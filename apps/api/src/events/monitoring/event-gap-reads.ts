@@ -1,3 +1,4 @@
+import { eventMapScope } from "#src/events/event-scope-query";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, desc, eq, isNull } from "drizzle-orm";
 import { Effect, Schema } from "effect";
@@ -80,13 +81,7 @@ export const makeEventGapReads = (
           eq(eventHeroNpcTable.id, eventMapTable.heroNpcId),
         )
         .innerJoin(eventTable, eq(eventTable.id, eventHeroNpcTable.eventId))
-        .where(
-          and(
-            eq(eventMapTable.id, mapId),
-            eq(eventTable.id, eventId),
-            eq(eventTable.guildId, guildId),
-          ),
-        )
+        .where(eventMapScope(guildId, eventId, mapId))
         .limit(1),
     ).pipe(
       Effect.flatMap((rows) =>

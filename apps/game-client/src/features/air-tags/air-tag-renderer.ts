@@ -1,6 +1,8 @@
 import { getFixedT } from "@/i18n/get-fixed-t";
 import {
   rendererRuntimeAdapter,
+  getMapCanvasCoordinate,
+  getMiniMapCanvasCoordinate,
   type RendererRuntimeAdapter,
   type RuntimeDrawable,
 } from "@/lib/margonem-runtime/adapters/renderer-runtime-adapter";
@@ -107,7 +109,6 @@ export class AirTagRenderer {
     if (!offset || !size) return;
 
     const tileSize = geometry.tileSize;
-    const halfTileSize = tileSize / 2;
     for (const target of this.frameTargets) {
       if (
         getAirTagEffectiveRelation(
@@ -120,8 +121,8 @@ export class AirTagRenderer {
         continue;
       }
 
-      const x = target.x * tileSize + halfTileSize - offset[0];
-      const y = target.y * tileSize + halfTileSize - offset[1];
+      const x = getMapCanvasCoordinate(target.x, tileSize, offset[0]);
+      const y = getMapCanvasCoordinate(target.y, tileSize, offset[1]);
       this.drawMainMarker(context, target, x, y);
     }
   }
@@ -150,8 +151,8 @@ export class AirTagRenderer {
         relation === AIR_TAG_CLAN_ENEMY_RELATION
           ? THREAT_COLOR
           : NEUTRAL_COLOR;
-      const x = margin.left + (target.x + 0.5) * normalSize;
-      const y = margin.top + (target.y + 0.5) * normalSize;
+      const x = getMiniMapCanvasCoordinate(target.x, normalSize, margin.left);
+      const y = getMiniMapCanvasCoordinate(target.y, normalSize, margin.top);
       const alpha = getAirTagMarkerAlpha(this.frameTime - target.observedAt);
 
       context.save();

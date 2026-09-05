@@ -1,8 +1,6 @@
-import { Card, CardContent } from "@lootlog/ui/components/card";
-import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { StatsOverviewCard } from "./stats-overview-card";
 import { useTranslation } from "react-i18next";
 import { Package, Layers, Crown, Sword } from "lucide-react";
-import { cn } from "cn";
 import type { LootStatsResponseDtoOutputOverview } from "@lootlog/client/main";
 
 const OVERVIEW_CONFIG = {
@@ -58,17 +56,7 @@ export const LootOverviewCards: React.FC<LootOverviewCardsProps> = ({
     return (
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {OVERVIEW_KEYS.map((key) => (
-          <Card key={key}>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <Skeleton className="h-10 w-10 rounded-lg" />
-                <div className="space-y-1.5">
-                  <Skeleton className="h-3 w-14" />
-                  <Skeleton className="h-6 w-10" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <StatsOverviewCard key={key} loading />
         ))}
       </div>
     );
@@ -81,29 +69,15 @@ export const LootOverviewCards: React.FC<LootOverviewCardsProps> = ({
         const value = data?.[config.key] ?? 0;
 
         return (
-          <Card key={key} className={cn("border-border/80", config.gradient)}>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div
-                  className={cn(
-                    "flex items-center justify-center h-10 w-10 rounded-lg",
-                    config.iconBg,
-                    config.iconColor,
-                  )}
-                >
-                  {config.icon}
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground font-medium">
-                    {t(`loots.stats.overview.${key}`)}
-                  </p>
-                  <p className="text-xl font-bold tabular-nums">
-                    {value.toLocaleString()}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <StatsOverviewCard
+            key={key}
+            icon={config.icon}
+            iconBg={config.iconBg}
+            iconColor={config.iconColor}
+            className={config.gradient}
+            label={t(`loots.stats.overview.${key}`)}
+            value={value}
+          />
         );
       })}
     </div>

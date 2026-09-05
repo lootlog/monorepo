@@ -1,3 +1,7 @@
+import {
+  discordPermissionFields,
+  DiscordGuildSyncStatus,
+} from "@lootlog/schema/discord";
 import { NonEmptyString, NonNegativeInt } from "@lootlog/schema/primitives";
 import { Schema } from "effect";
 import { RabbitRoutingKey } from "./topology.js";
@@ -74,26 +78,14 @@ const DiscordGuildChannel = Schema.Struct({
   active: Schema.Boolean,
   canView: Schema.Boolean,
   canSend: Schema.Boolean,
-  hasRequiredPermissions: Schema.Boolean,
-  requiredPermissions: Schema.Array(Schema.String),
-  grantedPermissions: Schema.Array(Schema.String),
-  missingPermissions: Schema.Array(Schema.String),
+  ...discordPermissionFields,
   lastSyncedAt: NonEmptyString,
 });
 
 const DiscordGuildSyncState = Schema.Struct({
   guildId: NonEmptyString,
-  status: Schema.Literals([
-    "SYNCED",
-    "SYNCING",
-    "FAILED",
-    "STALE",
-    "NOT_FOUND",
-  ]),
-  hasRequiredPermissions: Schema.Boolean,
-  requiredPermissions: Schema.Array(Schema.String),
-  grantedPermissions: Schema.Array(Schema.String),
-  missingPermissions: Schema.Array(Schema.String),
+  status: DiscordGuildSyncStatus,
+  ...discordPermissionFields,
   channelCount: NonNegativeInt,
   selectableChannelCount: NonNegativeInt,
   lastAttemptAt: NullableString,
@@ -116,13 +108,7 @@ export const DiscordGuildChannelUpserted = Schema.Struct({
 
 export const DiscordGuildChannelsSyncFailed = Schema.Struct({
   guildId: NonEmptyString,
-  status: Schema.Literals([
-    "SYNCED",
-    "SYNCING",
-    "FAILED",
-    "STALE",
-    "NOT_FOUND",
-  ]),
+  status: DiscordGuildSyncStatus,
   lastAttemptAt: NonEmptyString,
   lastError: NonEmptyString,
 });

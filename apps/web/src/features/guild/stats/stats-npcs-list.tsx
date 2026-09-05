@@ -1,3 +1,6 @@
+import { StatsNpcTypeSelect } from "./components/stats-npc-type-select";
+import { StatsRankingRowsSkeleton } from "./components/stats-ranking-rows-skeleton";
+import { getOffsetPagination } from "./utils/offset-pagination";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "@tanstack/react-router";
@@ -12,19 +15,11 @@ import {
 } from "@lootlog/ui/components/table";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { SearchInput } from "@/components/ui/search-input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@lootlog/ui/components/select";
 import { Card } from "@lootlog/ui/components/card";
-import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import { WorldSwitcher } from "@/components/common/world-switcher";
-import { useDebounce } from "@/hooks/use-debounce";
+import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
 import {
   getKillsControllerGetGuildTopNpcsQueryKey,
   useKillsControllerGetGuildTopNpcs,
@@ -32,7 +27,6 @@ import {
 import type { GuildTopNpcsResponseDtoOutputTopNpcsItem } from "@lootlog/client/main";
 import type { NpcType } from "@lootlog/client/main";
 import { useStatsSettings } from "./hooks/use-stats-settings";
-import { TRACKABLE_NPC_TYPES } from "./constants";
 import { LevelFilters } from "./components/level-filters";
 import { NpcStatsFiltersMobile } from "./components/npc-stats-filters-mobile";
 import { buildGuildTopNpcsParams } from "./utils/build-stats-query-params";
@@ -96,26 +90,14 @@ export const StatsNpcsList: React.FC = () => {
     Boolean(debouncedSearch);
   const total = topNpcs.length;
   const paginatedData = topNpcs.slice(cursor, cursor + ITEMS_PER_PAGE);
-  const hasNext = cursor + ITEMS_PER_PAGE < total;
-  const hasPrev = cursor > 0;
+  const { hasNext, hasPrev, handleNextPage, handlePreviousPage } =
+    getOffsetPagination(cursor, total, ITEMS_PER_PAGE, setCursor);
 
   const handleRowClick = (npc: GuildTopNpcsResponseDtoOutputTopNpcsItem) => {
     navigate({
       to: "/$guildId/stats/npcs/$npcId",
       params: { guildId, npcId: String(npc.npcId) },
     });
-  };
-
-  const handleNextPage = () => {
-    if (hasNext) {
-      setCursor(cursor + ITEMS_PER_PAGE);
-    }
-  };
-
-  const handlePreviousPage = () => {
-    if (hasPrev) {
-      setCursor(Math.max(0, cursor - ITEMS_PER_PAGE));
-    }
   };
 
   const handleNpcTypeChange = (value: string | null) => {
@@ -213,31 +195,10 @@ export const StatsNpcsList: React.FC = () => {
                   value={settings.period}
                   onValueChange={handlePeriodChange}
                 />
-                <Select
-                  value={settings.npcType ?? "ALL"}
+                <StatsNpcTypeSelect
+                  value={settings.npcType}
                   onValueChange={handleNpcTypeChange}
-                  items={[
-                    { value: "ALL", label: <>{t("kills.filters.allTypes")}</> },
-                    ...TRACKABLE_NPC_TYPES.map((type) => ({
-                      value: type,
-                      label: <>{t(`npcType.${type}`)}</>,
-                    })),
-                  ]}
-                >
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ALL">
-                      {t("kills.filters.allTypes")}
-                    </SelectItem>
-                    {TRACKABLE_NPC_TYPES.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {t(`npcType.${type}`)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                />
               </div>
             </div>
           </Card>
@@ -245,21 +206,7 @@ export const StatsNpcsList: React.FC = () => {
           <Card className="flex-1 min-h-0 flex flex-col border-border bg-card p-0  overflow-hidden gap-0">
             <ScrollArea className="relative flex-1 min-h-0 w-full">
               {isLoading ? (
-                <div>
-                  {Array.from({ length: 10 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="flex h-14 items-center gap-4 border-b border-border px-4"
-                    >
-                      <Skeleton className="h-4 w-8" />
-                      <Skeleton className="h-8 w-8 rounded-full" />
-                      <Skeleton className="h-4 flex-1" />
-                      {Array.from({ length: 4 }).map((_, j) => (
-                        <Skeleton key={j} className="h-4 w-12" />
-                      ))}
-                    </div>
-                  ))}
-                </div>
+                <StatsRankingRowsSkeleton />
               ) : !data || paginatedData.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-3 p-16 h-full">
                   <p className="text-muted-foreground">

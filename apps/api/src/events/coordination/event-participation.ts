@@ -1,3 +1,4 @@
+import { selectEventKillPoints } from "#src/events/kills/event-point-query";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import { and, asc, desc, eq, gte, inArray, isNull, lt, sql } from "drizzle-orm";
@@ -53,21 +54,7 @@ export const makeEventParticipation = (
   ) =>
     query(
       expired ? "events.participation.expired" : "events.participation.pending",
-      database
-        .select({
-          point: eventKillPointTable,
-          kill: eventHeroKillTable,
-          hero: eventHeroNpcTable,
-        })
-        .from(eventKillPointTable)
-        .innerJoin(
-          eventHeroKillTable,
-          eq(eventHeroKillTable.id, eventKillPointTable.killId),
-        )
-        .innerJoin(
-          eventHeroNpcTable,
-          eq(eventHeroNpcTable.id, eventHeroKillTable.heroNpcId),
-        )
+      selectEventKillPoints(database)
         .where(
           and(
             eq(eventKillPointTable.memberId, memberId),

@@ -1,9 +1,13 @@
+import {
+  pathString,
+  emptyStatusResponse,
+} from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 import { HttpServerResponse } from "effect/unstable/http";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { applicationErrorStatusOrUndefined } from "#src/shared/http/http-errors";
-import { encodeDomainJson } from "../../domain-json.schema.js";
+import { decodeDomainJson } from "../../domain-json.schema.js";
 import {
   Permission,
   type Permission as PermissionValue,
@@ -92,8 +96,7 @@ const data = <A>(
 ) => Effect.flatMap(ChatData, operation);
 
 const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
-  encodeDomainJson(value).pipe(
-    Effect.flatMap(Schema.decodeUnknownEffect(schema)),
+  decodeDomainJson(schema, value).pipe(
     Effect.mapError((cause) => new ChatOperationError({ cause })),
   );
 
@@ -102,11 +105,8 @@ type ChatFailure = ChatAccessDenied | ChatNotFound | ChatOperationError;
 const declaredHttpFailure = <A, R>(effect: Effect.Effect<A, ChatFailure, R>) =>
   Effect.catchTags(effect, {
     ChatAccessDenied: (error) =>
-      error.status === 403
-        ? Effect.succeed(HttpServerResponse.empty({ status: error.status }))
-        : Effect.die(error),
-    ChatNotFound: (error) =>
-      Effect.succeed(HttpServerResponse.empty({ status: error.status })),
+      error.status === 403 ? emptyStatusResponse(error) : Effect.die(error),
+    ChatNotFound: emptyStatusResponse,
     ChatOperationError: (error) => {
       const status = applicationErrorStatusOrUndefined(error.cause);
       return status === 403 || status === 404
@@ -114,11 +114,6 @@ const declaredHttpFailure = <A, R>(effect: Effect.Effect<A, ChatFailure, R>) =>
         : Effect.die(error.cause);
     },
   });
-
-const pathString = (value: unknown, name: string) =>
-  typeof value === "string"
-    ? Effect.succeed(value)
-    : Effect.die(new TypeError(`${name} path parameter must be a string`));
 
 const readCapabilities = [Permission.LOOTLOG_CHAT_READ] as const;
 const writeCapabilities = [

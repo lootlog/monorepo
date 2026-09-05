@@ -1,3 +1,5 @@
+import { topMemberDisplayRoles } from "#src/members/member-display-role";
+import { roundEventDisplayValue } from "#src/events/round-event-display-value";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
@@ -12,9 +14,6 @@ import {
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import { isoDatetimeCodec } from "#src/shared/schema/response-codecs";
 import type { EventReadCache } from "#src/events/catalog/event-read-cache.service";
-
-const roundPoints = (value: number) =>
-  Math.round((Number.isFinite(value) ? value : 0) * 100) / 100;
 
 const CachedEventRankingResponse = Schema.Array(
   Schema.Struct({
@@ -81,10 +80,7 @@ export const makeEventRankingRead = (
         member: {
           id: member.id,
           name: member.name,
-          roles: roles
-            .filter(({ memberId }) => memberId === member.id)
-            .slice(0, 1)
-            .map(({ position, color }) => ({ position, color })),
+          roles: topMemberDisplayRoles(roles, member.id),
         },
       }));
     }).pipe(
@@ -160,7 +156,7 @@ export const makeEventRankingRead = (
         for (const history of histories) {
           const entry = {
             ...history,
-            deltaPoints: roundPoints(
+            deltaPoints: roundEventDisplayValue(
               history.newPoints - history.previousPoints,
             ),
             editedByName: names.get(history.editedByUserId) ?? null,

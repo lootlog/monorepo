@@ -19,8 +19,11 @@ import { getCustomRoleCssColor } from "@/utils/get-color-from-role";
 import type { KillDetailParticipant } from "../../hooks/queries/use-kill-detail";
 import { aggregateMapData } from "../../utils/aggregate-map-data";
 import { formatDurationHuman } from "../../utils/format-duration";
-import { formatPoints, formatSignedPoints } from "../../utils/format-points";
-import { normalizeBonusBreakdown } from "../../utils/normalize-bonus-breakdown";
+import { formatPoints } from "../../utils/format-points";
+import {
+  getScoringBreakdown,
+  getScoringItems,
+} from "../../utils/scoring-presentation";
 import { ManualPointsEditDialog } from "../dialogs/manual-points-edit-dialog";
 
 interface KillParticipantRowProps {
@@ -52,64 +55,9 @@ const buildParticipantScoringView = (
     (sum, map) => sum + map.afkTimeSeconds,
     0,
   );
-  const bonusBreakdown = normalizeBonusBreakdown(participant.bonusBreakdown);
-  const manualAdjustmentPoints = participant.manualAdjustmentPoints ?? 0;
-  const hasManualAdjustment = manualAdjustmentPoints !== 0;
-  const autoTotalPoints = participant.points - manualAdjustmentPoints;
-  const fallbackBonusPoints =
-    Math.round(Math.max(0, autoTotalPoints - participant.basePoints) * 10_000) /
-    10_000;
-  const bonusPoints =
-    bonusBreakdown.length > 0
-      ? Math.round(
-          bonusBreakdown.reduce((sum, item) => sum + item.points, 0) * 10_000,
-        ) / 10_000
-      : fallbackBonusPoints;
-  const capReduction = Math.max(
-    0,
-    participant.basePoints + bonusPoints - autoTotalPoints,
-  );
-  const scoringItems = [
-    {
-      label: t("events.kills.pointsTooltip.basePoints"),
-      value: formatPoints(participant.basePoints),
-      valueClassName: "text-foreground",
-    },
-    ...bonusBreakdown.map((bonus) => ({
-      label: t("events.kills.pointsTooltip.bonusItem", {
-        name: bonus.ruleName ?? t("events.kills.pointsTooltip.unnamedBonus"),
-      }),
-      value: `+${formatPoints(bonus.points)}`,
-      valueClassName: "text-cyan-400",
-    })),
-    ...(bonusBreakdown.length === 0 && bonusPoints > 0
-      ? [
-          {
-            label: t("events.kills.pointsTooltip.bonusTotal"),
-            value: `+${formatPoints(bonusPoints)}`,
-            valueClassName: "text-cyan-400",
-          },
-        ]
-      : []),
-    ...(capReduction > 0
-      ? [
-          {
-            label: t("events.kills.pointsTooltip.capReduction"),
-            value: `-${formatPoints(capReduction)}`,
-            valueClassName: "text-amber-400",
-          },
-        ]
-      : []),
-    ...(hasManualAdjustment
-      ? [
-          {
-            label: t("events.kills.pointsTooltip.manualAdjustment"),
-            value: formatSignedPoints(manualAdjustmentPoints),
-            valueClassName: "text-amber-400",
-          },
-        ]
-      : []),
-  ];
+  const scoring = getScoringBreakdown(participant);
+  const hasManualAdjustment = scoring.manualAdjustmentPoints !== 0;
+  const scoringItems = getScoringItems({ ...scoring, t, formatPoints });
 
   return {
     aggregatedMaps,

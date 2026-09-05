@@ -1,3 +1,4 @@
+import { statusCodeResponse } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   SettingsDocumentsResponseSchema,
@@ -231,13 +232,7 @@ export const toSettingsHttpResponse = <A, R>(
   effect: Effect.Effect<A, SettingsHttpFailure, R>,
 ) =>
   Effect.catchTags(effect, {
-    SettingsAccessDenied: (error) =>
-      Effect.succeed(
-        HttpServerResponse.jsonUnsafe(
-          { code: error.code },
-          { status: error.status },
-        ),
-      ),
+    SettingsAccessDenied: statusCodeResponse,
     SettingsOperationError: (error) =>
       error.cause instanceof SettingsRequestError
         ? Effect.succeed(

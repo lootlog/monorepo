@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useIsMutating, useMutationState } from "@tanstack/react-query";
 import { useCurrentGameAccountPreferences } from "@/hooks/use-current-game-account-preferences";
 import { getUpdateUserGameAccountPreferencesMutationKey } from "@/lib/game-account-preferences";
@@ -94,3 +95,14 @@ export const useGameAccountPreferencesSyncStatus =
       error: null,
     };
   };
+
+export const useGameAccountPreferencesSyncIndicator = () => {
+  const { status } = useGameAccountPreferencesSyncStatus();
+  const [visibleStatus, setVisibleStatus] = useState(status);
+  useEffect(() => {
+    if (status === "error" || status === "idle") return;
+    const timeoutId = window.setTimeout(() => setVisibleStatus(status), 100);
+    return () => window.clearTimeout(timeoutId);
+  }, [status]);
+  return status === "error" || status === "idle" ? status : visibleStatus;
+};

@@ -15,7 +15,7 @@ import {
 import {
   ACTIVITY_EVENT_SIGNATURE_HEADER,
   verifyActivityEventSignature,
-} from "./activity-event-signature.js";
+} from "@lootlog/protocol/rabbit/activity-signature";
 import { ActivityConfig } from "#src/config/activity-config";
 
 const mainQueue = (

@@ -5,7 +5,6 @@ import type { Timer } from "@/api/timers.api";
 import { DraggableWindow } from "@/components/draggable-window";
 import { TimersActions } from "@/features/timers/components/timers-actions";
 import { TimersContent } from "@/features/timers/components/timers-content";
-import { TimersUnderBagActions } from "@/features/timers/components/timers-under-bag-actions";
 import { useTimerListProjection } from "@/features/timers/hooks/use-timer-list-projection";
 import { UnderBagTimers } from "@/features/timers/under-bag-timers";
 import { useTimers } from "@/hooks/api/use-timers";
@@ -202,16 +201,19 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
   if (isUnderBag) {
     return (
       <UnderBagTimers>
-        <TimersUnderBagActions
-          timerFiltersEnabled={resolvedTimerFiltersEnabled}
-          toggleTimerFiltersEnabled={toggleTimerFiltersEnabled}
-          colorFiltersEnabled={resolvedColorFiltersEnabled}
-          toggleColorFiltersEnabled={toggleColorFiltersEnabled}
-          timersSortOrder={sortOrder}
-          setTimersSortOrder={setTimersSortOrder}
-          showHiddenTimers={showHiddenTimers}
-          setShowHiddenTimers={setShowHiddenTimers}
-        />
+        <div className="ll:flex ll:gap-1">
+          <TimersActions
+            underBag
+            timerFiltersEnabled={resolvedTimerFiltersEnabled}
+            toggleTimerFiltersEnabled={toggleTimerFiltersEnabled}
+            colorFiltersEnabled={resolvedColorFiltersEnabled}
+            toggleColorFiltersEnabled={toggleColorFiltersEnabled}
+            timersSortOrder={sortOrder}
+            setTimersSortOrder={setTimersSortOrder}
+            showHiddenTimers={showHiddenTimers}
+            setShowHiddenTimers={setShowHiddenTimers}
+          />
+        </div>
         <div className="ll:bg-[0_0] ll:top-1 ll:leading-7 ll:-mt-1.5 ll-custom-cursor-pointer ll:absolute ll:left-1/2 ll:transform ll:-translate-x-1/2 ll:flex ll:gap-2 ll:items-center">
           <p className="ll:text-[12px] ll:text-[beige] ll:text-shadow-[1px_1px_1px_black]">
             {t("underBag.title")}

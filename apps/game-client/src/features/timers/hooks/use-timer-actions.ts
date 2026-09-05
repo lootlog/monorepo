@@ -9,6 +9,16 @@ import { useTimersStore } from "@/store/timers.store";
 import { getFixedT } from "@/i18n/get-fixed-t";
 import { useShallow } from "zustand/react/shallow";
 
+const getApiErrorMessage = (error: unknown) => {
+  return isApiError(error) &&
+    typeof error.data === "object" &&
+    error.data !== null &&
+    "message" in error.data &&
+    typeof error.data.message === "string"
+    ? error.data.message
+    : undefined;
+};
+
 export const useTimerActions = (
   timer: TimerWithTimeLeft,
   settingsKey: string,
@@ -45,14 +55,7 @@ export const useTimerActions = (
     })),
   );
   const getResetTimerErrorMessage = (error: unknown) => {
-    const apiMessage =
-      isApiError(error) &&
-      typeof error.data === "object" &&
-      error.data !== null &&
-      "message" in error.data &&
-      typeof error.data.message === "string"
-        ? error.data.message
-        : undefined;
+    const apiMessage = getApiErrorMessage(error);
 
     if (apiMessage === "EVENT_TIMER_CANNOT_BE_RESET") {
       return t("messages.resetEventWindowForbidden");
@@ -61,14 +64,7 @@ export const useTimerActions = (
     return t("messages.resetFailed", { name: timer.npc.name });
   };
   const getDeleteTimerErrorMessage = (error: unknown) => {
-    const apiMessage =
-      isApiError(error) &&
-      typeof error.data === "object" &&
-      error.data !== null &&
-      "message" in error.data &&
-      typeof error.data.message === "string"
-        ? error.data.message
-        : undefined;
+    const apiMessage = getApiErrorMessage(error);
 
     if (apiMessage === "EVENT_TIMER_MUST_USE_EVENT_CLOSE") {
       return t("messages.deleteEventWindowForbidden");
@@ -82,30 +78,20 @@ export const useTimerActions = (
     hideTimer(settingsKey, timer.npc.name);
   };
 
-  const handleHideTimerForAll = () => {
+  const applyToAllTimerScopes = (action: typeof hideTimer) => {
     if (!settingsKey || guildIds.length === 0) return;
-
-    guildIds.forEach((guildId) => {
-      hideTimer(guildId, timer.npc.name);
-    });
-
-    hideTimer("global", timer.npc.name);
+    guildIds.forEach((guildId) => action(guildId, timer.npc.name));
+    action("global", timer.npc.name);
   };
+
+  const handleHideTimerForAll = () => applyToAllTimerScopes(hideTimer);
 
   const handleShowTimer = () => {
     if (!settingsKey) return;
     revealTimer(settingsKey, timer.npc.name);
   };
 
-  const handleShowTimerForAll = () => {
-    if (!settingsKey || guildIds.length === 0) return;
-
-    guildIds.forEach((guildId) => {
-      revealTimer(guildId, timer.npc.name);
-    });
-
-    revealTimer("global", timer.npc.name);
-  };
+  const handleShowTimerForAll = () => applyToAllTimerScopes(revealTimer);
 
   const handlePinTimer = () => {
     if (!settingsKey) return;
@@ -117,23 +103,9 @@ export const useTimerActions = (
     pinTimer(settingsKey, timer.npc.name);
   };
 
-  const handlePinTimerForAll = () => {
-    if (!settingsKey || guildIds.length === 0) return;
+  const handlePinTimerForAll = () => applyToAllTimerScopes(pinTimer);
 
-    guildIds.forEach((guildId) => {
-      pinTimer(guildId, timer.npc.name);
-    });
-
-    pinTimer("global", timer.npc.name);
-  };
-
-  const handleUnpinTimerForAll = () => {
-    if (!settingsKey || guildIds.length === 0) return;
-    guildIds.forEach((guildId) => {
-      unpinTimer(guildId, timer.npc.name);
-    });
-    unpinTimer("global", timer.npc.name);
-  };
+  const handleUnpinTimerForAll = () => applyToAllTimerScopes(unpinTimer);
 
   const handleTimerColorChange = (color?: string) => {
     setTimerColor(timer.npc.name, color);

@@ -1,3 +1,4 @@
+import { isRecord } from "@lootlog/schema/records";
 import { useGameStore } from "@/store/game.store";
 import type {
   CreatePartyGatheringDtoCharacter,
@@ -28,10 +29,6 @@ const guildNamesByIdCache = new WeakMap<
   GuildIdentity[],
   Record<string, string>
 >();
-
-const isRecord = (value: unknown): value is Record<string, unknown> => {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-};
 
 const getNumber = (value: unknown, fallback = 0) => {
   if (typeof value === "number") {

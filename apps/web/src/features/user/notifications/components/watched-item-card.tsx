@@ -1,3 +1,4 @@
+import { invalidateUserNotificationQueries } from "@/features/user/notifications/utils/invalidate-user-notification-queries";
 import { BellOff, ShieldAlert, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -8,11 +9,7 @@ import { ItemImage } from "@lootlog/ui/components/item-image";
 import { ItemTile } from "@/components/tiles";
 import { getUserNotificationsErrorMessage } from "@/features/user/notifications/utils/get-user-notifications-error-message";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  invalidateNotificationsUserControllerGetUserTargets,
-  invalidateNotificationsUserControllerGetWatchedItems,
-  useNotificationsUserControllerDeleteWatchedItem,
-} from "@lootlog/client/main";
+import { useNotificationsUserControllerDeleteWatchedItem } from "@lootlog/client/main";
 import type { WatchedItemResponseDto } from "@lootlog/client/main";
 import { ItemRarity } from "@/lib/loots/loot-types";
 
@@ -32,10 +29,7 @@ export const WatchedItemCard = ({
   const deleteWatchedItem = useNotificationsUserControllerDeleteWatchedItem({
     mutation: {
       onSuccess: async () => {
-        await Promise.all([
-          invalidateNotificationsUserControllerGetUserTargets(queryClient),
-          invalidateNotificationsUserControllerGetWatchedItems(queryClient),
-        ]);
+        await invalidateUserNotificationQueries(queryClient);
       },
     },
   });

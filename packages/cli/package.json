@@ -23,6 +23,7 @@
     "@lootlog/api": "workspace:*",
     "@lootlog/battle-processor": "workspace:*",
     "@lootlog/battlelog": "workspace:*",
+    "@lootlog/database": "workspace:*",
     "@lootlog/domain": "workspace:*",
     "@lootlog/schema": "workspace:*",
     "amqplib": "^2.0.1",

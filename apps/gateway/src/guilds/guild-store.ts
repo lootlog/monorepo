@@ -1,3 +1,4 @@
+import { boundedHttpGet } from "@lootlog/instrumentation/bounded-http-get";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { UserGuildPermissionsDtoSchema } from "@lootlog/schema/permissions";
 import { Clock, Effect, Schema } from "effect";
@@ -7,7 +8,6 @@ import type { GetUserGuildsOptions, UserGuildData } from "#src/guilds/guild";
 import { CACHE_TTL, getUserGuildsCacheKey } from "#src/guilds/cache-keys";
 import type { RedisGatewayStore } from "#src/platform/redis-store";
 
-const RESPONSE_LIMIT_BYTES = 1024 * 1024;
 const UserGuildsJson = Schema.fromJsonString(
   Schema.Array(UserGuildPermissionsDtoSchema),
 );
@@ -67,52 +67,18 @@ export const makeGuildStore = (
     const url = new URL(`${config.apiUrl}/internal/guilds/user-permissions`);
     url.searchParams.set("discordId", options.discordId);
     url.searchParams.set("userId", options.userId);
-    let retryCount = 0;
-    const attempt = Effect.suspend(() => {
-      const currentRetryCount = retryCount;
-      retryCount += 1;
-      return httpClient.get(url.toString()).pipe(
-        Effect.timeout("10 seconds"),
-        Effect.mapError((error) =>
-          failure(error._tag === "TimeoutError" ? "timeout" : "transport", {
-            retryable: true,
-          }),
-        ),
-        Effect.flatMap((response) => {
-          if (response.status < 200 || response.status >= 300) {
-            return Effect.fail(
-              failure("status", {
-                retryable: response.status >= 500,
-                status: response.status,
-              }),
-            );
-          }
-          return response.arrayBuffer.pipe(
-            Effect.mapError(() => failure("invalid-response")),
-            Effect.flatMap((body) =>
-              body.byteLength <= RESPONSE_LIMIT_BYTES
-                ? Effect.succeed(body)
-                : Effect.fail(failure("response-too-large")),
-            ),
-          );
-        }),
-        Effect.flatMap((body) =>
-          Effect.try({
-            try: () => decodeGuilds(body),
-            catch: () => failure("invalid-response"),
-          }),
-        ),
-        Effect.withSpan("GuildStore_fetchUserGuilds.attempt", {
-          attributes: {
-            adapter: "api-user-permissions",
-            retryCount: currentRetryCount,
-          },
-        }),
-      );
+    return yield* boundedHttpGet({
+      client: httpClient,
+      url,
+      timeoutMilliseconds: 10000,
+      retries: 3,
+      operationId: "GuildStore_fetchUserGuilds",
+      adapter: "api-user-permissions",
+      response: "successful",
+      failure: (reason, retryable, status) =>
+        failure(reason, { retryable, status }),
+      decode: decodeGuilds,
     });
-    return yield* attempt.pipe(
-      Effect.retry({ times: 3, while: (error) => error.retryable }),
-    );
   });
 
   const readCache = (key: string) =>

@@ -1,3 +1,4 @@
+import { isRecord } from "@lootlog/schema/records";
 import {
   calculateLocalWindowOverlapMs,
   isLocalTimeInRange,
@@ -255,10 +256,6 @@ export const DEFAULT_ADVANCED_EVENT_SCORING_RULES: EventScoringRules = {
     },
   ],
 };
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === "object" && !Array.isArray(value);
-}
 
 function isOneOf<const Values extends readonly string[]>(
   values: Values,

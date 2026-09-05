@@ -123,3 +123,15 @@ class MargonemRendererRuntimeAdapter implements RendererRuntimeAdapter {
 
 export const rendererRuntimeAdapter: RendererRuntimeAdapter =
   new MargonemRendererRuntimeAdapter();
+
+export const getMapCanvasCoordinate = (
+  coordinate: number,
+  tileSize: number,
+  offset: number,
+): number => coordinate * tileSize + tileSize / 2 - offset;
+
+export const getMiniMapCanvasCoordinate = (
+  coordinate: number,
+  normalSize: number,
+  margin: number,
+): number => margin + (coordinate + 0.5) * normalSize;

@@ -1,3 +1,4 @@
+import { boundedHttpGet } from "@lootlog/instrumentation/bounded-http-get";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Effect, Schema } from "effect";
 import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
@@ -5,7 +6,6 @@ import type { RedisService } from "#src/redis/redis.service";
 
 const cacheKey = "maps:all";
 const cacheTtlSeconds = 60 * 60;
-const responseLimitBytes = 1024 * 1024;
 
 export class MapsOperationFailure extends TaggedErrorClass<MapsOperationFailure>()(
   "MapsOperationFailure",
@@ -50,52 +50,18 @@ const failure = (
 
 export const makeMapsOperation = (options: MapsOperationOptions) => {
   const fetchMaps = Effect.fn("MapsController_getMaps.fetch")(function* () {
-    let retryCount = 0;
-    const request = Effect.suspend(() => {
-      const currentRetryCount = retryCount;
-      retryCount += 1;
-      return options.httpClient.get(options.url.toString()).pipe(
-        Effect.timeout("3 seconds"),
-        Effect.mapError((error) =>
-          failure(error._tag === "TimeoutError" ? "timeout" : "transport", {
-            retryable: true,
-          }),
-        ),
-        Effect.flatMap((response) => {
-          if (response.status < 200 || response.status >= 300) {
-            return Effect.fail(
-              failure("status", {
-                retryable: response.status >= 500,
-                status: response.status,
-              }),
-            );
-          }
-          return response.arrayBuffer.pipe(
-            Effect.mapError(() => failure("invalid-response")),
-            Effect.flatMap((body) =>
-              body.byteLength <= responseLimitBytes
-                ? Effect.succeed(body)
-                : Effect.fail(failure("response-too-large")),
-            ),
-          );
-        }),
-        Effect.flatMap((body) =>
-          Effect.try({
-            try: () => decodeGameMapsJson(new TextDecoder().decode(body)),
-            catch: () => failure("invalid-response"),
-          }),
-        ),
-        Effect.withSpan("MapsController_getMaps.fetch.attempt", {
-          attributes: {
-            adapter: "maps-catalog",
-            retryCount: currentRetryCount,
-          },
-        }),
-      );
+    return yield* boundedHttpGet({
+      client: options.httpClient,
+      url: options.url,
+      timeoutMilliseconds: 3000,
+      retries: 2,
+      operationId: "MapsController_getMaps.fetch",
+      adapter: "maps-catalog",
+      response: "successful",
+      failure: (reason, retryable, status) =>
+        failure(reason, { retryable, status }),
+      decode: (body) => decodeGameMapsJson(new TextDecoder().decode(body)),
     });
-    return yield* request.pipe(
-      Effect.retry({ times: 2, while: (error) => error.retryable }),
-    );
   });
 
   return Effect.fn("MapsController_getMaps")(function* () {

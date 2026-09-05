@@ -1,3 +1,7 @@
+import {
+  toggleBattleSearchWarrior,
+  createBattleFilterHandlers,
+} from "@/features/user/battle-panel/battle-panel-battles-list/utils/battle-filter-handlers";
 import { BattlesList } from "@/features/user/battle-panel/battle-panel-battles-list/components/battles-list";
 import { FiltersSidebar } from "@/features/user/battle-panel/battle-panel-battles-list/components/filters-sidebar";
 import { BattlesListFilterToolbar } from "@/features/user/battle-panel/battle-panel-battles-list/components/battles-list-filter-toolbar";
@@ -8,7 +12,7 @@ import {
 } from "@/features/user/battle-panel/components/battle-panel-active-filter-helpers";
 import { MobileFiltersDrawer } from "@/components/filters/mobile-filters-drawer";
 import { useQueryStates } from "nuqs";
-import type { BattleFilters } from "./components/battles-list-filters";
+import type { BattleFilters } from "@/features/user/battle-panel/battle-panel-battles-list/utils/battle-filter-handlers";
 import {
   battlePanelBattlesSearchParsers,
   getBattlePanelCursorPaginationForCursor,
@@ -100,84 +104,29 @@ export const BattlePanelBattlesList = () => {
     });
   };
 
+  const {
+    handleCharacterChange,
+    handleTypeChange,
+    handleResultChange,
+    handlePhToggle,
+    handleMinLevelChange,
+    handleMaxLevelChange,
+    handleWorldChange,
+  } = createBattleFilterHandlers(filters, handleFiltersChange);
   const handleClearFilters = () => {
     handleFiltersChange(getResetBattleListFilters());
   };
 
   const handleWarriorToggle = (warrior: SearchWarrior) => {
-    const isSelected = selectedWarriors.some((w) => w.name === warrior.name);
-    const newSelectedWarriors = isSelected
-      ? selectedWarriors.filter((w) => w.name !== warrior.name)
-      : [...selectedWarriors, warrior];
+    const newSelectedWarriors = toggleBattleSearchWarrior(
+      selectedWarriors,
+      warrior,
+    );
 
     const warriorNames = newSelectedWarriors.map((w) => w.name);
     handleFiltersChange({
       ...filters,
       search: warriorNames.length > 0 ? warriorNames.join(",") : undefined,
-    });
-  };
-
-  const handleCharacterChange = (value: string) => {
-    const currentCharacters = filters.characterId ?? [];
-    const newCharacters = currentCharacters.includes(value)
-      ? currentCharacters.filter((id) => id !== value)
-      : [...currentCharacters, value];
-
-    handleFiltersChange({
-      ...filters,
-      characterId: newCharacters.length > 0 ? newCharacters : undefined,
-    });
-  };
-
-  const handleTypeChange = (value: "solo" | "group") => {
-    const currentTypes = filters.type ?? [];
-    const newTypes = currentTypes.includes(value)
-      ? currentTypes.filter((type) => type !== value)
-      : [...currentTypes, value];
-
-    handleFiltersChange({
-      ...filters,
-      type: newTypes.length > 0 ? newTypes : undefined,
-    });
-  };
-
-  const handleResultChange = (value: "won" | "lost" | "flee") => {
-    const currentResults = filters.result ?? [];
-    const newResults = currentResults.includes(value)
-      ? currentResults.filter((result) => result !== value)
-      : [...currentResults, value];
-
-    handleFiltersChange({
-      ...filters,
-      result: newResults.length > 0 ? newResults : undefined,
-    });
-  };
-
-  const handleWorldChange = (value: string) => {
-    handleFiltersChange({
-      ...filters,
-      world: filters.world === value ? undefined : value,
-    });
-  };
-
-  const handleMinLevelChange = (value: number | undefined) => {
-    handleFiltersChange({
-      ...filters,
-      minLevel: value,
-    });
-  };
-
-  const handleMaxLevelChange = (value: number | undefined) => {
-    handleFiltersChange({
-      ...filters,
-      maxLevel: value,
-    });
-  };
-
-  const handlePhToggle = (checked: boolean) => {
-    handleFiltersChange({
-      ...filters,
-      ph: checked ? true : undefined,
     });
   };
 

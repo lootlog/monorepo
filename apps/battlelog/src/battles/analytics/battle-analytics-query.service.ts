@@ -1,8 +1,8 @@
+import { makeWarriorExists } from "#src/battles/battle-warrior-query";
 import { ResourceNotFoundError } from "#src/infrastructure/http-error";
 import {
   and,
   eq,
-  exists,
   gt,
   gte,
   inArray,
@@ -31,16 +31,7 @@ export const makeBattleAnalyticsQuery = (
   drizzle: DrizzleDatabase,
   cache: BattleAnalyticsCache,
 ) => {
-  const warriorExists = (
-    battlesRef: typeof battles,
-    ...conditions: (SQL | undefined)[]
-  ) =>
-    exists(
-      drizzle
-        .select({ one: eq(battleWarriors.id, battleWarriors.id) })
-        .from(battleWarriors)
-        .where(and(eq(battleWarriors.battleId, battlesRef.id), ...conditions)),
-    );
+  const warriorExists = makeWarriorExists(drizzle);
 
   const getCharacterIdsUncached = (
     userId: string,
@@ -141,32 +132,15 @@ export const makeBattleAnalyticsQuery = (
       ratingDeltaNotNull?: boolean;
     },
   ): SQL | undefined => {
-    const conditions: (SQL | undefined)[] = [
-      eq(battlesRef.userId, params.userId),
+    return and(
+      buildCombatProfileWhere(battlesRef, params),
       eq(battlesRef.type, "1v1"),
-      ...(params.world ? [eq(battlesRef.world, params.world)] : []),
-      ...(params.startDate
-        ? [gte(battlesRef.createdAt, params.startDate)]
-        : []),
-      ...(params.endDate ? [lte(battlesRef.createdAt, params.endDate)] : []),
-      ...(params.matchmaking !== undefined
-        ? [eq(battlesRef.matchmaking, params.matchmaking)]
-        : []),
-      ...(params.hasFlee !== undefined
-        ? [eq(battlesRef.hasFlee, params.hasFlee)]
-        : []),
-      ...(params.ratingNotNull ? [isNotNull(battlesRef.rating)] : []),
-      ...(params.ratingDeltaNotNull ? [isNotNull(battlesRef.ratingDelta)] : []),
-    ];
-
-    const warriorConditions: (SQL | undefined)[] = [
-      inArray(battleWarriors.originalId, params.characterIds),
-      ...(params.phFilter ? [gt(battleWarriors.ph, 0)] : []),
-    ];
-
-    conditions.push(warriorExists(battlesRef, ...warriorConditions));
-
-    return and(...conditions);
+      params.hasFlee !== undefined
+        ? eq(battlesRef.hasFlee, params.hasFlee)
+        : undefined,
+      params.ratingNotNull ? isNotNull(battlesRef.rating) : undefined,
+      params.ratingDeltaNotNull ? isNotNull(battlesRef.ratingDelta) : undefined,
+    );
   };
 
   const buildCombatProfileWhere = (

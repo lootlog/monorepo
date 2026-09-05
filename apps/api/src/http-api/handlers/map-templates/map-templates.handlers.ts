@@ -1,7 +1,8 @@
+import { emptyStatusResponse } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import { Context, Effect, Layer, Schema } from "effect";
-import { HttpServerResponse } from "effect/unstable/http";
+
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { and, asc, eq } from "drizzle-orm";
 import {
@@ -222,15 +223,12 @@ type MapTemplatesHttpFailure =
   | MapTemplatesAccessDenied
   | MapTemplatesPersistenceError;
 
-const statusResponse = (error: { readonly status: number }) =>
-  Effect.succeed(HttpServerResponse.empty({ status: error.status }));
-
 const toHttpResponse = <A, R>(
   effect: Effect.Effect<A, MapTemplatesHttpFailure, R>,
 ) =>
   Effect.catchTags(effect, {
-    MapTemplateNotFound: statusResponse,
-    MapTemplatesAccessDenied: statusResponse,
+    MapTemplateNotFound: emptyStatusResponse,
+    MapTemplatesAccessDenied: emptyStatusResponse,
     MapTemplatesPersistenceError: (error) => Effect.die(error.cause),
   });
 

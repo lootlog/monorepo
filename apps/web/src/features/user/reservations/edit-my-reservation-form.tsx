@@ -1,5 +1,10 @@
-import { useId, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import {
+  ReservationFormFields,
+  toReminderOffset,
+  type ReminderValue,
+  type ReminderOffset,
+} from "@/features/guild/reservations/schedule/reservation-form-fields";
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { resolveReservationSettings } from "@lootlog/domain/reservations";
@@ -9,19 +14,7 @@ import {
   getListMyReservationsQueryKey,
   useUpdateMyReservation,
 } from "@lootlog/client/main";
-import { useNotificationsUserControllerGetUserTargets } from "@lootlog/client/main";
 import { Button } from "@lootlog/ui/components/button";
-import { DateTimePicker } from "@lootlog/ui/components/date-time-picker";
-import { Label } from "@lootlog/ui/components/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@lootlog/ui/components/select";
-import { Textarea } from "@lootlog/ui/components/textarea";
-import { ROUTES } from "@/config/routes";
 import { getReservationErrorMessage } from "@/features/guild/reservations/get-reservation-error-message";
 import {
   getReservationEarliestStartDate,
@@ -30,22 +23,14 @@ import {
 } from "@/features/guild/reservations/schedule/reservation-settings";
 import { getReservationValidationMessage } from "@/features/guild/reservations/schedule/reservation-validation-message";
 
-type ReminderValue = "none" | "0" | "5" | "15" | "30";
-type ReminderOffset = 0 | 5 | 15 | 30;
-
 type EditMyReservationFormProps = {
   reservation: MyReservationsResponseDtoItemsItem;
   onCancel: () => void;
   onSuccess: () => void;
 };
 
-const REMINDER_VALUES: ReminderValue[] = ["none", "0", "5", "15", "30"];
-
 const toReminderValue = (value: ReminderOffset | null): ReminderValue =>
   value === null ? "none" : (String(value) as ReminderValue);
-
-const toReminderOffset = (value: ReminderValue): ReminderOffset | null =>
-  value === "none" ? null : (Number(value) as ReminderOffset);
 
 export function EditMyReservationForm({
   reservation,
@@ -54,7 +39,6 @@ export function EditMyReservationForm({
 }: EditMyReservationFormProps) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const commentId = useId();
   const initialStartsAt = new Date(reservation.startsAt);
   const [startsAt, setStartsAt] = useState<Date | undefined>(initialStartsAt);
   const [endsAt, setEndsAt] = useState<Date | undefined>(
@@ -65,12 +49,7 @@ export function EditMyReservationForm({
     toReminderValue(reservation.reminderMinutesBefore),
   );
   const settings = resolveReservationSettings(reservation.editingConstraints);
-  const targetsQuery = useNotificationsUserControllerGetUserTargets();
-  const hasActiveDm = Boolean(
-    targetsQuery.data?.some(
-      (target) => target.targetType === "DM" && target.active && target.canSend,
-    ),
-  );
+
   const updateMutation = useUpdateMyReservation({
     mutation: {
       onSuccess: async () => {
@@ -120,16 +99,6 @@ export function EditMyReservationForm({
       ? initialStartsAt
       : earliestAllowedStart;
   const maxStart = getReservationLatestStartDate(settings);
-  const minEnd = startsAt
-    ? new Date(
-        startsAt.getTime() + settings.reservationMinDurationMinutes * 60_000,
-      )
-    : minStart;
-  const maxEnd = startsAt
-    ? new Date(
-        startsAt.getTime() + settings.reservationMaxDurationMinutes * 60_000,
-      )
-    : maxStart;
 
   return (
     <form
@@ -139,88 +108,19 @@ export function EditMyReservationForm({
         submit();
       }}
     >
-      <div className="space-y-2">
-        <Label>{t("reservations.schedule.dialog.startDate")}</Label>
-        <DateTimePicker
-          value={startsAt}
-          onChange={setStartsAt}
-          min={minStart}
-          max={maxStart}
-          minuteStep={settings.reservationTimeGranularityMinutes}
-          placeholder={t("reservations.schedule.dialog.startDatePlaceholder")}
-          timeLabel={t("reservations.datePicker.time")}
-          clearLabel={t("reservations.datePicker.clear")}
-          required
-        />
-      </div>
-      <div className="space-y-2">
-        <Label>{t("reservations.schedule.dialog.endDate")}</Label>
-        <DateTimePicker
-          value={endsAt}
-          onChange={setEndsAt}
-          min={minEnd}
-          max={maxEnd}
-          minuteStep={settings.reservationTimeGranularityMinutes}
-          placeholder={t("reservations.schedule.dialog.endDatePlaceholder")}
-          timeLabel={t("reservations.datePicker.time")}
-          clearLabel={t("reservations.datePicker.clear")}
-          required
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor={commentId}>
-          {t("reservations.schedule.dialog.comment")}
-        </Label>
-        <Textarea
-          id={commentId}
-          value={comment}
-          onChange={(event) => setComment(event.target.value)}
-          maxLength={128}
-          rows={3}
-          placeholder={t("reservations.schedule.dialog.commentPlaceholder")}
-          className="resize-none"
-        />
-        <p className="text-right text-xs text-muted-foreground">
-          {comment.length}/128
-        </p>
-      </div>
-      <div className="space-y-2">
-        <Label>{t("reservations.schedule.dialog.reminder")}</Label>
-        <Select
-          value={reminder}
-          onValueChange={(value) => value && setReminder(value)}
-          items={REMINDER_VALUES.map((value) => ({
-            value,
-            label: t(`reservations.reminders.${value}`),
-          }))}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {REMINDER_VALUES.map((value) => (
-              <SelectItem
-                key={value}
-                value={value}
-                disabled={value !== "none" && !hasActiveDm}
-              >
-                {t(`reservations.reminders.${value}`)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {!hasActiveDm && targetsQuery.isSuccess && (
-          <p className="text-xs text-muted-foreground">
-            {t("reservations.schedule.dialog.dmRequired")}{" "}
-            <Link
-              to={ROUTES.user.notifications.base}
-              className="font-medium text-primary underline-offset-4 hover:underline"
-            >
-              {t("reservations.schedule.dialog.configureDm")}
-            </Link>
-          </p>
-        )}
-      </div>
+      <ReservationFormFields
+        settings={settings}
+        startsAt={startsAt}
+        endsAt={endsAt}
+        setStartsAt={setStartsAt}
+        setEndsAt={setEndsAt}
+        comment={comment}
+        setComment={setComment}
+        reminder={reminder}
+        setReminder={setReminder}
+        minStart={minStart}
+        maxStart={maxStart}
+      />
       <div className="flex justify-end gap-2 pt-1">
         <Button type="button" variant="outline" onClick={onCancel}>
           {t("common.cancel")}

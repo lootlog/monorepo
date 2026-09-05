@@ -1,7 +1,5 @@
-import {
-  filterGuildsByVisibility,
-  orderGuilds,
-} from "@/features/user/settings/servers/server-visibility";
+import { orderGuilds } from "@lootlog/domain/guild-preferences";
+import { filterGuildsByVisibility } from "@/features/user/settings/servers/server-visibility";
 import {
   useUpdateUserPreferences,
   useUserPreferences,

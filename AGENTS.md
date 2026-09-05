@@ -231,6 +231,22 @@ Before calling a change complete, account for every applicable item:
 - Import from the module that owns a symbol. Do not create source files that
   only re-export symbols.
 
+### Prevent duplicated logic
+
+- Before adding or copying logic, search by behavior as well as symbol name
+  across the relevant apps and packages. Reuse the existing owner, standard
+  library, or installed dependency before writing another implementation.
+- When equivalent logic has multiple callers, keep one implementation in the
+  narrowest suitable owning module. Migrate every equivalent occurrence in
+  the affected family, including inline copies and differently named helpers;
+  extracting a helper while leaving its copies behind is incomplete.
+- Compare input acceptance, defaults, side effects, errors, and boundary
+  contracts before consolidating. Keep meaningful differences explicit;
+  similar syntax alone does not justify a configurable abstraction.
+- Before finishing, search the affected family again. Remove remaining
+  equivalent copies and explain any intentionally retained variants in the
+  delivery notes. Passing tests alone does not prove deduplication is complete.
+
 ## Verification
 
 - Start with the smallest proof that exercises the changed behavior. Run lint,

@@ -12,7 +12,7 @@ import {
   useShowEventOverview,
 } from "@lootlog/client/main";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
-import { MemberKillsFilter } from "./components/member-kills/member-kills-filter";
+import { HeroKillsFilter } from "@/features/guild/events/components/shared/hero-kills-filter";
 import { MemberKillsList } from "./components/member-kills/member-kills-list";
 import { MemberSummaryStrip } from "./components/member-kills/member-summary-strip";
 import type { MemberStatsSummary } from "./components/member-kills/member-kills-view-model";
@@ -198,7 +198,8 @@ export const EventMemberKillsPageContent = ({
             selectedHeroName={selectedHero?.npcName}
             contextStats={contextStats}
           />
-          <MemberKillsFilter
+          <HeroKillsFilter
+            variant="member"
             heroes={heroes}
             selectedHeroId={selectedHeroId}
             onSelectedHeroChange={setSelectedHeroId}

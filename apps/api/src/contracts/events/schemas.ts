@@ -7,7 +7,7 @@ import {
   NonEmptyString,
   DateTimeString,
   FiniteNumber,
-} from "#src/contracts/scalars";
+} from "@lootlog/schema/http-scalars";
 
 const SpawnWindowTimestamp = DateTimeString.check(
   Schema.isMinLength(1).annotate({
@@ -301,9 +301,7 @@ export const CreateEventRequest = Schema.Struct({
   )
   .annotate({ identifier: "CreateEventDto" });
 
-export type EventMutationResponse = typeof EventMutationResponse.Type;
-
-export const EventMutationResponse = Schema.Struct({
+const eventResponseFields = {
   id: Schema.String,
   guildId: Schema.String,
   name: Schema.String,
@@ -329,6 +327,12 @@ export const EventMutationResponse = Schema.Struct({
     Schema.Union([Schema.String, Schema.Null]),
   ),
   scoringMode: Schema.Literals(["SIMPLE", "ADVANCED"]),
+};
+
+export type EventMutationResponse = typeof EventMutationResponse.Type;
+
+export const EventMutationResponse = Schema.Struct({
+  ...eventResponseFields,
   scoringRules: EventScoringState,
   heroNpcs: Schema.Array(
     Schema.Struct({
@@ -341,31 +345,7 @@ export const EventMutationResponse = Schema.Struct({
 export type EventOverviewResponse = typeof EventOverviewResponse.Type;
 
 export const EventOverviewResponse = Schema.Struct({
-  id: Schema.String,
-  guildId: Schema.String,
-  name: Schema.String,
-  world: Schema.String,
-  active: Schema.Boolean,
-  startsAt: Schema.Union([DateTimeString, Schema.Null]),
-  endsAt: Schema.Union([DateTimeString, Schema.Null]),
-  createdAt: DateTimeString,
-  updatedAt: DateTimeString,
-  basePointsPerKill: Schema.optionalKey(
-    Schema.Union([FiniteNumber, Schema.Null]),
-  ),
-  assignmentTimeoutMinutes: Schema.optionalKey(
-    Schema.Union([FiniteNumber, Schema.Null]),
-  ),
-  participationConfirmationMinutes: Schema.optionalKey(
-    Schema.Union([FiniteNumber, Schema.Null]),
-  ),
-  mapAssignmentCap: Schema.optionalKey(
-    Schema.Union([FiniteNumber, Schema.Null]),
-  ),
-  rulebookMarkdown: Schema.optionalKey(
-    Schema.Union([Schema.String, Schema.Null]),
-  ),
-  scoringMode: Schema.Literals(["SIMPLE", "ADVANCED"]),
+  ...eventResponseFields,
   scoringRules: EventOverviewScoringState,
   heroNpcs: Schema.Array(EventHeroSummary),
 }).annotate({ identifier: "EventOverviewResponseDto" });

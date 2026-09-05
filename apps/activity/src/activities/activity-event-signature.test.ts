@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test";
 import {
   signActivityEvent,
   verifyActivityEventSignature,
-} from "./activity-event-signature.js";
+} from "@lootlog/protocol/rabbit/activity-signature";
 
 describe("activity event signature", () => {
   it("keeps stable object-key ordering", () => {

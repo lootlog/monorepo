@@ -13,7 +13,7 @@ import { PartyFinder } from "@/features/party-finder/party-finder";
 import { QuickAccess } from "@/features/quick-access/quick-access";
 import { Settings } from "@/features/settings/settings";
 import { Timers } from "@/features/timers/timers";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "@lootlog/ui/components/sonner";
 import { useGameAccountPreferencesSync } from "@/hooks/use-game-account-preferences-sync";
 import { useGameEventHandlers } from "@/hooks/game-events/use-game-event-handlers";
 import { useGlobalStore } from "@/store/global.store";
@@ -68,7 +68,7 @@ export const AppContent = () => {
       <QuickAccess />
       <CatchingWhitelistWarning />
       <BackendPreferencesWarning />
-      <Toaster />
+      <Toaster theme="light" />
       <PartyFinder />
       <CreatePartyGathering />
       <MapPingWheel />

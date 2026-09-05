@@ -1,3 +1,5 @@
+import { visibleReservationGuildIds } from "#src/reservations/reservation-visibility-query";
+import { activeGuildMemberJoin } from "#src/members/member-access-query";
 import { randomUUID } from "node:crypto";
 import {
   and,
@@ -7,8 +9,6 @@ import {
   eq,
   gt,
   inArray,
-  isNotNull,
-  isNull,
   lt,
   ne,
   or,
@@ -27,7 +27,6 @@ import {
   notificationRuleTable,
   notificationRuleTargetTable,
   notificationTargetTable,
-  reservationShareTable,
   reservationTable,
   roleTable,
 } from "#src/database/drizzle/schema";
@@ -95,33 +94,6 @@ type ReminderContext = {
 const RULE_NAME = "__system:reservation-reminder__";
 const RESERVATION_SOURCE_ENTITY_TYPE = "reservation";
 
-const visibleGuildIds = (
-  database: typeof ApiDatabase.Service,
-  guildId: string,
-) =>
-  database
-    .select()
-    .from(reservationShareTable)
-    .where(
-      and(
-        isNull(reservationShareTable.revokedAt),
-        or(
-          eq(reservationShareTable.firstGuildId, guildId),
-          eq(reservationShareTable.secondGuildId, guildId),
-        ),
-      ),
-    )
-    .pipe(
-      Effect.map((shares) => [
-        guildId,
-        ...shares.map((share) =>
-          share.firstGuildId === guildId
-            ? share.secondGuildId
-            : share.firstGuildId,
-        ),
-      ]),
-    );
-
 const accessibleGuildIds = (
   database: typeof ApiDatabase.Service,
   discordId: string,
@@ -129,15 +101,7 @@ const accessibleGuildIds = (
   database
     .selectDistinct({ id: guildTable.id })
     .from(guildTable)
-    .leftJoin(
-      memberTable,
-      and(
-        eq(memberTable.guildId, guildTable.id),
-        eq(memberTable.userId, discordId),
-        eq(memberTable.active, true),
-        isNotNull(memberTable.globalUserId),
-      ),
-    )
+    .leftJoin(memberTable, activeGuildMemberJoin(discordId))
     .leftJoin(memberToRoleTable, eq(memberToRoleTable.A, memberTable.id))
     .leftJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
     .where(
@@ -614,7 +578,7 @@ export const makeReservationMutationsDataLayer = (
           const [spot, guild, audienceGuildIds, member] = yield* Effect.all([
             ports.catalog.getSpot(spotId),
             findGuild(context.guildId),
-            visibleGuildIds(database, context.guildId),
+            visibleReservationGuildIds(database, context.guildId),
             database
               .select()
               .from(memberTable)
@@ -807,7 +771,7 @@ export const makeReservationMutationsDataLayer = (
           const reminderNeedsReschedule =
             timeChanged ||
             reminderMinutesBefore !== reservation.reminderMinutesBefore;
-          const audienceGuildIds = yield* visibleGuildIds(
+          const audienceGuildIds = yield* visibleReservationGuildIds(
             database,
             reservation.guildId,
           );
@@ -935,7 +899,10 @@ export const makeReservationMutationsDataLayer = (
           operation(
             "deleteReservation",
             Effect.gen(function* () {
-              const visible = yield* visibleGuildIds(database, context.guildId);
+              const visible = yield* visibleReservationGuildIds(
+                database,
+                context.guildId,
+              );
               const reservation = yield* findVisible(reservationId, visible);
               if (!reservation) {
                 return yield* Effect.fail(
@@ -958,7 +925,10 @@ export const makeReservationMutationsDataLayer = (
               const audienceGuildIds =
                 reservation.guildId === context.guildId
                   ? visible
-                  : yield* visibleGuildIds(database, reservation.guildId);
+                  : yield* visibleReservationGuildIds(
+                      database,
+                      reservation.guildId,
+                    );
               yield* deletePersisted({
                 reservation,
                 audienceGuildIds,
@@ -985,7 +955,7 @@ export const makeReservationMutationsDataLayer = (
               }
               yield* deletePersisted({
                 reservation,
-                audienceGuildIds: yield* visibleGuildIds(
+                audienceGuildIds: yield* visibleReservationGuildIds(
                   database,
                   reservation.guildId,
                 ),

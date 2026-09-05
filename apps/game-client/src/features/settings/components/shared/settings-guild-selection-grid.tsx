@@ -202,3 +202,16 @@ export const SettingsGuildSelectionGrid: FC<
     </div>
   );
 };
+
+export const toggleAvailableGuild = (
+  guilds: readonly Pick<Guild, "id">[],
+  selectedGuildIds: readonly string[],
+  guildId: string,
+): string[] => {
+  const nextGuildIds = selectedGuildIds.includes(guildId)
+    ? selectedGuildIds.filter((id) => id !== guildId)
+    : [...selectedGuildIds, guildId];
+  return guilds
+    .map((guild) => guild.id)
+    .filter((id) => nextGuildIds.includes(id));
+};

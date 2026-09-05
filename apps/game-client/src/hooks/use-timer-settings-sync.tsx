@@ -34,6 +34,38 @@ type LocalSettingsSnapshot = {
   pinnedTimers: ReturnType<typeof useTimersStore.getState>["pinnedTimers"];
 };
 
+const applyRemoteTimerSettings = (
+  remoteSettings: NonNullable<ReturnType<typeof useTimerSettings>["data"]>,
+) => {
+  const localStore = useTimersStore.getState();
+  useTimersStore.setState({
+    updatedAt: remoteSettings.updatedAt
+      ? new Date(remoteSettings.updatedAt).getTime()
+      : undefined,
+    generalConfig:
+      remoteSettings.generalConfig as typeof localStore.generalConfig,
+    displayConfig:
+      remoteSettings.displayConfig as typeof localStore.displayConfig,
+    customColors: remoteSettings.customColors as typeof localStore.customColors,
+    alwaysVisibleExpiredTimers:
+      remoteSettings.alwaysVisibleExpiredTimers as typeof localStore.alwaysVisibleExpiredTimers,
+    timersColors: remoteSettings.timersColors as Record<
+      string,
+      string | undefined
+    >,
+    defaultColorNames: remoteSettings.defaultColorNames as Record<
+      string,
+      string
+    >,
+    overriddenDefaultColors:
+      remoteSettings.overriddenDefaultColors as typeof localStore.overriddenDefaultColors,
+    hiddenDefaultColors: remoteSettings.hiddenDefaultColors as string[],
+    timerFiltersEnabled: remoteSettings.timerFiltersEnabled,
+    timersSortOrder: remoteSettings.timersSortOrder as "asc" | "desc",
+    syncEnabled: remoteSettings.syncEnabled,
+  });
+};
+
 export const useTimerSettingsSync = () => {
   const [showConflict, setShowConflict] = useState(false);
   const [remoteUpdatedAt] = useState<Date>();
@@ -127,33 +159,7 @@ export const useTimerSettingsSync = () => {
         // }
 
         // Always apply remote settings (backend is source of truth)
-        useTimersStore.setState({
-          updatedAt: remoteSettings.updatedAt
-            ? new Date(remoteSettings.updatedAt).getTime()
-            : undefined,
-          generalConfig:
-            remoteSettings.generalConfig as typeof localStore.generalConfig,
-          displayConfig:
-            remoteSettings.displayConfig as typeof localStore.displayConfig,
-          customColors:
-            remoteSettings.customColors as typeof localStore.customColors,
-          alwaysVisibleExpiredTimers:
-            remoteSettings.alwaysVisibleExpiredTimers as typeof localStore.alwaysVisibleExpiredTimers,
-          timersColors: remoteSettings.timersColors as Record<
-            string,
-            string | undefined
-          >,
-          defaultColorNames: remoteSettings.defaultColorNames as Record<
-            string,
-            string
-          >,
-          overriddenDefaultColors:
-            remoteSettings.overriddenDefaultColors as typeof localStore.overriddenDefaultColors,
-          hiddenDefaultColors: remoteSettings.hiddenDefaultColors as string[],
-          timerFiltersEnabled: remoteSettings.timerFiltersEnabled,
-          timersSortOrder: remoteSettings.timersSortOrder as "asc" | "desc",
-          syncEnabled: remoteSettings.syncEnabled,
-        });
+        applyRemoteTimerSettings(remoteSettings);
 
         if (!isInitializedRef.current) {
           isInitializedRef.current = true;
@@ -185,34 +191,7 @@ export const useTimerSettingsSync = () => {
         conflictResolution: "local",
       });
     } else if (remoteSettings) {
-      const localStore = useTimersStore.getState();
-      useTimersStore.setState({
-        updatedAt: remoteSettings.updatedAt
-          ? new Date(remoteSettings.updatedAt).getTime()
-          : undefined,
-        generalConfig:
-          remoteSettings.generalConfig as typeof localStore.generalConfig,
-        displayConfig:
-          remoteSettings.displayConfig as typeof localStore.displayConfig,
-        customColors:
-          remoteSettings.customColors as typeof localStore.customColors,
-        alwaysVisibleExpiredTimers:
-          remoteSettings.alwaysVisibleExpiredTimers as typeof localStore.alwaysVisibleExpiredTimers,
-        timersColors: remoteSettings.timersColors as Record<
-          string,
-          string | undefined
-        >,
-        defaultColorNames: remoteSettings.defaultColorNames as Record<
-          string,
-          string
-        >,
-        overriddenDefaultColors:
-          remoteSettings.overriddenDefaultColors as typeof localStore.overriddenDefaultColors,
-        hiddenDefaultColors: remoteSettings.hiddenDefaultColors as string[],
-        timerFiltersEnabled: remoteSettings.timerFiltersEnabled,
-        timersSortOrder: remoteSettings.timersSortOrder as "asc" | "desc",
-        syncEnabled: remoteSettings.syncEnabled,
-      });
+      applyRemoteTimerSettings(remoteSettings);
     }
 
     setShowConflict(false);

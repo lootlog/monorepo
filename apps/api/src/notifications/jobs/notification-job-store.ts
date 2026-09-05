@@ -1,3 +1,5 @@
+import { selectNotificationJobsWithRelations } from "./notification-job-query.js";
+import { mapNotificationTarget } from "#src/notifications/targets/notification-target-store";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
@@ -64,12 +66,6 @@ const mapRule = (
   ...rule,
   filters: rule.filters as JsonValue | null,
 });
-const mapTarget = (
-  target: typeof notificationTargetTable.$inferSelect,
-): NotificationStoredTarget => ({
-  ...target,
-  metadata: target.metadata as JsonValue | null,
-});
 
 export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
   const failure = (operation: string) => (cause: unknown) =>
@@ -87,21 +83,7 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
       );
 
   const findJobWithRelations = (jobId: string) =>
-    database
-      .select({
-        job: notificationJobTable,
-        rule: notificationRuleTable,
-        target: notificationTargetTable,
-      })
-      .from(notificationJobTable)
-      .innerJoin(
-        notificationRuleTable,
-        eq(notificationJobTable.ruleId, notificationRuleTable.id),
-      )
-      .innerJoin(
-        notificationTargetTable,
-        eq(notificationJobTable.targetId, notificationTargetTable.id),
-      )
+    selectNotificationJobsWithRelations(database)
       .where(eq(notificationJobTable.id, jobId))
       .limit(1)
       .pipe(
@@ -112,7 +94,7 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
             ? {
                 ...mapJob(row.job),
                 rule: mapRule(row.rule),
-                target: mapTarget(row.target),
+                target: mapNotificationTarget(row.target),
               }
             : null;
         }),
@@ -200,7 +182,7 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
         Effect.map((rows) =>
           rows.map(({ link, target }) => ({
             ...link,
-            target: mapTarget(target),
+            target: mapNotificationTarget(target),
           })),
         ),
       );

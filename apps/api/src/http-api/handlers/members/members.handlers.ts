@@ -1,9 +1,13 @@
+import {
+  pathString,
+  emptyStatusResponse,
+} from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 import { HttpServerResponse } from "effect/unstable/http";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { applicationErrorStatusOrUndefined } from "#src/shared/http/http-errors";
-import { encodeDomainJson } from "../../domain-json.schema.js";
+import { decodeDomainJson } from "../../domain-json.schema.js";
 import {
   Permission,
   type Permission as PermissionValue,
@@ -139,8 +143,7 @@ const refreshJobData = <A>(
 ) => Effect.flatMap(MemberRefreshJobData, operation);
 
 const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
-  encodeDomainJson(value).pipe(
-    Effect.flatMap(Schema.decodeUnknownEffect(schema)),
+  decodeDomainJson(schema, value).pipe(
     Effect.mapError((cause) => new MembersOperationError({ cause })),
   );
 
@@ -151,10 +154,8 @@ type MembersFailure =
 
 const orDieHttpFailure = <A, R>(effect: Effect.Effect<A, MembersFailure, R>) =>
   Effect.catchTags(effect, {
-    MembersAccessDenied: (error) =>
-      Effect.succeed(HttpServerResponse.empty({ status: error.status })),
-    MembersNotFound: (error) =>
-      Effect.succeed(HttpServerResponse.empty({ status: error.status })),
+    MembersAccessDenied: emptyStatusResponse,
+    MembersNotFound: emptyStatusResponse,
     MembersOperationError: (error) => {
       const status = applicationErrorStatusOrUndefined(error.cause);
       return status === undefined
@@ -170,11 +171,11 @@ const declaredEmptyError = <A, R>(
   Effect.catchTags(effect, {
     MembersAccessDenied: (error) =>
       statuses.includes(error.status)
-        ? Effect.succeed(HttpServerResponse.empty({ status: error.status }))
+        ? emptyStatusResponse(error)
         : Effect.die(error),
     MembersNotFound: (error) =>
       statuses.includes(error.status)
-        ? Effect.succeed(HttpServerResponse.empty({ status: error.status }))
+        ? emptyStatusResponse(error)
         : Effect.die(error),
     MembersOperationError: (error) => {
       const status = applicationErrorStatusOrUndefined(error.cause);
@@ -183,11 +184,6 @@ const declaredEmptyError = <A, R>(
         : Effect.die(error.cause);
     },
   });
-
-const pathString = (value: unknown, name: string) =>
-  typeof value === "string"
-    ? Effect.succeed(value)
-    : Effect.die(new TypeError(`${name} path parameter must be a string`));
 
 export const getCurrentMember = Effect.fn("getCurrentMember")(function* (
   guildId: string,

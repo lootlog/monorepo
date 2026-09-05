@@ -1,3 +1,4 @@
+import { isRecord as isJsonObject } from "./records.js";
 const HTTP_METHODS = [
   "get",
   "post",
@@ -11,10 +12,7 @@ const HTTP_METHODS = [
 
 type JsonObject = Record<string, unknown>;
 
-const isJsonObject = (value: unknown): value is JsonObject =>
-  value !== null && typeof value === "object" && !Array.isArray(value);
-
-const normalizeSchemaAnnotations = (value: JsonObject): void => {
+export const normalizeSchemaAnnotations = (value: JsonObject): void => {
   if (Array.isArray(value.examples) && value.example === undefined) {
     value.example = value.examples[0];
     delete value.examples;
@@ -31,10 +29,9 @@ const normalizeSchemaAnnotations = (value: JsonObject): void => {
     value.enum = [value.const];
     delete value.const;
   }
-  if (value.additionalProperties === false) delete value.additionalProperties;
 };
 
-const normalizeNullableSchema = (value: JsonObject): void => {
+export const normalizeNullableSchema = (value: JsonObject): void => {
   for (const unionKey of ["anyOf", "oneOf"] as const) {
     const variants = value[unionKey];
     if (!Array.isArray(variants)) continue;
@@ -74,6 +71,7 @@ const normalizeSchema = (value: unknown): void => {
   if (!isJsonObject(value)) return;
 
   normalizeSchemaAnnotations(value);
+  if (value.additionalProperties === false) delete value.additionalProperties;
   normalizeNullableSchema(value);
   removeEmptyUnknownIntersection(value);
   for (const item of Object.values(value)) normalizeSchema(item);

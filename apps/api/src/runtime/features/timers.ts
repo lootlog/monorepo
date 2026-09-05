@@ -50,6 +50,20 @@ export const timersData = Layer.unwrap(
     });
     const attempt = <A>(operation: () => PromiseLike<A>) =>
       Effect.tryPromise({ try: operation, catch: (error) => error });
+    const withLock = <A, E>(key: string, effect: Effect.Effect<A, E>) =>
+      Effect.acquireUseRelease(
+        Effect.tryPromise({
+          try: () => redlock.acquire([key], 30_000),
+          catch: (error) =>
+            new ResourceConflictError({
+              message: ErrorKey.TIMER_RACE_CONDITION,
+              cause: error,
+            }),
+        }),
+        () => effect,
+        (lock: Awaited<ReturnType<typeof redlock.acquire>>) =>
+          Effect.tryPromise(() => lock.release()).pipe(Effect.ignore),
+      );
     const service = TimersData.makeService({
       ...makeTimerHistory(database),
       createAuto: makeAutoTimer(database, {
@@ -62,6 +76,7 @@ export const timersData = Layer.unwrap(
             windowKey,
             isManualClose: false,
           });
+
           return attempt(() =>
             eventHeroKillQueue.add(
               EVENT_HERO_KILL_JOB_NAME,
@@ -90,20 +105,7 @@ export const timersData = Layer.unwrap(
           attempt(() => redis.set(key, value, ttlSeconds)),
         setNx: (key, value, ttlSeconds) =>
           attempt(() => redis.setNX(key, value, ttlSeconds)),
-        withLock: (key, effect) =>
-          Effect.acquireUseRelease(
-            Effect.tryPromise({
-              try: () => redlock.acquire([key], 30_000),
-              catch: (error) =>
-                new ResourceConflictError({
-                  message: ErrorKey.TIMER_RACE_CONDITION,
-                  cause: error,
-                }),
-            }),
-            () => effect,
-            (lock: Awaited<ReturnType<typeof redlock.acquire>>) =>
-              Effect.tryPromise(() => lock.release()).pipe(Effect.ignore),
-          ),
+        withLock,
       }),
       createManual: makeManualTimer(database, {
         invalidate: (pattern) => attempt(() => redis.deleteByPattern(pattern)),
@@ -140,20 +142,7 @@ export const timersData = Layer.unwrap(
             routingKey,
             content: new TextEncoder().encode(JSON.stringify(payload)),
           }),
-        withLock: (key, effect) =>
-          Effect.acquireUseRelease(
-            Effect.tryPromise({
-              try: () => redlock.acquire([key], 30_000),
-              catch: (error) =>
-                new ResourceConflictError({
-                  message: ErrorKey.TIMER_RACE_CONDITION,
-                  cause: error,
-                }),
-            }),
-            () => effect,
-            (lock: Awaited<ReturnType<typeof redlock.acquire>>) =>
-              Effect.tryPromise(() => lock.release()).pipe(Effect.ignore),
-          ),
+        withLock,
       }),
       getAll: makeAllTimerList(database),
       getGuildTimers: makeGuildTimerList(database, {

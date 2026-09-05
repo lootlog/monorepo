@@ -1,3 +1,4 @@
+import { normalizeRuntimeOtherData } from "@/lib/margonem-runtime/runtime-adapter";
 import { create } from "zustand";
 import type {
   RuntimeOther,
@@ -44,14 +45,7 @@ interface OthersState {
 
 function normalizeOther(other: RuntimeOtherInput): RuntimeOther {
   if (!("d" in other)) return other;
-  return Object.freeze({
-    accountId: String(other.d.account ?? ""),
-    characterId: String(other.d.id ?? ""),
-    icon: other.d.icon ?? "",
-    level: other.d.lvl ?? 0,
-    name: other.d.nick ?? "",
-    profession: other.d.prof ?? "",
-  });
+  return normalizeRuntimeOtherData(other.d);
 }
 
 function areRuntimeOthersEqual(

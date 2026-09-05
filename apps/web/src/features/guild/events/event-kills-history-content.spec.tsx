@@ -39,8 +39,8 @@ vi.mock("./components/dialogs/event-participation-confirmation-dialog", () => ({
   EventParticipationConfirmationDialog: () => null,
 }));
 
-vi.mock("./components/kills/event-kills-filter", () => ({
-  EventKillsFilter: ({
+vi.mock("@/features/guild/events/components/shared/hero-kills-filter", () => ({
+  HeroKillsFilter: ({
     onSelectedHeroChange,
   }: {
     onSelectedHeroChange: (heroId?: string) => void;

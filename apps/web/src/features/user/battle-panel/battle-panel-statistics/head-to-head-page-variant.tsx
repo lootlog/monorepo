@@ -1,3 +1,4 @@
+import { createBattlePanelCursorActions } from "../components/battle-panel-cursor-actions";
 import { SectionHeader } from "@/components/layout/section-header";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
@@ -16,8 +17,6 @@ import { getBattleResultRowClassName } from "@/features/user/battle-panel/compon
 import {
   battlePanelHeadToHeadSearchParsers,
   getBattlePanelPageIndex,
-  getNextBattlePanelPage,
-  getPreviousBattlePanelPage,
   getSelectedWarriorsFromSearch,
   normalizeBattlePanelCharacterId,
   resetBattlePanelCursorPagination,
@@ -214,23 +213,11 @@ export function HeadToHeadPageVariant({
     });
   };
 
-  const handleNextPage = () => {
-    if (data?.pagination.nextCursor) {
-      void setQueryState({
-        cursor: data.pagination.nextCursor,
-        page: getNextBattlePanelPage(queryState.page),
-      });
-    }
-  };
-
-  const handlePreviousPage = () => {
-    if (data?.pagination.previousCursor) {
-      void setQueryState({
-        cursor: data.pagination.previousCursor,
-        page: getPreviousBattlePanelPage(queryState.page),
-      });
-    }
-  };
+  const { handleNextPage, handlePreviousPage } = createBattlePanelCursorActions(
+    data?.pagination,
+    queryState.page,
+    setQueryState,
+  );
 
   const handlePeriodChange = (value: Period) => {
     applyFilterState({

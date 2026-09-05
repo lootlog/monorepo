@@ -4,7 +4,7 @@ import {
   DateTimeWithOffsetString,
   DateTimeString,
   FiniteNumber,
-} from "../scalars.js";
+} from "@lootlog/schema/http-scalars";
 
 export type PaginatedActivitiesResponseDto =
   typeof PaginatedActivitiesResponseDto.Type;

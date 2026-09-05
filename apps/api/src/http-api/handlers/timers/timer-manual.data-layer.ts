@@ -1,14 +1,11 @@
-import { createHash } from "node:crypto";
+import { upsertActorCharacter } from "./timer-actor-snapshot.js";
+
 import { and, eq } from "drizzle-orm";
 import { Clock, Effect } from "effect";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import {
-  memberTable,
-  playerSnapshotTable,
-  timerTable,
-} from "#src/database/drizzle/schema";
-import { getProfByShortname } from "#src/shared/margonem/profession";
+import { memberTable, timerTable } from "#src/database/drizzle/schema";
+
 import { generateUniqueIntId } from "#src/shared/generate-unique-int-id";
 import { InvalidRequestError } from "#src/shared/http/http-errors";
 import { TIMER_TYPES } from "#src/timers/timer-limits";
@@ -106,49 +103,11 @@ export const makeManualTimer = (
             }),
           );
 
-        let actorCharacter: typeof playerSnapshotTable.$inferSelect | null =
-          null;
-        const actor = payload.actorCharacter;
-        if (actor) {
-          const characterId = Number.parseInt(actor.characterId, 10);
-          const accountId = Number.parseInt(actor.accountId, 10);
-          if (!Number.isNaN(characterId) && !Number.isNaN(accountId)) {
-            const prof = getProfByShortname(actor.prof ?? "");
-            const icon = actor.icon ?? "";
-            const snapshotHash = createHash("sha256")
-              .update(`${actor.name}${actor.prof ?? ""}${icon}`)
-              .digest("hex");
-            const inserted = yield* transaction
-              .insert(playerSnapshotTable)
-              .values({
-                world: payload.world,
-                accountId,
-                characterId,
-                snapshotHash,
-                name: actor.name,
-                prof,
-                icon,
-              })
-              .onConflictDoNothing()
-              .returning();
-            actorCharacter = inserted[0] ?? null;
-            if (!actorCharacter) {
-              const existing = yield* transaction
-                .select()
-                .from(playerSnapshotTable)
-                .where(
-                  and(
-                    eq(playerSnapshotTable.world, payload.world),
-                    eq(playerSnapshotTable.accountId, accountId),
-                    eq(playerSnapshotTable.characterId, characterId),
-                    eq(playerSnapshotTable.snapshotHash, snapshotHash),
-                  ),
-                )
-                .limit(1);
-              actorCharacter = existing[0] ?? null;
-            }
-          }
-        }
+        const actorCharacter = yield* upsertActorCharacter(
+          transaction,
+          payload.world,
+          payload.actorCharacter,
+        );
         const insertedTimers = yield* transaction
           .insert(timerTable)
           .values({
@@ -171,7 +130,7 @@ export const makeManualTimer = (
               margonemType: TIMER_TYPES.CUSTOM_MANUAL,
             },
             actorCharacterSnapshotId: actorCharacter?.id ?? null,
-            actorCharacterLvl: actor?.lvl ?? null,
+            actorCharacterLvl: payload.actorCharacter?.lvl ?? null,
             deletedAt: null,
             createdAt: now,
             updatedAt: now,

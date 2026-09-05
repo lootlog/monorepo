@@ -1,7 +1,10 @@
 import type { W } from "@lootlog/margonem/game-events";
 import { describe, expect, it } from "vitest";
 import type { BattleWarriorsWithAccountId } from "@/store/game-store/battle.store";
-import { mergeBattleWarriorPatches } from "./battle.helpers";
+import {
+  mergeBattleWarriorPatches,
+  parseNumericHpValue,
+} from "./battle.helpers";
 
 const createWarrior = (
   id: number,
@@ -42,5 +45,18 @@ describe("mergeBattleWarriorPatches", () => {
     });
     expect(currentWarriors["101"].hpp).toBe(100);
     expect(currentWarriors["-501"].hpp).toBe(100);
+  });
+});
+
+describe("battle HP parsing", () => {
+  it.each([
+    ["0.00", 0],
+    ["12.5hp", 12.5],
+    ["", null],
+    ["Infinity", null],
+    [undefined, null],
+    [Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY],
+  ])("preserves runtime numeric semantics for %s", (value, expected) => {
+    expect(parseNumericHpValue(value)).toBe(expected);
   });
 });

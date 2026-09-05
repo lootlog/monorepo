@@ -1,22 +1,16 @@
+import { StatsNpcTypeSelect } from "./components/stats-npc-type-select";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "@tanstack/react-router";
 import { Users } from "lucide-react";
 import { Card } from "@lootlog/ui/components/card";
-import { useDebounce } from "@/hooks/use-debounce";
+import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
 } from "@lootlog/ui/components/avatar";
 import { Badge } from "@lootlog/ui/components/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@lootlog/ui/components/select";
 import {
   Table,
   TableBody,
@@ -39,7 +33,6 @@ import type { NpcType } from "@lootlog/client/main";
 import type { MemberKillsResponseDtoOutput } from "@lootlog/client/main";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
-import { TRACKABLE_NPC_TYPES } from "./constants";
 import { LevelFilters } from "./components/level-filters";
 import { NpcStatsFiltersMobile } from "./components/npc-stats-filters-mobile";
 import { useMembersControllerGetGuildMemberReferences } from "@lootlog/client/main";
@@ -353,31 +346,10 @@ export const MemberStatsPage: React.FC = () => {
                 value={settings.period}
                 onValueChange={handlePeriodChange}
               />
-              <Select
-                value={settings.npcType ?? "ALL"}
+              <StatsNpcTypeSelect
+                value={settings.npcType}
                 onValueChange={handleNpcTypeChange}
-                items={[
-                  { value: "ALL", label: <>{t("kills.filters.allTypes")}</> },
-                  ...TRACKABLE_NPC_TYPES.map((type) => ({
-                    value: type,
-                    label: <>{t(`npcType.${type}`)}</>,
-                  })),
-                ]}
-              >
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">
-                    {t("kills.filters.allTypes")}
-                  </SelectItem>
-                  {TRACKABLE_NPC_TYPES.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {t(`npcType.${type}`)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              />
             </div>
           </Card>
 

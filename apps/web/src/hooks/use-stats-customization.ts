@@ -42,95 +42,42 @@ export const useStatsCustomization = (
     }));
   };
 
-  const toggleCategoryVisibility = (categoryId: string) => {
-    setConfig((prev) => {
-      const category = prev.categories[categoryId];
-      if (!category) return prev;
-
+  const updateCategory = (
+    categoryId: string,
+    update: (category: CategoryCustomization) => CategoryCustomization,
+  ) => {
+    setConfig((previous) => {
+      const category = previous.categories[categoryId];
+      if (!category) return previous;
+      const updated = update(category);
+      if (updated === category) return previous;
       return {
-        ...prev,
-        categories: {
-          ...prev.categories,
-          [categoryId]: {
-            ...category,
-            visible: !category.visible,
-          },
-        },
+        ...previous,
+        categories: { ...previous.categories, [categoryId]: updated },
       };
     });
   };
 
-  const updateCategoryName = (categoryId: string, newName: string) => {
-    setConfig((prev) => {
-      const category = prev.categories[categoryId];
-      if (!category) return prev;
-
-      return {
-        ...prev,
-        categories: {
-          ...prev.categories,
-          [categoryId]: {
-            ...category,
-            name: newName,
-          },
-        },
-      };
-    });
-  };
-
-  const updateStatOrder = (categoryId: string, newOrder: string[]) => {
-    setConfig((prev) => {
-      const category = prev.categories[categoryId];
-      if (!category) return prev;
-
-      return {
-        ...prev,
-        categories: {
-          ...prev.categories,
-          [categoryId]: {
-            ...category,
-            statOrder: newOrder,
-          },
-        },
-      };
-    });
-  };
-
-  const addStatToCategory = (categoryId: string, statKey: string) => {
-    setConfig((prev) => {
-      const category = prev.categories[categoryId];
-      if (!category || category.statOrder.includes(statKey)) return prev;
-
-      return {
-        ...prev,
-        categories: {
-          ...prev.categories,
-          [categoryId]: {
-            ...category,
-            statOrder: [...category.statOrder, statKey],
-          },
-        },
-      };
-    });
-  };
-
-  const removeStatFromCategory = (categoryId: string, statKey: string) => {
-    setConfig((prev) => {
-      const category = prev.categories[categoryId];
-      if (!category) return prev;
-
-      return {
-        ...prev,
-        categories: {
-          ...prev.categories,
-          [categoryId]: {
-            ...category,
-            statOrder: category.statOrder.filter((key) => key !== statKey),
-          },
-        },
-      };
-    });
-  };
+  const toggleCategoryVisibility = (categoryId: string) =>
+    updateCategory(categoryId, (category) => ({
+      ...category,
+      visible: !category.visible,
+    }));
+  const updateCategoryName = (categoryId: string, name: string) =>
+    updateCategory(categoryId, (category) => ({ ...category, name }));
+  const updateStatOrder = (categoryId: string, statOrder: string[]) =>
+    updateCategory(categoryId, (category) => ({ ...category, statOrder }));
+  const addStatToCategory = (categoryId: string, statKey: string) =>
+    updateCategory(categoryId, (category) =>
+      category.statOrder.includes(statKey)
+        ? category
+        : { ...category, statOrder: [...category.statOrder, statKey] },
+    );
+  const removeStatFromCategory = (categoryId: string, statKey: string) =>
+    updateCategory(categoryId, (category) => ({
+      ...category,
+      statOrder: category.statOrder.filter((key) => key !== statKey),
+    }));
 
   const addCategory = (categoryName: string) => {
     setConfig((prev) => {

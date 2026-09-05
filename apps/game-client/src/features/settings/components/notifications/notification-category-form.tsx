@@ -1,6 +1,9 @@
 import { SettingsControlRow } from "@/components/settings/settings-control-row";
 import { SettingsSection } from "@/components/settings/settings-section";
-import { SettingsGuildSelectionGrid } from "@/features/settings/components/shared/settings-guild-selection-grid";
+import {
+  SettingsGuildSelectionGrid,
+  toggleAvailableGuild,
+} from "@/features/settings/components/shared/settings-guild-selection-grid";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useUpdateUserGameAccountPreferences } from "@/hooks/api/use-user-account-preferences";
@@ -14,7 +17,13 @@ import type {
   NotificationSettings,
   NotificationType,
 } from "@lootlog/schema/account-preferences";
-import { type FC, type FormEvent, useEffect, useState } from "react";
+import {
+  type FC,
+  type FormEvent,
+  useEffect,
+  useEffectEvent,
+  useState,
+} from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import * as z from "zod";
@@ -156,6 +165,8 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
     });
   };
 
+  const syncFromEffect = useEffectEvent(syncCurrentValues);
+
   useEffect(() => {
     if (
       !formState.isDirty ||
@@ -163,21 +174,7 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
     ) {
       return;
     }
-    if (!accountId || !isFetched) return;
-    const nextCategorySettings = getValues() as NotificationSettings;
-    if (
-      areNotificationSettingsEqual(
-        nextCategorySettings,
-        currentCategorySettings,
-      )
-    ) {
-      return;
-    }
-    debouncedUpdate({
-      notifications: {
-        [categoryKey]: nextCategorySettings,
-      },
-    });
+    syncFromEffect();
   }, [
     accountId,
     categoryKey,
@@ -198,13 +195,11 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
       return;
     }
 
-    const nextGuildIds = selectedGuildIds.includes(guildId)
-      ? selectedGuildIds.filter((currentGuildId) => currentGuildId !== guildId)
-      : [...selectedGuildIds, guildId];
-
-    const normalizedGuildIds = guilds
-      .map((guild) => guild.id)
-      .filter((currentGuildId) => nextGuildIds.includes(currentGuildId));
+    const normalizedGuildIds = toggleAvailableGuild(
+      guilds,
+      selectedGuildIds,
+      guildId,
+    );
 
     setValue("guildIds", normalizedGuildIds, {
       shouldDirty: true,

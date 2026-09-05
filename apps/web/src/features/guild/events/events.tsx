@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useParams, Link } from "@tanstack/react-router";
@@ -54,7 +55,7 @@ export const Events = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
   const [searchValue, setSearchValue] = useState("");
-  const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
+  const currentTimestamp = useMinuteTimestamp();
   const queryClient = useQueryClient();
   const { data: accessPolicy } = useGuildPermissions();
   const hasGuildId = Boolean(guildId);
@@ -105,14 +106,6 @@ export const Events = () => {
     isPinned,
     isPending: isPinPending,
   } = useToggleEventPin(guildId ?? "");
-
-  useEffect(() => {
-    const intervalId = window.setInterval(() => {
-      setCurrentTimestamp(Date.now());
-    }, 60_000);
-
-    return () => window.clearInterval(intervalId);
-  }, []);
 
   const {
     data: events,

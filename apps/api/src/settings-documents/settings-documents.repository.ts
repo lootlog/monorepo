@@ -1,3 +1,4 @@
+import { isRecord } from "@lootlog/schema/records";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { SETTINGS_CATALOG } from "@lootlog/domain/settings-documents";
 import type {
@@ -17,9 +18,6 @@ import { applySettingsPatch } from "./settings-resolver.js";
 type JsonRecord = Record<string, unknown>;
 type SettingsOperation = PatchSettingsDocuments["operations"][number];
 type StoredSettingsDocument = typeof userSettingDocumentTable.$inferSelect;
-
-const isRecord = (value: unknown): value is JsonRecord =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
 
 const getPostgresErrorCode = (error: unknown): string | undefined => {
   if (!isRecord(error)) return undefined;

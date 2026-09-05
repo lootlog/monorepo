@@ -1,4 +1,8 @@
 import {
+  RealtimeEventListeners,
+  unwrapOrganizationEvent,
+} from "@lootlog/client/realtime/event-listeners";
+import {
   GATEWAY_SOCKET_PATH,
   GATEWAY_URL,
   GatewayEvent,
@@ -56,11 +60,6 @@ const isJoinResult = (value: unknown): value is JoinResult =>
     Array.isArray(value.organizationIds) &&
     value.organizationIds.every((id) => typeof id === "string"),
   );
-
-const unwrapOrganizationEvent = (event: ServerEvent): unknown => {
-  if (!event.data || typeof event.data !== "object") return event.data;
-  return "payload" in event.data ? event.data.payload : event.data;
-};
 
 const toLegacyPresence = (guildId: string, presence: BasicPresence) => {
   const location =
@@ -123,7 +122,7 @@ export class AppSocket {
     ticketProvider: requestRealtimeTicket,
     frameEncoding: AppSocket.useReadableLocalFrames ? "json" : "messagepack",
   });
-  private readonly listeners = new Map<GatewayEvent, Set<Listener>>();
+  private readonly listeners = new RealtimeEventListeners<GatewayEvent>();
   private joinedOrganizationIds: string[] = [];
   private lastIsAfk = false;
   private wasConnected = false;
@@ -141,7 +140,9 @@ export class AppSocket {
       if (connected === this.wasConnected) return;
       this.wasConnected = connected;
       if (state === "disconnected") this.id = undefined;
-      this.dispatch(connected ? GatewayEvent.CONNECT : GatewayEvent.DISCONNECT);
+      this.listeners.emit(
+        connected ? GatewayEvent.CONNECT : GatewayEvent.DISCONNECT,
+      );
     });
   }
 
@@ -162,18 +163,16 @@ export class AppSocket {
   }
 
   hasListeners(event: GatewayEvent): boolean {
-    return (this.listeners.get(event)?.size ?? 0) > 0;
+    return this.listeners.has(event);
   }
 
   on(event: GatewayEvent, listener: Listener): this {
-    const listeners = this.listeners.get(event) ?? new Set();
-    listeners.add(listener);
-    this.listeners.set(event, listeners);
+    this.listeners.add(event, listener);
     return this;
   }
 
   off(event: GatewayEvent, listener: Listener): this {
-    this.listeners.get(event)?.delete(listener);
+    this.listeners.delete(event, listener);
     return this;
   }
 
@@ -356,7 +355,7 @@ export class AppSocket {
     }
     if (event.type === "permissions.updated") {
       this.joinedOrganizationIds = [...event.data.organizationIds];
-      this.dispatch(GatewayEvent.PERMISSIONS_UPDATED, {
+      this.listeners.emit(GatewayEvent.PERMISSIONS_UPDATED, {
         guilds: event.data.organizationIds.map((id) => ({ guild: { id } })),
         featureRooms: event.data.subscriptionScopes.map((scope) => scope.topic),
       });
@@ -365,7 +364,7 @@ export class AppSocket {
     }
     if (event.type === "presence.snapshot") {
       for (const presence of event.data.presences) {
-        this.dispatch(
+        this.listeners.emit(
           GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
           toLegacyPresence(event.data.organizationId, presence),
         );
@@ -383,7 +382,10 @@ export class AppSocket {
                 sessionId: change.sessionId,
                 status: "offline",
               };
-        this.dispatch(GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE, payload);
+        this.listeners.emit(
+          GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
+          payload,
+        );
       }
       return;
     }
@@ -393,18 +395,12 @@ export class AppSocket {
         event.type === "map-ping.received" || event.type === "air-tag.updated"
           ? event.data
           : unwrapOrganizationEvent(event);
-      this.dispatch(legacyEvent, payload);
-    }
-  }
-
-  private dispatch(event: GatewayEvent, payload?: unknown): void {
-    for (const listener of this.listeners.get(event) ?? []) {
-      (listener as (value?: unknown) => void)(payload);
+      this.listeners.emit(legacyEvent, payload);
     }
   }
 
   private dispatchJoin(result: JoinResult): void {
-    this.dispatch(GatewayEvent.JOIN, {
+    this.listeners.emit(GatewayEvent.JOIN, {
       status: "success",
       guildsCount: result.organizationIds.length,
       guildIds: [...result.organizationIds],

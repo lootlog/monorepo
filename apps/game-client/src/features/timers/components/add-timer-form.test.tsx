@@ -78,7 +78,7 @@ vi.mock("@lootlog/client/main", async () => ({
   }),
 }));
 
-vi.mock("@/hooks/use-debounce", () => ({
+vi.mock("@lootlog/ui/hooks/use-debounce", () => ({
   useDebounce: (value: string) => value,
 }));
 

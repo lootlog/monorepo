@@ -1,4 +1,5 @@
-import { and, asc, desc, eq, inArray, isNotNull, or } from "drizzle-orm";
+import { hydrateMemberRoles } from "#src/members/member-role-hydration";
+import { and, asc, desc, eq, isNotNull, or } from "drizzle-orm";
 import { Effect, Layer, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -6,9 +7,7 @@ import {
   guildTable,
   memberRefreshJobTable,
   memberTable,
-  memberToRoleTable,
   playerSnapshotTable,
-  roleTable,
   userCharactersLootlogSettingsTable,
 } from "#src/database/drizzle/schema";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
@@ -83,24 +82,7 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
               ),
             )
             .orderBy(asc(memberTable.name));
-          if (members.length === 0) return [];
-          const roles = yield* database
-            .select({ memberId: memberToRoleTable.A, role: roleTable })
-            .from(memberToRoleTable)
-            .innerJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
-            .where(
-              inArray(
-                memberToRoleTable.A,
-                members.map(({ id }) => id),
-              ),
-            )
-            .orderBy(desc(roleTable.position));
-          return members.map((member) => ({
-            ...member,
-            roles: roles
-              .filter(({ memberId }) => memberId === member.id)
-              .map(({ role }) => role),
-          }));
+          return yield* hydrateMemberRoles(database, members);
         });
       const cached = <S extends Schema.ConstraintDecoder<unknown>, A>(
         key: string,

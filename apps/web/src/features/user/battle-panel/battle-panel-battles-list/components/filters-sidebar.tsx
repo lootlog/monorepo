@@ -1,3 +1,5 @@
+import { BattleCharacterOption } from "./battle-character-option";
+import { createBattleFilterHandlers } from "@/features/user/battle-panel/battle-panel-battles-list/utils/battle-filter-handlers";
 import { useId, useState } from "react";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Button } from "@lootlog/ui/components/button";
@@ -14,7 +16,6 @@ import {
   User,
   Award,
   Swords,
-  Check,
   ChevronsUpDown,
   ArrowRight,
 } from "lucide-react";
@@ -33,12 +34,9 @@ import {
   CommandEmpty,
   CommandGroup,
   CommandInput,
-  CommandItem,
   CommandList,
 } from "@lootlog/ui/components/command";
-import { PlayerTile } from "@/components/battle";
-import { MARGONEM_CDN_CHARACTERS_URL } from "@/constants/margonem";
-import type { BattleFilters } from "./battles-list-filters";
+import type { BattleFilters } from "@/features/user/battle-panel/battle-panel-battles-list/utils/battle-filter-handlers";
 import { useTranslation } from "react-i18next";
 
 type FiltersSidebarProps = {
@@ -70,6 +68,16 @@ export const FiltersSidebar = ({
   className,
   showMatchmakingFilter = true,
 }: FiltersSidebarProps) => {
+  const {
+    handleCharacterChange,
+    handleTypeChange,
+    handleResultChange,
+    handlePhToggle,
+    handleMinLevelChange,
+    handleMaxLevelChange,
+    handleMatchmakingToggle,
+    handleWorldChange,
+  } = createBattleFilterHandlers(filters, onFiltersChange);
   const { t } = useTranslation();
   const characterListId = useId();
   const [characterOpen, setCharacterOpen] = useState(false);
@@ -85,77 +93,6 @@ export const FiltersSidebar = ({
     { value: "lost" as const, label: t("battlePanel.filters.results.lost") },
     { value: "flee" as const, label: t("battlePanel.filters.results.flee") },
   ];
-
-  const handleCharacterChange = (value: string) => {
-    const currentCharacters = filters.characterId ?? [];
-    const newCharacters = currentCharacters.includes(value)
-      ? currentCharacters.filter((id) => id !== value)
-      : [...currentCharacters, value];
-
-    onFiltersChange({
-      ...filters,
-      characterId: newCharacters.length > 0 ? newCharacters : undefined,
-    });
-  };
-
-  const handleTypeChange = (value: "solo" | "group") => {
-    const currentTypes = filters.type ?? [];
-    const newTypes = currentTypes.includes(value)
-      ? currentTypes.filter((t) => t !== value)
-      : [...currentTypes, value];
-
-    onFiltersChange({
-      ...filters,
-      type: newTypes.length > 0 ? newTypes : undefined,
-    });
-  };
-
-  const handleResultChange = (value: "won" | "lost" | "flee") => {
-    const currentResults = filters.result ?? [];
-    const newResults = currentResults.includes(value)
-      ? currentResults.filter((r) => r !== value)
-      : [...currentResults, value];
-
-    onFiltersChange({
-      ...filters,
-      result: newResults.length > 0 ? newResults : undefined,
-    });
-  };
-
-  const handlePhToggle = (checked: boolean) => {
-    onFiltersChange({
-      ...filters,
-      ph: checked ? true : undefined,
-    });
-  };
-
-  const handleMatchmakingToggle = (checked: boolean) => {
-    onFiltersChange({
-      ...filters,
-      matchmaking: checked ? true : undefined,
-    });
-  };
-
-  const handleWorldChange = (value: string) => {
-    onFiltersChange({
-      ...filters,
-      world: filters.world === value ? undefined : value,
-    });
-  };
-
-  const handleMinLevelChange = (value: number | undefined) => {
-    onFiltersChange({
-      ...filters,
-      minLevel: value,
-    });
-  };
-
-  const handleMaxLevelChange = (value: number | undefined) => {
-    onFiltersChange({
-      ...filters,
-      maxLevel: value,
-    });
-  };
 
   const handleClearFilters = () => {
     onFiltersChange({});
@@ -265,27 +202,14 @@ export const FiltersSidebar = ({
                         </CommandEmpty>
                         <CommandGroup>
                           {characters.map((char) => (
-                            <CommandItem
+                            <BattleCharacterOption
                               key={char.id}
-                              value={`${char.name} ${char.world}`}
-                              onSelect={() => handleCharacterChange(char.id)}
-                              className="p-0 px-2 gap-0"
-                            >
-                              <PlayerTile
-                                player={char}
-                                cdnBaseUrl={MARGONEM_CDN_CHARACTERS_URL}
-                                className="scale-70 mr-2"
-                              />
-                              {char.name} ({char.world})
-                              <Check
-                                className={cn(
-                                  "ml-auto h-4 w-4",
-                                  filters.characterId?.includes(char.id)
-                                    ? "opacity-100"
-                                    : "opacity-0",
-                                )}
-                              />
-                            </CommandItem>
+                              character={char}
+                              selected={
+                                filters.characterId?.includes(char.id) ?? false
+                              }
+                              onSelect={handleCharacterChange}
+                            />
                           ))}
                         </CommandGroup>
                       </CommandList>

@@ -1,3 +1,4 @@
+import { isRecord } from "@lootlog/schema/records";
 import type {
   SettingsDocuments,
   SettingsDocumentsFailure,
@@ -18,9 +19,6 @@ const APPEARANCE_FIELDS = [
   "overriddenDefaultColors",
   "hiddenDefaultColors",
 ] as const;
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
 
 type JsonValue = string | number | boolean | null | JsonValue[] | JsonObject;
 type JsonObject = { [key: string]: JsonValue };

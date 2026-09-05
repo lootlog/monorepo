@@ -7,7 +7,7 @@ import {
   SafeInteger,
   JsonValue,
   NonNegativeSafeInteger,
-} from "#src/contracts/scalars";
+} from "@lootlog/schema/http-scalars";
 
 const ReservationAuthor = Schema.Struct({
   displayName: Schema.String,

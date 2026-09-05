@@ -1,6 +1,20 @@
+import { BattlePagination } from "../shared.js";
 /** analytics transport definitions for battles. */
 import * as Schema from "effect/Schema";
-import { DateTimeString, FiniteNumber } from "../scalars.js";
+import { DateTimeString, FiniteNumber } from "@lootlog/schema/http-scalars";
+
+const PlayerVsPlayerWarrior = Schema.Struct({
+  name: Schema.String,
+  lvl: FiniteNumber,
+  prof: Schema.String,
+  icon: Schema.String,
+  fireDamage: FiniteNumber,
+  frostDamage: FiniteNumber,
+  lightningDamage: FiniteNumber,
+  poisonDamageTaken: FiniteNumber,
+  woundDamageTaken: FiniteNumber,
+  critWoundDamageTaken: FiniteNumber,
+});
 
 export type BattleAnalyticsResponseDto_Output =
   typeof BattleAnalyticsResponseDto_Output.Type;
@@ -129,30 +143,8 @@ export const HeadToHeadPaginatedResponseDto_Output = Schema.Struct({
       opponentProf: Schema.String,
       opponentLvl: FiniteNumber,
       lastBattleResult: Schema.Literals(["won", "lost", "flee"]),
-      lastBattleUserWarrior: Schema.Struct({
-        name: Schema.String,
-        lvl: FiniteNumber,
-        prof: Schema.String,
-        icon: Schema.String,
-        fireDamage: FiniteNumber,
-        frostDamage: FiniteNumber,
-        lightningDamage: FiniteNumber,
-        poisonDamageTaken: FiniteNumber,
-        woundDamageTaken: FiniteNumber,
-        critWoundDamageTaken: FiniteNumber,
-      }),
-      lastBattleOpponentWarrior: Schema.Struct({
-        name: Schema.String,
-        lvl: FiniteNumber,
-        prof: Schema.String,
-        icon: Schema.String,
-        fireDamage: FiniteNumber,
-        frostDamage: FiniteNumber,
-        lightningDamage: FiniteNumber,
-        poisonDamageTaken: FiniteNumber,
-        woundDamageTaken: FiniteNumber,
-        critWoundDamageTaken: FiniteNumber,
-      }),
+      lastBattleUserWarrior: PlayerVsPlayerWarrior,
+      lastBattleOpponentWarrior: PlayerVsPlayerWarrior,
       wins: FiniteNumber,
       losses: FiniteNumber,
       totalBattles: FiniteNumber,
@@ -162,14 +154,7 @@ export const HeadToHeadPaginatedResponseDto_Output = Schema.Struct({
       avgRatingDelta: Schema.optionalKey(FiniteNumber),
     }),
   ),
-  pagination: Schema.Struct({
-    size: FiniteNumber,
-    hasNext: Schema.Boolean,
-    hasPrev: Schema.Boolean,
-    nextCursor: Schema.optionalKey(Schema.String),
-    previousCursor: Schema.optionalKey(Schema.String),
-    total: Schema.optionalKey(FiniteNumber),
-  }),
+  pagination: BattlePagination,
   meta: Schema.Struct({
     performance: Schema.Struct({
       queryTime: FiniteNumber,
@@ -284,40 +269,11 @@ export const PlayerVsPlayerPaginatedResponseDto_Output = Schema.Struct({
       ratingDelta: Schema.Union([FiniteNumber, Schema.Null]),
       userRating: Schema.Union([FiniteNumber, Schema.Null]),
       opponentRating: Schema.Union([FiniteNumber, Schema.Null]),
-      userWarrior: Schema.Struct({
-        name: Schema.String,
-        lvl: FiniteNumber,
-        prof: Schema.String,
-        icon: Schema.String,
-        fireDamage: FiniteNumber,
-        frostDamage: FiniteNumber,
-        lightningDamage: FiniteNumber,
-        poisonDamageTaken: FiniteNumber,
-        woundDamageTaken: FiniteNumber,
-        critWoundDamageTaken: FiniteNumber,
-      }),
-      opponentWarrior: Schema.Struct({
-        name: Schema.String,
-        lvl: FiniteNumber,
-        prof: Schema.String,
-        icon: Schema.String,
-        fireDamage: FiniteNumber,
-        frostDamage: FiniteNumber,
-        lightningDamage: FiniteNumber,
-        poisonDamageTaken: FiniteNumber,
-        woundDamageTaken: FiniteNumber,
-        critWoundDamageTaken: FiniteNumber,
-      }),
+      userWarrior: PlayerVsPlayerWarrior,
+      opponentWarrior: PlayerVsPlayerWarrior,
     }),
   ),
-  pagination: Schema.Struct({
-    size: FiniteNumber,
-    hasNext: Schema.Boolean,
-    hasPrev: Schema.Boolean,
-    nextCursor: Schema.optionalKey(Schema.String),
-    previousCursor: Schema.optionalKey(Schema.String),
-    total: Schema.optionalKey(FiniteNumber),
-  }),
+  pagination: BattlePagination,
   meta: Schema.Struct({
     performance: Schema.Struct({
       queryTime: FiniteNumber,

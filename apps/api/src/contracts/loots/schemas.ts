@@ -9,7 +9,7 @@ import {
   DateTimeWithOffsetString,
   DateTimeString,
   FiniteNumber,
-} from "#src/contracts/scalars";
+} from "@lootlog/schema/http-scalars";
 import { ItemRaritySchema } from "@lootlog/schema/item-rarity";
 import { ProfessionSchema, LootSourceSchema } from "@lootlog/schema/loot";
 import { NpcTypeSchema } from "@lootlog/schema/npc-type";

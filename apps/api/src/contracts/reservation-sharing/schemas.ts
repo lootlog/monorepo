@@ -1,6 +1,6 @@
 /** Shared input and output schemas for the reservation-sharing feature. */
 import * as Schema from "effect/Schema";
-import { NonEmptyString, DateTimeString } from "#src/contracts/scalars";
+import { NonEmptyString, DateTimeString } from "@lootlog/schema/http-scalars";
 
 const PartnerOrganization = Schema.Struct({
   name: Schema.String,

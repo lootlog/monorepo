@@ -28,7 +28,10 @@
     "./sound-settings": "./src/sound-settings.ts",
     "./stable-json": "./src/stable-json.ts",
     "./timer-settings": "./src/timer-settings.ts",
-    "./user-preferences": "./src/user-preferences.ts"
+    "./user-preferences": "./src/user-preferences.ts",
+    "./records": "./src/records.ts",
+    "./http-scalars": "./src/http-scalars.ts",
+    "./numbers": "./src/numbers.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",

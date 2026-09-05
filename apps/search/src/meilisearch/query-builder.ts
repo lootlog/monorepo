@@ -1,8 +1,5 @@
+import { isObjectRecord as isRecord } from "@lootlog/schema/records";
 type UnknownRecord = Record<string, unknown>;
-
-function isRecord(value: unknown): value is UnknownRecord {
-  return typeof value === "object" && value !== null;
-}
 
 export function getMeilisearchErrorCode(error: unknown): string | null {
   if (!isRecord(error) || !isRecord(error.cause)) {

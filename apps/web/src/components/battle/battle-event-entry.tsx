@@ -1,11 +1,10 @@
+import { BATTLE_TEXT_COLORS } from "./utils/battle-color-palette";
+import { BattleActionList } from "./actions/battle-action-list";
 import { BattleLogAttackActions } from "./actions/battle-log-attack-action";
 import type { KeyboardEvent, FC, CSSProperties, Ref } from "react";
 import { parseActions } from "./utils/battle-actions-parser";
-import { BattleBuffActions } from "./actions/battle-buff-actions";
-import { BattleOutcomeActions } from "./actions/battle-outcome-actions";
 import { BattlePassiveActions } from "./actions/battle-passive-actions";
 import { BattleSpellActions } from "./actions/battle-spell-actions";
-import { BattleSystemActions } from "./actions/battle-system-actions";
 import { cn } from "cn";
 import type {
   BattleWarrior as Warrior,
@@ -88,14 +87,15 @@ export const BattleEventEntry: FC<BattleEventEntryProps> = ({
         #{turn}
       </span>
 
-      <BattleBuffActions
+      <BattleActionList
+        valueClassName={cn("font-bold", BATTLE_TEXT_COLORS.damage.auxiliary)}
         actions={parsedActions.buffActions}
         attacker={attacker}
         event={event}
         eventIndex={eventIndex}
       />
 
-      <BattleSystemActions
+      <BattleActionList
         actions={parsedActions.systemActions}
         attacker={attacker}
         event={event}
@@ -127,7 +127,7 @@ export const BattleEventEntry: FC<BattleEventEntryProps> = ({
         userTeam={userTeam}
       />
 
-      <BattleOutcomeActions
+      <BattleActionList
         actions={parsedActions.outcomeActions}
         attacker={attacker}
         event={event}

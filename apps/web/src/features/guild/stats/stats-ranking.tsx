@@ -1,3 +1,5 @@
+import { StatsRankingRowsSkeleton } from "./components/stats-ranking-rows-skeleton";
+import { getOffsetPagination } from "./utils/offset-pagination";
 import { useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "@tanstack/react-router";
@@ -19,7 +21,6 @@ import {
   AvatarImage,
 } from "@lootlog/ui/components/avatar";
 import { Card } from "@lootlog/ui/components/card";
-import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
@@ -134,26 +135,14 @@ export const StatsRanking: React.FC = () => {
     Boolean(searchQuery);
   const total = filteredRanking.length;
   const paginatedData = filteredRanking.slice(cursor, cursor + ITEMS_PER_PAGE);
-  const hasNext = cursor + ITEMS_PER_PAGE < total;
-  const hasPrev = cursor > 0;
+  const { hasNext, hasPrev, handleNextPage, handlePreviousPage } =
+    getOffsetPagination(cursor, total, ITEMS_PER_PAGE, setCursor);
 
   const activeNpcTypes = NPC_TYPE_ORDER.filter((type) =>
     memberRanking.some(
       (member) => (member.participationsByType[type] ?? 0) > 0,
     ),
   );
-
-  const handleNextPage = () => {
-    if (hasNext) {
-      setCursor(cursor + ITEMS_PER_PAGE);
-    }
-  };
-
-  const handlePreviousPage = () => {
-    if (hasPrev) {
-      setCursor(Math.max(0, cursor - ITEMS_PER_PAGE));
-    }
-  };
 
   const handleRowClick = (memberId: number) => {
     navigate({
@@ -232,21 +221,7 @@ export const StatsRanking: React.FC = () => {
           <Card className="flex-1 min-h-0 flex flex-col border-border bg-card p-0  overflow-hidden gap-0">
             <ScrollArea className="relative flex-1 min-h-0 w-full">
               {isLoading ? (
-                <div>
-                  {Array.from({ length: 10 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="flex h-14 items-center gap-4 border-b border-border px-4"
-                    >
-                      <Skeleton className="h-4 w-8" />
-                      <Skeleton className="h-8 w-8 rounded-full" />
-                      <Skeleton className="h-4 flex-1" />
-                      {Array.from({ length: 4 }).map((_, j) => (
-                        <Skeleton key={j} className="h-4 w-12" />
-                      ))}
-                    </div>
-                  ))}
-                </div>
+                <StatsRankingRowsSkeleton />
               ) : !data || paginatedData.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-3 p-16 h-full">
                   <p className="text-muted-foreground">

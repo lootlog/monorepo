@@ -1,18 +1,10 @@
-import {
-  and,
-  arrayOverlaps,
-  desc,
-  eq,
-  inArray,
-  isNotNull,
-  or,
-} from "drizzle-orm";
+import { selectAccessibleGuilds } from "#src/members/member-access-query";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
 import type { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
-  guildTable,
   memberTable,
   memberToRoleTable,
   roleTable,
@@ -114,29 +106,10 @@ export const makeAccessibleGuilds = (
       return cached;
     }
 
-    const guildRows = yield* database
-      .selectDistinct({ guild: guildTable })
-      .from(guildTable)
-      .leftJoin(
-        memberTable,
-        and(
-          eq(memberTable.guildId, guildTable.id),
-          eq(memberTable.userId, identity.discordId),
-          eq(memberTable.active, true),
-          isNotNull(memberTable.globalUserId),
-        ),
-      )
-      .leftJoin(memberToRoleTable, eq(memberToRoleTable.A, memberTable.id))
-      .leftJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
-      .where(
-        and(
-          eq(guildTable.active, true),
-          or(
-            eq(guildTable.ownerId, identity.discordId),
-            arrayOverlaps(roleTable.permissions, [Permission.LOOTLOG_ACCESS]),
-          ),
-        ),
-      );
+    const guildRows = yield* selectAccessibleGuilds(
+      database,
+      identity.discordId,
+    );
     const guilds = guildRows.map(({ guild }) => guild);
     if (guilds.length === 0) return [];
     const members = yield* database

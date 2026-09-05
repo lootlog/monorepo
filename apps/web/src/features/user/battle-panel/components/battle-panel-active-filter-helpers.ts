@@ -1,5 +1,5 @@
 import type { Period } from "@/features/user/battle-panel/battle-panel-search";
-import type { BattleFilters } from "../battle-panel-battles-list/components/battles-list-filters";
+import type { BattleFilters } from "@/features/user/battle-panel/battle-panel-battles-list/utils/battle-filter-handlers";
 import {
   BATTLE_PANEL_DEFAULT_MAX_LEVEL,
   BATTLE_PANEL_DEFAULT_MIN_LEVEL,
@@ -303,43 +303,16 @@ export const buildHeadToHeadFilterLabels = ({
     });
   }
 
-  if (period !== "30d") {
-    chips.push({
-      id: "period",
-      label: translate("battlePanel.filters.chips.period", {
-        value: translate(`battlePanel.filters.periodOptions.${period}`),
-      }),
-    });
-  }
-
-  if (ph) {
-    chips.push({
-      id: "ph",
-      label: translate("battlePanel.filters.chips.honorPoints"),
-    });
-  }
-
-  if (matchmaking) {
-    chips.push({
-      id: "matchmaking",
-      label: translate("battlePanel.filters.chips.matchmaking"),
-    });
-  }
-
-  if (isLevelRangeActive({ minLevel, maxLevel })) {
-    const normalizedRange = normalizeBattlePanelLevelRange({
-      minLevel,
+  chips.push(
+    ...buildPlayerVsPlayerFilterLabels({
+      matchmaking,
       maxLevel,
-    });
-
-    chips.push({
-      id: "level",
-      label: translate("battlePanel.filters.chips.levelRange", {
-        min: normalizedRange.minLevel,
-        max: normalizedRange.maxLevel,
-      }),
-    });
-  }
+      minLevel,
+      period,
+      ph,
+      translate,
+    }),
+  );
 
   return chips;
 };

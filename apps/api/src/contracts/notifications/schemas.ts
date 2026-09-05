@@ -1,3 +1,7 @@
+import {
+  discordPermissionFields,
+  DiscordGuildSyncStatus,
+} from "@lootlog/schema/discord";
 /** Shared input and output schemas for the notifications feature. */
 import * as Schema from "effect/Schema";
 import {
@@ -15,7 +19,7 @@ import {
   SafeInteger,
   JsonValue,
   NonEmptyString,
-} from "#src/contracts/scalars";
+} from "@lootlog/schema/http-scalars";
 const NotificationTargetMetadata = JsonValue.annotate({
   identifier: "NotificationTargetResponseDto__schema0",
 });
@@ -96,10 +100,7 @@ export const AvailableOrganizationNotificationTargetsResponse = Schema.Struct({
       active: Schema.Boolean,
       canView: Schema.Boolean,
       canSend: Schema.Boolean,
-      hasRequiredPermissions: Schema.Boolean,
-      requiredPermissions: Schema.Array(Schema.String),
-      grantedPermissions: Schema.Array(Schema.String),
-      missingPermissions: Schema.Array(Schema.String),
+      ...discordPermissionFields,
       lastSyncedAt: DateTimeString,
       createdAt: DateTimeString,
       updatedAt: DateTimeString,
@@ -109,17 +110,8 @@ export const AvailableOrganizationNotificationTargetsResponse = Schema.Struct({
     Schema.StructWithRest(
       Schema.Struct({
         guildId: Schema.String,
-        status: Schema.Literals([
-          "SYNCED",
-          "SYNCING",
-          "FAILED",
-          "STALE",
-          "NOT_FOUND",
-        ]),
-        hasRequiredPermissions: Schema.Boolean,
-        requiredPermissions: Schema.Array(Schema.String),
-        grantedPermissions: Schema.Array(Schema.String),
-        missingPermissions: Schema.Array(Schema.String),
+        status: DiscordGuildSyncStatus,
+        ...discordPermissionFields,
         channelCount: SafeInteger,
         selectableChannelCount: SafeInteger,
         lastAttemptAt: Schema.Union([DateTimeString, Schema.Null]),

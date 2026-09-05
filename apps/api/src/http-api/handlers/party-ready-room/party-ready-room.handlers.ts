@@ -1,9 +1,10 @@
+import { statusCodeResponse } from "#src/shared/http/handler-response";
 import { applicationErrorResponse } from "../../application-error-response.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
-import { HttpServerResponse } from "effect/unstable/http";
+
 import { HttpApiBuilder } from "effect/unstable/httpapi";
-import { encodeDomainJson } from "../../domain-json.schema.js";
+import { decodeDomainJson } from "../../domain-json.schema.js";
 import { LootlogApi } from "../../lootlog-api.js";
 import {
   PartyReadyRoomResponse,
@@ -116,8 +117,7 @@ const accessibleGuildIds = (discordId: string) =>
   );
 
 const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
-  encodeDomainJson(value).pipe(
-    Effect.flatMap(Schema.decodeUnknownEffect(schema)),
+  decodeDomainJson(schema, value).pipe(
     Effect.mapError((cause) => new ReadyRoomOperationError({ cause })),
   );
 
@@ -242,13 +242,7 @@ const orDieHttpFailure = <A, R>(
   effect: Effect.Effect<A, ReadyRoomHttpFailure, R>,
 ) =>
   Effect.catchTags(effect, {
-    ReadyRoomAccessDenied: (error) =>
-      Effect.succeed(
-        HttpServerResponse.jsonUnsafe(
-          { code: error.code },
-          { status: error.status },
-        ),
-      ),
+    ReadyRoomAccessDenied: statusCodeResponse,
     ReadyRoomOperationError: (error) => applicationErrorResponse(error.cause),
   });
 

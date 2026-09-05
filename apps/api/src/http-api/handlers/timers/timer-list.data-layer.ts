@@ -1,3 +1,4 @@
+import { activeGuildMemberJoin } from "#src/members/member-access-query";
 import {
   and,
   arrayOverlaps,
@@ -187,15 +188,7 @@ export const makeAllTimerList = (database: typeof ApiDatabase.Service) => {
     const guildRows = yield* database
       .selectDistinct({ guild: guildTable })
       .from(guildTable)
-      .leftJoin(
-        memberTable,
-        and(
-          eq(memberTable.guildId, guildTable.id),
-          eq(memberTable.userId, identity.discordId),
-          eq(memberTable.active, true),
-          isNotNull(memberTable.globalUserId),
-        ),
-      )
+      .leftJoin(memberTable, activeGuildMemberJoin(identity.discordId))
       .leftJoin(memberToRoleTable, eq(memberToRoleTable.A, memberTable.id))
       .leftJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
       .where(
