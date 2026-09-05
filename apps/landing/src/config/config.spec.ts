@@ -16,7 +16,7 @@ describe("public landing configuration", () => {
     expect(resolveAddonUrl()).toBe(
       "https://github.com/lootlog/monorepo/releases/latest",
     );
-    expect(resolveAuthServiceUrl()).toBe("http://localhost:4000");
+    expect(resolveAuthServiceUrl()).toBe("http://localhost/api/auth");
   });
 
   it("preserves the Better Auth callback path", () => {
