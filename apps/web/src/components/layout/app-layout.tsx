@@ -9,27 +9,13 @@ import { UserSidebarNav } from "@/components/layout/user-sidebar-nav";
 import { Toaster } from "@lootlog/ui/components/sonner";
 import { SidebarProvider } from "@lootlog/ui/components/sidebar";
 import { Outlet, useLocation, useMatches } from "@tanstack/react-router";
+import { GlobalModals } from "@/components/common/global-modals";
 
 const ThemeAnnouncement = lazy(() =>
   import("@/components/common/theme-announcement").then((module) => ({
     default: module.ThemeAnnouncement,
   })),
 );
-const CreateGuildModal = lazy(() =>
-  import("@/components/common/create-guild-modal/create-guild-modal").then(
-    (module) => ({
-      default: module.CreateGuildModal,
-    }),
-  ),
-);
-const InstallAddonModal = lazy(() =>
-  import("@/components/common/install-addon-modal/install-addon-modal").then(
-    (module) => ({
-      default: module.InstallAddonModal,
-    }),
-  ),
-);
-
 export const AppLayout = () => {
   const location = useLocation();
   const guildRouteMatch = useMatches({
@@ -96,10 +82,7 @@ export const AppLayout = () => {
         </div>
       </div>
       <Toaster />
-      <Suspense fallback={null}>
-        <CreateGuildModal />
-        <InstallAddonModal />
-      </Suspense>
+      <GlobalModals />
     </div>
   );
 };

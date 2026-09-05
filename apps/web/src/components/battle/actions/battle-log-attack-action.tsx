@@ -1,3 +1,7 @@
+import {
+  groupBattleAttackDamage,
+  getBattleActionValues,
+} from "../utils/battle-action-values";
 import type {
   BattleWarrior as Warrior,
   RawBattleParsedEvent,
@@ -11,7 +15,7 @@ import {
   BATTLE_TEXT_COLORS,
 } from "../utils/battle-color-palette";
 import { generateDynamicValuesAndComponents } from "../utils/dynamic-values-helper";
-import { processDamageValue, roundHpPercentage } from "../utils/value-utils";
+import { roundHpPercentage } from "../utils/value-utils";
 
 export type BattleLogAttackActionsProps = {
   actions: { type: string; value: string }[];
@@ -45,80 +49,13 @@ export const BattleLogAttackActions: FC<BattleLogAttackActionsProps> = ({
         )}
       >
         {(() => {
-          const positiveDamage = {
-            dmgd: "",
-            dmgf: "",
-            dmgl: "",
-            dmg: "",
-            dmgo: "",
-            dmga: "",
-            dmgc: "",
-            thirdatt: "",
-          };
-          const negativeDamage = {
-            dmgd: "",
-            dmgf: "",
-            dmgl: "",
-            dmg: "",
-            dmgo: "",
-            dmga: "",
-            dmgc: "",
-            thirdatt: "",
-          };
-          const otherActions: { type: string; value: string }[] = [];
-
-          actions.forEach((action) => {
-            if (action.type === "+dmgd")
-              positiveDamage.dmgd = processDamageValue(action.value, "+");
-            else if (action.type === "+dmgf")
-              positiveDamage.dmgf = processDamageValue(action.value, "+");
-            else if (action.type === "+dmgl")
-              positiveDamage.dmgl = processDamageValue(action.value, "+");
-            else if (action.type === "-dmgd")
-              negativeDamage.dmgd = processDamageValue(action.value, "-");
-            else if (action.type === "-dmgf")
-              negativeDamage.dmgf = processDamageValue(action.value, "-");
-            else if (action.type === "-dmgl")
-              negativeDamage.dmgl = processDamageValue(action.value, "-");
-            else if (action.type === "-dmg")
-              negativeDamage.dmg = processDamageValue(action.value, "-");
-            else if (action.type === "+dmg")
-              positiveDamage.dmg = processDamageValue(action.value, "+");
-            else if (action.type === "-dmgo")
-              negativeDamage.dmgo = processDamageValue(action.value, "-");
-            else if (action.type === "-dmga")
-              negativeDamage.dmga = processDamageValue(action.value, "-");
-            else if (action.type === "+dmgo")
-              positiveDamage.dmgo = processDamageValue(action.value, "+");
-            else if (action.type === "+dmgc")
-              positiveDamage.dmgc = processDamageValue(action.value, "+");
-            else if (action.type === "-dmgc")
-              negativeDamage.dmgc = processDamageValue(action.value, "-");
-            else if (action.type === "+thirdatt") {
-              positiveDamage.thirdatt = processDamageValue(action.value, "+");
-              otherActions.push(action);
-            } else if (action.type === "-thirdatt") {
-              negativeDamage.thirdatt = processDamageValue(action.value, "-");
-            } else otherActions.push(action);
-          });
-
-          const hasPositiveDamage =
-            positiveDamage.dmgd ||
-            positiveDamage.dmgf ||
-            positiveDamage.dmgl ||
-            positiveDamage.dmg ||
-            positiveDamage.dmgo ||
-            positiveDamage.thirdatt ||
-            positiveDamage.dmgc;
-          const hasNegativeDamage =
-            negativeDamage.dmgd ||
-            negativeDamage.dmgf ||
-            negativeDamage.dmgl ||
-            negativeDamage.dmg ||
-            negativeDamage.dmgo ||
-            negativeDamage.dmga ||
-            negativeDamage.thirdatt ||
-            negativeDamage.dmgc;
+          const {
+            positiveDamage,
+            negativeDamage,
+            otherActions,
+            hasPositiveDamage,
+            hasNegativeDamage,
+          } = groupBattleAttackDamage(actions);
 
           return (
             <>
@@ -161,16 +98,13 @@ export const BattleLogAttackActions: FC<BattleLogAttackActionsProps> = ({
                   <span key={sIndex}>
                     <Trans
                       i18nKey={actionPresentation.i18nKey}
-                      values={{
-                        name: attacker?.name,
-                        defenderName: defender?.name,
-                        hp: roundHpPercentage(event.attackerHpPercentage),
-                        defenderHp: roundHpPercentage(
-                          event.defenderHpPercentage,
-                        ),
-                        ...actionPresentation.values,
-                        ...dynamicData.values,
-                      }}
+                      values={getBattleActionValues(
+                        action,
+                        event,
+                        attacker,
+                        defender,
+                        "attack",
+                      )}
                       components={{
                         value: createStrongText(),
                         ...dynamicData.components,

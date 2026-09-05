@@ -1,6 +1,6 @@
 import { startTransition, useEffect } from "react";
 import {
-  battlesControllerGetCombatProfile,
+  useBattlesControllerGetCombatProfile,
   useBattlesControllerGetBattleDuration,
   useBattlesControllerGetCurrentStreak,
   useBattlesControllerGetHeadToHead,
@@ -23,14 +23,15 @@ import {
   normalizeBattlePanelCharacterId,
 } from "@/features/user/battle-panel/battle-panel-search";
 import { CombatProfileOverview } from "./components/combat-profile-overview";
-import { useQuery } from "@tanstack/react-query";
+import { StatisticsQueryPanel } from "./components/statistics-query-panel";
 import { useTranslation } from "react-i18next";
 import { BattlePanelStatisticsSkeleton } from "./battle-panel-statistics-skeleton";
 
 export function BattlePanelStatistics() {
   const { t } = useTranslation();
+  const charactersQuery = useBattlesControllerGetUserCharacters();
   const { data: charactersResponse, isLoading: isLoadingCharacters } =
-    useBattlesControllerGetUserCharacters();
+    charactersQuery;
   const characters = charactersResponse?.characters;
   const [queryState, setQueryState] = useQueryStates(
     battlePanelStatisticsSearchParsers,
@@ -59,92 +60,50 @@ export function BattlePanelStatistics() {
     }
   }, [characters, currentCharacterId, isLoadingCharacters, setQueryState]);
 
+  const statisticsParams = {
+    characterId: selectedCharacterId,
+    period,
+    minLevel,
+    maxLevel,
+    startDate,
+    endDate,
+    ph,
+    matchmaking,
+  };
+  const queryOptions = { query: { enabled: Boolean(selectedCharacterId) } };
+  const professionQuery = useBattlesControllerGetProfessionWinRate(
+    statisticsParams,
+    queryOptions,
+  );
+  const headToHeadQuery = useBattlesControllerGetHeadToHead(
+    { ...statisticsParams, size: 5 },
+    queryOptions,
+  );
+  const streakQuery = useBattlesControllerGetCurrentStreak(
+    statisticsParams,
+    queryOptions,
+  );
+  const durationQuery = useBattlesControllerGetBattleDuration(
+    statisticsParams,
+    queryOptions,
+  );
+  const phGrowthQuery = useBattlesControllerGetPhGrowth(
+    statisticsParams,
+    queryOptions,
+  );
+  const combatProfileQuery = useBattlesControllerGetCombatProfile(
+    statisticsParams,
+    queryOptions,
+  );
   const { data: professionData, isLoading: isProfessionLoading } =
-    useBattlesControllerGetProfessionWinRate({
-      characterId: selectedCharacterId,
-      period,
-      minLevel,
-      maxLevel,
-      startDate,
-      endDate,
-      ph,
-      matchmaking,
-    });
-
+    professionQuery;
   const { data: headToHeadData, isLoading: isHeadToHeadLoading } =
-    useBattlesControllerGetHeadToHead({
-      characterId: selectedCharacterId,
-      period,
-      minLevel,
-      maxLevel,
-      startDate,
-      endDate,
-      ph,
-      matchmaking,
-      size: 5,
-    });
-
-  const { data: streakData, isLoading: isStreakLoading } =
-    useBattlesControllerGetCurrentStreak({
-      characterId: selectedCharacterId,
-      period,
-      minLevel,
-      maxLevel,
-      startDate,
-      endDate,
-      ph,
-      matchmaking,
-    });
-
-  const { data: durationData, isLoading: isDurationLoading } =
-    useBattlesControllerGetBattleDuration({
-      characterId: selectedCharacterId,
-      period,
-      minLevel,
-      maxLevel,
-      startDate,
-      endDate,
-      ph,
-      matchmaking,
-    });
-
-  const { data: phGrowthData, isLoading: isPhGrowthLoading } =
-    useBattlesControllerGetPhGrowth({
-      characterId: selectedCharacterId,
-      period,
-      minLevel,
-      maxLevel,
-      startDate,
-      endDate,
-      ph,
-      matchmaking,
-    });
-
-  const { data: combatProfile, isLoading: isCombatProfileLoading } = useQuery({
-    queryKey: [
-      "combat-profile",
-      selectedCharacterId,
-      period,
-      minLevel,
-      maxLevel,
-      startDate,
-      endDate,
-      ph,
-      matchmaking,
-    ],
-    queryFn: () =>
-      battlesControllerGetCombatProfile({
-        characterId: selectedCharacterId,
-        period,
-        minLevel,
-        maxLevel,
-        startDate,
-        endDate,
-        ph,
-        matchmaking,
-      }),
-    enabled: Boolean(selectedCharacterId),
-  });
+    headToHeadQuery;
+  const { data: streakData, isLoading: isStreakLoading } = streakQuery;
+  const { data: durationData, isLoading: isDurationLoading } = durationQuery;
+  const { data: phGrowthData, isLoading: isPhGrowthLoading } = phGrowthQuery;
+  const { data: combatProfile, isLoading: isCombatProfileLoading } =
+    combatProfileQuery;
 
   const statisticsSearch = {
     characterId: currentCharacterId,
@@ -157,14 +116,23 @@ export function BattlePanelStatistics() {
     matchmaking,
   };
 
-  if (isLoadingCharacters) {
-    return <BattlePanelStatisticsSkeleton />;
+  if (!selectedCharacterId) {
+    if (charactersQuery.isError) {
+      return <StatisticsQueryPanel query={charactersQuery} />;
+    }
+    if (isLoadingCharacters) {
+      return <BattlePanelStatisticsSkeleton />;
+    }
+    return <p className="p-3">{t("battlePanel.statistics.empty.title")}</p>;
   }
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
       <ScrollArea className="min-h-0 flex-1">
         <div className="flex min-h-full flex-col gap-4 px-3 py-3">
+          {charactersQuery.isError && (
+            <StatisticsQueryPanel query={charactersQuery} />
+          )}
           <SectionHeader
             icon={BarChart3}
             title={t("battlePanel.statistics.title")}
@@ -223,48 +191,60 @@ export function BattlePanelStatistics() {
             />
           </SectionHeader>
 
-          <CombatProfileOverview
-            data={combatProfile}
-            isLoading={isCombatProfileLoading}
-          />
+          <StatisticsQueryPanel query={combatProfileQuery}>
+            <CombatProfileOverview
+              data={combatProfile}
+              isLoading={isCombatProfileLoading}
+            />
+          </StatisticsQueryPanel>
 
           <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
-            <CurrentStreakCard
-              data={
-                streakData ?? {
-                  current: { type: "none", count: 0 },
-                  longest: { wins: 0, losses: 0 },
+            <StatisticsQueryPanel query={streakQuery}>
+              <CurrentStreakCard
+                data={
+                  streakData ?? {
+                    current: { type: "none", count: 0 },
+                    longest: { wins: 0, losses: 0 },
+                  }
                 }
-              }
-              isLoading={isStreakLoading}
-            />
-            <BattleDurationStatsCard
-              data={
-                durationData ?? {
-                  avgWinDuration: 0,
-                  avgLossDuration: 0,
-                  fastest: null,
-                  longest: null,
+                isLoading={isStreakLoading}
+              />
+            </StatisticsQueryPanel>
+            <StatisticsQueryPanel query={durationQuery}>
+              <BattleDurationStatsCard
+                data={
+                  durationData ?? {
+                    avgWinDuration: 0,
+                    avgLossDuration: 0,
+                    fastest: null,
+                    longest: null,
+                  }
                 }
-              }
-              isLoading={isDurationLoading}
-            />
-            <PhGrowthChart
-              data={phGrowthData ?? []}
-              isLoading={isPhGrowthLoading}
-            />
+                isLoading={isDurationLoading}
+              />
+            </StatisticsQueryPanel>
+            <StatisticsQueryPanel query={phGrowthQuery}>
+              <PhGrowthChart
+                data={phGrowthData ?? []}
+                isLoading={isPhGrowthLoading}
+              />
+            </StatisticsQueryPanel>
           </div>
 
           <div className="grid min-w-0 grid-cols-1 gap-4 2xl:grid-cols-2">
-            <ProfessionWinRateChart
-              data={professionData ?? []}
-              isLoading={isProfessionLoading}
-            />
-            <HeadToHeadTable
-              data={headToHeadData?.records ?? []}
-              search={statisticsSearch}
-              isLoading={isHeadToHeadLoading}
-            />
+            <StatisticsQueryPanel query={professionQuery}>
+              <ProfessionWinRateChart
+                data={professionData ?? []}
+                isLoading={isProfessionLoading}
+              />
+            </StatisticsQueryPanel>
+            <StatisticsQueryPanel query={headToHeadQuery}>
+              <HeadToHeadTable
+                data={headToHeadData?.records ?? []}
+                search={statisticsSearch}
+                isLoading={isHeadToHeadLoading}
+              />
+            </StatisticsQueryPanel>
           </div>
         </div>
       </ScrollArea>

@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   getTimersControllerGetTimersQueryKey,
@@ -6,19 +6,17 @@ import {
 } from "@lootlog/client/main";
 import { subscribeToSecondClock } from "@/hooks/utils/second-clock";
 
-export function useTimerClock(
+export function useTimerExpiry(
   timers: Pick<TimerResponseDto, "timerKey" | "maxSpawnTime">[] | undefined,
   guildId: string | undefined,
   world: string | null | undefined,
 ) {
   const queryClient = useQueryClient();
-  const [now, setNow] = useState(Date.now);
   const expiredRef = useRef(new Map<string, string>());
   const hasTimers = (timers?.length ?? 0) > 0;
 
   const tick = useEffectEvent(() => {
     const currentTime = Date.now();
-    setNow(currentTime);
     const expired = new Map<string, string>();
     let hasNewExpiry = false;
     for (const timer of timers ?? []) {
@@ -42,6 +40,4 @@ export function useTimerClock(
     if (!hasTimers || !guildId || !world) return;
     return subscribeToSecondClock(() => tick());
   }, [guildId, world, hasTimers]);
-
-  return now;
 }

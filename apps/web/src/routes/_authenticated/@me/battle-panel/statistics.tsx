@@ -16,14 +16,18 @@ import {
   getBattlesControllerGetProfessionWinRateQueryOptions,
 } from "@lootlog/client/battlelog";
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
-import { ensureRouteQueryData } from "@/lib/router/route-prefetch";
+import { prefetchRouteQuery } from "@/lib/router/route-prefetch";
 
 export const Route = createFileRoute(
   "/_authenticated/@me/battle-panel/statistics",
 )({
   validateSearch: battlePanelStatisticsSearchSchema,
-  loader: ({ abortController, context, location }) =>
+  loader: ({ abortController, context, location, preload }) =>
     withRouteLoaderCancellation(abortController, async () => {
+      if (preload) {
+        return null;
+      }
+
       const search = loadBattlePanelStatisticsSearch(location.searchStr);
       const normalizedCharacterId = normalizeBattlePanelCharacterId(
         search.characterId,
@@ -59,35 +63,35 @@ export const Route = createFileRoute(
         matchmaking: false,
       };
 
-      await Promise.all([
-        ensureRouteQueryData(
+      void Promise.all([
+        prefetchRouteQuery(
           context.queryClient,
           getBattlesControllerGetProfessionWinRateQueryOptions(baseParams),
         ),
-        ensureRouteQueryData(
+        prefetchRouteQuery(
           context.queryClient,
           getBattlesControllerGetHeadToHeadQueryOptions({
             ...baseParams,
             size: 5,
           }),
         ),
-        ensureRouteQueryData(
+        prefetchRouteQuery(
           context.queryClient,
           getBattlesControllerGetCurrentStreakQueryOptions(baseParams),
         ),
-        ensureRouteQueryData(
+        prefetchRouteQuery(
           context.queryClient,
           getBattlesControllerGetBattleDurationQueryOptions(baseParams),
         ),
-        ensureRouteQueryData(
+        prefetchRouteQuery(
           context.queryClient,
           getBattlesControllerGetPhGrowthQueryOptions(baseParams),
         ),
-        ensureRouteQueryData(
+        prefetchRouteQuery(
           context.queryClient,
           getBattlesControllerGetCombatProfileQueryOptions(baseParams),
         ),
-      ]);
+      ]).catch(() => undefined);
 
       return null;
     }),

@@ -2,9 +2,7 @@ import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "cn";
-import { CatPawOverlay } from "@lootlog/ui/components/cat-paw-overlay";
-import { RukiaFrostCardOverlay } from "@lootlog/ui/components/rukia-frost-card-overlay";
-import { RiasMagicCardOverlay } from "@lootlog/ui/components/rias-magic-card-overlay";
+import { ThemeDecoration } from "@lootlog/ui/components/theme-decoration";
 
 const cardVariants = cva(
   "bg-card text-card-foreground relative flex flex-col gap-5 overflow-hidden rounded-2xl border border-border py-5 shadow-xs",
@@ -34,9 +32,7 @@ function Card({
       className={cn(cardVariants({ variant }), className)}
       {...props}
     >
-      <CatPawOverlay />
-      <RukiaFrostCardOverlay />
-      <RiasMagicCardOverlay />
+      <ThemeDecoration />
       {children}
     </div>
   );
