@@ -5,11 +5,13 @@ export const LootMetaItem = ({
   children,
   className,
   title,
+  label,
 }: {
   icon: FC<{ className?: string }>;
   children: ReactNode;
   className?: string;
   title?: string;
+  label?: string;
 }) => (
   <span
     className={cn(
@@ -18,7 +20,10 @@ export const LootMetaItem = ({
     )}
     title={title}
   >
-    <Icon className="h-3 w-3 shrink-0" />
+    <span aria-hidden>
+      <Icon className="h-3 w-3 shrink-0" />
+    </span>
+    {label && <span className="sr-only">{label} </span>}
     {children}
   </span>
 );
