@@ -69,7 +69,7 @@ export const LootsListItem = ({ loot, isNew, variant = "card" }: Props) => {
         <Card
           className={cn(
             "group relative px-4 pt-2 pb-1 h-full flex flex-col gap-0",
-            "bg-card border-border overflow-visible",
+            "rounded-xl bg-card border-border overflow-visible",
             "hover:bg-card hover:border-primary/30 hover:shadow-md transition-[background-color,border-color,box-shadow] duration-200",
             isNew && "border-primary/70 ring-1 ring-primary/40 shadow-lg",
             hasLegendaryItem &&

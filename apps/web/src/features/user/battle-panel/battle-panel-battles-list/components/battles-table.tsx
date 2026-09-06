@@ -114,6 +114,20 @@ const BATTLE_TABLE_LINK_COLUMN_IDS = new Set([
 
 const BATTLE_TABLE_PRIMARY_LINK_COLUMN_ID = "leftTeam";
 
+const getBattleCellLink = (battle: Battle, columnId: string) => {
+  const { leftTeam, rightTeam } = getBattleTeams(battle);
+  if (
+    !BATTLE_TABLE_LINK_COLUMN_IDS.has(columnId) ||
+    (columnId === "leftTeam" && leftTeam.length > 1) ||
+    (columnId === "rightTeam" && rightTeam.length > 1)
+  ) {
+    return undefined;
+  }
+  const primaryColumnId =
+    leftTeam.length > 1 ? "status" : BATTLE_TABLE_PRIMARY_LINK_COLUMN_ID;
+  return columnId === primaryColumnId ? "primary" : "secondary";
+};
+
 export const BattlesTable = ({
   activeFilterChips = [],
   battles,
@@ -207,20 +221,17 @@ export const BattlesTable = ({
     cell: Cell<typeof coreTableFeatures, Battle, unknown>,
     content: ReactNode,
   ) => {
-    if (!BATTLE_TABLE_LINK_COLUMN_IDS.has(cell.column.id)) {
+    const link = getBattleCellLink(cell.row.original, cell.column.id);
+    if (!link) {
       return content;
     }
 
     return (
       <Link
         aria-label={
-          cell.column.id === BATTLE_TABLE_PRIMARY_LINK_COLUMN_ID
-            ? t("battlePanel.list.openBattle")
-            : undefined
+          link === "primary" ? t("battlePanel.list.openBattle") : undefined
         }
-        tabIndex={
-          cell.column.id === BATTLE_TABLE_PRIMARY_LINK_COLUMN_ID ? 0 : -1
-        }
+        tabIndex={link === "primary" ? 0 : -1}
         to="/@me/battle-panel/battles/$battleId"
         params={{ battleId: cell.row.original.id }}
         preload={false}
@@ -305,16 +316,10 @@ export const BattlesTable = ({
       id: "leftTeam",
       header: t("battlePanel.list.columns.yourTeam"),
       cell: ({ row }) => {
-        const { leftTeam, rightTeam, userWarrior } = getBattleTeams(
-          row.original,
-        );
+        const { leftTeam, userWarrior } = getBattleTeams(row.original);
 
         return (
-          <BattleTableTeamCell
-            team={leftTeam}
-            opposingTeam={rightTeam}
-            userWarrior={userWarrior}
-          />
+          <BattleTableTeamCell team={leftTeam} userWarrior={userWarrior} />
         );
       },
       enableSorting: false,
@@ -323,9 +328,9 @@ export const BattlesTable = ({
       id: "rightTeam",
       header: t("battlePanel.list.columns.opponents"),
       cell: ({ row }) => {
-        const { leftTeam, rightTeam } = getBattleTeams(row.original);
+        const { rightTeam } = getBattleTeams(row.original);
 
-        return <BattleTableTeamCell team={rightTeam} opposingTeam={leftTeam} />;
+        return <BattleTableTeamCell team={rightTeam} />;
       },
       enableSorting: false,
     },

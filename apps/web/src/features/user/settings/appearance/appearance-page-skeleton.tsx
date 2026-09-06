@@ -1,4 +1,3 @@
-import { PageHeader } from "@/components/common/page-header";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -8,12 +7,7 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 export const AppearanceSettingsPageSkeleton = () => {
   return (
     <ScrollArea className="h-full min-h-0">
-      <div className="flex flex-col gap-4 px-3 py-3">
-        <PageHeader
-          title={<Skeleton className="h-5 w-40" />}
-          description={<Skeleton className="h-3 w-48" />}
-        ></PageHeader>
-
+      <div className="flex flex-col gap-4 px-3 pb-3">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => (
             <SectionCard key={i}>

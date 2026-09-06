@@ -60,8 +60,8 @@ export const GuildNavItem: FC<GuildNavItemProps> = ({
   const avatarElement = (
     <Avatar
       className={cn(
-        "size-11 transition-all duration-200 rounded-lg hover:rounded-lg hover:scale-105",
-        isActive && !isRukiaTheme && "border-[3px] border-primary",
+        "size-11 rounded-xl after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit] after:ring-2 after:ring-inset after:ring-primary after:opacity-0 after:transition-opacity after:duration-200 motion-reduce:after:transition-none",
+        isActive && !isRukiaTheme && "after:opacity-100",
       )}
     >
       <AvatarImage
@@ -92,9 +92,6 @@ export const GuildNavItem: FC<GuildNavItemProps> = ({
               <TooltipTrigger
                 render={
                   <div className="relative mb-2 flex w-full items-center justify-center">
-                    {isActive && !isRukiaTheme && (
-                      <div className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full bg-primary shadow-[0_0_6px_var(--primary)/0.4]" />
-                    )}
                     <Link
                       to={`/${guild.vanityUrl ?? guild.id}` as string}
                       draggable={false}
@@ -108,11 +105,14 @@ export const GuildNavItem: FC<GuildNavItemProps> = ({
                       {isHidden ? (
                         <EyeOff
                           aria-hidden
-                          className="pointer-events-none absolute -bottom-1 -right-1 z-20 size-4 rounded-full border border-sidebar-border bg-sidebar p-0.5 text-muted-foreground"
+                          className="pointer-events-none absolute top-0.5 right-0.5 z-20 size-4 rounded-full border border-sidebar-border bg-sidebar p-0.5 text-muted-foreground"
                         />
                       ) : null}
                       {unreadLootsCount > 0 && !isActive && (
-                        <Badge className="absolute -right-2 -top-2 z-20 h-5 min-w-5 justify-center px-1.5 text-[10px] leading-none shadow-md">
+                        <Badge
+                          variant="destructive"
+                          className="pointer-events-none absolute bottom-0.5 right-0.5 z-20 h-4.5 min-w-4.5 justify-center px-1 text-[9px] leading-none ring-2 ring-sidebar"
+                        >
                           {unreadLootsCount > 99
                             ? t("layout.guildsSelector.unreadLootsOverflow")
                             : unreadLootsCount}

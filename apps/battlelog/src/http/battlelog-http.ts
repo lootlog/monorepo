@@ -1,8 +1,9 @@
 import { BunHttpServer } from "@effect/platform-bun";
 import { httpServerMetrics } from "@lootlog/instrumentation";
-import { Effect, Layer, Schema, SchemaIssue } from "effect";
+import { Cause, Effect, Layer, Option, Schema, SchemaIssue } from "effect";
 import {
   HttpRouter,
+  HttpMiddleware,
   HttpServer,
   HttpServerRequest,
   HttpServerError,
@@ -448,6 +449,19 @@ export const BattlelogRoutes = Layer.merge(
   DocumentationRoutes,
 );
 
+export const battlelogHttpMiddleware = HttpMiddleware.make((effect) =>
+  httpServerMetrics(
+    Effect.tapCause(effect, (cause) =>
+      Effect.sync(() => {
+        const [, failure] = HttpServerError.causeResponseStripped(cause);
+        if (Option.isSome(failure) && !Cause.hasInterruptsOnly(failure.value)) {
+          logger.error("Unhandled Battlelog HTTP failure", failure.value);
+        }
+      }),
+    ),
+  ),
+);
+
 export const BattlelogHttpServer = Layer.unwrap(
   Effect.map(BattlelogApplication, (application) =>
     HttpRouter.serve(
@@ -457,18 +471,7 @@ export const BattlelogHttpServer = Layer.unwrap(
         ),
       ),
       {
-        middleware: (effect) =>
-          httpServerMetrics(
-            Effect.catchCause(effect, (cause) => {
-              logger.error("Unhandled Battlelog HTTP failure", cause);
-              return Effect.succeed(
-                HttpServerResponse.jsonUnsafe(
-                  { message: "Internal server error", statusCode: 500 },
-                  { status: 500 },
-                ),
-              );
-            }),
-          ),
+        middleware: battlelogHttpMiddleware,
       },
     ).pipe(
       Layer.provide(
@@ -491,7 +494,7 @@ export const makeBattlelogTestBoundary = (
       ),
       Layer.provide(HttpServer.layerServices),
     ),
-    { disableLogger: true },
+    { disableLogger: true, middleware: battlelogHttpMiddleware },
   );
   return {
     dispose: boundary.dispose,

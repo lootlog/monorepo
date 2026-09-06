@@ -173,7 +173,7 @@ export const GuildsSelector: FC = () => {
             axis="y"
             values={guildList}
             onReorder={handleReorder}
-            className="flex flex-col gap-0.5 py-2"
+            className="flex flex-col gap-0.5 pt-1 pb-2"
             as="div"
           >
             {guildList.map((guild, index) => (

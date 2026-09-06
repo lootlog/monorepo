@@ -1,4 +1,5 @@
 import { Link, useLocation, type LinkProps } from "@tanstack/react-router";
+import { HorizontalMenu as HorizontalMenuRoot } from "@lootlog/ui/components/horizontal-menu";
 import { cn } from "cn";
 
 type NavElement = {
@@ -33,36 +34,34 @@ export const HorizontalMenu = ({
   }, null);
 
   return (
-    <nav
+    <HorizontalMenuRoot
       aria-label={ariaLabel}
       className={cn("min-w-0 shrink-0 p-3", className)}
     >
-      <ul className="flex min-w-0 flex-wrap gap-1 rounded-lg bg-card p-1">
-        {items.map((item) => {
-          const url = `${basePath}${item.href}`;
-          const active =
-            activeId === undefined ? url === activeUrl : item.id === activeId;
-          return (
-            <li key={item.id} className="min-w-0 max-w-full">
-              <Link
-                to={url}
-                search={item.search}
-                preload="intent"
-                activeOptions={{ exact: true }}
-                aria-current={active ? "page" : undefined}
-                className={cn(
-                  "block rounded-md px-4 py-3 text-sm font-medium break-words outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
-                  active
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                )}
-              >
-                {item.label}
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
+      {items.map((item) => {
+        const url = `${basePath}${item.href}`;
+        const active =
+          activeId === undefined ? url === activeUrl : item.id === activeId;
+        return (
+          <li key={item.id} className="min-w-0 max-w-full">
+            <Link
+              to={url}
+              search={item.search}
+              preload="intent"
+              activeOptions={{ exact: true }}
+              aria-current={active ? "page" : undefined}
+              className={cn(
+                "block text-sm font-medium break-words outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
+                active
+                  ? "text-primary-foreground"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
+              )}
+            >
+              {item.label}
+            </Link>
+          </li>
+        );
+      })}
+    </HorizontalMenuRoot>
   );
 };
