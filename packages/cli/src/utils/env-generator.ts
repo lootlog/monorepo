@@ -58,6 +58,7 @@ const APP_DATABASES: Record<string, LocalDatabaseName> = {
 };
 
 const SHARED_KEYS = [
+  "ACTIVITY_EVENT_SIGNATURE_SECRET",
   "USERS_DB_USER",
   "USERS_DB_PASSWORD",
   "USERS_DB_NAME",
@@ -158,6 +159,10 @@ export const generateEnvValues = (
       variable.value,
       sharedValues,
     );
+
+    if (SHARED_KEY_SET.has(variable.key)) {
+      sharedValues.set(variable.key, generatedValue);
+    }
 
     return {
       ...variable,

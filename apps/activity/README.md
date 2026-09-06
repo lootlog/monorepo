@@ -2,6 +2,12 @@
 
 The service owns Organization activity logs and private confirmed game online history. The histories have separate persistence and retention policies. Neither the Organization log permissions nor member removal grant access to, or delete, private account-wide history.
 
+## Activity event recovery
+
+Gateway and Activity must use the same `ACTIVITY_EVENT_SIGNATURE_SECRET`, including locally. A mismatch rejects every signed activity event before persistence. Restart both processes after changing their environment files.
+
+The activity and member-removal DLQs retain failed messages for manual recovery; Activity does not consume them at startup. Warnings are emitted when a message is sent to a DLQ and include its rejection reason and retry count, without payloads or secrets. Inspect the DLQ headers, resolve the cause, and replay only trusted events. Messages previously ACKed by the old log-only DLQ consumer are no longer retained in RabbitMQ.
+
 ## Online history contract
 
 `GET /users/@me/activity/online?from=YYYY-MM-DD&to=YYYY-MM-DD` accepts an inclusive range of 1–112 valid calendar dates. The edge's authenticated `x-auth-user-id` determines the internal User. There is no request parameter for selecting another User, Discord identity, Organization or world. Keep this service behind the existing forward-auth boundary; do not expose a bypass accepting client-provided identity headers.

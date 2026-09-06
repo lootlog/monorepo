@@ -133,7 +133,10 @@ const promptForValues = async (
   return updatedVariables;
 };
 
-export const generate = async (args: string[]): Promise<void> => {
+export const generate = async (
+  args: string[],
+  rootPath: string = ROOT_PATH,
+): Promise<void> => {
   if (args.includes("--help") || args.includes("-h")) {
     console.log(`
 ${chalk.bold("env generate - Generate environment files")}
@@ -156,7 +159,7 @@ ${chalk.bold("Examples:")}
 
 ${chalk.bold("Note:")}
   The CLI automatically discovers all .env.example files in the monorepo.
-  Shared values (database credentials, RabbitMQ, Redis) are generated once
+  Shared values (database credentials, RabbitMQ, Redis, activity signing) are generated once
   and reused across all services.
     `);
     return;
@@ -172,11 +175,28 @@ ${chalk.bold("Note:")}
   console.log(chalk.gray(`Force overwrite: ${options.force}\n`));
 
   console.log(chalk.gray("Discovering .env.example files...\n"));
-  const envFiles = await discoverEnvFiles(ROOT_PATH);
+  const envFiles = await discoverEnvFiles(rootPath);
 
   console.log(chalk.gray(`Found ${envFiles.length} environment files:\n`));
 
   let sharedValues = new Map<string, string>();
+  if (options.auto && (!options.force || options.skipExisting)) {
+    const signatureKey = "ACTIVITY_EVENT_SIGNATURE_SECRET";
+    for (const envFile of envFiles) {
+      if (!existsSync(envFile.path)) continue;
+      const value = extractSharedValues(
+        parseEnvFile(readEnvFile(envFile.path)),
+      ).get(signatureKey);
+      if (value === undefined) continue;
+      const previous = sharedValues.get(signatureKey);
+      if (!value || (previous !== undefined && previous !== value)) {
+        throw new Error(
+          `Invalid or inconsistent ${signatureKey} in existing .env files. Align the root, apps/gateway and apps/activity values or regenerate all files with --force.`,
+        );
+      }
+      sharedValues.set(signatureKey, value);
+    }
+  }
   let createdCount = 0;
   let skippedCount = 0;
   const rootEnvFile = envFiles.find((envFile) => envFile.name === "root");
@@ -199,7 +219,10 @@ ${chalk.bold("Note:")}
       skippedCount++;
     }
 
-    sharedValues = extractSharedValues(rootResult.variables);
+    sharedValues = new Map([
+      ...sharedValues,
+      ...extractSharedValues(rootResult.variables),
+    ]);
 
     console.log(
       chalk.gray(
