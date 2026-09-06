@@ -68,8 +68,8 @@ afterEach(() => {
 });
 
 it.each([
-  ["development", "lootlog.realtime.json.v1"],
-  ["production-local", "lootlog.realtime.json.v1"],
+  ["development", "lootlog.realtime.v1"],
+  ["production-local", "lootlog.realtime.v1"],
   ["production", "lootlog.realtime.v1"],
 ])("joins and stays connected in %s", async (mode, protocol) => {
   vi.stubEnv("MODE", mode);
