@@ -91,6 +91,13 @@ bun run db:battlelog:push
 bun run dev
 ```
 
+The environment generator shares `ACTIVITY_EVENT_SIGNATURE_SECRET` between the
+Gateway publisher and Activity consumer. With `--skip-existing`, it reuses the
+secret from existing files and leaves those files unchanged. If existing secrets
+differ, align the value in the root, Gateway, and Activity `.env` files before
+running the generator again. `--force` regenerates all environment files,
+including credentials and manually configured values.
+
 `docker-compose.yml` starts local infrastructure: four PostgreSQL-compatible
 databases, RabbitMQ, Redis, Meilisearch, and Traefik. It is not a supported
 production deployment.
