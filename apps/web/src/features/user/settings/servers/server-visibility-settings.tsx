@@ -1,5 +1,4 @@
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { PageHeader } from "@/components/common/page-header";
+import { AnimatedToggleGroup } from "@/components/ui/animated-toggle-group";
 import { orderGuilds } from "@lootlog/domain/guild-preferences";
 import { filterGuildsByVisibility } from "@/features/user/settings/servers/server-visibility";
 import {
@@ -17,7 +16,7 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { Switch } from "@lootlog/ui/components/switch";
 import { useUsersControllerGetCurrentUserGuilds } from "@lootlog/client/main";
-import { EyeOff, RotateCcw, Server } from "lucide-react";
+import { Eye, EyeOff, RotateCcw, Server } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { SearchInput } from "@/components/ui/search-input";
@@ -91,24 +90,13 @@ export const ServerVisibilitySettings = () => {
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
+      <h1 className="sr-only">{t("settings.servers.title")}</h1>
       <ScrollArea className="min-h-0 flex-1">
         <div className="flex flex-col gap-4 px-3 pb-3">
-          <PageHeader
-            icon={Server}
-            title={t("settings.servers.title")}
-            description={t("settings.servers.description")}
-            status={
-              <span
-                aria-live="polite"
-                className="shrink-0 text-xs text-muted-foreground"
-              >
-                {updatePreferences.isPending
-                  ? t("settings.servers.saving")
-                  : null}
-                {isSaved ? t("settings.servers.saved") : null}
-              </span>
-            }
-          />
+          <span aria-live="polite" className="sr-only">
+            {updatePreferences.isPending ? t("settings.servers.saving") : null}
+            {isSaved ? t("settings.servers.saved") : null}
+          </span>
 
           {isLoading ? (
             <SectionCard className="flex h-64 items-center justify-center bg-card">
@@ -151,69 +139,69 @@ export const ServerVisibilitySettings = () => {
 
           {showGuilds ? (
             <SectionCard className="gap-0 overflow-hidden border-border bg-card p-0">
-              <SectionCardHeader
-                title={t("settings.servers.title")}
-                actions={
-                  <div className="flex flex-col gap-3 ">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <SearchInput
-                        value={query}
-                        onChange={(event) => setQuery(event.target.value)}
-                        placeholder={t("settings.servers.searchPlaceholder")}
-                        className="h-9"
-                        wrapperClassName="min-w-0 flex-1"
-                      />
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="w-full justify-center sm:w-auto"
-                        disabled={
-                          hiddenCount === 0 || updatePreferences.isPending
-                        }
-                        loading={isShowingAll}
-                        onClick={() => {
-                          setIsShowingAll(true);
-                          updatePreferences.mutate(
-                            {
-                              hiddenGuildIds: hiddenGuildIds.filter(
-                                (hiddenGuildId) =>
-                                  !accessibleGuildIdSet.has(hiddenGuildId),
-                              ),
-                            },
-                            { onSettled: () => setIsShowingAll(false) },
-                          );
-                        }}
-                      >
-                        {t("settings.servers.showAll")}
-                      </Button>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      {(["all", "visible", "hidden"] as const).map((filter) => (
-                        <Button
-                          key={filter}
-                          size="sm"
-                          variant={
-                            visibilityFilter === filter ? "secondary" : "ghost"
-                          }
-                          aria-pressed={visibilityFilter === filter}
-                          onClick={() => setVisibilityFilter(filter)}
-                        >
-                          {t(`settings.servers.filters.${filter}`)}
-                        </Button>
-                      ))}
-                      <span className="ml-auto text-xs text-muted-foreground">
-                        {t("settings.servers.visibleCount", {
-                          count: visibleCount,
-                        })}
-                        {" · "}
-                        {t("settings.servers.hiddenCount", {
-                          count: hiddenCount,
-                        })}
-                      </span>
-                    </div>
+              <header className="flex flex-col gap-4 border-b border-border p-3 sm:p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="min-w-0 space-y-1">
+                    <h2 className="text-sm font-semibold">
+                      {t("settings.servers.title")}
+                    </h2>
+                    <p className="text-xs tabular-nums text-muted-foreground">
+                      {t("settings.servers.visibleCount", {
+                        count: visibleCount,
+                      })}
+                      {" · "}
+                      {t("settings.servers.hiddenCount", {
+                        count: hiddenCount,
+                      })}
+                    </p>
                   </div>
-                }
-              />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="shrink-0"
+                    icon={<Eye className="size-3.5" />}
+                    disabled={hiddenCount === 0 || updatePreferences.isPending}
+                    loading={isShowingAll}
+                    onClick={() => {
+                      setIsShowingAll(true);
+                      updatePreferences.mutate(
+                        {
+                          hiddenGuildIds: hiddenGuildIds.filter(
+                            (hiddenGuildId) =>
+                              !accessibleGuildIdSet.has(hiddenGuildId),
+                          ),
+                        },
+                        { onSettled: () => setIsShowingAll(false) },
+                      );
+                    }}
+                  >
+                    {t("settings.servers.showAll")}
+                  </Button>
+                </div>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <SearchInput
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder={t("settings.servers.searchPlaceholder")}
+                    aria-label={t("settings.servers.searchPlaceholder")}
+                    className="h-9"
+                    wrapperClassName="min-w-0 flex-1"
+                  />
+                  <AnimatedToggleGroup
+                    label={t("settings.servers.title")}
+                    value={visibilityFilter}
+                    onValueChange={setVisibilityFilter}
+                    compact
+                    className="w-full shrink-0 sm:w-auto"
+                    options={(["all", "visible", "hidden"] as const).map(
+                      (filter) => ({
+                        value: filter,
+                        label: t(`settings.servers.filters.${filter}`),
+                      }),
+                    )}
+                  />
+                </div>
+              </header>
 
               {updatePreferences.isError || isRetrying ? (
                 <div

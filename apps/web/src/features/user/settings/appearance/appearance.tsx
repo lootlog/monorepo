@@ -1,8 +1,6 @@
-import { PageHeader } from "@/components/common/page-header";
 import { useEffect, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearch } from "@tanstack/react-router";
-import { Palette } from "lucide-react";
 import { useTheme } from "@/hooks/context/use-theme";
 import { ThemeCard } from "@lootlog/ui/components/theme-card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -28,12 +26,7 @@ export const AppearanceSettings: FC = () => {
   return (
     <ScrollArea className="h-full">
       <div className="px-3 pb-3 flex flex-col gap-4">
-        <PageHeader
-          icon={Palette}
-          title={t("settings.appearance.title")}
-          description={t("settings.appearance.description")}
-        />
-
+        <h1 className="sr-only">{t("settings.appearance.title")}</h1>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {THEME_CATALOG.map((themeOption) => (
             <ThemeCard

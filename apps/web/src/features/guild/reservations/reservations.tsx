@@ -1,5 +1,5 @@
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { PageHeader } from "@/components/common/page-header";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import { useState } from "react";
 import { useLocalStorage } from "usehooks-ts";
 import { useQueryClient } from "@tanstack/react-query";
@@ -115,9 +115,10 @@ export function Reservations() {
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
+      <h1 className="sr-only">{t("layout.navigation.reservations")}</h1>
       <div className="space-y-2 px-3 pt-3">
-        <PageHeader title={t("layout.navigation.reservations")}>
-          <SectionCardContent>
+        <SectionCard className="rounded-xl">
+          <SectionCardContent className="p-2">
             <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2    xl:grid-cols-[minmax(14rem,1fr)_auto_auto]">
               <SearchInput
                 value={searchValue}
@@ -141,7 +142,7 @@ export function Reservations() {
               />
             </div>
           </SectionCardContent>
-        </PageHeader>
+        </SectionCard>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col pt-3">

@@ -1,5 +1,5 @@
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { PageHeader } from "@/components/common/page-header";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import { Button } from "@lootlog/ui/components/button";
 import { Kbd } from "@lootlog/ui/components/kbd";
 import { AnimatePresence, motion } from "framer-motion";
@@ -76,8 +76,8 @@ export const LootFiltersHeader = ({
   return (
     <>
       {showWorldControls && (
-        <PageHeader title={t("layout.navigation.lootlog")}>
-          <SectionCardContent>
+        <SectionCard className="rounded-xl">
+          <SectionCardContent className="p-2">
             <div
               className={cn(
                 "flex items-center gap-2",
@@ -169,7 +169,7 @@ export const LootFiltersHeader = ({
                         size="icon"
                         aria-label={t("loots.header.mobileFiltersTitle")}
                         aria-expanded={isFiltersOpen}
-                        className="relative shrink-0 h-8 w-8"
+                        className="relative size-9 shrink-0"
                       >
                         <Filter className="h-4 w-4" />
                         <AnimatePresence>
@@ -198,7 +198,7 @@ export const LootFiltersHeader = ({
               )}
             </div>
           </SectionCardContent>
-        </PageHeader>
+        </SectionCard>
       )}
 
       <LootSearchCommand open={isCommandOpen} onOpenChange={setIsCommandOpen} />

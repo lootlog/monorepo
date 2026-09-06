@@ -45,61 +45,64 @@ export function MyReservationListItem({
 
   return (
     <li className="group flex min-w-0 items-stretch border-b transition-colors last:border-b-0 hover:bg-muted/40 focus-within:bg-muted/40">
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <Link
-              to={reservation.sourceOrganization.calendarPath}
-              className="flex min-w-0 flex-1 items-center gap-2 px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-              aria-label={t("reservations.my.open", {
-                spot: reservation.spotName,
-              })}
-            />
-          }
-        >
-          <Avatar className="size-9" aria-hidden>
-            <AvatarImage src={organizationIconUrl ?? undefined} alt="" />
-            <AvatarFallback className="text-sm font-semibold">
-              {reservation.sourceOrganization.name.charAt(0).toUpperCase() ||
-                "?"}
-            </AvatarFallback>
-          </Avatar>
-          <div className="min-w-0 flex-1">
-            <div className="flex min-w-0 items-center gap-2">
-              <span className="truncate text-sm font-semibold transition-colors group-hover:text-primary">
-                {reservation.spotName}
-              </span>
-            </div>
-            <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-              <span className="truncate text-xs text-muted-foreground">
-                {format(new Date(reservation.startsAt), "EEE, d MMM, HH:mm", {
-                  locale: pl,
-                })}
-                {" – "}
-                {format(new Date(reservation.endsAt), "HH:mm", { locale: pl })}
-              </span>
-              {reservation.reminderMinutesBefore !== null && (
-                <Badge
-                  variant="secondary"
-                  className="h-5 gap-1 rounded-md px-1.5 text-[10px] font-medium normal-case tracking-normal shadow-none"
-                >
-                  <Bell className="size-3" />
-                  <span>
-                    {t(
-                      `reservations.reminders.${reservation.reminderMinutesBefore}`,
-                    )}
-                  </span>
-                </Badge>
-              )}
-            </div>
+      <Link
+        to={reservation.sourceOrganization.calendarPath}
+        className="flex min-w-0 flex-1 items-center gap-2 px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+        aria-label={`${t("reservations.my.open", { spot: reservation.spotName })} — ${reservation.sourceOrganization.name}`}
+      >
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <span
+                className="shrink-0 rounded-xl"
+                aria-label={reservation.sourceOrganization.name}
+              />
+            }
+          >
+            <Avatar className="size-9" aria-hidden>
+              <AvatarImage src={organizationIconUrl ?? undefined} alt="" />
+              <AvatarFallback className="text-sm font-semibold">
+                {reservation.sourceOrganization.name.charAt(0).toUpperCase() ||
+                  "?"}
+              </AvatarFallback>
+            </Avatar>
+          </TooltipTrigger>
+          <TooltipContent>{reservation.sourceOrganization.name}</TooltipContent>
+        </Tooltip>
+        <div className="min-w-0 flex-1">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="truncate text-sm font-semibold transition-colors group-hover:text-primary">
+              {reservation.spotName}
+            </span>
           </div>
-          <ChevronRight
-            aria-hidden
-            className="size-4 shrink-0 text-muted-foreground transition-[color,transform] group-hover:translate-x-0.5 group-hover:text-primary"
-          />
-        </TooltipTrigger>
-        <TooltipContent>{reservation.sourceOrganization.name}</TooltipContent>
-      </Tooltip>
+          <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="truncate text-xs text-muted-foreground">
+              {format(new Date(reservation.startsAt), "EEE, d MMM, HH:mm", {
+                locale: pl,
+              })}
+              {" – "}
+              {format(new Date(reservation.endsAt), "HH:mm", { locale: pl })}
+            </span>
+            {reservation.reminderMinutesBefore !== null && (
+              <Badge
+                variant="secondary"
+                className="h-5 gap-1 rounded-md px-1.5 text-[10px] font-medium normal-case tracking-normal shadow-none"
+              >
+                <Bell className="size-3" />
+                <span>
+                  {t(
+                    `reservations.reminders.${reservation.reminderMinutesBefore}`,
+                  )}
+                </span>
+              </Badge>
+            )}
+          </div>
+        </div>
+        <ChevronRight
+          aria-hidden
+          className="size-4 shrink-0 text-muted-foreground transition-[color,transform] group-hover:translate-x-0.5 group-hover:text-primary"
+        />
+      </Link>
       {((showEdit && reservation.canEdit) ||
         (showCancel && reservation.canCancel)) && (
         <div className="flex shrink-0 items-center gap-0.5 pr-2">
@@ -138,7 +141,7 @@ export function MyReservationListItem({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="size-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                    className="size-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
                     loading={cancelPending}
                     disabled={cancelDisabled}
                     onClick={onCancel}

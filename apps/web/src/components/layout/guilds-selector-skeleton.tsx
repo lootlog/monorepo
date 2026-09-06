@@ -15,7 +15,7 @@ export const GuildsSelectorSkeleton: FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25, delay: i * 0.05, ease: "easeOut" }}
         >
-          <Skeleton className="size-11 rounded-lg" />
+          <Skeleton className="size-11 rounded-xl" />
         </motion.div>
       ))}
     </div>

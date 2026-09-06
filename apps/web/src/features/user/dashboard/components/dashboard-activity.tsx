@@ -1,4 +1,5 @@
 import { DashboardActivitySkeleton } from "./dashboard-activity-skeleton";
+import { useLocalStorage } from "usehooks-ts";
 import { Activity } from "lucide-react";
 import { useState, type CSSProperties } from "react";
 import "./dashboard-activity.css";
@@ -18,7 +19,11 @@ import { StatisticsQueryState } from "@/features/user/statistics/statistics-quer
 
 export function DashboardActivity() {
   const { t } = useTranslation();
-  const [mode, setMode] = useState<"online" | "kills">("online");
+  const [storedMode, setMode] = useLocalStorage<string>(
+    "lootlog:dashboard:activity-mode",
+    "online",
+  );
+  const mode = storedMode === "kills" ? "kills" : "online";
   const [range] = useState(() => calendarRange(new Date(), 112));
   const calendarStyle: CSSProperties & { "--activity-weeks": number } = {
     containerType: "inline-size",

@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, expect, it, vi } from "vitest";
+import { Storage as MemoryStorage } from "happy-dom";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import "@/i18n/config";
 import { DashboardActivity } from "./dashboard-activity";
 const mocks = vi.hoisted(() => ({ online: vi.fn(), kills: vi.fn() }));
@@ -10,7 +11,11 @@ vi.mock("@lootlog/client/main", () => ({
 vi.mock("@lootlog/client/activity", () => ({
   useUsersActivityControllerGetOnline: mocks.online,
 }));
+beforeEach(() => {
+  vi.stubGlobal("localStorage", new MemoryStorage());
+});
 afterEach(() => {
+  vi.unstubAllGlobals();
   cleanup();
   vi.useRealTimers();
 });
@@ -176,4 +181,24 @@ it("passes each day's source worlds independently in both activity tabs", () => 
       .getByRole("button", { name: /2 września/ })
       .getAttribute("aria-label"),
   ).not.toContain("Światy:");
+});
+
+it("restores the selected activity mode after remounting", () => {
+  const query = {
+    isPending: true,
+    isError: false,
+    isFetching: false,
+    data: undefined,
+    refetch: vi.fn(),
+  };
+  mocks.online.mockReturnValue(query);
+  mocks.kills.mockReturnValue(query);
+  const view = render(<DashboardActivity />);
+  fireEvent.click(screen.getByRole("button", { name: "Bicia" }));
+  view.unmount();
+  render(<DashboardActivity />);
+  expect(
+    screen.getByRole("button", { name: "Bicia" }).getAttribute("aria-pressed"),
+  ).toBe("true");
+  expect(mocks.kills.mock.lastCall?.[1].query.enabled).toBe(true);
 });

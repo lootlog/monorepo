@@ -1,5 +1,9 @@
 import { Clock, Effect, FiberSet, Metric } from "effect";
-import { HttpMiddleware, HttpServerRequest } from "effect/unstable/http";
+import {
+  HttpMiddleware,
+  HttpServerError,
+  HttpServerRequest,
+} from "effect/unstable/http";
 
 const durationBoundaries = [
   5, 10, 25, 50, 100, 250, 500, 1_000, 2_500, 5_000, 10_000,
@@ -64,13 +68,17 @@ export const httpServerMetrics = HttpMiddleware.make((httpApp) =>
       yield* HttpMiddleware.withLoggerDisabled(Effect.void);
     }
     const startedAt = yield* Clock.currentTimeMillis;
-    const response = yield* httpApp;
-    const completedAt = yield* Clock.currentTimeMillis;
-    yield* recordHttpServerMetrics({
-      method: request.method,
-      status: response.status,
-      durationMilliseconds: completedAt - startedAt,
-    });
-    return response;
+    return yield* httpApp.pipe(
+      Effect.onExit((exit) =>
+        Effect.gen(function* () {
+          const completedAt = yield* Clock.currentTimeMillis;
+          yield* recordHttpServerMetrics({
+            method: request.method,
+            status: HttpServerError.exitResponse(exit).status,
+            durationMilliseconds: completedAt - startedAt,
+          });
+        }),
+      ),
+    );
   }),
 );

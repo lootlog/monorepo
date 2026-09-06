@@ -36,11 +36,11 @@ export const LiveFeedOrganizations = ({ organizations }: Props) => {
                     guildId: organization.vanityUrl ?? organization.id,
                   }}
                   aria-label={organization.name}
-                  className="size-8 shrink-0 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  className="size-8 shrink-0 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 />
               }
             >
-              <Avatar className="size-8" aria-hidden>
+              <Avatar className="size-8 rounded-xl" aria-hidden>
                 <AvatarImage
                   src={
                     guilds?.find((guild) => guild.id === organization.id)
@@ -48,7 +48,7 @@ export const LiveFeedOrganizations = ({ organizations }: Props) => {
                   }
                   alt=""
                 />
-                <AvatarFallback className="text-xs font-medium">
+                <AvatarFallback className="rounded-none text-xs font-medium">
                   {organization.name.charAt(0).toUpperCase() || "?"}
                 </AvatarFallback>
               </Avatar>

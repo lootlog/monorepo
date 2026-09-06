@@ -5,7 +5,7 @@ import { cn } from "cn";
 import { ArrowUp, Pause, Play, Radio } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { LiveFeedSkeleton } from "./live-feed-skeleton";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
@@ -41,7 +41,7 @@ export function DashboardLiveFeed() {
     scroller.current?.scrollTo({ top: 0, behavior: "auto" });
   };
   return (
-    <SectionCard className="@container/feed h-[36rem] min-w-0 overflow-hidden @3xl/dashboard:h-full @3xl/dashboard:min-h-0">
+    <SectionCard className="@container/feed h-[36rem] min-w-0 overflow-hidden @3xl/dashboard:h-full @3xl/dashboard:min-h-0 @3xl/dashboard:col-start-1 @3xl/dashboard:row-start-1">
       <SectionCardHeader
         className="shrink-0"
         icon={Radio}
@@ -116,18 +116,7 @@ export function DashboardLiveFeed() {
         <div className="flex min-h-full flex-col">
           <div ref={top} className="h-px shrink-0" aria-hidden />
           {items === undefined ? (
-            !state.isError &&
-            !paused && (
-              <div
-                role="status"
-                aria-label={t("common.loading")}
-                className="space-y-3 p-3"
-              >
-                {Array.from({ length: 4 }, (_, index) => (
-                  <Skeleton key={index} className="h-16 w-full" />
-                ))}
-              </div>
-            )
+            !state.isError && !paused && <LiveFeedSkeleton />
           ) : (
             <>
               {items.length === 0 && !state.isError && (
