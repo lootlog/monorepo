@@ -1,16 +1,8 @@
-import { LootItemResponseDtoProfItem } from "@lootlog/client/main";
-import { NpcType } from "@lootlog/client/main";
+import { LootItemResponseDtoProfItem, NpcType } from "@lootlog/client/main";
 import { ItemRarity } from "@/lib/loots/loot-types";
 import { useTranslation } from "react-i18next";
 
-const PROFESSION_TRANSLATION_KEYS = {
-  [LootItemResponseDtoProfItem.BLADE_DANCER]: "b",
-  [LootItemResponseDtoProfItem.HUNTER]: "h",
-  [LootItemResponseDtoProfItem.MAGE]: "m",
-  [LootItemResponseDtoProfItem.PALADIN]: "p",
-  [LootItemResponseDtoProfItem.TRACKER]: "t",
-  [LootItemResponseDtoProfItem.WARRIOR]: "w",
-};
+import { getShortnameByProf } from "@lootlog/domain/profession";
 
 type LootQuickFilter = {
   id: string;
@@ -52,7 +44,7 @@ export function useLootFilterOptions() {
     LootItemResponseDtoProfItem.TRACKER,
   ].map((profession) => ({
     value: profession,
-    label: t(`professions.${PROFESSION_TRANSLATION_KEYS[profession]}`),
+    label: t(`professions.${getShortnameByProf(profession)}`),
   }));
 
   const defaultQuickFilters: LootQuickFilter[] = [

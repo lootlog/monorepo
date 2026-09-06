@@ -10,6 +10,7 @@ const loot = {
   location: "Map",
   items: [],
   players: [],
+  mapPlayersSnapshot: null,
   npcs: [],
   lootShare: {},
   createdAt: "2026-01-01T00:00:00Z",

@@ -1,3 +1,4 @@
+import { MapPlayersSnapshot } from "#src/contracts/loots/map-players-snapshot";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { Permission } from "@lootlog/schema/permissions";
 import { Effect, Schema } from "effect";
@@ -60,6 +61,9 @@ const mapLoot = (guildId: string, loot: LootQueryRecord): LootQueryResult => ({
   world: loot.world,
   source: loot.source,
   location: loot.location,
+  mapPlayersSnapshot: Schema.decodeUnknownSync(
+    Schema.NullOr(MapPlayersSnapshot),
+  )(loot.mapPlayersSnapshot),
   lootShare: Object.fromEntries(
     Object.entries(
       Schema.decodeUnknownSync(LootShareResponse)(loot.lootShare),

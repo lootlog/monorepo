@@ -33,7 +33,7 @@ import {
   userCharactersLootlogSettingsTable,
 } from "#src/database/drizzle/schema";
 import { getSyntheticNpcId } from "#src/events/kills/get-synthetic-npc-id";
-import { getProfByShortname } from "#src/shared/margonem/profession";
+import { getProfByShortname } from "@lootlog/domain/profession";
 import {
   InvalidRequestError,
   ResourceConflictError,

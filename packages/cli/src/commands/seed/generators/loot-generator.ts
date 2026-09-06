@@ -6,10 +6,8 @@ import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import { NpcTypeEnum } from "@lootlog/schema/npc-type";
 import { SCRAPER_CONFIG, SEED_CONFIG } from "../config.js";
 import type { GeneratedPlayer } from "./players-generator.js";
-import {
-  getProfByShortname,
-  type Profession,
-} from "../utils/get-prof-by-shortname.js";
+import { getProfByShortname } from "@lootlog/domain/profession";
+import type { ProfessionEnum as Profession } from "@lootlog/schema/loot";
 
 interface NpcData {
   id: number;
@@ -196,7 +194,7 @@ export class LootGenerator {
       id: `${player.characterId}${player.originalId}`,
       name: player.name,
       lvl: player.lvl,
-      prof: getProfByShortname(player.prof),
+      prof: getProfByShortname(player.prof) ?? "WARRIOR",
       icon: player.icon,
       characterId: player.characterId,
       accountId: String(player.originalId),
@@ -227,7 +225,7 @@ export class LootGenerator {
           lvl: npc.lvl,
           icon: npc.icon,
           name: npc.name,
-          prof: getProfByShortname(npc.prof),
+          prof: getProfByShortname(npc.prof) ?? "WARRIOR",
           type: getNpcTypeByWt(NpcTypeEnum, npc.wt, npc.prof, npc.type),
           location,
           margonemType: npc.type,

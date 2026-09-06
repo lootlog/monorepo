@@ -1,3 +1,9 @@
+import {
+  captureLootMapPlayers,
+  mapPlayersToSnapshotInputs,
+} from "./loot-map-players.persistence.js";
+import { resolvePlayerSnapshots } from "#src/shared/margonem/player-snapshot.persistence";
+import type { MapPlayersSnapshot } from "#src/contracts/loots/map-players-snapshot";
 import { activeGuildMemberJoin } from "#src/members/member-access-query";
 import { DependencyUnavailableError } from "#src/shared/http/http-errors";
 import {
@@ -28,7 +34,6 @@ import {
   memberToRoleTable,
   npcSnapshotTable,
   organizationLootRecordTable,
-  playerSnapshotTable,
   roleTable,
   userCharactersLootlogSettingsTable,
 } from "#src/database/drizzle/schema";
@@ -50,6 +55,7 @@ export type PersistedLootSubmission = {
 };
 
 export type NewLootPersistence = {
+  mapPlayersSnapshot: MapPlayersSnapshot | null;
   uniqueId: string;
   world: string;
   source: LootSource;
@@ -74,7 +80,7 @@ export type NewLootPersistence = {
     characterId: number;
     snapshotHash: string;
     name: string;
-    prof: Profession;
+    prof: Profession | null;
     icon: string;
     lvl: number;
   }>;
@@ -137,6 +143,7 @@ export interface LootSubmissionAcceptancePersistence {
     lootId: number,
     submissions: PersistedLootSubmission[],
     publications: (organizationIds: string[]) => LootPublication[],
+    mapPlayersSnapshot?: { guildIds: string[]; players: MapPlayersSnapshot },
   ) => Effect.Effect<
     Array<{ id: number; guildId: string; archivedAt: Date | null }>,
     unknown
@@ -311,8 +318,15 @@ export const makeLootSubmissionAcceptancePersistence = (
     );
   },
 
-  appendSubmissions: (lootId, submissions, publications) => {
-    const guildIds = [...new Set(submissions.map(({ guildId }) => guildId))];
+  appendSubmissions: (
+    lootId,
+    submissions,
+    publications,
+    mapPlayersSnapshot,
+  ) => {
+    const guildIds = [
+      ...new Set(submissions.map(({ guildId }) => guildId)),
+    ].sort();
     return database.transaction((transaction) =>
       Effect.gen(function* () {
         const now = new Date(yield* Clock.currentTimeMillis);
@@ -349,6 +363,15 @@ export const makeLootSubmissionAcceptancePersistence = (
                     inArray(organizationLootRecordTable.guildId, guildIds),
                   ),
                 );
+        const snapshotGuildIds = mapPlayersSnapshot
+          ? yield* captureLootMapPlayers(
+              transaction,
+              lootId,
+              mapPlayersSnapshot.guildIds,
+              mapPlayersSnapshot.players,
+              now,
+            )
+          : [];
         const recordIdByGuildId = new Map(
           records.map((record) => [record.guildId, record.id]),
         );
@@ -378,11 +401,14 @@ export const makeLootSubmissionAcceptancePersistence = (
               ],
             });
         }
-        const intents = publications(
-          records
-            .filter((record) => record.archivedAt === null)
-            .map((record) => record.guildId),
-        );
+        const intents = publications([
+          ...new Set([
+            ...records
+              .filter((record) => record.archivedAt === null)
+              .map((record) => record.guildId),
+            ...snapshotGuildIds,
+          ]),
+        ]);
         if (intents.length > 0) {
           yield* transaction
             .insert(lootPublicationOutboxTable)
@@ -459,54 +485,24 @@ export const makeLootSubmissionAcceptancePersistence = (
           });
         }
 
-        for (const player of data.players) {
-          const inserted = yield* transaction
-            .insert(playerSnapshotTable)
-            .values({
-              world: player.world,
-              accountId: player.accountId,
-              characterId: player.characterId,
-              snapshotHash: player.snapshotHash,
-              name: player.name,
-              prof: player.prof,
-              icon: player.icon,
-            })
-            .onConflictDoNothing({
-              target: [
-                playerSnapshotTable.world,
-                playerSnapshotTable.accountId,
-                playerSnapshotTable.characterId,
-                playerSnapshotTable.snapshotHash,
-              ],
-            })
-            .returning({ id: playerSnapshotTable.id });
-          const existing = inserted[0]
-            ? inserted
-            : yield* transaction
-                .select({ id: playerSnapshotTable.id })
-                .from(playerSnapshotTable)
-                .where(
-                  and(
-                    eq(playerSnapshotTable.world, player.world),
-                    eq(playerSnapshotTable.accountId, player.accountId),
-                    eq(playerSnapshotTable.characterId, player.characterId),
-                    eq(playerSnapshotTable.snapshotHash, player.snapshotHash),
-                  ),
-                )
-                .limit(1);
-          const snapshot = existing[0];
-          if (!snapshot) {
-            return yield* Effect.fail(
-              new DependencyUnavailableError(
-                "Failed to resolve player snapshot",
-              ),
-            );
-          }
-          yield* transaction.insert(lootPlayerTable).values({
-            lootId: loot.id,
-            playerSnapshotId: snapshot.id,
-            lvl: player.lvl,
-          });
+        // Resolve all characters in one sorted batch; overlapping participant/map
+        // batches from concurrent loots must acquire snapshot keys in the same order.
+        const resolvedSnapshots = yield* resolvePlayerSnapshots(transaction, [
+          ...data.players,
+          ...mapPlayersToSnapshotInputs(
+            data.world,
+            data.mapPlayersSnapshot ?? [],
+          ),
+        ]);
+        const playerSnapshots = resolvedSnapshots.slice(0, data.players.length);
+        if (playerSnapshots.length > 0) {
+          yield* transaction.insert(lootPlayerTable).values(
+            playerSnapshots.map((snapshot, index) => ({
+              lootId: loot.id,
+              playerSnapshotId: snapshot.id,
+              lvl: data.players[index]?.lvl,
+            })),
+          );
         }
 
         for (const npc of data.npcs) {
@@ -554,6 +550,15 @@ export const makeLootSubmissionAcceptancePersistence = (
             id: organizationLootRecordTable.id,
             guildId: organizationLootRecordTable.guildId,
           });
+        if (data.mapPlayersSnapshot) {
+          yield* captureLootMapPlayers(
+            transaction,
+            loot.id,
+            records.map(({ guildId }) => guildId),
+            data.mapPlayersSnapshot,
+            now,
+          );
+        }
         const recordIdByGuildId = new Map(
           records.map((record) => [record.guildId, record.id]),
         );

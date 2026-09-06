@@ -375,12 +375,27 @@ describe("API HTTP boundary", () => {
   });
 
   it("creates, reads and deletes a timer through the real router and database", async () => {
+    const actorCharacter = {
+      accountId: "123",
+      characterId: "456",
+      name: "Timer reporter",
+      prof: "w",
+      icon: "reporter.gif",
+      lvl: 80,
+    };
+    const expectedActor = {
+      ...actorCharacter,
+      accountId: 123,
+      characterId: 456,
+      prof: "WARRIOR",
+    };
     const createdResponse = await request(
       `/guilds/${authorizedGuildId}/timers/manual`,
       {
         method: "POST",
         body: JSON.stringify({
           name: "Test boss",
+          actorCharacter,
           minSeconds: 60,
           maxSeconds: 120,
           world,
@@ -404,6 +419,7 @@ describe("API HTTP boundary", () => {
       guildId: authorizedGuildId,
       world,
       npc: { name: "Test boss" },
+      actorCharacter: expectedActor,
     });
     expect(await countTimers()).toBe(1);
 
@@ -412,7 +428,10 @@ describe("API HTTP boundary", () => {
     );
     expect(listedResponse.status).toBe(200);
     expect(await listedResponse.json()).toEqual([
-      expect.objectContaining({ timerKey: created.timerKey }),
+      expect.objectContaining({
+        timerKey: created.timerKey,
+        actorCharacter: expectedActor,
+      }),
     ]);
 
     const deletedResponse = await request(

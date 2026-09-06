@@ -1,7 +1,7 @@
 import { ProfessionEnum as Profession } from "@lootlog/schema/loot";
 import type { LootItemDto } from "#src/loots/query/loot-item";
 import type { LootNpcDto } from "#src/loots/query/loot-npc";
-import { getProfByShortname } from "#src/shared/margonem/profession";
+import { getProfByShortname } from "@lootlog/domain/profession";
 import type {
   itemSnapshotTable,
   playerSnapshotTable,
@@ -37,7 +37,7 @@ const parseRequiredProf = (required?: string | null): Profession[] =>
     ? required
         .split("")
         .map((short) => getProfByShortname(short))
-        .filter(Boolean)
+        .filter((prof) => prof !== undefined)
     : Object.values(Profession);
 
 export const mapItem = (lootItem: LootItemWithSnapshot): LootItemDto => {

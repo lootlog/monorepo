@@ -75,4 +75,33 @@ describe("createLoot", () => {
     expect(action?.payload).toEqual(options);
     expect(action?.requests[0]?.payload).toEqual(options);
   });
+  it("sends map presence without storing it in diagnostic action payloads", async () => {
+    const options: CreateLootOptions = {
+      accountId: "1",
+      characterId: "2",
+      location: "Map",
+      world: "pandora",
+      source: "FIGHT",
+      loots: [],
+      npcs: [],
+      players: [],
+      mapPlayersSnapshot: [
+        {
+          accountId: 1,
+          characterId: 2,
+          name: "Hero",
+          prof: "WARRIOR",
+          icon: null,
+        },
+      ],
+    };
+    post.mockResolvedValue({ id: 1, rejectedGuilds: [], submittedGuilds: [] });
+    await createLoot(options, { attemptId: "snapshot", source: "fight" });
+    expect(post).toHaveBeenCalledWith("/loots", options);
+    const [action] = useLogsStore.getState().actions;
+    expect(action?.payload).not.toHaveProperty("mapPlayersSnapshot");
+    expect(action?.requests[0]?.payload).not.toHaveProperty(
+      "mapPlayersSnapshot",
+    );
+  });
 });
