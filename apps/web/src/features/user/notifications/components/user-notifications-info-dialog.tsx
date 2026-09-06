@@ -1,4 +1,4 @@
-import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { Eye, Gauge, ShieldAlert, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {

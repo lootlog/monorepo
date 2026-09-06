@@ -290,6 +290,7 @@ export const makeKillCreation = (
                       npcName: input.npcName,
                       npcType: input.npcType,
                       npcLvl: input.npcLvl,
+                      npcProf: input.npcProf,
                       npcIcon: input.npcIcon,
                       occurredAt: input.lastKilledAt,
                     }),

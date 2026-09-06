@@ -7,11 +7,16 @@ import type { MyReservationsResponseDtoItemsItem } from "@lootlog/client/main";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@lootlog/ui/components/avatar";
+import { Separator } from "@lootlog/ui/components/separator";
+import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { ReservationOrganizationBadge } from "@/components/reservation-organization-badge";
 import { useReservationOrganizationIcon } from "./use-reservation-organization-icon";
 
 type MyReservationListItemProps = {
@@ -47,15 +52,31 @@ export function MyReservationListItem({
           spot: reservation.spotName,
         })}
       >
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <span
+                tabIndex={0}
+                aria-label={reservation.sourceOrganization.name}
+                className="shrink-0 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              />
+            }
+          >
+            <Avatar className="size-9" aria-hidden>
+              <AvatarImage src={organizationIconUrl ?? undefined} alt="" />
+              <AvatarFallback className="text-sm font-semibold">
+                {reservation.sourceOrganization.name.charAt(0).toUpperCase() ||
+                  "?"}
+              </AvatarFallback>
+            </Avatar>
+          </TooltipTrigger>
+          <TooltipContent>{reservation.sourceOrganization.name}</TooltipContent>
+        </Tooltip>
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-2">
             <span className="truncate text-sm font-semibold transition-colors group-hover:text-primary">
               {reservation.spotName}
             </span>
-            <ReservationOrganizationBadge
-              name={reservation.sourceOrganization.name}
-              iconUrl={organizationIconUrl}
-            />
           </div>
           <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
             <span className="truncate text-xs text-muted-foreground">
@@ -88,6 +109,10 @@ export function MyReservationListItem({
       {((showEdit && reservation.canEdit) ||
         (showCancel && reservation.canCancel)) && (
         <div className="flex shrink-0 items-center gap-0.5 pr-2">
+          <Separator
+            orientation="vertical"
+            className="mr-1 self-center data-[orientation=vertical]:h-8"
+          />
           {showEdit && reservation.canEdit && (
             <Tooltip>
               <TooltipTrigger

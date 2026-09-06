@@ -1,5 +1,5 @@
 import { PageHeader } from "@/components/common/page-header";
-import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { canManageEvent } from "./utils/event-access";
 import { getWindowStatusConfig } from "./utils/window-status-presentation";
 import { useTranslation } from "react-i18next";

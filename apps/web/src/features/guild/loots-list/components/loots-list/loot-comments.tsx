@@ -1,4 +1,4 @@
-import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { Button } from "@lootlog/ui/components/button";
 import { useState, type FC } from "react";
 import { Textarea } from "@lootlog/ui/components/textarea";

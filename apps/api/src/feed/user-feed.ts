@@ -1,3 +1,4 @@
+import { makeLootQueryPersistence } from "#src/loots/query/loot-query.persistence";
 import { UserFeedItem } from "@lootlog/protocol/feed";
 import { createAccessPolicy, Capability } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
@@ -58,41 +59,70 @@ export const userFeedSql = (
   },
 ) => {
   const visible = predicates(scopes, discordId);
+  // Kill creation assigns occurredAt once before Organization fanout. Hash the
+  // complete timestamp multiset so distinct kills in one minute stay separate.
   return sql`
     with kill_groups as (
       select "guildId",world,"npcId",date_trunc('minute',"occurredAt") as minute,
         'kill:'||"guildId"||':'||world||':'||"npcId"||':'||to_char(date_trunc('minute',"occurredAt"),'YYYYMMDDHH24MI') as entry_id,
         max("occurredAt") as occurred_at,count(*)::int as count,
+        'kill:'||world||':'||"npcId"||':'||md5(string_agg(to_char("occurredAt",'YYYY-MM-DD"T"HH24:MI:SS.MS'),',' order by "occurredAt")) as group_key,
         (array_agg("npcName" order by "occurredAt" desc,id desc))[1] as name,
         (array_agg("npcType" order by "occurredAt" desc,id desc))[1]::text as type,
         (array_agg("npcLvl" order by "occurredAt" desc,id desc))[1] as lvl,
-        (array_agg("npcIcon" order by "occurredAt" desc,id desc))[1] as icon
+        (array_agg("npcIcon" order by "occurredAt" desc,id desc))[1] as icon,
+        (array_agg("npcProf" order by "occurredAt" desc,id desc))[1] as prof
       from "GuildKillActivity" where "occurredAt">=${cutoff}::timestamptz at time zone 'UTC' and (${visible.kills}) and ${selection?.lootId !== undefined ? sql`false` : selection?.kill ? sql`world=${selection.kill.world} and "npcId"=${selection.kill.npcId} and "occurredAt">=${selection.kill.minute.toISOString()}::timestamptz at time zone 'UTC' and "occurredAt"<${new Date(selection.kill.minute.getTime() + 60000).toISOString()}::timestamptz at time zone 'UTC'` : sql`true`}
       group by "guildId",world,"npcId",date_trunc('minute',"occurredAt")
-      order by occurred_at desc,entry_id desc limit 20
+      order by occurred_at desc,entry_id desc
     ), visible_loots as (
       select r.id as record_id,'loot:'||r.id as entry_id,r."guildId",l.id as loot_id,l.world,r."createdAt" as occurred_at
       from "OrganizationLootRecord" r join "Loot" l on l.id=r."lootId"
       where r."archivedAt" is null and r."createdAt">=${cutoff}::timestamptz at time zone 'UTC' and (${visible.loots}) and ${selection?.kill ? sql`false` : selection?.lootId !== undefined ? sql`l.id=${selection.lootId}` : sql`true`}
-      order by r."createdAt" desc,entry_id desc limit 20
+      order by r."createdAt" desc,entry_id desc
+    ), group_candidates as (
+      select group_key,occurred_at from kill_groups
+      union all
+      select 'loot:'||loot_id as group_key,occurred_at from visible_loots
+    ), selected_groups as (
+      select group_key,max(occurred_at) as occurred_at from group_candidates
+      group by group_key order by occurred_at desc,group_key desc limit 20
     ), entries as (
       select k.occurred_at,
-        json_build_object('id',k.entry_id,'version',k.count,'type','kill',
+        json_build_object('id',k.entry_id,'groupKey',k.group_key,'version',k.count,'type','kill',
           'occurredAt',to_char(k.occurred_at,'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),'world',k.world,
           'guild',json_build_object('id',g.id,'name',g.name,'vanityUrl',g."vanityUrl"),
-          'npc',json_build_object('id',k."npcId",'name',k.name,'type',k.type,'lvl',k.lvl,'icon',k.icon),'count',k.count) as item
-      from kill_groups k join "Guild" g on g.id=k."guildId"
+          'npc',json_build_object('id',k."npcId",'name',k.name,'type',k.type,'lvl',k.lvl,'icon',k.icon,'prof',k.prof),'count',k.count) as item
+      from kill_groups k join selected_groups s on s.group_key=k.group_key join "Guild" g on g.id=k."guildId"
       union all
       select l.occurred_at,
-        json_build_object('id',l.entry_id,'version',1,'type','loot','lootId',l.loot_id,
+        json_build_object('id',l.entry_id,'groupKey','loot:'||l.loot_id,'version',1,'type','loot','lootId',l.loot_id,
           'occurredAt',to_char(l.occurred_at,'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),'world',l.world,
           'guild',json_build_object('id',g.id,'name',g.name,'vanityUrl',g."vanityUrl"),
-          'npc',(select json_build_object('id',n."npcId",'name',n.name,'type',n.type,'lvl',n.lvl,'icon',n.icon) from "LootNpc" ln join "NpcSnapshot" n on n.id=ln."npcSnapshotId" where ln."lootId"=l.loot_id order by n.lvl desc nulls last,n.id limit 1),
-          'items',coalesce((select json_agg(i) from (select i."itemId" as id,i.name,i.icon,i.rarity from "LootItem" li join "ItemSnapshot" i on i.id=li."itemSnapshotId" where li."lootId"=l.loot_id order by li.id limit 3) i),'[]'::json),
+          'npc',(select json_build_object('id',n."npcId",'name',n.name,'type',n.type,'lvl',n.lvl,'icon',n.icon,'prof',n.prof) from "LootNpc" ln join "NpcSnapshot" n on n.id=ln."npcSnapshotId" where ln."lootId"=l.loot_id order by n.lvl desc nulls last,n.id limit 1),
+          'items',coalesce((select json_agg(i) from (select i."itemId" as id,i.name,i.icon,i.rarity,i."statRaw" as stat,i."itemType" as type,i.lvl from "LootItem" li join "ItemSnapshot" i on i.id=li."itemSnapshotId" where li."lootId"=l.loot_id order by li.id limit 3) i),'[]'::json),
           'additionalItemsCount',greatest(0,(select count(*) from "LootItem" li where li."lootId"=l.loot_id)-3)) as item
-      from visible_loots l join "Guild" g on g.id=l."guildId"
-    ) select item from entries order by occurred_at desc,item->>'id' desc limit 20`;
+      from visible_loots l join selected_groups s on s.group_key='loot:'||l.loot_id join "Guild" g on g.id=l."guildId"
+    ) select item from entries order by occurred_at desc,item->>'id' desc`;
 };
+
+const enrichFeedLoots = Effect.fn("feed.enrich-loots")(function* (
+  database: Pick<typeof ApiDatabase.Service, "select">,
+  items: ReadonlyArray<UserFeedItem>,
+) {
+  const ids = [
+    ...new Set(
+      items.flatMap((item) => (item.type === "loot" ? [item.lootId] : [])),
+    ),
+  ];
+  const summaries =
+    yield* makeLootQueryPersistence(database).readVisibleSummaries(ids);
+  return items.map((item): UserFeedItem => {
+    if (item.type !== "loot") return item;
+    const summary = summaries.get(item.lootId);
+    return summary ? { ...item, summary } : item;
+  });
+});
 
 export const makeUserFeed = (database: typeof ApiDatabase.Service) =>
   Effect.fn("users.feed")(function* (discordId: string) {
@@ -132,7 +162,10 @@ export const makeUserFeed = (database: typeof ApiDatabase.Service) =>
     return {
       generatedAt,
       windowStart,
-      items: decoded.rows.map((row) => row.item),
+      items: yield* enrichFeedLoots(
+        database,
+        decoded.rows.map((row) => row.item),
+      ),
     } satisfies UserFeedResponse;
   });
 
@@ -159,6 +192,9 @@ export const readPublishedFeedEntry = Effect.fn("feed.read-published-entry")(
         rows: Schema.Array(Schema.Struct({ item: UserFeedItem })),
       }),
     )(result);
-    return decoded.rows[0]?.item;
+    return (yield* enrichFeedLoots(
+      database,
+      decoded.rows.map((row) => row.item),
+    ))[0];
   },
 );

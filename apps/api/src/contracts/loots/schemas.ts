@@ -1,3 +1,9 @@
+import {
+  LootItemResponse as LootItem,
+  LootPlayerResponse as LootPlayer,
+  LootNpcResponse as LootNpc,
+  LootShareResponse as LootShare,
+} from "@lootlog/protocol/loot-summary";
 /** Shared input and output schemas for the loots feature. */
 import * as Schema from "effect/Schema";
 import {
@@ -11,42 +17,8 @@ import {
   FiniteNumber,
 } from "@lootlog/schema/http-scalars";
 import { ItemRaritySchema } from "@lootlog/schema/item-rarity";
-import { ProfessionSchema, LootSourceSchema } from "@lootlog/schema/loot";
+import { LootSourceSchema } from "@lootlog/schema/loot";
 import { NpcTypeSchema } from "@lootlog/schema/npc-type";
-
-const LootItem = Schema.Struct({
-  id: FiniteNumber,
-  hid: Schema.String,
-  name: Schema.String,
-  icon: Schema.String,
-  stat: Schema.String,
-  type: Schema.Union([Schema.String, Schema.Null]),
-  rarity: Schema.Union([ItemRaritySchema, Schema.Null]),
-  lvl: FiniteNumber,
-  prof: Schema.Array(ProfessionSchema),
-});
-
-const LootPlayer = Schema.Struct({
-  id: Schema.Union([Schema.String, FiniteNumber]),
-  name: Schema.String,
-  lvl: Schema.Union([FiniteNumber, Schema.Null]),
-  prof: Schema.Union([ProfessionSchema, Schema.Null]),
-  icon: Schema.Union([Schema.String, Schema.Null]),
-  characterId: Schema.Union([FiniteNumber, Schema.Null]),
-  accountId: Schema.Union([FiniteNumber, Schema.Null]),
-  hpp: Schema.Union([FiniteNumber, Schema.Null]),
-});
-
-const LootNpc = Schema.Struct({
-  id: FiniteNumber,
-  name: Schema.String,
-  wt: Schema.Union([FiniteNumber, Schema.Null]),
-  lvl: Schema.Union([FiniteNumber, Schema.Null]),
-  prof: Schema.Union([ProfessionSchema, Schema.Null]),
-  icon: Schema.Union([Schema.String, Schema.Null]),
-  type: Schema.Union([NpcTypeSchema, Schema.Null]),
-  margonemType: Schema.Union([FiniteNumber, Schema.Null]),
-});
 
 const LootSubmission = Schema.Struct({
   guildId: Schema.String,
@@ -68,7 +40,7 @@ const LootRecord = Schema.Struct({
   items: Schema.Array(LootItem),
   players: Schema.Array(LootPlayer),
   npcs: Schema.Array(LootNpc),
-  lootShare: Schema.Record(Schema.String, Schema.Array(Schema.String)),
+  lootShare: LootShare,
   createdAt: DateTimeString,
   updatedAt: DateTimeString,
   submissions: Schema.optionalKey(Schema.Array(LootSubmission)),
@@ -285,10 +257,9 @@ export const UpdateLootShareRequest = Schema.Struct({
 
 export type LootShareResponse = typeof LootShareResponse.Type;
 
-export const LootShareResponse = Schema.Record(
-  Schema.String,
-  Schema.Array(Schema.String),
-).annotate({ identifier: "LootShareResponseDto_Output" });
+export const LootShareResponse = LootShare.annotate({
+  identifier: "LootShareResponseDto_Output",
+});
 
 export type LootOrganizationPath = typeof LootOrganizationPath.Type;
 
