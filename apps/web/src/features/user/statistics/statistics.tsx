@@ -1,3 +1,11 @@
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@lootlog/ui/components/select";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { BarChart3 } from "lucide-react";
@@ -47,27 +55,37 @@ export function Statistics() {
           description={t("statistics.description")}
           actions={
             <div className="flex min-w-0 flex-wrap items-end gap-2">
-              <label className="space-y-1 text-xs">
-                <span className="block text-muted-foreground">
+              <div className="flex flex-col gap-1">
+                <label
+                  htmlFor="statistics-period"
+                  className="text-xs text-muted-foreground"
+                >
                   {t("statistics.period")}
-                </span>
-                <select
+                </label>
+                <Select
                   value={search.days}
-                  className="h-10 rounded-md border bg-background px-3 text-sm"
-                  onChange={(event) => {
-                    const days = STATISTICS_DAYS.find(
-                      (day) => day === Number(event.target.value),
-                    );
-                    if (days) update({ days });
+                  items={STATISTICS_DAYS.map((days) => ({
+                    value: days,
+                    label: t("statistics.days", { count: days }),
+                  }))}
+                  onValueChange={(days) => {
+                    if (days !== null) update({ days });
                   }}
                 >
-                  {STATISTICS_DAYS.map((days) => (
-                    <option key={days} value={days}>
-                      {t("statistics.days", { count: days })}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                  <SelectTrigger id="statistics-period" size="lg">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {STATISTICS_DAYS.map((days) => (
+                        <SelectItem key={days} value={days}>
+                          {t("statistics.days", { count: days })}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-1">
                 <span className="block text-xs text-muted-foreground">
                   {t("statistics.world")}

@@ -50,7 +50,6 @@
   "duration": "{{hours}} godz. {{minutes}} min",
   "onlineUnavailable": "Zbieranie czasu online jeszcze się nie rozpoczęło.",
   "onlineStale": "Zbieranie czasu online jest opóźnione. Ostatnie dni mogą być niepełne.",
-  "coverage": "Dane godzinowe od {{date}}. Starsze bicia: {{count}}.",
   "alignedComparison": "Porównanie obejmuje zakończone godziny obu okresów. Dzisiejszy wykres może zawierać nowsze bicia.",
   "partial": "Niepełny okres",
   "records": "Rekordy w wybranym okresie",
