@@ -26,6 +26,7 @@ export const AppearanceSettings: FC = () => {
   return (
     <ScrollArea className="h-full">
       <div className="px-3 pb-3 flex flex-col gap-4">
+        <h1 className="sr-only">{t("settings.appearance.title")}</h1>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {THEME_CATALOG.map((themeOption) => (
             <ThemeCard

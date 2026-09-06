@@ -92,6 +92,58 @@ describe("HTTP server metrics", () => {
     }
   });
 
+  test("records failed responses and interruptions without changing their status", async () => {
+    const routes = [
+      { path: "/defect", status: 500, effect: Effect.die(new Error("failed")) },
+      {
+        path: "/response",
+        status: 418,
+        effect: Effect.die(HttpServerResponse.empty({ status: 418 })),
+      },
+      { path: "/interrupt", status: 503, effect: Effect.interrupt },
+    ] as const;
+    const boundary = HttpRouter.toWebHandler(
+      Layer.mergeAll(
+        HttpRouter.add("GET", routes[0].path, routes[0].effect),
+        HttpRouter.add("GET", routes[1].path, routes[1].effect),
+        HttpRouter.add("GET", routes[2].path, routes[2].effect),
+      ).pipe(Layer.provide(HttpServer.layerServices)),
+      { disableLogger: true, middleware: httpServerMetrics },
+    );
+    try {
+      await Promise.all(
+        routes.map(async ({ path, status }) => {
+          const attributes = {
+            "http.request.method": "GET",
+            "http.response.status_code": String(status),
+          };
+          const counter = Metric.withAttributes(
+            httpServerRequestCount,
+            attributes,
+          );
+          const histogram = Metric.withAttributes(
+            httpServerDuration,
+            attributes,
+          );
+          const before = await Effect.runPromise(
+            Effect.all([Metric.value(counter), Metric.value(histogram)]),
+          );
+          const response = await boundary.handler(
+            new Request(`http://localhost${path}`),
+          );
+          expect(response.status).toBe(status);
+          const after = await Effect.runPromise(
+            Effect.all([Metric.value(counter), Metric.value(histogram)]),
+          );
+          expect(after[0].count - before[0].count).toBe(1);
+          expect(after[1].count - before[1].count).toBe(1);
+        }),
+      );
+    } finally {
+      await boundary.dispose();
+    }
+  });
+
   test("records request count and duration with bounded HTTP attributes", async () => {
     const attributes = {
       "http.request.method": "GET",

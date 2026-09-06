@@ -88,7 +88,7 @@ export function DashboardKillSummary() {
                   to="/@me/statistics"
                   search={{
                     tab: "overview",
-                    days: 30,
+                    days: period === "7d" ? 7 : 30,
                     world: world ?? undefined,
                   }}
                 />

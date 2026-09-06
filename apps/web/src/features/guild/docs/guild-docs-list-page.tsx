@@ -107,6 +107,7 @@ export const GuildDocsListPage = () => {
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
+      <h1 className="sr-only">{t("docs.list.title")}</h1>
       <div className="px-3 pt-3">
         <SectionCard className="rounded-xl">
           <SectionCardContent className="p-2">

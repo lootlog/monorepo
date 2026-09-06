@@ -142,6 +142,7 @@ export const Events = () => {
 
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4 max-h-full overflow-y-auto [justify-content:safe_center]">
+        <h1 className="sr-only">{t("events.title")}</h1>
         {isForbidden ? (
           <>
             <ShieldX className="w-12 h-12 text-destructive" />
@@ -159,6 +160,7 @@ export const Events = () => {
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
+      <h1 className="sr-only">{t("events.title")}</h1>
       <div className="px-3 pt-3">
         <SectionCard className="rounded-xl">
           <SectionCardContent className="p-2">
