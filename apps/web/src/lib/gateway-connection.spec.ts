@@ -68,11 +68,13 @@ afterEach(() => {
 });
 
 it.each([
-  ["development", "lootlog.realtime.v1"],
-  ["production-local", "lootlog.realtime.v1"],
-  ["production", "lootlog.realtime.v1"],
-])("joins and stays connected in %s", async (mode, protocol) => {
+  ["development", "messagepack", "lootlog.realtime.v1"],
+  ["production-local", "messagepack", "lootlog.realtime.v1"],
+  ["production", "messagepack", "lootlog.realtime.v1"],
+  ["development", "json", "lootlog.realtime.json.v1"],
+])("joins and stays connected in %s", async (mode, encoding, protocol) => {
   vi.stubEnv("MODE", mode);
+  vi.stubEnv("VITE_GATEWAY_FRAME_ENCODING", encoding);
   vi.stubGlobal("WebSocket", GatewayWebSocket);
   const restore = configureApiClients({
     auth: {
