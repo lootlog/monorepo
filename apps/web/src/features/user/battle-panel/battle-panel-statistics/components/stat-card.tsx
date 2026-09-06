@@ -1,10 +1,6 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@lootlog/ui/components/card";
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCard } from "@/components/common/section-card/section-card";
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { BattlePanelEmptyState } from "@/features/user/battle-panel/components/battle-panel-empty-state";
 import { cn } from "cn";
 import { Inbox } from "lucide-react";
@@ -43,7 +39,7 @@ export function StatCard({
   const { t } = useTranslation();
 
   return (
-    <Card
+    <SectionCard
       aria-label={ariaLabel}
       onClick={onClick}
       onKeyDown={onKeyDown}
@@ -55,17 +51,8 @@ export function StatCard({
         className,
       )}
     >
-      <CardHeader className="p-4 pb-2">
-        <div className="flex gap-2 flex-col">
-          <CardTitle className="text-base font-semibold leading-tight">
-            {title}
-          </CardTitle>
-          <CardDescription className="text-xs leading-tight">
-            {description}
-          </CardDescription>
-        </div>
-      </CardHeader>
-      <CardContent className="min-w-0 flex-1 p-4 pt-2">
+      <SectionCardHeader title={title} description={description} />
+      <SectionCardContent className="min-w-0 flex-1">
         {isLoading ? (
           <div className="h-72 flex items-center justify-center">
             <p className="text-sm text-muted-foreground">
@@ -80,7 +67,7 @@ export function StatCard({
         ) : (
           children
         )}
-      </CardContent>
-    </Card>
+      </SectionCardContent>
+    </SectionCard>
   );
 }

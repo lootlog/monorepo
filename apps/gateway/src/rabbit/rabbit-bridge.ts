@@ -8,6 +8,7 @@ import {
   decodeRabbitEventJson,
   type CanonicalRabbitEventRoutingKey,
   type GuildLootCreatedEventV2,
+  type GuildKillsAcceptedV1,
   type GuildLootShareUpdatedEventV2,
   type ReservationChangedEventV2,
 } from "@lootlog/protocol/rabbit/events";
@@ -53,6 +54,12 @@ const retryable = (
 });
 
 export const gatewayConsumerSpecs: ReadonlyArray<ConsumerSpec> = [
+  retryable(
+    "gateway-guilds-kills-accepted-v1",
+    RabbitRoutingKey.GUILDS_KILLS_ACCEPTED_V1,
+    RabbitRoutingKey.GUILDS_KILLS_ACCEPTED_V1_RETRY,
+    RabbitRoutingKey.GUILDS_KILLS_ACCEPTED_V1_DLQ,
+  ),
   retryable(
     "gateway-guilds-timers-update",
     RabbitRoutingKey.GUILDS_TIMERS_UPDATE,
@@ -384,15 +391,70 @@ export class RabbitBridge {
     }
     if (routingKey === RabbitRoutingKey.GUILDS_MEMBERS_ADD) return Effect.void;
 
+    if (routingKey === RabbitRoutingKey.GUILDS_KILLS_ACCEPTED_V1) {
+      const data = payload as GuildKillsAcceptedV1;
+      return fromPromise(async () => {
+        const scope = {
+          topic: "organization.loots" as const,
+          organizationId: data.guildId,
+        };
+        const audience = {
+          recipientPlatform: "web-app" as const,
+          sourceNpcs: data.sourceNpcs ?? [
+            { level: data.npc.lvl, type: data.npc.type },
+          ],
+        };
+        await this.hub.publishToScope(
+          scope,
+          { v: 1, type: "kills.changed", data: { guildId: data.guildId } },
+          messageId,
+          audience,
+        );
+        if (
+          data.feedEntry &&
+          data.feedEntry.guild.id === data.guildId &&
+          data.feedEntry.type === "kill"
+        ) {
+          await this.hub.publishToScope(
+            scope,
+            { v: 1, type: "feed.entry", data: data.feedEntry },
+            messageId ? `${messageId}:feed` : undefined,
+            audience,
+          );
+        }
+      });
+    }
     if (routingKey === RabbitRoutingKey.GUILDS_LOOTS_CREATE) {
-      const data = payload as GuildLootCreatedEventV2;
-      return fromPromise(() =>
-        this.hub.publishToScope(
-          { topic: "organization.loots", organizationId: data.guildId },
+      const { feedEntry, ...data } = payload as GuildLootCreatedEventV2;
+      return fromPromise(async () => {
+        const scope = {
+          topic: "organization.loots" as const,
+          organizationId: data.guildId,
+        };
+        await this.hub.publishToScope(
+          scope,
           { v: 1, type: "loot.created", data },
           messageId,
-        ),
-      );
+        );
+        if (
+          feedEntry &&
+          feedEntry.guild.id === data.guildId &&
+          feedEntry.type === "loot"
+        ) {
+          await this.hub.publishToScope(
+            scope,
+            { v: 1, type: "feed.entry", data: feedEntry },
+            messageId ? `${messageId}:feed` : undefined,
+            {
+              recipientPlatform: "web-app",
+              sourceNpcs: data.npcs.map((npc) => ({
+                level: npc.lvl ?? null,
+                type: typeof npc.type === "string" ? npc.type : null,
+              })),
+            },
+          );
+        }
+      });
     }
     if (routingKey === RabbitRoutingKey.GUILDS_LOOTS_SHARE_UPDATE) {
       const data = payload as GuildLootShareUpdatedEventV2;

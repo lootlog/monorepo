@@ -2,6 +2,7 @@ import { expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { parse } from "yaml";
 import {
+  assertVerifiedPersonalAddition,
   normalizeAllowedChanges,
   normalizeOpenApiRepresentation,
 } from "./check-openapi-parity.js";
@@ -213,4 +214,63 @@ test("reservation exceptions retain only the verified statuses and error schema"
       responses: { "401": errorResponse },
     }),
   ).toEqual({ responses: { "401": errorResponse } });
+});
+
+test("verified private additions pin authentication, supported filters and response contracts", () => {
+  const cases = [
+    ["activity", "/users/@me/activity/online"],
+    ["api", "/users/@me/stats/kills/analytics"],
+    ["api", "/users/@me/stats/kills/activity"],
+    ["api", "/users/@me/feed"],
+  ] as const;
+  for (const [service, path] of cases) {
+    const document = parse(
+      readFileSync(
+        new URL(`../../../apps/${service}/openapi.yaml`, import.meta.url),
+        "utf8",
+      ),
+    );
+    const operation = document.paths[path].get;
+    const key = `GET ${path}`;
+    expect(() =>
+      assertVerifiedPersonalAddition(service, key, operation),
+    ).not.toThrow();
+    expect(() =>
+      assertVerifiedPersonalAddition(service, key, {
+        ...operation,
+        security: [],
+      }),
+    ).toThrow("contract changed");
+    expect(() =>
+      assertVerifiedPersonalAddition(service, key, {
+        ...operation,
+        parameters: [
+          ...operation.parameters,
+          {
+            name: "userId",
+            in: "query",
+            required: false,
+            schema: { type: "string" },
+          },
+        ],
+      }),
+    ).toThrow("contract changed");
+    expect(() =>
+      assertVerifiedPersonalAddition(service, key, {
+        ...operation,
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Other" },
+              },
+            },
+          },
+        },
+      }),
+    ).toThrow("contract changed");
+    expect(() =>
+      assertVerifiedPersonalAddition(service, `${key}/unreviewed`, operation),
+    ).toThrow("Unverified");
+  }
 });

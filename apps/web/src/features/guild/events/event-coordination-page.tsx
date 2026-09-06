@@ -7,7 +7,7 @@ import { AlertCircle, Crosshair } from "lucide-react";
 import { toast } from "sonner";
 import { Permission } from "@lootlog/schema/permissions";
 import { Button } from "@lootlog/ui/components/button";
-import { Card } from "@lootlog/ui/components/card";
+import { SectionCard as Card } from "@/components/common/section-card/section-card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";

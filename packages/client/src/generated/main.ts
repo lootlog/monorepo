@@ -28,6 +28,85 @@ import type {
 
 import { mainFetch } from '../mutators';
 import type { ErrorType , BodyType } from '../mutators';
+export type UserFeedResponseDtoOutputItemsItem = {
+  id: string;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  version: number;
+  occurredAt: string;
+  world: string;
+  guild: {
+  id: string;
+  name: string;
+  /** @nullable */
+  vanityUrl: string | null;
+};
+  npc: {
+  id: number;
+  name: string;
+  /** @nullable */
+  type: string | null;
+  /** @nullable */
+  lvl: number | null;
+  /** @nullable */
+  icon: string | null;
+};
+  type: 'kill';
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  count: number;
+} | {
+  id: string;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  version: number;
+  occurredAt: string;
+  world: string;
+  guild: {
+  id: string;
+  name: string;
+  /** @nullable */
+  vanityUrl: string | null;
+};
+  /** @nullable */
+  npc: {
+  id: number;
+  name: string;
+  /** @nullable */
+  type: string | null;
+  /** @nullable */
+  lvl: number | null;
+  /** @nullable */
+  icon: string | null;
+} | null;
+  type: 'loot';
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  lootId: number;
+  additionalItemsCount: number;
+  items: ({
+  id: number;
+  name: string;
+  icon: string;
+  /** @nullable */
+  rarity: string | null;
+})[];
+};
+
+export interface UserFeedResponseDtoOutput {
+  generatedAt: string;
+  windowStart: string;
+  items: UserFeedResponseDtoOutputItemsItem[];
+}
+
 export type StatusOkResponseDtoOutputStatus = typeof StatusOkResponseDtoOutputStatus[keyof typeof StatusOkResponseDtoOutputStatus];
 
 
@@ -8319,6 +8398,296 @@ export interface UserKillStatsResponseDtoOutput {
   topNpcs: UserKillStatsResponseDtoOutputTopNpcsItem[];
 }
 
+export type UserKillAnalyticsResponseDtoOutputMetaTimezone = typeof UserKillAnalyticsResponseDtoOutputMetaTimezone[keyof typeof UserKillAnalyticsResponseDtoOutputMetaTimezone];
+
+
+export const UserKillAnalyticsResponseDtoOutputMetaTimezone = {
+  'Europe/Warsaw': 'Europe/Warsaw',
+} as const;
+
+export type UserKillAnalyticsResponseDtoOutputMetaCoverage = typeof UserKillAnalyticsResponseDtoOutputMetaCoverage[keyof typeof UserKillAnalyticsResponseDtoOutputMetaCoverage];
+
+
+export const UserKillAnalyticsResponseDtoOutputMetaCoverage = {
+  complete: 'complete',
+  partial: 'partial',
+  unavailable: 'unavailable',
+} as const;
+
+export type UserKillAnalyticsResponseDtoOutputMeta = {
+  timezone: UserKillAnalyticsResponseDtoOutputMetaTimezone;
+  generatedAt: string;
+  /** @minimum 0 */
+  days: number;
+  /** @nullable */
+  world: string | null;
+  startDate: string;
+  endDate: string;
+  /** @nullable */
+  firstBucketAt: string | null;
+  coverage: UserKillAnalyticsResponseDtoOutputMetaCoverage;
+  /** @minimum 0 */
+  allTimeKills: number;
+  /** @minimum 0 */
+  timedKills: number;
+  /** @minimum 0 */
+  untimedKills: number;
+  includesCurrentHour: true;
+};
+
+export type UserKillAnalyticsResponseDtoOutputOverview = {
+  /** @minimum 0 */
+  totalKills: number;
+  /** @minimum 0 */
+  activeDays: number;
+  /** @nullable */
+  averagePerDay: number | null;
+  /** @minimum 0 */
+  currentStreak: number;
+  /** @minimum 0 */
+  longestStreak: number;
+  /** @minimum 0 */
+  uniqueNpcs: number;
+};
+
+export type UserKillAnalyticsResponseDtoOutputDailyItem = {
+  date: string;
+  /** @nullable */
+  kills: number | null;
+  partial: boolean;
+};
+
+export type UserKillAnalyticsResponseDtoOutputWeeklyItem = {
+  startDate: string;
+  endDate: string;
+  /** @minimum 0 */
+  kills: number;
+  partial: boolean;
+};
+
+export type UserKillAnalyticsResponseDtoOutputComparison = {
+  /** @minimum 0 */
+  currentKills: number;
+  /** @minimum 0 */
+  previousKills: number;
+  deltaKills: number;
+  /** @nullable */
+  deltaPercent: number | null;
+  currentThrough: string;
+  previousThrough: string;
+  partial: boolean;
+};
+
+/**
+ * @nullable
+ */
+export type UserKillAnalyticsResponseDtoOutputRecordsBestDay = {
+  startDate: string;
+  endDate: string;
+  /** @minimum 0 */
+  kills: number;
+  partial: boolean;
+} | null;
+
+/**
+ * @nullable
+ */
+export type UserKillAnalyticsResponseDtoOutputRecordsBestWeek = {
+  startDate: string;
+  endDate: string;
+  /** @minimum 0 */
+  kills: number;
+  partial: boolean;
+} | null;
+
+/**
+ * @nullable
+ */
+export type UserKillAnalyticsResponseDtoOutputRecordsBestMonth = {
+  startDate: string;
+  endDate: string;
+  /** @minimum 0 */
+  kills: number;
+  partial: boolean;
+} | null;
+
+export type UserKillAnalyticsResponseDtoOutputRecords = {
+  /** @nullable */
+  bestDay: UserKillAnalyticsResponseDtoOutputRecordsBestDay;
+  /** @nullable */
+  bestWeek: UserKillAnalyticsResponseDtoOutputRecordsBestWeek;
+  /** @nullable */
+  bestMonth: UserKillAnalyticsResponseDtoOutputRecordsBestMonth;
+};
+
+export type UserKillAnalyticsResponseDtoOutputHourlyWeekdayItem = {
+  /** @minimum 0 */
+  weekday: number;
+  /** @minimum 0 */
+  hour: number;
+  /** @minimum 0 */
+  kills: number;
+};
+
+export type UserKillAnalyticsResponseDtoOutputTypesItem = {
+  npcType: string;
+  /** @minimum 0 */
+  totalKills: number;
+  /** @minimum 0 */
+  uniqueNpcs: number;
+  share: number;
+};
+
+/**
+ * @nullable
+ */
+export type UserKillAnalyticsResponseDtoOutputNpcsItemBestDay = {
+  date: string;
+  /** @nullable */
+  kills: number | null;
+} | null;
+
+export type UserKillAnalyticsResponseDtoOutputNpcsItem = {
+  world: string;
+  npcId: number;
+  npcName: string;
+  npcType: string;
+  npcLvl: number;
+  /** @nullable */
+  npcProf: string | null;
+  /** @nullable */
+  npcIcon: string | null;
+  /** @minimum 0 */
+  totalKills: number;
+  /** @minimum 0 */
+  previousKills: number;
+  /** @minimum 0 */
+  comparisonKills: number;
+  deltaKills: number;
+  /** @nullable */
+  deltaPercent: number | null;
+  share: number;
+  /** @nullable */
+  bestDay: UserKillAnalyticsResponseDtoOutputNpcsItemBestDay;
+};
+
+/**
+ * @nullable
+ */
+export type UserKillAnalyticsResponseDtoOutputNpcGainsItemBestDay = {
+  date: string;
+  /** @nullable */
+  kills: number | null;
+} | null;
+
+export type UserKillAnalyticsResponseDtoOutputNpcGainsItem = {
+  world: string;
+  npcId: number;
+  npcName: string;
+  npcType: string;
+  npcLvl: number;
+  /** @nullable */
+  npcProf: string | null;
+  /** @nullable */
+  npcIcon: string | null;
+  /** @minimum 0 */
+  totalKills: number;
+  /** @minimum 0 */
+  previousKills: number;
+  /** @minimum 0 */
+  comparisonKills: number;
+  deltaKills: number;
+  /** @nullable */
+  deltaPercent: number | null;
+  share: number;
+  /** @nullable */
+  bestDay: UserKillAnalyticsResponseDtoOutputNpcGainsItemBestDay;
+};
+
+export type UserKillAnalyticsResponseDtoOutputWorldsItemDailyItem = {
+  date: string;
+  /** @nullable */
+  kills: number | null;
+};
+
+export type UserKillAnalyticsResponseDtoOutputWorldsItem = {
+  world: string;
+  /** @minimum 0 */
+  totalKills: number;
+  /** @minimum 0 */
+  comparisonKills: number;
+  /** @minimum 0 */
+  previousKills: number;
+  deltaKills: number;
+  /** @nullable */
+  deltaPercent: number | null;
+  share: number;
+  daily: UserKillAnalyticsResponseDtoOutputWorldsItemDailyItem[];
+};
+
+export interface UserKillAnalyticsResponseDtoOutput {
+  meta: UserKillAnalyticsResponseDtoOutputMeta;
+  overview: UserKillAnalyticsResponseDtoOutputOverview;
+  daily: UserKillAnalyticsResponseDtoOutputDailyItem[];
+  weekly: UserKillAnalyticsResponseDtoOutputWeeklyItem[];
+  comparison: UserKillAnalyticsResponseDtoOutputComparison;
+  records: UserKillAnalyticsResponseDtoOutputRecords;
+  hourlyWeekday: UserKillAnalyticsResponseDtoOutputHourlyWeekdayItem[];
+  types: UserKillAnalyticsResponseDtoOutputTypesItem[];
+  npcs: UserKillAnalyticsResponseDtoOutputNpcsItem[];
+  npcGains: UserKillAnalyticsResponseDtoOutputNpcGainsItem[];
+  worlds: UserKillAnalyticsResponseDtoOutputWorldsItem[];
+}
+
+export type UserKillActivityResponseDtoOutputMetaTimezone = typeof UserKillActivityResponseDtoOutputMetaTimezone[keyof typeof UserKillActivityResponseDtoOutputMetaTimezone];
+
+
+export const UserKillActivityResponseDtoOutputMetaTimezone = {
+  'Europe/Warsaw': 'Europe/Warsaw',
+} as const;
+
+export type UserKillActivityResponseDtoOutputMetaCoverage = typeof UserKillActivityResponseDtoOutputMetaCoverage[keyof typeof UserKillActivityResponseDtoOutputMetaCoverage];
+
+
+export const UserKillActivityResponseDtoOutputMetaCoverage = {
+  complete: 'complete',
+  partial: 'partial',
+  unavailable: 'unavailable',
+} as const;
+
+export type UserKillActivityResponseDtoOutputMeta = {
+  timezone: UserKillActivityResponseDtoOutputMetaTimezone;
+  generatedAt: string;
+  /** @minimum 0 */
+  days: number;
+  /** @nullable */
+  world: string | null;
+  startDate: string;
+  endDate: string;
+  /** @nullable */
+  firstBucketAt: string | null;
+  coverage: UserKillActivityResponseDtoOutputMetaCoverage;
+  /** @minimum 0 */
+  allTimeKills: number;
+  /** @minimum 0 */
+  timedKills: number;
+  /** @minimum 0 */
+  untimedKills: number;
+  includesCurrentHour: true;
+};
+
+export type UserKillActivityResponseDtoOutputDailyItem = {
+  date: string;
+  /** @nullable */
+  kills: number | null;
+  partial: boolean;
+};
+
+export interface UserKillActivityResponseDtoOutput {
+  meta: UserKillActivityResponseDtoOutputMeta;
+  daily: UserKillActivityResponseDtoOutputDailyItem[];
+}
+
 export type UserNpcKillsResponseDtoOutputNpcsItem = {
   npcId: number;
   npcName: string;
@@ -10010,6 +10379,33 @@ export const KillsControllerGetUserKillStatsPeriod = {
   '30d': '30d',
 } as const;
 
+export type KillsControllerGetUserKillAnalyticsParams = {
+days?: KillsControllerGetUserKillAnalyticsDays;
+/**
+ * @minLength 1
+ * @maxLength 100
+ */
+world?: string;
+};
+
+export type KillsControllerGetUserKillAnalyticsDays = typeof KillsControllerGetUserKillAnalyticsDays[keyof typeof KillsControllerGetUserKillAnalyticsDays];
+
+
+export const KillsControllerGetUserKillAnalyticsDays = {
+  NUMBER_7: '7',
+  NUMBER_30: '30',
+  NUMBER_90: '90',
+  NUMBER_365: '365',
+} as const;
+
+export type KillsControllerGetUserKillActivityParams = {
+/**
+ * @minLength 1
+ * @maxLength 100
+ */
+world?: string;
+};
+
 export type KillsControllerGetUserNpcKillsParams = {
 npcTypes?: KillsControllerGetUserNpcKillsNpcTypesItem[];
 world?: string;
@@ -10249,6 +10645,149 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+export const getUsersControllerGetUserFeedUrl = () => {
+
+
+
+
+  return `/users/@me/feed`
+}
+
+/**
+ * @summary Get recent activity across accessible Organizations
+ */
+export const usersControllerGetUserFeed = async ( options?: Parameters<typeof mainFetch>[1]): Promise<UserFeedResponseDtoOutput> => {
+
+  return mainFetch<UserFeedResponseDtoOutput>(getUsersControllerGetUserFeedUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getUsersControllerGetUserFeedQueryKey = () => {
+    return [
+    `/users/@me/feed`
+    ] as const;
+    }
+
+
+export const getUsersControllerGetUserFeedQueryOptions = <TData = Awaited<ReturnType<typeof usersControllerGetUserFeed>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetUserFeed>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getUsersControllerGetUserFeedQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof usersControllerGetUserFeed>>> = ({ signal }) => usersControllerGetUserFeed({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetUserFeed>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type UsersControllerGetUserFeedQueryResult = NonNullable<Awaited<ReturnType<typeof usersControllerGetUserFeed>>>
+export type UsersControllerGetUserFeedQueryError = ErrorType<unknown>
+
+
+export function useUsersControllerGetUserFeed<TData = Awaited<ReturnType<typeof usersControllerGetUserFeed>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetUserFeed>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersControllerGetUserFeed>>,
+          TError,
+          Awaited<ReturnType<typeof usersControllerGetUserFeed>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersControllerGetUserFeed<TData = Awaited<ReturnType<typeof usersControllerGetUserFeed>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetUserFeed>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersControllerGetUserFeed>>,
+          TError,
+          Awaited<ReturnType<typeof usersControllerGetUserFeed>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersControllerGetUserFeed<TData = Awaited<ReturnType<typeof usersControllerGetUserFeed>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetUserFeed>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get recent activity across accessible Organizations
+ */
+
+export function useUsersControllerGetUserFeed<TData = Awaited<ReturnType<typeof usersControllerGetUserFeed>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetUserFeed>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getUsersControllerGetUserFeedQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get recent activity across accessible Organizations
+ */
+export const prefetchUsersControllerGetUserFeedQuery = async <TData = Awaited<ReturnType<typeof usersControllerGetUserFeed>>, TError = ErrorType<unknown>>(
+ queryClient: QueryClient,  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetUserFeed>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getUsersControllerGetUserFeedQueryOptions(options)
+
+  await queryClient.prefetchQuery(queryOptions);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get recent activity across accessible Organizations
+ */
+export const invalidateUsersControllerGetUserFeed = async (
+ queryClient: QueryClient,  options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getUsersControllerGetUserFeedQueryKey() }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get recent activity across accessible Organizations
+ */
+export const useSetUsersControllerGetUserFeedQueryData = () => {
+  const queryClient = useQueryClient();
+  return (updater: Awaited<ReturnType<typeof usersControllerGetUserFeed>> | undefined | ((old: Awaited<ReturnType<typeof usersControllerGetUserFeed>> | undefined) => Awaited<ReturnType<typeof usersControllerGetUserFeed>> | undefined)) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof usersControllerGetUserFeed>>>({ queryKey: getUsersControllerGetUserFeedQueryKey() }, updater);
+  };
+}
+
+/**
+ * @summary Get recent activity across accessible Organizations
+ */
+export const useGetUsersControllerGetUserFeedQueryData = () => {
+  const queryClient = useQueryClient();
+  return () =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof usersControllerGetUserFeed>>>(getUsersControllerGetUserFeedQueryKey());
+}
+
+
 
 export const getUsersControllerDeleteAccountUrl = () => {
 
@@ -30117,6 +30656,307 @@ export const useGetKillsControllerGetUserKillStatsQueryData = () => {
   const queryClient = useQueryClient();
   return (params?: KillsControllerGetUserKillStatsParams,) =>
     queryClient.getQueryData<Awaited<ReturnType<typeof killsControllerGetUserKillStats>>>(getKillsControllerGetUserKillStatsQueryKey(params));
+}
+
+
+
+export const getKillsControllerGetUserKillAnalyticsUrl = (params?: KillsControllerGetUserKillAnalyticsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/users/@me/stats/kills/analytics?${stringifiedParams}` : `/users/@me/stats/kills/analytics`
+}
+
+/**
+ * Calendar-day analytics in Europe/Warsaw. Current-day/hour data is partial; untimed lifetime history is never distributed backwards. Rankings are bounded to 20 NPCs and 10 gains. Comparisons exclude the current incomplete hour.
+ * @summary Get personal kill analytics
+ */
+export const killsControllerGetUserKillAnalytics = async (params?: KillsControllerGetUserKillAnalyticsParams, options?: Parameters<typeof mainFetch>[1]): Promise<UserKillAnalyticsResponseDtoOutput> => {
+
+  return mainFetch<UserKillAnalyticsResponseDtoOutput>(getKillsControllerGetUserKillAnalyticsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getKillsControllerGetUserKillAnalyticsQueryKey = (params?: KillsControllerGetUserKillAnalyticsParams,) => {
+    return [
+    `/users/@me/stats/kills/analytics`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getKillsControllerGetUserKillAnalyticsQueryOptions = <TData = Awaited<ReturnType<typeof killsControllerGetUserKillAnalytics>>, TError = ErrorType<unknown>>(params?: KillsControllerGetUserKillAnalyticsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetUserKillAnalytics>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getKillsControllerGetUserKillAnalyticsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof killsControllerGetUserKillAnalytics>>> = ({ signal }) => killsControllerGetUserKillAnalytics(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetUserKillAnalytics>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type KillsControllerGetUserKillAnalyticsQueryResult = NonNullable<Awaited<ReturnType<typeof killsControllerGetUserKillAnalytics>>>
+export type KillsControllerGetUserKillAnalyticsQueryError = ErrorType<unknown>
+
+
+export function useKillsControllerGetUserKillAnalytics<TData = Awaited<ReturnType<typeof killsControllerGetUserKillAnalytics>>, TError = ErrorType<unknown>>(
+ params: undefined |  KillsControllerGetUserKillAnalyticsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetUserKillAnalytics>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof killsControllerGetUserKillAnalytics>>,
+          TError,
+          Awaited<ReturnType<typeof killsControllerGetUserKillAnalytics>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useKillsControllerGetUserKillAnalytics<TData = Awaited<ReturnType<typeof killsControllerGetUserKillAnalytics>>, TError = ErrorType<unknown>>(
+ params?: KillsControllerGetUserKillAnalyticsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetUserKillAnalytics>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof killsControllerGetUserKillAnalytics>>,
+          TError,
+          Awaited<ReturnType<typeof killsControllerGetUserKillAnalytics>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useKillsControllerGetUserKillAnalytics<TData = Awaited<ReturnType<typeof killsControllerGetUserKillAnalytics>>, TError = ErrorType<unknown>>(
+ params?: KillsControllerGetUserKillAnalyticsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetUserKillAnalytics>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get personal kill analytics
+ */
+
+export function useKillsControllerGetUserKillAnalytics<TData = Awaited<ReturnType<typeof killsControllerGetUserKillAnalytics>>, TError = ErrorType<unknown>>(
+ params?: KillsControllerGetUserKillAnalyticsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetUserKillAnalytics>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getKillsControllerGetUserKillAnalyticsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get personal kill analytics
+ */
+export const prefetchKillsControllerGetUserKillAnalyticsQuery = async <TData = Awaited<ReturnType<typeof killsControllerGetUserKillAnalytics>>, TError = ErrorType<unknown>>(
+ queryClient: QueryClient, params?: KillsControllerGetUserKillAnalyticsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetUserKillAnalytics>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getKillsControllerGetUserKillAnalyticsQueryOptions(params,options)
+
+  await queryClient.prefetchQuery(queryOptions);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get personal kill analytics
+ */
+export const invalidateKillsControllerGetUserKillAnalytics = async (
+ queryClient: QueryClient, params?: KillsControllerGetUserKillAnalyticsParams, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getKillsControllerGetUserKillAnalyticsQueryKey(params) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get personal kill analytics
+ */
+export const useSetKillsControllerGetUserKillAnalyticsQueryData = () => {
+  const queryClient = useQueryClient();
+  return (params: KillsControllerGetUserKillAnalyticsParams | undefined,updater: Awaited<ReturnType<typeof killsControllerGetUserKillAnalytics>> | undefined | ((old: Awaited<ReturnType<typeof killsControllerGetUserKillAnalytics>> | undefined) => Awaited<ReturnType<typeof killsControllerGetUserKillAnalytics>> | undefined)) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof killsControllerGetUserKillAnalytics>>>({ queryKey: getKillsControllerGetUserKillAnalyticsQueryKey(params) }, updater);
+  };
+}
+
+/**
+ * @summary Get personal kill analytics
+ */
+export const useGetKillsControllerGetUserKillAnalyticsQueryData = () => {
+  const queryClient = useQueryClient();
+  return (params?: KillsControllerGetUserKillAnalyticsParams,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof killsControllerGetUserKillAnalytics>>>(getKillsControllerGetUserKillAnalyticsQueryKey(params));
+}
+
+
+
+export const getKillsControllerGetUserKillActivityUrl = (params?: KillsControllerGetUserKillActivityParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/users/@me/stats/kills/activity?${stringifiedParams}` : `/users/@me/stats/kills/activity`
+}
+
+/**
+ * @summary Get 16 weeks of personal kill activity
+ */
+export const killsControllerGetUserKillActivity = async (params?: KillsControllerGetUserKillActivityParams, options?: Parameters<typeof mainFetch>[1]): Promise<UserKillActivityResponseDtoOutput> => {
+
+  return mainFetch<UserKillActivityResponseDtoOutput>(getKillsControllerGetUserKillActivityUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getKillsControllerGetUserKillActivityQueryKey = (params?: KillsControllerGetUserKillActivityParams,) => {
+    return [
+    `/users/@me/stats/kills/activity`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getKillsControllerGetUserKillActivityQueryOptions = <TData = Awaited<ReturnType<typeof killsControllerGetUserKillActivity>>, TError = ErrorType<unknown>>(params?: KillsControllerGetUserKillActivityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetUserKillActivity>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getKillsControllerGetUserKillActivityQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof killsControllerGetUserKillActivity>>> = ({ signal }) => killsControllerGetUserKillActivity(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetUserKillActivity>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type KillsControllerGetUserKillActivityQueryResult = NonNullable<Awaited<ReturnType<typeof killsControllerGetUserKillActivity>>>
+export type KillsControllerGetUserKillActivityQueryError = ErrorType<unknown>
+
+
+export function useKillsControllerGetUserKillActivity<TData = Awaited<ReturnType<typeof killsControllerGetUserKillActivity>>, TError = ErrorType<unknown>>(
+ params: undefined |  KillsControllerGetUserKillActivityParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetUserKillActivity>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof killsControllerGetUserKillActivity>>,
+          TError,
+          Awaited<ReturnType<typeof killsControllerGetUserKillActivity>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useKillsControllerGetUserKillActivity<TData = Awaited<ReturnType<typeof killsControllerGetUserKillActivity>>, TError = ErrorType<unknown>>(
+ params?: KillsControllerGetUserKillActivityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetUserKillActivity>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof killsControllerGetUserKillActivity>>,
+          TError,
+          Awaited<ReturnType<typeof killsControllerGetUserKillActivity>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useKillsControllerGetUserKillActivity<TData = Awaited<ReturnType<typeof killsControllerGetUserKillActivity>>, TError = ErrorType<unknown>>(
+ params?: KillsControllerGetUserKillActivityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetUserKillActivity>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get 16 weeks of personal kill activity
+ */
+
+export function useKillsControllerGetUserKillActivity<TData = Awaited<ReturnType<typeof killsControllerGetUserKillActivity>>, TError = ErrorType<unknown>>(
+ params?: KillsControllerGetUserKillActivityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetUserKillActivity>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getKillsControllerGetUserKillActivityQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get 16 weeks of personal kill activity
+ */
+export const prefetchKillsControllerGetUserKillActivityQuery = async <TData = Awaited<ReturnType<typeof killsControllerGetUserKillActivity>>, TError = ErrorType<unknown>>(
+ queryClient: QueryClient, params?: KillsControllerGetUserKillActivityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof killsControllerGetUserKillActivity>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getKillsControllerGetUserKillActivityQueryOptions(params,options)
+
+  await queryClient.prefetchQuery(queryOptions);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get 16 weeks of personal kill activity
+ */
+export const invalidateKillsControllerGetUserKillActivity = async (
+ queryClient: QueryClient, params?: KillsControllerGetUserKillActivityParams, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getKillsControllerGetUserKillActivityQueryKey(params) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get 16 weeks of personal kill activity
+ */
+export const useSetKillsControllerGetUserKillActivityQueryData = () => {
+  const queryClient = useQueryClient();
+  return (params: KillsControllerGetUserKillActivityParams | undefined,updater: Awaited<ReturnType<typeof killsControllerGetUserKillActivity>> | undefined | ((old: Awaited<ReturnType<typeof killsControllerGetUserKillActivity>> | undefined) => Awaited<ReturnType<typeof killsControllerGetUserKillActivity>> | undefined)) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof killsControllerGetUserKillActivity>>>({ queryKey: getKillsControllerGetUserKillActivityQueryKey(params) }, updater);
+  };
+}
+
+/**
+ * @summary Get 16 weeks of personal kill activity
+ */
+export const useGetKillsControllerGetUserKillActivityQueryData = () => {
+  const queryClient = useQueryClient();
+  return (params?: KillsControllerGetUserKillActivityParams,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof killsControllerGetUserKillActivity>>>(getKillsControllerGetUserKillActivityQueryKey(params));
 }
 
 

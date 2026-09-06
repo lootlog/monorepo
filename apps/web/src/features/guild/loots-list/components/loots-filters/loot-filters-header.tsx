@@ -1,5 +1,6 @@
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { PageHeader } from "@/components/common/page-header";
 import { Button } from "@lootlog/ui/components/button";
-import { Card } from "@lootlog/ui/components/card";
 import { Kbd } from "@lootlog/ui/components/kbd";
 import { AnimatePresence, motion } from "framer-motion";
 import { Filter, Search } from "lucide-react";
@@ -75,124 +76,129 @@ export const LootFiltersHeader = ({
   return (
     <>
       {showWorldControls && (
-        <Card className="gap-2 rounded-xl border-border bg-card p-2 shadow-none">
-          <div
-            className={cn(
-              "flex items-center gap-2",
-              isMobile ? "flex-nowrap" : "flex-wrap",
-            )}
-          >
-            {showWorldControls && (
-              <div
-                className={cn(
-                  "min-w-0 flex-1",
-                  !isMobile && isCompactLayout && "min-w-48 flex-[1_1_16rem]",
-                )}
-              >
-                <Button
-                  variant="outline"
-                  onClick={() => setIsCommandOpen(true)}
-                  className="relative h-9 w-full justify-start font-normal text-muted-foreground hover:border-foreground/20 hover:bg-foreground/[0.04] hover:text-foreground"
-                >
-                  <Search className="size-4 shrink-0" />
-                  <span
-                    className={cn("truncate", !usesStackedControls && "pr-16")}
-                  >
-                    {t("loots.header.searchPlaceholder")}
-                  </span>
-                  {!usesStackedControls && (
-                    <Kbd className="absolute right-2 top-1/2 -translate-y-1/2">
-                      {t("loots.header.shortcut", {
-                        modifier: primaryModifierKeyLabel,
-                      })}
-                    </Kbd>
+        <PageHeader title={t("layout.navigation.lootlog")}>
+          <SectionCardContent>
+            <div
+              className={cn(
+                "flex items-center gap-2",
+                isMobile ? "flex-nowrap" : "flex-wrap",
+              )}
+            >
+              {showWorldControls && (
+                <div
+                  className={cn(
+                    "min-w-0 flex-1",
+                    !isMobile && isCompactLayout && "min-w-48 flex-[1_1_16rem]",
                   )}
-                  <AnimatePresence>
-                    {hasSearchFilters && (
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        exit={{ scale: 0 }}
-                        className="absolute -left-1 -top-1 h-3 w-3 rounded-full border-2 border-background bg-primary"
-                      />
-                    )}
-                  </AnimatePresence>
-                </Button>
-              </div>
-            )}
-
-            {!usesStackedControls && (
-              <div aria-hidden className="relative h-9 w-3 shrink-0">
-                <div className="absolute inset-y-1 left-1/2 w-px -translate-x-1/2 bg-border" />
-              </div>
-            )}
-
-            {!isMobile && (
-              <div
-                className={cn(
-                  "flex min-w-0 items-center gap-2",
-                  isCompactLayout ? "contents" : "w-[19.5rem] shrink-0",
-                )}
-              >
-                <div
-                  className={
-                    isCompactLayout ? "w-[180px] shrink-0" : "min-w-0 flex-1"
-                  }
                 >
-                  <WorldSwitcher width="w-full" />
-                </div>
-
-                <ViewModeToggle
-                  value={viewMode}
-                  onChange={setViewMode}
-                  listLabel={t("loots.header.listView")}
-                  gridLabel={t("loots.header.gridView")}
-                  className={cn(isCompactLayout && "ml-auto")}
-                />
-
-                <div
-                  onMouseEnter={() => setIsFilterHovered(true)}
-                  onMouseLeave={() => setIsFilterHovered(false)}
-                >
-                  <ThemeInteractiveFrame
-                    isHovered={isFilterHovered}
-                    isActive={isFiltersOpen}
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsCommandOpen(true)}
+                    className="relative h-9 w-full justify-start font-normal text-muted-foreground hover:border-foreground/20 hover:bg-foreground/[0.04] hover:text-foreground"
                   >
-                    <Button
-                      onClick={onToggleFilters}
-                      variant={isFiltersOpen ? "default" : "outline"}
-                      size="icon"
-                      aria-label={t("loots.header.mobileFiltersTitle")}
-                      aria-expanded={isFiltersOpen}
-                      className="relative shrink-0 h-8 w-8"
+                    <Search className="size-4 shrink-0" />
+                    <span
+                      className={cn(
+                        "truncate",
+                        !usesStackedControls && "pr-16",
+                      )}
                     >
-                      <Filter className="h-4 w-4" />
-                      <AnimatePresence>
-                        {hasActiveFilters && !isFiltersOpen && (
-                          <motion.div
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            exit={{ scale: 0 }}
-                            className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full border-2 border-background"
-                          />
-                        )}
-                      </AnimatePresence>
-                    </Button>
-                  </ThemeInteractiveFrame>
+                      {t("loots.header.searchPlaceholder")}
+                    </span>
+                    {!usesStackedControls && (
+                      <Kbd className="absolute right-2 top-1/2 -translate-y-1/2">
+                        {t("loots.header.shortcut", {
+                          modifier: primaryModifierKeyLabel,
+                        })}
+                      </Kbd>
+                    )}
+                    <AnimatePresence>
+                      {hasSearchFilters && (
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          exit={{ scale: 0 }}
+                          className="absolute -left-1 -top-1 h-3 w-3 rounded-full border-2 border-background bg-primary"
+                        />
+                      )}
+                    </AnimatePresence>
+                  </Button>
                 </div>
-              </div>
-            )}
+              )}
 
-            {isMobile && (
-              <div className="w-[42%] min-w-28 shrink-0">
-                <WorldSwitcher
-                  width="w-full"
-                  triggerClassName="w-full justify-between"
-                />
-              </div>
-            )}
-          </div>
-        </Card>
+              {!usesStackedControls && (
+                <div aria-hidden className="relative h-9 w-3 shrink-0">
+                  <div className="absolute inset-y-1 left-1/2 w-px -translate-x-1/2 bg-border" />
+                </div>
+              )}
+
+              {!isMobile && (
+                <div
+                  className={cn(
+                    "flex min-w-0 items-center gap-2",
+                    isCompactLayout ? "contents" : "w-[19.5rem] shrink-0",
+                  )}
+                >
+                  <div
+                    className={
+                      isCompactLayout ? "w-[180px] shrink-0" : "min-w-0 flex-1"
+                    }
+                  >
+                    <WorldSwitcher width="w-full" />
+                  </div>
+
+                  <ViewModeToggle
+                    value={viewMode}
+                    onChange={setViewMode}
+                    listLabel={t("loots.header.listView")}
+                    gridLabel={t("loots.header.gridView")}
+                    className={cn(isCompactLayout && "ml-auto")}
+                  />
+
+                  <div
+                    onMouseEnter={() => setIsFilterHovered(true)}
+                    onMouseLeave={() => setIsFilterHovered(false)}
+                  >
+                    <ThemeInteractiveFrame
+                      isHovered={isFilterHovered}
+                      isActive={isFiltersOpen}
+                    >
+                      <Button
+                        onClick={onToggleFilters}
+                        variant={isFiltersOpen ? "default" : "outline"}
+                        size="icon"
+                        aria-label={t("loots.header.mobileFiltersTitle")}
+                        aria-expanded={isFiltersOpen}
+                        className="relative shrink-0 h-8 w-8"
+                      >
+                        <Filter className="h-4 w-4" />
+                        <AnimatePresence>
+                          {hasActiveFilters && !isFiltersOpen && (
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              exit={{ scale: 0 }}
+                              className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full border-2 border-background"
+                            />
+                          )}
+                        </AnimatePresence>
+                      </Button>
+                    </ThemeInteractiveFrame>
+                  </div>
+                </div>
+              )}
+
+              {isMobile && (
+                <div className="w-[42%] min-w-28 shrink-0">
+                  <WorldSwitcher
+                    width="w-full"
+                    triggerClassName="w-full justify-between"
+                  />
+                </div>
+              )}
+            </div>
+          </SectionCardContent>
+        </PageHeader>
       )}
 
       <LootSearchCommand open={isCommandOpen} onOpenChange={setIsCommandOpen} />

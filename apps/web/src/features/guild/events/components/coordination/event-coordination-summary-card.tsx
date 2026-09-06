@@ -1,6 +1,6 @@
+import { PageHeader } from "@/components/common/page-header";
 import { useTranslation } from "react-i18next";
 import { AlertTriangle, Clock3, Crosshair, MapPinned } from "lucide-react";
-import { Card } from "@lootlog/ui/components/card";
 import { Badge } from "@lootlog/ui/components/badge";
 import { getCoveragePercentage } from "../../utils/coordination-utils";
 import type { EventCoordinationResponseDto } from "@lootlog/client/main";
@@ -22,22 +22,11 @@ export const EventCoordinationSummaryCard = ({
     : t("events.coordination.summary.noNextSpawn");
 
   return (
-    <Card className="gap-4 border-border bg-card p-4">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-        <div className="flex min-w-0 items-start gap-3">
-          <div className="rounded-xl bg-primary/10 p-2.5">
-            <Crosshair className="size-4 text-primary" />
-          </div>
-          <div className="min-w-0">
-            <h2 className="text-base font-semibold leading-tight">
-              {t("events.coordination.title")}
-            </h2>
-            <p className="text-xs text-muted-foreground leading-tight">
-              {t("events.coordination.description")}
-            </p>
-          </div>
-        </div>
-
+    <PageHeader
+      icon={Crosshair}
+      title={t("events.coordination.title")}
+      description={t("events.coordination.description")}
+      metadata={
         <div className="flex flex-wrap gap-2">
           <Badge variant="outline" className="gap-1 text-xs">
             <AlertTriangle className="size-3 text-destructive" />
@@ -65,7 +54,7 @@ export const EventCoordinationSummaryCard = ({
             })}
           </Badge>
         </div>
-      </div>
-    </Card>
+      }
+    />
   );
 };

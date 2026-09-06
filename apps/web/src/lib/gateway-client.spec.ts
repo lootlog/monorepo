@@ -125,3 +125,40 @@ describe("gateway presence identity", () => {
     }
   });
 });
+
+it("adapts kill invalidation signals without adding an actor or NPC identity", () => {
+  const subscribe = vi.spyOn(RealtimeClient.prototype, "subscribe");
+  const client = new GatewayClient();
+  const deliver = subscribe.mock.calls[0]?.[0];
+  const handler = vi.fn();
+  client.on(GatewayEvent.KILLS_CHANGED, handler);
+  deliver?.({
+    v: 1,
+    type: "kills.changed",
+    data: { guildId: "organization-1" },
+  });
+  expect(handler).toHaveBeenCalledWith({ guildId: "organization-1" });
+});
+
+it("delivers complete feed entries without turning them into loot invalidation signals", () => {
+  const subscribe = vi.spyOn(RealtimeClient.prototype, "subscribe");
+  const client = new GatewayClient();
+  const deliver = subscribe.mock.calls[0]?.[0];
+  const entryHandler = vi.fn();
+  const lootHandler = vi.fn();
+  client.on(GatewayEvent.FEED_ENTRY, entryHandler);
+  client.on(GatewayEvent.LOOTS_CREATE, lootHandler);
+  const entry = {
+    id: "kill:organization-1:world:1:minute",
+    version: 2,
+    type: "kill" as const,
+    count: 2,
+    occurredAt: "2026-09-06T12:00:00Z",
+    world: "world",
+    guild: { id: "organization-1", name: "Organization", vanityUrl: null },
+    npc: { id: 1, name: "Hero", type: "HERO", lvl: 100, icon: null },
+  };
+  deliver?.({ v: 1, type: "feed.entry", data: entry });
+  expect(entryHandler).toHaveBeenCalledWith(entry);
+  expect(lootHandler).not.toHaveBeenCalled();
+});

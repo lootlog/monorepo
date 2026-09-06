@@ -1,3 +1,4 @@
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
 import type { FC } from "react";
 import {
   Dialog,
@@ -84,11 +85,13 @@ const LootDetailsContent: FC<LootDetailsContentProps> = ({
         </div>
       )}
       <ScrollArea className="min-h-0 flex-1 sm:max-h-[65vh]">
-        <section className="border-b border-border bg-card/30 px-5 py-4 sm:px-6">
-          <p className="text-xs font-medium text-muted-foreground">
-            {t("loots.details.participants", { count: loot.players.length })}
-          </p>
-          <div className="mt-2 flex flex-wrap items-end gap-2">
+        <section className="border-b border-border">
+          <SectionCardHeader
+            title={t("loots.details.participants", {
+              count: loot.players.length,
+            })}
+          />
+          <div className="flex flex-wrap items-end gap-2 p-3">
             {loot.players.map((player, idx) => {
               const color = playerColorMap[player.id];
               return (

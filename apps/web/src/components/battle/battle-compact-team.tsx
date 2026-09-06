@@ -29,14 +29,7 @@ export const BattleCompactTeam: FC<BattleCompactTeamProps> = ({
   team,
 }) => {
   return (
-    <section
-      className={cn(
-        "min-w-0 rounded-sm bg-background/35 px-2.5 py-2",
-        isUserTeam
-          ? BATTLE_SURFACE_COLORS.team.friendlyShadow
-          : BATTLE_SURFACE_COLORS.team.enemyShadow,
-      )}
-    >
+    <section className="min-w-0 bg-muted/20 px-3 py-2">
       <div
         className={cn(
           "mb-1.5 flex items-center gap-2",

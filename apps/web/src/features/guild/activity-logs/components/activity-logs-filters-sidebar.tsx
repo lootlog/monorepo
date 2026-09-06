@@ -1,6 +1,7 @@
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Button } from "@lootlog/ui/components/button";
-import { Card } from "@lootlog/ui/components/card";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import { Separator } from "@lootlog/ui/components/separator";
 import { Label } from "@lootlog/ui/components/label";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
@@ -186,7 +187,8 @@ export const ActivityLogsFiltersSidebar: FC<
         className,
       )}
     >
-      <Card className="flex-1 flex flex-col min-h-0 bg-filters-sidebar border-border  p-0">
+      <SectionCard className="flex-1 flex flex-col min-h-0 bg-filters-sidebar">
+        <SectionCardHeader title={t("activityLogs.filters.title")} />
         <div className="flex-1 overflow-hidden">
           <ScrollArea className="h-full">
             <div className="p-4 space-y-4">
@@ -409,7 +411,7 @@ export const ActivityLogsFiltersSidebar: FC<
             </motion.div>
           )}
         </AnimatePresence>
-      </Card>
+      </SectionCard>
     </div>
   );
 };

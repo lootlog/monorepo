@@ -1,7 +1,9 @@
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import { NotificationHistoryRow } from "./components/notification-history-row";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Card } from "@lootlog/ui/components/card";
+
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { NotificationJobDetailDialog } from "./components/notification-job-detail-dialog";
@@ -55,18 +57,20 @@ export const NotificationsHistoryPage = () => {
           {isLoading ? (
             <div className="space-y-3">
               {Array.from({ length: 6 }).map((_, i) => (
-                <Card key={i} className="border-border bg-card p-3">
-                  <div className="flex items-center gap-3">
-                    <Skeleton className="h-8 w-8 shrink-0 rounded-lg" />
-                    <div className="min-w-0 flex-1 space-y-1.5">
-                      <Skeleton className="h-4 w-40" />
-                      <div className="flex gap-2">
-                        <Skeleton className="h-4 w-16 rounded-full" />
-                        <Skeleton className="h-4 w-24" />
+                <SectionCard key={i}>
+                  <SectionCardContent className="flex flex-col gap-3">
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="h-8 w-8 shrink-0 rounded-lg" />
+                      <div className="min-w-0 flex-1 space-y-1.5">
+                        <Skeleton className="h-4 w-40" />
+                        <div className="flex gap-2">
+                          <Skeleton className="h-4 w-16 rounded-full" />
+                          <Skeleton className="h-4 w-24" />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </Card>
+                  </SectionCardContent>
+                </SectionCard>
               ))}
             </div>
           ) : historyJobs.length > 0 ? (
@@ -80,7 +84,7 @@ export const NotificationsHistoryPage = () => {
               ))}
             </div>
           ) : (
-            <div className="rounded-xl border border-dashed border-border/80 bg-background p-6 text-sm text-muted-foreground">
+            <div className="py-6 text-sm text-muted-foreground">
               {t("settings.notifications.empty.historyJobs")}
             </div>
           )}

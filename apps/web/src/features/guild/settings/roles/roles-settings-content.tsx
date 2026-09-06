@@ -1,3 +1,5 @@
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import { SearchInput } from "@/components/ui/search-input";
 import { RolesSettingsHeader } from "@/features/guild/settings/roles/roles-settings-header";
 import { RolesTable } from "@/features/guild/settings/roles/roles-table";
@@ -5,7 +7,7 @@ import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useRolesControllerGetGuildRoles } from "@lootlog/client/main";
 import { Permission } from "@lootlog/schema/permissions";
 import { Button } from "@lootlog/ui/components/button";
-import { Card } from "@lootlog/ui/components/card";
+
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { FilterX, Shield } from "lucide-react";
@@ -45,62 +47,64 @@ export const RolesSettingsContent = () => {
   return (
     <div className="flex h-full min-h-0 flex-col overflow-x-hidden overflow-y-auto bg-background px-3 gap-3">
       <RolesSettingsHeader />
-      <Card className="min-h-48 flex-1 p-0 gap-0">
-        <div className="flex shrink-0 flex-col gap-3 border-b border-border px-4 py-3 xl:flex-row xl:items-center xl:justify-between">
-          <SearchInput
-            value={searchValue}
-            onChange={(event) => setSearchValue(event.target.value)}
-            placeholder={t("settings.roles.searchPlaceholder")}
-            className="h-9"
-            wrapperClassName="w-full xl:max-w-md 2xl:max-w-xl"
-          />
-        </div>
-
-        <div className="flex min-h-0 flex-1 overflow-hidden">
-          <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
-            <ScrollArea className="h-full flex-1">
-              <div className="w-full max-w-full min-w-0">
-                {filteredRoles.length > 0 && (
-                  <RolesTable
-                    guildId={guildId ?? ""}
-                    isMobile={isMobile}
-                    roles={filteredRoles}
-                  />
-                )}
-                {filteredRoles.length === 0 && (
-                  <div className="flex min-h-80 flex-col items-center justify-center px-4 py-12 text-center text-muted-foreground">
-                    <Shield className="mb-4 size-12 opacity-30" />
-                    <p className="text-sm font-medium">
-                      {roles?.length === 0
-                        ? t("settings.roles.emptyGuildTitle")
-                        : t("settings.roles.emptyTitle")}
-                    </p>
-                    <p className="mt-1 text-xs">
-                      {hasActiveFilters
-                        ? t("settings.roles.emptyFilteredDescription")
-                        : t("settings.roles.emptyDescription")}
-                    </p>
-                    {hasActiveFilters && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="mt-4"
-                        onClick={() =>
-                          startTransition(() => setSearchValue(""))
-                        }
-                      >
-                        <FilterX className="size-4" />
-                        {t("settings.roles.resetFilters")}
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
+      <SectionCard className="min-h-48 flex-1">
+        <SectionCardContent className="flex flex-col gap-3">
+          <div className="flex shrink-0 flex-col gap-3 border-b border-border px-4 py-3 xl:flex-row xl:items-center xl:justify-between">
+            <SearchInput
+              value={searchValue}
+              onChange={(event) => setSearchValue(event.target.value)}
+              placeholder={t("settings.roles.searchPlaceholder")}
+              className="h-9"
+              wrapperClassName="w-full xl:max-w-md 2xl:max-w-xl"
+            />
           </div>
-        </div>
-      </Card>
+
+          <div className="flex min-h-0 flex-1 overflow-hidden">
+            <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
+              <ScrollArea className="h-full flex-1">
+                <div className="w-full max-w-full min-w-0">
+                  {filteredRoles.length > 0 && (
+                    <RolesTable
+                      guildId={guildId ?? ""}
+                      isMobile={isMobile}
+                      roles={filteredRoles}
+                    />
+                  )}
+                  {filteredRoles.length === 0 && (
+                    <div className="flex min-h-80 flex-col items-center justify-center px-4 py-12 text-center text-muted-foreground">
+                      <Shield className="mb-4 size-12 opacity-30" />
+                      <p className="text-sm font-medium">
+                        {roles?.length === 0
+                          ? t("settings.roles.emptyGuildTitle")
+                          : t("settings.roles.emptyTitle")}
+                      </p>
+                      <p className="mt-1 text-xs">
+                        {hasActiveFilters
+                          ? t("settings.roles.emptyFilteredDescription")
+                          : t("settings.roles.emptyDescription")}
+                      </p>
+                      {hasActiveFilters && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="mt-4"
+                          onClick={() =>
+                            startTransition(() => setSearchValue(""))
+                          }
+                        >
+                          <FilterX className="size-4" />
+                          {t("settings.roles.resetFilters")}
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            </div>
+          </div>
+        </SectionCardContent>
+      </SectionCard>
     </div>
   );
 };

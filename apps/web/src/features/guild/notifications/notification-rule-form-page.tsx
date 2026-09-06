@@ -1,3 +1,6 @@
+import { PageHeader } from "@/components/common/page-header";
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import { NotificationFormSkeleton } from "./notification-form-skeleton";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { CreateNotificationRuleDtoScheduleAnchor as NotificationScheduleAnchor } from "@lootlog/client/main";
@@ -5,7 +8,7 @@ import { CreateNotificationRuleDtoScheduleIntervalType as NotificationScheduleIn
 import { CreateNotificationRuleDtoTriggerType as NotificationTriggerType } from "@lootlog/client/main";
 import type { CreateNotificationRuleDtoTriggerType } from "@lootlog/client/main";
 import { Button } from "@lootlog/ui/components/button";
-import { Card } from "@lootlog/ui/components/card";
+
 import {
   Form,
   FormControl,
@@ -85,22 +88,21 @@ export const NotificationRuleFormPage = () => {
     );
   }
 
-  if (isError) {
+  if (isError || (!isCreateMode && !rule)) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <p className="text-sm text-muted-foreground">
-          {t("settings.notifications.errors.loadFailed")}
-        </p>
-      </div>
-    );
-  }
-
-  if (!isCreateMode && !rule) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <p className="text-sm text-muted-foreground">
-          {t("settings.notifications.errors.ruleNotFound")}
-        </p>
+      <div className="min-h-0 flex-1 overflow-y-auto p-3" role="alert">
+        <PageHeader
+          title={t(
+            isCreateMode
+              ? "settings.notifications.ruleDialog.createTitle"
+              : "settings.notifications.ruleDialog.editTitle",
+          )}
+          description={t(
+            isError
+              ? "settings.notifications.errors.loadFailed"
+              : "settings.notifications.errors.ruleNotFound",
+          )}
+        />
       </div>
     );
   }
@@ -109,9 +111,16 @@ export const NotificationRuleFormPage = () => {
     <div className="flex h-full min-h-0 flex-col bg-background">
       <ScrollArea className="flex-1 min-h-0">
         <div className="flex flex-col gap-4 px-3 py-3">
+          <PageHeader
+            title={t(
+              isCreateMode
+                ? "settings.notifications.ruleDialog.createTitle"
+                : "settings.notifications.ruleDialog.editTitle",
+            )}
+          />
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-            <div className="lg:col-span-2">
-              <Card className="gap-3 border-border bg-card p-4">
+            <SectionCard className="lg:col-span-2">
+              <SectionCardContent className="flex flex-col gap-3">
                 <Form {...form}>
                   <form
                     onSubmit={form.handleSubmit(handleSubmit)}
@@ -316,7 +325,7 @@ export const NotificationRuleFormPage = () => {
                           control={form.control}
                           name="manualNpcEntry"
                           render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-xl border border-border/70 bg-background px-3 py-3">
+                            <FormItem className="flex flex-row items-center justify-between border-b border-border/70 py-3">
                               <div className="pr-3">
                                 <FormLabel className="text-sm font-medium">
                                   {t(
@@ -898,7 +907,7 @@ export const NotificationRuleFormPage = () => {
                         control={form.control}
                         name="enabled"
                         render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between rounded-xl border border-border/70 bg-background px-3 py-3">
+                          <FormItem className="flex flex-row items-center justify-between border-b border-border/70 py-3">
                             <div>
                               <FormLabel className="text-sm font-medium">
                                 {t("settings.notifications.fields.enabled")}
@@ -943,8 +952,8 @@ export const NotificationRuleFormPage = () => {
                     </div>
                   </form>
                 </Form>
-              </Card>
-            </div>
+              </SectionCardContent>
+            </SectionCard>
 
             <div className="hidden lg:block">
               <NotificationRulePreviewPanel

@@ -1,3 +1,5 @@
+import { SectionCard } from "@/components/common/section-card/section-card";
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
 import type { TFunction } from "i18next";
 import { Calculator } from "lucide-react";
 import type { EventConfig } from "../../hooks/queries/use-kill-detail";
@@ -22,20 +24,22 @@ export const MultipliersCard = ({
   const timezone = eventConfig.scoringRules?.timezone ?? "Europe/Warsaw";
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-border bg-card">
-      <header className="flex min-h-12 items-center gap-2 border-b border-border/70 px-3 py-2.5">
-        <Calculator className="size-4 shrink-0 text-primary" />
-        <h2 className="truncate text-sm font-semibold">
-          {t("events.killDetail.multipliers.title")}
-        </h2>
-        {eventConfig.scoringMode === "ADVANCED" ? (
-          <span className="ml-auto shrink-0 text-xs text-muted-foreground">
-            {t("events.killDetail.multipliers.ruleCount", {
-              count: rules.length,
-            })}
-          </span>
-        ) : null}
-      </header>
+    <SectionCard className="overflow-hidden bg-card">
+      <SectionCardHeader
+        icon={Calculator}
+        title={<> {t("events.killDetail.multipliers.title")} </>}
+        actions={
+          <>
+            {eventConfig.scoringMode === "ADVANCED" ? (
+              <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+                {t("events.killDetail.multipliers.ruleCount", {
+                  count: rules.length,
+                })}
+              </span>
+            ) : null}
+          </>
+        }
+      />
 
       {eventConfig.scoringMode === "SIMPLE" ? (
         <p className="px-3 py-3 text-sm text-muted-foreground">
@@ -63,6 +67,6 @@ export const MultipliersCard = ({
           )}
         </>
       )}
-    </section>
+    </SectionCard>
   );
 };

@@ -1,0 +1,1 @@
+export const ONLINE_HISTORY_RETENTION_DAYS = 112;

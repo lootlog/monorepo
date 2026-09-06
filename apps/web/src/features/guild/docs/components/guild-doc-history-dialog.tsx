@@ -1,5 +1,6 @@
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
 import { useEffect, useState } from "react";
-import { Clock3, FileClock } from "lucide-react";
+import { FileClock } from "lucide-react";
 import { Badge } from "@lootlog/ui/components/badge";
 import {
   Dialog,
@@ -138,16 +139,17 @@ export const GuildDocHistoryDialog = ({
         </DialogHeader>
 
         <div className="grid min-h-0 flex-1 grid-rows-[220px_minmax(0,1fr)] lg:grid-cols-[220px_minmax(0,1fr)] lg:grid-rows-1">
-          <aside className="min-h-0 border-b border-border/70 bg-card/25 lg:border-b-0 lg:border-r">
-            <div className="flex h-11 items-center justify-between border-b border-border/70 px-3">
-              <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                {t("docs.history.versions")}
-              </span>
-              <Badge variant="secondary" className="h-5 px-2 text-[10px]">
-                {historyItems.length}
-              </Badge>
-            </div>
-            <ScrollArea className="h-[calc(100%-2.75rem)]">
+          <aside className="flex min-h-0 flex-col border-b border-border/70 bg-card/25 lg:border-b-0 lg:border-r">
+            <SectionCardHeader
+              title={t("docs.history.versions")}
+              actions={
+                <Badge variant="secondary" className="h-5 px-2 text-[10px]">
+                  {historyItems.length}
+                </Badge>
+              }
+              className="shrink-0"
+            />
+            <ScrollArea className="min-h-0 flex-1">
               <div className="flex flex-col gap-1 p-2">
                 {historyQuery.isLoading ? (
                   Array.from({ length: 5 }).map((_, index) => (
@@ -176,22 +178,18 @@ export const GuildDocHistoryDialog = ({
               </div>
             ) : snapshotQuery.data ? (
               <div className="flex min-h-0 flex-1 flex-col">
-                <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border/70 bg-card/20 px-4 py-3">
-                  <div className="min-w-0">
-                    <h3 className="truncate text-base font-semibold">
-                      {snapshotQuery.data.title}
-                    </h3>
-                    <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Clock3 className="size-3" />
-                      {t("docs.history.preview", {
-                        version: snapshotQuery.data.version,
-                      })}
-                    </p>
-                  </div>
-                  <Badge variant="outline" className="bg-background">
-                    {t(`docs.history.actions.${snapshotQuery.data.action}`)}
-                  </Badge>
-                </div>
+                <SectionCardHeader
+                  title={snapshotQuery.data.title}
+                  description={t("docs.history.preview", {
+                    version: snapshotQuery.data.version,
+                  })}
+                  actions={
+                    <Badge variant="outline" className="bg-background">
+                      {t(`docs.history.actions.${snapshotQuery.data.action}`)}
+                    </Badge>
+                  }
+                  className="shrink-0"
+                />
                 <div className="flex min-h-0 flex-1 p-3">
                   <GuildDocEditor
                     key={snapshotQuery.data.id}

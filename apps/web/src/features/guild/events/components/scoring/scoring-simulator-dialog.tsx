@@ -1,3 +1,4 @@
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -173,13 +174,12 @@ export const ScoringSimulatorDialog = ({
         <ScrollArea className="flex-1">
           <div className="p-4 space-y-4">
             {/* Results - prominent at the top */}
-            <div className="rounded-lg border bg-card p-3">
-              <div className="flex items-center gap-2 mb-2">
-                <Trophy className="size-3.5 text-amber-500" />
-                <span className="text-[10px] uppercase tracking-[0.18em] font-semibold text-muted-foreground">
-                  {t("events.scoring.simulator.results")}
-                </span>
-              </div>
+            <div className="bg-muted/20 p-3">
+              <SectionCardHeader
+                icon={Trophy}
+                title={t("events.scoring.simulator.results")}
+                className="mb-3"
+              />
               <div className="flex items-baseline gap-4">
                 <div className="text-center">
                   <p className="text-[10px] text-muted-foreground/60">

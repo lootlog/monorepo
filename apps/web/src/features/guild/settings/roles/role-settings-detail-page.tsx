@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/common/page-header";
 import { PermissionCategoryTooltip } from "@/features/guild/settings/components/permission-category-tooltip";
 import { PERMISSION_CATEGORIES } from "@/features/guild/settings/roles/constants/permission-categories";
 import { RolesForm } from "@/features/guild/settings/roles/components/roles-form";
@@ -5,7 +6,7 @@ import { useRolesControllerGetGuildRoles } from "@lootlog/client/main";
 import { getColorFromRoleColor } from "@/utils/get-color-from-role";
 import { Permission } from "@lootlog/schema/permissions";
 import { Button } from "@lootlog/ui/components/button";
-import { Card } from "@lootlog/ui/components/card";
+
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { TooltipProvider } from "@lootlog/ui/components/tooltip";
 import { useNavigate, useParams } from "@tanstack/react-router";
@@ -69,9 +70,20 @@ export const RoleSettingsDetailPage = () => {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto bg-background px-3">
-      <Card className="shrink-0 border-b border-t border-border px-4 py-3">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex min-w-0 items-center gap-3">
+      <PageHeader
+        title={<span style={{ color: `#${color}` }}>{role.name}</span>}
+        description={
+          <>
+            {t("settings.roles.details")}
+
+            {t("settings.roles.levelRange", {
+              from: role.lvlRangeFrom,
+              to: role.lvlRangeTo,
+            })}
+          </>
+        }
+        actions={
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <Button
               type="button"
               variant="ghost"
@@ -81,59 +93,44 @@ export const RoleSettingsDetailPage = () => {
             >
               <ArrowLeft className="size-4" />
             </Button>
-            <div
-              className="flex size-10 shrink-0 items-center justify-center rounded-lg"
-              style={{ backgroundColor: `#${color}20` }}
-            >
-              <span
-                className="size-4 rounded-full"
-                style={{ backgroundColor: `#${color}` }}
-              />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs text-muted-foreground">
-                {t("settings.roles.details")}
-              </p>
-              <h2
-                className="truncate text-base font-semibold leading-tight"
-                style={{ color: `#${color}` }}
+            <div className="flex min-w-0 items-center gap-3">
+              <div
+                className="flex size-10 shrink-0 items-center justify-center rounded-lg"
+                style={{ backgroundColor: `#${color}20` }}
               >
-                {role.name}
-              </h2>
-              <p className="truncate text-xs text-muted-foreground">
-                {t("settings.roles.levelRange", {
-                  from: role.lvlRangeFrom,
-                  to: role.lvlRangeTo,
-                })}
-              </p>
+                <span
+                  className="size-4 rounded-full"
+                  style={{ backgroundColor: `#${color}` }}
+                />
+              </div>
+            </div>
+            <div className="flex min-h-8 shrink-0 flex-wrap items-center gap-1 pl-12 sm:pl-0">
+              {activeCategories.length > 0 ? (
+                <TooltipProvider delay={100}>
+                  {activeCategories.map((category) => {
+                    const activePermissions = category.permissions.filter(
+                      (permission) => role.permissions.includes(permission),
+                    );
+
+                    return (
+                      <PermissionCategoryTooltip
+                        key={category.name}
+                        category={category}
+                        activePermissions={activePermissions}
+                        side="bottom"
+                      />
+                    );
+                  })}
+                </TooltipProvider>
+              ) : (
+                <span className="text-xs text-muted-foreground">
+                  {t("settings.roles.noPermissions")}
+                </span>
+              )}
             </div>
           </div>
-          <div className="flex min-h-8 shrink-0 flex-wrap items-center gap-1 pl-12 sm:pl-0">
-            {activeCategories.length > 0 ? (
-              <TooltipProvider delay={100}>
-                {activeCategories.map((category) => {
-                  const activePermissions = category.permissions.filter(
-                    (permission) => role.permissions.includes(permission),
-                  );
-
-                  return (
-                    <PermissionCategoryTooltip
-                      key={category.name}
-                      category={category}
-                      activePermissions={activePermissions}
-                      side="bottom"
-                    />
-                  );
-                })}
-              </TooltipProvider>
-            ) : (
-              <span className="text-xs text-muted-foreground">
-                {t("settings.roles.noPermissions")}
-              </span>
-            )}
-          </div>
-        </div>
-      </Card>
+        }
+      />
       <ScrollArea className="min-h-48 flex-1">
         <div className="mx-auto w-full">
           <RolesForm role={role} />

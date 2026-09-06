@@ -1,3 +1,5 @@
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { PageHeader } from "@/components/common/page-header";
 import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearch, useNavigate } from "@tanstack/react-router";
@@ -8,7 +10,7 @@ import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Card } from "@lootlog/ui/components/card";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import { Skull } from "lucide-react";
 import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
 import {
@@ -279,26 +281,17 @@ export const KillsPage: React.FC = () => {
     );
   };
 
+  const totalKills = data?.pagination?.total ?? 0;
+
   return (
     <div className="flex flex-col h-full min-h-0">
       <ScrollArea className="flex-1 min-h-0">
         <div className="px-3 py-3 flex flex-col gap-4">
-          <Card className="gap-4 border-border bg-card p-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                <div className="rounded-xl bg-red-500/10 p-2.5">
-                  <Skull className="size-4 text-red-500" />
-                </div>
-                <div className="min-w-0">
-                  <h2 className="text-base font-semibold leading-tight">
-                    {t("kills.ranking.title")}
-                  </h2>
-                  <p className="text-xs text-muted-foreground leading-tight">
-                    {t("kills.ranking.description")}
-                  </p>
-                </div>
-              </div>
-            </div>
+          <PageHeader
+            icon={Skull}
+            title={t("kills.ranking.title")}
+            description={t("kills.ranking.description")}
+          >
             <KillsFilters
               filters={{
                 ...filters,
@@ -313,22 +306,27 @@ export const KillsPage: React.FC = () => {
               onMaxLvlChange={handleMaxLvlChange}
               onPeriodChange={handlePeriodChange}
             />
-          </Card>
+          </PageHeader>
 
-          <Card className="flex-1 min-h-0 flex flex-col border-border bg-card p-0  overflow-hidden gap-0">
+          <SectionCard className="flex-1 min-h-0 flex flex-col overflow-hidden">
+            <SectionCardHeader
+              title={t("kills.ranking.total", {
+                count: totalKills,
+              })}
+            />
             <ScrollArea className="relative flex-1 min-h-0 w-full">
               {renderResults()}
             </ScrollArea>
             <TablePaginationFooter
               totalLabel={t("kills.ranking.total", {
-                count: data?.pagination?.total ?? 0,
+                count: totalKills,
               })}
               hasPrev={hasPrev}
               hasNext={Boolean(data?.pagination?.hasNext)}
               onPreviousPage={handlePreviousPage}
               onNextPage={handleNextPage}
             />
-          </Card>
+          </SectionCard>
         </div>
       </ScrollArea>
     </div>

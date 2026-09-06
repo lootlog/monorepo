@@ -1,3 +1,5 @@
+import { PageHeader } from "@/components/common/page-header";
+import { useTranslation } from "react-i18next";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useGuildsControllerGetGuildById } from "@lootlog/client/main";
@@ -5,6 +7,7 @@ import { ReservationsSettingsForm } from "./reservations-settings-form";
 import { ReservationSharingSettings } from "./reservation-sharing-settings";
 
 export const ReservationsSettings = () => {
+  const { t } = useTranslation();
   const guildId = useGuildId();
   const { data: guild } = useGuildsControllerGetGuildById({
     guildId: guildId ?? "",
@@ -14,6 +17,7 @@ export const ReservationsSettings = () => {
     <div className="flex h-full min-h-0 flex-col">
       <ScrollArea className="min-h-0 flex-1 bg-background">
         <div className="w-full space-y-4 px-3 pb-24">
+          <PageHeader title={t("settings.guildNavigation.reservations")} />
           {guild && <ReservationsSettingsForm guild={guild} />}
           <ReservationSharingSettings />
         </div>

@@ -6,7 +6,6 @@ import { Button } from "@lootlog/ui/components/button";
 import { Label } from "@lootlog/ui/components/label";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { Separator } from "@lootlog/ui/components/separator";
-import { Card } from "@lootlog/ui/components/card";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   X,
@@ -110,10 +109,10 @@ export const FiltersSidebar = ({
         className,
       )}
     >
-      <Card className="flex-1 flex flex-col min-h-0 bg-filters-sidebar border-border  p-0">
+      <div className="flex-1 flex flex-col min-h-0">
         <div className="flex-1 overflow-hidden">
           <ScrollArea className="h-full">
-            <div className="p-4 space-y-4">
+            <div className="p-3 space-y-4">
               <div className="space-y-2">
                 <Label className="text-xs text-muted-foreground">
                   {t("battlePanel.filters.world")}
@@ -321,7 +320,7 @@ export const FiltersSidebar = ({
             </motion.div>
           )}
         </AnimatePresence>
-      </Card>
+      </div>
     </div>
   );
 };

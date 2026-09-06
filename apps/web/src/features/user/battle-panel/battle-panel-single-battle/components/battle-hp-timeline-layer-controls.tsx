@@ -1,3 +1,4 @@
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
 import { battleHpTimelineEventIconByKey } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-event-icons";
 import {
   BATTLE_HP_TIMELINE_LAYER_DEFINITIONS,
@@ -7,7 +8,6 @@ import {
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Separator } from "@lootlog/ui/components/separator";
 import { Switch } from "@lootlog/ui/components/switch";
 import { cn } from "cn";
 import { RotateCcw, SlidersHorizontal } from "lucide-react";
@@ -33,24 +33,22 @@ export function BattleHpTimelineLayerControls({
 
   return (
     <aside className="flex min-h-0 flex-col border-t bg-card lg:w-72 lg:border-l lg:border-t-0">
-      <div className="flex shrink-0 items-center justify-between gap-3 px-4 py-3">
-        <div className="flex min-w-0 items-center gap-2">
-          <SlidersHorizontal className="size-4 shrink-0 text-primary" />
-          <h3 className="truncate text-sm font-semibold">
-            {t("battlePanel.single.chart.layers.title")}
-          </h3>
-        </div>
-        <Button
-          aria-label={t("battlePanel.single.chart.layers.reset")}
-          variant="ghost"
-          size="icon"
-          className="size-8 shrink-0"
-          onClick={onReset}
-        >
-          <RotateCcw className="size-3.5" />
-        </Button>
-      </div>
-      <Separator />
+      <SectionCardHeader
+        icon={SlidersHorizontal}
+        title={t("battlePanel.single.chart.layers.title")}
+        actions={
+          <Button
+            aria-label={t("battlePanel.single.chart.layers.reset")}
+            variant="ghost"
+            size="icon"
+            className="size-8 shrink-0"
+            onClick={onReset}
+          >
+            <RotateCcw className="size-3.5" />
+          </Button>
+        }
+        className="shrink-0"
+      />
       <ScrollArea className="min-h-0 flex-1">
         <div className="flex flex-col gap-1 p-3">
           {BATTLE_HP_TIMELINE_LAYER_DEFINITIONS.map((definition) => {

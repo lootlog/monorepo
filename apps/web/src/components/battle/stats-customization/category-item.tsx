@@ -62,7 +62,7 @@ export const CategoryItem = ({
   );
 
   return (
-    <div className="bg-card border rounded-lg mb-2 overflow-hidden">
+    <div className="border-b border-border/70 overflow-hidden">
       <div className="flex items-center gap-2 p-3">
         <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab active:cursor-grabbing flex-shrink-0" />
 
@@ -110,7 +110,7 @@ export const CategoryItem = ({
         }}
       >
         <div className="overflow-hidden">
-          <div className="px-3 pb-3 pt-1 border-t bg-muted/30 space-y-4">
+          <div className="p-3 border-t border-border/70 bg-muted/20 space-y-3">
             <div>
               <div className="text-xs text-muted-foreground mb-2 font-medium">
                 {t("battleUi.customization.inCategory")}

@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@lootlog/ui/components/badge";
-import { Card } from "@lootlog/ui/components/card";
+
 import { cn } from "cn";
 import type { NotificationJobsResponseDto } from "@lootlog/client/main";
 import {
@@ -23,17 +23,16 @@ export function NotificationHistoryRow({
 }) {
   const { t } = useTranslation();
   return (
-    <Card
-      variant="interactive"
+    <div
       role="button"
       tabIndex={0}
       className={cn(
-        "border-border/70 bg-background p-3 text-left hover:bg-background",
+        "border-b border-border/70 py-3 text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors hover:bg-muted/30 last:border-b-0",
         compact ? "gap-1" : "gap-2",
       )}
       onClick={() => openJobDetails(job)}
       onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === "") {
+        if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
           openJobDetails(job);
         }
@@ -59,6 +58,6 @@ export function NotificationHistoryRow({
           <p className="text-xs text-destructive">{job.lastError}</p>
         ) : null}
       </div>
-    </Card>
+    </div>
   );
 }

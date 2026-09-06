@@ -4,6 +4,22 @@ info:
   version: "1.0"
   description: The Lootlog API documentation
 paths:
+  /users/@me/feed:
+    get:
+      tags:
+        - users
+      operationId: UsersController_getUserFeed
+      parameters: []
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: UserFeedResponseDto_Output
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserFeedResponseDto_Output"
+      summary: Get recent activity across accessible Organizations
   /users/@me:
     delete:
       tags:
@@ -6766,6 +6782,63 @@ paths:
                 $ref: "#/components/schemas/UserKillStatsResponseDto_Output"
       description: Retrieves kill statistics for the authenticated user across all guilds, deduplicated.
       summary: Get personal kill statistics
+  /users/@me/stats/kills/analytics:
+    get:
+      tags:
+        - kills
+      operationId: KillsController_getUserKillAnalytics
+      parameters:
+        - name: days
+          in: query
+          schema:
+            type: string
+            enum:
+              - "7"
+              - "30"
+              - "90"
+              - "365"
+          required: false
+        - name: world
+          in: query
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+          required: false
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: UserKillAnalyticsResponseDto_Output
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserKillAnalyticsResponseDto_Output"
+      description: Calendar-day analytics in Europe/Warsaw. Current-day/hour data is partial; untimed lifetime history is never distributed backwards. Rankings are bounded to 20 NPCs and 10 gains. Comparisons exclude the current incomplete hour.
+      summary: Get personal kill analytics
+  /users/@me/stats/kills/activity:
+    get:
+      tags:
+        - kills
+      operationId: KillsController_getUserKillActivity
+      parameters:
+        - name: world
+          in: query
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+          required: false
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: UserKillActivityResponseDto_Output
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserKillActivityResponseDto_Output"
+      summary: Get 16 weeks of personal kill activity
   /users/@me/kills/npcs:
     get:
       tags:
@@ -7466,6 +7539,183 @@ paths:
       summary: Permanently delete guild document
 components:
   schemas:
+    UserFeedResponseDto_Output:
+      type: object
+      properties:
+        generatedAt:
+          type: string
+        windowStart:
+          type: string
+        items:
+          type: array
+          items:
+            anyOf:
+              - type: object
+                properties:
+                  id:
+                    type: string
+                  version:
+                    type: integer
+                    minimum: 1
+                    maximum: 9007199254740991
+                  occurredAt:
+                    type: string
+                  world:
+                    type: string
+                  guild:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      name:
+                        type: string
+                      vanityUrl:
+                        nullable: true
+                        type: string
+                    required:
+                      - id
+                      - name
+                      - vanityUrl
+                    additionalProperties: false
+                  npc:
+                    type: object
+                    properties:
+                      id:
+                        type: number
+                      name:
+                        type: string
+                      type:
+                        nullable: true
+                        type: string
+                      lvl:
+                        nullable: true
+                        type: number
+                      icon:
+                        nullable: true
+                        type: string
+                    required:
+                      - id
+                      - name
+                      - type
+                      - lvl
+                      - icon
+                    additionalProperties: false
+                  type:
+                    type: string
+                    enum:
+                      - kill
+                  count:
+                    type: integer
+                    minimum: 1
+                    maximum: 9007199254740991
+                required:
+                  - id
+                  - version
+                  - occurredAt
+                  - world
+                  - guild
+                  - npc
+                  - type
+                  - count
+                additionalProperties: false
+              - type: object
+                properties:
+                  id:
+                    type: string
+                  version:
+                    type: integer
+                    minimum: 1
+                    maximum: 9007199254740991
+                  occurredAt:
+                    type: string
+                  world:
+                    type: string
+                  guild:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      name:
+                        type: string
+                      vanityUrl:
+                        nullable: true
+                        type: string
+                    required:
+                      - id
+                      - name
+                      - vanityUrl
+                    additionalProperties: false
+                  npc:
+                    nullable: true
+                    type: object
+                    properties:
+                      id:
+                        type: number
+                      name:
+                        type: string
+                      type:
+                        nullable: true
+                        type: string
+                      lvl:
+                        nullable: true
+                        type: number
+                      icon:
+                        nullable: true
+                        type: string
+                    required:
+                      - id
+                      - name
+                      - type
+                      - lvl
+                      - icon
+                    additionalProperties: false
+                  type:
+                    type: string
+                    enum:
+                      - loot
+                  lootId:
+                    type: integer
+                    minimum: 1
+                    maximum: 9007199254740991
+                  additionalItemsCount:
+                    type: number
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: number
+                        name:
+                          type: string
+                        icon:
+                          type: string
+                        rarity:
+                          nullable: true
+                          type: string
+                      required:
+                        - id
+                        - name
+                        - icon
+                        - rarity
+                      additionalProperties: false
+                required:
+                  - id
+                  - version
+                  - occurredAt
+                  - world
+                  - guild
+                  - npc
+                  - type
+                  - lootId
+                  - additionalItemsCount
+                  - items
+                additionalProperties: false
+      required:
+        - generatedAt
+        - windowStart
+        - items
+      additionalProperties: false
     StatusOkResponseDto_Output:
       type: object
       properties:
@@ -19828,6 +20078,535 @@ components:
       required:
         - overview
         - topNpcs
+      additionalProperties: false
+    UserKillAnalyticsResponseDto_Output:
+      type: object
+      properties:
+        meta:
+          type: object
+          properties:
+            timezone:
+              type: string
+              enum:
+                - Europe/Warsaw
+            generatedAt:
+              type: string
+            days:
+              type: integer
+              minimum: 0
+            world:
+              nullable: true
+              type: string
+            startDate:
+              type: string
+            endDate:
+              type: string
+            firstBucketAt:
+              nullable: true
+              type: string
+            coverage:
+              type: string
+              enum:
+                - complete
+                - partial
+                - unavailable
+            allTimeKills:
+              type: integer
+              minimum: 0
+            timedKills:
+              type: integer
+              minimum: 0
+            untimedKills:
+              type: integer
+              minimum: 0
+            includesCurrentHour:
+              type: boolean
+              enum:
+                - true
+          required:
+            - timezone
+            - generatedAt
+            - days
+            - world
+            - startDate
+            - endDate
+            - firstBucketAt
+            - coverage
+            - allTimeKills
+            - timedKills
+            - untimedKills
+            - includesCurrentHour
+          additionalProperties: false
+        overview:
+          type: object
+          properties:
+            totalKills:
+              type: integer
+              minimum: 0
+            activeDays:
+              type: integer
+              minimum: 0
+            averagePerDay:
+              nullable: true
+              type: number
+            currentStreak:
+              type: integer
+              minimum: 0
+            longestStreak:
+              type: integer
+              minimum: 0
+            uniqueNpcs:
+              type: integer
+              minimum: 0
+          required:
+            - totalKills
+            - activeDays
+            - averagePerDay
+            - currentStreak
+            - longestStreak
+            - uniqueNpcs
+          additionalProperties: false
+        daily:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+              kills:
+                nullable: true
+                type: number
+              partial:
+                type: boolean
+            required:
+              - date
+              - kills
+              - partial
+            additionalProperties: false
+        weekly:
+          type: array
+          items:
+            type: object
+            properties:
+              startDate:
+                type: string
+              endDate:
+                type: string
+              kills:
+                type: integer
+                minimum: 0
+              partial:
+                type: boolean
+            required:
+              - startDate
+              - endDate
+              - kills
+              - partial
+            additionalProperties: false
+        comparison:
+          type: object
+          properties:
+            currentKills:
+              type: integer
+              minimum: 0
+            previousKills:
+              type: integer
+              minimum: 0
+            deltaKills:
+              type: number
+            deltaPercent:
+              nullable: true
+              type: number
+            currentThrough:
+              type: string
+            previousThrough:
+              type: string
+            partial:
+              type: boolean
+          required:
+            - currentKills
+            - previousKills
+            - deltaKills
+            - deltaPercent
+            - currentThrough
+            - previousThrough
+            - partial
+          additionalProperties: false
+        records:
+          type: object
+          properties:
+            bestDay:
+              nullable: true
+              type: object
+              properties:
+                startDate:
+                  type: string
+                endDate:
+                  type: string
+                kills:
+                  type: integer
+                  minimum: 0
+                partial:
+                  type: boolean
+              required:
+                - startDate
+                - endDate
+                - kills
+                - partial
+              additionalProperties: false
+            bestWeek:
+              nullable: true
+              type: object
+              properties:
+                startDate:
+                  type: string
+                endDate:
+                  type: string
+                kills:
+                  type: integer
+                  minimum: 0
+                partial:
+                  type: boolean
+              required:
+                - startDate
+                - endDate
+                - kills
+                - partial
+              additionalProperties: false
+            bestMonth:
+              nullable: true
+              type: object
+              properties:
+                startDate:
+                  type: string
+                endDate:
+                  type: string
+                kills:
+                  type: integer
+                  minimum: 0
+                partial:
+                  type: boolean
+              required:
+                - startDate
+                - endDate
+                - kills
+                - partial
+              additionalProperties: false
+          required:
+            - bestDay
+            - bestWeek
+            - bestMonth
+          additionalProperties: false
+        hourlyWeekday:
+          type: array
+          items:
+            type: object
+            properties:
+              weekday:
+                type: integer
+                minimum: 0
+              hour:
+                type: integer
+                minimum: 0
+              kills:
+                type: integer
+                minimum: 0
+            required:
+              - weekday
+              - hour
+              - kills
+            additionalProperties: false
+        types:
+          type: array
+          items:
+            type: object
+            properties:
+              npcType:
+                type: string
+              totalKills:
+                type: integer
+                minimum: 0
+              uniqueNpcs:
+                type: integer
+                minimum: 0
+              share:
+                type: number
+            required:
+              - npcType
+              - totalKills
+              - uniqueNpcs
+              - share
+            additionalProperties: false
+        npcs:
+          type: array
+          items:
+            type: object
+            properties:
+              world:
+                type: string
+              npcId:
+                type: number
+              npcName:
+                type: string
+              npcType:
+                type: string
+              npcLvl:
+                type: number
+              npcProf:
+                nullable: true
+                type: string
+              npcIcon:
+                nullable: true
+                type: string
+              totalKills:
+                type: integer
+                minimum: 0
+              previousKills:
+                type: integer
+                minimum: 0
+              comparisonKills:
+                type: integer
+                minimum: 0
+              deltaKills:
+                type: number
+              deltaPercent:
+                nullable: true
+                type: number
+              share:
+                type: number
+              bestDay:
+                nullable: true
+                type: object
+                properties:
+                  date:
+                    type: string
+                  kills:
+                    nullable: true
+                    type: number
+                required:
+                  - date
+                  - kills
+                additionalProperties: false
+            required:
+              - world
+              - npcId
+              - npcName
+              - npcType
+              - npcLvl
+              - npcProf
+              - npcIcon
+              - totalKills
+              - previousKills
+              - comparisonKills
+              - deltaKills
+              - deltaPercent
+              - share
+              - bestDay
+            additionalProperties: false
+        npcGains:
+          type: array
+          items:
+            type: object
+            properties:
+              world:
+                type: string
+              npcId:
+                type: number
+              npcName:
+                type: string
+              npcType:
+                type: string
+              npcLvl:
+                type: number
+              npcProf:
+                nullable: true
+                type: string
+              npcIcon:
+                nullable: true
+                type: string
+              totalKills:
+                type: integer
+                minimum: 0
+              previousKills:
+                type: integer
+                minimum: 0
+              comparisonKills:
+                type: integer
+                minimum: 0
+              deltaKills:
+                type: number
+              deltaPercent:
+                nullable: true
+                type: number
+              share:
+                type: number
+              bestDay:
+                nullable: true
+                type: object
+                properties:
+                  date:
+                    type: string
+                  kills:
+                    nullable: true
+                    type: number
+                required:
+                  - date
+                  - kills
+                additionalProperties: false
+            required:
+              - world
+              - npcId
+              - npcName
+              - npcType
+              - npcLvl
+              - npcProf
+              - npcIcon
+              - totalKills
+              - previousKills
+              - comparisonKills
+              - deltaKills
+              - deltaPercent
+              - share
+              - bestDay
+            additionalProperties: false
+        worlds:
+          type: array
+          items:
+            type: object
+            properties:
+              world:
+                type: string
+              totalKills:
+                type: integer
+                minimum: 0
+              comparisonKills:
+                type: integer
+                minimum: 0
+              previousKills:
+                type: integer
+                minimum: 0
+              deltaKills:
+                type: number
+              deltaPercent:
+                nullable: true
+                type: number
+              share:
+                type: number
+              daily:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    date:
+                      type: string
+                    kills:
+                      nullable: true
+                      type: number
+                  required:
+                    - date
+                    - kills
+                  additionalProperties: false
+            required:
+              - world
+              - totalKills
+              - comparisonKills
+              - previousKills
+              - deltaKills
+              - deltaPercent
+              - share
+              - daily
+            additionalProperties: false
+      required:
+        - meta
+        - overview
+        - daily
+        - weekly
+        - comparison
+        - records
+        - hourlyWeekday
+        - types
+        - npcs
+        - npcGains
+        - worlds
+      additionalProperties: false
+    UserKillActivityResponseDto_Output:
+      type: object
+      properties:
+        meta:
+          type: object
+          properties:
+            timezone:
+              type: string
+              enum:
+                - Europe/Warsaw
+            generatedAt:
+              type: string
+            days:
+              type: integer
+              minimum: 0
+            world:
+              nullable: true
+              type: string
+            startDate:
+              type: string
+            endDate:
+              type: string
+            firstBucketAt:
+              nullable: true
+              type: string
+            coverage:
+              type: string
+              enum:
+                - complete
+                - partial
+                - unavailable
+            allTimeKills:
+              type: integer
+              minimum: 0
+            timedKills:
+              type: integer
+              minimum: 0
+            untimedKills:
+              type: integer
+              minimum: 0
+            includesCurrentHour:
+              type: boolean
+              enum:
+                - true
+          required:
+            - timezone
+            - generatedAt
+            - days
+            - world
+            - startDate
+            - endDate
+            - firstBucketAt
+            - coverage
+            - allTimeKills
+            - timedKills
+            - untimedKills
+            - includesCurrentHour
+          additionalProperties: false
+        daily:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+              kills:
+                nullable: true
+                type: number
+              partial:
+                type: boolean
+            required:
+              - date
+              - kills
+              - partial
+            additionalProperties: false
+      required:
+        - meta
+        - daily
       additionalProperties: false
     UserNpcKillsResponseDto_Output:
       type: object

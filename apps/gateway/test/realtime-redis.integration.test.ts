@@ -18,6 +18,8 @@ import {
 } from "testcontainers";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 import { RedisGatewayStore } from "#src/platform/redis-store";
+import { OnlineHistory } from "#src/realtime/online-history";
+import type { UserOnlineEventV1 } from "@lootlog/protocol/rabbit/events";
 import { AirTagService } from "#src/realtime/air-tag-service";
 import { MapPingService } from "#src/realtime/map-ping-service";
 import { RealtimeHub } from "#src/realtime/realtime-hub";
@@ -114,6 +116,96 @@ describe("realtime Dragonfly integration", () => {
 
   afterAll(async () => {
     await dragonfly?.stop();
+  });
+
+  test("online history survives publisher restart without counting gaps or web sessions", async () => {
+    const runtime = ManagedRuntime.make(
+      BunRedis.layer({ url: `redis://${dragonfly.getHost()}:${redisPort}` }),
+    );
+    try {
+      const redis = await runtime.runPromise(Redis.Redis);
+      const store = new RedisGatewayStore(
+        redis,
+        {
+          host: dragonfly.getHost(),
+          port: redisPort,
+          username: "",
+          password: "",
+          keyPrefix: `online-test:${crypto.randomUUID()}`,
+        },
+        (effect) => runtime.runPromise(effect),
+        () => {},
+      );
+      const start = Date.parse("2026-09-06T10:00:00Z");
+      let now = start;
+      const messages: UserOnlineEventV1[] = [];
+      let fails = false;
+      const publish = (event: UserOnlineEventV1) =>
+        Effect.suspend(() => {
+          if (fails) return Effect.fail(new Error("Rabbit unavailable"));
+          messages.push(event);
+          return Effect.void;
+        });
+      let history = new OnlineHistory(store.command, publish, () => now);
+      const session = makeSession("online-one");
+      session.character = session.presence?.character;
+      const observeAt = async (seconds: number, final = false) => {
+        now = start + seconds * 1000;
+        await Effect.runPromise(history.observe(session, now, final));
+      };
+      const checkpoints = () =>
+        messages.filter((event) => event.type === "checkpoint");
+      await observeAt(0);
+      await observeAt(25);
+      await observeAt(50);
+      now = start + 60_000;
+      await Effect.runPromise(history.flush());
+      expect(checkpoints()).toHaveLength(1);
+      expect(checkpoints()[0]?.endedAt).toBe(
+        new Date(start + 50_000).toISOString(),
+      );
+      await observeAt(75);
+      await observeAt(100);
+      now = start + 110_000;
+      await Effect.runPromise(history.flush());
+      expect(checkpoints()).toHaveLength(1);
+      now = start + 120_000;
+      fails = true;
+      await expect(Effect.runPromise(history.flush())).rejects.toThrow();
+      history = new OnlineHistory(store.command, publish, () => now);
+      fails = false;
+      now = start + 180_000;
+      await Effect.runPromise(history.flush());
+      expect(checkpoints()).toHaveLength(2);
+      expect(checkpoints()[1]?.segmentId).toBe(checkpoints()[0]?.segmentId);
+      expect(checkpoints()[1]?.endedAt).toBe(
+        new Date(start + 100_000).toISOString(),
+      );
+      await observeAt(200);
+      await observeAt(225, true);
+      await Effect.runPromise(history.flush());
+      expect(checkpoints()).toHaveLength(3);
+      expect(checkpoints()[2]?.startedAt).toBe(
+        new Date(start + 200_000).toISOString(),
+      );
+      expect(checkpoints()[2]?.endedAt).toBe(
+        new Date(start + 225_000).toISOString(),
+      );
+      expect(session.guilds).toHaveLength(2);
+      const web = {
+        ...session,
+        platform: "web-app" as const,
+        connectionId: "web",
+      };
+      await Effect.runPromise(history.observe(web, now));
+      await Effect.runPromise(history.observe(web, now + 30_000, true));
+      now += 120_000;
+      await Effect.runPromise(history.observe(session, now, true));
+      await Effect.runPromise(history.flush());
+      expect(checkpoints()).toHaveLength(3);
+    } finally {
+      await runtime.dispose();
+    }
   });
 
   test("closing a subscription scope releases Redis without a shutdown defect", async () => {
@@ -289,6 +381,49 @@ describe("realtime Dragonfly integration", () => {
       const recipient = makeSocket("recipient");
       firstHub.register(source.socket);
       secondHub.register(recipient.socket);
+      const visibleFeed = makeSocket("visible-feed");
+      const hiddenFeed = makeSocket("hidden-feed");
+      for (const target of [visibleFeed, hiddenFeed]) {
+        Object.assign(target.socket.data, { platform: "web-app" });
+        target.socket.data.guilds = [
+          {
+            guild: { id: "organization-1", ownerId: "other-owner" },
+            roles: [
+              {
+                id: "feed-role",
+                lvlRangeFrom: 0,
+                lvlRangeTo: target === visibleFeed ? 500 : 99,
+                permissions: [
+                  Permission.LOOTLOG_LOOTS_READ,
+                  Permission.LOOTLOG_LOOTS_HEROES_READ,
+                ],
+              },
+            ],
+          },
+        ];
+        secondHub.register(target.socket);
+        secondHub.subscribe(target.socket, {
+          topic: "organization.loots",
+          organizationId: "organization-1",
+        });
+      }
+      await firstHub.publishToScope(
+        { topic: "organization.loots", organizationId: "organization-1" },
+        { v: 1, type: "kills.changed", data: { guildId: "organization-1" } },
+        "persisted-kill-1",
+        {
+          recipientPlatform: "web-app",
+          sourceNpcs: [{ level: 100, type: "HERO" }],
+        },
+      );
+      await waitFor(() => visibleFeed.frames.length === 1);
+      expect(hiddenFeed.frames).toHaveLength(0);
+      expect(decodeRealtimeFrame(visibleFeed.frames[0]!)).toEqual({
+        v: 1,
+        type: "kills.changed",
+        data: { guildId: "organization-1" },
+      });
+
       for (const organizationId of ["organization-1", "organization-2"]) {
         secondHub.subscribe(recipient.socket, {
           topic: "map.pings",

@@ -1,4 +1,7 @@
-import { Card } from "@lootlog/ui/components/card";
+import { SectionCardFooter } from "@/components/common/section-card/section-card-footer";
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { PageHeader } from "@/components/common/page-header";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 
 const tableRows = Array.from({ length: 10 });
@@ -23,19 +26,16 @@ const renderTeamSkeleton = () => (
 export const BattlePanelBattlesSkeleton = () => {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden bg-background">
+      <div className="px-3 pt-3">
+        <PageHeader title={<Skeleton className="h-5 w-40" />} />
+      </div>
       <div className="flex flex-1 overflow-hidden">
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden p-3">
-          <Card className="flex h-full min-h-0 flex-1 flex-col gap-0 overflow-hidden border-border bg-card p-0">
-            <div className="grid shrink-0 gap-2 border-b border-border bg-background/80 px-3 py-3 md:min-h-[64px] md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
-              <div className="flex min-w-0 items-center gap-2">
-                <Skeleton className="h-10 min-w-0 flex-1 rounded-md md:max-w-[360px]" />
-              </div>
-              <div className="hidden min-h-8 items-center justify-end gap-2 md:flex">
-                <Skeleton className="h-8 w-24 rounded-md" />
-                <Skeleton className="h-8 w-24 rounded-md" />
-                <Skeleton className="size-9 rounded-md" />
-              </div>
-            </div>
+          <SectionCard className="flex h-full min-h-0 flex-1 flex-col gap-0 overflow-hidden border-border bg-card p-0">
+            <SectionCardHeader
+              title={<Skeleton className="h-4 w-28" />}
+              actions={<Skeleton className="h-9 w-48" />}
+            />
 
             <div className="min-h-0 flex-1 overflow-hidden">
               <div className="min-w-full md:min-w-[840px]">
@@ -82,18 +82,18 @@ export const BattlePanelBattlesSkeleton = () => {
               </div>
             </div>
 
-            <div className="flex h-14 shrink-0 items-center justify-between gap-3 border-t border-border px-4">
+            <SectionCardFooter className="shrink-0 justify-between">
               <Skeleton className="h-4 w-36" />
               <div className="flex items-center gap-2">
                 <Skeleton className="h-8 w-24 rounded-md" />
                 <Skeleton className="h-8 w-24 rounded-md" />
               </div>
-            </div>
-          </Card>
+            </SectionCardFooter>
+          </SectionCard>
         </div>
 
         <div className="hidden h-full w-[320px] shrink-0 flex-col overflow-hidden bg-background py-3 pr-3 md:flex">
-          <Card className="flex min-h-0 flex-1 flex-col gap-0 border-border bg-filters-sidebar p-0">
+          <SectionCard className="flex min-h-0 flex-1 flex-col gap-0 border-border bg-filters-sidebar p-0">
             <div className="min-h-0 flex-1 overflow-hidden">
               <div className="space-y-4 p-4">
                 {filterGroups.map((_, index) => (
@@ -121,7 +121,7 @@ export const BattlePanelBattlesSkeleton = () => {
                 ))}
               </div>
             </div>
-          </Card>
+          </SectionCard>
         </div>
       </div>
 

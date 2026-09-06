@@ -1,3 +1,4 @@
+import { Permission } from "@lootlog/schema/permissions";
 import { describe, expect, test } from "bun:test";
 import { decodeRealtimeFrame } from "@lootlog/protocol/realtime/codec";
 import type {
@@ -89,6 +90,266 @@ const makeSocket = (
 };
 
 describe("RealtimeHub federation", () => {
+  test("filters kill and loot source visibility before local and remote delivery, preserving retries", async () => {
+    const bus = new FederationBus();
+    const stores = [new FakeRedisStore(bus), new FakeRedisStore(bus)];
+    const hubs = stores.map(
+      (store) => new RealtimeHub(config, store as unknown as RedisGatewayStore),
+    );
+    const scope = {
+      topic: "organization.loots",
+      organizationId: "organization-1",
+    } as const;
+    const role = (permissions: Permission[], from = 0, to = 500) => ({
+      id: crypto.randomUUID(),
+      permissions,
+      lvlRangeFrom: from,
+      lvlRangeTo: to,
+    });
+    const read = [
+      Permission.LOOTLOG_LOOTS_READ,
+      Permission.LOOTLOG_LOOTS_HEROES_READ,
+    ];
+    const variants = [
+      { name: "visible", roles: [role(read)] },
+      { name: "low-level", roles: [role(read, 0, 99)] },
+      { name: "hidden-type", roles: [role([Permission.LOOTLOG_LOOTS_READ])] },
+      {
+        name: "split-role",
+        roles: [
+          role([Permission.LOOTLOG_LOOTS_READ], 0, 99),
+          role([Permission.LOOTLOG_LOOTS_HEROES_READ], 100, 200),
+        ],
+      },
+      { name: "admin", roles: [role([Permission.ADMIN])] },
+      { name: "owner", roles: [] },
+      { name: "game", roles: [role(read)] },
+      { name: "other-guild", roles: [role(read)] },
+    ];
+    const targets = hubs.map((hub, index) =>
+      variants.map((variant) => {
+        const session = makeSession(`${index}-${variant.name}`);
+        if (variant.name === "game")
+          Object.assign(session, { platform: "game" });
+        session.guilds = [
+          {
+            guild: {
+              id:
+                variant.name === "other-guild"
+                  ? "organization-2"
+                  : "organization-1",
+              ownerId:
+                variant.name === "owner" ? session.discordId : "other-owner",
+            },
+            roles: variant.roles,
+          },
+        ];
+        session.subscriptions.set(getScopeKey(scope), scope);
+        const target = makeSocket(session);
+        hub.register(target.socket);
+        return target;
+      }),
+    );
+    const handlers = new Map<
+      string,
+      (delivery: RabbitDelivery) => Effect.Effect<void, unknown>
+    >();
+    const messaging: RabbitMessagingService = {
+      publish: () => Effect.void,
+      ack: () => Effect.void,
+      nack: () => Effect.void,
+      consume: (options, handler) =>
+        Effect.sync(() => {
+          handlers.set(options.queue, handler);
+          return { consumerTag: options.queue, cancel: Effect.void };
+        }),
+    };
+    const unexpected = () => {
+      throw new Error("Unexpected control handler");
+    };
+    const bridge = new RabbitBridge(
+      messaging,
+      hubs[0]!,
+      { rebalanceAcrossInstances: unexpected },
+      { coverageForMap: unexpected },
+      { publish: unexpected },
+    );
+    const feedEntry = {
+      id: "kill:organization-1:tempest:1:minute",
+      type: "kill" as const,
+      version: 1,
+      occurredAt: "2026-09-06T12:00:00.000Z",
+      world: "tempest",
+      guild: { id: "organization-1", name: "Organization", vanityUrl: null },
+      npc: { id: 1, name: "Hero", type: "HERO", lvl: 100, icon: null },
+      count: 1,
+    };
+    const payload = {
+      version: 1,
+      feedEntry,
+      guildId: "organization-1",
+      world: "tempest",
+      npc: { type: "HERO", lvl: 100 },
+    };
+    const content = Buffer.from(JSON.stringify(payload));
+    const properties: RabbitDelivery["properties"] = {
+      messageId: "accepted-kill-1",
+      contentType: "application/json",
+      contentEncoding: undefined,
+      headers: {},
+      deliveryMode: 2,
+      priority: undefined,
+      correlationId: undefined,
+      replyTo: undefined,
+      expiration: undefined,
+      timestamp: undefined,
+      type: undefined,
+      userId: undefined,
+      appId: undefined,
+      clusterId: undefined,
+    };
+    const fields = {
+      consumerTag: "kill-test",
+      deliveryTag: 1,
+      exchange: "default",
+      routingKey: RabbitRoutingKey.GUILDS_KILLS_ACCEPTED_V1,
+      redelivered: true,
+    };
+    const delivery: RabbitDelivery = {
+      content,
+      properties,
+      ...fields,
+      raw: { content, properties, fields },
+    };
+    await Effect.runPromise(
+      Effect.scoped(
+        Effect.gen(function* () {
+          for (const hub of hubs) yield* hub.start();
+          yield* bridge.start();
+          const handler = handlers.get("gateway-guilds-kills-accepted-v1");
+          if (!handler) throw new Error("Missing kill consumer");
+          const firstStore = stores[0]!;
+          const publish = firstStore.publish.bind(firstStore);
+          firstStore.publish = async () => {
+            throw new Error("Redis unavailable");
+          };
+          expect((yield* handler(delivery).pipe(Effect.result))._tag).toBe(
+            "Failure",
+          );
+          firstStore.publish = publish;
+          yield* handler(delivery);
+          yield* handler(delivery);
+          for (const group of targets)
+            expect(group.map((target) => target.sent.length)).toEqual([
+              2, 0, 0, 0, 2, 2, 0, 0,
+            ]);
+          for (const group of targets)
+            expect(decodeRealtimeFrame(group[0]!.sent[1]!)).toEqual({
+              v: 1,
+              type: "feed.entry",
+              data: feedEntry,
+            });
+          const lootHandler = handlers.get("gateway-guilds-loots-create");
+          if (!lootHandler) throw new Error("Missing loot consumer");
+          const { count: _count, ...baseEntry } = feedEntry;
+          const lootEntry = {
+            ...baseEntry,
+            id: "loot:organization-1:1",
+            type: "loot" as const,
+            lootId: 1,
+            items: [],
+            additionalItemsCount: 0,
+          };
+          const lootPayload = {
+            version: 2,
+            guildId: "organization-1",
+            lootId: 1,
+            npcs: [{ type: "HERO", lvl: 100 }],
+            feedEntry: lootEntry,
+          };
+          const lootContent = Buffer.from(JSON.stringify(lootPayload));
+          const lootFields = {
+            ...fields,
+            routingKey: RabbitRoutingKey.GUILDS_LOOTS_CREATE,
+          };
+          const lootProperties = { ...properties, messageId: "loot-visible" };
+          const lootDelivery = {
+            ...lootFields,
+            content: lootContent,
+            properties: lootProperties,
+            raw: {
+              content: lootContent,
+              properties: lootProperties,
+              fields: lootFields,
+            },
+          };
+          yield* lootHandler(lootDelivery);
+          yield* lootHandler(lootDelivery);
+          for (const group of targets) {
+            expect(group.map((target) => target.sent.length)).toEqual([
+              4, 0, 0, 0, 2, 4, 1, 0,
+            ]);
+            expect(decodeRealtimeFrame(group[0]!.sent[2]!)).toEqual({
+              v: 1,
+              type: "loot.created",
+              data: {
+                version: 2,
+                guildId: "organization-1",
+                lootId: 1,
+                npcs: [{ type: "HERO", lvl: 100 }],
+              },
+            });
+            expect(decodeRealtimeFrame(group[0]!.sent[3]!)).toEqual({
+              v: 1,
+              type: "feed.entry",
+              data: lootEntry,
+            });
+          }
+          for (const group of targets) group[0]!.socket.data.guilds = [];
+          yield* Effect.promise(() =>
+            hubs[0]!.publishToScope(
+              scope,
+              {
+                v: 1,
+                type: "kills.changed",
+                data: { guildId: "organization-1" },
+              },
+              "after-revoke",
+              {
+                recipientPlatform: "web-app",
+                sourceNpcs: [{ type: "HERO", level: 100 }],
+              },
+            ),
+          );
+          for (const group of targets) expect(group[0]!.sent).toHaveLength(4);
+          yield* Effect.promise(() =>
+            hubs[0]!.publishToScope(
+              scope,
+              {
+                v: 1,
+                type: "feed.entry",
+                data: { ...feedEntry, version: 2, count: 2 },
+              },
+              "feed-after-revoke",
+              {
+                recipientPlatform: "web-app",
+                sourceNpcs: [{ type: "HERO", level: 100 }],
+              },
+            ),
+          );
+          for (const group of targets) {
+            expect(group[0]!.sent).toHaveLength(4);
+            expect(group[1]!.sent).toHaveLength(0);
+            expect(group[2]!.sent).toHaveLength(0);
+            expect(group[3]!.sent).toHaveLength(0);
+            expect(group[6]!.sent).toHaveLength(1);
+            expect(group[7]!.sent).toHaveLength(0);
+          }
+        }),
+      ),
+    );
+  });
+
   test("deduplicates outbox replays across gateways without losing a failed federation publish", async () => {
     const bus = new FederationBus();
     const firstStore = new FakeRedisStore(bus);
@@ -105,6 +366,10 @@ describe("RealtimeHub federation", () => {
       for (const organizationId of ["organization-1", "organization-2"]) {
         const scope = { topic: "organization.loots", organizationId } as const;
         target.socket.data.subscriptions.set(getScopeKey(scope), scope);
+        target.socket.data.guilds.push({
+          guild: { id: organizationId, ownerId: target.socket.data.discordId },
+          roles: [],
+        });
       }
       hub.register(target.socket);
       return target;

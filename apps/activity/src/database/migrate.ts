@@ -24,6 +24,30 @@ export const migrateActivityDatabase = Effect.gen(function* () {
     yield* sql.unsafe(migration).unprepared;
   }
   yield* verifyAndAdoptDatabase();
+  const onlineMigration = yield* Effect.tryPromise({
+    try: () =>
+      Bun.file(
+        new URL(
+          "../../drizzle/migrations/0001_user_online_history.sql",
+          import.meta.url,
+        ),
+      ).text(),
+    catch: (cause) =>
+      new Error("Failed to read online history migration", { cause }),
+  });
+  yield* sql.unsafe(onlineMigration).unprepared;
+  const onlineRetentionMigration = yield* Effect.tryPromise({
+    try: () =>
+      Bun.file(
+        new URL(
+          "../../drizzle/migrations/0002_online_history_16_week_retention.sql",
+          import.meta.url,
+        ),
+      ).text(),
+    catch: (cause) =>
+      new Error("Failed to read online retention migration", { cause }),
+  });
+  yield* sql.unsafe(onlineRetentionMigration).unprepared;
 });
 
 if (import.meta.main) {

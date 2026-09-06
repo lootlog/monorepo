@@ -148,7 +148,7 @@ export function RatingDeltaByOpponentCard({
                 key={opponent.opponentId}
                 type="button"
                 onClick={() => handleRowClick(opponent.opponentId)}
-                className="min-w-0 rounded-lg border border-border bg-card p-3 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="min-w-0 p-3 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <div className="flex min-w-0 items-center gap-3">
                   <PlayerTile
@@ -232,7 +232,7 @@ export function RatingDeltaByOpponentCard({
             ))}
           </div>
         ) : (
-          <ScrollArea className="min-w-0 rounded-lg border border-border bg-card">
+          <ScrollArea className="min-w-0">
             <Table className="border-b">
               <TanStackTableHeader
                 table={table}

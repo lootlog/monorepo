@@ -11,26 +11,95 @@ zebrane przez dodatek. Logujesz się do niego tym samym kontem Discord.
 Najpierw wykonaj [Pierwsze kroki](/docs/getting-started). Bez aktywnego dodatku
 panel nie odtworzy zdarzeń, które miały miejsce wcześniej.
 
+## Nawigacja między sekcjami
+
+Ustawienia, statystyki, panel walk i edycja wydarzenia używają wspólnego
+poziomego menu. Aktywna sekcja ma pełne tło w kolorze akcentu motywu.
+Na wąskim ekranie pozycje zawijają się do kolejnych wierszy. Możesz przechodzić
+między nimi klawiszem Tab i otwierać wybraną sekcję klawiszem Enter.
+
 ## Strefa osobista
 
 Strefa osobista dotyczy twojego konta i postaci, niezależnie od wybranego
 klanu.
 
-| Widok         | Do czego służy                                   |
-| ------------- | ------------------------------------------------ |
-| Dashboard     | Podsumowanie aktywności z filtrem świata i czasu |
-| Kille         | Historia pokonanych potworów                     |
-| Panel walki   | Analiza obsługiwanych walk PvP                   |
-| Powiadomienia | Komunikaty związane z kontem                     |
-| Ustawienia    | Preferencje i konfiguracja postaci               |
+| Widok         | Do czego służy                                               |
+| ------------- | ------------------------------------------------------------ |
+| Dashboard     | Łączne bicia, aktywność z 16 tygodni i najbliższe rezerwacje |
+| Statystyki    | Analiza bić z filtrem świata i zakresu czasu                 |
+| Kille         | Historia pokonanych potworów                                 |
+| Panel walki   | Analiza obsługiwanych walk PvP                               |
+| Powiadomienia | Komunikaty związane z kontem                                 |
+| Ustawienia    | Preferencje i konfiguracja postaci                           |
 
-<ProductScreenshot
-  src="/screenshots/dashboard-current.png"
-  alt="Osobisty dashboard Lootlog z filtrem świata, statystykami bić i rankingiem potworów"
-  title="Strefa osobista · Dashboard"
-/>
+### Dashboard
 
-Jeśli wynik wygląda na niepełny, najpierw sprawdź wybrany świat i zakres czasu.
+W nagłówku karty **Bicia** możesz wybrać świat albo wyświetlić wszystkie światy.
+Przycisk **Statystyki** zachowuje wybrany świat.
+
+Dashboard pokazuje liczniki wszystkich bić oraz E2, herosów, kolosów i tytanów
+od początku zbierania danych. Nie ogranicza ich filtr okresu ani świata.
+Obok najbliższych rezerwacji znajdziesz kompaktowy kalendarz aktywności
+z ostatnich 16 tygodni (112 dni).
+Domyślny widok **Online** pokazuje czas całego konta. Nakładające się sesje
+postaci i światów liczymy tylko raz. Zakładka **Bicia** pokazuje dzienną liczbę
+zarejestrowanych bić.
+
+Czas online powstaje od rozpoczęcia śledzenia. Wcześniejsze dni oznaczamy jako
+brak danych, a nie zero. Komunikat o opóźnionym zbieraniu oznacza, że najnowsze
+wartości mogą jeszcze wzrosnąć.
+
+### Na żywo
+
+Po prawej stronie dashboardu widzisz ostatnie 20 zdarzeń z ostatnich 24 godzin:
+nowe łupy oraz ważne bicia z organizacji, do których masz dostęp. Przy każdym
+wpisie są świat, organizacja i czas. Bicia tego samego potwora w tej samej
+organizacji, świecie i minucie tworzą jeden wpis z licznikiem ×N. Wpis nie
+wskazuje osoby, która zgłosiła bicie.
+
+Kliknięcie łupu otwiera istniejące szczegóły, a kliknięcie bicia — statystyki
+potwora. Karta ma stałą wysokość i własne przewijanie, również na telefonie,
+gdzie znajduje się pod aktywnością i rezerwacjami.
+
+Jeżeli czytasz starsze wpisy, aktualizacje czekają pod przyciskiem **Nowe
+zdarzenia**. Nie przesuwają automatycznie czytanej listy. Przycisk **Wstrzymaj** w prawym górnym rogu zatrzymuje
+aktualizacje, a **Wznów** pobiera aktualną listę. Przeglądarka zapamiętuje ten
+wybór także po odświeżeniu strony. Pauza dotyczy wyłącznie feedu.
+Historię pobieramy przy wejściu, ponownym połączeniu i wznowieniu. Podczas
+połączenia kompletne wpisy przychodzą przez WebSocket, bez cyklicznego
+odpytywania historii. Kolejne bicia aktualizują licznik istniejącego wpisu.
+Po zmianie dostępu stare wpisy są od razu usuwane, również podczas pauzy.
+Aktualizacja live może nie dotrzeć podczas awarii; zapisane bicie pozostaje
+w historii przez 24 godziny i może pojawić się przy kolejnym pobraniu listy.
+
+### Statystyki konta
+
+Otwórz **Statystyki** w menu albo przycisk w karcie **Bicia** na dashboardzie. Wybierz całe konto
+lub jeden świat oraz ostatnie **7, 30, 90 albo 365 dni**. Domyślny okres to 30 dni.
+Filtry i zakładka są zapisane w adresie strony, więc pozostają po odświeżeniu.
+
+- **Przegląd:** liczba bić, aktywne dni, średnia na aktywny dzień, trendy dzienne
+  i tygodniowe, porównanie z poprzednim okresem oraz rekordy w wybranym okresie.
+- **Aktywność:** kalendarz bić, obecna i najdłuższa seria aktywnych dni oraz
+  osobne rozkłady bić według godziny i dnia tygodnia oraz macierz łącząca
+  oba wymiary.
+- **Potwory:** udział typów, liczba różnych potworów, ranking i największy
+  przyrost liczby bić. Przy zerowym wyniku poprzedniego okresu zmiana procentowa
+  nie jest wyliczana.
+- **Światy:** udział i trend każdego świata. Gdy wybrano jeden świat, możesz
+  wrócić do całego konta przyciskiem nad tabelą.
+
+Dni i godziny odpowiadają strefie **Europe/Warsaw**, a tydzień zaczyna się
+w poniedziałek. Dzisiejszy dzień i niepełne tygodnie są oznaczone. Porównanie
+okresów obejmuje zakończone godziny po obu stronach; dzienny wykres może już
+uwzględniać bicia z bieżącej godziny. Starsza historia bez dat godzinowych
+pozostaje w licznikach łącznych, lecz nie jest sztucznie rozkładana na dni.
+
+Kalendarz rozróżnia dni bez danych, dni z zerowym wynikiem i cztery poziomy
+aktywności. Wybierz dzień dotykiem lub poruszaj się strzałkami po ustawieniu
+focusu, aby przeczytać datę i wartość. Na telefonie kalendarz przewija się
+poziomo i otwiera na najnowszych dniach. Pod wykresami trendu dostępna jest
+również tabela danych.
 
 ## Strefa organizacji
 

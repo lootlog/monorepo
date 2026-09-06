@@ -1,3 +1,4 @@
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
 import { useTranslation } from "react-i18next";
 import {
   Dialog,
@@ -51,12 +52,12 @@ export const EventRulesDialog = ({
         <ScrollArea className="flex-1">
           <div className="p-5 space-y-5">
             <div className="space-y-2">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-                <BookOpen className="size-3.5" />
-                {t("events.rulesDialog.rulebookTitle", "Regulamin")}
-              </p>
+              <SectionCardHeader
+                icon={BookOpen}
+                title={t("events.rulesDialog.rulebookTitle")}
+              />
               {hasRulebook ? (
-                <div className="rounded-lg border bg-muted/20 p-3">
+                <div className="p-3">
                   <pre className="whitespace-pre-wrap text-sm font-sans leading-relaxed">
                     {rulebookMarkdown}
                   </pre>
@@ -72,11 +73,11 @@ export const EventRulesDialog = ({
             </div>
 
             <div className="space-y-2">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-                <Scale className="size-3.5" />
-                {t("events.rulesDialog.scoringTitle", "Zasady punktacji")}
-              </p>
-              <div className="rounded-lg border bg-muted/20 p-3">
+              <SectionCardHeader
+                icon={Scale}
+                title={t("events.rulesDialog.scoringTitle")}
+              />
+              <div className="p-3">
                 <EventScoringRulesSummary
                   scoringMode={scoringMode}
                   rules={scoringRules}

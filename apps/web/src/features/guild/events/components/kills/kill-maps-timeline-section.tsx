@@ -1,3 +1,5 @@
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import type { TFunction } from "i18next";
 import { useParams } from "@tanstack/react-router";
 import { Map } from "lucide-react";
@@ -35,13 +37,13 @@ export const KillMapsTimelineSection = ({
 
   if (isLoading) {
     return (
-      <section className="overflow-hidden rounded-2xl border border-border bg-card">
+      <SectionCard className="overflow-hidden bg-card">
         <div className="space-y-2 p-3">
           {Array.from({ length: 3 }).map((_, index) => (
             <Skeleton key={index} className="h-12 rounded-lg" />
           ))}
         </div>
-      </section>
+      </SectionCard>
     );
   }
 
@@ -56,34 +58,34 @@ export const KillMapsTimelineSection = ({
   });
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-border bg-card">
-      <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-3.5">
-        <div className="flex min-w-0 items-center gap-2">
-          <Map className="size-4 shrink-0 text-primary" />
-          <h2 className="truncate text-sm font-semibold">
-            {t("events.killDetail.mapCoverage.title")}
-          </h2>
-          <span className="text-xs tabular-nums text-muted-foreground">
-            {t("events.killDetail.mapCoverage.mapCount", {
-              count: sortedMaps.length,
-            })}
-          </span>
-        </div>
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <span className="size-2.5 rounded-full bg-emerald-500" />
-            {t("events.killDetail.mapCoverage.covered")}
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="size-2.5 rounded-full bg-amber-500" />
-            {t("events.killDetail.mapCoverage.uncovered")}
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="size-2.5 rounded-full bg-destructive" />
-            {t("events.killDetail.mapCoverage.unassigned")}
-          </span>
-        </div>
-      </div>
+    <SectionCard className="overflow-hidden bg-card">
+      <SectionCardHeader
+        icon={Map}
+        title={t("events.killDetail.mapCoverage.title")}
+        actions={
+          <>
+            <span className="text-xs tabular-nums text-muted-foreground">
+              {t("events.killDetail.mapCoverage.mapCount", {
+                count: sortedMaps.length,
+              })}
+            </span>
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <span className="size-2.5 rounded-full bg-emerald-500" />
+                {t("events.killDetail.mapCoverage.covered")}
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="size-2.5 rounded-full bg-amber-500" />
+                {t("events.killDetail.mapCoverage.uncovered")}
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="size-2.5 rounded-full bg-destructive" />
+                {t("events.killDetail.mapCoverage.unassigned")}
+              </span>
+            </div>
+          </>
+        }
+      />
 
       <div className="border-t border-border/70">
         <KillMapsTimelineTable
@@ -94,6 +96,6 @@ export const KillMapsTimelineSection = ({
           t={t}
         />
       </div>
-    </section>
+    </SectionCard>
   );
 };

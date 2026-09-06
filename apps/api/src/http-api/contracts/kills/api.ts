@@ -1,3 +1,9 @@
+import {
+  UserKillAnalyticsQuery,
+  UserKillAnalyticsResponse,
+  UserKillActivityQuery,
+  UserKillActivityResponse,
+} from "#src/contracts/kills/analytics-schemas";
 /** Endpoints owned by the kills HTTP module. */
 import {
   HttpApiEndpoint,
@@ -75,6 +81,26 @@ export class KillsGroup extends HttpApiGroup.make("kills").add(
       OpenApi.Description,
       "Retrieves kill statistics for the authenticated user across all guilds, deduplicated.",
     ),
+  HttpApiEndpoint.get(
+    "KillsControllerGetUserKillAnalytics",
+    "/users/@me/stats/kills/analytics",
+    { query: UserKillAnalyticsQuery, success: UserKillAnalyticsResponse },
+  )
+    .middleware(BearerSecurityMiddleware)
+    .annotate(OpenApi.Identifier, "KillsController_getUserKillAnalytics")
+    .annotate(OpenApi.Summary, "Get personal kill analytics")
+    .annotate(
+      OpenApi.Description,
+      "Calendar-day analytics in Europe/Warsaw. Current-day/hour data is partial; untimed lifetime history is never distributed backwards. Rankings are bounded to 20 NPCs and 10 gains. Comparisons exclude the current incomplete hour.",
+    ),
+  HttpApiEndpoint.get(
+    "KillsControllerGetUserKillActivity",
+    "/users/@me/stats/kills/activity",
+    { query: UserKillActivityQuery, success: UserKillActivityResponse },
+  )
+    .middleware(BearerSecurityMiddleware)
+    .annotate(OpenApi.Identifier, "KillsController_getUserKillActivity")
+    .annotate(OpenApi.Summary, "Get 16 weeks of personal kill activity"),
   HttpApiEndpoint.get(
     "KillsControllerGetUserNpcKills",
     "/users/@me/kills/npcs",

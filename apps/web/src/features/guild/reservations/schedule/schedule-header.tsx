@@ -19,6 +19,7 @@ import { cn } from "cn";
 import { ReservationSettingsInfoDialog } from "./reservation-settings-info-dialog";
 
 type ScheduleHeaderProps = {
+  spotName: string;
   date: Date;
   isCompact: boolean;
   settings: ReservationSettings;
@@ -59,6 +60,7 @@ const getScheduleDateLabels = (date: Date, isCompact: boolean) => {
 };
 
 export function ScheduleHeader({
+  spotName,
   date,
   isCompact,
   settings,
@@ -211,33 +213,38 @@ export function ScheduleHeader({
           >
             <ChevronLeft />
           </Button>
-          <p
-            aria-live="polite"
-            className={cn(
-              "min-w-0 truncate text-sm font-semibold capitalize",
-              compactValue(
-                isCompact,
-                "text-center",
-                "sm:min-w-52 sm:text-center",
-              ),
-            )}
-            title={compactTitle}
-          >
-            <span
-              className={compactValue(
-                isCompact,
-                "max-[400px]:hidden",
-                undefined,
+          <div className="min-w-0 text-center">
+            <h1 className="truncate text-sm font-semibold" title={spotName}>
+              {spotName}
+            </h1>
+            <p
+              aria-live="polite"
+              className={cn(
+                "min-w-0 truncate text-sm font-semibold capitalize",
+                compactValue(
+                  isCompact,
+                  "text-center",
+                  "sm:min-w-52 sm:text-center",
+                ),
               )}
+              title={compactTitle}
             >
-              {label}
-            </span>
-            {isCompact && (
-              <span className="hidden max-[400px]:inline">
-                {shortCompactLabel}
+              <span
+                className={compactValue(
+                  isCompact,
+                  "max-[400px]:hidden",
+                  undefined,
+                )}
+              >
+                {label}
               </span>
-            )}
-          </p>
+              {isCompact && (
+                <span className="hidden max-[400px]:inline">
+                  {shortCompactLabel}
+                </span>
+              )}
+            </p>
+          </div>
           <Button
             type="button"
             variant="ghost"

@@ -1,3 +1,5 @@
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import { SearchInput } from "@/components/ui/search-input";
 import { MembersSettingsHeader } from "@/features/guild/settings/members/members-settings-header";
 import { MembersTable } from "@/features/guild/settings/members/members-table";
@@ -36,7 +38,6 @@ import { useQuery } from "@tanstack/react-query";
 import { FilterX, Users } from "lucide-react";
 import { startTransition, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Card } from "@lootlog/ui/components/card";
 
 export const MembersSettingsContent = () => {
   const { t } = useTranslation();
@@ -180,93 +181,97 @@ export const MembersSettingsContent = () => {
           startTransition(() => setStatusFilter("problems"));
         }}
       />
-      <Card className="min-h-48 flex-1 p-0 gap-0">
-        <div className="flex shrink-0 flex-col gap-3 border-b border-border px-4 py-3 xl:flex-row xl:items-center xl:justify-between">
-          <SearchInput
-            value={searchValue}
-            onChange={(event) => setSearchValue(event.target.value)}
-            placeholder={t("settings.members.searchPlaceholder")}
-            className="h-9"
-            wrapperClassName="w-full xl:max-w-md 2xl:max-w-xl"
-          />
-          <div className="flex flex-wrap items-center gap-1.5 xl:justify-end">
-            {statusFilters.map((filter) => (
-              <Button
-                key={filter}
-                type="button"
-                size="sm"
-                variant={statusFilter === filter ? "secondary" : "ghost"}
-                className={cn(
-                  "h-8 px-2.5 text-xs",
-                  statusFilter === filter && "bg-primary/10 text-primary",
-                )}
-                onClick={() => {
-                  scrollElementRef.current?.scrollTo({ top: 0 });
-                  startTransition(() => setStatusFilter(filter));
-                }}
-              >
-                {t(`settings.members.filters.${filter}`)}
-              </Button>
-            ))}
+      <SectionCard className="min-h-48 flex-1">
+        <SectionCardContent className="flex flex-col gap-3">
+          <div className="flex shrink-0 flex-col gap-3 border-b border-border px-4 py-3 xl:flex-row xl:items-center xl:justify-between">
+            <SearchInput
+              value={searchValue}
+              onChange={(event) => setSearchValue(event.target.value)}
+              placeholder={t("settings.members.searchPlaceholder")}
+              className="h-9"
+              wrapperClassName="w-full xl:max-w-md 2xl:max-w-xl"
+            />
+            <div className="flex flex-wrap items-center gap-1.5 xl:justify-end">
+              {statusFilters.map((filter) => (
+                <Button
+                  key={filter}
+                  type="button"
+                  size="sm"
+                  variant={statusFilter === filter ? "secondary" : "ghost"}
+                  className={cn(
+                    "h-8 px-2.5 text-xs",
+                    statusFilter === filter && "bg-primary/10 text-primary",
+                  )}
+                  onClick={() => {
+                    scrollElementRef.current?.scrollTo({ top: 0 });
+                    startTransition(() => setStatusFilter(filter));
+                  }}
+                >
+                  {t(`settings.members.filters.${filter}`)}
+                </Button>
+              ))}
+            </div>
           </div>
-        </div>
 
-        <div className="flex min-h-0 flex-1 overflow-hidden">
-          <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
-            <ScrollArea className="h-full flex-1" ref={scrollElementRef}>
-              <div className="w-full max-w-full min-w-0">
-                {filteredMembers.length > 0 && (
-                  <MembersTable
-                    members={filteredMembers}
-                    guildOwnerId={guild?.ownerId}
-                    activityStatsByDiscordIdAndSource={
-                      memberActivityStatsByDiscordIdAndSource
-                    }
-                    scrollElementRef={scrollElementRef}
-                    isMobile={isMobile}
-                    canManageMembers={canManageMembers}
-                    memberGamePresenceByDiscordId={
-                      memberGamePresenceByDiscordId
-                    }
-                    memberWebPresenceByDiscordId={memberWebPresenceByDiscordId}
-                    guildId={routeGuildId ?? ""}
-                  />
-                )}
-                {filteredMembers.length === 0 && (
-                  <div className="flex min-h-80 flex-col items-center justify-center px-4 py-12 text-center text-muted-foreground">
-                    <Users className="mb-4 size-12 opacity-30" />
-                    <p className="text-sm font-medium">
-                      {members?.length === 0
-                        ? t("settings.members.emptyGuildTitle")
-                        : t("settings.members.emptyTitle")}
-                    </p>
-                    <p className="mt-1 text-xs">
-                      {hasActiveFilters
-                        ? t("settings.members.emptyFilteredDescription")
-                        : t("settings.members.emptyDescription")}
-                    </p>
-                    {hasActiveFilters && (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="mt-4"
-                        onClick={() => {
-                          setSearchValue("");
-                          setStatusFilter(defaultStatusFilter);
-                        }}
-                      >
-                        <FilterX className="size-3.5" />
-                        {t("settings.members.resetFilters")}
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
+          <div className="flex min-h-0 flex-1 overflow-hidden">
+            <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
+              <ScrollArea className="h-full flex-1" ref={scrollElementRef}>
+                <div className="w-full max-w-full min-w-0">
+                  {filteredMembers.length > 0 && (
+                    <MembersTable
+                      members={filteredMembers}
+                      guildOwnerId={guild?.ownerId}
+                      activityStatsByDiscordIdAndSource={
+                        memberActivityStatsByDiscordIdAndSource
+                      }
+                      scrollElementRef={scrollElementRef}
+                      isMobile={isMobile}
+                      canManageMembers={canManageMembers}
+                      memberGamePresenceByDiscordId={
+                        memberGamePresenceByDiscordId
+                      }
+                      memberWebPresenceByDiscordId={
+                        memberWebPresenceByDiscordId
+                      }
+                      guildId={routeGuildId ?? ""}
+                    />
+                  )}
+                  {filteredMembers.length === 0 && (
+                    <div className="flex min-h-80 flex-col items-center justify-center px-4 py-12 text-center text-muted-foreground">
+                      <Users className="mb-4 size-12 opacity-30" />
+                      <p className="text-sm font-medium">
+                        {members?.length === 0
+                          ? t("settings.members.emptyGuildTitle")
+                          : t("settings.members.emptyTitle")}
+                      </p>
+                      <p className="mt-1 text-xs">
+                        {hasActiveFilters
+                          ? t("settings.members.emptyFilteredDescription")
+                          : t("settings.members.emptyDescription")}
+                      </p>
+                      {hasActiveFilters && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="mt-4"
+                          onClick={() => {
+                            setSearchValue("");
+                            setStatusFilter(defaultStatusFilter);
+                          }}
+                        >
+                          <FilterX className="size-3.5" />
+                          {t("settings.members.resetFilters")}
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            </div>
           </div>
-        </div>
-      </Card>
+        </SectionCardContent>
+      </SectionCard>
     </div>
   );
 };

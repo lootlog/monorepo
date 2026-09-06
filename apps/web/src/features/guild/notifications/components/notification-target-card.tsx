@@ -93,7 +93,7 @@ export const NotificationTargetCard = ({
 
   return (
     <div
-      className={`rounded-xl border p-3 ${target.active ? "border-border/70 bg-background" : "border-amber-500/30 bg-amber-500/5 opacity-75"}`}
+      className={`border-b py-3 last:border-b-0 ${target.active ? "border-border/70" : "border-amber-500/30 bg-amber-500/5 opacity-75"}`}
     >
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 space-y-2">

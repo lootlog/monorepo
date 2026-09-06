@@ -109,7 +109,7 @@ export const EventRankingPoints = ({
                 {ranking.editHistory.map((entry) => (
                   <div
                     key={entry.id}
-                    className="rounded-lg border border-border bg-card p-2 text-sm"
+                    className="border-b border-border/70 p-2 text-sm last:border-b-0"
                   >
                     <div className="mb-1 flex items-center gap-2 text-muted-foreground">
                       <span className="text-xs">

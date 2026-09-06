@@ -1,3 +1,5 @@
+import { makeUserFeed } from "#src/feed/user-feed";
+import { makeGuildKillActivityPublisher } from "#src/kills/guild-kill-activity";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { makeJsonCodec } from "#src/redis/redis.service";
 import { makeGuildKillQueries } from "#src/kills/guild-kill-queries";
@@ -120,6 +122,7 @@ export const recordsServicesLive = Layer.effect(
       dispatchLootPublications,
       loots,
       layer: recordsDataLayer({
+        userFeed: makeUserFeed(database),
         createKill: makeKillCreation(
           database,
           {
@@ -135,6 +138,7 @@ export const recordsServicesLive = Layer.effect(
               }),
           },
           applicationLogger,
+          makeGuildKillActivityPublisher(database, rabbit),
         ),
         guildKillQueries: makeGuildKillQueries(
           killStatsPersistence,

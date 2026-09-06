@@ -1,10 +1,12 @@
+import { EventDetailSkeleton } from "./event-detail-skeleton";
+import { SectionCardFooter } from "@/components/common/section-card/section-card-footer";
+import { PageHeader } from "@/components/common/page-header";
 import { canManageEvent } from "./utils/event-access";
 import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import { useTranslation } from "react-i18next";
 import { useParams, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Card } from "@lootlog/ui/components/card";
 import { Button } from "@lootlog/ui/components/button";
 import { Badge } from "@lootlog/ui/components/badge";
 import {
@@ -52,7 +54,6 @@ import {
   normalizeEventScoringRules,
 } from "@lootlog/domain/scoring";
 import { getEventStatusAtTimestamp } from "./utils/event-activity";
-import { Skeleton } from "@lootlog/ui/components/skeleton";
 import {
   getEventsRankingControllerGetEventHeroStatsQueryKey,
   getListEventHeroTimersQueryKey,
@@ -406,58 +407,7 @@ export const EventDetail = () => {
   };
 
   if (isLoading || isMapsLoading) {
-    return (
-      <div className="flex flex-col h-full min-h-0 bg-background">
-        <div className="px-3 py-3 flex flex-col gap-3">
-          <Card className="gap-4 border-border bg-card p-4">
-            <div className="flex items-center gap-3">
-              <Skeleton className="h-10 w-10 rounded-xl" />
-              <div className="flex flex-col gap-2 flex-1">
-                <Skeleton className="h-4 w-48" />
-                <div className="flex gap-2">
-                  <Skeleton className="h-5 w-16 rounded-full" />
-                  <Skeleton className="h-5 w-20 rounded-full" />
-                  <Skeleton className="h-5 w-32 rounded-full" />
-                </div>
-              </div>
-            </div>
-          </Card>
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-            <div className="space-y-3 lg:col-span-2">
-              <Card className="p-3 bg-card  border-border gap-2">
-                <Skeleton className="h-5 w-32 mb-3" />
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-3 rounded-lg border border-border p-3"
-                  >
-                    <Skeleton className="h-10 w-10 rounded" />
-                    <div className="flex flex-col gap-2 flex-1">
-                      <Skeleton className="h-4 w-32" />
-                      <Skeleton className="h-3 w-20" />
-                    </div>
-                    <Skeleton className="h-6 w-16 rounded-full" />
-                  </div>
-                ))}
-              </Card>
-            </div>
-            <div className="space-y-3">
-              <Card className="p-3 bg-card  border-border gap-2">
-                <Skeleton className="h-5 w-24 mb-3" />
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="flex items-center gap-3 py-2">
-                    <Skeleton className="h-4 w-6" />
-                    <Skeleton className="h-6 w-6 rounded-full" />
-                    <Skeleton className="h-4 flex-1" />
-                    <Skeleton className="h-4 w-10" />
-                  </div>
-                ))}
-              </Card>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <EventDetailSkeleton />;
   }
 
   if (error || !event) {
@@ -615,55 +565,50 @@ export const EventDetail = () => {
 
       <ScrollArea className="flex-1 min-h-0">
         <div className="px-3 py-3 flex flex-col gap-3">
-          <Card className="gap-0 overflow-hidden border-border bg-card p-0">
-            <div className="flex items-start gap-3 p-4">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                <Trophy className="size-4 text-primary" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <h2 className="min-w-0 break-words text-lg font-semibold leading-tight">
-                    {event.name}
-                  </h2>
-                  <Badge
-                    variant={eventStatusVariant}
-                    className="h-5 px-2 text-[11px]"
-                  >
-                    {eventStatusLabel}
-                  </Badge>
-                </div>
+          <PageHeader
+            icon={Trophy}
+            title={event.name}
+            status={
+              <Badge
+                variant={eventStatusVariant}
+                className="h-5 px-2 text-[11px]"
+              >
+                {eventStatusLabel}
+              </Badge>
+            }
+            metadata={
+              <>
+                <span className="inline-flex items-center gap-1.5">
+                  <Globe2 className="size-3.5" />
+                  {event.world.charAt(0).toUpperCase() + event.world.slice(1)}
+                </span>
 
-                <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-muted-foreground">
-                  <span className="inline-flex items-center gap-1.5">
-                    <Globe2 className="size-3.5" />
-                    {event.world.charAt(0).toUpperCase() + event.world.slice(1)}
-                  </span>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1.5 rounded-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                      >
+                        <Clock className="size-3.5" />
+                        {t("events.header.assignmentTimeoutValue", {
+                          minutes: event.assignmentTimeoutMinutes ?? 5,
+                        })}
+                      </button>
+                    }
+                  />
+                  <TooltipContent>
+                    <p>{t("events.header.assignmentTimeoutTooltip")}</p>
+                  </TooltipContent>
+                </Tooltip>
 
-                  <Tooltip>
-                    <TooltipTrigger
-                      render={
-                        <button
-                          type="button"
-                          className="inline-flex items-center gap-1.5 rounded-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-                        >
-                          <Clock className="size-3.5" />
-                          {t("events.header.assignmentTimeoutValue", {
-                            minutes: event.assignmentTimeoutMinutes ?? 5,
-                          })}
-                        </button>
-                      }
-                    />
-                    <TooltipContent>
-                      <p>{t("events.header.assignmentTimeoutTooltip")}</p>
-                    </TooltipContent>
-                  </Tooltip>
-
-                  <span className="inline-flex min-w-0 items-center gap-1.5">
-                    <CalendarDays className="size-3.5 shrink-0" />
-                    <span>{eventDateRangeLabel}</span>
-                  </span>
-                </div>
-              </div>
+                <span className="inline-flex min-w-0 items-center gap-1.5">
+                  <CalendarDays className="size-3.5 shrink-0" />
+                  <span>{eventDateRangeLabel}</span>
+                </span>
+              </>
+            }
+            actions={
               <Tooltip>
                 <TooltipTrigger
                   render={
@@ -703,9 +648,9 @@ export const EventDetail = () => {
                 />
                 <TooltipContent>{pinActionLabel}</TooltipContent>
               </Tooltip>
-            </div>
-
-            <div className="grid gap-1 border-t border-border bg-muted/20 p-1.5 sm:grid-cols-3">
+            }
+          >
+            <SectionCardFooter className="grid gap-1 p-1.5 sm:grid-cols-3">
               <Button
                 size="sm"
                 variant="ghost"
@@ -739,8 +684,8 @@ export const EventDetail = () => {
                 <BookText className="size-3.5" />
                 {t("events.rulesDialog.trigger")}
               </Button>
-            </div>
-          </Card>
+            </SectionCardFooter>
+          </PageHeader>
 
           <div className="xl:hidden">
             <EventActionsCard

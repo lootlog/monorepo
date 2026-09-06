@@ -1,3 +1,8 @@
+import { makeUserKillAnalytics } from "./user-kill-analytics.js";
+import type {
+  UserKillAnalyticsQuery,
+  UserKillActivityQuery,
+} from "#src/contracts/kills/analytics-schemas";
 import { addNpcKills } from "./npc-kill-aggregation.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, eq, gte, ilike, inArray, lte, type SQL } from "drizzle-orm";
@@ -258,7 +263,21 @@ export const makeUserKillQueries = (
     );
   };
 
-  return { getUserKillStats, getUserNpcKills } as const;
+  const analytics = makeUserKillAnalytics(database, cache);
+  return {
+    getUserKillStats,
+    getUserNpcKills,
+    getUserKillAnalytics: (userId: string, query: UserKillAnalyticsQuery) =>
+      protect(
+        "kills.user-analytics",
+        analytics.getUserKillAnalytics(userId, query),
+      ),
+    getUserKillActivity: (userId: string, query: UserKillActivityQuery) =>
+      protect(
+        "kills.user-activity",
+        analytics.getUserKillActivity(userId, query),
+      ),
+  } as const;
 };
 
 export type UserKillQueries = ReturnType<typeof makeUserKillQueries>;

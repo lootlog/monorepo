@@ -25,6 +25,25 @@ const policy = (...capabilities: CapabilityName[]) =>
   createAccessPolicy({ capabilities });
 
 describe("resolveAppNavigation", () => {
+  it("separates personal statistics from dashboard and battle navigation", () => {
+    const navigation = resolveAppNavigation({
+      matches: [
+        createMatch({
+          pathname: "/@me/statistics",
+          routeId: "/_authenticated/@me/statistics",
+        }),
+      ],
+    });
+    expect(navigation.breadcrumbs).toEqual([
+      { label: "Statystyki", path: null },
+    ]);
+    expect(
+      navigation.sidebarItems
+        .filter((item) => item.active)
+        .map((item) => item.id),
+    ).toEqual(["user-statistics"]);
+    expect(navigation.documentTitle).toBe("Statystyki - Lootlog.pl");
+  });
   it("resolves one Organization hierarchy for breadcrumbs, title, parent, and sidebar", () => {
     const navigation = resolveAppNavigation({
       currentEntityLabel: "Alicja",

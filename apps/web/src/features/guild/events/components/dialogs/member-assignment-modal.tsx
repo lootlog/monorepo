@@ -126,7 +126,7 @@ export const MemberAssignmentModal = ({
                   ))}
                 </div>
               ) : (
-                <div className="py-4 px-4 rounded-lg border border-dashed text-center">
+                <div className="px-3 py-3 text-center">
                   <Users className="size-6 mx-auto mb-2 text-muted-foreground/40" />
                   <p className="text-xs text-muted-foreground">
                     {t("events.maps.noAssignedMembers")}

@@ -1,5 +1,7 @@
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import type { AbyssSeason } from "@/lib/api/battlelog-types";
-import { Card } from "@lootlog/ui/components/card";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import { BarChart3, Crown, Sigma, Sparkles, Swords } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
@@ -89,18 +91,15 @@ export function AbyssSummaryCards({ season }: AbyssSummaryCardsProps) {
   return (
     <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
       {cards.map((card) => (
-        <Card key={card.key} className="gap-2 border-border bg-card p-3">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <card.icon className="size-3.5" />
-            {card.label}
-          </div>
-          <div className="text-lg font-semibold leading-tight">
-            {card.value}
-          </div>
-          <div className="truncate text-xs text-muted-foreground">
-            {card.subvalue}
-          </div>
-        </Card>
+        <SectionCard key={card.key}>
+          <SectionCardHeader icon={card.icon} title={card.label} />
+          <SectionCardContent className="space-y-2">
+            <div className="text-lg font-semibold leading-tight">
+              {card.value}
+            </div>
+            <div className="text-xs text-muted-foreground">{card.subvalue}</div>
+          </SectionCardContent>
+        </SectionCard>
       ))}
     </div>
   );
