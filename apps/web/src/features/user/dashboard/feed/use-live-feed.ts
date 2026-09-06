@@ -69,10 +69,13 @@ export function useLiveFeed() {
         }
       }
     };
-    const handlePermissions = () => {
+    const clear = () => {
       cancel();
       dispatch({ type: "clear" });
       queryClient.removeQueries({ queryKey });
+    };
+    const handlePermissions = () => {
+      clear();
       if (!isPaused) void refresh();
     };
     const onEntry = (item: FeedItem) => {
@@ -92,7 +95,8 @@ export function useLiveFeed() {
       },
     };
     socket.on(GatewayEvent.FEED_ENTRY, onEntry);
-    socket.on(GatewayEvent.CONNECT, handlePermissions);
+    socket.on(GatewayEvent.CONNECT, clear);
+    socket.on(GatewayEvent.JOIN, handlePermissions);
     socket.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissions);
     void refresh();
     return () => {
@@ -100,7 +104,8 @@ export function useLiveFeed() {
       cancel();
       controlsRef.current = undefined;
       socket.off(GatewayEvent.FEED_ENTRY, onEntry);
-      socket.off(GatewayEvent.CONNECT, handlePermissions);
+      socket.off(GatewayEvent.CONNECT, clear);
+      socket.off(GatewayEvent.JOIN, handlePermissions);
       socket.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissions);
     };
   }, [socket, queryClient]);

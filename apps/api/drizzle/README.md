@@ -88,8 +88,11 @@ unchanged apart from including the complete feed entry in its event.
 
 HTTP and `feed.entry` share the same item contract. Kill entries carry an absolute
 count and monotonic version; loot entries have stable identifiers. The gateway
-checks current Organization and NPC access before delivery. Web fetches HTTP
-history on entry, reconnect, resume, and access changes, then merges complete
+checks current Organization and NPC access before delivery. New feed and kill
+events are sent only to web clients offering the `lootlog.feed.v1` capability
+alongside the existing realtime subprotocol; older clients retain their existing
+event set. Web fetches HTTP
+history on entry, after session rejoin, resume, and access changes, then merges complete
 WebSocket entries without event-triggered HTTP requests. Live events received
 during a history request are buffered and merged by version.
 

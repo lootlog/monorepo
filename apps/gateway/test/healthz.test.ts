@@ -34,40 +34,48 @@ describe("gateway HTTP boundary", () => {
     expect(response?.status).toBe(400);
   });
 
-  test("echoes only the public protocol and never the ticket protocol", async () => {
-    let upgradeOptions: { readonly headers?: HeadersInit } | undefined;
-    const authenticated = {
-      config: { websocketPath: "/ws" },
-      runPromise: Effect.runPromise,
-      auth: {
-        isAllowedOrigin: () => true,
-        readCredential: () => ({
-          kind: "one-time-ticket",
-          value: "ticket",
+  test.each([false, true])(
+    "negotiates feed opt-in (%s) while echoing only the wire protocol",
+    async (supportsFeed) => {
+      let upgradeOptions:
+        | {
+            readonly headers?: HeadersInit;
+            readonly data: { readonly supportsFeed?: boolean };
+          }
+        | undefined;
+      const authenticated = {
+        config: { websocketPath: "/ws" },
+        runPromise: Effect.runPromise,
+        auth: {
+          isAllowedOrigin: () => true,
+          readCredential: () => ({
+            kind: "one-time-ticket",
+            value: "ticket",
+            origin: "https://classic.margonem.pl",
+          }),
+          verify: () =>
+            Effect.succeed({ userId: "user-1", discordId: "discord-1" }),
+          getPlatform: () => "game",
+        },
+      } as unknown as GatewayApplicationService;
+      const request = new Request("https://gateway.example/ws", {
+        headers: {
           origin: "https://classic.margonem.pl",
-        }),
-        verify: () =>
-          Effect.succeed({ userId: "user-1", discordId: "discord-1" }),
-        getPlatform: () => "game",
-      },
-    } as unknown as GatewayApplicationService;
-    const request = new Request("https://gateway.example/ws", {
-      headers: {
-        origin: "https://classic.margonem.pl",
-        "sec-websocket-protocol":
-          "lootlog.realtime.v1, lootlog.ticket.v1.c2VjcmV0",
-      },
-    });
-    await createGatewayFetch(authenticated)(request, {
-      upgrade: (_request, options) => {
-        upgradeOptions = options;
-        return true;
-      },
-    });
-    expect(upgradeOptions?.headers).toEqual({
-      "sec-websocket-protocol": "lootlog.realtime.v1",
-    });
-  });
+          "sec-websocket-protocol": `lootlog.realtime.v1, lootlog.ticket.v1.c2VjcmV0${supportsFeed ? ", lootlog.feed.v1" : ""}`,
+        },
+      });
+      await createGatewayFetch(authenticated)(request, {
+        upgrade: (_request, options) => {
+          upgradeOptions = options;
+          return true;
+        },
+      });
+      expect(upgradeOptions?.data.supportsFeed).toBe(supportsFeed);
+      expect(upgradeOptions?.headers).toEqual({
+        "sec-websocket-protocol": "lootlog.realtime.v1",
+      });
+    },
+  );
 
   test("uses readable JSON frames locally when the browser strips public subprotocols", async () => {
     let upgradeOptions:
