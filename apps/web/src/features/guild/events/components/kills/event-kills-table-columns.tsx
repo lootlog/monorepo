@@ -1,3 +1,4 @@
+import { TextLink } from "@lootlog/ui/components/text-link";
 import type { TFunction } from "i18next";
 import { Link } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -61,17 +62,21 @@ export const createEventKillsTableColumns = ({
             <Skull className="hidden size-4 shrink-0 text-muted-foreground lg:block" />
           )}
           <div className="min-w-0 flex-1">
-            <Link
-              to="/$guildId/events/$eventId/heroes/$heroId/kills/$killId"
-              params={getKillDetailParams(kill, guildId, eventId)}
+            <TextLink
               aria-label={detailLabel}
               title={detailLabel}
-              className="inline-flex max-w-full min-w-0 items-center rounded-md outline-none transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
+              className="inline-flex max-w-full min-w-0 items-center text-sm"
+              render={
+                <Link
+                  to="/$guildId/events/$eventId/heroes/$heroId/kills/$killId"
+                  params={getKillDetailParams(kill, guildId, eventId)}
+                />
+              }
             >
               <span className="truncate font-semibold">
                 {kill.heroNpc.npcName}
               </span>
-            </Link>
+            </TextLink>
             <div
               className={`mt-0.5 truncate text-[10px] text-muted-foreground tabular-nums ${
                 isPreview ? "" : "sm:hidden"

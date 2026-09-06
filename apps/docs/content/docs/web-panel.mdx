@@ -28,6 +28,11 @@ spróbować ponownie albo je zamknąć.
 
 ## Strefa osobista
 
+Przy nazwie konta na dole panelu bocznego widzisz stan połączenia z aktualizacjami
+na żywo (WebSocket). Zielona kropka i **Połączono** oznaczają aktywne połączenie.
+**Brak połączenia** z bursztynową kropką oznacza, że panel nie odbiera obecnie
+aktualizacji na żywo. Wskaźnik zmienia się automatycznie po odzyskaniu połączenia.
+
 Strefa osobista dotyczy twojego konta i postaci, niezależnie od wybranego
 klanu.
 
@@ -42,38 +47,47 @@ klanu.
 
 ### Dashboard
 
-W nagłówku karty **Bicia** możesz wybrać świat albo wyświetlić wszystkie światy.
+Nad licznikami w karcie **Bicia** możesz wybrać świat albo wyświetlić wszystkie światy.
 Przycisk **Statystyki** zachowuje wybrany świat.
 
 Dashboard pokazuje liczniki wszystkich bić oraz E2, herosów, kolosów i tytanów
-od początku zbierania danych. Nie ogranicza ich filtr okresu ani świata.
+od początku zbierania danych, dla wybranego świata lub wszystkich światów.
 Obok najbliższych rezerwacji znajdziesz kompaktowy kalendarz aktywności
 z ostatnich 16 tygodni (112 dni).
 Domyślny widok **Online** pokazuje czas całego konta. Nakładające się sesje
 postaci i światów liczymy tylko raz. Zakładka **Bicia** pokazuje dzienną liczbę
 zarejestrowanych bić.
 
-Czas online powstaje od rozpoczęcia śledzenia. Wcześniejsze dni oznaczamy jako
-brak danych, a nie zero. Komunikat o opóźnionym zbieraniu oznacza, że najnowsze
+Najedź na dzień w kalendarzu lub ustaw na nim focus klawiaturą, aby zobaczyć
+łączną aktywność i światy, z których pochodzą zapisy. Dotyczy to obu zakładek.
+Dla czasu online starsze zapisy mogą nie zawierać informacji o świecie;
+podpowiedź zaznacza wtedy niepełny podział. Łączny czas konta nadal nie
+dubluje nakładających się sesji z różnych światów.
+
+Czas online powstaje od rozpoczęcia śledzenia. Na dashboardzie dni bez danych
+mają najniższą intensywność koloru w obu zakładkach. Pod kalendarzem nie ma
+panelu szczegółów dnia. Komunikat o opóźnionym zbieraniu oznacza, że najnowsze
 wartości mogą jeszcze wzrosnąć.
 
 ### Na żywo
 
-Po prawej stronie dashboardu widzisz ostatnie 20 zdarzeń z ostatnich 24 godzin:
+Po lewej stronie dashboardu widzisz ostatnie 20 zdarzeń z ostatnich 24 godzin:
 nowe łupy oraz ważne bicia z organizacji, do których masz dostęp. Przy każdym
-wpisie są świat, organizacja i czas. Bicia tego samego potwora w tej samej
+wpisie czas znajduje się przy nazwie potwora, a świat i organizacja pod nią.
+Przedmioty pokazujemy jako grafiki bez podpisów. Bicia tego samego potwora w tej samej
 organizacji, świecie i minucie tworzą jeden wpis z licznikiem ×N. Wpis nie
 wskazuje osoby, która zgłosiła bicie.
 
 Kliknięcie łupu otwiera istniejące szczegóły, a kliknięcie bicia — statystyki
-potwora. Karta ma stałą wysokość i własne przewijanie, również na telefonie,
-gdzie znajduje się pod aktywnością i rezerwacjami.
+potwora. Na szerokim ekranie karta wypełnia pozostałą wysokość dashboardu
+i ma własne przewijanie. Aktywność i rezerwacje znajdują się po prawej stronie.
+Na telefonie feed ma stałą wysokość i znajduje się nad aktywnością i rezerwacjami.
 
 Jeżeli czytasz starsze wpisy, aktualizacje czekają pod przyciskiem **Nowe
 zdarzenia**. Nie przesuwają automatycznie czytanej listy. Przycisk **Wstrzymaj** w prawym górnym rogu zatrzymuje
 aktualizacje, a **Wznów** pobiera aktualną listę. Przeglądarka zapamiętuje ten
 wybór także po odświeżeniu strony. Pauza dotyczy wyłącznie feedu.
-Historię pobieramy przy wejściu, po ponownym dołączeniu sesji do organizacji
+Historię pobieramy przy wejściu, po ponownym połączeniu i dołączeniu sesji do organizacji
 i przy wznowieniu. Podczas
 połączenia kompletne wpisy przychodzą przez WebSocket, bez cyklicznego
 odpytywania historii. Kolejne bicia aktualizują licznik istniejącego wpisu.

@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { cn } from "cn";
 import { ArrowUp, Pause, Play, Radio } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
@@ -38,7 +39,7 @@ export function DashboardLiveFeed() {
     scroller.current?.scrollTo({ top: 0, behavior: "auto" });
   };
   return (
-    <SectionCard className="@container/feed h-[36rem] min-w-0 overflow-hidden">
+    <SectionCard className="@container/feed h-[36rem] min-w-0 overflow-hidden @3xl/dashboard:h-full @3xl/dashboard:min-h-0">
       <SectionCardHeader
         className="shrink-0"
         icon={Radio}
@@ -93,46 +94,48 @@ export function DashboardLiveFeed() {
           </Button>
         </div>
       )}
-      <div
+      <ScrollArea
         ref={scroller}
-        className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-        tabIndex={0}
+        orientation="vertical"
+        className="min-h-0 min-w-0 flex-1"
         role="region"
         aria-label={t("statistics.feedTitle")}
         onScroll={(event) => setAtTop(event.currentTarget.scrollTop <= 8)}
       >
-        <div ref={top} className="h-px shrink-0" aria-hidden />
-        {items === undefined ? (
-          !state.isError &&
-          !paused && (
-            <div
-              role="status"
-              aria-label={t("common.loading")}
-              className="space-y-3 p-3"
-            >
-              {Array.from({ length: 4 }, (_, index) => (
-                <Skeleton key={index} className="h-16 w-full" />
-              ))}
-            </div>
-          )
-        ) : (
-          <>
-            {items.length === 0 && !state.isError && (
-              <p className="flex flex-1 items-center justify-center px-3 py-8 text-center text-sm text-muted-foreground">
-                {t("statistics.feedEmpty")}
-              </p>
-            )}
-            <ol
-              aria-label={t("statistics.feedTitle")}
-              aria-busy={state.isFetching}
-            >
-              {items.map((item) => (
-                <LiveFeedRow key={item.id} item={item} now={now} />
-              ))}
-            </ol>
-          </>
-        )}
-      </div>
+        <div className="flex min-h-full flex-col">
+          <div ref={top} className="h-px shrink-0" aria-hidden />
+          {items === undefined || (items.length === 0 && state.isFetching) ? (
+            !state.isError &&
+            !paused && (
+              <div
+                role="status"
+                aria-label={t("common.loading")}
+                className="space-y-3 p-3"
+              >
+                {Array.from({ length: 4 }, (_, index) => (
+                  <Skeleton key={index} className="h-16 w-full" />
+                ))}
+              </div>
+            )
+          ) : (
+            <>
+              {items.length === 0 && !state.isError && (
+                <p className="flex flex-1 items-center justify-center px-3 py-8 text-center text-sm text-muted-foreground">
+                  {t("statistics.feedEmpty")}
+                </p>
+              )}
+              <ol
+                aria-label={t("statistics.feedTitle")}
+                aria-busy={state.isFetching}
+              >
+                {items.map((item) => (
+                  <LiveFeedRow key={item.id} item={item} now={now} />
+                ))}
+              </ol>
+            </>
+          )}
+        </div>
+      </ScrollArea>
     </SectionCard>
   );
 }

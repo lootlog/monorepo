@@ -1,3 +1,4 @@
+import { TextLink } from "@lootlog/ui/components/text-link";
 import { NPC_RARITY_CONFIG } from "@/features/guild/settings/npcs/npc-rarity-config";
 import type { LootlogConfigNpcResponseDtoOutput as LootlogConfigNpc } from "@lootlog/client/main";
 import { cn } from "cn";
@@ -146,13 +147,17 @@ export const NpcsTable = ({ guildId, isMobile, npcs }: NpcsTableProps) => {
               }}
             >
               <TableCell className="min-w-0 overflow-hidden">
-                <Link
-                  to="/$guildId/settings/npcs/$npcId"
-                  params={npcRouteParams}
-                  className="block truncate text-sm font-semibold"
+                <TextLink
+                  className="block truncate text-sm"
+                  render={
+                    <Link
+                      to="/$guildId/settings/npcs/$npcId"
+                      params={npcRouteParams}
+                    />
+                  }
                 >
                   {t(`npcType.${npc.npcType}`)}
-                </Link>
+                </TextLink>
               </TableCell>
               <TableCell className="overflow-hidden">
                 <Link

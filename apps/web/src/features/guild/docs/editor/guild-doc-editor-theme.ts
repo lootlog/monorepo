@@ -1,3 +1,5 @@
+import { textLinkClassName } from "@lootlog/ui/components/text-link";
+import { cn } from "cn";
 import type { EditorThemeClasses } from "lexical";
 
 export const guildDocEditorTheme: EditorThemeClasses = {
@@ -22,7 +24,7 @@ export const guildDocEditorTheme: EditorThemeClasses = {
     h2: "mb-2 text-xl font-semibold leading-tight",
   },
   hr: "my-4 border-0 border-t border-border",
-  link: "cursor-pointer text-primary underline underline-offset-4",
+  link: cn(textLinkClassName, "text-sm"),
   list: {
     checklist: "my-2",
     listitem: "my-1 ml-6",

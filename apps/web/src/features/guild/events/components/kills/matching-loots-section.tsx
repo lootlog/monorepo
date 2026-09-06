@@ -1,8 +1,9 @@
+import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
-import { ChevronRight, Frown, Package } from "lucide-react";
+import { Frown, Package } from "lucide-react";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import type { Loot } from "@/lib/loots/loot-types";
 import { LootsListItem } from "@/features/guild/loots-list/components/loots-list/loots-list-item";
@@ -32,15 +33,18 @@ export const MatchingLootsSection = ({
         title={t("events.killDetail.matchingLoots")}
         actions={
           <>
-            <Link
-              to="/$guildId"
-              params={{ guildId }}
-              search={{ npcs: npcName }}
-              className="inline-flex h-8 shrink-0 items-center gap-1 rounded-sm text-xs font-semibold text-muted-foreground outline-none transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring/50"
+            <ChevronLink
+              className="inline-flex h-8 shrink-0 items-center gap-1 text-xs"
+              render={
+                <Link
+                  to="/$guildId"
+                  params={{ guildId }}
+                  search={{ npcs: npcName }}
+                />
+              }
             >
               {t("events.loots.showAll")}
-              <ChevronRight className="size-3.5" />
-            </Link>
+            </ChevronLink>
           </>
         }
       />

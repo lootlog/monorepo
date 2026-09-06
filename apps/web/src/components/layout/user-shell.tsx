@@ -53,10 +53,7 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
                 )}
               </div>
 
-              <AppBreadcrumbs
-                breadcrumbs={navigationInfo.breadcrumbs}
-                onNavigate={(path) => navigate({ to: path })}
-              />
+              <AppBreadcrumbs breadcrumbs={navigationInfo.breadcrumbs} />
 
               <div
                 ref={setHeaderActionsElement}

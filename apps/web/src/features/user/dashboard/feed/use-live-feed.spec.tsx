@@ -74,12 +74,13 @@ it("receives complete live entries without further HTTP requests and refetches o
   expect(result.current.state.items).toEqual(feedResponse(20).items);
   act(() => mocks.socket.emit(GatewayEvent.CONNECT));
   await act(() => vi.advanceTimersByTimeAsync(0));
-  expect(mocks.request).toHaveBeenCalledTimes(1);
+  expect(mocks.request).toHaveBeenCalledTimes(2);
+  expect(result.current.state.items).toEqual(feedResponse().items);
   // A kill accepted while session.join is pending must appear in the post-join snapshot.
   mocks.request.mockResolvedValue(feedResponse(21));
   act(() => mocks.socket.emit(GatewayEvent.JOIN));
   await act(() => vi.advanceTimersByTimeAsync(0));
-  expect(mocks.request).toHaveBeenCalledTimes(2);
+  expect(mocks.request).toHaveBeenCalledTimes(3);
   expect(result.current.state.items).toEqual(feedResponse(21).items);
 });
 it.each([GatewayEvent.PERMISSIONS_UPDATED, GatewayEvent.JOIN])(
@@ -246,3 +247,19 @@ it("ignores an in-flight HTTP snapshot after pause and refreshes on resume", asy
   await act(() => vi.advanceTimersByTimeAsync(0));
   expect(result.current.state.items).toEqual(feedResponse(4).items);
 });
+
+it.each([GatewayEvent.PERMISSIONS_UPDATED, GatewayEvent.JOIN])(
+  "shows the refreshed snapshot after %s clears a scrolled feed",
+  async (event) => {
+    mocks.request
+      .mockResolvedValueOnce(feedResponse())
+      .mockResolvedValueOnce(feedResponse(4));
+    const { result } = renderFeed();
+    await act(() => vi.advanceTimersByTimeAsync(0));
+    act(() => result.current.setAtTop(false));
+    act(() => mocks.socket.emit(event));
+    await act(() => vi.advanceTimersByTimeAsync(0));
+    expect(result.current.state.items).toEqual(feedResponse(4).items);
+    expect(result.current.state.pending).toBeUndefined();
+  },
+);

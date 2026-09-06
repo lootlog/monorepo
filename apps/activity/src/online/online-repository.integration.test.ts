@@ -82,6 +82,16 @@ describe("durable private online history", () => {
         );
         yield* sql.unsafe(migration).unprepared;
         yield* sql.unsafe(migration).unprepared;
+        const worldsMigration = yield* Effect.promise(() =>
+          Bun.file(
+            new URL(
+              "../../drizzle/migrations/0003_online_world_provenance.sql",
+              import.meta.url,
+            ),
+          ).text(),
+        );
+        yield* sql.unsafe(worldsMigration).unprepared;
+        yield* sql.unsafe(worldsMigration).unprepared;
       }).pipe(Effect.provide(database)),
     );
   }, 60_000);
@@ -150,9 +160,27 @@ describe("durable private online history", () => {
       }),
     );
     expect(result.days).toEqual([
-      { date: "2026-08-31", onlineSeconds: 0, partial: false },
-      { date: "2026-09-01", onlineSeconds: 14_400, partial: false },
-      { date: "2026-09-02", onlineSeconds: 0, partial: false },
+      {
+        date: "2026-08-31",
+        onlineSeconds: 0,
+        partial: false,
+        worlds: [],
+        worldsComplete: true,
+      },
+      {
+        date: "2026-09-01",
+        onlineSeconds: 14_400,
+        partial: false,
+        worlds: [],
+        worldsComplete: false,
+      },
+      {
+        date: "2026-09-02",
+        onlineSeconds: 0,
+        partial: false,
+        worlds: [],
+        worldsComplete: true,
+      },
     ]);
     expect(result.trackingStartedAt).toBe("2025-10-25T00:00:00.000Z");
   });
@@ -169,9 +197,27 @@ describe("durable private online history", () => {
       }),
     );
     expect(result.days).toEqual([
-      { date: "2025-10-24", onlineSeconds: null, partial: false },
-      { date: "2025-10-25", onlineSeconds: null, partial: true },
-      { date: "2025-10-26", onlineSeconds: 0, partial: false },
+      {
+        date: "2025-10-24",
+        onlineSeconds: null,
+        partial: false,
+        worlds: [],
+        worldsComplete: true,
+      },
+      {
+        date: "2025-10-25",
+        onlineSeconds: null,
+        partial: true,
+        worlds: [],
+        worldsComplete: true,
+      },
+      {
+        date: "2025-10-26",
+        onlineSeconds: 0,
+        partial: false,
+        worlds: [],
+        worldsComplete: true,
+      },
     ]);
     const confirmed = await runAt(
       "2025-10-27T12:00:00Z",
@@ -195,6 +241,8 @@ describe("durable private online history", () => {
       date: "2025-10-25",
       onlineSeconds: 3600,
       partial: true,
+      worlds: [],
+      worldsComplete: false,
     });
     expect(result.lastObservedAt).toBeNull();
     expect(result.status).toBe("stale");
@@ -545,6 +593,16 @@ describe("durable private online history", () => {
         );
         yield* sql.unsafe(migration).unprepared;
         yield* sql.unsafe(migration).unprepared;
+        const worldsMigration = yield* Effect.promise(() =>
+          Bun.file(
+            new URL(
+              "../../drizzle/migrations/0003_online_world_provenance.sql",
+              import.meta.url,
+            ),
+          ).text(),
+        );
+        yield* sql.unsafe(worldsMigration).unprepared;
+        yield* sql.unsafe(worldsMigration).unprepared;
         const rows = yield* sql<{
           userId: string;
           startedAt: string;
@@ -626,5 +684,99 @@ describe("durable private online history", () => {
     } finally {
       await boundary.dispose();
     }
+  });
+  it("reports real contributing worlds across Warsaw midnight without double counting overlaps or hiding legacy provenance", async () => {
+    await runAt(
+      "2026-09-06T12:00:00Z",
+      Effect.gen(function* () {
+        const repo = yield* OnlineRepository;
+        yield* repo.ingest({
+          version: 1,
+          type: "collector",
+          status: "healthy",
+          observedAt: "2026-09-01T00:00:00Z",
+        });
+        const known = {
+          ...checkpoint(
+            "worlds",
+            "a",
+            "2026-09-04T21:00:00Z",
+            "2026-09-04T23:00:00Z",
+          ),
+          world: "luvia",
+        };
+        yield* repo.ingest(known);
+        yield* repo.ingest(known);
+        yield* repo.ingest({
+          ...checkpoint(
+            "worlds",
+            "b",
+            "2026-09-04T22:00:00Z",
+            "2026-09-04T23:00:00Z",
+          ),
+          world: "classic",
+        });
+        yield* repo.ingest(
+          checkpoint(
+            "worlds",
+            "old",
+            "2026-09-04T22:15:00Z",
+            "2026-09-04T22:30:00Z",
+          ),
+        );
+        yield* repo.ingest({
+          ...checkpoint(
+            "other-user",
+            "other",
+            "2026-09-04T22:00:00Z",
+            "2026-09-04T23:00:00Z",
+          ),
+          world: "private",
+        });
+        yield* repo.ingest({
+          ...checkpoint(
+            "worlds",
+            "zero",
+            "2026-09-04T23:00:00Z",
+            "2026-09-04T23:00:00Z",
+          ),
+          world: "zero",
+        });
+        const result = yield* repo.find("worlds", {
+          from: "2026-09-04",
+          to: "2026-09-06",
+        });
+        expect(
+          result.days.map(({ onlineSeconds, worlds, worldsComplete }) => ({
+            onlineSeconds,
+            worlds,
+            worldsComplete,
+          })),
+        ).toEqual([
+          { onlineSeconds: 3600, worlds: ["luvia"], worldsComplete: true },
+          {
+            onlineSeconds: 3600,
+            worlds: ["classic", "luvia"],
+            worldsComplete: false,
+          },
+          { onlineSeconds: 0, worlds: [], worldsComplete: true },
+        ]);
+        const changedWorld = yield* repo
+          .ingest({ ...known, world: "changed" })
+          .pipe(Effect.exit);
+        expect(changedWorld._tag).toBe("Failure");
+        yield* repo.ingest(
+          checkpoint("worlds", "a", known.startedAt, "2026-09-05T00:00:00Z"),
+        );
+        yield* repo.ingest(known);
+        const rollback = yield* repo.find("worlds", {
+          from: "2026-09-04",
+          to: "2026-09-05",
+        });
+        expect(rollback.days[0]?.worldsComplete).toBe(false);
+        expect(rollback.days[0]?.worlds).toEqual([]);
+        expect(rollback.days[1]?.onlineSeconds).toBe(7200);
+      }),
+    );
   });
 });

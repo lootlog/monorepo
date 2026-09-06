@@ -72,7 +72,7 @@ export function liveFeedReducer(
           : mergeFeedItems([], action.items);
       const queryState =
         action.type === "received" ? { isFetching: false, isError: false } : {};
-      if (state.items === undefined || state.atTop)
+      if (!state.items?.length || state.atTop)
         return { ...state, ...queryState, items, pending: undefined };
       const changed = JSON.stringify(state.items) !== JSON.stringify(items);
       return { ...state, ...queryState, pending: changed ? items : undefined };

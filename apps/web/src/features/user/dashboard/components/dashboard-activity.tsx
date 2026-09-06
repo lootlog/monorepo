@@ -69,9 +69,15 @@ export function DashboardActivity() {
                 )}
                 <ActivityHeatmap
                   fill
+                  showDetails={false}
+                  unknownDisplay="lowest"
                   days={online.data.days.filter(isInRange).map((day) => ({
                     date: day.date,
                     value: day.onlineSeconds,
+                    worlds: day.worlds,
+                    worldsComplete:
+                      day.worldsComplete ??
+                      (day.onlineSeconds === null || day.onlineSeconds === 0),
                     partial: day.partial,
                   }))}
                   label={t("statistics.online")}
@@ -92,28 +98,23 @@ export function DashboardActivity() {
             loading={<DashboardActivitySkeleton />}
           >
             {kills.data && (
-              <>
-                {kills.data.meta.coverage !== "complete" && (
-                  <p
-                    role="status"
-                    className="mb-3 text-sm text-muted-foreground"
-                  >
-                    {t("statistics.partialHistory")}
-                  </p>
-                )}
-                <ActivityHeatmap
-                  fill
-                  days={kills.data.daily.filter(isInRange).map((day) => ({
-                    date: day.date,
-                    value: day.kills,
-                    partial: day.partial,
-                  }))}
-                  label={t("statistics.kills")}
-                  formatValue={(value) =>
-                    t("statistics.count", { count: value })
-                  }
-                />
-              </>
+              <ActivityHeatmap
+                fill
+                showDetails={false}
+                unknownDisplay="lowest"
+                days={kills.data.daily.filter(isInRange).map((day) => ({
+                  date: day.date,
+                  value: day.kills,
+                  worlds: day.worlds,
+                  worldsComplete:
+                    day.worlds !== undefined ||
+                    day.kills === null ||
+                    day.kills === 0,
+                  partial: day.partial,
+                }))}
+                label={t("statistics.kills")}
+                formatValue={(value) => t("statistics.count", { count: value })}
+              />
             )}
           </StatisticsQueryState>
         )}

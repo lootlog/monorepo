@@ -74,8 +74,9 @@ it("keeps focused visible rows and scroll position until the reader applies a gr
   await act(() => vi.advanceTimersByTimeAsync(0));
   const link = screen.getByRole("link", { name: "Bicie: Heros" });
   link.focus();
-  const list = screen.getByRole("list", { name: "Na żywo" });
-  const scroller = list.parentElement;
+  const scroller = screen
+    .getByRole("region", { name: "Na żywo" })
+    .querySelector<HTMLElement>('[data-slot="scroll-area-viewport"]');
   if (!scroller) throw new Error("Feed scroll region missing");
   scroller.scrollTop = 120;
   fireEvent.scroll(scroller);

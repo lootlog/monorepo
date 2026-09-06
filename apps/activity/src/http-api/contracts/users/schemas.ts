@@ -38,6 +38,8 @@ export const UserOnlineResponse = Schema.Struct({
       date: CalendarDate,
       onlineSeconds: Schema.NullOr(FiniteNumber),
       partial: Schema.Boolean,
+      worlds: Schema.Array(Schema.String),
+      worldsComplete: Schema.Boolean,
     }),
   ),
 }).annotate({ identifier: "UserOnlineResponseDto" });

@@ -22,7 +22,7 @@ export function MyReservationsCard() {
   const reservations = query.data?.items.slice(0, 5) ?? [];
 
   return (
-    <SectionCard className="gap-0 py-0">
+    <SectionCard className="min-h-48 gap-0 py-0">
       <SectionCardHeader
         id="dashboard-my-reservations-title"
         icon={CalendarDays}
@@ -33,7 +33,7 @@ export function MyReservationsCard() {
           </ChevronLink>
         }
       />
-      <SectionCardContent className="p-0">
+      <SectionCardContent className="flex flex-1 flex-col p-0">
         {reservations.length ? (
           <ul>
             {reservations.map((reservation) => (
@@ -58,7 +58,7 @@ export function MyReservationsCard() {
             ))}
           </ul>
         ) : (
-          <p className="px-4 py-8 text-center text-sm text-muted-foreground">
+          <p className="flex flex-1 items-center justify-center px-4 py-8 text-center text-sm text-muted-foreground">
             {query.isPending
               ? t("common.loading")
               : t("reservations.my.emptyUpcoming")}

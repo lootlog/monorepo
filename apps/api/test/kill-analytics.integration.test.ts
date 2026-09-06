@@ -42,6 +42,18 @@ const readAnalytics = (world?: string) =>
     Effect.provide(TestClock.layer()),
     Effect.runPromise,
   );
+const readActivity = (world?: string) =>
+  Effect.gen(function* () {
+    yield* TestClock.setTime(Date.parse(now));
+    return yield* makeUserKillAnalytics(
+      yield* ApiDatabase,
+      cache,
+    ).getUserKillActivity("analytics-owner", world ? { world } : {});
+  }).pipe(
+    Effect.provide(ApiDatabaseLive),
+    Effect.provide(TestClock.layer()),
+    Effect.runPromise,
+  );
 const bucket = async (
   date: string,
   kills: number,
@@ -99,9 +111,30 @@ describe("personal kill analytics PostgreSQL boundary", () => {
     expect(result.daily.at(-1)).toEqual({
       date: "2026-10-25",
       kills: 18,
+      worlds: ["tempest"],
       partial: true,
     });
     expect(result.npcs).toHaveLength(1);
+  });
+  it("returns source worlds for the lightweight calendar with owner and world filtering", async () => {
+    await bucket("2026-10-24T22:00:00Z", 3, "tempest");
+    await bucket("2026-10-25T00:00:00Z", 4, "tempest");
+    await bucket("2026-10-25T00:00:00Z", 6, "lunia");
+    await bucket("2026-10-25T00:00:00Z", 99, "private", "another-owner");
+    await bucket("2026-10-25T00:00:00Z", 0, "zero");
+    await totals();
+    await totals("another-owner");
+    const all = await readActivity();
+    expect(all.daily.at(-1)).toEqual({
+      date: "2026-10-25",
+      kills: 13,
+      partial: true,
+      worlds: ["lunia", "tempest"],
+    });
+    expect(all.daily.at(-2)?.worlds).toEqual([]);
+    const filtered = await readActivity("tempest");
+    expect(filtered.daily.at(-1)?.worlds).toEqual(["tempest"]);
+    expect(filtered.daily.at(-1)?.kills).toBe(7);
   });
   it("returns real missing-history metadata and lightweight exactly-112-date activity", async () => {
     await bucket("2026-10-25T00:00:00Z", 4);
@@ -121,6 +154,7 @@ describe("personal kill analytics PostgreSQL boundary", () => {
     expect(result.meta.untimedKills).toBe(96);
     expect(result.meta.coverage).toBe("partial");
     expect(result.daily[0]?.kills).toBeNull();
+    expect(result.daily[0]?.worlds).toEqual([]);
     expect(result.daily.at(-1)?.kills).toBe(4);
     expect(Object.keys(result).sort()).toEqual(["daily", "meta"]);
   });

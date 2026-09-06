@@ -1,3 +1,4 @@
+import { TextLink } from "@lootlog/ui/components/text-link";
 import {
   Dialog,
   DialogContent,
@@ -31,15 +32,15 @@ export const InstallAddonModal: FC = () => {
           </DialogDescription>
         </DialogHeader>
         <div className="p-4">
-          <a
+          <TextLink
             href={ADDON_INSTALL_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-primary hover:underline"
+            className="text-sm"
             onClick={handleModalClose}
           >
             {t("ui.actions.installAddon")}
-          </a>
+          </TextLink>
         </div>
       </DialogContent>
     </Dialog>

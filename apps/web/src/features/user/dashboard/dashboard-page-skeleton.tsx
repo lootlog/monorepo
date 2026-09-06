@@ -19,9 +19,9 @@ export function DashboardPageSkeleton() {
     ),
   };
   return (
-    <ScrollArea className="h-full min-h-0">
+    <ScrollArea className="h-full min-h-0 [&>[data-slot=scroll-area-viewport]>div]:h-full">
       <div
-        className="@container/dashboard space-y-3 p-3"
+        className="@container/dashboard flex min-h-full flex-col gap-3 p-3"
         role="status"
         aria-label={t("common.loading")}
       >
@@ -30,14 +30,14 @@ export function DashboardPageSkeleton() {
             <Skeleton className="h-20 w-full" />
           </SectionCardContent>
         </SectionCard>
-        <div className="grid gap-3 @3xl/dashboard:grid-cols-[minmax(0,28rem)_minmax(0,1fr)]">
+        <div className="grid flex-1 gap-3 @3xl/dashboard:min-h-0 @3xl/dashboard:grid-cols-[minmax(0,1fr)_minmax(0,28rem)] @3xl/dashboard:grid-rows-[minmax(36rem,1fr)]">
+          <Skeleton className="h-[36rem] w-full @3xl/dashboard:h-full" />
           <div className="space-y-3">
             <div style={calendarStyle}>
               <Skeleton className="dashboard-activity-content dashboard-activity-placeholder w-full" />
             </div>
             <Skeleton className="h-48 w-full" />
           </div>
-          <Skeleton className="h-[36rem] w-full" />
         </div>
       </div>
     </ScrollArea>

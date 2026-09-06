@@ -54,7 +54,7 @@ export function AnimatedToggleGroup<Value extends string>({
           value={option.value}
           disabled={option.disabled}
           className={cn(
-            "min-w-0 bg-transparent hover:bg-transparent aria-pressed:bg-transparent aria-pressed:text-primary-foreground data-[state=on]:bg-transparent transition-[color,scale] duration-150 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none",
+            "min-w-0 cursor-pointer disabled:cursor-default bg-transparent hover:bg-transparent aria-pressed:bg-transparent aria-pressed:text-primary-foreground data-[state=on]:bg-transparent transition-[color,scale] duration-150 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none",
             !isStatic && "active:scale-[0.96] motion-reduce:active:scale-100",
           )}
         >

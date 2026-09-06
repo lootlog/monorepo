@@ -8452,6 +8452,7 @@ export type UserKillAnalyticsResponseDtoOutputOverview = {
 
 export type UserKillAnalyticsResponseDtoOutputDailyItem = {
   date: string;
+  worlds: string[];
   /** @nullable */
   kills: number | null;
   partial: boolean;
@@ -8678,6 +8679,7 @@ export type UserKillActivityResponseDtoOutputMeta = {
 
 export type UserKillActivityResponseDtoOutputDailyItem = {
   date: string;
+  worlds: string[];
   /** @nullable */
   kills: number | null;
   partial: boolean;
