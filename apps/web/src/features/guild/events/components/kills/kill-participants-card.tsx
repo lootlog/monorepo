@@ -1,3 +1,5 @@
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -80,20 +82,20 @@ export const KillParticipantsCard = ({
   };
 
   return (
-    <section className="w-full min-w-0 overflow-hidden rounded-2xl border border-border bg-card">
-      <div className="flex items-center justify-between gap-3 px-3 py-3.5">
-        <div className="flex min-w-0 items-center gap-2">
-          <Users className="size-4 shrink-0 text-primary" />
-          <h2 className="truncate text-sm font-semibold">
-            {t("events.killDetail.participants")}
-          </h2>
-        </div>
-        <span className="text-xs tabular-nums text-muted-foreground">
-          {t("events.kills.participantCount", {
-            count: sortedParticipants.length,
-          })}
-        </span>
-      </div>
+    <SectionCard className="w-full min-w-0 overflow-hidden bg-card">
+      <SectionCardHeader
+        icon={Users}
+        title={t("events.killDetail.participants")}
+        actions={
+          <>
+            <span className="text-xs tabular-nums text-muted-foreground">
+              {t("events.kills.participantCount", {
+                count: sortedParticipants.length,
+              })}
+            </span>
+          </>
+        }
+      />
 
       {sortedParticipants.length === 0 ? (
         <div className="border-t border-border/70 px-4 py-8 text-center text-sm text-muted-foreground">
@@ -127,6 +129,6 @@ export const KillParticipantsCard = ({
           </div>
         </>
       )}
-    </section>
+    </SectionCard>
   );
 };

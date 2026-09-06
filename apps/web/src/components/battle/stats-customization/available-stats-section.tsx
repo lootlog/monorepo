@@ -58,7 +58,7 @@ export const AvailableStatsSection = ({
             filteredAvailableStats.map((stat) => (
               <div
                 key={String(stat.key)}
-                className="flex items-center gap-2 bg-background border rounded px-2 py-1.5 text-sm"
+                className="flex items-center gap-2 border-b border-border/70 px-2 py-1.5 text-sm last:border-b-0"
               >
                 <span className="flex-1">{t(stat.labelKey)}</span>
                 <Button

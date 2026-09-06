@@ -5,6 +5,7 @@
   "type": "module",
   "sideEffects": false,
   "exports": {
+    "./feed": "./src/feed.ts",
     "./http": "./src/http/http-contract.ts",
     "./openapi": "./src/openapi/sanitize.ts",
     "./rabbit/events": "./src/rabbit/events.ts",

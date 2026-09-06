@@ -6,7 +6,7 @@ import {
   RabbitRoutingKey,
   type RabbitQueueDefinition,
 } from "@lootlog/protocol/rabbit/topology";
-import { Effect } from "effect";
+import { Deferred, Effect } from "effect";
 import amqp from "amqplib";
 import { GenericContainer, type StartedTestContainer } from "testcontainers";
 import { RabbitMessaging } from "../src/messaging.ts";
@@ -125,6 +125,111 @@ describe("RabbitMessaging real broker integration", () => {
       { redelivered: false, retryCount: undefined },
       { redelivered: false, retryCount: 1 },
     ]);
+  }, 15_000);
+
+  test("single active consumer keeps later health behind an unacknowledged checkpoint without blocking other queues", async () => {
+    const name = `online-ordered-${crypto.randomUUID()}`;
+    const other = `${name}-other`;
+    const seen: string[] = [];
+    const inspection = await amqp.connect(rabbitUri);
+    const channel = await inspection.createChannel();
+    try {
+      await Effect.runPromise(
+        Effect.scoped(
+          Effect.gen(function* () {
+            const messaging = yield* RabbitMessaging;
+            const started = yield* Deferred.make<void>();
+            const release = yield* Deferred.make<void>();
+            const health = yield* Deferred.make<void>();
+            const unrelated = yield* Deferred.make<void>();
+            yield* messaging.consume(
+              {
+                queue: name,
+                consumerTag: `${name}-first`,
+                prefetch: 1,
+                failurePolicy: { strategy: "requeue" },
+              },
+              (delivery) =>
+                Effect.gen(function* () {
+                  const payload = new TextDecoder().decode(delivery.content);
+                  seen.push(payload);
+                  if (payload === "checkpoint") {
+                    yield* Deferred.succeed(started, undefined);
+                    yield* Deferred.await(release);
+                  } else yield* Deferred.succeed(health, undefined);
+                }),
+            );
+            yield* messaging.consume(
+              {
+                queue: name,
+                consumerTag: `${name}-standby`,
+                prefetch: 1,
+                failurePolicy: { strategy: "requeue" },
+              },
+              (delivery) =>
+                Effect.sync(() => {
+                  seen.push(
+                    `standby:${new TextDecoder().decode(delivery.content)}`,
+                  );
+                }),
+            );
+            yield* messaging.consume(
+              {
+                queue: other,
+                prefetch: 1,
+                failurePolicy: { strategy: "requeue" },
+              },
+              () => Deferred.succeed(unrelated, undefined).pipe(Effect.asVoid),
+            );
+            for (const payload of ["checkpoint", "healthy"])
+              yield* messaging.publish({
+                routingKey: RabbitRoutingKey.USERS_ONLINE_CHECKPOINT_V1,
+                content: new TextEncoder().encode(payload),
+              });
+            yield* messaging.publish({
+              routingKey: RabbitRoutingKey.GUILDS_CREATE,
+              content: new TextEncoder().encode("independent"),
+            });
+            yield* Deferred.await(started);
+            yield* Deferred.await(unrelated);
+            expect(seen).toEqual(["checkpoint"]);
+            expect(
+              (yield* Effect.promise(() => channel.checkQueue(name)))
+                .messageCount,
+            ).toBe(1);
+            yield* Deferred.succeed(release, undefined);
+            yield* Deferred.await(health);
+            yield* Effect.promise(() => channel.checkQueue(name));
+            expect(seen).toEqual(["checkpoint", "healthy"]);
+          }).pipe(
+            Effect.provide(
+              RabbitMessaging.layer({
+                uri: rabbitUri,
+                queues: [
+                  {
+                    name,
+                    exchange: RabbitExchange.DEFAULT,
+                    routingKey: RabbitRoutingKey.USERS_ONLINE_CHECKPOINT_V1,
+                    durable: false,
+                    singleActiveConsumer: true,
+                  },
+                  {
+                    name: other,
+                    exchange: RabbitExchange.DEFAULT,
+                    routingKey: RabbitRoutingKey.GUILDS_CREATE,
+                    durable: false,
+                  },
+                ],
+              }),
+            ),
+            Effect.timeout("10 seconds"),
+          ),
+        ).pipe(RabbitMessaging.supervised),
+      );
+    } finally {
+      await channel.close();
+      await inspection.close();
+    }
   }, 15_000);
 
   test("broker cancellation of a subscription fails the application", async () => {

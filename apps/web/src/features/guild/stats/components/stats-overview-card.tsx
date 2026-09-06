@@ -1,5 +1,8 @@
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import type { ReactNode } from "react";
-import { Card, CardContent } from "@lootlog/ui/components/card";
+
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { cn } from "cn";
 
@@ -18,40 +21,37 @@ export function StatsOverviewCard(props: Props) {
   const { className } = props;
   if (props.loading)
     return (
-      <Card className={className}>
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            <Skeleton className="h-10 w-10 rounded-lg" />
-            <div className="space-y-1.5">
-              <Skeleton className="h-3 w-14" />
-              <Skeleton className="h-6 w-10" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <SectionCard className={className}>
+        <SectionCardHeader title={<Skeleton className="h-4 w-24" />} />
+        <SectionCardContent>
+          <Skeleton className="h-6 w-10" />
+        </SectionCardContent>
+      </SectionCard>
     );
   const { icon, iconBg, iconColor, label, value } = props;
   return (
-    <Card className={cn("border-border/80", className)}>
-      <CardContent className="p-4">
-        <div className="flex items-center gap-3">
-          <div
-            className={cn(
-              "flex items-center justify-center h-10 w-10 rounded-lg",
-              iconBg,
-              iconColor,
-            )}
-          >
-            {icon}
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground font-medium">{label}</p>
-            <p className="text-xl font-bold tabular-nums">
-              {value.toLocaleString()}
-            </p>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+    <SectionCard className={className}>
+      <SectionCardHeader
+        title={
+          <span className="flex items-center gap-2">
+            <span
+              className={cn(
+                "flex size-6 items-center justify-center rounded",
+                iconBg,
+                iconColor,
+              )}
+            >
+              {icon}
+            </span>
+            {label}
+          </span>
+        }
+      />
+      <SectionCardContent>
+        <p className="text-xl font-bold tabular-nums">
+          {value.toLocaleString()}
+        </p>
+      </SectionCardContent>
+    </SectionCard>
   );
 }

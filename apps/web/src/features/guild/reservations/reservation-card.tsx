@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import type { ReservationSpotsResponseDtoItem } from "@lootlog/client/main";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
-import { Card } from "@lootlog/ui/components/card";
+import { SectionCard as Card } from "@/components/common/section-card/section-card";
 import { cn } from "cn";
 import { NpcSearchTile } from "@/components/tiles";
 

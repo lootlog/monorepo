@@ -1,6 +1,9 @@
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Card } from "@lootlog/ui/components/card";
+
 import { Button } from "@lootlog/ui/components/button";
 import {
   Collapsible,
@@ -84,31 +87,35 @@ export const MapTemplatesSettings = () => {
   };
 
   return (
-    <div className="flex flex-col h-full min-h-0">
+    <div className="flex flex-col h-full min-h-0 overflow-y-auto">
       <MapTemplatesHeader onAddClick={() => setCreateDialogOpen(true)} />
-      <ScrollArea className="flex-1 min-h-0 bg-background">
+      <ScrollArea className="flex-1 min-h-48 bg-background">
         <div className="p-3 flex flex-col gap-3">
           {isLoading ? (
             <div className="space-y-3">
               {Array.from({ length: 4 }).map((_, i) => (
-                <Card key={i} className="border-border bg-card p-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Skeleton className="h-8 w-8 rounded-lg" />
-                      <Skeleton className="h-4 w-32" />
+                <SectionCard key={i}>
+                  <SectionCardContent className="flex flex-col gap-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Skeleton className="h-8 w-8 rounded-lg" />
+                        <Skeleton className="h-4 w-32" />
+                      </div>
+                      <Skeleton className="h-5 w-8 rounded-full" />
                     </div>
-                    <Skeleton className="h-5 w-8 rounded-full" />
-                  </div>
-                </Card>
+                  </SectionCardContent>
+                </SectionCard>
               ))}
             </div>
           ) : templates?.length === 0 ? (
-            <Card className="flex flex-col items-center justify-center h-64 gap-4 bg-card">
-              <FileText className="w-16 h-16 text-muted-foreground" />
-              <p className="text-muted-foreground">
-                {t("settings.mapTemplates.noTemplates")}
-              </p>
-            </Card>
+            <SectionCard className="flex flex-col items-center justify-center h-64">
+              <SectionCardContent className="flex flex-col gap-3">
+                <FileText className="w-16 h-16 text-muted-foreground" />
+                <p className="text-muted-foreground">
+                  {t("settings.mapTemplates.noTemplates")}
+                </p>
+              </SectionCardContent>
+            </SectionCard>
           ) : (
             templates?.map((template: MapTemplateResponseDto) => (
               <Collapsible
@@ -116,59 +123,58 @@ export const MapTemplatesSettings = () => {
                 open={expandedTemplates[template.id]}
                 onOpenChange={() => toggleExpanded(template.id)}
               >
-                <div className="rounded-lg border bg-card  overflow-hidden">
-                  <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-3 hover:bg-muted/30 transition-colors cursor-pointer">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-primary/10">
-                        <FileText className="size-4 text-primary" />
+                <SectionCard className="overflow-hidden">
+                  <SectionCardHeader
+                    icon={FileText}
+                    title={
+                      <CollapsibleTrigger className="text-left">
+                        {template.name}
+                      </CollapsibleTrigger>
+                    }
+                    description={t("settings.mapTemplates.mapCount", {
+                      count: template.maps.length,
+                    })}
+                    actions={
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8"
+                          onClick={(e) => handleEdit(template, e)}
+                        >
+                          <Pencil className="size-4" />
+                        </Button>
+                        <ConfirmDeleteDialog
+                          onConfirm={() => handleDelete(template.id)}
+                          title={t("settings.mapTemplates.deleteConfirmTitle")}
+                          description={t(
+                            "settings.mapTemplates.deleteConfirmDescription",
+                            { name: template.name },
+                          )}
+                          trigger={
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          }
+                        />
+                        <CollapsibleTrigger
+                          aria-label={template.name}
+                          className="p-2"
+                        >
+                          <ChevronDown
+                            className={`size-4 text-muted-foreground transition-transform ${expandedTemplates[template.id] ? "rotate-180" : ""}`}
+                          />
+                        </CollapsibleTrigger>
                       </div>
-                      <div className="text-left">
-                        <span className="font-semibold text-sm">
-                          {template.name}
-                        </span>
-                        <span className="text-xs text-muted-foreground ml-2">
-                          {t("settings.mapTemplates.mapCount", {
-                            count: template.maps.length,
-                          })}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-8"
-                        onClick={(e) => handleEdit(template, e)}
-                      >
-                        <Pencil className="size-4" />
-                      </Button>
-                      <ConfirmDeleteDialog
-                        onConfirm={() => handleDelete(template.id)}
-                        title={t("settings.mapTemplates.deleteConfirmTitle")}
-                        description={t(
-                          "settings.mapTemplates.deleteConfirmDescription",
-                          { name: template.name },
-                        )}
-                        trigger={
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Trash2 className="size-4" />
-                          </Button>
-                        }
-                      />
-                      <ChevronDown
-                        className={`size-4 text-muted-foreground transition-transform ml-1 ${
-                          expandedTemplates[template.id] ? "rotate-180" : ""
-                        }`}
-                      />
-                    </div>
-                  </CollapsibleTrigger>
+                    }
+                  />
                   <CollapsibleContent>
-                    <div className="px-4 pb-4 pt-2 border-t">
+                    <SectionCardContent>
                       <div className="flex flex-wrap gap-2">
                         {template.maps.map((map, idx) => (
                           <span
@@ -183,9 +189,9 @@ export const MapTemplatesSettings = () => {
                           </span>
                         ))}
                       </div>
-                    </div>
+                    </SectionCardContent>
                   </CollapsibleContent>
-                </div>
+                </SectionCard>
               </Collapsible>
             ))
           )}

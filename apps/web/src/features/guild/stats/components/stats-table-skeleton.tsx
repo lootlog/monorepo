@@ -1,4 +1,5 @@
-import { Card } from "@lootlog/ui/components/card";
+import { SectionCard } from "@/components/common/section-card/section-card";
+
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 
 export const StatsTableSkeleton = ({
@@ -10,7 +11,7 @@ export const StatsTableSkeleton = ({
   rows: number;
   footer?: boolean;
 }) => (
-  <Card className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden border-border bg-card p-0">
+  <SectionCard className="flex min-h-0 flex-1 flex-col overflow-hidden">
     <div className="flex gap-4 border-b border-border px-4 py-3">
       {Array.from({ length: columns }).map((_, i) => (
         <Skeleton key={i} className="h-4 flex-1" />
@@ -35,5 +36,5 @@ export const StatsTableSkeleton = ({
         </div>
       </div>
     )}
-  </Card>
+  </SectionCard>
 );

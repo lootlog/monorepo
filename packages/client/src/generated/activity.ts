@@ -191,6 +191,45 @@ export interface DeleteActivityResponseDtoOutput {
   count: number;
 }
 
+export type UserOnlineResponseDtoTimezone = typeof UserOnlineResponseDtoTimezone[keyof typeof UserOnlineResponseDtoTimezone];
+
+
+export const UserOnlineResponseDtoTimezone = {
+  'Europe/Warsaw': 'Europe/Warsaw',
+} as const;
+
+export type UserOnlineResponseDtoStatus = typeof UserOnlineResponseDtoStatus[keyof typeof UserOnlineResponseDtoStatus];
+
+
+export const UserOnlineResponseDtoStatus = {
+  fresh: 'fresh',
+  stale: 'stale',
+  unavailable: 'unavailable',
+} as const;
+
+export type UserOnlineResponseDtoDaysItem = {
+  date: string;
+  /** @nullable */
+  onlineSeconds: number | null;
+  partial: boolean;
+};
+
+export interface UserOnlineResponseDto {
+  timezone: UserOnlineResponseDtoTimezone;
+  /**
+     * @nullable
+     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+     */
+  trackingStartedAt: string | null;
+  /**
+     * @nullable
+     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+     */
+  lastObservedAt: string | null;
+  status: UserOnlineResponseDtoStatus;
+  days: UserOnlineResponseDtoDaysItem[];
+}
+
 /**
  * @nullable
  */
@@ -478,6 +517,23 @@ export const ActivitiesControllerDeleteActivity503StatusCode = {
 export type ActivitiesControllerDeleteActivity503 = {
   message: string;
   statusCode: ActivitiesControllerDeleteActivity503StatusCode;
+};
+
+export type UsersActivityControllerGetOnlineParams = {
+from: string;
+to: string;
+};
+
+export type UsersActivityControllerGetOnline401StatusCode = typeof UsersActivityControllerGetOnline401StatusCode[keyof typeof UsersActivityControllerGetOnline401StatusCode];
+
+
+export const UsersActivityControllerGetOnline401StatusCode = {
+  NUMBER_401: 401,
+} as const;
+
+export type UsersActivityControllerGetOnline401 = {
+  message: string;
+  statusCode: UsersActivityControllerGetOnline401StatusCode;
 };
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -1826,3 +1882,152 @@ export const useActivitiesControllerDeleteActivity = <TError = ErrorType<void | 
       > => {
       return useMutation(getActivitiesControllerDeleteActivityMutationOptions(options), queryClient);
     }
+
+export const getUsersActivityControllerGetOnlineUrl = (params: UsersActivityControllerGetOnlineParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/users/@me/activity/online?${stringifiedParams}` : `/users/@me/activity/online`
+}
+
+/**
+ * An inclusive range of at most 112 Warsaw calendar dates. Only the latest 16 weeks of confirmed online intervals are retained.
+ * @summary Get the signed-in user's confirmed game online time by Warsaw calendar day
+ */
+export const usersActivityControllerGetOnline = async (params: UsersActivityControllerGetOnlineParams, options?: Parameters<typeof activityFetch>[1]): Promise<UserOnlineResponseDto> => {
+
+  return activityFetch<UserOnlineResponseDto>(getUsersActivityControllerGetOnlineUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getUsersActivityControllerGetOnlineQueryKey = (params?: UsersActivityControllerGetOnlineParams,) => {
+    return [
+    `/users/@me/activity/online`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getUsersActivityControllerGetOnlineQueryOptions = <TData = Awaited<ReturnType<typeof usersActivityControllerGetOnline>>, TError = ErrorType<UsersActivityControllerGetOnline401>>(params: UsersActivityControllerGetOnlineParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersActivityControllerGetOnline>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getUsersActivityControllerGetOnlineQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof usersActivityControllerGetOnline>>> = ({ signal }) => usersActivityControllerGetOnline(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof usersActivityControllerGetOnline>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type UsersActivityControllerGetOnlineQueryResult = NonNullable<Awaited<ReturnType<typeof usersActivityControllerGetOnline>>>
+export type UsersActivityControllerGetOnlineQueryError = ErrorType<UsersActivityControllerGetOnline401>
+
+
+export function useUsersActivityControllerGetOnline<TData = Awaited<ReturnType<typeof usersActivityControllerGetOnline>>, TError = ErrorType<UsersActivityControllerGetOnline401>>(
+ params: UsersActivityControllerGetOnlineParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersActivityControllerGetOnline>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersActivityControllerGetOnline>>,
+          TError,
+          Awaited<ReturnType<typeof usersActivityControllerGetOnline>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof activityFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersActivityControllerGetOnline<TData = Awaited<ReturnType<typeof usersActivityControllerGetOnline>>, TError = ErrorType<UsersActivityControllerGetOnline401>>(
+ params: UsersActivityControllerGetOnlineParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersActivityControllerGetOnline>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersActivityControllerGetOnline>>,
+          TError,
+          Awaited<ReturnType<typeof usersActivityControllerGetOnline>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof activityFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersActivityControllerGetOnline<TData = Awaited<ReturnType<typeof usersActivityControllerGetOnline>>, TError = ErrorType<UsersActivityControllerGetOnline401>>(
+ params: UsersActivityControllerGetOnlineParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersActivityControllerGetOnline>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get the signed-in user's confirmed game online time by Warsaw calendar day
+ */
+
+export function useUsersActivityControllerGetOnline<TData = Awaited<ReturnType<typeof usersActivityControllerGetOnline>>, TError = ErrorType<UsersActivityControllerGetOnline401>>(
+ params: UsersActivityControllerGetOnlineParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersActivityControllerGetOnline>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getUsersActivityControllerGetOnlineQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get the signed-in user's confirmed game online time by Warsaw calendar day
+ */
+export const prefetchUsersActivityControllerGetOnlineQuery = async <TData = Awaited<ReturnType<typeof usersActivityControllerGetOnline>>, TError = ErrorType<UsersActivityControllerGetOnline401>>(
+ queryClient: QueryClient, params: UsersActivityControllerGetOnlineParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersActivityControllerGetOnline>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getUsersActivityControllerGetOnlineQueryOptions(params,options)
+
+  await queryClient.prefetchQuery(queryOptions);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get the signed-in user's confirmed game online time by Warsaw calendar day
+ */
+export const invalidateUsersActivityControllerGetOnline = async (
+ queryClient: QueryClient, params: UsersActivityControllerGetOnlineParams, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getUsersActivityControllerGetOnlineQueryKey(params) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get the signed-in user's confirmed game online time by Warsaw calendar day
+ */
+export const useSetUsersActivityControllerGetOnlineQueryData = () => {
+  const queryClient = useQueryClient();
+  return (params: UsersActivityControllerGetOnlineParams | undefined,updater: Awaited<ReturnType<typeof usersActivityControllerGetOnline>> | undefined | ((old: Awaited<ReturnType<typeof usersActivityControllerGetOnline>> | undefined) => Awaited<ReturnType<typeof usersActivityControllerGetOnline>> | undefined)) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof usersActivityControllerGetOnline>>>({ queryKey: getUsersActivityControllerGetOnlineQueryKey(params) }, updater);
+  };
+}
+
+/**
+ * @summary Get the signed-in user's confirmed game online time by Warsaw calendar day
+ */
+export const useGetUsersActivityControllerGetOnlineQueryData = () => {
+  const queryClient = useQueryClient();
+  return (params: UsersActivityControllerGetOnlineParams,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof usersActivityControllerGetOnline>>>(getUsersActivityControllerGetOnlineQueryKey(params));
+}

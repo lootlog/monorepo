@@ -1,3 +1,4 @@
+import type { LootVisibilityNpc } from "@lootlog/domain/loot-visibility";
 import { SubscriptionScope } from "@lootlog/protocol/realtime";
 import { Effect, Queue, Schedule, Schema } from "effect";
 import * as Redis from "effect/unstable/persistence/Redis";
@@ -11,6 +12,7 @@ type RedisGatewayConfig = Omit<GatewayConfiguration["redis"], "password"> & {
 export interface FederatedRealtimeMessage {
   readonly id: string;
   readonly sourceInstanceId: string;
+  readonly sourceNpcs?: ReadonlyArray<LootVisibilityNpc>;
   readonly scopeKey?: string;
   readonly scope?: typeof SubscriptionScope.Type;
   readonly scopes?: ReadonlyArray<typeof SubscriptionScope.Type>;
@@ -34,6 +36,14 @@ const FederatedRealtimeMessageJson = Schema.fromJsonString(
   Schema.Struct({
     id: Schema.String,
     sourceInstanceId: Schema.String,
+    sourceNpcs: Schema.optional(
+      Schema.Array(
+        Schema.Struct({
+          level: Schema.NullOr(Schema.Number),
+          type: Schema.NullOr(Schema.String),
+        }),
+      ),
+    ),
     scopeKey: Schema.optional(Schema.String),
     scope: Schema.optional(SubscriptionScope),
     scopes: Schema.optional(Schema.Array(SubscriptionScope)),

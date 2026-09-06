@@ -1,3 +1,5 @@
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { PageHeader } from "@/components/common/page-header";
 import { useState } from "react";
 import { useLocalStorage } from "usehooks-ts";
 import { useQueryClient } from "@tanstack/react-query";
@@ -13,7 +15,6 @@ import {
   useUnpinReservationSpot,
 } from "@lootlog/client/main";
 import { Button } from "@lootlog/ui/components/button";
-import { Card } from "@lootlog/ui/components/card";
 import {
   Empty,
   EmptyContent,
@@ -115,28 +116,32 @@ export function Reservations() {
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
       <div className="space-y-2 px-3 pt-3">
-        <Card className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-border bg-card p-2 xl:grid-cols-[minmax(14rem,1fr)_auto_auto]">
-          <SearchInput
-            value={searchValue}
-            onChange={(event) => setSearchValue(event.target.value)}
-            placeholder={t("reservations.searchPlaceholder")}
-            className="h-9"
-            wrapperClassName="min-w-0"
-            disabled={spotsQuery.isPending}
-          />
-          <ReservationFilters
-            value={filter}
-            onChange={setFilter}
-            className="col-span-2 row-start-2 xl:col-span-1 xl:col-start-2 xl:row-start-1"
-          />
-          <ViewModeToggle
-            value={viewMode}
-            onChange={setViewMode}
-            listLabel={t("reservations.view.list")}
-            gridLabel={t("reservations.view.grid")}
-            className="col-start-2 row-start-1 xl:col-start-3"
-          />
-        </Card>
+        <PageHeader title={t("layout.navigation.reservations")}>
+          <SectionCardContent>
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2    xl:grid-cols-[minmax(14rem,1fr)_auto_auto]">
+              <SearchInput
+                value={searchValue}
+                onChange={(event) => setSearchValue(event.target.value)}
+                placeholder={t("reservations.searchPlaceholder")}
+                className="h-9"
+                wrapperClassName="min-w-0"
+                disabled={spotsQuery.isPending}
+              />
+              <ReservationFilters
+                value={filter}
+                onChange={setFilter}
+                className="col-span-2 row-start-2 xl:col-span-1 xl:col-start-2 xl:row-start-1"
+              />
+              <ViewModeToggle
+                value={viewMode}
+                onChange={setViewMode}
+                listLabel={t("reservations.view.list")}
+                gridLabel={t("reservations.view.grid")}
+                className="col-start-2 row-start-1 xl:col-start-3"
+              />
+            </div>
+          </SectionCardContent>
+        </PageHeader>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col pt-3">
@@ -149,7 +154,7 @@ export function Reservations() {
             </div>
           </ScrollArea>
         ) : spotsQuery.isError ? (
-          <div className="flex flex-1 items-center justify-center px-3 pb-3">
+          <div className="flex min-h-0 flex-1 [align-items:safe_center] justify-center overflow-y-auto px-3 pb-3">
             <Empty className="min-h-56 w-full max-w-xl">
               <EmptyHeader>
                 <EmptyMedia variant="icon">
@@ -173,7 +178,7 @@ export function Reservations() {
             </Empty>
           </div>
         ) : sortedSpots.length === 0 ? (
-          <div className="flex flex-1 items-center justify-center px-3 pb-3">
+          <div className="flex min-h-0 flex-1 [align-items:safe_center] justify-center overflow-y-auto px-3 pb-3">
             <Empty className="min-h-56 w-full max-w-xl">
               <EmptyHeader>
                 <EmptyMedia variant="icon">

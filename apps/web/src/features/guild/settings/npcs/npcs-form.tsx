@@ -1,3 +1,6 @@
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -18,7 +21,7 @@ import type { LootlogConfigNpcResponseDtoOutput as LootlogConfigNpc } from "@loo
 import type { UpdateLootlogConfigNpcDtoAllowedRaritiesItem } from "@lootlog/client/main";
 import { cn } from "cn";
 import { toast } from "sonner";
-import { Card } from "@lootlog/ui/components/card";
+
 import { Sparkles } from "lucide-react";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
 import { useGuildId } from "@/hooks/context/use-guild-id";
@@ -104,70 +107,61 @@ export const NpcsForm: FC<NpcsFormProps> = ({ npc }) => {
         onSubmit={form.handleSubmit(onSubmit)}
         className="w-full mx-auto pb-24"
       >
-        <Card className="bg-card  border-border overflow-hidden p-0 gap-0">
-          <div className="px-4 py-3">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Sparkles className="size-4 text-primary" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-sm">
-                    {t("settings.npcs.raritiesTitle")}
-                  </span>
-                  <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                    {enabledCount}/{NPC_RARITY_CONFIG.length}
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {t("settings.npcs.raritiesDescription")}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t border-border/50 divide-y divide-border/50">
-            {NPC_RARITY_CONFIG.map((rarity) => (
-              <FormField
-                key={rarity.key}
-                control={form.control}
-                name={rarity.key as keyof z.infer<typeof formSchema>}
-                render={({ field }) => (
-                  <FormItem
-                    className={cn(
-                      "relative flex flex-row items-center space-x-3 space-y-0 py-3 px-4 pl-6",
-                      "transition-colors hover:bg-muted/20",
-                      field.value && "bg-primary/5",
-                    )}
-                  >
-                    <FormControl
-                      render={
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      }
-                    />
-                    <div className="flex items-center gap-2 flex-1">
-                      <div className={cn("p-1 rounded", rarity.bgColor)}>
-                        <rarity.icon className={cn("size-3", rarity.color)} />
+        <SectionCard className="overflow-hidden">
+          <SectionCardHeader
+            icon={Sparkles}
+            title={t("settings.npcs.raritiesTitle")}
+            description={t("settings.npcs.raritiesDescription")}
+            actions={
+              <span className="text-xs text-muted-foreground">
+                {enabledCount}/{NPC_RARITY_CONFIG.length}
+              </span>
+            }
+          />
+          <SectionCardContent className="p-0">
+            <div className="border-t border-border/50 divide-y divide-border/50">
+              {NPC_RARITY_CONFIG.map((rarity) => (
+                <FormField
+                  key={rarity.key}
+                  control={form.control}
+                  name={rarity.key as keyof z.infer<typeof formSchema>}
+                  render={({ field }) => (
+                    <FormItem
+                      className={cn(
+                        "relative flex flex-row items-center space-x-3 space-y-0 py-3 px-4 pl-6",
+                        "transition-colors hover:bg-muted/20",
+                        field.value && "bg-primary/5",
+                      )}
+                    >
+                      <FormControl
+                        render={
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        }
+                      />
+                      <div className="flex items-center gap-2 flex-1">
+                        <div className={cn("p-1 rounded", rarity.bgColor)}>
+                          <rarity.icon className={cn("size-3", rarity.color)} />
+                        </div>
+                        <FormLabel
+                          className={cn(
+                            "text-sm font-medium cursor-pointer after:absolute after:inset-0",
+                            rarity.color,
+                          )}
+                        >
+                          {t(`itemRarity.${rarity.key}`)}
+                        </FormLabel>
                       </div>
-                      <FormLabel
-                        className={cn(
-                          "text-sm font-medium cursor-pointer after:absolute after:inset-0",
-                          rarity.color,
-                        )}
-                      >
-                        {t(`itemRarity.${rarity.key}`)}
-                      </FormLabel>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            ))}
-          </div>
-        </Card>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ))}
+            </div>
+          </SectionCardContent>
+        </SectionCard>
 
         <UnsavedChangesBar
           isDirty={form.formState.isDirty}

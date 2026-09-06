@@ -23,7 +23,7 @@ export const AddCategoryForm = ({ onAddCategory }: AddCategoryFormProps) => {
 
   if (isAddingCategory) {
     return (
-      <div className="flex items-center gap-2 bg-card border rounded-lg p-3 mt-2">
+      <div className="flex flex-wrap items-center gap-2 border-t border-border/70 bg-muted/20 p-3 mt-2">
         <Input
           value={newCategoryName}
           onChange={(e) => setNewCategoryName(e.target.value)}

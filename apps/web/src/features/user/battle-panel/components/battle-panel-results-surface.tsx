@@ -1,4 +1,6 @@
-import { Card } from "@lootlog/ui/components/card";
+import { useTranslation } from "react-i18next";
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
 import { cn } from "cn";
 import type { ReactNode } from "react";
@@ -8,6 +10,7 @@ import {
 } from "./battle-panel-filter-chip-list";
 
 type BattlePanelResultsSurfaceProps = {
+  title?: string;
   chips?: BattlePanelFilterChip[];
   children: ReactNode;
   clearFiltersLabel?: string;
@@ -20,6 +23,7 @@ type BattlePanelResultsSurfaceProps = {
 };
 
 export const BattlePanelResultsSurface = ({
+  title,
   chips = [],
   children,
   clearFiltersLabel,
@@ -30,21 +34,22 @@ export const BattlePanelResultsSurface = ({
   toolbarEnd,
   withHorizontalScroll = true,
 }: BattlePanelResultsSurfaceProps) => {
+  const { t } = useTranslation();
   const shouldShowChips =
     chips.length > 0 && clearFiltersLabel !== undefined && onClearFilters;
 
   return (
-    <Card className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden border-border bg-card p-0">
-      {(toolbar || toolbarEnd) && (
-        <div className="grid shrink-0 gap-2 border-b border-border bg-background/80 px-3 py-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
-          <div className="min-w-0">{toolbar}</div>
-          {toolbarEnd && (
-            <div className="flex min-h-8 flex-wrap items-center justify-end gap-2">
-              {toolbarEnd}
-            </div>
-          )}
-        </div>
-      )}
+    <SectionCard className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden border-border bg-card p-0">
+      <SectionCardHeader
+        title={title ?? t("battlePanel.navigation.battles")}
+        actions={
+          <>
+            {toolbar}
+            {toolbarEnd}
+          </>
+        }
+        className="shrink-0"
+      />
       {shouldShowChips && (
         <BattlePanelFilterChipList
           chips={chips}
@@ -62,6 +67,6 @@ export const BattlePanelResultsSurface = ({
         </div>
       )}
       {footer}
-    </Card>
+    </SectionCard>
   );
 };

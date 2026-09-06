@@ -1,3 +1,4 @@
+import { readPublishedFeedEntry } from "#src/feed/user-feed";
 import { and, asc, eq, inArray, isNull, notInArray, sql } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import { GuildLootCreatedEventV2Schema } from "@lootlog/schema/loot-events";
@@ -88,11 +89,19 @@ export const makeLootPublicationDispatcher = (
             if (payload.kind === "cache") {
               yield* invalidateCaches(organizationIds);
             } else {
-              const data =
+              let data =
                 payload.routingKey ===
                 RabbitRoutingKey.NOTIFICATIONS_LOOT_CREATED
                   ? { ...payload.data, guildIds: organizationIds }
                   : payload.data;
+              if (payload.routingKey === RabbitRoutingKey.GUILDS_LOOTS_CREATE) {
+                const feedEntry = yield* readPublishedFeedEntry(
+                  transaction,
+                  payload.data.guildId,
+                  { lootId: payload.data.lootId },
+                );
+                data = { ...payload.data, ...(feedEntry ? { feedEntry } : {}) };
+              }
               yield* rabbit.publish({
                 exchange: "default",
                 routingKey: payload.routingKey,

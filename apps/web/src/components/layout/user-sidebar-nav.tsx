@@ -1,6 +1,12 @@
 import { useTranslation } from "react-i18next";
 import { useSession } from "@/hooks/auth/use-session";
-import { BellRing, LayoutDashboard, Settings, Swords } from "lucide-react";
+import {
+  BarChart3,
+  BellRing,
+  LayoutDashboard,
+  Settings,
+  Swords,
+} from "lucide-react";
 import { SidebarNav } from "./sidebar-nav/sidebar-nav";
 import type { MenuItem } from "./sidebar-nav/types";
 import { useThemeMeta } from "@/themes";
@@ -12,6 +18,7 @@ import {
 } from "@/navigation/app-navigation";
 
 const userNavigationIcons: Partial<Record<AppNavigationItemId, ReactNode>> = {
+  "user-statistics": <BarChart3 className="mr-1 h-4 w-4" />,
   "user-dashboard": <LayoutDashboard className="mr-1 h-4 w-4" />,
   "user-battles": <Swords className="mr-1 h-4 w-4" />,
   "user-notifications": <BellRing className="mr-1 h-4 w-4" />,

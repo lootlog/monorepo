@@ -1,3 +1,4 @@
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
 import { Button } from "@lootlog/ui/components/button";
 import { useState, type FC } from "react";
 import { Textarea } from "@lootlog/ui/components/textarea";
@@ -73,11 +74,11 @@ export const LootComments: FC<LootCommentProps> = ({ lootId }) => {
 
   return (
     <section className="flex flex-col">
-      <div className="flex items-center justify-between border-b border-border px-5 py-3 sm:px-6">
-        <h3 className="text-sm font-semibold text-foreground">
-          {t("loots.details.comments.title", { count: comments?.length ?? 0 })}
-        </h3>
-      </div>
+      <SectionCardHeader
+        title={t("loots.details.comments.title", {
+          count: comments?.length ?? 0,
+        })}
+      />
 
       <div className="border-b border-border bg-card/20 px-5 py-4 sm:px-6">
         <form className="space-y-3" onSubmit={handleAddComment}>

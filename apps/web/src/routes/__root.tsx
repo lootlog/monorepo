@@ -17,6 +17,7 @@ import { resolveAppNavigation } from "@/navigation/app-navigation";
 import { ThemeRootEffects, ThemeSpinnerProvider } from "@/themes";
 
 import "@lootlog/ui/globals.css";
+import "@/themes/default.css";
 import "../scrollbars.css";
 import "@/i18n/config";
 

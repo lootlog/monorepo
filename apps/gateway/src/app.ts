@@ -1,7 +1,14 @@
+import { OnlineHistory } from "#src/realtime/online-history";
+import {
+  ACTIVITY_EVENT_SIGNATURE_HEADER,
+  signActivityEvent,
+} from "@lootlog/protocol/rabbit/activity-signature";
+import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { BunRedis } from "@effect/platform-bun";
 import { recordHttpServerMetrics } from "@lootlog/instrumentation";
 import { RabbitMessaging } from "@lootlog/messaging";
 import {
+  REALTIME_FEED_CAPABILITY,
   REALTIME_JSON_SUBPROTOCOL,
   REALTIME_SUBPROTOCOL,
 } from "@lootlog/protocol/realtime";
@@ -86,7 +93,28 @@ export class GatewayApplication extends Context.Service<
       const hub = new RealtimeHub(config, redis, runBackground);
       yield* hub.start();
       const coverage = new CoveragePublisher(messaging);
-      const presence = new PresenceStore(redis, hub, Date.now, coverage);
+      const onlineHistory = new OnlineHistory(redis.command, (payload) =>
+        messaging
+          .publish({
+            routingKey: RabbitRoutingKey.USERS_ONLINE_CHECKPOINT_V1,
+            content: new TextEncoder().encode(JSON.stringify(payload)),
+            headers: {
+              [ACTIVITY_EVENT_SIGNATURE_HEADER]: signActivityEvent(
+                payload,
+                Redacted.value(config.activityEventSignatureSecret),
+              ),
+            },
+          })
+          .pipe(Effect.asVoid),
+      );
+      yield* onlineHistory.run().pipe(Effect.forkScoped);
+      const presence = new PresenceStore(
+        redis,
+        hub,
+        Date.now,
+        coverage,
+        onlineHistory,
+      );
       yield* presence.runExpirySweep().pipe(Effect.forkScoped);
       const activity = new ActivityPublisher(messaging, config);
       const mapPings = new MapPingService(redis, hub);
@@ -264,6 +292,12 @@ export const createGatewayFetch =
       data: {
         ...identity,
         connectionId,
+        supportsFeed:
+          request.headers
+            .get("sec-websocket-protocol")
+            ?.split(",")
+            .some((protocol) => protocol.trim() === REALTIME_FEED_CAPABILITY) ??
+          false,
         platform: application.auth.getPlatform(origin ?? ""),
         userAgent: request.headers.get("user-agent") ?? undefined,
         frameEncoding,

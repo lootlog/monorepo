@@ -1,3 +1,5 @@
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useTable } from "@tanstack/react-table";
@@ -181,13 +183,15 @@ export const EventKillsTable = (props: EventKillsTableProps) => {
     );
   }
 
+  const Container = ({ history: SectionCard, preview: "section" } as const)[
+    variant
+  ];
+
   return (
-    <section
-      className={cn(
-        "w-full min-w-0 overflow-hidden bg-card",
-        !isPreview && "rounded-2xl border border-border",
+    <Container className="w-full min-w-0 overflow-hidden">
+      {!isPreview && (
+        <SectionCardHeader icon={Skull} title={t("events.kills.title")} />
       )}
-    >
       <Table className="w-full table-auto xl:table-fixed">
         <TanStackTableHeader
           table={table}
@@ -237,6 +241,6 @@ export const EventKillsTable = (props: EventKillsTableProps) => {
           </TableBody>
         )}
       </Table>
-    </section>
+    </Container>
   );
 };

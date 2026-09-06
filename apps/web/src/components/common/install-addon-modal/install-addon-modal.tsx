@@ -35,7 +35,7 @@ export const InstallAddonModal: FC = () => {
             href={ADDON_INSTALL_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-500 hover:underline"
+            className="text-primary hover:underline"
             onClick={handleModalClose}
           >
             {t("ui.actions.installAddon")}

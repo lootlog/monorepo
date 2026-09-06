@@ -679,7 +679,7 @@ export const NotificationTemplateEditor = ({
                               value={suggestion.label}
                               className={cn(
                                 highlightedSuggestionIndex === index &&
-                                  "bg-primary/50 text-accent-foreground",
+                                  "bg-accent text-accent-foreground",
                               )}
                               onMouseEnter={() => {
                                 setHighlightedSuggestion({
@@ -727,7 +727,7 @@ export const NotificationTemplateEditor = ({
             <p className="text-xs text-muted-foreground">
               {t("settings.notifications.templateEditor.previewNotice")}
             </p>
-            <div className="rounded-xl border border-border/60 bg-background px-4 py-4 text-sm">
+            <div className="py-3 text-sm">
               <div className="max-w-none whitespace-pre-wrap break-words text-foreground [&_blockquote]:rounded-md [&_blockquote]:border [&_blockquote]:border-border [&_blockquote]:px-3 [&_blockquote]:py-2 [&_code]:rounded [&_code]:bg-muted [&_code]:px-1.5 [&_code]:py-0.5 [&_h1]:text-lg [&_h1]:font-semibold [&_h2]:text-base [&_h2]:font-semibold [&_hr]:border-border [&_li]:ml-4 [&_p]:leading-6 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-muted [&_pre]:p-3 [&_strong]:font-semibold">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {renderTemplatePreview(value, previewTemplateValues)}
@@ -738,7 +738,7 @@ export const NotificationTemplateEditor = ({
         </DialogContent>
       </Dialog>
 
-      <div className="rounded-xl border border-dashed border-border/70 bg-background px-3 py-3">
+      <div className="py-3">
         <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
           {t("settings.notifications.templateEditor.availableVariables")}
         </p>

@@ -1,6 +1,4 @@
 import type { AppNavigation } from "@/navigation/app-navigation";
-import { ThemeInteractiveFrame } from "@/themes";
-import { Button } from "@lootlog/ui/components/button";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -10,7 +8,7 @@ import {
   BreadcrumbSeparator,
 } from "@lootlog/ui/components/breadcrumb";
 import { cn } from "cn";
-import { Fragment, useState } from "react";
+import { Fragment } from "react";
 import { useTranslation } from "react-i18next";
 
 type AppBreadcrumbsProps = {
@@ -55,9 +53,6 @@ export const AppBreadcrumbs = ({
   onNavigate,
 }: AppBreadcrumbsProps) => {
   const { t } = useTranslation();
-  const [hoveredBreadcrumbIndex, setHoveredBreadcrumbIndex] = useState<
-    number | null
-  >(null);
 
   return (
     <Breadcrumb
@@ -76,30 +71,24 @@ export const AppBreadcrumbs = ({
             >
               <BreadcrumbItem className={breadcrumbItemClassNames[visibility]}>
                 {breadcrumbPath ? (
-                  <div
-                    className="min-w-0 max-w-full"
-                    onMouseEnter={() => setHoveredBreadcrumbIndex(index)}
-                    onMouseLeave={() => setHoveredBreadcrumbIndex(null)}
+                  <BreadcrumbLink
+                    href={breadcrumbPath}
+                    onClick={(event) => {
+                      if (
+                        event.button !== 0 ||
+                        event.metaKey ||
+                        event.ctrlKey ||
+                        event.shiftKey ||
+                        event.altKey
+                      )
+                        return;
+                      event.preventDefault();
+                      onNavigate(breadcrumbPath);
+                    }}
+                    className="inline-flex min-h-6 min-w-0 max-w-full items-center truncate text-xs text-muted-foreground transition-colors hover:text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
                   >
-                    <ThemeInteractiveFrame
-                      isHovered={hoveredBreadcrumbIndex === index}
-                      isActive={false}
-                    >
-                      <BreadcrumbLink
-                        render={
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => onNavigate(breadcrumbPath)}
-                          />
-                        }
-                        className="min-h-8 max-w-full cursor-pointer truncate rounded px-1 text-xs text-muted-foreground/70 transition-colors duration-200 hover:text-foreground"
-                      >
-                        {breadcrumb.label}
-                      </BreadcrumbLink>
-                    </ThemeInteractiveFrame>
-                  </div>
+                    {breadcrumb.label}
+                  </BreadcrumbLink>
                 ) : (
                   <BreadcrumbPage className="truncate text-sm font-bold">
                     {breadcrumb.label}

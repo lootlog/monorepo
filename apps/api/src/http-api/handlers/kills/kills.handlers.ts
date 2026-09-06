@@ -8,6 +8,8 @@ import {
   getMemberKills,
   getNpcKillers,
   getUserKillStats,
+  getUserKillAnalytics,
+  getUserKillActivity,
   getUserNpcKills,
   toRecordsHttpResponse,
 } from "../records/records.operations.js";
@@ -22,6 +24,12 @@ export const KillsHandlers = HttpApiBuilder.group(
       )
       .handle("KillsControllerGetGuildKillStats", ({ params, query }) =>
         toRecordsHttpResponse(getGuildKillStats(params.guildId, query)),
+      )
+      .handle("KillsControllerGetUserKillAnalytics", ({ query }) =>
+        toRecordsHttpResponse(getUserKillAnalytics(query)),
+      )
+      .handle("KillsControllerGetUserKillActivity", ({ query }) =>
+        toRecordsHttpResponse(getUserKillActivity(query)),
       )
       .handle("KillsControllerGetUserKillStats", ({ query }) =>
         toRecordsHttpResponse(getUserKillStats(query)),

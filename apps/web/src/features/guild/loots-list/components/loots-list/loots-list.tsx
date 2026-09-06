@@ -606,7 +606,7 @@ export const LootsList: FC = () => {
 
   if (!world) {
     return (
-      <div className="flex flex-1 items-start justify-center px-4 pb-8 pt-5 sm:px-6 md:items-center md:py-8">
+      <div className="flex min-h-0 flex-1 items-start justify-center overflow-y-auto px-4 pb-8 pt-5 sm:px-6 md:[align-items:safe_center] md:py-8">
         <section className="flex w-full max-w-sm flex-col items-center rounded-2xl border border-border bg-card px-4 py-5 text-center shadow-sm sm:px-7 sm:py-8">
           <div className="mb-4 flex size-14 items-center justify-center rounded-xl border border-border bg-background">
             <ThemeEmptyStateIcon
@@ -633,7 +633,7 @@ export const LootsList: FC = () => {
 
   if (!isLoading && !hasLoots) {
     return (
-      <div className="flex flex-1 items-start justify-center px-3 pb-3 md:items-center">
+      <div className="flex min-h-0 flex-1 items-start justify-center overflow-y-auto px-3 pb-3 md:[align-items:safe_center]">
         <Empty className="min-h-56 w-full max-w-xl">
           <EmptyHeader>
             <EmptyMedia variant="icon">

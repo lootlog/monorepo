@@ -1,5 +1,5 @@
+import { PageHeader } from "@/components/common/page-header";
 import { Button } from "@lootlog/ui/components/button";
-import { Card } from "@lootlog/ui/components/card";
 import { AnimatePresence, motion } from "framer-motion";
 import { Activity, Filter } from "lucide-react";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
@@ -35,77 +35,74 @@ export const ActivityLogsFiltersHeader = ({
   const { t } = useTranslation();
 
   return (
-    <Card className="gap-3 border-border bg-card p-4">
-      <div className="flex items-center gap-3">
-        <div className="rounded-xl bg-primary/10 p-2">
-          <Activity className="size-4 text-primary" />
-        </div>
-        <h2 className="text-base font-semibold">{t("activityLogs.title")}</h2>
-
-        <div className="flex-1" />
-
-        {!isMobile && (
-          <>
-            <Select
-              value={selectedWorld || undefined}
-              onValueChange={(value) =>
-                onWorldChange(value !== null && value !== "all" ? value : "")
-              }
-              items={[
-                {
-                  value: null,
-                  label: <>{t("activityLogs.filters.allWorlds")}</>,
-                },
-                {
-                  value: "all",
-                  label: <>{t("activityLogs.filters.allWorlds")}</>,
-                },
-                ...worldOptions.map((option) => ({
-                  value: option.value,
-                  label: <>{capitalizeFirstLetter(option.label)}</>,
-                })),
-              ]}
-            >
-              <SelectTrigger className="h-9 w-48">
-                <SelectValue
-                  placeholder={t("activityLogs.filters.allWorlds")}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">
-                  {t("activityLogs.filters.allWorlds")}
-                </SelectItem>
-                {worldOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {capitalizeFirstLetter(option.label)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Button
-              onClick={onToggleFilters}
-              variant={isFiltersOpen ? "default" : "outline"}
-              size="icon"
-              className="relative shrink-0"
-            >
-              <Filter className="h-4 w-4" />
-              <AnimatePresence>
-                {hasActiveFilters && !isFiltersOpen && (
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    exit={{ scale: 0 }}
-                    className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full border-2 border-background"
+    <PageHeader
+      icon={Activity}
+      title={t("activityLogs.title")}
+      actions={
+        <>
+          {!isMobile && (
+            <>
+              <Select
+                value={selectedWorld || undefined}
+                onValueChange={(value) =>
+                  onWorldChange(value !== null && value !== "all" ? value : "")
+                }
+                items={[
+                  {
+                    value: null,
+                    label: <>{t("activityLogs.filters.allWorlds")}</>,
+                  },
+                  {
+                    value: "all",
+                    label: <>{t("activityLogs.filters.allWorlds")}</>,
+                  },
+                  ...worldOptions.map((option) => ({
+                    value: option.value,
+                    label: <>{capitalizeFirstLetter(option.label)}</>,
+                  })),
+                ]}
+              >
+                <SelectTrigger className="h-9 w-48">
+                  <SelectValue
+                    placeholder={t("activityLogs.filters.allWorlds")}
                   />
-                )}
-              </AnimatePresence>
-            </Button>
-          </>
-        )}
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">
+                    {t("activityLogs.filters.allWorlds")}
+                  </SelectItem>
+                  {worldOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {capitalizeFirstLetter(option.label)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-        {isMobile && <WorldSwitcher />}
-      </div>
-    </Card>
+              <Button
+                onClick={onToggleFilters}
+                variant={isFiltersOpen ? "default" : "outline"}
+                size="icon"
+                className="relative shrink-0"
+              >
+                <Filter className="h-4 w-4" />
+                <AnimatePresence>
+                  {hasActiveFilters && !isFiltersOpen && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      exit={{ scale: 0 }}
+                      className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full border-2 border-background"
+                    />
+                  )}
+                </AnimatePresence>
+              </Button>
+            </>
+          )}
+
+          {isMobile && <WorldSwitcher />}
+        </>
+      }
+    ></PageHeader>
   );
 };

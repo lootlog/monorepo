@@ -1,3 +1,4 @@
+import { makeGuildKillActivityCleanup } from "#src/kills/guild-kill-activity";
 import { Effect, FiberSet, Layer, Schedule } from "effect";
 import {
   RabbitMessaging,
@@ -384,6 +385,14 @@ export const ScheduledJobs = Layer.effectDiscard(
       retentionDays: config.timerCleanup.retentionDays,
     });
 
+    yield* forkCronTask(
+      makeGuildKillActivityCleanup(database)().pipe(
+        Effect.catch((error) =>
+          Effect.logError("Guild kill activity cleanup failed", error),
+        ),
+      ),
+      "15 * * * *",
+    );
     yield* forkCronTask(cleanupTimers, "0 3 * * *");
     yield* forkCronTask(cleanupReservations, "0 4 * * *");
   }),

@@ -1,6 +1,7 @@
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
 import type { AbyssSeason } from "@/lib/api/battlelog-types";
 import { Button } from "@lootlog/ui/components/button";
-import { Card } from "@lootlog/ui/components/card";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
 import {
   Table,
@@ -36,20 +37,12 @@ export function AbyssSeasonsTable({
   const isMobile = useIsMobile();
 
   return (
-    <Card className="min-w-0 gap-3 border-border bg-card p-0">
-      <div className="flex items-start gap-3 border-b border-border p-4">
-        <div className="rounded-xl bg-amber-500/10 p-2.5">
-          <Trophy className="size-4 text-amber-500" />
-        </div>
-        <div className="min-w-0 space-y-1">
-          <h3 className="text-base font-semibold leading-tight">
-            {t("battlePanel.abyss.seasonsTitle")}
-          </h3>
-          <p className="text-xs leading-tight text-muted-foreground">
-            {t("battlePanel.abyss.seasonsSubtitle")}
-          </p>
-        </div>
-      </div>
+    <SectionCard className="min-w-0">
+      <SectionCardHeader
+        icon={Trophy}
+        title={t("battlePanel.abyss.seasonsTitle")}
+        description={t("battlePanel.abyss.seasonsSubtitle")}
+      />
 
       {seasons.length === 0 && !isLoading ? (
         <div className="p-4 text-sm text-muted-foreground">
@@ -63,7 +56,7 @@ export function AbyssSeasonsTable({
             return (
               <div
                 key={season.id}
-                className="rounded-md border border-border bg-background/80 p-3"
+                className="border-b border-border/70 p-3 last:border-b-0"
                 data-state={isSelected ? "selected" : undefined}
               >
                 <div className="flex min-w-0 items-start justify-between gap-3">
@@ -82,7 +75,7 @@ export function AbyssSeasonsTable({
                 </div>
 
                 <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                  <div className="rounded-md bg-muted/50 p-2">
+                  <div className="p-2">
                     <div className="text-muted-foreground">
                       {t("battlePanel.abyss.seasonsTable.record")}
                     </div>
@@ -92,7 +85,7 @@ export function AbyssSeasonsTable({
                       {t("battlePanel.statistics.columns.l")}
                     </div>
                   </div>
-                  <div className="rounded-md bg-muted/50 p-2">
+                  <div className="p-2">
                     <div className="text-muted-foreground">
                       {t("battlePanel.abyss.seasonsTable.ratingDelta")}
                     </div>
@@ -100,7 +93,7 @@ export function AbyssSeasonsTable({
                       {formatAbyssSignedNumber(season.totalRatingDelta)}
                     </div>
                   </div>
-                  <div className="rounded-md bg-muted/50 p-2">
+                  <div className="p-2">
                     <div className="text-muted-foreground">
                       {t("battlePanel.abyss.seasonsTable.peakRating")}
                     </div>
@@ -110,7 +103,7 @@ export function AbyssSeasonsTable({
                         : formatAbyssNumber(season.peakRating)}
                     </div>
                   </div>
-                  <div className="rounded-md bg-muted/50 p-2">
+                  <div className="p-2">
                     <div className="text-muted-foreground">
                       {t("battlePanel.abyss.seasonsTable.points")}
                     </div>
@@ -224,6 +217,6 @@ export function AbyssSeasonsTable({
           <ScrollBar orientation="horizontal" />
         </ScrollArea>
       )}
-    </Card>
+    </SectionCard>
   );
 }

@@ -1,3 +1,8 @@
+import { EventEditSkeleton } from "./event-edit-skeleton";
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCard } from "@/components/common/section-card/section-card";
+import { PageHeader } from "@/components/common/page-header";
 import { Link, useParams } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { Controller, useForm, useWatch } from "react-hook-form";
@@ -6,9 +11,7 @@ import { toast } from "sonner";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
 import { AlertCircle, RefreshCcw, Settings, Trophy } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
-import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { Button } from "@lootlog/ui/components/button";
-import { Card } from "@lootlog/ui/components/card";
 import { Label } from "@lootlog/ui/components/label";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
@@ -72,33 +75,12 @@ export const EventEditScoringPage = () => {
     },
   });
   if (isLoading) {
-    return (
-      <div className="flex flex-col gap-3 px-3 py-3">
-        <Card className="gap-4 border-border bg-card p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <Skeleton className="h-9 w-9 rounded-xl" />
-              <div className="flex flex-col gap-2">
-                <Skeleton className="h-3 w-20" />
-                <Skeleton className="h-4 w-32" />
-              </div>
-            </div>
-            <Skeleton className="h-8 w-28 rounded-md" />
-          </div>
-        </Card>
-        <Card className="gap-4 border-border bg-card p-3">
-          <div className="space-y-2">
-            <Skeleton className="h-3 w-24" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-        </Card>
-      </div>
-    );
+    return <EventEditSkeleton />;
   }
 
   if (error || !event) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-4">
+      <div className="flex flex-col items-center justify-center h-64 gap-4 max-h-full overflow-y-auto [justify-content:safe_center]">
         <AlertCircle className="w-12 h-12 text-destructive" />
         <p className="text-muted-foreground">{t("events.error")}</p>
         <Link to="/$guildId/events/$eventId" params={routeParams}>
@@ -212,19 +194,11 @@ const EventEditScoringForm = ({
 
   return (
     <div className="flex flex-col gap-3 px-3 py-3">
-      <Card className="gap-4 border-border bg-card p-4">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="rounded-xl bg-emerald-500/10 p-2">
-              <Trophy className="size-4 text-emerald-500" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                {t("events.editSections.scoring")}
-              </p>
-              <h2 className="truncate text-base font-semibold">{event.name}</h2>
-            </div>
-          </div>
+      <PageHeader
+        icon={Trophy}
+        title={event.name}
+        description={t("events.editSections.scoring")}
+        actions={
           <Button
             type="button"
             variant="outline"
@@ -242,42 +216,48 @@ const EventEditScoringForm = ({
               ? t("events.scoring.recalculating")
               : t("events.scoring.recalculateButton")}
           </Button>
-        </div>
-      </Card>
+        }
+      />
 
       <form className="space-y-3 pb-24" onSubmit={form.handleSubmit(onSubmit)}>
-        <Card className="gap-4 border-border bg-card p-3">
-          <div className="space-y-2">
-            <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {t("events.scoring.mode")}
-            </Label>
-            <Controller
-              control={form.control}
-              name="scoringMode"
-              render={({ field }) => (
-                <ScoringModeSelector
-                  value={normalizeEventScoringMode(field.value)}
-                  onChange={(mode) => field.onChange(mode)}
-                />
-              )}
-            />
-          </div>
-        </Card>
-
-        {scoringMode === "ADVANCED" && (
-          <Card className="gap-4 border-border bg-card p-3">
-            <div className="space-y-3">
-              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-                <Settings className="size-3" />
-                {t("events.scoring.title")}
+        <SectionCard className=" border-border bg-card ">
+          <SectionCardHeader title={t("events.scoring.mode")} />
+          <SectionCardContent className="flex min-h-0 flex-col gap-3">
+            <div className="space-y-2">
+              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {t("events.scoring.mode")}
               </Label>
-              <ScoringRulesEditor
+              <Controller
                 control={form.control}
-                register={form.register}
-                setValue={form.setValue}
+                name="scoringMode"
+                render={({ field }) => (
+                  <ScoringModeSelector
+                    value={normalizeEventScoringMode(field.value)}
+                    onChange={(mode) => field.onChange(mode)}
+                  />
+                )}
               />
             </div>
-          </Card>
+          </SectionCardContent>
+        </SectionCard>
+
+        {scoringMode === "ADVANCED" && (
+          <SectionCard className=" border-border bg-card ">
+            <SectionCardHeader title={t("events.scoring.title")} />
+            <SectionCardContent className="flex min-h-0 flex-col gap-3">
+              <div className="space-y-3">
+                <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                  <Settings className="size-3" />
+                  {t("events.scoring.title")}
+                </Label>
+                <ScoringRulesEditor
+                  control={form.control}
+                  register={form.register}
+                  setValue={form.setValue}
+                />
+              </div>
+            </SectionCardContent>
+          </SectionCard>
         )}
 
         <UnsavedChangesBar

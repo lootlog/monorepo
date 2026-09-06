@@ -36,7 +36,7 @@ export function RecentOpponentBattlesList({
     <ScrollArea className={cn("min-h-0 flex-1", className)}>
       <div className="divide-y divide-border/70">
         {!context ? (
-          <div className="m-3 rounded-md border border-dashed border-border bg-background p-3 text-sm text-muted-foreground">
+          <div className="p-3 text-sm text-muted-foreground">
             {t("battlePanel.single.recentOpponent.unsupportedDescription")}
           </div>
         ) : isLoading ? (
@@ -58,7 +58,7 @@ export function RecentOpponentBattlesList({
             {t("battlePanel.single.recentOpponent.error")}
           </div>
         ) : battles.length === 0 ? (
-          <div className="m-3 rounded-md border border-dashed border-border bg-background p-3 text-sm text-muted-foreground">
+          <div className="p-3 text-sm text-muted-foreground">
             {t("battlePanel.single.recentOpponent.empty")}
           </div>
         ) : (

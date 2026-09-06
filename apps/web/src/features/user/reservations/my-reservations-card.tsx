@@ -1,10 +1,13 @@
+import { ChevronLink } from "@lootlog/ui/components/chevron-link";
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { CalendarDays, ChevronRight } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useListMyReservations } from "@lootlog/client/main";
 import type { MyReservationsResponseDtoItemsItem } from "@lootlog/client/main";
-import { Card, CardContent } from "@lootlog/ui/components/card";
+import { SectionCard } from "@/components/common/section-card/section-card";
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { ROUTES } from "@/config/routes";
 import { EditMyReservationDialog } from "./edit-my-reservation-dialog";
 import { MyReservationListItem } from "./my-reservation-list-item";
@@ -19,24 +22,18 @@ export function MyReservationsCard() {
   const reservations = query.data?.items.slice(0, 5) ?? [];
 
   return (
-    <Card className="gap-0 py-0">
-      <header className="flex min-h-12 items-center justify-between gap-3 border-b border-border/70 px-3 py-2">
-        <h2
-          id="dashboard-my-reservations-title"
-          className="flex min-w-0 items-center gap-2 text-sm font-semibold"
-        >
-          <CalendarDays className="size-4 text-primary" />
-          <span className="truncate">{t("reservations.my.title")}</span>
-        </h2>
-        <Link
-          to={ROUTES.user.reservations}
-          className="inline-flex h-8 shrink-0 items-center gap-1 rounded-sm text-xs font-semibold text-muted-foreground outline-none transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring/50"
-        >
-          {t("reservations.my.showAll")}
-          <ChevronRight className="size-3.5" />
-        </Link>
-      </header>
-      <CardContent className="p-0">
+    <SectionCard className="gap-0 py-0">
+      <SectionCardHeader
+        id="dashboard-my-reservations-title"
+        icon={CalendarDays}
+        title={t("reservations.my.title")}
+        actions={
+          <ChevronLink render={<Link to={ROUTES.user.reservations} />}>
+            {t("reservations.my.showAll")}
+          </ChevronLink>
+        }
+      />
+      <SectionCardContent className="p-0">
         {reservations.length ? (
           <ul>
             {reservations.map((reservation) => (
@@ -62,7 +59,7 @@ export function MyReservationsCard() {
               : t("reservations.my.emptyUpcoming")}
           </p>
         )}
-      </CardContent>
+      </SectionCardContent>
       <EditMyReservationDialog
         reservation={editingReservation}
         open={editingReservation !== null}
@@ -70,6 +67,6 @@ export function MyReservationsCard() {
           if (!open) setEditingReservation(null);
         }}
       />
-    </Card>
+    </SectionCard>
   );
 }

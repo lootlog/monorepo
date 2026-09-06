@@ -7,7 +7,7 @@ import { AlertCircle, Crosshair } from "lucide-react";
 import { toast } from "sonner";
 import { Permission } from "@lootlog/schema/permissions";
 import { Button } from "@lootlog/ui/components/button";
-import { Card } from "@lootlog/ui/components/card";
+import { SectionCard as Card } from "@/components/common/section-card/section-card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
@@ -197,7 +197,7 @@ export const EventCoordinationPage = () => {
 
   if (error || !coordination) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-4">
+      <div className="flex flex-col items-center justify-center h-64 gap-4 max-h-full overflow-y-auto [justify-content:safe_center]">
         <AlertCircle className="w-12 h-12 text-destructive" />
         <p className="text-muted-foreground">
           {t("events.coordination.error")}

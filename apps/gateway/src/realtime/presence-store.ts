@@ -1,3 +1,4 @@
+import type { OnlineHistory } from "./online-history.js";
 import {
   BasicPresence,
   PRESENCE_EXPIRY_MS,
@@ -77,6 +78,7 @@ export class PresenceStore {
     >,
     private readonly now: () => number = Date.now,
     private readonly coverage?: CoveragePublisher,
+    private readonly onlineHistory?: Pick<OnlineHistory, "observe">,
   ) {}
 
   readonly sweepSchedule = SWEEP_INTERVAL_MS;
@@ -131,6 +133,10 @@ export class PresenceStore {
           presence,
         );
       }
+      yield* (
+        self.onlineHistory?.observe(socket.data, presence.lastSeen) ??
+          Effect.void
+      );
       return presence;
     }).pipe(
       Effect.mapError((cause) => asPresenceFailure("presence.publish", cause)),
@@ -158,6 +164,10 @@ export class PresenceStore {
       yield* fromPromise("presence.refresh-registry", () =>
         self.hub.refreshRegistry(socket.data),
       );
+      yield* (
+        self.onlineHistory?.observe(socket.data, presence.lastSeen) ??
+          Effect.void
+      );
       return presence.lastSeen;
     }).pipe(
       Effect.mapError((cause) =>
@@ -169,6 +179,9 @@ export class PresenceStore {
   disconnect(session: SessionData): Effect.Effect<void, unknown> {
     const self = this;
     return Effect.gen(function* () {
+      yield* (
+        self.onlineHistory?.observe(session, self.now(), true) ?? Effect.void
+      );
       const presence = session.presence;
       if (!presence) return;
       for (const organizationId of presence.organizationIds) {

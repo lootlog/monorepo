@@ -1,3 +1,6 @@
+import { UserFeedItem } from "../feed.js";
+import { NpcTypeSchema } from "@lootlog/schema/npc-type";
+import { DateTimeWithOffsetString } from "@lootlog/schema/http-scalars";
 import {
   discordPermissionFields,
   DiscordGuildSyncStatus,
@@ -148,7 +151,20 @@ export const GuildLootEventNpc = Schema.Struct({
   ),
 });
 
+export const GuildKillsAcceptedV1 = Schema.Struct({
+  sourceNpcs: Schema.optional(
+    Schema.Array(Schema.Struct({ level: NonNegativeInt, type: NpcTypeSchema })),
+  ),
+  feedEntry: Schema.optional(UserFeedItem),
+  version: Schema.Literal(1),
+  guildId: NonEmptyString,
+  world: NonEmptyString,
+  npc: Schema.Struct({ type: NpcTypeSchema, lvl: NonNegativeInt }),
+});
+export type GuildKillsAcceptedV1 = typeof GuildKillsAcceptedV1.Type;
+
 export const GuildLootCreatedEventV2 = Schema.Struct({
+  feedEntry: Schema.optional(UserFeedItem),
   version: Schema.Literal(2),
   guildId: NonEmptyString,
   lootId: NonNegativeInt,
@@ -253,7 +269,44 @@ export const DiscordGuildChannelDeleted = Schema.Struct({
   syncState: DiscordGuildSyncState,
 });
 
+/** Cumulative confirmed game presence. A gap starts a new segment; retries never extend it. */
+export const UserOnlineCheckpointV1 = Schema.Struct({
+  version: Schema.Literal(1),
+  type: Schema.Literal("checkpoint"),
+  userId: NonEmptyString,
+  sessionId: NonEmptyString,
+  segmentId: NonEmptyString,
+  startedAt: DateTimeWithOffsetString,
+  endedAt: DateTimeWithOffsetString,
+  observedAt: DateTimeWithOffsetString,
+}).check(
+  Schema.makeFilter(
+    (event) =>
+      Date.parse(event.startedAt) <= Date.parse(event.endedAt) &&
+      Date.parse(event.endedAt) <= Date.parse(event.observedAt),
+    { expected: "ordered confirmed interval timestamps" },
+  ),
+);
+export type UserOnlineCheckpointV1 = typeof UserOnlineCheckpointV1.Type;
+
+/** Published only after the durable publisher has drained its pending checkpoints. */
+export const UserOnlineHealthV1 = Schema.Struct({
+  version: Schema.Literal(1),
+  type: Schema.Literal("collector"),
+  observedAt: DateTimeWithOffsetString,
+  status: Schema.Literals(["healthy", "degraded"]),
+});
+export type UserOnlineHealthV1 = typeof UserOnlineHealthV1.Type;
+
+export const UserOnlineEventV1 = Schema.Union([
+  UserOnlineCheckpointV1,
+  UserOnlineHealthV1,
+]);
+export type UserOnlineEventV1 = typeof UserOnlineEventV1.Type;
+
 export const canonicalRabbitEventSchemas = {
+  [RabbitRoutingKey.GUILDS_KILLS_ACCEPTED_V1]: GuildKillsAcceptedV1,
+  [RabbitRoutingKey.USERS_ONLINE_CHECKPOINT_V1]: UserOnlineEventV1,
   [RabbitRoutingKey.ACTIVITY_LOG_CREATE]: ActivityLogCreated,
   [RabbitRoutingKey.DISCORD_GUILD_CHANNEL_DELETED]: DiscordGuildChannelDeleted,
   [RabbitRoutingKey.DISCORD_GUILD_CHANNEL_UPSERTED]:

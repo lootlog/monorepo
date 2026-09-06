@@ -817,6 +817,144 @@ const assertTicketOperation = (operation: JsonValue | undefined): void => {
   }
 };
 
+// Intentional private additions verified against real persistence and authorization tests:
+// activity/src/online/online-repository.integration.test.ts;
+// api/test/kill-analytics.integration.test.ts, user-feed.integration.test.ts and records.operations.test.ts.
+const PERSONAL_ANALYTICS_ADDITIONS: Record<
+  string,
+  Record<string, JsonValue>
+> = {
+  activity: {
+    "GET /users/@me/activity/online": {
+      operationId: "UsersActivityController_getOnline",
+      parameters: ["from", "to"].map((name) => ({
+        name,
+        in: "query",
+        required: true,
+        schema: { type: "string" },
+      })),
+      security: [{ bearer: [] }],
+      responses: {
+        "200": {
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/UserOnlineResponseDto" },
+            },
+          },
+        },
+        "401": {
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  message: { type: "string" },
+                  statusCode: { type: "number", enum: [401] },
+                },
+                required: ["message", "statusCode"],
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+  api: {
+    "GET /users/@me/feed": {
+      operationId: "UsersController_getUserFeed",
+      parameters: [],
+      security: [{ bearer: [] }],
+      responses: {
+        "200": {
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/UserFeedResponseDto_Output",
+              },
+            },
+          },
+        },
+      },
+    },
+    ...Object.fromEntries(
+      (
+        [
+          [
+            "analytics",
+            "KillsController_getUserKillAnalytics",
+            "UserKillAnalyticsResponseDto_Output",
+          ],
+          [
+            "activity",
+            "KillsController_getUserKillActivity",
+            "UserKillActivityResponseDto_Output",
+          ],
+        ] as const
+      ).map(([path, operationId, response]): [string, JsonValue] => [
+        `GET /users/@me/stats/kills/${path}`,
+        {
+          operationId,
+          parameters: [
+            ...(path === "analytics"
+              ? [
+                  {
+                    name: "days",
+                    in: "query",
+                    required: false,
+                    schema: { type: "string", enum: ["7", "30", "90", "365"] },
+                  },
+                ]
+              : []),
+            {
+              name: "world",
+              in: "query",
+              required: false,
+              schema: { type: "string", minLength: 1, maxLength: 100 },
+            },
+          ],
+          security: [{ bearer: [] }],
+          responses: {
+            "200": {
+              content: {
+                "application/json": {
+                  schema: { $ref: `#/components/schemas/${response}` },
+                },
+              },
+            },
+          },
+        },
+      ]),
+    ),
+  },
+};
+
+export const assertVerifiedPersonalAddition = (
+  service: string,
+  operationKey: string,
+  operation: JsonValue | undefined,
+): void => {
+  const expected = PERSONAL_ANALYTICS_ADDITIONS[service]?.[operationKey];
+  if (
+    !expected ||
+    !operation ||
+    typeof operation !== "object" ||
+    Array.isArray(operation)
+  ) {
+    throw new Error(
+      `Unverified personal API addition: ${service} ${operationKey}`,
+    );
+  }
+  const { tags: _tags, summary: _summary, ...contract } = operation;
+  if (
+    JSON.stringify(normalizeOpenApiRepresentation(contract)) !==
+    JSON.stringify(normalizeOpenApiRepresentation(expected))
+  ) {
+    throw new Error(
+      `Verified personal API contract changed: ${service} ${operationKey}`,
+    );
+  }
+};
+
 if (import.meta.main) {
   const changedOperations: string[] = [];
   for (const service of services) {
@@ -825,14 +963,21 @@ if (import.meta.main) {
 
     const additions = [...current.keys()].filter((key) => !baseline.has(key));
     const removals = [...baseline.keys()].filter((key) => !current.has(key));
-    const expectedAdditions = service.current === "auth" ? 1 : 0;
+    const expectedAdditions =
+      service.current === "auth"
+        ? [REALTIME_TICKET_OPERATION]
+        : Object.keys(PERSONAL_ANALYTICS_ADDITIONS[service.current] ?? {});
     if (
-      additions.length !== expectedAdditions ||
-      (expectedAdditions === 1 && additions[0] !== REALTIME_TICKET_OPERATION)
+      additions.length !== expectedAdditions.length ||
+      additions.some((key) => !expectedAdditions.includes(key))
     ) {
       throw new Error(
         `${service.current} has unexpected OpenAPI additions: ${additions.join(", ") || "none"}`,
       );
+    }
+    for (const key of additions) {
+      if (service.current !== "auth")
+        assertVerifiedPersonalAddition(service.current, key, current.get(key));
     }
     if (removals.length > 0) {
       throw new Error(
@@ -873,6 +1018,6 @@ if (import.meta.main) {
   }
 
   process.stdout.write(
-    "OpenAPI parity passed: 243 baseline operations plus the allowlisted realtime ticket endpoint\n",
+    "OpenAPI parity passed: 243 baseline operations plus verified realtime ticket and private analytics additions\n",
   );
 }

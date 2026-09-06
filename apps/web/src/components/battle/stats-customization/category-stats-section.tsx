@@ -55,7 +55,7 @@ export const CategoryStatsSection = ({
         <Reorder.Item
           key={statKey}
           value={statKey}
-          className="flex items-center gap-2 bg-background border rounded px-2 py-1.5 text-sm"
+          className="flex items-center gap-2 border-b border-border/70 px-2 py-1.5 text-sm last:border-b-0"
           onDragStart={() => {
             setIsDragging(true);
           }}

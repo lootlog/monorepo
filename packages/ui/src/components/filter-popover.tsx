@@ -112,6 +112,7 @@ export function FilterPopover<T extends string = string>({
           <Button
             variant="outline"
             role="combobox"
+            aria-label={placeholder}
             aria-expanded={open}
             disabled={disabled}
             className={cn(

@@ -1,3 +1,4 @@
+import { UserFeedItem } from "../feed.js";
 import { NonEmptyString, NonNegativeInt } from "@lootlog/schema/primitives";
 import {
   AirTagObservationBatchSchema,
@@ -17,6 +18,8 @@ import {
 } from "../rabbit/events.js";
 
 export const REALTIME_PROTOCOL_VERSION = 1;
+// Offered alongside v1 by clients that understand feed events; never selected as the wire protocol.
+export const REALTIME_FEED_CAPABILITY = "lootlog.feed.v1";
 export const REALTIME_SUBPROTOCOL = "lootlog.realtime.v1";
 export const REALTIME_JSON_SUBPROTOCOL = "lootlog.realtime.json.v1";
 export const PRESENCE_HEARTBEAT_INTERVAL_MS = 25_000;
@@ -307,6 +310,8 @@ export const ServerEvent = Schema.Union([
   serverEvent("chat.updated", OrganizationEvent),
   serverEvent("chat.deleted", OrganizationEvent),
   serverEvent("chat.cleared", OrganizationEvent),
+  serverEvent("feed.entry", UserFeedItem),
+  serverEvent("kills.changed", Schema.Struct({ guildId: NonEmptyString })),
   serverEvent("loot.created", GuildLootCreatedEventV2),
   serverEvent("loot.share-updated", GuildLootShareUpdatedEventV2),
   serverEvent("timer.created", OrganizationEvent),

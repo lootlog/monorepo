@@ -9,6 +9,7 @@ import { Permission } from "@lootlog/schema/permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   guildKillSummaryBucketTable,
+  guildKillActivityTable,
   guildKillSummaryTable,
   guildTable,
   memberTable,
@@ -64,6 +65,9 @@ export const makeKillCreation = (
   database: typeof ApiDatabase.Service,
   cache: KillCreationCache,
   logger: ApplicationLogger,
+  publishActivity: (
+    input: KillInput & { readonly guildId: string },
+  ) => Effect.Effect<void> = () => Effect.void,
 ) => {
   const protect = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
     effect.pipe(
@@ -217,61 +221,85 @@ export const makeKillCreation = (
     const { userId: _userId, ...values } = input;
     return protect(
       "kills.create.guild",
-      Effect.all(
-        [
-          database
-            .insert(guildKillSummaryTable)
-            .values({
-              id: randomUUID(),
-              ...values,
-              uniqueKills: 1,
-              updatedAt: new Date(),
-            })
-            .onConflictDoUpdate({
-              target: [
-                guildKillSummaryTable.guildId,
-                guildKillSummaryTable.world,
-                guildKillSummaryTable.npcId,
-              ],
-              set: {
-                uniqueKills: sql`${guildKillSummaryTable.uniqueKills} + 1`,
-                lastKilledAt: input.lastKilledAt,
-                npcName: input.npcName,
-                npcLvl: input.npcLvl,
-                npcProf: input.npcProf,
-                npcIcon: input.npcIcon,
-                updatedAt: new Date(),
-              },
-            }),
-          database
-            .insert(guildKillSummaryBucketTable)
-            .values({
-              id: randomUUID(),
-              ...values,
-              periodStart,
-              uniqueKills: 1,
-              updatedAt: new Date(),
-            })
-            .onConflictDoUpdate({
-              target: [
-                guildKillSummaryBucketTable.guildId,
-                guildKillSummaryBucketTable.world,
-                guildKillSummaryBucketTable.npcId,
-                guildKillSummaryBucketTable.periodStart,
-              ],
-              set: {
-                uniqueKills: sql`${guildKillSummaryBucketTable.uniqueKills} + 1`,
-                lastKilledAt: input.lastKilledAt,
-                npcName: input.npcName,
-                npcLvl: input.npcLvl,
-                npcProf: input.npcProf,
-                npcIcon: input.npcIcon,
-                updatedAt: new Date(),
-              },
-            }),
-        ],
-        { discard: true },
-      ),
+      database
+        .transaction((transaction) =>
+          Effect.all(
+            [
+              transaction
+                .insert(guildKillSummaryTable)
+                .values({
+                  id: randomUUID(),
+                  ...values,
+                  uniqueKills: 1,
+                  updatedAt: new Date(),
+                })
+                .onConflictDoUpdate({
+                  target: [
+                    guildKillSummaryTable.guildId,
+                    guildKillSummaryTable.world,
+                    guildKillSummaryTable.npcId,
+                  ],
+                  set: {
+                    uniqueKills: sql`${guildKillSummaryTable.uniqueKills} + 1`,
+                    lastKilledAt: input.lastKilledAt,
+                    npcName: input.npcName,
+                    npcLvl: input.npcLvl,
+                    npcProf: input.npcProf,
+                    npcIcon: input.npcIcon,
+                    updatedAt: new Date(),
+                  },
+                }),
+              transaction
+                .insert(guildKillSummaryBucketTable)
+                .values({
+                  id: randomUUID(),
+                  ...values,
+                  periodStart,
+                  uniqueKills: 1,
+                  updatedAt: new Date(),
+                })
+                .onConflictDoUpdate({
+                  target: [
+                    guildKillSummaryBucketTable.guildId,
+                    guildKillSummaryBucketTable.world,
+                    guildKillSummaryBucketTable.npcId,
+                    guildKillSummaryBucketTable.periodStart,
+                  ],
+                  set: {
+                    uniqueKills: sql`${guildKillSummaryBucketTable.uniqueKills} + 1`,
+                    lastKilledAt: input.lastKilledAt,
+                    npcName: input.npcName,
+                    npcLvl: input.npcLvl,
+                    npcProf: input.npcProf,
+                    npcIcon: input.npcIcon,
+                    updatedAt: new Date(),
+                  },
+                }),
+              ...(new Set<NpcType>([
+                NpcType.ELITE2,
+                NpcType.HERO,
+                NpcType.COLOSSUS,
+                NpcType.TITAN,
+              ]).has(input.npcType)
+                ? [
+                    transaction.insert(guildKillActivityTable).values({
+                      id: randomUUID(),
+                      guildId: input.guildId,
+                      world: input.world,
+                      npcId: input.npcId,
+                      npcName: input.npcName,
+                      npcType: input.npcType,
+                      npcLvl: input.npcLvl,
+                      npcIcon: input.npcIcon,
+                      occurredAt: input.lastKilledAt,
+                    }),
+                  ]
+                : []),
+            ],
+            { discard: true },
+          ),
+        )
+        .pipe(Effect.tap(() => publishActivity(input).pipe(Effect.forkDetach))),
     );
   };
 

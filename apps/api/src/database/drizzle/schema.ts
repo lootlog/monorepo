@@ -2614,3 +2614,31 @@ export const eventMapToMemberTable = pgTable(
       .onUpdate("cascade"),
   ],
 );
+
+/** Short-lived accepted Organization kills and their durable publication intent. */
+export const guildKillActivityTable = pgTable(
+  "GuildKillActivity",
+  {
+    id: text("id").primaryKey(),
+    guildId: text("guildId")
+      .notNull()
+      .references(() => guildTable.id, { onDelete: "cascade" }),
+    world: text("world").notNull(),
+    npcId: integer("npcId").notNull(),
+    npcName: text("npcName").notNull(),
+    npcType: npcTypeEnum("npcType").notNull(),
+    npcLvl: integer("npcLvl").notNull(),
+    npcIcon: text("npcIcon"),
+    occurredAt: timestamp("occurredAt", {
+      mode: "date",
+      precision: 3,
+    }).notNull(),
+  },
+  (table) => [
+    index("GuildKillActivity_guildId_occurredAt_idx").on(
+      table.guildId,
+      table.occurredAt,
+    ),
+    index("GuildKillActivity_occurredAt_idx").on(table.occurredAt),
+  ],
+);
