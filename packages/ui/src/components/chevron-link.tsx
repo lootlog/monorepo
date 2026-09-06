@@ -13,7 +13,7 @@ export function ChevronLink({
       {...props}
       data-slot="chevron-link"
       className={cn(
-        "group/chevron-link inline-flex min-h-8 shrink-0 items-center gap-1",
+        "group/chevron-link inline-flex min-h-8 shrink-0 items-center gap-1 text-sm",
         className,
       )}
     >

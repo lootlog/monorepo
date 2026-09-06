@@ -17,7 +17,10 @@ const ScrollArea = React.forwardRef<
   return (
     <ScrollAreaPrimitive.Root
       data-slot="scroll-area"
-      className={cn("relative", className)}
+      className={cn(
+        "relative [&:hover>[data-slot=scroll-area-scrollbar]]:opacity-100 [&:focus-within>[data-slot=scroll-area-scrollbar]]:opacity-100",
+        className,
+      )}
       {...props}
     >
       <ScrollAreaPrimitive.Viewport
@@ -47,7 +50,7 @@ function ScrollBar({
       data-slot="scroll-area-scrollbar"
       orientation={orientation}
       className={cn(
-        "flex touch-none p-px transition-colors select-none",
+        "flex touch-none p-px opacity-0 transition-opacity select-none data-[dragging]:opacity-100 motion-reduce:transition-none",
         orientation === "vertical" &&
           "h-full w-2.5 border-l border-l-transparent border-r-transparent border-r-2",
         orientation === "horizontal" &&
