@@ -1,5 +1,5 @@
 import { PageHeader } from "@/components/common/page-header";
-import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { SectionCard } from "@/components/common/section-card/section-card";

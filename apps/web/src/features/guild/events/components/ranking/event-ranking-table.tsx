@@ -1,4 +1,4 @@
-import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";

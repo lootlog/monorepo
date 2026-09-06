@@ -7,7 +7,9 @@ import { TranslatedItemStat } from "./translated-item-stat";
 
 export type ItemTileProps = {
   color?: string;
-  item: Item;
+  item: Pick<Item, "name" | "icon" | "stat" | "type"> & {
+    rarity?: ItemRarity | null;
+  };
   shareIndex?: number;
   shareNickname?: string;
 };

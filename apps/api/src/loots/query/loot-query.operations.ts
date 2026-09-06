@@ -1,14 +1,16 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { ProfessionEnum as Profession } from "@lootlog/schema/loot";
 import type { Permission } from "@lootlog/schema/permissions";
 import { Effect, Schema } from "effect";
 import type { guildTable, roleTable } from "#src/database/drizzle/schema";
 import type { LootsQuery as FetchLootsParamsDto } from "#src/contracts/loots/schemas";
 import type { LootItemDto } from "#src/loots/query/loot-item";
-import type { LootNpcDto } from "#src/loots/query/loot-npc";
 import type { LootQueryResult } from "#src/loots/query/loot-query-result";
-import { LootShareResponse } from "#src/loots/loot-response.schema";
-import { getProfByShortname } from "#src/shared/margonem/profession";
+import { LootShareResponse } from "@lootlog/protocol/loot-summary";
+import {
+  mapItem,
+  mapPlayer,
+  mapNpc,
+} from "#src/loots/query/loot-snapshot-mappers";
 import { DEFAULT_PAGE_LIMIT } from "#src/loots/config/pagination";
 import type { LootQueryPersistence } from "#src/loots/query/loot-query.persistence";
 
@@ -17,9 +19,6 @@ type Role = typeof roleTable.$inferSelect;
 type LootQueryRecord = Effect.Success<
   ReturnType<LootQueryPersistence["findMany"]>
 >[number];
-type LootItemWithSnapshot = LootQueryRecord["lootItems"][number];
-type LootPlayerWithSnapshot = LootQueryRecord["lootPlayers"][number];
-type LootNpcWithSnapshot = LootQueryRecord["lootNpcs"][number];
 
 export class LootQueryError extends TaggedErrorClass<LootQueryError>()(
   "LootQueryError",
@@ -55,72 +54,6 @@ export interface LootQueryOperations {
   ) => QueryEffect<LootItemDto | null>;
 }
 
-const parseNumber = (value: unknown): number | null => {
-  if (value === null || value === undefined) return null;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
-};
-
-const parseStatValue = (statRaw: string, key: string): string | null => {
-  const prefix = `${key}=`;
-  const segment = statRaw.split(";").find((entry) => entry.startsWith(prefix));
-  return segment?.slice(prefix.length) ?? null;
-};
-
-const parseRequiredProf = (required?: string | null): Profession[] =>
-  required
-    ? required
-        .split("")
-        .map((short) => getProfByShortname(short))
-        .filter(Boolean)
-    : Object.values(Profession);
-
-const mapItem = (lootItem: LootItemWithSnapshot): LootItemDto => {
-  const statRaw = lootItem.itemSnapshot.statRaw;
-  const lvl =
-    lootItem.itemSnapshot.lvl ??
-    parseNumber(parseStatValue(statRaw, "lvl")) ??
-    0;
-  return {
-    id: lootItem.itemSnapshot.itemId,
-    hid: lootItem.hid,
-    name: lootItem.itemSnapshot.name,
-    icon: lootItem.itemSnapshot.icon,
-    stat: statRaw,
-    type: lootItem.itemSnapshot.itemType,
-    rarity: lootItem.itemSnapshot.rarity,
-    lvl,
-    prof: parseRequiredProf(parseStatValue(statRaw, "reqp")),
-  };
-};
-
-const mapPlayer = (lootPlayer: LootPlayerWithSnapshot) => {
-  const snapshot = lootPlayer.playerSnapshot;
-  const accountId = parseNumber(snapshot.accountId);
-  const characterId = parseNumber(snapshot.characterId);
-  return {
-    id: `${characterId ?? snapshot.characterId}${accountId ?? snapshot.accountId}`,
-    name: snapshot.name,
-    lvl: lootPlayer.lvl ?? null,
-    prof: snapshot.prof,
-    icon: snapshot.icon,
-    characterId,
-    accountId,
-    hpp: lootPlayer.hpp,
-  };
-};
-
-const mapNpc = (lootNpc: LootNpcWithSnapshot): LootNpcDto => ({
-  id: lootNpc.npcSnapshot.npcId,
-  name: lootNpc.npcSnapshot.name,
-  wt: lootNpc.npcSnapshot.wt ?? null,
-  lvl: lootNpc.npcSnapshot.lvl ?? null,
-  prof: lootNpc.npcSnapshot.prof ?? null,
-  icon: lootNpc.npcSnapshot.icon,
-  type: lootNpc.npcSnapshot.type,
-  margonemType: lootNpc.npcSnapshot.margonemType ?? null,
-});
-
 const mapLoot = (guildId: string, loot: LootQueryRecord): LootQueryResult => ({
   id: loot.id,
   uniqueId: loot.uniqueId,
@@ -134,11 +67,9 @@ const mapLoot = (guildId: string, loot: LootQueryRecord): LootQueryResult => ({
   ),
   createdAt: loot.createdAt,
   updatedAt: loot.updatedAt,
-  items: (loot.lootItems as unknown as LootItemWithSnapshot[]).map(mapItem),
-  players: (loot.lootPlayers as unknown as LootPlayerWithSnapshot[]).map(
-    mapPlayer,
-  ),
-  npcs: (loot.lootNpcs as unknown as LootNpcWithSnapshot[]).map(mapNpc),
+  items: loot.lootItems.map(mapItem),
+  players: loot.lootPlayers.map(mapPlayer),
+  npcs: loot.lootNpcs.map(mapNpc),
   submissions: loot.submissions.map((submission) => ({
     guildId,
     lootId: loot.id,

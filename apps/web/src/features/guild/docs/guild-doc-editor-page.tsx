@@ -1,5 +1,5 @@
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { PageHeader } from "@/components/common/page-header";
 import { useEffect, useState, type FormEvent } from "react";

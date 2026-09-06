@@ -7,7 +7,7 @@ import { useKillsControllerGetUserKillActivity } from "@lootlog/client/main";
 import { useUsersActivityControllerGetOnline } from "@lootlog/client/activity";
 import { AnimatedToggleGroup } from "@/components/ui/animated-toggle-group";
 import { SectionCard } from "@/components/common/section-card/section-card";
-import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { ActivityHeatmap } from "@/components/common/activity-heatmap/activity-heatmap";
 import {
@@ -40,6 +40,7 @@ export function DashboardActivity() {
         title={t("statistics.activity")}
         actions={
           <AnimatedToggleGroup
+            compact
             label={t("statistics.activity")}
             value={mode}
             onValueChange={setMode}

@@ -1,4 +1,4 @@
-import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import type { Battle } from "@/lib/api/battlelog-types";
 import { ROUTES } from "@/config/routes";
 import { Button } from "@lootlog/ui/components/button";

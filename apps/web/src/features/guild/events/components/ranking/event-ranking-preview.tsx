@@ -1,5 +1,5 @@
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
-import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { Trophy } from "lucide-react";

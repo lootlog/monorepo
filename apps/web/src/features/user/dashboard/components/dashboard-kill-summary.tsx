@@ -1,4 +1,5 @@
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
+import { Separator } from "@lootlog/ui/components/separator";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Swords } from "lucide-react";
@@ -6,7 +7,7 @@ import { WorldSwitcher } from "@/components/common/world-switcher";
 import { useTranslation } from "react-i18next";
 import { useKillsControllerGetUserKillStats } from "@lootlog/client/main";
 import { SectionCard } from "@/components/common/section-card/section-card";
-import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { StatisticsQueryState } from "@/features/user/statistics/statistics-query-state";
 
@@ -33,7 +34,7 @@ export function DashboardKillSummary() {
     <SectionCard className="@container/kill-summary">
       <SectionCardHeader
         icon={Swords}
-        title={t("statistics.kills")}
+        title={t("statistics.killSummaryTitle")}
         description={t("statistics.allTime")}
         actions={
           <>
@@ -55,7 +56,7 @@ export function DashboardKillSummary() {
         }
       />
       <SectionCardContent>
-        <div className="mb-3 flex items-center">
+        <div className="flex items-center">
           <WorldSwitcher
             width="w-[180px]"
             value={world}
@@ -64,6 +65,7 @@ export function DashboardKillSummary() {
             showAllOption
           />
         </div>
+        <Separator className="my-3" />
         <StatisticsQueryState query={query}>
           <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5">
             {counts.map(({ key, value }) => (

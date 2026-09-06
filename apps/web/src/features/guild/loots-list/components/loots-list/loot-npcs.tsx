@@ -1,3 +1,4 @@
+import { NpcTile } from "@/components/tiles/npc-tile";
 import type { LootNpc } from "@/lib/loots/loot-types";
 import { cn } from "cn";
 import type { FC } from "react";
@@ -6,6 +7,7 @@ import { useTranslation } from "react-i18next";
 export type LootNpcsProps = {
   npcs: LootNpc[];
   className?: string;
+  showIcon?: boolean;
 };
 
 // NPC type priority for sorting (higher = more important)
@@ -50,7 +52,11 @@ const isSpecialNpcType = (
 ): type is (typeof SPECIAL_NPC_TYPES)[number] =>
   SPECIAL_NPC_TYPES.includes(type as (typeof SPECIAL_NPC_TYPES)[number]);
 
-export const LootNpcs: FC<LootNpcsProps> = ({ npcs, className }) => {
+export const LootNpcs: FC<LootNpcsProps> = ({
+  npcs,
+  className,
+  showIcon = false,
+}) => {
   const { t } = useTranslation();
   const sortedNpcs = [...npcs].sort(
     (a, b) =>
@@ -70,6 +76,15 @@ export const LootNpcs: FC<LootNpcsProps> = ({ npcs, className }) => {
         className,
       )}
     >
+      {showIcon && firstNpc?.icon && (
+        <NpcTile
+          npc={{
+            name: firstNpc.name,
+            icon: firstNpc.icon,
+            lvl: firstNpc.lvl ?? undefined,
+          }}
+        />
+      )}
       {firstNpc && (
         <span className="truncate text-sm font-bold text-foreground">
           {firstNpc.name}{" "}

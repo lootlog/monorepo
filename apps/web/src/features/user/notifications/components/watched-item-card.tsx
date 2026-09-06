@@ -60,15 +60,11 @@ export const WatchedItemCard = ({
       return (
         <ItemTile
           item={{
-            id: watchedItem.itemId,
-            hid: "",
             name: displayName,
             icon: displayIcon,
             rarity: apiRarity,
-            lvl: snapshot.lvl ?? 0,
             type: snapshot.type ?? "",
             stat: snapshot.stat,
-            prof: [],
           }}
         />
       );

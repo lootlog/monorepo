@@ -7558,6 +7558,8 @@ components:
                     type: integer
                     minimum: 1
                     maximum: 9007199254740991
+                  groupKey:
+                    type: string
                   occurredAt:
                     type: string
                   world:
@@ -7593,6 +7595,9 @@ components:
                       icon:
                         nullable: true
                         type: string
+                      prof:
+                        nullable: true
+                        type: string
                     required:
                       - id
                       - name
@@ -7626,6 +7631,8 @@ components:
                     type: integer
                     minimum: 1
                     maximum: 9007199254740991
+                  groupKey:
+                    type: string
                   occurredAt:
                     type: string
                   world:
@@ -7662,6 +7669,9 @@ components:
                       icon:
                         nullable: true
                         type: string
+                      prof:
+                        nullable: true
+                        type: string
                     required:
                       - id
                       - name
@@ -7677,6 +7687,174 @@ components:
                     type: integer
                     minimum: 1
                     maximum: 9007199254740991
+                  summary:
+                    type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: number
+                            hid:
+                              type: string
+                            name:
+                              type: string
+                            icon:
+                              type: string
+                            stat:
+                              type: string
+                            type:
+                              nullable: true
+                              type: string
+                            rarity:
+                              nullable: true
+                              type: string
+                              enum:
+                                - UNIQUE
+                                - HEROIC
+                                - LEGENDARY
+                                - UPGRADED
+                            lvl:
+                              type: number
+                            prof:
+                              type: array
+                              items:
+                                type: string
+                                enum:
+                                  - WARRIOR
+                                  - PALADIN
+                                  - HUNTER
+                                  - MAGE
+                                  - BLADE_DANCER
+                                  - TRACKER
+                          required:
+                            - id
+                            - hid
+                            - name
+                            - icon
+                            - stat
+                            - type
+                            - rarity
+                            - lvl
+                            - prof
+                          additionalProperties: false
+                      players:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              anyOf:
+                                - type: string
+                                - type: number
+                            name:
+                              type: string
+                            lvl:
+                              nullable: true
+                              type: number
+                            prof:
+                              nullable: true
+                              type: string
+                              enum:
+                                - WARRIOR
+                                - PALADIN
+                                - HUNTER
+                                - MAGE
+                                - BLADE_DANCER
+                                - TRACKER
+                            icon:
+                              nullable: true
+                              type: string
+                            characterId:
+                              nullable: true
+                              type: number
+                            accountId:
+                              nullable: true
+                              type: number
+                            hpp:
+                              nullable: true
+                              type: number
+                          required:
+                            - id
+                            - name
+                            - lvl
+                            - prof
+                            - icon
+                            - characterId
+                            - accountId
+                            - hpp
+                          additionalProperties: false
+                      npcs:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: number
+                            name:
+                              type: string
+                            wt:
+                              nullable: true
+                              type: number
+                            lvl:
+                              nullable: true
+                              type: number
+                            prof:
+                              nullable: true
+                              type: string
+                              enum:
+                                - WARRIOR
+                                - PALADIN
+                                - HUNTER
+                                - MAGE
+                                - BLADE_DANCER
+                                - TRACKER
+                            icon:
+                              nullable: true
+                              type: string
+                            type:
+                              nullable: true
+                              type: string
+                              enum:
+                                - COMMON
+                                - ELITE
+                                - ELITE2
+                                - ELITE3
+                                - HERO
+                                - EVENT_HERO
+                                - COLOSSUS
+                                - TITAN
+                                - NPC
+                            margonemType:
+                              nullable: true
+                              type: number
+                          required:
+                            - id
+                            - name
+                            - wt
+                            - lvl
+                            - prof
+                            - icon
+                            - type
+                            - margonemType
+                          additionalProperties: false
+                      lootShare:
+                        type: object
+                        additionalProperties:
+                          type: array
+                          items:
+                            type: string
+                      location:
+                        type: string
+                    required:
+                      - items
+                      - players
+                      - npcs
+                      - lootShare
+                      - location
+                    additionalProperties: false
                   additionalItemsCount:
                     type: number
                   items:
@@ -7693,6 +7871,14 @@ components:
                         rarity:
                           nullable: true
                           type: string
+                        stat:
+                          type: string
+                        type:
+                          nullable: true
+                          type: string
+                        lvl:
+                          nullable: true
+                          type: number
                       required:
                         - id
                         - name

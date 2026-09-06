@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { PageHeader } from "../page-header";
 import { SectionCard } from "./section-card";
-import { SectionCardHeader } from "./section-card-header";
+import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCardContent } from "./section-card-content";
 import { SectionCardFooter } from "./section-card-footer";
 

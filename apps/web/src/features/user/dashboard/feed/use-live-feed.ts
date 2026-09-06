@@ -32,15 +32,16 @@ export function useLiveFeed() {
     let disposed = false;
     let isPaused = getPaused();
     let fetching = false;
+    let revalidatingAccess = false;
     let buffered: FeedItem[] = [];
     const queryKey = getUsersControllerGetUserFeedQueryKey();
     const cancel = () => {
       generation += 1;
       fetching = false;
-      buffered = [];
       void queryClient.cancelQueries({ queryKey });
     };
-    const refresh = async () => {
+    const refresh = async (revalidateAccess = false) => {
+      revalidatingAccess ||= revalidateAccess;
       cancel();
       const requestedGeneration = generation;
       fetching = true;
@@ -54,7 +55,8 @@ export function useLiveFeed() {
         if (!disposed && requestedGeneration === generation) {
           dispatch({
             type: "received",
-            items: mergeFeedItems(data.items, buffered),
+            items: data.items,
+            liveItems: buffered,
           });
         }
       } catch {
@@ -65,18 +67,23 @@ export function useLiveFeed() {
       } finally {
         if (requestedGeneration === generation) {
           fetching = false;
+          revalidatingAccess = false;
           buffered = [];
         }
       }
     };
-    const clear = () => {
-      cancel();
-      dispatch({ type: "clear" });
-      queryClient.removeQueries({ queryKey });
-    };
     const handlePermissions = () => {
-      clear();
+      // Events buffered under the old access policy cannot restore revoked rows.
+      buffered = [];
+      void refresh(true);
+    };
+    const handleConnect = () => {
+      // Revalidate in place: a transport reconnect does not revoke access.
       if (!isPaused) void refresh();
+    };
+    const handleJoin = () => {
+      // Pausing live updates does not pause source-access revalidation.
+      void refresh(true);
     };
     const onEntry = (item: FeedItem) => {
       if (isPaused) return;
@@ -90,13 +97,13 @@ export function useLiveFeed() {
       setPaused: (value) => {
         if (isPaused === value) return;
         isPaused = value;
-        if (value) cancel();
-        else void refresh();
+        if (!value) void refresh();
+        else if (!revalidatingAccess) cancel();
       },
     };
     socket.on(GatewayEvent.FEED_ENTRY, onEntry);
-    socket.on(GatewayEvent.CONNECT, handlePermissions);
-    socket.on(GatewayEvent.JOIN, handlePermissions);
+    socket.on(GatewayEvent.CONNECT, handleConnect);
+    socket.on(GatewayEvent.JOIN, handleJoin);
     socket.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissions);
     void refresh();
     return () => {
@@ -104,8 +111,8 @@ export function useLiveFeed() {
       cancel();
       controlsRef.current = undefined;
       socket.off(GatewayEvent.FEED_ENTRY, onEntry);
-      socket.off(GatewayEvent.CONNECT, handlePermissions);
-      socket.off(GatewayEvent.JOIN, handlePermissions);
+      socket.off(GatewayEvent.CONNECT, handleConnect);
+      socket.off(GatewayEvent.JOIN, handleJoin);
       socket.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissions);
     };
   }, [socket, queryClient]);

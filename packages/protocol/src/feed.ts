@@ -1,3 +1,4 @@
+import { LootSummary } from "./loot-summary.js";
 import {
   FiniteNumber,
   PositiveSafeInteger,
@@ -10,10 +11,12 @@ const FeedNpc = Schema.Struct({
   type: Schema.NullOr(Schema.String),
   lvl: Schema.NullOr(FiniteNumber),
   icon: Schema.NullOr(Schema.String),
+  prof: Schema.optionalKey(Schema.NullOr(Schema.String)),
 });
 const common = {
   id: Schema.String,
   version: PositiveSafeInteger,
+  groupKey: Schema.optionalKey(Schema.String),
   occurredAt: Schema.String,
   world: Schema.String,
   guild: Schema.Struct({
@@ -34,6 +37,7 @@ export const UserFeedItem = Schema.Union([
     ...common,
     type: Schema.Literal("loot"),
     lootId: PositiveSafeInteger,
+    summary: Schema.optionalKey(LootSummary),
     additionalItemsCount: FiniteNumber,
     items: Schema.Array(
       Schema.Struct({
@@ -41,6 +45,9 @@ export const UserFeedItem = Schema.Union([
         name: Schema.String,
         icon: Schema.String,
         rarity: Schema.NullOr(Schema.String),
+        stat: Schema.optionalKey(Schema.String),
+        type: Schema.optionalKey(Schema.NullOr(Schema.String)),
+        lvl: Schema.optionalKey(Schema.NullOr(FiniteNumber)),
       }),
     ),
   }),
