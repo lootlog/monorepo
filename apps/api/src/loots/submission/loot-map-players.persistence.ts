@@ -1,5 +1,3 @@
-import { createPlayerSnapshotHash } from "@lootlog/database/snapshot-hash";
-import { getShortnameByProf } from "@lootlog/domain/profession";
 import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import { Effect } from "effect";
 import type { MapPlayersSnapshot } from "#src/contracts/loots/map-players-snapshot";
@@ -26,11 +24,6 @@ export function mapPlayersToSnapshotInputs(
   return uniquePlayers.map((player) => ({
     ...player,
     world,
-    snapshotHash: createPlayerSnapshotHash(
-      player.name,
-      player.prof ? (getShortnameByProf(player.prof) ?? "") : "",
-      player.icon ?? "",
-    ),
   }));
 }
 
