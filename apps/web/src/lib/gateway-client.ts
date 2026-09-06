@@ -11,6 +11,7 @@ import {
 import { authControllerIssueRealtimeTicket } from "@lootlog/client/auth";
 import {
   REALTIME_SUBPROTOCOL,
+  REALTIME_JSON_SUBPROTOCOL,
   RealtimeClient,
   type BasicPresence,
   type PresenceWithLocation,
@@ -75,10 +76,17 @@ const serverEventNames: Partial<Record<ServerEvent["type"], GatewayEvent>> = {
 };
 
 export class GatewayClient {
+  private readonly readable =
+    import.meta.env.MODE === "development" ||
+    import.meta.env.MODE === "production-local";
   private readonly realtime = new RealtimeClient({
     url: GATEWAY_URL,
     path: GATEWAY_SOCKET_PATH || "/ws",
-    protocols: [REALTIME_SUBPROTOCOL, REALTIME_FEED_CAPABILITY],
+    protocols: [
+      this.readable ? REALTIME_JSON_SUBPROTOCOL : REALTIME_SUBPROTOCOL,
+      REALTIME_FEED_CAPABILITY,
+    ],
+    frameEncoding: this.readable ? "json" : "messagepack",
     ticketProvider: async () =>
       (await authControllerIssueRealtimeTicket()).ticket,
   });
