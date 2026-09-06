@@ -55,4 +55,23 @@ describe("loot create debug logging", () => {
       source: "fight",
     });
   });
+
+  it("omits map observations from diagnostics without changing the request", () => {
+    const consoleLogSpy = vi
+      .spyOn(console, "log")
+      .mockImplementation(() => undefined);
+    useSettingsStore.getState().setLootDebugLoggingEnabled(true);
+    const payload = {
+      source: "FIGHT",
+      mapPlayersSnapshot: [{ name: "Observer" }],
+    };
+
+    logLootCreateDebug("request-prepared", { payload });
+
+    expect(consoleLogSpy).toHaveBeenCalledWith(LOOT_CREATE_DEBUG_PREFIX, {
+      stage: "request-prepared",
+      payload: { source: "FIGHT" },
+    });
+    expect(payload.mapPlayersSnapshot).toEqual([{ name: "Observer" }]);
+  });
 });

@@ -1,10 +1,14 @@
-import { createItemStatsHash } from "@lootlog/database/snapshot-hash";
+import {
+  createItemStatsHash,
+  createPlayerSnapshotHash,
+} from "@lootlog/database/snapshot-hash";
 import { buildTimerKey } from "@lootlog/api/timers/timer-key";
 import {
   guildTable,
   itemSnapshotTable,
   lootCommentTable,
   lootItemTable,
+  lootMapPlayerTable,
   lootNpcTable,
   lootPlayerTable,
   lootSubmissionTable,
@@ -36,7 +40,6 @@ import { fileURLToPath } from "node:url";
 import { and, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
-import { createHash } from "node:crypto";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -108,6 +111,7 @@ async function cleanDatabase() {
     await transaction.delete(lootItemTable);
     await transaction.delete(lootNpcTable);
     await transaction.delete(lootPlayerTable);
+    await transaction.delete(lootMapPlayerTable);
     await transaction.delete(organizationLootRecordTable);
     await transaction.delete(lootTable);
     await transaction.delete(itemSnapshotTable);
@@ -327,9 +331,11 @@ async function findOrCreatePlayerSnapshot(
 ) {
   const accountId = Number(player.accountId);
   const characterId = Number(player.characterId);
-  const snapshotHash = createHash("sha256")
-    .update(`${player.name}${player.prof}${player.icon}`)
-    .digest("hex");
+  const snapshotHash = createPlayerSnapshotHash(
+    player.name,
+    player.prof,
+    player.icon,
+  );
   const inserted = await transaction
     .insert(playerSnapshotTable)
     .values({

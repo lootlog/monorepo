@@ -1,7 +1,20 @@
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import { randomUUID } from "node:crypto";
-import { count, eq, sql } from "drizzle-orm";
-import { Effect, ManagedRuntime } from "effect";
+import { makeLootQueryOperations } from "#src/loots/query/loot-query.operations";
+import {
+  NullableLootResponse,
+  LootResponse as RuntimeLootResponse,
+} from "#src/loots/loot-response.schema";
+import {
+  LootDetailResponse,
+  LootResponse,
+  type CreateLootRequest,
+} from "#src/contracts/loots/schemas";
+import { Permission } from "@lootlog/schema/permissions";
+import { makeLootQueryPersistence } from "#src/loots/query/loot-query.persistence";
+import type { MapPlayersSnapshot } from "#src/contracts/loots/map-players-snapshot";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "bun:test";
+import { createHash, randomInt, randomUUID } from "node:crypto";
+import { and, count, eq, inArray, sql } from "drizzle-orm";
+import { Effect, ManagedRuntime, Schema } from "effect";
 import { MessagingError, type PublishOptions } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { ApiDatabase, ApiDatabaseLive } from "#src/database/drizzle/database";
@@ -13,6 +26,9 @@ import {
   memberTable,
   userCharactersLootlogSettingsTable,
   lootTable,
+  lootPlayerTable,
+  lootMapPlayerTable,
+  playerSnapshotTable,
   organizationLootRecordTable,
   lootSubmissionTable,
   notificationTargetTable,
@@ -27,7 +43,6 @@ import { NotificationJobKind } from "#src/notifications/notification-enums";
 import { makeLootSubmissionAcceptancePersistence } from "#src/loots/submission/loot-submission-acceptance.repository";
 import { makeLootSubmissionAcceptance } from "#src/loots/submission/loot-submission-acceptance.service";
 import { makeLootPublicationDispatcher } from "#src/loots/submission/loot-publication-outbox";
-import type { CreateLootRequest } from "#src/contracts/loots/schemas";
 
 describe("durable loot publications", () => {
   let runtime = ManagedRuntime.make(ApiDatabaseLive);
@@ -39,7 +54,7 @@ describe("durable loot publications", () => {
     await runtime.dispose();
   });
 
-  const seed = async () => {
+  const seed = async (elite2 = false) => {
     const id = randomUUID();
     const now = new Date();
     await runtime.runPromise(
@@ -55,8 +70,8 @@ describe("durable loot publications", () => {
           .values({ id, updatedAt: now });
         yield* database.insert(lootlogConfigNpcTable).values({
           lootlogConfigId: id,
-          npcType: "HERO",
-          allowedRarities: ["HEROIC"],
+          npcType: elite2 ? "ELITE2" : "HERO",
+          allowedRarities: ["HEROIC", "LEGENDARY"],
           updatedAt: now,
         });
         yield* database.insert(userCharactersLootlogSettingsTable).values({
@@ -78,7 +93,7 @@ describe("durable loot publications", () => {
           pr: 1,
           prc: "1",
           cl: 1,
-          stat: "rarity=heroic;lvl=80",
+          stat: elite2 ? "rarity=legendary;lvl=80" : "rarity=heroic;lvl=80",
         },
       ],
       npcs: [
@@ -88,7 +103,7 @@ describe("durable loot publications", () => {
           location: "Test map",
           lvl: 80,
           prof: "w",
-          wt: 85,
+          wt: elite2 ? 25 : 85,
           icon: "npc.png",
           type: 2,
         },
@@ -125,6 +140,536 @@ describe("durable loot publications", () => {
         .from(lootPublicationOutboxTable)
         .where(eq(lootPublicationOutboxTable.lootId, lootId)),
     );
+
+  const mapPlayerLinks = (guildId: string, lootId: number) =>
+    runtime.runPromise(
+      database
+        .select({
+          organizationLootRecordId: lootMapPlayerTable.organizationLootRecordId,
+          playerSnapshotId: lootMapPlayerTable.playerSnapshotId,
+        })
+        .from(lootMapPlayerTable)
+        .innerJoin(
+          organizationLootRecordTable,
+          eq(
+            organizationLootRecordTable.id,
+            lootMapPlayerTable.organizationLootRecordId,
+          ),
+        )
+        .where(
+          and(
+            eq(organizationLootRecordTable.guildId, guildId),
+            eq(organizationLootRecordTable.lootId, lootId),
+          ),
+        )
+        .orderBy(lootMapPlayerTable.playerSnapshotId),
+    );
+
+  const snapshotTestLootIds: number[] = [];
+  afterEach(async () => {
+    if (snapshotTestLootIds.length === 0) return;
+    await runtime.runPromise(
+      database
+        .delete(lootPublicationOutboxTable)
+        .where(
+          inArray(lootPublicationOutboxTable.lootId, [...snapshotTestLootIds]),
+        ),
+    );
+    snapshotTestLootIds.length = 0;
+  });
+
+  const mapPlayersSnapshot: MapPlayersSnapshot = [
+    {
+      accountId: 123,
+      characterId: 456,
+      name: "Map observer",
+      prof: "WARRIOR",
+      icon: null,
+    },
+  ];
+  const seededGuild = async (guildId: string) => {
+    const [guild] = await runtime.runPromise(
+      database.select().from(guildTable).where(eq(guildTable.id, guildId)),
+    );
+    if (!guild) throw new Error("Expected seeded Organization");
+    return guild;
+  };
+  const lootRecord = async (
+    guildId: string,
+    lootId: number,
+    permissions: Permission[] = [Permission.OWNER],
+  ) => {
+    const guild = await seededGuild(guildId);
+    const loot = await runtime.runPromise(
+      makeLootQueryOperations(makeLootQueryPersistence(database)).fetchLootById(
+        guild,
+        permissions,
+        [],
+        lootId,
+      ),
+    );
+    return Schema.decodeUnknownSync(LootDetailResponse)(
+      Schema.encodeSync(NullableLootResponse)(loot),
+    );
+  };
+  const lootList = async (guildId: string) => {
+    const guild = await seededGuild(guildId);
+    const loots = await runtime.runPromise(
+      makeLootQueryOperations(
+        makeLootQueryPersistence(database),
+      ).fetchLootsByGuildId(guild, [Permission.OWNER], [], {}),
+    );
+    return Schema.decodeUnknownSync(Schema.Array(LootResponse))(
+      Schema.encodeSync(Schema.Array(RuntimeLootResponse))(loots),
+    );
+  };
+
+  it("persists map players for legendary elite2 and keeps Organization observations isolated", async () => {
+    const first = await seed(true);
+    const second = await seed(true);
+    const unrelated = await seed(true);
+    first.request.submission = {
+      ...first.request.submission,
+      mapPlayersSnapshot,
+    };
+    const result = await runtime.runPromise(acceptance().accept(first.request));
+    snapshotTestLootIds.push(result.id);
+    const secondSnapshot = [
+      {
+        ...mapPlayersSnapshot[0],
+        accountId: 222,
+        characterId: 333,
+        name: "Other Organization observer",
+      },
+    ] satisfies MapPlayersSnapshot;
+    second.request.submission = {
+      ...second.request.submission,
+      loots: first.request.submission.loots,
+      mapPlayersSnapshot: secondSnapshot,
+    };
+    expect(
+      (await runtime.runPromise(acceptance().accept(second.request))).id,
+    ).toBe(result.id);
+    expect((await lootRecord(first.id, result.id))?.mapPlayersSnapshot).toEqual(
+      mapPlayersSnapshot,
+    );
+    expect(
+      (await lootRecord(second.id, result.id))?.mapPlayersSnapshot,
+    ).toEqual(secondSnapshot);
+    expect(await lootRecord(first.id, result.id, [])).toBeNull();
+    expect(await lootRecord(unrelated.id, result.id)).toBeNull();
+    expect(
+      (await lootList(first.id)).map((loot) => loot.mapPlayersSnapshot),
+    ).toEqual([mapPlayersSnapshot]);
+    expect(
+      (await lootList(second.id)).map((loot) => loot.mapPlayersSnapshot),
+    ).toEqual([secondSnapshot]);
+    expect(await lootList(unrelated.id)).toEqual([]);
+    await runtime.runPromise(
+      database
+        .update(organizationLootRecordTable)
+        .set({ archivedAt: new Date() })
+        .where(eq(organizationLootRecordTable.guildId, first.id)),
+    );
+    expect(await lootRecord(first.id, result.id)).toBeNull();
+    expect(
+      (await lootRecord(second.id, result.id))?.mapPlayersSnapshot,
+    ).toEqual(secondSnapshot);
+  });
+
+  it.each([1, 2])(
+    "accepts concurrent loots with opposite participants and the same map roster (round %j)",
+    async () => {
+      const first = await seed(true);
+      const second = await seed(true);
+      const world = `concurrent-map-${randomUUID()}`;
+      const playerA = {
+        accountId: randomInt(1, 1_000_000),
+        characterId: randomInt(1, 1_000_000),
+        name: `Player A ${randomUUID()}`,
+        prof: "WARRIOR" as const,
+        icon: "player-a.png",
+      };
+      const playerB = {
+        accountId: randomInt(1_000_001, 2_000_000),
+        characterId: randomInt(1_000_001, 2_000_000),
+        name: `Player B ${randomUUID()}`,
+        prof: "MAGE" as const,
+        icon: "player-b.png",
+      };
+      first.request.submission = {
+        ...first.request.submission,
+        world,
+        npcs: first.request.submission.npcs.map((npc) => ({
+          ...npc,
+          id: randomInt(1, 1_000_000),
+          name: randomUUID(),
+        })),
+        loots: first.request.submission.loots.map((item) => ({
+          ...item,
+          id: randomInt(1, 1_000_000),
+          name: randomUUID(),
+        })),
+        players: [{ ...playerA, id: playerA.characterId, prof: "w", lvl: 80 }],
+        mapPlayersSnapshot: [playerA, playerB],
+      };
+      second.request.submission = {
+        ...second.request.submission,
+        world,
+        npcs: second.request.submission.npcs.map((npc) => ({
+          ...npc,
+          id: randomInt(1_000_001, 2_000_000),
+          name: randomUUID(),
+        })),
+        loots: second.request.submission.loots.map((item) => ({
+          ...item,
+          id: randomInt(1_000_001, 2_000_000),
+          name: randomUUID(),
+        })),
+        players: [{ ...playerB, id: playerB.characterId, prof: "m", lvl: 80 }],
+        mapPlayersSnapshot: [playerB, playerA],
+      };
+      const [firstResult, secondResult] = await Promise.all(
+        [first.request, second.request].map(async (request) => {
+          const result = await runtime.runPromise(acceptance().accept(request));
+          snapshotTestLootIds.push(result.id);
+          return result;
+        }),
+      );
+      if (!firstResult || !secondResult)
+        throw new Error("Expected both accepted loots");
+      expect(firstResult.id).not.toBe(secondResult.id);
+      const snapshots = await runtime.runPromise(
+        database
+          .select()
+          .from(playerSnapshotTable)
+          .where(eq(playerSnapshotTable.world, world)),
+      );
+      expect(snapshots).toHaveLength(2);
+      const snapshotA = snapshots.find(
+        (player) => player.characterId === playerA.characterId,
+      );
+      const snapshotB = snapshots.find(
+        (player) => player.characterId === playerB.characterId,
+      );
+      if (!snapshotA || !snapshotB)
+        throw new Error("Expected both player snapshots");
+      await Promise.all(
+        (
+          [
+            [first.id, firstResult, snapshotA],
+            [second.id, secondResult, snapshotB],
+          ] as const
+        ).map(async ([guildId, result, participant]) => {
+          const links = await mapPlayerLinks(guildId, result.id);
+          expect(links).toHaveLength(2);
+          expect(new Set(links.map((link) => link.playerSnapshotId))).toEqual(
+            new Set([snapshotA.id, snapshotB.id]),
+          );
+          const participants = await runtime.runPromise(
+            database
+              .select()
+              .from(lootPlayerTable)
+              .where(eq(lootPlayerTable.lootId, result.id)),
+          );
+          expect(participants).toHaveLength(1);
+          expect(participants[0]?.playerSnapshotId).toBe(participant.id);
+          expect(
+            (await lootRecord(guildId, result.id))?.mapPlayersSnapshot,
+          ).toEqual([playerA, playerB]);
+        }),
+      );
+    },
+  );
+
+  it.each([false, true])(
+    "reuses participant snapshots across scoped Organization links (legacy CLI snapshot: %j)",
+    async (legacySnapshot) => {
+      const first = await seed(true);
+      const second = await seed(true);
+      const observers: MapPlayersSnapshot = [
+        {
+          accountId: 123,
+          characterId: 456,
+          name: "Player",
+          prof: "WARRIOR",
+          icon: "player.png",
+        },
+      ];
+      first.request.submission = {
+        ...first.request.submission,
+        world: `outbox-test-${first.id}`,
+        mapPlayersSnapshot: observers,
+      };
+      let legacySnapshotId: number | undefined;
+      if (legacySnapshot) {
+        const player = observers[0];
+        if (!player) throw new Error("Expected map observer");
+        const inserted = await runtime.runPromise(
+          database
+            .insert(playerSnapshotTable)
+            .values({
+              ...player,
+              world: first.request.submission.world,
+              snapshotHash: createHash("sha256")
+                .update(`${player.name}${player.prof}${player.icon}`)
+                .digest("hex"),
+            })
+            .returning(),
+        );
+        legacySnapshotId = inserted[0]?.id;
+        expect(legacySnapshotId).toBeDefined();
+      }
+      const result = await runtime.runPromise(
+        acceptance().accept(first.request),
+      );
+      snapshotTestLootIds.push(result.id);
+      second.request.submission = first.request.submission;
+      await runtime.runPromise(acceptance().accept(second.request));
+
+      const participants = await runtime.runPromise(
+        database
+          .select()
+          .from(lootPlayerTable)
+          .where(eq(lootPlayerTable.lootId, result.id)),
+      );
+      expect(participants).toHaveLength(1);
+      const participant = participants[0];
+      if (!participant) throw new Error("Expected fight participant");
+      if (legacySnapshot)
+        expect(participant.playerSnapshotId).toBe(legacySnapshotId);
+      const firstLinks = await mapPlayerLinks(first.id, result.id);
+      const secondLinks = await mapPlayerLinks(second.id, result.id);
+      expect(firstLinks).toHaveLength(1);
+      expect(secondLinks).toHaveLength(1);
+      expect(firstLinks[0]?.playerSnapshotId).toBe(
+        participant.playerSnapshotId,
+      );
+      expect(secondLinks[0]?.playerSnapshotId).toBe(
+        participant.playerSnapshotId,
+      );
+      expect(firstLinks[0]?.organizationLootRecordId).not.toBe(
+        secondLinks[0]?.organizationLootRecordId,
+      );
+      expect(
+        await runtime.runPromise(
+          database
+            .select()
+            .from(playerSnapshotTable)
+            .where(
+              eq(playerSnapshotTable.world, first.request.submission.world),
+            ),
+        ),
+      ).toHaveLength(1);
+      expect(
+        (await lootRecord(first.id, result.id))?.mapPlayersSnapshot,
+      ).toEqual(observers);
+      expect(
+        (await lootRecord(second.id, result.id))?.mapPlayersSnapshot,
+      ).toEqual(observers);
+    },
+  );
+
+  it("accepts map observers whose legacy concatenated hash collides without changing historical snapshots", async () => {
+    const { id, request } = await seed(true);
+    const legacyObserver = {
+      accountId: 321,
+      characterId: 654,
+      name: "Foo",
+      prof: "WARRIOR" as const,
+      icon: "outfit.gif",
+    };
+    const observer = { ...legacyObserver, name: "Foow", prof: null };
+    const world = `hash-collision-${id}`;
+    const legacyHash = createHash("sha256")
+      .update("Foowoutfit.gif")
+      .digest("hex");
+    const [legacy] = await runtime.runPromise(
+      database
+        .insert(playerSnapshotTable)
+        .values({ ...legacyObserver, world, snapshotHash: legacyHash })
+        .returning(),
+    );
+    if (!legacy) throw new Error("Expected historical player snapshot");
+    request.submission = {
+      ...request.submission,
+      world,
+      mapPlayersSnapshot: [observer],
+    };
+    const created = await runtime.runPromise(acceptance().accept(request));
+    snapshotTestLootIds.push(created.id);
+    expect((await lootRecord(id, created.id))?.mapPlayersSnapshot).toEqual([
+      observer,
+    ]);
+    const newLinks = await mapPlayerLinks(id, created.id);
+    expect(newLinks[0]?.playerSnapshotId).not.toBe(legacy.id);
+    expect(
+      await runtime.runPromise(
+        database
+          .select()
+          .from(playerSnapshotTable)
+          .where(eq(playerSnapshotTable.id, legacy.id)),
+      ),
+    ).toEqual([legacy]);
+
+    request.submission = {
+      ...request.submission,
+      loots: request.submission.loots.map((item) => ({
+        ...item,
+        hid: randomUUID(),
+      })),
+      mapPlayersSnapshot: [legacyObserver],
+    };
+    const later = await runtime.runPromise(acceptance().accept(request));
+    snapshotTestLootIds.push(later.id);
+    expect((await mapPlayerLinks(id, later.id))[0]?.playerSnapshotId).toBe(
+      legacy.id,
+    );
+    expect((await lootRecord(id, later.id))?.mapPlayersSnapshot).toEqual([
+      legacyObserver,
+    ]);
+  });
+
+  it.each([
+    { name: "Renamed player" },
+    { prof: "MAGE" as const },
+    { icon: "new-outfit.png" },
+  ])(
+    "preserves old map presence when player snapshot attributes change: %j",
+    async (change) => {
+      const { id, request } = await seed(true);
+      const original = {
+        accountId: 123,
+        characterId: 456,
+        name: "Player",
+        prof: "WARRIOR" as const,
+        icon: "player.png",
+      };
+      request.submission = {
+        ...request.submission,
+        world: `outbox-test-${id}`,
+        mapPlayersSnapshot: [original],
+      };
+      const first = await runtime.runPromise(acceptance().accept(request));
+      snapshotTestLootIds.push(first.id);
+      const changed = { ...original, ...change };
+      const second = await runtime.runPromise(
+        acceptance().accept({
+          ...request,
+          submission: {
+            ...request.submission,
+            loots: request.submission.loots.map((item) => ({
+              ...item,
+              hid: randomUUID(),
+            })),
+            mapPlayersSnapshot: [changed],
+          },
+        }),
+      );
+      snapshotTestLootIds.push(second.id);
+      expect(second.id).not.toBe(first.id);
+      const originalLinks = await mapPlayerLinks(id, first.id);
+      const changedLinks = await mapPlayerLinks(id, second.id);
+      expect(originalLinks).toHaveLength(1);
+      expect(changedLinks).toHaveLength(1);
+      expect(originalLinks[0]?.playerSnapshotId).not.toBe(
+        changedLinks[0]?.playerSnapshotId,
+      );
+      const storedSnapshots = await runtime.runPromise(
+        database
+          .select()
+          .from(playerSnapshotTable)
+          .where(eq(playerSnapshotTable.world, request.submission.world)),
+      );
+      expect(storedSnapshots).toHaveLength(2);
+      expect(storedSnapshots).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining(original),
+          expect.objectContaining(changed),
+        ]),
+      );
+      expect((await lootRecord(id, first.id))?.mapPlayersSnapshot).toEqual([
+        original,
+      ]);
+      expect((await lootRecord(id, second.id))?.mapPlayersSnapshot).toEqual([
+        changed,
+      ]);
+    },
+  );
+
+  it("fills a missing snapshot on same-member retry once, atomically, without duplicating submissions", async () => {
+    const { id, request } = await seed(true);
+    const result = await runtime.runPromise(acceptance().accept(request));
+    snapshotTestLootIds.push(result.id);
+    expect((await lootRecord(id, result.id))?.mapPlayersSnapshot).toBeNull();
+    expect(await mapPlayerLinks(id, result.id)).toEqual([]);
+    const firstSnapshot = [
+      ...mapPlayersSnapshot,
+      { ...mapPlayersSnapshot[0], characterId: 1001, name: "First witness" },
+    ] satisfies MapPlayersSnapshot;
+    const otherSnapshot = [
+      { ...mapPlayersSnapshot[0], name: "Later observer" },
+      { ...mapPlayersSnapshot[0], characterId: 1002, name: "Second witness" },
+      { ...mapPlayersSnapshot[0], characterId: 1003, name: "Third witness" },
+    ] satisfies MapPlayersSnapshot;
+    await Promise.all(
+      [firstSnapshot, otherSnapshot].map((snapshot) =>
+        runtime.runPromise(
+          acceptance().accept({
+            ...request,
+            submission: { ...request.submission, mapPlayersSnapshot: snapshot },
+          }),
+        ),
+      ),
+    );
+    const saved = (await lootRecord(id, result.id))?.mapPlayersSnapshot;
+    if (!saved) throw new Error("Expected winning map snapshot");
+    expect([firstSnapshot, otherSnapshot]).toContainEqual([...saved]);
+    const linksBeforeRetry = await mapPlayerLinks(id, result.id);
+    expect(linksBeforeRetry).toHaveLength(saved.length);
+    const intentsBeforeRetry = (await pending(result.id)).length;
+    await runtime.runPromise(
+      acceptance().accept({
+        ...request,
+        submission: {
+          ...request.submission,
+          mapPlayersSnapshot: otherSnapshot,
+        },
+      }),
+    );
+    expect((await lootRecord(id, result.id))?.mapPlayersSnapshot).toEqual(
+      saved,
+    );
+    expect(await mapPlayerLinks(id, result.id)).toEqual(linksBeforeRetry);
+    expect((await lootRecord(id, result.id))?.submissions).toHaveLength(1);
+    expect(await pending(result.id)).toHaveLength(intentsBeforeRetry);
+  });
+
+  it("ignores map snapshots for other NPC types, rarities, and loot sources", async () => {
+    await Promise.all(
+      (["hero", "heroic", "dialog"] as const).map(async (variant) => {
+        const { id, request } = await seed(variant !== "hero");
+        request.submission = {
+          ...request.submission,
+          mapPlayersSnapshot,
+          source: variant === "dialog" ? "DIALOG" : "FIGHT",
+          loots: request.submission.loots.map((item) => ({
+            ...item,
+            stat:
+              variant === "heroic"
+                ? "rarity=heroic;lvl=80"
+                : "rarity=legendary;lvl=80",
+          })),
+        };
+        const result = await runtime.runPromise(acceptance().accept(request));
+        snapshotTestLootIds.push(result.id);
+        expect(
+          (await lootRecord(id, result.id))?.mapPlayersSnapshot,
+        ).toBeNull();
+        expect(await mapPlayerLinks(id, result.id)).toEqual([]);
+      }),
+    );
+  });
 
   it("commits intents with the loot, survives publish failure/restart, and does not duplicate on submission retry", async () => {
     const { id, request } = await seed();

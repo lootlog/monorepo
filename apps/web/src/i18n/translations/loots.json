@@ -162,6 +162,11 @@
     "copyId": "Kopiuj identyfikator przedmiotu",
     "notFound": "Nie znaleziono łupu",
     "obtainedAt": "Zdobyto {{date}}",
+    "mapPlayers": {
+      "title": "Gracze na mapie w chwili dropu",
+      "titleWithCount": "Gracze na mapie w chwili dropu ({{count}})",
+      "unavailable": "Brak danych o graczach na mapie"
+    },
     "participants": "Uczestnicy ({{count}})",
     "comments": {
       "title": "Komentarze ({{count}})",

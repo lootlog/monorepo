@@ -11068,6 +11068,44 @@ components:
               - accountId
               - hpp
             additionalProperties: false
+        mapPlayersSnapshot:
+          nullable: true
+          type: array
+          items:
+            type: object
+            properties:
+              accountId:
+                type: integer
+                minimum: 1
+                maximum: 9007199254740991
+              characterId:
+                type: integer
+                minimum: 1
+                maximum: 9007199254740991
+              name:
+                type: string
+                minLength: 1
+              prof:
+                nullable: true
+                type: string
+                enum:
+                  - WARRIOR
+                  - PALADIN
+                  - HUNTER
+                  - MAGE
+                  - BLADE_DANCER
+                  - TRACKER
+              icon:
+                nullable: true
+                type: string
+            required:
+              - accountId
+              - characterId
+              - name
+              - prof
+              - icon
+            additionalProperties: false
+          minItems: 1
         npcs:
           type: array
           items:
@@ -11177,6 +11215,7 @@ components:
         - location
         - items
         - players
+        - mapPlayersSnapshot
         - npcs
         - lootShare
         - createdAt
@@ -11519,6 +11558,44 @@ components:
               - accountId
               - hpp
             additionalProperties: false
+        mapPlayersSnapshot:
+          nullable: true
+          type: array
+          items:
+            type: object
+            properties:
+              accountId:
+                type: integer
+                minimum: 1
+                maximum: 9007199254740991
+              characterId:
+                type: integer
+                minimum: 1
+                maximum: 9007199254740991
+              name:
+                type: string
+                minLength: 1
+              prof:
+                nullable: true
+                type: string
+                enum:
+                  - WARRIOR
+                  - PALADIN
+                  - HUNTER
+                  - MAGE
+                  - BLADE_DANCER
+                  - TRACKER
+              icon:
+                nullable: true
+                type: string
+            required:
+              - accountId
+              - characterId
+              - name
+              - prof
+              - icon
+            additionalProperties: false
+          minItems: 1
         npcs:
           type: array
           items:
@@ -11628,6 +11705,7 @@ components:
         - location
         - items
         - players
+        - mapPlayersSnapshot
         - npcs
         - lootShare
         - createdAt
@@ -11639,6 +11717,43 @@ components:
     CreateLootDto:
       type: object
       properties:
+        mapPlayersSnapshot:
+          type: array
+          items:
+            type: object
+            properties:
+              accountId:
+                type: integer
+                minimum: 1
+                maximum: 9007199254740991
+              characterId:
+                type: integer
+                minimum: 1
+                maximum: 9007199254740991
+              name:
+                type: string
+                minLength: 1
+              prof:
+                nullable: true
+                type: string
+                enum:
+                  - WARRIOR
+                  - PALADIN
+                  - HUNTER
+                  - MAGE
+                  - BLADE_DANCER
+                  - TRACKER
+              icon:
+                nullable: true
+                type: string
+            required:
+              - accountId
+              - characterId
+              - name
+              - prof
+              - icon
+            additionalProperties: false
+          minItems: 1
         loots:
           type: array
           items:
