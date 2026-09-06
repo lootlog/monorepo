@@ -28,10 +28,10 @@ export const SectionCardHeader = ({
     <div className="min-w-0 flex-1">
       <h2
         id={id}
-        className="flex min-w-0 items-center gap-2 text-sm font-semibold"
+        className="flex min-w-0 items-center gap-2 text-base font-semibold"
       >
         {Icon && (
-          <Icon className="size-4 shrink-0 text-primary" aria-hidden="true" />
+          <Icon className="size-5 shrink-0 text-primary" aria-hidden="true" />
         )}
         <span className="min-w-0 break-words">{title}</span>
       </h2>

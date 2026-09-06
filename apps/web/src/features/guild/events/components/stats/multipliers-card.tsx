@@ -1,5 +1,5 @@
 import { SectionCard } from "@/components/common/section-card/section-card";
-import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import type { TFunction } from "i18next";
 import { Calculator } from "lucide-react";
 import type { EventConfig } from "../../hooks/queries/use-kill-detail";

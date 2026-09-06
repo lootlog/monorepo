@@ -2628,6 +2628,7 @@ export const guildKillActivityTable = pgTable(
     npcName: text("npcName").notNull(),
     npcType: npcTypeEnum("npcType").notNull(),
     npcLvl: integer("npcLvl").notNull(),
+    npcProf: text("npcProf"),
     npcIcon: text("npcIcon"),
     occurredAt: timestamp("occurredAt", {
       mode: "date",

@@ -1,3 +1,4 @@
+import { AnimatePresence } from "framer-motion";
 import { useEffect, useEffectEvent, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "cn";
@@ -6,10 +7,11 @@ import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { SectionCard } from "@/components/common/section-card/section-card";
-import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import { useLiveFeed } from "./use-live-feed";
-import { LiveFeedRow } from "./live-feed-row";
+import { AnimatedLiveFeedRow } from "./animated-live-feed-row";
+import { groupFeedItems } from "./live-feed-state";
 
 export function DashboardLiveFeed() {
   const { t } = useTranslation();
@@ -59,19 +61,28 @@ export function DashboardLiveFeed() {
               </span>
             </Button>
             <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setPaused(!paused)}
-            >
-              {paused ? (
-                <Play className="size-4 text-primary" aria-hidden />
-              ) : (
-                <Pause className="size-4" aria-hidden />
+              size="icon"
+              variant={paused ? "default" : "destructive"}
+              className={cn(
+                "size-9",
+                paused && "bg-emerald-600 text-white hover:bg-emerald-700",
               )}
-              {t(
+              aria-label={t(
                 paused
                   ? "statistics.feedResumeAction"
                   : "statistics.feedPauseAction",
+              )}
+              title={t(
+                paused
+                  ? "statistics.feedResumeAction"
+                  : "statistics.feedPauseAction",
+              )}
+              onClick={() => setPaused(!paused)}
+            >
+              {paused ? (
+                <Play className="size-4" aria-hidden />
+              ) : (
+                <Pause className="size-4" aria-hidden />
               )}
             </Button>
           </>
@@ -104,7 +115,7 @@ export function DashboardLiveFeed() {
       >
         <div className="flex min-h-full flex-col">
           <div ref={top} className="h-px shrink-0" aria-hidden />
-          {items === undefined || (items.length === 0 && state.isFetching) ? (
+          {items === undefined ? (
             !state.isError &&
             !paused && (
               <div
@@ -128,9 +139,17 @@ export function DashboardLiveFeed() {
                 aria-label={t("statistics.feedTitle")}
                 aria-busy={state.isFetching}
               >
-                {items.map((item) => (
-                  <LiveFeedRow key={item.id} item={item} now={now} />
-                ))}
+                <AnimatePresence>
+                  {groupFeedItems(items).map(({ key, item, organizations }) => (
+                    <AnimatedLiveFeedRow
+                      key={key}
+                      animateEntry={state.animatedKeys.includes(key)}
+                      item={item}
+                      organizations={organizations}
+                      now={now}
+                    />
+                  ))}
+                </AnimatePresence>
               </ol>
             </>
           )}

@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
 import { cn } from "cn";

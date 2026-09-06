@@ -1,4 +1,4 @@
-import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { battleHpTimelineEventIconByKey } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-event-icons";
 import {
   BATTLE_HP_TIMELINE_LAYER_DEFINITIONS,

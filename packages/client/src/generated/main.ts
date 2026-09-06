@@ -35,6 +35,7 @@ export type UserFeedResponseDtoOutputItemsItem = {
      * @maximum 9007199254740991
      */
   version: number;
+  groupKey?: string;
   occurredAt: string;
   world: string;
   guild: {
@@ -52,6 +53,8 @@ export type UserFeedResponseDtoOutputItemsItem = {
   lvl: number | null;
   /** @nullable */
   icon: string | null;
+  /** @nullable */
+  prof?: string | null;
 };
   type: 'kill';
   /**
@@ -66,6 +69,7 @@ export type UserFeedResponseDtoOutputItemsItem = {
      * @maximum 9007199254740991
      */
   version: number;
+  groupKey?: string;
   occurredAt: string;
   world: string;
   guild: {
@@ -84,6 +88,8 @@ export type UserFeedResponseDtoOutputItemsItem = {
   lvl: number | null;
   /** @nullable */
   icon: string | null;
+  /** @nullable */
+  prof?: string | null;
 } | null;
   type: 'loot';
   /**
@@ -91,6 +97,55 @@ export type UserFeedResponseDtoOutputItemsItem = {
      * @maximum 9007199254740991
      */
   lootId: number;
+  summary?: {
+  items: ({
+  id: number;
+  hid: string;
+  name: string;
+  icon: string;
+  stat: string;
+  /** @nullable */
+  type: string | null;
+  /** @nullable */
+  rarity: 'UNIQUE' | 'HEROIC' | 'LEGENDARY' | 'UPGRADED' | null;
+  lvl: number;
+  prof: ('WARRIOR' | 'PALADIN' | 'HUNTER' | 'MAGE' | 'BLADE_DANCER' | 'TRACKER')[];
+})[];
+  players: ({
+  id: string | number;
+  name: string;
+  /** @nullable */
+  lvl: number | null;
+  /** @nullable */
+  prof: 'WARRIOR' | 'PALADIN' | 'HUNTER' | 'MAGE' | 'BLADE_DANCER' | 'TRACKER' | null;
+  /** @nullable */
+  icon: string | null;
+  /** @nullable */
+  characterId: number | null;
+  /** @nullable */
+  accountId: number | null;
+  /** @nullable */
+  hpp: number | null;
+})[];
+  npcs: ({
+  id: number;
+  name: string;
+  /** @nullable */
+  wt: number | null;
+  /** @nullable */
+  lvl: number | null;
+  /** @nullable */
+  prof: 'WARRIOR' | 'PALADIN' | 'HUNTER' | 'MAGE' | 'BLADE_DANCER' | 'TRACKER' | null;
+  /** @nullable */
+  icon: string | null;
+  /** @nullable */
+  type: 'COMMON' | 'ELITE' | 'ELITE2' | 'ELITE3' | 'HERO' | 'EVENT_HERO' | 'COLOSSUS' | 'TITAN' | 'NPC' | null;
+  /** @nullable */
+  margonemType: number | null;
+})[];
+  lootShare: {[key: string]: string[]};
+  location: string;
+};
   additionalItemsCount: number;
   items: ({
   id: number;
@@ -98,6 +153,11 @@ export type UserFeedResponseDtoOutputItemsItem = {
   icon: string;
   /** @nullable */
   rarity: string | null;
+  stat?: string;
+  /** @nullable */
+  type?: string | null;
+  /** @nullable */
+  lvl?: number | null;
 })[];
 };
 

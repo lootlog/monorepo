@@ -6,7 +6,7 @@ import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import type { UserKillAnalyticsResponseDtoOutput } from "@lootlog/client/main";
 import { useTranslation } from "react-i18next";
 import { SectionCard } from "@/components/common/section-card/section-card";
-import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { StatisticsNpcTable } from "./statistics-npc-table";
 

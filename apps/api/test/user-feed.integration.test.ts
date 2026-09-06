@@ -16,7 +16,11 @@ import {
   guildKillActivityTable,
   userCharactersLootlogSettingsTable,
 } from "#src/database/drizzle/schema";
-import { makeUserFeed, userFeedSql } from "#src/feed/user-feed";
+import {
+  makeUserFeed,
+  userFeedSql,
+  readPublishedFeedEntry,
+} from "#src/feed/user-feed";
 import {
   makeGuildKillActivityCleanup,
   makeGuildKillActivityPublisher,
@@ -85,6 +89,7 @@ const kill = (
     npcName: "NPC",
     npcType: "ELITE2",
     npcLvl: 100,
+    npcProf: "w",
     occurredAt: recent,
     ...overrides,
   });
@@ -119,7 +124,7 @@ describe("personal Organization activity feed", () => {
       type: "kill",
       count: 2,
       guild: { id: guild.id },
-      npc: { id: 1, lvl: 100 },
+      npc: { id: 1, lvl: 100, prof: "w" },
     });
     expect((await run(makeUserFeed(database)(reader))).items[0]?.id).toBe(
       readerFeed.items[0]?.id,
@@ -133,6 +138,47 @@ describe("personal Organization activity feed", () => {
         .where(eq(memberTable.id, member.id)),
     );
     expect((await run(makeUserFeed(database)(reader))).items).toEqual([]);
+  });
+  it("groups only identical kill event sets and limits groups without dropping organizations", async () => {
+    const { guild, owner } = await seed();
+    const other = await seed();
+    await run(
+      database
+        .update(guildTable)
+        .set({ ownerId: owner })
+        .where(eq(guildTable.id, other.guild.id)),
+    );
+    await Promise.all(
+      Array.from({ length: 21 }, (_, index) => index + 1).flatMap((npcId) => [
+        run(kill(guild.id, { npcId })),
+        run(kill(other.guild.id, { npcId })),
+      ]),
+    );
+    const feed = await run(makeUserFeed(database)(owner));
+    expect(feed.items).toHaveLength(40);
+    expect(new Set(feed.items.map((item) => item.groupKey)).size).toBe(20);
+    for (const item of feed.items) {
+      expect(
+        feed.items.filter((candidate) => candidate.groupKey === item.groupKey),
+      ).toHaveLength(2);
+    }
+    await run(
+      kill(guild.id, {
+        npcId: 100,
+        occurredAt: new Date(recent.getTime() + 1000),
+      }),
+    );
+    await run(
+      kill(other.guild.id, {
+        npcId: 100,
+        occurredAt: new Date(recent.getTime() + 2000),
+      }),
+    );
+    const distinct = (await run(makeUserFeed(database)(owner))).items.filter(
+      (item) => item.npc?.id === 100,
+    );
+    expect(distinct).toHaveLength(2);
+    expect(distinct[0]?.groupKey).not.toBe(distinct[1]?.groupKey);
   });
   it("includes separate nonarchived loot records, requiring visibility of every NPC and bounding item previews", async () => {
     const { guild, owner, reader } = await seed();
@@ -163,7 +209,7 @@ describe("personal Organization activity feed", () => {
     )(
       (
         await client.query(
-          `INSERT INTO "NpcSnapshot" ("npcId",name,type,lvl) VALUES (1,$1,'ELITE2',100) RETURNING id`,
+          `INSERT INTO "NpcSnapshot" ("npcId",name,type,lvl,prof) VALUES (1,$1,'ELITE2',100,'WARRIOR') RETURNING id`,
           [randomUUID()],
         )
       ).rows,
@@ -174,8 +220,16 @@ describe("personal Organization activity feed", () => {
       [loot.id, npc.id],
     );
     await client.query(
-      `WITH inserted AS (INSERT INTO "ItemSnapshot" ("itemId","statsHash",name,icon,"statRaw","statsSnapshot") SELECT n,$2||n,'item','item.png','','{}'::jsonb FROM generate_series(1,5)n RETURNING id) INSERT INTO "LootItem" ("lootId","itemSnapshotId",hid) SELECT $1,id,id::text FROM inserted`,
+      `WITH inserted AS (INSERT INTO "ItemSnapshot" ("itemId","statsHash",name,icon,"statRaw","statsSnapshot","itemType",lvl) SELECT n,$2||n,'item','item.png','lvl=100;sa=10','{}'::jsonb,'Sword',100 FROM generate_series(1,5)n RETURNING id) INSERT INTO "LootItem" ("lootId","itemSnapshotId",hid) SELECT $1,id,id::text FROM inserted`,
       [loot.id, randomUUID()],
+    );
+    await client.query(
+      `WITH inserted AS (INSERT INTO "PlayerSnapshot" (world,"accountId","characterId","snapshotHash",name,prof,icon) VALUES ('tempest',1,2,$2,'Participant','WARRIOR','player.png') RETURNING id) INSERT INTO "LootPlayer" ("lootId","playerSnapshotId",lvl,hpp) SELECT $1,id,120,75 FROM inserted`,
+      [loot.id, randomUUID()],
+    );
+    await client.query(
+      `UPDATE "Loot" SET "lootShare"='{"Participant":["1"]}'::jsonb WHERE id=$1`,
+      [loot.id],
     );
     const ownerItems = (await run(makeUserFeed(database)(owner))).items;
     expect(ownerItems).toHaveLength(2);
@@ -183,9 +237,47 @@ describe("personal Organization activity feed", () => {
     expect(ownerItems[0]).toMatchObject({
       type: "loot",
       additionalItemsCount: 2,
+      npc: { prof: "WARRIOR" },
     });
-    if (ownerItems[0]?.type === "loot")
+    if (ownerItems[0]?.type === "loot") {
       expect(ownerItems[0].items).toHaveLength(3);
+      expect(ownerItems[0].summary?.items).toHaveLength(5);
+      expect(ownerItems[0].summary).toMatchObject({
+        location: "map",
+        players: [
+          {
+            id: "21",
+            name: "Participant",
+            prof: "WARRIOR",
+            icon: "player.png",
+            lvl: 120,
+            hpp: 75,
+            accountId: 1,
+            characterId: 2,
+          },
+        ],
+        npcs: [{ id: 1, type: "ELITE2", lvl: 100 }],
+        lootShare: { Participant: ["1"] },
+      });
+      expect(ownerItems[0].summary?.items[0]).toMatchObject({
+        stat: "lvl=100;sa=10",
+        type: "Sword",
+        lvl: 100,
+        prof: expect.arrayContaining(["WARRIOR"]),
+      });
+      const published = await run(
+        readPublishedFeedEntry(database, ownerItems[0].guild.id, {
+          lootId: loot.id,
+        }),
+      );
+      expect(published).toEqual(ownerItems[0]);
+      expect(ownerItems[0].items[0]).toMatchObject({
+        stat: "lvl=100;sa=10",
+        type: "Sword",
+        lvl: 100,
+      });
+    }
+    expect(ownerItems[0]?.groupKey).toBe(ownerItems[1]?.groupKey);
     expect((await run(makeUserFeed(database)(reader))).items).toHaveLength(1);
     await client.query(`UPDATE "NpcSnapshot" SET type='HERO' WHERE id=$1`, [
       npc.id,
@@ -335,7 +427,7 @@ describe("personal Organization activity feed", () => {
       world: "tempest",
       accountId: "1",
       characterId: "1",
-      npc: { id: 123, name: "Hero", lvl: 100, wt: 80 },
+      npc: { id: 123, name: "Hero", lvl: 100, wt: 80, prof: "p" },
     };
     await run(create(owner, input));
     await published.promise;
@@ -346,6 +438,9 @@ describe("personal Organization activity feed", () => {
       [guild.id],
     );
     expect(acceptedSums.rows).toEqual([{ uniqueKills: 1 }]);
+    expect((await run(makeUserFeed(database)(owner))).items[0]?.npc?.prof).toBe(
+      "p",
+    );
     expect(
       await run(
         database

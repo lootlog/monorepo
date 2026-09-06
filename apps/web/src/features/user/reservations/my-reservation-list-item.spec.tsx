@@ -105,6 +105,17 @@ describe("MyReservationListItem", () => {
     );
   });
 
+  it("keeps the avatar out of the tab order and names its organization on link focus", async () => {
+    render(<MyReservationListItem reservation={reservation} />);
+    const link = screen.getByRole("link");
+    expect(link.querySelector('[tabindex="0"]')).toBeNull();
+    fireEvent.focus(link);
+    expect(await screen.findByRole("tooltip")).toHaveProperty(
+      "textContent",
+      "ZGARBIENI",
+    );
+  });
+
   it("makes the reservation row a link to its calendar", () => {
     render(<MyReservationListItem reservation={reservation} />);
 

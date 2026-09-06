@@ -1,4 +1,4 @@
-import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { PageHeader } from "@/components/common/page-header";
 import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";

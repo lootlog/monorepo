@@ -1,5 +1,5 @@
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
-import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { CalendarDays } from "lucide-react";
@@ -22,7 +22,9 @@ export function MyReservationsCard() {
   const reservations = query.data?.items.slice(0, 5) ?? [];
 
   return (
-    <SectionCard className="min-h-48 gap-0 py-0">
+    <SectionCard
+      className={reservations.length ? "gap-0 py-0" : "min-h-48 gap-0 py-0"}
+    >
       <SectionCardHeader
         id="dashboard-my-reservations-title"
         icon={CalendarDays}

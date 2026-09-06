@@ -189,6 +189,7 @@ export const ItemTile: FC<ItemTileProps> = ({
   if (sharedTooltip) {
     return (
       <button
+        aria-label={name}
         className={triggerClassName}
         onBlur={sharedTooltip.hideTooltip}
         onFocus={({ currentTarget }) =>
@@ -223,7 +224,13 @@ export const ItemTile: FC<ItemTileProps> = ({
     <TooltipProvider delay={100}>
       <Tooltip>
         <TooltipTrigger
-          render={<button className={triggerClassName} type="button" />}
+          render={
+            <button
+              aria-label={name}
+              className={triggerClassName}
+              type="button"
+            />
+          }
         >
           {itemImage}
         </TooltipTrigger>
