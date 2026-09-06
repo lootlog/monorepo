@@ -1,5 +1,6 @@
 import { invalidateUserNotificationQueries } from "@/features/user/notifications/utils/invalidate-user-notification-queries";
 import { type ItemTileProps, ItemTile } from "@/components/tiles/item-tile";
+import type { Item } from "@/lib/loots/loot-types";
 import { ROUTES } from "@/config/routes";
 import { USER_WATCHED_ITEMS_LIMIT } from "@/features/user/notifications/constants/user-watched-items-limit";
 import { useGuildWatchedItems } from "@/features/user/notifications/hooks/use-guild-watched-items";
@@ -25,7 +26,8 @@ import { Button } from "@lootlog/ui/components/button";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { cn } from "cn";
 
-type WatchableItemTileProps = ItemTileProps & {
+type WatchableItemTileProps = Omit<ItemTileProps, "item"> & {
+  item: Item;
   watchContext: WatchedItemScope;
   selectedItemNames?: string[];
 };

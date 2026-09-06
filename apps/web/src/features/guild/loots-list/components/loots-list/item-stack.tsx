@@ -1,10 +1,10 @@
-import { WatchableItemTile } from "@/components/tiles";
+import { WatchableItemTile } from "@/components/tiles/watchable-item-tile";
 import { ItemImage } from "@lootlog/ui/components/item-image";
 import type { WatchedItemScope } from "@/features/user/notifications/types/watched-item-scope";
 import { ItemRarity, type Item } from "@/lib/loots/loot-types";
 import { cn } from "cn";
 import { AnimatePresence } from "framer-motion";
-import { useEffect, useRef, useState, type FC } from "react";
+import { useEffect, useRef, useState, type ReactNode, type FC } from "react";
 import { ItemStackBadge } from "@/features/guild/loots-list/components/loots-list/item-stack-badge";
 import { ItemStackExpanded } from "@/features/guild/loots-list/components/loots-list/item-stack-expanded";
 import { Check } from "lucide-react";
@@ -28,12 +28,14 @@ type Props = {
   items: Item[];
   watchContext: WatchedItemScope;
   selectedItemNames: string[];
+  renderItem?: (item: Item) => ReactNode;
 };
 
 export const ItemStack: FC<Props> = ({
   items,
   watchContext,
   selectedItemNames,
+  renderItem,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
@@ -54,6 +56,10 @@ export const ItemStack: FC<Props> = ({
   }, [isExpanded]);
 
   if (items.length === 0) return null;
+
+  if (items.length === 1 && items[0] && renderItem) {
+    return renderItem(items[0]);
+  }
 
   if (items.length === 1) {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -122,6 +128,7 @@ export const ItemStack: FC<Props> = ({
       <AnimatePresence>
         {isExpanded && anchorRect && (
           <ItemStackExpanded
+            renderItem={renderItem}
             items={sorted}
             anchorRect={anchorRect}
             watchContext={watchContext}

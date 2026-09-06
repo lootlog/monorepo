@@ -1,3 +1,9 @@
+import { LootSummary, LootShareResponse } from "@lootlog/protocol/loot-summary";
+import {
+  mapItem,
+  mapPlayer,
+  mapNpc,
+} from "#src/loots/query/loot-snapshot-mappers";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   and,
@@ -36,7 +42,7 @@ export class LootQueryPersistenceError extends TaggedErrorClass<LootQueryPersist
 ) {}
 
 export const makeLootQueryPersistence = (
-  database: typeof ApiDatabase.Service,
+  database: Pick<typeof ApiDatabase.Service, "select">,
 ) => {
   const protect = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
     effect.pipe(
@@ -359,7 +365,36 @@ export const makeLootQueryPersistence = (
       return rows[0] ?? null;
     });
 
+  // Callers must resolve source visibility before passing these shared loot IDs.
+  const readVisibleSummaries = (ids: ReadonlyArray<number>) =>
+    Effect.gen(function* () {
+      if (ids.length === 0) return new Map<number, LootSummary>();
+      const [loots, items, players, npcs] = yield* Effect.all([
+        selectLoots(ids),
+        selectItems(ids),
+        selectPlayers(ids),
+        selectNpcs(ids),
+      ]);
+      const summaries = new Map<number, LootSummary>();
+      for (const loot of loots) {
+        const lootShare = yield* Schema.decodeUnknownEffect(LootShareResponse)(
+          loot.lootShare,
+        );
+        summaries.set(loot.id, {
+          location: loot.location,
+          lootShare,
+          items: items.filter((item) => item.lootId === loot.id).map(mapItem),
+          players: players
+            .filter((player) => player.lootId === loot.id)
+            .map(mapPlayer),
+          npcs: npcs.filter((npc) => npc.lootId === loot.id).map(mapNpc),
+        });
+      }
+      return summaries;
+    });
+
   return {
+    readVisibleSummaries,
     findItemSnapshotIds,
     findMany,
     count: countLoots,

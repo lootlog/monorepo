@@ -72,26 +72,41 @@ wartości mogą jeszcze wzrosnąć.
 ### Na żywo
 
 Po lewej stronie dashboardu widzisz ostatnie 20 zdarzeń z ostatnich 24 godzin:
-nowe łupy oraz ważne bicia z organizacji, do których masz dostęp. Przy każdym
-wpisie czas znajduje się przy nazwie potwora, a świat i organizacja pod nią.
-Przedmioty pokazujemy jako grafiki bez podpisów. Bicia tego samego potwora w tej samej
+nowe łupy oraz ważne bicia z organizacji, do których masz dostęp.
+Łupy mają niskie wiersze: potwór i avatary organizacji w nagłówku,
+ikonki przedmiotów poniżej separatora oraz świat, lokalizacja, czas i liczniki w stopce.
+Nie ma tu rzędów postaci ani przycisków komentarzy i szczegółów.
+Przedmioty pokazujemy jako grafiki bez podpisów; najedź na ikonę lub przejdź
+do niej klawiaturą, aby zobaczyć nazwę i statystyki.
+Przy łupie i biciu widzisz ikonę NPC przed nazwą. Przy biciu pokazujemy także
+czas, poziom z profesją (jeśli została zapisana), świat i organizacje.
+Ten sam łup dodany do kilku dostępnych organizacji zajmuje jeden wpis ze wszystkimi
+ich avatarami. Nazwę organizacji zobaczysz w tooltipie po najechaniu na avatar
+lub ustawieniu na nim fokusu klawiaturą. Bicia łączymy między organizacjami tylko wtedy, gdy obejmują dokładnie
+te same zdarzenia. Bicia tego samego potwora w tej samej
 organizacji, świecie i minucie tworzą jeden wpis z licznikiem ×N. Wpis nie
 wskazuje osoby, która zgłosiła bicie.
 
-Kliknięcie łupu otwiera istniejące szczegóły, a kliknięcie bicia — statystyki
+Kliknięcie avatara organizacji otwiera jej listę łupów, a kliknięcie bicia — statystyki
 potwora. Na szerokim ekranie karta wypełnia pozostałą wysokość dashboardu
 i ma własne przewijanie. Aktywność i rezerwacje znajdują się po prawej stronie.
 Na telefonie feed ma stałą wysokość i znajduje się nad aktywnością i rezerwacjami.
+Karta z rezerwacjami dopasowuje wysokość do zapisów.
 
 Jeżeli czytasz starsze wpisy, aktualizacje czekają pod przyciskiem **Nowe
 zdarzenia**. Nie przesuwają automatycznie czytanej listy. Przycisk **Wstrzymaj** w prawym górnym rogu zatrzymuje
 aktualizacje, a **Wznów** pobiera aktualną listę. Przeglądarka zapamiętuje ten
 wybór także po odświeżeniu strony. Pauza dotyczy wyłącznie feedu.
+Odświeżenie zachowuje widoczną listę do otrzymania odpowiedzi. Wpisy pobrane
+przez HTTP pojawiają się bez animacji. Nowy wpis z WebSocketu najpierw odsuwa pozostałe
+w dół, a następnie się pojawia. Przy ograniczeniu ruchu w systemie pojawia się od razu.
 Historię pobieramy przy wejściu, po ponownym połączeniu i dołączeniu sesji do organizacji
 i przy wznowieniu. Podczas
 połączenia kompletne wpisy przychodzą przez WebSocket, bez cyklicznego
 odpytywania historii. Kolejne bicia aktualizują licznik istniejącego wpisu.
-Po zmianie dostępu stare wpisy są od razu usuwane, również podczas pauzy.
+Po zmianie dostępu od razu czyścimy widoczne i oczekujące wpisy oraz pobieramy
+aktualną listę, również podczas pauzy. Jeśli pobranie się nie powiedzie,
+poprzednie wpisy pozostają ukryte.
 Aktualizacja live może nie dotrzeć podczas awarii; zapisane bicie pozostaje
 w historii przez 24 godziny i może pojawić się przy kolejnym pobraniu listy.
 

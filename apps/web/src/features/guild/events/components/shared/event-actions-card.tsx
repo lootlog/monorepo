@@ -1,5 +1,5 @@
 import { SectionCardFooter } from "@/components/common/section-card/section-card-footer";
-import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { useTranslation } from "react-i18next";
 import { Clock, Pencil, RotateCcw, Settings2, Trash2 } from "lucide-react";
 import { SectionCard } from "@/components/common/section-card/section-card";

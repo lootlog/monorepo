@@ -30,10 +30,13 @@ vi.mock("framer-motion", () => ({
   useReducedMotion: () => true,
 }));
 
-vi.mock("@/components/tiles", () => ({
+vi.mock("@/components/tiles/player-tile", () => ({
   PlayerTile: ({ player }: { player: Loot["players"][number] }) => (
     <div>{player.name}</div>
   ),
+}));
+
+vi.mock("@/components/tiles/watchable-item-tile", () => ({
   WatchableItemTile: ({ item }: { item: Loot["items"][number] }) => (
     <div>{item.name}</div>
   ),

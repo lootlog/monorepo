@@ -1,4 +1,4 @@
-import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { useEffect, useState } from "react";
 import { FileClock } from "lucide-react";
 import { Badge } from "@lootlog/ui/components/badge";

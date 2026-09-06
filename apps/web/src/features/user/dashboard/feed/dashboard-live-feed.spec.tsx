@@ -41,7 +41,8 @@ const mocks = vi.hoisted(() => {
 vi.mock("@/hooks/utils/use-gateway", () => ({
   useGateway: () => ({ socket: mocks.socket, connected: false }),
 }));
-vi.mock("@lootlog/client/main", () => ({
+vi.mock("@lootlog/client/main", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@lootlog/client/main")>()),
   getUsersControllerGetUserFeedQueryKey: () => ["user-feed"],
   getUsersControllerGetUserFeedQueryOptions: () => ({
     queryKey: ["user-feed"],
@@ -75,7 +76,7 @@ it("keeps focused visible rows and scroll position until the reader applies a gr
   const link = screen.getByRole("link", { name: "Bicie: Heros" });
   link.focus();
   const scroller = screen
-    .getByRole("region", { name: "Na żywo" })
+    .getByRole("region", { name: "Feed aktywności" })
     .querySelector<HTMLElement>('[data-slot="scroll-area-viewport"]');
   if (!scroller) throw new Error("Feed scroll region missing");
   scroller.scrollTop = 120;
@@ -96,4 +97,78 @@ it("keeps focused visible rows and scroll position until the reader applies a gr
   fireEvent.click(screen.getByRole("button", { name: "Wznów" }));
   await act(() => vi.advanceTimersByTimeAsync(1000));
   expect(screen.getByRole("button", { name: "Wstrzymaj" })).toBeTruthy();
+});
+
+it("adds organization copies to one row and preserves that row during an HTTP refresh", async () => {
+  vi.stubGlobal("localStorage", new MemoryStorage());
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2026-09-06T12:01:00Z"));
+  const response = feedResponse();
+  response.items = response.items.map((item) => ({
+    ...item,
+    groupKey: "same-kill",
+  }));
+  let finish: (data: typeof response) => void = () => undefined;
+  mocks.request
+    .mockReset()
+    .mockResolvedValueOnce(response)
+    .mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+  const root = createRootRoute({ component: DashboardLiveFeed });
+  const router = createRouter({
+    routeTree: root,
+    history: createMemoryHistory({ initialEntries: ["/"] }),
+  });
+  render(
+    <QueryClientProvider client={new QueryClient()}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>,
+  );
+  await act(() => vi.advanceTimersByTimeAsync(0));
+  const link = screen.getByRole("link", { name: "Bicie: Heros" });
+  const row = link.closest("li");
+  const item = response.items[0];
+  if (!item) throw new Error("Missing fixture");
+  act(() =>
+    mocks.socket.emit(GatewayEvent.FEED_ENTRY, {
+      ...item,
+      id: "copy",
+      guild: { id: "second", name: "Druga organizacja", vanityUrl: null },
+    }),
+  );
+  expect(screen.getAllByRole("link", { name: "Bicie: Heros" })).toHaveLength(1);
+  expect(screen.getByRole("link", { name: "Druga organizacja" })).toBeTruthy();
+  expect(screen.getByRole("link", { name: "Bicie: Heros" }).closest("li")).toBe(
+    row,
+  );
+  link.focus();
+  for (const event of [
+    GatewayEvent.JOIN,
+    GatewayEvent.DISCONNECT,
+    GatewayEvent.CONNECT,
+    GatewayEvent.JOIN,
+  ]) {
+    act(() => mocks.socket.emit(event, { status: "success" }));
+    expect(
+      screen.getByRole("link", { name: "Bicie: Heros" }).closest("li"),
+    ).toBe(row);
+    expect(document.activeElement).toBe(link);
+    expect(screen.queryByRole("status", { name: "Ładowanie..." })).toBeNull();
+  }
+  expect(screen.getByRole("link", { name: "Bicie: Heros" }).closest("li")).toBe(
+    row,
+  );
+  expect(screen.queryByRole("status", { name: "Ładowanie..." })).toBeNull();
+  await act(async () => {
+    finish(response);
+    await vi.advanceTimersByTimeAsync(0);
+  });
+  expect(screen.getByRole("link", { name: "Bicie: Heros" }).closest("li")).toBe(
+    row,
+  );
+  expect(screen.queryByRole("link", { name: "Druga organizacja" })).toBeNull();
 });
