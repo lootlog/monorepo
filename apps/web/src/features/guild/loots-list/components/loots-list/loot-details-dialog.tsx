@@ -28,6 +28,8 @@ import {
 } from "@lootlog/client/main";
 import { buildLootShareMaps } from "@/features/guild/loots-list/utils/build-loot-share-maps";
 
+import { LootMapPlayers } from "./loot-map-players";
+
 const ARCHIVE_LOOTS_PERMISSION = "LOOTLOG_LOOTS_ARCHIVE";
 
 const LoadingState: FC = () => (
@@ -105,6 +107,7 @@ const LootDetailsContent: FC<LootDetailsContentProps> = ({
             })}
           </div>
         </section>
+        <LootMapPlayers loot={loot} />
         <LootDetails loot={loot} ownerMap={itemOwnerMap} />
         <LootComments lootId={loot.id} />
       </ScrollArea>

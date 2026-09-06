@@ -21,6 +21,7 @@ import {
   itemSnapshotTable,
   lootCommentTable,
   lootItemTable,
+  lootMapPlayerTable,
   lootNpcTable,
   lootPlayerTable,
   lootSubmissionTable,
@@ -182,6 +183,41 @@ export const makeLootQueryPersistence = (
           inArray(organizationLootRecordTable.lootId, [...ids]),
         ),
       );
+  const selectMapPlayers = (guildId: string, ids: ReadonlyArray<number>) =>
+    database
+      .select({
+        lootId: organizationLootRecordTable.lootId,
+        accountId: playerSnapshotTable.accountId,
+        characterId: playerSnapshotTable.characterId,
+        name: playerSnapshotTable.name,
+        prof: playerSnapshotTable.prof,
+        icon: playerSnapshotTable.icon,
+      })
+      .from(organizationLootRecordTable)
+      .innerJoin(
+        lootMapPlayerTable,
+        eq(
+          lootMapPlayerTable.organizationLootRecordId,
+          organizationLootRecordTable.id,
+        ),
+      )
+      .innerJoin(
+        playerSnapshotTable,
+        eq(playerSnapshotTable.id, lootMapPlayerTable.playerSnapshotId),
+      )
+      .where(
+        and(
+          eq(organizationLootRecordTable.guildId, guildId),
+          isNull(organizationLootRecordTable.archivedAt),
+          inArray(organizationLootRecordTable.lootId, [...ids]),
+        ),
+      )
+      .orderBy(
+        asc(playerSnapshotTable.accountId),
+        asc(playerSnapshotTable.characterId),
+        asc(playerSnapshotTable.id),
+      );
+
   const selectCommentCounts = (guildId: string, ids: ReadonlyArray<number>) =>
     database
       .select({
@@ -217,6 +253,7 @@ export const makeLootQueryPersistence = (
           selectNpcs(lootIds),
           selectSubmissions(guildId, lootIds),
           selectCommentCounts(guildId, lootIds),
+          selectMapPlayers(guildId, lootIds),
         ] as const,
         { concurrency: "unbounded" },
       ).pipe(
@@ -229,21 +266,22 @@ export const makeLootQueryPersistence = (
             npcs,
             submissions,
             commentCounts,
+            mapPlayers,
           ]) => {
             const byLoot = <Value extends { lootId: number }>(
               values: ReadonlyArray<Value>,
             ) => {
               const result = new Map<number, Value[]>();
               for (const value of values) {
-                result.set(value.lootId, [
-                  ...(result.get(value.lootId) ?? []),
-                  value,
-                ]);
+                const group = result.get(value.lootId);
+                if (group) group.push(value);
+                else result.set(value.lootId, [value]);
               }
               return result;
             };
             const itemsByLoot = byLoot(items);
             const playersByLoot = byLoot(players);
+            const mapPlayersByLoot = byLoot(mapPlayers);
             const npcsByLoot = byLoot(npcs);
             const submissionsByLoot = byLoot(submissions);
             const recordsByLoot = new Map(
@@ -256,6 +294,10 @@ export const makeLootQueryPersistence = (
             );
             return loots.map((loot) => ({
               ...loot,
+              mapPlayersSnapshot:
+                mapPlayersByLoot
+                  .get(loot.id)
+                  ?.map(({ lootId: _lootId, ...player }) => player) ?? null,
               lootItems: (itemsByLoot.get(loot.id) ?? []).map(
                 ({ lootId: _lootId, ...item }) => item,
               ),

@@ -17,6 +17,13 @@ describe("useOthersStore", () => {
     useOthersStore.getState().clearOthers();
   });
 
+  it("does not declare a partial delta to be a complete map snapshot", () => {
+    useOthersStore.getState().applyBatch({ upserts: { 1: createOther("1") } });
+    expect(useOthersStore.getState().status).toBe("uninitialized");
+    useOthersStore.getState().replaceOthers({});
+    expect(useOthersStore.getState().status).toBe("ready");
+  });
+
   it("keeps compatibility defaults for incomplete wrapped character data", () => {
     useOthersStore.getState().upsertOther("legacy", { d: {} });
     const other = useOthersStore.getState().getOther("legacy");

@@ -1,7 +1,10 @@
 import { describe, expect, it } from "bun:test";
 import { ItemTypeEnum, ProfessionEnum } from "@lootlog/schema/loot";
 import { getItemTypeByCl } from "./item-type.js";
-import { getProfByShortname, getShortnameByProf } from "./profession.js";
+import {
+  getProfByShortname,
+  getShortnameByProf,
+} from "@lootlog/domain/profession";
 
 describe("Margonem enum mappings", () => {
   it.each([

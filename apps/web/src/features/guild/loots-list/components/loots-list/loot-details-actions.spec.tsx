@@ -38,6 +38,7 @@ it("keeps archive pending until the request finishes and prevents duplicate requ
   const loot = {
     id: 1,
     uniqueId: "loot-1",
+    mapPlayersSnapshot: null,
     world: "tempest",
     source: "FIGHT" as const,
     location: "Map",

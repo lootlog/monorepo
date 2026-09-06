@@ -1,3 +1,4 @@
+import type { MapPlayersSnapshot } from "#src/contracts/loots/map-players-snapshot";
 import type { lootTable } from "#src/database/drizzle/schema";
 import type { LootItemDto } from "#src/loots/query/loot-item";
 import type { LootNpcDto } from "#src/loots/query/loot-npc";
@@ -31,6 +32,7 @@ type LootQueryBase = Omit<LootSelection, "lootShare">;
 
 export type LootQueryResult = LootQueryBase & {
   lootShare: LootShare;
+  mapPlayersSnapshot: MapPlayersSnapshot | null;
   items: LootItemDto[];
   players: LootPlayerDto[];
   npcs: LootNpcDto[];

@@ -252,6 +252,61 @@ describe("RuntimeStateProjection", () => {
     expect(adapter.getOtherHandle).toHaveBeenCalledOnce();
   });
 
+  it("replaces membership on map changes, applies deletions and rebuilds after cleanup", () => {
+    const adapter = createAdapter();
+    const projection = new RuntimeStateProjection({ adapter });
+    projection.bootstrap();
+    useOthersStore.getState().replaceOthers({
+      "11": {
+        accountId: "22",
+        characterId: "11",
+        name: "Previous map",
+        icon: "a.gif",
+        profession: "w",
+        level: 30,
+      },
+    });
+    projection.apply(
+      createEnvelope({
+        town: {
+          id: 12,
+          mainid: 12,
+          bg: "",
+          file: "",
+          mode: 0,
+          name: "Empty map",
+          pvp: 0,
+          visibility: 30,
+          water: "",
+          x: 0,
+          y: 0,
+        },
+      }),
+    );
+    expect(useOthersStore.getState().othersById).toEqual({});
+    expect(useOthersStore.getState().status).toBe("ready");
+    expect(useOthersStore.getState().mapEpoch).toBe(
+      useGameStore.getState().mapEpoch,
+    );
+    useOthersStore.getState().replaceOthers({
+      "33": {
+        accountId: "44",
+        characterId: "33",
+        name: "Departing",
+        icon: "b.gif",
+        profession: "m",
+        level: 30,
+      },
+    });
+    projection.apply(createEnvelope({ other: { "33": { del: 1 } } }));
+    expect(useOthersStore.getState().othersById).toEqual({});
+    projection.cleanup();
+    expect(useOthersStore.getState().status).toBe("uninitialized");
+    expect(projection.bootstrap()).toBe(true);
+    expect(useOthersStore.getState().status).toBe("ready");
+    expect(useOthersStore.getState().othersById).toEqual({});
+  });
+
   it("captures pre-event state from Lootlog stores before applying deletion", () => {
     const adapter = createAdapter();
     const projection = new RuntimeStateProjection({ adapter });

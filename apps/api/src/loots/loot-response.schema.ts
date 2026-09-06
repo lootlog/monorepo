@@ -1,3 +1,4 @@
+import { MapPlayersSnapshot } from "#src/contracts/loots/map-players-snapshot";
 import {
   LootItemResponse,
   LootPlayerResponse,
@@ -31,6 +32,7 @@ export const LootResponse = Schema.Struct({
   location: Schema.String,
   items: Schema.Array(LootItemResponse),
   players: Schema.Array(LootPlayerResponse),
+  mapPlayersSnapshot: Schema.NullOr(MapPlayersSnapshot),
   npcs: Schema.Array(LootNpcResponse),
   lootShare: LootShareResponse,
   createdAt: isoDatetimeCodec,

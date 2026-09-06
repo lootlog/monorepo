@@ -113,13 +113,13 @@ export const useOthersStore = create<OthersState>()((set, get) => ({
         getWritableOthersById()[id] = other;
       }
 
-      if (!writableOthersById && state.status === "ready") return state;
+      if (!writableOthersById) return state;
       return {
         othersById: Object.freeze(
           writableOthersById ?? { ...state.othersById },
         ),
         revision: state.revision + 1,
-        status: "ready",
+        status: state.status,
       };
     }),
   clearOthers: (mapChanged = false) =>

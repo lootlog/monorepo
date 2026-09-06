@@ -100,6 +100,7 @@ function createLoot(): Loot {
   return {
     id: 1,
     uniqueId: "loot-1",
+    mapPlayersSnapshot: null,
     world: "tempest",
     source: "FIGHT",
     location: "Starorzecze Narumi",

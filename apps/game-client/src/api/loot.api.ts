@@ -5,6 +5,7 @@ import {
 } from "@/lib/loot-create-debug";
 import { runSingleLoggedAction } from "@/lib/logs/log-actions";
 import { GAME_EVENT_RETRY_OPTIONS } from "@/api/retry-policy";
+import type { CreateLootDtoMapPlayersSnapshotItem } from "@lootlog/client/main";
 import type { Item } from "@lootlog/margonem/game-events";
 import type { Npc, PartyMember } from "@/utils/game/get-battle-participants";
 
@@ -20,7 +21,10 @@ export type LootDto = {
   own?: number;
 };
 
+export type MapPlayerSnapshot = CreateLootDtoMapPlayersSnapshotItem;
+
 export type CreateLootOptions = {
+  mapPlayersSnapshot?: MapPlayerSnapshot[];
   npcs: Npc[];
   players: PartyMember[];
   loots: Partial<Item>[];
@@ -55,14 +59,15 @@ export async function createLoot(
   debugContext: LootCreateDebugContext,
 ): Promise<CreateLootResponse> {
   const client = createApiClient("main");
+  const { mapPlayersSnapshot: _mapPlayersSnapshot, ...loggedOptions } = options;
   let attempt = 0;
   const response = await runSingleLoggedAction({
     actionType: "create_loot",
-    actionPayload: options,
+    actionPayload: loggedOptions,
     request: {
       method: "POST",
       endpoint: "/loots",
-      payload: options,
+      payload: loggedOptions,
     },
     execute: async () => {
       attempt += 1;
@@ -71,7 +76,7 @@ export async function createLoot(
         attempt,
         endpoint: "/loots",
         method: "POST",
-        payload: options,
+        payload: loggedOptions,
       });
 
       try {
