@@ -19,12 +19,14 @@ import { useLogout } from "@/hooks/auth/use-logout";
 import { useNavigate } from "@tanstack/react-router";
 import { ROUTES } from "@/config/routes";
 import { useTranslation } from "react-i18next";
+import { useGateway } from "@/hooks/utils/use-gateway";
 
 export const UserMenu = () => {
   const { user, isPending } = useUser();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { logout, isPending: isLogoutPending } = useLogout();
+  const { connected } = useGateway();
 
   const handleOpenAccountSettings = () => {
     navigate({ to: ROUTES.user.settings.account });
@@ -72,6 +74,21 @@ export const UserMenu = () => {
                     {user.name}
                   </span>
                 </div>
+                <span
+                  role="status"
+                  title={t("layout.userMenu.connectionDescription")}
+                  className="flex shrink-0 items-center gap-1.5 text-[10px] text-sidebar-foreground/75"
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`size-1.5 rounded-full ${connected ? "bg-emerald-400" : "bg-amber-400"}`}
+                  />
+                  {t(
+                    connected
+                      ? "layout.userMenu.connected"
+                      : "layout.userMenu.disconnected",
+                  )}
+                </span>
                 <span className="flex h-8 w-12 shrink-0 items-center justify-center border-l border-sidebar-border text-sidebar-foreground/55 transition-colors group-hover:text-sidebar-foreground">
                   <ChevronUp className="size-4 transition-transform duration-200 group-data-[state=open]:rotate-180 motion-reduce:transition-none" />
                 </span>
