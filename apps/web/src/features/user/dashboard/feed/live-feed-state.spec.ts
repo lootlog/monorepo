@@ -127,13 +127,17 @@ it("does not group unrelated kills in the same minute and removes organizations 
   ]);
 });
 
-it("removes records missing from the refreshed authorized snapshot even while scrolled", () => {
+it("buffers an ordinary snapshot rollover while scrolled until explicitly applied", () => {
   let state = liveFeedReducer(initialLiveFeedState, {
     type: "received",
     items: [feedKill],
   });
   state = liveFeedReducer(state, { type: "position", atTop: false });
+  const original = state.items;
   state = liveFeedReducer(state, { type: "received", items: [] });
+  expect(state.items).toBe(original);
+  expect(state.pending).toEqual([]);
+  state = liveFeedReducer(state, { type: "apply" });
   expect(state.items).toEqual([]);
   expect(state.pending).toBeUndefined();
 });

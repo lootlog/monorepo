@@ -66,7 +66,12 @@ export const initialLiveFeedState: LiveFeedState = {
   isError: false,
 };
 export type LiveFeedAction =
-  | { type: "received"; items: FeedItems; liveItems?: FeedItems }
+  | {
+      type: "received";
+      items: FeedItems;
+      liveItems?: FeedItems;
+      revalidatedAccess?: boolean;
+    }
   | { type: "entry"; item: FeedItems[number] }
   | { type: "position"; atTop: boolean }
   | { type: "refresh" }
@@ -142,20 +147,16 @@ function receiveFeedItems(
       items,
       pending: undefined,
     };
-  // A refreshed snapshot is authoritative for access, including while scrolled.
-  // Keep reading position only for records that the server still returns.
-  if (action.type === "received") {
-    const visibleIds = new Set(items.map((item) => item.id));
-    const retained = state.items.filter((item) => visibleIds.has(item.id));
-    if (retained.length !== state.items.length)
-      return {
-        ...state,
-        ...queryState,
-        animatedKeys,
-        items,
-        pending: undefined,
-      };
-  }
+  // Only access revalidation can interrupt the reading snapshot.
+  // Normal refreshes may drop entries due to the rolling time/count limit.
+  if (action.type === "received" && action.revalidatedAccess)
+    return {
+      ...state,
+      ...queryState,
+      animatedKeys,
+      items,
+      pending: undefined,
+    };
   const changed = JSON.stringify(state.items) !== JSON.stringify(items);
   return {
     ...state,

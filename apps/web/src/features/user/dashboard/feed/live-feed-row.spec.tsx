@@ -232,6 +232,12 @@ it("renders compact loot tiles with organization avatars and no character sprite
     ],
   );
   expect(await screen.findByText("Luvia · Świątynia Andarum")).toBeTruthy();
+  expect(screen.getByText("Liczba graczy:").parentElement?.textContent).toBe(
+    "Liczba graczy: 1",
+  );
+  expect(
+    screen.getByText("Liczba przedmiotów:").parentElement?.textContent,
+  ).toBe("Liczba przedmiotów: 2");
   expect(screen.getByText(/Breheret Żelazny Łeb/)).toBeTruthy();
   const npcImage = screen.getByRole("img", { name: feedLoot.npc.name });
   expect(npcImage.getAttribute("src")).toContain("/npc/breheret.gif");

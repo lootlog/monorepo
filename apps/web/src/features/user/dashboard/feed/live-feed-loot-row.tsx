@@ -52,9 +52,19 @@ export const LiveFeedLootRow = ({ loot, now, organizations }: Props) => {
             <LiveFeedTime occurredAt={loot.createdAt} now={now} />
           </LootMetaItem>
           <Dot className="shrink-0 text-muted-foreground" aria-hidden />
-          <LootMetaItem icon={Users}>{loot.players.length}</LootMetaItem>
+          <LootMetaItem
+            icon={Users}
+            label={t("statistics.feedPlayersCountLabel")}
+          >
+            {loot.players.length}
+          </LootMetaItem>
           <Dot className="shrink-0 text-muted-foreground" aria-hidden />
-          <LootMetaItem icon={Package}>{loot.items.length}</LootMetaItem>
+          <LootMetaItem
+            icon={Package}
+            label={t("statistics.feedItemsCountLabel")}
+          >
+            {loot.items.length}
+          </LootMetaItem>
         </div>
       </div>
     </div>

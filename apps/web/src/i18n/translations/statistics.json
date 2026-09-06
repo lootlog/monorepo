@@ -75,6 +75,8 @@
   "feedTitle": "Feed aktywności",
   "feedKill": "Bicie: {{name}}",
   "feedLoot": "Nowy łup",
+  "feedPlayersCountLabel": "Liczba graczy:",
+  "feedItemsCountLabel": "Liczba przedmiotów:",
   "feedItems": "Przedmioty",
   "feedPauseAction": "Wstrzymaj",
   "feedResumeAction": "Wznów",

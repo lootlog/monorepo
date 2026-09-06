@@ -57,6 +57,7 @@ export function useLiveFeed() {
             type: "received",
             items: data.items,
             liveItems: buffered,
+            revalidatedAccess: revalidatingAccess,
           });
         }
       } catch {
@@ -73,7 +74,10 @@ export function useLiveFeed() {
       }
     };
     const handlePermissions = () => {
-      // Events buffered under the old access policy cannot restore revoked rows.
+      // Purge old-policy state and cache before starting access revalidation.
+      cancel();
+      queryClient.removeQueries({ queryKey });
+      dispatch({ type: "clear" });
       buffered = [];
       void refresh(true);
     };

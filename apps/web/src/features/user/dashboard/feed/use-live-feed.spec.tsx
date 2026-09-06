@@ -91,7 +91,7 @@ it("receives complete live entries without further HTTP requests and refetches o
   expect(mocks.request).toHaveBeenCalledTimes(3);
   expect(result.current.state.items).toEqual(feedResponse(21).items);
 });
-it.each([GatewayEvent.PERMISSIONS_UPDATED, GatewayEvent.JOIN])(
+it.each([GatewayEvent.JOIN])(
   "retains the populated list and marks it stale when %s revalidation fails",
   async (event) => {
     mocks.request
@@ -174,7 +174,7 @@ it("ignores live entries while paused and fetches a fresh snapshot immediately o
   expect(result.current.state.items).toEqual(feedResponse(4).items);
 });
 
-it.each([GatewayEvent.PERMISSIONS_UPDATED, GatewayEvent.JOIN])(
+it.each([GatewayEvent.JOIN])(
   "keeps a paused list until %s resolves its authoritative access snapshot",
   async (event) => {
     const response = deferredResponse();
@@ -207,7 +207,7 @@ it("finishes mandatory access revalidation when the user pauses during the reque
   await act(() => vi.advanceTimersByTimeAsync(0));
   act(() => mocks.socket.emit(GatewayEvent.PERMISSIONS_UPDATED));
   act(() => result.current.setPaused(true));
-  expect(result.current.state.items).toEqual(feedResponse().items);
+  expect(result.current.state.items).toEqual([]);
   await act(async () => {
     response.resolve({ ...feedResponse(), items: [] });
     await vi.advanceTimersByTimeAsync(0);
@@ -386,11 +386,78 @@ it("does not restore pre-permission buffered entries after the authoritative sna
     }),
   );
   act(() => mocks.socket.emit(GatewayEvent.PERMISSIONS_UPDATED));
-  expect(result.current.state.items).toEqual(feedResponse().items);
+  expect(result.current.state.items).toEqual([]);
   await act(async () => {
     first.resolve(feedResponse(2));
     second.resolve({ ...feedResponse(), items: [] });
     await vi.advanceTimersByTimeAsync(0);
   });
   expect(result.current.state.items).toEqual([]);
+});
+
+it.each([false, true])(
+  "purges displayed, pending and cached entries immediately on permissions change (paused: %s), even if revalidation fails",
+  async (paused) => {
+    mocks.request
+      .mockResolvedValueOnce(feedResponse())
+      .mockRejectedValueOnce(new Error("offline"));
+    const { result, queryClient } = renderFeed();
+    await act(() => vi.advanceTimersByTimeAsync(0));
+    act(() => {
+      result.current.setAtTop(false);
+      mocks.socket.emit(GatewayEvent.FEED_ENTRY, {
+        ...feedKill,
+        id: "pending",
+      });
+    });
+    expect(result.current.state.pending).toBeDefined();
+    act(() => result.current.setPaused(paused));
+    act(() => mocks.socket.emit(GatewayEvent.PERMISSIONS_UPDATED));
+    expect(result.current.state.items).toEqual([]);
+    expect(result.current.state.pending).toBeUndefined();
+    expect(queryClient.getQueryData(["user-feed"])).toBeUndefined();
+    await act(() => vi.advanceTimersByTimeAsync(0));
+    expect(result.current.state.items).toEqual([]);
+    expect(result.current.state.isError).toBe(true);
+    expect(queryClient.getQueryData(["user-feed"])).toBeUndefined();
+  },
+);
+
+it.each(["refresh", "reconnect"] as const)(
+  "buffers rolling snapshot changes during %s while reading older entries",
+  async (trigger) => {
+    const replacement = {
+      ...feedResponse(),
+      items: [{ ...feedKill, id: "newest" }],
+    };
+    mocks.request
+      .mockResolvedValueOnce(feedResponse())
+      .mockResolvedValueOnce(replacement);
+    const { result } = renderFeed();
+    await act(() => vi.advanceTimersByTimeAsync(0));
+    const original = result.current.state.items;
+    act(() => result.current.setAtTop(false));
+    act(() => {
+      if (trigger === "refresh") result.current.refresh();
+      else mocks.socket.emit(GatewayEvent.CONNECT);
+    });
+    await act(() => vi.advanceTimersByTimeAsync(0));
+    expect(result.current.state.items).toBe(original);
+    expect(result.current.state.pending).toEqual(replacement.items);
+    act(() => result.current.applyPending());
+    expect(result.current.state.items).toEqual(replacement.items);
+  },
+);
+
+it("applies explicit join access revalidation while scrolled", async () => {
+  mocks.request
+    .mockResolvedValueOnce(feedResponse())
+    .mockResolvedValueOnce({ ...feedResponse(), items: [] });
+  const { result } = renderFeed();
+  await act(() => vi.advanceTimersByTimeAsync(0));
+  act(() => result.current.setAtTop(false));
+  act(() => mocks.socket.emit(GatewayEvent.JOIN));
+  await act(() => vi.advanceTimersByTimeAsync(0));
+  expect(result.current.state.items).toEqual([]);
+  expect(result.current.state.pending).toBeUndefined();
 });
