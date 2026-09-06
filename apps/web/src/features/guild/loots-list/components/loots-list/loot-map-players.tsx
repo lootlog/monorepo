@@ -15,20 +15,21 @@ type LootMapPlayersProps = {
 export const LootMapPlayers = ({ loot }: LootMapPlayersProps) => {
   const { t } = useTranslation();
   const titleId = useId();
+  const players = loot.mapPlayersSnapshot;
   const primaryNpc = loot.npcs.reduce<(typeof loot.npcs)[number] | undefined>(
     (primary, npc) =>
       !primary || (npc.wt ?? 0) > (primary.wt ?? 0) ? npc : primary,
     undefined,
   );
   if (
-    loot.source !== "FIGHT" ||
-    primaryNpc?.type !== "ELITE2" ||
-    !loot.items.some((item) => item.rarity === "LEGENDARY")
+    !players?.length &&
+    (loot.source !== "FIGHT" ||
+      primaryNpc?.type !== "ELITE2" ||
+      !loot.items.some((item) => item.rarity === "LEGENDARY"))
   ) {
     return null;
   }
 
-  const players = loot.mapPlayersSnapshot;
   return (
     <section aria-labelledby={titleId} className="border-b border-border">
       <SectionCardHeader

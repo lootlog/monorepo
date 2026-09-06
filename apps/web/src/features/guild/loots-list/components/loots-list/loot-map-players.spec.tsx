@@ -49,6 +49,20 @@ describe("LootMapPlayers", () => {
     expect(screen.getByText("Uczestnik")).toBeTruthy();
   });
 
+  it.each([null, "HERO", "ELITE"] as const)(
+    "shows a captured roster despite a legacy NPC type of %s",
+    (type) => {
+      render(<LootMapPlayers loot={{ ...loot, npcs: [{ wt: 20, type }] }} />);
+      expect(
+        screen.getByRole("heading", {
+          name: "Gracze na mapie w chwili dropu (2)",
+        }),
+      ).toBeTruthy();
+      expect(screen.getAllByRole("listitem")).toHaveLength(2);
+      expect(screen.getByText("Obserwator")).toBeTruthy();
+    },
+  );
+
   it("distinguishes an unavailable snapshot from an empty map", () => {
     render(<LootMapPlayers loot={{ ...loot, mapPlayersSnapshot: null }} />);
     expect(screen.getByText("Brak danych o graczach na mapie")).toBeTruthy();
@@ -67,10 +81,15 @@ describe("LootMapPlayers", () => {
         { wt: 100, type: "HERO" as const },
       ],
     },
-  ])("hides the section for nonqualifying loot", (otherLoot) => {
-    const { container } = render(<LootMapPlayers loot={otherLoot} />);
-    expect(container.textContent).toBe("");
-  });
+  ])(
+    "hides the section for nonqualifying loot without a snapshot",
+    (otherLoot) => {
+      const { container } = render(
+        <LootMapPlayers loot={{ ...otherLoot, mapPlayersSnapshot: null }} />,
+      );
+      expect(container.textContent).toBe("");
+    },
+  );
 });
 
 it.each([
