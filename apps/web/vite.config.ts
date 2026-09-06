@@ -72,6 +72,7 @@ function getVendorChunkName(id: string) {
 // https://vitejs.dev/config/
 export default defineConfig({
   test: {
+    env: { VITE_AUTH_SERVICE_URL: "http://auth.test" },
     setupFiles: "./src/test/setup.ts",
   },
   server: {
