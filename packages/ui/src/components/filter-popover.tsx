@@ -123,11 +123,11 @@ export function FilterPopover<T extends string = string>({
           />
         }
       >
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
           {Icon && <Icon className="h-4 w-4" />}
-          <span className="text-sm truncate">{getLabel()}</span>
+          <span className="truncate text-sm">{getLabel()}</span>
         </div>
-        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
       </PopoverTrigger>
       <PopoverContent
         className={cn(

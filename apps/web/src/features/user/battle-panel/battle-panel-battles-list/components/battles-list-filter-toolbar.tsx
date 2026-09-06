@@ -111,7 +111,7 @@ export const BattlesListFilterToolbar = ({
 
   if (isMobile) {
     return (
-      <div className="flex min-w-0 items-center gap-2">
+      <div className="flex w-full min-w-0 items-center gap-2">
         <WarriorSearchFilter
           selectedWarriors={selectedWarriors}
           onWarriorToggle={onWarriorToggle}
@@ -131,11 +131,11 @@ export const BattlesListFilterToolbar = ({
   }
 
   return (
-    <div className="flex min-w-0 flex-wrap items-center gap-2">
+    <div className="flex w-full min-w-0 flex-wrap items-center gap-2">
       <WarriorSearchFilter
         selectedWarriors={selectedWarriors}
         onWarriorToggle={onWarriorToggle}
-        className="min-w-[260px] flex-1 xl:max-w-[360px]"
+        className="min-w-0 basis-full xl:min-w-60 xl:flex-1 xl:basis-0"
       />
 
       <FilterPopover

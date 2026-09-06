@@ -1,5 +1,5 @@
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { PageHeader } from "@/components/common/page-header";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -160,8 +160,8 @@ export const Events = () => {
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
       <div className="px-3 pt-3">
-        <PageHeader title={t("layout.navigation.events")}>
-          <SectionCardContent>
+        <SectionCard className="rounded-xl">
+          <SectionCardContent className="p-2">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <SearchInput
                 value={searchValue}
@@ -181,7 +181,7 @@ export const Events = () => {
               </Button>
             </div>
           </SectionCardContent>
-        </PageHeader>
+        </SectionCard>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col pt-3">

@@ -1,5 +1,6 @@
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { PageHeader } from "@/components/common/page-header";
+import { SectionCard } from "@/components/common/section-card/section-card";
+import { ViewModeToggle } from "@/components/ui/view-mode-toggle";
 import { useTimerExpiry } from "./use-timer-expiry";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -12,13 +13,8 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@lootlog/ui/components/empty";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@lootlog/ui/components/tooltip";
 import groupBy from "lodash/groupBy";
-import { Clock3, Globe2, Grid2X2, List, SearchX } from "lucide-react";
+import { Clock3, Globe2, SearchX } from "lucide-react";
 import { useState } from "react";
 import { SingleTimer } from "./single-timer";
 import { NPC_TYPE_NAMES, NPC_TYPE_SORT_ORDER } from "@/constants/npc";
@@ -53,9 +49,6 @@ const getTimerListState = <Timer extends { npc?: { name: string } | null }>(
       !hasFilteredTimers,
   };
 };
-
-const getViewModeVariant = (isActive: boolean) =>
-  isActive ? "default" : "ghost";
 
 const getTimerGroupClassName = (viewMode: "grid" | "list") =>
   viewMode === "grid"
@@ -119,15 +112,16 @@ export const Timers = () => {
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
       <div className="px-3 pt-3">
-        <PageHeader title={t("layout.navigation.timers")}>
-          <SectionCardContent>
+        <SectionCard className="rounded-xl">
+          <SectionCardContent className="p-2">
             <div className="flex items-center gap-2">
               <SearchInput
                 placeholder={t("timers.searchPlaceholder")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="h-9"
-                wrapperClassName="flex-1"
+                wrapperClassName="min-w-0 flex-1"
+                aria-label={t("timers.searchPlaceholder")}
               />
               {isMobile ? (
                 <WorldSwitcher />
@@ -136,45 +130,15 @@ export const Timers = () => {
                   <WorldSwitcher />
                 </div>
               )}
-              <div className="flex items-center gap-1">
-                <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <Button
-                        onClick={() => setViewMode("list")}
-                        variant={getViewModeVariant(viewMode === "list")}
-                        size="icon"
-                        className="h-8 w-8"
-                      >
-                        <List className="h-4 w-4" />
-                      </Button>
-                    }
-                  />
-                  <TooltipContent side="bottom">
-                    <p>{t("timers.view.list")}</p>
-                  </TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <Button
-                        onClick={() => setViewMode("grid")}
-                        variant={getViewModeVariant(viewMode === "grid")}
-                        size="icon"
-                        className="h-8 w-8"
-                      >
-                        <Grid2X2 className="h-4 w-4" />
-                      </Button>
-                    }
-                  />
-                  <TooltipContent side="bottom">
-                    <p>{t("timers.view.grid")}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
+              <ViewModeToggle
+                value={viewMode}
+                onChange={setViewMode}
+                listLabel={t("timers.view.list")}
+                gridLabel={t("timers.view.grid")}
+              />
             </div>
           </SectionCardContent>
-        </PageHeader>
+        </SectionCard>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col pt-3">

@@ -84,5 +84,11 @@
   "feedError": "Nie udało się odświeżyć zdarzeń.",
   "feedNew": "Nowe zdarzenia",
   "feedEmpty": "Brak nowych zdarzeń z ostatnich 24 godzin.",
-  "feedMoreItems": "+{{count}} kolejnych"
+  "feedMoreItems": "+{{count}} kolejnych",
+  "recentBattles": {
+    "title": "Ostatnie walki",
+    "showAll": "Pokaż wszystkie",
+    "empty": "Nie masz jeszcze zapisanych walk.",
+    "unknownOpponent": "Nieznany przeciwnik"
+  }
 }

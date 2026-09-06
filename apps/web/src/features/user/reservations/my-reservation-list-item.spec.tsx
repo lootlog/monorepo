@@ -105,11 +105,12 @@ describe("MyReservationListItem", () => {
     );
   });
 
-  it("keeps the avatar out of the tab order and names its organization on link focus", async () => {
+  it("shows the organization tooltip only when the avatar receives focus", async () => {
     render(<MyReservationListItem reservation={reservation} />);
     const link = screen.getByRole("link");
-    expect(link.querySelector('[tabindex="0"]')).toBeNull();
     fireEvent.focus(link);
+    expect(screen.queryByRole("tooltip")).toBeNull();
+    fireEvent.focus(screen.getByLabelText("ZGARBIENI"));
     expect(await screen.findByRole("tooltip")).toHaveProperty(
       "textContent",
       "ZGARBIENI",
