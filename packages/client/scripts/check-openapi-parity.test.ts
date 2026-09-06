@@ -216,14 +216,14 @@ test("reservation exceptions retain only the verified statuses and error schema"
   ).toEqual({ responses: { "401": errorResponse } });
 });
 
-test("verified private additions pin authentication, supported filters and response contracts", () => {
-  const cases = [
-    ["activity", "/users/@me/activity/online"],
-    ["api", "/users/@me/stats/kills/analytics"],
-    ["api", "/users/@me/stats/kills/activity"],
-    ["api", "/users/@me/feed"],
-  ] as const;
-  for (const [service, path] of cases) {
+test.each([
+  ["activity", "/users/@me/activity/online"],
+  ["api", "/users/@me/stats/kills/analytics"],
+  ["api", "/users/@me/stats/kills/activity"],
+  ["api", "/users/@me/feed"],
+] as const)(
+  "verified private addition %s %s pins authentication, filters and response",
+  (service, path) => {
     const document = parse(
       readFileSync(
         new URL(`../../../apps/${service}/openapi.yaml`, import.meta.url),
@@ -272,5 +272,5 @@ test("verified private additions pin authentication, supported filters and respo
     expect(() =>
       assertVerifiedPersonalAddition(service, `${key}/unreviewed`, operation),
     ).toThrow("Unverified");
-  }
-});
+  },
+);
