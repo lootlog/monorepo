@@ -103,7 +103,10 @@ it("restores URL filters, keeps them while changing tabs, and fetches the select
       .getByRole("link", { name: "Aktywność" })
       .getAttribute("aria-current"),
   ).toBeNull();
-  fireEvent.change(screen.getByLabelText("Okres"), { target: { value: "7" } });
+  fireEvent.click(screen.getByRole("combobox", { name: "Okres" }));
+  const weekOption = await screen.findByRole("option", { name: "7 dni" });
+  fireEvent.pointerDown(weekOption, { pointerType: "mouse" });
+  fireEvent.click(weekOption);
   await waitFor(() =>
     expect(analytics.mock.lastCall?.[0]).toEqual({
       days: "7",
@@ -125,7 +128,7 @@ it("does not present unavailable dated history as zero kills", async () => {
   });
   renderStatistics("/@me/statistics");
   await screen.findByRole("heading", { level: 1, name: "Statystyki" });
-  expect(screen.getByText(/Historia godzinowa nie obejmuje/)).toBeTruthy();
+  expect(screen.getByText("Brak danych")).toBeTruthy();
   expect(
     screen.queryByText("Brak zarejestrowanych bić w tym okresie."),
   ).toBeNull();
