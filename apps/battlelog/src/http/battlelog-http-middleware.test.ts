@@ -1,5 +1,9 @@
 import { expect, it, spyOn } from "bun:test";
-import { Effect, Layer } from "effect";
+import {
+  httpServerDuration,
+  httpServerRequestCount,
+} from "@lootlog/instrumentation";
+import { Effect, Layer, Metric } from "effect";
 import {
   HttpRouter,
   HttpServer,
@@ -53,6 +57,15 @@ it("does not report an aborted client request as an HTTP failure", async () => {
     { disableLogger: true, middleware: battlelogHttpMiddleware },
   );
   try {
+    const attributes = {
+      "http.request.method": "GET",
+      "http.response.status_code": "499",
+    };
+    const counter = Metric.withAttributes(httpServerRequestCount, attributes);
+    const histogram = Metric.withAttributes(httpServerDuration, attributes);
+    const before = await Effect.runPromise(
+      Effect.all([Metric.value(counter), Metric.value(histogram)]),
+    );
     const controller = new AbortController();
     const response = boundary.handler(
       new Request("http://battlelog.test/", { signal: controller.signal }),
@@ -61,6 +74,11 @@ it("does not report an aborted client request as an HTTP failure", async () => {
     controller.abort();
     expect((await response).status).toBe(499);
     expect(errorLog).not.toHaveBeenCalled();
+    const after = await Effect.runPromise(
+      Effect.all([Metric.value(counter), Metric.value(histogram)]),
+    );
+    expect(after[0].count - before[0].count).toBe(1);
+    expect(after[1].count - before[1].count).toBe(1);
   } finally {
     await boundary.dispose();
     errorLog.mockRestore();

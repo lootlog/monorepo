@@ -51,6 +51,7 @@ export const AccountSettings: FC = () => {
   return (
     <ScrollArea className="h-full">
       <div className="px-3 pb-3 flex flex-col gap-4">
+        <h1 className="sr-only">{t("settings.account.title")}</h1>
         <SectionCard>
           <SectionCardHeader
             icon={LogOut}

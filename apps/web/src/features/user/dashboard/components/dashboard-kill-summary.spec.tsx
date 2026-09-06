@@ -82,6 +82,15 @@ it("filters lifetime totals by world and carries the selection to statistics", a
   );
   await screen.findByText("42");
   fireEvent.click(screen.getByRole("combobox", { name: "Okres" }));
+  const weekOption = await screen.findByRole("option", {
+    name: "Ostatni tydzień",
+  });
+  fireEvent.pointerDown(weekOption, { pointerType: "mouse" });
+  fireEvent.click(weekOption);
+  expect(
+    screen.getByRole("link", { name: /^Statystyki$/ }).getAttribute("href"),
+  ).toContain("days=7");
+  fireEvent.click(screen.getByRole("combobox", { name: "Okres" }));
   const dayOption = await screen.findByRole("option", {
     name: "Ostatnie 24 godziny",
   });

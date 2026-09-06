@@ -105,23 +105,20 @@ describe("MyReservationListItem", () => {
     );
   });
 
-  it("shows the organization tooltip only when the avatar receives focus", async () => {
+  it("keeps the reservation link as the only navigation focus target", () => {
     render(<MyReservationListItem reservation={reservation} />);
     const link = screen.getByRole("link");
+    expect(link.getAttribute("aria-label")).toContain("ZGARBIENI");
+    expect(link.querySelector('[tabindex="0"], a, button')).toBeNull();
     fireEvent.focus(link);
     expect(screen.queryByRole("tooltip")).toBeNull();
-    fireEvent.focus(screen.getByLabelText("ZGARBIENI"));
-    expect(await screen.findByRole("tooltip")).toHaveProperty(
-      "textContent",
-      "ZGARBIENI",
-    );
   });
 
   it("makes the reservation row a link to its calendar", () => {
     render(<MyReservationListItem reservation={reservation} />);
 
     const link = screen.getByRole("link", {
-      name: "Otwórz rezerwację na potepione-zamczysko",
+      name: "Otwórz rezerwację na potepione-zamczysko — ZGARBIENI",
     });
 
     expect(link.getAttribute("href")).toBe(

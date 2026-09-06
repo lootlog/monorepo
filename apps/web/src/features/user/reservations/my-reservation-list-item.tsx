@@ -48,14 +48,13 @@ export function MyReservationListItem({
       <Link
         to={reservation.sourceOrganization.calendarPath}
         className="flex min-w-0 flex-1 items-center gap-2 px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-        aria-label={t("reservations.my.open", { spot: reservation.spotName })}
+        aria-label={`${t("reservations.my.open", { spot: reservation.spotName })} — ${reservation.sourceOrganization.name}`}
       >
         <Tooltip>
           <TooltipTrigger
             render={
               <span
-                tabIndex={0}
-                className="shrink-0 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="shrink-0 rounded-xl"
                 aria-label={reservation.sourceOrganization.name}
               />
             }
