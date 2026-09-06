@@ -1,6 +1,6 @@
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import { getProfByShortname } from "@lootlog/domain/profession";
-import { NpcType } from "@/api/npcs.api";
+import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import type { MapPlayerSnapshot } from "@/api/loot.api";
 import { getItemRarity } from "@/utils/game/get-item-rarity";
 import { useOthersStore } from "@/store/others.store";
