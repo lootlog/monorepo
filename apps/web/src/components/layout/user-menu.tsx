@@ -26,7 +26,7 @@ export const UserMenu = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { logout, isPending: isLogoutPending } = useLogout();
-  const { connected } = useGateway();
+  const { joined } = useGateway();
 
   const handleOpenAccountSettings = () => {
     navigate({ to: ROUTES.user.settings.account });
@@ -81,10 +81,10 @@ export const UserMenu = () => {
                 >
                   <span
                     aria-hidden="true"
-                    className={`size-1.5 rounded-full ${connected ? "bg-emerald-400" : "bg-amber-400"}`}
+                    className={`size-1.5 rounded-full ${joined ? "bg-emerald-400" : "bg-amber-400"}`}
                   />
                   {t(
-                    connected
+                    joined
                       ? "layout.userMenu.connected"
                       : "layout.userMenu.disconnected",
                   )}
