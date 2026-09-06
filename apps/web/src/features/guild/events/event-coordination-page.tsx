@@ -51,6 +51,7 @@ export const EventCoordinationPage = () => {
     isPending,
     error,
     refetch,
+    isFetching,
   } = useEventsMonitoringControllerGetCoordination(
     {
       guildId: resolvedGuildId,
@@ -202,7 +203,11 @@ export const EventCoordinationPage = () => {
         <p className="text-muted-foreground">
           {t("events.coordination.error")}
         </p>
-        <Button variant="outline" onClick={() => void refetch()}>
+        <Button
+          variant="outline"
+          loading={isFetching}
+          onClick={() => void refetch()}
+        >
           {t("common.routeErrors.actions.retry")}
         </Button>
       </div>

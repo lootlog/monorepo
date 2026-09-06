@@ -14,6 +14,7 @@ type ReservationCardProps = {
   onOpen: () => void;
   onPinChange: (pinned: boolean) => void;
   pinPending?: boolean;
+  pinDisabled?: boolean;
   viewMode?: "list" | "grid";
 };
 
@@ -25,6 +26,7 @@ export function ReservationCard({
   onOpen,
   onPinChange,
   pinPending = false,
+  pinDisabled = false,
   viewMode = "grid",
 }: ReservationCardProps) {
   const { t } = useTranslation();
@@ -80,7 +82,8 @@ export function ReservationCard({
             size="icon"
             className="pointer-events-auto size-8"
             variant={spot.isPinned ? "secondary" : "ghost"}
-            disabled={pinPending}
+            disabled={pinDisabled}
+            loading={pinPending}
             aria-label={
               spot.isPinned
                 ? t("reservations.card.unpin", { name: spot.name })

@@ -106,11 +106,12 @@ interface MapCardProps {
   canManage: boolean;
   currentMemberId?: number;
   presenceData?: Map<string, PlayerPresence[]>;
+  actionsDisabled?: boolean;
   assignmentDisabled: boolean;
   assignmentEnabledAt?: Date | null;
   assignmentDisabledMessage?: string | null;
-  onSelfAssignClick?: (mapId: string) => void;
-  onSelfUnassignClick?: (mapId: string) => void;
+  onSelfAssignClick?: (mapId: string) => void | Promise<void>;
+  onSelfUnassignClick?: (mapId: string) => void | Promise<void>;
   onManageClick?: (mapId: string) => void;
   windowStatus?: WindowStatus;
   activeGap?: CoverageGap | null;
@@ -123,6 +124,7 @@ export const MapCard = ({
   canManage,
   currentMemberId,
   presenceData,
+  actionsDisabled,
   assignmentDisabled,
   assignmentEnabledAt,
   assignmentDisabledMessage,
@@ -134,6 +136,19 @@ export const MapCard = ({
 }: MapCardProps) => {
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [pendingAction, setPendingAction] = useState<
+    "assign" | "unassign" | null
+  >(null);
+  const changeAssignment = async (action: "assign" | "unassign") => {
+    await (action === "assign"
+      ? onSelfAssignClick?.(map.id)
+      : onSelfUnassignClick?.(map.id));
+  };
+  const runAssignment = async (action: "assign" | "unassign") => {
+    if (pendingAction) return;
+    setPendingAction(action);
+    await changeAssignment(action).finally(() => setPendingAction(null));
+  };
 
   const assignedMembers = map.assignedMembers ?? [];
   const memberCount = assignedMembers.length;
@@ -144,27 +159,27 @@ export const MapCard = ({
   const { isEnabled: isAssignmentEnabled, formattedTime: countdownTime } =
     useAssignmentCountdown(assignmentDisabled, assignmentEnabledAt);
 
+  const isActionDisabled = Boolean(pendingAction || actionsDisabled);
+  const isAssignDisabled = !isAssignmentEnabled || isActionDisabled;
   const effectiveStyle = isWindowActive(windowStatus)
     ? style
     : WINDOW_CLOSED_STYLE;
 
   const hasPlayersToShow = playersOnMap.length > 0;
   const manageActionLabel = t("events.maps.manageShort");
-  let assignmentTooltipContent = t("events.maps.assignSelf");
-  if (!isAssignmentEnabled) {
-    if (assignmentDisabledMessage) {
-      assignmentTooltipContent = assignmentDisabledMessage;
-    } else if (countdownTime) {
-      assignmentTooltipContent = t("events.maps.assignmentDisabledWithTime", {
+  const assignmentTooltipContent = getAssignmentTooltipContent();
+  function getAssignmentTooltipContent() {
+    if (isAssignmentEnabled) return t("events.maps.assignSelf");
+    if (assignmentDisabledMessage) return assignmentDisabledMessage;
+    if (countdownTime)
+      return t("events.maps.assignmentDisabledWithTime", {
         time: countdownTime,
       });
-    } else {
-      assignmentTooltipContent = t("events.maps.assignmentDisabled");
-    }
+    return t("events.maps.assignmentDisabled");
   }
 
   const handleRowDoubleClick = (event: MouseEvent<HTMLDivElement>) => {
-    if (!isAssignmentEnabled) return;
+    if (!isAssignmentEnabled || pendingAction || actionsDisabled) return;
 
     const target = event.target;
     if (target instanceof Element && target.closest("[data-map-row-actions]")) {
@@ -172,11 +187,11 @@ export const MapCard = ({
     }
 
     if (isAssignedToMe) {
-      onSelfUnassignClick?.(map.id);
+      void runAssignment("unassign");
       return;
     }
 
-    onSelfAssignClick?.(map.id);
+    void runAssignment("assign");
   };
 
   return (
@@ -312,7 +327,7 @@ export const MapCard = ({
                       size="icon"
                       className="size-9"
                       onClick={() => onManageClick?.(map.id)}
-                      disabled={!isAssignmentEnabled}
+                      disabled={isAssignDisabled}
                       aria-label={manageActionLabel}
                     >
                       <Users className="size-4" />
@@ -336,11 +351,12 @@ export const MapCard = ({
                     variant="outline"
                     size="icon"
                     className="size-9 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                    onClick={() => onSelfUnassignClick?.(map.id)}
+                    loading={pendingAction === "unassign"}
+                    disabled={isActionDisabled}
+                    icon={<X className="size-4" />}
+                    onClick={() => void runAssignment("unassign")}
                     aria-label={t("events.maps.unassignSelf")}
-                  >
-                    <X className="size-4" />
-                  </Button>
+                  ></Button>
                 }
               />
               <TooltipContent>{t("events.maps.unassignSelf")}</TooltipContent>
@@ -354,12 +370,12 @@ export const MapCard = ({
                       variant="outline"
                       size="icon"
                       className="size-9"
-                      onClick={() => onSelfAssignClick?.(map.id)}
-                      disabled={!isAssignmentEnabled}
+                      loading={pendingAction === "assign"}
+                      icon={<UserPlus className="size-4" />}
+                      onClick={() => void runAssignment("assign")}
+                      disabled={isAssignDisabled}
                       aria-label={t("events.maps.assignSelf")}
-                    >
-                      <UserPlus className="size-4" />
-                    </Button>
+                    ></Button>
                   </span>
                 }
               />

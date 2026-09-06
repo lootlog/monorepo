@@ -166,6 +166,8 @@ export const BattlesTable = ({
     handleSingleDelete,
     handleUnshare,
     isBulkBusy,
+    isBulkSharePending,
+    pendingBattleId,
     isBulkDeleteDialogOpen,
     isDeletePending,
     isRowActionBusy,
@@ -234,6 +236,7 @@ export const BattlesTable = ({
       <BattleTableActionsMenu
         battle={battle}
         disabled={isRowActionBusy}
+        loading={pendingBattleId === battle.id}
         onCopyLink={handleCopyLink}
         onDelete={setSingleDeleteBattle}
         onShare={handleShare}
@@ -388,7 +391,8 @@ export const BattlesTable = ({
 
   const selectionBar = hasSelectedBattles ? (
     <BattlesBulkActionsBar
-      disabled={isBulkBusy}
+      disabled={isBulkBusy || isRowActionBusy}
+      sharePending={isBulkSharePending}
       onClearSelection={clearSelection}
       onDelete={() => setIsBulkDeleteDialogOpen(true)}
       onShare={handleBulkShare}

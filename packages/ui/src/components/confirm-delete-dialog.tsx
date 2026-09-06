@@ -107,7 +107,12 @@ export function ConfirmDeleteDialog({
   };
 
   return (
-    <AlertDialog open={isOpen} onOpenChange={handleOpenChange}>
+    <AlertDialog
+      open={isOpen}
+      onOpenChange={(nextOpen) => {
+        if (!isSubmitting) handleOpenChange(nextOpen);
+      }}
+    >
       {triggerTooltip ? (
         <Tooltip>
           <TooltipTrigger
@@ -131,6 +136,7 @@ export function ConfirmDeleteDialog({
               <p className="text-sm text-muted-foreground">{confirmLabel}</p>
             )}
             <Input
+              disabled={isSubmitting}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               placeholder={confirmText}
@@ -143,12 +149,12 @@ export function ConfirmDeleteDialog({
             {cancelButtonLabel}
           </AlertDialogCancel>
           <AlertDialogAction
+            render=<Button variant="destructive" loading={isSubmitting} />
             onClick={(e) => {
               e.preventBaseUIHandler();
               void handleConfirm();
             }}
             disabled={isConfirmDisabled}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
             {confirmButtonLabel}
           </AlertDialogAction>

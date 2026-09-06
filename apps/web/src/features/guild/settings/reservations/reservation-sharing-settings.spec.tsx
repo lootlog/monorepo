@@ -7,11 +7,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import type {
-  ButtonHTMLAttributes,
-  HTMLAttributes,
-  InputHTMLAttributes,
-} from "react";
+import type { HTMLAttributes, InputHTMLAttributes } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ReservationSharingSettings } from "./reservation-sharing-settings";
 
@@ -104,18 +100,6 @@ vi.mock("@lootlog/ui/components/card", () => ({
   ),
 }));
 
-vi.mock("@lootlog/ui/components/button", () => ({
-  Button: ({
-    children,
-    size: _size,
-    variant: _variant,
-    ...props
-  }: ButtonHTMLAttributes<HTMLButtonElement> & {
-    size?: string;
-    variant?: string;
-  }) => <button {...props}>{children}</button>,
-}));
-
 vi.mock("@lootlog/ui/components/input", () => ({
   Input: (props: InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
 }));
@@ -186,5 +170,50 @@ describe("ReservationSharingSettings", () => {
         screen.queryByRole("textbox", { name: "Link zaproszenia" }),
       ).toBeNull();
     });
+  });
+  it("keeps copy busy until the clipboard request settles and allows retry after failure", async () => {
+    let rejectCopy: (reason?: unknown) => void = () => {};
+    const writeText = vi.fn(
+      () =>
+        new Promise<void>((_resolve, reject) => {
+          rejectCopy = reject;
+        }),
+    );
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+    render(<ReservationSharingSettings />);
+    fireEvent.click(screen.getByRole("button", { name: "Utwórz zaproszenie" }));
+    const copy = screen.getByRole<HTMLButtonElement>("button", {
+      name: "Kopiuj",
+    });
+    fireEvent.click(copy);
+    await waitFor(() => expect(copy.disabled).toBe(true));
+    expect(copy.getAttribute("aria-busy")).toBe("true");
+    fireEvent.click(copy);
+    expect(writeText).toHaveBeenCalledTimes(1);
+    rejectCopy(new Error("Clipboard unavailable"));
+    await waitFor(() => expect(copy.disabled).toBe(false));
+    expect(screen.getByRole("button", { name: "Kopiuj" })).toBe(copy);
+  });
+  it("restores copy after a synchronous clipboard exception", async () => {
+    const writeText = vi.fn(() => {
+      throw new Error("Clipboard unavailable");
+    });
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+    render(<ReservationSharingSettings />);
+    fireEvent.click(screen.getByRole("button", { name: "Utwórz zaproszenie" }));
+    const copy = screen.getByRole<HTMLButtonElement>("button", {
+      name: "Kopiuj",
+    });
+    fireEvent.click(copy);
+    await waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(copy.disabled).toBe(false));
+    fireEvent.click(copy);
+    await waitFor(() => expect(writeText).toHaveBeenCalledTimes(2));
   });
 });

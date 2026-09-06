@@ -210,7 +210,7 @@ describe("ScheduleHeader", () => {
     renderHeader({ isCompact: true, isFindingNearestFreeSlot: true });
 
     const action = screen.getByRole("button", {
-      name: "Szukanie wolnego terminu",
+      name: "Znajdź najbliższy wolny termin",
     });
     expect(action.hasAttribute("disabled")).toBe(true);
     expect(action.getAttribute("aria-busy")).toBe("true");

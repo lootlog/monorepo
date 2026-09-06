@@ -1,5 +1,4 @@
 import { Button } from "@lootlog/ui/components/button";
-import { Spinner } from "@lootlog/ui/components/spinner";
 import { useQueryClient } from "@tanstack/react-query";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
@@ -40,7 +39,7 @@ export const LootDetailsActions: FC<LootDetailsActionsProps> = ({ loot }) => {
   });
 
   const handleLootDelete = () => {
-    if (!guildId) {
+    if (!guildId || isPending) {
       return;
     }
 
@@ -53,10 +52,11 @@ export const LootDetailsActions: FC<LootDetailsActionsProps> = ({ loot }) => {
     <div className="flex justify-start items-center gap-2">
       <Button
         variant="destructive"
-        className="h-8 w-16"
+        className="h-8"
+        loading={isPending}
         onClick={handleLootDelete}
       >
-        {isPending ? <Spinner className="h-4 w-4" /> : t("common.delete")}
+        {t("common.delete")}
       </Button>
     </div>
   );

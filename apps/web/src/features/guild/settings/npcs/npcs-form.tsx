@@ -44,7 +44,7 @@ const formSchema = z.object({
 export const NpcsForm: FC<NpcsFormProps> = ({ npc }) => {
   const guildId = useGuildId();
   const queryClient = useQueryClient();
-  const { mutate: updateGuildLootlogNpc } =
+  const { mutate: updateGuildLootlogNpc, isPending } =
     useLootlogConfigControllerUpdateNpc();
   const { t } = useTranslation();
 
@@ -67,6 +67,8 @@ export const NpcsForm: FC<NpcsFormProps> = ({ npc }) => {
   }, [npc]);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
+    if (isPending) return;
+
     updateGuildLootlogNpc(
       {
         pathParams: { guildId: guildId ?? "", npcId: npc.id.toString() },
@@ -165,7 +167,7 @@ export const NpcsForm: FC<NpcsFormProps> = ({ npc }) => {
 
         <UnsavedChangesBar
           isDirty={form.formState.isDirty}
-          isSubmitting={form.formState.isSubmitting}
+          isSubmitting={isPending}
           onReset={() => form.reset()}
         />
       </form>

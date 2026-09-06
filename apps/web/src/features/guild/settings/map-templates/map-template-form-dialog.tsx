@@ -24,7 +24,6 @@ import {
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { FileText, Pencil, X, MapPin } from "lucide-react";
-import { Spinner } from "@lootlog/ui/components/spinner";
 import { toast } from "sonner";
 import { getApiErrorStatus } from "@lootlog/client/transport";
 import { useQueryClient } from "@tanstack/react-query";
@@ -384,24 +383,11 @@ export const MapTemplateFormDialog = ({
               <Button
                 type="submit"
                 size="sm"
-                disabled={isPending}
+                loading={isPending}
+                icon={<Icon className="size-3.5" />}
                 className="flex-1"
               >
-                {isPending ? (
-                  <>
-                    <Spinner className="size-3.5 mr-1.5" />
-                    {t(
-                      isCreate
-                        ? "settings.mapTemplates.createDialog.creating"
-                        : "settings.mapTemplates.editDialog.saving",
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <Icon className="size-3.5 mr-1.5" />
-                    {t("settings.mapTemplates.saveTemplate")}
-                  </>
-                )}
+                {t("settings.mapTemplates.saveTemplate")}
               </Button>
             </div>
           </form>

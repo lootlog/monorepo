@@ -127,7 +127,8 @@ export function EditMyReservationForm({
         </Button>
         <Button
           type="submit"
-          disabled={!startsAt || !endsAt || updateMutation.isPending}
+          disabled={!startsAt || !endsAt}
+          loading={updateMutation.isPending}
         >
           {t("common.save")}
         </Button>

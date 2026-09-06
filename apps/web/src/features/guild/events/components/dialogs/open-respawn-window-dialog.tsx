@@ -20,7 +20,6 @@ import {
   FormMessage,
 } from "@lootlog/ui/components/form";
 import { Timer } from "lucide-react";
-import { Spinner } from "@lootlog/ui/components/spinner";
 
 interface OpenRespawnWindowDialogProps {
   open: boolean;
@@ -73,15 +72,20 @@ export const OpenRespawnWindowDialog = ({
   });
 
   const handleConfirm = async (values: FormValues) => {
-    await onConfirm({
-      minSpawnTime: values.minTime.toISOString(),
-      maxSpawnTime: values.maxTime.toISOString(),
-    });
-
-    form.reset(getDefaultValues());
+    if (isLoading) return;
+    try {
+      await onConfirm({
+        minSpawnTime: values.minTime.toISOString(),
+        maxSpawnTime: values.maxTime.toISOString(),
+      });
+      form.reset(getDefaultValues());
+    } catch {
+      // Preserve the entered times for retry after the action reports its error.
+    }
   };
 
   const handleOpenChange = (isOpen: boolean) => {
+    if (isLoading) return;
     if (!isOpen) {
       form.reset(getDefaultValues());
     }
@@ -168,11 +172,11 @@ export const OpenRespawnWindowDialog = ({
               </Button>
               <Button
                 type="submit"
+                loading={isLoading}
                 size="sm"
                 disabled={isLoading}
                 className="flex-1"
               >
-                {isLoading && <Spinner className="w-4 h-4 mr-2" />}
                 {t("events.respawn.openWindowButton")}
               </Button>
             </div>

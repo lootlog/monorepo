@@ -31,7 +31,7 @@ export function StatisticsQueryPanel({
           <Button
             variant="outline"
             size="sm"
-            disabled={query.isFetching}
+            loading={query.isFetching}
             onClick={() => {
               void query.refetch();
             }}

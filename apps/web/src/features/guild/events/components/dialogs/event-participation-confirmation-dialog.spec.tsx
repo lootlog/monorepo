@@ -71,6 +71,53 @@ vi.mock("@lootlog/client/main", async () => ({
 }));
 
 describe("EventParticipationConfirmationDialog", () => {
+  it("keeps bulk confirmation busy after one request fails until every request settles", async () => {
+    let failFirst = (_reason?: unknown) => {};
+    let finishLast = () => {};
+    const first = new Promise<void>((_resolve, reject) => {
+      failFirst = reject;
+    });
+    const last = new Promise<void>((resolve) => {
+      finishLast = resolve;
+    });
+    mocks.confirmParticipation
+      .mockReturnValueOnce(first)
+      .mockReturnValueOnce(last);
+    mocks.data.items = [
+      createConfirmation({
+        killId: "first",
+        confirmationDeadlineAt: "2026-07-28T12:01:00.000Z",
+      }),
+      createConfirmation({
+        killId: "last",
+        confirmationDeadlineAt: "2026-07-28T12:01:00.000Z",
+      }),
+    ];
+    render(
+      <EventParticipationConfirmationDialog
+        guildId="guild-1"
+        eventId="event-1"
+      />,
+    );
+    const bulk = screen.getByRole("button", { name: "Potwierdź wszystko" });
+    fireEvent.click(bulk);
+    expect(bulk.getAttribute("aria-busy")).toBe("true");
+    await act(async () => {
+      failFirst(new Error("request failed"));
+    });
+    expect(bulk.hasAttribute("disabled")).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(screen.getByRole("button", { name: "Potwierdź wszystko" })).toBe(
+      bulk,
+    );
+    await act(async () => {
+      finishLast();
+      await last;
+    });
+    expect(bulk.hasAttribute("disabled")).toBe(false);
+    expect(bulk.getAttribute("aria-busy")).not.toBe("true");
+  });
+
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime("2026-07-28T12:00:00.000Z");

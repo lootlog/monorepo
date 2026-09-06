@@ -20,20 +20,20 @@ export type LootDetailsProps = {
 
 export const LootDetails: FC<LootDetailsProps> = ({ loot, ownerMap }) => {
   const [open, setOpen] = useState(false);
+  const [copyingId, setCopyingId] = useState<string | null>(null);
   const { t } = useTranslation();
   const watchContext = {
     world: loot.world,
   };
 
   const handleCopyId = (id: string) => {
-    navigator.clipboard
-      .writeText(id)
-      .then(() => {
-        toast.success(t("loots.details.copySuccess"));
-      })
-      .catch(() => {
-        toast.error(t("loots.details.copyError"));
-      });
+    if (copyingId !== null) return;
+    setCopyingId(id);
+    return Promise.resolve()
+      .then(() => navigator.clipboard.writeText(id))
+      .then(() => toast.success(t("loots.details.copySuccess")))
+      .catch(() => toast.error(t("loots.details.copyError")))
+      .finally(() => setCopyingId(null));
   };
 
   const getOwnerName = (itemHid: string) => {
@@ -78,6 +78,8 @@ export const LootDetails: FC<LootDetailsProps> = ({ loot, ownerMap }) => {
               className="size-8 shrink-0 cursor-pointer rounded-lg"
               variant="ghost"
               onClick={() => handleCopyId(formattedItemHid)}
+              loading={copyingId === formattedItemHid}
+              disabled={copyingId !== null}
               aria-label={t("loots.details.copyId")}
               title={t("loots.details.copyId")}
             >

@@ -77,13 +77,19 @@ export const GuildDocTrashDialog = ({
       });
       await refreshDocs(docId);
       toast.success(t("docs.trash.purged"));
-    } catch {
+    } catch (error) {
       toast.error(t("docs.trash.purgeError"));
+      throw error;
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!isMutating) onOpenChange(nextOpen);
+      }}
+    >
       <DialogContent className="flex max-h-[85vh] flex-col gap-0 overflow-hidden border-border/70 bg-background/95 p-0 shadow-2xl shadow-background/40  sm:max-w-2xl">
         <DialogHeader className="border-b border-border/70 bg-card px-4 py-3 pr-12">
           <DialogTitle className="flex items-center gap-2 text-base">
@@ -164,9 +170,14 @@ export const GuildDocTrashDialog = ({
                           size="sm"
                           variant="secondary"
                           disabled={isMutating}
+                          loading={
+                            restoreDocument.isPending &&
+                            restoreDocument.variables?.pathParams.docId ===
+                              document.id
+                          }
+                          icon={<RotateCcw className="size-3.5" />}
                           onClick={() => void handleRestore(document.id)}
                         >
-                          <RotateCcw className="size-3.5" />
                           {t("docs.trash.restore")}
                         </Button>
                         <ConfirmDeleteDialog

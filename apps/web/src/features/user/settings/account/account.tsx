@@ -19,7 +19,7 @@ export const AccountSettings: FC = () => {
   const { user, isPending } = useUser();
   const deleteAccount = useUsersControllerDeleteAccount();
   const queryClient = useQueryClient();
-  const { logout } = useLogout();
+  const { logout, isPending: isLoggingOut } = useLogout();
   const isDeleteDisabled = isPending || !user?.name || deleteAccount.isPending;
 
   const handleDeleteAccount = async () => {
@@ -69,9 +69,10 @@ export const AccountSettings: FC = () => {
               variant="outline"
               size="sm"
               className="w-full justify-center sm:w-auto"
+              loading={isLoggingOut}
+              icon={<LogOut className="size-3.5" />}
               onClick={logout}
             >
-              <LogOut className="size-3.5" />
               {t("settings.account.session.logout")}
             </Button>
           </SectionCardContent>

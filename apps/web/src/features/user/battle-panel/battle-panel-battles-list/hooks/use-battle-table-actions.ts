@@ -13,7 +13,7 @@ import {
   invalidatePublicBattlesControllerGetPublicBattleTimeline,
 } from "@lootlog/client/battlelog";
 import { useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useCopyToClipboard } from "usehooks-ts";
@@ -35,21 +35,27 @@ export const useBattleTableActions = ({
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [, copy] = useCopyToClipboard();
-  const { handleShare, handleCopyLink, handleUnshare, isPending } =
-    useBattleSharing();
-  const { mutateAsync: updateBattle, isPending: isBulkSharePending } =
-    useBattlesControllerUpdateBattle();
   const {
-    mutate: deleteBattle,
-    mutateAsync: deleteBattleAsync,
-    isPending: isDeletePending,
-  } = useBattlesControllerDeleteBattle();
+    handleShare,
+    handleCopyLink,
+    handleUnshare,
+    isPending,
+    pendingAction,
+  } = useBattleSharing();
+  const { mutateAsync: updateBattle } = useBattlesControllerUpdateBattle();
+  const { mutateAsync: deleteBattleAsync } = useBattlesControllerDeleteBattle();
+  const [pendingOperation, setPendingOperation] = useState<
+    "share" | "delete" | "singleDelete" | null
+  >(null);
+  const operationBusy = useRef(false);
   const [singleDeleteBattle, setSingleDeleteBattle] = useState<Battle | null>(
     null,
   );
   const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
 
-  const isBulkBusy = isBulkSharePending || isDeletePending;
+  const isDeletePending =
+    pendingOperation === "delete" || pendingOperation === "singleDelete";
+  const isBulkBusy = pendingOperation !== null;
   const isRowActionBusy = isPending || isBulkBusy;
 
   const invalidateBattleVisibilityQueries = async (battleIds: string[]) => {
@@ -75,7 +81,7 @@ export const useBattleTableActions = ({
     await Promise.all(invalidationPromises);
   };
 
-  const handleBulkShare = async () => {
+  const shareSelectedBattles = async () => {
     if (selectedBattles.length === 0) {
       return;
     }
@@ -83,7 +89,7 @@ export const useBattleTableActions = ({
     const privateBattles = selectedBattles.filter((battle) => !battle.public);
 
     try {
-      await Promise.all(
+      const results = await Promise.allSettled(
         privateBattles.map((battle) =>
           updateBattle({
             pathParams: { battleId: battle.id },
@@ -96,6 +102,12 @@ export const useBattleTableActions = ({
         await invalidateBattleVisibilityQueries(
           privateBattles.map((battle) => battle.id),
         );
+      }
+      if (results.some((result) => result.status === "rejected")) {
+        toast.error(t("battlePanel.toasts.bulkBattleShareError"), {
+          duration: 3000,
+        });
+        return;
       }
     } catch {
       toast.error(t("battlePanel.toasts.bulkBattleShareError"), {
@@ -132,13 +144,13 @@ export const useBattleTableActions = ({
     }
   };
 
-  const handleBulkDelete = async () => {
+  const deleteSelectedBattles = async () => {
     if (selectedBattles.length === 0) {
       return;
     }
 
     try {
-      await Promise.all(
+      const results = await Promise.allSettled(
         selectedBattles.map((battle) =>
           deleteBattleAsync({
             pathParams: { battleId: battle.id },
@@ -148,6 +160,17 @@ export const useBattleTableActions = ({
       await invalidateBattleVisibilityQueries(
         selectedBattles.map((battle) => battle.id),
       );
+      results.forEach((result, index) => {
+        const battle = selectedBattles[index];
+        if (result.status === "fulfilled" && battle)
+          removeBattleFromSelection(battle.id);
+      });
+      if (results.some((result) => result.status === "rejected")) {
+        toast.error(t("battlePanel.toasts.bulkBattleDeleteError"), {
+          duration: 3000,
+        });
+        return;
+      }
       toast.success(
         t("battlePanel.toasts.bulkBattlesDeleted", {
           count: selectedBattles.length,
@@ -165,34 +188,41 @@ export const useBattleTableActions = ({
     }
   };
 
-  const handleSingleDelete = () => {
-    if (!singleDeleteBattle) {
-      return;
+  const deleteSingleBattle = async () => {
+    if (!singleDeleteBattle) return;
+    try {
+      await deleteBattleAsync({
+        pathParams: { battleId: singleDeleteBattle.id },
+      });
+      await invalidateBattleVisibilityQueries([singleDeleteBattle.id]);
+      toast.success(t("battlePanel.toasts.battleDeleted"), { duration: 3000 });
+      removeBattleFromSelection(singleDeleteBattle.id);
+      setSingleDeleteBattle(null);
+    } catch {
+      toast.error(t("battlePanel.toasts.battleDeleteError"), {
+        duration: 3000,
+      });
     }
-
-    deleteBattle(
-      {
-        pathParams: {
-          battleId: singleDeleteBattle.id,
-        },
-      },
-      {
-        onSuccess: async () => {
-          await invalidateBattleVisibilityQueries([singleDeleteBattle.id]);
-          toast.success(t("battlePanel.toasts.battleDeleted"), {
-            duration: 3000,
-          });
-          removeBattleFromSelection(singleDeleteBattle.id);
-          setSingleDeleteBattle(null);
-        },
-        onError: () => {
-          toast.error(t("battlePanel.toasts.battleDeleteError"), {
-            duration: 3000,
-          });
-        },
-      },
-    );
   };
+
+  const runOperation = async (
+    operation: "share" | "delete" | "singleDelete",
+    action: () => Promise<void>,
+  ) => {
+    if (operationBusy.current || isPending) return;
+    operationBusy.current = true;
+    setPendingOperation(operation);
+    await Promise.resolve()
+      .then(action)
+      .finally(() => {
+        operationBusy.current = false;
+        setPendingOperation(null);
+      });
+  };
+  const handleBulkShare = () => runOperation("share", shareSelectedBattles);
+  const handleBulkDelete = () => runOperation("delete", deleteSelectedBattles);
+  const handleSingleDelete = () =>
+    runOperation("singleDelete", deleteSingleBattle);
 
   return {
     handleBulkDelete,
@@ -202,6 +232,8 @@ export const useBattleTableActions = ({
     handleSingleDelete,
     handleUnshare,
     isBulkBusy,
+    isBulkSharePending: pendingOperation === "share",
+    pendingBattleId: pendingAction?.battleId,
     isBulkDeleteDialogOpen,
     isDeletePending,
     isRowActionBusy,

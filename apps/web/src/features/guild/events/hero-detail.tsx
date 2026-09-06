@@ -245,6 +245,8 @@ export const HeroDetail = () => {
       },
     },
   );
+  const [isClearingAssignments, setIsClearingAssignments] = useState(false);
+  const [pendingAssignmentCount, setPendingAssignmentCount] = useState(0);
   const [mapManageOpen, setMapManageOpen] = useState(false);
   const [assignmentOpen, setAssignmentOpen] = useState(false);
   const [selectedMapId, setSelectedMapId] = useState<string | null>(null);
@@ -506,6 +508,7 @@ export const HeroDetail = () => {
   const handleSelfAssignClick = async (mapId: string) => {
     if (!eventId) return;
 
+    setPendingAssignmentCount((count) => count + 1);
     try {
       if (!assignmentAllowed) {
         const assignmentErrorCandidate = assignmentDisabledMessage;
@@ -523,12 +526,15 @@ export const HeroDetail = () => {
       toast.success(t("events.maps.assignSuccess"));
     } catch {
       toast.error(t("events.maps.assignError"));
+    } finally {
+      setPendingAssignmentCount((count) => count - 1);
     }
   };
 
   const handleSelfUnassignClick = async (mapId: string) => {
     if (!eventId) return;
 
+    setPendingAssignmentCount((count) => count + 1);
     try {
       await selfUnassignMember.mutateAsync({
         pathParams: {
@@ -540,6 +546,8 @@ export const HeroDetail = () => {
       toast.success(t("events.maps.unassignSuccess"));
     } catch {
       toast.error(t("events.maps.unassignError"));
+    } finally {
+      setPendingAssignmentCount((count) => count - 1);
     }
   };
 
@@ -551,6 +559,7 @@ export const HeroDetail = () => {
   const handleAssignFromModal = async (memberId: number) => {
     if (!selectedMapId || !guildId || !eventId) return;
 
+    setPendingAssignmentCount((count) => count + 1);
     try {
       if (!assignmentAllowed) {
         const assignmentErrorCandidate = assignmentDisabledMessage;
@@ -571,12 +580,15 @@ export const HeroDetail = () => {
       toast.success(t("events.maps.assignSuccess"));
     } catch {
       toast.error(t("events.maps.assignError"));
+    } finally {
+      setPendingAssignmentCount((count) => count - 1);
     }
   };
 
   const handleUnassignFromModal = async (memberId: number) => {
     if (!selectedMapId || !guildId || !eventId) return;
 
+    setPendingAssignmentCount((count) => count + 1);
     try {
       await unassignMember.mutateAsync({
         pathParams: {
@@ -591,16 +603,19 @@ export const HeroDetail = () => {
       toast.success(t("events.maps.unassignSuccess"));
     } catch {
       toast.error(t("events.maps.unassignError"));
+    } finally {
+      setPendingAssignmentCount((count) => count - 1);
     }
   };
 
   const selectedMap = allMaps.find((m) => m.id === selectedMapId);
 
   const handleClearAllAssignments = async () => {
-    if (!eventId || allMaps.length === 0) return;
+    if (!eventId || allMaps.length === 0 || isClearingAssignments) return;
+    setIsClearingAssignments(true);
 
     try {
-      await Promise.all(
+      const results = await Promise.allSettled(
         allMaps.map((map) =>
           unassignMember.mutateAsync({
             pathParams: {
@@ -611,9 +626,15 @@ export const HeroDetail = () => {
           }),
         ),
       );
-      toast.success(t("events.maps.clearAllSuccess"));
+      if (results.some((result) => result.status === "rejected")) {
+        toast.error(t("events.maps.clearAllError"));
+      } else {
+        toast.success(t("events.maps.clearAllSuccess"));
+      }
     } catch {
       toast.error(t("events.maps.clearAllError"));
+    } finally {
+      setIsClearingAssignments(false);
     }
   };
 
@@ -637,8 +658,9 @@ export const HeroDetail = () => {
       });
       toast.success(t("events.respawn.closeSuccess"));
       setCloseWindowOpen(false);
-    } catch {
+    } catch (error) {
       toast.error(t("events.respawn.closeError"));
+      throw error;
     }
   };
 
@@ -662,8 +684,9 @@ export const HeroDetail = () => {
       });
       toast.success(t("events.respawn.openSuccess"));
       setOpenWindowOpen(false);
-    } catch {
+    } catch (error) {
       toast.error(t("events.respawn.openError"));
+      throw error;
     }
   };
 
@@ -790,10 +813,14 @@ export const HeroDetail = () => {
                                     size="sm"
                                     className="size-9 px-0 @2xl/maps:w-auto @2xl/maps:px-3"
                                     onClick={handleClearAllAssignments}
-                                    disabled={uniqueMembers.length === 0}
+                                    loading={isClearingAssignments}
+                                    icon={<Eraser className="size-4" />}
+                                    disabled={
+                                      uniqueMembers.length === 0 ||
+                                      pendingAssignmentCount > 0
+                                    }
                                     aria-label={t("events.maps.clearAll")}
                                   >
-                                    <Eraser className="size-4" />
                                     <span className="hidden @2xl/maps:inline">
                                       {t("events.maps.clearAll")}
                                     </span>
@@ -834,6 +861,7 @@ export const HeroDetail = () => {
                 <EventMapGrid
                   locations={hero.locations}
                   maps={hero.maps}
+                  actionsDisabled={isClearingAssignments}
                   onSelfAssignClick={handleSelfAssignClick}
                   onSelfUnassignClick={handleSelfUnassignClick}
                   onManageClick={handleManageClick}

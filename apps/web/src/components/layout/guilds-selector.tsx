@@ -155,6 +155,7 @@ export const GuildsSelector: FC = () => {
               size="icon"
               variant="ghost"
               aria-label={t("settings.servers.loadError")}
+              loading={guildsQuery.isFetching || preferencesQuery.isFetching}
               onClick={() => {
                 void guildsQuery.refetch();
                 void preferencesQuery.refetch();

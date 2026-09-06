@@ -205,7 +205,8 @@ type RolesFormProps = {
 export const RolesForm: FC<RolesFormProps> = ({ role }) => {
   const guildId = useGuildId();
   const queryClient = useQueryClient();
-  const { mutate: updateGuildRole } = useRolesControllerUpdateGuildRole();
+  const { mutate: updateGuildRole, isPending } =
+    useRolesControllerUpdateGuildRole();
   const { t } = useTranslation();
 
   const form = useForm<FormSchemaType>({
@@ -239,6 +240,8 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
   }, [role]);
 
   function onSubmit(values: FormSchemaType) {
+    if (isPending) return;
+
     updateGuildRole(
       {
         pathParams: { guildId: guildId ?? "", roleId: role.id },
@@ -420,7 +423,7 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
 
         <UnsavedChangesBar
           isDirty={form.formState.isDirty}
-          isSubmitting={form.formState.isSubmitting}
+          isSubmitting={isPending}
           onReset={() => form.reset()}
         />
       </form>

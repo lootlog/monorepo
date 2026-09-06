@@ -383,18 +383,15 @@ export const NotificationTargetDialog = ({
               </Button>
               <Button
                 type="submit"
+                loading={isSubmitting}
                 disabled={
                   isSubmitting ||
                   (isCreateMode && availableChannels.length === 0)
                 }
               >
-                {isSubmitting ? (
-                  <Spinner className="size-4" />
-                ) : isCreateMode ? (
-                  t("settings.notifications.actions.create")
-                ) : (
-                  t("settings.notifications.actions.save")
-                )}
+                {isCreateMode
+                  ? t("settings.notifications.actions.create")
+                  : t("settings.notifications.actions.save")}
               </Button>
             </DialogFooter>
           </form>

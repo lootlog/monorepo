@@ -6,7 +6,6 @@ import { useTranslation } from "react-i18next";
 import { ArrowRight, MapPin, Timer, UserPlus, X } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import { Badge } from "@lootlog/ui/components/badge";
-import { Spinner } from "@lootlog/ui/components/spinner";
 import { Progress } from "@lootlog/ui/components/progress";
 import { NpcTile } from "@/components/tiles";
 import { formatDurationHuman } from "../../utils/format-duration";
@@ -137,14 +136,11 @@ export const EventCoordinationHeroCard = ({
                 size="sm"
                 variant="outline"
                 className="shrink-0"
-                disabled={isAssigning || !isAssignmentEnabled}
+                loading={isAssigning}
+                disabled={!isAssignmentEnabled}
+                icon={<UserPlus className="size-3.5" />}
                 onClick={() => onSelfAssign(targetGap.mapId, hero)}
               >
-                {isAssigning ? (
-                  <Spinner className="size-3.5" />
-                ) : (
-                  <UserPlus className="size-3.5" />
-                )}
                 {!isAssignmentEnabled && assignmentCountdownTime
                   ? t("events.maps.assignmentDisabledWithTime", {
                       time: assignmentCountdownTime,
@@ -158,14 +154,10 @@ export const EventCoordinationHeroCard = ({
                 size="sm"
                 variant="destructive"
                 className="shrink-0"
-                disabled={isClosing}
+                loading={isClosing}
+                icon={<X className="size-3.5" />}
                 onClick={() => onCloseWindow(hero)}
               >
-                {isClosing ? (
-                  <Spinner className="size-3.5" />
-                ) : (
-                  <X className="size-3.5" />
-                )}
                 {t("events.coordination.actions.close_window")}
               </Button>
             )}

@@ -485,8 +485,9 @@ export const EventDetail = () => {
                   },
                 });
                 toast.success(t("events.endSuccess"));
-              } catch {
+              } catch (error) {
                 toast.error(t("events.statusError"));
+                throw error;
               }
             }}
             isPending={updateEvent.isPending}
@@ -510,8 +511,9 @@ export const EventDetail = () => {
                   },
                 });
                 toast.success(t("events.resumeSuccess"));
-              } catch {
+              } catch (error) {
                 toast.error(t("events.statusError"));
+                throw error;
               }
             }}
             isPending={updateEvent.isPending}
@@ -616,6 +618,15 @@ export const EventDetail = () => {
                       type="button"
                       size="sm"
                       variant="outline"
+                      loading={isPinPending(event.id)}
+                      icon={
+                        <Star
+                          className={cn(
+                            "size-4",
+                            eventIsPinned && "fill-current",
+                          )}
+                        />
+                      }
                       aria-label={pinActionLabel}
                       title={pinActionLabel}
                       aria-pressed={eventIsPinned}
@@ -636,12 +647,6 @@ export const EventDetail = () => {
                         }
                       }}
                     >
-                      <Star
-                        className={cn(
-                          "size-4",
-                          eventIsPinned && "fill-current",
-                        )}
-                      />
                       <span className="hidden sm:inline">{pinActionLabel}</span>
                     </Button>
                   }
