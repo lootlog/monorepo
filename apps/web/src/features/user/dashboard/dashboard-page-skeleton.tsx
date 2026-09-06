@@ -30,7 +30,7 @@ export function DashboardPageSkeleton() {
             <Skeleton className="h-20 w-full" />
           </SectionCardContent>
         </SectionCard>
-        <div className="grid flex-1 gap-3 @3xl/dashboard:min-h-0 @3xl/dashboard:grid-cols-[minmax(0,1fr)_minmax(0,28rem)] @3xl/dashboard:grid-rows-[minmax(36rem,1fr)]">
+        <div className="grid flex-1 gap-3 @3xl/dashboard:min-h-0 @3xl/dashboard:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] @3xl/dashboard:grid-rows-[minmax(36rem,1fr)]">
           <Skeleton className="h-[36rem] w-full @3xl/dashboard:h-full" />
           <div className="space-y-3">
             <div style={calendarStyle}>
