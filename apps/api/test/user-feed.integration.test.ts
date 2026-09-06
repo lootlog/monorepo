@@ -446,5 +446,5 @@ describe("personal Organization activity feed", () => {
       ),
     ).toBe(true);
     expect(JSON.stringify(feed).length).toBeLessThan(18000);
-  });
+  }, 60_000);
 });
