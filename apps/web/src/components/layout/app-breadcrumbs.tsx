@@ -1,8 +1,9 @@
+import { TextLink } from "@lootlog/ui/components/text-link";
+import { Link } from "@tanstack/react-router";
 import type { AppNavigation } from "@/navigation/app-navigation";
 import {
   Breadcrumb,
   BreadcrumbItem,
-  BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
@@ -13,7 +14,6 @@ import { useTranslation } from "react-i18next";
 
 type AppBreadcrumbsProps = {
   breadcrumbs: AppNavigation["breadcrumbs"];
-  onNavigate: (path: string) => void;
 };
 
 type BreadcrumbVisibility = "always" | "sm" | "xl" | "2xl";
@@ -48,10 +48,7 @@ const getBreadcrumbVisibility = (
   return "2xl";
 };
 
-export const AppBreadcrumbs = ({
-  breadcrumbs,
-  onNavigate,
-}: AppBreadcrumbsProps) => {
+export const AppBreadcrumbs = ({ breadcrumbs }: AppBreadcrumbsProps) => {
   const { t } = useTranslation();
 
   return (
@@ -71,24 +68,12 @@ export const AppBreadcrumbs = ({
             >
               <BreadcrumbItem className={breadcrumbItemClassNames[visibility]}>
                 {breadcrumbPath ? (
-                  <BreadcrumbLink
-                    href={breadcrumbPath}
-                    onClick={(event) => {
-                      if (
-                        event.button !== 0 ||
-                        event.metaKey ||
-                        event.ctrlKey ||
-                        event.shiftKey ||
-                        event.altKey
-                      )
-                        return;
-                      event.preventDefault();
-                      onNavigate(breadcrumbPath);
-                    }}
-                    className="inline-flex min-h-6 min-w-0 max-w-full items-center truncate text-xs text-muted-foreground transition-colors hover:text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
+                  <TextLink
+                    render={<Link to={breadcrumbPath} />}
+                    className="inline-flex min-h-6 min-w-0 max-w-full items-center truncate"
                   >
                     {breadcrumb.label}
-                  </BreadcrumbLink>
+                  </TextLink>
                 ) : (
                   <BreadcrumbPage className="truncate text-sm font-bold">
                     {breadcrumb.label}

@@ -98,8 +98,15 @@ export const buildKillActivity = (
     : null;
   const untimedKills = Math.max(0, raw.allTimeKills - raw.timedKills);
   const byDate = new Map<string, number>();
-  for (const row of raw.daily)
+  const worldsByDate = new Map<string, Set<string>>();
+  for (const row of raw.daily) {
     byDate.set(row.date, (byDate.get(row.date) ?? 0) + row.kills);
+    if (row.kills > 0) {
+      const worlds = worldsByDate.get(row.date) ?? new Set<string>();
+      worlds.add(row.world);
+      worldsByDate.set(row.date, worlds);
+    }
+  }
   const daily = Array.from({ length: range.days }, (_, index) => {
     const date = dateAfter(range.startDate, index);
     const unknown =
@@ -107,6 +114,7 @@ export const buildKillActivity = (
     return {
       date,
       kills: unknown ? null : (byDate.get(date) ?? 0),
+      worlds: [...(worldsByDate.get(date) ?? [])].sort(),
       partial:
         unknown ||
         date === range.endDate ||
@@ -348,6 +356,7 @@ export const makeUserKillAnalytics = (
         days: query.days ?? 30,
         world: query.world,
         through: range.through,
+        version: 2,
       }),
       UserKillAnalyticsResponse,
       load,
@@ -378,6 +387,7 @@ export const makeUserKillAnalytics = (
         days: range.days,
         world: query.world,
         through: range.through,
+        version: 2,
       }),
       UserKillActivityResponse,
       load,

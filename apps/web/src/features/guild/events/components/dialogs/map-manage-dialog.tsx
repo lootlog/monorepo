@@ -1,3 +1,4 @@
+import { TextLink } from "@lootlog/ui/components/text-link";
 import { filterAvailableGameMaps } from "@/utils/filter-available-game-maps";
 import { useState, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -529,15 +530,19 @@ export const MapManageDialog = ({
                   {t("events.maps.loadFromTemplate")}
                 </Label>
                 {templates && templates.length > 0 && (
-                  <Link
-                    to="/$guildId/settings/map-templates"
-                    params={{ guildId }}
+                  <TextLink
                     target="_blank"
-                    className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    className="inline-flex items-center gap-1 text-xs"
+                    render={
+                      <Link
+                        to="/$guildId/settings/map-templates"
+                        params={{ guildId }}
+                      />
+                    }
                   >
                     <Settings className="size-3" />
                     {t("events.maps.manageTemplates")}
-                  </Link>
+                  </TextLink>
                 )}
               </div>
               {templates && templates.length > 0 ? (
@@ -599,15 +604,19 @@ export const MapManageDialog = ({
                   <p className="text-xs text-muted-foreground mb-2">
                     {t("events.maps.noTemplatesHint")}
                   </p>
-                  <Link
-                    to="/$guildId/settings/map-templates"
-                    params={{ guildId }}
+                  <TextLink
                     target="_blank"
-                    className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+                    className="inline-flex items-center gap-1.5 text-xs"
+                    render={
+                      <Link
+                        to="/$guildId/settings/map-templates"
+                        params={{ guildId }}
+                      />
+                    }
                   >
                     <Plus className="size-3" />
                     {t("events.maps.createTemplates")}
-                  </Link>
+                  </TextLink>
                 </div>
               )}
             </div>

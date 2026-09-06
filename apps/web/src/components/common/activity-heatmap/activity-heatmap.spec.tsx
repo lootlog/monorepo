@@ -61,3 +61,48 @@ it("keeps a keyboard entry point after shrinking the period and refreshes select
     "3 bić",
   );
 });
+
+it("shows daily source worlds on keyboard focus without restoring the details panel", async () => {
+  render(
+    <ActivityHeatmap
+      label="Online"
+      showDetails={false}
+      days={[
+        {
+          date: "2026-09-01",
+          value: 3600,
+          worlds: ["luvia", "pandora"],
+          worldsComplete: true,
+        },
+      ]}
+      formatValue={() => "1 godz. 0 min"}
+    />,
+  );
+  const day = screen.getByRole("button", { name: /Światy: Luvia, Pandora/ });
+  day.focus();
+  expect((await screen.findByRole("tooltip")).textContent).toContain(
+    "Światy: Luvia, Pandora",
+  );
+  expect(document.querySelector("p[aria-live=polite]")).toBeNull();
+});
+
+it("keeps known source worlds while explaining incomplete historical provenance", () => {
+  render(
+    <ActivityHeatmap
+      label="Online"
+      days={[
+        {
+          date: "2026-09-01",
+          value: 3600,
+          worlds: ["luvia"],
+          worldsComplete: false,
+        },
+      ]}
+      formatValue={() => "1 godz. 0 min"}
+    />,
+  );
+  const day = screen.getByRole("button", { name: /Światy: Luvia/ });
+  expect(day.getAttribute("aria-label")).toContain(
+    "Część aktywności nie ma zapisanej informacji o świecie.",
+  );
+});

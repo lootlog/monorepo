@@ -7,6 +7,8 @@
   "activity": "Aktywność",
   "monsters": "Potwory",
   "worlds": "Światy",
+  "sourceWorlds": "Światy: {{worlds}}",
+  "sourceWorldsIncomplete": "Część aktywności nie ma zapisanej informacji o świecie.",
   "online": "Online",
   "kills": "Bicia",
   "total": "Wszystkie bicia",

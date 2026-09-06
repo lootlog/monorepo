@@ -1,3 +1,4 @@
+import { TextLink } from "@lootlog/ui/components/text-link";
 import { PermissionCategoryTooltip } from "@/features/guild/settings/components/permission-category-tooltip";
 import { PERMISSION_CATEGORIES } from "@/features/guild/settings/roles/constants/permission-categories";
 import type { RoleResponseDtoOutput as GuildRole } from "@lootlog/client/main";
@@ -154,34 +155,39 @@ export const RolesTable = ({ guildId, isMobile, roles }: RolesTableProps) => {
               }}
             >
               <TableCell className="min-w-0 overflow-hidden">
-                <Link
-                  to="/$guildId/settings/roles/$roleId"
-                  params={roleRouteParams}
-                  className="flex min-w-0 items-center gap-3"
+                <TextLink
+                  className="flex min-w-0 items-center gap-3 text-sm"
+                  render={
+                    <Link
+                      to="/$guildId/settings/roles/$roleId"
+                      params={roleRouteParams}
+                    />
+                  }
                 >
                   <span
                     className="size-3 shrink-0 rounded-full"
                     style={{ backgroundColor: `#${color}` }}
                   />
-                  <span
-                    className="truncate text-sm font-semibold"
-                    style={{ color: `#${color}` }}
-                  >
+                  <span className="truncate text-sm font-semibold">
                     {role.name}
                   </span>
-                </Link>
+                </TextLink>
               </TableCell>
               <TableCell className="overflow-hidden text-xs text-muted-foreground">
-                <Link
-                  to="/$guildId/settings/roles/$roleId"
-                  params={roleRouteParams}
-                  className="block truncate"
+                <TextLink
+                  className="block truncate text-sm"
+                  render={
+                    <Link
+                      to="/$guildId/settings/roles/$roleId"
+                      params={roleRouteParams}
+                    />
+                  }
                 >
                   {t("settings.roles.levelRange", {
                     from: role.lvlRangeFrom,
                     to: role.lvlRangeTo,
                   })}
-                </Link>
+                </TextLink>
               </TableCell>
               <TableCell className="overflow-hidden">
                 <Link

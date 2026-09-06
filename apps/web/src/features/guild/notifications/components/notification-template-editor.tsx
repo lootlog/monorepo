@@ -1,3 +1,4 @@
+import { previewMarkdownComponents } from "../utils/notification-rule-form-preview.utils";
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
@@ -729,7 +730,10 @@ export const NotificationTemplateEditor = ({
             </p>
             <div className="py-3 text-sm">
               <div className="max-w-none whitespace-pre-wrap break-words text-foreground [&_blockquote]:rounded-md [&_blockquote]:border [&_blockquote]:border-border [&_blockquote]:px-3 [&_blockquote]:py-2 [&_code]:rounded [&_code]:bg-muted [&_code]:px-1.5 [&_code]:py-0.5 [&_h1]:text-lg [&_h1]:font-semibold [&_h2]:text-base [&_h2]:font-semibold [&_hr]:border-border [&_li]:ml-4 [&_p]:leading-6 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-muted [&_pre]:p-3 [&_strong]:font-semibold">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={previewMarkdownComponents}
+                >
                   {renderTemplatePreview(value, previewTemplateValues)}
                 </ReactMarkdown>
               </div>

@@ -1,3 +1,4 @@
+import { TextLink } from "@lootlog/ui/components/text-link";
 import { PermissionCategoryTooltip } from "@/features/guild/settings/components/permission-category-tooltip";
 import { MemberDeactivationButton } from "@/features/guild/settings/members/components/member-deactivation-button";
 import { MemberDiscordSyncIndicator } from "@/features/guild/settings/members/components/member-discord-sync-indicator";
@@ -310,7 +311,6 @@ export const MembersTable = ({
             isOnlineOnWeb,
             isGamePresenceVerified,
             onlineSources,
-            color,
           } = getMemberDisplayData(member);
           const isOnline = onlineSources.length > 0;
           const memberPermissions = Array.from(
@@ -375,10 +375,14 @@ export const MembersTable = ({
               }}
             >
               <TableCell className="min-w-0 overflow-hidden">
-                <Link
-                  to="/$guildId/settings/members/$memberId"
-                  params={memberRouteParams}
-                  className="flex min-w-0 items-center gap-3"
+                <TextLink
+                  className="flex min-w-0 items-center gap-3 text-sm"
+                  render={
+                    <Link
+                      to="/$guildId/settings/members/$memberId"
+                      params={memberRouteParams}
+                    />
+                  }
                 >
                   <Avatar className="size-8 shrink-0 rounded-lg">
                     <AvatarImage
@@ -388,10 +392,7 @@ export const MembersTable = ({
                   </Avatar>
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex min-w-0 items-center gap-2">
-                      <span
-                        className="truncate text-sm font-semibold"
-                        style={{ color: `#${color}` }}
-                      >
+                      <span className="truncate text-sm font-semibold">
                         {member.name}
                       </span>
                       {onlineSources.length > 0 && (
@@ -498,7 +499,7 @@ export const MembersTable = ({
                       </TooltipProvider>
                     </div>
                   </div>
-                </Link>
+                </TextLink>
               </TableCell>
               <TableCell className="overflow-hidden">
                 <Link
@@ -510,32 +511,44 @@ export const MembersTable = ({
                 </Link>
               </TableCell>
               <TableCell className="overflow-hidden text-xs text-muted-foreground">
-                <Link
-                  to="/$guildId/settings/members/$memberId"
-                  params={memberRouteParams}
-                  className="block truncate"
+                <TextLink
+                  className="block truncate text-sm"
+                  render={
+                    <Link
+                      to="/$guildId/settings/members/$memberId"
+                      params={memberRouteParams}
+                    />
+                  }
                 >
                   {member.lastDiscordSyncAt
                     ? t("settings.members.discordSync.lastConfirmedCompact", {
                         time: getRelativeTime(member.lastDiscordSyncAt),
                       })
                     : t("settings.members.discordSync.neverSyncedCompact")}
-                </Link>
+                </TextLink>
               </TableCell>
               <TableCell className="overflow-hidden text-xs text-muted-foreground">
-                <Link
-                  to="/$guildId/settings/members/$memberId"
-                  params={memberRouteParams}
-                  className="block truncate"
+                <TextLink
+                  className="block truncate text-sm"
+                  render={
+                    <Link
+                      to="/$guildId/settings/members/$memberId"
+                      params={memberRouteParams}
+                    />
+                  }
                 >
                   {activityLabel}
-                </Link>
+                </TextLink>
               </TableCell>
               <TableCell className="overflow-hidden text-right text-xs tabular-nums">
-                <Link
-                  to="/$guildId/settings/members/$memberId"
-                  params={memberRouteParams}
-                  className="inline-flex max-w-full items-center justify-end gap-3"
+                <TextLink
+                  className="inline-flex max-w-full items-center justify-end gap-3 text-sm"
+                  render={
+                    <Link
+                      to="/$guildId/settings/members/$memberId"
+                      params={memberRouteParams}
+                    />
+                  }
                 >
                   <span className="inline-flex min-w-0 items-center gap-1">
                     <MousePointerClick className="size-3 text-muted-foreground" />
@@ -549,7 +562,7 @@ export const MembersTable = ({
                       {gameActivityStats?.visitCount ?? 0}
                     </span>
                   </span>
-                </Link>
+                </TextLink>
               </TableCell>
               <TableCell
                 data-member-row-action

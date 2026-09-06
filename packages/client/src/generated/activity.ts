@@ -212,6 +212,8 @@ export type UserOnlineResponseDtoDaysItem = {
   /** @nullable */
   onlineSeconds: number | null;
   partial: boolean;
+  worlds: string[];
+  worldsComplete: boolean;
 };
 
 export interface UserOnlineResponseDto {

@@ -60,17 +60,19 @@ export class OnlineRepository extends Context.Service<
         yield* sql.withTransaction(
           Effect.gen(function* () {
             const inserted =
-              yield* sql`INSERT INTO "UserOnlineInterval" ("userId", "sessionId", "segmentId", "startedAt", "endedAt", "observedAt")
-          VALUES (${event.userId}, ${event.sessionId}, ${event.segmentId}, GREATEST(${event.startedAt}::timestamptz, ${cutoff}::timestamptz), ${event.endedAt}::timestamptz, ${event.observedAt}::timestamptz)
+              yield* sql`INSERT INTO "UserOnlineInterval" ("userId", "sessionId", "segmentId", "world", "startedAt", "endedAt", "observedAt")
+          VALUES (${event.userId}, ${event.sessionId}, ${event.segmentId}, ${event.world ?? null}, GREATEST(${event.startedAt}::timestamptz, ${cutoff}::timestamptz), ${event.endedAt}::timestamptz, ${event.observedAt}::timestamptz)
           ON CONFLICT ("userId", "sessionId", "segmentId") DO UPDATE
-          SET "startedAt" = GREATEST("UserOnlineInterval"."startedAt", EXCLUDED."startedAt"),
+          SET "world" = CASE WHEN "UserOnlineInterval"."world" IS NULL OR EXCLUDED."world" IS NULL THEN NULL ELSE "UserOnlineInterval"."world" END,
+              "startedAt" = GREATEST("UserOnlineInterval"."startedAt", EXCLUDED."startedAt"),
               "endedAt" = GREATEST("UserOnlineInterval"."endedAt", EXCLUDED."endedAt"),
               "observedAt" = GREATEST("UserOnlineInterval"."observedAt", EXCLUDED."observedAt")
           WHERE GREATEST("UserOnlineInterval"."startedAt", ${cutoff}::timestamptz) = EXCLUDED."startedAt"
+            AND ("UserOnlineInterval"."world" IS NULL OR EXCLUDED."world" IS NULL OR "UserOnlineInterval"."world" = EXCLUDED."world")
           RETURNING "userId"`;
             if (!inserted.length)
               return yield* Effect.fail(
-                new Error("Online segment start cannot change"),
+                new Error("Online segment start or world cannot change"),
               );
             yield* sql`INSERT INTO "UserOnlineTracking" ("userId", "lastObservedAt")
           VALUES (${event.userId}, ${event.observedAt}::timestamptz)
@@ -108,19 +110,27 @@ export class OnlineRepository extends Context.Service<
           date: string;
           onlineSeconds: number | null;
           partial: boolean;
+          worlds: string[];
+          worldsComplete: boolean;
         }>`
         WITH days AS (
           SELECT d::date AS date, d::timestamp AT TIME ZONE 'Europe/Warsaw' AS start,
             (d::date + 1)::timestamp AT TIME ZONE 'Europe/Warsaw' AS finish
           FROM generate_series(${query.from}::date::timestamp, ${query.to}::date::timestamp, interval '1 day') d
-        ), intervals AS (
-          SELECT unnest(range_agg(tstzrange(GREATEST("startedAt", ${cutoff}::timestamptz), "endedAt", '[)'))) AS span
+        ), source_intervals AS (
+          SELECT "world", GREATEST("startedAt", ${cutoff}::timestamptz) AS start, "endedAt" AS finish
           FROM "UserOnlineInterval" WHERE "userId" = ${userId}
             AND "endedAt" > ${cutoff}::timestamptz
             AND "endedAt" > (SELECT min(start) FROM days)
             AND "startedAt" < (SELECT max(finish) FROM days)
+        ), intervals AS (
+          SELECT unnest(range_agg(tstzrange(start, finish, '[)'))) AS span FROM source_intervals
         )
         SELECT days.date::text AS date,
+          ARRAY(SELECT DISTINCT world FROM source_intervals WHERE world IS NOT NULL
+            AND start < days.finish AND finish > days.start AND finish > start ORDER BY world) AS worlds,
+          NOT EXISTS(SELECT 1 FROM source_intervals WHERE world IS NULL
+            AND start < days.finish AND finish > days.start AND finish > start) AS "worldsComplete",
           CASE WHEN ${trackingStartedAt}::timestamptz IS NULL OR days.finish <= ${trackingStartedAt}::timestamptz
             OR days.finish <= ${cutoff}::timestamptz OR days.start > ${nowIso}::timestamptz THEN NULL
           WHEN (days.start < ${trackingStartedAt}::timestamptz OR days.start < ${cutoff}::timestamptz)

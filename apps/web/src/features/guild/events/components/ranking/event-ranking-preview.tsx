@@ -1,7 +1,8 @@
+import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
-import { Trophy, ChevronRight } from "lucide-react";
+import { Trophy } from "lucide-react";
 import { Tabs, TabsTrigger } from "@lootlog/ui/components/tabs";
 import type { EventRanking, EventHeroNpc } from "../../types/api";
 import { SectionCard } from "@/components/common/section-card/section-card";
@@ -64,14 +65,17 @@ export const EventRankingPreview = ({
         actions={
           <>
             {rankings.length > 0 ? (
-              <Link
-                to="/$guildId/events/$eventId/ranking"
-                params={{ guildId, eventId }}
-                className="inline-flex h-8 shrink-0 items-center gap-1 rounded-sm text-xs font-semibold text-muted-foreground outline-none transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring/50"
+              <ChevronLink
+                className="inline-flex h-8 shrink-0 items-center gap-1 text-xs"
+                render={
+                  <Link
+                    to="/$guildId/events/$eventId/ranking"
+                    params={{ guildId, eventId }}
+                  />
+                }
               >
                 {t("events.ranking.viewAll")}
-                <ChevronRight className="size-3.5" />
-              </Link>
+              </ChevronLink>
             ) : null}
           </>
         }

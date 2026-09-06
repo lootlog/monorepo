@@ -1,3 +1,4 @@
+import upperFirst from "lodash/upperFirst";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -38,6 +39,8 @@ type ActivityHeatmapProps = {
   days: ActivityDay[];
   label: string;
   fill?: boolean;
+  showDetails?: boolean;
+  unknownDisplay?: "distinct" | "lowest";
   formatValue: (value: number) => string;
 };
 
@@ -46,6 +49,8 @@ export function ActivityHeatmap({
   label,
   formatValue,
   fill = false,
+  showDetails = true,
+  unknownDisplay = "distinct",
 }: ActivityHeatmapProps) {
   const { t } = useTranslation();
   const scroller = useRef<HTMLDivElement>(null);
@@ -64,8 +69,23 @@ export function ActivityHeatmap({
   const describe = (day: ActivityDay) => {
     const date = fullDateFormatter.format(new Date(`${day.date}T12:00:00Z`));
     const value =
-      day.value === null ? t("statistics.unknown") : formatValue(day.value);
-    return `${date}: ${value}${day.partial ? ` · ${t("statistics.partialDay")}` : ""}`;
+      day.value === null && unknownDisplay === "distinct"
+        ? t("statistics.unknown")
+        : formatValue(day.value ?? 0);
+    const details = [
+      `${date}: ${value}${day.partial ? ` · ${t("statistics.partialDay")}` : ""}`,
+    ];
+    if (day.worlds?.length) {
+      details.push(
+        t("statistics.sourceWorlds", {
+          worlds: day.worlds.map(upperFirst).join(", "),
+        }),
+      );
+    }
+    if (day.worldsComplete === false) {
+      details.push(t("statistics.sourceWorldsIncomplete"));
+    }
+    return details.join("\n");
   };
   return (
     <div
@@ -125,14 +145,23 @@ export function ActivityHeatmap({
                   tabIndex={activeIndex === index ? 0 : -1}
                   className={cn(
                     "block size-full rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card",
-                    levels[activityLevel(day.value, maximum)],
+                    levels[
+                      activityLevel(
+                        unknownDisplay === "lowest"
+                          ? (day.value ?? 0)
+                          : day.value,
+                        maximum,
+                      )
+                    ],
                   )}
                   style={{
                     gridColumn: Math.floor((index + offset) / 7) + 2,
                     gridRow: ((index + offset) % 7) + 2,
                   }}
                   onFocus={() => setFocused(index)}
-                  onClick={() => setSelectedDate(day.date)}
+                  onClick={
+                    showDetails ? () => setSelectedDate(day.date) : undefined
+                  }
                   onKeyDown={(event) => {
                     const moves: Record<string, number> = {
                       ArrowRight: 7,
@@ -150,21 +179,25 @@ export function ActivityHeatmap({
                       ?.focus();
                   }}
                 />
-                <TooltipContent>{describe(day)}</TooltipContent>
+                <TooltipContent className="max-w-72 whitespace-pre-line">
+                  {describe(day)}
+                </TooltipContent>
               </Tooltip>
             </div>
           ))}
         </div>
       </div>
-      <p
-        className={cn(
-          "text-xs text-muted-foreground",
-          fill ? "h-8 shrink-0" : "min-h-4",
-        )}
-        aria-live="polite"
-      >
-        {selected ? describe(selected) : t("statistics.heatmapHint")}
-      </p>
+      {showDetails && (
+        <p
+          className={cn(
+            "text-xs text-muted-foreground",
+            fill ? "h-8 shrink-0" : "min-h-4",
+          )}
+          aria-live="polite"
+        >
+          {selected ? describe(selected) : t("statistics.heatmapHint")}
+        </p>
+      )}
       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
         <span>{t("statistics.less")}</span>
         {(["zero", 1, 2, 3, 4] as const).map((level) => (
@@ -175,11 +208,15 @@ export function ActivityHeatmap({
           />
         ))}
         <span>{t("statistics.more")}</span>
-        <span
-          aria-hidden
-          className={cn("ml-2 size-3 rounded-sm", levels.unknown)}
-        />
-        <span>{t("statistics.unknown")}</span>
+        {unknownDisplay === "distinct" && (
+          <>
+            <span
+              aria-hidden
+              className={cn("ml-2 size-3 rounded-sm", levels.unknown)}
+            />
+            <span>{t("statistics.unknown")}</span>
+          </>
+        )}
       </div>
     </div>
   );

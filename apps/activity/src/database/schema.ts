@@ -171,6 +171,7 @@ export const userOnlineIntervals = pgTable(
     userId: text().notNull(),
     sessionId: text().notNull(),
     segmentId: text().notNull(),
+    world: text(),
     startedAt: timestamp({ withTimezone: true, mode: "date" }).notNull(),
     endedAt: timestamp({ withTimezone: true, mode: "date" }).notNull(),
     observedAt: timestamp({ withTimezone: true, mode: "date" }).notNull(),

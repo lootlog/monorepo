@@ -276,6 +276,7 @@ export const UserOnlineCheckpointV1 = Schema.Struct({
   userId: NonEmptyString,
   sessionId: NonEmptyString,
   segmentId: NonEmptyString,
+  world: Schema.optional(NonEmptyString),
   startedAt: DateTimeWithOffsetString,
   endedAt: DateTimeWithOffsetString,
   observedAt: DateTimeWithOffsetString,

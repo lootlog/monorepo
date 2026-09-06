@@ -16,6 +16,9 @@ const checkpoint = {
 describe("private online event contract", () => {
   it("accepts cumulative checkpoints and collector health without a fake user", () => {
     expect(decode(checkpoint)).toEqual(checkpoint);
+    expect(decode({ ...checkpoint, world: "luvia" })).toMatchObject({
+      world: "luvia",
+    });
     expect(
       decode({
         version: 1,
@@ -29,6 +32,7 @@ describe("private online event contract", () => {
     for (const invalid of [
       { ...checkpoint, version: 2 },
       { ...checkpoint, userId: "" },
+      { ...checkpoint, world: "" },
       { ...checkpoint, startedAt: "2026-09-01T10:00:00Z" },
       { ...checkpoint, observedAt: "2026-09-01T08:30:00Z" },
       { ...checkpoint, endedAt: "2026-02-30T00:00:00Z" },
