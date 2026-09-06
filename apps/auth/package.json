@@ -15,7 +15,7 @@
     "lint": "oxlint src scripts",
     "typecheck": "tsc --noEmit",
     "test": "bun test --path-ignore-patterns='**/*.integration.*'",
-    "test:integration": "bun test src/auth/realtime/realtime-ticket.integration.spec.ts src/database/migrations.integration.spec.ts src/database/database.integration.spec.ts",
+    "test:integration": "bun test src/auth/storage/auth-redis-storage.integration.spec.ts src/auth/realtime/realtime-ticket.integration.spec.ts src/database/migrations.integration.spec.ts src/database/database.integration.spec.ts",
     "test:watch": "bun test --watch",
     "openapi:generate": "bun --conditions=development src/openapi/generate-openapi.ts",
     "auth:migrate:plan": "bun scripts/migration-plan.ts",
