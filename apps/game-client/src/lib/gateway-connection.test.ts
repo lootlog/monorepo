@@ -1,12 +1,10 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { configureApiClients } from "@lootlog/client/transport";
 import { decodeRealtimeFrame as parseRealtimeFrame } from "@lootlog/protocol/realtime";
 import {
   decodeRealtimeFrame,
   encodeRealtimeFrame,
 } from "@lootlog/protocol/realtime/codec";
-import { GatewayEvent } from "@/config/gateway";
-import { GatewayClient } from "./gateway-client";
+import { createGameRealtimeClient } from "./game-client-platform";
 
 class GatewayWebSocket extends EventTarget {
   binaryType = "arraybuffer";
@@ -76,15 +74,12 @@ it.each([
   vi.stubEnv("MODE", mode);
   vi.stubEnv("VITE_GATEWAY_FRAME_ENCODING", encoding);
   vi.stubGlobal("WebSocket", GatewayWebSocket);
-  const restore = configureApiClients({
-    auth: {
-      baseUrl: "http://auth.test",
-      fetch: async () => Response.json({ ticket: "test-ticket", expiresAt: 1 }),
-    },
-  });
-  const client = new GatewayClient();
-  const joined = vi.fn();
-  client.on(GatewayEvent.JOIN, joined);
+  vi.stubGlobal("fetch", () =>
+    Promise.resolve(
+      Response.json({ ticket: "test-ticket", expiresAt: Date.now() + 60000 }),
+    ),
+  );
+  const client = createGameRealtimeClient();
   try {
     client.connect();
     await vi.waitFor(() => expect(GatewayWebSocket.instances).toHaveLength(1));
@@ -93,17 +88,22 @@ it.each([
     expect(socket.protocols).toContain(protocol);
     socket.readyState = 1;
     socket.dispatchEvent(new Event("open"));
-    client.emit(GatewayEvent.JOIN, {});
-    await vi.waitFor(() =>
-      expect(joined).toHaveBeenCalledWith(
-        expect.objectContaining({ status: "success" }),
-      ),
-    );
-    expect(client.connected).toBe(true);
+    await expect(
+      client.join({
+        world: "alpha",
+        character: {
+          world: "alpha",
+          name: "Hero",
+          lvl: 100,
+          icon: "hero.gif",
+          characterId: "10",
+          accountId: "20",
+          prof: "w",
+        },
+      }),
+    ).resolves.toEqual({});
     client.disconnect();
-    expect(client.connected).toBe(false);
   } finally {
     client.disconnect();
-    restore();
   }
 });
