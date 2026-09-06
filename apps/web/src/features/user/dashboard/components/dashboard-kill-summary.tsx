@@ -32,19 +32,11 @@ export function DashboardKillSummary() {
   return (
     <SectionCard className="@container/kill-summary">
       <SectionCardHeader
-        className="[&>div:first-child]:basis-full @lg/kill-summary:[&>div:first-child]:basis-0"
         icon={Swords}
         title={t("statistics.kills")}
         description={t("statistics.allTime")}
         actions={
           <>
-            <WorldSwitcher
-              width="w-[180px]"
-              value={world}
-              onValueChange={setWorld}
-              worlds={worlds}
-              showAllOption
-            />
             <ChevronLink
               render={
                 <Link
@@ -63,6 +55,15 @@ export function DashboardKillSummary() {
         }
       />
       <SectionCardContent>
+        <div className="mb-3 flex items-center">
+          <WorldSwitcher
+            width="w-[180px]"
+            value={world}
+            onValueChange={setWorld}
+            worlds={worlds}
+            showAllOption
+          />
+        </div>
         <StatisticsQueryState query={query}>
           <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5">
             {counts.map(({ key, value }) => (

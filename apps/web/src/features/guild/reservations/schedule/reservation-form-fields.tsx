@@ -1,3 +1,4 @@
+import { TextLink } from "@lootlog/ui/components/text-link";
 import { useId } from "react";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
@@ -145,12 +146,12 @@ export function ReservationFormFields({
         {!hasActiveDm && targetsQuery.isSuccess && (
           <p className="text-xs text-muted-foreground">
             {t("reservations.schedule.dialog.dmRequired")}{" "}
-            <Link
-              to={ROUTES.user.notifications.base}
-              className="font-medium text-primary underline-offset-4 hover:underline"
+            <TextLink
+              className="underline-offset-4"
+              render={<Link to={ROUTES.user.notifications.base} />}
             >
               {t("reservations.schedule.dialog.configureDm")}
-            </Link>
+            </TextLink>
           </p>
         )}
       </div>

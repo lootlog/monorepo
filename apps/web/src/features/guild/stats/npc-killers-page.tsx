@@ -1,3 +1,4 @@
+import { TextLink } from "@lootlog/ui/components/text-link";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { PageHeader } from "@/components/common/page-header";
@@ -383,13 +384,17 @@ export const NpcKillersPage: React.FC = () => {
                               </div>
                             </TableCell>
                             <TableCell>
-                              <Link
-                                to="/$guildId/stats/members/$memberId"
-                                params={{
-                                  guildId,
-                                  memberId: killer.memberId.toString(),
-                                }}
-                                className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+                              <TextLink
+                                className="flex items-center gap-3 text-sm"
+                                render={
+                                  <Link
+                                    to="/$guildId/stats/members/$memberId"
+                                    params={{
+                                      guildId,
+                                      memberId: killer.memberId.toString(),
+                                    }}
+                                  />
+                                }
                               >
                                 <Avatar className="h-8 w-8">
                                   <AvatarImage
@@ -403,11 +408,8 @@ export const NpcKillersPage: React.FC = () => {
                                     {killer.memberName[0]}
                                   </AvatarFallback>
                                 </Avatar>
-                                <MemberNameWithColor
-                                  name={killer.memberName}
-                                  member={membersMap.get(killer.memberUserId)}
-                                />
-                              </Link>
+                                {killer.memberName}
+                              </TextLink>
                             </TableCell>
                             <TableCell className="text-right">
                               <span className="font-semibold tabular-nums">

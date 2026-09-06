@@ -25,14 +25,14 @@ if state and now - state.lastSeen > tonumber(ARGV[3]) then
   if final then redis.call('DEL', KEYS[1]); return 0 end
   state = nil
 end
-if state and now - state.started >= 86400000 then
-  state = {started = state.lastSeen, lastSeen = state.lastSeen}
+if state and (now - state.started >= 86400000 or state.world ~= ARGV[6]) then
+  state = {started = state.lastSeen, lastSeen = state.lastSeen, world = ARGV[6]}
 end
-if not state then state = {started = now, lastSeen = now} end
+if not state then state = {started = now, lastSeen = now, world = ARGV[6]} end
 state.lastSeen = now
 local id = ARGV[5] .. ':' .. tostring(state.started)
 -- Dates are encoded in JavaScript from the numeric times returned below.
-local value = cjson.encode({userId=ARGV[4],sessionId=ARGV[5],segmentId=id,started=state.started,ended=now,final=final})
+local value = cjson.encode({userId=ARGV[4],sessionId=ARGV[5],segmentId=id,started=state.started,ended=now,final=final,world=state.world})
 if now > state.started then
   local sent = tonumber(redis.call('GET', KEYS[5]) or '0')
   local due = final and now or math.max(state.started + 60000, sent + 60000)
@@ -78,6 +78,7 @@ const Pending = Schema.fromJsonString(
     userId: Schema.String,
     sessionId: Schema.String,
     segmentId: Schema.String,
+    world: Schema.optional(Schema.String),
     started: Schema.Number,
     ended: Schema.Number,
     final: Schema.Boolean,
@@ -101,6 +102,7 @@ export class OnlineHistory {
     if (session.platform !== "game" || !session.joined || !session.character) {
       return Effect.void;
     }
+    const world = session.character.world;
     return Effect.tryPromise(() =>
       this.redis.eval(
         OBSERVE,
@@ -115,6 +117,7 @@ export class OnlineHistory {
         PRESENCE_EXPIRY_MS,
         session.userId,
         session.connectionId,
+        world,
       ),
     ).pipe(
       Effect.asVoid,
@@ -144,6 +147,7 @@ export class OnlineHistory {
           userId: item.userId,
           sessionId: item.sessionId,
           segmentId: item.segmentId,
+          ...(item.world ? { world: item.world } : {}),
           startedAt: new Date(item.started).toISOString(),
           endedAt: new Date(item.ended).toISOString(),
           observedAt: new Date(item.ended).toISOString(),

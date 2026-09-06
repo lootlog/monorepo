@@ -1,10 +1,11 @@
+import { TextLink } from "@lootlog/ui/components/text-link";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { PageHeader } from "@/components/common/page-header";
 import { StatsRankingRowsSkeleton } from "./components/stats-ranking-rows-skeleton";
 import { getOffsetPagination } from "./utils/offset-pagination";
 import { useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate, useParams } from "@tanstack/react-router";
+import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import { Users } from "lucide-react";
 import {
   Table,
@@ -344,9 +345,21 @@ export const StatsRanking: React.FC = () => {
                                     {member.memberName[0]}
                                   </AvatarFallback>
                                 </Avatar>
-                                <span className="font-medium">
+                                <TextLink
+                                  className="text-sm"
+                                  onClick={(event) => event.stopPropagation()}
+                                  render={
+                                    <Link
+                                      to="/$guildId/stats/members/$memberId"
+                                      params={{
+                                        guildId,
+                                        memberId: String(member.memberId),
+                                      }}
+                                    />
+                                  }
+                                >
                                   {member.memberName}
-                                </span>
+                                </TextLink>
                               </div>
                             </TableCell>
                             <TableCell className="whitespace-nowrap">

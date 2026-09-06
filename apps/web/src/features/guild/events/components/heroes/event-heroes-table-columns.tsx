@@ -1,3 +1,4 @@
+import { TextLink } from "@lootlog/ui/components/text-link";
 import type { TFunction } from "i18next";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Link } from "@tanstack/react-router";
@@ -78,10 +79,14 @@ export const createEventHeroesTableColumns = ({
             : `${hero.npcLvl}${npcProfession}`;
 
         return (
-          <Link
-            to="/$guildId/events/$eventId/heroes/$heroId"
-            params={{ guildId, eventId, heroId: hero.id }}
-            className="flex min-w-0 items-center gap-2.5 rounded-sm py-0.5 outline-none transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring/50"
+          <TextLink
+            className="flex min-w-0 items-center gap-2.5 py-0.5 text-sm"
+            render={
+              <Link
+                to="/$guildId/events/$eventId/heroes/$heroId"
+                params={{ guildId, eventId, heroId: hero.id }}
+              />
+            }
           >
             <div
               className={cn(
@@ -134,7 +139,7 @@ export const createEventHeroesTableColumns = ({
                 </span>
               </div>
             </div>
-          </Link>
+          </TextLink>
         );
       },
     },

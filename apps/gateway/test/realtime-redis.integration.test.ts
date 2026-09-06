@@ -161,6 +161,7 @@ describe("realtime Dragonfly integration", () => {
       now = start + 60_000;
       await Effect.runPromise(history.flush());
       expect(checkpoints()).toHaveLength(1);
+      expect(checkpoints()[0]?.world).toBe("classic");
       expect(checkpoints()[0]?.endedAt).toBe(
         new Date(start + 50_000).toISOString(),
       );
@@ -203,6 +204,53 @@ describe("realtime Dragonfly integration", () => {
       await Effect.runPromise(history.observe(session, now, true));
       await Effect.runPromise(history.flush());
       expect(checkpoints()).toHaveLength(3);
+      // A pre-upgrade segment and pending message retain unknown provenance.
+      const legacyStart = now;
+      const legacyId = session.connectionId + ":" + legacyStart;
+      await store.command.eval(
+        "redis.call('SET', KEYS[1], ARGV[1]); redis.call('HSET', KEYS[2], ARGV[2], ARGV[3]); redis.call('ZADD', KEYS[3], ARGV[4], ARGV[2]); redis.call('ZADD', KEYS[4], ARGV[4], ARGV[2]); return 1",
+        4,
+        "online-history:session:" + session.connectionId,
+        "online-history:pending",
+        "online-history:due",
+        "online-history:age",
+        JSON.stringify({
+          started: legacyStart,
+          lastSeen: legacyStart + 25_000,
+        }),
+        legacyId,
+        JSON.stringify({
+          userId: session.userId,
+          sessionId: session.connectionId,
+          segmentId: legacyId,
+          started: legacyStart,
+          ended: legacyStart + 25_000,
+          final: false,
+        }),
+        legacyStart,
+      );
+      now = legacyStart + 50_000;
+      await Effect.runPromise(history.observe(session, now));
+      now = legacyStart + 100_000;
+      await Effect.runPromise(history.flush());
+      expect(
+        checkpoints()
+          .slice(3)
+          .map(({ world }) => world),
+      ).toEqual([undefined, "classic"]);
+      expect(checkpoints()[4]?.startedAt).toBe(
+        new Date(legacyStart + 25_000).toISOString(),
+      );
+      if (!session.character) throw new Error("Expected game character");
+      session.character = { ...session.character, world: "luvia" };
+      now = legacyStart + 75_000;
+      await Effect.runPromise(history.observe(session, now));
+      now = legacyStart + 175_000;
+      await Effect.runPromise(history.flush());
+      expect(checkpoints()[5]?.world).toBe("luvia");
+      expect(checkpoints()[5]?.startedAt).toBe(
+        new Date(legacyStart + 50_000).toISOString(),
+      );
     } finally {
       await runtime.dispose();
     }

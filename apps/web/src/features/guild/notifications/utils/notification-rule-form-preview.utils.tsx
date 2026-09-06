@@ -1,3 +1,4 @@
+import { TextLink } from "@lootlog/ui/components/text-link";
 import { defaultUrlTransform, type Components } from "react-markdown";
 import type { RoleResponseDtoOutput as GuildRole } from "@lootlog/client/main";
 import { getCustomRoleCssColor } from "@/utils/get-color-from-role";
@@ -23,7 +24,7 @@ export const previewUrlTransform = (url: string) =>
   url.startsWith(ROLE_LINK_PREFIX) ? url : defaultUrlTransform(url);
 
 export const previewMarkdownComponents: Components = {
-  a: ({ href, children }) => {
+  a: ({ href, children, node: _node, ...props }) => {
     if (href?.startsWith(ROLE_LINK_PREFIX)) {
       const color = href.slice(ROLE_LINK_PREFIX.length) || null;
       return (
@@ -40,6 +41,10 @@ export const previewMarkdownComponents: Components = {
         </span>
       );
     }
-    return <a href={href}>{children}</a>;
+    return (
+      <TextLink {...props} href={href} className="text-[length:inherit]">
+        {children}
+      </TextLink>
+    );
   },
 };

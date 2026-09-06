@@ -1,8 +1,9 @@
+import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
-import { ChevronRight, Skull } from "lucide-react";
+import { Skull } from "lucide-react";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { Tabs, TabsTrigger } from "@lootlog/ui/components/tabs";
 import { useRecentHeroKills } from "../../hooks/queries/use-recent-hero-kills";
@@ -56,22 +57,25 @@ export const RecentKillsPreview = ({
         actions={
           <>
             {kills && kills.length > 0 ? (
-              <Link
-                to={
-                  activeHeroId
-                    ? "/$guildId/events/$eventId/heroes/$heroId/kills"
-                    : "/$guildId/events/$eventId/kills"
+              <ChevronLink
+                className="inline-flex h-8 shrink-0 items-center gap-1 text-xs"
+                render={
+                  <Link
+                    to={
+                      activeHeroId
+                        ? "/$guildId/events/$eventId/heroes/$heroId/kills"
+                        : "/$guildId/events/$eventId/kills"
+                    }
+                    params={
+                      activeHeroId
+                        ? { guildId, eventId, heroId: activeHeroId }
+                        : { guildId, eventId }
+                    }
+                  />
                 }
-                params={
-                  activeHeroId
-                    ? { guildId, eventId, heroId: activeHeroId }
-                    : { guildId, eventId }
-                }
-                className="inline-flex h-8 shrink-0 items-center gap-1 rounded-sm text-xs font-semibold text-muted-foreground outline-none transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring/50"
               >
                 {t("events.kills.viewAll")}
-                <ChevronRight className="size-3.5" />
-              </Link>
+              </ChevronLink>
             ) : null}
           </>
         }

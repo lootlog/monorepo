@@ -1,3 +1,4 @@
+import { TextLink } from "@lootlog/ui/components/text-link";
 import { Fragment, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
@@ -60,26 +61,30 @@ export const MemberKillRow = ({
               <Skull className="hidden size-4 shrink-0 text-muted-foreground lg:block" />
             )}
             <div className="min-w-0 flex-1">
-              <Link
-                to="/$guildId/events/$eventId/heroes/$heroId/kills/$killId"
-                params={{
-                  guildId,
-                  eventId,
-                  heroId: kill.heroNpcId,
-                  killId: kill.id,
-                }}
+              <TextLink
                 aria-label={t("events.kills.openKillDetails", {
                   monsterName: kill.heroNpc.npcName,
                 })}
                 title={t("events.kills.openKillDetails", {
                   monsterName: kill.heroNpc.npcName,
                 })}
-                className="inline-flex max-w-full min-w-0 items-center rounded-md outline-none transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
+                className="inline-flex max-w-full min-w-0 items-center text-sm"
+                render={
+                  <Link
+                    to="/$guildId/events/$eventId/heroes/$heroId/kills/$killId"
+                    params={{
+                      guildId,
+                      eventId,
+                      heroId: kill.heroNpcId,
+                      killId: kill.id,
+                    }}
+                  />
+                }
               >
                 <span className="truncate font-semibold">
                   {kill.heroNpc.npcName}
                 </span>
-              </Link>
+              </TextLink>
               <div className="mt-0.5 truncate text-[10px] text-muted-foreground tabular-nums sm:hidden">
                 {formatDateTime(new Date(kill.killedAt))}
               </div>

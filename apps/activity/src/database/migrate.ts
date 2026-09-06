@@ -48,6 +48,18 @@ export const migrateActivityDatabase = Effect.gen(function* () {
       new Error("Failed to read online retention migration", { cause }),
   });
   yield* sql.unsafe(onlineRetentionMigration).unprepared;
+  const onlineWorldMigration = yield* Effect.tryPromise({
+    try: () =>
+      Bun.file(
+        new URL(
+          "../../drizzle/migrations/0003_online_world_provenance.sql",
+          import.meta.url,
+        ),
+      ).text(),
+    catch: (cause) =>
+      new Error("Failed to read online world migration", { cause }),
+  });
+  yield* sql.unsafe(onlineWorldMigration).unprepared;
 });
 
 if (import.meta.main) {

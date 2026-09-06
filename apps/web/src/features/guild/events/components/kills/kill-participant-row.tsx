@@ -1,3 +1,4 @@
+import { TextLink } from "@lootlog/ui/components/text-link";
 import { Fragment, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
@@ -138,14 +139,17 @@ export const KillParticipantRow = ({
           </Avatar>
           <div className="min-w-0 flex-1">
             {memberLinkParams ? (
-              <Link
-                to="/$guildId/events/$eventId/members/$memberId"
-                params={memberLinkParams}
-                className="inline-flex w-fit max-w-full min-w-0 items-center rounded-sm text-sm font-semibold outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
-                style={roleCssColor ? { color: roleCssColor } : undefined}
+              <TextLink
+                className="inline-flex w-fit max-w-full min-w-0 items-center text-sm"
+                render={
+                  <Link
+                    to="/$guildId/events/$eventId/members/$memberId"
+                    params={memberLinkParams}
+                  />
+                }
               >
                 <span className="truncate">{participant.member.name}</span>
-              </Link>
+              </TextLink>
             ) : (
               <span
                 className="block truncate text-sm font-semibold"

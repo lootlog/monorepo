@@ -50,7 +50,7 @@ export const userKillAnalyticsSql = (
         and "periodStart" >= ${activityOnly ? range.start : range.previousStart}::timestamptz at time zone 'UTC'
         and "periodStart" <= ${through}
     ), daily as (
-      select to_char(local_time, 'YYYY-MM-DD') as date, ${activityOnly ? sql`''::text` : sql`world`} as world, sum("totalKills")::float8 as kills
+      select to_char(local_time, 'YYYY-MM-DD') as date, world, sum("totalKills")::float8 as kills
       from buckets group by 1, 2
     )
     ${

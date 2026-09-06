@@ -57,18 +57,39 @@ describe("personal kill analytics calendar semantics", () => {
     expect(result.daily[0]).toEqual({
       date: "2026-10-19",
       kills: null,
+      worlds: [],
       partial: true,
     });
     expect(result.daily[4]).toEqual({
       date: "2026-10-23",
       kills: 8,
+      worlds: ["tempest"],
       partial: true,
     });
     expect(result.daily[5]).toEqual({
       date: "2026-10-24",
       kills: 4,
+      worlds: ["tempest"],
       partial: false,
     });
+  });
+  it("lists only distinct worlds contributing positive observed kills to each day", () => {
+    const result = buildKillActivity(
+      {
+        ...base,
+        daily: [
+          ...base.daily,
+          { date: "2026-10-23", world: "lunia", kills: 3 },
+          { date: "2026-10-23", world: "tempest", kills: 2 },
+          { date: "2026-10-23", world: "zero", kills: 0 },
+        ],
+      },
+      range,
+    );
+    expect(result.daily[4]?.worlds).toEqual(["lunia", "tempest"]);
+    expect(result.daily[4]?.kills).toBe(13);
+    expect(result.daily[0]?.worlds).toEqual([]);
+    expect(result.daily[5]?.worlds).toEqual(["tempest"]);
   });
   it("uses active days for the average and preserves yesterday's current streak", () => {
     const result = buildKillAnalytics(raw, range);

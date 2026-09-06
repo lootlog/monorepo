@@ -1,3 +1,4 @@
+import { TextLink } from "@lootlog/ui/components/text-link";
 import { SectionCard as Card } from "@/components/common/section-card/section-card";
 import { Badge } from "@lootlog/ui/components/badge";
 import {
@@ -118,15 +119,15 @@ export const ActivityLogsListItem: React.FC<Props> = ({ activity }) => {
                 <>
                   &nbsp;•
                   {actor.clanId ? (
-                    <a
+                    <TextLink
                       href={`${MARGONEM_GUILD_URL},${activity.world},${actor.clanId}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="hover:text-primary hover:underline transition-colors text-white"
+
                       onClick={(event) => event.stopPropagation()}
                     >
                       {actor.clanName}
-                    </a>
+                    </TextLink>
                   ) : (
                     <span>{actor.clanName}</span>
                   )}

@@ -1,3 +1,4 @@
+import { TextLink } from "@lootlog/ui/components/text-link";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { PageHeader } from "@/components/common/page-header";
 import { useState } from "react";
@@ -247,13 +248,17 @@ export const GuildDocsListPage = () => {
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 space-y-1">
-                        <Link
-                          to="/$guildId/docs/$docId"
-                          params={{ guildId, docId: document.id }}
-                          className="block truncate text-base font-semibold leading-tight outline-none hover:text-primary focus-visible:text-primary"
+                        <TextLink
+                          className="block truncate leading-tight text-sm"
+                          render={
+                            <Link
+                              to="/$guildId/docs/$docId"
+                              params={{ guildId, docId: document.id }}
+                            />
+                          }
                         >
                           {document.title}
-                        </Link>
+                        </TextLink>
                         <p className="text-xs text-muted-foreground">
                           {t("docs.list.updatedBy", { name: editorName })}
                         </p>
