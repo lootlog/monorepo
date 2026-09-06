@@ -36,7 +36,9 @@ export const SectionCardHeader = ({
         <span className="min-w-0 break-words">{title}</span>
       </h2>
       {description && (
-        <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+        <p className={cn("mt-1 text-xs text-muted-foreground", Icon && "pl-7")}>
+          {description}
+        </p>
       )}
     </div>
     {actions && (
