@@ -1,6 +1,6 @@
 import { TextLink } from "@lootlog/ui/components/text-link";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { PageHeader } from "@/components/common/page-header";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
@@ -107,9 +107,10 @@ export const GuildDocsListPage = () => {
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
+      <h1 className="sr-only">{t("docs.list.title")}</h1>
       <div className="px-3 pt-3">
-        <PageHeader title={t("docs.list.title")}>
-          <SectionCardContent>
+        <SectionCard className="rounded-xl">
+          <SectionCardContent className="p-2">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <SearchInput
                 name="guild-doc-search"
@@ -173,7 +174,7 @@ export const GuildDocsListPage = () => {
               </div>
             </div>
           </SectionCardContent>
-        </PageHeader>
+        </SectionCard>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col pt-3">

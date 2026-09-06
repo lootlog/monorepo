@@ -1,16 +1,12 @@
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCard } from "@/components/common/section-card/section-card";
-import { PageHeader } from "@/components/common/page-header";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 
 export const EventsPageSkeleton = () => {
   return (
     <div className="flex flex-col gap-4 px-3 py-3">
-      <PageHeader
-        title={<Skeleton className="h-5 w-40" />}
-        description={<Skeleton className="h-3 w-56 max-w-full" />}
-      />
+      <Skeleton className="h-[54px] w-full rounded-xl" />
 
       <div className="flex flex-col gap-3">
         {Array.from({ length: 4 }).map((_, i) => (

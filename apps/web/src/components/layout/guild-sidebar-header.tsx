@@ -1,11 +1,6 @@
 import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import { Button } from "@lootlog/ui/components/button";
 import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@lootlog/ui/components/avatar";
-import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
@@ -99,27 +94,7 @@ export const GuildSidebarHeader = ({ guildId }: { guildId?: string }) => {
 
   return (
     <>
-      <div className="flex items-center gap-2.5 min-w-0 flex-1">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={guild?.id ?? "loading"}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            transition={{ duration: 0.15 }}
-          >
-            <Avatar className="size-8 rounded-lg shrink-0">
-              <AvatarImage
-                src={guild?.icon as string}
-                alt={guild?.name}
-                className="pointer-events-none select-none"
-              />
-              <AvatarFallback className="rounded-lg text-xs font-semibold">
-                {guild?.name?.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-          </motion.div>
-        </AnimatePresence>
+      <div className="flex items-center gap-2.5 min-w-0 flex-1 pl-3">
         <AnimatePresence mode="wait">
           <motion.span
             key={guild?.id ?? "loading"}
@@ -154,10 +129,10 @@ export const GuildSidebarHeader = ({ guildId }: { guildId?: string }) => {
           render={
             <span tabIndex={0}>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="icon"
                 aria-label={canTriggerRefreshText}
-                className="size-8 border-primary/30 bg-primary/10 text-primary shadow-sm hover:border-primary/60 hover:bg-primary/15 disabled:border-border disabled:bg-muted/40 disabled:text-muted-foreground disabled:opacity-100"
+                className="size-8 text-muted-foreground hover:text-foreground"
                 onClick={handleRefreshPermissions}
                 disabled={!canTriggerRefresh}
                 loading={refreshMember.isPending}

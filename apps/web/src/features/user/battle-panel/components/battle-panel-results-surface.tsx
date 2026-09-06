@@ -40,16 +40,29 @@ export const BattlePanelResultsSurface = ({
 
   return (
     <SectionCard className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden border-border bg-card p-0">
-      <SectionCardHeader
-        title={title ?? t("battlePanel.navigation.battles")}
-        actions={
-          <>
-            {toolbar}
+      {title ? (
+        <SectionCardHeader
+          title={title}
+          actions={
+            <>
+              {toolbar}
+              {toolbarEnd}
+            </>
+          }
+          className="shrink-0"
+        />
+      ) : (
+        (toolbar || toolbarEnd) && (
+          <div
+            role="group"
+            aria-label={t("battlePanel.filters.title")}
+            className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border/70 bg-background/30 p-2"
+          >
+            {toolbar && <div className="min-w-0 flex-1">{toolbar}</div>}
             {toolbarEnd}
-          </>
-        }
-        className="shrink-0"
-      />
+          </div>
+        )
+      )}
       {shouldShowChips && (
         <BattlePanelFilterChipList
           chips={chips}

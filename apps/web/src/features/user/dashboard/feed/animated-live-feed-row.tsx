@@ -11,7 +11,7 @@ export function AnimatedLiveFeedRow({
   const expandDuration = shouldAnimate ? 0.22 : 0;
   return (
     <motion.li
-      className="border-t border-border/50 first:border-t-0 odd:bg-card even:bg-muted/20"
+      className="border-t border-border/50 first:border-t-0 odd:bg-card even:bg-muted/60"
       initial={shouldAnimate ? { height: 0, overflow: "hidden" } : false}
       animate={{ height: "auto", overflow: "visible" }}
       transition={{

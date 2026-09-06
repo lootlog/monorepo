@@ -19,19 +19,22 @@ vi.mock("@lootlog/client/main", async () => ({
 }));
 afterEach(cleanup);
 it("filters lifetime totals by world and carries the selection to statistics", async () => {
-  stats.mockImplementation((params) => ({
-    data: {
-      overview: {
-        totalKills: params?.world === "pandora" ? 12 : 42,
-        killsByType: { ELITE2: 40, HERO: 2 },
-        killsByWorld: { pandora: 12, zorza: 30 },
+  stats.mockImplementation((params) => {
+    const worldTotal = params?.world === "pandora" ? 12 : 42;
+    return {
+      data: {
+        overview: {
+          totalKills: params?.period === "24h" ? 3 : worldTotal,
+          killsByType: { ELITE2: 40, HERO: 2 },
+          killsByWorld: { pandora: 12, zorza: 30 },
+        },
       },
-    },
-    isPending: false,
-    isError: false,
-    isFetching: false,
-    refetch: vi.fn(),
-  }));
+      isPending: false,
+      isError: false,
+      isFetching: false,
+      refetch: vi.fn(),
+    };
+  });
   const root = createRootRoute();
   const route = createRoute({
     getParentRoute: () => root,
@@ -65,7 +68,7 @@ it("filters lifetime totals by world and carries the selection to statistics", a
   fireEvent.click(await screen.findByRole("option", { name: "Pandora" }));
   await screen.findByText("12");
   expect(stats).toHaveBeenCalledWith(
-    { world: "pandora" },
+    { world: "pandora", period: "all" },
     expect.objectContaining({
       query: expect.objectContaining({ enabled: true }),
     }),
@@ -77,6 +80,27 @@ it("filters lifetime totals by world and carries the selection to statistics", a
   fireEvent.click(
     await screen.findByRole("option", { name: "Wszystkie światy" }),
   );
+  await screen.findByText("42");
+  fireEvent.click(screen.getByRole("combobox", { name: "Okres" }));
+  const weekOption = await screen.findByRole("option", {
+    name: "Ostatni tydzień",
+  });
+  fireEvent.pointerDown(weekOption, { pointerType: "mouse" });
+  fireEvent.click(weekOption);
+  expect(
+    screen.getByRole("link", { name: /^Statystyki$/ }).getAttribute("href"),
+  ).toContain("days=7");
+  fireEvent.click(screen.getByRole("combobox", { name: "Okres" }));
+  const dayOption = await screen.findByRole("option", {
+    name: "Ostatnie 24 godziny",
+  });
+  fireEvent.pointerDown(dayOption, { pointerType: "mouse" });
+  fireEvent.click(dayOption);
+  await screen.findByText("3");
+  fireEvent.click(screen.getByRole("combobox", { name: "Okres" }));
+  const allOption = await screen.findByRole("option", { name: "Wszystko" });
+  fireEvent.pointerDown(allOption, { pointerType: "mouse" });
+  fireEvent.click(allOption);
   await screen.findByText("42");
   expect(
     screen.getByRole("link", { name: /^Statystyki$/ }).getAttribute("href"),

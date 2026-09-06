@@ -1,9 +1,8 @@
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { PageHeader } from "@/components/common/page-header";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
-import { LogOut, Trash2, UserCog } from "lucide-react";
+import { LogOut, Trash2 } from "lucide-react";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -52,12 +51,7 @@ export const AccountSettings: FC = () => {
   return (
     <ScrollArea className="h-full">
       <div className="px-3 pb-3 flex flex-col gap-4">
-        <PageHeader
-          icon={UserCog}
-          title={t("settings.account.title")}
-          description={t("settings.account.description")}
-        />
-
+        <h1 className="sr-only">{t("settings.account.title")}</h1>
         <SectionCard>
           <SectionCardHeader
             icon={LogOut}
