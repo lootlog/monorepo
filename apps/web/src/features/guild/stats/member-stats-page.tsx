@@ -1,3 +1,4 @@
+import { TextLink } from "@lootlog/ui/components/text-link";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { PageHeader } from "@/components/common/page-header";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
@@ -421,13 +422,17 @@ export const MemberStatsPage: React.FC = () => {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Link
-                              to="/$guildId/stats/npcs/$npcId"
-                              params={{
-                                guildId,
-                                npcId: npc.npcId.toString(),
-                              }}
-                              className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+                            <TextLink
+                              className="flex items-center gap-3 text-sm"
+                              render={
+                                <Link
+                                  to="/$guildId/stats/npcs/$npcId"
+                                  params={{
+                                    guildId,
+                                    npcId: npc.npcId.toString(),
+                                  }}
+                                />
+                              }
                             >
                               {npc.npcIcon && (
                                 <div className="w-8 flex-shrink-0">
@@ -450,7 +455,7 @@ export const MemberStatsPage: React.FC = () => {
                                   {npc.npcProf} • {t(`npcType.${npc.npcType}`)}
                                 </span>
                               </div>
-                            </Link>
+                            </TextLink>
                           </TableCell>
                           <TableCell className="text-right">
                             <span className="font-semibold tabular-nums">

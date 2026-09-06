@@ -1,3 +1,4 @@
+import { TextLink } from "@lootlog/ui/components/text-link";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { PageHeader } from "@/components/common/page-header";
 import { StatsNpcTypeSelect } from "./components/stats-npc-type-select";
@@ -5,7 +6,7 @@ import { StatsRankingRowsSkeleton } from "./components/stats-ranking-rows-skelet
 import { getOffsetPagination } from "./utils/offset-pagination";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate, useParams } from "@tanstack/react-router";
+import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import { Swords } from "lucide-react";
 import {
   Table,
@@ -299,9 +300,21 @@ export const StatsNpcsList: React.FC = () => {
                                 </div>
                               )}
                               <div className="flex flex-col">
-                                <span className="text-sm font-medium leading-tight">
+                                <TextLink
+                                  className="text-sm leading-tight"
+                                  onClick={(event) => event.stopPropagation()}
+                                  render={
+                                    <Link
+                                      to="/$guildId/stats/npcs/$npcId"
+                                      params={{
+                                        guildId,
+                                        npcId: String(npc.npcId),
+                                      }}
+                                    />
+                                  }
+                                >
                                   {npc.npcName}
-                                </span>
+                                </TextLink>
                                 <span className="text-xs text-muted-foreground">
                                   {npc.npcLvl}
                                 </span>

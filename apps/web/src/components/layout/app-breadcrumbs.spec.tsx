@@ -1,7 +1,20 @@
 // @vitest-environment happy-dom
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  createMemoryHistory,
+  createRootRoute,
+  createRoute,
+  createRouter,
+  RouterProvider,
+} from "@tanstack/react-router";
 import { AppBreadcrumbs } from "./app-breadcrumbs";
 
 vi.mock("react-i18next", () => ({
@@ -11,20 +24,27 @@ vi.mock("react-i18next", () => ({
 describe("AppBreadcrumbs", () => {
   afterEach(cleanup);
 
-  it("renders accessible navigation with links, separators, and current page", () => {
-    const onNavigate = vi.fn();
-    const { container } = render(
-      <AppBreadcrumbs
-        breadcrumbs={[
-          { label: "Lootlog", path: "/guild" },
-          { label: "Events", path: "/guild/events" },
-          { label: "Summer Event", path: "/guild/events/summer" },
-          { label: "Members", path: "/guild/events/summer/members" },
-          { label: "Very Long Member Name", path: null },
-        ]}
-        onNavigate={onNavigate}
-      />,
-    );
+  it("renders accessible navigation with links, separators, and current page", async () => {
+    const root = createRootRoute({
+      component: () => (
+        <AppBreadcrumbs
+          breadcrumbs={[
+            { label: "Lootlog", path: "/guild" },
+            { label: "Events", path: "/guild/events" },
+            { label: "Summer Event", path: "/guild/events/summer" },
+            { label: "Members", path: "/guild/events/summer/members" },
+            { label: "Very Long Member Name", path: null },
+          ]}
+        />
+      ),
+    });
+    const route = createRoute({ getParentRoute: () => root, path: "/$" });
+    const router = createRouter({
+      routeTree: root.addChildren([route]),
+      history: createMemoryHistory({ initialEntries: ["/guild"] }),
+    });
+    await router.load();
+    const { container } = render(<RouterProvider router={router} />);
 
     expect(
       screen.getByRole("navigation", {
@@ -34,9 +54,9 @@ describe("AppBreadcrumbs", () => {
     expect(
       container.querySelectorAll('[data-slot="breadcrumb-separator"]'),
     ).toHaveLength(4);
-    expect(container.querySelector('[aria-current="page"]')?.textContent).toBe(
-      "Very Long Member Name",
-    );
+    expect(
+      container.querySelector('[data-slot="breadcrumb-page"]')?.textContent,
+    ).toBe("Very Long Member Name");
 
     const breadcrumbItems = container.querySelectorAll(
       '[data-slot="breadcrumb-item"]',
@@ -52,10 +72,13 @@ describe("AppBreadcrumbs", () => {
     const members = screen.getByRole("link", { name: "Members" });
     expect(members.getAttribute("href")).toBe("/guild/events/summer/members");
     fireEvent.click(members, { ctrlKey: true });
-    expect(onNavigate).not.toHaveBeenCalled();
+    expect(router.state.location.pathname).toBe("/guild");
     fireEvent.click(members);
 
-    expect(onNavigate).toHaveBeenCalledOnce();
-    expect(onNavigate).toHaveBeenCalledWith("/guild/events/summer/members");
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe(
+        "/guild/events/summer/members",
+      ),
+    );
   });
 });

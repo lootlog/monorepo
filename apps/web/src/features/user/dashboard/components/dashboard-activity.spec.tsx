@@ -68,3 +68,112 @@ it("requests 112 inclusive days and hides older cached kill activity", () => {
   expect(screen.getByRole("button", { name: /18 maja/ })).toBeTruthy();
   expect(screen.getByRole("button", { name: /6 września/ })).toBeTruthy();
 });
+
+it("uses the lowest activity level for missing days in both tabs without details or coverage notices", () => {
+  vi.setSystemTime(new Date("2026-09-06T12:00:00Z"));
+  const query = {
+    isPending: false,
+    isError: false,
+    isFetching: false,
+    refetch: vi.fn(),
+  };
+  mocks.online.mockReturnValue({
+    ...query,
+    data: {
+      status: "fresh",
+      days: [{ date: "2026-09-01", onlineSeconds: null, partial: false }],
+    },
+  });
+  mocks.kills.mockReturnValue({
+    ...query,
+    data: {
+      meta: { coverage: "partial" },
+      daily: [{ date: "2026-09-01", kills: null, partial: false }],
+    },
+  });
+  render(<DashboardActivity />);
+  for (const mode of ["Online", "Bicia"]) {
+    fireEvent.click(screen.getByRole("button", { name: mode }));
+    const day = screen.getByRole("button", { name: /1 września/ });
+    expect(day.getAttribute("aria-label")).not.toContain("Brak danych");
+    expect(day.classList.contains("bg-muted")).toBe(true);
+    fireEvent.click(day);
+    expect(document.querySelector("p[aria-live=polite]")).toBeNull();
+    expect(screen.queryByText("Brak danych")).toBeNull();
+    expect(screen.queryByText(/Wybierz dzień/)).toBeNull();
+    expect(screen.queryByText(/Historia godzinowa/)).toBeNull();
+  }
+});
+
+it("passes each day's source worlds independently in both activity tabs", () => {
+  vi.setSystemTime(new Date("2026-09-06T12:00:00Z"));
+  const query = {
+    isPending: false,
+    isError: false,
+    isFetching: false,
+    refetch: vi.fn(),
+  };
+  mocks.online.mockReturnValue({
+    ...query,
+    data: {
+      status: "fresh",
+      days: [
+        {
+          date: "2026-09-01",
+          onlineSeconds: 3600,
+          partial: false,
+          worlds: ["luvia"],
+          worldsComplete: true,
+        },
+        {
+          date: "2026-09-02",
+          onlineSeconds: 1800,
+          partial: false,
+          worlds: ["pandora"],
+          worldsComplete: false,
+        },
+      ],
+    },
+  });
+  mocks.kills.mockReturnValue({
+    ...query,
+    data: {
+      daily: [
+        {
+          date: "2026-09-01",
+          kills: 12,
+          partial: false,
+          worlds: ["gordion", "luvia"],
+        },
+        { date: "2026-09-02", kills: 0, partial: false, worlds: [] },
+      ],
+    },
+  });
+  render(<DashboardActivity />);
+  expect(
+    screen
+      .getByRole("button", { name: /1 września/ })
+      .getAttribute("aria-label"),
+  ).toContain("Światy: Luvia");
+  expect(
+    screen
+      .getByRole("button", { name: /1 września/ })
+      .getAttribute("aria-label"),
+  ).not.toContain("Pandora");
+  expect(
+    screen
+      .getByRole("button", { name: /2 września/ })
+      .getAttribute("aria-label"),
+  ).toContain("Część aktywności");
+  fireEvent.click(screen.getByRole("button", { name: "Bicia" }));
+  expect(
+    screen
+      .getByRole("button", { name: /1 września/ })
+      .getAttribute("aria-label"),
+  ).toContain("Światy: Gordion, Luvia");
+  expect(
+    screen
+      .getByRole("button", { name: /2 września/ })
+      .getAttribute("aria-label"),
+  ).not.toContain("Światy:");
+});

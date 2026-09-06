@@ -2,6 +2,8 @@ export type ActivityDay = {
   date: string;
   value: number | null;
   partial?: boolean;
+  worlds?: readonly string[];
+  worldsComplete?: boolean;
 };
 
 export function activityLevel(

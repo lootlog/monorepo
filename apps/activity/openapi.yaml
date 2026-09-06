@@ -925,10 +925,18 @@ components:
                 type: number
               partial:
                 type: boolean
+              worlds:
+                type: array
+                items:
+                  type: string
+              worldsComplete:
+                type: boolean
             required:
               - date
               - onlineSeconds
               - partial
+              - worlds
+              - worldsComplete
       required:
         - timezone
         - trackingStartedAt

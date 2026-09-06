@@ -20173,6 +20173,10 @@ components:
             properties:
               date:
                 type: string
+              worlds:
+                type: array
+                items:
+                  type: string
               kills:
                 nullable: true
                 type: number
@@ -20180,6 +20184,7 @@ components:
                 type: boolean
             required:
               - date
+              - worlds
               - kills
               - partial
             additionalProperties: false
@@ -20594,6 +20599,10 @@ components:
             properties:
               date:
                 type: string
+              worlds:
+                type: array
+                items:
+                  type: string
               kills:
                 nullable: true
                 type: number
@@ -20601,6 +20610,7 @@ components:
                 type: boolean
             required:
               - date
+              - worlds
               - kills
               - partial
             additionalProperties: false

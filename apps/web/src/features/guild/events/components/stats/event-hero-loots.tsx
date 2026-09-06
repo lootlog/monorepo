@@ -1,10 +1,11 @@
+import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { Tabs, TabsTrigger } from "@lootlog/ui/components/tabs";
-import { Package, Frown, ChevronRight } from "lucide-react";
+import { Package, Frown } from "lucide-react";
 import { useEventLoots } from "../../hooks/queries/use-event-loots";
 import type { EventHeroNpc } from "../../types/api";
 import { LootsListItem } from "@/features/guild/loots-list/components/loots-list/loots-list-item";
@@ -54,17 +55,20 @@ export const EventHeroLoots = ({
           title={t("events.loots.title")}
           actions={
             <>
-              <Link
-                to="/$guildId"
-                params={{ guildId }}
-                search={{
-                  npcs: activeHeroName ?? heroNpcNames.join(","),
-                }}
-                className="inline-flex h-8 shrink-0 items-center gap-1 rounded-sm text-xs font-semibold text-muted-foreground outline-none transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring/50"
+              <ChevronLink
+                className="inline-flex h-8 shrink-0 items-center gap-1 text-xs"
+                render={
+                  <Link
+                    to="/$guildId"
+                    params={{ guildId }}
+                    search={{
+                      npcs: activeHeroName ?? heroNpcNames.join(","),
+                    }}
+                  />
+                }
               >
                 {t("events.loots.showAll")}
-                <ChevronRight className="size-3.5" />
-              </Link>
+              </ChevronLink>
             </>
           }
         />

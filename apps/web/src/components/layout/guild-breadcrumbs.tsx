@@ -224,10 +224,7 @@ export const GuildBreadcrumbs: FC = () => {
           )}
         </div>
 
-        <AppBreadcrumbs
-          breadcrumbs={navInfo.breadcrumbs}
-          onNavigate={(breadcrumbPath) => navigate({ to: breadcrumbPath })}
-        />
+        <AppBreadcrumbs breadcrumbs={navInfo.breadcrumbs} />
         <div className={parentPath ? "w-[4.5rem]" : "w-8"} />
       </div>
     </AppTopBar>

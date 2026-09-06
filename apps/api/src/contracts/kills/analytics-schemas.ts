@@ -38,6 +38,7 @@ export const KillAnalyticsMeta = Schema.Struct({
 });
 const DailyActivity = Schema.Struct({
   date: Schema.String,
+  worlds: Schema.Array(Schema.String),
   kills: NullableNumber,
   partial: Schema.Boolean,
 });

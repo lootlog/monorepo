@@ -95,7 +95,7 @@ export function useLiveFeed() {
       },
     };
     socket.on(GatewayEvent.FEED_ENTRY, onEntry);
-    socket.on(GatewayEvent.CONNECT, clear);
+    socket.on(GatewayEvent.CONNECT, handlePermissions);
     socket.on(GatewayEvent.JOIN, handlePermissions);
     socket.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissions);
     void refresh();
@@ -104,7 +104,7 @@ export function useLiveFeed() {
       cancel();
       controlsRef.current = undefined;
       socket.off(GatewayEvent.FEED_ENTRY, onEntry);
-      socket.off(GatewayEvent.CONNECT, clear);
+      socket.off(GatewayEvent.CONNECT, handlePermissions);
       socket.off(GatewayEvent.JOIN, handlePermissions);
       socket.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissions);
     };
