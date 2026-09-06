@@ -2248,6 +2248,40 @@ export type LootResponseDtoPlayersItem = {
 /**
  * @nullable
  */
+export type LootResponseDtoMapPlayersSnapshotItemProf = typeof LootResponseDtoMapPlayersSnapshotItemProf[keyof typeof LootResponseDtoMapPlayersSnapshotItemProf] | null;
+
+
+export const LootResponseDtoMapPlayersSnapshotItemProf = {
+  WARRIOR: 'WARRIOR',
+  PALADIN: 'PALADIN',
+  HUNTER: 'HUNTER',
+  MAGE: 'MAGE',
+  BLADE_DANCER: 'BLADE_DANCER',
+  TRACKER: 'TRACKER',
+} as const;
+
+export type LootResponseDtoMapPlayersSnapshotItem = {
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  accountId: number;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  characterId: number;
+  /** @minLength 1 */
+  name: string;
+  /** @nullable */
+  prof: LootResponseDtoMapPlayersSnapshotItemProf;
+  /** @nullable */
+  icon: string | null;
+};
+
+/**
+ * @nullable
+ */
 export type LootResponseDtoNpcsItemProf = typeof LootResponseDtoNpcsItemProf[keyof typeof LootResponseDtoNpcsItemProf] | null;
 
 
@@ -2319,6 +2353,11 @@ export interface LootResponseDto {
   location: string;
   items: LootResponseDtoItemsItem[];
   players: LootResponseDtoPlayersItem[];
+  /**
+     * @minItems 1
+     * @nullable
+     */
+  mapPlayersSnapshot: LootResponseDtoMapPlayersSnapshotItem[] | null;
   npcs: LootResponseDtoNpcsItem[];
   lootShare: LootResponseDtoLootShare;
   /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
@@ -2550,6 +2589,40 @@ export type NullableLootResponseDtoPlayersItem = {
 /**
  * @nullable
  */
+export type NullableLootResponseDtoMapPlayersSnapshotItemProf = typeof NullableLootResponseDtoMapPlayersSnapshotItemProf[keyof typeof NullableLootResponseDtoMapPlayersSnapshotItemProf] | null;
+
+
+export const NullableLootResponseDtoMapPlayersSnapshotItemProf = {
+  WARRIOR: 'WARRIOR',
+  PALADIN: 'PALADIN',
+  HUNTER: 'HUNTER',
+  MAGE: 'MAGE',
+  BLADE_DANCER: 'BLADE_DANCER',
+  TRACKER: 'TRACKER',
+} as const;
+
+export type NullableLootResponseDtoMapPlayersSnapshotItem = {
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  accountId: number;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  characterId: number;
+  /** @minLength 1 */
+  name: string;
+  /** @nullable */
+  prof: NullableLootResponseDtoMapPlayersSnapshotItemProf;
+  /** @nullable */
+  icon: string | null;
+};
+
+/**
+ * @nullable
+ */
 export type NullableLootResponseDtoNpcsItemProf = typeof NullableLootResponseDtoNpcsItemProf[keyof typeof NullableLootResponseDtoNpcsItemProf] | null;
 
 
@@ -2624,6 +2697,11 @@ export type NullableLootResponseDto = {[key: string]: unknown} & ({
   location: string;
   items: NullableLootResponseDtoItemsItem[];
   players: NullableLootResponseDtoPlayersItem[];
+  /**
+     * @minItems 1
+     * @nullable
+     */
+  mapPlayersSnapshot: NullableLootResponseDtoMapPlayersSnapshotItem[] | null;
   npcs: NullableLootResponseDtoNpcsItem[];
   lootShare: NullableLootResponseDtoLootShare;
   /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
@@ -2633,6 +2711,40 @@ export type NullableLootResponseDto = {[key: string]: unknown} & ({
   submissions?: NullableLootResponseDtoSubmissionsItem[];
   commentsCount: number;
 } | null) | null;
+
+/**
+ * @nullable
+ */
+export type CreateLootDtoMapPlayersSnapshotItemProf = typeof CreateLootDtoMapPlayersSnapshotItemProf[keyof typeof CreateLootDtoMapPlayersSnapshotItemProf] | null;
+
+
+export const CreateLootDtoMapPlayersSnapshotItemProf = {
+  WARRIOR: 'WARRIOR',
+  PALADIN: 'PALADIN',
+  HUNTER: 'HUNTER',
+  MAGE: 'MAGE',
+  BLADE_DANCER: 'BLADE_DANCER',
+  TRACKER: 'TRACKER',
+} as const;
+
+export type CreateLootDtoMapPlayersSnapshotItem = {
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  accountId: number;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  characterId: number;
+  /** @minLength 1 */
+  name: string;
+  /** @nullable */
+  prof: CreateLootDtoMapPlayersSnapshotItemProf;
+  /** @nullable */
+  icon: string | null;
+};
 
 export type CreateLootDtoLootsItem = {
   /** @minLength 1 */
@@ -2691,6 +2803,8 @@ export const CreateLootDtoSource = {
 } as const;
 
 export interface CreateLootDto {
+  /** @minItems 1 */
+  mapPlayersSnapshot?: CreateLootDtoMapPlayersSnapshotItem[];
   /**
      * @minItems 1
      * @maxItems 10

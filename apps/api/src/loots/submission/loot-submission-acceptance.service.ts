@@ -1,3 +1,4 @@
+import type { MapPlayersSnapshot } from "#src/contracts/loots/map-players-snapshot";
 import { createItemStatsHash } from "@lootlog/database/snapshot-hash";
 import { Effect, Schema } from "effect";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
@@ -29,7 +30,7 @@ import type {
 } from "#src/contracts/loots/schemas";
 import { ErrorKey } from "#src/loots/error-key";
 import { getItemTypeByCl } from "#src/shared/margonem/item-type";
-import { getProfByShortname } from "#src/shared/margonem/profession";
+import { getProfByShortname } from "@lootlog/domain/profession";
 import {
   LootPublicationPayload,
   type LootPublication,
@@ -219,16 +220,26 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         type: npc.type,
         wt: npc.wt,
       }));
+      const mapPlayersSnapshot =
+        options.submission.source === "FIGHT" &&
+        primaryNpcType === NpcType.ELITE2 &&
+        options.submission.loots.some(
+          (item) => self.getItemStats(item).rarity === "LEGENDARY",
+        )
+          ? (options.submission.mapPlayersSnapshot ?? null)
+          : null;
       if (existingLootId !== null) {
         yield* self.acceptExistingLoot(
           existingLootId,
           outcome.submissionData,
           socketNpcs,
+          mapPlayersSnapshot,
         );
         return self.createResponse(existingLootId, outcome);
       }
 
       const lootId = yield* self.createNewLoot({
+        mapPlayersSnapshot,
         npcData,
         outcome,
         primaryNpcType,
@@ -318,6 +329,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     lootId: number,
     submissions: LootSubmissionData[],
     socketNpcs: LootEventNpc[],
+    mapPlayersSnapshot: MapPlayersSnapshot | null,
   ): Effect.Effect<void, unknown> {
     const self = this;
     return Effect.gen(function* () {
@@ -335,7 +347,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         submissions,
         existingSubmissions,
       );
-      if (newSubmissions.length === 0) {
+      if (newSubmissions.length === 0 && mapPlayersSnapshot === null) {
         return;
       }
 
@@ -344,11 +356,18 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         newSubmissions,
         (organizationIds) =>
           self.createdPublications(lootId, organizationIds, socketNpcs),
+        mapPlayersSnapshot === null
+          ? undefined
+          : {
+              guildIds: submissions.map(({ guildId }) => guildId),
+              players: mapPlayersSnapshot,
+            },
       );
     });
   }
 
   private createNewLoot(options: {
+    mapPlayersSnapshot: MapPlayersSnapshot | null;
     npcData: { primary: CreateLootRequest["npcs"][number] };
     outcome: AcceptanceOutcome;
     primaryNpcType: NpcType;
@@ -365,6 +384,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
       );
       return yield* self.repository.createNewLoot(
         {
+          mapPlayersSnapshot: options.mapPlayersSnapshot,
           uniqueId: options.uniqueId,
           world: options.submission.world,
           source: options.submission.source,
@@ -545,7 +565,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         id: npc.id,
         name: npc.name,
         lvl: npc.lvl,
-        prof: npc.prof ? getProfByShortname(npc.prof) : "",
+        prof: getProfByShortname(npc.prof ?? "") ?? "",
         icon: npc.icon,
         wt: npc.wt,
         location: npc.location,
@@ -578,7 +598,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
       ? requiredProf
           .split("")
           .map((id) => getProfByShortname(id))
-          .filter(Boolean)
+          .filter((prof) => prof !== undefined)
       : Object.values(Profession);
     return { lvl, rarity, prof, type: getItemTypeByCl(item.cl) };
   }
@@ -639,20 +659,16 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     world: string,
   ) {
     return players.map((player) => {
-      const prof = getProfByShortname(player.prof);
+      const prof = getProfByShortname(player.prof) ?? null;
       const { accountId, characterId } = this.normalizeCharacterAndAccount(
         player.id,
         player.accountId,
       );
-      const snapshotHash = createHash("sha256")
-        .update(`${player.name}${player.prof}${player.icon}`)
-        .digest("hex");
       return {
         lvl: player.lvl,
         world,
         accountId,
         characterId,
-        snapshotHash,
         name: player.name,
         prof,
         icon: player.icon,
@@ -688,7 +704,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
       icon: npc.icon,
       wt: npc.wt,
       margonemType: npc.type,
-      prof: npc.prof ? getProfByShortname(npc.prof) : null,
+      prof: getProfByShortname(npc.prof ?? "") ?? null,
     }));
   }
 

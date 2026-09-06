@@ -764,6 +764,35 @@ export const organizationLootRecordTable = pgTable(
   ],
 );
 
+export const lootMapPlayerTable = pgTable(
+  "LootMapPlayer",
+  {
+    organizationLootRecordId: integer("organizationLootRecordId").notNull(),
+    playerSnapshotId: integer("playerSnapshotId").notNull(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [table.organizationLootRecordId, table.playerSnapshotId],
+      name: "LootMapPlayer_pkey",
+    }),
+    index("LootMapPlayer_playerSnapshotId_idx").on(table.playerSnapshotId),
+    foreignKey({
+      columns: [table.organizationLootRecordId],
+      foreignColumns: [organizationLootRecordTable.id],
+      name: "LootMapPlayer_organizationLootRecordId_fkey",
+    })
+      .onDelete("restrict")
+      .onUpdate("cascade"),
+    foreignKey({
+      columns: [table.playerSnapshotId],
+      foreignColumns: [playerSnapshotTable.id],
+      name: "LootMapPlayer_playerSnapshotId_fkey",
+    })
+      .onDelete("restrict")
+      .onUpdate("cascade"),
+  ],
+);
+
 export const lootSubmissionTable = pgTable(
   "LootSubmission",
   {

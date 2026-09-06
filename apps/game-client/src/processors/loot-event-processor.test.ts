@@ -1,3 +1,5 @@
+import { RuntimeStateProjection } from "@/lib/margonem-runtime/runtime-state-projection";
+import { parseRuntimeFacts } from "@/lib/margonem-runtime/runtime-event-parser";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useBattleStore } from "@/store/game-store/battle.store";
 import { useDialogStore } from "@/store/game-store/dialog.store";
@@ -8,6 +10,7 @@ import { LootEventProcessor } from "./loot-event-processor";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import type * as ApiModule from "@/api";
 import { useGameStore } from "@/store/game.store";
+import { useOthersStore } from "@/store/others.store";
 import { useNpcsStore } from "@/store/npcs.store";
 
 const { mockCreateLoot, mockGetLoot, mockGetBattleParticipants, mockGame } =
@@ -156,6 +159,7 @@ describe("LootEventProcessor", () => {
     });
     useDialogStore.getState().clearNpcContext();
     useNpcsStore.getState().clearNpcs();
+    useOthersStore.getState().clearOthers();
     useGameStore.getState().replaceGame({
       hero: {
         accountId: "202",
@@ -174,6 +178,202 @@ describe("LootEventProcessor", () => {
       world: "pandora",
     });
     useSettingsStore.getState().setLootDebugLoggingEnabled(false);
+  });
+
+  it("captures map characters and the hero once for a legendary elite II loot", () => {
+    useBattleStore.setState({ battleWarriors: { "1": createBattleWarrior() } });
+    mockGetLoot.mockReturnValue([{ id: 1, stat: "rarity=legendary" }]);
+    mockGetBattleParticipants.mockReturnValue({
+      npcs: [{ id: 501, wt: 20, type: 2, prof: "w" }],
+      party: [],
+    });
+    mockCreateLoot.mockResolvedValue({ id: 999 });
+    useOthersStore.getState().replaceOthers({
+      "303": {
+        accountId: "404",
+        characterId: "303",
+        name: "Other",
+        profession: "m",
+        icon: "other.gif",
+        level: 123,
+      },
+      "101": {
+        accountId: "202",
+        characterId: "101",
+        name: "Tester",
+        profession: "w",
+        icon: "hero.gif",
+        level: 230,
+      },
+    });
+    processor.handleLootFromBattle(createBattleLootEvent());
+    useOthersStore.getState().clearOthers();
+    expect(mockCreateLoot.mock.calls[0][0].mapPlayersSnapshot).toEqual([
+      {
+        accountId: 202,
+        characterId: 101,
+        name: "Tester",
+        prof: "WARRIOR",
+        icon: "hero.gif",
+      },
+      {
+        accountId: 404,
+        characterId: 303,
+        name: "Other",
+        prof: "MAGE",
+        icon: "other.gif",
+      },
+    ]);
+  });
+
+  it("uses same-event map, hero and membership updates and freezes them before the next event", () => {
+    useBattleStore.setState({ battleWarriors: { "1": createBattleWarrior() } });
+    mockGetLoot.mockReturnValue([{ id: 1, stat: "rarity=legendary" }]);
+    mockGetBattleParticipants.mockReturnValue({
+      npcs: [{ id: 501, wt: 20, type: 2, prof: "w" }],
+      party: [],
+    });
+    mockCreateLoot.mockResolvedValue({ id: 999 });
+    useOthersStore.getState().replaceOthers({});
+    const projection = new RuntimeStateProjection();
+    const event = {
+      ...createBattleLootEvent(),
+      town: {
+        id: 2,
+        name: "New map",
+        visibility: 30,
+        mainid: 2,
+        bg: "",
+        file: "",
+        mode: 0,
+        pvp: 0,
+        water: "",
+        x: 0,
+        y: 0,
+      },
+      h: { nick: "Updated hero" },
+      other: {
+        "303": {
+          action: "CREATE",
+          account: 404,
+          nick: "Arriving",
+          prof: "m",
+          icon: "other.gif",
+          lvl: 123,
+          attr: 0,
+          relation: 0,
+          x: 0,
+          y: 0,
+          dir: 0,
+          stasis: 0,
+          stasis_incoming_seconds: 0,
+          rights: 0,
+          oplvl: 0,
+          is_blessed: 0,
+        },
+      },
+    } satisfies GameEvent;
+    const envelope = projection.captureIngress({
+      raw: event,
+      facts: parseRuntimeFacts(event),
+      observedAt: 1,
+      sequence: 1,
+      ingress: { game: null, intent: null, npcsById: {}, othersById: {} },
+    });
+    projection.apply(envelope);
+    processor.handleLootFromBattle(event, envelope.ingress);
+    useOthersStore.getState().removeOther("303");
+    expect(mockCreateLoot.mock.calls[0][0]).toMatchObject({
+      location: "New map",
+      mapPlayersSnapshot: [
+        { characterId: 101, name: "Updated hero" },
+        { characterId: 303, name: "Arriving" },
+      ],
+    });
+  });
+
+  it("omits a snapshot when a higher-weight NPC is not elite II", () => {
+    useBattleStore.setState({ battleWarriors: { "1": createBattleWarrior() } });
+    mockGetLoot.mockReturnValue([{ id: 1, stat: "rarity=legendary" }]);
+    mockGetBattleParticipants.mockReturnValue({
+      npcs: [
+        { wt: 20, type: 2, prof: "w" },
+        { wt: 80, type: 2, prof: "w" },
+      ],
+      party: [],
+    });
+    mockCreateLoot.mockResolvedValue({ id: 999 });
+    useOthersStore.getState().replaceOthers({});
+    processor.handleLootFromBattle(createBattleLootEvent());
+    expect(mockCreateLoot.mock.calls[0][0]).not.toHaveProperty(
+      "mapPlayersSnapshot",
+    );
+  });
+
+  it.each([
+    ["heroic", 20],
+    ["legendary", 80],
+    ["legendary", 100],
+  ])("omits map characters for rarity %s and weight %s", (rarity, wt) => {
+    useBattleStore.setState({ battleWarriors: { "1": createBattleWarrior() } });
+    mockGetLoot.mockReturnValue([{ id: 1, stat: `rarity=${rarity}` }]);
+    mockGetBattleParticipants.mockReturnValue({
+      npcs: [{ id: 501, wt, type: 2, prof: "w" }],
+      party: [],
+    });
+    mockCreateLoot.mockResolvedValue({ id: 999 });
+    useOthersStore.getState().replaceOthers({});
+    processor.handleLootFromBattle(createBattleLootEvent());
+    expect(mockCreateLoot.mock.calls[0][0]).not.toHaveProperty(
+      "mapPlayersSnapshot",
+    );
+  });
+
+  it.each(["invalid player", "different map epoch"])(
+    "omits an inconsistent map snapshot: %s",
+    (reason) => {
+      useBattleStore.setState({
+        battleWarriors: { "1": createBattleWarrior() },
+      });
+      mockGetLoot.mockReturnValue([{ id: 1, stat: "rarity=legendary" }]);
+      mockGetBattleParticipants.mockReturnValue({
+        npcs: [{ id: 501, wt: 20, type: 2, prof: "w" }],
+        party: [],
+      });
+      mockCreateLoot.mockResolvedValue({ id: 999 });
+      useOthersStore.getState().replaceOthers({
+        "303": {
+          accountId: reason === "invalid player" ? "" : "404",
+          characterId: "303",
+          name: "Other",
+          profession: "m",
+          icon: "other.gif",
+          level: 123,
+        },
+      });
+      const mapEpoch = useOthersStore.getState().mapEpoch;
+      if (reason === "different map epoch")
+        useOthersStore.setState({ mapEpoch: mapEpoch + 1 });
+      processor.handleLootFromBattle(createBattleLootEvent());
+      useOthersStore.setState({ mapEpoch });
+      expect(mockCreateLoot.mock.calls[0][0]).not.toHaveProperty(
+        "mapPlayersSnapshot",
+      );
+    },
+  );
+
+  it("submits the loot without an uninitialized map list", () => {
+    useBattleStore.setState({ battleWarriors: { "1": createBattleWarrior() } });
+    mockGetLoot.mockReturnValue([{ id: 1, stat: "rarity=legendary" }]);
+    mockGetBattleParticipants.mockReturnValue({
+      npcs: [{ id: 501, wt: 20, type: 2, prof: "w" }],
+      party: [],
+    });
+    mockCreateLoot.mockResolvedValue({ id: 999 });
+    processor.handleLootFromBattle(createBattleLootEvent());
+    expect(mockCreateLoot.mock.calls[0][0]).not.toHaveProperty(
+      "mapPlayersSnapshot",
+    );
   });
 
   it("ignores battle loot when item is missing or source is not fight", () => {
