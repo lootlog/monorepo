@@ -268,6 +268,7 @@
       "version": "1.1.0",
       "dependencies": {
         "@effect/platform-bun": "catalog:",
+        "@lootlog/domain": "workspace:*",
         "@lootlog/instrumentation": "workspace:*",
         "@lootlog/messaging": "workspace:*",
         "@lootlog/protocol": "workspace:*",
