@@ -1,3 +1,4 @@
+import { OnlineRepository } from "#src/online/online-repository";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { BunHttpServer } from "@effect/platform-bun";
 import { httpServerMetrics } from "@lootlog/instrumentation";
@@ -218,7 +219,20 @@ const BearerSecurityLive = Layer.succeed(
   BearerSecurityMiddleware.of({ bearer: (httpEffect) => httpEffect }),
 );
 
-export const ActivityHandlers = Layer.merge(
+export const ActivityHandlers = Layer.mergeAll(
+  HttpApiBuilder.group(ActivityApi, "users", (handlers) =>
+    handlers.handleRaw("UsersActivityControllerGetOnline", ({ query }) =>
+      jsonOperation(
+        Effect.gen(function* () {
+          const request = yield* HttpServerRequest.HttpServerRequest;
+          const userId = request.headers["x-auth-user-id"];
+          if (!userId) return yield* fail(401, "Unauthorized");
+          const repository = yield* OnlineRepository;
+          return yield* repository.find(userId, query);
+        }),
+      ),
+    ),
+  ),
   HttpApiBuilder.group(ActivityApi, "health", (handlers) =>
     handlers.handleRaw("HealthzControllerCheck", () =>
       Effect.map(ActivityHealth, (health) => health.check()).pipe(

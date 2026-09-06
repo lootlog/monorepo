@@ -1,3 +1,8 @@
+import { EventEditSkeleton } from "./event-edit-skeleton";
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCard } from "@/components/common/section-card/section-card";
+import { PageHeader } from "@/components/common/page-header";
 import { useEffect } from "react";
 import { Link, useParams } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
@@ -6,9 +11,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
 import { AlertCircle, Settings } from "lucide-react";
-import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { Button } from "@lootlog/ui/components/button";
-import { Card } from "@lootlog/ui/components/card";
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -156,51 +159,12 @@ export const EventEditSettingsPage = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex flex-col gap-3 px-3 py-3">
-        <Card className="gap-4 border-border bg-card p-4">
-          <div className="flex items-center gap-3">
-            <Skeleton className="h-9 w-9 rounded-xl" />
-            <div className="flex flex-col gap-2">
-              <Skeleton className="h-3 w-20" />
-              <Skeleton className="h-4 w-32" />
-            </div>
-          </div>
-        </Card>
-        <Card className="gap-4 border-border bg-card p-3">
-          <div className="grid gap-4">
-            <div className="space-y-2">
-              <Skeleton className="h-3 w-24" />
-              <Skeleton className="h-9 w-full" />
-            </div>
-            <div className="grid gap-3 md:grid-cols-2">
-              <div className="space-y-2">
-                <Skeleton className="h-3 w-20" />
-                <Skeleton className="h-9 w-full" />
-              </div>
-              <div className="space-y-2">
-                <Skeleton className="h-3 w-20" />
-                <Skeleton className="h-9 w-full" />
-              </div>
-            </div>
-            <div className="grid gap-3 xl:grid-cols-3">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="space-y-2">
-                  <Skeleton className="h-3 w-28" />
-                  <Skeleton className="h-9 w-full" />
-                  <Skeleton className="h-3 w-full" />
-                </div>
-              ))}
-            </div>
-          </div>
-        </Card>
-      </div>
-    );
+    return <EventEditSkeleton />;
   }
 
   if (error || !event) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-4">
+      <div className="flex flex-col items-center justify-center h-64 gap-4 max-h-full overflow-y-auto [justify-content:safe_center]">
         <AlertCircle className="w-12 h-12 text-destructive" />
         <p className="text-muted-foreground">{t("events.error")}</p>
         <Link to="/$guildId/events/$eventId" params={routeParams}>
@@ -213,116 +177,113 @@ export const EventEditSettingsPage = () => {
   return (
     <ScrollArea className="h-full bg-background">
       <div className="flex flex-col gap-3 px-3 py-3">
-        <Card className="gap-4 border-border bg-card p-4">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="rounded-xl bg-primary/10 p-2">
-              <Settings className="size-4 text-primary" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                {t("events.editSections.settings")}
-              </p>
-              <h2 className="truncate text-base font-semibold">{event.name}</h2>
-            </div>
-          </div>
-        </Card>
+        <PageHeader
+          icon={Settings}
+          title={event.name}
+          description={t("events.editSections.settings")}
+        />
 
         <form
           className="space-y-3 pb-24"
           onSubmit={form.handleSubmit(onSubmit)}
         >
-          <Card className="gap-4 border-border bg-card p-3">
-            <div className="grid gap-4">
-              <div className="space-y-2">
-                <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  {t("events.settings.nameLabel")}
-                </Label>
-                <Input
-                  {...form.register("name", { required: true })}
-                  className="h-9 text-sm"
-                />
+          <SectionCard className=" border-border bg-card ">
+            <SectionCardHeader title={t("events.editSections.settings")} />
+            <SectionCardContent className="flex min-h-0 flex-col gap-3">
+              <div className="grid gap-4">
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    {t("events.settings.nameLabel")}
+                  </Label>
+                  <Input
+                    {...form.register("name", { required: true })}
+                    className="h-9 text-sm"
+                  />
+                </div>
+
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      {t("events.settings.startsAt")}
+                    </Label>
+                    <Input
+                      type="datetime-local"
+                      {...form.register("startsAt")}
+                      className="h-9 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      {t("events.settings.endsAt")}
+                    </Label>
+                    <Input
+                      type="datetime-local"
+                      {...form.register("endsAt")}
+                      className="h-9 text-sm"
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {t("events.settings.datesHint")}
+                </p>
+
+                <div className="grid gap-3 xl:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      {t("events.settings.assignmentTimeout")}
+                    </Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      {...form.register("assignmentTimeoutMinutes", {
+                        valueAsNumber: true,
+                      })}
+                      className="h-9 text-sm"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {t("events.settings.assignmentTimeoutDescription")}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      {t("events.settings.participationConfirmation")}
+                    </Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      {...form.register("participationConfirmationMinutes", {
+                        valueAsNumber: true,
+                      })}
+                      className="h-9 text-sm"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {t(
+                        "events.settings.participationConfirmationDescription",
+                      )}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      {t("events.settings.mapAssignmentCap")}
+                    </Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      {...form.register("mapAssignmentCap", {
+                        valueAsNumber: true,
+                      })}
+                      className="h-9 text-sm"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {t("events.settings.mapAssignmentCapDescription")}
+                    </p>
+                  </div>
+                </div>
               </div>
-
-              <div className="grid gap-3 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    {t("events.settings.startsAt")}
-                  </Label>
-                  <Input
-                    type="datetime-local"
-                    {...form.register("startsAt")}
-                    className="h-9 text-sm"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    {t("events.settings.endsAt")}
-                  </Label>
-                  <Input
-                    type="datetime-local"
-                    {...form.register("endsAt")}
-                    className="h-9 text-sm"
-                  />
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {t("events.settings.datesHint")}
-              </p>
-
-              <div className="grid gap-3 xl:grid-cols-3">
-                <div className="space-y-2">
-                  <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    {t("events.settings.assignmentTimeout")}
-                  </Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    {...form.register("assignmentTimeoutMinutes", {
-                      valueAsNumber: true,
-                    })}
-                    className="h-9 text-sm"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    {t("events.settings.assignmentTimeoutDescription")}
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    {t("events.settings.participationConfirmation")}
-                  </Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    {...form.register("participationConfirmationMinutes", {
-                      valueAsNumber: true,
-                    })}
-                    className="h-9 text-sm"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    {t("events.settings.participationConfirmationDescription")}
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    {t("events.settings.mapAssignmentCap")}
-                  </Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    {...form.register("mapAssignmentCap", {
-                      valueAsNumber: true,
-                    })}
-                    className="h-9 text-sm"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    {t("events.settings.mapAssignmentCapDescription")}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </Card>
+            </SectionCardContent>
+          </SectionCard>
 
           <UnsavedChangesBar
             isDirty={form.formState.isDirty}

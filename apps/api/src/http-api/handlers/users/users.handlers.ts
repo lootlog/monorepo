@@ -1,3 +1,7 @@
+import {
+  getUserFeed,
+  toRecordsHttpResponse,
+} from "../records/records.operations.js";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { LootlogApi } from "../../lootlog-api.js";
 import {
@@ -15,6 +19,9 @@ export const UsersHandlers = HttpApiBuilder.group(
   "users",
   (handlers) =>
     handlers
+      .handle("UsersControllerGetUserFeed", () =>
+        toRecordsHttpResponse(getUserFeed()),
+      )
       .handle("UsersControllerDeleteAccount", deleteCurrentAccountHttpResponse)
       .handle("UsersControllerGetUserPreferences", () =>
         toAccountOrganizationHttpResponse(getCurrentUserPreferences()),

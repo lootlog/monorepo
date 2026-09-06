@@ -27,7 +27,7 @@ export const StatsLayout: React.FC = () => {
   const showMenu = topLevelPaths.includes(pathname);
 
   return (
-    <div className="w-full h-full flex flex-col min-h-0 bg-background">
+    <div className="w-full flex-1 flex flex-col min-h-0 min-w-0 bg-background">
       {showMenu && (
         <HorizontalMenu
           items={NAV_ELEMENTS}
@@ -36,7 +36,7 @@ export const StatsLayout: React.FC = () => {
           className="shrink-0 pb-3"
         />
       )}
-      <div className="flex-1 min-h-0 overflow-hidden">
+      <div className="flex flex-col flex-1 min-h-0 min-w-0 overflow-hidden">
         <Outlet />
       </div>
     </div>

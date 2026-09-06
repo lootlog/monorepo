@@ -1,3 +1,4 @@
+import { registerIsolatedTestDatabase } from "./isolated-test-database.js";
 import { PostgreSqlContainer } from "@testcontainers/postgresql";
 import {
   GenericContainer,
@@ -31,6 +32,7 @@ export default async function setup() {
       .start();
 
     process.env.POSTGRESQL_CONNECTION_URI = postgres.getConnectionUri();
+    registerIsolatedTestDatabase(postgres.getConnectionUri());
     process.env.PORT = "4000";
     process.env.SERVICE_NAME = "api-e2e";
     process.env.SERVICE_NAMESPACE = "test";

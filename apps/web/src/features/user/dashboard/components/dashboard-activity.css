@@ -1,0 +1,11 @@
+.dashboard-activity-content {
+  --activity-cell: max(
+    20px,
+    calc((100cqw - 56px - var(--activity-weeks) * 4px) / var(--activity-weeks))
+  );
+  height: calc(7 * var(--activity-cell) + 160px);
+}
+
+.dashboard-activity-placeholder {
+  height: calc(7 * var(--activity-cell) + 216px);
+}

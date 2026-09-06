@@ -17,7 +17,7 @@ export const KillsMobileList = ({ npcs, startRank }: KillsMobileListProps) => {
       {npcs.map((npc, index) => (
         <div
           key={`${npc.npcId}-${npc.npcName}`}
-          className="rounded-md border border-border bg-background/80 p-3"
+          className="border-b border-border/70 p-3 last:border-b-0"
         >
           <div className="flex min-w-0 items-start gap-3">
             <div className="flex h-8 min-w-8 items-center justify-center rounded-md bg-muted text-sm font-semibold text-muted-foreground">

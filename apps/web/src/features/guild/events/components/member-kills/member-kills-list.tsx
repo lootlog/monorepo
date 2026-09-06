@@ -1,3 +1,5 @@
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { AlertCircle, Skull } from "lucide-react";
@@ -111,7 +113,8 @@ export const MemberKillsList = ({
   }
 
   return (
-    <section className="w-full min-w-0 overflow-hidden rounded-2xl border border-border bg-card">
+    <SectionCard className="w-full overflow-hidden">
+      <SectionCardHeader icon={Skull} title={t("events.kills.title")} />
       <Table className="w-full table-auto xl:table-fixed">
         <TableHeader className="bg-secondary/25">
           <TableRow className="border-border/80 hover:bg-transparent">
@@ -163,6 +166,6 @@ export const MemberKillsList = ({
           </TableRow>
         </TableBody>
       </Table>
-    </section>
+    </SectionCard>
   );
 };

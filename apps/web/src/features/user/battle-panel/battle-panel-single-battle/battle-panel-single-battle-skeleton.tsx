@@ -1,5 +1,7 @@
+import { PageHeader } from "@/components/common/page-header";
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
 import { BattleTeamMemberSkeleton } from "./components/battle-team-member-skeleton";
-import { Card } from "@lootlog/ui/components/card";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import type { CSSProperties } from "react";
@@ -21,7 +23,8 @@ export const BattlePanelSingleBattleSkeleton = () => {
   return (
     <ScrollArea className="h-full bg-background" aria-hidden="true">
       <div className="flex flex-col gap-4 px-3 py-3" style={layoutStyle}>
-        <Card className="w-full gap-0 overflow-hidden border-border bg-card p-0">
+        <PageHeader title={<Skeleton className="h-5 w-48" />} />
+        <SectionCard className="w-full gap-0 overflow-hidden border-border bg-card p-0">
           <div className="bg-gradient-to-r from-green-400/10 via-transparent to-red-400/10 px-3 py-3">
             <div className="grid grid-cols-1 items-stretch gap-2 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-center">
               <section className="min-w-0 rounded-sm bg-background/35 px-2.5 py-2">
@@ -59,7 +62,7 @@ export const BattlePanelSingleBattleSkeleton = () => {
               ))}
             </div>
           </div>
-        </Card>
+        </SectionCard>
 
         <div className="flex flex-col gap-3 lg:sticky lg:top-3 lg:z-20">
           <div className="bg-background">
@@ -68,50 +71,40 @@ export const BattlePanelSingleBattleSkeleton = () => {
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(280px,0.9fr)_minmax(0,1.3fr)] xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.25fr)_minmax(300px,0.9fr)]">
             <div className="min-w-0">
-              <Card className="flex w-full flex-col gap-0 overflow-hidden border-border bg-card p-0  lg:h-[var(--battle-side-card-height)] lg:min-h-0">
-                <div className="flex min-h-[57px] items-center justify-between gap-3 border-b bg-background px-3 py-3">
-                  <div className="flex min-w-0 flex-1 items-center gap-2">
-                    <Skeleton className="size-4 rounded-sm" />
-                    <Skeleton className="h-4 w-32" />
-                  </div>
-                  <div className="flex shrink-0 gap-1.5">
-                    <Skeleton className="size-9 rounded-sm" />
-                    <Skeleton className="size-9 rounded-sm" />
-                  </div>
-                </div>
+              <SectionCard className="flex w-full flex-col gap-0 overflow-hidden border-border bg-card p-0  lg:h-[var(--battle-side-card-height)] lg:min-h-0">
+                <SectionCardHeader
+                  title={<Skeleton className="h-4 w-36" />}
+                  actions={<Skeleton className="h-8 w-24" />}
+                />
                 <div className="min-h-0 flex-1 space-y-0 overflow-hidden">
                   {statsRows.map((_, index) => (
                     <BattleTeamMemberSkeleton key={index} />
                   ))}
                 </div>
-              </Card>
+              </SectionCard>
             </div>
 
             <div className="flex min-w-0 flex-col gap-3">
-              <Card className="overflow-hidden border-border bg-card p-0 lg:flex lg:h-[var(--battle-side-card-height)] lg:min-h-0 lg:w-full lg:flex-col">
-                <div className="flex min-h-[52px] items-center gap-2 border-b bg-background px-3 py-2.5">
-                  <Skeleton className="h-9 flex-1 rounded-sm" />
-                  <Skeleton className="size-9 rounded-sm" />
-                  <Skeleton className="size-9 rounded-sm" />
-                </div>
+              <SectionCard className="overflow-hidden border-border bg-card p-0 lg:flex lg:h-[var(--battle-side-card-height)] lg:min-h-0 lg:w-full lg:flex-col">
+                <SectionCardHeader
+                  title={<Skeleton className="h-4 w-36" />}
+                  actions={<Skeleton className="h-8 w-24" />}
+                />
                 <div className="min-h-0 flex-1 overflow-hidden">
                   {logTurns.map((_, index) => (
                     <BattleTeamMemberSkeleton key={index} />
                   ))}
                 </div>
-              </Card>
+              </SectionCard>
             </div>
 
             <div className="hidden min-w-0 xl:block xl:self-start">
               <div>
-                <Card className="flex max-h-[420px] min-h-0 w-full flex-col gap-0 overflow-hidden border-border bg-card p-0 xl:h-[var(--battle-side-card-height)] xl:max-h-none">
-                  <div className="flex min-h-[49px] shrink-0 items-center justify-between gap-3 border-b bg-background px-3 py-2">
-                    <div className="flex min-w-0 flex-1 items-center gap-2">
-                      <Skeleton className="size-4 rounded-sm" />
-                      <Skeleton className="h-4 min-w-0 flex-1" />
-                    </div>
-                    <Skeleton className="size-8 shrink-0 rounded-sm" />
-                  </div>
+                <SectionCard className="flex max-h-[420px] min-h-0 w-full flex-col gap-0 overflow-hidden border-border bg-card p-0 xl:h-[var(--battle-side-card-height)] xl:max-h-none">
+                  <SectionCardHeader
+                    title={<Skeleton className="h-4 w-36" />}
+                    actions={<Skeleton className="h-8 w-24" />}
+                  />
                   <div className="min-h-0 flex-1 overflow-hidden">
                     {recentRows.map((_, index) => (
                       <div
@@ -139,7 +132,7 @@ export const BattlePanelSingleBattleSkeleton = () => {
                       </div>
                     ))}
                   </div>
-                </Card>
+                </SectionCard>
               </div>
             </div>
           </div>

@@ -1,3 +1,6 @@
+import { SectionCard } from "@/components/common/section-card/section-card";
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import type { MemberResponseDto as GuildMember } from "@lootlog/client/main";
 import type { MemberActivityStats } from "@/features/guild/settings/members/member-activity-stats-api";
 import type { ReactNode } from "react";
@@ -6,7 +9,7 @@ import { useTranslation } from "react-i18next";
 import { cn } from "cn";
 import { PERMISSION_CATEGORIES } from "@/features/guild/settings/roles/constants/permission-categories";
 import { Badge } from "@lootlog/ui/components/badge";
-import { Card } from "@lootlog/ui/components/card";
+
 import { format } from "date-fns";
 import {
   Activity,
@@ -61,14 +64,10 @@ const DetailSection = ({
   title: string;
   children: ReactNode;
 }) => (
-  <Card className="gap-0 px-4 py-4">
-    <section>
-      <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-        {title}
-      </h3>
-      {children}
-    </section>
-  </Card>
+  <SectionCard>
+    <SectionCardHeader title={title} />
+    <SectionCardContent>{children}</SectionCardContent>
+  </SectionCard>
 );
 
 const DetailField = ({ label, value }: { label: string; value: ReactNode }) => (
@@ -210,38 +209,40 @@ export const MemberData = ({
 
   return (
     <div className="min-h-full space-y-3 pb-3">
-      <Card className="gap-0 px-4 py-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge
-            variant="outline"
-            className={cn("gap-1.5", accessSummary.className)}
-          >
-            <AccessIcon className="size-3.5" />
-            {accessSummary.label}
-          </Badge>
-          <Badge
-            variant="outline"
-            className={cn(
-              "border-border bg-background text-muted-foreground",
-              isOnline &&
-                "border-emerald-500/25 bg-emerald-500/10 text-emerald-500",
-            )}
-          >
-            {onlineStatusLabel}
-          </Badge>
-        </div>
-        <p className="mt-2 text-xs text-muted-foreground">
-          {accessSummary.description}
-        </p>
-        {(!member.active || hasProblem) && (
-          <p className="mt-3 flex items-start gap-2 rounded-md border border-amber-500/60 bg-amber-500/5 px-3 py-2 text-xs text-amber-500">
-            <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
-            {member.active
-              ? t("settings.members.syncProblemHint")
-              : t("settings.members.reactivateHint")}
+      <SectionCard>
+        <SectionCardContent className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge
+              variant="outline"
+              className={cn("gap-1.5", accessSummary.className)}
+            >
+              <AccessIcon className="size-3.5" />
+              {accessSummary.label}
+            </Badge>
+            <Badge
+              variant="outline"
+              className={cn(
+                "border-border bg-background text-muted-foreground",
+                isOnline &&
+                  "border-emerald-500/25 bg-emerald-500/10 text-emerald-500",
+              )}
+            >
+              {onlineStatusLabel}
+            </Badge>
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            {accessSummary.description}
           </p>
-        )}
-      </Card>
+          {(!member.active || hasProblem) && (
+            <p className="mt-3 flex items-start gap-2 rounded-md border border-amber-500/60 bg-amber-500/5 px-3 py-2 text-xs text-amber-500">
+              <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
+              {member.active
+                ? t("settings.members.syncProblemHint")
+                : t("settings.members.reactivateHint")}
+            </p>
+          )}
+        </SectionCardContent>
+      </SectionCard>
 
       <DetailSection title={t("settings.members.access.title")}>
         <dl className="divide-y divide-border/60">

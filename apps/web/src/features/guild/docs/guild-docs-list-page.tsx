@@ -1,3 +1,5 @@
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { PageHeader } from "@/components/common/page-header";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
@@ -15,7 +17,7 @@ import {
 } from "@lootlog/ui/components/alert-dialog";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
-import { Card } from "@lootlog/ui/components/card";
+import { SectionCard as Card } from "@/components/common/section-card/section-card";
 import {
   Empty,
   EmptyContent,
@@ -105,77 +107,79 @@ export const GuildDocsListPage = () => {
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
       <div className="px-3 pt-3">
-        <Card className="gap-2 border-border bg-card p-2">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <SearchInput
-              name="guild-doc-search"
-              aria-label={t("docs.list.searchLabel")}
-              value={searchValue}
-              onChange={(event) => setSearchValue(event.target.value)}
-              placeholder={t("docs.list.searchPlaceholder")}
-              className="h-9"
-              wrapperClassName="min-w-0 flex-1"
-              disabled={documentsQuery.isLoading}
-            />
+        <PageHeader title={t("docs.list.title")}>
+          <SectionCardContent>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <SearchInput
+                name="guild-doc-search"
+                aria-label={t("docs.list.searchLabel")}
+                value={searchValue}
+                onChange={(event) => setSearchValue(event.target.value)}
+                placeholder={t("docs.list.searchPlaceholder")}
+                className="h-9"
+                wrapperClassName="min-w-0 flex-1"
+                disabled={documentsQuery.isLoading}
+              />
 
-            <div className="flex items-center gap-2">
-              <Badge
-                variant="outline"
-                className="ml-auto h-9 shrink-0 gap-1.5 rounded-md px-3 text-xs font-medium text-muted-foreground"
-                aria-label={t("docs.list.limit", {
-                  max: limit.max,
-                  used: limit.used,
-                })}
-                title={t("docs.list.limit", {
-                  max: limit.max,
-                  used: limit.used,
-                })}
-              >
-                <FileText className="size-3.5" />
-                {t("docs.list.limitShort", {
-                  max: limit.max,
-                  used: limit.used,
-                })}
-              </Badge>
-              {canWrite && (
-                <Button
-                  type="button"
-                  size="sm"
+              <div className="flex items-center gap-2">
+                <Badge
                   variant="outline"
-                  className="h-9 shrink-0"
-                  onClick={() => setTrashOpen(true)}
+                  className="ml-auto h-9 shrink-0 gap-1.5 rounded-md px-3 text-xs font-medium text-muted-foreground"
+                  aria-label={t("docs.list.limit", {
+                    max: limit.max,
+                    used: limit.used,
+                  })}
+                  title={t("docs.list.limit", {
+                    max: limit.max,
+                    used: limit.used,
+                  })}
                 >
-                  <Archive className="size-3.5" />
-                  {limit.trashed > 0
-                    ? t("docs.trash.openWithCount", {
-                        count: limit.trashed,
-                      })
-                    : t("docs.trash.open")}
-                </Button>
-              )}
-              {canWrite && (
-                <Button
-                  size="sm"
-                  className="h-9 shrink-0"
-                  disabled={!limit.canCreate}
-                  onClick={() => setCreateOpen(true)}
-                >
-                  <Plus className="size-3.5" />
-                  {limit.canCreate
-                    ? t("docs.list.create")
-                    : t("docs.list.limitReached")}
-                </Button>
-              )}
+                  <FileText className="size-3.5" />
+                  {t("docs.list.limitShort", {
+                    max: limit.max,
+                    used: limit.used,
+                  })}
+                </Badge>
+                {canWrite && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-9 shrink-0"
+                    onClick={() => setTrashOpen(true)}
+                  >
+                    <Archive className="size-3.5" />
+                    {limit.trashed > 0
+                      ? t("docs.trash.openWithCount", {
+                          count: limit.trashed,
+                        })
+                      : t("docs.trash.open")}
+                  </Button>
+                )}
+                {canWrite && (
+                  <Button
+                    size="sm"
+                    className="h-9 shrink-0"
+                    disabled={!limit.canCreate}
+                    onClick={() => setCreateOpen(true)}
+                  >
+                    <Plus className="size-3.5" />
+                    {limit.canCreate
+                      ? t("docs.list.create")
+                      : t("docs.list.limitReached")}
+                  </Button>
+                )}
+              </div>
             </div>
-          </div>
-        </Card>
+          </SectionCardContent>
+        </PageHeader>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col pt-3">
         {documentsQuery.isLoading ? (
           <GuildDocsListSkeleton />
         ) : documentsQuery.isError ? (
-          <div className="flex flex-1 items-start justify-center px-3 pb-3 md:items-center">
+          <div className="flex min-h-0 flex-1 items-start justify-center overflow-y-auto px-3 pb-3 md:[align-items:safe_center]">
             <Card className="flex flex-col items-center justify-center gap-3 border-border bg-card py-12">
               <FileX2 className="size-12 text-muted-foreground opacity-50" />
               <p className="text-sm text-muted-foreground">
@@ -184,7 +188,7 @@ export const GuildDocsListPage = () => {
             </Card>
           </div>
         ) : !hasDocuments ? (
-          <div className="flex flex-1 items-start justify-center px-3 pb-3 md:items-center">
+          <div className="flex min-h-0 flex-1 items-start justify-center overflow-y-auto px-3 pb-3 md:[align-items:safe_center]">
             <Empty className="min-h-56 w-full max-w-xl">
               <EmptyHeader>
                 <EmptyMedia variant="icon">
@@ -206,7 +210,7 @@ export const GuildDocsListPage = () => {
             </Empty>
           </div>
         ) : !hasFilteredDocuments ? (
-          <div className="flex flex-1 items-start justify-center px-3 pb-3 md:items-center">
+          <div className="flex min-h-0 flex-1 items-start justify-center overflow-y-auto px-3 pb-3 md:[align-items:safe_center]">
             <Empty className="min-h-56 w-full max-w-xl">
               <EmptyHeader>
                 <EmptyMedia variant="icon">

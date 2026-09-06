@@ -463,6 +463,7 @@ export function HeadToHeadPageVariant({
 
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-3">
           <BattlePanelResultsSurface
+            title={t(titleKey)}
             chips={activeFilterChips}
             clearFiltersLabel={t("battlePanel.filters.clear")}
             footer={paginationFooter}

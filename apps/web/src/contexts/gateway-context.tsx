@@ -4,6 +4,7 @@ import React, {
   useEffectEvent,
   useState,
 } from "react";
+import { useKillStatsUpdates } from "@/hooks/utils/use-kill-stats-updates";
 import { GatewayEvent } from "@/config/gateway";
 import { socket, type GatewayClient } from "@/lib/gateway-client";
 import { useUser } from "@/hooks/api/user/use-user";
@@ -32,6 +33,7 @@ export const GatewayContext = createContext<GatewayProviderValue | undefined>(
 GatewayContext.displayName = "GatewayContext";
 
 export const GatewayProvider: React.FC<Props> = ({ children }) => {
+  useKillStatsUpdates(socket);
   const { user } = useUser();
   const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds();
   const routeGuildId = useGuildId();

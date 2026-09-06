@@ -1,7 +1,6 @@
 import {
   CAT_THEME_VARIANTS,
   DEFAULT_CAT_THEME_VARIANT,
-  DEFAULT_THEME_ID,
   THEME_CLASS_IDS,
   type CatThemeVariant,
   type ResolvedThemeId,
@@ -87,12 +86,8 @@ export const applyThemeClassToRoot = ({
   resolvedTheme: ResolvedThemeId;
 }) => {
   root.classList.remove("light", "dark", ...THEME_CLASS_IDS);
-  root.classList.add("dark");
+  root.classList.add("dark", resolvedTheme);
   root.style.colorScheme = "dark";
-
-  if (resolvedTheme !== DEFAULT_THEME_ID) {
-    root.classList.add(resolvedTheme);
-  }
 };
 
 export const getThemeGreetingSuffix = (

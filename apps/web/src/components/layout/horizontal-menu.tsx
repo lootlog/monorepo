@@ -1,67 +1,29 @@
-import { Link, useLocation } from "@tanstack/react-router";
-import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-} from "@lootlog/ui/components/navigation-menu";
-import { useEffect, useRef, useState } from "react";
+import { Link, useLocation, type LinkProps } from "@tanstack/react-router";
 import { cn } from "cn";
-import { ThemeInteractiveFrame, useThemeMeta } from "@/themes";
 
-interface NavElement {
+type NavElement = {
   id: string;
   label: string;
   href: string;
-}
+  search?: LinkProps["search"];
+};
 
-interface HorizontalMenuProps {
+type HorizontalMenuProps = {
   items: NavElement[];
   basePath?: string;
-  ariaLabel?: string;
+  activeId?: string;
+  ariaLabel: string;
   className?: string;
-}
+};
 
-export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
+export const HorizontalMenu = ({
   items,
   basePath = "",
-  ariaLabel = "Navigation",
-  className = "",
-}) => {
-  const { pathname } = useLocation();
-  const { isRukiaTheme } = useThemeMeta();
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
-
-  const scrollRef = useRef<HTMLDivElement | null>(null);
-  const activeTabRef = useRef<HTMLAnchorElement | null>(null);
-
-  useEffect(() => {
-    if (activeTabRef.current && scrollRef.current) {
-      const el = activeTabRef.current;
-      const container = scrollRef.current;
-      const elLeft = el.offsetLeft;
-      const elRight = elLeft + el.offsetWidth;
-      const viewLeft = container.scrollLeft;
-      const viewRight = viewLeft + container.clientWidth;
-      if (elLeft < viewLeft || elRight > viewRight) {
-        container.scrollTo({ left: elLeft - 16, behavior: "smooth" });
-      }
-    }
-  }, [pathname]);
-
-  useEffect(() => {
-    const container = scrollRef.current;
-    if (!container) return;
-    const onWheel = (e: WheelEvent) => {
-      if (e.deltaY === 0) return;
-      if (container.scrollWidth <= container.clientWidth) return;
-      e.preventDefault();
-      container.scrollLeft += e.deltaY;
-    };
-    container.addEventListener("wheel", onWheel, { passive: false });
-    return () => container.removeEventListener("wheel", onWheel);
-  }, []);
-
+  activeId,
+  ariaLabel,
+  className,
+}: HorizontalMenuProps) => {
+  const pathname = useLocation({ select: (location) => location.pathname });
   const activeUrl = items.reduce<string | null>((best, item) => {
     const url = `${basePath}${item.href}`;
     if (pathname === url || pathname.startsWith(`${url}/`)) {
@@ -71,71 +33,36 @@ export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
   }, null);
 
   return (
-    <NavigationMenu
-      viewport={false}
+    <nav
       aria-label={ariaLabel}
-      className="w-full max-w-none flex-none justify-start"
+      className={cn("min-w-0 shrink-0 p-3", className)}
     >
-      <div
-        ref={scrollRef}
-        className={cn(
-          "w-full min-w-0 overflow-x-auto overflow-y-hidden px-3 py-3 [scrollbar-width:none] [-ms-overflow-style:none] scroll-smooth [&::-webkit-scrollbar]:hidden",
-          className,
-        )}
-      >
-        <NavigationMenuList className="w-max justify-start gap-2">
-          {items.map((item) => {
-            const url = `${basePath}${item.href}`;
-            const active = url === activeUrl;
-            const isHovered = hoveredId === item.id;
-            let tabClassName =
-              "bg-muted/30 text-muted-foreground hover:text-foreground hover:bg-muted/50";
-
-            if (active && isRukiaTheme) {
-              tabClassName = "bg-primary/15 text-white font-semibold";
-            } else if (active) {
-              tabClassName = "bg-primary/15 text-primary";
-            }
-
-            const tabContent = (
-              <span
+      <ul className="flex min-w-0 flex-wrap gap-1 rounded-lg bg-card p-1">
+        {items.map((item) => {
+          const url = `${basePath}${item.href}`;
+          const active =
+            activeId === undefined ? url === activeUrl : item.id === activeId;
+          return (
+            <li key={item.id} className="min-w-0 max-w-full">
+              <Link
+                to={url}
+                search={item.search}
+                preload="intent"
+                activeOptions={{ exact: true }}
+                aria-current={active ? "page" : undefined}
                 className={cn(
-                  "inline-flex items-center px-6 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap",
-                  tabClassName,
+                  "block rounded-md px-4 py-3 text-sm font-medium break-words outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
+                  active
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
                 )}
               >
                 {item.label}
-              </span>
-            );
-
-            return (
-              <NavigationMenuItem key={item.id} className="shrink-0">
-                <NavigationMenuLink
-                  render={
-                    <Link
-                      to={url}
-                      preload="intent"
-                      activeOptions={{ exact: true }}
-                      ref={active ? activeTabRef : undefined}
-                    />
-                  }
-                  aria-current={active ? "page" : undefined}
-                  className="rounded-lg p-0 focus-visible:ring-2"
-                  onMouseEnter={() => setHoveredId(item.id)}
-                  onMouseLeave={() => setHoveredId(null)}
-                >
-                  <ThemeInteractiveFrame
-                    isHovered={isHovered}
-                    isActive={active}
-                  >
-                    {tabContent}
-                  </ThemeInteractiveFrame>
-                </NavigationMenuLink>
-              </NavigationMenuItem>
-            );
-          })}
-        </NavigationMenuList>
-      </div>
-    </NavigationMenu>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
   );
 };

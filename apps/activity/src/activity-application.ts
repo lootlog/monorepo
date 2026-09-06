@@ -1,3 +1,5 @@
+import { OnlineConsumer, onlineQueues } from "#src/online/online-consumer";
+import { OnlineRepository } from "#src/online/online-repository";
 import { RabbitMessaging } from "@lootlog/messaging";
 import { Effect, Layer, Redacted } from "effect";
 import {
@@ -18,7 +20,7 @@ const RabbitLive = Layer.unwrap(
     return RabbitMessaging.layer({
       uri: Redacted.value(config.rabbitmqUri),
       connectionName: config.serviceName,
-      queues: activityQueues,
+      queues: [...activityQueues, ...onlineQueues],
     });
   }),
 ).pipe(Layer.provide(ActivityConfig.layer));
@@ -38,14 +40,16 @@ const DatabaseAdoption = Layer.effectDiscard(verifyAndAdoptDatabase()).pipe(
   Layer.provide(PgClientLive),
 );
 const DatabaseServices = Layer.mergeAll(
+  OnlineRepository.layer.pipe(Layer.provide(PgClientLive)),
   RepositoryLive,
   HealthLive,
   DatabaseAdoption,
 );
 
-export const ActivityApplication = Layer.merge(
+export const ActivityApplication = Layer.mergeAll(
   ActivityHttpServer,
   ActivityConsumers,
+  OnlineConsumer,
 ).pipe(
   Layer.provide(DatabaseServices),
   Layer.provide(PermissionsLive),

@@ -1,3 +1,4 @@
+import { AppContentFrame } from "./app-content-frame";
 import { GuildBreadcrumbs } from "@/components/layout/guild-breadcrumbs";
 import { AppTopBar } from "@/components/layout/app-top-bar";
 import { SidebarTrigger } from "@lootlog/ui/components/sidebar";
@@ -13,9 +14,9 @@ export const GuildShell: FC<GuildShellProps> = ({ children, variant }) => {
   const { t } = useTranslation();
 
   return (
-    <div className="flex h-full min-h-0 min-w-0 flex-1 flex-row bg-background">
-      <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
-        {variant === "ready" ? (
+    <AppContentFrame
+      header={
+        variant === "ready" ? (
           <GuildBreadcrumbs />
         ) : (
           <AppTopBar>
@@ -26,11 +27,10 @@ export const GuildShell: FC<GuildShellProps> = ({ children, variant }) => {
               </span>
             </div>
           </AppTopBar>
-        )}
-        <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden">
-          {children}
-        </div>
-      </div>
-    </div>
+        )
+      }
+    >
+      {children}
+    </AppContentFrame>
   );
 };

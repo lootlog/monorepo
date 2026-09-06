@@ -1,6 +1,8 @@
+import { SectionCardFooter } from "@/components/common/section-card/section-card-footer";
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
 import { useTranslation } from "react-i18next";
 import { Clock, Pencil, RotateCcw, Settings2, Trash2 } from "lucide-react";
-import { Card } from "@lootlog/ui/components/card";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import { Button } from "@lootlog/ui/components/button";
 import { cn } from "cn";
 
@@ -36,15 +38,18 @@ export const EventActionsCard = ({
     : "grid-cols-1 sm:grid-cols-2";
 
   return (
-    <Card className="gap-0 overflow-hidden border-border bg-card p-0">
-      <header className="flex min-h-12 items-center border-b border-border/70 px-3 py-2">
-        <h3 className="flex min-w-0 items-center gap-2 text-sm font-semibold">
-          <Settings2 className="size-4 shrink-0 text-primary" />
-          {t("events.actionsCard.subtitle")}
-        </h3>
-      </header>
+    <SectionCard className="gap-0 overflow-hidden border-border bg-card p-0">
+      <SectionCardHeader
+        icon={Settings2}
+        title={<> {t("events.actionsCard.subtitle")} </>}
+      />
 
-      <div className={cn("grid gap-1 bg-muted/20 p-1.5", actionGridClassName)}>
+      <SectionCardFooter
+        className={cn(
+          "grid gap-1 border-t-0 bg-muted/20 p-1.5",
+          actionGridClassName,
+        )}
+      >
         <Button
           size="sm"
           variant="ghost"
@@ -85,7 +90,7 @@ export const EventActionsCard = ({
             {t("events.delete")}
           </Button>
         )}
-      </div>
-    </Card>
+      </SectionCardFooter>
+    </SectionCard>
   );
 };

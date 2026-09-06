@@ -1,3 +1,4 @@
+import type { makeUserFeed } from "#src/feed/user-feed";
 import { Effect, Schema } from "effect";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import type { UserKillQueries } from "#src/kills/user-kill-queries";
@@ -29,6 +30,7 @@ export interface RecordsServices {
     discordId: string,
     payload: Parameters<RecordsData["Service"]["createKill"]>[1],
   ) => Effect.Effect<CreateKillResponse, unknown>;
+  readonly userFeed: ReturnType<typeof makeUserFeed>;
   readonly userKillQueries: UserKillQueries;
   readonly memberKillQuery: MemberKillQuery;
   readonly guildKillQueries: GuildKillQueries;
@@ -106,6 +108,18 @@ export const recordsDataLayer = (services: RecordsServices) =>
           [...caller.roles],
           mutableNpcTypes(query),
         ),
+      ),
+    getUserFeed: (caller) =>
+      lootOperation("users.feed", services.userFeed(caller.discordId)),
+    getUserKillAnalytics: (caller, query) =>
+      lootOperation(
+        "KillsController_getUserKillAnalytics",
+        services.userKillQueries.getUserKillAnalytics(caller.discordId, query),
+      ),
+    getUserKillActivity: (caller, query) =>
+      lootOperation(
+        "KillsController_getUserKillActivity",
+        services.userKillQueries.getUserKillActivity(caller.discordId, query),
       ),
     getUserKillStats: (caller, query) =>
       lootOperation(

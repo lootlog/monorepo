@@ -1,3 +1,5 @@
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import type { BattleTimelineResponseDtoOutput } from "@lootlog/client/battlelog";
 import { BattleHpTimelineDialog } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-dialog";
 import { getBattleHpTimelineEventLayerCounts } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-event-markers";
@@ -10,7 +12,7 @@ import { BattleHpTimelinePlot } from "@/features/user/battle-panel/battle-panel-
 import { useBattleHpTimelineSettingsStore } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-settings.store";
 import { useBattleHpTimelineLayers } from "@/features/user/battle-panel/battle-panel-single-battle/components/use-battle-hp-timeline-layers";
 import { Button } from "@lootlog/ui/components/button";
-import { Card } from "@lootlog/ui/components/card";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import {
   Activity,
   ChevronsDownUp,
@@ -23,7 +25,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { cn } from "cn";
 import { useTranslation } from "react-i18next";
 
 type BattleHpTimelineChartProps = {
@@ -75,90 +76,78 @@ export function BattleHpTimelineChart({
   const plotHeightClassName = isExpanded ? "h-72" : "h-36";
 
   return (
-    <Card
-      className={cn(
-        "border-border bg-card",
-        isChartHidden ? "gap-0 p-2.5" : "gap-2 p-3",
-      )}
-    >
-      <div
-        className={cn(
-          "flex flex-wrap justify-between gap-3 px-1",
-          isChartHidden ? "items-center" : "items-start",
-        )}
-      >
-        <div className="flex items-center gap-2">
-          <Activity className="size-4 text-primary" />
-          <div>
-            <h2 className="text-base font-semibold leading-tight">
-              {t("battlePanel.single.chart.title")}
-            </h2>
+    <SectionCard>
+      <SectionCardHeader
+        icon={Activity}
+        title={t("battlePanel.single.chart.title")}
+        actions={
+          <div className="flex items-center gap-2">
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    aria-label={visibilityLabel}
+                    aria-pressed={isChartHidden}
+                    variant="ghost"
+                    size="icon"
+                    className="size-8"
+                    onClick={toggleChartHidden}
+                  >
+                    <VisibilityIcon className="size-3.5" />
+                  </Button>
+                }
+              />
+              <TooltipContent>{visibilityLabel}</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    aria-label={heightLabel}
+                    aria-pressed={isExpanded}
+                    variant="ghost"
+                    size="icon"
+                    className="size-8"
+                    onClick={toggleHeightMode}
+                  >
+                    <HeightIcon className="size-3.5" />
+                  </Button>
+                }
+              />
+              <TooltipContent>{heightLabel}</TooltipContent>
+            </Tooltip>
+            <BattleHpTimelineLegendPopover
+              config={config}
+              layerCounts={layerCounts}
+              legendaryItems={legendaryLegendItems}
+            />
+            <BattleHpTimelineDialog
+              timeline={timeline}
+              warriors={warriors}
+              characterId={characterId}
+              config={config}
+              selectedTurn={selectedTurn}
+              onLayerVisibilityChange={setLayerVisibility}
+              onResetLayers={resetLayers}
+              onTurnSelect={onTurnSelect}
+            />
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  aria-label={visibilityLabel}
-                  aria-pressed={isChartHidden}
-                  variant="ghost"
-                  size="icon"
-                  className="size-8"
-                  onClick={toggleChartHidden}
-                >
-                  <VisibilityIcon className="size-3.5" />
-                </Button>
-              }
-            />
-            <TooltipContent>{visibilityLabel}</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  aria-label={heightLabel}
-                  aria-pressed={isExpanded}
-                  variant="ghost"
-                  size="icon"
-                  className="size-8"
-                  onClick={toggleHeightMode}
-                >
-                  <HeightIcon className="size-3.5" />
-                </Button>
-              }
-            />
-            <TooltipContent>{heightLabel}</TooltipContent>
-          </Tooltip>
-          <BattleHpTimelineLegendPopover
-            config={config}
-            layerCounts={layerCounts}
-            legendaryItems={legendaryLegendItems}
-          />
-          <BattleHpTimelineDialog
+        }
+      />
+      {isChartHidden ? null : (
+        <SectionCardContent>
+          <BattleHpTimelinePlot
             timeline={timeline}
             warriors={warriors}
             characterId={characterId}
-            config={config}
+            layers={config}
             selectedTurn={selectedTurn}
-            onLayerVisibilityChange={setLayerVisibility}
-            onResetLayers={resetLayers}
+            compact
+            className={plotHeightClassName}
             onTurnSelect={onTurnSelect}
           />
-        </div>
-      </div>
-      {isChartHidden ? null : (
-        <BattleHpTimelinePlot
-          timeline={timeline}
-          warriors={warriors}
-          characterId={characterId}
-          layers={config}
-          selectedTurn={selectedTurn}
-          compact
-          className={plotHeightClassName}
-          onTurnSelect={onTurnSelect}
-        />
+        </SectionCardContent>
       )}
-    </Card>
+    </SectionCard>
   );
 }

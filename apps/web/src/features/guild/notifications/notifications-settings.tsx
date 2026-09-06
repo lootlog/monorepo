@@ -1,3 +1,6 @@
+import { SectionCard } from "@/components/common/section-card/section-card";
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { NotificationSettingsSkeleton } from "./notification-settings-skeleton";
 import { useState } from "react";
 import { BellRing, Info, ShieldAlert } from "lucide-react";
@@ -9,7 +12,7 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
-import { Card } from "@lootlog/ui/components/card";
+
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { PageHeader } from "@/components/common/page-header";
 import { NotificationsActionsCard } from "./components/notifications-actions-card";
@@ -150,37 +153,38 @@ export const NotificationsSettings = () => {
             />
 
             {!hasRequiredPermissions ? (
-              <Card className="gap-3 border-border bg-card p-4">
-                <div className="flex items-start gap-3">
-                  <div className="rounded-xl bg-amber-500/10 p-2.5">
-                    <ShieldAlert className="size-4 text-amber-500" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-base font-semibold leading-tight">
-                      {t("settings.notifications.permissionsBlocked.title")}
-                    </h3>
-                    <p className="mt-1 text-xs leading-tight text-muted-foreground">
-                      {t(
-                        "settings.notifications.permissionsBlocked.description",
-                      )}
-                    </p>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {missingPermissions.map((permission) => (
-                        <Badge key={permission} variant="secondary">
-                          {permission}
-                        </Badge>
-                      ))}
+              <SectionCard>
+                <SectionCardHeader
+                  title={t("settings.notifications.permissionsBlocked.title")}
+                  icon={ShieldAlert}
+                  description={t(
+                    "settings.notifications.permissionsBlocked.description",
+                  )}
+                  actions={
+                    <div className="flex items-start gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {missingPermissions.map((permission) => (
+                            <Badge key={permission} variant="secondary">
+                              {permission}
+                            </Badge>
+                          ))}
+                        </div>
+                        <Button
+                          size="sm"
+                          className="mt-4"
+                          onClick={() => window.location.assign(installUrl)}
+                        >
+                          {t(
+                            "settings.notifications.permissionsBlocked.reinstall",
+                          )}
+                        </Button>
+                      </div>
                     </div>
-                    <Button
-                      size="sm"
-                      className="mt-4"
-                      onClick={() => window.location.assign(installUrl)}
-                    >
-                      {t("settings.notifications.permissionsBlocked.reinstall")}
-                    </Button>
-                  </div>
-                </div>
-              </Card>
+                  }
+                />
+                <SectionCardContent className="flex flex-col gap-3"></SectionCardContent>
+              </SectionCard>
             ) : null}
 
             {isLoading ? (

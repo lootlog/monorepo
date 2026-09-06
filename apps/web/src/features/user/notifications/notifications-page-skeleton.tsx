@@ -1,40 +1,49 @@
-import { Card } from "@lootlog/ui/components/card";
+import { PageHeader } from "@/components/common/page-header";
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 
 export const UserNotificationsPageSkeleton = () => {
   return (
-    <div className="flex flex-col gap-3 px-3 py-3">
-      <Card className="gap-4 border-border bg-card p-4">
-        <div className="flex min-w-0 items-center gap-3">
-          <Skeleton className="h-9 w-9 shrink-0 rounded-xl" />
-          <div className="min-w-0 flex-1 space-y-1.5">
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-3 w-48" />
+    <ScrollArea className="h-full min-h-0">
+      <div className="flex flex-col gap-3 px-3 py-3">
+        <PageHeader
+          title={<Skeleton className="h-5 w-40" />}
+          description={<Skeleton className="h-3 w-48" />}
+        ></PageHeader>
+
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <div className="space-y-4 lg:col-span-2">
+            <SectionCard>
+              <SectionCardHeader
+                title={<Skeleton className="mb-3 h-5 w-40" />}
+              />
+              <SectionCardContent>
+                <div className="space-y-2">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <Skeleton key={i} className="h-16 rounded-lg" />
+                  ))}
+                </div>
+              </SectionCardContent>
+            </SectionCard>
+          </div>
+          <div className="space-y-4">
+            <SectionCard>
+              <SectionCardHeader
+                title={<Skeleton className="mb-3 h-5 w-32" />}
+              />
+              <SectionCardContent>
+                <div className="space-y-2">
+                  <Skeleton className="h-10 rounded-md" />
+                  <Skeleton className="h-10 rounded-md" />
+                </div>
+              </SectionCardContent>
+            </SectionCard>
           </div>
         </div>
-      </Card>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="space-y-4 lg:col-span-2">
-          <Card className="border-border bg-card p-4">
-            <Skeleton className="mb-3 h-5 w-40" />
-            <div className="space-y-2">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-16 rounded-lg" />
-              ))}
-            </div>
-          </Card>
-        </div>
-        <div className="space-y-4">
-          <Card className="border-border bg-card p-4">
-            <Skeleton className="mb-3 h-5 w-32" />
-            <div className="space-y-2">
-              <Skeleton className="h-10 rounded-md" />
-              <Skeleton className="h-10 rounded-md" />
-            </div>
-          </Card>
-        </div>
       </div>
-    </div>
+    </ScrollArea>
   );
 };

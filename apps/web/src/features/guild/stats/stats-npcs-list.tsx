@@ -1,3 +1,5 @@
+import { SectionCard } from "@/components/common/section-card/section-card";
+import { PageHeader } from "@/components/common/page-header";
 import { StatsNpcTypeSelect } from "./components/stats-npc-type-select";
 import { StatsRankingRowsSkeleton } from "./components/stats-ranking-rows-skeleton";
 import { getOffsetPagination } from "./utils/offset-pagination";
@@ -15,7 +17,7 @@ import {
 } from "@lootlog/ui/components/table";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { SearchInput } from "@/components/ui/search-input";
-import { Card } from "@lootlog/ui/components/card";
+
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import { WorldSwitcher } from "@/components/common/world-switcher";
@@ -135,76 +137,66 @@ export const StatsNpcsList: React.FC = () => {
     <div className="flex flex-col h-full min-h-0 bg-background">
       <ScrollArea className="flex-1 min-h-0">
         <div className="px-3 py-3 flex flex-col gap-4">
-          <Card className="gap-4 border-border bg-card p-4">
-            <div className="flex flex-col gap-3 min-[2200px]:flex-row min-[2200px]:items-center min-[2200px]:justify-between">
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                <div className="rounded-xl bg-primary/10 p-2.5">
-                  <Swords className="size-4 text-primary" />
+          <PageHeader
+            title={t("kills.npcsList.title")}
+            icon={Swords}
+            description={t("kills.npcsList.description")}
+            actions={
+              <div className="flex flex-col gap-3 min-[2200px]:flex-row min-[2200px]:items-center min-[2200px]:justify-between">
+                <div className="flex items-center gap-2 md:hidden">
+                  <SearchInput
+                    placeholder={t("kills.npcsList.searchPlaceholder")}
+                    value={search}
+                    onChange={handleSearchChange}
+                    wrapperClassName="flex-1"
+                  />
+                  <NpcStatsFiltersMobile
+                    world={settings.world}
+                    npcType={settings.npcType}
+                    minLvl={settings.minLvl}
+                    maxLvl={settings.maxLvl}
+                    period={settings.period}
+                    onWorldChange={handleWorldChange}
+                    onNpcTypeChange={handleNpcTypeChange}
+                    onMinLvlChange={handleMinLvlChange}
+                    onMaxLvlChange={handleMaxLvlChange}
+                    onPeriodChange={handlePeriodChange}
+                  />
                 </div>
-                <div className="min-w-0">
-                  <h2 className="text-base font-semibold leading-tight">
-                    {t("kills.npcsList.title")}
-                  </h2>
-                  <p className="text-xs text-muted-foreground leading-tight">
-                    {t("kills.npcsList.description")}
-                  </p>
+                <div className="hidden md:flex w-full flex-wrap items-center gap-2 min-[2200px]:w-auto min-[2200px]:justify-end">
+                  <SearchInput
+                    placeholder={t("kills.npcsList.searchPlaceholder")}
+                    value={search}
+                    onChange={handleSearchChange}
+                    wrapperClassName="w-[200px]"
+                  />
+                  <LevelFilters
+                    minLvl={settings.minLvl}
+                    maxLvl={settings.maxLvl}
+                    onMinLvlChange={handleMinLvlChange}
+                    onMaxLvlChange={handleMaxLvlChange}
+                  />
+                  <WorldSwitcher
+                    value={settings.world}
+                    onValueChange={handleWorldChange}
+                    showAllOption
+                    width="w-[160px]"
+                  />
+                  <KillStatsPeriodSelect
+                    value={settings.period}
+                    onValueChange={handlePeriodChange}
+                  />
+                  <StatsNpcTypeSelect
+                    value={settings.npcType}
+                    onValueChange={handleNpcTypeChange}
+                  />
                 </div>
               </div>
+            }
+          />
 
-              <div className="flex items-center gap-2 md:hidden">
-                <SearchInput
-                  placeholder={t("kills.npcsList.searchPlaceholder")}
-                  value={search}
-                  onChange={handleSearchChange}
-                  wrapperClassName="flex-1"
-                />
-                <NpcStatsFiltersMobile
-                  world={settings.world}
-                  npcType={settings.npcType}
-                  minLvl={settings.minLvl}
-                  maxLvl={settings.maxLvl}
-                  period={settings.period}
-                  onWorldChange={handleWorldChange}
-                  onNpcTypeChange={handleNpcTypeChange}
-                  onMinLvlChange={handleMinLvlChange}
-                  onMaxLvlChange={handleMaxLvlChange}
-                  onPeriodChange={handlePeriodChange}
-                />
-              </div>
-
-              <div className="hidden md:flex w-full flex-wrap items-center gap-2 min-[2200px]:w-auto min-[2200px]:justify-end">
-                <SearchInput
-                  placeholder={t("kills.npcsList.searchPlaceholder")}
-                  value={search}
-                  onChange={handleSearchChange}
-                  wrapperClassName="w-[200px]"
-                />
-                <LevelFilters
-                  minLvl={settings.minLvl}
-                  maxLvl={settings.maxLvl}
-                  onMinLvlChange={handleMinLvlChange}
-                  onMaxLvlChange={handleMaxLvlChange}
-                />
-                <WorldSwitcher
-                  value={settings.world}
-                  onValueChange={handleWorldChange}
-                  showAllOption
-                  width="w-[160px]"
-                />
-                <KillStatsPeriodSelect
-                  value={settings.period}
-                  onValueChange={handlePeriodChange}
-                />
-                <StatsNpcTypeSelect
-                  value={settings.npcType}
-                  onValueChange={handleNpcTypeChange}
-                />
-              </div>
-            </div>
-          </Card>
-
-          <Card className="flex-1 min-h-0 flex flex-col border-border bg-card p-0  overflow-hidden gap-0">
-            <ScrollArea className="relative flex-1 min-h-0 w-full">
+          <SectionCard className="flex-1 min-h-0 flex flex-col overflow-hidden">
+            <div className="relative min-w-0 w-full overflow-x-auto">
               {isLoading ? (
                 <StatsRankingRowsSkeleton />
               ) : !data || paginatedData.length === 0 ? (
@@ -224,7 +216,7 @@ export const StatsNpcsList: React.FC = () => {
                       <button
                         key={npc.npcId}
                         type="button"
-                        className="min-w-0 rounded-lg border border-border bg-background p-3 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        className="min-w-0 border-b border-border p-3 last:border-b-0 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         onClick={() => handleRowClick(npc)}
                       >
                         <div className="flex min-w-0 items-center gap-3">
@@ -337,7 +329,7 @@ export const StatsNpcsList: React.FC = () => {
                   </Table>
                 </>
               )}
-            </ScrollArea>
+            </div>
 
             <TablePaginationFooter
               totalLabel={t("kills.ranking.total", { count: total })}
@@ -346,7 +338,7 @@ export const StatsNpcsList: React.FC = () => {
               onPreviousPage={handlePreviousPage}
               onNextPage={handleNextPage}
             />
-          </Card>
+          </SectionCard>
         </div>
       </ScrollArea>
     </div>

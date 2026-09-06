@@ -48,7 +48,10 @@ export const EventScoringRulesSummary = ({
       </div>
       <div className="space-y-2">
         {normalizedRules.map((rule) => (
-          <div key={rule.id} className="rounded-md border p-2">
+          <div
+            key={rule.id}
+            className="border-b border-border/70 py-2 last:border-b-0"
+          >
             <p className="font-medium text-xs">
               {rule.name || rule.id}{" "}
               {rule.enabled === false

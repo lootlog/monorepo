@@ -92,8 +92,8 @@ describe("MemberSummaryStrip", () => {
     expect(screen.getByRole("heading", { name: "Wild" })).toBeTruthy();
     expect(screen.getByText("events.kills.kpiKills")).toBeTruthy();
     expect(screen.queryByRole("button")).toBeNull();
-    expect(container.querySelector("section")?.lastElementChild?.tagName).toBe(
-      "DL",
-    );
+    expect(
+      container.querySelector("[data-slot=card]")?.lastElementChild?.tagName,
+    ).toBe("DL");
   });
 });

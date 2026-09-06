@@ -19,9 +19,13 @@ import {
   fetchLoot,
   fetchLoots,
   getMemberKills,
+  getUserKillAnalytics,
+  getUserKillActivity,
+  getUserFeed,
   RecordsAccessDenied,
   RecordsAuthorization,
   RecordsData,
+  RecordsDataError,
   RecordsNotFound,
   type AuthenticatedCaller,
   type AuthorizedGuildCaller,
@@ -53,6 +57,9 @@ const makeData = (overrides: Partial<RecordsData["Service"]> = {}) =>
     createKill: unimplemented,
     getGuildKillStats: unimplemented,
     getUserKillStats: unimplemented,
+    getUserFeed: unimplemented,
+    getUserKillAnalytics: unimplemented,
+    getUserKillActivity: unimplemented,
     getUserNpcKills: unimplemented,
     getGuildTopNpcs: unimplemented,
     getGuildTopKillersByType: unimplemented,
@@ -298,5 +305,70 @@ describe("Kills and Loots HttpApi handlers", () => {
       npcs: [],
       pagination: null,
     });
+  });
+});
+
+describe("Personal kill analytics authentication", () => {
+  it("rejects analytics, activity, and feed before reading private data", async () => {
+    const denied = new RecordsAccessDenied({
+      status: 401,
+      code: "AUTHENTICATION_REQUIRED",
+    });
+    await Promise.all(
+      [
+        Effect.asVoid(getUserKillAnalytics({ days: 7 })),
+        Effect.asVoid(getUserKillActivity({})),
+        Effect.asVoid(getUserFeed()),
+      ].map(async (operation) => {
+        const error = await Effect.runPromise(
+          Effect.flip(
+            operation.pipe(
+              Effect.provide(
+                services(
+                  makeAuthorization({ requireCaller: Effect.fail(denied) }),
+                  makeData(),
+                ),
+              ),
+            ),
+          ),
+        );
+        expect(error).toBe(denied);
+      }),
+    );
+  });
+  it("forwards the authenticated owner and scoped filters to each aggregate", async () => {
+    const reached = new RecordsDataError({
+      cause: new Error("Test boundary reached"),
+    });
+    const received: unknown[] = [];
+    const layer = services(
+      makeAuthorization(),
+      makeData({
+        getUserKillAnalytics: (owner, query) => {
+          received.push({ owner, query });
+          return Effect.fail(reached);
+        },
+        getUserKillActivity: (owner, query) => {
+          received.push({ owner, query });
+          return Effect.fail(reached);
+        },
+      }),
+    );
+    await Promise.all(
+      [
+        getUserKillAnalytics({ days: 90, world: "tempest" }),
+        getUserKillActivity({ world: "lunia" }),
+      ].map(async (operation) => {
+        expect(
+          await Effect.runPromise(
+            Effect.flip(operation.pipe(Effect.provide(layer))),
+          ),
+        ).toBe(reached);
+      }),
+    );
+    expect(received).toEqual([
+      { owner: caller, query: { days: 90, world: "tempest" } },
+      { owner: caller, query: { world: "lunia" } },
+    ]);
   });
 });

@@ -1,9 +1,10 @@
+import { PageHeader } from "@/components/common/page-header";
 import { NPC_RARITY_CONFIG } from "@/features/guild/settings/npcs/npc-rarity-config";
 import { NpcsForm } from "@/features/guild/settings/npcs/npcs-form";
 import { useLootlogConfigControllerGetLootlogConfig } from "@lootlog/client/main";
 import { cn } from "cn";
 import { Button } from "@lootlog/ui/components/button";
-import { Card } from "@lootlog/ui/components/card";
+
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
   Tooltip,
@@ -41,7 +42,7 @@ export const NpcSettingsDetailPage = () => {
             {t("settings.npcs.backToNpcs")}
           </Button>
         </header>
-        <div className="flex flex-1 items-center justify-center p-6 text-center">
+        <div className="flex min-h-0 flex-1 [align-items:safe_center] justify-center overflow-y-auto p-6 text-center">
           <div className="max-w-sm text-muted-foreground">
             <Settings2 className="mx-auto mb-3 size-10 opacity-50" />
             <p className="text-sm font-medium text-foreground">
@@ -65,10 +66,13 @@ export const NpcSettingsDetailPage = () => {
   );
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 bg-background px-3">
-      <Card className="shrink-0 border-b border-t border-border px-4 py-3">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex min-w-0 items-center gap-3">
+    <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto bg-background px-3">
+      <PageHeader
+        title={t(`npcType.${npc.npcType}`)}
+        icon={Settings2}
+        description={t("settings.npcs.details")}
+        actions={
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <Button
               type="button"
               variant="ghost"
@@ -78,56 +82,50 @@ export const NpcSettingsDetailPage = () => {
             >
               <ArrowLeft className="size-4" />
             </Button>
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <Settings2 className="size-4" />
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Settings2 className="size-4" />
+              </div>
             </div>
-            <div className="min-w-0">
-              <p className="text-xs text-muted-foreground">
-                {t("settings.npcs.details")}
-              </p>
-              <h2 className="truncate text-base font-semibold leading-tight">
-                {t(`npcType.${npc.npcType}`)}
-              </h2>
-            </div>
-          </div>
-          <div className="flex min-h-8 shrink-0 flex-wrap items-center gap-1 pl-12 sm:pl-0">
-            {enabledRarities.length > 0 ? (
-              <TooltipProvider delay={100}>
-                {enabledRarities.map((rarity) => {
-                  const Icon = rarity.icon;
+            <div className="flex min-h-8 shrink-0 flex-wrap items-center gap-1 pl-12 sm:pl-0">
+              {enabledRarities.length > 0 ? (
+                <TooltipProvider delay={100}>
+                  {enabledRarities.map((rarity) => {
+                    const Icon = rarity.icon;
 
-                  return (
-                    <Tooltip key={rarity.key}>
-                      <TooltipTrigger
-                        render={
-                          <span
-                            className={cn(
-                              "inline-flex size-8 items-center justify-center rounded-md",
-                              rarity.bgColor,
-                            )}
-                          >
-                            <Icon className={cn("size-4", rarity.color)} />
-                          </span>
-                        }
-                      />
-                      <TooltipContent side="bottom">
-                        <p className="text-sm font-semibold">
-                          {t(`itemRarity.${rarity.key}`)}
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  );
-                })}
-              </TooltipProvider>
-            ) : (
-              <span className="text-xs text-muted-foreground">
-                {t("settings.npcs.noRarities")}
-              </span>
-            )}
+                    return (
+                      <Tooltip key={rarity.key}>
+                        <TooltipTrigger
+                          render={
+                            <span
+                              className={cn(
+                                "inline-flex size-8 items-center justify-center rounded-md",
+                                rarity.bgColor,
+                              )}
+                            >
+                              <Icon className={cn("size-4", rarity.color)} />
+                            </span>
+                          }
+                        />
+                        <TooltipContent side="bottom">
+                          <p className="text-sm font-semibold">
+                            {t(`itemRarity.${rarity.key}`)}
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    );
+                  })}
+                </TooltipProvider>
+              ) : (
+                <span className="text-xs text-muted-foreground">
+                  {t("settings.npcs.noRarities")}
+                </span>
+              )}
+            </div>
           </div>
-        </div>
-      </Card>
-      <ScrollArea className="min-h-0 flex-1">
+        }
+      />
+      <ScrollArea className="min-h-48 flex-1">
         <div className="mx-auto w-full">
           <NpcsForm npc={npc} />
         </div>

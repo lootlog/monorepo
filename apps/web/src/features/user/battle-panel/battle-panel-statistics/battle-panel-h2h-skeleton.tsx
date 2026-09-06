@@ -1,55 +1,51 @@
-import { Card } from "@lootlog/ui/components/card";
+import { SectionCardFooter } from "@/components/common/section-card/section-card-footer";
+import { PageHeader } from "@/components/common/page-header";
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 
 export const BattlePanelH2hSkeleton = () => {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden bg-background">
       <div className="px-3 pt-3 pb-0">
-        <Card className="gap-3 border-border bg-card p-4">
-          <div className="flex min-w-0 items-center gap-3">
-            <Skeleton className="h-9 w-9 shrink-0 rounded-xl" />
-            <div className="min-w-0 flex-1 space-y-1.5">
-              <Skeleton className="h-4 w-40" />
-              <Skeleton className="h-3 w-64 max-w-full" />
-            </div>
-            <Skeleton className="hidden size-9 shrink-0 rounded-md md:block" />
-          </div>
-        </Card>
+        <PageHeader
+          title={<Skeleton className="h-5 w-40" />}
+          description={<Skeleton className="h-3 w-48" />}
+        ></PageHeader>
       </div>
 
       <div className="flex flex-1 overflow-hidden">
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden p-3">
-          <Card className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden border-border bg-card p-0">
-            <div className="flex gap-4 border-b border-border px-4 py-3">
-              {Array.from({ length: 6 }).map((_, index) => (
-                <Skeleton key={index} className="h-4 flex-1" />
-              ))}
-            </div>
-            <div className="min-h-0 flex-1">
-              {Array.from({ length: 8 }).map((_, rowIndex) => (
-                <div
-                  key={rowIndex}
-                  className="flex h-14 items-center gap-4 border-b border-border px-4"
-                >
-                  {Array.from({ length: 6 }).map((_, columnIndex) => (
-                    <Skeleton key={columnIndex} className="h-4 flex-1" />
-                  ))}
-                </div>
-              ))}
-            </div>
-            <div className="flex h-14 shrink-0 items-center justify-between border-t border-border px-4">
-              <Skeleton className="h-4 w-28" />
-              <div className="flex gap-2">
-                {Array.from({ length: 2 }).map((_, index) => (
-                  <Skeleton key={index} className="h-8 w-24 rounded-md" />
+          <SectionCard className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <SectionCardHeader title={<Skeleton className="h-4 w-32" />} />
+            <SectionCardContent className="flex min-h-0 flex-1 flex-col p-0">
+              <div className="min-h-0 flex-1">
+                {Array.from({ length: 8 }).map((_, rowIndex) => (
+                  <div
+                    key={rowIndex}
+                    className="flex h-14 items-center gap-4 border-b border-border px-4"
+                  >
+                    {Array.from({ length: 6 }).map((_, columnIndex) => (
+                      <Skeleton key={columnIndex} className="h-4 flex-1" />
+                    ))}
+                  </div>
                 ))}
               </div>
-            </div>
-          </Card>
+              <SectionCardFooter className="shrink-0 justify-between">
+                <Skeleton className="h-4 w-28" />
+                <div className="flex gap-2">
+                  {Array.from({ length: 2 }).map((_, index) => (
+                    <Skeleton key={index} className="h-8 w-24 rounded-md" />
+                  ))}
+                </div>
+              </SectionCardFooter>
+            </SectionCardContent>
+          </SectionCard>
         </div>
 
         <div className="hidden h-full w-[320px] shrink-0 flex-col overflow-hidden bg-background py-3 pr-3 md:flex">
-          <Card className="flex min-h-0 flex-1 flex-col gap-0 border-border bg-filters-sidebar p-0">
+          <SectionCard className="flex min-h-0 flex-1 flex-col gap-0 border-border bg-filters-sidebar p-0">
             <div className="space-y-4 p-4">
               {Array.from({ length: 5 }).map((_, index) => (
                 <div key={index} className="space-y-2">
@@ -75,7 +71,7 @@ export const BattlePanelH2hSkeleton = () => {
                 </div>
               ))}
             </div>
-          </Card>
+          </SectionCard>
         </div>
       </div>
 

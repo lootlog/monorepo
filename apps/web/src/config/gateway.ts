@@ -17,6 +17,8 @@ export enum GatewayEvent {
   JOIN = "join",
   PERMISSIONS_UPDATED = "permissions-updated",
   CHAT_MESSAGE = "chat-message",
+  FEED_ENTRY = "feed-entry",
+  KILLS_CHANGED = "kills-changed",
   LOOTS_CREATE = "loots-create",
   LOOTS_SHARE_UPDATE = "loots-share-update",
   ONLINE_PLAYERS_PRESENCE_FETCH = "online-players:presence:fetch",

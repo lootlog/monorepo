@@ -515,7 +515,7 @@ export const MapManageDialog = ({
                   </div>
                 </ScrollArea>
               ) : (
-                <div className="py-3 px-4 rounded-lg border border-dashed text-center">
+                <div className="px-3 py-3 text-center">
                   <p className="text-xs text-muted-foreground">
                     {t("events.maps.noMapsAssigned")}
                   </p>
@@ -595,7 +595,7 @@ export const MapManageDialog = ({
                   ))}
                 </div>
               ) : (
-                <div className="py-3 px-4 rounded-lg border border-dashed text-center">
+                <div className="px-3 py-3 text-center">
                   <p className="text-xs text-muted-foreground mb-2">
                     {t("events.maps.noTemplatesHint")}
                   </p>

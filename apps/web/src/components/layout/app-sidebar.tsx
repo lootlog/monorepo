@@ -4,9 +4,6 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarMenu,
 } from "@lootlog/ui/components/sidebar";
 import type { ReactNode } from "react";
 
@@ -22,15 +19,10 @@ export const AppSidebar = ({
   return (
     <Sidebar className="border-r border-sidebar-border bg-sidebar">
       <SidebarContent className="h-full bg-sidebar">
-        <SidebarGroup className="h-full p-0">
-          <SidebarGroupContent className="h-full">
-            <SidebarMenu className="flex h-full flex-row gap-0">
-              <GuildsSelector />
-              {!compact &&
-                (navigation ?? <div className="flex-1 bg-sidebar" />)}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        <div className="relative flex min-h-0 min-w-0 w-full flex-1 flex-row gap-0 text-sm">
+          <GuildsSelector />
+          {!compact && (navigation ?? <div className="flex-1 bg-sidebar" />)}
+        </div>
       </SidebarContent>
       {!compact && (
         <SidebarFooter className="border-t border-sidebar-border bg-sidebar p-0">

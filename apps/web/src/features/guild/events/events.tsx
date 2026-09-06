@@ -1,9 +1,11 @@
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { PageHeader } from "@/components/common/page-header";
 import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useParams, Link } from "@tanstack/react-router";
-import { Card } from "@lootlog/ui/components/card";
+import { SectionCard as Card } from "@/components/common/section-card/section-card";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
@@ -139,7 +141,7 @@ export const Events = () => {
     const isForbidden = getApiErrorStatus(error) === 403;
 
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-4">
+      <div className="flex flex-col items-center justify-center h-64 gap-4 max-h-full overflow-y-auto [justify-content:safe_center]">
         {isForbidden ? (
           <>
             <ShieldX className="w-12 h-12 text-destructive" />
@@ -158,26 +160,28 @@ export const Events = () => {
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
       <div className="px-3 pt-3">
-        <Card className="gap-2 border-border bg-card p-2">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <SearchInput
-              value={searchValue}
-              onChange={(event) => setSearchValue(event.target.value)}
-              placeholder={t("events.searchPlaceholder")}
-              className="h-9"
-              wrapperClassName="min-w-0 flex-1"
-              disabled={isLoading}
-            />
-            <Button
-              size="sm"
-              className="h-9 w-full shrink-0 sm:w-auto"
-              onClick={() => setCreateDialogOpen(true)}
-            >
-              <Plus className="size-4" />
-              {t("events.create")}
-            </Button>
-          </div>
-        </Card>
+        <PageHeader title={t("layout.navigation.events")}>
+          <SectionCardContent>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <SearchInput
+                value={searchValue}
+                onChange={(event) => setSearchValue(event.target.value)}
+                placeholder={t("events.searchPlaceholder")}
+                className="h-9"
+                wrapperClassName="min-w-0 flex-1"
+                disabled={isLoading}
+              />
+              <Button
+                size="sm"
+                className="h-9 w-full shrink-0 sm:w-auto"
+                onClick={() => setCreateDialogOpen(true)}
+              >
+                <Plus className="size-4" />
+                {t("events.create")}
+              </Button>
+            </div>
+          </SectionCardContent>
+        </PageHeader>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col pt-3">
@@ -214,7 +218,7 @@ export const Events = () => {
             </div>
           </ScrollArea>
         ) : !hasEvents ? (
-          <div className="flex flex-1 items-start justify-center px-3 pb-3 md:items-center">
+          <div className="flex min-h-0 flex-1 items-start justify-center overflow-y-auto px-3 pb-3 md:[align-items:safe_center]">
             <Empty className="min-h-56 w-full max-w-xl">
               <EmptyHeader>
                 <EmptyMedia variant="icon">
@@ -234,7 +238,7 @@ export const Events = () => {
             </Empty>
           </div>
         ) : !hasFilteredEvents ? (
-          <div className="flex flex-1 items-start justify-center px-3 pb-3 md:items-center">
+          <div className="flex min-h-0 flex-1 items-start justify-center overflow-y-auto px-3 pb-3 md:[align-items:safe_center]">
             <Empty className="min-h-56 w-full max-w-xl">
               <EmptyHeader>
                 <EmptyMedia variant="icon">

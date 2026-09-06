@@ -1,9 +1,12 @@
+import { SectionCard } from "@/components/common/section-card/section-card";
+import { PageHeader } from "@/components/common/page-header";
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { StatsNpcTypeSelect } from "./components/stats-npc-type-select";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "@tanstack/react-router";
 import { Users } from "lucide-react";
-import { Card } from "@lootlog/ui/components/card";
+
 import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
 import {
   Avatar,
@@ -206,16 +209,18 @@ export const MemberStatsPage: React.FC = () => {
       return (
         <div className="flex flex-col h-full min-h-0 bg-background">
           <div className="px-3 py-3 flex flex-col gap-4">
-            <Card className="gap-4 border-border bg-card p-4">
-              <div className="flex items-center gap-3">
-                <Skeleton className="h-12 w-12 rounded-full" />
-                <div className="flex flex-col gap-2 flex-1">
-                  <Skeleton className="h-4 w-32" />
-                  <Skeleton className="h-3 w-48" />
+            <SectionCard>
+              <SectionCardContent className="flex flex-col gap-3">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-12 w-12 rounded-full" />
+                  <div className="flex flex-col gap-2 flex-1">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-48" />
+                  </div>
                 </div>
-              </div>
-            </Card>
-            <Card className="flex-1 min-h-0 flex flex-col border-border bg-card p-0  overflow-hidden gap-0">
+              </SectionCardContent>
+            </SectionCard>
+            <SectionCard className="flex-1 min-h-0 flex flex-col overflow-hidden">
               <div>
                 {Array.from({ length: 10 }).map((_, i) => (
                   <div
@@ -229,7 +234,7 @@ export const MemberStatsPage: React.FC = () => {
                   </div>
                 ))}
               </div>
-            </Card>
+            </SectionCard>
           </div>
         </div>
       );
@@ -257,34 +262,30 @@ export const MemberStatsPage: React.FC = () => {
     <div className="flex flex-col h-full min-h-0 bg-background">
       <ScrollArea className="flex-1 min-h-0">
         <div className="px-3 py-3 flex flex-col gap-4">
-          <Card className="gap-4 border-border bg-card p-4">
-            <div className="flex items-center gap-3">
-              <Avatar className="h-12 w-12 shrink-0 border-2 border-background shadow-lg">
-                <AvatarImage
-                  src={getDiscordAvatarUrl(
-                    member.memberUserId,
-                    member.memberAvatar,
-                    128,
-                  )}
-                />
-                <AvatarFallback className="text-lg">
-                  {member.memberName[0]}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col min-w-0">
-                <h2
-                  className="text-base font-semibold truncate"
-                  style={{ color: memberColor }}
-                >
-                  {member.memberName}
-                </h2>
-                <p className="text-xs text-muted-foreground">
-                  {t("kills.memberStats.totalParticipations", {
-                    count: totalParticipations,
-                  })}
-                </p>
+          <PageHeader
+            title={
+              <span style={{ color: memberColor }}>{member.memberName}</span>
+            }
+            description={t("kills.memberStats.totalParticipations", {
+              count: totalParticipations,
+            })}
+            actions={
+              <div className="flex items-center gap-3">
+                <Avatar className="h-12 w-12 shrink-0 border-2 border-background shadow-lg">
+                  <AvatarImage
+                    src={getDiscordAvatarUrl(
+                      member.memberUserId,
+                      member.memberAvatar,
+                      128,
+                    )}
+                  />
+                  <AvatarFallback className="text-lg">
+                    {member.memberName[0]}
+                  </AvatarFallback>
+                </Avatar>
               </div>
-            </div>
+            }
+          >
             {activeTypes.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {activeTypes.map((type) => (
@@ -299,62 +300,64 @@ export const MemberStatsPage: React.FC = () => {
                 ))}
               </div>
             )}
-          </Card>
+          </PageHeader>
 
-          <Card className="border-border bg-card p-3  gap-3">
-            <div className="flex items-center gap-2 lg:hidden">
-              <SearchInput
-                placeholder={t("kills.memberStats.searchPlaceholder")}
-                value={search}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                wrapperClassName="flex-1"
-              />
-              <NpcStatsFiltersMobile
-                world={settings.world}
-                npcType={settings.npcType}
-                minLvl={settings.minLvl}
-                maxLvl={settings.maxLvl}
-                period={settings.period}
-                onWorldChange={handleWorldChange}
-                onNpcTypeChange={handleNpcTypeChange}
-                onMinLvlChange={handleMinLvlChange}
-                onMaxLvlChange={handleMaxLvlChange}
-                onPeriodChange={handlePeriodChange}
-              />
-            </div>
-            <div className="hidden lg:flex items-center gap-2 flex-wrap">
-              <SearchInput
-                placeholder={t("kills.memberStats.searchPlaceholder")}
-                value={search}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                wrapperClassName="w-[200px]"
-              />
-              <LevelFilters
-                minLvl={settings.minLvl}
-                maxLvl={settings.maxLvl}
-                onMinLvlChange={handleMinLvlChange}
-                onMaxLvlChange={handleMaxLvlChange}
-                inputClassName="w-[100px]"
-              />
-              <WorldSwitcher
-                value={settings.world}
-                onValueChange={handleWorldChange}
-                showAllOption
-                width="w-[160px]"
-              />
-              <KillStatsPeriodSelect
-                value={settings.period}
-                onValueChange={handlePeriodChange}
-              />
-              <StatsNpcTypeSelect
-                value={settings.npcType}
-                onValueChange={handleNpcTypeChange}
-              />
-            </div>
-          </Card>
+          <SectionCard>
+            <SectionCardContent className="flex flex-col gap-3">
+              <div className="flex items-center gap-2 lg:hidden">
+                <SearchInput
+                  placeholder={t("kills.memberStats.searchPlaceholder")}
+                  value={search}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  wrapperClassName="flex-1"
+                />
+                <NpcStatsFiltersMobile
+                  world={settings.world}
+                  npcType={settings.npcType}
+                  minLvl={settings.minLvl}
+                  maxLvl={settings.maxLvl}
+                  period={settings.period}
+                  onWorldChange={handleWorldChange}
+                  onNpcTypeChange={handleNpcTypeChange}
+                  onMinLvlChange={handleMinLvlChange}
+                  onMaxLvlChange={handleMaxLvlChange}
+                  onPeriodChange={handlePeriodChange}
+                />
+              </div>
+              <div className="hidden lg:flex items-center gap-2 flex-wrap">
+                <SearchInput
+                  placeholder={t("kills.memberStats.searchPlaceholder")}
+                  value={search}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  wrapperClassName="w-[200px]"
+                />
+                <LevelFilters
+                  minLvl={settings.minLvl}
+                  maxLvl={settings.maxLvl}
+                  onMinLvlChange={handleMinLvlChange}
+                  onMaxLvlChange={handleMaxLvlChange}
+                  inputClassName="w-[100px]"
+                />
+                <WorldSwitcher
+                  value={settings.world}
+                  onValueChange={handleWorldChange}
+                  showAllOption
+                  width="w-[160px]"
+                />
+                <KillStatsPeriodSelect
+                  value={settings.period}
+                  onValueChange={handlePeriodChange}
+                />
+                <StatsNpcTypeSelect
+                  value={settings.npcType}
+                  onValueChange={handleNpcTypeChange}
+                />
+              </div>
+            </SectionCardContent>
+          </SectionCard>
 
-          <Card className="flex-1 min-h-0 flex flex-col border-border bg-card p-0  overflow-hidden gap-0">
-            <ScrollArea className="relative flex-1 min-h-0 w-full">
+          <SectionCard className="flex-1 min-h-0 flex flex-col overflow-hidden">
+            <div className="relative min-w-0 w-full overflow-x-auto">
               {isLoading ? (
                 <div>
                   {Array.from({ length: 10 }).map((_, i) => (
@@ -460,7 +463,7 @@ export const MemberStatsPage: React.FC = () => {
                   </TableBody>
                 </Table>
               )}
-            </ScrollArea>
+            </div>
 
             {(hasPrev || npcs.length > 0) && (
               <TablePaginationFooter
@@ -471,7 +474,7 @@ export const MemberStatsPage: React.FC = () => {
                 onNextPage={handleNextPage}
               />
             )}
-          </Card>
+          </SectionCard>
         </div>
       </ScrollArea>
     </div>

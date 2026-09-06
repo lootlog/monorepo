@@ -14,14 +14,14 @@ export const GeneralSettings = () => {
   });
 
   return (
-    <div className="flex flex-col h-full min-h-0">
+    <div className="flex flex-col h-full min-h-0 overflow-y-auto">
       <SettingsHeader
         icon={Settings}
         title={t("settings.general.title")}
         description={t("settings.general.description")}
         className="mx-3 mt-3"
       />
-      <ScrollArea className="flex-1 min-h-0 bg-background">
+      <ScrollArea className="flex-1 min-h-48 bg-background">
         {guild && <GeneralForm />}
       </ScrollArea>
     </div>

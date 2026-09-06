@@ -1,5 +1,7 @@
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import type { CombatProfileResponseDtoOutput } from "@lootlog/client/battlelog";
-import { Card } from "@lootlog/ui/components/card";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import {
   Clock,
   Crosshair,
@@ -34,11 +36,13 @@ export function CombatProfileOverview({
 
   if (isLoading || !data) {
     return (
-      <Card className="border-border bg-card p-4">
-        <p className="text-sm text-muted-foreground">
-          {t("battlePanel.statistics.loading")}
-        </p>
-      </Card>
+      <SectionCard>
+        <SectionCardContent>
+          <p className="text-sm text-muted-foreground">
+            {t("battlePanel.statistics.loading")}
+          </p>
+        </SectionCardContent>
+      </SectionCard>
     );
   }
 
@@ -91,16 +95,17 @@ export function CombatProfileOverview({
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
         {kpis.map((kpi) => (
-          <Card key={kpi.key} className="gap-2 border-border bg-card p-3">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <kpi.icon className="size-3.5" />
-              {kpi.label}
-            </div>
-            <div className="text-lg font-semibold leading-tight">
-              {kpi.value}
-            </div>
-            <div className="text-xs text-muted-foreground">{kpi.subvalue}</div>
-          </Card>
+          <SectionCard key={kpi.key}>
+            <SectionCardHeader icon={kpi.icon} title={kpi.label} />
+            <SectionCardContent className="space-y-2">
+              <div className="text-lg font-semibold leading-tight">
+                {kpi.value}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {kpi.subvalue}
+              </div>
+            </SectionCardContent>
+          </SectionCard>
         ))}
       </div>
     </div>

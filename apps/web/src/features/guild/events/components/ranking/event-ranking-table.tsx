@@ -1,3 +1,5 @@
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
@@ -313,13 +315,13 @@ export const EventRankingTable = ({
     );
   }
 
+  const Container = variant === "default" ? SectionCard : "section";
+
   return (
-    <section
-      className={cn(
-        "@container/ranking w-full min-w-0 overflow-hidden",
-        variant === "default" && "rounded-2xl border border-border bg-card",
+    <Container className="@container/ranking w-full min-w-0 overflow-hidden">
+      {variant === "default" && (
+        <SectionCardHeader icon={Trophy} title={t("events.ranking.title")} />
       )}
-    >
       <Table className="w-full table-fixed">
         <TanStackTableHeader
           table={table}
@@ -357,6 +359,6 @@ export const EventRankingTable = ({
           renderCellContent={renderRankingLinkCell}
         />
       </Table>
-    </section>
+    </Container>
   );
 };

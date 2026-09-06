@@ -1,26 +1,18 @@
-import { Card } from "@lootlog/ui/components/card";
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
-import { Activity } from "lucide-react";
 
 const chartTicks = Array.from({ length: 9 });
 
 export function BattleHpTimelineChartSkeleton() {
   return (
-    <Card className="gap-2 border-border bg-card p-3" aria-hidden="true">
-      <div className="flex flex-wrap items-start justify-between gap-3 px-1">
-        <div className="flex items-center gap-2">
-          <Activity className="size-4 text-primary/45" />
-          <Skeleton className="h-5 w-36" />
-        </div>
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-8 w-8 rounded-sm" />
-          <Skeleton className="h-8 w-8 rounded-sm" />
-          <Skeleton className="h-8 w-8 rounded-sm" />
-          <Skeleton className="h-8 w-8 rounded-sm" />
-        </div>
-      </div>
+    <SectionCard aria-hidden="true">
+      <SectionCardHeader
+        title={<Skeleton className="h-4 w-36" />}
+        actions={<Skeleton className="h-8 w-24" />}
+      />
 
-      <div className="relative h-36 w-full overflow-hidden rounded-md bg-background/35 px-4 py-4">
+      <div className="relative m-3 h-36 w-full overflow-hidden rounded-md bg-background/35 px-4 py-4">
         <div className="absolute inset-x-4 top-1/4 h-px bg-border/45" />
         <div className="absolute inset-x-4 top-1/2 h-px bg-border/65" />
         <div className="absolute inset-x-4 top-3/4 h-px bg-border/45" />
@@ -39,6 +31,6 @@ export function BattleHpTimelineChartSkeleton() {
           ))}
         </div>
       </div>
-    </Card>
+    </SectionCard>
   );
 }

@@ -1,10 +1,13 @@
+import { SectionCard } from "@/components/common/section-card/section-card";
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { StatsPodiumSlot } from "./stats-podium-slot";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { useLocalStorage } from "usehooks-ts";
 import { ChevronRight, Users } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
-import { Card } from "@lootlog/ui/components/card";
+
 import {
   Select,
   SelectContent,
@@ -62,20 +65,24 @@ export const MemberRankingPodiumCard: React.FC<
 
   if (isLoading) {
     return (
-      <Card className="bg-card  border-border p-3 gap-3 flex flex-col">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            <Skeleton className="h-5 w-40" />
-          </h2>
-          <Skeleton className="h-8 w-[120px]" />
-        </div>
-        <div className="flex items-end justify-center gap-2">
-          <Skeleton className="h-24 w-24" />
-          <Skeleton className="h-32 w-24" />
-          <Skeleton className="h-20 w-24" />
-        </div>
-      </Card>
+      <SectionCard className="flex flex-col">
+        <SectionCardHeader
+          title={<Skeleton className="h-5 w-40" />}
+          icon={Users}
+          actions={
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-8 w-[120px]" />
+            </div>
+          }
+        />
+        <SectionCardContent className="flex flex-col gap-3">
+          <div className="flex items-end justify-center gap-2">
+            <Skeleton className="h-24 w-24" />
+            <Skeleton className="h-32 w-24" />
+            <Skeleton className="h-20 w-24" />
+          </div>
+        </SectionCardContent>
+      </SectionCard>
     );
   }
 
@@ -90,86 +97,90 @@ export const MemberRankingPodiumCard: React.FC<
       .slice(0, 3) ?? [];
 
   return (
-    <Card className="bg-card  border-border p-3 gap-3 flex flex-col">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-base font-semibold flex items-center gap-2">
-          <Users className="h-5 w-5" />
-          {t("kills.memberRanking.title")}
-        </h2>
-        <Select
-          value={selectedNpcType}
-          onValueChange={(value) => setSelectedNpcType(value as NpcType)}
-          items={[
-            ...TRACKABLE_NPC_TYPES.map((type) => ({
-              value: type,
-              label: <>{t(`npcType.${type}`)}</>,
-            })),
-          ]}
-        >
-          <SelectTrigger className="w-[120px] h-8">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {TRACKABLE_NPC_TYPES.map((type) => (
-              <SelectItem key={type} value={type}>
-                {t(`npcType.${type}`)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="flex flex-1 flex-col">
-        <div className="flex-1 flex items-center justify-center">
-          {sortedByType.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              {t(
-                hasActiveFilters
-                  ? "kills.memberRanking.filteredNoData"
-                  : "kills.memberRanking.noData",
-              )}
-            </p>
-          ) : (
-            <div className="flex items-end justify-center gap-2">
-              {([2, 1, 3] as const).map((position) => {
-                const member = sortedByType[position - 1];
-                return (
-                  <StatsPodiumSlot
-                    key={position}
-                    position={position}
-                    member={
-                      member
-                        ? {
-                            userId: member.memberUserId,
-                            avatar: member.memberAvatar,
-                            name: member.memberName,
-                            memberId: member.memberId,
-                            detail: `x${member.typeParticipations.toLocaleString()}`,
-                          }
-                        : undefined
-                    }
-                    guildMember={
-                      member ? membersMap.get(member.memberUserId) : undefined
-                    }
-                    guildId={guildId}
-                  />
-                );
-              })}
-            </div>
+    <SectionCard className="flex flex-col">
+      <SectionCardHeader
+        title={t("kills.memberRanking.title")}
+        icon={Users}
+        actions={
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <Select
+              value={selectedNpcType}
+              onValueChange={(value) => setSelectedNpcType(value as NpcType)}
+              items={[
+                ...TRACKABLE_NPC_TYPES.map((type) => ({
+                  value: type,
+                  label: <>{t(`npcType.${type}`)}</>,
+                })),
+              ]}
+            >
+              <SelectTrigger className="w-[120px] h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {TRACKABLE_NPC_TYPES.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {t(`npcType.${type}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        }
+      />
+      <SectionCardContent className="flex flex-col gap-3">
+        <div className="flex flex-1 flex-col">
+          <div className="flex-1 flex items-center justify-center">
+            {sortedByType.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                {t(
+                  hasActiveFilters
+                    ? "kills.memberRanking.filteredNoData"
+                    : "kills.memberRanking.noData",
+                )}
+              </p>
+            ) : (
+              <div className="flex items-end justify-center gap-2">
+                {([2, 1, 3] as const).map((position) => {
+                  const member = sortedByType[position - 1];
+                  return (
+                    <StatsPodiumSlot
+                      key={position}
+                      position={position}
+                      member={
+                        member
+                          ? {
+                              userId: member.memberUserId,
+                              avatar: member.memberAvatar,
+                              name: member.memberName,
+                              memberId: member.memberId,
+                              detail: `x${member.typeParticipations.toLocaleString()}`,
+                            }
+                          : undefined
+                      }
+                      guildMember={
+                        member ? membersMap.get(member.memberUserId) : undefined
+                      }
+                      guildId={guildId}
+                    />
+                  );
+                })}
+              </div>
+            )}
+          </div>
+          {guildId && (
+            <Link
+              to="/$guildId/stats/ranking"
+              params={{ guildId }}
+              className="block mt-3"
+            >
+              <Button variant="outline" className="w-full" size="sm">
+                {t("kills.memberRanking.viewAll")}
+                <ChevronRight className="w-4 h-4 ml-2" />
+              </Button>
+            </Link>
           )}
         </div>
-        {guildId && (
-          <Link
-            to="/$guildId/stats/ranking"
-            params={{ guildId }}
-            className="block mt-3"
-          >
-            <Button variant="outline" className="w-full" size="sm">
-              {t("kills.memberRanking.viewAll")}
-              <ChevronRight className="w-4 h-4 ml-2" />
-            </Button>
-          </Link>
-        )}
-      </div>
-    </Card>
+      </SectionCardContent>
+    </SectionCard>
   );
 };

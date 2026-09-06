@@ -1,3 +1,4 @@
+import { REALTIME_FEED_CAPABILITY } from "@lootlog/protocol/realtime";
 import {
   RealtimeEventListeners,
   unwrapOrganizationEvent,
@@ -55,6 +56,8 @@ const groupPresence = (
 
 const serverEventNames: Partial<Record<ServerEvent["type"], GatewayEvent>> = {
   "chat.created": GatewayEvent.CHAT_MESSAGE,
+  "feed.entry": GatewayEvent.FEED_ENTRY,
+  "kills.changed": GatewayEvent.KILLS_CHANGED,
   "loot.created": GatewayEvent.LOOTS_CREATE,
   "loot.share-updated": GatewayEvent.LOOTS_SHARE_UPDATE,
   "timer.created": GatewayEvent.TIMERS_CREATE,
@@ -75,7 +78,7 @@ export class GatewayClient {
   private readonly realtime = new RealtimeClient({
     url: GATEWAY_URL,
     path: GATEWAY_SOCKET_PATH || "/ws",
-    protocols: [REALTIME_SUBPROTOCOL],
+    protocols: [REALTIME_SUBPROTOCOL, REALTIME_FEED_CAPABILITY],
     ticketProvider: async () =>
       (await authControllerIssueRealtimeTicket()).ticket,
   });

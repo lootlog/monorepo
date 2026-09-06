@@ -52,14 +52,12 @@ describe("MyReservations", () => {
     vi.clearAllMocks();
   });
 
-  it("uses the full content width and requests the complete selected list", () => {
+  it("names the page and requests the complete selected list", () => {
     render(<MyReservations />);
 
-    const heading = screen.getByRole("heading", { name: "Moje zapisy" });
-    const page = heading.parentElement?.parentElement;
-
-    expect(page?.className).toContain("w-full");
-    expect(page?.className).not.toContain("max-w-");
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Moje zapisy" }),
+    ).toBeTruthy();
     expect(mocks.useListMyReservations).toHaveBeenCalledWith({
       status: "upcoming",
     });

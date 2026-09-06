@@ -1,19 +1,17 @@
-import { Card } from "@lootlog/ui/components/card";
+import { PageHeader } from "@/components/common/page-header";
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 
-export const SigninPageSkeleton = () => {
-  return (
-    <div className="flex h-full items-center justify-center bg-background">
-      <Card className="w-full max-w-sm border-border bg-card p-6">
-        <div className="space-y-4">
-          <div className="space-y-2 text-center">
-            <Skeleton className="mx-auto h-10 w-10 rounded-xl" />
-            <Skeleton className="mx-auto h-5 w-32" />
-            <Skeleton className="mx-auto h-3 w-48" />
-          </div>
-          <Skeleton className="h-10 w-full rounded-md" />
-        </div>
-      </Card>
-    </div>
-  );
-};
+export const SigninPageSkeleton = () => (
+  <div className="flex min-h-screen items-center justify-center bg-background px-4">
+    <PageHeader
+      className="w-full max-w-md"
+      title={<Skeleton className="h-5 w-48" />}
+      description={<Skeleton className="h-3 w-full" />}
+    >
+      <SectionCardContent>
+        <Skeleton className="h-10 w-full rounded-md" />
+      </SectionCardContent>
+    </PageHeader>
+  </div>
+);

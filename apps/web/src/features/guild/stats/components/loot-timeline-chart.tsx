@@ -1,4 +1,7 @@
-import { Card } from "@lootlog/ui/components/card";
+import { SectionCard } from "@/components/common/section-card/section-card";
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import {
   ChartContainer,
@@ -71,89 +74,89 @@ export const LootTimelineChart: React.FC<LootTimelineChartProps> = ({
 
   if (isLoading) {
     return (
-      <Card className="bg-card  border-border p-3 gap-3">
-        <h2 className="text-base font-semibold">
-          {t("loots.stats.timeline.title")}
-        </h2>
-        <Skeleton className="h-[250px] w-full" />
-      </Card>
+      <SectionCard>
+        <SectionCardHeader title={t("loots.stats.timeline.title")} />
+        <SectionCardContent className="flex flex-col gap-3">
+          <Skeleton className="h-[250px] w-full" />
+        </SectionCardContent>
+      </SectionCard>
     );
   }
 
   if (!data?.length) {
     return (
-      <Card className="bg-card  border-border p-3 gap-3">
-        <h2 className="text-base font-semibold">
-          {t("loots.stats.timeline.title")}
-        </h2>
-        <div className="flex h-[250px] items-center justify-center text-muted-foreground">
-          {t("loots.stats.timeline.noData")}
-        </div>
-      </Card>
+      <SectionCard>
+        <SectionCardHeader title={t("loots.stats.timeline.title")} />
+        <SectionCardContent className="flex flex-col gap-3">
+          <div className="flex h-[250px] items-center justify-center text-muted-foreground">
+            {t("loots.stats.timeline.noData")}
+          </div>
+        </SectionCardContent>
+      </SectionCard>
     );
   }
 
   return (
-    <Card className="bg-card  border-border p-3 gap-3">
-      <h2 className="text-base font-semibold">
-        {t("loots.stats.timeline.title")}
-      </h2>
-      <div>
-        <ChartContainer config={chartConfig} className="h-[250px] w-full">
-          <AreaChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-            <XAxis
-              dataKey="date"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              fontSize={11}
-            />
-            <YAxis
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              fontSize={11}
-              width={35}
-            />
-            <ChartTooltip
-              content=<ChartTooltipContent
-                labelFormatter={(_, payload) => {
-                  const item = payload[0]?.payload as
-                    | Record<string, unknown>
-                    | undefined;
-                  const fullDate = item?.fullDate;
-                  if (typeof fullDate !== "string") return "";
-                  const date = new Date(fullDate);
-                  return date.toLocaleDateString("pl-PL", {
-                    weekday: "short",
-                    day: "numeric",
-                    month: "short",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  });
-                }}
+    <SectionCard>
+      <SectionCardHeader title={t("loots.stats.timeline.title")} />
+      <SectionCardContent className="flex flex-col gap-3">
+        <div>
+          <ChartContainer config={chartConfig} className="h-[250px] w-full">
+            <AreaChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis
+                dataKey="date"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                fontSize={11}
               />
-            />
-            <Area
-              type="monotone"
-              dataKey="LEGENDARY"
-              stackId="1"
-              stroke={RARITY_COLORS.LEGENDARY}
-              fill={RARITY_COLORS.LEGENDARY}
-              fillOpacity={0.6}
-            />
-            <Area
-              type="monotone"
-              dataKey="HEROIC"
-              stackId="1"
-              stroke={RARITY_COLORS.HEROIC}
-              fill={RARITY_COLORS.HEROIC}
-              fillOpacity={0.6}
-            />
-          </AreaChart>
-        </ChartContainer>
-      </div>
-    </Card>
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                fontSize={11}
+                width={35}
+              />
+              <ChartTooltip
+                content=<ChartTooltipContent
+                  labelFormatter={(_, payload) => {
+                    const item = payload[0]?.payload as
+                      | Record<string, unknown>
+                      | undefined;
+                    const fullDate = item?.fullDate;
+                    if (typeof fullDate !== "string") return "";
+                    const date = new Date(fullDate);
+                    return date.toLocaleDateString("pl-PL", {
+                      weekday: "short",
+                      day: "numeric",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    });
+                  }}
+                />
+              />
+              <Area
+                type="monotone"
+                dataKey="LEGENDARY"
+                stackId="1"
+                stroke={RARITY_COLORS.LEGENDARY}
+                fill={RARITY_COLORS.LEGENDARY}
+                fillOpacity={0.6}
+              />
+              <Area
+                type="monotone"
+                dataKey="HEROIC"
+                stackId="1"
+                stroke={RARITY_COLORS.HEROIC}
+                fill={RARITY_COLORS.HEROIC}
+                fillOpacity={0.6}
+              />
+            </AreaChart>
+          </ChartContainer>
+        </div>
+      </SectionCardContent>
+    </SectionCard>
   );
 };

@@ -1,3 +1,5 @@
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { PageHeader } from "@/components/common/page-header";
 import { orderGuilds } from "@lootlog/domain/guild-preferences";
 import { filterGuildsByVisibility } from "@/features/user/settings/servers/server-visibility";
 import {
@@ -10,7 +12,7 @@ import {
   AvatarImage,
 } from "@lootlog/ui/components/avatar";
 import { Button } from "@lootlog/ui/components/button";
-import { Card } from "@lootlog/ui/components/card";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { Switch } from "@lootlog/ui/components/switch";
@@ -89,21 +91,11 @@ export const ServerVisibilitySettings = () => {
     <div className="flex h-full min-h-0 flex-col bg-background">
       <ScrollArea className="min-h-0 flex-1">
         <div className="flex flex-col gap-4 px-3 pb-3">
-          <Card className="gap-4 border-border bg-card p-4">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-primary/10 p-2.5">
-                  <Server className="size-4 text-primary" />
-                </div>
-                <div>
-                  <h2 className="text-base font-semibold leading-tight">
-                    {t("settings.servers.title")}
-                  </h2>
-                  <p className="text-xs leading-tight text-muted-foreground">
-                    {t("settings.servers.description")}
-                  </p>
-                </div>
-              </div>
+          <PageHeader
+            icon={Server}
+            title={t("settings.servers.title")}
+            description={t("settings.servers.description")}
+            status={
               <span
                 aria-live="polite"
                 className="shrink-0 text-xs text-muted-foreground"
@@ -113,18 +105,18 @@ export const ServerVisibilitySettings = () => {
                   : null}
                 {isSaved ? t("settings.servers.saved") : null}
               </span>
-            </div>
-          </Card>
+            }
+          />
 
           {isLoading ? (
-            <Card className="flex h-64 items-center justify-center bg-card">
+            <SectionCard className="flex h-64 items-center justify-center bg-card">
               <Spinner className="size-8" />
               <span className="sr-only">{t("settings.servers.loading")}</span>
-            </Card>
+            </SectionCard>
           ) : null}
 
           {showLoadError ? (
-            <Card
+            <SectionCard
               className="flex h-64 flex-col items-center justify-center gap-3 bg-card"
               role="alert"
             >
@@ -142,69 +134,78 @@ export const ServerVisibilitySettings = () => {
                 <RotateCcw className="size-3.5" />
                 {t("common.actions.retry")}
               </Button>
-            </Card>
+            </SectionCard>
           ) : null}
 
           {showEmpty ? (
-            <Card className="flex h-64 flex-col items-center justify-center gap-3 bg-card">
+            <SectionCard className="flex h-64 flex-col items-center justify-center gap-3 bg-card">
               <Server className="size-10 text-muted-foreground opacity-50" />
               <p className="text-sm text-muted-foreground">
                 {t("settings.servers.noGuilds")}
               </p>
-            </Card>
+            </SectionCard>
           ) : null}
 
           {showGuilds ? (
-            <Card className="gap-0 overflow-hidden border-border bg-card p-0">
-              <div className="flex flex-col gap-3 border-b border-border p-3">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <SearchInput
-                    value={query}
-                    onChange={(event) => setQuery(event.target.value)}
-                    placeholder={t("settings.servers.searchPlaceholder")}
-                    className="h-9"
-                    wrapperClassName="min-w-0 flex-1"
-                  />
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-full justify-center sm:w-auto"
-                    disabled={hiddenCount === 0 || updatePreferences.isPending}
-                    onClick={() =>
-                      updatePreferences.mutate({
-                        hiddenGuildIds: hiddenGuildIds.filter(
-                          (hiddenGuildId) =>
-                            !accessibleGuildIdSet.has(hiddenGuildId),
-                        ),
-                      })
-                    }
-                  >
-                    {t("settings.servers.showAll")}
-                  </Button>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  {(["all", "visible", "hidden"] as const).map((filter) => (
-                    <Button
-                      key={filter}
-                      size="sm"
-                      variant={
-                        visibilityFilter === filter ? "secondary" : "ghost"
-                      }
-                      aria-pressed={visibilityFilter === filter}
-                      onClick={() => setVisibilityFilter(filter)}
-                    >
-                      {t(`settings.servers.filters.${filter}`)}
-                    </Button>
-                  ))}
-                  <span className="ml-auto text-xs text-muted-foreground">
-                    {t("settings.servers.visibleCount", {
-                      count: visibleCount,
-                    })}
-                    {" · "}
-                    {t("settings.servers.hiddenCount", { count: hiddenCount })}
-                  </span>
-                </div>
-              </div>
+            <SectionCard className="gap-0 overflow-hidden border-border bg-card p-0">
+              <SectionCardHeader
+                title={t("settings.servers.title")}
+                actions={
+                  <div className="flex flex-col gap-3 ">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <SearchInput
+                        value={query}
+                        onChange={(event) => setQuery(event.target.value)}
+                        placeholder={t("settings.servers.searchPlaceholder")}
+                        className="h-9"
+                        wrapperClassName="min-w-0 flex-1"
+                      />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="w-full justify-center sm:w-auto"
+                        disabled={
+                          hiddenCount === 0 || updatePreferences.isPending
+                        }
+                        onClick={() =>
+                          updatePreferences.mutate({
+                            hiddenGuildIds: hiddenGuildIds.filter(
+                              (hiddenGuildId) =>
+                                !accessibleGuildIdSet.has(hiddenGuildId),
+                            ),
+                          })
+                        }
+                      >
+                        {t("settings.servers.showAll")}
+                      </Button>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {(["all", "visible", "hidden"] as const).map((filter) => (
+                        <Button
+                          key={filter}
+                          size="sm"
+                          variant={
+                            visibilityFilter === filter ? "secondary" : "ghost"
+                          }
+                          aria-pressed={visibilityFilter === filter}
+                          onClick={() => setVisibilityFilter(filter)}
+                        >
+                          {t(`settings.servers.filters.${filter}`)}
+                        </Button>
+                      ))}
+                      <span className="ml-auto text-xs text-muted-foreground">
+                        {t("settings.servers.visibleCount", {
+                          count: visibleCount,
+                        })}
+                        {" · "}
+                        {t("settings.servers.hiddenCount", {
+                          count: hiddenCount,
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                }
+              />
 
               {updatePreferences.isError ? (
                 <div
@@ -281,7 +282,7 @@ export const ServerVisibilitySettings = () => {
                   })}
                 </div>
               )}
-            </Card>
+            </SectionCard>
           ) : null}
         </div>
       </ScrollArea>
