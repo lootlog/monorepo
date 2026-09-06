@@ -21,7 +21,6 @@ import {
   FormMessage,
 } from "@lootlog/ui/components/form";
 import { XCircle } from "lucide-react";
-import { Spinner } from "@lootlog/ui/components/spinner";
 
 interface CloseRespawnWindowDialogProps {
   open: boolean;
@@ -95,14 +94,20 @@ export const CloseRespawnWindowDialog = ({
       newMaxSpawnTime = new Date(values.maxTime).toISOString();
     }
 
-    await onConfirm({
-      createNewWindow: values.createNewWindow,
-      newMinSpawnTime,
-      newMaxSpawnTime,
-    });
+    if (isLoading) return;
+    try {
+      await onConfirm({
+        createNewWindow: values.createNewWindow,
+        newMinSpawnTime,
+        newMaxSpawnTime,
+      });
+    } catch {
+      // Preserve the entered times for retry after the action reports its error.
+    }
   };
 
   const handleOpenChange = (isOpen: boolean) => {
+    if (isLoading) return;
     if (!isOpen) {
       form.reset();
     }
@@ -217,12 +222,12 @@ export const CloseRespawnWindowDialog = ({
               </Button>
               <Button
                 type="submit"
+                loading={isLoading}
                 variant="destructive"
                 size="sm"
                 disabled={isLoading}
                 className="flex-1"
               >
-                {isLoading && <Spinner className="w-4 h-4 mr-2" />}
                 {t("events.respawn.closeWindowButton")}
               </Button>
             </div>

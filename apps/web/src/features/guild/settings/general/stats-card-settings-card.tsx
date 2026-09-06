@@ -33,6 +33,7 @@ export const StatsCardSettingsCard = ({
   const { t } = useTranslation();
   const [, copyToClipboard] = useCopyToClipboard();
   const [previewToken, setPreviewToken] = useState(() => Date.now());
+  const [isCopying, setIsCopying] = useState(false);
   const [imageError, setImageError] = useState(false);
   const refreshStatsCard =
     useAuthenticatedGuildStatsCardControllerRefreshStatsCard();
@@ -42,23 +43,23 @@ export const StatsCardSettingsCard = ({
   const previewUrl = `${imageUrl}?preview=${previewToken}`;
   const needsSaveBeforePreview = enabledValue && !savedEnabled;
 
-  const handleCopyLink = async () => {
-    if (!savedEnabled) {
-      return;
-    }
+  const handleCopyLink = () => {
+    if (!savedEnabled || isCopying) return;
 
-    try {
-      const copied = await copyToClipboard(imageUrl);
-
-      if (copied) {
-        toast.success(t("settings.general.statsCard.copySuccess"));
-        return;
-      }
-
-      toast.error(t("settings.general.statsCard.copyError"));
-    } catch {
-      toast.error(t("settings.general.statsCard.copyError"));
-    }
+    setIsCopying(true);
+    return Promise.resolve()
+      .then(() => copyToClipboard(imageUrl))
+      .then((copied) => {
+        if (copied) {
+          toast.success(t("settings.general.statsCard.copySuccess"));
+          return;
+        }
+        toast.error(t("settings.general.statsCard.copyError"));
+      })
+      .catch(() => {
+        toast.error(t("settings.general.statsCard.copyError"));
+      })
+      .finally(() => setIsCopying(false));
   };
 
   const handleRefresh = () => {
@@ -155,9 +156,10 @@ export const StatsCardSettingsCard = ({
               variant="outline"
               size="sm"
               disabled={!savedEnabled}
+              loading={isCopying}
+              icon={<Copy className="size-4" />}
               onClick={handleCopyLink}
             >
-              <Copy className="size-4" />
               {t("settings.general.statsCard.copyLink")}
             </Button>
             <Button
@@ -165,13 +167,10 @@ export const StatsCardSettingsCard = ({
               variant="outline"
               size="sm"
               disabled={!savedEnabled || refreshStatsCard.isPending}
+              loading={refreshStatsCard.isPending}
+              icon={<RefreshCw className="size-4" />}
               onClick={handleRefresh}
             >
-              <RefreshCw
-                className={
-                  refreshStatsCard.isPending ? "size-4 animate-spin" : "size-4"
-                }
-              />
               {t("settings.general.statsCard.refresh")}
             </Button>
             <p className="text-xs text-muted-foreground">

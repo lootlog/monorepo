@@ -1,3 +1,4 @@
+import { Button } from "@lootlog/ui/components/button";
 import { useState } from "react";
 import {
   Select,
@@ -15,6 +16,7 @@ interface MapChipProps {
   onDelete: () => void;
   onLocationChange: (locationId: string | null) => void;
   isDeleting: boolean;
+  deletionDisabled: boolean;
 }
 
 export const MapChip = ({
@@ -23,6 +25,7 @@ export const MapChip = ({
   onDelete,
   onLocationChange,
   isDeleting,
+  deletionDisabled,
 }: MapChipProps) => {
   const [showSelect, setShowSelect] = useState(false);
   const { t } = useTranslation();
@@ -64,14 +67,17 @@ export const MapChip = ({
         </Select>
       )}
 
-      <button
+      <Button
+        variant="ghost"
+        size="icon"
         type="button"
+        aria-label={t("events.delete")}
+        icon={<X className="size-2.5" />}
         onClick={onDelete}
-        className="p-0.5 rounded hover:bg-destructive/20 text-primary/60 hover:text-destructive transition-colors"
-        disabled={isDeleting}
-      >
-        <X className="size-2.5" />
-      </button>
+        className="size-5 p-0.5 rounded hover:bg-destructive/20 text-primary/60 hover:text-destructive transition-colors"
+        disabled={deletionDisabled}
+        loading={isDeleting}
+      ></Button>
     </div>
   );
 };

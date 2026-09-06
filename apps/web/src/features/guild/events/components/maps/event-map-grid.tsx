@@ -16,11 +16,12 @@ import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 interface EventMapGridProps {
   locations?: EventMapLocation[];
   maps: EventMap[];
-  onSelfAssignClick?: (mapId: string) => void;
-  onSelfUnassignClick?: (mapId: string) => void;
+  onSelfAssignClick?: (mapId: string) => void | Promise<void>;
+  onSelfUnassignClick?: (mapId: string) => void | Promise<void>;
   onManageClick?: (mapId: string) => void;
   currentMemberId?: number;
   presenceData?: Map<string, PlayerPresence[]>;
+  actionsDisabled?: boolean;
   assignmentDisabled?: boolean;
   assignmentEnabledAt?: Date | null;
   assignmentDisabledMessage?: string | null;
@@ -35,14 +36,15 @@ interface LocationSectionProps {
   canManage: boolean;
   currentMemberId?: number;
   presenceData?: Map<string, PlayerPresence[]>;
+  actionsDisabled?: boolean;
   assignmentDisabled: boolean;
   assignmentEnabledAt?: Date | null;
   assignmentDisabledMessage?: string | null;
   windowStatus: WindowStatus;
   activeGapsMap?: Map<string, CoverageGap>;
   vertical: boolean;
-  onSelfAssignClick?: (mapId: string) => void;
-  onSelfUnassignClick?: (mapId: string) => void;
+  onSelfAssignClick?: (mapId: string) => void | Promise<void>;
+  onSelfUnassignClick?: (mapId: string) => void | Promise<void>;
   onManageClick?: (mapId: string) => void;
   defaultExpanded?: boolean;
   isUngrouped?: boolean;
@@ -54,6 +56,7 @@ const LocationSection = ({
   canManage,
   currentMemberId,
   presenceData,
+  actionsDisabled,
   assignmentDisabled,
   assignmentEnabledAt,
   assignmentDisabledMessage,
@@ -146,6 +149,7 @@ const LocationSection = ({
               canManage={canManage}
               currentMemberId={currentMemberId}
               presenceData={presenceData}
+              actionsDisabled={actionsDisabled}
               assignmentDisabled={assignmentDisabled}
               assignmentEnabledAt={assignmentEnabledAt}
               assignmentDisabledMessage={assignmentDisabledMessage}
@@ -170,6 +174,7 @@ export const EventMapGrid = ({
   onManageClick,
   currentMemberId,
   presenceData,
+  actionsDisabled,
   assignmentDisabled = false,
   assignmentEnabledAt,
   assignmentDisabledMessage,
@@ -219,6 +224,7 @@ export const EventMapGrid = ({
               canManage={canManage ?? false}
               currentMemberId={currentMemberId}
               presenceData={presenceData}
+              actionsDisabled={actionsDisabled}
               assignmentDisabled={assignmentDisabled}
               assignmentEnabledAt={assignmentEnabledAt}
               assignmentDisabledMessage={assignmentDisabledMessage}
@@ -244,6 +250,7 @@ export const EventMapGrid = ({
           canManage={canManage ?? false}
           currentMemberId={currentMemberId}
           presenceData={presenceData}
+          actionsDisabled={actionsDisabled}
           assignmentDisabled={assignmentDisabled}
           assignmentEnabledAt={assignmentEnabledAt}
           assignmentDisabledMessage={assignmentDisabledMessage}
@@ -262,6 +269,7 @@ export const EventMapGrid = ({
           canManage={canManage ?? false}
           currentMemberId={currentMemberId}
           presenceData={presenceData}
+          actionsDisabled={actionsDisabled}
           assignmentDisabled={assignmentDisabled}
           assignmentEnabledAt={assignmentEnabledAt}
           windowStatus={windowStatus}

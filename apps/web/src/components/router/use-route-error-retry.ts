@@ -8,6 +8,6 @@ export const useRouteErrorRetry = (reset: ErrorComponentProps["reset"]) => {
   return () => {
     queryErrorResetBoundary.reset();
     reset();
-    void router.invalidate();
+    return router.invalidate();
   };
 };

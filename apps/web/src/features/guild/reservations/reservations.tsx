@@ -170,6 +170,7 @@ export function Reservations() {
                   type="button"
                   variant="outline"
                   size="sm"
+                  loading={spotsQuery.isFetching}
                   onClick={() => spotsQuery.refetch()}
                 >
                   {t("common.actions.retry")}
@@ -216,7 +217,13 @@ export function Reservations() {
                   key={spot.id}
                   spot={spot}
                   viewMode={viewMode}
-                  pinPending={pinMutation.isPending || unpinMutation.isPending}
+                  pinDisabled={pinMutation.isPending || unpinMutation.isPending}
+                  pinPending={
+                    (pinMutation.isPending &&
+                      pinMutation.variables?.pathParams.spotId === spot.id) ||
+                    (unpinMutation.isPending &&
+                      unpinMutation.variables?.pathParams.spotId === spot.id)
+                  }
                   onPinChange={(isPinned) => handlePinChange(spot.id, isPinned)}
                   onOpen={() =>
                     navigate({ to: `/${guildId}/reservations/${spot.id}` })

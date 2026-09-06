@@ -73,7 +73,7 @@ export const NotificationsPendingJobsCard = ({
         getApiErrorMessage(error) ??
           t("settings.notifications.toasts.jobCancelError"),
       );
-      return;
+      throw error;
     }
     try {
       await cancelGuildJob.mutateAsync({

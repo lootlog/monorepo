@@ -42,7 +42,7 @@ export const EventSummaryDialog = ({
   const previousIndexRef = useRef(0);
   const [currentSlideId, setCurrentSlideId] = useState("opening");
   const [direction, setDirection] = useState<1 | -1>(1);
-  const { data, isLoading, error, refetch } = useShowEventWrapped(
+  const { data, isLoading, isFetching, error, refetch } = useShowEventWrapped(
     { guildId, eventId },
     {
       query: {
@@ -197,9 +197,10 @@ export const EventSummaryDialog = ({
             type="button"
             variant="outline"
             className="mt-6"
+            loading={isFetching}
+            icon={<RotateCcw className="size-4" />}
             onClick={() => void refetch()}
           >
-            <RotateCcw className="size-4" />
             {t("events.summaryDialog.retry")}
           </Button>
         </div>

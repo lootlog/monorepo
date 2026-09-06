@@ -19,7 +19,6 @@ import {
 } from "@lootlog/ui/components/form";
 import { Input } from "@lootlog/ui/components/input";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Spinner } from "@lootlog/ui/components/spinner";
 import { Switch } from "@lootlog/ui/components/switch";
 import { Textarea } from "@lootlog/ui/components/textarea";
 import {
@@ -940,14 +939,10 @@ export const NotificationRuleFormPage = () => {
                       >
                         {t("settings.notifications.actions.cancel")}
                       </Button>
-                      <Button type="submit" disabled={isSubmitting}>
-                        {isSubmitting ? (
-                          <Spinner className="size-4" />
-                        ) : isCreateMode ? (
-                          t("settings.notifications.actions.create")
-                        ) : (
-                          t("settings.notifications.actions.save")
-                        )}
+                      <Button type="submit" loading={isSubmitting}>
+                        {isCreateMode
+                          ? t("settings.notifications.actions.create")
+                          : t("settings.notifications.actions.save")}
                       </Button>
                     </div>
                   </form>

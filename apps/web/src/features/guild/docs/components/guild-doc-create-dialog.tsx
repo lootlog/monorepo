@@ -112,10 +112,12 @@ export const GuildDocCreateDialog = ({
             >
               {t("common.cancel")}
             </Button>
-            <Button type="submit" disabled={!canSubmit}>
-              {createDocument.isPending
-                ? t("common.saving")
-                : t("docs.list.create")}
+            <Button
+              type="submit"
+              disabled={!canSubmit}
+              loading={createDocument.isPending}
+            >
+              {t("docs.list.create")}
             </Button>
           </DialogFooter>
         </form>

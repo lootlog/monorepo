@@ -27,9 +27,8 @@ interface MemberAssignmentModalProps {
     avatar?: string | null;
     userId: string;
   }[];
-  onAssign: (memberId: number) => void;
-  onUnassign: (memberId: number) => void;
-  isLoading?: boolean;
+  onAssign: (memberId: number) => void | Promise<void>;
+  onUnassign: (memberId: number) => void | Promise<void>;
   disabled?: boolean;
   disabledMessage?: string | null;
 }
@@ -41,12 +40,28 @@ export const MemberAssignmentModal = ({
   assignedMembers,
   onAssign,
   onUnassign,
-  isLoading: isActionLoading,
   disabled,
   disabledMessage,
 }: MemberAssignmentModalProps) => {
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
+  const [pendingAction, setPendingAction] = useState<{
+    kind: "assign" | "unassign";
+    memberId: number;
+  } | null>(null);
+  const changeAssignment = async (
+    kind: "assign" | "unassign",
+    memberId: number,
+  ) => {
+    await (kind === "assign" ? onAssign(memberId) : onUnassign(memberId));
+  };
+  const runAction = async (kind: "assign" | "unassign", memberId: number) => {
+    if (pendingAction) return;
+    setPendingAction({ kind, memberId });
+    await changeAssignment(kind, memberId).finally(() =>
+      setPendingAction(null),
+    );
+  };
   const guildId = useGuildId();
   const { data: members, isLoading } = useMembersControllerGetGuildMembers({
     guildId: guildId ?? "",
@@ -57,15 +72,20 @@ export const MemberAssignmentModal = ({
   );
 
   const handleAssign = (memberId: number) => {
-    onAssign(memberId);
+    void runAction("assign", memberId);
   };
 
   const handleUnassign = (memberId: number) => {
-    onUnassign(memberId);
+    void runAction("unassign", memberId);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!pendingAction) onOpenChange(nextOpen);
+      }}
+    >
       <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden max-h-[85vh] flex flex-col">
         <DialogHeader className="px-5 pt-5 pb-4 border-b bg-muted/30 shrink-0">
           <div className="flex items-center gap-3">
@@ -115,13 +135,20 @@ export const MemberAssignmentModal = ({
                         />
                       </div>
                       <span className="text-xs font-medium">{member.name}</span>
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        loading={
+                          pendingAction?.kind === "unassign" &&
+                          pendingAction.memberId === member.id
+                        }
+                        disabled={Boolean(pendingAction)}
+                        icon={<X className="size-3" />}
+                        aria-label={t("events.maps.unassign")}
                         onClick={() => handleUnassign(member.id)}
-                        className="p-0.5 rounded-full hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
+                        className="size-5 p-0.5 rounded-full hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
                         title={t("events.maps.unassign")}
-                      >
-                        <X className="size-3" />
-                      </button>
+                      ></Button>
                     </div>
                   ))}
                 </div>
@@ -155,11 +182,6 @@ export const MemberAssignmentModal = ({
               />
 
               <ScrollArea className="h-[220px] rounded-lg border relative">
-                {isActionLoading && (
-                  <div className="absolute inset-0 bg-background backdrop-blur-[1px] z-10 flex items-center justify-center">
-                    <Spinner className="size-5 text-primary" />
-                  </div>
-                )}
                 {isLoading ? (
                   <div className="flex flex-col items-center justify-center h-full py-8">
                     <Spinner className="size-6 text-primary mb-2" />
@@ -180,14 +202,21 @@ export const MemberAssignmentModal = ({
                       );
 
                       return (
-                        <button
+                        <Button
+                          variant="ghost"
+                          loading={
+                            pendingAction?.kind === "assign" &&
+                            pendingAction.memberId === member.id
+                          }
                           key={member.id}
                           onClick={() =>
                             !isAssigned && !disabled && handleAssign(member.id)
                           }
-                          disabled={isAssigned || disabled}
+                          disabled={
+                            isAssigned || disabled || Boolean(pendingAction)
+                          }
                           className={cn(
-                            "w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors",
+                            "h-auto w-full justify-start rounded-none flex items-center gap-3 px-3 py-2.5 text-left transition-colors",
                             isAssigned || disabled
                               ? "opacity-50 cursor-default bg-muted/30"
                               : "hover:bg-muted/50 cursor-pointer",
@@ -215,7 +244,7 @@ export const MemberAssignmentModal = ({
                           ) : (
                             <UserPlus className="size-4 text-muted-foreground" />
                           )}
-                        </button>
+                        </Button>
                       );
                     })}
                   </div>
@@ -229,6 +258,7 @@ export const MemberAssignmentModal = ({
           <Button
             variant="outline"
             size="sm"
+            disabled={Boolean(pendingAction)}
             onClick={() => onOpenChange(false)}
             className="w-full"
           >

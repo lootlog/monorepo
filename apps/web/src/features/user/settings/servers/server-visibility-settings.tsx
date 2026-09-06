@@ -49,6 +49,8 @@ export const ServerVisibilitySettings = () => {
   const guildsQuery = useUsersControllerGetCurrentUserGuilds();
   const preferencesQuery = useUserPreferences();
   const updatePreferences = useUpdateUserPreferences();
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [isShowingAll, setIsShowingAll] = useState(false);
   const [query, setQuery] = useState("");
   const [visibilityFilter, setVisibilityFilter] =
     useState<VisibilityFilter>("all");
@@ -126,12 +128,13 @@ export const ServerVisibilitySettings = () => {
               <Button
                 size="sm"
                 variant="outline"
+                loading={guildsQuery.isFetching || preferencesQuery.isFetching}
+                icon={<RotateCcw className="size-3.5" />}
                 onClick={() => {
                   void guildsQuery.refetch();
                   void preferencesQuery.refetch();
                 }}
               >
-                <RotateCcw className="size-3.5" />
                 {t("common.actions.retry")}
               </Button>
             </SectionCard>
@@ -167,14 +170,19 @@ export const ServerVisibilitySettings = () => {
                         disabled={
                           hiddenCount === 0 || updatePreferences.isPending
                         }
-                        onClick={() =>
-                          updatePreferences.mutate({
-                            hiddenGuildIds: hiddenGuildIds.filter(
-                              (hiddenGuildId) =>
-                                !accessibleGuildIdSet.has(hiddenGuildId),
-                            ),
-                          })
-                        }
+                        loading={isShowingAll}
+                        onClick={() => {
+                          setIsShowingAll(true);
+                          updatePreferences.mutate(
+                            {
+                              hiddenGuildIds: hiddenGuildIds.filter(
+                                (hiddenGuildId) =>
+                                  !accessibleGuildIdSet.has(hiddenGuildId),
+                              ),
+                            },
+                            { onSettled: () => setIsShowingAll(false) },
+                          );
+                        }}
                       >
                         {t("settings.servers.showAll")}
                       </Button>
@@ -207,7 +215,7 @@ export const ServerVisibilitySettings = () => {
                 }
               />
 
-              {updatePreferences.isError ? (
+              {updatePreferences.isError || isRetrying ? (
                 <div
                   className="flex items-center justify-between gap-3 border-b border-destructive/30 bg-destructive/5 px-3 py-2"
                   role="alert"
@@ -219,9 +227,13 @@ export const ServerVisibilitySettings = () => {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() =>
-                        updatePreferences.mutate(updatePreferences.variables)
-                      }
+                      loading={isRetrying}
+                      onClick={() => {
+                        setIsRetrying(true);
+                        updatePreferences.mutate(updatePreferences.variables, {
+                          onSettled: () => setIsRetrying(false),
+                        });
+                      }}
                     >
                       {t("common.actions.retry")}
                     </Button>

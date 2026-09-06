@@ -133,6 +133,8 @@ export const MemberSyncButton: FC<MemberSyncButtonProps> = ({
               className={cn("justify-center", className)}
               size="sm"
               variant={variant}
+              loading={isPending}
+              icon={<RefreshCcw className="size-4" />}
               disabled={
                 isPending ||
                 !canRefresh ||
@@ -153,9 +155,6 @@ export const MemberSyncButton: FC<MemberSyncButtonProps> = ({
                 });
               }}
             >
-              <RefreshCcw
-                className={cn("size-4", isPending && "animate-spin")}
-              />
               {t("settings.members.refreshPermissions")}
             </Button>
           </span>

@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 
 type BattlesBulkActionsBarProps = {
   disabled: boolean;
+  sharePending?: boolean;
   onClearSelection: () => void;
   onDelete: () => void;
   onShare: () => void;
@@ -12,6 +13,7 @@ type BattlesBulkActionsBarProps = {
 
 export const BattlesBulkActionsBar = ({
   disabled,
+  sharePending,
   onClearSelection,
   onDelete,
   onShare,
@@ -42,9 +44,10 @@ export const BattlesBulkActionsBar = ({
               variant="outline"
               className="justify-center"
               onClick={onShare}
+              loading={sharePending}
+              icon={<Share2 className="size-3.5" aria-hidden="true" />}
               disabled={disabled}
             >
-              <Share2 className="size-3.5" aria-hidden="true" />
               {t("battlePanel.bulk.share")}
             </Button>
             <Button

@@ -22,7 +22,6 @@ import {
   FormLabel,
 } from "@lootlog/ui/components/form";
 import { Input } from "@lootlog/ui/components/input";
-import { Spinner } from "@lootlog/ui/components/spinner";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { USER_WATCHED_ITEMS_LIMIT } from "@/features/user/notifications/constants/user-watched-items-limit";
@@ -501,20 +500,14 @@ export const WatchFormDialog = ({
             <Button
               type="submit"
               size="sm"
+              loading={createWatchedItem.isPending}
               disabled={
                 createWatchedItem.isPending ||
                 !hasActiveDm ||
                 isWatchedItemLimitReached
               }
             >
-              {createWatchedItem.isPending ? (
-                <span className="flex items-center gap-2">
-                  <Spinner className="size-4" />
-                  {t("settings.userNotifications.actions.addingWatch")}
-                </span>
-              ) : (
-                t("settings.userNotifications.actions.addWatch")
-              )}
+              {t("settings.userNotifications.actions.addWatch")}
             </Button>
           </form>
         </Form>

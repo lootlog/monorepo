@@ -2,7 +2,6 @@ import { Button } from "@lootlog/ui/components/button";
 import { Progress } from "@lootlog/ui/components/progress";
 import { Clock, RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { cn } from "cn";
 
 type RefreshDisplayJob = {
   status: string;
@@ -110,9 +109,10 @@ export const RefreshMembersStatus = ({
         size="sm"
         variant="secondary"
         onClick={onRefresh}
-        disabled={isPending || !countdown.isExpired}
+        disabled={!countdown.isExpired}
+        loading={isPending}
+        icon={<RefreshCw className="size-4" />}
       >
-        <RefreshCw className={cn("mr-2 size-4", isPending && "animate-spin")} />
         <span className="mr-1 font-medium">
           {t("settings.members.refreshError")}
         </span>
@@ -127,9 +127,10 @@ export const RefreshMembersStatus = ({
       size="sm"
       variant="outline"
       onClick={onRefresh}
-      disabled={isPending || !countdown.isExpired}
+      disabled={!countdown.isExpired}
+      loading={isPending}
+      icon={<RefreshCw className="size-4" />}
     >
-      <RefreshCw className={cn("mr-2 size-4", isPending && "animate-spin")} />
       {t("settings.members.refreshAll")}
     </Button>
   );

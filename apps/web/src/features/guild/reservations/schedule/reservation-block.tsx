@@ -11,6 +11,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@lootlog/ui/components/avatar";
+import { Button } from "@lootlog/ui/components/button";
 import { Badge } from "@lootlog/ui/components/badge";
 import {
   ContextMenu,
@@ -29,6 +30,7 @@ type ReservationBlockProps = {
   onSelect: () => void;
   onCancel?: () => void;
   isCancelPending?: boolean;
+  cancelDisabled?: boolean;
   onContextMenuOpenChange?: (open: boolean) => void;
   onContextMenuOutsidePress?: (event: Event) => void;
 };
@@ -40,6 +42,7 @@ export function ReservationBlock({
   onSelect,
   onCancel,
   isCancelPending = false,
+  cancelDisabled = false,
   onContextMenuOpenChange,
   onContextMenuOutsidePress,
 }: ReservationBlockProps) {
@@ -148,11 +151,18 @@ export function ReservationBlock({
           <>
             <ContextMenuSeparator />
             <ContextMenuItem
-              className="gap-2 text-destructive focus:bg-destructive/10 focus:text-destructive"
-              disabled={isCancelPending}
+              className="w-full justify-start gap-2 text-destructive focus:bg-destructive/10 focus:text-destructive"
+              closeOnClick={false}
+              render={
+                <Button
+                  variant="ghost"
+                  loading={isCancelPending}
+                  icon={<Trash2 className="size-4" />}
+                />
+              }
+              disabled={isCancelPending || cancelDisabled}
               onClick={onCancel}
             >
-              <Trash2 className="size-4" />
               {t(
                 reservation.isMine
                   ? "reservations.details.cancel"

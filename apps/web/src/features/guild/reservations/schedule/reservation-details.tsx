@@ -176,7 +176,8 @@ export function ReservationDetails({
           type="button"
           variant="destructive"
           className="w-full sm:w-auto"
-          disabled={deleteMutation.isPending}
+          loading={deleteMutation.isPending}
+          icon={<Trash2 />}
           onClick={() =>
             deleteMutation.mutate({
               pathParams: {
@@ -186,7 +187,6 @@ export function ReservationDetails({
             })
           }
         >
-          <Trash2 />
           {t("reservations.details.cancel")}
         </Button>
       )}
@@ -195,7 +195,12 @@ export function ReservationDetails({
 
   if (isMobile) {
     return (
-      <Drawer open={reservation !== null} onOpenChange={onOpenChange}>
+      <Drawer
+        open={reservation !== null}
+        onOpenChange={(open) => {
+          if (!deleteMutation.isPending) onOpenChange(open);
+        }}
+      >
         <DrawerContent className="p-0">
           <DrawerHeader className="border-b text-left">
             <DrawerTitle>{title}</DrawerTitle>
@@ -209,7 +214,12 @@ export function ReservationDetails({
   }
 
   return (
-    <Dialog open={reservation !== null} onOpenChange={onOpenChange}>
+    <Dialog
+      open={reservation !== null}
+      onOpenChange={(open) => {
+        if (!deleteMutation.isPending) onOpenChange(open);
+      }}
+    >
       <DialogContent className="max-w-md">
         <DialogHeader className="pb-4">
           <DialogTitle>{title}</DialogTitle>

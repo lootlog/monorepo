@@ -10,7 +10,6 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
 import { AlertCircle, RefreshCcw, Settings, Trophy } from "lucide-react";
-import { Spinner } from "@lootlog/ui/components/spinner";
 import { Button } from "@lootlog/ui/components/button";
 import { Label } from "@lootlog/ui/components/label";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -204,17 +203,11 @@ const EventEditScoringForm = ({
             variant="outline"
             size="sm"
             onClick={handleRecalculate}
-            disabled={recalculatePoints.isPending}
+            loading={recalculatePoints.isPending}
+            icon={<RefreshCcw className="size-3.5" />}
             title={t("events.scoring.recalculateHint")}
           >
-            {recalculatePoints.isPending ? (
-              <Spinner className="size-3.5" />
-            ) : (
-              <RefreshCcw className="size-3.5" />
-            )}
-            {recalculatePoints.isPending
-              ? t("events.scoring.recalculating")
-              : t("events.scoring.recalculateButton")}
+            {t("events.scoring.recalculateButton")}
           </Button>
         }
       />

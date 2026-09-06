@@ -73,7 +73,8 @@ export const MapTemplatesSettings = () => {
 
   const handleDelete = async (templateId: string) => {
     if (!guildId) {
-      return;
+      toast.error(t("settings.mapTemplates.toasts.deleteError"));
+      throw new Error("Missing guild id.");
     }
 
     try {
@@ -81,8 +82,9 @@ export const MapTemplatesSettings = () => {
         pathParams: { guildId, templateId },
       });
       toast.success(t("settings.mapTemplates.toasts.deleted"));
-    } catch {
+    } catch (error) {
       toast.error(t("settings.mapTemplates.toasts.deleteError"));
+      throw error;
     }
   };
 

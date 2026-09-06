@@ -11,7 +11,6 @@ export type UnsavedChangesBarProps = {
   unsavedChangesLabel?: string;
   resetLabel?: string;
   saveLabel?: string;
-  savingLabel?: string;
 };
 
 export const UnsavedChangesBar: FC<UnsavedChangesBarProps> = ({
@@ -21,7 +20,6 @@ export const UnsavedChangesBar: FC<UnsavedChangesBarProps> = ({
   unsavedChangesLabel,
   resetLabel,
   saveLabel,
-  savingLabel,
 }) => {
   const { t } = useTranslation();
 
@@ -29,7 +27,6 @@ export const UnsavedChangesBar: FC<UnsavedChangesBarProps> = ({
     unsavedChangesLabel ?? t("common.unsavedChanges");
   const effectiveResetLabel = resetLabel ?? t("common.reset");
   const effectiveSaveLabel = saveLabel ?? t("common.save");
-  const effectiveSavingLabel = savingLabel ?? t("common.saving");
 
   return (
     <AnimatePresence>
@@ -54,16 +51,22 @@ export const UnsavedChangesBar: FC<UnsavedChangesBarProps> = ({
               </p>
             </div>
             <div className="flex gap-2">
-              <Button type="button" variant="ghost" size="sm" onClick={onReset}>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={onReset}
+                disabled={isSubmitting}
+              >
                 {effectiveResetLabel}
               </Button>
               <Button
                 type="submit"
                 variant="default"
                 size="sm"
-                disabled={isSubmitting}
+                loading={isSubmitting}
               >
-                {isSubmitting ? effectiveSavingLabel : effectiveSaveLabel}
+                {effectiveSaveLabel}
               </Button>
             </div>
           </div>

@@ -173,7 +173,9 @@ export function ReservationShareInvitation({
               type="button"
               className="mt-4 w-full"
               size="lg"
-              disabled={!targetGuildId || acceptMutation.isPending}
+              disabled={!targetGuildId}
+              loading={acceptMutation.isPending}
+              icon={<Link2 className="size-4" aria-hidden="true" />}
               onClick={() =>
                 targetGuildId &&
                 acceptMutation.mutate({
@@ -182,14 +184,7 @@ export function ReservationShareInvitation({
                 })
               }
             >
-              {acceptMutation.isPending ? (
-                <Spinner className="size-4" />
-              ) : (
-                <Link2 className="size-4" aria-hidden="true" />
-              )}
-              {acceptMutation.isPending
-                ? t("reservations.sharing.connecting")
-                : t("reservations.sharing.accept")}
+              {t("reservations.sharing.accept")}
             </Button>
           </div>
         </SectionCardContent>

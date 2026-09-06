@@ -63,20 +63,26 @@ export const ManualPointsEditDialog = ({
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (parsedPointsDelta === null || parsedPointsDelta === 0) {
+    if (isSubmitDisabled) {
       return;
     }
 
-    await onSubmit({
-      pointsDelta: parsedPointsDelta,
-      comment: commentValue,
-    });
-
-    onOpenChange(false);
+    if (parsedPointsDelta === null) return;
+    try {
+      await onSubmit({ pointsDelta: parsedPointsDelta, comment: commentValue });
+      onOpenChange(false);
+    } catch {
+      // The action reports its error; preserve the entered correction for retry.
+    }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!isPending) onOpenChange(nextOpen);
+      }}
+    >
       <DialogContent className="sm:max-w-md gap-0 overflow-hidden p-0">
         <DialogHeader className="gap-2 px-4 pt-4 pb-3">
           <DialogTitle className="px-0 pt-0">{title}</DialogTitle>
@@ -151,7 +157,11 @@ export const ManualPointsEditDialog = ({
             >
               {t("common.cancel")}
             </Button>
-            <Button type="submit" disabled={isSubmitDisabled}>
+            <Button
+              type="submit"
+              loading={isPending}
+              disabled={isSubmitDisabled}
+            >
               {t("common.save")}
             </Button>
           </DialogFooter>

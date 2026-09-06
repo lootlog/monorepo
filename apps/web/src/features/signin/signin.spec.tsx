@@ -1,7 +1,6 @@
 // @vitest-environment happy-dom
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import type { ButtonHTMLAttributes } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SignIn } from "./signin";
 
@@ -32,16 +31,6 @@ vi.mock("react-i18next", () => ({
 
 vi.mock("sonner", () => ({
   toast: { error: mocks.toastError },
-}));
-
-vi.mock("@lootlog/ui/components/button", () => ({
-  Button: ({
-    children,
-    size: _size,
-    ...props
-  }: ButtonHTMLAttributes<HTMLButtonElement> & { size?: string }) => (
-    <button {...props}>{children}</button>
-  ),
 }));
 
 describe("SignIn OAuth recovery", () => {
