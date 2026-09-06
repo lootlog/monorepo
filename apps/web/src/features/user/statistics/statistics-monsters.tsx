@@ -65,7 +65,7 @@ export function StatisticsMonsters({
           <div className="overflow-x-auto">
             <Table>
               <TanStackTableHeader table={table} />
-              <TanStackTableBody table={table} />
+              <TanStackTableBody table={table} rowHeaderColumnId="npcType" />
             </Table>
           </div>
         </SectionCardContent>

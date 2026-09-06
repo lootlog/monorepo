@@ -107,7 +107,7 @@ export function StatisticsNpcTable({
     <div className="overflow-x-auto">
       <Table className="min-w-[680px]">
         <TanStackTableHeader table={table} />
-        <TanStackTableBody table={table} />
+        <TanStackTableBody table={table} rowHeaderColumnId="npcName" />
       </Table>
     </div>
   );

@@ -14,6 +14,7 @@ type TableRowProps = ComponentProps<typeof TableRow>;
 
 type TanStackTableBodyProps<TData extends RowData> = {
   table: TanStackTable<typeof coreTableFeatures, TData>;
+  rowHeaderColumnId?: string;
   rowClassName?:
     | string
     | ((row: Row<typeof coreTableFeatures, TData>) => string);
@@ -29,6 +30,7 @@ type TanStackTableBodyProps<TData extends RowData> = {
 
 export const TanStackTableBody = <TData extends RowData>({
   table,
+  rowHeaderColumnId,
   rowClassName,
   cellClassName,
   getRowProps,
@@ -57,8 +59,18 @@ export const TanStackTableBody = <TData extends RowData>({
                 cell.getContext(),
               );
 
+              const isRowHeader = cell.column.id === rowHeaderColumnId;
+
               return (
-                <TableCell key={cell.id} className={resolvedCellClassName}>
+                <TableCell
+                  key={cell.id}
+                  as={isRowHeader ? "th" : "td"}
+                  scope={isRowHeader ? "row" : undefined}
+                  className={cn(
+                    isRowHeader && "text-left font-normal",
+                    resolvedCellClassName,
+                  )}
+                >
                   {renderCellContent
                     ? renderCellContent(cell, content)
                     : content}
