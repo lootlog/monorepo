@@ -1,7 +1,6 @@
 import type { Battle } from "@/lib/api/battlelog-types";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -40,7 +39,9 @@ export const BattleTableDeleteDialogs = ({
     <>
       <AlertDialog
         open={isBulkDeleteDialogOpen}
-        onOpenChange={onBulkDeleteOpenChange}
+        onOpenChange={(open) => {
+          if (!isDeletePending) onBulkDeleteOpenChange(open);
+        }}
       >
         <AlertDialogContent onClick={stopBattleTableAction}>
           <AlertDialogHeader>
@@ -54,25 +55,25 @@ export const BattleTableDeleteDialogs = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              render={
-                <Button
-                  variant="destructive"
-                  onClick={onBulkDelete}
-                  disabled={isDeletePending}
-                >
-                  {t("battlePanel.bulk.deleteDialog.confirm")}
-                </Button>
-              }
-            />
+            <AlertDialogCancel disabled={isDeletePending}>
+              {t("common.cancel")}
+            </AlertDialogCancel>
+            <Button
+              variant="destructive"
+              onClick={onBulkDelete}
+              loading={isDeletePending}
+            >
+              {t("battlePanel.bulk.deleteDialog.confirm")}
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       <AlertDialog
         open={Boolean(singleDeleteBattle)}
-        onOpenChange={onSingleDeleteOpenChange}
+        onOpenChange={(open) => {
+          if (!isDeletePending) onSingleDeleteOpenChange(open);
+        }}
       >
         <AlertDialogContent onClick={stopBattleTableAction}>
           <AlertDialogHeader>
@@ -84,18 +85,16 @@ export const BattleTableDeleteDialogs = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              render={
-                <Button
-                  variant="destructive"
-                  onClick={onSingleDelete}
-                  disabled={isDeletePending}
-                >
-                  {t("battlePanel.dialogs.deleteBattle.confirm")}
-                </Button>
-              }
-            />
+            <AlertDialogCancel disabled={isDeletePending}>
+              {t("common.cancel")}
+            </AlertDialogCancel>
+            <Button
+              variant="destructive"
+              onClick={onSingleDelete}
+              loading={isDeletePending}
+            >
+              {t("battlePanel.dialogs.deleteBattle.confirm")}
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

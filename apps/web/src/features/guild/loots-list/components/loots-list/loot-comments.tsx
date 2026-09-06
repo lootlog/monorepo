@@ -99,12 +99,9 @@ export const LootComments: FC<LootCommentProps> = ({ lootId }) => {
               size="sm"
               type="submit"
               disabled={isSubmitDisabled}
+              loading={isPending}
             >
-              {isPending ? (
-                <Spinner className="h-4 w-4" />
-              ) : (
-                t("loots.details.comments.submit")
-              )}
+              {t("loots.details.comments.submit")}
             </Button>
           </div>
         </form>

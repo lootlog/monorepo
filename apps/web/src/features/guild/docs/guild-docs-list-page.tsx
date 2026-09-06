@@ -322,7 +322,7 @@ export const GuildDocsListPage = () => {
       <AlertDialog
         open={documentPendingTrash !== null}
         onOpenChange={(open) => {
-          if (!open) {
+          if (!open && !deleteDocument.isPending) {
             setDocumentPendingTrash(null);
           }
         }}
@@ -341,6 +341,7 @@ export const GuildDocsListPage = () => {
               {t("common.cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
+              render={<Button loading={deleteDocument.isPending} />}
               disabled={deleteDocument.isPending || !documentPendingTrash}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={(event) => {

@@ -21,6 +21,7 @@ import type { MemberResponseDto as GuildMember } from "@lootlog/client/main";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { UserX } from "lucide-react";
+import { useState } from "react";
 import { cn } from "cn";
 
 export type MemberDeactivationButtonProps = {
@@ -36,12 +37,14 @@ export const MemberDeactivationButton = ({
 }: MemberDeactivationButtonProps) => {
   const { t } = useTranslation();
   const guildId = useGuildId();
+  const [isOpen, setIsOpen] = useState(false);
   const queryClient = useQueryClient();
   const deactivateMemberMutation = useMembersControllerDeactivateMember({
     mutation: {
       onSuccess: (data, variables) => {
         const currentGuildId = variables.pathParams.guildId;
 
+        setIsOpen(false);
         onDeactivated(data);
         toast.success(t("settings.members.deactivateSuccess"));
 
@@ -68,7 +71,12 @@ export const MemberDeactivationButton = ({
   });
 
   return (
-    <AlertDialog>
+    <AlertDialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!deactivateMemberMutation.isPending) setIsOpen(open);
+      }}
+    >
       <AlertDialogTrigger
         render={
           <Button
@@ -78,9 +86,7 @@ export const MemberDeactivationButton = ({
             disabled={!member.active || deactivateMemberMutation.isPending}
           >
             <UserX className="size-4" />
-            {deactivateMemberMutation.isPending
-              ? t("settings.members.deactivatePending")
-              : t("settings.members.deactivate")}
+            {t("settings.members.deactivate")}
           </Button>
         }
       />
@@ -94,11 +100,15 @@ export const MemberDeactivationButton = ({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+          <AlertDialogCancel disabled={deactivateMemberMutation.isPending}>
+            {t("common.cancel")}
+          </AlertDialogCancel>
           <AlertDialogAction
             disabled={!guildId || deactivateMemberMutation.isPending}
-            onClick={() => {
-              if (!guildId) {
+            render={<Button loading={deactivateMemberMutation.isPending} />}
+            onClick={(event) => {
+              event.preventBaseUIHandler();
+              if (!guildId || deactivateMemberMutation.isPending) {
                 return;
               }
 
@@ -110,9 +120,7 @@ export const MemberDeactivationButton = ({
               });
             }}
           >
-            {deactivateMemberMutation.isPending
-              ? t("settings.members.deactivatePending")
-              : t("settings.members.deactivate")}
+            {t("settings.members.deactivate")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -132,6 +132,12 @@ export const MapManageDialog = ({
   const { data: templates } = useMapTemplatesControllerGetTemplates({
     guildId,
   });
+  const [pendingTemplate, setPendingTemplate] = useState<{
+    templateId: string;
+    locationId: string | null;
+  } | null>(null);
+  const [isAddingMap, setIsAddingMap] = useState(false);
+  const isAdding = isAddingMap || pendingTemplate !== null;
   const [searchQuery, setSearchQuery] = useState("");
   const [newLocationName, setNewLocationName] = useState("");
   const [editingLocation, setEditingLocation] = useState<{
@@ -201,34 +207,29 @@ export const MapManageDialog = ({
   }, [gameMaps, addedMapIds, searchQuery]);
 
   const handleAddMapFromGame = async (gameMap: GameMapResponseDtoOutput) => {
-    try {
-      const result = await addMap.mutateAsync({
-        pathParams: {
-          guildId,
-          eventId,
-          heroId: hero.id,
-        },
+    if (isAdding) return;
+    setIsAddingMap(true);
+    await addMap
+      .mutateAsync({
+        pathParams: { guildId, eventId, heroId: hero.id },
         data: { mapId: gameMap.id, mapName: gameMap.name },
-      });
-
-      if (selectedLocationId) {
-        await assignMapToLocation.mutateAsync({
-          pathParams: {
-            guildId,
-            eventId,
-            heroId: hero.id,
-            mapId: result.id,
-          },
-          data: { locationId: selectedLocationId },
-        });
-      }
-    } catch (error) {
-      if (getApiErrorStatus(error) === 400) {
-        toast.error(t("events.maps.errors.duplicate"));
-      } else {
-        toast.error(t("events.maps.errors.addFailed"));
-      }
-    }
+      })
+      .then(async (result) => {
+        if (selectedLocationId) {
+          await assignMapToLocation.mutateAsync({
+            pathParams: { guildId, eventId, heroId: hero.id, mapId: result.id },
+            data: { locationId: selectedLocationId },
+          });
+        }
+      })
+      .catch((error: unknown) => {
+        if (getApiErrorStatus(error) === 400) {
+          toast.error(t("events.maps.errors.duplicate"));
+        } else {
+          toast.error(t("events.maps.errors.addFailed"));
+        }
+      })
+      .finally(() => setIsAddingMap(false));
   };
 
   const handleDeleteMap = async (mapId: string) => {
@@ -250,6 +251,7 @@ export const MapManageDialog = ({
     template: MapTemplateResponseDto,
     targetLocationId: string | null,
   ) => {
+    if (isAdding) return;
     const mapsToAdd = template.maps.filter((m) => !addedMapIds.has(m.id));
 
     if (mapsToAdd.length === 0) {
@@ -257,6 +259,10 @@ export const MapManageDialog = ({
       return;
     }
 
+    setPendingTemplate({
+      templateId: template.id,
+      locationId: targetLocationId,
+    });
     const results = await Promise.allSettled(
       mapsToAdd.map(async (mapItem) => {
         const result = await addMap.mutateAsync({
@@ -282,6 +288,10 @@ export const MapManageDialog = ({
       }),
     );
 
+    setPendingTemplate(null);
+    if (results.some((result) => result.status === "rejected")) {
+      toast.error(t("events.maps.errors.addFailed"));
+    }
     const addedCount = results.filter((r) => r.status === "fulfilled").length;
     if (addedCount > 0) {
       toast.success(
@@ -417,13 +427,10 @@ export const MapManageDialog = ({
                   size="sm"
                   className="h-8 gap-1.5"
                   onClick={handleCreateLocation}
-                  disabled={createLocation.isPending || !newLocationName.trim()}
+                  loading={createLocation.isPending}
+                  icon={<FolderPlus className="size-3" />}
+                  disabled={!newLocationName.trim()}
                 >
-                  {createLocation.isPending ? (
-                    <Spinner className="size-3" />
-                  ) : (
-                    <FolderPlus className="size-3" />
-                  )}
                   {t("events.locations.create")}
                 </Button>
               </div>
@@ -443,7 +450,12 @@ export const MapManageDialog = ({
                       setEditingLocation={setEditingLocation}
                       handleUpdateLocation={handleUpdateLocation}
                       handleDeleteLocation={handleDeleteLocation}
-                      isDeleting={deleteLocation.isPending}
+                      isDeleting={
+                        deleteLocation.isPending &&
+                        deleteLocation.variables?.pathParams.locationId ===
+                          location.id
+                      }
+                      deletionDisabled={deleteLocation.isPending}
                       onDragStart={() => {
                         setIsDragging(true);
                       }}
@@ -483,7 +495,12 @@ export const MapManageDialog = ({
                                 onLocationChange={(locId) =>
                                   handleMapLocationChange(map.id, locId)
                                 }
-                                isDeleting={deleteMap.isPending}
+                                isDeleting={
+                                  deleteMap.isPending &&
+                                  deleteMap.variables?.pathParams.mapId ===
+                                    map.id
+                                }
+                                deletionDisabled={deleteMap.isPending}
                               />
                             ))}
                           </div>
@@ -506,7 +523,11 @@ export const MapManageDialog = ({
                               onLocationChange={(locId) =>
                                 handleMapLocationChange(map.id, locId)
                               }
-                              isDeleting={deleteMap.isPending}
+                              isDeleting={
+                                deleteMap.isPending &&
+                                deleteMap.variables?.pathParams.mapId === map.id
+                              }
+                              deletionDisabled={deleteMap.isPending}
                             />
                           ))}
                         </div>
@@ -550,7 +571,7 @@ export const MapManageDialog = ({
                             variant="outline"
                             size="sm"
                             className="h-7 text-xs gap-1.5"
-                            disabled={addMap.isPending}
+                            disabled={isAdding}
                           >
                             <FileText className="size-3" />
                             {template.name}
@@ -570,8 +591,12 @@ export const MapManageDialog = ({
                             variant="ghost"
                             size="sm"
                             className="w-full justify-start h-7 text-xs"
+                            loading={
+                              pendingTemplate?.templateId === template.id &&
+                              pendingTemplate.locationId === null
+                            }
                             onClick={() => handleLoadTemplate(template, null)}
-                            disabled={addMap.isPending}
+                            disabled={isAdding}
                           >
                             {t("events.locations.noLocation")}
                           </Button>
@@ -581,10 +606,14 @@ export const MapManageDialog = ({
                               variant="ghost"
                               size="sm"
                               className="w-full justify-start h-7 text-xs"
+                              loading={
+                                pendingTemplate?.templateId === template.id &&
+                                pendingTemplate.locationId === loc.id
+                              }
                               onClick={() =>
                                 handleLoadTemplate(template, loc.id)
                               }
-                              disabled={addMap.isPending}
+                              disabled={isAdding}
                             >
                               {loc.name}
                             </Button>
@@ -663,7 +692,7 @@ export const MapManageDialog = ({
               />
 
               <ScrollArea className="h-[180px] rounded-lg border relative">
-                {addMap.isPending && (
+                {isAdding && (
                   <div className="absolute inset-0 bg-background backdrop-blur-[1px] z-10 flex items-center justify-center">
                     <Spinner className="size-5 text-primary" />
                   </div>
@@ -680,7 +709,7 @@ export const MapManageDialog = ({
                           onCheckedChange={(checked) => {
                             if (checked) handleAddMapFromGame(gameMap);
                           }}
-                          disabled={addMap.isPending}
+                          disabled={isAdding}
                           className="size-4"
                         />
                         <span className="flex-1 text-sm">{gameMap.name}</span>

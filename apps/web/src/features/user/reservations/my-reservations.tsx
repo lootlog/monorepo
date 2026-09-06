@@ -67,7 +67,12 @@ export function MyReservations() {
                   reservation={reservation}
                   showEdit={status === "upcoming"}
                   showCancel={status === "upcoming"}
-                  cancelPending={deleteMutation.isPending}
+                  cancelDisabled={deleteMutation.isPending}
+                  cancelPending={
+                    deleteMutation.isPending &&
+                    deleteMutation.variables?.pathParams.reservationId ===
+                      reservation.id
+                  }
                   onEdit={() => setEditingReservation(reservation)}
                   onCancel={() =>
                     deleteMutation.mutate({

@@ -44,6 +44,7 @@ function buildInvitationUrl(invitation: InvitationLink): string {
 export function ReservationSharingSettings() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const [isCopying, setIsCopying] = useState(false);
   const guildId = useGuildId() ?? "";
   const [createdInvitation, setCreatedInvitation] =
     useState<CreatedInvitation | null>(null);
@@ -94,10 +95,10 @@ export function ReservationSharingSettings() {
             <Button
               type="button"
               className="w-full lg:w-auto"
-              disabled={createMutation.isPending}
+              loading={createMutation.isPending}
+              icon={<Plus />}
               onClick={() => createMutation.mutate({ pathParams: { guildId } })}
             >
-              <Plus />
               {t("settings.reservations.sharing.createInvite")}
             </Button>
           </div>
@@ -124,18 +125,26 @@ export function ReservationSharingSettings() {
                 type="button"
                 variant="outline"
                 className="shrink-0"
-                onClick={async () => {
-                  try {
-                    await navigator.clipboard.writeText(
-                      createdInvitation.inviteUrl,
-                    );
-                    toast.success(t("settings.reservations.sharing.copied"));
-                  } catch {
-                    toast.error(t("settings.reservations.sharing.copyError"));
-                  }
+                loading={isCopying}
+                icon={<Copy />}
+                onClick={() => {
+                  if (isCopying) return;
+                  setIsCopying(true);
+                  return Promise.resolve()
+                    .then(() =>
+                      navigator.clipboard.writeText(
+                        createdInvitation.inviteUrl,
+                      ),
+                    )
+                    .then(() => {
+                      toast.success(t("settings.reservations.sharing.copied"));
+                    })
+                    .catch(() => {
+                      toast.error(t("settings.reservations.sharing.copyError"));
+                    })
+                    .finally(() => setIsCopying(false));
                 }}
               >
-                <Copy />
                 {t("settings.reservations.sharing.copy")}
               </Button>
             </div>
@@ -159,6 +168,7 @@ export function ReservationSharingSettings() {
                 type="button"
                 variant="outline"
                 size="sm"
+                loading={sharesQuery.isFetching}
                 onClick={() => sharesQuery.refetch()}
               >
                 {t("common.actions.retry")}
@@ -278,6 +288,11 @@ export function ReservationSharingSettings() {
                         size="sm"
                         className="text-destructive hover:text-destructive"
                         disabled={revokeInvitationMutation.isPending}
+                        loading={
+                          revokeInvitationMutation.isPending &&
+                          revokeInvitationMutation.variables?.pathParams
+                            .invitationId === invitation.id
+                        }
                         onClick={() =>
                           revokeInvitationMutation.mutate({
                             pathParams: {

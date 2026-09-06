@@ -1,5 +1,5 @@
 import { invalidateUserNotificationQueries } from "@/features/user/notifications/utils/invalidate-user-notification-queries";
-import { BellOff, ShieldAlert, Trash2 } from "lucide-react";
+import { ShieldAlert, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Badge } from "@lootlog/ui/components/badge";
@@ -45,6 +45,7 @@ export const WatchedItemCard = ({
         getUserNotificationsErrorMessage(error, t) ??
           t("settings.userNotifications.toasts.watchDeleteError"),
       );
+      throw error;
     }
   };
 
@@ -134,11 +135,7 @@ export const WatchedItemCard = ({
               aria-label={t("settings.notifications.actions.delete")}
               disabled={deleteWatchedItem.isPending}
             >
-              {deleteWatchedItem.isPending ? (
-                <BellOff className="h-4 w-4" />
-              ) : (
-                <Trash2 className="h-4 w-4" />
-              )}
+              <Trash2 className="h-4 w-4" />
             </Button>
           }
         />

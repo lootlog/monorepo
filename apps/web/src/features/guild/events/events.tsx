@@ -378,6 +378,7 @@ export const Events = () => {
                         size="icon"
                         className="size-8"
                         title={pinActionLabel}
+                        loading={isPinPending(event.id)}
                         aria-label={pinActionLabel}
                         disabled={!event.active || isPinPending(event.id)}
                         onClick={() => togglePin(event)}

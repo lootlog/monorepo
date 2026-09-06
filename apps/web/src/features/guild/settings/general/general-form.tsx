@@ -48,7 +48,8 @@ export const GeneralForm = () => {
   const { data: guild } = useGuildsControllerGetGuildById({
     guildId: guildId ?? "",
   });
-  const { mutate: updateGuildConfig } = useGuildsControllerUpdateGuildConfig();
+  const { mutate: updateGuildConfig, isPending } =
+    useGuildsControllerUpdateGuildConfig();
   const navigate = useNavigate();
 
   const form = useForm<GeneralFormValues>({
@@ -70,6 +71,8 @@ export const GeneralForm = () => {
   }, [guild?.vanityUrl, guild?.publicStatsCardEnabled]);
 
   function onSubmit(values: GeneralFormValues) {
+    if (isPending) return;
+
     if (RESTRICTED_NAMES.includes(values.vanityUrl)) {
       toast.error(t("settings.general.vanityUrl.restricted"));
       return;
@@ -171,7 +174,7 @@ export const GeneralForm = () => {
 
         <UnsavedChangesBar
           isDirty={form.formState.isDirty}
-          isSubmitting={form.formState.isSubmitting}
+          isSubmitting={isPending}
           onReset={() => form.reset()}
         />
       </form>

@@ -17,7 +17,6 @@ import { Label } from "@lootlog/ui/components/label";
 import { DateTimePicker } from "@lootlog/ui/components/date-time-picker";
 import { toast } from "sonner";
 import { Trophy, Settings, BookOpenText } from "lucide-react";
-import { Spinner } from "@lootlog/ui/components/spinner";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { getListEventsQueryKey, useCreateEvent } from "@lootlog/client/main";
 import type { EventListItemResponseDto } from "@lootlog/client/main";
@@ -183,7 +182,12 @@ export const EventCreateDialog = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!createEvent.isPending) handleClose(nextOpen);
+      }}
+    >
       <DialogContent className="sm:max-w-3xl p-0 gap-0 overflow-hidden max-h-[90vh] flex flex-col">
         <DialogHeader className="px-5 pt-5 pb-4 border-b bg-muted/30 shrink-0">
           <div className="flex items-center gap-3">
@@ -328,6 +332,7 @@ export const EventCreateDialog = ({
           <Button
             type="button"
             variant="outline"
+            disabled={createEvent.isPending}
             onClick={() => {
               if (step === 1) {
                 handleClose(false);
@@ -357,17 +362,10 @@ export const EventCreateDialog = ({
               type="button"
               size="sm"
               className="flex-1"
-              disabled={createEvent.isPending}
+              loading={createEvent.isPending}
               onClick={form.handleSubmit(onSubmit)}
             >
-              {createEvent.isPending ? (
-                <>
-                  <Spinner className="size-3.5 mr-1.5" />
-                  {t("events.createDialog.creating")}
-                </>
-              ) : (
-                t("events.createDialog.create")
-              )}
+              {t("events.createDialog.create")}
             </Button>
           )}
         </div>

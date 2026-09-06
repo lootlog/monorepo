@@ -7,7 +7,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Info,
-  LoaderCircle,
   Plus,
   Settings,
   WandSparkles,
@@ -38,8 +37,6 @@ const compactValue = <Value,>(
   compactValue: Value,
   regularValue: Value,
 ) => (isCompact ? compactValue : regularValue);
-
-const trueOrUndefined = (value: boolean) => (value ? true : undefined);
 
 const getScheduleDateLabels = (date: Date, isCompact: boolean) => {
   const weekStart = startOfWeek(date, { weekStartsOn: 1 });
@@ -80,10 +77,8 @@ export function ScheduleHeader({
     date,
     isCompact,
   );
-  const nearestFreeSlotLabel = compactValue(
-    isFindingNearestFreeSlot,
-    t("reservations.schedule.header.findingNearestSlot"),
-    t("reservations.schedule.header.findNearestSlot"),
+  const nearestFreeSlotLabel = t(
+    "reservations.schedule.header.findNearestSlot",
   );
   const iconButtonClassName = compactValue(isCompact, "size-11", "size-8");
   const compactTitleFor = (key: string) =>
@@ -120,17 +115,12 @@ export function ScheduleHeader({
         variant="ghost"
         size="icon"
         className={iconButtonClassName}
-        disabled={isFindingNearestFreeSlot}
+        loading={isFindingNearestFreeSlot}
         onClick={onFindNearestFreeSlot}
-        aria-busy={trueOrUndefined(isFindingNearestFreeSlot)}
         aria-label={nearestFreeSlotLabel}
         title={nearestFreeSlotLabel}
       >
-        {isFindingNearestFreeSlot ? (
-          <LoaderCircle className="animate-spin" />
-        ) : (
-          <WandSparkles />
-        )}
+        <WandSparkles />
       </Button>
       <Button
         type="button"

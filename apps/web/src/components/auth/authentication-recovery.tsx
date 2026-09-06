@@ -33,7 +33,7 @@ export const AuthenticationRecovery = ({
         <SectionCardFooter>
           <Button
             className="w-full sm:w-auto"
-            disabled={actionPending}
+            loading={actionPending}
             onClick={onAction}
             size="sm"
           >

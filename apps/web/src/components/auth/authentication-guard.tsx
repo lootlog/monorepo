@@ -33,7 +33,14 @@ const isReauthenticationError = (error: unknown) => {
 };
 
 export const AuthenticationGuard = ({ children }: Props) => {
-  const { data: scopes, error, isError, isPending, refetch } = useAuthScopes();
+  const {
+    data: scopes,
+    error,
+    isError,
+    isPending,
+    isFetching,
+    refetch,
+  } = useAuthScopes();
   const authFailure = useAuthRecoveryStore((state) => state.failure);
   const reauthenticationAttempt = useRef<Promise<unknown> | null>(null);
   const [reauthenticationPending, setReauthenticationPending] = useState(false);
@@ -99,6 +106,10 @@ export const AuthenticationGuard = ({ children }: Props) => {
   }
 
   return (
-    <AuthenticationRecovery mode="retry" onAction={() => void refetch()} />
+    <AuthenticationRecovery
+      actionPending={isFetching}
+      mode="retry"
+      onAction={() => void refetch()}
+    />
   );
 };

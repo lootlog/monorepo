@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+import { Button } from "@lootlog/ui/components/button";
 import { Reorder } from "framer-motion";
 import { Input } from "@lootlog/ui/components/input";
 import { GripVertical, Pencil, Trash2 } from "lucide-react";
@@ -10,6 +12,7 @@ interface LocationItemProps {
   handleUpdateLocation: () => void;
   handleDeleteLocation: (id: string) => void;
   isDeleting: boolean;
+  deletionDisabled: boolean;
   onDragStart: () => void;
   onDragEnd: () => void;
 }
@@ -21,9 +24,11 @@ export const LocationItem = ({
   handleUpdateLocation,
   handleDeleteLocation,
   isDeleting,
+  deletionDisabled,
   onDragStart,
   onDragEnd,
 }: LocationItemProps) => {
+  const { t } = useTranslation();
   return (
     <Reorder.Item
       value={location}
@@ -55,26 +60,32 @@ export const LocationItem = ({
       <span className="text-[10px] text-muted-foreground">
         ({location.maps.length})
       </span>
-      <button
+      <Button
+        variant="ghost"
+        size="icon"
         type="button"
+        aria-label={t("events.locations.edit")}
         onClick={() =>
           setEditingLocation({
             id: location.id,
             name: location.name,
           })
         }
-        className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+        className="size-6 p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
       >
         <Pencil className="size-3" />
-      </button>
-      <button
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
         type="button"
+        aria-label={t("events.delete")}
+        icon={<Trash2 className="size-3" />}
         onClick={() => handleDeleteLocation(location.id)}
-        className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-        disabled={isDeleting}
-      >
-        <Trash2 className="size-3" />
-      </button>
+        className="size-6 p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+        disabled={deletionDisabled}
+        loading={isDeleting}
+      ></Button>
     </Reorder.Item>
   );
 };
