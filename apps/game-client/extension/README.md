@@ -66,7 +66,7 @@ Run `bun run zip:extension:sources` (Bun; no Python required) from a clean Git w
 To reproduce the extension in an empty directory:
 
 1. Extract the source archive at that directory's root.
-2. Install Bun 1.4.1, then run `bun install --frozen-lockfile`.
+2. Install Bun 1.4.2, then run `bun install --frozen-lockfile`.
 3. Review the public endpoint profile in `apps/game-client/extension/build-profile.ts`.
 4. Run `bun run --cwd apps/game-client build:extension:production` or `bun run --cwd apps/game-client build:extension:production:firefox`.
 
