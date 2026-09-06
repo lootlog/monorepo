@@ -1,3 +1,13 @@
+import {
+  mkdtempSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { generate } from "../commands/env/generate.js";
 import assert from "node:assert/strict";
 import { describe, test } from "bun:test";
 import type { EnvVariable } from "../types.js";
@@ -213,4 +223,81 @@ describe("environment value generation", () => {
   test("derives Auth database values", assertAuthValues);
   test("derives Search integration values", assertSearchValues);
   test("reuses generated root values", assertGeneratedRootValuesCanBeReused);
+});
+
+const signatureKey = "ACTIVITY_EVENT_SIGNATURE_SECRET";
+
+const withEnvFixture = async (run: (root: string) => Promise<void>) => {
+  const root = mkdtempSync(join(tmpdir(), "lootlog-env-"));
+  try {
+    writeFileSync(join(root, ".env.example"), `${signatureKey}=placeholder\n`);
+    for (const app of ["activity", "gateway"]) {
+      mkdirSync(join(root, "apps", app), { recursive: true });
+      writeFileSync(
+        join(root, "apps", app, ".env.example"),
+        `${signatureKey}=placeholder\n`,
+      );
+    }
+    await run(root);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+};
+
+const readSignatureEnv = (root: string, app: string) =>
+  readFileSync(join(root, app, ".env"), "utf8");
+
+describe("activity signing environment generation", () => {
+  test("uses one generated secret in root, publisher and consumer", () =>
+    withEnvFixture(async (root) => {
+      await generate(["--auto"], root);
+      assert.equal(
+        readSignatureEnv(root, "apps/activity"),
+        readSignatureEnv(root, ""),
+      );
+      assert.equal(
+        readSignatureEnv(root, "apps/gateway"),
+        readSignatureEnv(root, ""),
+      );
+    }));
+
+  test("shares a generated secret when skipped root predates the signing key", () =>
+    withEnvFixture(async (root) => {
+      writeFileSync(join(root, ".env"), "REDIS_PASSWORD=existing\n");
+      await generate(["--skip-existing"], root);
+      assert.equal(
+        readSignatureEnv(root, "apps/activity"),
+        readSignatureEnv(root, "apps/gateway"),
+      );
+      assert.equal(readSignatureEnv(root, ""), "REDIS_PASSWORD=existing\n");
+    }));
+
+  test("reuses a skipped app secret before generating other apps", () =>
+    withEnvFixture(async (root) => {
+      writeFileSync(join(root, ".env"), "REDIS_PASSWORD=existing\n");
+      const existing = `${signatureKey}=existing-signature-secret-at-least-32-characters\n`;
+      writeFileSync(join(root, "apps/gateway/.env"), existing);
+      await generate(["--skip-existing"], root);
+      assert.equal(readSignatureEnv(root, "apps/activity"), existing);
+      assert.equal(readSignatureEnv(root, "apps/gateway"), existing);
+    }));
+
+  test("rejects inconsistent skipped secrets without leaking them or creating files", () =>
+    withEnvFixture(async (root) => {
+      writeFileSync(join(root, ".env"), `${signatureKey}=root-secret\n`);
+      writeFileSync(
+        join(root, "apps/gateway/.env"),
+        `${signatureKey}=gateway-secret\n`,
+      );
+      await assert.rejects(
+        generate(["--skip-existing"], root),
+        (error: unknown) => {
+          assert.ok(error instanceof Error);
+          assert.match(error.message, /ACTIVITY_EVENT_SIGNATURE_SECRET/);
+          assert.doesNotMatch(error.message, /root-secret|gateway-secret/);
+          return true;
+        },
+      );
+      assert.throws(() => readSignatureEnv(root, "apps/activity"), /ENOENT/);
+    }));
 });
