@@ -470,6 +470,66 @@ describe("durable loot publications", () => {
     },
   );
 
+  it("accepts map observers whose legacy concatenated hash collides without changing historical snapshots", async () => {
+    const { id, request } = await seed(true);
+    const legacyObserver = {
+      accountId: 321,
+      characterId: 654,
+      name: "Foo",
+      prof: "WARRIOR" as const,
+      icon: "outfit.gif",
+    };
+    const observer = { ...legacyObserver, name: "Foow", prof: null };
+    const world = `hash-collision-${id}`;
+    const legacyHash = createHash("sha256")
+      .update("Foowoutfit.gif")
+      .digest("hex");
+    const [legacy] = await runtime.runPromise(
+      database
+        .insert(playerSnapshotTable)
+        .values({ ...legacyObserver, world, snapshotHash: legacyHash })
+        .returning(),
+    );
+    if (!legacy) throw new Error("Expected historical player snapshot");
+    request.submission = {
+      ...request.submission,
+      world,
+      mapPlayersSnapshot: [observer],
+    };
+    const created = await runtime.runPromise(acceptance().accept(request));
+    snapshotTestLootIds.push(created.id);
+    expect((await lootRecord(id, created.id))?.mapPlayersSnapshot).toEqual([
+      observer,
+    ]);
+    const newLinks = await mapPlayerLinks(id, created.id);
+    expect(newLinks[0]?.playerSnapshotId).not.toBe(legacy.id);
+    expect(
+      await runtime.runPromise(
+        database
+          .select()
+          .from(playerSnapshotTable)
+          .where(eq(playerSnapshotTable.id, legacy.id)),
+      ),
+    ).toEqual([legacy]);
+
+    request.submission = {
+      ...request.submission,
+      loots: request.submission.loots.map((item) => ({
+        ...item,
+        hid: randomUUID(),
+      })),
+      mapPlayersSnapshot: [legacyObserver],
+    };
+    const later = await runtime.runPromise(acceptance().accept(request));
+    snapshotTestLootIds.push(later.id);
+    expect((await mapPlayerLinks(id, later.id))[0]?.playerSnapshotId).toBe(
+      legacy.id,
+    );
+    expect((await lootRecord(id, later.id))?.mapPlayersSnapshot).toEqual([
+      legacyObserver,
+    ]);
+  });
+
   it.each([
     { name: "Renamed player" },
     { prof: "MAGE" as const },

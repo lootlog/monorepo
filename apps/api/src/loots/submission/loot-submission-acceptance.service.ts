@@ -1,8 +1,5 @@
 import type { MapPlayersSnapshot } from "#src/contracts/loots/map-players-snapshot";
-import {
-  createItemStatsHash,
-  createPlayerSnapshotHash,
-} from "@lootlog/database/snapshot-hash";
+import { createItemStatsHash } from "@lootlog/database/snapshot-hash";
 import { Effect, Schema } from "effect";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import type {
@@ -667,17 +664,11 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         player.id,
         player.accountId,
       );
-      const snapshotHash = createPlayerSnapshotHash(
-        player.name,
-        player.prof,
-        player.icon,
-      );
       return {
         lvl: player.lvl,
         world,
         accountId,
         characterId,
-        snapshotHash,
         name: player.name,
         prof,
         icon: player.icon,

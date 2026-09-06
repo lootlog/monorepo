@@ -78,7 +78,6 @@ export type NewLootPersistence = {
     world: string;
     accountId: number;
     characterId: number;
-    snapshotHash: string;
     name: string;
     prof: Profession | null;
     icon: string;

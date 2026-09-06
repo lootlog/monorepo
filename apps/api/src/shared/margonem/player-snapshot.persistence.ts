@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { and, asc, eq, isNull, or } from "drizzle-orm";
 import { Effect } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
@@ -7,13 +8,7 @@ import { DependencyUnavailableError } from "#src/shared/http/http-errors";
 type PlayerSnapshot = typeof playerSnapshotTable.$inferSelect;
 export type PlayerSnapshotInput = Pick<
   PlayerSnapshot,
-  | "world"
-  | "accountId"
-  | "characterId"
-  | "snapshotHash"
-  | "name"
-  | "prof"
-  | "icon"
+  "world" | "accountId" | "characterId" | "name" | "prof" | "icon"
 >;
 
 const contentKey = (snapshot: PlayerSnapshotInput): string =>
@@ -26,7 +21,9 @@ const contentKey = (snapshot: PlayerSnapshotInput): string =>
     snapshot.icon,
   ]);
 
-const identityKey = (snapshot: PlayerSnapshotInput): string =>
+const identityKey = (
+  snapshot: PlayerSnapshotInput & { snapshotHash: string },
+): string =>
   JSON.stringify([
     snapshot.world,
     snapshot.accountId,
@@ -34,7 +31,9 @@ const identityKey = (snapshot: PlayerSnapshotInput): string =>
     snapshot.snapshotHash,
   ]);
 
-const matchesIdentity = (snapshot: PlayerSnapshotInput) =>
+const matchesIdentity = (
+  snapshot: PlayerSnapshotInput & { snapshotHash: string },
+) =>
   and(
     eq(playerSnapshotTable.world, snapshot.world),
     eq(playerSnapshotTable.accountId, snapshot.accountId),
@@ -83,15 +82,19 @@ export const resolvePlayerSnapshots = Effect.fnUntraced(function* (
   const missing = unique.filter(
     (snapshot) => !byContent.has(contentKey(snapshot)),
   );
-  const byIdentity = new Map<string, PlayerSnapshot>();
   if (missing.length > 0) {
-    const inserts = [
-      ...new Map(
-        missing.map((snapshot) => [identityKey(snapshot), snapshot]),
-      ).values(),
-    ].sort((left, right) =>
-      identityKey(left).localeCompare(identityKey(right)),
-    );
+    // Versioned structured hashes cannot collide with legacy concatenated fields.
+    // Keep one ordered insert batch so overlapping callers acquire keys consistently.
+    const inserts = missing
+      .map((snapshot) => ({
+        ...snapshot,
+        snapshotHash: `v2:${createHash("sha256")
+          .update(JSON.stringify([snapshot.name, snapshot.prof, snapshot.icon]))
+          .digest("hex")}`,
+      }))
+      .sort((left, right) =>
+        identityKey(left).localeCompare(identityKey(right)),
+      );
     const inserted = yield* database
       .insert(playerSnapshotTable)
       .values(inserts)
@@ -104,12 +107,12 @@ export const resolvePlayerSnapshots = Effect.fnUntraced(function* (
         ],
       })
       .returning();
+    const insertedIdentities = new Set(inserted.map(identityKey));
     for (const snapshot of inserted) {
-      byIdentity.set(identityKey(snapshot), snapshot);
       byContent.set(contentKey(snapshot), snapshot);
     }
     const conflicts = inserts.filter(
-      (snapshot) => !byIdentity.has(identityKey(snapshot)),
+      (snapshot) => !insertedIdentities.has(identityKey(snapshot)),
     );
     if (conflicts.length > 0) {
       const concurrent = yield* database
@@ -117,15 +120,13 @@ export const resolvePlayerSnapshots = Effect.fnUntraced(function* (
         .from(playerSnapshotTable)
         .where(or(...conflicts.map(matchesIdentity)));
       for (const snapshot of concurrent) {
-        byIdentity.set(identityKey(snapshot), snapshot);
         byContent.set(contentKey(snapshot), snapshot);
       }
     }
   }
   const resolved: PlayerSnapshot[] = [];
   for (const input of snapshots) {
-    const snapshot =
-      byContent.get(contentKey(input)) ?? byIdentity.get(identityKey(input));
+    const snapshot = byContent.get(contentKey(input));
     if (
       !snapshot ||
       snapshot.name !== input.name ||
