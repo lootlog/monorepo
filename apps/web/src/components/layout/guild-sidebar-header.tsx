@@ -159,15 +159,10 @@ export const GuildSidebarHeader = ({ guildId }: { guildId?: string }) => {
                 aria-label={canTriggerRefreshText}
                 className="size-8 border-primary/30 bg-primary/10 text-primary shadow-sm hover:border-primary/60 hover:bg-primary/15 disabled:border-border disabled:bg-muted/40 disabled:text-muted-foreground disabled:opacity-100"
                 onClick={handleRefreshPermissions}
-                disabled={!canTriggerRefresh || refreshMember.isPending}
+                disabled={!canTriggerRefresh}
+                loading={refreshMember.isPending}
               >
-                <RefreshCcw
-                  aria-hidden="true"
-                  className={cn(
-                    "size-4",
-                    refreshMember.isPending && "animate-spin text-primary",
-                  )}
-                />
+                <RefreshCcw aria-hidden="true" className="size-4" />
               </Button>
             </span>
           }

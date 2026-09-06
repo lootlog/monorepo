@@ -37,11 +37,21 @@ type DmActionsCardProps = {
 
 const resolveDmActionState = (
   dmTarget: NotificationTargetWithTestTriggerResponseDto | null,
-  pendingStates: readonly boolean[],
+  pendingStates: {
+    create: boolean;
+    update: boolean;
+    test: boolean;
+    active: boolean | undefined;
+  },
 ) => ({
   hasActiveDm: Boolean(dmTarget?.active && dmTarget.canSend),
   hasDmTarget: dmTarget !== null,
-  isDmActionPending: pendingStates.some(Boolean),
+  isDmActionPending:
+    pendingStates.create || pendingStates.update || pendingStates.test,
+  isEnablePending:
+    pendingStates.create ||
+    (pendingStates.update && pendingStates.active === true),
+  isDisablePending: pendingStates.update && pendingStates.active === false,
 });
 
 const getDmHint = (
@@ -80,14 +90,18 @@ export const DmActionsCard = ({ dmTarget, onAddWatch }: DmActionsCardProps) => {
       },
     });
 
-  const { hasActiveDm, hasDmTarget, isDmActionPending } = resolveDmActionState(
-    dmTarget,
-    [
-      createUserTarget.isPending,
-      updateUserTarget.isPending,
-      triggerUserTargetTest.isPending,
-    ],
-  );
+  const {
+    hasActiveDm,
+    hasDmTarget,
+    isDmActionPending,
+    isEnablePending,
+    isDisablePending,
+  } = resolveDmActionState(dmTarget, {
+    create: createUserTarget.isPending,
+    update: updateUserTarget.isPending,
+    test: triggerUserTargetTest.isPending,
+    active: updateUserTarget.variables?.data.active,
+  });
 
   const handleEnableDm = async () => {
     try {
@@ -200,8 +214,9 @@ export const DmActionsCard = ({ dmTarget, onAddWatch }: DmActionsCardProps) => {
                           dmTarget?.testTrigger.remaining === 0
                         }
                         onClick={handleTriggerDmTest}
+                        loading={triggerUserTargetTest.isPending}
+                        icon={<FlaskConical className="size-4" />}
                       >
-                        <FlaskConical className="size-4" />
                         {t("settings.userNotifications.dm.test")}
                       </Button>
                     </span>
@@ -237,8 +252,9 @@ export const DmActionsCard = ({ dmTarget, onAddWatch }: DmActionsCardProps) => {
                       variant="destructive"
                       disabled={isDmActionPending}
                       onClick={handleDisableDm}
+                      loading={isDisablePending}
+                      icon={<BellOff className="size-4" />}
                     >
-                      <BellOff className="size-4" />
                       {t("settings.userNotifications.dm.deactivate")}
                     </Button>
                   }
@@ -253,8 +269,9 @@ export const DmActionsCard = ({ dmTarget, onAddWatch }: DmActionsCardProps) => {
               size="sm"
               disabled={isDmActionPending}
               onClick={handleEnableDm}
+              loading={isEnablePending}
+              icon={<BellRing className="size-4" />}
             >
-              <BellRing className="size-4" />
               {t("settings.userNotifications.dm.configure")}
             </Button>
           )}

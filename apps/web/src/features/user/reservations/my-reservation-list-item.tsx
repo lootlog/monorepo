@@ -19,6 +19,7 @@ type MyReservationListItemProps = {
   showCancel?: boolean;
   showEdit?: boolean;
   cancelPending?: boolean;
+  cancelDisabled?: boolean;
   onEdit?: () => void;
   onCancel?: () => void;
 };
@@ -28,6 +29,7 @@ export function MyReservationListItem({
   showCancel = false,
   showEdit = false,
   cancelPending = false,
+  cancelDisabled = false,
   onEdit,
   onCancel,
 }: MyReservationListItemProps) {
@@ -118,7 +120,8 @@ export function MyReservationListItem({
                     variant="ghost"
                     size="icon"
                     className="size-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                    disabled={cancelPending}
+                    loading={cancelPending}
+                    disabled={cancelDisabled}
                     onClick={onCancel}
                     aria-label={t("reservations.my.cancel", {
                       spot: reservation.spotName,

@@ -1,3 +1,4 @@
+import { Button } from "@lootlog/ui/components/button";
 import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -12,7 +13,6 @@ import {
 } from "@lootlog/ui/components/alert-dialog";
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
-import { Spinner } from "@lootlog/ui/components/spinner";
 
 interface EventActionDialogProps {
   open: boolean;
@@ -56,16 +56,24 @@ const EventActionDialogSimple = ({
   const { t } = useTranslation();
 
   const handleConfirm = async () => {
-    await onConfirm();
-    if (closeOnConfirm) {
-      onOpenChange(false);
+    if (isPending) return;
+    try {
+      await onConfirm();
+      if (closeOnConfirm) onOpenChange(false);
+    } catch {
+      // The action reports its error; keep the confirmation available for retry.
     }
   };
 
   const isDestructive = variant === "destructive";
 
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
+    <AlertDialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!isPending) onOpenChange(nextOpen);
+      }}
+    >
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{t(titleKey)}</AlertDialogTitle>
@@ -78,6 +86,7 @@ const EventActionDialogSimple = ({
             {t("common.cancel")}
           </AlertDialogCancel>
           <AlertDialogAction
+            render={<Button loading={isPending} />}
             onClick={(e) => {
               e.preventBaseUIHandler();
               void handleConfirm();
@@ -89,7 +98,6 @@ const EventActionDialogSimple = ({
                 : undefined
             }
           >
-            {isPending && <Spinner className="w-4 h-4 mr-2" />}
             {t(actionLabelKey)}
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -117,12 +125,21 @@ const EventActionDialogWithConfirmation = ({
   const isDestructive = variant === "destructive";
 
   const handleConfirm = async () => {
-    if (!isConfirmationValid) return;
-    await onConfirm();
+    if (!isConfirmationValid || isPending) return;
+    try {
+      await onConfirm();
+    } catch {
+      // The action reports its error; keep the confirmation available for retry.
+    }
   };
 
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
+    <AlertDialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!isPending) onOpenChange(nextOpen);
+      }}
+    >
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{t(titleKey)}</AlertDialogTitle>
@@ -163,6 +180,7 @@ const EventActionDialogWithConfirmation = ({
             {t("common.cancel")}
           </AlertDialogCancel>
           <AlertDialogAction
+            render={<Button loading={isPending} />}
             disabled={isPending || !isConfirmationValid}
             className={
               isDestructive
@@ -174,7 +192,6 @@ const EventActionDialogWithConfirmation = ({
               void handleConfirm();
             }}
           >
-            {isPending && <Spinner className="w-4 h-4 mr-2" />}
             {t(actionLabelKey)}
           </AlertDialogAction>
         </AlertDialogFooter>

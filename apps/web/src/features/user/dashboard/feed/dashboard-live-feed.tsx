@@ -86,6 +86,7 @@ export function DashboardLiveFeed() {
             variant="outline"
             size="sm"
             disabled={state.isFetching || paused}
+            loading={state.isFetching}
             onClick={refresh}
           >
             {t("common.actions.retry")}

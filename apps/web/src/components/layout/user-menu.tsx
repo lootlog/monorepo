@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@lootlog/ui/components/dropdown-menu";
 import { ChevronUp, LogOut, Settings, User2 } from "lucide-react";
+import { Button } from "@lootlog/ui/components/button";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useUser } from "@/hooks/api/user/use-user";
@@ -23,7 +24,7 @@ export const UserMenu = () => {
   const { user, isPending } = useUser();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { logout } = useLogout();
+  const { logout, isPending: isLogoutPending } = useLogout();
 
   const handleOpenAccountSettings = () => {
     navigate({ to: ROUTES.user.settings.account });
@@ -114,10 +115,18 @@ export const UserMenu = () => {
                 <span>{t("layout.navigation.settings")}</span>
               </DropdownMenuItem>
               <DropdownMenuItem
+                closeOnClick={false}
+                disabled={isLogoutPending}
+                render={
+                  <Button
+                    variant="ghost"
+                    loading={isLogoutPending}
+                    icon={<LogOut className="size-4" />}
+                  />
+                }
                 onClick={logout}
-                className="rounded-lg px-2.5 py-2"
+                className="w-full justify-start rounded-lg px-2.5 py-2"
               >
-                <LogOut className="size-4" />
                 <span>{t("ui.actions.logout")}</span>
               </DropdownMenuItem>
             </div>

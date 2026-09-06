@@ -113,12 +113,10 @@ export const InfoSettings = () => {
                     guildId &&
                     refreshMutation.mutate({ pathParams: { guildId } })
                   }
-                  disabled={refreshMutation.isPending}
+                  loading={refreshMutation.isPending}
+                  icon={<RefreshCcw className="size-3.5" />}
                 >
-                  <RefreshCcw className="mr-2 size-3.5" />
-                  {refreshMutation.isPending
-                    ? t("settings.guildInfo.refreshing")
-                    : t("settings.guildInfo.refresh")}
+                  {t("settings.guildInfo.refresh")}
                 </Button>
               </div>
             }

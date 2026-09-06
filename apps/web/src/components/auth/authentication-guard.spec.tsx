@@ -9,7 +9,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from "react";
+import type { HTMLAttributes, ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useAuthRecoveryStore } from "@/store/auth-recovery.store";
 import { AuthenticationGuard } from "./authentication-guard";
@@ -41,25 +41,10 @@ vi.mock("react-i18next", () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-vi.mock("@lootlog/ui/components/button", () => ({
-  Button: ({
-    children,
-    size: _size,
-    ...props
-  }: ButtonHTMLAttributes<HTMLButtonElement> & { size?: string }) => (
-    <button {...props}>{children}</button>
-  ),
-}));
-
 vi.mock("@lootlog/ui/components/card", () => ({
   Card: ({ children, ...props }: HTMLAttributes<HTMLDivElement>) => (
     <div {...props}>{children}</div>
   ),
-}));
-
-vi.mock("lucide-react", () => ({
-  LoaderCircle: (props: HTMLAttributes<HTMLSpanElement>) => <span {...props} />,
-  ShieldAlert: (props: HTMLAttributes<HTMLSpanElement>) => <span {...props} />,
 }));
 
 const renderGuard = (children: ReactNode = <span>protected content</span>) =>

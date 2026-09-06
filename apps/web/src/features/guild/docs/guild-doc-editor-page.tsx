@@ -344,7 +344,12 @@ export const GuildDocEditorPage = () => {
         />
       )}
       {canWrite && (
-        <AlertDialog open={trashConfirmOpen} onOpenChange={setTrashConfirmOpen}>
+        <AlertDialog
+          open={trashConfirmOpen}
+          onOpenChange={(open) => {
+            if (!deleteDocument.isPending) setTrashConfirmOpen(open);
+          }}
+        >
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>{t("docs.trash.moveTitle")}</AlertDialogTitle>
@@ -359,6 +364,7 @@ export const GuildDocEditorPage = () => {
                 {t("common.cancel")}
               </AlertDialogCancel>
               <AlertDialogAction
+                render={<Button loading={deleteDocument.isPending} />}
                 disabled={deleteDocument.isPending}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 onClick={(event) => {

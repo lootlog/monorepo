@@ -82,6 +82,28 @@ const renderMapCard = ({
 };
 
 describe("MapCard interactions", () => {
+  it("keeps the assignment action busy and blocks row activation until completion", async () => {
+    let finish = () => {};
+    const pending = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    const onSelfAssignClick = vi.fn(() => pending);
+    renderMapCard({ onSelfAssignClick });
+    const button = screen.getByRole("button", {
+      name: "events.maps.assignSelf",
+    });
+    fireEvent.click(button);
+    expect(button.getAttribute("aria-busy")).toBe("true");
+    expect(button.hasAttribute("disabled")).toBe(true);
+    fireEvent.doubleClick(screen.getByText("Sala Mroźnych Szeptów"));
+    expect(onSelfAssignClick).toHaveBeenCalledOnce();
+    await act(async () => {
+      finish();
+      await pending;
+    });
+    expect(button.hasAttribute("disabled")).toBe(false);
+  });
+
   afterEach(() => {
     cleanup();
     vi.useRealTimers();

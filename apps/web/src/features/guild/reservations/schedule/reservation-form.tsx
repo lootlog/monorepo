@@ -119,7 +119,8 @@ export function ReservationForm({
         </Button>
         <Button
           type="submit"
-          disabled={!startsAt || !endsAt || createMutation.isPending}
+          disabled={!startsAt || !endsAt}
+          loading={createMutation.isPending}
         >
           {t("common.save")}
         </Button>

@@ -347,6 +347,7 @@ export const NotificationRuleCard = ({
                     !hasTestableTargets ||
                     rule.testTrigger.remaining === 0
                   }
+                  loading={triggerRuleTest.isPending}
                   onClick={handleTriggerTest}
                 >
                   <FlaskConical className="h-4 w-4" />
@@ -375,6 +376,7 @@ export const NotificationRuleCard = ({
                     "settings.notifications.actions.rebuildPending",
                   )}
                   disabled={isActionDisabled || !rule.enabled}
+                  loading={rebuildRuleJobs.isPending}
                   onClick={handleRebuildJobs}
                 >
                   <RefreshCw className="h-4 w-4" />

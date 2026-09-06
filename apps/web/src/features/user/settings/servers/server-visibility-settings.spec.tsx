@@ -175,7 +175,7 @@ describe("ServerVisibilitySettings", () => {
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Pokaż wszystkie" }));
-    expect(mocks.mutate).toHaveBeenLastCalledWith({
+    expect(mocks.mutate.mock.lastCall?.[0]).toEqual({
       hiddenGuildIds: ["temporarily-unavailable"],
     });
   });

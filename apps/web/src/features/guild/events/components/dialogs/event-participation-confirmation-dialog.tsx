@@ -59,7 +59,10 @@ const EventParticipationConfirmationDialogContent = ({
   const [dismissedExpiredKillIds, setDismissedExpiredKillIds] = useState(
     () => new Set<string>(),
   );
-  const [confirmingKillId, setConfirmingKillId] = useState<string | null>(null);
+  const [confirmingKillIds, setConfirmingKillIds] = useState<Set<string>>(
+    new Set(),
+  );
+  const [isConfirmingAll, setIsConfirmingAll] = useState(false);
   const [currentTimestamp, setCurrentTimestamp] = useState(Date.now);
 
   const { data, isLoading } = useListPendingParticipationConfirmations({
@@ -122,7 +125,7 @@ const EventParticipationConfirmationDialogContent = ({
   }, [nearestDeadlineTimestamp]);
 
   const handleConfirm = async (killId: string) => {
-    setConfirmingKillId(killId);
+    setConfirmingKillIds((ids) => new Set([...ids, killId]));
     try {
       await confirmParticipation.mutateAsync({
         pathParams: {
@@ -145,14 +148,23 @@ const EventParticipationConfirmationDialogContent = ({
         ),
       );
     }
-    setConfirmingKillId(null);
+    setConfirmingKillIds((ids) => {
+      const next = new Set(ids);
+      next.delete(killId);
+      return next;
+    });
   };
 
   const handleConfirmAll = async () => {
-    await Promise.all(sortedItems.map((item) => handleConfirm(item.killId)));
+    if (isConfirmingAll || confirmingKillIds.size > 0) return;
+    setIsConfirmingAll(true);
+    await Promise.allSettled(
+      sortedItems.map((item) => handleConfirm(item.killId)),
+    ).finally(() => setIsConfirmingAll(false));
   };
 
   const handleOpenChange = async (nextOpen: boolean) => {
+    if (isConfirmingAll || confirmingKillIds.size > 0) return;
     if (nextOpen) {
       return;
     }
@@ -276,16 +288,14 @@ const EventParticipationConfirmationDialogContent = ({
                               type="button"
                               size="sm"
                               disabled={
-                                Boolean(confirmingKillId) ||
+                                isConfirmingAll ||
+                                confirmingKillIds.size > 0 ||
                                 confirmParticipation.isPending
                               }
+                              loading={confirmingKillIds.has(item.killId)}
                               onClick={() => handleConfirm(item.killId)}
                             >
-                              {confirmingKillId === item.killId ? (
-                                <Spinner className="size-3.5" />
-                              ) : (
-                                t("events.confirmation.confirm", "Potwierdź")
-                              )}
+                              {t("events.confirmation.confirm", "Potwierdź")}
                             </Button>
                           </div>
                         </div>
@@ -298,9 +308,11 @@ const EventParticipationConfirmationDialogContent = ({
                   <Button
                     type="button"
                     variant="outline"
+                    loading={isConfirmingAll}
                     onClick={handleConfirmAll}
                     disabled={
-                      Boolean(confirmingKillId) ||
+                      isConfirmingAll ||
+                      confirmingKillIds.size > 0 ||
                       confirmParticipation.isPending
                     }
                   >

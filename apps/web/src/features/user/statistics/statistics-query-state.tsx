@@ -63,7 +63,7 @@ export function StatisticsQueryState({
           {query.data !== undefined && <p>{t("statistics.stale")}</p>}
           <Button
             variant="outline"
-            disabled={query.isFetching}
+            loading={query.isFetching}
             onClick={() => {
               void query.refetch();
             }}

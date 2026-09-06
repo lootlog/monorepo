@@ -13,7 +13,6 @@ import {
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { Swords, Plus, Pencil, Info } from "lucide-react";
-import { Spinner } from "@lootlog/ui/components/spinner";
 import { toast } from "sonner";
 import {
   useEventsAssignmentControllerAddHero,
@@ -132,7 +131,12 @@ export const HeroManageDialog = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!isPending) onOpenChange(nextOpen);
+      }}
+    >
       <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden">
         <DialogHeader className="px-5 pt-5 pb-4 border-b bg-muted/30">
           <div className="flex items-center gap-3">
@@ -217,6 +221,7 @@ export const HeroManageDialog = ({
             type="button"
             variant="outline"
             size="sm"
+            disabled={isPending}
             onClick={() => onOpenChange(false)}
             className="flex-1"
           >
@@ -226,25 +231,17 @@ export const HeroManageDialog = ({
             type="submit"
             form="hero-manage-form"
             size="sm"
-            disabled={isPending}
+            loading={isPending}
+            icon={
+              isEditing ? (
+                <Pencil className="size-3.5" />
+              ) : (
+                <Plus className="size-3.5" />
+              )
+            }
             className="flex-1"
           >
-            {isPending ? (
-              <>
-                <Spinner className="size-3.5 mr-1.5" />
-                {t("common.saving")}
-              </>
-            ) : isEditing ? (
-              <>
-                <Pencil className="size-3.5 mr-1.5" />
-                {t("common.save")}
-              </>
-            ) : (
-              <>
-                <Plus className="size-3.5 mr-1.5" />
-                {t("events.createDialog.addHero")}
-              </>
-            )}
+            {isEditing ? t("common.save") : t("events.createDialog.addHero")}
           </Button>
         </div>
       </DialogContent>

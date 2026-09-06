@@ -16,18 +16,13 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useNotificationsUserControllerDeleteWatchedItem } from "@lootlog/client/main";
 import { useNavigate } from "@tanstack/react-router";
-import {
-  Bell,
-  BellOff,
-  Check,
-  Copy,
-  ListFilter,
-  LoaderCircle,
-  Plus,
-} from "lucide-react";
+import { Bell, BellOff, Check, Copy, ListFilter, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { formatItemHid } from "@/lib/utils/hid-detection";
+import { useState } from "react";
+import { Button } from "@lootlog/ui/components/button";
+import { Spinner } from "@lootlog/ui/components/spinner";
 import { cn } from "cn";
 
 type WatchableItemTileProps = ItemTileProps & {
@@ -38,8 +33,6 @@ type WatchableItemTileProps = ItemTileProps & {
 const getWatchableItemState = ({
   currentGuildId,
   hasActiveDm,
-  isQuickAddPending,
-  isRemovePending,
   itemId,
   state,
   watchContext,
@@ -49,8 +42,6 @@ const getWatchableItemState = ({
 }: {
   currentGuildId: string | undefined;
   hasActiveDm: boolean;
-  isQuickAddPending: boolean;
-  isRemovePending: boolean;
   itemId: number;
   state: "error" | "loading" | "ready";
   watchContext: WatchedItemScope;
@@ -79,7 +70,7 @@ const getWatchableItemState = ({
     isWatchedInScope: isWatched,
     showAddAction: isReady && hasActiveDm && !isWatched,
     showDmRequired: isReady && !hasActiveDm,
-    showPending: state === "loading" || isQuickAddPending || isRemovePending,
+    showPending: state === "loading",
     showRemoveAction: isReady && hasActiveDm && isWatched,
     wouldCreateNewWatchedItem: wouldCreate,
   };
@@ -94,6 +85,8 @@ export const WatchableItemTile = ({
   selectedItemNames = [],
 }: WatchableItemTileProps) => {
   const { t } = useTranslation();
+  const [isCopyPending, setIsCopyPending] = useState(false);
+  const [isAddingThisItem, setIsAddingThisItem] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const currentGuildId = useGuildId();
@@ -130,8 +123,6 @@ export const WatchableItemTile = ({
     hasActiveDm,
     hasWatchedItem,
     isItemWatchedInScope,
-    isQuickAddPending,
-    isRemovePending,
     itemId: item.id,
     state,
     watchContext,
@@ -146,12 +137,18 @@ export const WatchableItemTile = ({
   };
 
   const handleCopyItemId = async () => {
-    try {
-      await navigator.clipboard.writeText(formattedItemHid);
-      toast.success(t("loots.details.copySuccess"));
-    } catch {
-      toast.error(t("loots.details.copyError"));
-    }
+    if (isCopyPending) return;
+    setIsCopyPending(true);
+    await (async () => {
+      try {
+        await navigator.clipboard.writeText(formattedItemHid);
+        toast.success(t("loots.details.copySuccess"));
+      } catch {
+        toast.error(t("loots.details.copyError"));
+      }
+    })().finally(() => {
+      setIsCopyPending(false);
+    });
   };
 
   const showLootsWithItem = () => {
@@ -196,6 +193,7 @@ export const WatchableItemTile = ({
   };
 
   const handleQuickAdd = async () => {
+    if (isQuickAddPending || isAddingThisItem) return;
     if (!effectiveGuildId) {
       toast.error(t("settings.userNotifications.quickAdd.scopeUnavailable"));
       return;
@@ -221,28 +219,33 @@ export const WatchableItemTile = ({
       }),
     );
 
-    try {
-      await quickAddWatchedItem({
-        itemId: item.id,
-        itemName: item.name,
-        world: watchContext.world,
-        guildId: effectiveGuildId,
-      });
-      toast.success(
-        t("settings.userNotifications.quickAdd.toasts.added", {
+    setIsAddingThisItem(true);
+    await (async () => {
+      try {
+        await quickAddWatchedItem({
+          itemId: item.id,
           itemName: item.name,
-          count: nextWatchedItemsCount,
-          limit: USER_WATCHED_ITEMS_LIMIT,
-        }),
-        { id: loadingToastId },
-      );
-    } catch (error) {
-      toast.error(
-        getUserNotificationsErrorMessage(error, t) ??
-          t("settings.userNotifications.quickAdd.toasts.error"),
-        { id: loadingToastId },
-      );
-    }
+          world: watchContext.world,
+          guildId: effectiveGuildId,
+        });
+        toast.success(
+          t("settings.userNotifications.quickAdd.toasts.added", {
+            itemName: item.name,
+            count: nextWatchedItemsCount,
+            limit: USER_WATCHED_ITEMS_LIMIT,
+          }),
+          { id: loadingToastId },
+        );
+      } catch (error) {
+        toast.error(
+          getUserNotificationsErrorMessage(error, t) ??
+            t("settings.userNotifications.quickAdd.toasts.error"),
+          { id: loadingToastId },
+        );
+      }
+    })().finally(() => {
+      setIsAddingThisItem(false);
+    });
   };
 
   return (
@@ -285,12 +288,20 @@ export const WatchableItemTile = ({
       />
       <ContextMenuContent className="min-w-[15rem]">
         <ContextMenuItem
-          className="gap-2"
+          className="w-full justify-start gap-2"
+          closeOnClick={false}
+          disabled={isCopyPending}
+          render={
+            <Button
+              variant="ghost"
+              loading={isCopyPending}
+              icon={<Copy className="h-4 w-4 text-muted-foreground" />}
+            />
+          }
           onClick={() => {
             void handleCopyItemId();
           }}
         >
-          <Copy className="h-4 w-4 text-muted-foreground" />
           {t("loots.list.itemActions.copyId")}
         </ContextMenuItem>
         <ContextMenuItem
@@ -304,7 +315,10 @@ export const WatchableItemTile = ({
         <ContextMenuSeparator />
         {showPending ? (
           <ContextMenuItem disabled className="gap-2">
-            <LoaderCircle className="h-4 w-4 animate-spin text-muted-foreground" />
+            <Spinner
+              aria-hidden="true"
+              className="h-4 w-4 text-muted-foreground motion-reduce:animate-none"
+            />
             {t("settings.userNotifications.quickAdd.loading")}
           </ContextMenuItem>
         ) : null}
@@ -333,12 +347,20 @@ export const WatchableItemTile = ({
         {showRemoveAction ? (
           <>
             <ContextMenuItem
-              className="gap-2"
+              className="w-full justify-start gap-2"
+              closeOnClick={false}
+              disabled={isRemovePending}
+              render={
+                <Button
+                  variant="ghost"
+                  loading={isRemovePending}
+                  icon={<BellOff className="h-4 w-4 text-muted-foreground" />}
+                />
+              }
               onClick={() => {
                 void handleRemove();
               }}
             >
-              <BellOff className="h-4 w-4 text-muted-foreground" />
               {t("settings.userNotifications.quickAdd.remove")}
             </ContextMenuItem>
             <ContextMenuSeparator />
@@ -362,12 +384,20 @@ export const WatchableItemTile = ({
             </>
           ) : (
             <ContextMenuItem
-              className="gap-2"
+              className="w-full justify-start gap-2"
+              closeOnClick={false}
+              disabled={isQuickAddPending || isAddingThisItem}
+              render={
+                <Button
+                  variant="ghost"
+                  loading={isAddingThisItem}
+                  icon={<Plus className="h-4 w-4 text-muted-foreground" />}
+                />
+              }
               onClick={() => {
                 void handleQuickAdd();
               }}
             >
-              <Plus className="h-4 w-4 text-muted-foreground" />
               {t("settings.userNotifications.quickAdd.add")}
             </ContextMenuItem>
           )

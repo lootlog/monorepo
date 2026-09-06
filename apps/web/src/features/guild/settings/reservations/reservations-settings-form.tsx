@@ -54,7 +54,8 @@ export const ReservationsSettingsForm = ({
   const { t } = useTranslation();
   const guildId = useGuildId();
   const queryClient = useQueryClient();
-  const { mutate: updateGuildConfig } = useGuildsControllerUpdateGuildConfig();
+  const { mutate: updateGuildConfig, isPending } =
+    useGuildsControllerUpdateGuildConfig();
   const settings = resolveReservationSettings(guild);
 
   const form = useForm<ReservationsSettingsFormValues>({
@@ -74,6 +75,8 @@ export const ReservationsSettingsForm = ({
   ]);
 
   function onSubmit(values: ReservationsSettingsFormValues) {
+    if (isPending) return;
+
     updateGuildConfig(
       {
         pathParams: { guildId: guildId ?? "" },
@@ -317,7 +320,7 @@ export const ReservationsSettingsForm = ({
 
         <UnsavedChangesBar
           isDirty={form.formState.isDirty}
-          isSubmitting={form.formState.isSubmitting}
+          isSubmitting={isPending}
           onReset={() => form.reset()}
         />
       </form>

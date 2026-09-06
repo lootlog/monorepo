@@ -17,6 +17,7 @@ import {
 type BattleTableActionsMenuProps = {
   battle: Battle;
   disabled?: boolean;
+  loading?: boolean;
   onCopyLink: (battleId: string) => void;
   onDelete: (battle: Battle) => void;
   onShare: (battleId: string) => void;
@@ -26,6 +27,7 @@ type BattleTableActionsMenuProps = {
 export const BattleTableActionsMenu = ({
   battle,
   disabled,
+  loading,
   onCopyLink,
   onDelete,
   onShare,
@@ -49,6 +51,7 @@ export const BattleTableActionsMenu = ({
               size="icon"
               className="size-7 md:size-8"
               disabled={disabled}
+              loading={loading}
             >
               <MoreHorizontal className="size-4" />
             </Button>
