@@ -96,18 +96,31 @@ export const ActivityConsumers = Layer.effectDiscard(
         | typeof RabbitRoutingKey.GUILDS_MEMBERS_REMOVE_DLQ,
       errorHeaders: Record<string, unknown>,
     ) =>
-      rabbit.publish({
-        exchange: RabbitExchange.DEAD_LETTER,
-        routingKey,
-        content: delivery.content,
-        contentType: delivery.properties.contentType ?? undefined,
-        headers: {
-          ...delivery.properties.headers,
-          ...errorHeaders,
-          "x-final-attempt": true,
-          "x-sent-to-dlq-at": new Date().toISOString(),
-        },
-      });
+      rabbit
+        .publish({
+          exchange: RabbitExchange.DEAD_LETTER,
+          routingKey,
+          content: delivery.content,
+          contentType: delivery.properties.contentType ?? undefined,
+          headers: {
+            ...delivery.properties.headers,
+            ...errorHeaders,
+            "x-final-attempt": true,
+            "x-sent-to-dlq-at": new Date().toISOString(),
+          },
+        })
+        .pipe(
+          Effect.tap(() =>
+            Effect.logWarning("Activity message sent to DLQ", {
+              routingKey,
+              reason:
+                errorHeaders["x-signature-error"] ??
+                errorHeaders["x-validation-error"] ??
+                "Retry limit exhausted",
+              retryCount: retryCount(delivery),
+            }),
+          ),
+        );
     yield* rabbit.consume(
       {
         queue: "activity-log-create",
@@ -220,17 +233,5 @@ export const ActivityConsumers = Layer.effectDiscard(
           });
         }),
     );
-    for (const queue of [
-      "activity-log-create.dlq",
-      "guilds-members-remove.dlq",
-    ])
-      yield* rabbit.consume(
-        { queue, prefetch: 1, failurePolicy: { strategy: "requeue" } },
-        (delivery) =>
-          Effect.logWarning(
-            "Activity DLQ message requires manual intervention",
-            { queue, routingKey: delivery.routingKey },
-          ),
-      );
   }),
 );
