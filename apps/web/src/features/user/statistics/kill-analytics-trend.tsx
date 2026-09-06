@@ -29,9 +29,7 @@ export function KillAnalyticsTrend({ title, data }: KillAnalyticsTrendProps) {
             <BarChart data={data} accessibilityLayer>
               <XAxis
                 dataKey="date"
-                tickFormatter={(date: string) =>
-                  `${date.slice(5)}${partialDates.has(date) ? "*" : ""}`
-                }
+                tickFormatter={(date: string) => date.slice(5)}
                 minTickGap={36}
                 tick={{ fontSize: 11 }}
               />
@@ -56,11 +54,6 @@ export function KillAnalyticsTrend({ title, data }: KillAnalyticsTrendProps) {
             </BarChart>
           </ResponsiveContainer>
         </div>
-        {partialDates.size > 0 && (
-          <p className="mt-2 text-xs text-muted-foreground">
-            * {t("statistics.partial")}
-          </p>
-        )}
         <details className="mt-2 text-xs">
           <summary className="cursor-pointer py-2">
             {t("statistics.showTable")}
@@ -76,10 +69,7 @@ export function KillAnalyticsTrend({ title, data }: KillAnalyticsTrendProps) {
               <tbody>
                 {data.map((day) => (
                   <tr key={day.date}>
-                    <th className="py-1 font-normal">
-                      {day.date}
-                      {day.partial ? " *" : ""}
-                    </th>
+                    <th className="py-1 font-normal">{day.date}</th>
                     <td>
                       {day.kills?.toLocaleString("pl-PL") ??
                         t("statistics.unknown")}
