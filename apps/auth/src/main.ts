@@ -1,9 +1,12 @@
-import { BunRedis, BunRuntime } from "@effect/platform-bun";
+import { BunRuntime } from "@effect/platform-bun";
 import { installScopedLogRunner } from "@lootlog/instrumentation";
-import { Effect, Layer, Redacted } from "effect";
+import { Effect, Layer } from "effect";
 import { FetchHttpClient } from "effect/unstable/http";
 import { Otlp, OtlpSerialization } from "effect/unstable/observability";
-import { AuthRedisStorage } from "#src/auth/storage/auth-redis-storage";
+import {
+  AuthRedisStorage,
+  createAuthRedisConnection,
+} from "#src/auth/storage/auth-redis-storage";
 import { AuthService } from "#src/auth/auth-service";
 import { BetterAuthRuntime } from "#src/auth/provider/better-auth";
 import { AppConfig } from "#src/config/env";
@@ -40,12 +43,7 @@ const InfrastructureLive = Layer.merge(
   Layer.provide(
     Layer.unwrap(
       Effect.map(AppConfig, (config) =>
-        BunRedis.layer({
-          url: `redis://${encodeURIComponent(config.redis.username)}:${encodeURIComponent(Redacted.value(config.redis.password))}@${config.redis.host}:${config.redis.port}`,
-          connectionTimeout: 1_000,
-          enableOfflineQueue: false,
-          maxRetries: 1,
-        }),
+        createAuthRedisConnection(config.redis),
       ),
     ),
   ),
