@@ -1,7 +1,11 @@
 import { invalidateReservationQueries } from "./invalidate-reservation-queries";
 import { useEffect, useRef, useState } from "react";
 import { addDays, differenceInCalendarDays, startOfWeek } from "date-fns";
-import { keepPreviousData, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -29,6 +33,7 @@ import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useIsOwner } from "@/hooks/context/use-is-owner";
 import { useGateway } from "@/hooks/utils/use-gateway";
 import { getReservationErrorMessage } from "../get-reservation-error-message";
+import { reservationSpotsQueryOptions } from "../reservations-api";
 import { DesktopWeekSchedule } from "./desktop-week-schedule";
 import {
   findNearestFreeReservationRange,
@@ -50,6 +55,12 @@ import { useCompactScheduleLayout } from "./use-compact-schedule-layout";
 type ReservationChangedPayload = {
   spotId?: string;
 };
+
+const resolveSpotName = (
+  spots: { id: string; name: string }[] | undefined,
+  spotId: string,
+  fallback: string,
+) => spots?.find((spot) => spot.id === spotId)?.name ?? fallback;
 
 export function ReservationsSchedule() {
   const { reservationId: spotId } = useParams({
@@ -75,6 +86,12 @@ export function ReservationsSchedule() {
   const swipePreviewStart = addDays(weekStart, -1);
   const swipePreviewEnd = addDays(weekEnd, 1);
   const dayIndex = differenceInCalendarDays(date, weekStart);
+  const spotsQuery = useQuery(reservationSpotsQueryOptions(guildId));
+  const spotName = resolveSpotName(
+    spotsQuery.data,
+    spotId,
+    t("layout.navigation.reservations"),
+  );
   const guildQuery = useGuildsControllerGetGuildById({ guildId });
   const settings = resolveReservationSettings(guildQuery.data);
   const reservationsQuery = useListSpotReservations(
@@ -202,6 +219,7 @@ export function ReservationsSchedule() {
       className="relative flex h-full min-h-0 flex-col overflow-hidden bg-background"
     >
       <ScheduleHeader
+        spotName={spotName}
         date={date}
         isCompact={isCompact}
         settings={settings}

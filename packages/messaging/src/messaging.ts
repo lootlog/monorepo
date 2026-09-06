@@ -382,6 +382,9 @@ const installTopology = (
         queues.map(async (queue) => {
           const queueOptions: Options.AssertQueue = {
             durable: queue.durable,
+            ...(queue.singleActiveConsumer
+              ? { arguments: { "x-single-active-consumer": true } }
+              : {}),
             messageTtl: queue.messageTtl,
             deadLetterExchange: queue.deadLetterExchange,
             deadLetterRoutingKey: queue.deadLetterRoutingKey,

@@ -1,15 +1,17 @@
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Copy, Eye, ImageOff, RefreshCw } from "lucide-react";
 import { useCopyToClipboard } from "usehooks-ts";
 import { Button } from "@lootlog/ui/components/button";
-import { Card } from "@lootlog/ui/components/card";
+
 import {
   FormControl,
   FormDescription,
   FormField,
   FormItem,
-  FormLabel,
 } from "@lootlog/ui/components/form";
 import { Switch } from "@lootlog/ui/components/switch";
 import { API_URL } from "@/config/api";
@@ -89,22 +91,12 @@ export const StatsCardSettingsCard = ({
   };
 
   return (
-    <Card className="bg-card  border-border p-0 gap-0">
-      <div className="p-3">
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <Eye className="size-4 text-primary" />
-            </div>
-            <div>
-              <FormLabel className="text-sm font-semibold">
-                {t("settings.general.statsCard.title")}
-              </FormLabel>
-              <p className="text-xs text-muted-foreground">
-                {t("settings.general.statsCard.description")}
-              </p>
-            </div>
-          </div>
+    <SectionCard>
+      <SectionCardHeader
+        title={t("settings.general.statsCard.title")}
+        description={t("settings.general.statsCard.description")}
+        icon={Eye}
+        actions={
           <FormField
             control={form.control}
             name="publicStatsCardEnabled"
@@ -122,14 +114,15 @@ export const StatsCardSettingsCard = ({
               </FormItem>
             )}
           />
-        </div>
-
-        <div className="ml-11 space-y-3">
+        }
+      />
+      <SectionCardContent>
+        <div className=" space-y-3">
           <FormDescription className="text-xs">
             {t("settings.general.statsCard.toggleDescription")}
           </FormDescription>
 
-          <div className="w-full max-w-xl overflow-hidden rounded-lg border border-border bg-background">
+          <div className="w-full max-w-xl overflow-hidden">
             {savedEnabled && !imageError ? (
               <img
                 src={previewUrl}
@@ -186,7 +179,7 @@ export const StatsCardSettingsCard = ({
             </p>
           </div>
         </div>
-      </div>
-    </Card>
+      </SectionCardContent>
+    </SectionCard>
   );
 };

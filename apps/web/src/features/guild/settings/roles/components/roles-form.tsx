@@ -1,3 +1,6 @@
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -15,7 +18,7 @@ import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { useEffect, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import { Input } from "@lootlog/ui/components/input";
-import { Label } from "@lootlog/ui/components/label";
+
 import { toast } from "sonner";
 import { Permission } from "@lootlog/schema/permissions";
 import {
@@ -38,7 +41,7 @@ import {
   Users,
 } from "lucide-react";
 import { cn } from "cn";
-import { Card } from "@lootlog/ui/components/card";
+
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useQueryClient } from "@tanstack/react-query";
@@ -284,23 +287,14 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
         onSubmit={form.handleSubmit(onSubmit)}
         className="w-full mx-auto pb-24"
       >
-        <Card className="bg-card  border-border p-0">
-          <div className="p-3">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Settings className="size-4 text-primary" />
-              </div>
-              <div>
-                <Label className="text-sm font-semibold">
-                  {t("settings.roles.levelRangeTitle")}
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  {t("settings.roles.levelRangeDescription")}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-3 items-center ml-11">
+        <SectionCard>
+          <SectionCardHeader
+            title={t("settings.roles.levelRangeTitle")}
+            description={t("settings.roles.levelRangeDescription")}
+            icon={Settings}
+          />
+          <SectionCardContent>
+            <div className="flex gap-3 items-center ">
               <FormField
                 control={form.control}
                 name="lvlRangeFrom"
@@ -345,8 +339,8 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
                 )}
               />
             </div>
-          </div>
-        </Card>
+          </SectionCardContent>
+        </SectionCard>
 
         <div className="space-y-3 pt-3">
           <Accordion
@@ -361,35 +355,24 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
               ).length;
 
               return (
-                <Card
-                  key={group.groupKey}
-                  className="bg-card  border-border overflow-hidden p-0"
-                >
+                <SectionCard key={group.groupKey} className="overflow-hidden">
                   <AccordionItem value={group.groupKey} className="border-0">
-                    <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/30 transition-colors">
-                      <div className="flex items-center gap-3 flex-1">
-                        <div className={cn("p-2 rounded-lg", group.bgColor)}>
-                          <IconComponent
-                            className={cn("size-4", group.color)}
-                          />
-                        </div>
-                        <div className="text-left flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-sm">
-                              {t(`permissions.groups.${group.groupKey}.name`)}
-                            </span>
-                            <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                              {enabledCount}/{group.permissions.length}
-                            </span>
-                          </div>
-                          <p className="text-xs text-muted-foreground font-normal">
-                            {t(
-                              `permissions.groups.${group.groupKey}.description`,
-                            )}
-                          </p>
-                        </div>
-                      </div>
-                    </AccordionTrigger>
+                    <SectionCardHeader
+                      icon={IconComponent}
+                      title={
+                        <AccordionTrigger className="p-0 hover:no-underline">
+                          {t(`permissions.groups.${group.groupKey}.name`)}
+                        </AccordionTrigger>
+                      }
+                      description={t(
+                        `permissions.groups.${group.groupKey}.description`,
+                      )}
+                      actions={
+                        <span className="text-xs text-muted-foreground">
+                          {enabledCount}/{group.permissions.length}
+                        </span>
+                      }
+                    />
                     <AccordionContent className="pb-0 pt-0">
                       <div className="divide-y divide-border/50 border-t border-border/50">
                         {group.permissions.map((perm) => (
@@ -429,7 +412,7 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
                       </div>
                     </AccordionContent>
                   </AccordionItem>
-                </Card>
+                </SectionCard>
               );
             })}
           </Accordion>

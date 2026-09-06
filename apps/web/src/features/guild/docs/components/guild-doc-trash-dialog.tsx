@@ -133,7 +133,7 @@ export const GuildDocTrashDialog = ({
                 return (
                   <div
                     key={document.id}
-                    className="flex flex-col gap-3 rounded-md border border-border/80 bg-card/35 p-3 transition-colors hover:bg-card sm:flex-row sm:items-center sm:justify-between"
+                    className="flex flex-col gap-3 border-b border-border/70 p-3 last:border-b-0 transition-colors hover:bg-card sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div className="min-w-0 space-y-1">
                       <div className="flex min-w-0 items-center gap-2">

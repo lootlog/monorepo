@@ -35,7 +35,7 @@ export const BattlePanelH2hCard = ({
     <button
       type="button"
       className={cn(
-        "w-full rounded-lg border border-border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "w-full border-b border-border/70 p-3 last:border-b-0 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         getBattleResultRowClassName(record.lastBattleResult),
       )}
       onClick={() => onOpen(record.opponentId)}
@@ -77,7 +77,7 @@ export const BattlePanelH2hCard = ({
       </div>
 
       <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
-        <div className="rounded-md border border-border/70 bg-background p-2">
+        <div className="p-2">
           <p className={cn("font-semibold", BATTLE_TEXT_COLORS.result.won)}>
             {record.wins}
           </p>
@@ -85,7 +85,7 @@ export const BattlePanelH2hCard = ({
             {t("battlePanel.filters.results.won")}
           </p>
         </div>
-        <div className="rounded-md border border-border/70 bg-background p-2">
+        <div className="p-2">
           <p className={cn("font-semibold", BATTLE_TEXT_COLORS.result.lost)}>
             {record.losses}
           </p>
@@ -93,7 +93,7 @@ export const BattlePanelH2hCard = ({
             {t("battlePanel.filters.results.lost")}
           </p>
         </div>
-        <div className="rounded-md border border-border/70 bg-background p-2">
+        <div className="p-2">
           <p className="font-semibold">{record.totalBattles}</p>
           <p className="text-muted-foreground">
             {t("battlePanel.statistics.columns.total")}
@@ -102,7 +102,7 @@ export const BattlePanelH2hCard = ({
       </div>
 
       {showRatingDelta && (
-        <div className="mt-2 rounded-md border border-border/70 bg-background p-2 text-xs">
+        <div className="mt-2 p-2 text-xs">
           <span className="text-muted-foreground">
             {t("battlePanel.statistics.columns.totalRatingDelta")}:
           </span>{" "}

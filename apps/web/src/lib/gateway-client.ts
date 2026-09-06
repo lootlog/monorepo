@@ -55,6 +55,8 @@ const groupPresence = (
 
 const serverEventNames: Partial<Record<ServerEvent["type"], GatewayEvent>> = {
   "chat.created": GatewayEvent.CHAT_MESSAGE,
+  "feed.entry": GatewayEvent.FEED_ENTRY,
+  "kills.changed": GatewayEvent.KILLS_CHANGED,
   "loot.created": GatewayEvent.LOOTS_CREATE,
   "loot.share-updated": GatewayEvent.LOOTS_SHARE_UPDATE,
   "timer.created": GatewayEvent.TIMERS_CREATE,

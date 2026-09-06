@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/common/page-header";
 import { createBattlePanelCursorActions } from "../components/battle-panel-cursor-actions";
 import { PlayerTile } from "@/components/battle";
 import { LevelRangeFilter } from "@/components/filters/level-range-filter";
@@ -26,7 +27,6 @@ import {
 } from "@/features/user/battle-panel/battle-panel-search";
 import { useBattlesControllerGetPlayerVsPlayerBattles } from "@lootlog/client/battlelog";
 import { getRouteErrorMessage } from "@/lib/router/route-errors";
-import { Card } from "@lootlog/ui/components/card";
 import { Label } from "@lootlog/ui/components/label";
 import { Separator } from "@lootlog/ui/components/separator";
 import { Table } from "@lootlog/ui/components/table";
@@ -389,9 +389,26 @@ export function PlayerVsPlayerFullPage() {
 
       <div className="flex h-full w-full flex-col overflow-hidden bg-background">
         <div className="px-3 pb-0 pt-3">
-          <Card className="gap-3 border-border bg-card p-4">
-            <div className="flex items-center gap-3">
-              {myCharacter ? (
+          <PageHeader
+            icon={Swords}
+            title={
+              <>
+                {myCharacter?.name ??
+                  t(
+                    "battlePanel.statistics.playerVsPlayer.characterFallback",
+                  )}{" "}
+                {t("battleUi.overview.vs")} {opponentName}
+              </>
+            }
+            description={
+              myCharacter
+                ? t("battlePanel.statistics.playerVsPlayer.subtitle", {
+                    level: myCharacter.lvl,
+                  })
+                : undefined
+            }
+            metadata={
+              myCharacter ? (
                 <PlayerTile
                   player={{
                     name: myCharacter.name,
@@ -400,29 +417,9 @@ export function PlayerVsPlayerFullPage() {
                     icon: myCharacter.icon,
                   }}
                 />
-              ) : (
-                <div className="rounded-lg bg-primary/10 p-2.5">
-                  <Swords className="size-4 text-primary" />
-                </div>
-              )}
-              <div className="min-w-0 flex-1">
-                <h2 className="text-base font-semibold leading-tight">
-                  {myCharacter?.name ??
-                    t(
-                      "battlePanel.statistics.playerVsPlayer.characterFallback",
-                    )}{" "}
-                  {t("battleUi.overview.vs")} {opponentName}
-                </h2>
-                {myCharacter && (
-                  <p className="text-xs text-muted-foreground">
-                    {t("battlePanel.statistics.playerVsPlayer.subtitle", {
-                      level: myCharacter.lvl,
-                    })}
-                  </p>
-                )}
-              </div>
-            </div>
-          </Card>
+              ) : undefined
+            }
+          />
         </div>
 
         <div className="flex min-h-0 flex-1 overflow-hidden">

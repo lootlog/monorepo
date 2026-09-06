@@ -1,4 +1,4 @@
-import { Card } from "@lootlog/ui/components/card";
+import { SectionCard as Card } from "@/components/common/section-card/section-card";
 import { cn } from "cn";
 import { Flag, Trophy, type LucideIcon } from "lucide-react";
 import type { FC } from "react";

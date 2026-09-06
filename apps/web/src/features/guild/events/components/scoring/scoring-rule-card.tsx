@@ -65,7 +65,7 @@ export const ScoringRuleCard = ({
     <Collapsible open={open} onOpenChange={setOpen}>
       <div
         className={cn(
-          "rounded-lg border bg-background transition-all overflow-hidden",
+          "border-b border-border/70 bg-transparent transition-all overflow-hidden last:border-b-0",
           !isEnabled && "opacity-40",
           open && "ring-1 ring-border/80",
         )}

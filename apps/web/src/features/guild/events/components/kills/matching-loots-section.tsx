@@ -1,3 +1,5 @@
+import { SectionCard } from "@/components/common/section-card/section-card";
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { ChevronRight, Frown, Package } from "lucide-react";
@@ -21,27 +23,27 @@ export const MatchingLootsSection = ({
   const { t } = useTranslation();
 
   return (
-    <section
+    <SectionCard
       data-testid="matching-loots-card"
-      className="min-w-0 overflow-hidden rounded-2xl border border-border bg-card"
+      className="min-w-0 overflow-hidden bg-card"
     >
-      <header className="flex min-h-12 items-center justify-between gap-3 border-b border-border/70 px-3 py-2">
-        <h2 className="flex min-w-0 items-center gap-2 text-sm font-semibold">
-          <Package className="size-4 shrink-0 text-primary" />
-          <span className="truncate">
-            {t("events.killDetail.matchingLoots")}
-          </span>
-        </h2>
-        <Link
-          to="/$guildId"
-          params={{ guildId }}
-          search={{ npcs: npcName }}
-          className="inline-flex h-8 shrink-0 items-center gap-1 rounded-sm text-xs font-semibold text-muted-foreground outline-none transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring/50"
-        >
-          {t("events.loots.showAll")}
-          <ChevronRight className="size-3.5" />
-        </Link>
-      </header>
+      <SectionCardHeader
+        icon={Package}
+        title={t("events.killDetail.matchingLoots")}
+        actions={
+          <>
+            <Link
+              to="/$guildId"
+              params={{ guildId }}
+              search={{ npcs: npcName }}
+              className="inline-flex h-8 shrink-0 items-center gap-1 rounded-sm text-xs font-semibold text-muted-foreground outline-none transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring/50"
+            >
+              {t("events.loots.showAll")}
+              <ChevronRight className="size-3.5" />
+            </Link>
+          </>
+        }
+      />
 
       {isLoading ? (
         <div className="divide-y divide-border/70">
@@ -63,6 +65,6 @@ export const MatchingLootsSection = ({
           ))}
         </div>
       )}
-    </section>
+    </SectionCard>
   );
 };

@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/common/page-header";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
@@ -83,61 +84,59 @@ export const KillDetailSummary = ({
   );
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-border/80 bg-card">
-      <div className="flex min-w-0 items-center gap-3 p-3 md:px-4">
-        {kill.heroNpc.npcIcon ? (
-          <NpcTile
-            className="flex w-10 shrink-0 items-center justify-center"
-            npc={{
-              id: kill.heroNpc.npcId ?? 0,
-              name: kill.heroNpc.npcName,
-              icon: kill.heroNpc.npcIcon,
-            }}
-          />
-        ) : (
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-destructive/10 ring-1 ring-border/70">
-            <Skull className="size-4 text-destructive" />
-          </div>
-        )}
-        <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-medium leading-none text-muted-foreground">
-            {t("events.killDetail.title")}
-          </p>
-          <h1 className="mt-1 truncate text-base font-semibold leading-none">
-            {kill.heroNpc.npcName}
-          </h1>
-          <p className="mt-1 truncate text-xs leading-none tabular-nums text-muted-foreground">
-            {formattedKillTime}
-          </p>
-        </div>
-        {kill.isManualClose ? (
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <span
-                  className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 text-xs font-medium text-amber-500"
-                  tabIndex={0}
-                  aria-label={t("events.killDetail.manualCloseTitle")}
-                >
-                  <Hand className="size-3.5" />
-                  <span className="hidden sm:inline">
-                    {t("events.kills.manualCloseLabel")}
-                  </span>
-                </span>
-              }
+    <PageHeader
+      title={kill.heroNpc.npcName}
+      status={
+        <>
+          {kill.heroNpc.npcIcon ? (
+            <NpcTile
+              className="flex w-10 shrink-0 items-center justify-center"
+              npc={{
+                id: kill.heroNpc.npcId ?? 0,
+                name: kill.heroNpc.npcName,
+                icon: kill.heroNpc.npcIcon,
+              }}
             />
-            <TooltipContent className="max-w-72">
-              <p className="font-medium">
-                {t("events.killDetail.manualCloseTitle")}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {t("events.killDetail.manualCloseDescription")}
-              </p>
-            </TooltipContent>
-          </Tooltip>
-        ) : null}
-      </div>
-
+          ) : (
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-destructive/10 ring-1 ring-border/70">
+              <Skull className="size-4 text-destructive" />
+            </div>
+          )}
+        </>
+      }
+      description={t("events.killDetail.title")}
+      metadata={formattedKillTime}
+      actions={
+        <>
+          {kill.isManualClose ? (
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <span
+                    className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 text-xs font-medium text-amber-500"
+                    tabIndex={0}
+                    aria-label={t("events.killDetail.manualCloseTitle")}
+                  >
+                    <Hand className="size-3.5" />
+                    <span className="hidden sm:inline">
+                      {t("events.kills.manualCloseLabel")}
+                    </span>
+                  </span>
+                }
+              />
+              <TooltipContent className="max-w-72">
+                <p className="font-medium">
+                  {t("events.killDetail.manualCloseTitle")}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {t("events.killDetail.manualCloseDescription")}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          ) : null}
+        </>
+      }
+    >
       <dl className="grid grid-cols-3 border-t border-border/70 bg-muted/20 md:grid-cols-6">
         <div className="min-w-0 border-border/70 px-3 py-2.5">
           <dt className="truncate text-[11px] leading-tight text-muted-foreground">
@@ -253,6 +252,6 @@ export const KillDetailSummary = ({
           </dd>
         </div>
       </dl>
-    </section>
+    </PageHeader>
   );
 };

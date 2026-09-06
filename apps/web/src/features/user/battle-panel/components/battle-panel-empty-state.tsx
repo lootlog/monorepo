@@ -1,4 +1,5 @@
-import { Card, CardContent } from "@lootlog/ui/components/card";
+import { SectionCard } from "@/components/common/section-card/section-card";
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import {
   Empty,
   EmptyDescription,
@@ -45,8 +46,8 @@ export const BattlePanelEmptyState = ({
   }
 
   return (
-    <Card className="border-border bg-card p-0">
-      <CardContent className="p-0">{content}</CardContent>
-    </Card>
+    <SectionCard className="border-border bg-card p-0">
+      <SectionCardContent className="p-0">{content}</SectionCardContent>
+    </SectionCard>
   );
 };

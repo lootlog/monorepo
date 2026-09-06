@@ -1,5 +1,6 @@
 import { Button } from "@lootlog/ui/components/button";
-import { Card } from "@lootlog/ui/components/card";
+import { PageHeader } from "@/components/common/page-header";
+import { SectionCardFooter } from "@/components/common/section-card/section-card-footer";
 import { ShieldAlert } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -23,31 +24,23 @@ export const AuthenticationRecovery = ({
       aria-live="polite"
       className="flex h-full min-h-64 items-center justify-center bg-background/50 px-3 py-3"
     >
-      <Card className="w-full max-w-lg gap-4 border-border bg-card/60 p-4 backdrop-blur-sm">
-        <div className="flex items-start gap-3">
-          <div className="rounded-xl bg-amber-500/10 p-2.5 shadow-inner shadow-amber-500/10">
-            <ShieldAlert aria-hidden="true" className="size-4 text-amber-500" />
-          </div>
-          <div className="flex min-w-0 flex-1 flex-col gap-3">
-            <div>
-              <h2 className="text-base font-semibold leading-tight">
-                {t(`${translationKey}.title`)}
-              </h2>
-              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                {t(`${translationKey}.description`)}
-              </p>
-            </div>
-            <Button
-              className="w-full justify-center sm:w-auto"
-              disabled={actionPending}
-              onClick={onAction}
-              size="sm"
-            >
-              {t(`${translationKey}.button`)}
-            </Button>
-          </div>
-        </div>
-      </Card>
+      <PageHeader
+        icon={ShieldAlert}
+        className="w-full max-w-lg"
+        title={t(`${translationKey}.title`)}
+        description={t(`${translationKey}.description`)}
+      >
+        <SectionCardFooter>
+          <Button
+            className="w-full sm:w-auto"
+            disabled={actionPending}
+            onClick={onAction}
+            size="sm"
+          >
+            {t(`${translationKey}.button`)}
+          </Button>
+        </SectionCardFooter>
+      </PageHeader>
     </div>
   );
 };

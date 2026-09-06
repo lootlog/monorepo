@@ -342,7 +342,7 @@ export const NotificationTargetDialog = ({
                 name="active"
                 render={({ field }) => (
                   <FormItem className="flex flex-col gap-2">
-                    <div className="flex flex-row items-center justify-between rounded-xl border border-border/70 bg-background px-3 py-3">
+                    <div className="flex flex-row items-center justify-between border-b border-border/70 py-3">
                       <div>
                         <FormLabel className="text-sm font-medium">
                           {t("settings.notifications.fields.active")}

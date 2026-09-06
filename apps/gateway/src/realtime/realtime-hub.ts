@@ -1,4 +1,9 @@
 import {
+  canViewLoot,
+  type LootVisibilityNpc,
+} from "@lootlog/domain/loot-visibility";
+import { Permission } from "@lootlog/schema/permissions";
+import {
   encodeRealtimeFrame,
   tryDecodeRealtimeFrame,
 } from "@lootlog/protocol/realtime/codec";
@@ -192,11 +197,16 @@ export class RealtimeHub {
     scope: Scope,
     event: Event,
     publicationId?: string,
+    options: {
+      readonly recipientPlatform?: "web-app";
+      readonly sourceNpcs?: ReadonlyArray<LootVisibilityNpc>;
+    } = {},
   ): Promise<void> {
     const message = this.createFederatedMessage({
       id: publicationId
         ? JSON.stringify([getScopeKey(scope), event.type, publicationId])
         : undefined,
+      ...options,
       scopeKey: getScopeKey(scope),
       scope,
       frame: event,
@@ -311,6 +321,7 @@ export class RealtimeHub {
   }
 
   private createFederatedMessage(options: {
+    readonly sourceNpcs?: ReadonlyArray<LootVisibilityNpc>;
     readonly id?: string;
     readonly scopeKey?: string;
     readonly scope?: Scope;
@@ -328,6 +339,7 @@ export class RealtimeHub {
     return {
       id: options.id ?? crypto.randomUUID(),
       sourceInstanceId: this.instanceId,
+      sourceNpcs: options.sourceNpcs,
       scopeKey: options.scopeKey,
       scope: options.scope,
       scopes: options.scopes,
@@ -396,12 +408,70 @@ export class RealtimeHub {
       if (!(matchesUser || matchesDiscord || matchesScope || matchesAnyScope))
         continue;
       if (!this.matchesPresenceAudience(socket, message)) continue;
+      if (!this.canReadSourceEvent(socket.data, frame, message)) continue;
       const encoded =
         socket.data.frameEncoding === "json"
           ? (jsonFrame ??= JSON.stringify(frame))
           : (binaryFrame ??= encodeRealtimeFrame(frame));
       this.send(socket, encoded);
     }
+  }
+
+  private canReadSourceEvent(
+    session: SessionData,
+    event: Event,
+    message: FederatedRealtimeMessage,
+  ): boolean {
+    if (
+      event.type !== "kills.changed" &&
+      event.type !== "loot.created" &&
+      event.type !== "feed.entry"
+    )
+      return true;
+    if (
+      (event.type === "kills.changed" || event.type === "feed.entry") &&
+      session.platform !== "web-app"
+    )
+      return false;
+    const guild = session.guilds.find(
+      (entry) =>
+        entry.guild.id ===
+        (event.type === "feed.entry"
+          ? event.data.guild.id
+          : event.data.guildId),
+    );
+    if (!guild) return false;
+    const permissions =
+      guild.guild.ownerId === session.discordId
+        ? [Permission.OWNER]
+        : guild.roles.flatMap((role) => role.permissions);
+    // Kill aggregates explicitly allow administrators; loot visibility only bypasses for owners.
+    if (
+      (event.type === "kills.changed" ||
+        (event.type === "feed.entry" && event.data.type === "kill")) &&
+      permissions.some(
+        (permission) =>
+          permission === Permission.ADMIN || permission === Permission.OWNER,
+      )
+    )
+      return true;
+    const npcs =
+      event.type !== "loot.created"
+        ? (message.sourceNpcs ?? [])
+        : event.data.npcs.map((npc) => ({
+            level: npc.lvl ?? null,
+            type: typeof npc.type === "string" ? npc.type : null,
+          }));
+    return canViewLoot({
+      permissions,
+      roles: guild.roles.map((role) => ({
+        id: role.id,
+        levelFrom: role.lvlRangeFrom,
+        levelTo: role.lvlRangeTo,
+        permissions: role.permissions,
+      })),
+      npcs,
+    });
   }
 
   private matchesRecipient(

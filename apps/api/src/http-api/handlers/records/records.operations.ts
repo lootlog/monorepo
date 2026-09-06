@@ -1,3 +1,10 @@
+import type { UserFeedResponse } from "#src/contracts/users/feed-schemas";
+import type {
+  UserKillAnalyticsQuery,
+  UserKillAnalyticsResponse,
+  UserKillActivityQuery,
+  UserKillActivityResponse,
+} from "#src/contracts/kills/analytics-schemas";
 import { statusCodeResponse } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
@@ -118,6 +125,17 @@ export class RecordsData extends Context.Service<
       caller: AuthorizedGuildCaller,
       query: GuildKillStatsQuery,
     ) => DataEffect<GuildKillStatsResponse>;
+    readonly getUserFeed: (
+      caller: AuthenticatedCaller,
+    ) => DataEffect<UserFeedResponse>;
+    readonly getUserKillAnalytics: (
+      caller: AuthenticatedCaller,
+      query: UserKillAnalyticsQuery,
+    ) => DataEffect<UserKillAnalyticsResponse>;
+    readonly getUserKillActivity: (
+      caller: AuthenticatedCaller,
+      query: UserKillActivityQuery,
+    ) => DataEffect<UserKillActivityResponse>;
     readonly getUserKillStats: (
       caller: AuthenticatedCaller,
       query: UserKillStatsQuery,
@@ -445,3 +463,23 @@ export const toRecordsHttpResponse = <A, R>(
     RecordsNotFound: statusCodeResponse,
     RecordsDataError: (error) => applicationErrorResponse(error.cause),
   });
+
+export const getUserKillAnalytics = Effect.fn("kills.getUserKillAnalytics")(
+  function* (query: UserKillAnalyticsQuery) {
+    const caller = yield* requireCaller;
+    return yield* data((service) =>
+      service.getUserKillAnalytics(caller, query),
+    );
+  },
+);
+export const getUserKillActivity = Effect.fn("kills.getUserKillActivity")(
+  function* (query: UserKillActivityQuery) {
+    const caller = yield* requireCaller;
+    return yield* data((service) => service.getUserKillActivity(caller, query));
+  },
+);
+
+export const getUserFeed = Effect.fn("users.feed")(function* () {
+  const caller = yield* requireCaller;
+  return yield* data((service) => service.getUserFeed(caller));
+});

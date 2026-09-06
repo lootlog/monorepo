@@ -1,9 +1,10 @@
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { Trophy, ChevronRight } from "lucide-react";
 import { Tabs, TabsTrigger } from "@lootlog/ui/components/tabs";
 import type { EventRanking, EventHeroNpc } from "../../types/api";
-import { Card } from "@lootlog/ui/components/card";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import { useState } from "react";
 import { EventScrollableTabsList } from "../shared/event-scrollable-tabs-list";
 import { EventRankingTable } from "./event-ranking-table";
@@ -56,23 +57,25 @@ export const EventRankingPreview = ({
   }
 
   return (
-    <Card className="gap-0 overflow-hidden border-border bg-card p-0">
-      <header className="flex min-h-12 items-center justify-between gap-3 border-b border-border/70 px-3 py-2">
-        <h2 className="flex min-w-0 items-center gap-2 text-sm font-semibold">
-          <Trophy className="size-4 shrink-0 text-primary" />
-          <span className="truncate">{t("events.ranking.title")}</span>
-        </h2>
-        {rankings.length > 0 ? (
-          <Link
-            to="/$guildId/events/$eventId/ranking"
-            params={{ guildId, eventId }}
-            className="inline-flex h-8 shrink-0 items-center gap-1 rounded-sm text-xs font-semibold text-muted-foreground outline-none transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring/50"
-          >
-            {t("events.ranking.viewAll")}
-            <ChevronRight className="size-3.5" />
-          </Link>
-        ) : null}
-      </header>
+    <SectionCard className="gap-0 overflow-hidden border-border bg-card p-0">
+      <SectionCardHeader
+        icon={Trophy}
+        title={t("events.ranking.title")}
+        actions={
+          <>
+            {rankings.length > 0 ? (
+              <Link
+                to="/$guildId/events/$eventId/ranking"
+                params={{ guildId, eventId }}
+                className="inline-flex h-8 shrink-0 items-center gap-1 rounded-sm text-xs font-semibold text-muted-foreground outline-none transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring/50"
+              >
+                {t("events.ranking.viewAll")}
+                <ChevronRight className="size-3.5" />
+              </Link>
+            ) : null}
+          </>
+        }
+      />
 
       {heroNpcs.length > 1 && (
         <Tabs
@@ -112,6 +115,6 @@ export const EventRankingPreview = ({
           />
         )}
       </div>
-    </Card>
+    </SectionCard>
   );
 };

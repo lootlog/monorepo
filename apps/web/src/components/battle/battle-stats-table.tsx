@@ -1,4 +1,4 @@
-import { Card } from "@lootlog/ui/components/card";
+import { SectionCard as Card } from "@/components/common/section-card/section-card";
 import { ExpandableDataTable } from "./expandable-data-table";
 import { getBattleStatsTableColumns } from "./battle-stats-table-columns-full";
 import { OneVsOneStatsTable } from "./one-vs-one-stats-table";

@@ -1,4 +1,4 @@
-import { Card } from "@lootlog/ui/components/card";
+import { SectionCard as Card } from "@/components/common/section-card/section-card";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 
 export const SidebarLayoutSkeleton = () => {

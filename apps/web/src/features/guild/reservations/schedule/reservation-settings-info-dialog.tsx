@@ -1,3 +1,4 @@
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
 import {
   CalendarClock,
   Clock3,
@@ -31,8 +32,7 @@ export const ReservationSettingsInfoDialog = ({
 
   const sections = [
     {
-      icon: <Clock3 className="size-4 text-emerald-500" />,
-      iconBg: "bg-emerald-500/10",
+      icon: Clock3,
       title: t("reservations.schedule.infoDialog.sections.minDuration.title"),
       value: t("reservations.schedule.infoDialog.values.minutes", {
         minutes: settings.reservationMinDurationMinutes,
@@ -42,8 +42,7 @@ export const ReservationSettingsInfoDialog = ({
       ),
     },
     {
-      icon: <Gauge className="size-4 text-primary" />,
-      iconBg: "bg-primary/10",
+      icon: Gauge,
       title: t("reservations.schedule.infoDialog.sections.maxDuration.title"),
       value: t("reservations.schedule.infoDialog.values.minutes", {
         minutes: settings.reservationMaxDurationMinutes,
@@ -53,8 +52,7 @@ export const ReservationSettingsInfoDialog = ({
       ),
     },
     {
-      icon: <Ruler className="size-4 text-blue-500" />,
-      iconBg: "bg-blue-500/10",
+      icon: Ruler,
       title: t("reservations.schedule.infoDialog.sections.granularity.title"),
       value: t("reservations.schedule.infoDialog.values.minutes", {
         minutes: settings.reservationTimeGranularityMinutes,
@@ -64,8 +62,7 @@ export const ReservationSettingsInfoDialog = ({
       ),
     },
     {
-      icon: <CalendarClock className="size-4 text-indigo-500" />,
-      iconBg: "bg-indigo-500/10",
+      icon: CalendarClock,
       title: t("reservations.schedule.infoDialog.sections.maxAdvance.title"),
       value: t("reservations.schedule.infoDialog.values.days", {
         days: settings.reservationMaxAdvanceDays,
@@ -75,8 +72,7 @@ export const ReservationSettingsInfoDialog = ({
       ),
     },
     {
-      icon: <ListChecks className="size-4 text-amber-500" />,
-      iconBg: "bg-amber-500/10",
+      icon: ListChecks,
       title: t("reservations.schedule.infoDialog.sections.activeLimit.title"),
       value: t("reservations.schedule.infoDialog.values.reservations", {
         count: settings.reservationActiveLimitPerSpot,
@@ -108,22 +104,18 @@ export const ReservationSettingsInfoDialog = ({
         </DialogHeader>
         <div className="flex flex-col gap-4 px-5 pt-2 pb-5">
           {sections.map((section) => (
-            <div key={section.title} className="flex items-start gap-3">
-              <div className={`shrink-0 rounded-xl p-2.5  ${section.iconBg}`}>
-                {section.icon}
-              </div>
-              <div className="pt-0.5">
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <p className="text-sm font-medium">{section.title}</p>
-                  <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-semibold text-muted-foreground">
+            <section key={section.title}>
+              <SectionCardHeader
+                icon={section.icon}
+                title={section.title}
+                description={section.description}
+                actions={
+                  <span className="text-xs font-semibold text-muted-foreground">
                     {section.value}
                   </span>
-                </div>
-                <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
-                  {section.description}
-                </p>
-              </div>
-            </div>
+                }
+              />
+            </section>
           ))}
 
           <div className="mt-1 rounded-md border border-border/70 bg-muted/30 p-3">

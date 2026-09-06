@@ -35,7 +35,7 @@ export const BattlePanelPvpBattleCard = ({
     <button
       type="button"
       className={cn(
-        "w-full rounded-lg border border-border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "w-full border-b border-border/70 p-3 last:border-b-0 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         getBattleResultRowClassName(result),
       )}
       onClick={() => onBattleClick(battle.battleId)}

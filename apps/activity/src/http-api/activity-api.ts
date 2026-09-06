@@ -1,3 +1,4 @@
+import { UsersGroup } from "./contracts/users/api.js";
 /** Authoritative composition root for the activity HTTP contract. */
 import { HttpApi, OpenApi } from "effect/unstable/httpapi";
 import { HealthGroup } from "./contracts/health/api.js";
@@ -8,4 +9,4 @@ export class ActivityApi extends HttpApi.make("ActivityApi")
   .annotate(OpenApi.Version, "1.0")
   .annotate(OpenApi.Description, "The Activity Logger API documentation")
   .annotate(OpenApi.Servers, [])
-  .add(HealthGroup, GuildsGroup) {}
+  .add(HealthGroup, GuildsGroup, UsersGroup) {}

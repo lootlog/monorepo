@@ -44,7 +44,7 @@ export function BattleDurationStatsCard({
         <div className="grid grid-cols-2 gap-4 min-h-[160px] items-center">
           <div
             className={cn(
-              "text-center p-4 rounded-lg border",
+              "text-center p-3",
               BATTLE_SURFACE_COLORS.metric.positiveBox,
             )}
           >
@@ -76,7 +76,7 @@ export function BattleDurationStatsCard({
 
           <div
             className={cn(
-              "text-center p-4 rounded-lg border",
+              "text-center p-3",
               BATTLE_SURFACE_COLORS.metric.negativeBox,
             )}
           >

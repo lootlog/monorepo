@@ -1,7 +1,8 @@
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { PageHeader } from "@/components/common/page-header";
 import { useTimerExpiry } from "./use-timer-expiry";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Card } from "@lootlog/ui/components/card";
 import { Button } from "@lootlog/ui/components/button";
 import {
   Empty,
@@ -118,60 +119,62 @@ export const Timers = () => {
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
       <div className="px-3 pt-3">
-        <Card className="gap-2 border-border bg-card p-2">
-          <div className="flex items-center gap-2">
-            <SearchInput
-              placeholder={t("timers.searchPlaceholder")}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="h-9"
-              wrapperClassName="flex-1"
-            />
-            {isMobile ? (
-              <WorldSwitcher />
-            ) : (
-              <div className="flex shrink-0 items-center border-l border-border pl-2">
+        <PageHeader title={t("layout.navigation.timers")}>
+          <SectionCardContent>
+            <div className="flex items-center gap-2">
+              <SearchInput
+                placeholder={t("timers.searchPlaceholder")}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="h-9"
+                wrapperClassName="flex-1"
+              />
+              {isMobile ? (
                 <WorldSwitcher />
+              ) : (
+                <div className="flex shrink-0 items-center border-l border-border pl-2">
+                  <WorldSwitcher />
+                </div>
+              )}
+              <div className="flex items-center gap-1">
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <Button
+                        onClick={() => setViewMode("list")}
+                        variant={getViewModeVariant(viewMode === "list")}
+                        size="icon"
+                        className="h-8 w-8"
+                      >
+                        <List className="h-4 w-4" />
+                      </Button>
+                    }
+                  />
+                  <TooltipContent side="bottom">
+                    <p>{t("timers.view.list")}</p>
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <Button
+                        onClick={() => setViewMode("grid")}
+                        variant={getViewModeVariant(viewMode === "grid")}
+                        size="icon"
+                        className="h-8 w-8"
+                      >
+                        <Grid2X2 className="h-4 w-4" />
+                      </Button>
+                    }
+                  />
+                  <TooltipContent side="bottom">
+                    <p>{t("timers.view.grid")}</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
-            )}
-            <div className="flex items-center gap-1">
-              <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <Button
-                      onClick={() => setViewMode("list")}
-                      variant={getViewModeVariant(viewMode === "list")}
-                      size="icon"
-                      className="h-8 w-8"
-                    >
-                      <List className="h-4 w-4" />
-                    </Button>
-                  }
-                />
-                <TooltipContent side="bottom">
-                  <p>{t("timers.view.list")}</p>
-                </TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <Button
-                      onClick={() => setViewMode("grid")}
-                      variant={getViewModeVariant(viewMode === "grid")}
-                      size="icon"
-                      className="h-8 w-8"
-                    >
-                      <Grid2X2 className="h-4 w-4" />
-                    </Button>
-                  }
-                />
-                <TooltipContent side="bottom">
-                  <p>{t("timers.view.grid")}</p>
-                </TooltipContent>
-              </Tooltip>
             </div>
-          </div>
-        </Card>
+          </SectionCardContent>
+        </PageHeader>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col pt-3">

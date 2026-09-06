@@ -117,7 +117,7 @@ const rangeConditions = (
     : undefined,
 ];
 
-const condition = (
+export const buildKillStatsCondition = (
   columns: FilterColumns,
   filter: KillStatsFilter,
 ): SQL | undefined =>
@@ -126,10 +126,12 @@ const condition = (
     ...npcConditions(columns, filter),
     ...rangeConditions(columns, filter),
     filter.AND
-      ? and(...filter.AND.map((entry) => condition(columns, entry)))
+      ? and(
+          ...filter.AND.map((entry) => buildKillStatsCondition(columns, entry)),
+        )
       : undefined,
     filter.OR
-      ? or(...filter.OR.map((entry) => condition(columns, entry)))
+      ? or(...filter.OR.map((entry) => buildKillStatsCondition(columns, entry)))
       : undefined,
   );
 
@@ -247,7 +249,7 @@ export const makeKillStatsPersistence = (
             memberTable,
             eq(memberTable.id, npcKillStatsBucketTable.memberId),
           )
-          .where(condition(memberColumns(true), filter))
+          .where(buildKillStatsCondition(memberColumns(true), filter))
           .pipe(
             Effect.map((rows) =>
               rows.map(({ stat, member }) => ({ ...stat, member })),
@@ -261,7 +263,7 @@ export const makeKillStatsPersistence = (
         database
           .select()
           .from(npcKillStatsBucketTable)
-          .where(condition(memberColumns(true), filter)),
+          .where(buildKillStatsCondition(memberColumns(true), filter)),
       );
     }
     if (includeMember) {
@@ -274,7 +276,7 @@ export const makeKillStatsPersistence = (
             memberTable,
             eq(memberTable.id, npcKillStatsTable.memberId),
           )
-          .where(condition(memberColumns(false), filter))
+          .where(buildKillStatsCondition(memberColumns(false), filter))
           .pipe(
             Effect.map((rows) =>
               rows.map(({ stat, member }) => ({ ...stat, member })),
@@ -287,7 +289,7 @@ export const makeKillStatsPersistence = (
       database
         .select()
         .from(npcKillStatsTable)
-        .where(condition(memberColumns(false), filter)),
+        .where(buildKillStatsCondition(memberColumns(false), filter)),
     );
   }
 
@@ -298,11 +300,11 @@ export const makeKillStatsPersistence = (
         ? database
             .select()
             .from(guildKillSummaryBucketTable)
-            .where(condition(guildColumns(true), filter))
+            .where(buildKillStatsCondition(guildColumns(true), filter))
         : database
             .select()
             .from(guildKillSummaryTable)
-            .where(condition(guildColumns(false), filter)),
+            .where(buildKillStatsCondition(guildColumns(false), filter)),
     );
 
   const topGuildNpcs = (
@@ -325,7 +327,7 @@ export const makeKillStatsPersistence = (
             .as("uniqueKills"),
       })
       .from(table)
-      .where(condition(guildColumns(bucket), filter))
+      .where(buildKillStatsCondition(guildColumns(bucket), filter))
       .orderBy(table.npcId, desc(table.npcLvl), table.id)
       .as("ranked");
     const query = database
@@ -363,7 +365,7 @@ export const makeKillStatsPersistence = (
       })
       .from(table)
       .innerJoin(memberTable, eq(memberTable.id, table.memberId))
-      .where(condition(memberColumns(bucket), filter))
+      .where(buildKillStatsCondition(memberColumns(bucket), filter))
       .groupBy(table.npcType, table.memberId, memberTable.id)
       .as("ranked");
     const sqlLimit = Math.trunc(limit);
@@ -402,7 +404,7 @@ export const makeKillStatsPersistence = (
         })
         .from(table)
         .innerJoin(memberTable, eq(memberTable.id, table.memberId))
-        .where(condition(memberColumns(bucket), filter))
+        .where(buildKillStatsCondition(memberColumns(bucket), filter))
         .groupBy(table.memberId, memberTable.id)
         .orderBy(desc(participationCount), table.memberId)
         .limit(limit),
@@ -424,7 +426,7 @@ export const makeKillStatsPersistence = (
         })
         .from(table)
         .innerJoin(memberTable, eq(memberTable.id, table.memberId))
-        .where(condition(memberColumns(bucket), filter))
+        .where(buildKillStatsCondition(memberColumns(bucket), filter))
         .orderBy(desc(table.npcLvl), table.id)
         .limit(1)
         .pipe(Effect.map((rows) => rows[0] ?? null)),
@@ -442,7 +444,7 @@ export const makeKillStatsPersistence = (
           memberKills: sum(table.memberKills).mapWith(Number),
         })
         .from(table)
-        .where(condition(memberColumns(bucket), filter))
+        .where(buildKillStatsCondition(memberColumns(bucket), filter))
         .groupBy(table.memberId, table.npcType)
         .pipe(
           Effect.map((rows) =>
@@ -466,7 +468,7 @@ export const makeKillStatsPersistence = (
           uniqueKills: sum(table.uniqueKills).mapWith(Number),
         })
         .from(table)
-        .where(condition(guildColumns(bucket), filter))
+        .where(buildKillStatsCondition(guildColumns(bucket), filter))
         .groupBy(table.npcType)
         .pipe(
           Effect.map((rows) =>

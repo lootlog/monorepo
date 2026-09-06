@@ -1,3 +1,6 @@
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import { getGuildSettingsErrorMessage } from "../get-guild-settings-error-message";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -7,14 +10,13 @@ import {
   FormDescription,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from "@lootlog/ui/components/form";
 import { Input } from "@lootlog/ui/components/input";
 import { generateSlug } from "@/utils/generate-slug";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Card } from "@lootlog/ui/components/card";
+
 import { Link2 } from "lucide-react";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
@@ -120,23 +122,14 @@ export const GeneralForm = () => {
         className="w-full mx-auto pb-24"
       >
         <div className="p-3">
-          <Card className="bg-card  border-border p-0 gap-0">
-            <div className="p-3">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <Link2 className="size-4 text-primary" />
-                </div>
-                <div>
-                  <FormLabel className="text-sm font-semibold">
-                    {t("settings.general.vanityUrl.title")}
-                  </FormLabel>
-                  <p className="text-xs text-muted-foreground">
-                    {t("settings.general.vanityUrl.description")}
-                  </p>
-                </div>
-              </div>
-
-              <div className="ml-11">
+          <SectionCard>
+            <SectionCardHeader
+              title={t("settings.general.vanityUrl.title")}
+              description={t("settings.general.vanityUrl.description")}
+              icon={Link2}
+            />
+            <SectionCardContent>
+              <div>
                 <FormField
                   control={form.control}
                   name="vanityUrl"
@@ -166,8 +159,8 @@ export const GeneralForm = () => {
                   )}
                 />
               </div>
-            </div>
-          </Card>
+            </SectionCardContent>
+          </SectionCard>
         </div>
 
         {guild && (

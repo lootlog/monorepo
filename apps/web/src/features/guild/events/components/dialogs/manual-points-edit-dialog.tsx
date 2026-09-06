@@ -101,13 +101,13 @@ export const ManualPointsEditDialog = ({
             />
           </div>
           <div className="grid grid-cols-3 gap-2 text-sm">
-            <div className="rounded-md border border-border/60 bg-muted/30 px-3 py-2">
+            <div className="px-3 py-2">
               <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
                 {t("events.points.currentValueLabel")}
               </p>
               <p className="font-semibold">{formatPoints(currentPoints)}</p>
             </div>
-            <div className="rounded-md border border-border/60 bg-muted/30 px-3 py-2">
+            <div className="px-3 py-2">
               <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
                 {t("events.points.deltaPreviewLabel")}
               </p>
@@ -117,7 +117,7 @@ export const ManualPointsEditDialog = ({
                   : formatSignedPoints(parsedPointsDelta)}
               </p>
             </div>
-            <div className="rounded-md border border-border/60 bg-primary/5 px-3 py-2">
+            <div className="px-3 py-2">
               <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
                 {t("events.points.resultValueLabel")}
               </p>

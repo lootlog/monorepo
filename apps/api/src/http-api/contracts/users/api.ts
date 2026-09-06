@@ -1,3 +1,4 @@
+import { UserFeedResponse } from "#src/contracts/users/feed-schemas";
 /** Endpoints owned by the users HTTP module. */
 import {
   HttpApiEndpoint,
@@ -17,6 +18,15 @@ import {
 } from "#src/contracts/users/schemas";
 
 export class UsersGroup extends HttpApiGroup.make("users").add(
+  HttpApiEndpoint.get("UsersControllerGetUserFeed", "/users/@me/feed", {
+    success: UserFeedResponse,
+  })
+    .middleware(BearerSecurityMiddleware)
+    .annotate(OpenApi.Identifier, "UsersController_getUserFeed")
+    .annotate(
+      OpenApi.Summary,
+      "Get recent activity across accessible Organizations",
+    ),
   HttpApiEndpoint.delete("UsersControllerDeleteAccount", "/users/@me", {
     success: StatusOk,
     error: HttpErrorResponse.pipe(HttpApiSchema.status(503)),

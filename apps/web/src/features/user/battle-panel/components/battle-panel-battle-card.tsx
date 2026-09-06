@@ -63,8 +63,8 @@ export const BattlePanelBattleCard = ({
   return (
     <article
       className={cn(
-        "rounded-lg border border-border bg-background/35 p-3 transition-colors hover:bg-muted/30",
-        isChecked && "border-primary/45 bg-primary/10",
+        "border-b border-border/70 p-3 last:border-b-0 transition-colors hover:bg-muted/30",
+        isChecked && "bg-primary/10 ring-1 ring-inset ring-primary/45",
       )}
     >
       <div className="flex items-start gap-3">

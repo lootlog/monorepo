@@ -1,6 +1,7 @@
 import { desc, sql } from "drizzle-orm";
 // Hand-maintained Activity database schema; Drizzle generates SQL migrations from it.
 import {
+  check,
   index,
   integer,
   jsonb,
@@ -162,3 +163,49 @@ export const activitySchema = {
   memberActivityStats,
 };
 export const oneDay = sql`INTERVAL '1 day'`;
+
+// Private user history is independent of Organization activity logs and their seven-day retention.
+export const userOnlineIntervals = pgTable(
+  "UserOnlineInterval",
+  {
+    userId: text().notNull(),
+    sessionId: text().notNull(),
+    segmentId: text().notNull(),
+    startedAt: timestamp({ withTimezone: true, mode: "date" }).notNull(),
+    endedAt: timestamp({ withTimezone: true, mode: "date" }).notNull(),
+    observedAt: timestamp({ withTimezone: true, mode: "date" }).notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userId, table.sessionId, table.segmentId] }),
+    index("UserOnlineInterval_userId_endedAt_idx").on(
+      table.userId,
+      table.endedAt,
+    ),
+    index("UserOnlineInterval_endedAt_idx").on(table.endedAt),
+    check(
+      "UserOnlineInterval_check",
+      sql`${table.endedAt} >= ${table.startedAt} AND ${table.observedAt} >= ${table.endedAt}`,
+    ),
+  ],
+);
+export const userOnlineTracking = pgTable("UserOnlineTracking", {
+  userId: text().primaryKey(),
+  lastObservedAt: timestamp({ withTimezone: true, mode: "date" }).notNull(),
+});
+export const userOnlineCollector = pgTable(
+  "UserOnlineCollector",
+  {
+    id: integer().primaryKey(),
+    degradedUntil: timestamp({ withTimezone: true, mode: "date" }),
+    trackingStartedAt: timestamp({ withTimezone: true, mode: "date" }),
+    observedAt: timestamp({ withTimezone: true, mode: "date" }).notNull(),
+    status: text().notNull(),
+  },
+  (table) => [
+    check("UserOnlineCollector_id_check", sql`${table.id} = 1`),
+    check(
+      "UserOnlineCollector_status_check",
+      sql`${table.status} IN ('healthy', 'degraded')`,
+    ),
+  ],
+);

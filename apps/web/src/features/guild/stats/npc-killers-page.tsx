@@ -1,3 +1,6 @@
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { SectionCard } from "@/components/common/section-card/section-card";
+import { PageHeader } from "@/components/common/page-header";
 import { getOffsetPagination } from "./utils/offset-pagination";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -21,7 +24,7 @@ import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { SearchInput } from "@/components/ui/search-input";
 import { PodiumRankIcon } from "@/components/ui/podium-rank-icon";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Card } from "@lootlog/ui/components/card";
+
 import { NpcTile } from "@/components/tiles/npc-tile";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
@@ -153,16 +156,18 @@ export const NpcKillersPage: React.FC = () => {
     return (
       <div className="flex flex-col h-full min-h-0 bg-background">
         <div className="px-3 py-3 flex flex-col gap-4">
-          <Card className="gap-4 border-border bg-card p-4">
-            <div className="flex items-center gap-3">
-              <Skeleton className="h-10 w-10 rounded" />
-              <div className="flex flex-col gap-2 flex-1">
-                <Skeleton className="h-4 w-40" />
-                <Skeleton className="h-3 w-24" />
+          <SectionCard>
+            <SectionCardContent className="flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-10 w-10 rounded" />
+                <div className="flex flex-col gap-2 flex-1">
+                  <Skeleton className="h-4 w-40" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
               </div>
-            </div>
-          </Card>
-          <Card className="flex-1 min-h-0 flex flex-col border-border bg-card p-0  overflow-hidden gap-0">
+            </SectionCardContent>
+          </SectionCard>
+          <SectionCard className="flex-1 min-h-0 flex flex-col overflow-hidden">
             <div>
               {Array.from({ length: 10 }).map((_, i) => (
                 <div
@@ -176,7 +181,7 @@ export const NpcKillersPage: React.FC = () => {
                 </div>
               ))}
             </div>
-          </Card>
+          </SectionCard>
         </div>
       </div>
     );
@@ -198,80 +203,80 @@ export const NpcKillersPage: React.FC = () => {
     <div className="flex flex-col h-full min-h-0 bg-background">
       <ScrollArea className="flex-1 min-h-0">
         <div className="px-3 py-3 flex flex-col gap-4">
-          <Card className="gap-4 border-border bg-card p-4">
-            <div className="flex flex-col gap-3 min-[2200px]:flex-row min-[2200px]:items-center min-[2200px]:justify-between">
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                {npc.npcIcon && (
-                  <NpcTile
-                    npc={{
-                      id: npc.npcId,
-                      name: npc.npcName,
-                      lvl: npc.npcLvl,
-                      icon: npc.npcIcon,
-                    }}
-                  />
-                )}
-                <div className="min-w-0 flex-1">
-                  <h2 className="text-base font-semibold leading-tight">
-                    {npc.npcName}
-                  </h2>
-                  <p className="text-xs text-muted-foreground">
-                    {npc.npcLvl}
-                    {npc.npcProf} • {t(`npcType.${npc.npcType}`)}
-                  </p>
-                  <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
-                    <span>
-                      {t("kills.npcKillers.uniqueGuildKills", {
-                        count: npc.uniqueGuildKills,
-                      })}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Users className="h-3 w-3" />
-                      {t("kills.npcKillers.totalMembers", {
-                        count: killers.length,
-                      })}
-                    </span>
+          <PageHeader
+            title={npc.npcName}
+            icon={Users}
+            description={
+              <>
+                {npc.npcLvl}
+                {npc.npcProf} • {t(`npcType.${npc.npcType}`)}
+              </>
+            }
+            actions={
+              <div className="flex flex-col gap-3 min-[2200px]:flex-row min-[2200px]:items-center min-[2200px]:justify-between">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  {npc.npcIcon && (
+                    <NpcTile
+                      npc={{
+                        id: npc.npcId,
+                        name: npc.npcName,
+                        lvl: npc.npcLvl,
+                        icon: npc.npcIcon,
+                      }}
+                    />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+                      <span>
+                        {t("kills.npcKillers.uniqueGuildKills", {
+                          count: npc.uniqueGuildKills,
+                        })}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        {t("kills.npcKillers.totalMembers", {
+                          count: killers.length,
+                        })}
+                      </span>
+                    </div>
                   </div>
                 </div>
+                <div className="flex items-center gap-2 md:hidden">
+                  <SearchInput
+                    placeholder={t("kills.npcKillers.searchPlaceholder")}
+                    value={search}
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                    wrapperClassName="flex-1"
+                  />
+                  <NpcKillersFiltersMobile
+                    world={settings.world}
+                    period={settings.period}
+                    onWorldChange={handleWorldChange}
+                    onPeriodChange={handlePeriodChange}
+                  />
+                </div>
+                <div className="hidden md:flex w-full flex-wrap items-center gap-2 min-[2200px]:w-auto min-[2200px]:justify-end">
+                  <KillStatsPeriodSelect
+                    value={settings.period}
+                    onValueChange={handlePeriodChange}
+                  />
+                  <WorldSwitcher
+                    value={settings.world}
+                    onValueChange={handleWorldChange}
+                    showAllOption
+                    width="w-[160px]"
+                  />
+                  <SearchInput
+                    placeholder={t("kills.npcKillers.searchPlaceholder")}
+                    value={search}
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                    wrapperClassName="w-[200px]"
+                  />
+                </div>
               </div>
+            }
+          />
 
-              <div className="flex items-center gap-2 md:hidden">
-                <SearchInput
-                  placeholder={t("kills.npcKillers.searchPlaceholder")}
-                  value={search}
-                  onChange={(e) => handleSearchChange(e.target.value)}
-                  wrapperClassName="flex-1"
-                />
-                <NpcKillersFiltersMobile
-                  world={settings.world}
-                  period={settings.period}
-                  onWorldChange={handleWorldChange}
-                  onPeriodChange={handlePeriodChange}
-                />
-              </div>
-
-              <div className="hidden md:flex w-full flex-wrap items-center gap-2 min-[2200px]:w-auto min-[2200px]:justify-end">
-                <KillStatsPeriodSelect
-                  value={settings.period}
-                  onValueChange={handlePeriodChange}
-                />
-                <WorldSwitcher
-                  value={settings.world}
-                  onValueChange={handleWorldChange}
-                  showAllOption
-                  width="w-[160px]"
-                />
-                <SearchInput
-                  placeholder={t("kills.npcKillers.searchPlaceholder")}
-                  value={search}
-                  onChange={(e) => handleSearchChange(e.target.value)}
-                  wrapperClassName="w-[200px]"
-                />
-              </div>
-            </div>
-          </Card>
-
-          <Card className="flex-1 min-h-0 flex flex-col border-border bg-card p-0  overflow-hidden gap-0">
+          <SectionCard className="flex-1 min-h-0 flex flex-col overflow-hidden">
             <div className="relative min-w-0 w-full overflow-x-auto">
               {filteredKillers.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-3 p-16 h-full">
@@ -297,7 +302,7 @@ export const NpcKillersPage: React.FC = () => {
                             memberId: killer.memberId.toString(),
                           }}
                           className={cn(
-                            "min-w-0 rounded-lg border border-border bg-background p-3 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                            "min-w-0 border-b border-border p-3 last:border-b-0 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                             globalIndex === 0 &&
                               "border-yellow-500/30 bg-yellow-500/5",
                           )}
@@ -425,7 +430,7 @@ export const NpcKillersPage: React.FC = () => {
               onPreviousPage={handlePreviousPage}
               onNextPage={handleNextPage}
             />
-          </Card>
+          </SectionCard>
         </div>
       </ScrollArea>
     </div>

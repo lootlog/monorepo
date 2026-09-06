@@ -1,4 +1,5 @@
-import { Card } from "@lootlog/ui/components/card";
+import { PageHeader } from "@/components/common/page-header";
+import { SectionCardFooter } from "@/components/common/section-card/section-card-footer";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -30,32 +31,23 @@ export const RouteErrorState = ({
 
   return (
     <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto px-3 py-3 [align-items:safe_center]">
-      <Card className="w-full max-w-md border-border bg-card">
-        <div className="flex flex-col items-center gap-4 p-6 text-center">
-          <div className="flex items-center gap-2.5">
-            <span className="text-3xl">{emoji}</span>
-            <span
-              className={`text-2xl font-bold tabular-nums tracking-tight ${color}`}
-            >
-              {status}
-            </span>
-          </div>
-
-          <div className="flex flex-col items-center gap-1.5">
-            <h2 className="text-base font-semibold leading-tight">{title}</h2>
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              {stateDescription}
-            </p>
-          </div>
-
-          {(primaryAction ?? secondaryAction) && (
-            <div className="flex w-full flex-col justify-center gap-2 pt-4 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
-              {primaryAction}
-              {secondaryAction}
-            </div>
-          )}
-        </div>
-      </Card>
+      <PageHeader
+        className="w-full max-w-md"
+        title={title}
+        description={stateDescription}
+        status={
+          <span className={`text-sm font-semibold tabular-nums ${color}`}>
+            {emoji} {status}
+          </span>
+        }
+      >
+        {(primaryAction ?? secondaryAction) && (
+          <SectionCardFooter>
+            {primaryAction}
+            {secondaryAction}
+          </SectionCardFooter>
+        )}
+      </PageHeader>
     </div>
   );
 };

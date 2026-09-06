@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/common/page-header";
 import { useTranslation } from "react-i18next";
 import {
   Avatar,
@@ -64,28 +65,24 @@ export const MemberSummaryStrip = ({
   ];
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-border/80 bg-card">
-      <div className="flex min-w-0 items-center gap-3 p-3 md:px-4">
+    <PageHeader
+      title={<>{member?.name ?? `#${memberId}`}</>}
+      status={
         <Avatar className="size-10 shrink-0 rounded-xl bg-muted ring-1 ring-border/70">
           <AvatarImage src={avatarUrl} />
           <AvatarFallback className="rounded-xl text-sm">
             {member?.name?.[0]?.toUpperCase() ?? "?"}
           </AvatarFallback>
         </Avatar>
-        <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-medium leading-none text-muted-foreground">
-            {t("events.kills.memberStatsTitle")}
-          </p>
-          <h1 className="mt-1 truncate text-base font-semibold leading-none">
-            {member?.name ?? `#${memberId}`}
-          </h1>
-          <p className="mt-1 truncate text-xs leading-none text-muted-foreground">
-            {selectedHeroName ? `${selectedHeroName} · ` : ""}
-            {eventName}
-          </p>
-        </div>
-      </div>
-
+      }
+      metadata={t("events.kills.memberStatsTitle")}
+      description={
+        <>
+          {selectedHeroName ? `${selectedHeroName} · ` : ""}
+          {eventName}
+        </>
+      }
+    >
       <dl className="grid grid-cols-3 border-t border-border/70 bg-muted/20 md:grid-cols-6">
         {metrics.map((metric, metricIndex) => (
           <div
@@ -111,6 +108,6 @@ export const MemberSummaryStrip = ({
           </div>
         ))}
       </dl>
-    </section>
+    </PageHeader>
   );
 };

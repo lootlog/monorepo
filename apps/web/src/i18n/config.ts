@@ -11,6 +11,7 @@ import battle from "./translations/battle.json";
 import battlePanel from "./translations/battle-panel.json";
 import battleUi from "./translations/battle-ui.json";
 import common from "./translations/common.json";
+import statistics from "./translations/statistics.json";
 import kills from "./translations/kills.json";
 import loots from "./translations/loots.json";
 import reservations from "./translations/reservations.json";
@@ -36,6 +37,7 @@ i18n.use(initReactI18next).init({
         battleUi,
         common,
         kills,
+        statistics,
         loots,
         reservations,
         timers,

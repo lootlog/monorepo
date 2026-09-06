@@ -1,3 +1,4 @@
+import { UserFeedItem } from "../feed.js";
 import { NonEmptyString, NonNegativeInt } from "@lootlog/schema/primitives";
 import {
   AirTagObservationBatchSchema,
@@ -307,6 +308,8 @@ export const ServerEvent = Schema.Union([
   serverEvent("chat.updated", OrganizationEvent),
   serverEvent("chat.deleted", OrganizationEvent),
   serverEvent("chat.cleared", OrganizationEvent),
+  serverEvent("feed.entry", UserFeedItem),
+  serverEvent("kills.changed", Schema.Struct({ guildId: NonEmptyString })),
   serverEvent("loot.created", GuildLootCreatedEventV2),
   serverEvent("loot.share-updated", GuildLootShareUpdatedEventV2),
   serverEvent("timer.created", OrganizationEvent),

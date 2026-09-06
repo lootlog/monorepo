@@ -1,9 +1,11 @@
+import { PageHeader } from "@/components/common/page-header";
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
 import { canManageEvent } from "./utils/event-access";
 import { getWindowStatusConfig } from "./utils/window-status-presentation";
 import { useTranslation } from "react-i18next";
 import { useParams, Link } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Card } from "@lootlog/ui/components/card";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
@@ -666,70 +668,76 @@ export const HeroDetail = () => {
   };
 
   const renderHeroHeader = () => (
-    <Card className="gap-0 overflow-hidden border-border bg-card p-0">
-      <div className="flex min-w-0 items-center gap-3 p-3 md:px-4">
-        {hero.npcIcon ? (
-          <NpcTile
-            className="flex w-10 shrink-0 items-center justify-center"
-            npc={{
-              id: hero.npcId ?? undefined,
-              name: hero.npcName,
-              icon: hero.npcIcon,
-            }}
-          />
-        ) : (
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-yellow-500/10 ring-1 ring-border/70">
-            <Swords className="size-4 text-yellow-500" />
-          </div>
-        )}
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-[11px] font-medium leading-none text-muted-foreground">
-            {event.name}
-          </p>
-          <h1 className="mt-1 truncate text-base font-semibold leading-none">
-            {hero.npcName} {hero.npcLvl ? `(${hero.npcLvl})` : ""}
-          </h1>
-          <div className="mt-1 flex min-w-0 items-center gap-1.5 text-xs leading-none text-muted-foreground">
-            <HeroTimerCountdown timer={heroTimer} />
-            {windowStatus !== "NONE" && (
-              <>
-                <span aria-hidden="true">·</span>
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    "h-5 shrink-0 px-1.5 text-[11px]",
-                    getWindowStatusConfig(windowStatus, t).className,
-                  )}
-                >
-                  {getWindowStatusConfig(windowStatus, t).label}
-                </Badge>
-              </>
-            )}
-          </div>
-        </div>
-        {canManage && (
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-9 shrink-0 px-2.5 lg:px-3"
-                  aria-label={respawnAction.label}
-                  onClick={handleRespawnActionClick}
-                >
-                  <RespawnActionIcon className="size-4" />
-                  <span className="hidden lg:inline">
-                    {respawnAction.label}
-                  </span>
-                </Button>
-              }
+    <PageHeader
+      title={
+        <>
+          {hero.npcName} {hero.npcLvl ? `(${hero.npcLvl})` : ""}
+        </>
+      }
+      description={event.name}
+      status={
+        <>
+          {hero.npcIcon ? (
+            <NpcTile
+              className="flex w-10 shrink-0 items-center justify-center"
+              npc={{
+                id: hero.npcId ?? undefined,
+                name: hero.npcName,
+                icon: hero.npcIcon,
+              }}
             />
-            <TooltipContent>{respawnAction.label}</TooltipContent>
-          </Tooltip>
-        )}
-      </div>
-    </Card>
+          ) : (
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-yellow-500/10 ring-1 ring-border/70">
+              <Swords className="size-4 text-yellow-500" />
+            </div>
+          )}
+        </>
+      }
+      metadata={
+        <div className="mt-1 flex min-w-0 items-center gap-1.5 text-xs leading-none text-muted-foreground">
+          <HeroTimerCountdown timer={heroTimer} />
+          {windowStatus !== "NONE" && (
+            <>
+              <span aria-hidden="true">·</span>
+              <Badge
+                variant="outline"
+                className={cn(
+                  "h-5 shrink-0 px-1.5 text-[11px]",
+                  getWindowStatusConfig(windowStatus, t).className,
+                )}
+              >
+                {getWindowStatusConfig(windowStatus, t).label}
+              </Badge>
+            </>
+          )}
+        </div>
+      }
+      actions={
+        <>
+          {canManage && (
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 shrink-0 px-2.5 lg:px-3"
+                    aria-label={respawnAction.label}
+                    onClick={handleRespawnActionClick}
+                  >
+                    <RespawnActionIcon className="size-4" />
+                    <span className="hidden lg:inline">
+                      {respawnAction.label}
+                    </span>
+                  </Button>
+                }
+              />
+              <TooltipContent>{respawnAction.label}</TooltipContent>
+            </Tooltip>
+          )}
+        </>
+      }
+    />
   );
 
   return (
@@ -745,78 +753,84 @@ export const HeroDetail = () => {
 
           <HeroDetailResponsiveLayout
             maps={
-              <Card className="@container/maps gap-0 overflow-hidden border-border bg-card p-0">
-                <header className="flex min-h-12 min-w-0 items-center gap-2 border-b border-border/70 px-3 py-2">
-                  <MapPin className="size-4 shrink-0 text-primary" />
-                  <h2 className="flex min-w-0 items-center gap-2 text-sm font-semibold">
-                    <span className="truncate">{t("events.maps.title")}</span>
-                    <span
-                      className={cn(
-                        "shrink-0 font-normal",
-                        getMapCoverageCountClassName(
+              <SectionCard className="@container/maps gap-0 overflow-hidden border-border bg-card p-0">
+                <SectionCardHeader
+                  icon={MapPin}
+                  title={
+                    <>
+                      <span className="truncate">{t("events.maps.title")}</span>
+                      <span
+                        className={cn(
+                          "shrink-0 font-normal",
+                          getMapCoverageCountClassName(
+                            canShowCoverageCount,
+                            coveredMapsCount,
+                            totalMapsCount,
+                          ),
+                        )}
+                      >
+                        {getMapCoverageLabel(
                           canShowCoverageCount,
                           coveredMapsCount,
                           totalMapsCount,
-                        ),
-                      )}
-                    >
-                      {getMapCoverageLabel(
-                        canShowCoverageCount,
-                        coveredMapsCount,
-                        totalMapsCount,
-                      )}
-                    </span>
-                  </h2>
-                  {canManage && (
-                    <div className="ml-auto flex shrink-0 items-center gap-1.5">
-                      <Tooltip>
-                        <TooltipTrigger
-                          render={
-                            <span className="inline-flex">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="size-9 px-0 @2xl/maps:w-auto @2xl/maps:px-3"
-                                onClick={handleClearAllAssignments}
-                                disabled={uniqueMembers.length === 0}
-                                aria-label={t("events.maps.clearAll")}
-                              >
-                                <Eraser className="size-4" />
-                                <span className="hidden @2xl/maps:inline">
-                                  {t("events.maps.clearAll")}
+                        )}
+                      </span>
+                    </>
+                  }
+                  actions={
+                    <>
+                      {canManage && (
+                        <div className="ml-auto flex shrink-0 items-center gap-1.5">
+                          <Tooltip>
+                            <TooltipTrigger
+                              render={
+                                <span className="inline-flex">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="size-9 px-0 @2xl/maps:w-auto @2xl/maps:px-3"
+                                    onClick={handleClearAllAssignments}
+                                    disabled={uniqueMembers.length === 0}
+                                    aria-label={t("events.maps.clearAll")}
+                                  >
+                                    <Eraser className="size-4" />
+                                    <span className="hidden @2xl/maps:inline">
+                                      {t("events.maps.clearAll")}
+                                    </span>
+                                  </Button>
                                 </span>
-                              </Button>
-                            </span>
-                          }
-                        />
-                        <TooltipContent>
-                          {t("events.maps.clearAll")}
-                        </TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger
-                          render={
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="size-9 px-0 @2xl/maps:w-auto @2xl/maps:px-3"
-                              onClick={() => setMapManageOpen(true)}
-                              aria-label={t("events.maps.manage")}
-                            >
-                              <Plus className="size-4" />
-                              <span className="hidden @2xl/maps:inline">
-                                {t("events.maps.manage")}
-                              </span>
-                            </Button>
-                          }
-                        />
-                        <TooltipContent>
-                          {t("events.maps.manage")}
-                        </TooltipContent>
-                      </Tooltip>
-                    </div>
-                  )}
-                </header>
+                              }
+                            />
+                            <TooltipContent>
+                              {t("events.maps.clearAll")}
+                            </TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger
+                              render={
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="size-9 px-0 @2xl/maps:w-auto @2xl/maps:px-3"
+                                  onClick={() => setMapManageOpen(true)}
+                                  aria-label={t("events.maps.manage")}
+                                >
+                                  <Plus className="size-4" />
+                                  <span className="hidden @2xl/maps:inline">
+                                    {t("events.maps.manage")}
+                                  </span>
+                                </Button>
+                              }
+                            />
+                            <TooltipContent>
+                              {t("events.maps.manage")}
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                      )}
+                    </>
+                  }
+                />
                 <EventMapGrid
                   locations={hero.locations}
                   maps={hero.maps}
@@ -832,20 +846,22 @@ export const HeroDetail = () => {
                   activeGapsMap={activeGapsMap}
                   vertical
                 />
-              </Card>
+              </SectionCard>
             }
             participants={
               uniqueMembers.length > 0 ? (
-                <Card className="@container/participants gap-0 overflow-hidden border-border bg-card p-0">
-                  <header className="flex min-h-12 items-center gap-2 border-b border-border/70 px-3 py-2">
-                    <Users className="size-4 shrink-0 text-primary" />
-                    <h2 className="truncate text-sm font-semibold">
-                      {t("events.participants.title")}
-                    </h2>
-                    <span className="shrink-0 text-sm text-muted-foreground">
-                      ({uniqueMembers.length})
-                    </span>
-                  </header>
+                <SectionCard className="@container/participants gap-0 overflow-hidden border-border bg-card p-0">
+                  <SectionCardHeader
+                    icon={Users}
+                    title={<> {t("events.participants.title")} </>}
+                    actions={
+                      <>
+                        <span className="shrink-0 text-sm text-muted-foreground">
+                          ({uniqueMembers.length})
+                        </span>
+                      </>
+                    }
+                  />
                   <div className="-mb-px -mr-px grid grid-cols-1 bg-card @sm/participants:grid-cols-2 @lg/participants:grid-cols-3 @2xl/participants:grid-cols-4">
                     {uniqueMembers.map((member) => (
                       <MemberBadge
@@ -856,7 +872,7 @@ export const HeroDetail = () => {
                       />
                     ))}
                   </div>
-                </Card>
+                </SectionCard>
               ) : null
             }
             sidebar={

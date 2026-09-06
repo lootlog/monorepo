@@ -1,3 +1,5 @@
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { PageHeader } from "@/components/common/page-header";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useState } from "react";
 import { CalendarX2 } from "lucide-react";
@@ -5,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import { useListMyReservations } from "@lootlog/client/main";
 import type { ListMyReservationsStatus } from "@lootlog/client/main";
 import type { MyReservationsResponseDtoItemsItem } from "@lootlog/client/main";
-import { Card } from "@lootlog/ui/components/card";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import {
   Empty,
   EmptyDescription,
@@ -29,14 +31,10 @@ export function MyReservations() {
   return (
     <ScrollArea className="h-full min-h-0">
       <div className="w-full space-y-4 p-3">
-        <div>
-          <h1 className="text-xl font-semibold">
-            {t("reservations.my.title")}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {t("reservations.my.description")}
-          </p>
-        </div>
+        <PageHeader
+          title={t("reservations.my.title")}
+          description={t("reservations.my.description")}
+        />
         <Tabs
           value={status}
           onValueChange={(value) =>
@@ -53,7 +51,14 @@ export function MyReservations() {
           </TabsList>
         </Tabs>
 
-        <Card className="gap-0 py-0">
+        <SectionCard>
+          <SectionCardHeader
+            title={t(
+              status === "upcoming"
+                ? "reservations.my.upcoming"
+                : "reservations.my.history",
+            )}
+          />
           {query.data?.items.length ? (
             <ul>
               {query.data.items.map((reservation) => (
@@ -93,7 +98,7 @@ export function MyReservations() {
               </EmptyHeader>
             </Empty>
           )}
-        </Card>
+        </SectionCard>
         <EditMyReservationDialog
           reservation={editingReservation}
           open={editingReservation !== null}

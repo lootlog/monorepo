@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/common/page-header";
 import { Button } from "@lootlog/ui/components/button";
 import {
   Avatar,
@@ -27,7 +28,6 @@ import { MemberData } from "@/features/guild/settings/members/components/member-
 import { RefreshStatusProvider } from "@/features/guild/settings/members/contexts/refresh-status-context";
 import { MemberSyncButton } from "@/features/guild/settings/members/components/member-sync-button";
 import { MemberDeactivationButton } from "@/features/guild/settings/members/components/member-deactivation-button";
-import { Card } from "@lootlog/ui/components/card";
 
 const MemberSettingsDetailPageContent = () => {
   const { t } = useTranslation();
@@ -116,52 +116,46 @@ const MemberSettingsDetailPageContent = () => {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto bg-background px-3">
-      <Card className="shrink-0 border-b border-t border-border px-4 py-3">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex min-w-0 items-center gap-3">
+      <PageHeader
+        title={<span style={{ color: memberColor }}>{member.name}</span>}
+        description={t("settings.members.details")}
+        actions={
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <Button
               type="button"
               variant="ghost"
               size="icon"
               onClick={handleBack}
+              aria-label={t("settings.members.backToMembers")}
             >
               <ArrowLeft className="size-4" />
             </Button>
-            <Avatar className="size-10 shrink-0 rounded-lg">
-              <AvatarImage
-                src={getDiscordAvatarUrl(member.userId, member.avatar)}
+            <div className="flex min-w-0 items-center gap-3">
+              <Avatar className="size-10 shrink-0 rounded-lg">
+                <AvatarImage
+                  src={getDiscordAvatarUrl(member.userId, member.avatar)}
+                />
+                <AvatarFallback>{member.name.slice(0, 1)}</AvatarFallback>
+              </Avatar>
+            </div>
+            <div className="flex shrink-0 flex-wrap items-center gap-2 pl-12 sm:pl-0">
+              <MemberSyncButton
+                member={member}
+                variant="secondary"
+                onMemberUpdated={handleMemberUpdated}
               />
-              <AvatarFallback>{member.name.slice(0, 1)}</AvatarFallback>
-            </Avatar>
-            <div className="min-w-0">
-              <p className="text-xs text-muted-foreground">
-                {t("settings.members.details")}
-              </p>
-              <h2
-                className="truncate text-base font-semibold leading-tight"
-                style={{ color: `#${memberColor}` }}
-              >
-                {member.name}
-              </h2>
+              {canManageMembers && (
+                <MemberDeactivationButton
+                  member={member}
+                  onDeactivated={(updatedMember) =>
+                    handleMemberUpdated(updatedMember)
+                  }
+                />
+              )}
             </div>
           </div>
-          <div className="flex shrink-0 flex-wrap items-center gap-2 pl-12 sm:pl-0">
-            <MemberSyncButton
-              member={member}
-              variant="secondary"
-              onMemberUpdated={handleMemberUpdated}
-            />
-            {canManageMembers && (
-              <MemberDeactivationButton
-                member={member}
-                onDeactivated={(updatedMember) =>
-                  handleMemberUpdated(updatedMember)
-                }
-              />
-            )}
-          </div>
-        </div>
-      </Card>
+        }
+      />
       <ScrollArea className="min-h-48 flex-1">
         <div className="mx-auto w-full">
           <MemberData

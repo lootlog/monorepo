@@ -1,9 +1,10 @@
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
 import { buildBattleLogVisibleText } from "./utils/battle-log-visible-text";
 import type {
   BattleWarrior as Warrior,
   RawBattle,
 } from "@/lib/api/battlelog-types";
-import { Card } from "@lootlog/ui/components/card";
+import { SectionCard as Card } from "@/components/common/section-card/section-card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { cn } from "cn";
 import { BattleLogList } from "./battle-log-list";
@@ -180,16 +181,11 @@ export const BattleLog: FC<BattleLogProps> = ({
       )}
     >
       {showHeader && (
-        <div className="sticky top-0 z-8 bg-background border-b">
-          <div className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 font-semibold">
-                <Sword className="h-5 w-5" />
-                {t("battlePanel.single.log.title")}
-              </div>
-            </div>
-          </div>
-        </div>
+        <SectionCardHeader
+          className="sticky top-0 z-8 bg-card"
+          title={t("battlePanel.single.log.title")}
+          icon={Sword}
+        />
       )}
       <BattleLogSearchToolbar
         query={searchQuery}

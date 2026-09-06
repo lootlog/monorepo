@@ -20,6 +20,7 @@ export type AppNavigationMatch = {
 
 export type AppNavigationItemId =
   | "user-dashboard"
+  | "user-statistics"
   | "user-battles"
   | "user-notifications"
   | "user-settings"
@@ -183,6 +184,12 @@ function buildUserSidebarRegistry(): RegistryItem[] {
       visible: alwaysVisible,
     },
     {
+      id: "user-statistics",
+      labelKey: "statistics.title",
+      path: ROUTES.user.statistics,
+      visible: alwaysVisible,
+    },
+    {
       id: "user-battles",
       labelKey: "layout.navigation.battlePanel",
       path: ROUTES.user.battlePanel.base,
@@ -341,6 +348,9 @@ function resolveUserNavigationInfo(
       [{ label: t("layout.navigation.dashboard"), path: null }],
       null,
     );
+  }
+  if (path === ROUTES.user.statistics) {
+    return navigationInfo([{ label: t("statistics.title"), path: null }], null);
   }
   if (path === ROUTES.user.reservations) {
     return navigationInfo(

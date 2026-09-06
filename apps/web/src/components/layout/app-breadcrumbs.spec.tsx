@@ -1,13 +1,8 @@
 // @vitest-environment happy-dom
 
-import type { ReactNode } from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AppBreadcrumbs } from "./app-breadcrumbs";
-
-vi.mock("@/themes", () => ({
-  ThemeInteractiveFrame: ({ children }: { children: ReactNode }) => children,
-}));
 
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({ t: (key: string) => key }),
@@ -51,10 +46,14 @@ describe("AppBreadcrumbs", () => {
     expect(breadcrumbItems[3]?.className).toContain("sm:inline-flex");
     expect(breadcrumbItems[4]?.className).not.toContain("hidden");
     expect(
-      screen.getByRole("button", { name: "Summer Event" }).className,
+      screen.getByRole("link", { name: "Summer Event" }).className,
     ).toContain("truncate");
 
-    fireEvent.click(screen.getByRole("button", { name: "Members" }));
+    const members = screen.getByRole("link", { name: "Members" });
+    expect(members.getAttribute("href")).toBe("/guild/events/summer/members");
+    fireEvent.click(members, { ctrlKey: true });
+    expect(onNavigate).not.toHaveBeenCalled();
+    fireEvent.click(members);
 
     expect(onNavigate).toHaveBeenCalledOnce();
     expect(onNavigate).toHaveBeenCalledWith("/guild/events/summer/members");

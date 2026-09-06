@@ -1,3 +1,7 @@
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCard } from "@/components/common/section-card/section-card";
+import { PageHeader } from "@/components/common/page-header";
 import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
@@ -15,7 +19,7 @@ import {
 } from "@lootlog/ui/components/alert-dialog";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
-import { Card } from "@lootlog/ui/components/card";
+import { SectionCard as Card } from "@/components/common/section-card/section-card";
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -210,117 +214,117 @@ export const GuildDocEditorPage = () => {
     <div className="flex h-full min-h-0 flex-col bg-background">
       <ScrollArea className="min-h-0 flex-1">
         <div className="flex min-h-full flex-col gap-4 px-3 py-3">
-          <Card className="gap-4 border-border bg-card p-4">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <div className="flex min-w-0 items-center gap-3">
-                <div className="rounded-xl bg-primary/10 p-2.5">
-                  <FileText className="size-4 text-primary" />
-                </div>
-                <div className="min-w-0">
-                  <h2 className="truncate text-base font-semibold leading-tight">
-                    {document.title}
-                  </h2>
-                  <p className="text-xs leading-tight text-muted-foreground">
-                    {t("docs.editor.updatedMeta", {
-                      date: formatGuildDocDateTime(document.updatedAt),
-                      version: document.version,
-                    })}
-                  </p>
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    {canWrite ? (
-                      <Badge variant="secondary">
-                        {t("docs.editor.manualSave")}
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="gap-1">
-                        <LockKeyhole className="size-3" />
-                        {t("docs.editor.readOnly")}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
+          <PageHeader
+            icon={FileText}
+            title={document.title}
+            description={
+              <>
+                {t("docs.editor.updatedMeta", {
+                  date: formatGuildDocDateTime(document.updatedAt),
+                  version: document.version,
+                })}
+              </>
+            }
+            status={
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                {canWrite ? (
+                  <Badge variant="secondary">
+                    {t("docs.editor.manualSave")}
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="gap-1">
+                    <LockKeyhole className="size-3" />
+                    {t("docs.editor.readOnly")}
+                  </Badge>
+                )}
               </div>
-
-              {canWrite && (
-                <div className="flex flex-wrap items-center gap-2">
-                  <Tooltip>
-                    <TooltipTrigger
-                      render={
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          aria-label={t("docs.editor.history")}
-                          onClick={() => setHistoryOpen(true)}
-                        >
-                          <History className="size-4" />
-                        </Button>
-                      }
-                    />
-                    <TooltipContent side="bottom">
-                      {t("docs.editor.history")}
-                    </TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger
-                      render={
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          aria-label={t("docs.trash.move")}
-                          className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                          disabled={deleteDocument.isPending}
-                          onClick={() => setTrashConfirmOpen(true)}
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
-                      }
-                    />
-                    <TooltipContent side="bottom">
-                      {t("docs.trash.move")}
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-              )}
-            </div>
-          </Card>
+            }
+            actions={
+              <>
+                {canWrite && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Tooltip>
+                      <TooltipTrigger
+                        render={
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            aria-label={t("docs.editor.history")}
+                            onClick={() => setHistoryOpen(true)}
+                          >
+                            <History className="size-4" />
+                          </Button>
+                        }
+                      />
+                      <TooltipContent side="bottom">
+                        {t("docs.editor.history")}
+                      </TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger
+                        render={
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            aria-label={t("docs.trash.move")}
+                            className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            disabled={deleteDocument.isPending}
+                            onClick={() => setTrashConfirmOpen(true)}
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        }
+                      />
+                      <TooltipContent side="bottom">
+                        {t("docs.trash.move")}
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                )}
+              </>
+            }
+          />
 
           <form className="flex min-h-0 flex-1 flex-col" onSubmit={saveDraft}>
-            <Card className="flex min-h-0 flex-1 flex-col gap-3 border-border bg-card p-3">
-              <div className="space-y-2">
-                <Label
-                  htmlFor="guild-doc-editor-title"
-                  className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-                >
-                  {t("docs.editor.titleLabel")}
-                </Label>
-                <Input
-                  id="guild-doc-editor-title"
-                  name="guild-doc-editor-title"
-                  value={title}
-                  disabled={!canWrite}
-                  maxLength={TITLE_MAX_LENGTH}
-                  placeholder={t("docs.editor.titlePlaceholder")}
-                  onChange={(event) => setTitle(event.target.value)}
+            <SectionCard className="flex min-h-0 flex-1 flex-col  border-border bg-card ">
+              <SectionCardHeader title={t("docs.list.title")} />
+              <SectionCardContent className="flex min-h-0 flex-col gap-3">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="guild-doc-editor-title"
+                    className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+                  >
+                    {t("docs.editor.titleLabel")}
+                  </Label>
+                  <Input
+                    id="guild-doc-editor-title"
+                    name="guild-doc-editor-title"
+                    value={title}
+                    disabled={!canWrite}
+                    maxLength={TITLE_MAX_LENGTH}
+                    placeholder={t("docs.editor.titlePlaceholder")}
+                    onChange={(event) => setTitle(event.target.value)}
+                  />
+                </div>
+
+                {!canWrite && (
+                  <p className="text-xs text-muted-foreground">
+                    {t("docs.editor.readOnlyNotice")}
+                  </p>
+                )}
+
+                <GuildDocEditor
+                  key={`${docId}-${editorSeed}`}
+                  className="flex-1"
+                  content={content}
+                  editable={canWrite}
+                  namespace={`guild-doc-${docId}-${editorSeed}`}
+                  onChange={setContent}
                 />
-              </div>
-
-              {!canWrite && (
-                <p className="text-xs text-muted-foreground">
-                  {t("docs.editor.readOnlyNotice")}
-                </p>
-              )}
-
-              <GuildDocEditor
-                key={`${docId}-${editorSeed}`}
-                className="flex-1"
-                content={content}
-                editable={canWrite}
-                namespace={`guild-doc-${docId}-${editorSeed}`}
-                onChange={setContent}
-              />
-            </Card>
+              </SectionCardContent>
+            </SectionCard>
 
             <UnsavedChangesBar
               isDirty={isDirty}

@@ -1,9 +1,10 @@
+import { PageHeader } from "@/components/common/page-header";
 import { Globe, Gift } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { PeriodSelector } from "@/components/filters/period-selector";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
-import { Card } from "@lootlog/ui/components/card";
+
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { useGuildId } from "@/hooks/context/use-guild-id";
@@ -75,48 +76,44 @@ export const LootStats: React.FC = () => {
     <>
       <ScrollArea className="h-full bg-background px-3 pb-3">
         <div className="flex flex-col gap-4">
-          <Card className="gap-4 border-border bg-card p-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                <div className="rounded-xl bg-emerald-500/10 p-2.5">
-                  <Gift className="size-4 text-emerald-500" />
-                </div>
-                <div className="min-w-0">
-                  <h2 className="text-base font-semibold leading-tight">
-                    {t("common.stats.loots")}
-                  </h2>
-                </div>
-              </div>
-              <div className="hidden md:flex items-center gap-2 flex-wrap gap-y-4">
-                <PeriodSelector
-                  value={settings.period}
-                  onValueChange={(value) =>
-                    setPeriod(value as LootsControllerGetLootStatsPeriod)
-                  }
-                  width="w-[180px]"
-                  className="h-9"
-                />
-                <WorldSwitcher
-                  value={settings.world}
-                  onValueChange={setWorld}
-                  width="w-[140px]"
-                />
-                <label
-                  htmlFor="exclude-colossus"
-                  className="flex h-9 cursor-pointer items-center gap-2 rounded-md border border-input bg-transparent px-3 text-sm shadow-xs"
-                >
-                  <Checkbox
-                    id="exclude-colossus"
-                    checked={settings.excludeColossus}
-                    onCheckedChange={(checked) => setExcludeColossus(!!checked)}
+          <PageHeader
+            title={t("common.stats.loots")}
+            icon={Gift}
+            actions={
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="hidden md:flex items-center gap-2 flex-wrap gap-y-4">
+                  <PeriodSelector
+                    value={settings.period}
+                    onValueChange={(value) =>
+                      setPeriod(value as LootsControllerGetLootStatsPeriod)
+                    }
+                    width="w-[180px]"
+                    className="h-9"
                   />
-                  <span className="select-none text-sm">
-                    {t("loots.stats.excludeColossus")}
-                  </span>
-                </label>
+                  <WorldSwitcher
+                    value={settings.world}
+                    onValueChange={setWorld}
+                    width="w-[140px]"
+                  />
+                  <label
+                    htmlFor="exclude-colossus"
+                    className="flex h-9 cursor-pointer items-center gap-2 rounded-md border border-input bg-transparent px-3 text-sm shadow-xs"
+                  >
+                    <Checkbox
+                      id="exclude-colossus"
+                      checked={settings.excludeColossus}
+                      onCheckedChange={(checked) =>
+                        setExcludeColossus(!!checked)
+                      }
+                    />
+                    <span className="select-none text-sm">
+                      {t("loots.stats.excludeColossus")}
+                    </span>
+                  </label>
+                </div>
               </div>
-            </div>
-          </Card>
+            }
+          />
 
           <LootOverviewCards data={data?.overview} isLoading={isLoading} />
 

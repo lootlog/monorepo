@@ -57,6 +57,7 @@ const renderHeader = ({
 
   const result = render(
     <ScheduleHeader
+      spotName="Driady"
       date={new Date(2026, 7, 26)}
       isCompact={isCompact}
       settings={DEFAULT_RESERVATION_SETTINGS}
@@ -75,6 +76,16 @@ const renderHeader = ({
 };
 
 describe("ScheduleHeader", () => {
+  it.each([true, false])(
+    "names the calendar with one page heading (compact: %s)",
+    (isCompact) => {
+      renderHeader({ isCompact });
+      expect(
+        screen.getByRole("heading", { level: 1, name: "Driady" }),
+      ).toBeTruthy();
+      expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    },
+  );
   it("moves every compact action into a rounded floating toolbar", () => {
     const { container, onAddReservation, onFindNearestFreeSlot, onToday } =
       renderHeader({ isCompact: true });

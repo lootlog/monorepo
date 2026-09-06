@@ -1,18 +1,14 @@
-import { Card } from "@lootlog/ui/components/card";
+import { PageHeader } from "@/components/common/page-header";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 
 export const TimersPageSkeleton = () => {
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
       <div className="flex flex-col gap-4 px-3 py-3">
-        <Card className="gap-3 border-border bg-card p-4">
-          <div className="flex items-center gap-3">
-            <Skeleton className="h-9 flex-1" />
-            <Skeleton className="h-8 w-24 rounded-md" />
-            <Skeleton className="h-8 w-8 rounded-md" />
-            <Skeleton className="h-8 w-8 rounded-md" />
-          </div>
-        </Card>
+        <PageHeader
+          title={<Skeleton className="h-5 w-40" />}
+          description={<Skeleton className="h-3 w-56 max-w-full" />}
+        />
 
         <div className="flex flex-col gap-1.5">
           {Array.from({ length: 8 }).map((_, i) => (

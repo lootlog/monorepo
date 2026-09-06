@@ -136,7 +136,7 @@ export function HeadToHeadTable({
       ariaLabel={t("battlePanel.statistics.directMatchups.link")}
     >
       <div className="flex min-h-72 min-w-0 flex-1 flex-col">
-        <ScrollArea className="min-w-0 rounded-lg border border-border bg-card">
+        <ScrollArea className="min-w-0">
           <Table className="border-b">
             <TanStackTableHeader
               table={table}

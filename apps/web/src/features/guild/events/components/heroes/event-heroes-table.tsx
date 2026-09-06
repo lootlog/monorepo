@@ -1,8 +1,9 @@
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
 import { useTranslation } from "react-i18next";
 import { useTable } from "@tanstack/react-table";
 import { Plus, Swords } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
-import { Card } from "@lootlog/ui/components/card";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import { Table } from "@lootlog/ui/components/table";
 import { cn } from "cn";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
@@ -62,24 +63,26 @@ export const EventHeroesTable = ({
   });
 
   return (
-    <Card className="h-fit gap-0 overflow-hidden border-border bg-card p-0">
-      <header className="flex min-h-12 items-center justify-between gap-3 border-b border-border/70 py-2 pl-3 pr-4">
-        <h2 className="flex min-w-0 items-center gap-2 text-sm font-semibold">
-          <Swords className="size-4 shrink-0 text-yellow-500" />
-          <span className="truncate">{t("events.heroes.title")}</span>
-        </h2>
-        {canManage ? (
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 shrink-0 pl-3 pr-4!"
-            onClick={onAddHero}
-          >
-            <Plus className="size-4" />
-            {t("events.heroes.addButton")}
-          </Button>
-        ) : null}
-      </header>
+    <SectionCard className="h-fit gap-0 overflow-hidden border-border bg-card p-0">
+      <SectionCardHeader
+        icon={Swords}
+        title={t("events.heroes.title")}
+        actions={
+          <>
+            {canManage ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 shrink-0 pl-3 pr-4!"
+                onClick={onAddHero}
+              >
+                <Plus className="size-4" />
+                {t("events.heroes.addButton")}
+              </Button>
+            ) : null}
+          </>
+        }
+      />
 
       {rows.length === 0 ? (
         <div className="flex min-h-36 flex-col items-center justify-center text-muted-foreground">
@@ -111,6 +114,6 @@ export const EventHeroesTable = ({
           />
         </Table>
       )}
-    </Card>
+    </SectionCard>
   );
 };

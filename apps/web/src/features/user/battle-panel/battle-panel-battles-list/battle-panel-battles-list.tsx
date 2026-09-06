@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/common/page-header";
 import {
   toggleBattleSearchWarrior,
   createBattleFilterHandlers,
@@ -185,6 +186,9 @@ export const BattlePanelBattlesList = () => {
       )}
 
       <div className="w-full min-w-0 flex flex-col h-full overflow-hidden bg-background">
+        <div className="px-3 pt-3">
+          <PageHeader title={t("battlePanel.navigation.battles")} />
+        </div>
         <div className="flex-1 min-w-0 flex overflow-hidden">
           <div className="flex-1 flex flex-col min-w-0 overflow-hidden p-3">
             <BattlesList

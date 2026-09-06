@@ -1,3 +1,4 @@
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
 import { CalendarClock, Hash, ListChecks, Gauge, Clock3 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
@@ -20,32 +21,27 @@ export const NotificationsInfoDialog = ({
 
   const sections = [
     {
-      icon: <Hash className="size-4 text-indigo-500" />,
-      iconBg: "bg-indigo-500/10",
+      icon: Hash,
       title: t("settings.notifications.info.targets.title"),
       description: t("settings.notifications.info.targets.description"),
     },
     {
-      icon: <ListChecks className="size-4 text-emerald-500" />,
-      iconBg: "bg-emerald-500/10",
+      icon: ListChecks,
       title: t("settings.notifications.info.rules.title"),
       description: t("settings.notifications.info.rules.description"),
     },
     {
-      icon: <CalendarClock className="size-4 text-blue-500" />,
-      iconBg: "bg-blue-500/10",
+      icon: CalendarClock,
       title: t("settings.notifications.info.scheduling.title"),
       description: t("settings.notifications.info.scheduling.description"),
     },
     {
-      icon: <Clock3 className="size-4 text-primary" />,
-      iconBg: "bg-primary/10",
+      icon: Clock3,
       title: t("settings.notifications.info.jobs.title"),
       description: t("settings.notifications.info.jobs.description"),
     },
     {
-      icon: <Gauge className="size-4 text-amber-500" />,
-      iconBg: "bg-amber-500/10",
+      icon: Gauge,
       title: t("settings.notifications.info.limits.title"),
       description: t("settings.notifications.info.limits.description"),
     },
@@ -59,17 +55,13 @@ export const NotificationsInfoDialog = ({
         </DialogHeader>
         <div className="flex flex-col gap-4 px-5 pt-2 pb-5">
           {sections.map((section) => (
-            <div key={section.title} className="flex items-start gap-3">
-              <div className={`shrink-0 rounded-xl p-2.5  ${section.iconBg}`}>
-                {section.icon}
-              </div>
-              <div className="pt-0.5">
-                <p className="text-sm font-medium">{section.title}</p>
-                <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
-                  {section.description}
-                </p>
-              </div>
-            </div>
+            <section key={section.title}>
+              <SectionCardHeader
+                icon={section.icon}
+                title={section.title}
+                description={section.description}
+              />
+            </section>
           ))}
         </div>
       </DialogContent>

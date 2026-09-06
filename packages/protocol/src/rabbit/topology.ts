@@ -14,6 +14,9 @@ export const RabbitExchangeName = Schema.Literals([
 export type RabbitExchangeName = typeof RabbitExchangeName.Type;
 
 export const RabbitRoutingKey = {
+  USERS_ONLINE_CHECKPOINT_V1: "users.online.checkpoint.v1",
+  USERS_ONLINE_CHECKPOINT_V1_RETRY: "users.online.checkpoint.v1.retry",
+  USERS_ONLINE_CHECKPOINT_V1_DLQ: "users.online.checkpoint.v1.dlq",
   ACTIVITY_LOG_CREATE: "activity.log.create",
   ACTIVITY_LOG_CREATE_DLQ: "activity.log.create.dlq",
   ACTIVITY_LOG_CREATE_RETRY: "activity.log.create.retry",
@@ -45,6 +48,9 @@ export const RabbitRoutingKey = {
   GUILDS_INITIALIZE_BOT: "guilds.initialize-bot",
   GUILDS_INITIALIZE_DLQ: "guilds.initialize.dlq",
   GUILDS_INITIALIZE_RETRY: "guilds.initialize.retry",
+  GUILDS_KILLS_ACCEPTED_V1: "guilds.kills.accepted.v1",
+  GUILDS_KILLS_ACCEPTED_V1_RETRY: "guilds.kills.accepted.v1.retry",
+  GUILDS_KILLS_ACCEPTED_V1_DLQ: "guilds.kills.accepted.v1.dlq",
   GUILDS_LOOTS_CREATE: "guilds.loots.create",
   GUILDS_LOOTS_CREATE_DLQ: "guilds.loots.create.dlq",
   GUILDS_LOOTS_CREATE_RETRY: "guilds.loots.create.retry",
@@ -141,6 +147,7 @@ export const RabbitQueueDefinition = Schema.Struct({
   routingKey: RabbitRoutingKeyName,
   durable: Schema.Boolean,
   messageTtl: Schema.optional(Schema.Int),
+  singleActiveConsumer: Schema.optional(Schema.Boolean),
   deadLetterExchange: Schema.optional(RabbitExchangeName),
   deadLetterRoutingKey: Schema.optional(RabbitRoutingKeyName),
 });

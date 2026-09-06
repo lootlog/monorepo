@@ -1,3 +1,4 @@
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
 import { format } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@lootlog/ui/components/badge";
@@ -67,10 +68,11 @@ export const NotificationJobDetailDialog = ({
         <ScrollArea className="max-h-[calc(90vh-180px)]">
           <div className="flex flex-col gap-5 px-5 py-5">
             <section>
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                {t("settings.notifications.jobDetail.sectionOverview")}
-              </p>
-              <div className="mt-2 flex flex-col gap-3 rounded-xl border border-border/70 bg-background p-4">
+              <SectionCardHeader
+                title={t("settings.notifications.jobDetail.sectionOverview")}
+                className="px-0"
+              />
+              <div className="mt-2 flex flex-col gap-3 py-3">
                 <NotificationJobDetailRow
                   label={t("settings.notifications.jobDetail.rule")}
                   value={
@@ -150,10 +152,11 @@ export const NotificationJobDetailDialog = ({
 
             {message ? (
               <section>
-                <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                  {t("settings.notifications.jobDetail.sectionContent")}
-                </p>
-                <div className="mt-2 rounded-xl border border-dashed border-border/80 bg-background p-4">
+                <SectionCardHeader
+                  title={t("settings.notifications.jobDetail.sectionContent")}
+                  className="px-0"
+                />
+                <div className="mt-2 py-3">
                   {title ? (
                     <p className="mb-2 text-sm font-semibold">{title}</p>
                   ) : null}
@@ -166,10 +169,11 @@ export const NotificationJobDetailDialog = ({
 
             {hasDeliveryDetails ? (
               <section>
-                <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                  {t("settings.notifications.jobDetail.sectionDelivery")}
-                </p>
-                <div className="mt-2 flex flex-col gap-3 rounded-xl border border-border/70 bg-background p-4">
+                <SectionCardHeader
+                  title={t("settings.notifications.jobDetail.sectionDelivery")}
+                  className="px-0"
+                />
+                <div className="mt-2 flex flex-col gap-3 py-3">
                   {job.attemptCount > 0 ? (
                     <NotificationJobDetailRow
                       label={t("settings.notifications.jobDetail.attemptCount")}

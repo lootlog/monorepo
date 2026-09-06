@@ -1,4 +1,7 @@
-import { Card } from "@lootlog/ui/components/card";
+import { SectionCard } from "@/components/common/section-card/section-card";
+import { SectionCardHeader } from "@/components/common/section-card/section-card-header";
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import {
   ChartContainer,
@@ -52,84 +55,84 @@ export const LootTopNpcsChart: React.FC<LootTopNpcsChartProps> = ({
 
   if (isLoading) {
     return (
-      <Card className="bg-card  border-border p-3 gap-3 flex flex-col">
-        <h2 className="text-base font-semibold">
-          {t("loots.stats.topNpcs.title")}
-        </h2>
-        <div className="flex-1">
-          <Skeleton className="h-full min-h-[250px] w-full" />
-        </div>
-      </Card>
+      <SectionCard className="flex flex-col">
+        <SectionCardHeader title={t("loots.stats.topNpcs.title")} />
+        <SectionCardContent className="flex flex-col gap-3">
+          <div className="flex-1">
+            <Skeleton className="h-full min-h-[250px] w-full" />
+          </div>
+        </SectionCardContent>
+      </SectionCard>
     );
   }
 
   if (!data?.length) {
     return (
-      <Card className="bg-card  border-border p-3 gap-3 flex flex-col">
-        <h2 className="text-base font-semibold">
-          {t("loots.stats.topNpcs.title")}
-        </h2>
-        <div className="flex-1">
-          <div className="flex h-full min-h-[250px] items-center justify-center text-muted-foreground">
-            {t("loots.stats.topNpcs.noData")}
+      <SectionCard className="flex flex-col">
+        <SectionCardHeader title={t("loots.stats.topNpcs.title")} />
+        <SectionCardContent className="flex flex-col gap-3">
+          <div className="flex-1">
+            <div className="flex h-full min-h-[250px] items-center justify-center text-muted-foreground">
+              {t("loots.stats.topNpcs.noData")}
+            </div>
           </div>
-        </div>
-      </Card>
+        </SectionCardContent>
+      </SectionCard>
     );
   }
 
   return (
-    <Card className="bg-card  border-border p-3 gap-3 flex flex-col">
-      <h2 className="text-base font-semibold">
-        {t("loots.stats.topNpcs.title")}
-      </h2>
-      <div className="flex-1">
-        <ChartContainer
-          config={chartConfig}
-          className="h-full min-h-[280px] w-full"
-        >
-          <BarChart
-            data={chartData}
-            layout="vertical"
-            margin={{ left: 10, right: 10 }}
+    <SectionCard className="flex flex-col">
+      <SectionCardHeader title={t("loots.stats.topNpcs.title")} />
+      <SectionCardContent className="flex flex-col gap-3">
+        <div className="flex-1">
+          <ChartContainer
+            config={chartConfig}
+            className="h-full min-h-[280px] w-full"
           >
-            <CartesianGrid horizontal={false} strokeDasharray="3 3" />
-            <YAxis
-              dataKey="name"
-              type="category"
-              tickLine={false}
-              axisLine={false}
-              fontSize={11}
-              width={120}
-              tick={{ fill: "var(--muted-foreground)" }}
-            />
-            <XAxis type="number" hide />
-            <ChartTooltip
-              content=<ChartTooltipContent
-                labelFormatter={(_, payload) => {
-                  const item = payload[0]?.payload as
-                    | Record<string, unknown>
-                    | undefined;
-                  return String(item?.fullName ?? "");
-                }}
+            <BarChart
+              data={chartData}
+              layout="vertical"
+              margin={{ left: 10, right: 10 }}
+            >
+              <CartesianGrid horizontal={false} strokeDasharray="3 3" />
+              <YAxis
+                dataKey="name"
+                type="category"
+                tickLine={false}
+                axisLine={false}
+                fontSize={11}
+                width={120}
+                tick={{ fill: "var(--muted-foreground)" }}
               />
-            />
-            <ChartLegend content=<ChartLegendContent /> />
-            <Bar
-              dataKey="LEGENDARY"
-              stackId="a"
-              fill={RARITY_COLORS.LEGENDARY}
-              radius={[0, 0, 0, 0]}
-            />
-            <Bar
-              dataKey="HEROIC"
-              stackId="a"
-              fill={RARITY_COLORS.HEROIC}
-              radius={[0, 4, 4, 0]}
-            />
-          </BarChart>
-        </ChartContainer>
-      </div>
-    </Card>
+              <XAxis type="number" hide />
+              <ChartTooltip
+                content=<ChartTooltipContent
+                  labelFormatter={(_, payload) => {
+                    const item = payload[0]?.payload as
+                      | Record<string, unknown>
+                      | undefined;
+                    return String(item?.fullName ?? "");
+                  }}
+                />
+              />
+              <ChartLegend content=<ChartLegendContent /> />
+              <Bar
+                dataKey="LEGENDARY"
+                stackId="a"
+                fill={RARITY_COLORS.LEGENDARY}
+                radius={[0, 0, 0, 0]}
+              />
+              <Bar
+                dataKey="HEROIC"
+                stackId="a"
+                fill={RARITY_COLORS.HEROIC}
+                radius={[0, 4, 4, 0]}
+              />
+            </BarChart>
+          </ChartContainer>
+        </div>
+      </SectionCardContent>
+    </SectionCard>
   );
 };

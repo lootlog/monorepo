@@ -71,6 +71,9 @@ export const UserNotifications = () => {
                     render={
                       <Button
                         size="icon"
+                        aria-label={t(
+                          "settings.userNotifications.infoDialog.title",
+                        )}
                         variant="ghost"
                         onClick={() => setIsInfoDialogOpen(true)}
                       >
