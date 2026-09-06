@@ -65,7 +65,8 @@ Jeżeli czytasz starsze wpisy, aktualizacje czekają pod przyciskiem **Nowe
 zdarzenia**. Nie przesuwają automatycznie czytanej listy. Przycisk **Wstrzymaj** w prawym górnym rogu zatrzymuje
 aktualizacje, a **Wznów** pobiera aktualną listę. Przeglądarka zapamiętuje ten
 wybór także po odświeżeniu strony. Pauza dotyczy wyłącznie feedu.
-Historię pobieramy przy wejściu, ponownym połączeniu i wznowieniu. Podczas
+Historię pobieramy przy wejściu, po ponownym dołączeniu sesji do organizacji
+i przy wznowieniu. Podczas
 połączenia kompletne wpisy przychodzą przez WebSocket, bez cyklicznego
 odpytywania historii. Kolejne bicia aktualizują licznik istniejącego wpisu.
 Po zmianie dostępu stare wpisy są od razu usuwane, również podczas pauzy.
@@ -139,3 +140,7 @@ zmienić świat i wyświetla sekcje zgodne z twoją rolą.
   współdzielonych.
 - Zobacz [Role i uprawnienia](/docs/permissions), gdy brakuje oczekiwanej
   sekcji.
+
+Statystyki bić odświeżają się także po sygnale nowego bicia organizacji oraz
+po ponownym dołączeniu sesji. Sygnał powoduje pobranie aktualnych wartości konta;
+nie dopisuje użytkownikowi bicia innej osoby. Krótkie serie sygnałów są łączone.

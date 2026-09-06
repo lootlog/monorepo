@@ -30,6 +30,7 @@
     "@lootlog/client": "workspace:*",
     "@lootlog/datetime": "workspace:*",
     "@lootlog/domain": "workspace:*",
+    "@lootlog/protocol": "workspace:*",
     "@lootlog/schema": "workspace:*",
     "@lootlog/ui": "workspace:*",
     "@tailwindcss/vite": "catalog:",

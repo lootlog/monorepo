@@ -74,9 +74,15 @@ it("receives complete live entries without further HTTP requests and refetches o
   expect(result.current.state.items).toEqual(feedResponse(20).items);
   act(() => mocks.socket.emit(GatewayEvent.CONNECT));
   await act(() => vi.advanceTimersByTimeAsync(0));
+  expect(mocks.request).toHaveBeenCalledTimes(1);
+  // A kill accepted while session.join is pending must appear in the post-join snapshot.
+  mocks.request.mockResolvedValue(feedResponse(21));
+  act(() => mocks.socket.emit(GatewayEvent.JOIN));
+  await act(() => vi.advanceTimersByTimeAsync(0));
   expect(mocks.request).toHaveBeenCalledTimes(2);
+  expect(result.current.state.items).toEqual(feedResponse(21).items);
 });
-it.each([GatewayEvent.PERMISSIONS_UPDATED, GatewayEvent.CONNECT])(
+it.each([GatewayEvent.PERMISSIONS_UPDATED, GatewayEvent.JOIN])(
   "purges current, buffered and cached entries on %s even if refresh fails",
   async (event) => {
     mocks.request
@@ -170,7 +176,7 @@ it("ignores live entries while paused and fetches a fresh snapshot immediately o
   expect(result.current.state.items).toEqual(feedResponse(4).items);
 });
 
-it.each([GatewayEvent.PERMISSIONS_UPDATED, GatewayEvent.CONNECT])(
+it.each([GatewayEvent.PERMISSIONS_UPDATED, GatewayEvent.JOIN])(
   "still purges restricted snapshots while paused on %s without starting a request",
   async (event) => {
     mocks.request.mockResolvedValue(feedResponse());

@@ -1,3 +1,4 @@
+import { REALTIME_FEED_CAPABILITY } from "@lootlog/protocol/realtime";
 import {
   RealtimeEventListeners,
   unwrapOrganizationEvent,
@@ -77,7 +78,7 @@ export class GatewayClient {
   private readonly realtime = new RealtimeClient({
     url: GATEWAY_URL,
     path: GATEWAY_SOCKET_PATH || "/ws",
-    protocols: [REALTIME_SUBPROTOCOL],
+    protocols: [REALTIME_SUBPROTOCOL, REALTIME_FEED_CAPABILITY],
     ticketProvider: async () =>
       (await authControllerIssueRealtimeTicket()).ticket,
   });

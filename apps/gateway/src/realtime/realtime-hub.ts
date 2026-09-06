@@ -430,7 +430,7 @@ export class RealtimeHub {
       return true;
     if (
       (event.type === "kills.changed" || event.type === "feed.entry") &&
-      session.platform !== "web-app"
+      (session.platform !== "web-app" || !session.supportsFeed)
     )
       return false;
     const guild = session.guilds.find(

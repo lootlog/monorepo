@@ -125,10 +125,12 @@ describe("RealtimeHub federation", () => {
       { name: "owner", roles: [] },
       { name: "game", roles: [role(read)] },
       { name: "other-guild", roles: [role(read)] },
+      { name: "legacy", roles: [role(read)] },
     ];
     const targets = hubs.map((hub, index) =>
       variants.map((variant) => {
         const session = makeSession(`${index}-${variant.name}`);
+        Object.assign(session, { supportsFeed: variant.name !== "legacy" });
         if (variant.name === "game")
           Object.assign(session, { platform: "game" });
         session.guilds = [
@@ -241,7 +243,7 @@ describe("RealtimeHub federation", () => {
           yield* handler(delivery);
           for (const group of targets)
             expect(group.map((target) => target.sent.length)).toEqual([
-              2, 0, 0, 0, 2, 2, 0, 0,
+              2, 0, 0, 0, 2, 2, 0, 0, 0,
             ]);
           for (const group of targets)
             expect(decodeRealtimeFrame(group[0]!.sent[1]!)).toEqual({
@@ -287,7 +289,7 @@ describe("RealtimeHub federation", () => {
           yield* lootHandler(lootDelivery);
           for (const group of targets) {
             expect(group.map((target) => target.sent.length)).toEqual([
-              4, 0, 0, 0, 2, 4, 1, 0,
+              4, 0, 0, 0, 2, 4, 1, 0, 1,
             ]);
             expect(decodeRealtimeFrame(group[0]!.sent[2]!)).toEqual({
               v: 1,
