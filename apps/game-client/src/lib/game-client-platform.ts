@@ -4,7 +4,6 @@ import {
   REALTIME_SUBPROTOCOL,
 } from "@lootlog/client/realtime";
 import { GATEWAY_URL, GATEWAY_SOCKET_PATH } from "@/config/gateway";
-import { APP_ENVIRONMENT } from "@/config/app";
 import { requestRealtimeTicket } from "./realtime-ticket";
 
 export type GameRealtimeClient = Pick<
@@ -26,8 +25,7 @@ export interface GameClientPlatform {
 export function createGameRealtimeClient(
   extensionOrigin?: string,
 ): RealtimeClient {
-  const readable =
-    APP_ENVIRONMENT === "development" || APP_ENVIRONMENT === "production-local";
+  const readable = import.meta.env.VITE_GATEWAY_FRAME_ENCODING === "json";
   return new RealtimeClient({
     url: GATEWAY_URL,
     path: GATEWAY_SOCKET_PATH || "/ws",
