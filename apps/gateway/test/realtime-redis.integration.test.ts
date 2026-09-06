@@ -384,7 +384,10 @@ describe("realtime Dragonfly integration", () => {
       const visibleFeed = makeSocket("visible-feed");
       const hiddenFeed = makeSocket("hidden-feed");
       for (const target of [visibleFeed, hiddenFeed]) {
-        Object.assign(target.socket.data, { platform: "web-app" });
+        Object.assign(target.socket.data, {
+          platform: "web-app",
+          supportsFeed: true,
+        });
         target.socket.data.guilds = [
           {
             guild: { id: "organization-1", ownerId: "other-owner" },
