@@ -60,3 +60,66 @@ settings block the session cookie on that handshake, forward auth rejects it.
 Record the browser and observed blocked-cookie reason; do not replace this flow
 with another token or claim the browser path passed without observing it. Do not
 include cookie values or private handshake headers in reports or committed tests.
+
+## Realtime access policy updates
+
+Gateway refreshes each connected session's server-side roles after a permission
+rebalance. It sends `permissions.updated` only when the effective policy changes.
+Role identifiers, role order, and redundant overlapping grants do not cause a
+client refresh. Subsequent source-event filtering uses the refreshed roles even
+when no client event is sent.
+
+The realtime v1 events retain `organizationIds` and `subscriptionScopes` and add
+these optional fields:
+
+| Event                 | Field          | Meaning                                                                          |
+| --------------------- | -------------- | -------------------------------------------------------------------------------- |
+| `session.joined`      | `accessPolicy` | Current authorized organizations, effective permissions, and level grants        |
+| `permissions.updated` | `accessPolicy` | Complete current policy snapshot                                                 |
+| `permissions.updated` | `changes`      | Changed organizations and areas, with separate `restricted` and `expanded` flags |
+
+`session.join` acknowledgements also contain `accessPolicy`. The schema and
+browser-safe comparison helpers live in
+`packages/protocol/src/realtime/access-policy.ts`.
+
+The gateway's snapshot `version` is a SHA-256 digest of the canonical policy.
+It identifies policy content; it is not a timestamp or an increasing revision.
+The snapshot merges overlapping level grants and preserves the requirement that
+loot tier access and the base loot permission belong to the same role. Owner and
+administrator handling follows the source policy; administrators do not bypass
+loot level grants.
+
+The game client compares each snapshot with its last local snapshot, including
+on reconnect. It does not assume the event's `changes` describe everything missed
+while disconnected. Receiving the same version in both the joined event and its
+acknowledgement does not trigger duplicate work. If all Organization access was
+removed while disconnected, Gateway sends an authoritative empty
+`permissions.updated` snapshot before rejecting `session.join` with the existing
+`COMMAND_REJECTED` error. The client can therefore clear retained data even
+though the new connection never joined an Organization.
+
+Restrictions cancel affected pending requests and remove inaccessible cached
+rows immediately. Expansion refreshes affected queries after five seconds of
+quiet while retaining visible rows. Timer, chat, notification, and presence
+changes remain scoped to their Organization and area. Gateway preserves
+still-authorized custom subscriptions and air-tag scopes during rebalance.
+
+### Policy rollout and rollback
+
+Deploy Gateway before the updated game client. The additional fields are
+optional in realtime v1, so existing clients can decode the events and continue
+to use the existing organization and subscription fields. This change requires
+no HTTP schema or database migration.
+
+An updated client connected to a gateway without policy snapshots uses a
+conservative fallback for legacy permission events: cancel and clear affected
+cache families, clear stored notifications, and coalesce required refetches over
+five seconds. This fallback cannot preserve the same selective view as a full
+policy snapshot. Gateway-first rollout enables selective updates immediately;
+rolling Gateway back may temporarily restore broader view clearing.
+
+Verify unchanged rebalances, a tier revocation, a level-range restriction, and a
+reconnect after an offline permission change. Check both userscript and extension
+transports against the same realtime event codec. Unchanged rebalance must cause
+no timer or chat requests, and restricted cached rows must not reappear after an
+older pending response completes.

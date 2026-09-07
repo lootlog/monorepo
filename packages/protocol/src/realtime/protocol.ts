@@ -1,3 +1,4 @@
+import { AccessPolicySnapshot, AccessPolicyChange } from "./access-policy.js";
 import { UserFeedItem } from "../feed.js";
 import { NonEmptyString, NonNegativeInt } from "@lootlog/schema/primitives";
 import {
@@ -298,13 +299,16 @@ export const ServerEvent = Schema.Union([
       connectionId: NonEmptyString,
       organizationIds: Schema.Array(NonEmptyString),
       subscriptionScopes: Schema.Array(SubscriptionScope),
+      accessPolicy: Schema.optional(AccessPolicySnapshot),
     }),
   ),
   serverEvent(
     "permissions.updated",
     Schema.Struct({
+      changes: Schema.optional(Schema.Array(AccessPolicyChange)),
       organizationIds: Schema.Array(NonEmptyString),
       subscriptionScopes: Schema.Array(SubscriptionScope),
+      accessPolicy: Schema.optional(AccessPolicySnapshot),
     }),
   ),
   serverEvent("presence.snapshot", PresenceSnapshot),

@@ -1,3 +1,4 @@
+import { canReadNotification } from "@/features/notifications/notification-access-policy";
 import { GatewayEvent } from "@/config/gateway";
 import { useSocket } from "@/contexts/socket-context";
 import { useNotificationPresenter } from "@/features/notifications/hooks/use-notification-presenter";
@@ -87,6 +88,8 @@ export const useNotifications = () => {
     socket,
     connected,
     accountId,
+    isPayloadAllowed: (notification) =>
+      canReadNotification(socket?.getAccessPolicy?.(), notification),
     isReady: isReady && areMutesReady,
     event: GatewayEvent.NOTIFICATION,
     onProcessBatch: (notifications: readonly Notification[]) =>

@@ -2,6 +2,8 @@ import { GatewayEvent } from "@/config/gateway";
 import { useSocket } from "@/contexts/socket-context";
 import {
   applyPresenceUpdates,
+  canReadPresence,
+  filterPresenceByPolicy,
   getPresenceKey,
   normalizePresence,
   normalizePresenceResponse,
@@ -18,6 +20,7 @@ import {
   type Dispatch,
   type SetStateAction,
 } from "react";
+import type { PermissionsUpdatedPayload } from "@/lib/socket";
 import type { AsyncResourceState } from "@/types/async-resource-state";
 
 export type OnlinePlayersAccessState = "allowed" | "forbidden";
@@ -60,10 +63,24 @@ export const usePlayersPresence = (
   );
   const [requestVersion, setRequestVersion] = useState(0);
   const { joined, connected, socket } = useSocket();
-  const visiblePresenceResource =
+  const policy = socket?.getAccessPolicy?.();
+  const forbidden =
+    policy &&
+    !canReadPresence(
+      policy.organizations.find(
+        (organization) => organization.organizationId === selectedGuildId,
+      ),
+    );
+  let visiblePresenceResource =
     presenceResource.scopeKey === scopeKey
       ? presenceResource
       : createEmptyPresenceResource(scopeKey);
+  if (forbidden)
+    visiblePresenceResource = {
+      ...createEmptyPresenceResource(scopeKey),
+      accessState: "forbidden",
+      loaded: true,
+    };
   const setOnlinePlayers: Dispatch<SetStateAction<PlayerPresenceResponse>> = (
     update,
   ) => {
@@ -98,6 +115,9 @@ export const usePlayersPresence = (
   const worldRef = useRef(world);
   const visibleScopeRef = useRef({ guildId: selectedGuildId, world });
   const requestIdRef = useRef(0);
+  const policyRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const presenceUpdateControllerRef = useRef({
     pendingUpdates: new Map<string, PlayerPresence>(),
     frame: null as number | null,
@@ -140,6 +160,17 @@ export const usePlayersPresence = (
       return;
     }
 
+    const policy = socket.getAccessPolicy?.();
+    if (
+      policy &&
+      !canReadPresence(
+        policy.organizations.find(
+          (organization) => organization.organizationId === selectedGuildId,
+        ),
+      )
+    ) {
+      return;
+    }
     const currentRequestId = ++requestIdRef.current;
     visibleScopeRef.current = { guildId: selectedGuildId, world };
 
@@ -149,10 +180,13 @@ export const usePlayersPresence = (
         if (requestIdRef.current !== currentRequestId) return;
 
         if (!data) {
-          setPresenceResource({
-            ...createEmptyPresenceResource(scopeKey),
+          setPresenceResource((current) => ({
+            ...(current.scopeKey === scopeKey
+              ? current
+              : createEmptyPresenceResource(scopeKey)),
+            loading: false,
             error: new Error("Online players response was empty"),
-          });
+          }));
           return;
         }
 
@@ -174,10 +208,13 @@ export const usePlayersPresence = (
       .catch((requestError: unknown) => {
         if (requestIdRef.current !== currentRequestId) return;
 
-        setPresenceResource({
-          ...createEmptyPresenceResource(scopeKey),
+        setPresenceResource((current) => ({
+          ...(current.scopeKey === scopeKey
+            ? current
+            : createEmptyPresenceResource(scopeKey)),
+          loading: false,
           error: requestError,
-        });
+        }));
       });
   }, [
     joined,
@@ -254,15 +291,65 @@ export const usePlayersPresence = (
     });
     setRequestVersion((version) => version + 1);
   };
-  const handlePermissionsUpdated = useEffectEvent(retry);
+  const schedulePolicyRefresh = () => {
+    if (policyRefreshTimerRef.current !== null)
+      clearTimeout(policyRefreshTimerRef.current);
+    policyRefreshTimerRef.current = setTimeout(() => {
+      policyRefreshTimerRef.current = null;
+      retry();
+    }, 5_000);
+  };
+  const handlePermissionsUpdated = useEffectEvent(
+    (payload: PermissionsUpdatedPayload) => {
+      if (!payload.accessPolicy) {
+        requestIdRef.current += 1;
+        presenceUpdateControllerRef.current.pendingUpdates.clear();
+        setPresenceResource(createEmptyPresenceResource(scopeKey));
+        schedulePolicyRefresh();
+        return;
+      }
+      const policy = payload.accessPolicy.organizations.find(
+        (organization) => organization.organizationId === selectedGuildId,
+      );
+      const changes =
+        payload.changes?.filter(
+          (change) =>
+            change.organizationId === selectedGuildId &&
+            change.areas.includes("presence"),
+        ) ?? [];
+      if (policy && changes.length === 0) return;
+      if (!policy || changes.some((change) => change.restricted)) {
+        requestIdRef.current += 1;
+        presenceUpdateControllerRef.current.pendingUpdates.clear();
+        setPresenceResource((current) => ({
+          ...current,
+          accessState: canReadPresence(policy) ? "allowed" : "forbidden",
+          loaded: true,
+          loading: false,
+          onlinePlayers: filterPresenceByPolicy(current.onlinePlayers, policy),
+        }));
+      }
+      if (policyRefreshTimerRef.current !== null) {
+        clearTimeout(policyRefreshTimerRef.current);
+        policyRefreshTimerRef.current = null;
+      }
+      if (joined && connected && changes.some((change) => change.expanded)) {
+        schedulePolicyRefresh();
+      }
+    },
+  );
 
   useEffect(() => {
-    if (!socket || !connected || !joined) return;
+    if (!socket) return;
 
     socket.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
 
     return () => {
       socket.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
+      if (policyRefreshTimerRef.current !== null) {
+        clearTimeout(policyRefreshTimerRef.current);
+        policyRefreshTimerRef.current = null;
+      }
     };
   }, [socket, joined, connected, scopeKey]);
 
