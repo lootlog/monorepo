@@ -262,6 +262,26 @@ export function OneVsOneStatsTable({
   const user = userWarrior;
   const opponent = opponentWarrior;
 
+  useEffect(() => {
+    const viewport = statsScrollViewportRef.current;
+    const header = viewport?.querySelector("thead");
+    if (!viewport || !header) return;
+
+    const updateHeaderHeight = () => {
+      viewport.style.setProperty(
+        "--scroll-fade-header-height",
+        `${header.getBoundingClientRect().height}px`,
+      );
+    };
+    updateHeaderHeight();
+    const observer = new ResizeObserver(updateHeaderHeight);
+    observer.observe(header);
+    return () => {
+      observer.disconnect();
+      viewport.style.removeProperty("--scroll-fade-header-height");
+    };
+  }, [user, opponent, compact]);
+
   const visibleStats = getVisibleStats({
     config,
     hideZeros,
@@ -428,7 +448,10 @@ export function OneVsOneStatsTable({
       )}
       <ScrollArea
         ref={statsScrollViewportRef}
-        className={cn("min-h-0 w-full max-w-screen", scrollClassName)}
+        className={cn(
+          "scroll-area-sticky-table min-h-0 w-full max-w-screen",
+          scrollClassName,
+        )}
       >
         <Table
           className={cn(compact && "text-[13px] leading-[1.35]")}
@@ -447,7 +470,7 @@ export function OneVsOneStatsTable({
             <TableRow className="border-b border-border/70">
               <TableHead
                 className={cn(
-                  "sticky left-0 top-0 z-20 border-r border-b border-border/70 bg-muted/80 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]",
+                  "sticky left-0 top-0 z-20 border-r border-b border-border/70 bg-muted shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]",
                   compact && "h-7 px-2 text-[13px]",
                 )}
               >

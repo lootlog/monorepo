@@ -32,16 +32,7 @@ export function StatisticsContent({
           {t("statistics.unknown")}
         </p>
       )}
-      {hasHistory && (
-        <>
-          {data.overview.totalKills === 0 && (
-            <p className="p-3 text-sm text-muted-foreground">
-              {t("statistics.noData")}
-            </p>
-          )}
-          <Content data={data} onClearWorld={onClearWorld} />
-        </>
-      )}
+      {hasHistory && <Content data={data} onClearWorld={onClearWorld} />}
     </>
   );
 }

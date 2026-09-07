@@ -470,7 +470,7 @@ export const BattlesTable = ({
             ))}
           </div>
         ) : (
-          <Table className="min-w-full table-fixed border-b md:min-w-[960px] md:table-auto">
+          <Table className="battle-panel-battles-table min-w-full table-fixed border-b md:min-w-[960px] md:table-auto">
             <TanStackTableHeader
               table={table}
               className="sticky top-0 z-10 bg-background"

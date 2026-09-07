@@ -14,8 +14,10 @@ import {
 import { Link, useLocation } from "@tanstack/react-router";
 import { ThemeCircularFrame, useThemeMeta } from "@/themes";
 import type { MouseEvent } from "react";
+import { useTranslation } from "react-i18next";
 
 export const UserNavItem = () => {
+  const { t } = useTranslation();
   const { data } = useSession();
   const { pathname } = useLocation();
   const { isRukiaTheme } = useThemeMeta();
@@ -33,7 +35,7 @@ export const UserNavItem = () => {
         isActive && !isRukiaTheme && "after:opacity-100",
       )}
     >
-      <AvatarImage src={data?.user.image ?? ""} alt={data?.user.image ?? ""} />
+      <AvatarImage src={data?.user.image ?? ""} alt="" />
       <AvatarFallback className="rounded-none">
         {data?.user?.name[0] || ""}
       </AvatarFallback>
@@ -47,6 +49,7 @@ export const UserNavItem = () => {
           <div className="relative h-10 flex items-center justify-center">
             <Link
               to={ROUTES.user.dashboard}
+              aria-label={t("common.routeErrors.actions.goToDashboard")}
               className="block"
               onClick={handleClick}
             >

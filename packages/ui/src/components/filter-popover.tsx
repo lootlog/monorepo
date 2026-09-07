@@ -139,6 +139,7 @@ export function FilterPopover<T extends string = string>({
         onWheel={(e) => e.stopPropagation()}
       >
         <Command
+          label={placeholder}
           className="rounded-lg bg-transparent"
           shouldFilter={shouldFilter}
         >
