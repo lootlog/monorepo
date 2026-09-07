@@ -153,7 +153,7 @@ describe("RealtimeClient", () => {
     expect(events).toEqual(["permissions.updated"]);
   });
 
-  it("re-authenticates, rejoins and restores logical subscriptions after jittered reconnect", async () => {
+  it("rejoins and restores logical subscriptions after jittered reconnect", async () => {
     vi.useFakeTimers();
     const sockets: TestWebSocket[] = [];
     const client = new RealtimeClient({
@@ -201,18 +201,60 @@ describe("RealtimeClient", () => {
     expect(client.state).toBe("ready");
   });
 
-  it("backs off when sockets open but session joins keep failing", async () => {
+  it("runs the reconnect handler and heartbeats the restored presence session", async () => {
     vi.useFakeTimers();
     const sockets: TestWebSocket[] = [];
-    let ticketRequests = 0;
     const client = new RealtimeClient({
       url: "https://gateway.example.test",
       reconnectBaseDelayMs: 1_000,
       random: () => 0,
-      ticketProvider: () => {
-        ticketRequests += 1;
-        return Promise.resolve(`ticket-${ticketRequests}`);
+      webSocketFactory: () => {
+        const socket = new TestWebSocket();
+        sockets.push(socket);
+        return socket;
       },
+    });
+    const restoreSession = async () => {
+      await client.join(joinData);
+      await client.request("presence.publish", { organizationIds: ["org-1"] });
+    };
+    client.setReconnectHandler(restoreSession);
+    client.connect();
+    const first = socketAt(sockets, 0);
+    first.open();
+    const initial = restoreSession();
+    respondToLastRequest(first);
+    await flushMessages();
+    respondToLastRequest(first, { sessionId: "initial-presence" });
+    await flushMessages();
+    await initial;
+    first.close();
+
+    await vi.advanceTimersByTimeAsync(500);
+    const second = socketAt(sockets, 1);
+    second.open();
+    respondToLastRequest(second);
+    await flushMessages();
+    expect(frameAt(second, 1)).toMatchObject({ type: "presence.publish" });
+    respondToLastRequest(second, { sessionId: "restored-presence" });
+    await flushMessages();
+    await vi.advanceTimersByTimeAsync(25_000);
+    expect(frameAt(second, 2)).toMatchObject({
+      type: "presence.heartbeat",
+      data: { sessionId: "restored-presence" },
+    });
+    respondToLastRequest(second);
+    await flushMessages();
+    client.disconnect();
+  });
+
+  it("backs off when sockets open but session joins keep failing", async () => {
+    vi.useFakeTimers();
+    const sockets: TestWebSocket[] = [];
+    const client = new RealtimeClient({
+      url: "https://gateway.example.test",
+      reconnectBaseDelayMs: 1_000,
+      random: () => 0,
       webSocketFactory: () => {
         const socket = new TestWebSocket();
         sockets.push(socket);
@@ -233,26 +275,23 @@ describe("RealtimeClient", () => {
 
     await vi.advanceTimersByTimeAsync(500);
     await flushMessages();
-    expect(ticketRequests).toBe(2);
     expect(sockets).toHaveLength(2);
 
     await vi.advanceTimersByTimeAsync(500);
     await flushMessages();
-    expect(ticketRequests).toBe(3);
     expect(sockets).toHaveLength(3);
     client.disconnect();
   });
 
-  it("fetches a fresh ticket for every connection and sends it only as a subprotocol", async () => {
+  it("preserves only configured frame and capability protocols on reconnect", async () => {
     vi.useFakeTimers();
     const sockets: TestWebSocket[] = [];
     const protocolsSeen: Array<string[] | undefined> = [];
-    let ticketNumber = 0;
     const client = new RealtimeClient({
       url: "https://gateway.example.test?ticket=must-be-removed",
       reconnectBaseDelayMs: 1_000,
       random: () => 0,
-      ticketProvider: () => Promise.resolve(`ticket-${++ticketNumber}`),
+      protocols: ["lootlog.realtime.v1", "lootlog.cap.feed.v1"],
       webSocketFactory: (url, protocols) => {
         expect(url).toBe("wss://gateway.example.test/ws");
         protocolsSeen.push(protocols);
@@ -264,14 +303,16 @@ describe("RealtimeClient", () => {
     client.connect();
     await flushMessages();
     expect(protocolsSeen[0]).toEqual([
-      `lootlog.ticket.v1.${btoa("ticket-1").replace(/=/g, "")}`,
+      "lootlog.realtime.v1",
+      "lootlog.cap.feed.v1",
     ]);
     socketAt(sockets, 0).open();
     socketAt(sockets, 0).close();
     await vi.advanceTimersByTimeAsync(500);
     await flushMessages();
     expect(protocolsSeen[1]).toEqual([
-      `lootlog.ticket.v1.${btoa("ticket-2").replace(/=/g, "")}`,
+      "lootlog.realtime.v1",
+      "lootlog.cap.feed.v1",
     ]);
     client.disconnect();
   });

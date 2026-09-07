@@ -16,14 +16,14 @@ import {
 import { Switch } from "@lootlog/ui/components/switch";
 import { API_URL } from "@/config/api";
 import { useAuthenticatedGuildStatsCardControllerRefreshStatsCard } from "@lootlog/client/main";
-import type { GuildResponseDto } from "@lootlog/client/main";
+import type { GuildResponseDtoOutput } from "@lootlog/client/main";
 import type { GeneralFormValues } from "./general-form.schema";
 import type { UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 
 type StatsCardSettingsCardProps = {
   form: UseFormReturn<GeneralFormValues>;
-  guild: GuildResponseDto;
+  guild: GuildResponseDtoOutput;
 };
 
 export const StatsCardSettingsCard = ({

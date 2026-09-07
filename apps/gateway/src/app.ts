@@ -89,7 +89,7 @@ export class GatewayApplication extends Context.Service<
         }),
         (store) => Effect.tryPromise(() => store.close()),
       );
-      const auth = makeGatewayAuth(config, httpClient);
+      const auth = makeGatewayAuth(config);
       const hub = new RealtimeHub(config, redis, runBackground);
       yield* hub.start();
       const coverage = new CoveragePublisher(messaging);
@@ -270,15 +270,7 @@ export const createGatewayFetch =
         application.config.websocketPath,
       );
     }
-    const credential = application.auth.readCredential(request);
-    if (!credential)
-      return complete(
-        new Response("Unauthorized", { status: 401 }),
-        application.config.websocketPath,
-      );
-    const identity = await application.runPromise(
-      application.auth.verify(credential),
-    );
+    const identity = application.auth.readIdentity(request);
     if (!identity)
       return complete(
         new Response("Unauthorized", { status: 401 }),

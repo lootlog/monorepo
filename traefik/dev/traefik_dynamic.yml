@@ -26,6 +26,7 @@ http:
         - "cors"
         - "apiStripPrefix"
         - "apiCompress"
+        - "stripAuthIdentity"
         - "apiForwardAuth"
       priority: 20
       entryPoints:
@@ -48,6 +49,7 @@ http:
       middlewares:
         - "cors"
         - "apiStripPrefix"
+        - "stripAuthIdentity"
         - "apiForwardAuth"
         - "apiCompress"
       priority: 10
@@ -71,6 +73,7 @@ http:
       middlewares:
         - "cors"
         - "apiStripPrefix"
+        - "stripAuthIdentity"
         - "apiForwardAuth"
         - "apiCompress"
       priority: 10
@@ -83,6 +86,7 @@ http:
       middlewares:
         - "cors"
         - "apiStripPrefix"
+        - "stripAuthIdentity"
         - "apiForwardAuth"
         - "apiCompress"
       priority: 10
@@ -117,6 +121,7 @@ http:
       middlewares:
         - "cors"
         - "apiStripPrefix"
+        - "stripAuthIdentity"
         - "apiForwardAuth"
         - "apiCompress"
       priority: 10
@@ -194,6 +199,11 @@ http:
           - "/api/battlelog"
           - "/api/activity"
           - "/gateway"
+    stripAuthIdentity:
+      headers:
+        customRequestHeaders:
+          X-Auth-User-Id: ""
+          X-Auth-Discord-Id: ""
     apiForwardAuth:
       forwardAuth:
         address: "http://host.docker.internal:4001/auth/verify"

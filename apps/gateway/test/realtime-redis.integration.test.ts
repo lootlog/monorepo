@@ -370,7 +370,6 @@ describe("realtime Dragonfly integration", () => {
       serviceName: "gateway",
       serviceNamespace: "test",
       apiUrl: "http://localhost",
-      authUrl: "http://localhost",
       margonemSigningKeyUrl: "http://localhost/key",
       rabbitmqUri: Redacted.make("unused"),
       activityEventSignatureSecret: Redacted.make("test"),

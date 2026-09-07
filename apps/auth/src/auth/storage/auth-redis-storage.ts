@@ -19,7 +19,6 @@ export const createAuthRedisConnection = (config: AuthConfig["redis"]) =>
 export class AuthRedisStorage extends Context.Service<
   AuthRedisStorage,
   {
-    readonly client: RealtimeTicketRedis;
     readonly secondaryStorage: ReturnType<
       typeof createFailOpenSecondaryStorage
     >;
@@ -41,11 +40,6 @@ export class AuthRedisStorage extends Context.Service<
             }),
           ),
         );
-      };
-      const client: RealtimeTicketRedis = {
-        set: (key, value, mode, ttl, condition) =>
-          run(redis.send("SET", key, value, mode, String(ttl), condition)),
-        getdel: (key) => run(redis.send("GETDEL", key)),
       };
       const storage: SecondaryStorage = {
         get: (key) => run(redis.send("GET", `${AUTH_REDIS_KEY_PREFIX}${key}`)),
@@ -85,20 +79,9 @@ export class AuthRedisStorage extends Context.Service<
         },
       );
 
-      return AuthRedisStorage.of({ client, secondaryStorage });
+      return AuthRedisStorage.of({ secondaryStorage });
     }),
   );
-}
-
-interface RealtimeTicketRedis {
-  readonly set: (
-    key: string,
-    value: string,
-    mode: "EX",
-    ttl: number,
-    condition: "NX",
-  ) => Promise<unknown>;
-  readonly getdel: (key: string) => Promise<string | null>;
 }
 
 const INCREMENT_SCRIPT = `
