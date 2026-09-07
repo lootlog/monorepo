@@ -39,11 +39,6 @@ export type AuthControllerVerify200 = {
   status: AuthControllerVerify200Status;
 };
 
-export type AuthControllerIssueRealtimeTicket201 = {
-  ticket: string;
-  expiresAt: number;
-};
-
 export type AuthControllerGetIdpTokenBody = {
   userId: string;
   discordId: string;
@@ -359,78 +354,6 @@ export const useGetAuthControllerVerifyQueryData = () => {
 }
 
 
-
-export const getAuthControllerIssueRealtimeTicketUrl = () => {
-
-
-
-
-  return `/auth/realtime-ticket`
-}
-
-/**
- * @summary Issue a single-use realtime ticket
- */
-export const authControllerIssueRealtimeTicket = async ( options?: Parameters<typeof authFetch>[1]): Promise<AuthControllerIssueRealtimeTicket201> => {
-
-  return authFetch<AuthControllerIssueRealtimeTicket201>(getAuthControllerIssueRealtimeTicketUrl(),
-  {
-    ...options,
-    method: 'POST'
-
-
-  }
-);}
-
-
-
-
-
-export const getAuthControllerIssueRealtimeTicketMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authControllerIssueRealtimeTicket>>, TError,void, TContext>, request?: SecondParameter<typeof authFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof authControllerIssueRealtimeTicket>>, TError,void, TContext> => {
-
-const mutationKey = ['authControllerIssueRealtimeTicket'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof authControllerIssueRealtimeTicket>>, void> = () => {
-
-
-          return  authControllerIssueRealtimeTicket(requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type AuthControllerIssueRealtimeTicketMutationResult = NonNullable<Awaited<ReturnType<typeof authControllerIssueRealtimeTicket>>>
-
-    export type AuthControllerIssueRealtimeTicketMutationError = ErrorType<unknown>
-
-
-    /**
- * @summary Issue a single-use realtime ticket
- */
-export const useAuthControllerIssueRealtimeTicket = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authControllerIssueRealtimeTicket>>, TError,void, TContext>, request?: SecondParameter<typeof authFetch>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof authControllerIssueRealtimeTicket>>,
-        TError,
-        void,
-        TContext
-      > => {
-      return useMutation(getAuthControllerIssueRealtimeTicketMutationOptions(options), queryClient);
-    }
 
 export const getAuthControllerGetScopesUrl = () => {
 

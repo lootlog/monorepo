@@ -1,6 +1,9 @@
 import { Config, Context, Effect, Layer, Redacted, Schema } from "effect";
 
-import { ChromeExtensionOrigin } from "@lootlog/schema/browser-extension";
+import {
+  ChromeExtensionOrigin,
+  FirefoxExtensionOrigin,
+} from "@lootlog/schema/browser-extension";
 
 export interface GatewayConfiguration {
   readonly environment: string;
@@ -8,7 +11,6 @@ export interface GatewayConfiguration {
   readonly serviceName: string;
   readonly serviceNamespace: string;
   readonly apiUrl: string;
-  readonly authUrl: string;
   readonly margonemSigningKeyUrl: string;
   readonly rabbitmqUri: Redacted.Redacted<string>;
   readonly activityEventSignatureSecret: Redacted.Redacted<string>;
@@ -51,7 +53,6 @@ export const loadGatewayConfiguration = Effect.gen(function* () {
       Config.withDefault("local"),
     ),
     apiUrl: (yield* Config.url("API_URL")).toString().replace(/\/$/, ""),
-    authUrl: (yield* Config.url("AUTH_URL")).toString().replace(/\/$/, ""),
     margonemSigningKeyUrl: (yield* Config.url("MARGONEM_SIGNING_KEY_URL").pipe(
       Config.withDefault(
         new URL("https://staticinfo.margonem.pl/.well-known/signing-key.pem"),
@@ -81,8 +82,15 @@ export const loadGatewayConfiguration = Effect.gen(function* () {
         Schema.String.check(
           Schema.makeFilter(
             (value) =>
-              [...splitOrigins(value)].every(Schema.is(ChromeExtensionOrigin)),
-            { expected: "comma-separated exact Chrome extension origins" },
+              [...splitOrigins(value)].every(
+                Schema.is(
+                  Schema.Union([ChromeExtensionOrigin, FirefoxExtensionOrigin]),
+                ),
+              ),
+            {
+              expected:
+                "comma-separated exact Chrome or Firefox extension origins",
+            },
           ),
         ),
         "ALLOWED_EXTENSION_ORIGINS",

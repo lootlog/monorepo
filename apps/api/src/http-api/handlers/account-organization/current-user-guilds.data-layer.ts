@@ -1,7 +1,7 @@
 import { hydrateMemberRoles } from "#src/members/member-role-hydration";
 import { and, eq, inArray } from "drizzle-orm";
 import { Clock, Effect } from "effect";
-import type { APIGuild } from "discord-api-types/v10";
+import type { RESTAPIPartialCurrentUserGuild } from "discord-api-types/v10";
 import { Permission } from "@lootlog/schema/permissions";
 import type { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -44,7 +44,7 @@ export interface CurrentUserGuildPorts {
   }) => Effect.Effect<unknown, unknown>;
   readonly freshDiscordGuilds: (
     identity: AuthenticatedIdentity,
-  ) => Effect.Effect<ReadonlyArray<APIGuild>, unknown>;
+  ) => Effect.Effect<ReadonlyArray<RESTAPIPartialCurrentUserGuild>, unknown>;
   readonly queueMember: (options: {
     readonly discordId: string;
     readonly guildId: string;
@@ -71,13 +71,7 @@ const fallbackEligible = (error: unknown) => {
   );
 };
 
-const discordOwner = (guild: APIGuild, discordId: string) =>
-  Boolean(
-    (guild as APIGuild & { owner?: boolean; owner_id?: string }).owner ||
-    guild.owner_id === discordId,
-  );
-
-const discordAdmin = (guild: APIGuild) => {
+const discordAdmin = (guild: RESTAPIPartialCurrentUserGuild) => {
   try {
     return isDiscordAdministrator(BigInt(guild.permissions));
   } catch {
@@ -145,7 +139,8 @@ export const makeCurrentUserGuilds = (
     if (!firstGuild || !("permissions" in firstGuild)) {
       return discordGuilds as ReadonlyArray<GuildSummary>;
     }
-    const apiGuilds = discordGuilds as ReadonlyArray<APIGuild>;
+    const apiGuilds =
+      discordGuilds as ReadonlyArray<RESTAPIPartialCurrentUserGuild>;
     const discordGuildIds = apiGuilds.map(({ id }) => id);
     yield* ports.deactivateMissing({
       ...identity,
@@ -186,9 +181,7 @@ export const makeCurrentUserGuilds = (
         );
         const discordGuild = discordById.get(guild.id);
         const privileged = Boolean(
-          discordGuild &&
-          (discordOwner(discordGuild, identity.discordId) ||
-            discordAdmin(discordGuild)),
+          discordGuild && (discordGuild.owner || discordAdmin(discordGuild)),
         );
         return [
           {

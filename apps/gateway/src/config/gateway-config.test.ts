@@ -5,7 +5,6 @@ import { loadGatewayConfiguration } from "./gateway-config.js";
 const requiredEnvironment = {
   PORT: "4004",
   API_URL: "http://api.internal",
-  AUTH_URL: "http://auth.internal",
   RABBITMQ_URI: "amqp://rabbit.internal",
   ACTIVITY_EVENT_SIGNATURE_SECRET: "test-secret",
   REDIS_HOST: "redis.internal",
@@ -18,6 +17,8 @@ describe("loadGatewayConfiguration", () => {
   it.each([
     "https://attacker.example",
     "chrome-extension://*",
+    "moz-extension://*",
+    "moz-extension://not-a-uuid",
     "chrome-extension://bad",
     "chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/path",
   ])("rejects invalid extension configuration: %s", async (origin) => {
@@ -36,22 +37,27 @@ describe("loadGatewayConfiguration", () => {
     ).rejects.toThrow();
   });
 
-  it("loads explicit extension origins independently from web origins", async () => {
-    const origin = "chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-    const config = await Effect.runPromise(
-      loadGatewayConfiguration.pipe(
-        Effect.provideService(
-          ConfigProvider.ConfigProvider,
-          ConfigProvider.fromUnknown({
-            ...requiredEnvironment,
-            ALLOWED_EXTENSION_ORIGINS: ` ${origin}/, `,
-          }),
+  it.each([
+    "chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "moz-extension://3dceb390-cdec-4e9c-9a03-4c726adc48cc",
+  ])(
+    "loads explicit extension origin %s independently from web origins",
+    async (origin) => {
+      const config = await Effect.runPromise(
+        loadGatewayConfiguration.pipe(
+          Effect.provideService(
+            ConfigProvider.ConfigProvider,
+            ConfigProvider.fromUnknown({
+              ...requiredEnvironment,
+              ALLOWED_EXTENSION_ORIGINS: ` ${origin}/, `,
+            }),
+          ),
         ),
-      ),
-    );
-    expect(config.allowedExtensionOrigins).toEqual(new Set([origin]));
-    expect(config.allowedWebOrigins.has(origin)).toBe(false);
-  });
+      );
+      expect(config.allowedExtensionOrigins).toEqual(new Set([origin]));
+      expect(config.allowedWebOrigins.has(origin)).toBe(false);
+    },
+  );
 
   it("allows both reverse-proxy and direct Vite origins by default", async () => {
     const config = await Effect.runPromise(

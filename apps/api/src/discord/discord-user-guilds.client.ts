@@ -12,7 +12,10 @@ import {
 } from "#src/shared/http/http-errors";
 import { RedisService } from "#src/redis/redis.service";
 import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
-import { Routes, type APIGuild } from "discord-api-types/v10";
+import {
+  Routes,
+  type RESTGetAPICurrentUserGuildsResult,
+} from "discord-api-types/v10";
 import { ExecutionError, RedlockService } from "#src/redis/redlock";
 import { Schema } from "effect";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
@@ -46,7 +49,7 @@ import { DiscordRestClientFactory } from "./discord-rest-client.factory.js";
 import { DiscordSyncDiagnosticsService } from "./discord-sync-diagnostics.service.js";
 
 export interface FreshCompleteUserGuildsResult {
-  guilds: APIGuild[];
+  guilds: RESTGetAPICurrentUserGuildsResult;
   fresh: true;
   complete: true;
 }
@@ -86,7 +89,10 @@ export class DiscordUserGuildsClient {
     });
   }
 
-  async getUserGuilds(userId: string, discordId: string): Promise<APIGuild[]> {
+  async getUserGuilds(
+    userId: string,
+    discordId: string,
+  ): Promise<RESTGetAPICurrentUserGuildsResult> {
     const cacheTtl = this.getCacheTtl(
       this.guildsCacheTtlLocal,
       this.guildsCacheTtlProd,
@@ -334,7 +340,7 @@ export class DiscordUserGuildsClient {
   private async getCachedUserGuilds(
     cacheKey: string,
     userId: string,
-  ): Promise<APIGuild[] | null> {
+  ): Promise<RESTGetAPICurrentUserGuildsResult | null> {
     const cached = await this.redisService.get(cacheKey);
     if (!cached) {
       return null;
@@ -398,7 +404,7 @@ export class DiscordUserGuildsClient {
   private async fetchUserGuildsFromDiscord(
     userId: string,
     discordId: string,
-  ): Promise<APIGuild[]> {
+  ): Promise<RESTGetAPICurrentUserGuildsResult> {
     await throwIfDiscordRateLimited(this.rateLimiter, userId, "guilds");
 
     const rest = await this.restClientFactory.getRestClient(userId, discordId);
@@ -418,8 +424,8 @@ export class DiscordUserGuildsClient {
     userId: string,
     rest: REST,
     after?: string,
-    guilds: APIGuild[] = [],
-  ): Promise<APIGuild[]> {
+    guilds: RESTGetAPICurrentUserGuildsResult = [],
+  ): Promise<RESTGetAPICurrentUserGuildsResult> {
     const page = await this.fetchUserGuildsPage(userId, rest, after);
     guilds.push(...page);
 
@@ -441,7 +447,7 @@ export class DiscordUserGuildsClient {
     userId: string,
     rest: REST,
     after?: string,
-  ): Promise<APIGuild[]> {
+  ): Promise<RESTGetAPICurrentUserGuildsResult> {
     const path = Routes.userGuilds();
     const query = new URLSearchParams({
       limit: this.userGuildsPageLimit.toString(),
@@ -463,7 +469,9 @@ export class DiscordUserGuildsClient {
         response.headers,
       );
 
-      return (await parseResponse(response)) as APIGuild[];
+      return (await parseResponse(
+        response,
+      )) as RESTGetAPICurrentUserGuildsResult;
     } catch (error: unknown) {
       await recordInvalidDiscordRequest(this.diagnostics, "guilds", error);
 

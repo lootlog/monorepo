@@ -1,5 +1,9 @@
 import { isObjectRecord as isRecord } from "@lootlog/schema/records";
-import type { APIGuild, APIGuildMember } from "discord-api-types/v10";
+import type {
+  APIGuildMember,
+  RESTAPIPartialCurrentUserGuild,
+  RESTGetAPICurrentUserGuildsResult,
+} from "discord-api-types/v10";
 
 export interface DiscordIdentity {
   userId: string;
@@ -76,7 +80,9 @@ export function getLegacyGuildMemberCacheKeys(options: {
   };
 }
 
-export function isApiGuildArray(value: unknown): value is APIGuild[] {
+export function isApiGuildArray(
+  value: unknown,
+): value is RESTGetAPICurrentUserGuildsResult {
   return Array.isArray(value) && value.every(isApiGuild);
 }
 
@@ -92,6 +98,6 @@ export function isApiGuildMember(value: unknown): value is APIGuildMember {
   );
 }
 
-function isApiGuild(value: unknown): value is APIGuild {
+function isApiGuild(value: unknown): value is RESTAPIPartialCurrentUserGuild {
   return isRecord(value) && typeof value.id === "string";
 }

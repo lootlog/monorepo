@@ -47,7 +47,6 @@ describe("extension HTTP boundary", () => {
     [`${API_URL}.evil/timers`, "GET"],
     [`${API_URL}/users/@me`, "DELETE"],
     [`${AUTH_API_URL}/idp/get-access-token`, "POST"],
-    [`${AUTH_API_URL}/auth/realtime-ticket`, "POST"],
     [`${AUTH_API_URL}/idp/get-session`, "POST"],
     [`${API_URL}/guilds/a%2fb/members`, "GET"],
     [`${API_URL}/timers#fragment`, "GET"],

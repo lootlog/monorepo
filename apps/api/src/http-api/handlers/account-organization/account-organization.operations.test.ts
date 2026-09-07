@@ -20,6 +20,8 @@ import {
   AccountOrganizationNotFound,
 } from "./account-organization.operations.js";
 
+import { makeManageableGuilds } from "./manageable-guilds.data-layer.js";
+
 const identity = { userId: "user-a", discordId: "discord-a" };
 
 const httpApiTestServices = Layer.mergeAll(
@@ -114,6 +116,59 @@ const provideServices = (
   );
 
 describe("Users and Guilds HttpApi handlers", () => {
+  it("returns Discord installation candidates without requiring existing Organization fields", async () => {
+    const getManageableUserGuilds = makeManageableGuilds(() =>
+      Effect.succeed([
+        {
+          id: "admin-guild",
+          name: "Admin guild",
+          icon: null,
+          banner: null,
+          owner: false,
+          permissions: "8",
+          features: [],
+        },
+        {
+          id: "member-guild",
+          name: "Member guild",
+          icon: null,
+          banner: null,
+          owner: false,
+          permissions: "0",
+          features: [],
+        },
+      ]),
+    );
+    const bearer = BearerSecurityMiddleware.of({
+      bearer: (httpEffect) =>
+        Effect.provideService(httpEffect, ForwardAuthIdentity, identity),
+    });
+    const responseEffect = Effect.scoped(
+      Effect.gen(function* () {
+        const client = yield* HttpApiTest.groups(LootlogApi, ["guilds"]).pipe(
+          Effect.provide(GuildsHandlers),
+          Effect.provide(Layer.succeed(BearerSecurityMiddleware, bearer)),
+        );
+        return yield* client.guilds.GuildsControllerGetManageableUserGuilds();
+      }),
+    ).pipe(
+      Effect.provide(
+        provideServices(
+          makeAuthorization(),
+          makeData({ getManageableUserGuilds }),
+        ),
+      ),
+      Effect.provide(httpApiTestServices),
+    );
+    // HttpApiBuilder retains phantom requirements after concrete layers are provided.
+    const response = await Effect.runPromise(
+      responseEffect as unknown as Effect.Effect<unknown, unknown>,
+    );
+    expect(response).toEqual([
+      { id: "admin-guild", name: "Admin guild", icon: null },
+    ]);
+  });
+
   it.each([
     new AccountOrganizationAccessDenied({ status: 403, code: "FORBIDDEN" }),
     new AccountOrganizationNotFound({ status: 404, code: "GUILD_NOT_FOUND" }),

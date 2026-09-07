@@ -15,7 +15,6 @@ const HTTP_METHODS = new Set([
   "put",
   "trace",
 ]);
-const REALTIME_TICKET_OPERATION = "POST /auth/realtime-ticket";
 const GUILD_METADATA_ERROR_OPERATIONS = new Set([
   "GET /guilds/{guildId}",
   "GET /guilds/{guildId}/permissions",
@@ -408,11 +407,6 @@ const BATTLELOG_INVALID_REQUEST_SCHEMA: JsonValue = {
   },
   required: ["error", "message", "statusCode"],
 };
-const TICKET_VERIFY_HEADERS = new Set([
-  "x-lootlog-credential-purpose",
-  "x-lootlog-websocket-origin",
-]);
-
 type JsonValue =
   | boolean
   | number
@@ -422,6 +416,7 @@ type JsonValue =
   | { [key: string]: JsonValue };
 
 type OpenApiDocument = {
+  components?: { schemas?: Record<string, JsonValue> };
   paths?: Record<string, Record<string, JsonValue>>;
 };
 
@@ -487,28 +482,6 @@ const removePresencePermission = (value: JsonValue): JsonValue => {
     );
   }
   return value;
-};
-
-const removeTicketVerifyHeaders = (value: JsonValue): JsonValue => {
-  if (value === null || Array.isArray(value) || typeof value !== "object") {
-    return value;
-  }
-  const operation = structuredClone(value);
-  const parameters = operation["parameters"];
-  if (Array.isArray(parameters)) {
-    operation["parameters"] = parameters.filter((parameter) => {
-      if (
-        parameter === null ||
-        Array.isArray(parameter) ||
-        typeof parameter !== "object"
-      ) {
-        return true;
-      }
-      const name = parameter["name"];
-      return typeof name !== "string" || !TICKET_VERIFY_HEADERS.has(name);
-    });
-  }
-  return operation;
 };
 
 const removeResponseStatus = (value: JsonValue, status: string): JsonValue => {
@@ -689,12 +662,86 @@ const normalizeErrorResponseMigrations = (
   return normalized;
 };
 
+// Discord's current-user guild summaries have no persisted Organization settings.
+// Verified by account-organization.operations.test.ts through the real HTTP encoder.
+const MANAGEABLE_ORGANIZATION_SCHEMA: JsonValue = {
+  type: "object",
+  properties: {
+    id: { type: "string" },
+    name: { type: "string" },
+    icon: { nullable: true, type: "string" },
+  },
+  required: ["id", "name"],
+  additionalProperties: false,
+};
+
+const normalizeManageableOrganizationResponse = (
+  operation: JsonValue,
+  schemas?: Record<string, JsonValue>,
+): JsonValue => {
+  if (
+    !schemas?.["ManageableOrganizationResponse"] ||
+    JSON.stringify(
+      normalizeOpenApiRepresentation(schemas["ManageableOrganizationResponse"]),
+    ) !==
+      JSON.stringify(
+        normalizeOpenApiRepresentation(MANAGEABLE_ORGANIZATION_SCHEMA),
+      )
+  ) {
+    throw new Error("ManageableOrganizationResponse contract changed");
+  }
+  assertErrorResponse(
+    operation,
+    "GET /guilds/@me/manageable",
+    "200",
+    "ManageableOrganizationResponse",
+    {
+      type: "array",
+      items: { $ref: "#/components/schemas/ManageableOrganizationResponse" },
+    },
+  );
+  if (
+    operation !== null &&
+    typeof operation === "object" &&
+    !Array.isArray(operation)
+  ) {
+    const responses = operation["responses"];
+    if (
+      responses !== null &&
+      typeof responses === "object" &&
+      !Array.isArray(responses)
+    ) {
+      operation = {
+        ...operation,
+        responses: {
+          ...responses,
+          "200": {
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: { $ref: "#/components/schemas/GuildResponseDto" },
+                },
+              },
+            },
+          },
+        },
+      };
+    }
+  }
+  return operation;
+};
+
 export const normalizeAllowedChanges = (
   service: string,
   operationKey: string,
   operation: JsonValue,
+  schemas?: Record<string, JsonValue>,
 ): JsonValue => {
   let normalized = operation;
+  if (service === "api" && operationKey === "GET /guilds/@me/manageable") {
+    normalized = normalizeManageableOrganizationResponse(normalized, schemas);
+  }
   if (service === "api") normalized = removePresencePermission(normalized);
   normalized = normalizeErrorResponseMigrations(
     service,
@@ -729,9 +776,6 @@ export const normalizeAllowedChanges = (
       assertErrorResponse(normalized, operationKey, status);
       normalized = removeResponseStatus(normalized, status);
     }
-  }
-  if (service === "auth" && operationKey === "GET /auth/verify") {
-    normalized = removeTicketVerifyHeaders(normalized);
   }
 
   if (
@@ -792,29 +836,6 @@ const differencePaths = (
     ),
   );
   return differences;
-};
-
-const assertTicketOperation = (operation: JsonValue | undefined): void => {
-  if (
-    operation === undefined ||
-    operation === null ||
-    Array.isArray(operation) ||
-    typeof operation !== "object"
-  ) {
-    throw new Error(`Missing ${REALTIME_TICKET_OPERATION}`);
-  }
-  if (operation["operationId"] !== "AuthController_issueRealtimeTicket") {
-    throw new Error("Realtime ticket operationId changed");
-  }
-  const responses = operation["responses"];
-  if (
-    responses === null ||
-    Array.isArray(responses) ||
-    typeof responses !== "object" ||
-    responses["201"] === undefined
-  ) {
-    throw new Error("Realtime ticket endpoint must retain its 201 response");
-  }
 };
 
 // Intentional private additions verified against real persistence and authorization tests:
@@ -959,14 +980,14 @@ if (import.meta.main) {
   const changedOperations: string[] = [];
   for (const service of services) {
     const baseline = operations(readBaseline(service.baseline));
-    const current = operations(readCurrent(service.current));
+    const currentDocument = readCurrent(service.current);
+    const current = operations(currentDocument);
 
     const additions = [...current.keys()].filter((key) => !baseline.has(key));
     const removals = [...baseline.keys()].filter((key) => !current.has(key));
-    const expectedAdditions =
-      service.current === "auth"
-        ? [REALTIME_TICKET_OPERATION]
-        : Object.keys(PERSONAL_ANALYTICS_ADDITIONS[service.current] ?? {});
+    const expectedAdditions = Object.keys(
+      PERSONAL_ANALYTICS_ADDITIONS[service.current] ?? {},
+    );
     if (
       additions.length !== expectedAdditions.length ||
       additions.some((key) => !expectedAdditions.includes(key))
@@ -976,8 +997,7 @@ if (import.meta.main) {
       );
     }
     for (const key of additions) {
-      if (service.current !== "auth")
-        assertVerifiedPersonalAddition(service.current, key, current.get(key));
+      assertVerifiedPersonalAddition(service.current, key, current.get(key));
     }
     if (removals.length > 0) {
       throw new Error(
@@ -992,6 +1012,7 @@ if (import.meta.main) {
         service.current,
         key,
         currentOperation,
+        currentDocument.components?.schemas,
       );
       const normalizedBaseline =
         normalizeOpenApiRepresentation(baselineOperation);
@@ -1005,10 +1026,6 @@ if (import.meta.main) {
         );
       }
     }
-
-    if (service.current === "auth") {
-      assertTicketOperation(current.get(REALTIME_TICKET_OPERATION));
-    }
   }
 
   if (changedOperations.length > 0) {
@@ -1018,6 +1035,6 @@ if (import.meta.main) {
   }
 
   process.stdout.write(
-    "OpenAPI parity passed: 243 baseline operations plus verified realtime ticket and private analytics additions\n",
+    "OpenAPI parity passed: 243 baseline operations plus verified private analytics additions\n",
   );
 }
