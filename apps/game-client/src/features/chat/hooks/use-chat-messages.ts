@@ -243,7 +243,7 @@ export const useChatMessagesListener = (
           {
             notification: {
               type: "chat-mention",
-              ...(sourceNpc ? { sourceNpc } : {}),
+              sourceNpc: sourceNpc ?? null,
               notificationId: getChatMentionNotificationId({
                 guildId: data.guildId,
                 messageId: data.id,

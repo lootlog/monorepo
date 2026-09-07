@@ -8,7 +8,7 @@ import { useNotificationsStore } from "@/store/notifications.store";
 type NotificationSource = {
   guildId: string;
   type?: string;
-  sourceNpc?: { type: string; lvl: number };
+  sourceNpc?: { type: string; lvl: number } | null;
   npc?: { type: string | number; lvl: number; wt: number; prof?: string };
 };
 
@@ -22,8 +22,11 @@ export const canReadNotification = (
   );
   if (!organization) return false;
   const area = notification.type === "chat-mention" ? "chat" : "notifications";
-  if (notification.type === "chat-mention" && notification.sourceNpc)
+  if (notification.type === "chat-mention") {
+    // Null identifies a verified plain message; an absent source is an old or unknown entry.
+    if (notification.sourceNpc === undefined) return false;
     return canReadPolicyNpc(organization, "chat", notification.sourceNpc);
+  }
   if (!notification.npc) return canReadPolicyNpc(organization, area, null);
   const type = resolveNpcType(notification.npc);
   return (

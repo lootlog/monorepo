@@ -1,5 +1,6 @@
 import {
   createAccessPolicySnapshot,
+  type AccessPolicySnapshot,
   diffAccessPolicies,
 } from "@lootlog/protocol/realtime/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
@@ -26,6 +27,9 @@ const socketMocks = vi.hoisted(() => {
     return Promise.resolve(response);
   });
   const socket = {
+    getAccessPolicy: undefined as
+      | (() => AccessPolicySnapshot | undefined)
+      | undefined,
     on: vi.fn((event: string, handler: Handler) => {
       const eventHandlers = handlers.get(event) ?? new Set<Handler>();
       eventHandlers.add(handler);
@@ -162,6 +166,7 @@ describe("Public API", () => {
       gameState: { gameInitialized: false },
       socketState: { connected: false, joined: false, joinedGuilds: [] },
     });
+    socketMocks.socket.getAccessPolicy = undefined;
     socketMocks.handlers.clear();
     socketMocks.responses.length = 0;
     socketMocks.emitWithAck.mockClear();
@@ -781,6 +786,94 @@ describe("Public API", () => {
         code: "ONLINE_PLAYERS_ACCESS_DENIED",
       });
       expect(socketMocks.emitWithAck).toHaveBeenCalledTimes(2);
+    });
+
+    it("uses current policy after reactivation and prevents live frames from restoring revoked access", async () => {
+      const makePolicy = (permissions: Permission[]) =>
+        createAccessPolicySnapshot(
+          [
+            {
+              guild: { id: "guild-1", ownerId: "owner" },
+              roles: [{ permissions, lvlRangeFrom: 1, lvlRangeTo: 300 }],
+            },
+          ],
+          "user",
+        );
+      const full = makePolicy([
+        Permission.LOOTLOG_ONLINE_PLAYERS_READ,
+        Permission.LOOTLOG_PRESENCE_LOCATION_READ,
+      ]);
+      const basic = makePolicy([Permission.LOOTLOG_ONLINE_PLAYERS_READ]);
+      const revoked = makePolicy([]);
+      let current = full;
+      socketMocks.socket.getAccessPolicy = () => current;
+      await primeScope();
+      const listener = vi.fn();
+      let unsubscribe = getPublicApi().subscribe(
+        "online-players:changed",
+        listener,
+      );
+      await vi.waitFor(() =>
+        expect(socketMocks.emitWithAck).toHaveBeenCalledTimes(2),
+      );
+      socketMocks.emit("permissions-updated", {
+        accessPolicy: full,
+        changes: [],
+      });
+      unsubscribe();
+      current = basic;
+      socketMocks.responses.push(makePresenceSuccess(makePresencePayload()));
+      unsubscribe = getPublicApi().subscribe(
+        "online-players:changed",
+        listener,
+      );
+      expect(
+        listener.mock.calls.at(-1)?.[0].players["discord-1"][0].mapName,
+      ).toBeUndefined();
+      await vi.waitFor(() =>
+        expect(socketMocks.emitWithAck).toHaveBeenCalledTimes(3),
+      );
+      socketMocks.emit(
+        "online-players:presence:update",
+        makePresencePayload({
+          player: {
+            ...makePresencePayload().player,
+            mapName: "Secret",
+            location: { map: "Secret", x: 7, y: 8 },
+          },
+        }),
+      );
+      expect(
+        listener.mock.calls.at(-1)?.[0].players["discord-1"][0].player.location,
+      ).toBeUndefined();
+      expect(
+        listener.mock.calls.at(-1)?.[0].players["discord-1"][0].mapName,
+      ).toBeUndefined();
+      current = revoked;
+      socketMocks.emit("online-players:presence:update", makePresencePayload());
+      expect(listener.mock.calls.at(-1)?.[0]).toMatchObject({
+        status: "forbidden",
+      });
+      socketMocks.emit("permissions-updated", {
+        accessPolicy: revoked,
+        changes: diffAccessPolicies(basic, revoked),
+      });
+      unsubscribe();
+      current = full;
+      socketMocks.responses.push(makePresenceSuccess(makePresencePayload()));
+      unsubscribe = getPublicApi().subscribe(
+        "online-players:changed",
+        listener,
+      );
+      await vi.waitFor(() =>
+        expect(socketMocks.emitWithAck).toHaveBeenCalledTimes(4),
+      );
+      await vi.waitFor(() =>
+        expect(
+          listener.mock.calls.at(-1)?.[0].players["discord-1"][0].mapName,
+        ).toBe("Cave"),
+      );
+      unsubscribe();
     });
 
     it("refreshes tracked scopes when the socket rejoins", async () => {

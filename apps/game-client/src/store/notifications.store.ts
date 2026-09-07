@@ -8,7 +8,7 @@ export type NotificationWithServers = Notification & {
 
 export type MentionNotification = {
   type: "chat-mention";
-  sourceNpc?: { type: string; lvl: number };
+  sourceNpc?: { type: string; lvl: number } | null;
   notificationId: string;
   discordId: string;
   guildId: string;

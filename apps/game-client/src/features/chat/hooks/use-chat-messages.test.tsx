@@ -338,6 +338,21 @@ describe("useChatMessagesListener", () => {
     ).toEqual({ type: "TITAN", lvl: 300 });
   });
 
+  it("marks a plain mention as a verified non-NPC source", async () => {
+    renderHook(() => useChatMessagesListener());
+    mocks.handlers.get(GatewayEvent.CHAT_MESSAGE)?.({
+      ...createMessage("plain-mention"),
+      type: "NORMAL",
+      message: "Hej @Current Hero",
+    } as never);
+    await waitFor(() =>
+      expect(mocks.presentNotifications).toHaveBeenCalledOnce(),
+    );
+    expect(
+      mocks.presentNotifications.mock.calls[0]?.[0][0].notification.sourceNpc,
+    ).toBeNull();
+  });
+
   it("presents a matching chat mention through the notification pipeline", async () => {
     renderHook(() => useChatMessagesListener());
     const handler = mocks.handlers.get(GatewayEvent.CHAT_MESSAGE);

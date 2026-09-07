@@ -113,3 +113,37 @@ it("removes a stored titan mention when chat tier access is revoked", () => {
   reconcileNotificationAccess(snapshot());
   expect(useNotificationsStore.getState().notifications).toEqual([]);
 });
+
+it("drops unverified mention sources while preserving verified plain mentions across policy updates", () => {
+  const mention = {
+    type: "chat-mention" as const,
+    notificationId: "unknown-source",
+    guildId: "b",
+    servers: ["b"],
+    discordId: "sender",
+    world: "alpha",
+    createdAt: "2026-09-07T00:00:00Z",
+    message: "Mention",
+  };
+  useNotificationsStore.getState().presentNotifications([
+    { notification: mention },
+    {
+      notification: {
+        ...mention,
+        notificationId: "plain-source",
+        sourceNpc: null,
+      },
+    },
+  ]);
+  const plain = useNotificationsStore
+    .getState()
+    .notifications.find(
+      (notification) => notification.notificationId === "plain-source",
+    );
+  reconcileNotificationAccess(snapshot());
+  expect(useNotificationsStore.getState().notifications).toEqual([plain]);
+  expect(useNotificationsStore.getState().notifications[0]).toBe(plain);
+  const retained = useNotificationsStore.getState().notifications;
+  reconcileNotificationAccess(snapshot());
+  expect(useNotificationsStore.getState().notifications).toBe(retained);
+});

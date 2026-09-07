@@ -82,6 +82,7 @@ const mergeRanges = (ranges: Range[]): Range[] => {
   for (const range of ranges.sort((a, b) => a.from - b.from || a.to - b.to)) {
     if (range.from > range.to) continue;
     const last = merged[merged.length - 1];
+    // NPC event levels accept finite numbers, so integer-adjacent ranges retain a fractional gap.
     if (last && range.from <= last.to) last.to = Math.max(last.to, range.to);
     else merged.push({ ...range });
   }
