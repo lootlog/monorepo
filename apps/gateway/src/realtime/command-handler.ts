@@ -192,7 +192,6 @@ export class CommandHandler {
   ): Effect.Effect<void, unknown> {
     const { activity, guilds, hub, presence } = this;
     return Effect.gen(function* () {
-      yield* guilds.invalidate({ discordId, userId });
       if (
         !hub
           .getLocalSocketsForUser(userId)
@@ -257,9 +256,12 @@ export class CommandHandler {
     discordId: string,
     userId: string,
   ): Effect.Effect<void, unknown> {
-    return this.rebalanceUser(discordId, userId).pipe(
-      Effect.andThen(this.hub.publishPermissionRebalance(discordId, userId)),
-    );
+    return this.guilds
+      .invalidate({ discordId, userId })
+      .pipe(
+        Effect.andThen(this.rebalanceUser(discordId, userId)),
+        Effect.andThen(this.hub.publishPermissionRebalance(discordId, userId)),
+      );
   }
 
   private dispatch(
