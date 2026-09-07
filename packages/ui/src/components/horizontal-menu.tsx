@@ -32,12 +32,13 @@ export function HorizontalMenu({
       scrollFrame = requestAnimationFrame(() => reveal(element));
     };
     let previousActive: HTMLElement | null = null;
-    const update = () => {
+    const update = (recenter = false) => {
       const active = list.querySelector<HTMLElement>('a[aria-current="page"]');
       highlight.hidden = !active;
-      if (!active) return;
-      if (active !== previousActive) scheduleReveal(active);
+      const activeChanged = active !== previousActive;
       previousActive = active;
+      if (!active) return;
+      if (activeChanged || recenter) scheduleReveal(active);
       highlight.style.width = `${active.offsetWidth}px`;
       highlight.style.height = `${active.offsetHeight}px`;
       highlight.style.transform = `translate(${active.offsetLeft}px, ${active.offsetTop}px)`;
@@ -50,10 +51,10 @@ export function HorizontalMenu({
     };
     list.addEventListener("click", onInteraction);
     update();
-    const resize = new ResizeObserver(update);
+    const resize = new ResizeObserver(() => update(true));
     resize.observe(list);
     resize.observe(viewport);
-    const mutation = new MutationObserver(update);
+    const mutation = new MutationObserver(() => update());
     mutation.observe(list, {
       subtree: true,
       childList: true,
@@ -66,7 +67,7 @@ export function HorizontalMenu({
       resize.disconnect();
       mutation.disconnect();
     };
-  });
+  }, []);
   return (
     <nav className={cn("min-w-0 shrink-0", className)} {...props}>
       <div
