@@ -79,12 +79,19 @@ export function useLiveFeed() {
         }
       }
     };
-    const handlePermissions = () => {
-      // Keep the displayed snapshot stable until the authoritative replacement.
+    const handlePermissions = (payload?: {
+      guilds: ReadonlyArray<{ guild: { id: string } }>;
+    }) => {
+      // Remove revoked organizations immediately; keep the remaining rows mounted.
       // Discard cached and pending data from the previous policy.
       cancel();
       queryClient.removeQueries({ queryKey });
-      dispatch({ type: "revalidate" });
+      dispatch({
+        type: "revalidate",
+        organizationIds: new Set(
+          payload?.guilds.map(({ guild }) => guild.id) ?? [],
+        ),
+      });
       buffered = [];
       permissionsChanged = true;
       revalidatingAccess = true;

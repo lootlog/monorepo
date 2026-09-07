@@ -75,7 +75,7 @@ export type LiveFeedAction =
   | { type: "entry"; item: FeedItems[number] }
   | { type: "position"; atTop: boolean }
   | { type: "refresh" }
-  | { type: "revalidate" }
+  | { type: "revalidate"; organizationIds: ReadonlySet<string> }
   | { type: "failed" }
   | { type: "apply" }
   | { type: "clear" };
@@ -108,6 +108,9 @@ export function liveFeedReducer(
     case "revalidate":
       return {
         ...state,
+        items: state.items?.filter((item) =>
+          action.organizationIds.has(item.guild.id),
+        ),
         pending: undefined,
         animatedKeys: [],
         isFetching: true,
