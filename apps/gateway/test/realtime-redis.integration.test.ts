@@ -256,6 +256,177 @@ describe("realtime Dragonfly integration", () => {
     }
   });
 
+  test("online history drains a bounded backlog and preserves updates during delivery", async () => {
+    const runtime = ManagedRuntime.make(
+      BunRedis.layer({ url: `redis://${dragonfly.getHost()}:${redisPort}` }),
+    );
+    try {
+      const redis = await runtime.runPromise(Redis.Redis);
+      const store = new RedisGatewayStore(
+        redis,
+        {
+          host: dragonfly.getHost(),
+          port: redisPort,
+          username: "",
+          password: "",
+          keyPrefix: `online-backlog:${crypto.randomUUID()}`,
+        },
+        (effect) => runtime.runPromise(effect),
+        () => {},
+      );
+      const start = Date.parse("2026-09-06T10:00:00Z");
+      let now = start;
+      const sessions = Array.from({ length: 1250 }, (_, index) => {
+        const session = makeSession(`backlog-${index}`);
+        session.character = session.presence?.character;
+        return session;
+      });
+      const messages: UserOnlineEventV1[] = [];
+      let updatedSession: SessionData | undefined;
+      let fail = false;
+      const history = new OnlineHistory(
+        store.command,
+        (event) =>
+          Effect.gen(function* () {
+            if (fail && event.type === "checkpoint")
+              return yield* Effect.fail(new Error("Rabbit unavailable"));
+            messages.push(event);
+            if (event.type === "checkpoint" && !updatedSession) {
+              updatedSession = sessions.find(
+                (session) => session.connectionId === event.sessionId,
+              );
+              if (!updatedSession) throw new Error("Missing session");
+              yield* history.observe(updatedSession, start + 55_000);
+            }
+          }),
+        () => now,
+      );
+      for (const session of sessions) {
+        await Effect.runPromise(history.observe(session, start));
+        await Effect.runPromise(history.observe(session, start + 50_000));
+      }
+      const checkpoints = () =>
+        messages.filter((event) => event.type === "checkpoint");
+      const pending = () =>
+        store.command.eval<number>(
+          "return redis.call('HLEN', KEYS[1])",
+          1,
+          "online-history:pending",
+        );
+      now = start + 60_000;
+      await Effect.runPromise(history.flush());
+      expect(checkpoints()).toHaveLength(1000);
+      expect(new Set(checkpoints().map((event) => event.sessionId)).size).toBe(
+        1000,
+      );
+      expect(await pending()).toBe(251);
+      expect(
+        messages.filter((event) => event.type === "collector"),
+      ).toHaveLength(1);
+      fail = true;
+      await expect(Effect.runPromise(history.flush())).rejects.toThrow(
+        "Rabbit unavailable",
+      );
+      expect(await pending()).toBe(251);
+      fail = false;
+      now += 60_000;
+      await Effect.runPromise(history.flush());
+      expect(checkpoints()).toHaveLength(1251);
+      expect(new Set(checkpoints().map((event) => event.sessionId)).size).toBe(
+        1250,
+      );
+      expect(await pending()).toBe(0);
+      const updated = checkpoints().filter(
+        (event) => event.sessionId === updatedSession?.connectionId,
+      );
+      expect(updated.map((event) => event.endedAt)).toEqual([
+        new Date(start + 50_000).toISOString(),
+        new Date(start + 55_000).toISOString(),
+      ]);
+      expect(updated[0]?.segmentId).toBe(updated[1]?.segmentId);
+    } finally {
+      await runtime.dispose();
+    }
+  }, 30_000);
+
+  test.each([3000, 5000])(
+    "online history refreshes batch leases and bounds slow drains (%i ms)",
+    async (delay) => {
+      const runtime = ManagedRuntime.make(
+        BunRedis.layer({ url: `redis://${dragonfly.getHost()}:${redisPort}` }),
+      );
+      try {
+        const redis = await runtime.runPromise(Redis.Redis);
+        const store = new RedisGatewayStore(
+          redis,
+          {
+            host: dragonfly.getHost(),
+            port: redisPort,
+            username: "",
+            password: "",
+            keyPrefix: `online-slow:${crypto.randomUUID()}`,
+          },
+          (effect) => runtime.runPromise(effect),
+          () => {},
+        );
+        const start = Date.parse("2026-09-06T10:00:00Z");
+        let now = start;
+        const messages: UserOnlineEventV1[] = [];
+        let fail = delay === 3000;
+        let attempts = 0;
+        const history = new OnlineHistory(
+          store.command,
+          (event) =>
+            Effect.suspend(() => {
+              if (event.type === "checkpoint") {
+                attempts++;
+                if (attempts === 1) now += delay;
+                if (fail && attempts === 101)
+                  return Effect.fail(new Error("Rabbit unavailable"));
+              }
+              messages.push(event);
+              return Effect.void;
+            }),
+          () => now,
+        );
+        for (let index = 0; index < 250; index++) {
+          const session = makeSession(`slow-${index}`);
+          session.character = session.presence?.character;
+          await Effect.runPromise(history.observe(session, start));
+          await Effect.runPromise(history.observe(session, start + 50_000));
+        }
+        const checkpoints = () =>
+          messages.filter((event) => event.type === "checkpoint");
+        now = start + 60_000;
+        if (fail)
+          await expect(Effect.runPromise(history.flush())).rejects.toThrow(
+            "Rabbit unavailable",
+          );
+        else await Effect.runPromise(history.flush());
+        expect(checkpoints()).toHaveLength(100);
+        expect(
+          messages.filter((event) => event.type === "collector").at(-1)
+            ?.observedAt,
+        ).toBe(new Date(now).toISOString());
+        fail = false;
+        now = start + 120_000;
+        await Effect.runPromise(history.flush());
+        // The second claimed batch retains its complete 60-second lease, measured
+        // from its own claim at 63 seconds, while unclaimed work can be drained.
+        expect(checkpoints()).toHaveLength(delay === 3000 ? 150 : 250);
+        now = start + 123_000;
+        await Effect.runPromise(history.flush());
+        expect(checkpoints()).toHaveLength(250);
+        expect(
+          new Set(checkpoints().map((event) => event.sessionId)).size,
+        ).toBe(250);
+      } finally {
+        await runtime.dispose();
+      }
+    },
+    30_000,
+  );
+
   test("closing a subscription scope releases Redis without a shutdown defect", async () => {
     const channel = `shutdown:${crypto.randomUUID()}`;
     await Effect.runPromise(
