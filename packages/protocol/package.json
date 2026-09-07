@@ -12,6 +12,7 @@
     "./rabbit/events": "./src/rabbit/events.ts",
     "./rabbit/topology": "./src/rabbit/topology.ts",
     "./realtime": "./src/realtime/protocol.ts",
+    "./realtime/access-policy": "./src/realtime/access-policy.ts",
     "./realtime/codec": "./src/realtime/codec.ts",
     "./rabbit/activity-signature": "./src/rabbit/activity-signature.ts"
   },

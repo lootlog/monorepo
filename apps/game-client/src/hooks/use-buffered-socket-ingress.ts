@@ -1,5 +1,5 @@
 import { GatewayEvent } from "@/config/gateway";
-import type { AppSocket } from "@/lib/socket";
+import type { AppSocket, PermissionsUpdatedPayload } from "@/lib/socket";
 import { useEffect, useRef } from "react";
 
 type SocketWithListeners = Pick<AppSocket, "on" | "off">;
@@ -12,6 +12,7 @@ type BufferedSocketIngressBaseOptions<TPayload> = {
   event: GatewayEvent;
   onProcessBatch: (payloads: readonly TPayload[]) => void;
   maxPendingItems?: number;
+  isPayloadAllowed?: (payload: TPayload) => boolean;
 };
 
 type BufferedSocketIngressWithoutCancel = {
@@ -48,8 +49,10 @@ export const useBufferedSocketIngress = <TPayload, TCancelPayload = never>({
   event,
   onProcessBatch,
   maxPendingItems = DEFAULT_MAX_PENDING_ITEMS,
+  isPayloadAllowed,
   ...cancelOptions
 }: UseBufferedSocketIngressOptions<TPayload, TCancelPayload>) => {
+  const isPayloadAllowedRef = useRef(isPayloadAllowed);
   const isReadyRef = useRef(isReady);
   const onProcessBatchRef = useRef(onProcessBatch);
   const onCancelRef = useRef(cancelOptions.onCancel);
@@ -68,11 +71,16 @@ export const useBufferedSocketIngress = <TPayload, TCancelPayload = never>({
 
   useEffect(() => {
     isReadyRef.current = isReady;
+    isPayloadAllowedRef.current = isPayloadAllowed;
     onProcessBatchRef.current = onProcessBatch;
     onCancelRef.current = cancelOptions.onCancel;
     getPayloadIdRef.current = cancelOptions.getPayloadId;
     getCancelIdRef.current = cancelOptions.getCancelId;
-    processPayloadsRef.current = (payloads) => {
+    processPayloadsRef.current = (input) => {
+      const payloads = input.filter(
+        (payload) => isPayloadAllowedRef.current?.(payload) ?? true,
+      );
+      if (payloads.length === 0) return;
       const getPayloadId = getPayloadIdRef.current;
 
       if (!getPayloadId) {
@@ -119,7 +127,13 @@ export const useBufferedSocketIngress = <TPayload, TCancelPayload = never>({
   }, [accountId]);
 
   useEffect(() => {
-    const handlePermissionsUpdated = () => {
+    const handlePermissionsUpdated = (data?: PermissionsUpdatedPayload) => {
+      if (data?.accessPolicy && isPayloadAllowedRef.current) {
+        pendingItemsRef.current = pendingItemsRef.current.filter(
+          isPayloadAllowedRef.current,
+        );
+        return;
+      }
       pendingItemsRef.current = [];
       pendingCancelIdsRef.current.clear();
     };

@@ -306,3 +306,30 @@ describe("useBufferedSocketIngress", () => {
     });
   });
 });
+
+it("keeps unaffected queued notifications and rejects revoked data at flush", async () => {
+  let allowedGuilds = new Set(["a", "b"]);
+  const onProcessBatch = vi.fn();
+  renderHook(() =>
+    useBufferedSocketIngress({
+      socket: socket as never,
+      connected: true,
+      accountId: "account",
+      isReady: true,
+      event: GatewayEvent.NOTIFICATION,
+      isPayloadAllowed: (payload: { guildId: string }) =>
+        allowedGuilds.has(payload.guildId),
+      onProcessBatch,
+    }),
+  );
+  emit(GatewayEvent.NOTIFICATION, { guildId: "a" });
+  emit(GatewayEvent.NOTIFICATION, { guildId: "b" });
+  allowedGuilds = new Set(["b"]);
+  emit(GatewayEvent.PERMISSIONS_UPDATED, {
+    accessPolicy: { version: "new", organizations: [] },
+  });
+  await act(async () => {
+    await Promise.resolve();
+  });
+  expect(onProcessBatch).toHaveBeenCalledWith([{ guildId: "b" }]);
+});

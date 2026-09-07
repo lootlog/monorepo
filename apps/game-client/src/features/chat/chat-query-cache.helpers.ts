@@ -16,7 +16,7 @@ type QueryWithKey = {
 
 const CHAT_MESSAGES_QUERY_PATH_PATTERN = /^\/guilds\/([^/]+)\/chat-messages$/;
 
-const getChatMessagesQueryGuildId = (query: QueryWithKey) => {
+export const getChatMessagesQueryGuildId = (query: QueryWithKey) => {
   const queryPath = query.queryKey[0];
   if (typeof queryPath !== "string") {
     return undefined;

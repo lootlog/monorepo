@@ -101,6 +101,22 @@ Przetestuj rolę na koncie bez uprawnień właściciela. Członek powinien widzi
 potrzebne sekcje i nie powinien mieć dostępu do operacji spoza swojej
 odpowiedzialności.
 
+## Zmiana uprawnień podczas gry
+
+Po zapisaniu roli dodatek uwzględnia nowy dostęp bez przeładowywania gry.
+Ponowne przeliczenie tych samych uprawnień nie przeładowuje timerów ani czatu.
+
+Jeśli odbierzesz dostęp, np. do tytanów lub części poziomów, odpowiednie wpisy
+znikną także z wcześniej pobranych danych. Pozostałe wpisy i dane innych
+organizacji pozostają widoczne.
+
+Jeśli rozszerzysz dostęp, dodatek odświeży potrzebne dane po 5 sekundach od
+ostatniej zmiany. Do otrzymania odpowiedzi zachowa dotychczasowe wpisy. Kilka
+kolejnych zmian nie powoduje osobnego odświeżenia po każdym zapisie.
+
+Po ponownym połączeniu dodatek sprawdza aktualne uprawnienia. Zmiany wprowadzone
+podczas rozłączenia również obejmują wcześniej pobrane dane.
+
 ## Następny krok
 
 Przejdź do [Ustawień](/docs/settings), aby skonfigurować członków, NPC i
