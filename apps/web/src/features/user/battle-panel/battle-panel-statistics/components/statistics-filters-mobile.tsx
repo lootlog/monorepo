@@ -1,11 +1,5 @@
-import {
-  Filter,
-  Calendar,
-  TrendingUp,
-  User,
-  Swords,
-  Award,
-} from "lucide-react";
+import { PeriodSelector } from "@/components/filters/period-selector";
+import { Filter, TrendingUp, User, Swords, Award } from "lucide-react";
 import { Label } from "@lootlog/ui/components/label";
 import { Button } from "@lootlog/ui/components/button";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
@@ -56,21 +50,6 @@ export const StatisticsFiltersMobile = ({
   const { t } = useTranslation();
   const { data: charactersResponse } = useBattlesControllerGetUserCharacters();
   const characters = charactersResponse?.characters ?? [];
-  const periodOptions = [
-    { value: "7d" as const, label: t("battlePanel.filters.periodOptions.7d") },
-    {
-      value: "30d" as const,
-      label: t("battlePanel.filters.periodOptions.30d"),
-    },
-    {
-      value: "90d" as const,
-      label: t("battlePanel.filters.periodOptions.90d"),
-    },
-    {
-      value: "all" as const,
-      label: t("battlePanel.filters.periodOptions.all"),
-    },
-  ];
 
   return (
     <MobileFiltersDrawer
@@ -130,32 +109,14 @@ export const StatisticsFiltersMobile = ({
 
       <div className="space-y-2">
         <Label>{t("battlePanel.filters.period")}</Label>
-        <Select
+        <PeriodSelector
           value={period}
-          onValueChange={(value) => {
-            if (value !== null) onPeriodChange(value);
-          }}
-          items={[
-            ...periodOptions.map((option) => ({
-              value: option.value,
-              label: <>{option.label}</>,
-            })),
-          ]}
-        >
-          <SelectTrigger className="w-full">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              <SelectValue />
-            </div>
-          </SelectTrigger>
-          <SelectContent>
-            {periodOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          onValueChange={onPeriodChange}
+          excludePeriods={["24h", "3d", "14d", "180d"]}
+          placeholder={t("battlePanel.filters.period")}
+          allLabel={t("battlePanel.filters.periodOptions.all")}
+          width="w-full"
+        />
       </div>
 
       <div className="space-y-2">

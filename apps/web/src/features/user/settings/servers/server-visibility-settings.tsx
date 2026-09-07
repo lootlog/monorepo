@@ -191,7 +191,6 @@ export const ServerVisibilitySettings = () => {
                     label={t("settings.servers.title")}
                     value={visibilityFilter}
                     onValueChange={setVisibilityFilter}
-                    compact
                     className="w-full shrink-0 sm:w-auto"
                     options={(["all", "visible", "hidden"] as const).map(
                       (filter) => ({

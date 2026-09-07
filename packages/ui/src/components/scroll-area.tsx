@@ -12,34 +12,50 @@ const ScrollArea = React.forwardRef<
   ScrollAreaPrimitive.Root.Props & {
     onScroll?: (event: React.UIEvent<HTMLDivElement>) => void;
     orientation?: ScrollAreaOrientation;
+    scrollFade?: boolean;
   }
->(({ className, children, onScroll, orientation = "both", ...props }, ref) => {
-  return (
-    <ScrollAreaPrimitive.Root
-      data-slot="scroll-area"
-      className={cn(
-        "relative [&:hover>[data-slot=scroll-area-scrollbar]]:opacity-100 [&:focus-within>[data-slot=scroll-area-scrollbar]]:opacity-100",
-        className,
-      )}
-      {...props}
-    >
-      <ScrollAreaPrimitive.Viewport
-        ref={ref}
-        data-slot="scroll-area-viewport"
+>(
+  (
+    {
+      className,
+      children,
+      onScroll,
+      orientation = "both",
+      scrollFade = false,
+      ...props
+    },
+    ref,
+  ) => {
+    return (
+      <ScrollAreaPrimitive.Root
+        data-slot="scroll-area"
         className={cn(
-          "focus-visible:ring-ring/50 focus-visible:ring-[3px] size-full rounded-[inherit] transition-[color,box-shadow] outline-none",
-          orientation === "horizontal" ? "scroll-fade-x" : "scroll-fade-y",
+          "relative [&:hover>[data-slot=scroll-area-scrollbar]]:opacity-100 [&:focus-within>[data-slot=scroll-area-scrollbar]]:opacity-100",
+          className,
         )}
-        onScroll={onScroll}
+        {...props}
       >
-        {children}
-      </ScrollAreaPrimitive.Viewport>
-      {orientation !== "horizontal" && <ScrollBar />}
-      {orientation !== "vertical" && <ScrollBar orientation="horizontal" />}
-      {orientation === "both" && <ScrollAreaPrimitive.Corner />}
-    </ScrollAreaPrimitive.Root>
-  );
-});
+        <ScrollAreaPrimitive.Viewport
+          ref={ref}
+          data-slot="scroll-area-viewport"
+          className={cn(
+            "focus-visible:ring-ring/50 focus-visible:ring-[3px] size-full rounded-[inherit] transition-[color,box-shadow] outline-none",
+            scrollFade &&
+              (orientation === "horizontal"
+                ? "scroll-fade-x"
+                : "scroll-fade-y"),
+          )}
+          onScroll={onScroll}
+        >
+          {children}
+        </ScrollAreaPrimitive.Viewport>
+        {orientation !== "horizontal" && <ScrollBar />}
+        {orientation !== "vertical" && <ScrollBar orientation="horizontal" />}
+        {orientation === "both" && <ScrollAreaPrimitive.Corner />}
+      </ScrollAreaPrimitive.Root>
+    );
+  },
+);
 
 ScrollArea.displayName = "ScrollArea";
 

@@ -1,7 +1,9 @@
+import { RefreshMembersButton } from "./components/refresh-members-button";
+import { TableFilterToolbar } from "@/components/ui/table-filter-toolbar";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { SearchInput } from "@/components/ui/search-input";
-import { MembersSettingsHeader } from "@/features/guild/settings/members/members-settings-header";
+import { MembersSettingsFooter } from "@/features/guild/settings/members/members-settings-footer";
 import { MembersTable } from "@/features/guild/settings/members/members-table";
 import {
   defaultStatusFilter,
@@ -29,7 +31,7 @@ import type {
   GuildMember,
   MembersStats,
 } from "@/features/guild/settings/members/members.types";
-import { cn } from "cn";
+import { AnimatedToggleGroup } from "@/components/ui/animated-toggle-group";
 import { Permission } from "@lootlog/schema/permissions";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -173,45 +175,34 @@ export const MembersSettingsContent = () => {
     statusFilter !== defaultStatusFilter || searchValue.trim() !== "";
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-x-hidden overflow-y-auto bg-background px-3 gap-3">
-      <MembersSettingsHeader
-        {...memberStats}
-        onProblemsClick={() => {
-          scrollElementRef.current?.scrollTo({ top: 0 });
-          startTransition(() => setStatusFilter("problems"));
-        }}
-      />
-      <SectionCard className="min-h-48 flex-1">
-        <SectionCardContent className="flex flex-col gap-3">
-          <div className="flex shrink-0 flex-col gap-3 border-b border-border px-4 py-3 xl:flex-row xl:items-center xl:justify-between">
+    <div className="flex h-full min-h-0 flex-col overflow-x-hidden overflow-y-auto bg-background px-3 pb-3 gap-3">
+      <h1 className="sr-only">{t("settings.members.title")}</h1>
+      <SectionCard className="max-h-full shrink-0">
+        <SectionCardContent className="flex min-h-0 flex-col gap-0 p-0">
+          <TableFilterToolbar>
             <SearchInput
               value={searchValue}
               onChange={(event) => setSearchValue(event.target.value)}
               placeholder={t("settings.members.searchPlaceholder")}
               className="h-9"
-              wrapperClassName="w-full xl:max-w-md 2xl:max-w-xl"
+              wrapperClassName="w-full min-w-0 sm:min-w-[200px] sm:flex-1"
             />
-            <div className="flex flex-wrap items-center gap-1.5 xl:justify-end">
-              {statusFilters.map((filter) => (
-                <Button
-                  key={filter}
-                  type="button"
-                  size="sm"
-                  variant={statusFilter === filter ? "secondary" : "ghost"}
-                  className={cn(
-                    "h-8 px-2.5 text-xs",
-                    statusFilter === filter && "bg-primary/10 text-primary",
-                  )}
-                  onClick={() => {
-                    scrollElementRef.current?.scrollTo({ top: 0 });
-                    startTransition(() => setStatusFilter(filter));
-                  }}
-                >
-                  {t(`settings.members.filters.${filter}`)}
-                </Button>
-              ))}
-            </div>
-          </div>
+            <AnimatedToggleGroup
+              size="default"
+              value={statusFilter}
+              onValueChange={(filter) => {
+                scrollElementRef.current?.scrollTo({ top: 0 });
+                startTransition(() => setStatusFilter(filter));
+              }}
+              label={t("settings.members.table.status")}
+              options={statusFilters.map((filter) => ({
+                value: filter,
+                label: t(`settings.members.filters.${filter}`),
+              }))}
+              className="w-full sm:w-fit"
+            />
+            <RefreshMembersButton />
+          </TableFilterToolbar>
 
           <div className="flex min-h-0 flex-1 overflow-hidden">
             <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
@@ -271,6 +262,13 @@ export const MembersSettingsContent = () => {
             </div>
           </div>
         </SectionCardContent>
+        <MembersSettingsFooter
+          {...memberStats}
+          onProblemsClick={() => {
+            scrollElementRef.current?.scrollTo({ top: 0 });
+            startTransition(() => setStatusFilter("problems"));
+          }}
+        />
       </SectionCard>
     </div>
   );

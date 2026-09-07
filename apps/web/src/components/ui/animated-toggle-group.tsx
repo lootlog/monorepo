@@ -17,7 +17,7 @@ type AnimatedToggleGroupProps<Value extends string> = {
   }[];
   className?: string;
   static?: boolean;
-  compact?: boolean;
+  size?: "default" | "small";
 };
 
 export function AnimatedToggleGroup<Value extends string>({
@@ -26,7 +26,7 @@ export function AnimatedToggleGroup<Value extends string>({
   onValueChange,
   options,
   static: isStatic = false,
-  compact = false,
+  size = "default",
   className,
 }: AnimatedToggleGroupProps<Value>) {
   const selectedIndex = options.findIndex((option) => option.value === value);
@@ -41,7 +41,7 @@ export function AnimatedToggleGroup<Value extends string>({
       spacing={0}
       className={cn(
         "relative isolate grid max-w-full rounded-xl border border-border bg-background",
-        compact && "h-9",
+        size === "small" ? "h-7" : "h-9",
         className,
       )}
       style={{
@@ -71,7 +71,7 @@ export function AnimatedToggleGroup<Value extends string>({
           title={option.icon ? option.label : undefined}
           className={cn(
             "min-w-0 cursor-pointer disabled:cursor-default bg-transparent hover:bg-transparent aria-pressed:bg-transparent aria-pressed:text-primary-foreground data-[state=on]:bg-transparent transition-[color,scale] duration-150 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none",
-            compact && "h-full",
+            "h-full",
             !isStatic && "active:scale-[0.96] motion-reduce:active:scale-100",
           )}
         >

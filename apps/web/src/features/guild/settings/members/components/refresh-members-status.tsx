@@ -107,7 +107,8 @@ export const RefreshMembersStatus = ({
     return (
       <Button
         size="sm"
-        variant="secondary"
+        className="h-9 text-xs"
+        variant="default"
         onClick={onRefresh}
         disabled={!countdown.isExpired}
         loading={isPending}
@@ -125,7 +126,8 @@ export const RefreshMembersStatus = ({
   return (
     <Button
       size="sm"
-      variant="outline"
+      className="h-9 text-xs"
+      variant="default"
       onClick={onRefresh}
       disabled={!countdown.isExpired}
       loading={isPending}
