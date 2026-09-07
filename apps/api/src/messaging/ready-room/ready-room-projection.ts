@@ -35,9 +35,11 @@ function createProjectionBase(
     organizerCharacter: cloneCharacter(aggregate.organizerCharacter),
     guildIds: [...aggregate.guildIds],
     world: aggregate.world,
-    description: aggregate.description,
-    minLvl: aggregate.minLvl,
-    maxLvl: aggregate.maxLvl,
+    ...(aggregate.description === undefined
+      ? {}
+      : { description: aggregate.description }),
+    ...(aggregate.minLvl === undefined ? {} : { minLvl: aggregate.minLvl }),
+    ...(aggregate.maxLvl === undefined ? {} : { maxLvl: aggregate.maxLvl }),
     status: "ACTIVE",
     revision: aggregate.revision,
     createdAt: aggregate.createdAt,

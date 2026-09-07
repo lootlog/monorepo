@@ -1,4 +1,7 @@
-import { REALTIME_FEED_CAPABILITY } from "@lootlog/protocol/realtime";
+import {
+  REALTIME_FEED_CAPABILITY,
+  REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
+} from "@lootlog/protocol/realtime";
 import {
   RealtimeEventListeners,
   unwrapOrganizationEvent,
@@ -66,6 +69,7 @@ const serverEventNames: Partial<Record<ServerEvent["type"], GatewayEvent>> = {
   "reservation.deleted": GatewayEvent.RESERVATIONS_DELETE,
   "reservation.changed": GatewayEvent.RESERVATIONS_CHANGED,
   "notification.sent": GatewayEvent.NOTIFICATION,
+  "notification.volunteer": GatewayEvent.NOTIFICATIONS_VOLUNTEER,
   "member-refresh.updated": GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE,
   "event.map-status-updated": GatewayEvent.EVENT_MAP_STATUS_UPDATE,
   "event.hero-killed": GatewayEvent.EVENT_HERO_KILLED,
@@ -83,6 +87,7 @@ export class GatewayClient {
     protocols: [
       this.readable ? REALTIME_JSON_SUBPROTOCOL : REALTIME_SUBPROTOCOL,
       REALTIME_FEED_CAPABILITY,
+      REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
     ],
     frameEncoding: this.readable ? "json" : "messagepack",
   });

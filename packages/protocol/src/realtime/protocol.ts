@@ -20,6 +20,8 @@ import {
 export const REALTIME_PROTOCOL_VERSION = 1;
 // Offered alongside v1 by clients that understand feed events; never selected as the wire protocol.
 export const REALTIME_FEED_CAPABILITY = "lootlog.feed.v1";
+export const REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY =
+  "lootlog.notification-volunteer.v1";
 export const REALTIME_SUBPROTOCOL = "lootlog.realtime.v1";
 export const REALTIME_JSON_SUBPROTOCOL = "lootlog.realtime.json.v1";
 export const PRESENCE_HEARTBEAT_INTERVAL_MS = 25_000;
@@ -114,7 +116,8 @@ export const PresenceSnapshot = Schema.Struct({
   organizationId: NonEmptyString,
   world: Schema.optional(NonEmptyString),
   revision: Revision,
-  presences: Schema.Array(Schema.Union([BasicPresence, PresenceWithLocation])),
+  // Match the richer shape first so the basic schema does not strip location.
+  presences: Schema.Array(Schema.Union([PresenceWithLocation, BasicPresence])),
 });
 
 export const PresenceDelta = Schema.Struct({
@@ -124,7 +127,7 @@ export const PresenceDelta = Schema.Struct({
     Schema.Union([
       Schema.Struct({
         action: Schema.Literal("upsert"),
-        presence: Schema.Union([BasicPresence, PresenceWithLocation]),
+        presence: Schema.Union([PresenceWithLocation, BasicPresence]),
       }),
       Schema.Struct({
         action: Schema.Literal("remove"),
@@ -331,6 +334,16 @@ export const ServerEvent = Schema.Union([
   serverEvent("event.ranking-updated", OrganizationEvent),
   serverEvent("event.respawn-window-opened", OrganizationEvent),
   serverEvent("event.respawn-window-closed", OrganizationEvent),
+  serverEvent(
+    "notification.volunteer",
+    Schema.Struct({
+      notificationId: NonEmptyString,
+      volunteer: Schema.StructWithRest(
+        Schema.Struct({ discordId: NonEmptyString, world: NonEmptyString }),
+        [Schema.Record(Schema.String, Schema.Unknown)],
+      ),
+    }),
+  ),
 ]);
 export type ServerEvent = typeof ServerEvent.Type;
 

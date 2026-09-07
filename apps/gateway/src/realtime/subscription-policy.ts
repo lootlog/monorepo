@@ -12,7 +12,7 @@ const TOPIC_PERMISSION: Partial<Record<Topic, Permission>> = {
   "organization.activity": Permission.LOOTLOG_ACCESS,
   "organization.chat": Permission.LOOTLOG_CHAT_READ,
   "organization.loots": Permission.LOOTLOG_LOOTS_READ,
-  "organization.members": Permission.LOOTLOG_MEMBERS_READ,
+  "organization.members": Permission.ADMIN,
   "organization.notifications": Permission.LOOTLOG_NOTIFICATIONS_READ,
   "organization.presence": Permission.LOOTLOG_ONLINE_PLAYERS_READ,
   "organization.reservations": Permission.LOOTLOG_RESERVATIONS_READ,

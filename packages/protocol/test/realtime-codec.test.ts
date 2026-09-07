@@ -13,6 +13,49 @@ import {
 } from "../src/realtime/protocol.ts";
 
 describe("realtime MessagePack codec", () => {
+  test.each([false, true])(
+    "preserves presence locations when included: %s",
+    (includeLocation) => {
+      const presence = {
+        userId: "user-1",
+        sessionId: "session-1",
+        organizationIds: ["organization-1"],
+        platform: "game" as const,
+        status: "online" as const,
+        confidence: "verified" as const,
+        isAfk: false,
+        lastSeen: 1_000,
+        ...(includeLocation
+          ? { location: { map: "Kwieciste Przejście", mapId: 42, x: 4, y: 7 } }
+          : {}),
+      };
+      const frames = [
+        {
+          v: 1,
+          type: "presence.snapshot",
+          data: {
+            organizationId: "organization-1",
+            revision: 1,
+            presences: [presence],
+          },
+        },
+        {
+          v: 1,
+          type: "presence.delta",
+          data: {
+            organizationId: "organization-1",
+            revision: 1,
+            changes: [{ action: "upsert", presence }],
+          },
+        },
+      ] satisfies RealtimeFrame[];
+      for (const frame of frames) {
+        expect(decodeRealtimeFrame(encode(frame))).toEqual(frame);
+        expect(decodeRealtimeFrame(encodeRealtimeFrame(frame))).toEqual(frame);
+      }
+    },
+  );
+
   test("round-trips a client command", () => {
     const frame = {
       v: 1,

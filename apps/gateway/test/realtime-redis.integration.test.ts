@@ -474,6 +474,113 @@ describe("realtime Dragonfly integration", () => {
         data: { guildId: "organization-1" },
       });
 
+      const timerTargets = [firstHub, secondHub].flatMap((hub, index) =>
+        [false, true].map((allowed) => {
+          const target = makeSocket(`timer-${index}-${allowed}`);
+          target.socket.data.guilds = [
+            {
+              guild: { id: "organization-1", ownerId: "owner" },
+              roles: [
+                {
+                  id: "timer-role",
+                  lvlRangeFrom: 200,
+                  lvlRangeTo: 500,
+                  permissions: allowed
+                    ? [
+                        Permission.LOOTLOG_TIMERS_READ,
+                        Permission.LOOTLOG_TIMERS_TITANS_READ,
+                      ]
+                    : [Permission.LOOTLOG_TIMERS_READ],
+                },
+                {
+                  id: "empty",
+                  lvlRangeFrom: 0,
+                  lvlRangeTo: 500,
+                  permissions: [],
+                },
+              ],
+            },
+          ];
+          hub.register(target.socket);
+          hub.subscribe(target.socket, {
+            topic: "organization.timers",
+            organizationId: "organization-1",
+          });
+          return { ...target, allowed };
+        }),
+      );
+      await firstHub.publishToScope(
+        { topic: "organization.timers", organizationId: "organization-1" },
+        {
+          v: 1,
+          type: "timer.created",
+          data: {
+            organizationId: "organization-1",
+            payload: {
+              guildId: "organization-1",
+              npc: { type: "TITAN", lvl: 250 },
+            },
+          },
+        },
+      );
+      await firstHub.publishToScope(
+        { topic: "organization.timers", organizationId: "organization-1" },
+        {
+          v: 1,
+          type: "timer.deleted",
+          data: {
+            organizationId: "organization-1",
+            payload: {
+              guildId: "organization-1",
+              routing: { tier: "titans", npcLevel: 250 },
+            },
+          },
+        },
+      );
+      await waitFor(() =>
+        timerTargets
+          .filter((target) => target.allowed)
+          .every((target) => target.frames.length === 2),
+      );
+      for (const target of timerTargets.filter((target) => !target.allowed))
+        expect(target.frames).toHaveLength(0);
+      // Even full tier grants do not authorize an out-of-range timer.
+      await firstHub.publishToScope(
+        { topic: "organization.timers", organizationId: "organization-1" },
+        {
+          v: 1,
+          type: "timer.created",
+          data: {
+            organizationId: "organization-1",
+            payload: {
+              guildId: "organization-1",
+              npc: { type: "TITAN", lvl: 105 },
+            },
+          },
+        },
+      );
+      await firstHub.publishToScope(
+        { topic: "organization.timers", organizationId: "organization-1" },
+        {
+          v: 1,
+          type: "timer.created",
+          data: {
+            organizationId: "organization-1",
+            payload: {
+              guildId: "organization-1",
+              npc: { type: "TITAN", lvl: 500 },
+            },
+          },
+        },
+      );
+      await waitFor(() =>
+        timerTargets
+          .filter((target) => target.allowed)
+          .every((target) => target.frames.length === 3),
+      );
+      for (const target of timerTargets.filter((target) => !target.allowed))
+        expect(target.frames).toHaveLength(0);
+
       for (const organizationId of ["organization-1", "organization-2"]) {
         secondHub.subscribe(recipient.socket, {
           topic: "map.pings",

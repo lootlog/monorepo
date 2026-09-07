@@ -9,6 +9,7 @@ import { recordHttpServerMetrics } from "@lootlog/instrumentation";
 import { RabbitMessaging } from "@lootlog/messaging";
 import {
   REALTIME_FEED_CAPABILITY,
+  REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
   REALTIME_JSON_SUBPROTOCOL,
   REALTIME_SUBPROTOCOL,
 } from "@lootlog/protocol/realtime";
@@ -278,18 +279,21 @@ export const createGatewayFetch =
       );
 
     const connectionId = crypto.randomUUID();
+    const offeredProtocols =
+      request.headers
+        .get("sec-websocket-protocol")
+        ?.split(",")
+        .map((protocol) => protocol.trim()) ?? [];
     const frameEncoding =
       application.config.environment === "local" ? "json" : undefined;
     const upgraded = activeServer.upgrade(request, {
       data: {
         ...identity,
         connectionId,
-        supportsFeed:
-          request.headers
-            .get("sec-websocket-protocol")
-            ?.split(",")
-            .some((protocol) => protocol.trim() === REALTIME_FEED_CAPABILITY) ??
-          false,
+        supportsFeed: offeredProtocols.includes(REALTIME_FEED_CAPABILITY),
+        supportsNotificationVolunteer: offeredProtocols.includes(
+          REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
+        ),
         platform: application.auth.getPlatform(origin ?? ""),
         userAgent: request.headers.get("user-agent") ?? undefined,
         frameEncoding,

@@ -123,3 +123,46 @@ it("publishes once after replacing a shared transport facade and preserves recon
     useGameStore.setState({ game: previousGame });
   }
 });
+
+it("dispatches private volunteer frames to the legacy volunteer listener", async () => {
+  const listeners = new Map<string, (event: { data?: unknown }) => void>();
+  const realtime = new RealtimeClient({
+    url: "https://gateway.example.test",
+    webSocketFactory: () => ({
+      readyState: 1,
+      binaryType: "arraybuffer",
+      addEventListener: (type, listener) => listeners.set(type, listener),
+      send: () => {},
+      close: () => {},
+    }),
+  });
+  const restore = configureGameClientPlatform({
+    fetch: globalThis.fetch,
+    createRealtime: () => realtime,
+  });
+  const { GatewayEvent } = await import("@/config/gateway");
+  disposeSocket();
+  const socket = getSocket();
+  const received = vi.fn();
+  try {
+    socket.on(GatewayEvent.NOTIFICATIONS_VOLUNTEER, received);
+    socket.connect();
+    listeners.get("open")?.({});
+    const data = {
+      notificationId: "notification",
+      volunteer: {
+        discordId: "volunteer",
+        world: "tempest",
+        nick: "Volunteer",
+        lvl: 250,
+      },
+    };
+    listeners.get("message")?.({
+      data: encodeRealtimeFrame({ v: 1, type: "notification.volunteer", data }),
+    });
+    await vi.waitFor(() => expect(received).toHaveBeenCalledWith(data));
+  } finally {
+    disposeSocket();
+    restore();
+  }
+});

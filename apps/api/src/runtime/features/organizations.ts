@@ -261,15 +261,30 @@ export const internalGuildsData = Layer.unwrap(
   }),
 );
 export const rolesData = Layer.unwrap(
-  Effect.map(ApiRedis, (redis) =>
-    RolesData.layerDatabase({
-      deleteByPattern: (pattern) =>
-        Effect.tryPromise({
-          try: () => redis.deleteByPattern(pattern),
-          catch: (cause) => new OrganizationWorkspaceOperationError({ cause }),
-        }).pipe(Effect.asVoid),
-    }),
-  ),
+  Effect.gen(function* () {
+    const redis = yield* ApiRedis;
+    const rabbit = yield* RabbitMessaging;
+    return RolesData.layerDatabase(
+      {
+        deleteByPattern: (pattern) =>
+          Effect.tryPromise({
+            try: () => redis.deleteByPattern(pattern),
+            catch: (cause) =>
+              new OrganizationWorkspaceOperationError({ cause }),
+          }).pipe(Effect.asVoid),
+      },
+      {
+        memberPolicyChanged: (member) =>
+          rabbit
+            .publish({
+              exchange: "default",
+              routingKey: RabbitRoutingKey.GUILDS_MEMBERS_UPDATE,
+              content: new TextEncoder().encode(JSON.stringify(member)),
+            })
+            .pipe(Effect.asVoid),
+      },
+    );
+  }),
 );
 export const guildConfigurationData = Layer.unwrap(
   Effect.map(ApiRedis, (redis) =>

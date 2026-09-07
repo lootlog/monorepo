@@ -31,6 +31,7 @@ export enum GatewayEvent {
   RESERVATIONS_DELETE = "reservations-delete",
   RESERVATIONS_CHANGED = "reservations-changed",
   NOTIFICATION = "notifications-send",
+  NOTIFICATIONS_VOLUNTEER = "notifications-volunteer",
   MEMBERS_REFRESH_JOB_UPDATE = "members-refresh-job-update",
 
   // Event map presence

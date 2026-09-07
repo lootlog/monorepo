@@ -24,6 +24,7 @@ export interface SessionData extends AuthenticatedIdentity {
   readonly platform: typeof PresencePlatform.Type;
   readonly userAgent?: string;
   readonly supportsFeed?: boolean;
+  readonly supportsNotificationVolunteer?: boolean;
   readonly frameEncoding?: "json";
   joined: boolean;
   guilds: UserGuildData[];
