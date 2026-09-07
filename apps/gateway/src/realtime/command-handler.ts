@@ -193,6 +193,12 @@ export class CommandHandler {
     const { activity, guilds, hub, presence } = this;
     return Effect.gen(function* () {
       yield* guilds.invalidate({ discordId, userId });
+      if (
+        !hub
+          .getLocalSocketsForUser(userId)
+          .some((socket) => socket.data.discordId === discordId)
+      )
+        return;
       const updatedGuilds = yield* guilds.getUserGuilds({
         discordId,
         userId,

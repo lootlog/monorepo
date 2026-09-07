@@ -45,8 +45,7 @@ const decodeConnectionRegistration = Schema.decodeUnknownSync(
 
 const toBase64 = (bytes: Uint8Array): string =>
   Buffer.from(bytes).toString("base64");
-const fromBase64 = (value: string): Uint8Array =>
-  new Uint8Array(Buffer.from(value, "base64"));
+const fromBase64 = (value: string): Uint8Array => Buffer.from(value, "base64");
 
 export const getScopeKey = (scope: Scope): string =>
   [
@@ -58,20 +57,33 @@ export const getScopeKey = (scope: Scope): string =>
   ].join("|");
 
 const getScopeAudienceKey = (scope: Scope): string =>
-  JSON.stringify([scope.topic, scope.organizationId]);
+  JSON.stringify([
+    scope.topic,
+    scope.organizationId,
+    scope.eventId,
+    scope.world,
+    scope.mapId,
+  ]);
 
-const scopeMatches = (subscription: Scope, published: Scope): boolean => {
-  if (subscription.topic !== published.topic) return false;
-  for (const field of [
-    "organizationId",
-    "eventId",
-    "world",
-    "mapId",
-  ] as const) {
-    const expected = subscription[field];
-    if (expected !== undefined && expected !== published[field]) return false;
+// Four optional fields produce at most 16 exact/wildcard subscription keys.
+const matchingScopeAudienceKeys = (scope: Scope): string[] => {
+  let keys: Array<Array<string | number | undefined>> = [[scope.topic]];
+  for (const value of [
+    scope.organizationId,
+    scope.eventId,
+    scope.world,
+    scope.mapId,
+  ]) {
+    keys = keys.flatMap((key) =>
+      value === undefined
+        ? [[...key, undefined]]
+        : [
+            [...key, undefined],
+            [...key, value],
+          ],
+    );
   }
-  return true;
+  return keys.map((key) => JSON.stringify(key));
 };
 
 export class RealtimeHub {
@@ -155,10 +167,7 @@ export class RealtimeHub {
     if (!removed) return;
     socket.data.subscriptions.delete(key);
     for (const subscription of socket.data.subscriptions.values()) {
-      if (
-        subscription.topic === removed.topic &&
-        subscription.organizationId === removed.organizationId
-      )
+      if (getScopeAudienceKey(subscription) === getScopeAudienceKey(removed))
         return;
     }
     this.removeAudience(getScopeAudienceKey(removed), socket);
@@ -235,7 +244,7 @@ export class RealtimeHub {
       readonly sourceNpcs?: ReadonlyArray<LootVisibilityNpc>;
     } = {},
   ): Promise<void> {
-    const message = this.createFederatedMessage({
+    const { message, bytes } = this.createFederatedMessage({
       id: publicationId
         ? JSON.stringify([getScopeKey(scope), event.type, publicationId])
         : undefined,
@@ -244,7 +253,7 @@ export class RealtimeHub {
       scope,
       frame: event,
     });
-    this.deliver(message);
+    this.deliver(message, bytes);
     // Retry federation even when this instance already delivered the publication.
     await this.redis.publish(message);
   }
@@ -260,24 +269,30 @@ export class RealtimeHub {
     } = {},
   ): Promise<void> {
     if (scopes.length === 0) return;
-    const message = this.createFederatedMessage({
+    const { message, bytes } = this.createFederatedMessage({
       scopes,
       frame: event,
       ...options,
     });
-    this.deliver(message);
+    this.deliver(message, bytes);
     await this.redis.publish(message);
   }
 
   async publishToUser(userId: string, event: Event): Promise<void> {
-    const message = this.createFederatedMessage({ userId, frame: event });
-    this.deliver(message);
+    const { message, bytes } = this.createFederatedMessage({
+      userId,
+      frame: event,
+    });
+    this.deliver(message, bytes);
     await this.redis.publish(message);
   }
 
   async publishToDiscord(discordId: string, event: Event): Promise<void> {
-    const message = this.createFederatedMessage({ discordId, frame: event });
-    this.deliver(message);
+    const { message, bytes } = this.createFederatedMessage({
+      discordId,
+      frame: event,
+    });
+    this.deliver(message, bytes);
     await this.redis.publish(message);
   }
 
@@ -329,8 +344,8 @@ export class RealtimeHub {
         frame: preciseEvent,
       }),
     ];
-    for (const message of messages) {
-      this.deliver(message);
+    for (const { message, bytes } of messages) {
+      this.deliver(message, bytes);
       await this.redis.publish(message);
     }
   }
@@ -366,23 +381,30 @@ export class RealtimeHub {
     readonly organizationId?: string;
     readonly presenceAudience?: "basic" | "precise";
     readonly frame: Event;
-  }): FederatedRealtimeMessage {
+  }): {
+    readonly message: FederatedRealtimeMessage;
+    readonly bytes: Uint8Array;
+  } {
+    const bytes = encodeRealtimeFrame(options.frame);
     return {
-      id: options.id ?? crypto.randomUUID(),
-      sourceInstanceId: this.instanceId,
-      sourceNpcs: options.sourceNpcs,
-      scopeKey: options.scopeKey,
-      scope: options.scope,
-      scopes: options.scopes,
-      userId: options.userId,
-      discordId: options.discordId,
-      excludeConnectionId: options.excludeConnectionId,
-      recipientPlatform: options.recipientPlatform,
-      recipientWorld: options.recipientWorld,
-      recipientMapId: options.recipientMapId,
-      organizationId: options.organizationId,
-      presenceAudience: options.presenceAudience,
-      frame: toBase64(encodeRealtimeFrame(options.frame)),
+      bytes,
+      message: {
+        id: options.id ?? crypto.randomUUID(),
+        sourceInstanceId: this.instanceId,
+        sourceNpcs: options.sourceNpcs,
+        scopeKey: options.scopeKey,
+        scope: options.scope,
+        scopes: options.scopes,
+        userId: options.userId,
+        discordId: options.discordId,
+        excludeConnectionId: options.excludeConnectionId,
+        recipientPlatform: options.recipientPlatform,
+        recipientWorld: options.recipientWorld,
+        recipientMapId: options.recipientMapId,
+        organizationId: options.organizationId,
+        presenceAudience: options.presenceAudience,
+        frame: toBase64(bytes),
+      },
     };
   }
 
@@ -401,10 +423,15 @@ export class RealtimeHub {
     this.deliver(message);
   }
 
-  private deliver(message: FederatedRealtimeMessage): void {
+  private deliver(
+    message: FederatedRealtimeMessage,
+    localBytes?: Uint8Array,
+  ): void {
     if (!this.remember(message.id)) return;
     if (!message.frame) return;
-    const decoded = tryDecodeRealtimeFrame(fromBase64(message.frame));
+    const decoded = tryDecodeRealtimeFrame(
+      localBytes ?? fromBase64(message.frame),
+    );
     if (decoded._tag === "Failure") {
       this.logger.warn(
         "Rejected malformed Redis federation frame",
@@ -415,12 +442,12 @@ export class RealtimeHub {
     if (!("type" in decoded.success)) return;
     const frame = decoded.success as Event;
     let jsonFrame: string | undefined;
-    let binaryFrame: Uint8Array | undefined;
+    // Remote frames must be re-encoded after validation strips unknown fields.
+    let binaryFrame = localBytes;
     const chatFrames = new Map<string, string | Uint8Array>();
 
     for (const socket of this.candidates(message)) {
       if (!this.matchesRecipient(socket, message)) continue;
-      if (!this.matchesAudience(socket, message)) continue;
       if (!this.matchesPresenceAudience(socket, message)) continue;
       if (!canReadSourceEvent(socket.data, frame, message.sourceNpcs)) continue;
       if (frame.type === "chat.created") {
@@ -454,26 +481,6 @@ export class RealtimeHub {
     return encoded;
   }
 
-  private matchesAudience(
-    socket: GatewaySocket,
-    message: FederatedRealtimeMessage,
-  ): boolean {
-    if (message.userId !== undefined && socket.data.userId === message.userId)
-      return true;
-    if (
-      message.discordId !== undefined &&
-      socket.data.discordId === message.discordId
-    )
-      return true;
-    for (const subscription of socket.data.subscriptions.values()) {
-      if (message.scope && scopeMatches(subscription, message.scope))
-        return true;
-      if (message.scopes?.some((scope) => scopeMatches(subscription, scope)))
-        return true;
-    }
-    return false;
-  }
-
   private audienceKeys(session: SessionData): string[] {
     return [
       JSON.stringify(["user", session.userId]),
@@ -498,7 +505,9 @@ export class RealtimeHub {
     if (audience.size === 0) this.audiences.delete(key);
   }
 
-  private candidates(message: FederatedRealtimeMessage): Set<GatewaySocket> {
+  private candidates(
+    message: FederatedRealtimeMessage,
+  ): Iterable<GatewaySocket> {
     const keys: string[] = [];
     if (message.userId !== undefined)
       keys.push(JSON.stringify(["user", message.userId]));
@@ -507,15 +516,17 @@ export class RealtimeHub {
     const scopes = message.scope ? [message.scope] : [];
     if (message.scopes) scopes.push(...message.scopes);
     for (const scope of scopes) {
-      keys.push(getScopeAudienceKey(scope));
-      if (scope.organizationId !== undefined)
-        keys.push(getScopeAudienceKey({ topic: scope.topic }));
+      keys.push(...matchingScopeAudienceKeys(scope));
     }
-    // ponytail: map/event filters scan one topic and Organization; index those dimensions if a single Organization dominates fanout.
-    const candidates = new Set<GatewaySocket>();
-    for (const key of keys) {
-      for (const socket of this.audiences.get(key) ?? [])
-        candidates.add(socket);
+    const [first, ...others] = keys.flatMap((key) => {
+      const audience = this.audiences.get(key);
+      return audience ? [audience] : [];
+    });
+    if (!first) return [];
+    if (others.length === 0) return [...first];
+    const candidates = new Set(first);
+    for (const audience of others) {
+      for (const socket of audience) candidates.add(socket);
     }
     return candidates;
   }

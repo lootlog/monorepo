@@ -11,6 +11,10 @@ const PENDING = "online-history:pending";
 const DUE = "online-history:due";
 const AGE = "online-history:age";
 const INTERVAL_MS = 60_000;
+const CLAIM_BATCH_SIZE = 100;
+const FLUSH_INTERVAL_MS = 5_000;
+// ponytail: cap each run at 1000 checkpoints; scale collectors if this falls behind.
+const MAX_BATCHES_PER_FLUSH = 10;
 
 // Persist every confirmed observation before publishing cumulative segments. A
 // process restart therefore loses no observation already accepted by Redis.
@@ -48,7 +52,7 @@ return 1
 `;
 
 const CLAIM = `
-local ids = redis.call('ZRANGEBYSCORE', KEYS[1], '-inf', ARGV[1], 'LIMIT', 0, 100)
+local ids = redis.call('ZRANGEBYSCORE', KEYS[1], '-inf', ARGV[1], 'LIMIT', 0, ${CLAIM_BATCH_SIZE})
 local values = {}
 for _, id in ipairs(ids) do
   local value = redis.call('HGET', KEYS[2], id)
@@ -135,38 +139,44 @@ export class OnlineHistory {
 
   flush() {
     return Effect.gen({ self: this }, function* () {
-      const now = this.now();
-      const values = yield* Effect.tryPromise(() =>
-        this.redis.eval<string[]>(CLAIM, 3, DUE, PENDING, AGE, now),
-      );
-      for (const raw of values) {
-        const item = yield* Effect.try(() => decodePending(raw));
-        const event = Schema.decodeUnknownSync(UserOnlineCheckpointV1)({
-          version: 1,
-          type: "checkpoint",
-          userId: item.userId,
-          sessionId: item.sessionId,
-          segmentId: item.segmentId,
-          ...(item.world ? { world: item.world } : {}),
-          startedAt: new Date(item.started).toISOString(),
-          endedAt: new Date(item.ended).toISOString(),
-          observedAt: new Date(item.ended).toISOString(),
-        });
-        yield* this.publish(event);
-        yield* Effect.tryPromise(() =>
-          this.redis.eval(
-            ACK,
-            4,
-            PENDING,
-            DUE,
-            AGE,
-            `online-history:sent:${item.sessionId}`,
-            item.segmentId,
-            raw,
-            now,
-          ),
+      const startedAt = this.now();
+      for (let batch = 0; batch < MAX_BATCHES_PER_FLUSH; batch++) {
+        const claimedAt = this.now();
+        if (batch > 0 && claimedAt - startedAt >= FLUSH_INTERVAL_MS) break;
+        const values = yield* Effect.tryPromise(() =>
+          this.redis.eval<string[]>(CLAIM, 3, DUE, PENDING, AGE, claimedAt),
         );
+        for (const raw of values) {
+          const item = yield* Effect.try(() => decodePending(raw));
+          const event = Schema.decodeUnknownSync(UserOnlineCheckpointV1)({
+            version: 1,
+            type: "checkpoint",
+            userId: item.userId,
+            sessionId: item.sessionId,
+            segmentId: item.segmentId,
+            ...(item.world ? { world: item.world } : {}),
+            startedAt: new Date(item.started).toISOString(),
+            endedAt: new Date(item.ended).toISOString(),
+            observedAt: new Date(item.ended).toISOString(),
+          });
+          yield* this.publish(event);
+          yield* Effect.tryPromise(() =>
+            this.redis.eval(
+              ACK,
+              4,
+              PENDING,
+              DUE,
+              AGE,
+              `online-history:sent:${item.sessionId}`,
+              item.segmentId,
+              raw,
+              claimedAt,
+            ),
+          );
+        }
+        if (values.length < CLAIM_BATCH_SIZE) break;
       }
+      const now = this.now();
       if (now - this.lastHealthAt >= INTERVAL_MS) {
         const oldest = yield* Effect.tryPromise(() =>
           this.redis.eval<string[]>(
@@ -225,7 +235,7 @@ export class OnlineHistory {
       Effect.catch((cause) =>
         Effect.logError("Online history delivery failed; retrying", cause),
       ),
-      Effect.repeat(Schedule.spaced("5 seconds")),
+      Effect.repeat(Schedule.spaced(FLUSH_INTERVAL_MS)),
     );
   }
 }
