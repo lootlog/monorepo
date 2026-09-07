@@ -201,8 +201,29 @@ it("keeps the same focused row throughout debounced permission revalidation", as
   const link = screen.getByRole("link", { name: "Bicie: Heros" });
   const row = link.closest("li");
   link.focus();
+  const source = feedResponse().items[0];
+  if (!source) throw new Error("Missing fixture");
+  act(() =>
+    mocks.socket.emit(GatewayEvent.FEED_ENTRY, {
+      ...source,
+      id: "revoked-copy",
+      groupKey: source.id,
+      guild: { id: "revoked", name: "Odebrana organizacja", vanityUrl: null },
+    }),
+  );
+  expect(
+    screen.getByRole("link", { name: "Odebrana organizacja" }),
+  ).toBeTruthy();
   for (let index = 0; index < 3; index += 1) {
-    act(() => mocks.socket.emit(GatewayEvent.PERMISSIONS_UPDATED));
+    act(() =>
+      mocks.socket.emit(GatewayEvent.PERMISSIONS_UPDATED, {
+        guilds: [{ guild: { id: "organization" } }],
+      }),
+    );
+    expect(
+      screen.queryByRole("link", { name: "Odebrana organizacja" }),
+    ).toBeNull();
+    expect(screen.queryByRole("status", { name: "Ładowanie..." })).toBeNull();
     await act(() => vi.advanceTimersByTimeAsync(1000));
     expect(
       screen.getByRole("link", { name: "Bicie: Heros" }).closest("li"),
