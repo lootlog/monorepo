@@ -121,9 +121,11 @@ Historię pobieramy przy wejściu, po ponownym połączeniu i dołączeniu sesji
 i przy wznowieniu. Podczas
 połączenia kompletne wpisy przychodzą przez WebSocket, bez cyklicznego
 odpytywania historii. Kolejne bicia aktualizują licznik istniejącego wpisu.
-Po zmianie dostępu od razu czyścimy widoczne i oczekujące wpisy oraz pobieramy
-aktualną listę, również podczas pauzy. Jeśli pobranie się nie powiedzie,
-poprzednie wpisy pozostają ukryte.
+Po serii zmian dostępu czekamy 5 sekund od ostatniej zmiany i pobieramy aktualną
+listę, również podczas pauzy. Widoczne wpisy pozostają na ekranie do otrzymania
+odpowiedzi, a następnie są zastępowane aktualną listą bez przejściowego komunikatu
+o pustym feedzie. Oczekujące aktualizacje są odrzucane. Jeśli pobranie się nie
+powiedzie, poprzednie wpisy zostają ukryte i pojawia się komunikat błędu.
 Aktualizacja live może nie dotrzeć podczas awarii; zapisane bicie pozostaje
 w historii przez 24 godziny i może pojawić się przy kolejnym pobraniu listy.
 

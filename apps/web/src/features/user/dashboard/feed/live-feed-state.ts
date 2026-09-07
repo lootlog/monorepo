@@ -75,6 +75,7 @@ export type LiveFeedAction =
   | { type: "entry"; item: FeedItems[number] }
   | { type: "position"; atTop: boolean }
   | { type: "refresh" }
+  | { type: "revalidate" }
   | { type: "failed" }
   | { type: "apply" }
   | { type: "clear" };
@@ -104,6 +105,14 @@ export function liveFeedReducer(
   switch (action.type) {
     case "refresh":
       return { ...state, isFetching: true, isError: false };
+    case "revalidate":
+      return {
+        ...state,
+        pending: undefined,
+        animatedKeys: [],
+        isFetching: true,
+        isError: false,
+      };
     case "failed":
       return { ...state, isFetching: false, isError: true };
     case "position":
