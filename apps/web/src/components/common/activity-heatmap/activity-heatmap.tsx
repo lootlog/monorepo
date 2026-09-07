@@ -69,9 +69,7 @@ export function ActivityHeatmap({
   const describe = (day: ActivityDay) => {
     const date = fullDateFormatter.format(new Date(`${day.date}T12:00:00Z`));
     const value =
-      day.value === null && unknownDisplay === "distinct"
-        ? t("statistics.unknown")
-        : formatValue(day.value ?? 0);
+      day.value === null ? t("statistics.unknown") : formatValue(day.value);
     const details = [
       `${date}: ${value}${day.partial ? ` · ${t("statistics.partialDay")}` : ""}`,
     ];

@@ -20,6 +20,7 @@ export const InstallButton: FC = () => {
       <TooltipTrigger
         render={
           <Button
+            aria-label={t("ui.tooltips.installAddon")}
             variant="ghost"
             className="size-11"
             onClick={() => dispatch({ type: "OPEN" })}

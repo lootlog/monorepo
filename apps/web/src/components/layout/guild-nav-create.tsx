@@ -20,6 +20,7 @@ export const GuildNavCreate: FC = () => {
       <TooltipTrigger
         render={
           <Button
+            aria-label={t("ui.tooltips.createLootlog")}
             className="size-11 0"
             variant="secondary"
             onClick={() => dispatch({ type: "OPEN" })}

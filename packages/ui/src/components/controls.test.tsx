@@ -1,10 +1,11 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { Button } from "./button";
 import { Checkbox } from "./checkbox";
 import { RadioGroup, RadioGroupItem } from "./radio-group";
 import { Separator } from "./separator";
 import { Switch } from "./switch";
+import { FilterPopover } from "./filter-popover";
 
 describe("Base UI controls", () => {
   it("renders a custom button element through the render prop", () => {
@@ -89,4 +90,22 @@ describe("Base UI controls", () => {
       expect(separator).toHaveClass(orientationClassName);
     },
   );
+});
+
+it("names filter search by its context and allows selecting a filtered option", async () => {
+  const onValueChange = vi.fn<(value: string) => void>();
+  render(
+    <FilterPopover
+      placeholder="Świat"
+      searchPlaceholder="Szukaj…"
+      options={[{ value: "luvia", label: "Luvia" }]}
+      onValueChange={onValueChange}
+    />,
+  );
+  fireEvent.click(screen.getByRole("combobox", { name: "Świat" }));
+  const dialog = await screen.findByRole("dialog");
+  const search = within(dialog).getByRole("combobox", { name: "Świat" });
+  fireEvent.change(search, { target: { value: "Luv" } });
+  fireEvent.click(await within(dialog).findByRole("option", { name: "Luvia" }));
+  expect(onValueChange).toHaveBeenCalledWith("luvia");
 });
