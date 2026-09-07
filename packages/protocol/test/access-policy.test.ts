@@ -37,6 +37,47 @@ describe("realtime effective access policy", () => {
     expect(isAccessPolicySnapshot(next)).toBe(true);
   });
 
+  test("integer-adjacent grants preserve fractional NPC access gaps", () => {
+    const previous = snapshot([
+      guild([role([Permission.LOOTLOG_TIMERS_READ], 0, 200)]),
+    ]);
+    const next = snapshot([
+      guild([
+        role([Permission.LOOTLOG_TIMERS_READ], 0, 100),
+        role([Permission.LOOTLOG_TIMERS_READ], 101, 200),
+      ]),
+    ]);
+    const previousOrganization = previous.organizations[0];
+    const nextOrganization = next.organizations[0];
+    if (!previousOrganization || !nextOrganization)
+      throw new Error("Missing fixture policy");
+    expect(
+      canReadPolicyNpc(previousOrganization, "timers", {
+        type: "ELITE2",
+        lvl: 100.5,
+      }),
+    ).toBe(true);
+    expect(
+      canReadPolicyNpc(nextOrganization, "timers", {
+        type: "ELITE2",
+        lvl: 100.5,
+      }),
+    ).toBe(false);
+    for (const lvl of [0, 100, 101, 200]) {
+      expect(
+        canReadPolicyNpc(nextOrganization, "timers", { type: "ELITE2", lvl }),
+      ).toBe(true);
+    }
+    expect(diffAccessPolicies(previous, next)).toEqual([
+      {
+        organizationId: "one",
+        areas: ["timers"],
+        restricted: true,
+        expanded: false,
+      },
+    ]);
+  });
+
   test("tier revocation and narrower levels affect only timers of their organization", () => {
     const unaffected = guild([role([Permission.LOOTLOG_CHAT_READ])], "two");
     const previous = snapshot([

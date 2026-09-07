@@ -234,6 +234,22 @@ export const usePlayersPresence = (
       data: PlayerPresenceUpdatePayload,
     ) => {
       const normalizedPresence = normalizePresence(data);
+      const snapshot = socket.getAccessPolicy?.();
+      const organization = snapshot?.organizations.find(
+        (entry) => entry.organizationId === selectedGuildIdRef.current,
+      );
+      const allowedPresence = snapshot
+        ? filterPresenceByPolicy(
+            { [normalizedPresence.discordId]: [normalizedPresence] },
+            organization,
+          )[normalizedPresence.discordId]?.[0]
+        : normalizedPresence;
+      if (!allowedPresence) {
+        updateOnlinePlayersForCurrentScope((previous) =>
+          filterPresenceByPolicy(previous, organization),
+        );
+        return;
+      }
 
       if (
         normalizedPresence.guildId !== selectedGuildIdRef.current ||
@@ -242,19 +258,26 @@ export const usePlayersPresence = (
         return;
 
       const presenceKey = `${normalizedPresence.discordId}:${getPresenceKey(normalizedPresence)}`;
-      presenceUpdateController.pendingUpdates.set(
-        presenceKey,
-        normalizedPresence,
-      );
+      presenceUpdateController.pendingUpdates.set(presenceKey, allowedPresence);
       if (presenceUpdateController.frame !== null) return;
 
       presenceUpdateController.frame = window.requestAnimationFrame(() => {
         presenceUpdateController.frame = null;
         const updates = [...presenceUpdateController.pendingUpdates.values()];
         presenceUpdateController.pendingUpdates.clear();
-        updateOnlinePlayersForCurrentScope((previous) =>
-          applyPresenceUpdates(previous, updates),
-        );
+        updateOnlinePlayersForCurrentScope((previous) => {
+          const next = applyPresenceUpdates(previous, updates);
+          const currentPolicy = socket.getAccessPolicy?.();
+          return currentPolicy
+            ? filterPresenceByPolicy(
+                next,
+                currentPolicy.organizations.find(
+                  (entry) =>
+                    entry.organizationId === selectedGuildIdRef.current,
+                ),
+              )
+            : next;
+        });
       });
     };
 

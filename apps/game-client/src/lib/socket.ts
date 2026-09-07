@@ -297,27 +297,33 @@ export class AppSocket {
     const game = useGameStore.getState().game;
     if (!game) return;
     // Presence publication opt-out is temporarily disabled; keep stored preferences intact.
-    await this.realtime.request("presence.publish", {
-      organizationIds: this.joinedOrganizationIds,
-      isAfk: this.lastIsAfk,
-      character: {
-        world: game.world,
-        name: game.hero.name,
-        lvl: game.hero.level,
-        icon: game.hero.icon,
-        characterId: game.hero.characterId,
-        accountId: game.hero.accountId,
-        prof: game.hero.profession,
-        clan: game.hero.clan,
-      },
-      location: {
-        mapId: game.map.id,
-        map: game.map.name,
-        x: game.hero.x,
-        y: game.hero.y,
-      },
-      clientObservedAt: Date.now(),
-    });
+    try {
+      await this.realtime.request("presence.publish", {
+        organizationIds: this.joinedOrganizationIds,
+        isAfk: this.lastIsAfk,
+        character: {
+          world: game.world,
+          name: game.hero.name,
+          lvl: game.hero.level,
+          icon: game.hero.icon,
+          characterId: game.hero.characterId,
+          accountId: game.hero.accountId,
+          prof: game.hero.profession,
+          clan: game.hero.clan,
+        },
+        location: {
+          mapId: game.map.id,
+          map: game.map.name,
+          x: game.hero.x,
+          y: game.hero.y,
+        },
+        clientObservedAt: Date.now(),
+      });
+    } catch {
+      // Presence is best effort; the next publication carries the current state.
+      if (import.meta.env.DEV)
+        console.warn("[Gateway] Failed to publish presence");
+    }
   }
 
   private async requestLegacy(

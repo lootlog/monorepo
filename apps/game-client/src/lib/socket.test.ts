@@ -32,97 +32,133 @@ describe("realtime socket facade lifecycle", () => {
   });
 });
 
-it("publishes once after replacing a shared transport facade and preserves reconnects", async () => {
-  const listeners = new Map<string, (event: { data?: unknown }) => void>();
-  const send = vi.fn((bytes: string | Uint8Array) => {
-    if (!(bytes instanceof Uint8Array))
-      throw new Error("Expected binary frame");
-    const frame = decodeRealtimeFrame(bytes);
-    if (!("requestId" in frame) || !frame.requestId)
-      throw new Error("Expected request frame");
-    const requestId = frame.requestId;
-    queueMicrotask(() =>
+it.each(["success", "legacy", "policy", "player"])(
+  "publishes once after replacing a shared transport facade and handles rejection: %s",
+  async (mode) => {
+    const rejectPublication = mode !== "success";
+    const listeners = new Map<string, (event: { data?: unknown }) => void>();
+    const send = vi.fn((bytes: string | Uint8Array) => {
+      if (!(bytes instanceof Uint8Array))
+        throw new Error("Expected binary frame");
+      const frame = decodeRealtimeFrame(bytes);
+      if (!("requestId" in frame) || !frame.requestId)
+        throw new Error("Expected request frame");
+      const requestId = frame.requestId;
+      queueMicrotask(() =>
+        listeners.get("message")?.({
+          data: encodeRealtimeFrame({
+            v: 1,
+            requestId,
+            ...(rejectPublication
+              ? {
+                  status: "error" as const,
+                  error: {
+                    code: "UNAVAILABLE",
+                    message: "Disconnected",
+                    retryable: true,
+                  },
+                }
+              : { status: "success" as const }),
+          }),
+        }),
+      );
+    });
+    const wire: RealtimeWebSocket = {
+      readyState: 1,
+      binaryType: "arraybuffer",
+      addEventListener: (type, listener) => {
+        listeners.set(type, listener);
+      },
+      send,
+      close: () => {
+        listeners.get("close")?.({});
+      },
+    };
+    const realtime = new RealtimeClient({
+      url: "https://gateway.example.test",
+      webSocketFactory: () => wire,
+    });
+    const restorePlatform = configureGameClientPlatform({
+      fetch: globalThis.fetch,
+      createRealtime: () => realtime,
+    });
+    const previousGame = useGameStore.getState().game;
+    try {
+      useGameStore.getState().replaceGame({
+        hero: {
+          accountId: "20",
+          characterId: "10",
+          currentHp: 100,
+          icon: "hero.gif",
+          level: 100,
+          maxHp: 100,
+          name: "Hero",
+          profession: "w",
+          x: 1,
+          y: 2,
+        },
+        interface: "ni",
+        map: { id: 100, name: "Karka-han", visibility: 0 },
+        world: "alpha",
+      });
+      const oldFacade = getSocket();
+      disposeSocket();
+      const activeFacade = getSocket();
+      // Disposing an old facade twice must not detach its replacement.
+      oldFacade.dispose();
+      activeFacade.connect();
+      listeners.get("open")?.({});
+      expect(activeFacade.connected).toBe(true);
+      expect(oldFacade.connected).toBe(false);
+      activeFacade.disconnect();
+      activeFacade.connect();
+      listeners.get("open")?.({});
+      expect(activeFacade.connected).toBe(true);
+      const { createAccessPolicySnapshot } =
+        await import("@lootlog/protocol/realtime/access-policy");
       listeners.get("message")?.({
         data: encodeRealtimeFrame({
           v: 1,
-          requestId,
-          status: "success",
+          type: "permissions.updated",
+          data: {
+            organizationIds: ["organization-1"],
+            subscriptionScopes: [],
+            ...(mode === "policy"
+              ? {
+                  accessPolicy: createAccessPolicySnapshot(
+                    [
+                      {
+                        guild: { id: "organization-1", ownerId: "owner" },
+                        roles: [],
+                      },
+                    ],
+                    "user",
+                  ),
+                }
+              : {}),
+          },
         }),
-      }),
-    );
-  });
-  const wire: RealtimeWebSocket = {
-    readyState: 1,
-    binaryType: "arraybuffer",
-    addEventListener: (type, listener) => {
-      listeners.set(type, listener);
-    },
-    send,
-    close: () => {
-      listeners.get("close")?.({});
-    },
-  };
-  const realtime = new RealtimeClient({
-    url: "https://gateway.example.test",
-    webSocketFactory: () => wire,
-  });
-  const restorePlatform = configureGameClientPlatform({
-    fetch: globalThis.fetch,
-    createRealtime: () => realtime,
-  });
-  const previousGame = useGameStore.getState().game;
-  try {
-    useGameStore.getState().replaceGame({
-      hero: {
-        accountId: "20",
-        characterId: "10",
-        currentHp: 100,
-        icon: "hero.gif",
-        level: 100,
-        maxHp: 100,
-        name: "Hero",
-        profession: "w",
-        x: 1,
-        y: 2,
-      },
-      interface: "ni",
-      map: { id: 100, name: "Karka-han", visibility: 0 },
-      world: "alpha",
-    });
-    const oldFacade = getSocket();
-    disposeSocket();
-    const activeFacade = getSocket();
-    // Disposing an old facade twice must not detach its replacement.
-    oldFacade.dispose();
-    activeFacade.connect();
-    listeners.get("open")?.({});
-    expect(activeFacade.connected).toBe(true);
-    expect(oldFacade.connected).toBe(false);
-    activeFacade.disconnect();
-    activeFacade.connect();
-    listeners.get("open")?.({});
-    expect(activeFacade.connected).toBe(true);
-    listeners.get("message")?.({
-      data: encodeRealtimeFrame({
-        v: 1,
-        type: "permissions.updated",
-        data: { organizationIds: ["organization-1"], subscriptionScopes: [] },
-      }),
-    });
-    await vi.waitFor(() => expect(send).toHaveBeenCalledOnce());
-    const bytes = send.mock.calls[0]?.[0];
-    if (!(bytes instanceof Uint8Array))
-      throw new Error("Expected presence publication");
-    expect(decodeRealtimeFrame(bytes)).toMatchObject({
-      type: "presence.publish",
-      data: { organizationIds: ["organization-1"] },
-    });
-  } finally {
-    disposeSocket();
-    restorePlatform();
-    useGameStore.setState({ game: previousGame });
-  }
-});
+      });
+      await vi.waitFor(() => expect(send).toHaveBeenCalledOnce());
+      const bytes = send.mock.calls[0]?.[0];
+      if (!(bytes instanceof Uint8Array))
+        throw new Error("Expected presence publication");
+      expect(decodeRealtimeFrame(bytes)).toMatchObject({
+        type: "presence.publish",
+        data: { organizationIds: ["organization-1"] },
+      });
+      if (mode === "player") {
+        const { GatewayEvent } = await import("@/config/gateway");
+        activeFacade.emit(GatewayEvent.PLAYER_PRESENCE_UPDATE, { isAfk: true });
+        await vi.waitFor(() => expect(send).toHaveBeenCalledTimes(2));
+      }
+    } finally {
+      disposeSocket();
+      restorePlatform();
+      useGameStore.setState({ game: previousGame });
+    }
+  },
+);
 
 it("dispatches private volunteer frames to the legacy volunteer listener", async () => {
   const listeners = new Map<string, (event: { data?: unknown }) => void>();
