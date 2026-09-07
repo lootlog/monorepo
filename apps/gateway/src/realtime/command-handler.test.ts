@@ -3,6 +3,8 @@ import { encode } from "@msgpack/msgpack";
 import { Permission } from "@lootlog/schema/permissions";
 import { Effect } from "effect";
 import { CommandHandler } from "./command-handler.js";
+import { canReadSourceEvent } from "./source-event-visibility.js";
+import type { ServerEvent } from "@lootlog/protocol/realtime";
 import type { GuildStore } from "#src/guilds/guild-store";
 import type { MargonemProofVerifier } from "#src/auth/margonem-proof";
 import type { ActivityPublisher } from "#src/rabbit/activity-publisher";
@@ -243,6 +245,61 @@ describe("CommandHandler session lifecycle", () => {
     expect(presence.reconciled).toEqual([target.socket]);
     expect(target.socket.data.presence).toBeUndefined();
     expect(hub.events).toHaveLength(1);
+  });
+
+  test("applies revoked tier grants and narrower level ranges to connected sessions", async () => {
+    const { handler, guilds, hub } = setup();
+    const target = makeSocket();
+    target.socket.data.joined = true;
+    target.socket.data.guilds = [
+      guild([
+        Permission.LOOTLOG_TIMERS_READ,
+        Permission.LOOTLOG_TIMERS_HEROES_READ,
+        Permission.LOOTLOG_TIMERS_TITANS_READ,
+      ]),
+    ];
+    hub.sockets.push(target.socket);
+    const timer = (
+      type: "HERO" | "TITAN",
+      lvl: number,
+    ): typeof ServerEvent.Type => ({
+      v: 1,
+      type: "timer.created",
+      data: {
+        organizationId: "organization-1",
+        payload: { guildId: "organization-1", npc: { type, lvl } },
+      },
+    });
+    const titan = timer("TITAN", 250);
+    const lowLevelHero = timer("HERO", 105);
+    const allowedHero = timer("HERO", 250);
+    for (const event of [titan, lowLevelHero, allowedHero]) {
+      expect(canReadSourceEvent(target.socket.data, event)).toBe(true);
+    }
+
+    guilds.guilds = [
+      {
+        guild: { id: "organization-1", ownerId: "owner" },
+        roles: [
+          {
+            id: "role",
+            lvlRangeFrom: 200,
+            lvlRangeTo: 500,
+            permissions: [
+              Permission.LOOTLOG_TIMERS_READ,
+              Permission.LOOTLOG_TIMERS_HEROES_READ,
+            ],
+          },
+        ],
+      },
+    ];
+    await Effect.runPromise(handler.rebalanceUser("discord-1", "user-1"));
+
+    expect(canReadSourceEvent(target.socket.data, titan)).toBe(false);
+    expect(canReadSourceEvent(target.socket.data, lowLevelHero)).toBe(false);
+    expect(canReadSourceEvent(target.socket.data, allowedHero)).toBe(true);
+    expect(target.socket.data.joined).toBe(true);
+    expect(target.closes).toEqual([]);
   });
 
   test("closes unknown MessagePack commands as malformed protocol frames", async () => {
