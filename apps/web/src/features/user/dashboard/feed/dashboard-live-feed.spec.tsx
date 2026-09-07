@@ -172,3 +172,56 @@ it("adds organization copies to one row and preserves that row during an HTTP re
   );
   expect(screen.queryByRole("link", { name: "Druga organizacja" })).toBeNull();
 });
+
+it("keeps the same focused row throughout debounced permission revalidation", async () => {
+  vi.stubGlobal("localStorage", new MemoryStorage());
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2026-09-06T12:01:00Z"));
+  let finish: (data: ReturnType<typeof feedResponse>) => void = () => undefined;
+  mocks.request
+    .mockReset()
+    .mockResolvedValueOnce(feedResponse())
+    .mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+  const root = createRootRoute({ component: DashboardLiveFeed });
+  const router = createRouter({
+    routeTree: root,
+    history: createMemoryHistory({ initialEntries: ["/"] }),
+  });
+  render(
+    <QueryClientProvider client={new QueryClient()}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>,
+  );
+  await act(() => vi.advanceTimersByTimeAsync(0));
+  const link = screen.getByRole("link", { name: "Bicie: Heros" });
+  const row = link.closest("li");
+  link.focus();
+  for (let index = 0; index < 3; index += 1) {
+    act(() => mocks.socket.emit(GatewayEvent.PERMISSIONS_UPDATED));
+    await act(() => vi.advanceTimersByTimeAsync(1000));
+    expect(
+      screen.getByRole("link", { name: "Bicie: Heros" }).closest("li"),
+    ).toBe(row);
+    expect(document.activeElement).toBe(link);
+  }
+  expect(mocks.request).toHaveBeenCalledTimes(1);
+  await act(() => vi.advanceTimersByTimeAsync(4000));
+  expect(mocks.request).toHaveBeenCalledTimes(2);
+  expect(screen.getByRole("link", { name: "Bicie: Heros" }).closest("li")).toBe(
+    row,
+  );
+  await act(async () => {
+    finish(feedResponse(4));
+    await vi.advanceTimersByTimeAsync(0);
+  });
+  expect(screen.getByText("×4")).toBeTruthy();
+  expect(screen.getByRole("link", { name: "Bicie: Heros" }).closest("li")).toBe(
+    row,
+  );
+  expect(document.activeElement).toBe(link);
+});
