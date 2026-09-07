@@ -187,20 +187,25 @@ export const MembersSettingsContent = () => {
               className="h-9"
               wrapperClassName="w-full min-w-0 sm:min-w-[200px] sm:flex-1"
             />
-            <AnimatedToggleGroup
-              size="default"
-              value={statusFilter}
-              onValueChange={(filter) => {
-                scrollElementRef.current?.scrollTo({ top: 0 });
-                startTransition(() => setStatusFilter(filter));
-              }}
-              label={t("settings.members.table.status")}
-              options={statusFilters.map((filter) => ({
-                value: filter,
-                label: t(`settings.members.filters.${filter}`),
-              }))}
-              className="w-full sm:w-fit"
-            />
+            <ScrollArea
+              orientation="horizontal"
+              className="min-w-0 max-w-full w-full sm:w-auto"
+            >
+              <AnimatedToggleGroup
+                size="default"
+                value={statusFilter}
+                onValueChange={(filter) => {
+                  scrollElementRef.current?.scrollTo({ top: 0 });
+                  startTransition(() => setStatusFilter(filter));
+                }}
+                label={t("settings.members.table.status")}
+                options={statusFilters.map((filter) => ({
+                  value: filter,
+                  label: t(`settings.members.filters.${filter}`),
+                }))}
+                className="w-max min-w-full max-w-none"
+              />
+            </ScrollArea>
             <RefreshMembersButton />
           </TableFilterToolbar>
 

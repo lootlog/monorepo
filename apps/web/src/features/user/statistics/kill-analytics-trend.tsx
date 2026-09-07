@@ -105,6 +105,11 @@ export function KillAnalyticsTrend({ title, data }: KillAnalyticsTrendProps) {
                       className="text-left font-normal tabular-nums"
                     >
                       {day.date}
+                      {day.partial && (
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          {t("statistics.partial")}
+                        </span>
+                      )}
                     </TableCell>
                     <TableCell className="text-right font-medium tabular-nums">
                       {day.kills?.toLocaleString("pl-PL") ??
