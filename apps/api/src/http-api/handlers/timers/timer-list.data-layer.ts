@@ -198,6 +198,7 @@ export const makeAllTimerList = (database: typeof ApiDatabase.Service) => {
             eq(guildTable.ownerId, identity.discordId),
             arrayOverlaps(roleTable.permissions, [
               Permission.LOOTLOG_TIMERS_READ,
+              Permission.ADMIN,
             ]),
           ),
         ),
@@ -239,15 +240,21 @@ export const makeAllTimerList = (database: typeof ApiDatabase.Service) => {
       world,
       selectedKeys,
     );
-    const ownerGuilds = new Set(
+    const administrativeGuilds = new Set(
       guildRows
-        .filter(({ guild }) => guild.ownerId === identity.discordId)
+        .filter(
+          ({ guild }) =>
+            guild.ownerId === identity.discordId ||
+            rolesByGuild
+              .get(guild.id)
+              ?.some((role) => role.permissions.includes(Permission.ADMIN)),
+        )
         .map(({ guild }) => guild.id),
     );
     return timers
       .filter(
         (timer) =>
-          ownerGuilds.has(timer.guildId) ||
+          administrativeGuilds.has(timer.guildId) ||
           canViewNpcTimer(
             parseTimerNpc(timer.npc),
             rolesByGuild.get(timer.guildId) ?? [],

@@ -19,12 +19,12 @@ import {
 import {
   canDeleteChatMessage,
   canEditChatMessage,
-} from "#src/chat/chat-message-permissions";
+} from "@lootlog/domain/chat-message-permissions";
 import { MessageType } from "#src/chat/chat-message";
 import type { ChatStoredMessage } from "#src/chat/chat-stored-message";
 import { SendChatMessageRequest } from "#src/contracts/chat/schemas";
 import type { ChatMessageViewer } from "#src/chat/chat-message-viewer";
-import { canViewChatMessage } from "#src/chat/chat-message-visibility";
+import { canViewerReadChatMessage } from "#src/chat/chat-message-visibility";
 import {
   PermissionDeniedError,
   ResourceNotFoundError,
@@ -231,13 +231,9 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) =>
             if (messages.length === 0) return [];
             const currentViewer = yield* viewer(discordId, guildId);
             if (!currentViewer) return [];
-            const visible = createAccessPolicy({
-              capabilities: currentViewer.permissions,
-            }).allows(Capability.ADMIN)
-              ? messages
-              : messages.filter((message) =>
-                  canViewChatMessage(message, currentViewer.roles),
-                );
+            const visible = messages.filter((message) =>
+              canViewerReadChatMessage(currentViewer, message),
+            );
             return visible.map((message) => ({
               ...message,
               canEdit: canEditChatMessage(currentViewer, message),
@@ -286,7 +282,11 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) =>
             }
             const message = parseStored(element);
             const currentViewer = yield* viewer(discordId, guildId);
-            if (!currentViewer || !canEditChatMessage(currentViewer, message)) {
+            if (
+              !currentViewer ||
+              !canViewerReadChatMessage(currentViewer, message) ||
+              !canEditChatMessage(currentViewer, message)
+            ) {
               return yield* Effect.fail(
                 new PermissionDeniedError("Not allowed to manage this message"),
               );
@@ -327,6 +327,7 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) =>
             const currentViewer = yield* viewer(discordId, guildId);
             if (
               !currentViewer ||
+              !canViewerReadChatMessage(currentViewer, message) ||
               !canDeleteChatMessage(currentViewer, message)
             ) {
               return yield* Effect.fail(

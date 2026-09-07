@@ -1,3 +1,5 @@
+import { useQueryClient } from "@tanstack/react-query";
+import { resetPermissionQueries } from "@lootlog/client/permission-query-cache";
 import React, {
   createContext,
   useEffect,
@@ -34,6 +36,7 @@ GatewayContext.displayName = "GatewayContext";
 
 export const GatewayProvider: React.FC<Props> = ({ children }) => {
   useKillStatsUpdates(socket);
+  const queryClient = useQueryClient();
   const { user } = useUser();
   const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds();
   const routeGuildId = useGuildId();
@@ -48,6 +51,11 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
   );
   const currentGuildId = currentGuild?.id;
 
+  const handlePermissionsUpdated = useEffectEvent(() => {
+    setUnreadLootIdsByGuild({});
+    void resetPermissionQueries(queryClient);
+  });
+
   const handleConnect = useEffectEvent(() => {
     setConnected(true);
   });
@@ -60,6 +68,7 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
       return;
     }
 
+    handlePermissionsUpdated();
     setJoined(true);
   });
   const emitJoin = useEffectEvent(() => {
@@ -88,6 +97,7 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
   );
 
   useEffect(() => {
+    socket.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
     socket.on(GatewayEvent.CONNECT, handleConnect);
     socket.on(GatewayEvent.DISCONNECT, handleDisconnect);
     socket.on(GatewayEvent.JOIN, handleJoin);
@@ -98,6 +108,7 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
     }
 
     return () => {
+      socket.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
       socket.off(GatewayEvent.CONNECT, handleConnect);
       socket.off(GatewayEvent.DISCONNECT, handleDisconnect);
       socket.off(GatewayEvent.JOIN, handleJoin);

@@ -3,7 +3,10 @@ import {
   REALTIME_JSON_SUBPROTOCOL,
   REALTIME_SUBPROTOCOL,
 } from "@lootlog/client/realtime";
-import { REALTIME_FEED_CAPABILITY } from "@lootlog/protocol/realtime";
+import {
+  REALTIME_FEED_CAPABILITY,
+  REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
+} from "@lootlog/protocol/realtime";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -46,6 +49,7 @@ describe("web realtime handshake", () => {
                 ? REALTIME_JSON_SUBPROTOCOL
                 : REALTIME_SUBPROTOCOL,
               REALTIME_FEED_CAPABILITY,
+              REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
             ],
           },
         ]);
@@ -55,4 +59,53 @@ describe("web realtime handshake", () => {
       }
     },
   );
+});
+
+it("dispatches private volunteer frames to the legacy volunteer listener", async () => {
+  vi.stubEnv("VITE_GATEWAY_URL", "https://gateway.example.test");
+  let dispatch: ((event: Event) => boolean) | undefined;
+  vi.stubGlobal(
+    "WebSocket",
+    class extends EventTarget {
+      readyState = 1;
+      binaryType = "arraybuffer";
+      constructor() {
+        super();
+        dispatch = (event) => this.dispatchEvent(event);
+      }
+      close() {
+        this.readyState = 3;
+      }
+      send() {}
+    },
+  );
+  const { socket: client } = await import("./gateway-client");
+  const { GatewayEvent } = await import("@/config/gateway");
+  const received = vi.fn();
+  try {
+    client.on(GatewayEvent.NOTIFICATIONS_VOLUNTEER, received);
+    client.connect();
+    dispatch?.(new Event("open"));
+    const data = {
+      notificationId: "notification",
+      volunteer: {
+        discordId: "volunteer",
+        world: "tempest",
+        nick: "Volunteer",
+        lvl: 250,
+      },
+    };
+    dispatch?.(
+      new MessageEvent("message", {
+        data: JSON.stringify({
+          v: 1,
+          type: "notification.volunteer",
+          data,
+        }),
+      }),
+    );
+    await vi.waitFor(() => expect(received).toHaveBeenCalledWith(data));
+  } finally {
+    client.disconnect();
+  }
 });
