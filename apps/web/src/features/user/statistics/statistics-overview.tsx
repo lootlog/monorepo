@@ -11,6 +11,16 @@ export function StatisticsOverview({
   data: UserKillAnalyticsResponseDtoOutput;
 }) {
   const { t } = useTranslation();
+  const dateFormatter = new Intl.DateTimeFormat("pl-PL", {
+    timeZone: data.meta.timezone,
+  });
+  const previousStart = new Date(data.meta.startDate);
+  previousStart.setUTCDate(previousStart.getUTCDate() - data.meta.days);
+  const ranges = {
+    current: `${dateFormatter.format(new Date(data.meta.startDate))} – ${dateFormatter.format(new Date(data.comparison.currentThrough))}`,
+    previous: `${dateFormatter.format(previousStart)} – ${dateFormatter.format(new Date(data.comparison.previousThrough))}`,
+    change: null,
+  };
   const metrics = {
     total: data.overview.totalKills,
     activeDays: data.overview.activeDays,
@@ -66,6 +76,8 @@ export function StatisticsOverview({
               <div key={key}>
                 <dt className="text-xs text-muted-foreground">
                   {t(`statistics.${key}`)}
+                  {ranges[key as keyof typeof ranges] &&
+                    ` (${ranges[key as keyof typeof ranges]})`}
                 </dt>
                 <dd className="text-xl font-semibold tabular-nums">
                   {value.toLocaleString("pl-PL")}
@@ -83,11 +95,6 @@ export function StatisticsOverview({
               </dd>
             </div>
           </dl>
-          {data.comparison.partial && (
-            <p className="mt-3 text-xs text-muted-foreground">
-              {t("statistics.partial")}
-            </p>
-          )}
         </SectionCardContent>
       </SectionCard>
       <SectionCard>

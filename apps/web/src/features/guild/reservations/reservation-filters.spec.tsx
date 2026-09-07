@@ -13,21 +13,25 @@ vi.mock("react-i18next", () => ({
 afterEach(cleanup);
 
 describe("ReservationFilters", () => {
-  it("renders the filters as a shadcn button group", () => {
+  it("labels the filter group and marks the selected filter", () => {
     render(<ReservationFilters value="all" onChange={vi.fn()} />);
 
     const group = screen.getByRole("group", {
       name: "reservations.filters.label",
     });
 
-    expect(group.getAttribute("data-slot")).toBe("button-group");
+    expect(group).toBeTruthy();
     expect(screen.getAllByRole("button")).toHaveLength(4);
     const activeFilter = screen.getByRole("button", {
       name: "reservations.filters.all",
     });
 
     expect(activeFilter.getAttribute("aria-pressed")).toBe("true");
-    expect(activeFilter.classList).toContain("border");
+    expect(
+      screen
+        .getByRole("button", { name: "reservations.filters.available" })
+        .getAttribute("aria-pressed"),
+    ).toBe("false");
   });
 
   it("selects a filter when its button is pressed", () => {

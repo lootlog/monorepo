@@ -278,11 +278,8 @@ export const MembersTable = ({
         <col className="w-[130px]" />
         <col className="w-16" />
       </colgroup>
-      <TableHeader
-        className="sticky top-0 z-10 bg-sidebar/95  [&_tr]:!border-b-0"
-        style={{ boxShadow: "inset 0 -1px 0 var(--border)" }}
-      >
-        <TableRow className="h-10 border-b-0 hover:bg-transparent">
+      <TableHeader className="sticky top-0 z-10 bg-background">
+        <TableRow className="border-b-1! border-border">
           <TableHead>{t("settings.members.table.member")}</TableHead>
           <TableHead>{t("settings.members.table.status")}</TableHead>
           <TableHead>{t("settings.members.table.discord")}</TableHead>
@@ -355,7 +352,7 @@ export const MembersTable = ({
                 isLastMember && "border-b-0",
                 isOnline
                   ? "border-emerald-500/20 bg-emerald-500/[0.045] hover:bg-emerald-500/[0.075]"
-                  : "border-border/70 hover:bg-muted/35",
+                  : "border-border hover:bg-accent/35",
               )}
               onClickCapture={(event) => {
                 const target = event.target as HTMLElement;
@@ -576,7 +573,7 @@ export const MembersTable = ({
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="size-8"
+                        className="size-7 md:size-8"
                         aria-label={t("settings.members.actions.more")}
                       >
                         <MoreHorizontal className="size-4" />

@@ -1,6 +1,4 @@
 import { GeneralForm } from "@/features/guild/settings/general/general-form";
-import { Settings } from "lucide-react";
-import { SettingsHeader } from "../settings-header";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useGuildsControllerGetGuildById } from "@lootlog/client/main";
@@ -15,12 +13,7 @@ export const GeneralSettings = () => {
 
   return (
     <div className="flex flex-col h-full min-h-0 overflow-y-auto">
-      <SettingsHeader
-        icon={Settings}
-        title={t("settings.general.title")}
-        description={t("settings.general.description")}
-        className="mx-3 mt-3"
-      />
+      <h1 className="sr-only">{t("settings.general.title")}</h1>
       <ScrollArea className="flex-1 min-h-48 bg-background">
         {guild && <GeneralForm />}
       </ScrollArea>

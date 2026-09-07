@@ -108,11 +108,8 @@ export const RolesTable = ({ guildId, isMobile, roles }: RolesTableProps) => {
         <col />
         <col className="w-16" />
       </colgroup>
-      <TableHeader
-        className="sticky top-0 z-10 bg-sidebar/95  [&_tr]:!border-b-0"
-        style={{ boxShadow: "inset 0 -1px 0 var(--border)" }}
-      >
-        <TableRow className="h-10 border-b-0 hover:bg-transparent">
+      <TableHeader className="sticky top-0 z-10 bg-background">
+        <TableRow className="border-b-1! border-border">
           <TableHead>{t("settings.roles.table.role")}</TableHead>
           <TableHead>{t("settings.roles.table.levelRange")}</TableHead>
           <TableHead>{t("settings.roles.table.permissions")}</TableHead>
@@ -134,7 +131,7 @@ export const RolesTable = ({ guildId, isMobile, roles }: RolesTableProps) => {
               role="link"
               tabIndex={0}
               className={cn(
-                "relative h-16 cursor-pointer border-b border-border/70 transition-colors hover:bg-muted/35",
+                "relative h-14 cursor-pointer border-b border-border transition-colors hover:bg-accent/35",
                 isLastRole && "border-b-0",
               )}
               onClickCapture={(event) => {
@@ -242,7 +239,7 @@ export const RolesTable = ({ guildId, isMobile, roles }: RolesTableProps) => {
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="size-8"
+                        className="size-7 md:size-8"
                         aria-label={t("settings.roles.actions.more")}
                       >
                         <MoreHorizontal className="size-4" />

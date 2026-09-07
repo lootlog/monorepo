@@ -1,3 +1,4 @@
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import upperFirst from "lodash/upperFirst";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -92,9 +93,10 @@ export function ActivityHeatmap({
         fill ? "flex min-h-0 flex-1 flex-col gap-2" : "space-y-2",
       )}
     >
-      <div
+      <ScrollArea
         ref={scroller}
-        className={cn("overflow-x-auto pb-2", fill && "shrink-0")}
+        orientation="horizontal"
+        className={cn("min-w-0 pb-2", fill && "shrink-0")}
         role="group"
         aria-label={label}
       >
@@ -184,7 +186,7 @@ export function ActivityHeatmap({
             </div>
           ))}
         </div>
-      </div>
+      </ScrollArea>
       {showDetails && (
         <p
           className={cn(

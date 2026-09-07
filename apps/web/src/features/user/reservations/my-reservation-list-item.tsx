@@ -59,9 +59,9 @@ export function MyReservationListItem({
               />
             }
           >
-            <Avatar className="size-9" aria-hidden>
+            <Avatar className="size-9 rounded-xl" aria-hidden>
               <AvatarImage src={organizationIconUrl ?? undefined} alt="" />
-              <AvatarFallback className="text-sm font-semibold">
+              <AvatarFallback className="rounded-none text-sm font-semibold">
                 {reservation.sourceOrganization.name.charAt(0).toUpperCase() ||
                   "?"}
               </AvatarFallback>

@@ -124,7 +124,7 @@ export const GeneralForm = () => {
         onSubmit={form.handleSubmit(onSubmit)}
         className="w-full mx-auto pb-24"
       >
-        <div className="p-3">
+        <div className="px-3 pb-3">
           <SectionCard>
             <SectionCardHeader
               title={t("settings.general.vanityUrl.title")}

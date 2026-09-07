@@ -1,3 +1,4 @@
+import { TableFilterToolbar } from "@/components/ui/table-filter-toolbar";
 import { useTranslation } from "react-i18next";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCard } from "@/components/common/section-card/section-card";
@@ -53,14 +54,13 @@ export const BattlePanelResultsSurface = ({
         />
       ) : (
         (toolbar || toolbarEnd) && (
-          <div
+          <TableFilterToolbar
             role="group"
             aria-label={t("battlePanel.filters.title")}
-            className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border/70 bg-background/30 p-2"
           >
             {toolbar && <div className="min-w-0 flex-1">{toolbar}</div>}
             {toolbarEnd}
-          </div>
+          </TableFilterToolbar>
         )
       )}
       {shouldShowChips && (
