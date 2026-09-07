@@ -56,6 +56,7 @@ export const useChatMessagesListener = (
   const sessionDiscordIdRef = useRef(sessionData?.user?.discordId);
   const onRemoteMessageRef = useRef(options?.onRemoteMessage);
   const wasJoinedRef = useRef(joined);
+  const permissionGenerationRef = useRef(0);
   const accountCacheIdentity = `${sessionData?.user?.discordId ?? ""}\u0000${runtimeAccountId}`;
   const previousAccountCacheIdentityRef = useRef(accountCacheIdentity);
   useEffect(
@@ -105,6 +106,19 @@ export const useChatMessagesListener = (
     removeChatMessagesQueriesOutsideGuilds(queryClient, joinedGuilds);
   }, [chatCacheBatcher, joined, joinedGuilds, queryClient]);
 
+  useEffect(() => {
+    const handlePermissionsUpdated = () => {
+      permissionGenerationRef.current += 1;
+      chatCacheBatcher.discardAll();
+    };
+    socket?.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
+    socket?.on(GatewayEvent.DISCONNECT, handlePermissionsUpdated);
+    return () => {
+      socket?.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
+      socket?.off(GatewayEvent.DISCONNECT, handlePermissionsUpdated);
+    };
+  }, [chatCacheBatcher, socket]);
+
   const handlerRef = useRef<
     (data: ChatMessage, afterFlush?: () => void) => void
   >(() => undefined);
@@ -143,6 +157,7 @@ export const useChatMessagesListener = (
       }
     };
     mentionNotificationRef.current = async (data) => {
+      const permissionGeneration = permissionGenerationRef.current;
       try {
         if (!data.message || !hasChatMentionToken(data.message)) return;
         if (
@@ -159,6 +174,7 @@ export const useChatMessagesListener = (
           queryFn: () => membersControllerGetMe({ guildId: data.guildId }),
           staleTime: 5 * 60 * 1000,
         });
+        if (permissionGeneration !== permissionGenerationRef.current) return;
         const currentUserNames = getCurrentUserMentionNames({
           currentCharacterNick: runtimeIdentityRef.current.heroName,
           currentMember,

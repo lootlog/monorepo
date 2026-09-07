@@ -55,13 +55,21 @@ describe("gateway HTTP boundary", () => {
     expect(upgraded).toBe(false);
   });
 
-  test.each([false, true])(
-    "negotiates feed opt-in (%s) while echoing only the wire protocol",
-    async (supportsFeed) => {
+  test.each([
+    [false, false],
+    [true, false],
+    [false, true],
+    [true, true],
+  ])(
+    "negotiates feed (%s) and volunteer (%s) opt-in while echoing only the wire protocol",
+    async (supportsFeed, supportsNotificationVolunteer) => {
       let upgradeOptions:
         | {
             readonly headers?: HeadersInit;
-            readonly data: { readonly supportsFeed?: boolean };
+            readonly data: {
+              readonly supportsFeed?: boolean;
+              readonly supportsNotificationVolunteer?: boolean;
+            };
           }
         | undefined;
       const authenticated = {
@@ -74,7 +82,7 @@ describe("gateway HTTP boundary", () => {
           origin: "https://classic.margonem.pl",
           "x-auth-user-id": "user-1",
           "x-auth-discord-id": "discord-1",
-          "sec-websocket-protocol": `lootlog.realtime.v1${supportsFeed ? ", lootlog.feed.v1" : ""}`,
+          "sec-websocket-protocol": `lootlog.realtime.v1${supportsFeed ? ", lootlog.feed.v1" : ""}${supportsNotificationVolunteer ? ", lootlog.notification-volunteer.v1" : ""}`,
         },
       });
       const response = await createGatewayFetch(authenticated)(request, {
@@ -89,6 +97,9 @@ describe("gateway HTTP boundary", () => {
         discordId: "discord-1",
       });
       expect(upgradeOptions?.data.supportsFeed).toBe(supportsFeed);
+      expect(upgradeOptions?.data.supportsNotificationVolunteer).toBe(
+        supportsNotificationVolunteer,
+      );
       expect(upgradeOptions?.headers).toEqual({
         "sec-websocket-protocol": "lootlog.realtime.v1",
       });

@@ -1,21 +1,19 @@
-import { hasRolePermissionInLevelRange } from "@lootlog/domain/npc-permissions";
+import {
+  hasRolePermissionInLevelRange,
+  NPC_FEATURE_PERMISSIONS,
+} from "@lootlog/domain/npc-permissions";
 import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
-import type { NpcRoutingTier } from "@lootlog/schema/npc-routing";
+import { Capability, createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { MessageType } from "#src/chat/chat-message";
 import type { ChatStoredMessage } from "#src/chat/chat-stored-message";
+import type { ChatMessageViewer } from "#src/chat/chat-message-viewer";
 
 type NpcData = NonNullable<ChatStoredMessage["npc"]>;
 type Role = {
   permissions: Permission[];
   lvlRangeFrom: number;
   lvlRangeTo: number;
-};
-
-const NPC_TIER_PERMISSIONS: Record<NpcRoutingTier, Permission> = {
-  base: Permission.LOOTLOG_CHAT_READ,
-  titans: Permission.LOOTLOG_CHAT_TITANS_READ,
-  heroes: Permission.LOOTLOG_CHAT_HEROES_READ,
 };
 
 const hasPermission = (roles: Role[], permission: Permission) => {
@@ -30,7 +28,7 @@ const isNpcScopedMessage = (data: ChatStoredMessage) => {
 };
 
 const hasNpcTierPermission = (npc: NpcData, roles: Role[]) => {
-  const permission = NPC_TIER_PERMISSIONS[getNpcRoutingTier(npc)];
+  const permission = NPC_FEATURE_PERMISSIONS.chat[getNpcRoutingTier(npc)];
 
   return hasRolePermissionInLevelRange(roles, permission, npc.lvl);
 };
@@ -52,3 +50,11 @@ export const canViewChatMessage = (
 
   return true;
 };
+
+export const canViewerReadChatMessage = (
+  viewer: ChatMessageViewer,
+  message: ChatStoredMessage,
+) =>
+  createAccessPolicy({ capabilities: viewer.permissions }).allows(
+    Capability.ADMIN,
+  ) || canViewChatMessage(message, viewer.roles);

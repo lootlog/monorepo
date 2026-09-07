@@ -35,6 +35,33 @@ describe("useBufferedSocketIngress", () => {
     cancelPayload.mockReset();
   });
 
+  it("discards notifications buffered before a permission change", async () => {
+    const onProcessBatch = vi.fn();
+    renderHook(() =>
+      useBufferedSocketIngress({
+        socket: socket as never,
+        connected: true,
+        accountId: "account-1",
+        isReady: true,
+        event: GatewayEvent.NOTIFICATION,
+        onProcessBatch,
+      }),
+    );
+    emit(GatewayEvent.NOTIFICATION, { notificationId: "hidden-titan" });
+    emit(GatewayEvent.PERMISSIONS_UPDATED, {});
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(onProcessBatch).not.toHaveBeenCalled();
+    emit(GatewayEvent.NOTIFICATION, { notificationId: "allowed" });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(onProcessBatch).toHaveBeenCalledWith([
+      { notificationId: "allowed" },
+    ]);
+  });
+
   it("queues payloads until readiness and flushes them afterwards", () => {
     const { rerender } = renderHook(
       ({ isReady }) =>

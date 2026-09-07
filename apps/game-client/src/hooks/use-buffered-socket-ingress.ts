@@ -1,4 +1,4 @@
-import type { GatewayEvent } from "@/config/gateway";
+import { GatewayEvent } from "@/config/gateway";
 import type { AppSocket } from "@/lib/socket";
 import { useEffect, useRef } from "react";
 
@@ -117,6 +117,19 @@ export const useBufferedSocketIngress = <TPayload, TCancelPayload = never>({
 
     previousAccountIdRef.current = accountId ?? null;
   }, [accountId]);
+
+  useEffect(() => {
+    const handlePermissionsUpdated = () => {
+      pendingItemsRef.current = [];
+      pendingCancelIdsRef.current.clear();
+    };
+    socket?.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
+    socket?.on(GatewayEvent.DISCONNECT, handlePermissionsUpdated);
+    return () => {
+      socket?.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
+      socket?.off(GatewayEvent.DISCONNECT, handlePermissionsUpdated);
+    };
+  }, [socket]);
 
   useEffect(() => {
     if (!socket || !connected) {
