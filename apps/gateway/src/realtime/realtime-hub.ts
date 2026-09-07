@@ -57,6 +57,9 @@ export const getScopeKey = (scope: Scope): string =>
     scope.mapId?.toString() ?? "",
   ].join("|");
 
+const getScopeAudienceKey = (scope: Scope): string =>
+  JSON.stringify([scope.topic, scope.organizationId]);
+
 const scopeMatches = (subscription: Scope, published: Scope): boolean => {
   if (subscription.topic !== published.topic) return false;
   for (const field of [
@@ -74,6 +77,7 @@ const scopeMatches = (subscription: Scope, published: Scope): boolean => {
 export class RealtimeHub {
   private readonly logger = new Logger(RealtimeHub.name);
   private readonly sockets = new Map<string, GatewaySocket>();
+  private readonly audiences = new Map<string, Set<GatewaySocket>>();
   private readonly seenEventIds = new Set<string>();
   private readonly seenEventOrder: string[] = [];
   private readonly permissionRebalanceListeners = new Set<
@@ -96,7 +100,14 @@ export class RealtimeHub {
   }
 
   register(socket: GatewaySocket): void {
+    const previous = this.sockets.get(socket.data.connectionId);
+    if (previous) {
+      for (const key of this.audienceKeys(previous.data))
+        this.removeAudience(key, previous);
+    }
     this.sockets.set(socket.data.connectionId, socket);
+    for (const key of this.audienceKeys(socket.data))
+      this.addAudience(key, socket);
     this.runBackground(
       "registry.register",
       Effect.tryPromise({
@@ -107,7 +118,10 @@ export class RealtimeHub {
   }
 
   unregister(socket: GatewaySocket): void {
+    if (this.sockets.get(socket.data.connectionId) !== socket) return;
     this.sockets.delete(socket.data.connectionId);
+    for (const key of this.audienceKeys(socket.data))
+      this.removeAudience(key, socket);
     this.runBackground(
       "registry.unregister",
       Effect.tryPromise({
@@ -127,17 +141,35 @@ export class RealtimeHub {
   }
 
   subscribe(socket: GatewaySocket, scope: Scope): void {
-    socket.data.subscriptions.set(getScopeKey(scope), scope);
+    const key = getScopeKey(scope);
+    const previous = socket.data.subscriptions.get(key);
+    if (previous) this.unsubscribe(socket, previous);
+    socket.data.subscriptions.set(key, scope);
+    if (this.sockets.get(socket.data.connectionId) === socket)
+      this.addAudience(getScopeAudienceKey(scope), socket);
   }
 
   unsubscribe(socket: GatewaySocket, scope: Scope): void {
-    socket.data.subscriptions.delete(getScopeKey(scope));
+    const key = getScopeKey(scope);
+    const removed = socket.data.subscriptions.get(key);
+    if (!removed) return;
+    socket.data.subscriptions.delete(key);
+    for (const subscription of socket.data.subscriptions.values()) {
+      if (
+        subscription.topic === removed.topic &&
+        subscription.organizationId === removed.organizationId
+      )
+        return;
+    }
+    this.removeAudience(getScopeAudienceKey(removed), socket);
   }
 
   replaceSubscriptions(
     socket: GatewaySocket,
     scopes: ReadonlyArray<Scope>,
   ): void {
+    for (const scope of socket.data.subscriptions.values())
+      this.removeAudience(getScopeAudienceKey(scope), socket);
     socket.data.subscriptions.clear();
     for (const scope of scopes) this.subscribe(socket, scope);
   }
@@ -308,9 +340,7 @@ export class RealtimeHub {
   }
 
   getLocalSocketsForUser(userId: string): ReadonlyArray<GatewaySocket> {
-    return [...this.sockets.values()].filter(
-      (socket) => socket.data.userId === userId,
-    );
+    return [...(this.audiences.get(JSON.stringify(["user", userId])) ?? [])];
   }
 
   private connectionKey(connectionId: string): string {
@@ -388,7 +418,7 @@ export class RealtimeHub {
     let binaryFrame: Uint8Array | undefined;
     const chatFrames = new Map<string, string | Uint8Array>();
 
-    for (const socket of this.sockets.values()) {
+    for (const socket of this.candidates(message)) {
       if (!this.matchesRecipient(socket, message)) continue;
       if (!this.matchesAudience(socket, message)) continue;
       if (!this.matchesPresenceAudience(socket, message)) continue;
@@ -428,24 +458,66 @@ export class RealtimeHub {
     socket: GatewaySocket,
     message: FederatedRealtimeMessage,
   ): boolean {
-    const matchesUser =
-      message.userId !== undefined && socket.data.userId === message.userId;
-    const matchesDiscord =
+    if (message.userId !== undefined && socket.data.userId === message.userId)
+      return true;
+    if (
       message.discordId !== undefined &&
-      socket.data.discordId === message.discordId;
-    const matchesScope =
-      message.scope !== undefined &&
-      [...socket.data.subscriptions.values()].some((subscription) =>
-        scopeMatches(subscription, message.scope as Scope),
-      );
-    const matchesAnyScope =
-      message.scopes !== undefined &&
-      message.scopes.some((published) =>
-        [...socket.data.subscriptions.values()].some((subscription) =>
-          scopeMatches(subscription, published),
-        ),
-      );
-    return matchesUser || matchesDiscord || matchesScope || matchesAnyScope;
+      socket.data.discordId === message.discordId
+    )
+      return true;
+    for (const subscription of socket.data.subscriptions.values()) {
+      if (message.scope && scopeMatches(subscription, message.scope))
+        return true;
+      if (message.scopes?.some((scope) => scopeMatches(subscription, scope)))
+        return true;
+    }
+    return false;
+  }
+
+  private audienceKeys(session: SessionData): string[] {
+    return [
+      JSON.stringify(["user", session.userId]),
+      JSON.stringify(["discord", session.discordId]),
+      ...Array.from(session.subscriptions.values(), getScopeAudienceKey),
+    ];
+  }
+
+  private addAudience(key: string, socket: GatewaySocket): void {
+    let audience = this.audiences.get(key);
+    if (!audience) {
+      audience = new Set();
+      this.audiences.set(key, audience);
+    }
+    audience.add(socket);
+  }
+
+  private removeAudience(key: string, socket: GatewaySocket): void {
+    const audience = this.audiences.get(key);
+    if (!audience) return;
+    audience.delete(socket);
+    if (audience.size === 0) this.audiences.delete(key);
+  }
+
+  private candidates(message: FederatedRealtimeMessage): Set<GatewaySocket> {
+    const keys: string[] = [];
+    if (message.userId !== undefined)
+      keys.push(JSON.stringify(["user", message.userId]));
+    if (message.discordId !== undefined)
+      keys.push(JSON.stringify(["discord", message.discordId]));
+    const scopes = message.scope ? [message.scope] : [];
+    if (message.scopes) scopes.push(...message.scopes);
+    for (const scope of scopes) {
+      keys.push(getScopeAudienceKey(scope));
+      if (scope.organizationId !== undefined)
+        keys.push(getScopeAudienceKey({ topic: scope.topic }));
+    }
+    // ponytail: map/event filters scan one topic and Organization; index those dimensions if a single Organization dominates fanout.
+    const candidates = new Set<GatewaySocket>();
+    for (const key of keys) {
+      for (const socket of this.audiences.get(key) ?? [])
+        candidates.add(socket);
+    }
+    return candidates;
   }
 
   private matchesRecipient(
