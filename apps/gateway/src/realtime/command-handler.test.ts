@@ -233,81 +233,86 @@ describe("CommandHandler session lifecycle", () => {
     expect(activity.calls.map(({ type }) => type)).toEqual(["CONNECT_EVENT"]);
   });
 
-  test("offline rebalances invalidate cached grants without fetching and still notify a remote instance", async () => {
-    let cached: string | null = JSON.stringify({
-      guilds: [guild()],
-      cachedAt: Date.now(),
-    });
-    let requests = 0;
-    let invalidations = 0;
-    const store = makeGuildStore(
-      { apiUrl: "http://api.local" } as GatewayConfiguration,
-      {
-        command: {
-          get: async () => cached,
-          set: async (_key: string, value: string) => {
-            cached = value;
-            return "OK";
-          },
-          del: async () => {
-            invalidations++;
-            cached = null;
-            return 1;
-          },
-        },
-      } as unknown as RedisGatewayStore,
-      {
-        get: () =>
-          Effect.sync(() => {
-            requests++;
-            return {
-              status: 200,
-              arrayBuffer: Effect.succeed(
-                new TextEncoder().encode("[]").buffer,
-              ),
-            };
-          }),
-      } as unknown as HttpClientValue,
-    );
-    const local = setup(store);
-    const remote = setup(store);
-    const target = makeSocket();
-    target.socket.data.joined = true;
-    target.socket.data.guilds = [guild()];
-    remote.hub.sockets.push(target.socket);
-    let published = 0;
-    local.hub.publishPermissionRebalance = () =>
-      Effect.gen(function* () {
-        published++;
-        expect(requests).toBe(0);
-        expect(cached).toBeNull();
-        yield* remote.handler.rebalanceUser("discord-1", "user-1");
+  test.each(["local", "remote"])(
+    "rebalances with the active socket on %s preserve refreshed shared permissions for reconnects",
+    async (activeInstance) => {
+      let cached: string | null = JSON.stringify({
+        guilds: [guild()],
+        cachedAt: Date.now(),
       });
-    await Effect.runPromise(
-      local.handler.rebalanceAcrossInstances("discord-1", "user-1"),
-    );
-    expect(published).toBe(1);
-    expect(invalidations).toBe(2);
-    expect(requests).toBe(1);
-    expect(target.closes).toEqual([1008]);
-    expect(target.socket.data.guilds).toEqual([]);
+      let requests = 0;
+      let invalidations = 0;
+      const store = makeGuildStore(
+        { apiUrl: "http://api.local" } as GatewayConfiguration,
+        {
+          command: {
+            get: async () => cached,
+            set: async (_key: string, value: string) => {
+              cached = value;
+              return "OK";
+            },
+            del: async () => {
+              invalidations++;
+              cached = null;
+              return 1;
+            },
+          },
+        } as unknown as RedisGatewayStore,
+        {
+          get: () =>
+            Effect.sync(() => {
+              requests++;
+              return {
+                status: 200,
+                arrayBuffer: Effect.succeed(
+                  new TextEncoder().encode("[]").buffer,
+                ),
+              };
+            }),
+        } as unknown as HttpClientValue,
+      );
+      const local = setup(store);
+      const remote = setup(store);
+      const target = makeSocket();
+      target.socket.data.joined = true;
+      target.socket.data.guilds = [guild()];
+      const active = activeInstance === "local" ? local : remote;
+      active.hub.sockets.push(target.socket);
+      let published = 0;
+      local.hub.publishPermissionRebalance = () =>
+        Effect.gen(function* () {
+          published++;
+          expect(requests).toBe(activeInstance === "local" ? 1 : 0);
+          yield* remote.handler.rebalanceUser("discord-1", "user-1");
+        });
+      await Effect.runPromise(
+        local.handler.rebalanceAcrossInstances("discord-1", "user-1"),
+      );
+      expect(published).toBe(1);
+      expect(invalidations).toBe(1);
+      expect(cached).not.toBeNull();
+      expect(requests).toBe(1);
+      expect(target.closes).toEqual([1008]);
+      expect(target.socket.data.guilds).toEqual([]);
 
-    // A later join must not recover the revoked grants from Redis.
-    const reconnect = makeSocket();
-    await Effect.runPromise(
-      local.handler.handle(
-        reconnect.socket,
-        JSON.stringify({
-          v: 1,
-          type: "session.join",
-          requestId: "reconnect",
-          data: {},
-        }),
-      ),
-    );
-    expect(reconnect.socket.data.joined).toBe(false);
-    expect(reconnect.socket.data.guilds).toEqual([]);
-  });
+      // A later join must not recover the revoked grants from Redis.
+      const reconnect = makeSocket();
+      await Effect.runPromise(
+        local.handler.handle(
+          reconnect.socket,
+          JSON.stringify({
+            v: 1,
+            type: "session.join",
+            requestId: "reconnect",
+            data: {},
+          }),
+        ),
+      );
+      expect(reconnect.socket.data.joined).toBe(false);
+      expect(reconnect.socket.data.guilds).toEqual([]);
+      expect(requests).toBe(1);
+    },
+  );
 
   test("does not fetch permissions for a different Discord identity on the same user", async () => {
     const { handler, guilds, hub } = setup();
