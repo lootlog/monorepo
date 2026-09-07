@@ -3,7 +3,7 @@ import { Effect, Metric, Schedule, Schema } from "effect";
 import type { RedisGatewayCommands } from "#src/platform/redis-store";
 import type { RealtimeHub } from "#src/realtime/realtime-hub";
 
-const SNAPSHOTS = "realtime:metrics:instances:v1";
+const SNAPSHOTS = "realtime:metrics:instances:v2";
 const SAMPLE = `
 local time = redis.call('TIME')
 local now = tonumber(time[1]) * 1000 + math.floor(tonumber(time[2]) / 1000)
@@ -41,6 +41,7 @@ const gameSessions = Metric.gauge("lootlog_gateway_cluster_game_sessions", {
   attributes: { unit: "" },
 });
 const uniquePlayers = Metric.gauge("lootlog_gateway_cluster_unique_players", {
+  description: "Unique Discord accounts with active game sessions",
   attributes: { unit: "" },
 });
 
@@ -65,14 +66,7 @@ export class GatewayMetrics {
       )
         continue;
       sessions += 1;
-      if (presence.character) {
-        players.add(
-          JSON.stringify([
-            presence.character.world,
-            presence.character.characterId,
-          ]),
-        );
-      }
+      players.add(data.discordId);
     }
     // ponytail: one snapshot per replica is scanned every 10s; shard aggregation if replica/player counts make this Redis script costly.
     const counts = yield* Effect.tryPromise(() =>

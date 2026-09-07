@@ -145,7 +145,7 @@ describe("realtime Dragonfly integration", () => {
     await dragonfly?.stop();
   });
 
-  test("gateway metrics deduplicate players across replicas and expire abandoned replicas", async () => {
+  test("gateway metrics deduplicate Discord accounts across characters and replicas and expire abandoned replicas", async () => {
     const runtime = ManagedRuntime.make(
       BunRedis.layer({ url: `redis://${dragonfly.getHost()}:${redisPort}` }),
     );
@@ -166,7 +166,13 @@ describe("realtime Dragonfly integration", () => {
       let now = Date.now();
       const first = makeSocket("metrics-first").socket;
       const duplicate = makeSocket("metrics-duplicate").socket;
-      duplicate.data.presence = first.data.presence;
+      Object.assign(duplicate, {
+        data: {
+          ...duplicate.data,
+          discordId: first.data.discordId,
+          userId: first.data.userId,
+        },
+      });
       const second = makeSocket("metrics-second").socket;
       const web = makeSocket("metrics-web").socket;
       const webSession = { ...web.data, platform: "web-app" as const };
@@ -201,7 +207,7 @@ describe("realtime Dragonfly integration", () => {
         return 1
       `,
         1,
-        "realtime:metrics:instances:v1",
+        "realtime:metrics:instances:v2",
         secondHub.instanceId,
       );
       expect(await Effect.runPromise(replicaA.sample())).toEqual({
@@ -225,9 +231,9 @@ describe("realtime Dragonfly integration", () => {
         { attributes: { unit: "s" } },
       );
       const lastSuccess = Effect.runSync(Metric.value(observed)).value;
-      await store.command.del("realtime:metrics:instances:v1");
+      await store.command.del("realtime:metrics:instances:v2");
       await store.command.set(
-        "realtime:metrics:instances:v1",
+        "realtime:metrics:instances:v2",
         "invalid Redis type",
       );
       now += 10_000;
