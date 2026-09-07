@@ -1,4 +1,3 @@
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { SectionCard } from "@/components/common/section-card/section-card";
 
 import { Skeleton } from "@lootlog/ui/components/skeleton";
@@ -8,39 +7,19 @@ const filterButtons = Array.from({ length: 5 });
 
 export const MembersSettingsSkeleton = () => {
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden bg-background px-3">
-      <SectionCard className="shrink-0">
-        <SectionCardContent className="flex flex-col gap-3">
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-            <div className="flex min-w-0 flex-1 items-center gap-3">
-              <Skeleton className="size-10 shrink-0 rounded-xl" />
-              <div className="min-w-0 flex-1 space-y-2">
-                <Skeleton className="h-5 w-32" />
-                <Skeleton className="h-3 w-full max-w-sm" />
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <Skeleton className="h-3 w-64" />
-                  <Skeleton className="h-5 w-24 rounded-full" />
-                </div>
-              </div>
-            </div>
-            <div className="flex w-full min-w-0 items-center xl:w-auto xl:justify-end">
-              <Skeleton className="h-9 w-44 rounded-md" />
-            </div>
-          </div>
-        </SectionCardContent>
-      </SectionCard>
-
+    <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden bg-background px-3 pb-3">
       <SectionCard className="min-h-0 flex-1 overflow-hidden">
-        <div className="flex shrink-0 flex-col gap-3 border-b border-border px-4 py-3 xl:flex-row xl:items-center xl:justify-between">
+        <div className="flex shrink-0 flex-col gap-3 border-b border-border/70 bg-background/30 p-2 xl:flex-row xl:items-center xl:justify-between">
           <Skeleton className="h-9 w-full rounded-md xl:max-w-md 2xl:max-w-xl" />
           <div className="flex flex-wrap items-center gap-1.5 xl:justify-end">
             {filterButtons.map((_, index) => (
               <Skeleton
                 key={index}
-                className="h-8 w-20 rounded-md first:w-16"
+                className="h-9 w-20 rounded-md first:w-16"
               />
             ))}
           </div>
+          <Skeleton className="h-9 w-40 shrink-0" />
         </div>
 
         <div className="min-h-0 flex-1 overflow-hidden">
@@ -82,6 +61,9 @@ export const MembersSettingsSkeleton = () => {
               ))}
             </div>
           </div>
+        </div>
+        <div className="shrink-0 border-t border-border/70 px-3 py-2">
+          <Skeleton className="h-8 w-72 max-w-full" />
         </div>
       </SectionCard>
     </div>

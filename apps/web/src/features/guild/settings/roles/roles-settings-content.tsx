@@ -1,7 +1,7 @@
+import { TableFilterToolbar } from "@/components/ui/table-filter-toolbar";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { SearchInput } from "@/components/ui/search-input";
-import { RolesSettingsHeader } from "@/features/guild/settings/roles/roles-settings-header";
 import { RolesTable } from "@/features/guild/settings/roles/roles-table";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useRolesControllerGetGuildRoles } from "@lootlog/client/main";
@@ -45,19 +45,19 @@ export const RolesSettingsContent = () => {
   const hasActiveFilters = normalizedSearchValue !== "";
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-x-hidden overflow-y-auto bg-background px-3 gap-3">
-      <RolesSettingsHeader />
-      <SectionCard className="min-h-48 flex-1">
-        <SectionCardContent className="flex flex-col gap-3">
-          <div className="flex shrink-0 flex-col gap-3 border-b border-border px-4 py-3 xl:flex-row xl:items-center xl:justify-between">
+    <div className="flex h-full min-h-0 flex-col overflow-x-hidden overflow-y-auto bg-background px-3 pb-3 gap-3">
+      <h1 className="sr-only">{t("settings.roles.title")}</h1>
+      <SectionCard className="max-h-full shrink-0">
+        <SectionCardContent className="flex min-h-0 flex-col gap-0 p-0">
+          <TableFilterToolbar>
             <SearchInput
               value={searchValue}
               onChange={(event) => setSearchValue(event.target.value)}
               placeholder={t("settings.roles.searchPlaceholder")}
               className="h-9"
-              wrapperClassName="w-full xl:max-w-md 2xl:max-w-xl"
+              wrapperClassName="w-full min-w-0 sm:min-w-[200px] sm:flex-1"
             />
-          </div>
+          </TableFilterToolbar>
 
           <div className="flex min-h-0 flex-1 overflow-hidden">
             <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">

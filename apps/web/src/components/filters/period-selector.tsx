@@ -1,12 +1,6 @@
 import { cn } from "cn";
 import { Calendar } from "lucide-react";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@lootlog/ui/components/select";
+import { FilterPopover } from "@lootlog/ui/components/filter-popover";
 import type { Period } from "@/features/user/battle-panel/battle-panel-search";
 import { useTranslation } from "react-i18next";
 
@@ -48,31 +42,16 @@ export function PeriodSelector({
   );
 
   return (
-    <Select
-      items={availablePeriods}
+    <FilterPopover
+      icon={Calendar}
+      options={availablePeriods}
       value={value}
-      onValueChange={(period) => {
-        if (period !== null) onValueChange(period);
-      }}
-    >
-      <SelectTrigger
-        aria-label={placeholder ?? t("common.filterLabels.period")}
-        className={cn("h-10", width, className)}
-      >
-        <Calendar className="size-4" />
-        <SelectValue className="min-w-0 flex-1 truncate text-left" />
-      </SelectTrigger>
-      <SelectContent
-        align="start"
-        alignItemWithTrigger={false}
-        className={width}
-      >
-        {availablePeriods.map((period) => (
-          <SelectItem key={period.value} value={period.value}>
-            {period.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+      onValueChange={onValueChange}
+      placeholder={placeholder ?? t("common.filterLabels.period")}
+      emptyMessage={t("common.noResults")}
+      width={width}
+      triggerClassName={cn("h-10", className)}
+      showSearch={false}
+    />
   );
 }

@@ -19,7 +19,6 @@ export function ViewModeToggle({
 }: ViewModeToggleProps) {
   return (
     <AnimatedToggleGroup
-      compact
       value={value}
       onValueChange={onChange}
       label={`${listLabel} / ${gridLabel}`}

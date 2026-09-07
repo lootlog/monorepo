@@ -1,7 +1,6 @@
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { PageHeader } from "@/components/common/page-header";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { hasConfirmedGuildDiscordPermissions } from "@/features/guild/settings/utils/has-confirmed-guild-discord-permissions";
 import { buildDiscordBotInstallUrl } from "@/utils/build-discord-bot-install-url";
@@ -11,7 +10,7 @@ import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { format } from "date-fns";
-import { Info, RefreshCcw, ShieldAlert, ShieldCheck } from "lucide-react";
+import { RefreshCcw, ShieldAlert, ShieldCheck } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -100,27 +99,8 @@ export const InfoSettings = () => {
   return (
     <div className="flex flex-col h-full min-h-0 bg-background">
       <ScrollArea className="flex-1 min-h-0">
-        <div className="px-3 py-3 flex flex-col gap-4">
-          <PageHeader
-            title={t("settings.guildInfo.title")}
-            icon={Info}
-            description={t("settings.guildInfo.description")}
-            actions={
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                <Button
-                  size="sm"
-                  onClick={() =>
-                    guildId &&
-                    refreshMutation.mutate({ pathParams: { guildId } })
-                  }
-                  loading={refreshMutation.isPending}
-                  icon={<RefreshCcw className="size-3.5" />}
-                >
-                  {t("settings.guildInfo.refresh")}
-                </Button>
-              </div>
-            }
-          />
+        <div className="px-3 pb-3 flex flex-col gap-4">
+          <h1 className="sr-only">{t("settings.guildInfo.title")}</h1>
 
           {isLoading ? (
             <>
@@ -164,7 +144,18 @@ export const InfoSettings = () => {
                   icon={ShieldCheck}
                   description={t("settings.guildInfo.syncStatusDescription")}
                   actions={
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Button
+                        size="sm"
+                        onClick={() =>
+                          guildId &&
+                          refreshMutation.mutate({ pathParams: { guildId } })
+                        }
+                        loading={refreshMutation.isPending}
+                        icon={<RefreshCcw className="size-3.5" />}
+                      >
+                        {t("settings.guildInfo.refresh")}
+                      </Button>
                       <div
                         className={`rounded-xl p-2.5  ${
                           hasRequiredPermissions
