@@ -1,4 +1,5 @@
 {
+  "loadError": "Nie udało się pobrać rezerwacji.",
   "searchPlaceholder": "Szukaj expowiska...",
   "view": {
     "list": "Widok listy",

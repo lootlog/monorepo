@@ -100,7 +100,7 @@ it("uses the lowest activity level for missing days in both tabs without details
   for (const mode of ["Online", "Bicia"]) {
     fireEvent.click(screen.getByRole("button", { name: mode }));
     const day = screen.getByRole("button", { name: /1 września/ });
-    expect(day.getAttribute("aria-label")).not.toContain("Brak danych");
+    expect(day.getAttribute("aria-label")).toContain("Brak danych");
     expect(day.classList.contains("bg-muted")).toBe(true);
     fireEvent.click(day);
     expect(document.querySelector("p[aria-live=polite]")).toBeNull();

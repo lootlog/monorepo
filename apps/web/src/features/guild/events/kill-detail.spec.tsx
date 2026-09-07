@@ -119,8 +119,8 @@ describe("KillDetail states", () => {
   });
 
   it("uses the same compact page padding as the member view", () => {
-    const { container } = render(<KillDetail />);
-    const main = container.querySelector("main");
+    render(<KillDetail />);
+    const main = screen.getByTestId("kill-summary").parentElement;
 
     expect(main?.className).toContain("px-3");
     expect(main?.className).toContain("py-3");
