@@ -1,6 +1,7 @@
 import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { cva, type VariantProps } from "class-variance-authority";
 import type { ReactNode } from "react";
+import { ButtonLoadingContent } from "@lootlog/ui/components/button-loading-content";
 import { Spinner } from "@lootlog/ui/components/spinner";
 
 import { cn } from "cn";
@@ -50,6 +51,7 @@ function Button({
     icon?: ReactNode;
   }) {
   const hasIndicator = loading !== undefined || icon !== undefined;
+  const expandsForSpinner = loading !== undefined && !icon;
   const indicator = (
     <span
       aria-hidden="true"
@@ -62,6 +64,32 @@ function Button({
     </span>
   );
 
+  let content = (
+    <>
+      {hasIndicator && indicator}
+      {children}
+    </>
+  );
+
+  if (size === "icon" && hasIndicator) {
+    content = (
+      <span className="relative inline-grid place-items-center">
+        <span className={cn("inline-flex", loading && "opacity-0")}>
+          {children ?? icon}
+        </span>
+        {loading && (
+          <span aria-hidden="true" className="absolute inline-flex">
+            <Spinner className="size-4 motion-reduce:animate-none" />
+          </span>
+        )}
+      </span>
+    );
+  } else if (expandsForSpinner) {
+    content = (
+      <ButtonLoadingContent loading={loading}>{children}</ButtonLoadingContent>
+    );
+  }
+
   return (
     <ButtonPrimitive
       data-slot="button"
@@ -70,23 +98,7 @@ function Button({
       disabled={disabled || loading}
       aria-busy={loading || props["aria-busy"]}
     >
-      {size === "icon" && hasIndicator ? (
-        <span className="relative inline-grid place-items-center">
-          <span className={cn("inline-flex", loading && "opacity-0")}>
-            {children ?? icon}
-          </span>
-          {loading && (
-            <span aria-hidden="true" className="absolute inline-flex">
-              <Spinner className="size-4 motion-reduce:animate-none" />
-            </span>
-          )}
-        </span>
-      ) : (
-        <>
-          {hasIndicator && indicator}
-          {children}
-        </>
-      )}
+      {content}
     </ButtonPrimitive>
   );
 }

@@ -164,6 +164,7 @@
     "obtainedAt": "Zdobyto {{date}}",
     "mapPlayers": {
       "title": "Gracze na mapie w chwili dropu",
+      "inParty": "W party",
       "titleWithCount": "Gracze na mapie w chwili dropu ({{count}})",
       "unavailable": "Brak danych o graczach na mapie"
     },
