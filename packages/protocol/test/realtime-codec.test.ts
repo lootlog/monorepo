@@ -172,3 +172,59 @@ describe("realtime MessagePack codec", () => {
     expect(PRESENCE_HEARTBEAT_INTERVAL_MS).toBeLessThan(PRESENCE_EXPIRY_MS / 2);
   });
 });
+
+test("realtime policy snapshots and legacy permission events share the v1 codec", () => {
+  const accessPolicy = {
+    version: "canonical-policy-version",
+    organizations: [
+      {
+        organizationId: "organization-1",
+        owner: false,
+        permissions: ["LOOTLOG_TIMERS_READ"],
+        grants: [
+          {
+            permission: "LOOTLOG_TIMERS_READ",
+            ranges: [{ from: 200, to: 500 }],
+          },
+        ],
+      },
+    ],
+  } as const;
+  for (const includePolicy of [false, true]) {
+    const data = {
+      organizationIds: ["organization-1"],
+      subscriptionScopes: [
+        { topic: "organization.timers", organizationId: "organization-1" },
+      ],
+      ...(includePolicy ? { accessPolicy } : {}),
+    } as const;
+    const frames = [
+      {
+        v: 1,
+        type: "session.joined",
+        data: { ...data, connectionId: "connection-1" },
+      },
+      {
+        v: 1,
+        type: "permissions.updated",
+        data: {
+          ...data,
+          ...(includePolicy
+            ? {
+                changes: [
+                  {
+                    organizationId: "organization-1",
+                    areas: ["timers"],
+                    restricted: true,
+                    expanded: false,
+                  },
+                ],
+              }
+            : {}),
+        },
+      },
+    ] satisfies RealtimeFrame[];
+    for (const frame of frames)
+      expect(decodeRealtimeFrame(encodeRealtimeFrame(frame))).toEqual(frame);
+  }
+});

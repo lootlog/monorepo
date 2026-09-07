@@ -1,6 +1,7 @@
 import { GatewayEvent } from "@/config/gateway";
 import { useGameStore } from "@/store/game.store";
-import { getSocket } from "@/lib/socket";
+import { canReadPresence } from "@/lib/online-players-presence";
+import { getSocket, type PermissionsUpdatedPayload } from "@/lib/socket";
 import type {
   AirTagObservationBatch,
   AirTagSubscriptionAck,
@@ -25,6 +26,9 @@ export class AirTagRuntime {
   };
   private currentMapId: number | null = null;
   private currentMapName: string | null = null;
+  private allowedOrganizations: ReadonlySet<string> | undefined;
+  private readonly pendingOrganizations = new Set<string>();
+  private policyRefreshTimer: ReturnType<typeof setTimeout> | null = null;
 
   configure(nextState: AirTagRuntimeState): void {
     const previousState = this.state;
@@ -59,12 +63,23 @@ export class AirTagRuntime {
 
     airTagRenderer.register();
     if (!isPublishing) {
-      airTagReceiveController.clear();
+      if (this.policyRefreshTimer !== null)
+        clearTimeout(this.policyRefreshTimer);
+      this.policyRefreshTimer = null;
       return;
     }
 
     if (!wasPublishing || !previousState.enabled) {
-      this.subscribeCurrentMap(true);
+      const policy = getSocket().getAccessPolicy?.();
+      if (policy) {
+        this.allowedOrganizations = new Set(
+          policy.organizations
+            .filter(canReadPresence)
+            .map((organization) => organization.organizationId),
+        );
+        airTagReceiveController.retainOrganizations(this.allowedOrganizations);
+      }
+      this.subscribeCurrentMap(true, undefined, previousState.enabled);
     }
   }
 
@@ -80,10 +95,49 @@ export class AirTagRuntime {
     }
   }
 
-  handlePermissionsUpdated(): void {
-    airTagReceiveController.clear();
-    if (this.isPublishing(this.state)) {
-      this.subscribeCurrentMap(false);
+  handlePermissionsUpdated(payload?: PermissionsUpdatedPayload): void {
+    if (!payload?.accessPolicy) {
+      this.allowedOrganizations = undefined;
+      airTagReceiveController.retainOrganizations();
+      airTagReceiveController.clear();
+      if (this.isPublishing(this.state)) this.schedulePolicySubscription();
+      return;
+    }
+    const allowed = new Set(
+      payload.accessPolicy.organizations
+        .filter(canReadPresence)
+        .map((organization) => organization.organizationId),
+    );
+    const previous = this.allowedOrganizations;
+    this.allowedOrganizations = allowed;
+    airTagReceiveController.retainOrganizations(allowed);
+    for (const organizationId of this.pendingOrganizations) {
+      if (!allowed.has(organizationId))
+        this.pendingOrganizations.delete(organizationId);
+    }
+    let addedOrganization = false;
+    for (const organizationId of allowed) {
+      const expanded = previous
+        ? !previous.has(organizationId)
+        : payload.changes?.some(
+            (change) =>
+              change.organizationId === organizationId &&
+              change.areas.includes("presence") &&
+              change.expanded,
+          );
+      if (expanded) {
+        addedOrganization = true;
+        this.pendingOrganizations.add(organizationId);
+      }
+    }
+    if (this.pendingOrganizations.size === 0) {
+      if (this.policyRefreshTimer !== null)
+        clearTimeout(this.policyRefreshTimer);
+      this.policyRefreshTimer = null;
+      return;
+    }
+    if (this.isPublishing(this.state) && addedOrganization) {
+      this.schedulePolicySubscription();
     }
   }
 
@@ -92,6 +146,11 @@ export class AirTagRuntime {
   }
 
   shutdown(): void {
+    if (this.policyRefreshTimer !== null) clearTimeout(this.policyRefreshTimer);
+    this.policyRefreshTimer = null;
+    this.pendingOrganizations.clear();
+    this.allowedOrganizations = undefined;
+    airTagReceiveController.retainOrganizations();
     if (this.isPublishing(this.state)) {
       this.emitSubscription({
         requestId: crypto.randomUUID(),
@@ -106,12 +165,24 @@ export class AirTagRuntime {
     airTagRenderer.unregister();
   }
 
+  private schedulePolicySubscription(): void {
+    if (this.policyRefreshTimer !== null) clearTimeout(this.policyRefreshTimer);
+    this.policyRefreshTimer = setTimeout(() => {
+      this.policyRefreshTimer = null;
+      this.subscribeCurrentMap(false, undefined, true);
+    }, 5_000);
+  }
+
   private subscribeCurrentMap(
     updatePresence: boolean,
     mapOverride?: { id: number; name: string },
+    preserveScopes = false,
   ): void {
     const map = mapOverride ?? this.getCurrentMap();
     if (!map || !this.isPublishing(this.state)) return;
+    if (this.policyRefreshTimer !== null) clearTimeout(this.policyRefreshTimer);
+    this.policyRefreshTimer = null;
+    this.pendingOrganizations.clear();
 
     this.currentMapId = map.id;
     this.currentMapName = map.name;
@@ -128,6 +199,7 @@ export class AirTagRuntime {
       requestId,
       useGameStore.getState().game?.world ?? "unknown",
       map.id,
+      preserveScopes,
     );
     this.emitSubscription(
       {

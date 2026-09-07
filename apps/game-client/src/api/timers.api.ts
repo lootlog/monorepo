@@ -224,8 +224,11 @@ const normalizeTimer = (timer: TimerResponseDto): Timer => {
 
 export const normalizeTimerResponse = normalizeTimer;
 
-export async function fetchTimers(world: string): Promise<Timer[]> {
-  const timers = await timersControllerGetAllTimers({ world });
+export async function fetchTimers(
+  world: string,
+  signal?: AbortSignal,
+): Promise<Timer[]> {
+  const timers = await timersControllerGetAllTimers({ world }, { signal });
 
   return timers.map(normalizeTimer);
 }

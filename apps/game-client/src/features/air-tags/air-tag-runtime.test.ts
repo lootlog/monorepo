@@ -40,6 +40,7 @@ vi.mock("./air-tag-receive-controller", () => ({
     beginSubscription: mocks.beginSubscription,
     clear: mocks.clearReceived,
     handleUpdate: mocks.handleUpdate,
+    retainOrganizations: vi.fn(),
   },
 }));
 
@@ -94,6 +95,7 @@ describe("AirTagRuntime", () => {
       "00000000-0000-4000-8000-000000000001",
       "fobos",
       12,
+      false,
     );
     expect(mocks.emit).toHaveBeenNthCalledWith(
       2,
@@ -122,6 +124,7 @@ describe("AirTagRuntime", () => {
       "00000000-0000-4000-8000-000000000002",
       "fobos",
       13,
+      false,
     );
     expect(mocks.emit).toHaveBeenCalledWith(
       GatewayEvent.AIR_TAG_SUBSCRIPTION,

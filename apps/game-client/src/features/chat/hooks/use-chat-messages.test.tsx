@@ -14,6 +14,9 @@ const mocks = vi.hoisted(() => ({
     joinedGuilds: ["guild-1"] as string[],
   },
   queryClient: {
+    getQueryCache: () => ({ findAll: () => [] }),
+    cancelQueries: vi.fn(),
+    setQueriesData: vi.fn(),
     fetchQuery: vi.fn().mockResolvedValue({
       name: "Current member",
       roles: [],
@@ -278,6 +281,76 @@ describe("useChatMessagesListener", () => {
       await Promise.resolve();
     });
     expect(mocks.presentNotifications).not.toHaveBeenCalled();
+  });
+
+  it("restricts pending messages and asynchronous mentions only in the affected organization", async () => {
+    mocks.socketState.joinedGuilds = ["guild-1", "guild-2"];
+    let finish: () => void = () => {};
+    mocks.queryClient.fetchQuery.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = () => resolve({ name: "Current member", roles: [] });
+        }),
+    );
+    renderHook(() => useChatMessagesListener());
+    const handler = mocks.handlers.get(GatewayEvent.CHAT_MESSAGE);
+    handler?.({
+      ...createMessage("unaffected", "guild-2"),
+      message: "Hej @Current Hero",
+    } as never);
+    handler?.(createMessage("revoked", "guild-1") as never);
+    mocks.handlers.get(GatewayEvent.PERMISSIONS_UPDATED)?.({
+      accessPolicy: { version: "selective-restriction", organizations: [] },
+      changes: [
+        {
+          organizationId: "guild-1",
+          areas: ["chat"],
+          restricted: true,
+          expanded: false,
+        },
+      ],
+    } as never);
+    act(() => flushAnimationFrame());
+    expect(mocks.queryClient.setQueryData).toHaveBeenCalledOnce();
+    expect(mocks.queryClient.setQueryData.mock.calls[0]?.[0]).toEqual([
+      "/guilds/guild-2/chat-messages",
+    ]);
+    await act(async () => {
+      finish();
+      await Promise.resolve();
+    });
+    expect(mocks.presentNotifications).toHaveBeenCalledOnce();
+  });
+
+  it("preserves the NPC tier and level on a mention so later revocation can hide it", async () => {
+    renderHook(() => useChatMessagesListener());
+    mocks.handlers.get(GatewayEvent.CHAT_MESSAGE)?.({
+      ...createMessage("titan-mention"),
+      type: "NPC",
+      message: "Hej @Current Hero",
+      npc: { type: 3, wt: 100, prof: "w", lvl: 300 },
+    } as never);
+    await waitFor(() =>
+      expect(mocks.presentNotifications).toHaveBeenCalledOnce(),
+    );
+    expect(
+      mocks.presentNotifications.mock.calls[0]?.[0][0].notification.sourceNpc,
+    ).toEqual({ type: "TITAN", lvl: 300 });
+  });
+
+  it("marks a plain mention as a verified non-NPC source", async () => {
+    renderHook(() => useChatMessagesListener());
+    mocks.handlers.get(GatewayEvent.CHAT_MESSAGE)?.({
+      ...createMessage("plain-mention"),
+      type: "NORMAL",
+      message: "Hej @Current Hero",
+    } as never);
+    await waitFor(() =>
+      expect(mocks.presentNotifications).toHaveBeenCalledOnce(),
+    );
+    expect(
+      mocks.presentNotifications.mock.calls[0]?.[0][0].notification.sourceNpc,
+    ).toBeNull();
   });
 
   it("presents a matching chat mention through the notification pipeline", async () => {

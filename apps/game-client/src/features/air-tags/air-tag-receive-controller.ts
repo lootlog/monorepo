@@ -39,9 +39,21 @@ export class AirTagReceiveController {
   private currentRequestId: string | null = null;
   private currentWorld: string | null = null;
   private currentMapId: number | null = null;
+  private allowedOrganizations: ReadonlySet<string> | undefined;
 
-  beginSubscription(requestId: string, world: string, mapId: number): void {
-    this.clear();
+  beginSubscription(
+    requestId: string,
+    world: string,
+    mapId: number,
+    preserveScopes = false,
+  ): void {
+    if (
+      !preserveScopes ||
+      this.currentWorld !== world ||
+      this.currentMapId !== mapId
+    )
+      this.clear();
+    this.queuedUpdates = [];
     this.currentRequestId = requestId;
     this.currentWorld = world;
     this.currentMapId = mapId;
@@ -136,6 +148,21 @@ export class AirTagReceiveController {
     return [...targets.values()];
   }
 
+  retainOrganizations(organizationIds?: ReadonlySet<string>): void {
+    this.allowedOrganizations = organizationIds;
+    if (!organizationIds) return;
+    let changed = false;
+    for (const [key, scope] of this.scopes) {
+      if (organizationIds.has(scope.guildId)) continue;
+      this.scopes.delete(key);
+      changed = true;
+    }
+    this.queuedUpdates = this.queuedUpdates.filter((update) =>
+      organizationIds.has(update.guildId),
+    );
+    if (changed) this.notifyChange();
+  }
+
   clear(): void {
     this.scopes.clear();
     this.queuedUpdates = [];
@@ -208,9 +235,16 @@ export class AirTagReceiveController {
     return isAirTagScopeSnapshot(value) && this.isCurrentMap(value);
   }
 
-  private isCurrentMap(value: { world: string; mapId: number }): boolean {
+  private isCurrentMap(value: {
+    world: string;
+    mapId: number;
+    guildId: string;
+  }): boolean {
     return (
-      value.world === this.currentWorld && value.mapId === this.currentMapId
+      (!this.allowedOrganizations ||
+        this.allowedOrganizations.has(value.guildId)) &&
+      value.world === this.currentWorld &&
+      value.mapId === this.currentMapId
     );
   }
 

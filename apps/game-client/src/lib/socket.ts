@@ -15,11 +15,21 @@ import {
 } from "@/lib/margonem-account-proof";
 import { getGameClientPlatform } from "@/lib/game-client-platform";
 
+import {
+  createAccessPolicySnapshot,
+  diffAccessPolicies,
+  isAccessPolicySnapshot,
+  type AccessPolicySnapshot,
+  type AccessPolicyChange,
+} from "@lootlog/protocol/realtime/access-policy";
+
 type Listener = (...arguments_: never[]) => void;
 
 export type PermissionsUpdatedPayload = {
   guilds?: { guild: { id: string } }[];
   featureRooms?: string[];
+  accessPolicy?: AccessPolicySnapshot;
+  changes?: readonly AccessPolicyChange[];
 };
 
 export interface GameSessionJoinData {
@@ -40,6 +50,7 @@ export interface GameSessionJoinData {
 interface JoinResult {
   readonly connectionId: string;
   readonly organizationIds: string[];
+  readonly accessPolicy?: AccessPolicySnapshot;
 }
 
 const isJoinResult = (value: unknown): value is JoinResult =>
@@ -50,7 +61,10 @@ const isJoinResult = (value: unknown): value is JoinResult =>
     typeof value.connectionId === "string" &&
     "organizationIds" in value &&
     Array.isArray(value.organizationIds) &&
-    value.organizationIds.every((id) => typeof id === "string"),
+    value.organizationIds.every((id) => typeof id === "string") &&
+    (!("accessPolicy" in value) ||
+      value.accessPolicy === undefined ||
+      isAccessPolicySnapshot(value.accessPolicy)),
   );
 
 const toLegacyPresence = (guildId: string, presence: BasicPresence) => {
@@ -108,6 +122,7 @@ export class AppSocket {
   private disposed = false;
   private joinedOrganizationIds: string[] = [];
   private lastIsAfk = false;
+  private currentAccessPolicy: AccessPolicySnapshot | undefined;
   private wasConnected = false;
   private lastJoinData: GameSessionJoinData | null = null;
   id: string | undefined;
@@ -133,6 +148,10 @@ export class AppSocket {
 
   get connected(): boolean {
     return this.wasConnected;
+  }
+
+  getAccessPolicy(): AccessPolicySnapshot | undefined {
+    return this.currentAccessPolicy;
   }
 
   connect(): void {
@@ -178,6 +197,9 @@ export class AppSocket {
     data: GameSessionJoinData,
     margonemAccountProof?: MargonemAccountProof,
   ): Promise<JoinResult> {
+    if (this.lastJoinData && this.lastJoinData.accountId !== data.accountId) {
+      this.currentAccessPolicy = undefined;
+    }
     this.lastJoinData = data;
     const response = await this.realtime.join({
       world: data.world,
@@ -197,6 +219,7 @@ export class AppSocket {
       throw new Error("Invalid session.join response");
     this.id = response.connectionId;
     this.joinedOrganizationIds = [...response.organizationIds];
+    if (response.accessPolicy) this.applyAccessPolicy(response.accessPolicy);
     if (margonemAccountProof) {
       this.dispatchJoin(response);
       return response;
@@ -274,27 +297,33 @@ export class AppSocket {
     const game = useGameStore.getState().game;
     if (!game) return;
     // Presence publication opt-out is temporarily disabled; keep stored preferences intact.
-    await this.realtime.request("presence.publish", {
-      organizationIds: this.joinedOrganizationIds,
-      isAfk: this.lastIsAfk,
-      character: {
-        world: game.world,
-        name: game.hero.name,
-        lvl: game.hero.level,
-        icon: game.hero.icon,
-        characterId: game.hero.characterId,
-        accountId: game.hero.accountId,
-        prof: game.hero.profession,
-        clan: game.hero.clan,
-      },
-      location: {
-        mapId: game.map.id,
-        map: game.map.name,
-        x: game.hero.x,
-        y: game.hero.y,
-      },
-      clientObservedAt: Date.now(),
-    });
+    try {
+      await this.realtime.request("presence.publish", {
+        organizationIds: this.joinedOrganizationIds,
+        isAfk: this.lastIsAfk,
+        character: {
+          world: game.world,
+          name: game.hero.name,
+          lvl: game.hero.level,
+          icon: game.hero.icon,
+          characterId: game.hero.characterId,
+          accountId: game.hero.accountId,
+          prof: game.hero.profession,
+          clan: game.hero.clan,
+        },
+        location: {
+          mapId: game.map.id,
+          map: game.map.name,
+          x: game.hero.x,
+          y: game.hero.y,
+        },
+        clientObservedAt: Date.now(),
+      });
+    } catch {
+      // Presence is best effort; the next publication carries the current state.
+      if (import.meta.env.DEV)
+        console.warn("[Gateway] Failed to publish presence");
+    }
   }
 
   private async requestLegacy(
@@ -349,15 +378,28 @@ export class AppSocket {
     if (event.type === "session.joined") {
       this.id = event.data.connectionId;
       this.joinedOrganizationIds = [...event.data.organizationIds];
+      if (event.data.accessPolicy)
+        this.applyAccessPolicy(event.data.accessPolicy);
       return;
     }
     if (event.type === "permissions.updated") {
+      const addedOrganization = event.data.organizationIds.some(
+        (id) => !this.joinedOrganizationIds.includes(id),
+      );
       this.joinedOrganizationIds = [...event.data.organizationIds];
-      this.listeners.emit(GatewayEvent.PERMISSIONS_UPDATED, {
-        guilds: event.data.organizationIds.map((id) => ({ guild: { id } })),
-        featureRooms: event.data.subscriptionScopes.map((scope) => scope.topic),
-      });
-      void this.publishPresence();
+      if (event.data.accessPolicy) {
+        this.applyAccessPolicy(event.data.accessPolicy);
+        if (addedOrganization) void this.publishPresence();
+      } else {
+        this.currentAccessPolicy = undefined;
+        this.listeners.emit(GatewayEvent.PERMISSIONS_UPDATED, {
+          guilds: event.data.organizationIds.map((id) => ({ guild: { id } })),
+          featureRooms: event.data.subscriptionScopes.map(
+            (scope) => scope.topic,
+          ),
+        });
+        void this.publishPresence();
+      }
       return;
     }
     if (event.type === "presence.snapshot") {
@@ -397,7 +439,30 @@ export class AppSocket {
     }
   }
 
+  private applyAccessPolicy(policy: AccessPolicySnapshot): void {
+    const previous = this.currentAccessPolicy;
+    if (previous?.version === policy.version) return;
+    const changes = diffAccessPolicies(
+      previous ?? createAccessPolicySnapshot([], ""),
+      policy,
+    );
+    this.currentAccessPolicy = policy;
+    this.listeners.emit(GatewayEvent.PERMISSIONS_UPDATED, {
+      guilds: policy.organizations.map(({ organizationId }) => ({
+        guild: { id: organizationId },
+      })),
+      accessPolicy: policy,
+      changes,
+    } satisfies PermissionsUpdatedPayload);
+  }
+
   private dispatchJoin(result: JoinResult): void {
+    if (!result.accessPolicy) {
+      this.currentAccessPolicy = undefined;
+      this.listeners.emit(GatewayEvent.PERMISSIONS_UPDATED, {
+        guilds: result.organizationIds.map((id) => ({ guild: { id } })),
+      } satisfies PermissionsUpdatedPayload);
+    }
     this.listeners.emit(GatewayEvent.JOIN, {
       status: "success",
       guildsCount: result.organizationIds.length,

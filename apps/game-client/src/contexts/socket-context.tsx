@@ -1,3 +1,12 @@
+import {
+  applyChatAccessPolicy,
+  applyLegacyChatAccessChange,
+  retainChatAccessPolicy,
+} from "@/features/chat/chat-access-policy";
+import { useNotificationsStore } from "@/store/notifications.store";
+import { reconcileNotificationAccess } from "@/features/notifications/notification-access-policy";
+import { createGameAccessCache } from "@/lib/game-access-cache";
+import { queryClient } from "@/lib/query-client";
 import { GatewayEvent } from "@/config/gateway";
 import {
   type AppSocket,
@@ -85,6 +94,8 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   }, [gameInitialized, connected, socket]);
 
   useEffect(() => {
+    const accessCache = createGameAccessCache(queryClient);
+    const releaseChatPolicy = retainChatAccessPolicy(queryClient);
     const handleConnect = () => setConnected(true);
     const handleDisconnect = () => {
       setConnected(false);
@@ -120,10 +131,14 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       });
     };
     const handlePermissionsUpdated = (data: PermissionsUpdatedPayload) => {
-      if (import.meta.env.DEV) {
-        console.warn("[Gateway] Rooms rebalanced:", data);
+      accessCache.apply(data);
+      if (data.accessPolicy) {
+        applyChatAccessPolicy(queryClient, data.accessPolicy);
+        reconcileNotificationAccess(data.accessPolicy);
+      } else {
+        applyLegacyChatAccessChange(queryClient);
+        useNotificationsStore.getState().clearNotifications();
       }
-
       const updatedGuildIds = data.guilds?.map((guild) => guild.guild.id);
 
       if (!updatedGuildIds) {
@@ -142,9 +157,19 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     socket.on(GatewayEvent.DISCONNECT, handleDisconnect);
     socket.on(GatewayEvent.JOIN, handleJoin);
     socket.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
+    const currentPolicy = socket.getAccessPolicy?.();
+    if (currentPolicy)
+      handlePermissionsUpdated({
+        accessPolicy: currentPolicy,
+        guilds: currentPolicy.organizations.map(({ organizationId }) => ({
+          guild: { id: organizationId },
+        })),
+      });
     socket.connect();
 
     return () => {
+      accessCache.dispose();
+      releaseChatPolicy();
       socket.off(GatewayEvent.CONNECT, handleConnect);
       socket.off(GatewayEvent.DISCONNECT, handleDisconnect);
       socket.off(GatewayEvent.JOIN, handleJoin);
