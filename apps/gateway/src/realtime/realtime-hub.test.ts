@@ -90,6 +90,169 @@ const makeSocket = (
 };
 
 describe("RealtimeHub federation", () => {
+  test("keeps local and federated delivery aligned through subscription changes and disconnect", async () => {
+    const bus = new FederationBus();
+    const hubs = [0, 1].map(
+      () =>
+        new RealtimeHub(
+          config,
+          new FakeRedisStore(bus) as unknown as RedisGatewayStore,
+        ),
+    );
+    const scope = {
+      topic: "organization.chat",
+      organizationId: "organization-1",
+    } as const;
+    const otherScope = { ...scope, organizationId: "organization-2" };
+    const targets = hubs.map((hub, index) => {
+      const target = makeSocket(makeSession(`lifecycle-${index}`));
+      target.socket.data.subscriptions.set(getScopeKey(scope), scope);
+      hub.register(target.socket);
+      return target;
+    });
+    for (const hub of hubs) await Effect.runPromise(hub.start());
+    const publish = async (organizationId = "organization-1") => {
+      await hubs[0]?.publishToScope(
+        { ...scope, organizationId },
+        {
+          v: 1,
+          type: "chat.cleared",
+          data: { organizationId, payload: {} },
+        },
+      );
+    };
+    const counts = () => targets.map((target) => target.sent.length);
+    await publish();
+    expect(counts()).toEqual([1, 1]);
+    hubs.forEach((hub, index) => {
+      const target = targets[index];
+      if (!target) throw new Error("Missing lifecycle target");
+      hub.subscribe(target.socket, scope);
+      hub.unsubscribe(target.socket, scope);
+    });
+    await publish();
+    expect(counts()).toEqual([1, 1]);
+    hubs.forEach((hub, index) => {
+      const target = targets[index];
+      if (!target) throw new Error("Missing lifecycle target");
+      hub.subscribe(target.socket, scope);
+      hub.replaceSubscriptions(target.socket, [otherScope, otherScope]);
+    });
+    await publish();
+    expect(counts()).toEqual([1, 1]);
+    await publish("organization-2");
+    expect(counts()).toEqual([2, 2]);
+    hubs.forEach((hub, index) => {
+      const target = targets[index];
+      if (!target) throw new Error("Missing lifecycle target");
+      hub.unregister(target.socket);
+      // An asynchronous subscription request may finish after the socket closes.
+      hub.subscribe(target.socket, otherScope);
+    });
+    await publish("organization-2");
+    expect(counts()).toEqual([2, 2]);
+  });
+
+  test("matches every optional scope dimension and delivers overlapping scopes only once", async () => {
+    const hub = new RealtimeHub(
+      config,
+      new FakeRedisStore(new FederationBus()) as unknown as RedisGatewayStore,
+    );
+    const scope = {
+      topic: "organization.chat",
+      organizationId: "organization-1",
+      world: "tempest",
+      mapId: 0,
+      eventId: "event-1",
+    } as const;
+    const subscriptions = [
+      { topic: scope.topic },
+      { topic: scope.topic, organizationId: scope.organizationId },
+      { topic: scope.topic, world: scope.world },
+      { topic: scope.topic, mapId: scope.mapId },
+      { topic: scope.topic, eventId: scope.eventId },
+      scope,
+      { ...scope, topic: "organization.timers" },
+      { ...scope, organizationId: "organization-2" },
+      { ...scope, world: "other-world" },
+      { ...scope, mapId: 1 },
+      { ...scope, eventId: "other-event" },
+    ] as const;
+    const targets = subscriptions.map((subscription, index) => {
+      const target = makeSocket(makeSession(`dimension-${index}`));
+      hub.register(target.socket);
+      hub.subscribe(target.socket, subscription);
+      return target;
+    });
+    const overlapping = makeSocket(makeSession("overlapping"));
+    hub.register(overlapping.socket);
+    for (const subscription of subscriptions.slice(0, 6))
+      hub.subscribe(overlapping.socket, subscription);
+    const event = {
+      v: 1,
+      type: "chat.cleared",
+      data: { organizationId: scope.organizationId, payload: {} },
+    } as const;
+    await hub.publishToScopes(
+      [scope, scope, { ...scope, eventId: "event-2" }],
+      event,
+    );
+    expect(targets.map((target) => target.sent.length)).toEqual([
+      1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
+    ]);
+    expect(overlapping.sent).toHaveLength(1);
+    await hub.publishToScope({ topic: scope.topic }, event);
+    expect(targets.map((target) => target.sent.length)).toEqual([
+      2, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
+    ]);
+    expect(overlapping.sent).toHaveLength(2);
+    hub.unsubscribe(overlapping.socket, scope);
+    await hub.publishToScope(scope, event);
+    expect(overlapping.sent).toHaveLength(3);
+  });
+
+  test("targets every user or Discord connection across gateways without subscriptions", async () => {
+    const bus = new FederationBus();
+    const hubs = [0, 1].map(
+      () =>
+        new RealtimeHub(
+          config,
+          new FakeRedisStore(bus) as unknown as RedisGatewayStore,
+        ),
+    );
+    const targets = hubs.map((hub, index) =>
+      ["shared", "shared", "other"].map((identity, connection) => {
+        const target = makeSocket({
+          ...makeSession(`identity-${index}-${connection}`),
+          userId: `user-${identity}`,
+          discordId: `discord-${identity}`,
+        });
+        hub.register(target.socket);
+        return target;
+      }),
+    );
+    for (const hub of hubs) await Effect.runPromise(hub.start());
+    const event = {
+      v: 1,
+      type: "chat.cleared",
+      data: { organizationId: "organization-1", payload: {} },
+    } as const;
+    await hubs[0]?.publishToUser("user-shared", event);
+    await hubs[0]?.publishToDiscord("discord-other", event);
+    for (const group of targets)
+      expect(group.map((target) => target.sent.length)).toEqual([1, 1, 1]);
+    hubs.forEach((hub, index) => {
+      const target = targets[index]?.[0];
+      if (!target) throw new Error("Missing identity target");
+      hub.unregister(target.socket);
+      expect(hub.getLocalSocketsForUser("user-shared")).toHaveLength(1);
+    });
+    await hubs[0]?.publishToDiscord("discord-shared", event);
+    await hubs[0]?.publishToUser("user-other", event);
+    for (const group of targets)
+      expect(group.map((target) => target.sent.length)).toEqual([1, 2, 2]);
+  });
+
   test("filters kill and loot source visibility before local and remote delivery, preserving retries", async () => {
     const bus = new FederationBus();
     const stores = [new FakeRedisStore(bus), new FakeRedisStore(bus)];
