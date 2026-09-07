@@ -1,3 +1,4 @@
+import { runLogEffect } from "@lootlog/instrumentation";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin } from "better-auth/plugins/admin";
@@ -38,6 +39,21 @@ export const createLootlogAuth = ({
 
   return betterAuth({
     appName: "@lootlog/auth",
+    logger: {
+      log(level, message, ...details: unknown[]) {
+        const severity = {
+          debug: "Debug",
+          info: "Info",
+          warn: "Warn",
+          error: "Error",
+        } as const;
+        runLogEffect(
+          Effect.logWithLevel(severity[level])(message, ...details, {
+            context: "BetterAuth",
+          }),
+        );
+      },
+    },
     baseURL: betterAuthBaseURL,
     database: drizzleAdapter(database, {
       provider: "pg",

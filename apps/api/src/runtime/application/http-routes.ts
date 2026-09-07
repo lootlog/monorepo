@@ -1,5 +1,8 @@
 import { BunHttpServer } from "@effect/platform-bun";
-import { httpServerMetrics } from "@lootlog/instrumentation";
+import {
+  httpServerMetrics,
+  httpServerRouteMetrics,
+} from "@lootlog/instrumentation";
 import { Effect, Layer } from "effect";
 import { HttpRouter } from "effect/unstable/http";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
@@ -45,9 +48,12 @@ export const LootlogApiRouter = LootlogApiRoutes.pipe(
   Layer.provideMerge(HandlerInfrastructure),
 );
 
-export const LootlogApiHttp = HttpRouter.serve(LootlogApiRoutes, {
-  middleware: httpServerMetrics,
-}).pipe(Layer.provide(ProcessHandlerInfrastructure));
+export const LootlogApiHttp = HttpRouter.serve(
+  LootlogApiRoutes.pipe(Layer.provide(httpServerRouteMetrics)),
+  {
+    middleware: httpServerMetrics,
+  },
+).pipe(Layer.provide(ProcessHandlerInfrastructure));
 
 export const ApiHttpServerLive = Layer.unwrap(
   Effect.map(ApiRuntimeConfig, ({ port }) =>

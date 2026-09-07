@@ -8,6 +8,7 @@ import {
 import {
   httpServerDuration,
   httpServerMetrics,
+  httpServerRouteMetrics,
   httpServerRequestCount,
   installScopedLogRunner,
   recordHttpServerMetrics,
@@ -31,7 +32,7 @@ test("the scoped log runner preserves the configured logger", async () => {
 });
 
 describe("HTTP server metrics", () => {
-  test("silences healthcheck access logs while preserving responses, metrics and other request logs", async () => {
+  test("silences healthcheck access logs while preserving responses and other request logs", async () => {
     const messages: unknown[] = [];
     const logger = Logger.make(({ message }) => messages.push(message));
     const boundary = HttpRouter.toWebHandler(
@@ -48,6 +49,7 @@ describe("HTTP server metrics", () => {
           ),
         ),
         Layer.provide(HttpServer.layerServices),
+        Layer.provide(httpServerRouteMetrics),
         Layer.merge(Logger.layer([logger])),
       ),
       { middleware: httpServerMetrics },
@@ -76,7 +78,7 @@ describe("HTTP server metrics", () => {
       );
       expect(messages).toHaveLength(0);
       const after = await Effect.runPromise(Metric.value(counter));
-      expect(after.count - before.count).toBe(healthPaths.length);
+      expect(after.count - before.count).toBe(0);
 
       const otherResponses = await Promise.all(
         ["/healthz-other", "/healthz/other", "/users"].map((path) =>
@@ -107,7 +109,10 @@ describe("HTTP server metrics", () => {
         HttpRouter.add("GET", routes[0].path, routes[0].effect),
         HttpRouter.add("GET", routes[1].path, routes[1].effect),
         HttpRouter.add("GET", routes[2].path, routes[2].effect),
-      ).pipe(Layer.provide(HttpServer.layerServices)),
+      ).pipe(
+        Layer.provide(HttpServer.layerServices),
+        Layer.provide(httpServerRouteMetrics),
+      ),
       { disableLogger: true, middleware: httpServerMetrics },
     );
     try {
@@ -116,6 +121,7 @@ describe("HTTP server metrics", () => {
           const attributes = {
             "http.request.method": "GET",
             "http.response.status_code": String(status),
+            "http.route": path,
           };
           const counter = Metric.withAttributes(
             httpServerRequestCount,
@@ -144,17 +150,59 @@ describe("HTTP server metrics", () => {
     }
   });
 
+  test("groups dynamic paths by router template and leaves unknown paths unlabelled", async () => {
+    const boundary = HttpRouter.toWebHandler(
+      HttpRouter.add("GET", "/widgets/:id", HttpServerResponse.empty()).pipe(
+        Layer.provide(HttpServer.layerServices),
+        Layer.provide(httpServerRouteMetrics),
+      ),
+      { disableLogger: true, middleware: httpServerMetrics },
+    );
+    const metric = Metric.withAttributes(httpServerRequestCount, {
+      "http.request.method": "GET",
+      "http.response.status_code": "204",
+      "http.route": "/widgets/:id",
+    });
+    const before = await Effect.runPromise(Metric.value(metric));
+    try {
+      const responses = await Promise.all(
+        ["/widgets/123?secret=hidden", "/widgets/456"].map((path) =>
+          boundary.handler(new Request(`http://localhost${path}`)),
+        ),
+      );
+      expect(responses.map((response) => response.status)).toEqual([204, 204]);
+      expect(
+        (await Effect.runPromise(Metric.value(metric))).count - before.count,
+      ).toBe(2);
+      const missing = Metric.withAttributes(httpServerRequestCount, {
+        "http.request.method": "GET",
+        "http.response.status_code": "404",
+      });
+      const missingBefore = await Effect.runPromise(Metric.value(missing));
+      expect(
+        (await boundary.handler(new Request("http://localhost/private/123")))
+          .status,
+      ).toBe(404);
+      expect(
+        (await Effect.runPromise(Metric.value(missing))).count -
+          missingBefore.count,
+      ).toBe(1);
+    } finally {
+      await boundary.dispose();
+    }
+  });
+
   test("records request count and duration with bounded HTTP attributes", async () => {
     const attributes = {
       "http.request.method": "GET",
       "http.response.status_code": "204",
-      "http.route": "/healthz",
+      "http.route": "/users/:id",
     };
 
     await Effect.runPromise(
       recordHttpServerMetrics({
         method: "GET",
-        route: "/healthz",
+        route: "/users/:id",
         status: 204,
         durationMilliseconds: 12,
       }),
@@ -168,6 +216,6 @@ describe("HTTP server metrics", () => {
     );
     expect(count.count).toBe(1);
     expect(duration.count).toBe(1);
-    expect(duration.sum).toBe(12);
+    expect(duration.sum).toBe(0.012);
   });
 });
