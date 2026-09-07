@@ -118,10 +118,14 @@ it("ignores a pre-permission response that arrives after access was revoked", as
     )
     .mockResolvedValueOnce({ ...feedResponse(), items: [] });
   const { result } = renderFeed();
-  act(() => mocks.socket.emit(GatewayEvent.PERMISSIONS_UPDATED));
+  act(() =>
+    mocks.socket.emit(GatewayEvent.PERMISSIONS_UPDATED, {
+      guilds: [{ guild: { id: "organization" } }],
+    }),
+  );
   await act(async () => {
     finish(feedResponse());
-    await vi.advanceTimersByTimeAsync(1000);
+    await vi.advanceTimersByTimeAsync(5000);
   });
   expect(result.current.state.items).toEqual([]);
   expect(result.current.state.pending).toBeUndefined();
@@ -205,9 +209,14 @@ it("finishes mandatory access revalidation when the user pauses during the reque
     .mockReturnValueOnce(response.promise);
   const { result } = renderFeed();
   await act(() => vi.advanceTimersByTimeAsync(0));
-  act(() => mocks.socket.emit(GatewayEvent.PERMISSIONS_UPDATED));
+  act(() =>
+    mocks.socket.emit(GatewayEvent.PERMISSIONS_UPDATED, {
+      guilds: [{ guild: { id: "organization" } }],
+    }),
+  );
   act(() => result.current.setPaused(true));
-  expect(result.current.state.items).toEqual([]);
+  expect(result.current.state.items).toEqual(feedResponse().items);
+  await act(() => vi.advanceTimersByTimeAsync(5000));
   await act(async () => {
     response.resolve({ ...feedResponse(), items: [] });
     await vi.advanceTimersByTimeAsync(0);
@@ -281,7 +290,7 @@ it.each([GatewayEvent.PERMISSIONS_UPDATED])(
     await act(() => vi.advanceTimersByTimeAsync(0));
     act(() => result.current.setAtTop(false));
     act(() => mocks.socket.emit(event));
-    await act(() => vi.advanceTimersByTimeAsync(0));
+    await act(() => vi.advanceTimersByTimeAsync(5000));
     expect(result.current.state.items).toEqual(replacement.items);
     expect(result.current.state.pending).toBeUndefined();
   },
@@ -385,8 +394,13 @@ it("does not restore pre-permission buffered entries after the authoritative sna
       count: 2,
     }),
   );
-  act(() => mocks.socket.emit(GatewayEvent.PERMISSIONS_UPDATED));
-  expect(result.current.state.items).toEqual([]);
+  act(() =>
+    mocks.socket.emit(GatewayEvent.PERMISSIONS_UPDATED, {
+      guilds: [{ guild: { id: "organization" } }],
+    }),
+  );
+  expect(result.current.state.items).toEqual(feedResponse().items);
+  await act(() => vi.advanceTimersByTimeAsync(5000));
   await act(async () => {
     first.resolve(feedResponse(2));
     second.resolve({ ...feedResponse(), items: [] });
@@ -396,7 +410,7 @@ it("does not restore pre-permission buffered entries after the authoritative sna
 });
 
 it.each([false, true])(
-  "purges displayed, pending and cached entries immediately on permissions change (paused: %s), even if revalidation fails",
+  "retains only the displayed snapshot until access revalidation fails (paused: %s)",
   async (paused) => {
     mocks.request
       .mockResolvedValueOnce(feedResponse())
@@ -412,11 +426,15 @@ it.each([false, true])(
     });
     expect(result.current.state.pending).toBeDefined();
     act(() => result.current.setPaused(paused));
-    act(() => mocks.socket.emit(GatewayEvent.PERMISSIONS_UPDATED));
-    expect(result.current.state.items).toEqual([]);
+    act(() =>
+      mocks.socket.emit(GatewayEvent.PERMISSIONS_UPDATED, {
+        guilds: [{ guild: { id: "organization" } }],
+      }),
+    );
+    expect(result.current.state.items).toEqual(feedResponse().items);
     expect(result.current.state.pending).toBeUndefined();
     expect(queryClient.getQueryData(["user-feed"])).toBeUndefined();
-    await act(() => vi.advanceTimersByTimeAsync(0));
+    await act(() => vi.advanceTimersByTimeAsync(5000));
     expect(result.current.state.items).toEqual([]);
     expect(result.current.state.isError).toBe(true);
     expect(queryClient.getQueryData(["user-feed"])).toBeUndefined();
@@ -461,3 +479,141 @@ it("applies explicit join access revalidation while scrolled", async () => {
   expect(result.current.state.items).toEqual([]);
   expect(result.current.state.pending).toBeUndefined();
 });
+
+it("keeps the snapshot through a rebalance burst and fetches five seconds after the last notification", async () => {
+  mocks.request.mockResolvedValue(feedResponse());
+  const { result } = renderFeed();
+  await act(() => vi.advanceTimersByTimeAsync(0));
+  for (let index = 0; index < 4; index += 1) {
+    act(() =>
+      mocks.socket.emit(GatewayEvent.PERMISSIONS_UPDATED, {
+        guilds: [{ guild: { id: "organization" } }],
+      }),
+    );
+    expect(result.current.state.items).toEqual(feedResponse().items);
+    await act(() => vi.advanceTimersByTimeAsync(1000));
+    expect(result.current.state.items).toEqual(feedResponse().items);
+  }
+  await act(() => vi.advanceTimersByTimeAsync(3999));
+  expect(mocks.request).toHaveBeenCalledTimes(1);
+  await act(() => vi.advanceTimersByTimeAsync(1));
+  expect(mocks.request).toHaveBeenCalledTimes(2);
+  expect(result.current.state.items).toEqual(feedResponse().items);
+});
+
+it("cancels a scheduled rebalance refresh on unmount", async () => {
+  mocks.request.mockResolvedValue(feedResponse());
+  const { unmount } = renderFeed();
+  await act(() => vi.advanceTimersByTimeAsync(0));
+  act(() =>
+    mocks.socket.emit(GatewayEvent.PERMISSIONS_UPDATED, {
+      guilds: [{ guild: { id: "organization" } }],
+    }),
+  );
+  unmount();
+  await act(() => vi.advanceTimersByTimeAsync(5000));
+  expect(mocks.request).toHaveBeenCalledTimes(1);
+});
+
+it("does not let joins or live entries bypass pending access revalidation", async () => {
+  mocks.request.mockResolvedValue(feedResponse());
+  const { result } = renderFeed();
+  await act(() => vi.advanceTimersByTimeAsync(0));
+  act(() => {
+    mocks.socket.emit(GatewayEvent.PERMISSIONS_UPDATED, {
+      guilds: [{ guild: { id: "organization" } }],
+    });
+    mocks.socket.emit(GatewayEvent.CONNECT);
+    mocks.socket.emit(GatewayEvent.JOIN);
+    mocks.socket.emit(GatewayEvent.FEED_ENTRY, feedKill);
+  });
+  expect(result.current.state.items).toEqual(feedResponse().items);
+  expect(mocks.request).toHaveBeenCalledTimes(1);
+  await act(() => vi.advanceTimersByTimeAsync(5000));
+  expect(mocks.request).toHaveBeenCalledTimes(2);
+});
+
+it("does not replay buffered live entries when permission revalidation fails", async () => {
+  let fail: (error: Error) => void = () => undefined;
+  mocks.request.mockResolvedValueOnce(feedResponse()).mockImplementationOnce(
+    () =>
+      new Promise((_resolve, reject) => {
+        fail = reject;
+      }),
+  );
+  const { result } = renderFeed();
+  await act(() => vi.advanceTimersByTimeAsync(0));
+  act(() =>
+    mocks.socket.emit(GatewayEvent.PERMISSIONS_UPDATED, {
+      guilds: [{ guild: { id: "organization" } }],
+    }),
+  );
+  await act(() => vi.advanceTimersByTimeAsync(5000));
+  act(() =>
+    mocks.socket.emit(GatewayEvent.FEED_ENTRY, { ...feedKill, id: "buffered" }),
+  );
+  await act(async () => {
+    fail(new Error("offline"));
+    await vi.advanceTimersByTimeAsync(0);
+  });
+  expect(result.current.state.items).toEqual([]);
+  expect(result.current.state.pending).toBeUndefined();
+  expect(result.current.state.isError).toBe(true);
+});
+
+it("prunes revoked organizations immediately while retaining allowed rows during a stalled refresh", async () => {
+  const allowed = feedKill;
+  const revoked = {
+    ...feedKill,
+    id: "revoked",
+    guild: { ...feedKill.guild, id: "revoked" },
+  };
+  mocks.request
+    .mockResolvedValueOnce({ ...feedResponse(), items: [allowed, revoked] })
+    .mockImplementation(() => new Promise(() => {}));
+  const { result, queryClient } = renderFeed();
+  await act(() => vi.advanceTimersByTimeAsync(0));
+  act(() => result.current.setAtTop(false));
+  act(() =>
+    mocks.socket.emit(GatewayEvent.FEED_ENTRY, {
+      ...revoked,
+      id: "pending-revoked",
+    }),
+  );
+  act(() =>
+    mocks.socket.emit(GatewayEvent.PERMISSIONS_UPDATED, {
+      guilds: [{ guild: { id: allowed.guild.id } }],
+    }),
+  );
+  expect(result.current.state.items).toEqual([allowed]);
+  expect(result.current.state.items?.[0]).toBe(allowed);
+  expect(result.current.state.pending).toBeUndefined();
+  expect(queryClient.getQueryData(["user-feed"])).toBeUndefined();
+  expect(mocks.request).toHaveBeenCalledTimes(1);
+  await act(() => vi.advanceTimersByTimeAsync(65000));
+  expect(result.current.state.items).toEqual([allowed]);
+  expect(mocks.request).toHaveBeenCalledTimes(2);
+});
+
+it.each([undefined, { guilds: [] }])(
+  "clears all visible data immediately when no organizations are authorized: %j",
+  async (payload) => {
+    const late = deferredResponse();
+    mocks.request
+      .mockResolvedValueOnce(feedResponse())
+      .mockReturnValueOnce(late.promise)
+      .mockResolvedValueOnce({ ...feedResponse(), items: [] });
+    const { result } = renderFeed();
+    await act(() => vi.advanceTimersByTimeAsync(0));
+    act(() => result.current.refresh());
+    act(() => mocks.socket.emit(GatewayEvent.PERMISSIONS_UPDATED, payload));
+    expect(result.current.state.items).toEqual([]);
+    await act(async () => {
+      late.resolve(feedResponse());
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(result.current.state.items).toEqual([]);
+    await act(() => vi.advanceTimersByTimeAsync(5000));
+    expect(result.current.state.items).toEqual([]);
+  },
+);
