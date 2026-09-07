@@ -139,6 +139,18 @@ describe("useChatMessagesListener", () => {
     characterData: { nick: `Sender ${id}` },
   });
 
+  it("discards queued chat messages after permission changes", () => {
+    renderHook(() => useChatMessagesListener());
+    act(() => {
+      mocks.handlers.get(GatewayEvent.CHAT_MESSAGE)?.(
+        createMessage("hidden-titan") as never,
+      );
+      mocks.handlers.get(GatewayEvent.PERMISSIONS_UPDATED)?.({} as never);
+      flushAnimationFrame();
+    });
+    expect(mocks.queryClient.setQueryData).not.toHaveBeenCalled();
+  });
+
   it("refetches active chat histories only after the reconnected session joins", () => {
     mocks.socketState.connected = false;
     mocks.socketState.joined = false;
@@ -245,6 +257,27 @@ describe("useChatMessagesListener", () => {
     } as never);
 
     expect(mocks.queryClient.prefetchQuery).toHaveBeenCalledOnce();
+  });
+
+  it("does not present a mention resolved after permissions changed", async () => {
+    let finish: () => void = () => {};
+    mocks.queryClient.fetchQuery.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = () => resolve({ name: "Current member", roles: [] });
+        }),
+    );
+    renderHook(() => useChatMessagesListener());
+    mocks.handlers.get(GatewayEvent.CHAT_MESSAGE)?.({
+      ...createMessage("hidden-titan"),
+      message: "Hej @Current Hero",
+    } as never);
+    mocks.handlers.get(GatewayEvent.PERMISSIONS_UPDATED)?.({} as never);
+    await act(async () => {
+      finish();
+      await Promise.resolve();
+    });
+    expect(mocks.presentNotifications).not.toHaveBeenCalled();
   });
 
   it("presents a matching chat mention through the notification pipeline", async () => {

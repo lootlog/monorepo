@@ -391,6 +391,24 @@ export class RabbitBridge {
     }
     if (routingKey === RabbitRoutingKey.GUILDS_MEMBERS_ADD) return Effect.void;
 
+    if (routingKey === RabbitRoutingKey.GUILDS_NOTIFICATIONS_VOLUNTEER) {
+      const data = record(payload);
+      return fromPromise(() =>
+        this.hub.publishToDiscord(requiredString(data, "targetDiscordId"), {
+          v: 1,
+          type: "notification.volunteer",
+          data: {
+            notificationId: requiredString(data, "notificationId"),
+            volunteer: {
+              ...record(data.character),
+              discordId: requiredString(data, "volunteerDiscordId"),
+              world: requiredString(data, "world"),
+            },
+          },
+        }),
+      );
+    }
+
     if (routingKey === RabbitRoutingKey.GUILDS_KILLS_ACCEPTED_V1) {
       const data = payload as GuildKillsAcceptedV1;
       return fromPromise(async () => {
@@ -564,10 +582,6 @@ export class RabbitBridge {
         type: "chat.cleared",
       },
       [RabbitRoutingKey.GUILDS_NOTIFICATIONS_SEND]: {
-        topic: "organization.notifications",
-        type: "notification.sent",
-      },
-      [RabbitRoutingKey.GUILDS_NOTIFICATIONS_VOLUNTEER]: {
         topic: "organization.notifications",
         type: "notification.sent",
       },

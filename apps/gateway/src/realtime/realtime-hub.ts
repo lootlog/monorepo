@@ -1,8 +1,9 @@
+import type { LootVisibilityNpc } from "@lootlog/domain/loot-visibility";
 import {
-  canViewLoot,
-  type LootVisibilityNpc,
-} from "@lootlog/domain/loot-visibility";
-import { Permission } from "@lootlog/schema/permissions";
+  chatMessagePermissions,
+  withChatMessagePermissions,
+} from "#src/realtime/chat-message-envelope";
+import { canReadSourceEvent } from "#src/realtime/source-event-visibility";
 import {
   encodeRealtimeFrame,
   tryDecodeRealtimeFrame,
@@ -385,30 +386,17 @@ export class RealtimeHub {
     const frame = decoded.success as Event;
     let jsonFrame: string | undefined;
     let binaryFrame: Uint8Array | undefined;
+    const chatFrames = new Map<string, string | Uint8Array>();
 
     for (const socket of this.sockets.values()) {
       if (!this.matchesRecipient(socket, message)) continue;
-      const matchesUser =
-        message.userId !== undefined && socket.data.userId === message.userId;
-      const matchesDiscord =
-        message.discordId !== undefined &&
-        socket.data.discordId === message.discordId;
-      const matchesScope =
-        message.scope !== undefined &&
-        [...socket.data.subscriptions.values()].some((subscription) =>
-          scopeMatches(subscription, message.scope as Scope),
-        );
-      const matchesAnyScope =
-        message.scopes !== undefined &&
-        message.scopes.some((published) =>
-          [...socket.data.subscriptions.values()].some((subscription) =>
-            scopeMatches(subscription, published),
-          ),
-        );
-      if (!(matchesUser || matchesDiscord || matchesScope || matchesAnyScope))
-        continue;
+      if (!this.matchesAudience(socket, message)) continue;
       if (!this.matchesPresenceAudience(socket, message)) continue;
-      if (!this.canReadSourceEvent(socket.data, frame, message)) continue;
+      if (!canReadSourceEvent(socket.data, frame, message.sourceNpcs)) continue;
+      if (frame.type === "chat.created") {
+        this.send(socket, this.encodeChatEvent(socket.data, frame, chatFrames));
+        continue;
+      }
       const encoded =
         socket.data.frameEncoding === "json"
           ? (jsonFrame ??= JSON.stringify(frame))
@@ -417,61 +405,47 @@ export class RealtimeHub {
     }
   }
 
-  private canReadSourceEvent(
+  private encodeChatEvent(
     session: SessionData,
-    event: Event,
+    event: Extract<Event, { type: "chat.created" }>,
+    frames: Map<string, string | Uint8Array>,
+  ): string | Uint8Array {
+    const permissions = chatMessagePermissions(session, event);
+    const key = `${session.frameEncoding}:${permissions.canEdit}:${permissions.canDelete}`;
+    let encoded = frames.get(key);
+    if (encoded === undefined) {
+      const recipientFrame = withChatMessagePermissions(event, permissions);
+      encoded =
+        session.frameEncoding === "json"
+          ? JSON.stringify(recipientFrame)
+          : encodeRealtimeFrame(recipientFrame);
+      frames.set(key, encoded);
+    }
+    return encoded;
+  }
+
+  private matchesAudience(
+    socket: GatewaySocket,
     message: FederatedRealtimeMessage,
   ): boolean {
-    if (
-      event.type !== "kills.changed" &&
-      event.type !== "loot.created" &&
-      event.type !== "feed.entry"
-    )
-      return true;
-    if (
-      (event.type === "kills.changed" || event.type === "feed.entry") &&
-      (session.platform !== "web-app" || !session.supportsFeed)
-    )
-      return false;
-    const guild = session.guilds.find(
-      (entry) =>
-        entry.guild.id ===
-        (event.type === "feed.entry"
-          ? event.data.guild.id
-          : event.data.guildId),
-    );
-    if (!guild) return false;
-    const permissions =
-      guild.guild.ownerId === session.discordId
-        ? [Permission.OWNER]
-        : guild.roles.flatMap((role) => role.permissions);
-    // Kill aggregates explicitly allow administrators; loot visibility only bypasses for owners.
-    if (
-      (event.type === "kills.changed" ||
-        (event.type === "feed.entry" && event.data.type === "kill")) &&
-      permissions.some(
-        (permission) =>
-          permission === Permission.ADMIN || permission === Permission.OWNER,
-      )
-    )
-      return true;
-    const npcs =
-      event.type !== "loot.created"
-        ? (message.sourceNpcs ?? [])
-        : event.data.npcs.map((npc) => ({
-            level: npc.lvl ?? null,
-            type: typeof npc.type === "string" ? npc.type : null,
-          }));
-    return canViewLoot({
-      permissions,
-      roles: guild.roles.map((role) => ({
-        id: role.id,
-        levelFrom: role.lvlRangeFrom,
-        levelTo: role.lvlRangeTo,
-        permissions: role.permissions,
-      })),
-      npcs,
-    });
+    const matchesUser =
+      message.userId !== undefined && socket.data.userId === message.userId;
+    const matchesDiscord =
+      message.discordId !== undefined &&
+      socket.data.discordId === message.discordId;
+    const matchesScope =
+      message.scope !== undefined &&
+      [...socket.data.subscriptions.values()].some((subscription) =>
+        scopeMatches(subscription, message.scope as Scope),
+      );
+    const matchesAnyScope =
+      message.scopes !== undefined &&
+      message.scopes.some((published) =>
+        [...socket.data.subscriptions.values()].some((subscription) =>
+          scopeMatches(subscription, published),
+        ),
+      );
+    return matchesUser || matchesDiscord || matchesScope || matchesAnyScope;
   }
 
   private matchesRecipient(

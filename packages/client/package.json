@@ -16,7 +16,8 @@
     "./battlelog": "./src/generated/battlelog.ts",
     "./main": "./src/generated/main.ts",
     "./search": "./src/generated/search.ts",
-    "./realtime/event-listeners": "./src/realtime/event-listeners.ts"
+    "./realtime/event-listeners": "./src/realtime/event-listeners.ts",
+    "./permission-query-cache": "./src/permission-query-cache.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

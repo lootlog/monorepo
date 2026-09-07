@@ -1,3 +1,7 @@
+import { queryClient } from "@/lib/query-client";
+import { resetPermissionQueries } from "@lootlog/client/permission-query-cache";
+import { useNotificationsStore } from "@/store/notifications.store";
+import { useChatStore } from "@/store/chat.store";
 import { GatewayEvent } from "@/config/gateway";
 import {
   type AppSocket,
@@ -85,6 +89,11 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   }, [gameInitialized, connected, socket]);
 
   useEffect(() => {
+    const resetVisibleData = () => {
+      void resetPermissionQueries(queryClient);
+      useNotificationsStore.getState().clearNotifications();
+      useChatStore.getState().clearReplyDraft();
+    };
     const handleConnect = () => setConnected(true);
     const handleDisconnect = () => {
       setConnected(false);
@@ -102,6 +111,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
+      resetVisibleData();
       setJoined(true);
       setJoinedGuilds(data.guildIds ?? []);
 
@@ -120,6 +130,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       });
     };
     const handlePermissionsUpdated = (data: PermissionsUpdatedPayload) => {
+      resetVisibleData();
       if (import.meta.env.DEV) {
         console.warn("[Gateway] Rooms rebalanced:", data);
       }

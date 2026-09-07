@@ -88,6 +88,7 @@ const legacyEventNames: Partial<Record<ServerEvent["type"], GatewayEvent>> = {
   "timer.created": GatewayEvent.TIMERS_CREATE,
   "timer.deleted": GatewayEvent.TIMERS_DELETE,
   "notification.sent": GatewayEvent.NOTIFICATION,
+  "notification.volunteer": GatewayEvent.NOTIFICATIONS_VOLUNTEER,
   "member-refresh.updated": GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE,
   "party-gathering.updated": GatewayEvent.PARTY_GATHERING_SEND,
   "party-gathering.cancelled": GatewayEvent.PARTY_GATHERING_CANCEL,

@@ -528,7 +528,7 @@ describe("RealtimeHub federation", () => {
     hub.register(jsonSocket);
     const event = {
       v: 1,
-      type: "chat.created",
+      type: "chat.cleared",
       data: { organizationId: "organization-1", payload: { id: "message-1" } },
     } as const;
     await hub.publishToScope(scope, event);
@@ -621,14 +621,14 @@ describe("RealtimeHub federation", () => {
 
     await first.publishToScope(scope, {
       v: 1,
-      type: "chat.created",
+      type: "chat.cleared",
       data: { organizationId: "organization-1", payload: { id: "message-1" } },
     });
 
     expect(target.sent).toHaveLength(1);
     expect(
       decodeRealtimeFrame(target.sent[0] ?? new Uint8Array()),
-    ).toHaveProperty("type", "chat.created");
+    ).toHaveProperty("type", "chat.cleared");
   });
 
   test("closes a persistently slow consumer with bounded backpressure", async () => {
@@ -647,7 +647,7 @@ describe("RealtimeHub federation", () => {
     hub.register(target.socket);
     const event = {
       v: 1,
-      type: "chat.created",
+      type: "chat.cleared",
       data: { organizationId: "organization-1", payload: {} },
     } as const;
     await hub.publishToScope(scope, event);
@@ -656,4 +656,323 @@ describe("RealtimeHub federation", () => {
     expect(target.sent).toHaveLength(0);
     expect(target.closes).toEqual([1013]);
   });
+});
+
+const npcDeliveryCases = (npcType: string, npcLevel: number, tier: string) =>
+  [
+    [
+      "timers update",
+      "gateway-guilds-timers-update",
+      "organization.timers",
+      { npc: { lvl: npcLevel, type: npcType } },
+    ],
+    [
+      "timers delete",
+      "gateway-guilds-timers-delete",
+      "organization.timers",
+      { npcId: 105, routing: { tier, npcLevel } },
+    ],
+    [
+      "NPC chat",
+      "gateway-guilds-send-message",
+      "organization.chat",
+      { type: "NPC", npc: { lvl: npcLevel, type: npcType } },
+    ],
+    [
+      "NPC party chat",
+      "gateway-guilds-send-message",
+      "organization.chat",
+      { type: "PARTY_GATHERING", npc: { lvl: npcLevel, type: npcType } },
+    ],
+    [
+      "chat edit",
+      "gateway-guilds-update-message",
+      "organization.chat",
+      {
+        messageId: "message",
+        message: "changed",
+        routing: { tier, npcLevel },
+      },
+    ],
+    [
+      "chat delete",
+      "gateway-guilds-delete-message",
+      "organization.chat",
+      { messageId: "message", routing: { tier, npcLevel } },
+    ],
+    [
+      "NPC notification",
+      "gateway-guilds-send-notification",
+      "organization.notifications",
+      { npc: { lvl: npcLevel, type: npcType } },
+    ],
+    [
+      "loot share",
+      "gateway-guilds-loots-share-update",
+      "organization.loots",
+      {
+        version: 2,
+        lootId: 1,
+        npcs: [{ lvl: npcLevel, type: npcType }],
+        lootShare: {},
+      },
+    ],
+  ] as const;
+const npcReadPermissions = [
+  Permission.LOOTLOG_TIMERS_READ,
+  Permission.LOOTLOG_TIMERS_HEROES_READ,
+  Permission.LOOTLOG_CHAT_READ,
+  Permission.LOOTLOG_CHAT_HEROES_READ,
+  Permission.LOOTLOG_NOTIFICATIONS_READ,
+  Permission.LOOTLOG_NOTIFICATIONS_HEROES_READ,
+  Permission.LOOTLOG_LOOTS_READ,
+  Permission.LOOTLOG_LOOTS_HEROES_READ,
+];
+const allNpcReadPermissions = [
+  ...npcReadPermissions,
+  Permission.LOOTLOG_TIMERS_TITANS_READ,
+  Permission.LOOTLOG_CHAT_TITANS_READ,
+  Permission.LOOTLOG_NOTIFICATIONS_TITANS_READ,
+  Permission.LOOTLOG_LOOTS_TITANS_READ,
+];
+for (const scenario of [
+  {
+    name: "level range",
+    type: "HERO",
+    level: 105,
+    tier: "heroes",
+    permissions: allNpcReadPermissions,
+    from: 200,
+  },
+  {
+    name: "titan permission",
+    type: "TITAN",
+    level: 250,
+    tier: "titans",
+    permissions: npcReadPermissions,
+    from: 200,
+  },
+  {
+    name: "hero permission",
+    type: "HERO",
+    level: 250,
+    tier: "heroes",
+    permissions: npcReadPermissions.filter(
+      (permission) => !permission.endsWith("HEROES_READ"),
+    ),
+    from: 200,
+  },
+]) {
+  for (const [name, queue, topic, data] of npcDeliveryCases(
+    scenario.type,
+    scenario.level,
+    scenario.tier,
+  )) {
+    test(`${name} requires ${scenario.name} on game and web across gateways`, async () => {
+      const bus = new FederationBus();
+      const hubs = [0, 1].map(
+        () =>
+          new RealtimeHub(
+            config,
+            new FakeRedisStore(bus) as unknown as RedisGatewayStore,
+          ),
+      );
+      const scope = { topic, organizationId: "organization-1" };
+      const targets = hubs.flatMap((hub, i) =>
+        ["game", "web-app"].flatMap((platform) =>
+          [false, true].map((allowed) => {
+            const session = makeSession(`${i}-${platform}-${allowed}`);
+            Object.assign(session, { platform });
+            session.guilds = [
+              {
+                guild: { id: "organization-1", ownerId: "owner" },
+                roles: [
+                  {
+                    id: "permission",
+                    permissions: allowed
+                      ? allNpcReadPermissions
+                      : scenario.permissions,
+                    lvlRangeFrom: allowed ? 0 : scenario.from,
+                    lvlRangeTo: 500,
+                  },
+                  {
+                    id: "empty",
+                    permissions: [],
+                    lvlRangeFrom: 0,
+                    lvlRangeTo: 500,
+                  },
+                ],
+              },
+            ];
+
+            const t = makeSocket(session);
+            hub.register(t.socket);
+            hub.subscribe(t.socket, scope);
+            return { ...t, allowed };
+          }),
+        ),
+      );
+      const handlers = new Map<
+        string,
+        (d: RabbitDelivery) => Effect.Effect<void, unknown>
+      >();
+      const messaging: RabbitMessagingService = {
+        publish: () => Effect.void,
+        ack: () => Effect.void,
+        nack: () => Effect.void,
+        consume: (options, handler) =>
+          Effect.sync(() => {
+            handlers.set(options.queue, handler);
+            return { consumerTag: options.queue, cancel: Effect.void };
+          }),
+      };
+      const unexpected = () => {
+        throw new Error("unexpected control");
+      };
+      const bridge = new RabbitBridge(
+        messaging,
+        hubs[0]!,
+        { rebalanceAcrossInstances: unexpected },
+        { coverageForMap: unexpected },
+        { publish: unexpected },
+      );
+      for (const hub of hubs) await Effect.runPromise(hub.start());
+      await Effect.runPromise(
+        Effect.scoped(
+          Effect.gen(function* () {
+            yield* bridge.start();
+            const content = Buffer.from(
+              JSON.stringify({ guildId: "organization-1", ...data }),
+            );
+            const properties: RabbitDelivery["properties"] = {
+              messageId: "npc-delivery",
+              contentType: "application/json",
+              contentEncoding: undefined,
+              headers: {},
+              deliveryMode: 2,
+              priority: undefined,
+              correlationId: undefined,
+              replyTo: undefined,
+              expiration: undefined,
+              timestamp: undefined,
+              type: undefined,
+              userId: undefined,
+              appId: undefined,
+              clusterId: undefined,
+            };
+            const fields = {
+              consumerTag: queue,
+              deliveryTag: 1,
+              exchange: "default",
+              routingKey: queue,
+              redelivered: false,
+            };
+            const delivery: RabbitDelivery = {
+              content,
+              properties,
+              ...fields,
+              raw: { content, properties, fields },
+            };
+            yield* handlers.get(queue)!(delivery);
+            for (const t of targets.filter((t) => t.allowed))
+              expect(t.sent).toHaveLength(1);
+
+            for (const t of targets.filter((t) => !t.allowed))
+              expect(t.sent).toHaveLength(0);
+          }),
+        ),
+      );
+    });
+  }
+}
+
+test("chat capabilities are recipient-specific and cannot be supplied by the sender", async () => {
+  const hub = new RealtimeHub(
+    config,
+    new FakeRedisStore(new FederationBus()) as unknown as RedisGatewayStore,
+  );
+  const scope = {
+    topic: "organization.chat",
+    organizationId: "organization-1",
+  } as const;
+  const viewers = [
+    {
+      id: "author",
+      permissions: [
+        Permission.LOOTLOG_CHAT_READ,
+        Permission.LOOTLOG_CHAT_WRITE,
+      ],
+      canEdit: true,
+      canDelete: true,
+    },
+    {
+      id: "reader",
+      permissions: [Permission.LOOTLOG_CHAT_READ],
+      canEdit: false,
+      canDelete: false,
+    },
+    {
+      id: "reader-2",
+      permissions: [Permission.LOOTLOG_CHAT_READ],
+      canEdit: false,
+      canDelete: false,
+    },
+    {
+      id: "admin",
+      permissions: [Permission.ADMIN],
+      canEdit: false,
+      canDelete: true,
+    },
+    { id: "owner", permissions: [], canEdit: false, canDelete: true },
+  ];
+  const targets = viewers.map((viewer) => {
+    const session = { ...makeSession(viewer.id), discordId: viewer.id };
+    session.guilds = [
+      {
+        guild: { id: "organization-1", ownerId: "owner" },
+        roles: [
+          {
+            id: "role",
+            permissions: viewer.permissions,
+            lvlRangeFrom: 0,
+            lvlRangeTo: 500,
+          },
+        ],
+      },
+    ];
+    const target = makeSocket(session);
+    hub.register(target.socket);
+    hub.subscribe(target.socket, scope);
+    return target;
+  });
+  await hub.publishToScope(scope, {
+    v: 1,
+    type: "chat.created",
+    data: {
+      organizationId: "organization-1",
+      payload: {
+        id: "message",
+        guildId: "organization-1",
+        senderId: "author",
+        type: "NORMAL",
+        message: "Hello",
+        canEdit: true,
+        canDelete: true,
+      },
+    },
+  });
+  for (const [index, viewer] of viewers.entries()) {
+    const frame = targets[index]?.sent[0];
+    expect(frame).toBeDefined();
+    expect(decodeRealtimeFrame(frame ?? new Uint8Array())).toMatchObject({
+      data: {
+        payload: {
+          id: "message",
+          canEdit: viewer.canEdit,
+          canDelete: viewer.canDelete,
+        },
+      },
+    });
+  }
+  expect(targets[1]?.sent[0]).toBe(targets[2]?.sent[0]);
 });
