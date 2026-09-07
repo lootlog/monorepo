@@ -78,6 +78,8 @@ jobs:
         with:
           fetch-depth: 0
       - uses: ./.github/actions/setup-bun
+        with:
+          turbo-cache-scope: ci-workspaces
       - name: Lint, typecheck, test, end-to-end test and build
         env:
           TURBO_SCM_BASE: ${{ needs.plan.outputs.base-sha }}
@@ -95,6 +97,8 @@ jobs:
         with:
           fetch-depth: 0
       - uses: ./.github/actions/setup-bun
+        with:
+          turbo-cache-scope: ci-integration
       - name: Run self-contained integration tests
         env:
           PACKAGES: ${{ needs.plan.outputs.integration-packages }}
@@ -113,6 +117,8 @@ jobs:
         with:
           fetch-depth: 0
       - uses: ./.github/actions/setup-bun
+        with:
+          turbo-cache-scope: ci-generated-client
       - run: bun run client:check
 
   docker:

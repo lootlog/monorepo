@@ -1,6 +1,12 @@
 name: Setup Bun workspace
 description: Install the pinned Bun version, restore caches and install dependencies
 
+inputs:
+  turbo-cache-scope:
+    description: Unique cache writer scope per job and matrix target; empty disables Turbo caching
+    required: false
+    default: ""
+
 runs:
   using: composite
   steps:
@@ -17,14 +23,15 @@ runs:
         restore-keys: bun-${{ runner.os }}-
 
     - name: Restore Turbo cache
+      if: inputs.turbo-cache-scope != ''
       uses: actions/cache@v5
       with:
         path: .turbo
-        key: turbo-${{ runner.os }}-${{ github.ref_name }}-${{ github.sha }}
+        key: turbo-v2-${{ runner.os }}-${{ github.ref_name }}-${{ inputs.turbo-cache-scope }}-${{ github.sha }}
         restore-keys: |
-          turbo-${{ runner.os }}-${{ github.ref_name }}-
-          turbo-${{ runner.os }}-main-
-          turbo-${{ runner.os }}-
+          turbo-v2-${{ runner.os }}-${{ github.ref_name }}-${{ inputs.turbo-cache-scope }}-
+          turbo-v2-${{ runner.os }}-${{ github.ref_name }}-
+          turbo-v2-${{ runner.os }}-main-
 
     - name: Install dependencies
       shell: bash
