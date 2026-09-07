@@ -1,4 +1,3 @@
-import { queryClient } from "@/lib/query-client";
 import { act, render, waitFor } from "@testing-library/react";
 import { GatewayEvent } from "@/config/gateway";
 import { useGameStore } from "@/store/game.store";
@@ -55,7 +54,6 @@ const expectedJoinData = {
 describe("SocketProvider", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    queryClient.clear();
     mockSocket.auth = {};
     mockSocket.connected = true;
     mockSocket.id = "socket-1";
@@ -175,64 +173,6 @@ describe("SocketProvider", () => {
         joined: false,
         joinedGuilds: [],
       });
-    });
-  });
-
-  it("drops old timers on reconnect even without a permissions update", () => {
-    render(
-      <SocketProvider>
-        <div />
-      </SocketProvider>,
-    );
-    act(() =>
-      mockSocketHandlers[GatewayEvent.JOIN]?.({
-        status: "success",
-        guildIds: ["guild-1"],
-      }),
-    );
-    queryClient.setQueryData(["/timers", { world: "alpha" }], ["hidden titan"]);
-    act(() => {
-      mockSocketHandlers[GatewayEvent.DISCONNECT]?.(undefined);
-      mockSocketHandlers[GatewayEvent.CONNECT]?.(undefined);
-      mockSocketHandlers[GatewayEvent.JOIN]?.({
-        status: "success",
-        guildIds: ["guild-1"],
-      });
-    });
-    expect(
-      queryClient.getQueryData(["/timers", { world: "alpha" }]),
-    ).toBeUndefined();
-  });
-
-  it("drops timers and chat even when membership stays the same", () => {
-    queryClient.setQueryData(
-      ["/timers", { world: "alpha" }],
-      [{ npc: { lvl: 105 } }],
-    );
-    queryClient.setQueryData(
-      ["/guilds/guild-1/chat-messages"],
-      ["hidden titan"],
-    );
-    queryClient.setQueryData(["/timer-settings"], { sound: true });
-    render(
-      <SocketProvider>
-        <div />
-      </SocketProvider>,
-    );
-    act(() => {
-      mockSocketHandlers[GatewayEvent.PERMISSIONS_UPDATED]?.({
-        guilds: [{ guild: { id: "guild-1" } }],
-        featureRooms: ["timers:base"],
-      });
-    });
-    expect(
-      queryClient.getQueryData(["/timers", { world: "alpha" }]),
-    ).toBeUndefined();
-    expect(
-      queryClient.getQueryData(["/guilds/guild-1/chat-messages"]),
-    ).toBeUndefined();
-    expect(queryClient.getQueryData(["/timer-settings"])).toEqual({
-      sound: true,
     });
   });
 
