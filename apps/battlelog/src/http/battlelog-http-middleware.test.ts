@@ -1,6 +1,7 @@
 import { expect, it, spyOn } from "bun:test";
 import {
   httpServerDuration,
+  httpServerRouteMetrics,
   httpServerRequestCount,
 } from "@lootlog/instrumentation";
 import { Effect, Layer, Metric } from "effect";
@@ -27,6 +28,7 @@ for (const { status, effect } of [
     const boundary = HttpRouter.toWebHandler(
       HttpRouter.add("GET", "/", effect).pipe(
         Layer.provide(HttpServer.layerServices),
+        Layer.provide(httpServerRouteMetrics),
       ),
       { disableLogger: true, middleware: battlelogHttpMiddleware },
     );
@@ -53,13 +55,17 @@ it("does not report an aborted client request as an HTTP failure", async () => {
       "GET",
       "/",
       Effect.sync(() => started.resolve()).pipe(Effect.andThen(Effect.never)),
-    ).pipe(Layer.provide(HttpServer.layerServices)),
+    ).pipe(
+      Layer.provide(HttpServer.layerServices),
+      Layer.provide(httpServerRouteMetrics),
+    ),
     { disableLogger: true, middleware: battlelogHttpMiddleware },
   );
   try {
     const attributes = {
       "http.request.method": "GET",
       "http.response.status_code": "499",
+      "http.route": "/",
     };
     const counter = Metric.withAttributes(httpServerRequestCount, attributes);
     const histogram = Metric.withAttributes(httpServerDuration, attributes);

@@ -1,5 +1,8 @@
 import { BunHttpServer } from "@effect/platform-bun";
-import { httpServerMetrics } from "@lootlog/instrumentation";
+import {
+  httpServerMetrics,
+  httpServerRouteMetrics,
+} from "@lootlog/instrumentation";
 import { Effect, Layer } from "effect";
 import { HttpRouter, HttpServerResponse } from "effect/unstable/http";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
@@ -30,8 +33,8 @@ export const SearchRoutes = Layer.merge(
 
 export const SearchHttpServer = Layer.unwrap(
   Effect.map(SearchConfig, ({ port }) =>
-    HttpRouter.serve(SearchRoutes, { middleware: httpServerMetrics }).pipe(
-      Layer.provide(BunHttpServer.layer({ hostname: "0.0.0.0", port })),
-    ),
+    HttpRouter.serve(SearchRoutes.pipe(Layer.provide(httpServerRouteMetrics)), {
+      middleware: httpServerMetrics,
+    }).pipe(Layer.provide(BunHttpServer.layer({ hostname: "0.0.0.0", port }))),
   ),
 ).pipe(Layer.provide(SearchConfig.layer));
