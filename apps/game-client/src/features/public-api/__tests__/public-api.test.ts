@@ -1,3 +1,8 @@
+import {
+  createAccessPolicySnapshot,
+  diffAccessPolicies,
+} from "@lootlog/protocol/realtime/access-policy";
+import { Permission } from "@lootlog/schema/permissions";
 import { QueryClient } from "@tanstack/react-query";
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { bootstrapPublicApi } from "../index";
@@ -703,7 +708,12 @@ describe("Public API", () => {
         code: "ONLINE_PLAYERS_ACCESS_DENIED",
       });
 
+      vi.useFakeTimers();
       socketMocks.emit("permissions-updated");
+      socketMocks.emit("permissions-updated");
+      expect(socketMocks.emitWithAck).toHaveBeenCalledTimes(2);
+      await vi.advanceTimersByTimeAsync(5000);
+      vi.useRealTimers();
 
       await vi.waitFor(() =>
         expect(listener).toHaveBeenCalledWith({
@@ -713,6 +723,64 @@ describe("Public API", () => {
           code: "ONLINE_PLAYERS_ACCESS_DENIED",
         }),
       );
+    });
+
+    it("ignores unrelated policy areas and immediately denies a revoked scope without fetching", async () => {
+      await primeScope();
+      const listener = vi.fn();
+      getPublicApi().subscribe("online-players:changed", listener);
+      await vi.waitFor(() =>
+        expect(socketMocks.emitWithAck).toHaveBeenCalledTimes(2),
+      );
+      const initial = createAccessPolicySnapshot(
+        [
+          {
+            guild: { id: "guild-1", ownerId: "owner" },
+            roles: [
+              {
+                permissions: [Permission.LOOTLOG_ONLINE_PLAYERS_READ],
+                lvlRangeFrom: 1,
+                lvlRangeTo: 300,
+              },
+            ],
+          },
+        ],
+        "user",
+      );
+      socketMocks.emit("permissions-updated", {
+        accessPolicy: initial,
+        changes: [
+          {
+            organizationId: "guild-1",
+            areas: ["timers"],
+            restricted: true,
+            expanded: false,
+          },
+        ],
+      });
+      expect(listener).not.toHaveBeenCalled();
+      expect(socketMocks.emitWithAck).toHaveBeenCalledTimes(2);
+      const revoked = createAccessPolicySnapshot([], "user");
+      socketMocks.emit("permissions-updated", {
+        accessPolicy: revoked,
+        changes: diffAccessPolicies(initial, revoked),
+      });
+      expect(listener).toHaveBeenCalledWith({
+        guildId: "guild-1",
+        world: "tempest",
+        status: "forbidden",
+        code: "ONLINE_PLAYERS_ACCESS_DENIED",
+      });
+      await expect(
+        getPublicApi().getOnlinePlayers({
+          guildId: "guild-1",
+          world: "tempest",
+        }),
+      ).resolves.toEqual({
+        status: "forbidden",
+        code: "ONLINE_PLAYERS_ACCESS_DENIED",
+      });
+      expect(socketMocks.emitWithAck).toHaveBeenCalledTimes(2);
     });
 
     it("refreshes tracked scopes when the socket rejoins", async () => {

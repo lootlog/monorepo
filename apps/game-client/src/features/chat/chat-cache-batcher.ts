@@ -124,6 +124,14 @@ export const createChatCacheBatcher = (queryClient: QueryClient) => {
       queuedOperations = [];
       cancelScheduledFlush();
     },
+    discardGuilds(guildIds: readonly string[]) {
+      const discardedGuildIds = new Set(guildIds);
+      queuedOperations = queuedOperations.filter(
+        ({ operation }) =>
+          !discardedGuildIds.has(getOperationGuildId(operation)),
+      );
+      if (queuedOperations.length === 0) cancelScheduledFlush();
+    },
     discardOutsideGuilds(guildIds: readonly string[]) {
       const accessibleGuildIds = new Set(guildIds);
       queuedOperations = queuedOperations.filter(({ operation }) =>

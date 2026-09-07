@@ -183,3 +183,35 @@ describe("AirTagReceiveController", () => {
     expect(controller.getRenderableTargets(11_000, 10_000)).toEqual([]);
   });
 });
+
+it("prunes revoked scopes during an in-flight refresh without clearing unrelated targets", () => {
+  const controller = new AirTagReceiveController();
+  const snapshots = [
+    createSnapshot(),
+    createSnapshot({
+      guildId: "guild-2",
+      targets: [createTarget({ targetId: "target-2", nickname: "Other" })],
+    }),
+  ];
+  controller.beginSubscription("initial", "aether", 42);
+  controller.applySubscriptionAck({
+    status: "accepted",
+    requestId: "initial",
+    scopes: snapshots,
+  });
+  controller.beginSubscription("refresh", "aether", 42, true);
+  expect(controller.getRenderableTargets(1100, 10000)).toHaveLength(2);
+  controller.retainOrganizations(new Set(["guild-2"]));
+  expect(controller.getRenderableTargets(1100, 10000)).toEqual([
+    expect.objectContaining({ targetId: "target-2" }),
+  ]);
+  controller.handleUpdate(createUpdate());
+  controller.applySubscriptionAck({
+    status: "accepted",
+    requestId: "refresh",
+    scopes: snapshots,
+  });
+  expect(controller.getRenderableTargets(1100, 10000)).toEqual([
+    expect.objectContaining({ targetId: "target-2" }),
+  ]);
+});

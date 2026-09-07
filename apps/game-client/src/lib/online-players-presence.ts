@@ -1,3 +1,5 @@
+import type { OrganizationAccessPolicy } from "@lootlog/protocol/realtime/access-policy";
+import { Permission } from "@lootlog/schema/permissions";
 import { GatewayEvent } from "@/config/gateway";
 
 export type PlayerPresenceResponse = Record<string, PlayerPresence[]>;
@@ -289,4 +291,43 @@ export const requestServerPresence = async (
   } catch {
     return requestPresence();
   }
+};
+
+export const canReadPresence = (
+  policy: OrganizationAccessPolicy | undefined,
+): boolean =>
+  Boolean(
+    policy &&
+    (policy.owner ||
+      policy.permissions.includes(Permission.ADMIN) ||
+      policy.permissions.includes(Permission.LOOTLOG_ONLINE_PLAYERS_READ)),
+  );
+
+export const canReadPresenceLocation = (
+  policy: OrganizationAccessPolicy | undefined,
+): boolean =>
+  canReadPresence(policy) &&
+  Boolean(
+    policy &&
+    (policy.owner ||
+      policy.permissions.includes(Permission.ADMIN) ||
+      policy.permissions.includes(Permission.LOOTLOG_PRESENCE_LOCATION_READ)),
+  );
+
+export const filterPresenceByPolicy = (
+  players: PlayerPresenceResponse,
+  policy: OrganizationAccessPolicy | undefined,
+): PlayerPresenceResponse => {
+  if (!canReadPresence(policy)) return {};
+  if (canReadPresenceLocation(policy)) return players;
+  return Object.fromEntries(
+    Object.entries(players).map(([id, presences]) => [
+      id,
+      presences.map(({ mapName: _mapName, ...presence }) => {
+        if (!presence.player) return presence;
+        const { location: _location, ...player } = presence.player;
+        return { ...presence, player };
+      }),
+    ]),
+  );
 };
