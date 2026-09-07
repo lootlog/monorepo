@@ -1,6 +1,6 @@
 import { and, eq, inArray, isNotNull, isNull, lt, or } from "drizzle-orm";
 import { Clock, Effect } from "effect";
-import type { APIGuild } from "discord-api-types/v10";
+import type { RESTAPIPartialCurrentUserGuild } from "discord-api-types/v10";
 import type { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -43,7 +43,7 @@ export interface UserGuildListPorts {
   }) => Effect.Effect<unknown, unknown>;
   readonly freshDiscordGuilds: (
     identity: AuthenticatedIdentity,
-  ) => Effect.Effect<ReadonlyArray<APIGuild>, unknown>;
+  ) => Effect.Effect<ReadonlyArray<RESTAPIPartialCurrentUserGuild>, unknown>;
   readonly getCache: (key: string) => Effect.Effect<string | null, unknown>;
   readonly setCache: (
     key: string,

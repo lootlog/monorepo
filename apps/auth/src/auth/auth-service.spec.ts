@@ -8,13 +8,6 @@ import {
   normalizeScopes,
 } from "./auth-service.js";
 import type { LootlogAuth } from "#src/auth/provider/better-auth";
-import { issueRealtimeTicket } from "#src/auth/realtime/realtime-ticket";
-
-const realtimeTicketRedis = {
-  set: () => Promise.resolve("OK"),
-  getdel: () => Promise.resolve(null),
-};
-
 const findDiscordAccountId = () => Effect.succeed("account-row-1");
 
 const createFakeAuth = () => {
@@ -51,7 +44,6 @@ describe("AuthService", () => {
       auth,
       appUrl: "http://localhost:3000",
       findDiscordAccountId,
-      realtimeTicketRedis,
     });
 
     await expect(
@@ -74,7 +66,6 @@ describe("AuthService", () => {
       auth,
       appUrl: "http://localhost:3000",
       findDiscordAccountId,
-      realtimeTicketRedis,
     });
 
     await expect(
@@ -103,7 +94,6 @@ describe("AuthService", () => {
       auth,
       appUrl: issuer,
       findDiscordAccountId,
-      realtimeTicketRedis,
     });
 
     await expect(
@@ -114,46 +104,6 @@ describe("AuthService", () => {
         }),
       ),
     ).resolves.toEqual({ userId: "user-2", discordId: "discord-2" });
-  });
-
-  it("consumes websocket tickets once and never falls back to ordinary bearer verification", async () => {
-    const values = new Map<string, string>();
-    const ticketRedis = {
-      set: (key: string, value: string) => {
-        values.set(key, value);
-        return Promise.resolve("OK");
-      },
-      getdel: (key: string) => {
-        const value = values.get(key) ?? null;
-        values.delete(key);
-        return Promise.resolve(value);
-      },
-    };
-    const { auth, getJwks } = createFakeAuth();
-    const { ticket } = await issueRealtimeTicket(
-      ticketRedis,
-      { userId: "user-1", discordId: "discord-1" },
-      "https://classic.margonem.pl",
-    );
-    const service = createAuthService({
-      auth,
-      appUrl: "http://localhost:3000",
-      findDiscordAccountId,
-      realtimeTicketRedis: ticketRedis,
-    });
-    const request = {
-      headers: new Headers(),
-      authorizationHeader: `Bearer ${ticket}`,
-      credentialPurpose: "websocket-ticket",
-      websocketOrigin: "https://classic.margonem.pl",
-    } as const;
-    await expect(
-      Effect.runPromise(service.verifyRequestIdentity(request)),
-    ).resolves.toEqual({ userId: "user-1", discordId: "discord-1" });
-    await expect(
-      Effect.runPromise(service.verifyRequestIdentity(request)),
-    ).rejects.toMatchObject({ status: 401 });
-    expect(getJwks).not.toHaveBeenCalled();
   });
 
   it("returns provider token scopes and remaining lifetime", async () => {
@@ -167,7 +117,6 @@ describe("AuthService", () => {
       auth,
       appUrl: "http://localhost:3000",
       findDiscordAccountId,
-      realtimeTicketRedis,
     });
 
     const response = await Effect.runPromise(
@@ -194,7 +143,6 @@ describe("AuthService", () => {
       auth,
       appUrl: "http://localhost:3000",
       findDiscordAccountId,
-      realtimeTicketRedis,
     });
 
     getAccessToken.mockResolvedValue({
@@ -244,7 +192,6 @@ describe("AuthService", () => {
       auth,
       appUrl: "http://localhost:3000",
       findDiscordAccountId,
-      realtimeTicketRedis,
     });
 
     await expect(

@@ -8,7 +8,6 @@ import {
   GATEWAY_URL,
   GatewayEvent,
 } from "@/config/gateway";
-import { authControllerIssueRealtimeTicket } from "@lootlog/client/auth";
 import {
   REALTIME_SUBPROTOCOL,
   REALTIME_JSON_SUBPROTOCOL,
@@ -86,8 +85,6 @@ export class GatewayClient {
       REALTIME_FEED_CAPABILITY,
     ],
     frameEncoding: this.readable ? "json" : "messagepack",
-    ticketProvider: async () =>
-      (await authControllerIssueRealtimeTicket()).ticket,
   });
   private readonly listeners = new RealtimeEventListeners<GatewayEvent>();
   private wasConnected = false;

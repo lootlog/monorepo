@@ -9,8 +9,6 @@ preserveOpenApi30Contract(
   {},
   {
     "HealthzController_healthCheck:200": "Auth service is healthy",
-    "AuthController_issueRealtimeTicket:201":
-      "Short-lived single-use websocket ticket",
   },
 );
 await Bun.write(

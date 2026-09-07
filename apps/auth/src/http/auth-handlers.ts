@@ -2,7 +2,6 @@ import { Effect, Layer, Schema } from "effect";
 import { HttpServerRequest, HttpServerResponse } from "effect/unstable/http";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { AuthService, HttpResponseError } from "#src/auth/auth-service";
-import { FirefoxExtensionOrigin } from "@lootlog/schema/browser-extension";
 import { AuthApi } from "#src/http-api/auth-api";
 
 const NonEmptyTrimmedString = Schema.Trim.check(Schema.isMinLength(1));
@@ -46,27 +45,9 @@ const verify = Effect.fn("AuthController_verify")(function* () {
     authorizationHeader: headers.get("authorization") ?? undefined,
     authDiscordId: headers.get("x-auth-discord-id") ?? undefined,
     authUserId: headers.get("x-auth-user-id") ?? undefined,
-    credentialPurpose: headers.get("x-lootlog-credential-purpose") ?? undefined,
-    websocketOrigin: headers.get("x-lootlog-websocket-origin") ?? undefined,
   });
   return { identity, body: { status: "OK" as const } };
 });
-
-const issueRealtimeTicket = Effect.fn("AuthController_issueRealtimeTicket")(
-  function* () {
-    const auth = yield* AuthService;
-    const headers = yield* requestHeaders;
-    const origin = headers.get("origin");
-    const extensionOrigin = headers.get("x-lootlog-extension-origin");
-    // Firefox may omit Origin on privileged background fetches. This hint only
-    // binds the ticket; the session authenticates it and the socket must match.
-    let ticketOrigin = origin === "null" ? undefined : origin;
-    if (!ticketOrigin && Schema.is(FirefoxExtensionOrigin)(extensionOrigin)) {
-      ticketOrigin = extensionOrigin;
-    }
-    return yield* auth.createRealtimeTicket(headers, ticketOrigin ?? undefined);
-  },
-);
 
 const getScopes = Effect.fn("AuthController_getScopes")(function* () {
   const auth = yield* AuthService;
@@ -106,14 +87,6 @@ export const AuthHandlers = Layer.merge(
               "X-Auth-Discord-Id": identity.discordId,
               "X-Auth-User-Id": identity.userId,
             },
-          }),
-        ),
-      )
-      .handleRaw("AuthControllerIssueRealtimeTicket", () =>
-        toHttpResponse(issueRealtimeTicket(), (ticket) =>
-          HttpServerResponse.jsonUnsafe(ticket, {
-            status: 201,
-            headers: { "cache-control": "no-store" },
           }),
         ),
       )

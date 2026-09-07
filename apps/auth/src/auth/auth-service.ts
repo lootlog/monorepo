@@ -14,18 +14,11 @@ import {
 import { AppConfig } from "#src/config/env";
 import { AuthDatabase } from "#src/database/drizzle";
 import { authAccounts } from "#src/database/drizzle.schema";
-import { AuthRedisStorage } from "#src/auth/storage/auth-redis-storage";
 import {
   BetterAuthRuntime,
   type AppUserSession,
   type LootlogAuth,
 } from "#src/auth/provider/better-auth";
-import {
-  consumeRealtimeTicket,
-  issueRealtimeTicket,
-  type RealtimeTicketRedis,
-} from "#src/auth/realtime/realtime-ticket";
-
 export interface VerifiedIdentity {
   readonly userId: string;
   readonly discordId: string;
@@ -106,14 +99,12 @@ export const createAuthService = ({
   auth,
   appUrl,
   findDiscordAccountId,
-  realtimeTicketRedis,
 }: {
   readonly auth: LootlogAuth;
   readonly appUrl: string;
   readonly findDiscordAccountId: (
     request: AccessTokenRequest,
   ) => Effect.Effect<string | null, unknown>;
-  readonly realtimeTicketRedis: RealtimeTicketRedis;
 }) => {
   const getSession = Effect.fn("AuthService.getSession")((headers: Headers) =>
     Effect.tryPromise({
@@ -187,30 +178,14 @@ export const createAuthService = ({
       authorizationHeader,
       authDiscordId,
       authUserId,
-      credentialPurpose,
-      websocketOrigin,
     }: {
       readonly headers: Headers;
       readonly authorizationHeader?: string;
       readonly authDiscordId?: string;
       readonly authUserId?: string;
-      readonly credentialPurpose?: string;
-      readonly websocketOrigin?: string;
     }) {
       if (authDiscordId || authUserId) {
         return yield* unauthorized();
-      }
-
-      if (credentialPurpose === "websocket-ticket") {
-        const ticket = authorizationHeader?.replace(/^Bearer\s+/i, "");
-        if (!ticket || !websocketOrigin) return yield* unauthorized();
-        const identity = yield* Effect.tryPromise({
-          try: () =>
-            consumeRealtimeTicket(realtimeTicketRedis, ticket, websocketOrigin),
-          catch: () => unauthorized(),
-        });
-        if (!identity) return yield* unauthorized();
-        return identity;
       }
 
       const session = yield* getSession(headers);
@@ -258,26 +233,6 @@ export const createAuthService = ({
       }
 
       return session;
-    },
-  );
-
-  const createRealtimeTicket = Effect.fn("AuthService.createRealtimeTicket")(
-    function* (headers: Headers, origin: string | undefined) {
-      if (!origin) return yield* unauthorized();
-      const session = yield* getRequiredSession(headers);
-      return yield* Effect.tryPromise({
-        try: () =>
-          issueRealtimeTicket(
-            realtimeTicketRedis,
-            { userId: session.user.id, discordId: session.user.discordId },
-            origin,
-          ),
-        catch: () =>
-          new HttpResponseError({
-            status: 503,
-            body: { message: "Realtime ticket service unavailable" },
-          }),
-      });
     },
   );
 
@@ -395,7 +350,6 @@ export const createAuthService = ({
 
   return {
     buildVerifiedIdentityFromRequest,
-    createRealtimeTicket,
     getCurrentUserScopes,
     getIdpTokenResponse,
     verifyRequestIdentity,
@@ -412,7 +366,6 @@ export class AuthService extends Context.Service<
       const auth = yield* BetterAuthRuntime;
       const config = yield* AppConfig;
       const database = yield* AuthDatabase;
-      const redis = yield* AuthRedisStorage;
 
       return AuthService.of(
         createAuthService({
@@ -431,7 +384,6 @@ export class AuthService extends Context.Service<
               )
               .limit(1)
               .pipe(Effect.map((rows) => rows[0]?.id ?? null)),
-          realtimeTicketRedis: redis.client,
         }),
       );
     }),

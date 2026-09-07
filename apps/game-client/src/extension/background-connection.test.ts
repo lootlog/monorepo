@@ -7,7 +7,7 @@ import {
   decodeRealtimeFrame,
   encodeRealtimeFrame,
 } from "@lootlog/protocol/realtime/codec";
-import { API_URL, AUTH_API_URL } from "@/config/api";
+import { API_URL } from "@/config/api";
 import { createBackgroundConnection } from "./background-connection";
 import {
   decodeMessage,
@@ -73,7 +73,6 @@ function setup() {
   const realtime = new RealtimeClient({
     url: "https://gateway.lootlog.pl",
     webSocketFactory: factory,
-    ticketProvider: () => Promise.resolve("private-ticket"),
   });
   const messages: ReturnType<typeof ExtensionMessageSchema.parse>[] = [];
   const connection = createBackgroundConnection(realtime, (raw) =>
@@ -91,7 +90,7 @@ function setup() {
 }
 
 describe("background connection", () => {
-  it("keeps the ticket in the socket handshake and handles validated join and presence commands", async () => {
+  it("handles validated join and presence commands with a cookie-authenticated handshake", async () => {
     const bridge = setup();
     await bridge.receive({ type: "connect", id: "connect" });
     await vi.waitFor(() => expect(bridge.factory).toHaveBeenCalledOnce());
@@ -127,9 +126,9 @@ describe("background connection", () => {
       data: { presences: [] },
     });
     expect(bridge.messages).toContainEqual({ type: "state", state: "ready" });
-    expect(JSON.stringify(bridge.messages)).not.toContain("private-ticket");
-    expect(JSON.stringify(bridge.factory.mock.calls)).toContain(
-      "lootlog.ticket.v1.",
+    expect(bridge.factory).toHaveBeenCalledWith(
+      "wss://gateway.lootlog.pl/ws",
+      undefined,
     );
     expect(
       bridge.socket.sent.map((frame) => decodeRealtimeFrame(frame)),
@@ -168,24 +167,6 @@ describe("background connection", () => {
       expect(bridge.socket.sent).toHaveLength(0);
     },
   );
-
-  it("denies page access to the realtime ticket endpoint", async () => {
-    const bridge = setup();
-    const fetcher = vi.spyOn(globalThis, "fetch");
-    await bridge.receive({
-      type: "http",
-      id: "ticket",
-      request: {
-        url: `${AUTH_API_URL}/auth/realtime-ticket`,
-        method: "POST",
-        headers: {},
-      },
-    });
-    expect(fetcher).not.toHaveBeenCalled();
-    expect(bridge.messages).toContainEqual(
-      expect.objectContaining({ type: "error", id: "ticket" }),
-    );
-  });
 
   it("aborts HTTP when its document disconnects and suppresses stale responses", async () => {
     const bridge = setup();

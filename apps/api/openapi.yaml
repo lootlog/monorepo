@@ -544,7 +544,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/GuildResponseDto"
+                  $ref: "#/components/schemas/ManageableOrganizationResponse"
       description: Retrieve guilds where the authenticated user has Discord administrator permissions
       summary: Get manageable user guilds
   /guilds/{guildId}:
@@ -9306,7 +9306,7 @@ components:
         - guild
         - roles
       additionalProperties: false
-    GuildResponseDto:
+    ManageableOrganizationResponse:
       type: object
       properties:
         id:
@@ -9316,33 +9316,9 @@ components:
         icon:
           nullable: true
           type: string
-        vanityUrl:
-          nullable: true
-          type: string
-        ownerId:
-          type: string
-        publicStatsCardEnabled:
-          type: boolean
-        reservationMaxDurationMinutes:
-          type: number
-        reservationMinDurationMinutes:
-          type: number
-        reservationTimeGranularityMinutes:
-          type: number
-        reservationMaxAdvanceDays:
-          type: number
-        reservationActiveLimitPerSpot:
-          type: number
       required:
         - id
         - name
-        - ownerId
-        - publicStatsCardEnabled
-        - reservationMaxDurationMinutes
-        - reservationMinDurationMinutes
-        - reservationTimeGranularityMinutes
-        - reservationMaxAdvanceDays
-        - reservationActiveLimitPerSpot
       additionalProperties: false
     GuildResponseDto_Output:
       type: object
