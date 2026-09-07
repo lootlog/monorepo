@@ -32,7 +32,7 @@ const decodeCounts = Schema.decodeUnknownSync(
   Schema.Tuple([Schema.Number, Schema.Number, Schema.Number]),
 );
 const observedAt = Metric.gauge("lootlog_gateway_cluster_observed_at_seconds", {
-  attributes: { unit: "" },
+  attributes: { unit: "s" },
 });
 const connections = Metric.gauge("lootlog_gateway_cluster_connections", {
   attributes: { unit: "" },

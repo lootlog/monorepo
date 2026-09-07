@@ -209,6 +209,62 @@ describe("observability contract", () => {
     expect(JSON.stringify(entries[1]?.details)).toContain("connection refused");
   });
 
+  test("isolates concurrent Promise logs and restores nested and absent spans", async () => {
+    const expected = new Map<string, { traceId: string; spanId: string }>();
+    const logFromPromise = (message: string) =>
+      Effect.gen(function* () {
+        const span = yield* Effect.currentSpan;
+        expected.set(message, { traceId: span.traceId, spanId: span.spanId });
+        yield* Effect.promise(async () => {
+          await new Promise<void>((resolve) => setImmediate(resolve));
+          await Effect.runPromise(
+            Fiber.join(runLogEffect(Effect.logInfo(message))),
+          );
+        });
+      });
+    await Effect.runPromise(
+      Effect.gen(function* () {
+        yield* installScopedLogRunner;
+        yield* Effect.forEach(
+          ["first", "second"],
+          (name) =>
+            Effect.gen(function* () {
+              yield* logFromPromise(`${name}-parent-before`);
+              yield* logFromPromise(`${name}-child`).pipe(
+                Effect.withSpan("child"),
+              );
+              yield* logFromPromise(`${name}-parent-after`);
+            }).pipe(Effect.withSpan(name)),
+          { concurrency: "unbounded" },
+        );
+        yield* Effect.promise(async () => {
+          await new Promise<void>((resolve) => setImmediate(resolve));
+          await Effect.runPromise(
+            Fiber.join(runLogEffect(Effect.logInfo("untraced"))),
+          );
+        });
+      }).pipe(Effect.scoped, Effect.provide(observability({}))),
+    );
+    const entries = logOutput.mock.calls.map(([line]) => decodeLog(line));
+    expect(entries).toHaveLength(7);
+    for (const entry of entries) {
+      const span = expected.get(entry.message);
+      expect(entry.trace_id).toBe(span?.traceId);
+      expect(entry.span_id).toBe(span?.spanId);
+    }
+    for (const name of ["first", "second"]) {
+      expect(expected.get(`${name}-parent-before`)).toEqual(
+        expected.get(`${name}-parent-after`),
+      );
+      expect(expected.get(`${name}-child`)?.spanId).not.toBe(
+        expected.get(`${name}-parent-before`)?.spanId,
+      );
+    }
+    expect(expected.get("first-child")?.traceId).not.toBe(
+      expected.get("second-child")?.traceId,
+    );
+  });
+
   test("HTTP propagates incoming trace context and logs correlate with exported spans", async () => {
     logOutput.mockImplementation(() => {});
     const payloads: unknown[] = [];

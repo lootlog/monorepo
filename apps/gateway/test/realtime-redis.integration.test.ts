@@ -222,7 +222,7 @@ describe("realtime Dragonfly integration", () => {
       });
       const observed = Metric.gauge(
         "lootlog_gateway_cluster_observed_at_seconds",
-        { attributes: { unit: "" } },
+        { attributes: { unit: "s" } },
       );
       const lastSuccess = Effect.runSync(Metric.value(observed)).value;
       await store.command.del("realtime:metrics:instances:v1");
