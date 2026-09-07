@@ -24,6 +24,8 @@ Traces retain HTTP method, route and status, but omit full URLs, query strings
 and HTTP request/response headers. Trace propagation still uses the incoming
 context. Application log messages must never contain credentials or private
 payloads; the JSON formatter preserves their content and error details.
+The Better Auth adapter omits arbitrary detail arguments because they can contain
+OAuth input and database parameters; its message, level and context remain.
 
 Idle processes emit `lootlog.service.up`, RSS and heap usage. CPU utilization
 is process CPU time divided by elapsed time; one core is 1. Event-loop delay

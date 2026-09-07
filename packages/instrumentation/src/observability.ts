@@ -37,6 +37,10 @@ const sampledTracer = Layer.effect(
         return span;
       },
       context(primitive, fiber) {
+        // Promise continuations already inherit this span; only switch on a
+        // mismatch, including clearing a span when an untraced fiber resumes.
+        if (logSpanContext.getStore() === fiber.currentSpan)
+          return primitive["~effect/Effect/evaluate"](fiber);
         return logSpanContext.run(fiber.currentSpan, () =>
           primitive["~effect/Effect/evaluate"](fiber),
         );
