@@ -1,5 +1,8 @@
 import { BunHttpServer } from "@effect/platform-bun";
-import { httpServerMetrics } from "@lootlog/instrumentation";
+import {
+  httpServerMetrics,
+  httpServerRouteMetrics,
+} from "@lootlog/instrumentation";
 import { Cause, Effect, Layer, Option, Schema, SchemaIssue } from "effect";
 import {
   HttpRouter,
@@ -466,6 +469,7 @@ export const BattlelogHttpServer = Layer.unwrap(
   Effect.map(BattlelogApplication, (application) =>
     HttpRouter.serve(
       BattlelogRoutes.pipe(
+        Layer.provide(httpServerRouteMetrics),
         HttpRouter.provideRequest(
           Layer.succeed(BattlelogApplication, application),
         ),
@@ -486,6 +490,7 @@ export const makeBattlelogTestBoundary = (
 ) => {
   const boundary = HttpRouter.toWebHandler(
     BattlelogRoutes.pipe(
+      Layer.provide(httpServerRouteMetrics),
       HttpRouter.provideRequest(
         Layer.succeed(
           BattlelogApplication,

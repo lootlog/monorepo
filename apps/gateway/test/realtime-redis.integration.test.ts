@@ -6,6 +6,7 @@ import {
   Effect,
   Fiber,
   ManagedRuntime,
+  Metric,
   Queue,
   Redacted,
   Schedule,
@@ -18,6 +19,8 @@ import {
 } from "testcontainers";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 import { RedisGatewayStore } from "#src/platform/redis-store";
+import { GatewayMetrics } from "#src/realtime/gateway-metrics";
+import { PRESENCE_EXPIRY_MS } from "@lootlog/protocol/realtime";
 import { OnlineHistory } from "#src/realtime/online-history";
 import type { UserOnlineEventV1 } from "@lootlog/protocol/rabbit/events";
 import { AirTagService } from "#src/realtime/air-tag-service";
@@ -27,6 +30,30 @@ import type { GatewaySocket, SessionData } from "#src/realtime/session";
 
 let dragonfly: StartedTestContainer;
 let redisPort: number;
+
+const makeConfiguration = () =>
+  ({
+    environment: "test",
+    port: 0,
+    serviceName: "gateway",
+    serviceNamespace: "test",
+    apiUrl: "http://localhost",
+    margonemSigningKeyUrl: "http://localhost/key",
+    rabbitmqUri: Redacted.make("unused"),
+    activityEventSignatureSecret: Redacted.make("test"),
+    websocketPath: "/ws",
+    allowedWebOrigins: new Set<string>(),
+    allowedExtensionOrigins: new Set<string>(),
+    redis: {
+      host: dragonfly.getHost(),
+      port: redisPort,
+      username: "",
+      password: Redacted.make(""),
+      keyPrefix: "lootlog-realtime-integration:test",
+    },
+    maxBackpressureBytes: 1_048_576,
+    maxBackpressureStrikes: 3,
+  }) satisfies GatewayConfiguration;
 
 const guilds = ["organization-1", "organization-2"].map((id) => ({
   guild: { id, ownerId: "owner" },
@@ -116,6 +143,109 @@ describe("realtime Dragonfly integration", () => {
 
   afterAll(async () => {
     await dragonfly?.stop();
+  });
+
+  test("gateway metrics deduplicate players across replicas and expire abandoned replicas", async () => {
+    const runtime = ManagedRuntime.make(
+      BunRedis.layer({ url: `redis://${dragonfly.getHost()}:${redisPort}` }),
+    );
+    try {
+      const redis = await runtime.runPromise(Redis.Redis);
+      const store = new RedisGatewayStore(
+        redis,
+        {
+          host: dragonfly.getHost(),
+          port: redisPort,
+          username: "",
+          password: "",
+          keyPrefix: `metrics-test:${crypto.randomUUID()}`,
+        },
+        (effect) => runtime.runPromise(effect),
+        () => {},
+      );
+      let now = Date.now();
+      const first = makeSocket("metrics-first").socket;
+      const duplicate = makeSocket("metrics-duplicate").socket;
+      duplicate.data.presence = first.data.presence;
+      const second = makeSocket("metrics-second").socket;
+      const web = makeSocket("metrics-web").socket;
+      const webSession = { ...web.data, platform: "web-app" as const };
+      Object.assign(web, { data: webSession });
+      now = Date.now();
+      const firstHub = new RealtimeHub(makeConfiguration(), store);
+      const secondHub = new RealtimeHub(makeConfiguration(), store);
+      firstHub.register(first);
+      firstHub.register(web);
+      secondHub.register(duplicate);
+      secondHub.register(second);
+      const replicaA = new GatewayMetrics(store.command, firstHub, () => now);
+      const replicaB = new GatewayMetrics(store.command, secondHub, () => now);
+      await Effect.runPromise(replicaA.sample());
+      expect(await Effect.runPromise(replicaB.sample())).toEqual({
+        connections: 4,
+        gameSessions: 3,
+        uniquePlayers: 2,
+      });
+      firstHub.unregister(first);
+      expect(await Effect.runPromise(replicaA.sample())).toEqual({
+        connections: 3,
+        gameSessions: 2,
+        uniquePlayers: 2,
+      });
+      // Simulate an abandoned replica using Redis time, without waiting for the lease.
+      await store.command.eval(
+        `
+        local value = cjson.decode(redis.call('HGET', KEYS[1], ARGV[1]))
+        value.at = value.at - 30000
+        redis.call('HSET', KEYS[1], ARGV[1], cjson.encode(value))
+        return 1
+      `,
+        1,
+        "realtime:metrics:instances:v1",
+        secondHub.instanceId,
+      );
+      expect(await Effect.runPromise(replicaA.sample())).toEqual({
+        connections: 1,
+        gameSessions: 0,
+        uniquePlayers: 0,
+      });
+      expect(await Effect.runPromise(replicaB.sample())).toEqual({
+        connections: 3,
+        gameSessions: 2,
+        uniquePlayers: 2,
+      });
+      now += PRESENCE_EXPIRY_MS;
+      expect(await Effect.runPromise(replicaB.sample())).toEqual({
+        connections: 3,
+        gameSessions: 0,
+        uniquePlayers: 0,
+      });
+      const observed = Metric.gauge(
+        "lootlog_gateway_cluster_observed_at_seconds",
+        { attributes: { unit: "" } },
+      );
+      const lastSuccess = Effect.runSync(Metric.value(observed)).value;
+      await store.command.del("realtime:metrics:instances:v1");
+      await store.command.set(
+        "realtime:metrics:instances:v1",
+        "invalid Redis type",
+      );
+      now += 10_000;
+      const result = await Effect.runPromise(Effect.exit(replicaB.sample()));
+      expect(result._tag).toBe("Failure");
+      expect(Effect.runSync(Metric.value(observed)).value).toBe(lastSuccess);
+      expect(
+        Effect.runSync(
+          Metric.value(
+            Metric.gauge("lootlog_gateway_cluster_connections", {
+              attributes: { unit: "" },
+            }),
+          ),
+        ).value,
+      ).toBe(3);
+    } finally {
+      await runtime.dispose();
+    }
   });
 
   test("online history survives publisher restart without counting gaps or web sessions", async () => {
@@ -535,28 +665,7 @@ describe("realtime Dragonfly integration", () => {
   });
 
   test("Dragonfly federates two Gateway instances and preserves map/air contracts", async () => {
-    const configuration = {
-      environment: "test",
-      port: 0,
-      serviceName: "gateway",
-      serviceNamespace: "test",
-      apiUrl: "http://localhost",
-      margonemSigningKeyUrl: "http://localhost/key",
-      rabbitmqUri: Redacted.make("unused"),
-      activityEventSignatureSecret: Redacted.make("test"),
-      websocketPath: "/ws",
-      allowedWebOrigins: new Set<string>(),
-      allowedExtensionOrigins: new Set<string>(),
-      redis: {
-        host: dragonfly.getHost(),
-        port: redisPort,
-        username: "",
-        password: Redacted.make(""),
-        keyPrefix: "lootlog-realtime-integration:test",
-      },
-      maxBackpressureBytes: 1_048_576,
-      maxBackpressureStrikes: 3,
-    } satisfies GatewayConfiguration;
+    const configuration = makeConfiguration();
     const firstRuntime = ManagedRuntime.make(
       BunRedis.layer({ url: `redis://127.0.0.1:${redisPort}` }),
     );

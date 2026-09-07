@@ -1,8 +1,7 @@
 import { BunRuntime } from "@effect/platform-bun";
 import { installScopedLogRunner } from "@lootlog/instrumentation";
 import { Effect, Layer } from "effect";
-import { FetchHttpClient } from "effect/unstable/http";
-import { Otlp, OtlpSerialization } from "effect/unstable/observability";
+import { makeObservabilityLayer } from "@lootlog/instrumentation/observability";
 import {
   AuthRedisStorage,
   createAuthRedisConnection,
@@ -13,27 +12,8 @@ import { AppConfig } from "#src/config/env";
 import { AuthDatabaseLive } from "#src/database/drizzle";
 import { AuthHttpServer } from "#src/http/server";
 
-const ObservabilityLive = Layer.unwrap(
-  Effect.gen(function* () {
-    const config = yield* AppConfig;
-    const resource = {
-      serviceName: config.serviceName,
-      serviceVersion: config.commitSha,
-      attributes: {
-        "deployment.environment.name": config.environment,
-        "service.namespace": config.serviceNamespace,
-      },
-    };
-
-    return Otlp.layerFromConfig({
-      resource,
-      loggerMergeWithExisting: true,
-    });
-  }),
-).pipe(
+const ObservabilityLive = makeObservabilityLayer(AppConfig).pipe(
   Layer.provide(AppConfig.layer),
-  Layer.provide(OtlpSerialization.layerJson),
-  Layer.provide(FetchHttpClient.layer),
 );
 
 const InfrastructureLive = Layer.merge(
