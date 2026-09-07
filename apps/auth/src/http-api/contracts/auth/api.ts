@@ -2,15 +2,12 @@
 import {
   HttpApiEndpoint,
   HttpApiGroup,
-  HttpApiSchema,
   OpenApi,
 } from "effect/unstable/httpapi";
 import {
   AuthControllerGetIdpToken200,
   AuthControllerGetIdpTokenRequestJson,
   AuthControllerGetScopes200,
-  AuthControllerIssueRealtimeTicket201,
-  AuthControllerIssueRealtimeTicketHeaders,
   AuthControllerVerify200,
   AuthControllerVerifyHeaders,
 } from "./schemas.js";
@@ -22,18 +19,6 @@ export class AuthGroup extends HttpApiGroup.make("auth").add(
   })
     .annotate(OpenApi.Identifier, "AuthController_verify")
     .annotate(OpenApi.Summary, "Verify request identity"),
-  HttpApiEndpoint.post(
-    "AuthControllerIssueRealtimeTicket",
-    "/auth/realtime-ticket",
-    {
-      headers: AuthControllerIssueRealtimeTicketHeaders,
-      success: AuthControllerIssueRealtimeTicket201.pipe(
-        HttpApiSchema.status(201),
-      ),
-    },
-  )
-    .annotate(OpenApi.Identifier, "AuthController_issueRealtimeTicket")
-    .annotate(OpenApi.Summary, "Issue a single-use realtime ticket"),
   HttpApiEndpoint.get("AuthControllerGetScopes", "/auth/@me/scopes", {
     success: AuthControllerGetScopes200,
   })

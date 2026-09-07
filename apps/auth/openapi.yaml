@@ -36,18 +36,6 @@ paths:
           schema:
             type: string
           required: false
-        - name: x-lootlog-credential-purpose
-          in: header
-          schema:
-            type: string
-            enum:
-              - websocket-ticket
-          required: false
-        - name: x-lootlog-websocket-origin
-          in: header
-          schema:
-            type: string
-          required: false
       responses:
         "200":
           description: ""
@@ -63,38 +51,6 @@ paths:
                 required:
                   - status
       summary: Verify request identity
-  /auth/realtime-ticket:
-    post:
-      tags:
-        - auth
-      operationId: AuthController_issueRealtimeTicket
-      parameters:
-        - name: origin
-          in: header
-          schema:
-            type: string
-          required: false
-        - name: x-lootlog-extension-origin
-          in: header
-          schema:
-            type: string
-          required: false
-      responses:
-        "201":
-          description: Short-lived single-use websocket ticket
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  ticket:
-                    type: string
-                  expiresAt:
-                    type: number
-                required:
-                  - ticket
-                  - expiresAt
-      summary: Issue a single-use realtime ticket
   /auth/@me/scopes:
     get:
       tags:

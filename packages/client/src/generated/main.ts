@@ -1053,20 +1053,11 @@ export interface UserGuildPermissionsDtoOutput {
   roles: UserGuildPermissionsDtoOutputRolesItem[];
 }
 
-export interface GuildResponseDto {
+export interface ManageableOrganizationResponse {
   id: string;
   name: string;
   /** @nullable */
   icon?: string | null;
-  /** @nullable */
-  vanityUrl?: string | null;
-  ownerId: string;
-  publicStatsCardEnabled: boolean;
-  reservationMaxDurationMinutes: number;
-  reservationMinDurationMinutes: number;
-  reservationTimeGranularityMinutes: number;
-  reservationMaxAdvanceDays: number;
-  reservationActiveLimitPerSpot: number;
 }
 
 export interface GuildResponseDtoOutput {
@@ -13430,9 +13421,9 @@ export const getGuildsControllerGetManageableUserGuildsUrl = () => {
  * Retrieve guilds where the authenticated user has Discord administrator permissions
  * @summary Get manageable user guilds
  */
-export const guildsControllerGetManageableUserGuilds = async ( options?: Parameters<typeof mainFetch>[1]): Promise<GuildResponseDto[]> => {
+export const guildsControllerGetManageableUserGuilds = async ( options?: Parameters<typeof mainFetch>[1]): Promise<ManageableOrganizationResponse[]> => {
 
-  return mainFetch<GuildResponseDto[]>(getGuildsControllerGetManageableUserGuildsUrl(),
+  return mainFetch<ManageableOrganizationResponse[]>(getGuildsControllerGetManageableUserGuildsUrl(),
   {
     ...options,
     method: 'GET'

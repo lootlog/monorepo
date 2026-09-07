@@ -1,17 +1,20 @@
 import { describe, expect, test } from "bun:test";
 import { Effect } from "effect";
+import { makeGatewayAuth } from "../src/auth/auth-service.js";
+
 import {
   createGatewayFetch,
   type GatewayApplicationService,
 } from "../src/app.js";
 
+const auth = makeGatewayAuth({
+  allowedWebOrigins: new Set(["https://lootlog.example"]),
+  allowedExtensionOrigins: new Set(),
+});
 const application = {
   config: { websocketPath: "/ws" },
   runPromise: Effect.runPromise,
-  auth: {
-    isAllowedOrigin: () => false,
-    readCredential: () => null,
-  },
+  auth,
 } as unknown as GatewayApplicationService;
 
 const server = { upgrade: () => false };
@@ -34,6 +37,24 @@ describe("gateway HTTP boundary", () => {
     expect(response?.status).toBe(400);
   });
 
+  test.each([
+    { origin: "https://classic.margonem.pl", status: 401 },
+    { origin: "https://attacker.example", status: 403 },
+  ])("rejects unauthorized upgrades: %j", async ({ origin, status }) => {
+    let upgraded = false;
+    const response = await createGatewayFetch(application)(
+      new Request("https://gateway.example/ws", { headers: { origin } }),
+      {
+        upgrade: () => {
+          upgraded = true;
+          return true;
+        },
+      },
+    );
+    expect(response?.status).toBe(status);
+    expect(upgraded).toBe(false);
+  });
+
   test.each([false, true])(
     "negotiates feed opt-in (%s) while echoing only the wire protocol",
     async (supportsFeed) => {
@@ -46,29 +67,26 @@ describe("gateway HTTP boundary", () => {
       const authenticated = {
         config: { websocketPath: "/ws" },
         runPromise: Effect.runPromise,
-        auth: {
-          isAllowedOrigin: () => true,
-          readCredential: () => ({
-            kind: "one-time-ticket",
-            value: "ticket",
-            origin: "https://classic.margonem.pl",
-          }),
-          verify: () =>
-            Effect.succeed({ userId: "user-1", discordId: "discord-1" }),
-          getPlatform: () => "game",
-        },
+        auth,
       } as unknown as GatewayApplicationService;
       const request = new Request("https://gateway.example/ws", {
         headers: {
           origin: "https://classic.margonem.pl",
-          "sec-websocket-protocol": `lootlog.realtime.v1, lootlog.ticket.v1.c2VjcmV0${supportsFeed ? ", lootlog.feed.v1" : ""}`,
+          "x-auth-user-id": "user-1",
+          "x-auth-discord-id": "discord-1",
+          "sec-websocket-protocol": `lootlog.realtime.v1${supportsFeed ? ", lootlog.feed.v1" : ""}`,
         },
       });
-      await createGatewayFetch(authenticated)(request, {
+      const response = await createGatewayFetch(authenticated)(request, {
         upgrade: (_request, options) => {
           upgradeOptions = options;
           return true;
         },
+      });
+      expect(response).toBeUndefined();
+      expect(upgradeOptions?.data).toMatchObject({
+        userId: "user-1",
+        discordId: "discord-1",
       });
       expect(upgradeOptions?.data.supportsFeed).toBe(supportsFeed);
       expect(upgradeOptions?.headers).toEqual({
@@ -87,22 +105,13 @@ describe("gateway HTTP boundary", () => {
     const authenticated = {
       config: { websocketPath: "/ws", environment: "local" },
       runPromise: Effect.runPromise,
-      auth: {
-        isAllowedOrigin: () => true,
-        readCredential: () => ({
-          kind: "one-time-ticket",
-          value: "ticket",
-          origin: "https://classic.margonem.pl",
-        }),
-        verify: () =>
-          Effect.succeed({ userId: "user-1", discordId: "discord-1" }),
-        getPlatform: () => "game",
-      },
+      auth,
     } as unknown as GatewayApplicationService;
     const request = new Request("https://gateway.example/ws", {
       headers: {
         origin: "https://classic.margonem.pl",
-        "sec-websocket-protocol": "lootlog.ticket.v1.c2VjcmV0",
+        "x-auth-user-id": "user-1",
+        "x-auth-discord-id": "discord-1",
       },
     });
 
