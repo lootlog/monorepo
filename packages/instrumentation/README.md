@@ -35,3 +35,9 @@ Unsupported Node/V8 measurements are not emitted as zero.
 The infrastructure repository owns Grafana dashboards, exporter environment
 variables, alerts and `docs/runbooks/verify-observability.md`. Deploy and verify
 in dev before promoting the same immutable application artifacts to prod.
+
+Gateway `unique_players` counts distinct authenticated Discord accounts with
+active game presence across replicas. `game_sessions` counts their separate game
+connections with unexpired presence; multiple characters or browsers on one
+Discord account increase sessions but not players. Web-only connections do not
+increase either counter. `connections` includes all registered sockets.
