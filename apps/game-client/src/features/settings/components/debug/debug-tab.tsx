@@ -7,6 +7,8 @@ import { margonemRuntimeBridge } from "@/lib/margonem-runtime/margonem-runtime-b
 import { getRuntimeZoomFactor } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
 import { useOthersStore } from "@/store/others.store";
+import { useGameStore } from "@/store/game.store";
+import { createDebugLegendaryLootEvent } from "./debug-legendary-loot-event";
 import { usePartyStore } from "@/store/party.store";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import { useState, type FC } from "react";
@@ -308,6 +310,7 @@ export const DebugTab: FC = () => {
   );
   const [jsonError, setJsonError] = useState<string | null>(null);
   const [eventLog, setEventLog] = useState<LogEntry[]>([]);
+  const game = useGameStore((s) => s.game);
   const partyMembers = usePartyStore((s) => s.members);
   const othersById = useOthersStore((s) => s.othersById);
   const tooltipActiveOther = useCharacterTooltipCatchingGuildsStore(
@@ -400,6 +403,19 @@ export const DebugTab: FC = () => {
               {eventLabels[key as keyof typeof eventLabels]}
             </Button>
           ))}
+          <Button
+            disabled={!game}
+            onClick={() => {
+              if (!game) return;
+              triggerEvent(
+                createDebugLegendaryLootEvent(game),
+                t("settings.debug.events.lootLegendary"),
+              );
+            }}
+            className="ll:px-2"
+          >
+            {t("settings.debug.events.lootLegendary")}
+          </Button>
           <Button
             onClick={() =>
               triggerEvent(
