@@ -1,4 +1,3 @@
-import { PageHeader } from "@/components/common/page-header";
 import {
   BattleLog,
   BattleStatsTable,
@@ -471,9 +470,6 @@ export function BattleDetailView({
       onScroll={handleBattleScroll}
     >
       <div className="px-3 py-3 flex flex-col gap-4" style={layoutStyle}>
-        <PageHeader
-          title={t("battlePanel.navigation.battleFallback", { id: battleId })}
-        />
         {battle ? <BattleOverview battle={battle} /> : null}
 
         <div

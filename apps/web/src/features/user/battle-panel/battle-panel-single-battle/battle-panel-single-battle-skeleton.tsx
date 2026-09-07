@@ -1,4 +1,3 @@
-import { PageHeader } from "@/components/common/page-header";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { BattleTeamMemberSkeleton } from "./components/battle-team-member-skeleton";
 import { SectionCard } from "@/components/common/section-card/section-card";
@@ -23,7 +22,6 @@ export const BattlePanelSingleBattleSkeleton = () => {
   return (
     <ScrollArea className="h-full bg-background" aria-hidden="true">
       <div className="flex flex-col gap-4 px-3 py-3" style={layoutStyle}>
-        <PageHeader title={<Skeleton className="h-5 w-48" />} />
         <SectionCard className="w-full gap-0 overflow-hidden border-border bg-card p-0">
           <div className="bg-gradient-to-r from-green-400/10 via-transparent to-red-400/10 px-3 py-3">
             <div className="grid grid-cols-1 items-stretch gap-2 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-center">

@@ -49,9 +49,9 @@ export const StandaloneShell = ({ children }: StandaloneShellProps) => {
       }
     >
       <ScrollArea className="min-h-0 flex-1 [&>[data-slot=scroll-area-viewport]]:flex [&>[data-slot=scroll-area-viewport]]:flex-col">
-        <main className="flex min-h-full w-full shrink-0 items-center justify-center px-3 py-6 sm:px-6 sm:py-10">
+        <div className="flex min-h-full w-full shrink-0 items-center justify-center px-3 py-6 sm:px-6 sm:py-10">
           {children}
-        </main>
+        </div>
       </ScrollArea>
     </AppContentFrame>
   );

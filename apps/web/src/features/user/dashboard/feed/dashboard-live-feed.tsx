@@ -62,11 +62,8 @@ export function DashboardLiveFeed() {
             </Button>
             <Button
               size="icon"
-              variant={paused ? "default" : "destructive"}
-              className={cn(
-                "size-9",
-                paused && "bg-emerald-600 text-white hover:bg-emerald-700",
-              )}
+              variant="outline"
+              className="size-9"
               aria-label={t(
                 paused
                   ? "statistics.feedResumeAction"
