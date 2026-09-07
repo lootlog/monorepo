@@ -1,5 +1,14 @@
 import { describe, expect, test } from "bun:test";
-import { Effect } from "effect";
+import { httpServerRequestCount } from "@lootlog/instrumentation";
+import {
+  ConfigProvider,
+  Effect,
+  Layer,
+  ManagedRuntime,
+  Metric,
+  Schema,
+} from "effect";
+import { makeObservabilityLayer } from "@lootlog/instrumentation/observability";
 import { makeGatewayAuth } from "../src/auth/auth-service.js";
 
 import {
@@ -20,6 +29,192 @@ const application = {
 const server = { upgrade: () => false };
 
 describe("gateway HTTP boundary", () => {
+  test("exports gateway server spans with parent context, status and no credentials", async () => {
+    const payloads: unknown[] = [];
+    const collector = Bun.serve({
+      hostname: "127.0.0.1",
+      port: 0,
+      async fetch(request) {
+        payloads.push(await request.json());
+        return Response.json({});
+      },
+    });
+    const runtime = ManagedRuntime.make(
+      makeObservabilityLayer(
+        Effect.succeed({
+          serviceName: "gateway",
+          serviceNamespace: "test",
+          environment: "test",
+        }),
+      ).pipe(
+        Layer.provide(
+          ConfigProvider.layer(
+            ConfigProvider.fromEnvRecord({
+              OTEL_TRACES_EXPORTER: "otlp",
+              OTEL_METRICS_EXPORTER: "none",
+              OTEL_EXPORTER_OTLP_ENDPOINT: collector.url.toString(),
+            }),
+          ),
+        ),
+      ),
+    );
+    const tracedApplication = {
+      ...application,
+      runPromise: <A, E>(effect: Effect.Effect<A, E>) =>
+        runtime.runPromise(effect),
+    };
+    const fetch = createGatewayFetch(tracedApplication);
+    const traceparent =
+      "00-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-bbbbbbbbbbbbbbbb-01";
+    const authenticatedHeaders = {
+      traceparent,
+      origin: "https://classic.margonem.pl",
+      "x-auth-user-id": "user-1",
+      "x-auth-discord-id": "discord-1",
+    };
+    try {
+      expect(
+        await fetch(
+          new Request("https://gateway.example/ws", {
+            headers: authenticatedHeaders,
+          }),
+          { upgrade: () => true },
+        ),
+      ).toBeUndefined();
+      expect(
+        (
+          await fetch(
+            new Request("https://gateway.example/ws", {
+              headers: { traceparent, origin: "https://classic.margonem.pl" },
+            }),
+            server,
+          )
+        )?.status,
+      ).toBe(401);
+      expect(
+        (
+          await fetch(
+            new Request("https://gateway.example/ws?ticket=private-secret", {
+              headers: authenticatedHeaders,
+            }),
+            server,
+          )
+        )?.status,
+      ).toBe(400);
+      expect(
+        (
+          await fetch(
+            new Request("https://gateway.example/healthz", {
+              headers: authenticatedHeaders,
+            }),
+            server,
+          )
+        )?.status,
+      ).toBe(200);
+      const failure = new Error("Upgrade failed");
+      await expect(
+        fetch(
+          new Request("https://gateway.example/ws", {
+            headers: authenticatedHeaders,
+          }),
+          {
+            upgrade: () => {
+              throw failure;
+            },
+          },
+        ),
+      ).rejects.toBe(failure);
+    } finally {
+      await runtime.dispose();
+      await collector.stop(true);
+    }
+    const decode = Schema.decodeUnknownSync(
+      Schema.Struct({
+        resourceSpans: Schema.Array(
+          Schema.Struct({
+            scopeSpans: Schema.Array(
+              Schema.Struct({
+                spans: Schema.Array(
+                  Schema.Struct({
+                    traceId: Schema.String,
+                    parentSpanId: Schema.String,
+                    name: Schema.String,
+                    attributes: Schema.Array(
+                      Schema.Struct({
+                        key: Schema.String,
+                        value: Schema.Unknown,
+                      }),
+                    ),
+                  }),
+                ),
+              }),
+            ),
+          }),
+        ),
+      }),
+    );
+    const spans = payloads.flatMap((payload) =>
+      decode(payload).resourceSpans.flatMap((resource) =>
+        resource.scopeSpans.flatMap((scope) => scope.spans),
+      ),
+    );
+    expect(spans).toHaveLength(4);
+    for (const span of spans) {
+      expect(span).toMatchObject({
+        traceId: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        parentSpanId: "bbbbbbbbbbbbbbbb",
+        name: "http.server GET",
+      });
+      expect(span.attributes).toContainEqual({
+        key: "http.route",
+        value: { stringValue: "/ws" },
+      });
+    }
+    expect(
+      spans.map(
+        (span) =>
+          span.attributes.find(
+            (attribute) => attribute.key === "http.response.status_code",
+          )?.value,
+      ),
+    ).toEqual([
+      { intValue: 101 },
+      { intValue: 401 },
+      { intValue: 400 },
+      { intValue: 500 },
+    ]);
+    expect(JSON.stringify(payloads)).not.toContain("private-secret");
+    expect(JSON.stringify(payloads)).not.toContain("user-1");
+  });
+
+  test("records upgrade failures once and preserves the thrown error", async () => {
+    const counter = Metric.withAttributes(httpServerRequestCount, {
+      "http.request.method": "GET",
+      "http.response.status_code": "500",
+      "http.route": "/ws",
+    });
+    const before = await Effect.runPromise(Metric.value(counter));
+    const failure = new Error("Upgrade unavailable");
+    await expect(
+      createGatewayFetch(application)(
+        new Request("https://gateway.example/ws", {
+          headers: {
+            origin: "https://classic.margonem.pl",
+            "x-auth-user-id": "user-1",
+            "x-auth-discord-id": "discord-1",
+          },
+        }),
+        {
+          upgrade: () => {
+            throw failure;
+          },
+        },
+      ),
+    ).rejects.toBe(failure);
+    const after = await Effect.runPromise(Metric.value(counter));
+    expect(after.count - before.count).toBe(1);
+  });
+
   test("keeps the health contract independent from websocket auth", async () => {
     const response = await createGatewayFetch(application)(
       new Request("https://gateway.example/healthz"),

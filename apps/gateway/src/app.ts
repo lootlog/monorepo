@@ -1,3 +1,4 @@
+import { GatewayMetrics } from "#src/realtime/gateway-metrics";
 import { OnlineHistory } from "#src/realtime/online-history";
 import {
   ACTIVITY_EVENT_SIGNATURE_HEADER,
@@ -13,8 +14,8 @@ import {
   REALTIME_JSON_SUBPROTOCOL,
   REALTIME_SUBPROTOCOL,
 } from "@lootlog/protocol/realtime";
-import { Context, Effect, FiberSet, Layer, Redacted } from "effect";
-import { HttpClient } from "effect/unstable/http";
+import { Context, Effect, FiberSet, Layer, Option, Redacted } from "effect";
+import { Headers, HttpClient, HttpTraceContext } from "effect/unstable/http";
 import { Redis } from "effect/unstable/persistence";
 import { makeGatewayAuth, type GatewayAuth } from "#src/auth/auth-service";
 import { makeMargonemProofVerifier } from "#src/auth/margonem-proof";
@@ -93,6 +94,9 @@ export class GatewayApplication extends Context.Service<
       const auth = makeGatewayAuth(config);
       const hub = new RealtimeHub(config, redis, runBackground);
       yield* hub.start();
+      yield* new GatewayMetrics(redis.command, hub)
+        .run()
+        .pipe(Effect.forkScoped);
       const coverage = new CoveragePublisher(messaging);
       const onlineHistory = new OnlineHistory(redis.command, (payload) =>
         messaging
@@ -235,83 +239,108 @@ export const createGatewayFetch =
     activeServer: UpgradeServer,
   ): Promise<Response | undefined> => {
     const url = new URL(request.url);
-    const complete = async (
-      response: Response | undefined,
-      route?: string,
-    ): Promise<Response | undefined> => {
+    const startedAt = performance.now();
+    let status = 500;
+    const route = ["/healthz", application.config.websocketPath].includes(
+      url.pathname,
+    )
+      ? url.pathname
+      : undefined;
+    const complete = (response: Response | undefined) => {
+      status = response?.status ?? 101;
+      return response;
+    };
+    const handle = async () => {
+      if (url.pathname === "/healthz") {
+        return complete(await httpHandler(request));
+      }
+      if (url.pathname !== application.config.websocketPath) {
+        return complete(new Response("Not found", { status: 404 }));
+      }
+      if (hasCredentialQuery(url)) {
+        return complete(
+          new Response("Credentials are not accepted in the URL", {
+            status: 400,
+          }),
+        );
+      }
+      const origin = request.headers.get("origin");
+      if (!application.auth.isAllowedOrigin(origin)) {
+        return complete(new Response("Origin not allowed", { status: 403 }));
+      }
+      const identity = application.auth.readIdentity(request);
+      if (!identity)
+        return complete(new Response("Unauthorized", { status: 401 }));
+
+      const connectionId = crypto.randomUUID();
+      const offeredProtocols =
+        request.headers
+          .get("sec-websocket-protocol")
+          ?.split(",")
+          .map((protocol) => protocol.trim()) ?? [];
+      const frameEncoding =
+        application.config.environment === "local" ? "json" : undefined;
+      const upgraded = activeServer.upgrade(request, {
+        data: {
+          ...identity,
+          connectionId,
+          supportsFeed: offeredProtocols.includes(REALTIME_FEED_CAPABILITY),
+          supportsNotificationVolunteer: offeredProtocols.includes(
+            REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
+          ),
+          platform: application.auth.getPlatform(origin ?? ""),
+          userAgent: request.headers.get("user-agent") ?? undefined,
+          frameEncoding,
+          joined: false,
+          guilds: [],
+          subscriptions: new Map(),
+          airTagScopes: [],
+          confidence: "reported",
+          backpressureStrikes: 0,
+        },
+        headers: websocketResponseHeaders(request, frameEncoding),
+      });
+      return complete(
+        upgraded
+          ? undefined
+          : new Response("WebSocket upgrade failed", { status: 400 }),
+      );
+    };
+    try {
+      if (url.pathname === "/healthz") return await handle();
+      const result = await application.runPromise(
+        Effect.tryPromise({ try: handle, catch: (cause) => cause }).pipe(
+          Effect.onExit(() =>
+            Effect.annotateCurrentSpan("http.response.status_code", status),
+          ),
+          Effect.withSpan(`http.server ${request.method}`, {
+            kind: "server",
+            parent: Option.getOrUndefined(
+              HttpTraceContext.fromHeaders(Headers.fromInput(request.headers)),
+            ),
+            attributes: {
+              "http.request.method": request.method,
+              ...(route === undefined ? {} : { "http.route": route }),
+            },
+          }),
+          Effect.match({
+            onSuccess: (value) => ({ ok: true as const, value }),
+            onFailure: (error) => ({ ok: false as const, error }),
+          }),
+        ),
+      );
+      if (!result.ok) throw result.error;
+      return result.value;
+    } finally {
       await application.runPromise(
         recordHttpServerMetrics({
           method: request.method,
           route,
-          status: response?.status ?? 101,
+          status,
           durationMilliseconds: performance.now() - startedAt,
         }),
       );
-      return response;
-    };
-    const startedAt = performance.now();
-    if (url.pathname === "/healthz") {
-      return complete(await httpHandler(request), "/healthz");
     }
-    if (url.pathname !== application.config.websocketPath) {
-      return complete(new Response("Not found", { status: 404 }));
-    }
-    if (hasCredentialQuery(url)) {
-      return complete(
-        new Response("Credentials are not accepted in the URL", {
-          status: 400,
-        }),
-        application.config.websocketPath,
-      );
-    }
-    const origin = request.headers.get("origin");
-    if (!application.auth.isAllowedOrigin(origin)) {
-      return complete(
-        new Response("Origin not allowed", { status: 403 }),
-        application.config.websocketPath,
-      );
-    }
-    const identity = application.auth.readIdentity(request);
-    if (!identity)
-      return complete(
-        new Response("Unauthorized", { status: 401 }),
-        application.config.websocketPath,
-      );
-
-    const connectionId = crypto.randomUUID();
-    const offeredProtocols =
-      request.headers
-        .get("sec-websocket-protocol")
-        ?.split(",")
-        .map((protocol) => protocol.trim()) ?? [];
-    const frameEncoding =
-      application.config.environment === "local" ? "json" : undefined;
-    const upgraded = activeServer.upgrade(request, {
-      data: {
-        ...identity,
-        connectionId,
-        supportsFeed: offeredProtocols.includes(REALTIME_FEED_CAPABILITY),
-        supportsNotificationVolunteer: offeredProtocols.includes(
-          REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
-        ),
-        platform: application.auth.getPlatform(origin ?? ""),
-        userAgent: request.headers.get("user-agent") ?? undefined,
-        frameEncoding,
-        joined: false,
-        guilds: [],
-        subscriptions: new Map(),
-        airTagScopes: [],
-        confidence: "reported",
-        backpressureStrikes: 0,
-      },
-      headers: websocketResponseHeaders(request, frameEncoding),
-    });
-    return complete(
-      upgraded
-        ? undefined
-        : new Response("WebSocket upgrade failed", { status: 400 }),
-      application.config.websocketPath,
-    );
   };
 
 export const GatewayServer = Layer.effectDiscard(

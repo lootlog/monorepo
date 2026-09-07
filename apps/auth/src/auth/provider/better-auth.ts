@@ -1,4 +1,5 @@
-import { betterAuth } from "better-auth";
+import { runLogEffect } from "@lootlog/instrumentation";
+import { betterAuth, type BetterAuthOptions } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin } from "better-auth/plugins/admin";
 import { bearer } from "better-auth/plugins/bearer";
@@ -19,6 +20,26 @@ export const DISCORD_AUTH_SCOPES = [
   "email",
 ] as const;
 
+export const betterAuthLogger = {
+  log(level, message: unknown) {
+    const severity = {
+      debug: "Debug",
+      info: "Info",
+      warn: "Warn",
+      error: "Error",
+    } as const;
+    // Better Auth details may contain OAuth input or database query parameters.
+    runLogEffect(
+      Effect.logWithLevel(severity[level])(
+        typeof message === "string" && message.trim() !== ""
+          ? message
+          : "Authentication event",
+        { context: "BetterAuth" },
+      ),
+    );
+  },
+} satisfies BetterAuthOptions["logger"];
+
 export const createLootlogAuth = ({
   config,
   database,
@@ -38,6 +59,7 @@ export const createLootlogAuth = ({
 
   return betterAuth({
     appName: "@lootlog/auth",
+    logger: betterAuthLogger,
     baseURL: betterAuthBaseURL,
     database: drizzleAdapter(database, {
       provider: "pg",

@@ -1,19 +1,35 @@
-import { Clock, Effect, FiberSet, Metric } from "effect";
+import { Clock, Context, Effect, FiberSet, Metric } from "effect";
 import {
   HttpMiddleware,
+  HttpRouter,
   HttpServerError,
   HttpServerRequest,
 } from "effect/unstable/http";
+import { currentLogSpan } from "./logging.js";
 
 const durationBoundaries = [
-  5, 10, 25, 50, 100, 250, 500, 1_000, 2_500, 5_000, 10_000,
+  0.005,
+  0.01,
+  0.025,
+  0.05,
+  0.1,
+  0.25,
+  0.5,
+  1,
+  2.5,
+  5,
+  10,
+  Infinity,
 ];
 
 const defaultLogRunner = (effect: Effect.Effect<void>) =>
   Effect.runFork(effect);
 let logRunner = defaultLogRunner;
 
-export const runLogEffect = (effect: Effect.Effect<void>) => logRunner(effect);
+export const runLogEffect = (effect: Effect.Effect<void>) => {
+  const span = currentLogSpan();
+  return logRunner(span ? Effect.withParentSpan(effect, span) : effect);
+};
 
 export const installScopedLogRunner = Effect.gen(function* () {
   const previous = logRunner;
@@ -25,10 +41,14 @@ export const installScopedLogRunner = Effect.gen(function* () {
   );
 });
 
-export const httpServerDuration = Metric.histogram("http.server.duration", {
-  description: "HTTP server request duration in milliseconds",
-  boundaries: durationBoundaries,
-});
+export const httpServerDuration = Metric.histogram(
+  "http.server.request.duration",
+  {
+    description: "HTTP server request duration in seconds",
+    boundaries: durationBoundaries,
+    attributes: { unit: "s" },
+  },
+);
 
 export const httpServerRequestCount = Metric.counter(
   "http.server.request.count",
@@ -41,6 +61,8 @@ export const recordHttpServerMetrics = (input: {
   readonly status: number;
   readonly durationMilliseconds: number;
 }) => {
+  if (input.route !== undefined && isHealthcheck(input.route))
+    return Effect.void;
   const attributes = {
     "http.request.method": input.method,
     "http.response.status_code": String(input.status),
@@ -50,7 +72,7 @@ export const recordHttpServerMetrics = (input: {
     [
       Metric.update(
         Metric.withAttributes(httpServerDuration, attributes),
-        input.durationMilliseconds,
+        input.durationMilliseconds / 1_000,
       ),
       Metric.update(
         Metric.withAttributes(httpServerRequestCount, attributes),
@@ -61,24 +83,45 @@ export const recordHttpServerMetrics = (input: {
   );
 };
 
+const RequestMetrics = Context.Reference<{ route?: string } | undefined>(
+  "@lootlog/instrumentation/RequestMetrics",
+  { defaultValue: () => undefined },
+);
+
+// Capture the matched template before HttpEffect restores the request context.
+export const httpServerRouteMetrics = HttpRouter.middleware((httpApp) =>
+  Effect.gen(function* () {
+    const metrics = yield* RequestMetrics;
+    const { route } = yield* HttpRouter.RouteContext;
+    if (metrics) metrics.route = route.path;
+    return yield* httpApp;
+  }),
+).layer;
+
+export const isHealthcheck = (url: string) =>
+  /^\/+healthz\/*(?:[?#]|$)/i.test(url);
+
 export const httpServerMetrics = HttpMiddleware.make((httpApp) =>
   Effect.gen(function* () {
     const request = yield* HttpServerRequest.HttpServerRequest;
-    if (/^\/+healthz\/*(?:[?#]|$)/i.test(request.url)) {
-      yield* HttpMiddleware.withLoggerDisabled(Effect.void);
+    if (isHealthcheck(request.url)) {
+      return yield* HttpMiddleware.withLoggerDisabled(httpApp);
     }
-    const startedAt = yield* Clock.currentTimeMillis;
+    const startedAt = yield* Clock.currentTimeNanos;
+    const metrics: { route?: string } = {};
     return yield* httpApp.pipe(
       Effect.onExit((exit) =>
         Effect.gen(function* () {
-          const completedAt = yield* Clock.currentTimeMillis;
+          const completedAt = yield* Clock.currentTimeNanos;
           yield* recordHttpServerMetrics({
+            route: metrics.route,
             method: request.method,
             status: HttpServerError.exitResponse(exit).status,
-            durationMilliseconds: completedAt - startedAt,
+            durationMilliseconds: Number(completedAt - startedAt) / 1_000_000,
           });
         }),
       ),
+      Effect.provideService(RequestMetrics, metrics),
     );
   }),
 );
