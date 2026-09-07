@@ -7,6 +7,7 @@ import type {
 } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Effect } from "effect";
+import { decode, encode } from "@msgpack/msgpack";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 import type {
   FederatedRealtimeMessage,
@@ -209,6 +210,131 @@ describe("RealtimeHub federation", () => {
     hub.unsubscribe(overlapping.socket, scope);
     await hub.publishToScope(scope, event);
     expect(overlapping.sent).toHaveLength(3);
+  });
+
+  test("keeps literal delimiters distinct and removes only the replaced or unsubscribed scope", async () => {
+    const hub = new RealtimeHub(
+      config,
+      new FakeRedisStore(new FederationBus()) as unknown as RedisGatewayStore,
+    );
+    const first = {
+      topic: "organization.chat",
+      organizationId: "organization-1",
+      eventId: "a|b",
+      world: "c",
+    } as const;
+    const second = { ...first, eventId: "a", world: "b|c" };
+    const wildcard = {
+      topic: first.topic,
+      organizationId: first.organizationId,
+    };
+    const firstTarget = makeSocket(makeSession("literal-first"));
+    const secondTarget = makeSocket(makeSession("literal-second"));
+    hub.register(firstTarget.socket);
+    hub.register(secondTarget.socket);
+    hub.subscribe(firstTarget.socket, first);
+    hub.subscribe(secondTarget.socket, second);
+    const event = {
+      v: 1,
+      type: "chat.cleared",
+      data: { organizationId: first.organizationId, payload: {} },
+    } as const;
+    await hub.publishToScope(first, event);
+    expect([firstTarget.sent.length, secondTarget.sent.length]).toEqual([1, 0]);
+    await hub.publishToScope(second, event);
+    expect([firstTarget.sent.length, secondTarget.sent.length]).toEqual([1, 1]);
+    hub.subscribe(firstTarget.socket, second);
+    await hub.publishToScope(first, event);
+    expect(firstTarget.sent).toHaveLength(1);
+    hub.subscribe(firstTarget.socket, wildcard);
+    hub.unsubscribe(firstTarget.socket, second);
+    await hub.publishToScope(second, event);
+    expect(firstTarget.sent).toHaveLength(2);
+    hub.unsubscribe(firstTarget.socket, wildcard);
+    await hub.publishToScopes([first, second], event);
+    expect(firstTarget.sent).toHaveLength(2);
+  });
+
+  test("sends canonical JSON and MessagePack locally and remotely and rejects malformed federation frames", async () => {
+    const bus = new FederationBus();
+    const store = new FakeRedisStore(bus);
+    const local = new RealtimeHub(
+      config,
+      store as unknown as RedisGatewayStore,
+    );
+    const remote = new RealtimeHub(
+      config,
+      new FakeRedisStore(bus) as unknown as RedisGatewayStore,
+    );
+    const scope = {
+      topic: "organization.chat",
+      organizationId: "organization-1",
+    } as const;
+    const targets = [local, remote].map((hub, index) => {
+      const binary = makeSocket(makeSession(`canonical-binary-${index}`));
+      const json: string[] = [];
+      const jsonSocket = {
+        data: {
+          ...makeSession(`canonical-json-${index}`),
+          frameEncoding: "json",
+        },
+        getBufferedAmount: () => 0,
+        send: (frame: string) => json.push(frame),
+      } as unknown as GatewaySocket;
+      for (const socket of [binary.socket, jsonSocket]) {
+        hub.register(socket);
+        hub.subscribe(socket, scope);
+      }
+      return { binary: binary.sent, json };
+    });
+    await Effect.runPromise(local.start());
+    await Effect.runPromise(remote.start());
+    const canonical = {
+      v: 1,
+      type: "chat.cleared",
+      data: {
+        organizationId: scope.organizationId,
+        payload: { id: "message-1" },
+      },
+    } as const;
+    const withUnknownFields = {
+      ...canonical,
+      untrusted: "strip",
+      data: { ...canonical.data, untrusted: "strip" },
+    };
+    await local.publishToScope(scope, withUnknownFields);
+    await store.publish({
+      id: "raw-federation",
+      sourceInstanceId: "external-instance",
+      scope,
+      frame: Buffer.from(encode(withUnknownFields)).toString("base64"),
+    });
+    for (const target of targets) {
+      // Decode the wire bytes without the protocol schema, which would hide leaked fields.
+      expect(target.binary.map((bytes) => decode(bytes))).toEqual([
+        canonical,
+        canonical,
+      ]);
+      expect(target.json.map((frame) => JSON.parse(frame))).toEqual([
+        canonical,
+        canonical,
+      ]);
+    }
+    for (const [index, bytes] of [
+      new Uint8Array([0xc1]),
+      encode({ ...canonical, v: 2 }),
+    ].entries()) {
+      await store.publish({
+        id: `malformed-federation-${index}`,
+        sourceInstanceId: "external-instance",
+        scope,
+        frame: Buffer.from(bytes).toString("base64"),
+      });
+    }
+    for (const target of targets) {
+      expect(target.binary).toHaveLength(2);
+      expect(target.json).toHaveLength(2);
+    }
   });
 
   test("targets every user or Discord connection across gateways without subscriptions", async () => {
