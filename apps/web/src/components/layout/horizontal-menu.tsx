@@ -48,6 +48,7 @@ export const HorizontalMenu = ({
               to={url}
               search={item.search}
               preload="intent"
+              resetScroll={false}
               activeOptions={{ exact: true }}
               aria-current={active ? "page" : undefined}
               className={cn(

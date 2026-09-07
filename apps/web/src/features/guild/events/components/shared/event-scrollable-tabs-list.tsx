@@ -1,4 +1,5 @@
-import type { ReactNode, WheelEvent } from "react";
+import { useRef, type ReactNode } from "react";
+import { useHorizontalWheelScroll } from "@lootlog/ui/hooks/use-horizontal-wheel-scroll";
 import { TabsList } from "@lootlog/ui/components/tabs";
 import { cn } from "cn";
 
@@ -11,36 +12,13 @@ export const EventScrollableTabsList = ({
   children,
   className,
 }: EventScrollableTabsListProps) => {
-  const handleWheel = (event: WheelEvent<HTMLDivElement>) => {
-    if (event.ctrlKey) {
-      return;
-    }
-
-    const scrollContainer = event.currentTarget;
-    const hasHorizontalOverflow =
-      scrollContainer.scrollWidth > scrollContainer.clientWidth;
-
-    if (!hasHorizontalOverflow) {
-      return;
-    }
-
-    const horizontalDelta =
-      Math.abs(event.deltaX) > Math.abs(event.deltaY)
-        ? event.deltaX
-        : event.deltaY;
-
-    if (horizontalDelta === 0) {
-      return;
-    }
-
-    scrollContainer.scrollLeft += horizontalDelta;
-    event.preventDefault();
-  };
+  const viewportRef = useRef<HTMLDivElement>(null);
+  useHorizontalWheelScroll(viewportRef);
 
   return (
     <div
       className="w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-      onWheel={handleWheel}
+      ref={viewportRef}
     >
       <TabsList
         className={cn(

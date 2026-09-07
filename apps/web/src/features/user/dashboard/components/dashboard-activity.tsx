@@ -45,7 +45,7 @@ export function DashboardActivity() {
         title={t("statistics.activity")}
         actions={
           <AnimatedToggleGroup
-            compact
+            size="default"
             label={t("statistics.activity")}
             value={mode}
             onValueChange={setMode}
