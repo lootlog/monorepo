@@ -18,6 +18,7 @@ afterEach(cleanup);
 
 const loot = {
   source: "FIGHT",
+  players: [{ characterId: 4 }],
   items: [{ rarity: "LEGENDARY" }],
   npcs: [{ wt: 20, type: "ELITE2" }],
   mapPlayersSnapshot: [
@@ -31,6 +32,7 @@ const loot = {
     { accountId: 3, characterId: 4, name: "Uczestnik", prof: null, icon: null },
   ],
 } satisfies Pick<Loot, "source" | "mapPlayersSnapshot"> & {
+  players: Pick<Loot["players"][number], "characterId">[];
   items: Pick<Loot["items"][number], "rarity">[];
   npcs: Pick<Loot["npcs"][number], "wt" | "type">[];
 };
@@ -47,6 +49,31 @@ describe("LootMapPlayers", () => {
     expect(screen.getByText("Obserwator")).toBeTruthy();
     expect(screen.getByText("Wojownik")).toBeTruthy();
     expect(screen.getByText("Uczestnik")).toBeTruthy();
+    expect(screen.getAllByText("W party")).toHaveLength(1);
+    expect(screen.getByText("W party").closest("li")).toBe(
+      screen.getByText("Uczestnik").closest("li"),
+    );
+  });
+
+  it("does not infer party membership from names or missing character IDs", () => {
+    render(
+      <LootMapPlayers
+        loot={{
+          ...loot,
+          players: [{ characterId: null }],
+          mapPlayersSnapshot: loot.mapPlayersSnapshot.map((player) => ({
+            ...player,
+            name: "Uczestnik",
+          })),
+        }}
+      />,
+    );
+    expect(screen.queryByText("W party")).toBeNull();
+  });
+
+  it("does not label recipients of non-fight loot as party participants", () => {
+    render(<LootMapPlayers loot={{ ...loot, source: "LOOTBOX" }} />);
+    expect(screen.queryByText("W party")).toBeNull();
   });
 
   it.each([null, "HERO", "ELITE"] as const)(

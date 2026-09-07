@@ -1,12 +1,15 @@
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
+import { UsersRound } from "lucide-react";
+import { cn } from "cn";
 import { PlayerSpriteTile } from "@/components/tiles/player-sprite-tile";
 import type { Loot } from "@/lib/loots/loot-types";
 import { getShortnameByProf } from "@lootlog/domain/profession";
 
 type LootMapPlayersProps = {
   loot: Pick<Loot, "source" | "mapPlayersSnapshot"> & {
+    players: Pick<Loot["players"][number], "characterId">[];
     items: Pick<Loot["items"][number], "rarity">[];
     npcs: Pick<Loot["npcs"][number], "wt" | "type">[];
   };
@@ -16,6 +19,13 @@ export const LootMapPlayers = ({ loot }: LootMapPlayersProps) => {
   const { t } = useTranslation();
   const titleId = useId();
   const players = loot.mapPlayersSnapshot;
+  const participantIds = new Set(
+    loot.source === "FIGHT"
+      ? loot.players.flatMap(({ characterId }) =>
+          characterId !== null && characterId > 0 ? [characterId] : [],
+        )
+      : [],
+  );
   const primaryNpc = loot.npcs.reduce<(typeof loot.npcs)[number] | undefined>(
     (primary, npc) =>
       !primary || (npc.wt ?? 0) > (primary.wt ?? 0) ? npc : primary,
@@ -47,7 +57,11 @@ export const LootMapPlayers = ({ loot }: LootMapPlayersProps) => {
           {players.map((player) => (
             <li
               key={`${player.accountId}:${player.characterId}`}
-              className="flex min-w-0 items-center gap-2"
+              className={cn(
+                "flex min-w-0 items-center gap-2 rounded-lg border border-transparent p-2",
+                participantIds.has(player.characterId) &&
+                  "border-primary/25 bg-primary/10",
+              )}
             >
               {player.icon && (
                 <span aria-hidden="true" className="shrink-0">
@@ -59,7 +73,22 @@ export const LootMapPlayers = ({ loot }: LootMapPlayersProps) => {
                 </span>
               )}
               <div className="min-w-0">
-                <p className="break-words text-sm font-medium">{player.name}</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="min-w-0 break-words text-sm font-medium">
+                    {player.name}
+                  </p>
+                  {participantIds.has(player.characterId) && (
+                    <span
+                      className="shrink-0 text-primary"
+                      title={t("loots.details.mapPlayers.inParty")}
+                    >
+                      <UsersRound className="size-3.5" aria-hidden="true" />
+                      <span className="sr-only">
+                        {t("loots.details.mapPlayers.inParty")}
+                      </span>
+                    </span>
+                  )}
+                </div>
                 {player.prof && (
                   <p className="text-xs text-muted-foreground">
                     {t(`professions.${getShortnameByProf(player.prof)}`)}
