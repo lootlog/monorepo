@@ -27,6 +27,49 @@
           }
         ]
       }
+    },
+    {
+      // Loader cancellation wrappers require a Promise-returning callback.
+      "files": ["src/routes/**/*.tsx"],
+      "rules": {
+        "require-await": "off"
+      }
+    },
+    {
+      // The fake socket asserts transport encoding when the test calls send.
+      "files": ["src/lib/gateway-connection.spec.ts"],
+      "rules": {
+        "vitest/no-standalone-expect": "off"
+      }
+    },
+    {
+      "files": [
+        // Table-driven cases intentionally assert different UI variants.
+        "src/features/guild/events/components/stats/multipliers-card.spec.tsx",
+        "src/features/guild/events/components/kills/recent-kills-preview.spec.tsx",
+        "src/features/guild/reservations/schedule/reservation-block.spec.tsx"
+      ],
+      "rules": {
+        "vitest/no-conditional-expect": "off"
+      }
+    },
+    {
+      "files": [
+        // Synchronize clocks, socket/cache state, URL scrolling and DOM state.
+        "src/hooks/utils/use-countdown.tsx",
+        "src/features/guild/events/hooks/utils/use-assignment-countdown.ts",
+        "src/features/guild/events/hooks/utils/use-local-coverage-timer.ts",
+        "src/features/guild/events/hooks/use-window-status.ts",
+        "src/features/user/battle-panel/battle-panel-single-battle/components/battle-detail-view.tsx",
+        "src/features/guild/events/components/dialogs/event-summary/use-wrapped-autoplay.ts",
+        "src/features/guild/events/hooks/socket/use-event-presence.ts",
+        "src/features/guild/settings/members/use-member-presence.ts",
+        "src/contexts/gateway-context.tsx",
+        "src/contexts/theme-context.tsx"
+      ],
+      "rules": {
+        "react/set-state-in-effect": "off"
+      }
     }
   ]
 }

@@ -411,7 +411,7 @@ async function seedLoots(count: number, guilds: SeedGuild[]) {
       const insertedLoots = await transaction
         .insert(lootTable)
         .values({
-          uniqueId: `loot-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
+          uniqueId: `loot-${Date.now()}-${crypto.randomUUID()}`,
           world: loot.world,
           source: loot.source,
           location: loot.location,
@@ -771,7 +771,7 @@ async function seedBattles(count: number) {
   const battlesGenerator = new BattlesGenerator();
   await battlesGenerator.initialize();
 
-  const accountId = `account-${Math.random().toString(36).substring(2, 11)}`;
+  const accountId = `account-${crypto.randomUUID()}`;
   const characterId = `${Math.floor(Math.random() * 1000)}`;
 
   const battles = battlesGenerator.generateMultiple(

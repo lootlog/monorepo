@@ -60,7 +60,7 @@ const readLegacyLayerConfig = () => {
   try {
     return storedLayers.safeParse(JSON.parse(value)).data;
   } catch {
-    return;
+    // Ignore malformed legacy preferences and use the defaults.
   }
 };
 

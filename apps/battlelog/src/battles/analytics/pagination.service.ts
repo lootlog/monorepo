@@ -41,8 +41,8 @@ export const makeBattlePagination = (drizzle: BattlePaginationDatabase) => {
     if (separatorIndex === -1) {
       return null;
     }
-    const timestamp = cursor.substring(0, separatorIndex);
-    const id = cursor.substring(separatorIndex + 1);
+    const timestamp = cursor.slice(0, separatorIndex);
+    const id = cursor.slice(separatorIndex + 1);
     const createdAt = new Date(timestamp);
     if (Number.isNaN(createdAt.getTime())) {
       return null;
@@ -138,7 +138,7 @@ export const makeBattlePagination = (drizzle: BattlePaginationDatabase) => {
     const cursorCondition = or(
       cmp(table.createdAt, createdAt),
       and(eq(table.createdAt, createdAt), cmp(table.id, id)),
-    )!;
+    );
 
     return where ? and(where, cursorCondition) : cursorCondition;
   };
@@ -190,7 +190,7 @@ export const makeBattlePagination = (drizzle: BattlePaginationDatabase) => {
     const previousCursorCondition = or(
       createdAtComparator(table.createdAt, createdAt),
       and(eq(table.createdAt, createdAt), idComparator(table.id, id)),
-    )!;
+    );
 
     return where
       ? and(where, previousCursorCondition)

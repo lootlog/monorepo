@@ -1,4 +1,4 @@
-import { startTransition, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
@@ -74,23 +74,22 @@ export const EventSummaryDialog = ({
   const { deck, slides, activeIndex, activeSlide, isFinalSlide } =
     resolveSlideState();
 
-  useEffect(() => {
-    if (!open) {
-      return;
+  const [wasOpen, setWasOpen] = useState(open);
+  const synchronizeSlide = () => {
+    if (wasOpen !== open) {
+      setWasOpen(open);
+      if (open) {
+        setDirection(1);
+        setSelection({ id: "opening", index: 0 });
+      }
+    } else if (
+      activeSlide &&
+      (activeSlide.id !== selection.id || activeIndex !== selection.index)
+    ) {
+      setSelection({ id: activeSlide.id, index: activeIndex });
     }
-
-    startTransition(() => {
-      setDirection(1);
-      setSelection({ id: "opening", index: 0 });
-    });
-  }, [open]);
-
-  if (
-    activeSlide &&
-    (activeSlide.id !== selection.id || activeIndex !== selection.index)
-  ) {
-    setSelection({ id: activeSlide.id, index: activeIndex });
-  }
+  };
+  synchronizeSlide();
 
   const advanceAutomatically = () => {
     if (!activeSlide || activeIndex >= slides.length - 1) {

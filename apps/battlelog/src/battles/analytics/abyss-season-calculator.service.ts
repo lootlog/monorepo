@@ -39,8 +39,8 @@ const buildSeasonSummary = (
   seasonBattles: InflatedBattleWithWarriors[],
   characterIds: Set<string>,
 ): AbyssSeason => {
-  const firstBattle = seasonBattles[0]!;
-  const lastBattle = seasonBattles[seasonBattles.length - 1]!;
+  const firstBattle = seasonBattles[0];
+  const lastBattle = seasonBattles[seasonBattles.length - 1];
   let wins = 0;
   let losses = 0;
   let totalRatingDelta = 0;

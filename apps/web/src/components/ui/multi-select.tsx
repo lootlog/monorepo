@@ -224,27 +224,43 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
     const [open, setOpen] = React.useState(false);
     const [inputValue, setInputValue] = React.useState(searchValue ?? "");
     const selectedValues = resolveValue(value, internalValue);
-    const [cachedOptions, setCachedOptions] = React.useState(
-      () => new Map(options.map((option) => [option.value, option])),
+    const [optionCache, setOptionCache] = React.useState(
+      () => new Map<string, MultiSelectOption>(),
     );
-    const incomingOptions = new Map(
-      options.map((option) => [option.value, option]),
-    );
-    let optionCache = cachedOptions;
-    if (
-      [...incomingOptions].some(
-        ([value, option]) => cachedOptions.get(value) !== option,
-      )
-    ) {
-      optionCache = new Map([...cachedOptions, ...incomingOptions]);
-      setCachedOptions(optionCache);
+    const mergeOptions = () => {
+      const currentOptions = new Map(optionCache);
+      for (const option of options) {
+        currentOptions.set(option.value, option);
+      }
+      const optionsChanged = Array.from(currentOptions.values()).some(
+        (option) => {
+          const cached = optionCache.get(option.value);
+          return cached?.label !== option.label || cached?.icon !== option.icon;
+        },
+      );
+      return { currentOptions, optionsChanged };
+    };
+    const { currentOptions, optionsChanged } = mergeOptions();
+    if (optionsChanged) {
+      setOptionCache(currentOptions);
     }
 
-    React.useEffect(() => {
-      if (!open) {
-        setInputValue(searchValue ?? "");
+    const [previousSearch, setPreviousSearch] = React.useState({
+      open,
+      searchValue,
+    });
+    const synchronizeSearch = () => {
+      if (
+        previousSearch.open !== open ||
+        previousSearch.searchValue !== searchValue
+      ) {
+        setPreviousSearch({ open, searchValue });
+        if (!open) {
+          setInputValue(searchValue ?? "");
+        }
       }
-    }, [open, searchValue]);
+    };
+    synchronizeSearch();
 
     const resolvedLabels = resolveLabels({
       placeholder,
@@ -260,7 +276,7 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
     const visibleOptions = shouldPromptForSearch || errorMessage ? [] : options;
     const selectedOptions = selectedValues.map(
       (selectedValue) =>
-        optionCache.get(selectedValue) ?? {
+        currentOptions.get(selectedValue) ?? {
           label: selectedValue,
           value: selectedValue,
         },
@@ -315,7 +331,7 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
         items={optionValues}
         filteredItems={controlledSearch ? optionValues : undefined}
         itemToStringLabel={(optionValue) =>
-          optionCache.get(optionValue)?.label ?? optionValue
+          currentOptions.get(optionValue)?.label ?? optionValue
         }
         disabled={disabled}
         modal={modalPopover}

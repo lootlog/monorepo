@@ -6,6 +6,7 @@ import {
   motion,
   useMotionValue,
   useReducedMotion,
+  type MotionValue,
 } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -108,6 +109,11 @@ const getSelectedRange = (
 const isReservationTarget = (target: EventTarget | null): boolean =>
   target instanceof Element && target.closest(".reservation-card") !== null;
 
+const resetSwipePosition = (swipeX: MotionValue<number>) => {
+  swipeX.stop();
+  swipeX.set(0);
+};
+
 export function MobileDaySchedule({
   date,
   dayIndex,
@@ -159,11 +165,6 @@ export function MobileDaySchedule({
     setTimeout(() => {
       suppressClickRef.current = false;
     }, 0);
-  };
-
-  const resetSwipePosition = () => {
-    swipeX.stop();
-    swipeX.set(0);
   };
 
   const finishDaySwipe = useEffectEvent(
@@ -245,8 +246,6 @@ export function MobileDaySchedule({
     [swipeX],
   );
 
-  const resetTouchSwipePosition = useEffectEvent(resetSwipePosition);
-
   useEffect(() => {
     const grid = gridRef.current;
     if (!grid || !isDaySwipeEnabled) return;
@@ -306,7 +305,7 @@ export function MobileDaySchedule({
           return;
         }
         session.activated = true;
-        resetTouchSwipePosition();
+        resetSwipePosition(swipeX);
         suppressClickRef.current = true;
         const nextSelection: DaySelection = {
           anchorMinutes: minutes,
@@ -383,7 +382,7 @@ export function MobileDaySchedule({
         return;
       }
       if (session.activated) {
-        resetTouchSwipePosition();
+        resetSwipePosition(swipeX);
         event.preventDefault();
         const finishedSelection = selectionRef.current;
         selectionRef.current = null;
@@ -409,7 +408,7 @@ export function MobileDaySchedule({
       selectionRef.current = null;
       setSelection(null);
       if (!swipeTransitioningRef.current) {
-        resetTouchSwipePosition();
+        resetSwipePosition(swipeX);
         suppressClickRef.current = false;
       }
     };
@@ -674,7 +673,7 @@ export function MobileDaySchedule({
                       }
                       onContextMenuOpenChange={(open) => {
                         contextMenuOpenRef.current = open;
-                        if (open) resetSwipePosition();
+                        if (open) resetSwipePosition(swipeX);
                       }}
                       onContextMenuOutsidePress={(event) => {
                         const grid = gridRef.current;
@@ -682,7 +681,7 @@ export function MobileDaySchedule({
                         suppressClickRef.current = true;
                         touchSessionRef.current = null;
                         updateSelection(null);
-                        resetSwipePosition();
+                        resetSwipePosition(swipeX);
                       }}
                       className={cn(
                         "absolute z-10",
