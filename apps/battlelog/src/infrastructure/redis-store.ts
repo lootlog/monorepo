@@ -14,7 +14,7 @@ export interface RedisOptions {
 }
 
 export interface JsonCodec<T> {
-  stringify(value: unknown): string;
+  stringify(value: T): string;
   parse(text: string): T;
 }
 
@@ -31,7 +31,7 @@ export interface RedisGetOrSetJsonOptions<T> {
 export interface RedisGetOrSetJsonBestEffortOptions<
   T,
 > extends RedisGetOrSetJsonOptions<T> {
-  readonly onError?: (error: unknown) => void;
+  readonly onError?: (cause: unknown) => void;
 }
 
 const decodeJsonUnknown = Schema.decodeUnknownSync(

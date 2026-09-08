@@ -1,248 +1,159 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { ReactNode } from "react";
-import { describe, expect, it, vi } from "vitest";
-
-const deleteTimerPopoverSpy = vi.fn();
-
-vi.mock("@/components/ui/context-menu", () => ({
-  ContextMenuItem: ({
-    children,
-    onClick,
-  }: {
-    children: ReactNode;
-    onClick?: () => void;
-  }) => (
-    <button type="button" onClick={onClick}>
-      {children}
-    </button>
-  ),
-}));
-
-vi.mock("./timer-color-picker", () => ({
-  TimerColorPicker: ({ selectedColor }: { selectedColor: string }) => (
-    <div>TimerColorPicker:{selectedColor}</div>
-  ),
-}));
-
-vi.mock("./timer-history-popover", () => ({
-  TimerHistoryPopover: () => <div>TimerHistoryPopover</div>,
-}));
-
-vi.mock("@/components/delete-timer-popover", () => ({
-  DeleteTimerPopover: (props: unknown) => {
-    deleteTimerPopoverSpy(props);
-    return <div>DeleteTimerPopover</div>;
-  },
-}));
-
-vi.mock("lucide-react", () => ({
-  Delete: () => <span>Delete</span>,
-  Eye: () => <span>Eye</span>,
-  EyeOff: () => <span>EyeOff</span>,
-  Globe: () => <span>Globe</span>,
-  History: () => <span>History</span>,
-  Loader2: () => <span>Loader2</span>,
-  Pin: () => <span>Pin</span>,
-  PinOff: () => <span>PinOff</span>,
-  RotateCcw: () => <span>RotateCcw</span>,
-  Trash2: () => <span>Trash2</span>,
-}));
-
+import { QueryClientProvider } from "@tanstack/react-query";
+import { getGuildsControllerGetGuildPermissionsQueryKey } from "@lootlog/client/main";
+import { Permission } from "@lootlog/schema/permissions";
+import type { ComponentProps } from "react";
+import { describe, expect, it, onTestFinished, vi } from "vitest";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
+import { createTimerFixture } from "../timer-fixtures";
+import { createTimerHttpFixture } from "../timer-http-fixtures";
 import { TimerContextMenuContent } from "./timer-context-menu-content";
-import type { TimerWithTimeLeft } from "../utils/timers-utils";
 
-const timer = {
-  guildId: "guild-1",
-  timerKey: "timer-1",
-  npc: {
-    name: "Tanroth",
-    margonemType: 4,
-  },
-} as TimerWithTimeLeft;
+type MenuProps = ComponentProps<typeof TimerContextMenuContent>;
+const action = () => vi.fn<() => void>();
+const createProps = (overrides: Partial<MenuProps> = {}): MenuProps => ({
+  timer: { ...createTimerFixture(), minTimeLeft: 0, maxTimeLeft: 0 },
+  isPending: false,
+  isPinned: false,
+  isHidden: false,
+  canDelete: true,
+  canReset: true,
+  timersGrouping: false,
+  selectedColor: "red",
+  customColors: {},
+  defaultColorNames: {},
+  overriddenDefaultColors: {},
+  hiddenDefaultColors: [],
+  isAlwaysVisibleExpiredTimer: false,
+  onColorChange: vi.fn<MenuProps["onColorChange"]>(),
+  onPin: action(),
+  onPinAll: action(),
+  onUnpinAll: action(),
+  onHide: action(),
+  onHideAll: action(),
+  onShow: action(),
+  onShowAll: action(),
+  onToggleAlwaysVisibleExpiredTimer: action(),
+  onReset: action(),
+  onDelete: vi.fn<MenuProps["onDelete"]>(),
+  ...overrides,
+});
+const openMenu = () =>
+  userEvent.pointer({
+    keys: "[MouseRight]",
+    target: screen.getByText("Timer"),
+  });
+const renderMenu = async (props: MenuProps) => {
+  const fixture = createTimerHttpFixture();
+  for (const guildId of ["guild-1", "guild-2"]) {
+    fixture.queryClient.setQueryData(
+      getGuildsControllerGetGuildPermissionsQueryKey({ guildId }),
+      [Permission.LOOTLOG_TIMERS_DELETE],
+    );
+  }
+  const view = render(
+    <QueryClientProvider client={fixture.queryClient}>
+      <ContextMenu>
+        <ContextMenuTrigger>Timer</ContextMenuTrigger>
+        <ContextMenuContent>
+          <TimerContextMenuContent {...props} />
+        </ContextMenuContent>
+      </ContextMenu>
+    </QueryClientProvider>,
+  );
+  onTestFinished(() => {
+    view.unmount();
+    fixture.cleanup();
+  });
+  await openMenu();
+};
 
 describe("TimerContextMenuContent", () => {
-  it("shows a pending placeholder while a timer is being created", () => {
-    render(
-      <TimerContextMenuContent
-        timer={timer}
-        isPending
-        isPinned={false}
-        isHidden={false}
-        canDelete={false}
-        canReset={false}
-        timersGrouping={false}
-        selectedColor="red"
-        customColors={{}}
-        defaultColorNames={{}}
-        overriddenDefaultColors={{}}
-        hiddenDefaultColors={[]}
-        onColorChange={vi.fn()}
-        onPin={vi.fn()}
-        onPinAll={vi.fn()}
-        onUnpinAll={vi.fn()}
-        onHide={vi.fn()}
-        onHideAll={vi.fn()}
-        onShow={vi.fn()}
-        onShowAll={vi.fn()}
-        isAlwaysVisibleExpiredTimer={false}
-        onToggleAlwaysVisibleExpiredTimer={vi.fn()}
-        onReset={vi.fn()}
-        onDelete={vi.fn()}
-      />,
-    );
-
-    expect(screen.getByText("Tworzenie timera...")).toBeInTheDocument();
+  it("shows a pending placeholder instead of timer actions", async () => {
+    await renderMenu(createProps({ isPending: true }));
+    expect(screen.getByText("Tworzenie timera...")).toBeVisible();
+    expect(screen.queryByRole("menuitem")).not.toBeInTheDocument();
   });
 
-  it("renders direct actions for non-grouped timers and forwards clicks", async () => {
+  it("invokes direct actions with the correct timer identity", async () => {
     const user = userEvent.setup();
-    const onColorChange = vi.fn();
-    const onPin = vi.fn();
-    const onPinAll = vi.fn();
-    const onHide = vi.fn();
-    const onHideAll = vi.fn();
-    const onReset = vi.fn();
-    const onDelete = vi.fn();
-
-    render(
-      <TimerContextMenuContent
-        timer={timer}
-        isPending={false}
-        isPinned={false}
-        isHidden={false}
-        canDelete
-        canReset
-        timersGrouping={false}
-        selectedColor="red"
-        customColors={{}}
-        defaultColorNames={{}}
-        overriddenDefaultColors={{}}
-        hiddenDefaultColors={[]}
-        onColorChange={onColorChange}
-        onPin={onPin}
-        onPinAll={onPinAll}
-        onUnpinAll={vi.fn()}
-        onHide={onHide}
-        onHideAll={onHideAll}
-        onShow={vi.fn()}
-        onShowAll={vi.fn()}
-        isAlwaysVisibleExpiredTimer={false}
-        onToggleAlwaysVisibleExpiredTimer={vi.fn()}
-        onReset={onReset}
-        onDelete={onDelete}
-      />,
-    );
-
-    expect(screen.getByText("TimerColorPicker:red")).toBeInTheDocument();
-    expect(screen.getByText("TimerHistoryPopover")).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: /Przypnij$/ }));
-    await user.click(
-      screen.getByRole("button", { name: /Przypnij wszędzie$/ }),
-    );
-    await user.click(screen.getByRole("button", { name: /Ukryj$/ }));
-    await user.click(screen.getByRole("button", { name: /Ukryj wszędzie$/ }));
-    await user.click(screen.getByRole("button", { name: /Pokaż zawsze$/ }));
-    await user.click(
-      screen.getByRole("button", { name: /Odliczaj od początku$/ }),
-    );
-    await user.click(screen.getByRole("button", { name: /Usuń timer$/ }));
-
-    expect(onPin).toHaveBeenCalledTimes(1);
-    expect(onPinAll).toHaveBeenCalledTimes(1);
-    expect(onHide).toHaveBeenCalledTimes(1);
-    expect(onHideAll).toHaveBeenCalledTimes(1);
-    expect(onReset).toHaveBeenCalledTimes(1);
-    expect(onDelete).toHaveBeenCalledWith("guild-1", "timer-1");
+    const props = createProps();
+    await renderMenu(props);
+    expect(screen.getByRole("menuitem", { name: "Historia" })).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Czerwony" }));
+    expect(props.onColorChange).toHaveBeenCalledWith("red");
+    await user.click(screen.getByRole("menuitem", { name: "Usuń timer" }));
+    expect(props.onDelete).toHaveBeenCalledWith("guild-1", "timer-1");
   });
 
-  it("uses the grouped delete popover, keeps always-visible action and hides history", async () => {
+  it.each([
+    ["Przypnij", "onPin"],
+    ["Przypnij wszędzie", "onPinAll"],
+    ["Ukryj", "onHide"],
+    ["Ukryj wszędzie", "onHideAll"],
+    ["Pokaż zawsze", "onToggleAlwaysVisibleExpiredTimer"],
+    ["Odliczaj od początku", "onReset"],
+  ] as const)("invokes the %s action", async (name, callback) => {
+    const props = createProps();
+    await renderMenu(props);
+    await userEvent.click(screen.getByRole("menuitem", { name }));
+    expect(props[callback]).toHaveBeenCalledOnce();
+  });
+
+  it("offers grouped deletion per organization and can reverse persistent visibility", async () => {
     const user = userEvent.setup();
-    const onToggleAlwaysVisibleExpiredTimer = vi.fn();
-
-    render(
-      <TimerContextMenuContent
-        timer={timer}
-        isPending={false}
-        isPinned
-        isHidden
-        canDelete
-        canReset={false}
-        timersGrouping
-        selectedColor="red"
-        customColors={{}}
-        defaultColorNames={{}}
-        overriddenDefaultColors={{}}
-        hiddenDefaultColors={[]}
-        onColorChange={vi.fn()}
-        onPin={vi.fn()}
-        onPinAll={vi.fn()}
-        onUnpinAll={vi.fn()}
-        onHide={vi.fn()}
-        onHideAll={vi.fn()}
-        onShow={vi.fn()}
-        onShowAll={vi.fn()}
-        isAlwaysVisibleExpiredTimer
-        onToggleAlwaysVisibleExpiredTimer={onToggleAlwaysVisibleExpiredTimer}
-        onReset={vi.fn()}
-        onDelete={vi.fn()}
-      />,
-    );
-
+    const timer = {
+      ...createTimerFixture(),
+      minTimeLeft: 0,
+      maxTimeLeft: 0,
+      mergedGuildIds: [
+        { guildId: "guild-1", npcId: 10, timerKey: "timer-1" },
+        { guildId: "guild-2", npcId: 10, timerKey: "timer-2" },
+      ],
+    };
+    const props = createProps({
+      timer,
+      timersGrouping: true,
+      isPinned: true,
+      isHidden: true,
+      isAlwaysVisibleExpiredTimer: true,
+    });
+    await renderMenu(props);
+    expect(
+      screen.queryByRole("menuitem", { name: "Historia" }),
+    ).not.toBeInTheDocument();
     await user.click(
-      screen.getByRole("button", { name: /Nie pokazuj zawsze$/ }),
+      screen.getByRole("menuitem", { name: "Nie pokazuj zawsze" }),
     );
+    expect(props.onToggleAlwaysVisibleExpiredTimer).toHaveBeenCalledOnce();
+    await openMenu();
+    await user.click(screen.getByRole("menuitem", { name: "Usuń timer" }));
+    await user.click(await screen.findByRole("button", { name: "guild-2" }));
+    expect(props.onDelete).toHaveBeenCalledWith("guild-2", "timer-2");
+  });
 
-    expect(screen.getByText("DeleteTimerPopover")).toBeInTheDocument();
-    expect(screen.queryByText("TimerHistoryPopover")).not.toBeInTheDocument();
-    expect(onToggleAlwaysVisibleExpiredTimer).toHaveBeenCalledTimes(1);
-    expect(deleteTimerPopoverSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        timer,
+  it("omits history and persistent expiry visibility for manual timers", async () => {
+    const timer = createTimerFixture();
+    await renderMenu(
+      createProps({
+        timer: {
+          ...timer,
+          minTimeLeft: 0,
+          maxTimeLeft: 0,
+          npc: { ...timer.npc, margonemType: 999 },
+        },
       }),
     );
-  });
-
-  it("does not render history for manual timers", () => {
-    render(
-      <TimerContextMenuContent
-        timer={
-          {
-            ...timer,
-            npc: {
-              name: "Manual timer",
-              margonemType: 999,
-            },
-          } as never
-        }
-        isPending={false}
-        isPinned={false}
-        isHidden={false}
-        canDelete
-        canReset={false}
-        timersGrouping={false}
-        selectedColor="red"
-        customColors={{}}
-        defaultColorNames={{}}
-        overriddenDefaultColors={{}}
-        hiddenDefaultColors={[]}
-        onColorChange={vi.fn()}
-        onPin={vi.fn()}
-        onPinAll={vi.fn()}
-        onUnpinAll={vi.fn()}
-        onHide={vi.fn()}
-        onHideAll={vi.fn()}
-        onShow={vi.fn()}
-        onShowAll={vi.fn()}
-        isAlwaysVisibleExpiredTimer={false}
-        onToggleAlwaysVisibleExpiredTimer={vi.fn()}
-        onReset={vi.fn()}
-        onDelete={vi.fn()}
-      />,
-    );
-
-    expect(screen.queryByText("TimerHistoryPopover")).not.toBeInTheDocument();
-    expect(screen.queryByText("Pokaż zawsze")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("menuitem", { name: "Historia" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("menuitem", { name: "Pokaż zawsze" }),
+    ).not.toBeInTheDocument();
   });
 });

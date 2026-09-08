@@ -1,7 +1,9 @@
 import { Schema } from "effect";
 
 /** Encodes and validates a value at an HTTP response boundary. */
-export const encodeUnknownResponse = (
-  codec: Schema.ConstraintEncoder<unknown>,
+export const encodeUnknownResponse = <
+  S extends Schema.ConstraintEncoder<unknown>,
+>(
+  codec: S,
   value: unknown,
-): unknown => Schema.encodeUnknownSync(codec)(value);
+): S["Encoded"] => Schema.encodeUnknownSync(codec)(value);

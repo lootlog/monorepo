@@ -55,9 +55,7 @@ export const ScoringFactorSelect = ({
       </Select>
       <Tooltip>
         <TooltipTrigger
-          render={
-            <HelpCircle className="size-3.5 text-muted-foreground/30 shrink-0 cursor-help" />
-          }
+          render=<HelpCircle className="size-3.5 text-muted-foreground/30 shrink-0 cursor-help" />
         />
         <TooltipContent side="top" className="max-w-[220px]">
           <p className="text-xs">{getScoringFactorDescription(value, t)}</p>

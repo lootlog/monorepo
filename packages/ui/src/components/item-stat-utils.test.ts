@@ -1,3 +1,4 @@
+import { createTranslationLookup } from "@lootlog/ui/i18n/translation-lookup";
 import itemStats from "@lootlog/ui/i18n/translations/item-stats.json";
 import { describe, expect, it } from "vitest";
 import {
@@ -9,19 +10,9 @@ import {
   type ItemDisplayValue,
 } from "./item-stat-utils";
 
+const translations = createTranslationLookup(itemStats);
 function resolveTranslation(path: string): string | undefined {
-  const normalizedPath = path.replace(/^itemStats\./, "");
-  const value = normalizedPath
-    .split(".")
-    .reduce<unknown>((current, segment) => {
-      if (current && typeof current === "object" && segment in current) {
-        return (current as Record<string, unknown>)[segment];
-      }
-
-      return undefined;
-    }, itemStats);
-
-  return typeof value === "string" ? value : undefined;
+  return translations.get(path.replace(/^itemStats\./, ""));
 }
 
 function expectTranslated(displayValue: ItemDisplayValue) {
@@ -265,31 +256,33 @@ describe("item stat utilities", () => {
   });
 
   it("recognizes every registered stat and emits only translated display keys", () => {
-    const sampleValues: Readonly<Record<string, string>> = {
-      action: "fatigue,-5",
-      bonus: "enfatig,5,10",
-      btype: "1,8",
-      custom_teleport: "id,10,20,Karka-han",
-      enhancement_refund: "2",
-      expaddlvl: "100,2",
-      expire_duration: "2d",
-      expires: "4102444800",
-      legbon: "retaliation",
-      loot: "Gracz,x,3,1767225600,Tytan",
-      opis: "Opis #YEAR#",
-      outfit: "120,x,Tuzmer",
-      pet: "x,x,zadanie#1|zadanie#2,quest",
-      reqp: "wm",
-      socket_content: "0",
-      socket_fleeting_legbon: "curse",
-      socket_injection_legbon: "dmgred",
-      target_class: "1,8",
-      target_rarity: "heroic",
-      teleport: "x,10,20,Karka-han",
-    };
+    const sampleValues = new Map(
+      Object.entries({
+        action: "fatigue,-5",
+        bonus: "enfatig,5,10",
+        btype: "1,8",
+        custom_teleport: "id,10,20,Karka-han",
+        enhancement_refund: "2",
+        expaddlvl: "100,2",
+        expire_duration: "2d",
+        expires: "4102444800",
+        legbon: "retaliation",
+        loot: "Gracz,x,3,1767225600,Tytan",
+        opis: "Opis #YEAR#",
+        outfit: "120,x,Tuzmer",
+        pet: "x,x,zadanie#1|zadanie#2,quest",
+        reqp: "wm",
+        socket_content: "0",
+        socket_fleeting_legbon: "curse",
+        socket_injection_legbon: "dmgred",
+        target_class: "1,8",
+        target_rarity: "heroic",
+        teleport: "x,10,20,Karka-han",
+      }),
+    );
     const stats = SUPPORTED_ITEM_STAT_KEYS.map((key) => ({
       key,
-      value: sampleValues[key] ?? "1",
+      value: sampleValues.get(key) ?? "1",
     }));
     const blocks = mapStatsToDisplayValues(stats);
     const displayValues = Object.values(blocks).flat();

@@ -1,4 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { waitFor } from "@testing-library/react";
+import { configureApiClients } from "@lootlog/client/transport";
+import { getSoundSettingsControllerGetSettingsQueryKey } from "@lootlog/client/main";
+import type { UserSoundSettings } from "@lootlog/schema/sound-settings";
+import { useSettingsStore } from "@/store/settings.store";
+import { disposeSoundPlayback } from "@/lib/sound-playback";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createDetectorSettings,
   getUserGameAccountPreferencesQueryKey,
@@ -7,76 +13,18 @@ import { queryClient } from "@/lib/query-client";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { NpcsDetectionProcessor } from "./npcs-detection-processor";
-import type { NpcTpl } from "@lootlog/margonem/npc-tpl-manager";
 import type { GameNpc } from "@lootlog/margonem/npcs";
 import type { GameEvent } from "@lootlog/margonem/game-events";
-import type * as Api from "@/api";
-import type * as NpcTypeDomain from "@lootlog/domain/npc-type";
 import { normalizeNpc } from "@/lib/margonem-runtime/runtime-adapter";
 import { useNpcsStore } from "@/store/npcs.store";
 import { useGameStore } from "@/store/game.store";
 
-const {
-  mockCreateNotification,
-  mockSendChatMessage,
-  mockPlaySound,
-  mockGetNpcTypeByWt,
-  mockGame,
-} = vi.hoisted(() => ({
-  mockCreateNotification: vi.fn(),
-  mockSendChatMessage: vi.fn(),
-  mockPlaySound: vi.fn(),
-  mockGetNpcTypeByWt: vi.fn(),
-  mockGame: {
-    hero: {
-      id: 101,
-      account: 202,
-      nick: "Tester",
-      lvl: 230,
-      prof: "w",
-      img: "hero.gif",
-    },
-    map: {
-      name: "Ithan",
-    },
-    npcs: [] as GameNpc[],
-    getAccountId: vi.fn(() => "202"),
-    getNpcTpl: vi.fn(),
-    getNpcIcon: vi.fn(),
-    getWorldName: vi.fn(() => "pandora"),
-  },
-}));
-
-vi.mock("@/api", async (importOriginal) => {
-  const originalModule = await importOriginal<typeof Api>();
-
-  return {
-    ...originalModule,
-    createNotification: (...args: unknown[]) => mockCreateNotification(...args),
-    sendChatMessage: (...args: unknown[]) => mockSendChatMessage(...args),
-    MessageType: {
-      ...originalModule.MessageType,
-      NPC: "NPC",
-    },
-  };
-});
-
-vi.mock("@/lib/sound-playback", () => ({
-  playSound: (...args: unknown[]) => mockPlaySound(...args),
-}));
-
-vi.mock("@lootlog/domain/npc-type", async (importOriginal) => {
-  const originalModule = await importOriginal<typeof NpcTypeDomain>();
-  return {
-    ...originalModule,
-    getNpcTypeByWt: (...args: unknown[]) => mockGetNpcTypeByWt(...args),
-  };
-});
-
-vi.mock("@/lib/game", () => ({
-  Game: mockGame,
-}));
-
+const requests: Request[] = [];
+let notificationStatus = 200;
+let chatStatus = 200;
+let responseGuildIds: string[] = [];
+let restoreApi: () => void = () => {};
+const play = vi.fn<HTMLMediaElement["play"]>().mockResolvedValue();
 const readyPreferences = (overrides?: {
   detect?: boolean;
   autoSend?: boolean;
@@ -89,6 +37,8 @@ const readyPreferences = (overrides?: {
     guildIds: string[];
   }>;
 }) => {
+  responseGuildIds =
+    overrides?.routingRules?.flatMap((rule) => rule.guildIds) ?? [];
   const detector = createDetectorSettings();
   detector.HERO.detect = overrides?.detect ?? true;
   detector.HERO.autoSend = overrides?.autoSend ?? false;
@@ -103,27 +53,26 @@ const readyPreferences = (overrides?: {
 };
 
 const createNpcEvent = (overrides?: {
-  npcTpls?: NpcTpl[];
+  npcTpls?: NonNullable<GameEvent["npc_tpls"]>;
   icons?: NonNullable<GameEvent["icons"]>;
-}): GameEvent =>
-  ({
-    npcs: [
-      {
-        id: 500,
-        x: 12,
-        y: 18,
-        tpl: 900,
-        icon: { id: 44 },
-      },
-    ],
-    npc_tpls: overrides?.npcTpls ?? [createNpcTpl()],
-    icons: overrides?.icons ?? [
-      {
-        id: 44,
-        icon: "event-icon.gif",
-      },
-    ],
-  }) as unknown as GameEvent;
+}): GameEvent => ({
+  npcs: [
+    {
+      id: 500,
+      x: 12,
+      y: 18,
+      tpl: 900,
+      icon: { id: 44 },
+    },
+  ],
+  npc_tpls: overrides?.npcTpls ?? [createNpcTpl()],
+  icons: overrides?.icons ?? [
+    {
+      id: 44,
+      icon: "event-icon.gif",
+    },
+  ],
+});
 
 const createGameNpc = (overrides?: Partial<GameNpc>): GameNpc => ({
   id: 501,
@@ -160,45 +109,81 @@ const setInitialNpcs = (npcs: GameNpc[]) => {
   });
 };
 
-const createNpcTpl = (overrides?: Partial<NpcTpl>): NpcTpl =>
-  ({
-    id: 900,
-    nick: "Detected npc",
-    warrior_type: 80,
-    wt: 80,
-    prof: "m",
-    type: 3,
-    level: 240,
-    lvl: 240,
-    elasticLevelFactor: 1,
-    ...overrides,
-  }) as NpcTpl;
+const createNpcTpl = (): NonNullable<GameEvent["npc_tpls"]>[number] => ({
+  id: 900,
+  nick: "Detected npc",
+  warrior_type: 80,
+  prof: "m",
+  type: 3,
+  level: 240,
+  elasticLevelFactor: 1,
+  resp_rand: 10,
+});
 
-const flushAsyncIntents = async () => {
-  await Promise.resolve();
-  await Promise.resolve();
-  await Promise.resolve();
-  await Promise.resolve();
-};
+afterEach(() => {
+  restoreApi();
+  disposeSoundPlayback();
+  queryClient.clear();
+  vi.restoreAllMocks();
+});
 
 describe("NpcsDetectionProcessor", () => {
   let processor: NpcsDetectionProcessor;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    requests.length = 0;
+    notificationStatus = 200;
+    chatStatus = 200;
+    restoreApi = configureApiClients({
+      main: {
+        baseUrl: "https://api.example.test",
+        fetch: (input, init) => {
+          const request = new Request(input, init);
+          requests.push(request);
+          const notification = new URL(request.url).pathname === "/messaging";
+          const status = notification ? notificationStatus : chatStatus;
+          return Promise.resolve(
+            Response.json(
+              notification
+                ? {
+                    notificationId: "notification-1",
+                    guildIds: responseGuildIds,
+                  }
+                : { id: "message-1" },
+              { status },
+            ),
+          );
+        },
+      },
+    });
+    vi.spyOn(HTMLMediaElement.prototype, "play").mockImplementation(play);
+    vi.spyOn(HTMLMediaElement.prototype, "load").mockImplementation(() => {});
+    vi.spyOn(HTMLMediaElement.prototype, "pause").mockImplementation(() => {});
+    useSettingsStore.setState({ soundsMuted: false, masterVolume: 1 });
     queryClient.clear();
+    const sound: UserSoundSettings = {
+      userId: "user-1",
+      masterVolume: 1,
+      detectorVolume: 1,
+      notificationsVolume: 1,
+      timersVolume: 1,
+      pingsVolume: 1,
+      detectorConfig: {
+        HERO: { volume: 1, soundUrl: "https://example.test/hero.mp3" },
+      },
+      notificationsConfig: {},
+      timersConfig: {},
+    };
+    queryClient.setQueryData(
+      getSoundSettingsControllerGetSettingsQueryKey(),
+      sound,
+    );
     processor = new NpcsDetectionProcessor();
-    (
-      NpcsDetectionProcessor as unknown as { pendingDetections: unknown[] }
-    ).pendingDetections = [];
-    mockGame.npcs = [];
+    processor.cleanup();
     useNpcsStore.getState().clearNpcs();
     useGameStore.getState().clearGame();
     setInitialNpcs([]);
-    mockGame.getNpcTpl.mockReset();
-    mockGame.getNpcIcon.mockReset();
-    mockGetNpcTypeByWt.mockReset();
-    mockGame.hero.account = 202;
     useNpcDetectorStore.getState().clearNpcs();
     useWindowsStore.setState((state) => ({
       ...state,
@@ -219,8 +204,6 @@ describe("NpcsDetectionProcessor", () => {
   });
 
   it("queues event until detector preferences are ready and flushes it later", () => {
-    mockGetNpcTypeByWt.mockReturnValue("HERO");
-
     processor.handle(createNpcEvent());
 
     expect(useNpcDetectorStore.getState().npcs).toEqual([]);
@@ -244,8 +227,6 @@ describe("NpcsDetectionProcessor", () => {
     vi.useFakeTimers();
 
     try {
-      mockGetNpcTypeByWt.mockReturnValue("HERO");
-
       processor.handle(createNpcEvent());
       vi.advanceTimersByTime(5_001);
 
@@ -267,8 +248,6 @@ describe("NpcsDetectionProcessor", () => {
   });
 
   it("replaces an overflowing account queue with one authoritative rescan", () => {
-    mockGetNpcTypeByWt.mockReturnValue("HERO");
-
     for (let index = 0; index < 201; index += 1) {
       processor.handle({
         ...createNpcEvent(),
@@ -281,11 +260,10 @@ describe("NpcsDetectionProcessor", () => {
             icon: { id: 44 },
           },
         ],
-      } as GameEvent);
+      });
     }
 
     setInitialNpcs([createGameNpc({ id: 999 })]);
-    mockGame.getNpcIcon.mockReturnValue("fallback-icon.gif");
     readyPreferences();
     processor.flushPending("202");
 
@@ -295,8 +273,6 @@ describe("NpcsDetectionProcessor", () => {
   });
 
   it("does not flush pending detections when preferences are still not ready", () => {
-    mockGetNpcTypeByWt.mockReturnValue("HERO");
-
     processor.handle(createNpcEvent());
     processor.flushPending("202");
 
@@ -308,20 +284,12 @@ describe("NpcsDetectionProcessor", () => {
     try {
       processor.handle(createNpcEvent());
       readyPreferences();
-      mockGame.npcs = [];
       processor.handleInitialDetection();
 
       processor.cleanup();
       processor.flushPending("202");
 
       expect(useNpcDetectorStore.getState().npcs).toEqual([]);
-      expect(
-        (
-          NpcsDetectionProcessor as unknown as {
-            pendingDetections: unknown[];
-          }
-        ).pendingDetections,
-      ).toEqual([]);
     } finally {
       vi.useRealTimers();
     }
@@ -337,8 +305,6 @@ describe("NpcsDetectionProcessor", () => {
 
   it("queues only one initial detection before preferences are ready", () => {
     setInitialNpcs([createGameNpc()]);
-    mockGame.getNpcIcon.mockReturnValue("fallback-icon.gif");
-    mockGetNpcTypeByWt.mockReturnValue("HERO");
 
     processor.handleInitialDetection();
     processor.handleInitialDetection();
@@ -349,11 +315,10 @@ describe("NpcsDetectionProcessor", () => {
     processor.flushPending("202");
 
     expect(useNpcDetectorStore.getState().npcs).toHaveLength(1);
-    expect(mockPlaySound).toHaveBeenCalledTimes(1);
+    expect(play).toHaveBeenCalledTimes(1);
   });
 
   it("keeps a queued initial detection until the NPC domain is ready", () => {
-    mockGetNpcTypeByWt.mockReturnValue("HERO");
     useNpcsStore.getState().clearNpcs();
 
     processor.handleInitialDetection();
@@ -371,7 +336,7 @@ describe("NpcsDetectionProcessor", () => {
     expect(useNpcDetectorStore.getState().npcs).toEqual([
       expect.objectContaining({ id: 777 }),
     ]);
-    expect(mockPlaySound).toHaveBeenCalledTimes(1);
+    expect(play).toHaveBeenCalledTimes(1);
   });
 
   it("processes initial detection immediately when preferences are ready", () => {
@@ -379,8 +344,6 @@ describe("NpcsDetectionProcessor", () => {
       notifySound: true,
     });
     setInitialNpcs([createGameNpc()]);
-    mockGame.getNpcIcon.mockReturnValue("fallback-icon.gif");
-    mockGetNpcTypeByWt.mockReturnValue("HERO");
 
     processor.handleInitialDetection();
 
@@ -391,7 +354,7 @@ describe("NpcsDetectionProcessor", () => {
         icon: "fallback-icon.gif",
       }),
     ]);
-    expect(mockPlaySound).toHaveBeenCalledWith("detector", "HERO");
+    expect(play).toHaveBeenCalledOnce();
   });
 
   it("rebuilds the projection when bootstrap is called after NPC state becomes ready", () => {
@@ -401,9 +364,6 @@ describe("NpcsDetectionProcessor", () => {
       readyPreferences({
         notifySound: true,
       });
-      mockGame.npcs = [];
-      mockGame.getNpcIcon.mockReturnValue("fallback-icon.gif");
-      mockGetNpcTypeByWt.mockReturnValue("HERO");
       vi.clearAllTimers();
 
       processor.handleInitialDetection();
@@ -421,7 +381,7 @@ describe("NpcsDetectionProcessor", () => {
           icon: "fallback-icon.gif",
         }),
       ]);
-      expect(mockPlaySound).toHaveBeenCalledTimes(1);
+      expect(play).toHaveBeenCalledTimes(1);
     } finally {
       vi.useRealTimers();
     }
@@ -435,8 +395,6 @@ describe("NpcsDetectionProcessor", () => {
         notifySound: true,
       });
       useNpcsStore.getState().clearNpcs();
-      mockGame.getNpcIcon.mockReturnValue("fallback-icon.gif");
-      mockGetNpcTypeByWt.mockReturnValue("HERO");
       vi.clearAllTimers();
 
       processor.handleInitialDetection();
@@ -444,7 +402,7 @@ describe("NpcsDetectionProcessor", () => {
       expect(useNpcDetectorStore.getState().npcs).toEqual([]);
 
       expect(vi.getTimerCount()).toBe(0);
-      expect(mockPlaySound).not.toHaveBeenCalled();
+      expect(play).not.toHaveBeenCalled();
     } finally {
       vi.useRealTimers();
     }
@@ -455,15 +413,11 @@ describe("NpcsDetectionProcessor", () => {
 
     try {
       readyPreferences();
-      mockGame.npcs = [];
-      mockGame.getNpcIcon.mockReturnValue("fallback-icon.gif");
-      mockGetNpcTypeByWt.mockReturnValue("HERO");
       vi.clearAllTimers();
 
       processor.handleInitialDetection();
 
       expect(useNpcDetectorStore.getState().npcs).toEqual([]);
-      expect(mockGetNpcTypeByWt).not.toHaveBeenCalled();
       expect(vi.getTimerCount()).toBe(0);
     } finally {
       vi.useRealTimers();
@@ -485,7 +439,7 @@ describe("NpcsDetectionProcessor", () => {
           icon: { id: 44 },
         },
       ],
-    } as GameEvent);
+    });
 
     expect(useNpcDetectorStore.getState().npcs).toEqual([]);
   });
@@ -494,20 +448,18 @@ describe("NpcsDetectionProcessor", () => {
     readyPreferences({
       detect: false,
     });
-    mockGetNpcTypeByWt.mockReturnValue("HERO");
 
     processor.handle(createNpcEvent({ npcTpls: [] }));
     processor.handle(createNpcEvent());
 
     expect(useNpcDetectorStore.getState().npcs).toEqual([]);
-    expect(mockPlaySound).not.toHaveBeenCalled();
+    expect(play).not.toHaveBeenCalled();
   });
 
   it("uses the normalized NPC store as template and icon fallback", () => {
     readyPreferences({
       notifySound: true,
     });
-    mockGetNpcTypeByWt.mockReturnValue("HERO");
     setInitialNpcs([
       createGameNpc({
         id: 500,
@@ -532,9 +484,8 @@ describe("NpcsDetectionProcessor", () => {
         notificationSent: false,
       }),
     ]);
-    expect(mockPlaySound).toHaveBeenCalledWith("detector", "HERO");
-    expect(mockCreateNotification).not.toHaveBeenCalled();
-    expect(mockSendChatMessage).not.toHaveBeenCalled();
+    expect(play).toHaveBeenCalledOnce();
+    expect(requests).toHaveLength(0);
   });
 
   it("skips initial detections when detector type is disabled", () => {
@@ -542,237 +493,98 @@ describe("NpcsDetectionProcessor", () => {
       detect: false,
     });
     setInitialNpcs([createGameNpc()]);
-    mockGetNpcTypeByWt.mockReturnValue("HERO");
 
     processor.handleInitialDetection();
 
     expect(useNpcDetectorStore.getState().npcs).toEqual([]);
   });
 
-  it("auto-sends notifications and chat messages when routing resolves guild ids", async () => {
-    readyPreferences({
-      autoSend: true,
-      routingRules: [
-        {
-          id: "rule-1",
-          minLevel: 200,
-          maxLevel: 260,
-          guildIds: ["guild-1", "guild-2"],
-        },
-      ],
-    });
-    mockGetNpcTypeByWt.mockReturnValue("HERO");
-    mockCreateNotification.mockResolvedValue({
-      notificationId: "notification-1",
-      guildIds: ["guild-1", "guild-2"],
-    });
-    mockSendChatMessage.mockResolvedValue([]);
-
-    processor.handle(createNpcEvent());
-
-    await flushAsyncIntents();
-
-    expect(mockCreateNotification).toHaveBeenCalledWith({
-      npc: {
-        id: 500,
-        hpp: 0,
-        location: "Ithan",
-        name: "Detected npc",
-        wt: 80,
-        x: 12,
-        y: 18,
-        lvl: 240,
-        prof: "m",
-        icon: "event-icon.gif",
-        type: 3,
-      },
-      world: "pandora",
-      guildIds: ["guild-1", "guild-2"],
-    });
-    expect(mockSendChatMessage).toHaveBeenCalledWith({
-      message: "",
-      guildIds: ["guild-1", "guild-2"],
-      type: "NPC",
-      characterData: {
-        nick: "Tester",
-        id: 101,
-        acc: 202,
-        lvl: 230,
-        prof: "w",
-        icon: "hero.gif",
-      },
-      npc: {
-        x: 12,
-        y: 18,
-        icon: "event-icon.gif",
-        id: 500,
-        name: "Detected npc",
-        lvl: 240,
-        prof: "m",
-        type: 3,
-        hpp: 0,
-        location: "Ithan",
-        wt: 80,
-      },
-    });
-    expect(useNpcDetectorStore.getState().npcs[0]).toEqual(
-      expect.objectContaining({
-        notificationSent: true,
-      }),
-    );
-  });
-
-  it("auto-sends event detections when routing rule world matches current world", async () => {
-    readyPreferences({
-      autoSend: true,
-      routingRules: [
-        {
-          id: "rule-1",
-          minLevel: 200,
-          maxLevel: 260,
-          world: "pandora",
-          guildIds: ["guild-1"],
-        },
-      ],
-    });
-    mockGetNpcTypeByWt.mockReturnValue("HERO");
-    mockCreateNotification.mockResolvedValue({
-      notificationId: "notification-1",
-      guildIds: ["guild-1"],
-    });
-    mockSendChatMessage.mockResolvedValue([]);
-
-    processor.handle(createNpcEvent());
-
-    await flushAsyncIntents();
-
-    expect(mockCreateNotification).toHaveBeenCalledWith(
-      expect.objectContaining({
+  it.each(["any-world", "matching-world", "queued"] as const)(
+    "sends notification then chat to routed guilds for %s detections",
+    async (mode) => {
+      if (mode === "queued") processor.handle(createNpcEvent());
+      readyPreferences({
+        autoSend: true,
+        routingRules: [
+          {
+            id: "rule-1",
+            minLevel: 200,
+            maxLevel: 260,
+            world: mode === "any-world" ? undefined : "pandora",
+            guildIds: ["guild-1", "guild-2"],
+          },
+        ],
+      });
+      if (mode === "queued") processor.flushPending("202");
+      else processor.handle(createNpcEvent());
+      await waitFor(() => expect(requests).toHaveLength(3));
+      const first = requests[0];
+      if (!first) throw new Error("Expected notification request");
+      expect(await first.json()).toMatchObject({
         world: "pandora",
-        guildIds: ["guild-1"],
-      }),
-    );
-    expect(mockSendChatMessage).toHaveBeenCalledWith(
-      expect.objectContaining({
-        guildIds: ["guild-1"],
-      }),
-    );
-    expect(useNpcDetectorStore.getState().npcs[0]).toEqual(
-      expect.objectContaining({
-        notificationSent: true,
-      }),
-    );
-  });
-
-  it("flushes queued event detections with the same world-specific routing", async () => {
-    mockGetNpcTypeByWt.mockReturnValue("HERO");
-
-    processor.handle(createNpcEvent());
-
+        guildIds: ["guild-1", "guild-2"],
+        npc: {
+          id: 500,
+          name: "Detected npc",
+          lvl: 240,
+          prof: "m",
+          wt: 80,
+          location: "Ithan",
+        },
+      });
+      expect(
+        requests
+          .slice(1)
+          .map((request) => new URL(request.url).pathname)
+          .sort(),
+      ).toEqual([
+        "/guilds/guild-1/chat-messages",
+        "/guilds/guild-2/chat-messages",
+      ]);
+      expect(await requests[1]?.json()).toMatchObject({
+        type: "NPC",
+        characterData: { nick: "Tester", id: 101, acc: 202 },
+        npc: { id: 500, name: "Detected npc" },
+      });
+      expect(useNpcDetectorStore.getState().npcs[0]?.notificationSent).toBe(
+        true,
+      );
+    },
+  );
+  it("does not send chat when notification HTTP creation fails", async () => {
+    notificationStatus = 503;
+    const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
     readyPreferences({
       autoSend: true,
       routingRules: [
-        {
-          id: "rule-1",
-          minLevel: 200,
-          maxLevel: 260,
-          world: "pandora",
-          guildIds: ["guild-1"],
-        },
+        { id: "rule-1", minLevel: 200, maxLevel: 260, guildIds: ["guild-1"] },
       ],
     });
-    mockCreateNotification.mockResolvedValue({
-      notificationId: "notification-1",
-      guildIds: ["guild-1"],
-    });
-    mockSendChatMessage.mockResolvedValue([]);
-
-    processor.flushPending("202");
-
-    await flushAsyncIntents();
-
-    expect(mockCreateNotification).toHaveBeenCalledWith(
-      expect.objectContaining({
-        world: "pandora",
-        guildIds: ["guild-1"],
-      }),
+    processor.handle(createNpcEvent());
+    await waitFor(() =>
+      expect(warning).toHaveBeenCalledWith(
+        "[NpcsDetectionProcessor] Failed to send notification:",
+        expect.any(Error),
+      ),
     );
-    expect(mockSendChatMessage).toHaveBeenCalledWith(
-      expect.objectContaining({
-        guildIds: ["guild-1"],
-      }),
-    );
-    expect(useNpcDetectorStore.getState().npcs[0]).toEqual(
-      expect.objectContaining({
-        notificationSent: true,
-      }),
+    expect(requests).toHaveLength(1);
+    expect(useNpcDetectorStore.getState().npcs[0]?.notificationSent).toBe(
+      false,
     );
   });
-
-  it("logs a warning and skips chat when notification creation fails", async () => {
-    const consoleWarnSpy = vi
-      .spyOn(console, "warn")
-      .mockImplementation(() => undefined);
-
+  it("retains the accepted notification when subsequent chat HTTP delivery fails", async () => {
+    chatStatus = 503;
     readyPreferences({
       autoSend: true,
       routingRules: [
-        {
-          id: "rule-1",
-          minLevel: 200,
-          maxLevel: 260,
-          guildIds: ["guild-1"],
-        },
+        { id: "rule-1", minLevel: 200, maxLevel: 260, guildIds: ["guild-1"] },
       ],
     });
-    mockGetNpcTypeByWt.mockReturnValue("HERO");
-    mockCreateNotification.mockRejectedValue(new Error("notify failed"));
-
     processor.handle(createNpcEvent());
-
-    await flushAsyncIntents();
-
-    expect(consoleWarnSpy).toHaveBeenCalledWith(
-      "[NpcsDetectionProcessor] Failed to send notification:",
-      expect.any(Error),
-    );
-    expect(mockSendChatMessage).not.toHaveBeenCalled();
+    await waitFor(() => expect(requests).toHaveLength(2));
+    expect(useNpcDetectorStore.getState().npcs[0]?.notificationSent).toBe(true);
   });
-
-  it("logs a warning when chat sending fails after notification creation succeeds", async () => {
-    const consoleWarnSpy = vi
-      .spyOn(console, "warn")
-      .mockImplementation(() => undefined);
-
-    readyPreferences({
-      autoSend: true,
-      routingRules: [
-        {
-          id: "rule-1",
-          minLevel: 200,
-          maxLevel: 260,
-          guildIds: ["guild-1"],
-        },
-      ],
-    });
-    mockGetNpcTypeByWt.mockReturnValue("HERO");
-    mockCreateNotification.mockResolvedValue({
-      notificationId: "notification-1",
-      guildIds: ["guild-1"],
-    });
-    mockSendChatMessage.mockRejectedValue(new Error("chat failed"));
-
-    processor.handle(createNpcEvent());
-
-    await flushAsyncIntents();
-
-    expect(consoleWarnSpy).toHaveBeenCalledWith(
-      "[NpcsDetectionProcessor] Failed to send chat message:",
-      expect.any(Error),
-    );
-  });
-
-  it("does not auto-send when routing rule world does not match current world", async () => {
+  it("does not auto-send when the routing rule targets another world", () => {
     readyPreferences({
       autoSend: true,
       routingRules: [
@@ -785,18 +597,10 @@ describe("NpcsDetectionProcessor", () => {
         },
       ],
     });
-    mockGetNpcTypeByWt.mockReturnValue("HERO");
-
     processor.handle(createNpcEvent());
-
-    await flushAsyncIntents();
-
-    expect(mockCreateNotification).not.toHaveBeenCalled();
-    expect(mockSendChatMessage).not.toHaveBeenCalled();
-    expect(useNpcDetectorStore.getState().npcs[0]).toEqual(
-      expect.objectContaining({
-        notificationSent: false,
-      }),
+    expect(requests).toHaveLength(0);
+    expect(useNpcDetectorStore.getState().npcs[0]?.notificationSent).toBe(
+      false,
     );
   });
 });

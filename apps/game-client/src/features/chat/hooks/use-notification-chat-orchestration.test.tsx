@@ -1,50 +1,56 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { ApiError } from "@lootlog/client/transport";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { ReactNode } from "react";
+import { ApiError, configureApiClients } from "@lootlog/client/transport";
 import {
   isNotificationRateLimitError,
   useNotificationChatOrchestration,
 } from "./use-notification-chat-orchestration";
 
-const createNotification = vi.fn();
-
-vi.mock("@lootlog/client/main", async () => ({
-  ...(await vi.importActual("@lootlog/client/main")),
-  useMessagingControllerSendNotification: () => ({
-    mutateAsync: createNotification,
-  }),
-}));
-
-const createDeferred = <T,>() => {
-  let resolve: (value: T) => void = () => {
-    throw new Error("Deferred promise was not initialized");
-  };
-  let reject: (reason?: unknown) => void = () => {
-    throw new Error("Deferred promise was not initialized");
-  };
-  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
-    resolve = resolvePromise;
-    reject = rejectPromise;
-  });
-
-  return { promise, reject, resolve };
-};
+const fetchRequest = vi.fn<typeof fetch>();
+let queryClient: QueryClient;
+let restoreApi: () => void;
+const wrapper = ({ children }: { children: ReactNode }) => (
+  <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+);
+afterEach(() => {
+  restoreApi();
+  queryClient.clear();
+});
 
 describe("useNotificationChatOrchestration", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    fetchRequest.mockReset();
+    queryClient = new QueryClient({
+      defaultOptions: { mutations: { retry: false } },
+    });
+    restoreApi = configureApiClients({
+      main: {
+        baseUrl: "https://api.example.test",
+        fetch: fetchRequest,
+      },
+    });
   });
 
   it("stays pending until notification creation and chat publishing finish", async () => {
-    const notificationDeferred = createDeferred<{
+    const notificationDeferred = Promise.withResolvers<{
       guildIds: string[];
       notificationId: string;
     }>();
-    const chatDeferred = createDeferred<string>();
-    const sendChatMessage = vi.fn(() => chatDeferred.promise);
-    createNotification.mockReturnValue(notificationDeferred.promise);
-    const { result } = renderHook(() => useNotificationChatOrchestration());
+    const chatDeferred = Promise.withResolvers<string>();
+    const sendChatMessage = vi.fn<(guildIds: string[]) => Promise<string>>(
+      () => chatDeferred.promise,
+    );
+    fetchRequest.mockReturnValue(
+      notificationDeferred.promise.then((body) => Response.json(body)),
+    );
+    const { result } = renderHook(() => useNotificationChatOrchestration(), {
+      wrapper,
+    });
 
-    let operation: Promise<unknown> | undefined;
+    let operation:
+      | ReturnType<typeof result.current.startNotificationMessage<string>>
+      | undefined;
     act(() => {
       operation = result.current.startNotificationMessage({
         guildIds: ["guild-1"],
@@ -75,8 +81,10 @@ describe("useNotificationChatOrchestration", () => {
   });
 
   it("unlocks after notification creation fails", async () => {
-    createNotification.mockRejectedValue(new Error("unavailable"));
-    const { result } = renderHook(() => useNotificationChatOrchestration());
+    fetchRequest.mockRejectedValue(new Error("unavailable"));
+    const { result } = renderHook(() => useNotificationChatOrchestration(), {
+      wrapper,
+    });
 
     await act(async () => {
       await expect(
@@ -84,7 +92,7 @@ describe("useNotificationChatOrchestration", () => {
           guildIds: ["guild-1"],
           world: "tempest",
           message: "alarm",
-          sendChatMessage: vi.fn(),
+          sendChatMessage: vi.fn<(guildIds: string[]) => Promise<string>>(),
         }),
       ).rejects.toThrow("unavailable");
     });

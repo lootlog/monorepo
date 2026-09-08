@@ -1,6 +1,6 @@
 import type { UserFeedResponseDtoOutput } from "@lootlog/client/main";
 import { useTranslation } from "react-i18next";
-import { ItemRarity } from "@/lib/loots/loot-types";
+import { resolveItemRarity } from "@lootlog/ui/components/item-image";
 import { ItemTile } from "@/components/tiles/item-tile";
 
 type LootFeedItem = Extract<
@@ -22,10 +22,7 @@ export function LiveFeedItems({ item }: { item: LootFeedItem }) {
               ...lootItem,
               stat: lootItem.stat ?? "",
               type: lootItem.type ?? null,
-              rarity:
-                Object.values(ItemRarity).find(
-                  (rarity) => rarity === lootItem.rarity,
-                ) ?? ItemRarity.COMMON,
+              rarity: resolveItemRarity(lootItem.rarity),
             }}
           />
         </li>

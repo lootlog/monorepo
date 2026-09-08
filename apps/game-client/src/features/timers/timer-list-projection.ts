@@ -1,3 +1,4 @@
+import type { UserTimerSettings } from "@lootlog/schema/timer-settings";
 import { NpcType } from "@/api/npcs.api";
 import type { Timer } from "@/api/timers.api";
 import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
@@ -40,7 +41,7 @@ type TimerListPreferences = {
   pinnedTimers: string[];
   removeTimerAfterMs: number;
   sortOrder: "asc" | "desc";
-  timersColors: Record<string, string>;
+  timersColors: UserTimerSettings["timersColors"];
 };
 
 type ProjectTimerListInput = {

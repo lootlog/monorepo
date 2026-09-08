@@ -1,315 +1,168 @@
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { render, screen } from "@testing-library/react";
-import type { ReactNode } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import userEvent from "@testing-library/user-event";
+import { QueryClientProvider } from "@tanstack/react-query";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  onTestFinished,
+  vi,
+} from "vitest";
 import { Permission } from "@lootlog/schema/permissions";
-import { setTestRuntimeGame } from "@/test/test-runtime-window";
-import type { TimerWithTimeLeft } from "../utils/timers-utils";
-
-beforeEach(() => setTestRuntimeGame());
-
-const timerContextMenuSpy = vi.fn();
-const timerTooltipSpy = vi.fn();
-const mockUseTimerActions = vi.fn();
-const mockUseTimerDisplay = vi.fn();
-const tileSpy = vi.fn();
-
-let timersStoreState = {
-  customColors: {},
-  defaultColorNames: {},
-  overriddenDefaultColors: {},
-  hiddenDefaultColors: [],
-  generalConfig: {
-    timersGrouping: false,
-  },
-};
-
-let guildPermissions: Permission[] = [];
-
-vi.mock("@/components/ui/context-menu", () => ({
-  ContextMenu: ({ children }: { children: ReactNode }) => <>{children}</>,
-  ContextMenuTrigger: ({ children }: { children: ReactNode }) => (
-    <>{children}</>
-  ),
-  ContextMenuContent: ({ children }: { children: ReactNode }) => (
-    <div>{children}</div>
-  ),
-}));
-
-vi.mock("@/components/ui/tooltip", () => ({
-  Tooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
-  TooltipTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
-  TooltipContent: ({ children }: { children: ReactNode }) => (
-    <div>{children}</div>
-  ),
-}));
-
-vi.mock("@/components/ui/tile", () => ({
-  Tile: ({
-    children,
-    ...props
-  }: {
-    children: ReactNode;
-    color?: string;
-    customBorderColor?: string;
-    customBackgroundColor?: string;
-    id: string;
-  }) => {
-    tileSpy(props);
-    return <div data-testid="tile">{children}</div>;
-  },
-}));
-
-vi.mock("@/store/timers.store", () => ({
-  useTimersStore: (selector: (state: typeof timersStoreState) => unknown) =>
-    selector(timersStoreState),
-}));
-
-vi.mock("../hooks/use-timer-actions", () => ({
-  useTimerActions: (...args: unknown[]) => mockUseTimerActions(...args),
-}));
-
-vi.mock("../hooks/use-timer-display", () => ({
-  useTimerDisplay: (...args: unknown[]) => mockUseTimerDisplay(...args),
-}));
-
-vi.mock("./timer-context-menu-content", () => ({
-  TimerContextMenuContent: (props: unknown) => {
-    timerContextMenuSpy(props);
-    return <div>TimerContextMenuContent</div>;
-  },
-}));
-
-vi.mock("./timer-tooltip", () => ({
-  TimerTooltip: (props: unknown) => {
-    timerTooltipSpy(props);
-    return <div>TimerTooltip</div>;
-  },
-}));
-
-vi.mock("./timer-live-tile", () => ({
-  TimerLiveTile: (props: { label: string; timer: TimerWithTimeLeft }) => {
-    tileSpy(props);
-    return (
-      <div data-testid="tile">
-        <span>{props.label}</span>
-        <span>{`time:${props.timer.maxTimeLeft}`}</span>
-      </div>
-    );
-  },
-}));
-
-vi.mock("@lootlog/client/main", async () => ({
-  ...(await vi.importActual("@lootlog/client/main")),
-  getGuildsControllerGetGuildPermissionsQueryKey: ({
-    guildId,
-  }: {
-    guildId: string;
-  }) => ["permissions", guildId],
-  useGuildsControllerGetGuildPermissions: () => ({
-    data: guildPermissions,
-  }),
-}));
-
-vi.mock("@/lib/game", () => ({
-  Game: {
-    getWorldName: () => "pandora",
-  },
-}));
-
-vi.mock("@lootlog/datetime", () => ({
-  parseMsToTime: (timeLeft: number) => `time:${timeLeft}`,
-}));
-
-vi.mock("lucide-react", () => ({
-  Loader2: () => <span>Loader2</span>,
-}));
-
+import { useTimersStore } from "@/store/timers.store";
+import {
+  createTimerFixture,
+  createTimerMemberFixture,
+} from "../timer-fixtures";
+import { createTimerHttpFixture } from "../timer-http-fixtures";
+import { TimerClockProvider } from "./timer-clock-provider";
 import { SingleTimer } from "./single-timer";
 
-const createTimer = (): TimerWithTimeLeft =>
-  ({
-    id: "timer-1",
-    guildId: "guild-1",
-    timerKey: "timer-1",
-    world: "pandora",
-    npcId: 10,
-    minSpawnTime: "2026-04-22T10:00:00.000Z",
-    maxSpawnTime: "2026-04-22T10:05:00.000Z",
-    updatedAt: "2026-04-22T09:59:00.000Z",
-    wasReset: false,
-    npc: {
-      id: 10,
-      name: "Tanroth",
-      lvl: 120,
-      prof: "W",
-      icon: "icon.gif",
-      wt: 10,
-      type: "hero",
-      margonemType: 4,
-      location: "Ruins",
-    } as never,
-    minTimeLeft: 5_000,
-    maxTimeLeft: 10_000,
-  }) as TimerWithTimeLeft;
+const NOW = new Date("2026-04-22T10:00:00.000Z").getTime();
+const resetStore = () =>
+  useTimersStore.setState(useTimersStore.getInitialState(), true);
+beforeEach(() => {
+  resetStore();
+  vi.spyOn(Date, "now").mockReturnValue(NOW);
+});
+afterEach(() => {
+  resetStore();
+  vi.restoreAllMocks();
+});
+const createTimer = () => ({
+  ...createTimerFixture({
+    minSpawnTime: new Date(NOW + 5000).toISOString(),
+    maxSpawnTime: new Date(NOW + 10000).toISOString(),
+    wasReset: true,
+    members: [createTimerMemberFixture()],
+  }),
+  minTimeLeft: 5000,
+  maxTimeLeft: 10000,
+});
 
 describe("SingleTimer", () => {
-  beforeEach(() => {
-    document.body.className = "";
-    timerContextMenuSpy.mockReset();
-    timerTooltipSpy.mockReset();
-    tileSpy.mockReset();
-    guildPermissions = [];
-    timersStoreState = {
-      customColors: {},
-      defaultColorNames: {},
-      overriddenDefaultColors: {},
-      hiddenDefaultColors: [],
-      generalConfig: {
-        timersGrouping: false,
-      },
-    };
-    mockUseTimerActions.mockReset();
-    mockUseTimerDisplay.mockReset();
-
-    mockUseTimerActions.mockReturnValue({
-      isPinned: true,
-      handleHideTimer: vi.fn(),
-      handleHideTimerForAll: vi.fn(),
-      handleShowTimer: vi.fn(),
-      handleShowTimerForAll: vi.fn(),
-      handlePinTimer: vi.fn(),
-      handlePinTimerForAll: vi.fn(),
-      handleUnpinTimerForAll: vi.fn(),
-      handleTimerColorChange: vi.fn(),
-      handleRestartTimer: vi.fn(),
-      handleDeleteTimer: vi.fn(),
-    });
-
-    mockUseTimerDisplay.mockReturnValue({
-      isPending: false,
-      selectedColor: "red",
-      customColor: undefined,
-      overriddenColor: undefined,
-      resetIndicator: "[R] ",
-      shortname: "[H]",
-      npcDetails: "(120w)",
-      countdownMode: "max",
+  it("renders the real countdown and metadata, and exposes actions according to its access policy", async () => {
+    const user = userEvent.setup();
+    const fixture = createTimerHttpFixture();
+    const state = useTimersStore.getState();
+    useTimersStore.setState({
+      timersColors: { Tanroth: "red" },
+      pinnedTimers: { "guild-1": ["Tanroth"] },
       displayConfig: {
-        fontSize: 11,
-        singleTimerDisplayMode: "row",
+        ...state.displayConfig,
+        showType: true,
+        showLevel: true,
+      },
+      generalConfig: {
+        ...state.generalConfig,
+        timersGrouping: false,
+        countdownMode: "max",
       },
     });
+    const timer = createTimer();
+    const content = (capabilities: Permission[]) => (
+      <QueryClientProvider client={fixture.queryClient}>
+        <TimerClockProvider>
+          <SingleTimer
+            guildIds={["guild-1", "guild-2"]}
+            guildNamesById={{ "guild-1": "Alpha" }}
+            accessPolicy={createAccessPolicy({ capabilities })}
+            timer={timer}
+            settingsKey="guild-1"
+          />
+        </TimerClockProvider>
+      </QueryClientProvider>
+    );
+    const view = render(
+      content([
+        Permission.LOOTLOG_TIMERS_DELETE,
+        Permission.LOOTLOG_TIMERS_RESET,
+      ]),
+    );
+    onTestFinished(() => {
+      view.unmount();
+      fixture.cleanup();
+    });
+    const label = screen.getByText(/\[R\] \[H\] Tanroth/);
+    expect(label).toHaveTextContent("(120w)");
+    expect(screen.getByText("00:00:10")).toBeVisible();
+    expect(view.container.querySelector('[id="10"]')).toHaveClass(
+      "ll:bg-red-500/20",
+    );
+    await user.hover(label);
+    expect(await screen.findByText("Tester (Alpha)")).toBeVisible();
+    await user.pointer({ keys: "[MouseRight]", target: label });
+    expect(
+      await screen.findByRole("menuitem", { name: "Usuń timer" }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("menuitem", { name: "Odliczaj od początku" }),
+    ).toBeVisible();
+    expect(screen.getByRole("menuitem", { name: "Odepnij" })).toBeVisible();
+    view.rerender(content([]));
+    expect(
+      screen.queryByRole("menuitem", { name: "Usuń timer" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("menuitem", { name: "Odliczaj od początku" }),
+    ).not.toBeInTheDocument();
   });
 
-  it("renders timer content, tooltip data, and forwards permissions to the context menu", () => {
-    guildPermissions = [
-      Permission.LOOTLOG_TIMERS_DELETE,
-      Permission.LOOTLOG_TIMERS_RESET,
-    ];
-
-    render(
-      <SingleTimer
-        guildIds={["guild-1", "guild-2"]}
-        guildNamesById={{ "guild-1": "Alpha" }}
-        accessPolicy={createAccessPolicy({ capabilities: guildPermissions })}
-        timer={createTimer()}
-        settingsKey="guild-1"
-      />,
-    );
-
-    expect(screen.getByText(/\[R] \[H] Tanroth \(120w\)/)).toBeVisible();
-    expect(screen.getByText("time:10000")).toBeVisible();
-    expect(screen.getByText("TimerContextMenuContent")).toBeVisible();
-    expect(screen.getByText("TimerTooltip")).toBeVisible();
-
-    expect(tileSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: "10",
-        color: "red",
-        customBorderColor: undefined,
-        customBackgroundColor: undefined,
-      }),
-    );
-    expect(timerContextMenuSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        isPinned: true,
-        canDelete: true,
-        canReset: true,
-        timersGrouping: false,
-        selectedColor: "red",
-      }),
-    );
-    expect(timerTooltipSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        timer: createTimer(),
-        guildNamesById: { "guild-1": "Alpha" },
-      }),
-    );
-    expect(mockUseTimerActions).toHaveBeenCalledWith(
-      createTimer(),
-      "guild-1",
-      "pandora",
-      ["guild-1", "guild-2"],
-      false,
-    );
-  });
-
-  it("shows the pending overlay, respects hidden state, and uses custom colors", () => {
-    timersStoreState = {
-      ...timersStoreState,
+  it("shows pending and hidden states with the configured custom color", async () => {
+    const user = userEvent.setup();
+    const fixture = createTimerHttpFixture();
+    const state = useTimersStore.getState();
+    useTimersStore.setState({
+      timersColors: { Tanroth: "custom-1" },
+      customColors: {
+        "custom-1": {
+          id: "custom-1",
+          name: "Custom",
+          borderColor: "#111111",
+          backgroundColor: "#222222",
+        },
+      },
       generalConfig: {
+        ...state.generalConfig,
         timersGrouping: true,
-      },
-    };
-    mockUseTimerDisplay.mockReturnValue({
-      isPending: true,
-      selectedColor: "red",
-      customColor: {
-        id: "custom-1",
-        name: "Custom",
-        borderColor: "#111",
-        backgroundColor: "#222",
-      },
-      overriddenColor: undefined,
-      resetIndicator: "",
-      shortname: "[T]",
-      npcDetails: "",
-      countdownMode: "min",
-      displayConfig: {
-        fontSize: 13,
-        singleTimerDisplayMode: "column",
+        countdownMode: "max",
       },
     });
-
-    document.body.classList.add("si");
-
-    const { container } = render(
-      <SingleTimer
-        guildIds={["guild-1"]}
-        guildNamesById={{}}
-        accessPolicy={createAccessPolicy({ capabilities: guildPermissions })}
-        timer={createTimer()}
-        settingsKey="guild-1"
-        isHidden
-      />,
+    const view = render(
+      <QueryClientProvider client={fixture.queryClient}>
+        <TimerClockProvider>
+          <SingleTimer
+            guildIds={["guild-1"]}
+            guildNamesById={{}}
+            accessPolicy={createAccessPolicy({ capabilities: [] })}
+            timer={{ ...createTimer(), isPending: true }}
+            settingsKey="guild-1"
+            isHidden
+          />
+        </TimerClockProvider>
+      </QueryClientProvider>,
     );
-
-    expect(screen.getByText("Loader2")).toBeVisible();
-    expect(container.querySelector(".ll\\:opacity-50")).toBeTruthy();
-    expect(tileSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        color: undefined,
-        customBorderColor: "#111",
-        customBackgroundColor: "#222",
-      }),
+    onTestFinished(() => {
+      view.unmount();
+      fixture.cleanup();
+    });
+    const tile = view.container.querySelector('[id="10"]');
+    expect(tile).toHaveStyle({
+      borderColor: "#111111",
+      backgroundColor: "#222222",
+    });
+    expect(tile?.parentElement).toHaveClass("ll:opacity-50");
+    expect(screen.getByText("00:00:10").parentElement).toHaveClass(
+      "ll:opacity-60",
     );
-    expect(timerContextMenuSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        isHidden: true,
-        timersGrouping: true,
-      }),
-    );
-    expect(screen.getByText("time:10000")).toBeVisible();
+    await user.pointer({
+      keys: "[MouseRight]",
+      target: screen.getByText(/Tanroth/),
+    });
+    expect(await screen.findByText("Tworzenie timera...")).toBeVisible();
+    expect(screen.queryByRole("menuitem")).not.toBeInTheDocument();
   });
 });

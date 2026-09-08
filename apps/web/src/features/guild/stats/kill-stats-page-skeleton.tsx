@@ -27,7 +27,7 @@ export const KillStatsPageSkeleton = () => {
       <div className="grid grid-cols-2 gap-3 min-[1280px]:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <SectionCard key={i}>
-            <SectionCardHeader title={<Skeleton className="mb-2 h-3 w-16" />} />
+            <SectionCardHeader title=<Skeleton className="mb-2 h-3 w-16" /> />
             <SectionCardContent className="flex flex-col gap-3">
               <Skeleton className="h-7 w-20" />
             </SectionCardContent>
@@ -37,7 +37,7 @@ export const KillStatsPageSkeleton = () => {
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,24rem),1fr))] gap-4">
         <SectionCard>
-          <SectionCardHeader title={<Skeleton className="mb-3 h-5 w-32" />} />
+          <SectionCardHeader title=<Skeleton className="mb-3 h-5 w-32" /> />
           <SectionCardContent className="flex flex-col gap-3">
             <div className="flex items-end justify-center gap-4">
               <Skeleton className="h-20 w-16 rounded-lg" />
@@ -47,7 +47,7 @@ export const KillStatsPageSkeleton = () => {
           </SectionCardContent>
         </SectionCard>
         <SectionCard>
-          <SectionCardHeader title={<Skeleton className="mb-3 h-5 w-32" />} />
+          <SectionCardHeader title=<Skeleton className="mb-3 h-5 w-32" /> />
           <SectionCardContent className="flex flex-col gap-3">
             <div className="space-y-2">
               {Array.from({ length: 5 }).map((_, i) => (

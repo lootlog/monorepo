@@ -11,9 +11,7 @@ import {
 } from "@lootlog/ui/components/select";
 import { EVENT_SCORING_BOOLEAN_FACTORS } from "@lootlog/domain/scoring";
 
-type ScoringRulesFormValues = {
-  scoringRules: { rules: { conditions: unknown[] }[] };
-};
+import type { ScoringRulesFormValues } from "./scoring-rules-editor";
 
 interface ScoringConditionBooleanProps {
   control: Control<ScoringRulesFormValues>;
@@ -36,15 +34,11 @@ export const ScoringConditionBoolean = ({
         </Label>
         <Controller
           control={control}
-          name={
-            `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.factor` as `scoringRules.rules.${number}.conditions.${number}`
-          }
+          name={`scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.factor`}
           render={({ field }) => (
             <ScoringFactorSelect
               factors={EVENT_SCORING_BOOLEAN_FACTORS}
-              value={
-                field.value as (typeof EVENT_SCORING_BOOLEAN_FACTORS)[number]
-              }
+              value={field.value}
               onChange={field.onChange}
             />
           )}
@@ -56,9 +50,7 @@ export const ScoringConditionBoolean = ({
         </Label>
         <Controller
           control={control}
-          name={
-            `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.value` as `scoringRules.rules.${number}.conditions.${number}`
-          }
+          name={`scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.value`}
           render={({ field }) => (
             <Select
               value={String(field.value)}

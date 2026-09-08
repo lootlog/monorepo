@@ -1,5 +1,32 @@
 {
+  "extends": ["../../.oxlintrc.json"],
   "rules": {
     "complexity": "error"
-  }
+  },
+  "overrides": [
+    {
+      "files": [
+        "src/features/guild/events/components/scoring/scoring-rules-editor.tsx"
+      ],
+      "rules": {
+        "anti-slop-effect/no-service-constructor-imports": [
+          "error",
+          {
+            "nonServiceImports": ["makeRuleId"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/themes/cat/cat-paw-lottie.spec.tsx"],
+      "rules": {
+        "anti-slop/no-module-mocking": [
+          "error",
+          {
+            "externalModules": ["lottie-react"]
+          }
+        ]
+      }
+    }
+  ]
 }

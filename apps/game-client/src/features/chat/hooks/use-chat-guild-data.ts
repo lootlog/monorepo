@@ -125,7 +125,7 @@ export const useChatGuildData = ({
   const hasMentionCandidatesByGuildId = guildIdsToLoad.reduce<
     Record<string, boolean>
   >((result, guildId, index) => {
-    const messages = (messageQueries[index]?.data ?? []) as ChatMessageType[];
+    const messages = messageQueries[index]?.data ?? [];
 
     result[guildId] = messages.some((message) => {
       return hasChatMentionToken(message.message);
@@ -184,8 +184,8 @@ export const useChatGuildData = ({
 
   const guildDataById = guildIdsToLoad.reduce<Record<string, ChatGuildData>>(
     (result, guildId, index) => {
-      const messages = (messageQueries[index]?.data ?? []) as ChatMessageType[];
-      const members = (memberQueries[index]?.data ?? []) as GuildMember[];
+      const messages = messageQueries[index]?.data ?? [];
+      const members = memberQueries[index]?.data ?? [];
 
       result[guildId] = {
         messages,
@@ -209,19 +209,19 @@ export const useChatGuildData = ({
       guildId,
       guildData.messages,
     ]),
-  ) as Record<string, ChatMessageType[]>;
+  );
   const membersByGuildId = Object.fromEntries(
     Object.entries(guildDataById).map(([guildId, guildData]) => [
       guildId,
       guildData.memberLookup,
     ]),
-  ) as Record<string, Record<string, GuildMember>>;
+  );
   const mentionContextsByGuildId = Object.fromEntries(
     Object.entries(guildDataById).map(([guildId, guildData]) => [
       guildId,
       guildData.mentionContext,
     ]),
-  ) as Record<string, ChatMentionContext>;
+  );
 
   return {
     ...resourceState,

@@ -141,14 +141,14 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
     reset(nextFormValues);
   }, [currentCategorySettings, getValues, reset]);
 
-  const watchedData = useWatch({ control }) as FormData;
+  const watchedData = useWatch({ control });
 
   const syncCurrentValues = () => {
     if (!accountId || !isFetched) {
       return;
     }
 
-    const nextCategorySettings = getValues() as NotificationSettings;
+    const nextCategorySettings = getValues();
     if (
       areNotificationSettingsEqual(
         nextCategorySettings,

@@ -248,25 +248,26 @@ describe("durable private online history", () => {
     expect(result.status).toBe("stale");
   });
 
-  it("splits Warsaw midnights with both spring and autumn DST", async () => {
-    for (const [user, now, start, end, date, seconds] of [
-      [
-        "spring",
-        "2026-03-30T12:00:00Z",
-        "2026-03-28T23:00:00Z",
-        "2026-03-29T22:00:00Z",
-        "2026-03-29",
-        23 * 3600,
-      ],
-      [
-        "autumn",
-        "2025-10-27T12:00:00Z",
-        "2025-10-25T22:00:00Z",
-        "2025-10-26T23:00:00Z",
-        "2025-10-26",
-        25 * 3600,
-      ],
-    ] as const) {
+  it.each([
+    [
+      "spring",
+      "2026-03-30T12:00:00Z",
+      "2026-03-28T23:00:00Z",
+      "2026-03-29T22:00:00Z",
+      "2026-03-29",
+      23 * 3600,
+    ],
+    [
+      "autumn",
+      "2025-10-27T12:00:00Z",
+      "2025-10-25T22:00:00Z",
+      "2025-10-26T23:00:00Z",
+      "2025-10-26",
+      25 * 3600,
+    ],
+  ] as const)(
+    "splits Warsaw midnight for %s DST",
+    async (user, now, start, end, date, seconds) => {
       const result = await runAt(
         now,
         Effect.gen(function* () {
@@ -276,8 +277,8 @@ describe("durable private online history", () => {
         }),
       );
       expect(result.days[0]?.onlineSeconds).toBe(seconds);
-    }
-  });
+    },
+  );
 
   it("keeps offline users fresh from a healthy collector and does not replace degraded with older health", async () => {
     const result = await run(

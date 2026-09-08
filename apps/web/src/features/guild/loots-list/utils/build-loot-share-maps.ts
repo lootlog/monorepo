@@ -16,7 +16,7 @@ export const buildLootPlayerColorMap = (
 
 export const buildLootItemOwnerMap = (
   lootShare: Loot["lootShare"] | null | undefined,
-): LootItemOwnerMap => {
+) => {
   const itemOwnerMap: LootItemOwnerMap = {};
 
   Object.entries(lootShare ?? {}).forEach(([playerId, itemIds]) => {

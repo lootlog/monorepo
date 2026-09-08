@@ -63,7 +63,7 @@ type RunLoggedRequestInput<TResponse> = LoggedRequestInput & {
 export type LoggedActionRetryOptions = {
   maxAttempts: number;
   retryableStatuses: readonly number[];
-  getDelayMs: (attempt: number, error: unknown) => number;
+  getDelayMs: (attempt: number, cause: unknown) => number;
 };
 
 type RunSingleLoggedActionInput<TResponse> = {
@@ -72,7 +72,7 @@ type RunSingleLoggedActionInput<TResponse> = {
   request: LoggedRequestInput;
   execute: () => Promise<TResponse>;
   getSuccessDetails?: (response: TResponse) => unknown;
-  getErrorDetails?: (error: unknown) => unknown;
+  getErrorDetails?: (cause: unknown) => unknown;
   retry?: LoggedActionRetryOptions;
 };
 
@@ -269,77 +269,77 @@ const getResponseBody = (response: unknown): unknown => {
   return response.data ?? null;
 };
 
-const getErrorStatusCode = (error: unknown): number | null => {
-  if (!isRecord(error)) {
+const getErrorStatusCode = (cause: unknown): number | null => {
+  if (!isRecord(cause)) {
     return null;
   }
 
-  if (typeof error.status === "number") {
-    return error.status;
+  if (typeof cause.status === "number") {
+    return cause.status;
   }
 
-  if (!isRecord(error.response)) {
+  if (!isRecord(cause.response)) {
     return null;
   }
 
-  return typeof error.response.status === "number"
-    ? error.response.status
+  return typeof cause.response.status === "number"
+    ? cause.response.status
     : null;
 };
 
-const getLoggableErrorResponse = (error: unknown): SerializableValue => {
+const getLoggableErrorResponse = (cause: unknown): SerializableValue => {
   const t = getFixedT("common");
 
-  if (isRecord(error) && ("status" in error || "data" in error)) {
+  if (isRecord(cause) && ("status" in cause || "data" in cause)) {
     return serializeLogValue({
       message:
-        typeof error.message === "string"
-          ? error.message
+        typeof cause.message === "string"
+          ? cause.message
           : t("errors.requestFailed"),
-      data: "data" in error ? (error.data ?? null) : null,
+      data: "data" in cause ? (cause.data ?? null) : null,
     });
   }
 
-  if (isRecord(error) && isRecord(error.response)) {
+  if (isRecord(cause) && isRecord(cause.response)) {
     return serializeLogValue({
       message:
-        typeof error.message === "string"
-          ? error.message
+        typeof cause.message === "string"
+          ? cause.message
           : t("errors.requestFailed"),
-      data: "data" in error.response ? (error.response.data ?? null) : null,
+      data: "data" in cause.response ? (cause.response.data ?? null) : null,
     });
   }
 
-  if (error instanceof Error) {
+  if (cause instanceof Error) {
     return {
-      message: error.message,
+      message: cause.message,
     };
   }
 
-  return serializeLogValue(error);
+  return serializeLogValue(cause);
 };
 
-export const getErrorMessage = (error: unknown): string => {
+export const getErrorMessage = (cause: unknown): string => {
   const t = getFixedT("common");
 
-  if (isRecord(error) && isRecord(error.data)) {
-    const responseData = error.data;
+  if (isRecord(cause) && isRecord(cause.data)) {
+    const responseData = cause.data;
 
     if (typeof responseData.message === "string") {
       return responseData.message;
     }
   }
 
-  if (isRecord(error) && isRecord(error.response)) {
-    const responseData = error.response.data;
+  if (isRecord(cause) && isRecord(cause.response)) {
+    const responseData = cause.response.data;
 
     if (isRecord(responseData) && typeof responseData.message === "string") {
       return responseData.message;
     }
   }
 
-  if (error instanceof Error) {
-    return error.message;
+  if (cause instanceof Error) {
+    return cause.message;
   }
 
   return t("errors.unknown");
@@ -452,12 +452,10 @@ const delayRetry = (delayMs: number): Promise<void> => {
   });
 };
 
-const shouldRetryLoggedActionError = (
-  error: unknown,
+const shouldRetryLoggedActionStatus = (
+  statusCode: number | null,
   retry: LoggedActionRetryOptions,
 ): boolean => {
-  const statusCode = getErrorStatusCode(error);
-
   if (statusCode === null) {
     return true;
   }
@@ -490,7 +488,7 @@ const runLoggedRequestWithRetry = <TResponse>({
       const canRetry =
         retry &&
         attempt < maxAttempts &&
-        shouldRetryLoggedActionError(error, retry);
+        shouldRetryLoggedActionStatus(getErrorStatusCode(error), retry);
 
       if (!canRetry) {
         throw error;

@@ -362,3 +362,11 @@ export const decodeClientCommand = Schema.decodeUnknownSync(ClientCommand);
 export const decodeResponse = Schema.decodeUnknownSync(Response);
 export const decodeServerEvent = Schema.decodeUnknownSync(ServerEvent);
 export const decodeRealtimeFrame = Schema.decodeUnknownSync(RealtimeFrame);
+
+// Discriminate an already decoded frame without parsing its payload a second time.
+const serverEventTypes = new Set<string>(
+  ServerEvent.members.map((member) => member.fields.type.literal),
+);
+export const isServerEventFrame = (
+  frame: RealtimeFrame,
+): frame is ServerEvent => "type" in frame && serverEventTypes.has(frame.type);

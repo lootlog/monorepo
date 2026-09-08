@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { Effect, FileSystem, Layer, Path, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
-import { Etag, HttpPlatform } from "effect/unstable/http";
+import { Etag, HttpPlatform, HttpRouter } from "effect/unstable/http";
 import { HttpApiTest } from "effect/unstable/httpapi";
 import { BearerSecurityMiddleware } from "../../contracts/shared.js";
 import { OrganizationSummary } from "#src/contracts/shared";
@@ -143,10 +143,16 @@ describe("Users and Guilds HttpApi handlers", () => {
       bearer: (httpEffect) =>
         Effect.provideService(httpEffect, ForwardAuthIdentity, identity),
     });
+    const services = provideServices(
+      makeAuthorization(),
+      makeData({ getManageableUserGuilds }),
+    );
     const responseEffect = Effect.scoped(
       Effect.gen(function* () {
         const client = yield* HttpApiTest.groups(LootlogApi, ["guilds"]).pipe(
-          Effect.provide(GuildsHandlers),
+          Effect.provide(
+            GuildsHandlers.pipe(HttpRouter.provideRequest(services)),
+          ),
           Effect.provide(Layer.succeed(BearerSecurityMiddleware, bearer)),
         );
         return yield* client.guilds.GuildsControllerGetManageableUserGuilds();
@@ -160,10 +166,7 @@ describe("Users and Guilds HttpApi handlers", () => {
       ),
       Effect.provide(httpApiTestServices),
     );
-    // HttpApiBuilder retains phantom requirements after concrete layers are provided.
-    const response = await Effect.runPromise(
-      responseEffect as unknown as Effect.Effect<unknown, unknown>,
-    );
+    const response = await Effect.runPromise(responseEffect);
     expect(response).toEqual([
       { id: "admin-guild", name: "Admin guild", icon: null },
     ]);
@@ -185,7 +188,9 @@ describe("Users and Guilds HttpApi handlers", () => {
     const responsesEffect = Effect.scoped(
       Effect.gen(function* () {
         const client = yield* HttpApiTest.groups(LootlogApi, ["guilds"]).pipe(
-          Effect.provide(GuildsHandlers),
+          Effect.provide(
+            GuildsHandlers.pipe(HttpRouter.provideRequest(services)),
+          ),
           Effect.provide(Layer.succeed(BearerSecurityMiddleware, bearer)),
         );
 
@@ -201,12 +206,7 @@ describe("Users and Guilds HttpApi handlers", () => {
         ]);
       }),
     ).pipe(Effect.provide(services), Effect.provide(httpApiTestServices));
-    // HttpApiBuilder retains phantom handler requirements after their concrete
-    // layers are provided. These in-memory requests prove the wiring.
-    const runnableResponsesEffect = responsesEffect as unknown as Effect.Effect<
-      ReadonlyArray<{ readonly status: number }>,
-      unknown
-    >;
+    const runnableResponsesEffect = responsesEffect;
     const responses = await Effect.runPromise(runnableResponsesEffect);
 
     expect(responses.map(({ status }) => status)).toEqual([

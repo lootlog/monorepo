@@ -16,8 +16,6 @@ import {
   getShowEventOverviewQueryKey,
   useListEventRanking,
   useShowEventOverview,
-} from "@lootlog/client/main";
-import {
   getMembersControllerGetMeQueryKey,
   useMembersControllerGetMe,
 } from "@lootlog/client/main";

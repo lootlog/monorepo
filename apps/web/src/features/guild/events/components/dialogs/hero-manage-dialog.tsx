@@ -108,15 +108,16 @@ export const HeroManageDialog = ({
         toast.success(t("events.heroes.updated"));
       } else {
         const npcIdNum = data.npcId ? Number(data.npcId) : undefined;
+        const request: Parameters<typeof addHero.mutateAsync>[0]["data"] = {
+          npcName: data.npcName,
+        };
+        if (npcIdNum) request.npcId = npcIdNum;
         await addHero.mutateAsync({
           pathParams: {
             guildId,
             eventId,
           },
-          data: {
-            ...(npcIdNum ? { npcId: npcIdNum } : {}),
-            npcName: data.npcName,
-          },
+          data: request,
         });
         toast.success(t("events.heroes.added"));
       }

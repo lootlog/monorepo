@@ -1,0 +1,18 @@
+{
+  "extends": ["../../.oxlintrc.json"],
+  "overrides": [
+    {
+      "files": ["src/api.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          { "boundaryFunctions": ["callEvent", "ApiEventCallback"] }
+        ],
+        "anti-slop/no-unknown-returns": [
+          "error",
+          { "boundaryFunctions": ["getData"] }
+        ]
+      }
+    }
+  ]
+}

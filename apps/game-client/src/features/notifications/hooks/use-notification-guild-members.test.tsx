@@ -1,49 +1,12 @@
-import { renderHook } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { configureApiClients } from "@lootlog/client/transport";
+import { createNotificationTest } from "../notification-test";
+import { renderHook, waitFor } from "@testing-library/react";
+import { beforeEach, onTestFinished, describe, expect, it, vi } from "vitest";
 import type { StoredNotification } from "@/store/notifications.store";
 import { useNotificationGuildMembers } from "./use-notification-guild-members";
 
-const mocks = vi.hoisted(() => ({
-  invalidateQueries: vi.fn(),
-  memberDataByGuildId: new Map<
-    string,
-    Array<{ userId: string; name: string }>
-  >(),
-  useQueries: vi.fn(
-    ({ queries }: { queries: Array<{ queryKey: readonly string[] }> }) => {
-      return queries.map(({ queryKey }) => {
-        const guildId = queryKey[1];
-        let data = mocks.memberDataByGuildId.get(guildId);
-        if (!data) {
-          data = [
-            {
-              userId: `member-${queryKey[1]}`,
-              name: `Member ${queryKey[1]}`,
-            },
-          ];
-          mocks.memberDataByGuildId.set(guildId, data);
-        }
-        return { data };
-      });
-    },
-  ),
-}));
-
-vi.mock("@tanstack/react-query", () => ({
-  useQueries: mocks.useQueries,
-  useQueryClient: () => ({ invalidateQueries: mocks.invalidateQueries }),
-}));
-
-vi.mock("@/hooks/api/guild-members-summary-query", () => ({
-  getGuildMembersSummaryQueryKey: ({ guildId }: { guildId: string }) => [
-    "members",
-    guildId,
-  ],
-  getGuildMembersSummaryQueryOptions: ({ guildId }: { guildId: string }) => ({
-    queryKey: ["members", guildId],
-  }),
-}));
-
+let test: ReturnType<typeof createNotificationTest>;
+const requests = vi.fn<(request: Request) => Promise<Response>>();
 const createNotification = (
   notificationId: string,
   guildId: string,
@@ -62,28 +25,55 @@ const createNotification = (
 
 describe("useNotificationGuildMembers", () => {
   beforeEach(() => {
-    mocks.invalidateQueries.mockClear();
-    mocks.useQueries.mockClear();
-    mocks.memberDataByGuildId.clear();
+    test = createNotificationTest();
+    requests.mockReset();
+    requests.mockImplementation((request) => {
+      const guildId = new URL(request.url).pathname.split("/")[2];
+      return Promise.resolve(
+        Response.json([
+          {
+            userId: `member-${guildId}`,
+            name: `Member ${guildId}`,
+            avatar: null,
+            roles: [],
+            id: 1,
+            guildId,
+            type: "MEMBER",
+          },
+        ]),
+      );
+    });
+    const restore = configureApiClients({
+      main: {
+        baseUrl: "https://api.example.test",
+        fetch: (input, init) => requests(new Request(input, init)),
+      },
+    });
+    onTestFinished(restore);
   });
-
-  it("creates one query per unique guild and exposes member lookups", () => {
+  it("creates one query per unique guild and exposes member lookups", async () => {
     const notifications = [
       createNotification("notification-1", "guild-1"),
       createNotification("notification-2", "guild-1"),
       createNotification("notification-3", "guild-2"),
     ];
 
-    const { result } = renderHook(() =>
-      useNotificationGuildMembers(notifications),
+    const { result } = renderHook(
+      () => useNotificationGuildMembers(notifications),
+      { wrapper: test.wrapper },
     );
 
-    expect(mocks.useQueries).toHaveBeenCalledWith({
-      queries: [
-        { queryKey: ["members", "guild-1"] },
-        { queryKey: ["members", "guild-2"] },
-      ],
-    });
+    await waitFor(() =>
+      expect(result.current["guild-2"]?.["member-guild-2"]).toBeDefined(),
+    );
+    expect(
+      requests.mock.calls
+        .map(([request]) => new URL(request.url).pathname)
+        .sort(),
+    ).toEqual([
+      "/guilds/guild-1/members/summary",
+      "/guilds/guild-2/members/summary",
+    ]);
     expect(result.current["guild-1"]?.["member-guild-1"]?.name).toBe(
       "Member guild-1",
     );
@@ -92,12 +82,18 @@ describe("useNotificationGuildMembers", () => {
     );
   });
 
-  it("keeps lookup references stable when query data is unchanged", () => {
+  it("keeps lookup references stable when query data is unchanged", async () => {
     const notifications = [createNotification("notification-1", "guild-1")];
     const { result, rerender } = renderHook(
       ({ currentNotifications }) =>
         useNotificationGuildMembers(currentNotifications),
-      { initialProps: { currentNotifications: notifications } },
+      {
+        wrapper: test.wrapper,
+        initialProps: { currentNotifications: notifications },
+      },
+    );
+    await waitFor(() =>
+      expect(result.current["guild-1"]?.["member-guild-1"]).toBeDefined(),
     );
     const firstResult = result.current;
     const firstGuildMembers = firstResult["guild-1"];
@@ -108,7 +104,7 @@ describe("useNotificationGuildMembers", () => {
     expect(result.current["guild-1"]).toBe(firstGuildMembers);
   });
 
-  it("forgets checked member identities after their guild leaves the list", () => {
+  it("forgets checked member identities after their guild leaves the list", async () => {
     const missingGuildOneMember = createNotification(
       "notification-1",
       "guild-1",
@@ -123,25 +119,29 @@ describe("useNotificationGuildMembers", () => {
       ({ currentNotifications }) =>
         useNotificationGuildMembers(currentNotifications),
       {
+        wrapper: test.wrapper,
         initialProps: {
           currentNotifications: [missingGuildOneMember],
         },
       },
     );
+    await waitFor(() =>
+      expect(result.current["guild-1"]?.["member-guild-1"]).toBeDefined(),
+    );
     const firstGuildMembers = result.current["guild-1"];
 
     rerender({ currentNotifications: [missingGuildTwoMember] });
-    expect(result.current["guild-1"]).toBeUndefined();
+    await waitFor(() => expect(result.current["guild-1"]).toBeUndefined());
     rerender({ currentNotifications: [missingGuildOneMember] });
 
-    expect(mocks.invalidateQueries).toHaveBeenCalledTimes(3);
-    expect(mocks.invalidateQueries).toHaveBeenLastCalledWith({
-      queryKey: ["members", "guild-1"],
-    });
+    await waitFor(() => expect(requests).toHaveBeenCalledTimes(3));
+    expect(requests.mock.lastCall?.[0].url).toContain(
+      "/guilds/guild-1/members/summary",
+    );
     expect(result.current["guild-1"]).not.toBe(firstGuildMembers);
   });
 
-  it("bounds checked identities to the unique members in a growing list", () => {
+  it("bounds checked identities to the unique members in a growing list", async () => {
     const firstMissingMember = createNotification(
       "notification-1",
       "guild-1",
@@ -155,7 +155,13 @@ describe("useNotificationGuildMembers", () => {
     const { result, rerender } = renderHook(
       ({ currentNotifications }) =>
         useNotificationGuildMembers(currentNotifications),
-      { initialProps: { currentNotifications: [firstMissingMember] } },
+      {
+        wrapper: test.wrapper,
+        initialProps: { currentNotifications: [firstMissingMember] },
+      },
+    );
+    await waitFor(() =>
+      expect(result.current["guild-1"]?.["member-guild-1"]).toBeDefined(),
     );
     const stableLookup = result.current;
     const stableGuildLookup = result.current["guild-1"];
@@ -170,13 +176,13 @@ describe("useNotificationGuildMembers", () => {
 
     expect(result.current).toBe(stableLookup);
     expect(result.current["guild-1"]).toBe(stableGuildLookup);
-    expect(mocks.invalidateQueries).toHaveBeenCalledTimes(2);
+    await waitFor(() => expect(requests).toHaveBeenCalledTimes(2));
 
     rerender({ currentNotifications: [secondMissingMember] });
     rerender({
       currentNotifications: [firstMissingMember, secondMissingMember],
     });
 
-    expect(mocks.invalidateQueries).toHaveBeenCalledTimes(3);
+    await waitFor(() => expect(requests).toHaveBeenCalledTimes(3));
   });
 });

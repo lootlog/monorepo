@@ -50,5 +50,5 @@ export const useNotificationChatOrchestration = () => {
   };
 };
 
-export const isNotificationRateLimitError = (error: unknown): boolean =>
-  isApiError(error) && error.status === 429;
+export const isNotificationRateLimitError = (cause: unknown): boolean =>
+  isApiError(cause) && cause.status === 429;

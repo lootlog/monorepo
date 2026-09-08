@@ -7,7 +7,7 @@ type StatisticsQueryPanelProps = {
     isError: boolean;
     isFetching: boolean;
     data: unknown;
-    refetch: () => unknown;
+    refetch: () => void;
   };
   children?: ReactNode;
 };

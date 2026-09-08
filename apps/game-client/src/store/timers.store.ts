@@ -1,4 +1,11 @@
-import type { UpdateTimerSettingsPayload } from "@lootlog/schema/timer-settings";
+import { decodeTimerSettings } from "./timer-settings-codec";
+import type {
+  UpdateTimerSettingsPayload,
+  TimersFilters,
+  TimersDisplayConfig,
+  TimersGeneralConfig as SharedTimersGeneralConfig,
+  CustomTimerColor,
+} from "@lootlog/schema/timer-settings";
 import { NpcType } from "@/api/npcs.api";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
@@ -12,20 +19,7 @@ export const TIMERS_STORAGE_KEY = storageKey("ll-timers-state");
 
 const DEFAULT_REMOVE_TIMER_AFTER_MS = 30000;
 
-type TimersFilters = {
-  minLvl: number;
-  maxLvl: number;
-  selectedNpcTypes: NpcType[];
-  selectedColors: string[];
-};
-
-type TimersGeneralConfig = {
-  removeTimerAfterMs: number;
-  timersGrouping: boolean;
-  timersUnderBag: boolean;
-  countdownMode: "min" | "max";
-  compactView: boolean;
-};
+type TimersGeneralConfig = SharedTimersGeneralConfig & { compactView: boolean };
 
 const DEFAULT_GENERAL_CONFIG = {
   removeTimerAfterMs: DEFAULT_REMOVE_TIMER_AFTER_MS,
@@ -35,23 +29,8 @@ const DEFAULT_GENERAL_CONFIG = {
   compactView: false,
 } satisfies TimersGeneralConfig;
 
-type TimersDisplayConfig = {
-  showType: boolean;
-  showLevel: boolean;
-  fontSize: number;
-  minColumnWidth: number;
-  singleTimerDisplayMode: "column" | "row";
-};
-
 type HiddenTimers = Record<string, string[]>;
 type PinnedTimers = Record<string, string[]>;
-
-export type CustomTimerColor = {
-  id: string;
-  name: string;
-  borderColor: string;
-  backgroundColor: string;
-};
 
 interface TimersState {
   updatedAt?: number;
@@ -117,25 +96,11 @@ export const DEFAULT_TIMERS_FILTERS: TimersFilters = {
   selectedColors: [],
 };
 
-const updateTimestamp = (
-  set: (
-    partial:
-      | Partial<TimersState>
-      | ((state: TimersState) => Partial<TimersState>),
-  ) => void,
-) => {
-  return (
-    partial:
-      | Partial<TimersState>
-      | ((state: TimersState) => Partial<TimersState>),
-  ) => {
-    if (typeof partial === "function") {
-      set((state) => ({ ...partial(state), updatedAt: Date.now() }));
-    } else {
-      set({ ...partial, updatedAt: Date.now() });
-    }
+const updateTimestamp =
+  (set: (partial: (state: TimersState) => Partial<TimersState>) => void) =>
+  (partial: (state: TimersState) => Partial<TimersState>) => {
+    set((state) => ({ ...partial(state), updatedAt: Date.now() }));
   };
-};
 
 export const useTimersStore = create<TimersState>()(
   persist(
@@ -144,7 +109,7 @@ export const useTimersStore = create<TimersState>()(
       const setGlobalSettings = (
         payload: UpdateTimerSettingsPayload & Partial<TimersState>,
       ) => {
-        setWithTimestamp(payload);
+        setWithTimestamp(() => payload);
         debouncedSyncGlobalSettings(payload);
       };
 
@@ -158,7 +123,9 @@ export const useTimersStore = create<TimersState>()(
         const next = selected
           ? [...new Set([...current, timerId])]
           : current.filter((id) => id !== timerId);
-        setWithTimestamp({ [field]: { ...get()[field], [guildId]: next } });
+        setWithTimestamp(() => ({
+          [field]: { ...get()[field], [guildId]: next },
+        }));
         debouncedSyncGuildSettings(guildId, { [field]: next });
       };
 
@@ -389,17 +356,39 @@ export const useTimersStore = create<TimersState>()(
       }),
       storage: createJSONStorage(() => localStorage),
       merge: (persistedState, currentState) => {
-        const persisted = persistedState as Partial<TimersState> | undefined;
-
+        const persisted = decodeTimerSettings(persistedState);
         return {
           ...currentState,
-          ...persisted,
+          updatedAt: persisted.updatedAt ?? currentState.updatedAt,
           generalConfig: {
             ...DEFAULT_GENERAL_CONFIG,
-            ...persisted?.generalConfig,
+            ...persisted.generalConfig,
           },
+          displayConfig: {
+            ...currentState.displayConfig,
+            ...persisted.displayConfig,
+          },
+          hiddenTimers: persisted.hiddenTimers ?? currentState.hiddenTimers,
+          pinnedTimers: persisted.pinnedTimers ?? currentState.pinnedTimers,
           alwaysVisibleExpiredTimers:
-            persisted?.alwaysVisibleExpiredTimers ?? {},
+            persisted.alwaysVisibleExpiredTimers ?? {},
+          timersColors: persisted.timersColors ?? currentState.timersColors,
+          customColors: persisted.customColors ?? currentState.customColors,
+          defaultColorNames:
+            persisted.defaultColorNames ?? currentState.defaultColorNames,
+          overriddenDefaultColors:
+            persisted.overriddenDefaultColors ??
+            currentState.overriddenDefaultColors,
+          hiddenDefaultColors:
+            persisted.hiddenDefaultColors ?? currentState.hiddenDefaultColors,
+          timersFilters: persisted.timersFilters ?? currentState.timersFilters,
+          timerFiltersEnabled:
+            persisted.timerFiltersEnabled ?? currentState.timerFiltersEnabled,
+          colorFiltersEnabled:
+            persisted.colorFiltersEnabled ?? currentState.colorFiltersEnabled,
+          timersSortOrder:
+            persisted.timersSortOrder ?? currentState.timersSortOrder,
+          syncEnabled: persisted.syncEnabled ?? currentState.syncEnabled,
         };
       },
       version: 6,

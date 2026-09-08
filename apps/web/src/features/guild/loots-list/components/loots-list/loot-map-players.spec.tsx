@@ -132,7 +132,7 @@ it.each([
   const route = createRoute({
     getParentRoute: () => root,
     path: "$guildId/loots",
-    component: () => {
+    component: function CachedLootMapPlayers() {
       const cachedLoot = useLootFromCache(1);
       return cachedLoot ? <LootMapPlayers loot={cachedLoot} /> : null;
     },

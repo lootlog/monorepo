@@ -3,7 +3,10 @@ import { RabbitMessaging } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Effect, Layer } from "effect";
 import { makeMessagingDataLayer } from "#src/http-api/handlers/messaging/messaging.data-layer";
-import { createReadyRoomForNotification } from "#src/http-api/handlers/party-ready-room/ready-room.data-layer";
+import {
+  createReadyRoomForNotification,
+  type ReadyRoomEffects,
+} from "#src/http-api/handlers/party-ready-room/ready-room.data-layer";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
 
 export const messagingData = Layer.unwrap(
@@ -21,7 +24,7 @@ export const messagingData = Layer.unwrap(
         arguments_: ReadonlyArray<string | number>,
       ) => attempt(() => redis.eval<A>(script, [...keys], [...arguments_])),
     };
-    const publishReadyRoom = (envelope: unknown) =>
+    const publishReadyRoom: ReadyRoomEffects["publish"] = (envelope) =>
       rabbit
         .publish({
           exchange: "default",

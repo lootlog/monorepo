@@ -11,6 +11,12 @@ export const ItemRarity = {
 
 export type ItemRarity = (typeof ItemRarity)[keyof typeof ItemRarity];
 
+export const resolveItemRarity = (
+  value: string | null | undefined,
+): ItemRarity =>
+  Object.values(ItemRarity).find((rarity) => rarity === value) ??
+  ItemRarity.COMMON;
+
 const MARGONEM_CDN_ITEMS_URL = "https://micc.garmory-cdn.cloud/obrazki/itemy";
 
 type ItemImageProps = {

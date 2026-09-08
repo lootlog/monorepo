@@ -4,7 +4,7 @@ import { Clock, Effect, Schema } from "effect";
 import { ExecutionError, type RedlockService } from "#src/redis/redlock";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { RoutingKey } from "#src/rabbitmq/routing-key";
-import { mapTimerResponse } from "#src/timers/timer-projection";
+import { mapTimerResponse, timerNpcField } from "#src/timers/timer-projection";
 import type { AmqpPublisher } from "#src/rabbitmq/amqp-publisher";
 import type { RedisService } from "#src/redis/redis.service";
 import { ResourceConflictError } from "#src/shared/http/http-errors";
@@ -137,18 +137,16 @@ export const makeEventTimersPort = ({
   };
 
   const publishDelete = (timer: Timer) => {
-    const npc = timer.npc as {
-      lvl?: number;
-      prof?: string;
-      type?: number | string;
-      wt?: number | string;
-    };
+    const npc = timer.npc;
     const payload = {
       guildId: timer.guildId,
       world: timer.world,
       npcId: timer.npcId,
       timerKey: timer.timerKey,
-      routing: { tier: getNpcRoutingTier(npc), npcLevel: npc.lvl },
+      routing: {
+        tier: getNpcRoutingTier(npc),
+        npcLevel: timerNpcField(npc, "lvl"),
+      },
     };
     return Effect.all(
       [
@@ -359,7 +357,7 @@ export const makeEventTimersPort = ({
       if (heroes.length === 0) return Effect.succeed([]);
       const timerKeys = heroes
         .filter((hero) => hero.npcId !== null)
-        .map((hero) => buildTimerKey(hero.npcId as number, hero.npcName));
+        .map((hero) => buildTimerKey(hero.npcId, hero.npcName));
       const npcNames = heroes
         .filter((hero) => hero.npcId === null)
         .map((hero) => hero.npcName);

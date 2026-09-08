@@ -1,33 +1,10 @@
 // @vitest-environment happy-dom
 
-import type { ReactNode } from "react";
+import { createOrganizationTestWrapper } from "@/lib/testing/router";
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import type { Member } from "../../types/api";
 import { MemberBadge } from "./member-badge";
-
-vi.mock("@tanstack/react-router", () => ({
-  Link: ({
-    children,
-    className,
-    params,
-  }: {
-    children: ReactNode;
-    className?: string;
-    params: Record<string, string>;
-  }) => (
-    <a
-      className={className}
-      href={`/${params.guildId}/events/${params.eventId}/members/${params.memberId}`}
-    >
-      {children}
-    </a>
-  ),
-}));
-
-vi.mock("@/utils/get-avatar-url", () => ({
-  getDiscordAvatarUrl: () => "https://example.com/avatar.png",
-}));
 
 const member: Member = {
   id: 8112,
@@ -39,8 +16,11 @@ const member: Member = {
 afterEach(cleanup);
 
 describe("MemberBadge", () => {
-  it("links the complete participant tile to the member event page", () => {
-    render(<MemberBadge member={member} guildId="guild-1" eventId="event-1" />);
+  it("links the complete participant tile to the member event page", async () => {
+    render(
+      <MemberBadge member={member} guildId="guild-1" eventId="event-1" />,
+      { wrapper: await createOrganizationTestWrapper() },
+    );
 
     const link = screen.getByRole("link", { name: "KobraK" });
 

@@ -174,32 +174,36 @@ export class PublicOnlinePlayersController {
     const presence = normalizePresence(payload);
     const guildId = presence.guildId;
     const world = presence.player?.world;
-    if (!guildId || !world) return;
+    if (!guildId) return;
+    const scopes = world
+      ? [this.scopes.get(getScopeKey(guildId, world))]
+      : presence.status === "offline" && presence.sessionId
+        ? [...this.scopes.values()].filter((scope) => scope.guildId === guildId)
+        : [];
+    for (const scope of scopes) {
+      if (!scope?.players) continue;
+      const policy = this.getCurrentAccessPolicy();
+      const organization = policy?.organizations.find(
+        (entry) => entry.organizationId === guildId,
+      );
+      if (policy && !canReadPresence(organization)) {
+        this.applyScopePolicy(scope, policy);
+        continue;
+      }
+      const updated = applyPresenceUpdates(scope.players, [presence]);
+      const players = policy
+        ? filterPresenceByPolicy(updated, organization)
+        : updated;
+      if (players === scope.players) continue;
 
-    const scope = this.scopes.get(getScopeKey(guildId, world));
-    if (!scope?.players) return;
-
-    const policy = this.getCurrentAccessPolicy();
-    const organization = policy?.organizations.find(
-      (entry) => entry.organizationId === guildId,
-    );
-    if (policy && !canReadPresence(organization)) {
-      this.applyScopePolicy(scope, policy);
-      return;
+      scope.requestVersion += 1;
+      scope.forbidden = false;
+      scope.players = players;
+      this.publishScopeIfChanged(scope, {
+        status: "success",
+        players: mapOnlinePlayers(players),
+      });
     }
-    const updated = applyPresenceUpdates(scope.players, [presence]);
-    const players = policy
-      ? filterPresenceByPolicy(updated, organization)
-      : updated;
-    if (players === scope.players) return;
-
-    scope.requestVersion += 1;
-    scope.forbidden = false;
-    scope.players = players;
-    this.publishScopeIfChanged(scope, {
-      status: "success",
-      players: mapOnlinePlayers(players),
-    });
   };
 
   private readonly handlePermissionsUpdated = (

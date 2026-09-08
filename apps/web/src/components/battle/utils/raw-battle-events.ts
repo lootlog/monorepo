@@ -1,13 +1,8 @@
+import { z } from "zod";
 import type {
   RawBattle,
   RawBattleParsedEvent,
 } from "@/lib/api/battlelog-types";
-
-type SourceBattleEvent = {
-  f?: {
-    m?: unknown;
-  };
-};
 
 type BattleMoveSide = {
   id: string | null;
@@ -79,32 +74,23 @@ const parseMove = (move: string): RawBattleParsedEvent => {
   };
 };
 
-const isSourceBattleEvent = (event: unknown): event is SourceBattleEvent =>
-  typeof event === "object" && event !== null;
+const sourceBattleEvent = z
+  .object({
+    f: z.object({ m: z.array(z.string().nullable().catch(null)) }),
+  })
+  .nullable()
+  .catch(null);
 
 export const parseRawBattleSourceEvents = (
   sourceEvents: RawBattle["sourceEvents"],
 ): RawBattleParsedEvent[] | null => {
-  if (!Array.isArray(sourceEvents)) {
-    return null;
-  }
-
-  const parsedEvents: RawBattleParsedEvent[] = [];
-
-  sourceEvents.forEach((sourceEvent) => {
-    if (!isSourceBattleEvent(sourceEvent) || !Array.isArray(sourceEvent.f?.m)) {
-      return;
-    }
-
-    sourceEvent.f.m.forEach((move) => {
-      if (typeof move !== "string") {
-        return;
-      }
-
-      parsedEvents.push(parseMove(move));
-    });
-  });
-
+  const result = z.array(sourceBattleEvent).safeParse(sourceEvents);
+  if (!result.success) return null;
+  const parsedEvents = result.data.flatMap(
+    (event) =>
+      event?.f.m.flatMap((move) => (move === null ? [] : [parseMove(move)])) ??
+      [],
+  );
   return parsedEvents.length > 0 ? parsedEvents : null;
 };
 

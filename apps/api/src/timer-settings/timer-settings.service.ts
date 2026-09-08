@@ -4,7 +4,7 @@ import type {
   SettingsDocumentsFailure,
   SettingsDocumentsResponse,
 } from "#src/settings-documents/settings-documents.service";
-import { Effect } from "effect";
+import { Effect, Schema } from "effect";
 import type {
   MigrateTimerSettingsRequest,
   UpdateOrganizationTimerSettingsRequest,
@@ -20,7 +20,7 @@ const APPEARANCE_FIELDS = [
   "hiddenDefaultColors",
 ] as const;
 
-type JsonValue = string | number | boolean | null | JsonValue[] | JsonObject;
+type JsonValue = typeof Schema.Json.Type;
 type JsonObject = { [key: string]: JsonValue };
 type TimerEffect = Effect.Effect<unknown, SettingsDocumentsFailure>;
 
@@ -59,8 +59,10 @@ const asJsonValue = (value: unknown): JsonValue => {
   );
 };
 const asJsonObject = (value: unknown): JsonObject => {
-  const normalized = asJsonValue(value);
-  return isRecord(normalized) ? normalized : {};
+  if (!isRecord(value)) return {};
+  return Object.fromEntries(
+    Object.entries(value).map(([key, entry]) => [key, asJsonValue(entry)]),
+  );
 };
 const asStringArray = (value: unknown) =>
   Array.isArray(value)
@@ -124,15 +126,17 @@ const mapGuildSettingsResponse = (
 };
 
 const extractGlobalSettingsFromLocal = (
-  localData: Record<string, unknown>,
+  localData: MigrateTimerSettingsRequest["localData"],
 ) => ({
-  generalConfig: asRecord(localData.generalConfig),
-  displayConfig: asRecord(localData.displayConfig),
-  customColors: asRecord(localData.customColors),
-  timersColors: asRecord(localData.timersColors),
-  alwaysVisibleExpiredTimers: asRecord(localData.alwaysVisibleExpiredTimers),
-  defaultColorNames: asRecord(localData.defaultColorNames),
-  overriddenDefaultColors: asRecord(localData.overriddenDefaultColors),
+  generalConfig: asJsonObject(localData.generalConfig),
+  displayConfig: asJsonObject(localData.displayConfig),
+  customColors: asJsonObject(localData.customColors),
+  timersColors: asJsonObject(localData.timersColors),
+  alwaysVisibleExpiredTimers: asJsonObject(
+    localData.alwaysVisibleExpiredTimers,
+  ),
+  defaultColorNames: asJsonObject(localData.defaultColorNames),
+  overriddenDefaultColors: asJsonObject(localData.overriddenDefaultColors),
   hiddenDefaultColors: asStringArray(localData.hiddenDefaultColors),
   timerFiltersEnabled: localData.timerFiltersEnabled !== false,
   colorFiltersEnabled: localData.colorFiltersEnabled === true,
@@ -141,7 +145,9 @@ const extractGlobalSettingsFromLocal = (
   syncEnabled: localData.syncEnabled !== false,
 });
 
-const extractGuildSettingsFromLocal = (localData: Record<string, unknown>) => {
+const extractGuildSettingsFromLocal = (
+  localData: MigrateTimerSettingsRequest["localData"],
+) => {
   const hiddenTimers = asRecord(localData.hiddenTimers);
   const pinnedTimers = asRecord(localData.pinnedTimers);
   const guildIds = new Set([
@@ -172,16 +178,11 @@ export const makeTimerSettings = (
         Effect.map((response) => mapGlobalSettingsResponse(userId, response)),
       );
 
-  const updateGlobalSettings = (
-    userId: string,
-    dto: UpdateTimerSettingsRequest,
-  ) => {
-    const appearanceSet: Record<string, unknown> = {};
-    const timersSet: Record<string, unknown> = {};
+  const updateGlobalSettings = (userId: string, dto: JsonObject) => {
+    const appearanceSet: JsonObject = {};
+    const timersSet: JsonObject = {};
     for (const [key, value] of Object.entries(dto)) {
-      if (
-        APPEARANCE_FIELDS.includes(key as (typeof APPEARANCE_FIELDS)[number])
-      ) {
+      if (APPEARANCE_FIELDS.some((field) => field === key)) {
         appearanceSet[key] = value;
       } else {
         timersSet[key] = value;
@@ -274,9 +275,7 @@ export const makeTimerSettings = (
 
       const global = yield* updateGlobalSettings(
         userId,
-        extractGlobalSettingsFromLocal(
-          localData,
-        ) as unknown as UpdateTimerSettingsRequest,
+        extractGlobalSettingsFromLocal(localData),
       );
       const guilds = yield* Effect.forEach(
         Object.entries(extractGuildSettingsFromLocal(localData)),

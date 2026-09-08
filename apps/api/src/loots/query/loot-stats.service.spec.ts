@@ -24,7 +24,11 @@ function role(id: string, permissions: Permission[]): Role {
 
 describe("LootStatsService access-scoped caching", () => {
   it("separates cache entries for different effective loot visibility", () => {
-    const service = new LootStatsService({} as never, {} as never);
+    const service = new LootStatsService(() => Effect.die("Unexpected SQL"), {
+      getOrSetJsonEffect: () => Effect.die("Unexpected cache read"),
+      deleteByPattern: () =>
+        Promise.reject(new Error("Unexpected cache invalidation")),
+    });
     const base = role("role", [Permission.LOOTLOG_LOOTS_READ]);
     const titan = role("role", [
       Permission.LOOTLOG_LOOTS_READ,
@@ -64,10 +68,13 @@ describe("LootStatsService access-scoped caching", () => {
       topItems: [],
     };
     const service = new LootStatsService(
-      (() => Effect.die("SQL must not run on a cache hit")) as never,
+      () => Effect.die("SQL must not run on a cache hit"),
       {
-        getOrSetJsonEffect: () => Effect.succeed(expected),
-      } as never,
+        getOrSetJsonEffect: (options) =>
+          Effect.succeed(options.codec.parse(JSON.stringify(expected))),
+        deleteByPattern: () =>
+          Promise.reject(new Error("Unexpected cache invalidation")),
+      },
     );
 
     await expect(

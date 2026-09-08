@@ -35,7 +35,7 @@ export const InfoSettingsSkeleton = () => {
         </SectionCard>
 
         <SectionCard>
-          <SectionCardHeader title={<Skeleton className="mb-3 h-5 w-32" />} />
+          <SectionCardHeader title=<Skeleton className="mb-3 h-5 w-32" /> />
           <SectionCardContent className="flex flex-col gap-3">
             <div className="space-y-2">
               {Array.from({ length: 3 }).map((_, i) => (

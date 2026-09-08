@@ -1,3 +1,4 @@
+import { seedRuntimeOthers } from "@/test/runtime-other-fixtures";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
 import { useChatStore } from "@/store/chat.store";
@@ -29,13 +30,68 @@ describe("resetTransientRuntimeState", () => {
       socketState: { connected: true, joined: true, joinedGuilds: ["guild"] },
     });
     useNpcDetectorStore.setState({
-      npcs: [{ id: 1 }] as never,
+      npcs: [
+        {
+          id: 1,
+          nick: "NPC",
+          icon: "npc.gif",
+          lvl: 200,
+          prof: "w",
+          type: 2,
+          wt: 80,
+          tpl: 1,
+          x: 1,
+          y: 2,
+          location: "Ithan",
+          notificationSent: false,
+        },
+      ],
     });
-    useOthersStore.setState({ othersById: { 1: {} as never } });
-    useNpcsStore.setState({ npcsById: { 1: { id: 1 } as never } });
+    seedRuntimeOthers({
+      "1": {
+        d: {
+          id: "1",
+          nick: "Other",
+          account: 1,
+          icon: "other.gif",
+          lvl: 200,
+          prof: "w",
+          x: 1,
+          y: 2,
+        },
+      },
+    });
+    useNpcsStore.setState({
+      npcsById: {
+        1: {
+          id: 1,
+          name: "NPC",
+          icon: "npc.gif",
+          level: 200,
+          profession: "w",
+          type: 2,
+          weight: 80,
+          templateId: 1,
+          x: 1,
+          y: 2,
+        },
+      },
+    });
     useFriendsStore.setState({ friendsMax: 50 });
     useNotificationsStore.setState({
-      notifications: [{ notificationId: "notification" }] as never,
+      notifications: [
+        {
+          notificationId: "notification",
+          discordId: "discord-1",
+          guildId: "guild",
+          world: "fobos",
+          createdAt: "2026-01-01T00:00:00.000Z",
+          message: "Hello",
+          servers: ["guild"],
+          listKey: "notification",
+          receivedAtMs: Date.now(),
+        },
+      ],
     });
     usePartyFinderStore.setState({
       readyRoomsSynchronized: true,
@@ -87,7 +143,8 @@ describe("resetTransientRuntimeState", () => {
 
   it("cancels pending timer settings mutations during runtime teardown", () => {
     vi.useFakeTimers();
-    const mutate = vi.fn();
+    const mutate =
+      vi.fn<Parameters<typeof registerGlobalSettingsMutation>[0]>();
     const unregister = registerGlobalSettingsMutation(mutate);
     debouncedSyncGlobalSettings({ syncEnabled: true });
 

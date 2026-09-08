@@ -8,22 +8,21 @@ import {
 const createSpot = (
   id: string,
   options: Partial<ReservationSpotsResponseDtoItem> = {},
-): ReservationSpotsResponseDtoItem =>
-  ({
-    id,
-    name: id,
-    level: 100,
-    images: [],
-    maps: [],
-    isPinned: false,
-    isAvailableNow: false,
-    availableUntil: null,
-    activeReservationCount: 0,
-    hasPartnerReservations: false,
-    currentReservation: null,
-    nextReservation: null,
-    ...options,
-  }) as ReservationSpotsResponseDtoItem;
+): ReservationSpotsResponseDtoItem => ({
+  id,
+  name: id,
+  level: 100,
+  images: [],
+  maps: [],
+  isPinned: false,
+  isAvailableNow: false,
+  availableUntil: null,
+  activeReservationCount: 0,
+  hasPartnerReservations: false,
+  currentReservation: null,
+  nextReservation: null,
+  ...options,
+});
 
 describe("reservation spot presentation", () => {
   const spots = [

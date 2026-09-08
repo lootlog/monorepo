@@ -57,8 +57,8 @@ const decodeGuilds = (body: ArrayBuffer): UserGuildData[] => {
 };
 
 export const makeGuildStore = (
-  config: GatewayConfiguration,
-  redis: RedisGatewayStore,
+  config: Pick<GatewayConfiguration, "apiUrl">,
+  redis: { command: Pick<RedisGatewayStore["command"], "get" | "set" | "del"> },
   httpClient: HttpClientValue,
 ): GuildStore => {
   const fetchGuilds = Effect.fn("GuildStore_fetchUserGuilds")(function* (

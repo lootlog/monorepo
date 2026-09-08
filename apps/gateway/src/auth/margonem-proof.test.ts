@@ -1,12 +1,11 @@
+import { httpClientFromResponses } from "../../test/http-fixtures.js";
 import { describe, expect, mock, test } from "bun:test";
 import { Effect, Fiber } from "effect";
-import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
 import { makeMargonemProofVerifier } from "./margonem-proof.js";
-import type { GatewayConfiguration } from "#src/config/gateway-config";
 
 const config = {
   margonemSigningKeyUrl: "https://margonem.example/signing-key.pem",
-} as GatewayConfiguration;
+};
 
 const proofOptions = () => {
   const accountId = "7";
@@ -31,17 +30,15 @@ const proofOptions = () => {
   };
 };
 
-const response = (body: Uint8Array) => ({
-  status: 200,
-  arrayBuffer: Effect.succeed(body.buffer),
-});
+const response = (body: Uint8Array) => new Response(new Uint8Array(body));
 
 describe("Margonem proof verifier", () => {
   test("rejects malformed proof without an outbound request", async () => {
     const get = mock(() => Effect.die("HTTP must not run"));
-    const verifier = makeMargonemProofVerifier(config, {
-      get,
-    } as unknown as HttpClientValue);
+    const verifier = makeMargonemProofVerifier(
+      config,
+      httpClientFromResponses(get),
+    );
 
     await expect(
       Effect.runPromise(
@@ -59,9 +56,10 @@ describe("Margonem proof verifier", () => {
         ),
       ),
     );
-    const verifier = makeMargonemProofVerifier(config, {
-      get,
-    } as unknown as HttpClientValue);
+    const verifier = makeMargonemProofVerifier(
+      config,
+      httpClientFromResponses(get),
+    );
 
     await expect(
       Effect.runPromise(verifier.verify(proofOptions())),
@@ -73,9 +71,10 @@ describe("Margonem proof verifier", () => {
     const get = mock(() =>
       Effect.succeed(response(new Uint8Array(64 * 1_024 + 1))),
     );
-    const verifier = makeMargonemProofVerifier(config, {
-      get,
-    } as unknown as HttpClientValue);
+    const verifier = makeMargonemProofVerifier(
+      config,
+      httpClientFromResponses(get),
+    );
 
     await expect(
       Effect.runPromise(verifier.verify(proofOptions())),
@@ -94,9 +93,10 @@ describe("Margonem proof verifier", () => {
         ),
       ),
     );
-    const verifier = makeMargonemProofVerifier(config, {
-      get,
-    } as unknown as HttpClientValue);
+    const verifier = makeMargonemProofVerifier(
+      config,
+      httpClientFromResponses(get),
+    );
     const fiber = Effect.runFork(verifier.verify(proofOptions()));
     while (get.mock.calls.length === 0) await Promise.resolve();
 

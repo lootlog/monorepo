@@ -16,7 +16,15 @@ import {
   or,
   sql as drizzleSql,
 } from "drizzle-orm";
-import { Clock, Context, Effect, Layer, Schema } from "effect";
+import {
+  Clock,
+  Context,
+  Effect,
+  Function,
+  Layer,
+  Option,
+  Schema,
+} from "effect";
 import { Buffer } from "node:buffer";
 import { createHash } from "node:crypto";
 import { ActivityDatabase } from "#src/database/database";
@@ -73,12 +81,14 @@ export interface ActivityRepositoryValue {
 
 const detailsString = (dto: CreateActivity, key: string) => {
   const value = dto.details?.[key];
-  return typeof value === "string" && value.length > 0 ? value : undefined;
+  return Option.getOrUndefined(
+    Schema.decodeUnknownOption(Schema.NonEmptyString)(value),
+  );
 };
-const mapDetails = (details: unknown): Record<string, unknown> | undefined =>
-  details !== null && typeof details === "object" && !Array.isArray(details)
-    ? (details as Record<string, unknown>)
-    : undefined;
+const mapDetails = Function.compose(
+  Schema.decodeUnknownOption(Schema.Record(Schema.String, Schema.Unknown)),
+  Option.getOrUndefined,
+);
 const encodeCursor = (activity: {
   readonly createdAt: Date;
   readonly id: string;
@@ -87,19 +97,14 @@ const encodeCursor = (activity: {
     JSON.stringify([activity.createdAt.toISOString(), activity.id]),
   ).toString("base64url");
 const decodeCursor = (cursor: string) => {
-  const value: unknown = JSON.parse(
-    Buffer.from(cursor, "base64url").toString("utf8"),
-  );
-  if (
-    !Array.isArray(value) ||
-    value.length !== 2 ||
-    typeof value[0] !== "string" ||
-    typeof value[1] !== "string" ||
-    !Number.isFinite(Date.parse(value[0]))
-  ) {
+  const value = Schema.decodeUnknownOption(
+    Schema.fromJsonString(Schema.Tuple([Schema.String, Schema.String])),
+  )(Buffer.from(cursor, "base64url").toString("utf8"));
+  if (value._tag === "None" || !Number.isFinite(Date.parse(value.value[0]))) {
     throw new Error("Invalid activity cursor");
   }
-  return { createdAt: new Date(value[0]), id: value[1] };
+  const [createdAt, id] = value.value;
+  return { createdAt: new Date(createdAt), id };
 };
 export class ActivityRepository extends Context.Service<
   ActivityRepository,

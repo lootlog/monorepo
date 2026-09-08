@@ -44,14 +44,14 @@ import {
 } from "#src/shared/cache";
 import { applicationLogger } from "#src/shared/application-logger";
 import { RabbitMessaging } from "@lootlog/messaging";
-import {
-  RabbitRoutingKey,
-  type RabbitRoutingKeyName,
-} from "@lootlog/protocol/rabbit/topology";
+import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Queue } from "bullmq";
 import { Context, Effect, FiberSet, Layer } from "effect";
 import { HttpClient } from "effect/unstable/http";
-import { makeMembersDataLayer } from "#src/http-api/handlers/members/member-commands.data-layer";
+import {
+  makeMembersDataLayer,
+  type MemberCommandsPorts,
+} from "#src/http-api/handlers/members/member-commands.data-layer";
 import { makeMemberReadDataLayer } from "#src/http-api/handlers/members/member-read.data-layer";
 import { ApiRedis, redisUrl } from "#src/runtime/infrastructure/api-redis";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
@@ -62,10 +62,7 @@ interface MemberServicesValue {
     readonly discordId: string;
     readonly guildId: string;
     readonly skipTtlCheck?: boolean;
-  }) => Effect.Effect<
-    ({ readonly refreshQueued: boolean } & Record<string, unknown>) | null,
-    unknown
-  >;
+  }) => Effect.Effect<{ readonly refreshQueued: boolean } | null, unknown>;
   readonly removal: MemberRemoval;
   readonly bulkRefreshQueue: Queue<MemberBulkRefreshJobData>;
   readonly refresh: MemberRefresh;
@@ -165,12 +162,12 @@ export const memberServicesLive = Layer.effect(
                         discord.clearGuildMemberDataCache({
                           discordId: member.discordId,
                           guildId: member.guildId,
-                          userId: member.globalUserId as string,
+                          userId: member.globalUserId,
                         }),
                         adapter(() =>
                           redis.del(
                             getPermissionsCacheKey(
-                              member.globalUserId as string,
+                              member.globalUserId,
                               member.guildId,
                             ),
                           ),
@@ -306,6 +303,14 @@ export const memberServicesLive = Layer.effect(
     );
   }),
 );
+type MemberPublishedEvents = {
+  [RabbitRoutingKey.GUILDS_MEMBERS_REMOVE]: Parameters<
+    MemberCommandsPorts["publishMemberRemoved"]
+  >[0] & { readonly id: string };
+  [RabbitRoutingKey.GUILDS_MEMBERS_REFRESH_JOB_UPDATE]: Parameters<
+    MemberCommandsPorts["publishRefreshJobUpdate"]
+  >[0];
+};
 export const membersData = Layer.unwrap(
   Effect.gen(function* () {
     const config = yield* ApiRuntimeConfig;
@@ -315,7 +320,10 @@ export const membersData = Layer.unwrap(
       yield* MemberServices;
     const promise = <A>(operation: () => PromiseLike<A>) =>
       Effect.tryPromise({ try: operation, catch: (cause) => cause });
-    const publish = (routingKey: RabbitRoutingKeyName, payload: unknown) =>
+    const publish = <Key extends keyof MemberPublishedEvents>(
+      routingKey: Key,
+      payload: MemberPublishedEvents[Key],
+    ) =>
       rabbit.publish({
         exchange: "default",
         routingKey,

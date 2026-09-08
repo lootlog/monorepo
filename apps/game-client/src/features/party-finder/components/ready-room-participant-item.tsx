@@ -1,7 +1,7 @@
-import type {
-  PartyReadyRoomClientUpdate,
-  PartyReadyRoomOrganizerProjection,
-  PartyReadyRoomParticipant,
+import {
+  decodePartyReadyRoomClientUpdate,
+  type PartyReadyRoomOrganizerProjection,
+  type PartyReadyRoomParticipant,
 } from "@lootlog/schema/party-ready-room";
 import { Plus, UserMinus, UserPlus } from "lucide-react";
 import { useState } from "react";
@@ -48,7 +48,7 @@ export function ReadyRoomParticipantItem({
       },
     )
       .then((update) => {
-        applyUpdate(update as unknown as PartyReadyRoomClientUpdate);
+        applyUpdate(decodePartyReadyRoomClientUpdate(update));
       })
       .finally(() => setIsRemoving(false));
   };
@@ -94,10 +94,10 @@ export function ReadyRoomParticipantItem({
             disabled={!canInviteParticipants([participant.participantId])}
             onClick={() => {
               void inviteParticipants([participant.participantId]).catch(
-                (error: unknown) => {
+                (cause: unknown) => {
                   console.warn(
                     "Failed to invite a Ready Room participant",
-                    error,
+                    cause,
                   );
                 },
               );

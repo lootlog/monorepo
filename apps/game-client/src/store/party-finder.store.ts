@@ -108,7 +108,7 @@ export function captureReadyRoomSyncBaseline(
 function isSchemaVersionThree(
   projection: PartyReadyRoomProjection,
 ): projection is PartyReadyRoomProjection {
-  return (projection as { schemaVersion?: number }).schemaVersion === 3;
+  return projection.schemaVersion === 3;
 }
 
 function pruneExpiredRoomTombstones(
@@ -146,10 +146,7 @@ function mergeProjectionIntoState(
   projections: Record<string, PartyReadyRoomProjection>,
   roomVersions: Record<string, ReadyRoomVersion>,
   projection: PartyReadyRoomProjection,
-): {
-  projections: Record<string, PartyReadyRoomProjection>;
-  roomVersions: Record<string, ReadyRoomVersion>;
-} {
+): Pick<PartyFinderState, "projections" | "roomVersions"> {
   const observedAtMs = Date.now();
   const retainedRoomVersions = pruneExpiredRoomTombstones(
     roomVersions,
@@ -196,10 +193,7 @@ function removeProjectionFromState(
   roomVersions: Record<string, ReadyRoomVersion>,
   notificationId: string,
   revision: number,
-): {
-  projections: Record<string, PartyReadyRoomProjection>;
-  roomVersions: Record<string, ReadyRoomVersion>;
-} {
+): Pick<PartyFinderState, "projections" | "roomVersions"> {
   const observedAtMs = Date.now();
   const retainedRoomVersions = pruneExpiredRoomTombstones(
     roomVersions,

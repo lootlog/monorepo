@@ -1,37 +1,17 @@
-export interface NormalizedBonusBreakdownItem {
-  ruleId: string;
-  ruleName: string | null;
-  points: number;
-}
+import { z } from "zod";
 
-export const normalizeBonusBreakdown = (
-  bonusBreakdown: unknown,
-): NormalizedBonusBreakdownItem[] => {
-  if (!Array.isArray(bonusBreakdown)) {
-    return [];
-  }
+const bonusBreakdownItem = z.object({
+  ruleId: z.string().min(1).catch("rule"),
+  ruleName: z.string().trim().min(1).nullable().catch(null),
+  points: z
+    .number()
+    .transform((points) => Math.max(0, Math.round(points * 100) / 100))
+    .pipe(z.number().positive()),
+});
 
-  return bonusBreakdown
-    .map((entry) => {
-      const points =
-        typeof entry?.points === "number" && Number.isFinite(entry.points)
-          ? Math.max(0, Math.round(entry.points * 100) / 100)
-          : null;
-      if (points === null || points <= 0) {
-        return null;
-      }
+export type NormalizedBonusBreakdownItem = z.output<typeof bonusBreakdownItem>;
 
-      return {
-        ruleId:
-          typeof entry.ruleId === "string" && entry.ruleId.length > 0
-            ? entry.ruleId
-            : "rule",
-        ruleName:
-          typeof entry.ruleName === "string" && entry.ruleName.trim().length > 0
-            ? entry.ruleName.trim()
-            : null,
-        points,
-      };
-    })
-    .filter((entry): entry is NormalizedBonusBreakdownItem => entry !== null);
-};
+export const normalizeBonusBreakdown = z
+  .array(bonusBreakdownItem.nullable().catch(null))
+  .transform((entries) => entries.filter((entry) => entry !== null))
+  .catch([]).parse;

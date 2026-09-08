@@ -3,53 +3,20 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { getListEventMapsQueryKey } from "@lootlog/client/main";
-import { GatewayEvent } from "@/config/gateway";
+import { createTestGateway } from "@/lib/testing/gateway";
 import { useEventSocket } from "./use-event-socket";
 
-type SocketHandler = (payload: unknown) => void;
-
-const mocks = vi.hoisted(() => {
-  const handlers = new Map<string, Set<SocketHandler>>();
-
-  return {
-    handlers,
-    socket: {
-      off: vi.fn((event: string, handler: SocketHandler) => {
-        handlers.get(event)?.delete(handler);
-      }),
-      on: vi.fn((event: string, handler: SocketHandler) => {
-        const eventHandlers = handlers.get(event) ?? new Set();
-        eventHandlers.add(handler);
-        handlers.set(event, eventHandlers);
-      }),
-      serverEmit: (event: string, payload: unknown) => {
-        handlers.get(event)?.forEach((handler) => handler(payload));
-      },
-    },
-  };
-});
-
-vi.mock("@/hooks/utils/use-gateway", () => ({
-  useGateway: () => ({
-    connected: true,
-    joined: true,
-    socket: mocks.socket,
-  }),
-}));
-
 describe("useEventSocket", () => {
-  beforeEach(() => {
-    mocks.handlers.clear();
-    vi.clearAllMocks();
-  });
-
   afterEach(() => {
     cleanup();
+    vi.restoreAllMocks();
   });
 
   it("invalidates event maps after socket rooms are rebalanced", () => {
+    const gateway = createTestGateway();
+    const GatewayWrapper = gateway.wrapper;
     const queryClient = new QueryClient();
     const eventMapsQueryKey = getListEventMapsQueryKey({
       guildId: "guild-1",
@@ -58,7 +25,11 @@ describe("useEventSocket", () => {
     queryClient.setQueryData(eventMapsQueryKey, { heroNpcs: [] });
 
     const QueryWrapper = ({ children }: { children: ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      <GatewayWrapper>
+        <QueryClientProvider client={queryClient}>
+          {children}
+        </QueryClientProvider>
+      </GatewayWrapper>
     );
 
     renderHook(
@@ -71,11 +42,16 @@ describe("useEventSocket", () => {
     );
 
     act(() => {
-      mocks.socket.serverEmit(GatewayEvent.PERMISSIONS_UPDATED, {});
+      gateway.deliver({
+        v: 1,
+        type: "permissions.updated",
+        data: { organizationIds: [], subscriptionScopes: [] },
+      });
     });
 
     expect(queryClient.getQueryState(eventMapsQueryKey)?.isInvalidated).toBe(
       true,
     );
+    queryClient.clear();
   });
 });

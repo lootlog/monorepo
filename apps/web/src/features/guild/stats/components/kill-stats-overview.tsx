@@ -2,43 +2,49 @@ import { StatsOverviewCard } from "./stats-overview-card";
 import { useTranslation } from "react-i18next";
 import { Flame, Mountain, Shield, Sword } from "lucide-react";
 import { cn } from "cn";
-import type { GuildKillStatsResponseDtoOutputOverview } from "@lootlog/client/main";
-import type { NpcType } from "@lootlog/client/main";
+import type {
+  GuildKillStatsResponseDtoOutputOverview,
+  NpcType,
+} from "@lootlog/client/main";
 
-const NPC_TYPE_CONFIG: Record<
-  string,
-  {
-    icon: React.ReactNode;
-    gradient: string;
-    iconBg: string;
-    iconColor: string;
-  }
-> = {
-  TITAN: {
-    icon: <Mountain className="h-5 w-5" />,
-    gradient: "bg-red-500/8",
-    iconBg: "bg-red-500/10",
-    iconColor: "text-red-500",
-  },
-  COLOSSUS: {
-    icon: <Flame className="h-5 w-5" />,
-    gradient: "bg-cyan-500/8",
-    iconBg: "bg-cyan-500/10",
-    iconColor: "text-cyan-400",
-  },
-  HERO: {
-    icon: <Shield className="h-5 w-5" />,
-    gradient: "bg-amber-500/8",
-    iconBg: "bg-amber-500/10",
-    iconColor: "text-amber-500",
-  },
-  ELITE2: {
-    icon: <Sword className="h-5 w-5" />,
-    gradient: "bg-blue-500/8",
-    iconBg: "bg-blue-500/10",
-    iconColor: "text-blue-500",
-  },
-};
+const NPC_TYPE_CONFIG = new Map([
+  [
+    "TITAN",
+    {
+      icon: <Mountain className="h-5 w-5" />,
+      gradient: "bg-red-500/8",
+      iconBg: "bg-red-500/10",
+      iconColor: "text-red-500",
+    },
+  ],
+  [
+    "COLOSSUS",
+    {
+      icon: <Flame className="h-5 w-5" />,
+      gradient: "bg-cyan-500/8",
+      iconBg: "bg-cyan-500/10",
+      iconColor: "text-cyan-400",
+    },
+  ],
+  [
+    "HERO",
+    {
+      icon: <Shield className="h-5 w-5" />,
+      gradient: "bg-amber-500/8",
+      iconBg: "bg-amber-500/10",
+      iconColor: "text-amber-500",
+    },
+  ],
+  [
+    "ELITE2",
+    {
+      icon: <Sword className="h-5 w-5" />,
+      gradient: "bg-blue-500/8",
+      iconBg: "bg-blue-500/10",
+      iconColor: "text-blue-500",
+    },
+  ],
+]);
 
 const NPC_TYPES_TO_DISPLAY: NpcType[] = ["TITAN", "COLOSSUS", "HERO", "ELITE2"];
 
@@ -66,7 +72,7 @@ export const NpcTypeStatsCards: React.FC<NpcTypeStatsCardsProps> = ({
   return (
     <div className="grid grid-cols-2 gap-3 min-[1280px]:grid-cols-4">
       {NPC_TYPES_TO_DISPLAY.map((type) => {
-        const config = NPC_TYPE_CONFIG[type];
+        const config = NPC_TYPE_CONFIG.get(type);
         if (!config) return null;
         return (
           <StatsOverviewCard

@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { createEmptyGuildDocumentContent } from "@lootlog/domain/guild-documents";
 export const EMPTY_GUILD_DOC_EDITOR_CONTENT: GuildDocEditorContent =
   createEmptyGuildDocumentContent();
@@ -8,19 +9,14 @@ export type GuildDocEditorContent = Exclude<
   null
 >;
 
+export const guildDocContent = z
+  .record(z.string(), z.json())
+  .refine((content) => "root" in content);
+
 export const normalizeGuildDocEditorContent = (
   content: GuildDocumentResponseDto["content"] | GuildDocEditorContent,
-): GuildDocEditorContent => {
-  if (!content || typeof content !== "object" || Array.isArray(content)) {
-    return EMPTY_GUILD_DOC_EDITOR_CONTENT;
-  }
-
-  if (!("root" in content)) {
-    return EMPTY_GUILD_DOC_EDITOR_CONTENT;
-  }
-
-  return content as GuildDocEditorContent;
-};
+): GuildDocEditorContent =>
+  guildDocContent.safeParse(content).data ?? EMPTY_GUILD_DOC_EDITOR_CONTENT;
 
 export const stringifyGuildDocEditorContent = (
   content: GuildDocEditorContent,

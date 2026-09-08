@@ -19,12 +19,13 @@ import {
   fromDateTimeLocalValueToIso,
   toDateTimeLocalValue,
 } from "./utils/date-time-local";
-import type { EventOverviewResponseDto } from "@lootlog/client/main";
 import {
+  type EventOverviewResponseDto,
   getShowEventOverviewQueryKey,
   useShowEventOverview,
   useUpdateEvent,
 } from "@lootlog/client/main";
+
 import { invalidateEventDetailQueries } from "./hooks/mutations/invalidate-event-queries";
 
 interface EventSettingsFormData {
@@ -110,11 +111,11 @@ export const EventEditSettingsPage = () => {
     try {
       const startsAt = fromDateTimeLocalValueToIso(data.startsAt);
       const endsAtIso = fromDateTimeLocalValueToIso(data.endsAt);
-      let normalizedEndsAt: string | undefined;
+      let normalizedEndsAt: string | null | undefined;
       if (data.endsAt) {
         normalizedEndsAt = endsAtIso;
       } else if (event.endsAt) {
-        normalizedEndsAt = null as never;
+        normalizedEndsAt = null;
       }
       const normalizedAssignmentTimeoutMinutes = Number.isFinite(
         data.assignmentTimeoutMinutes,

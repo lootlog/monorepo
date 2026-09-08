@@ -7,13 +7,14 @@ import { useNavigate } from "@tanstack/react-router";
 import { SearchX, TriangleAlert } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import type { ReservationSpotsResponseDto } from "@lootlog/client/main";
 import {
+  type ReservationSpotsResponseDto,
   getListReservationSpotsQueryKey,
   useListReservationSpots,
   usePinReservationSpot,
   useUnpinReservationSpot,
 } from "@lootlog/client/main";
+
 import { Button } from "@lootlog/ui/components/button";
 import {
   Empty,

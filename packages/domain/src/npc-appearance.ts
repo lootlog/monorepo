@@ -1,3 +1,4 @@
+import { isObjectRecord } from "@lootlog/schema/records";
 import {
   COMBAT_NPC_TYPES,
   DEFAULT_NPC_TYPE_COLORS,
@@ -15,20 +16,15 @@ export const normalizeAppearanceColor = (
   isHexAppearanceColor(value) ? value.toUpperCase() : fallback.toUpperCase();
 
 export const normalizeNpcTypeColors = (value: unknown): NpcTypeColors => {
-  const candidate =
-    typeof value === "object" && value !== null && !Array.isArray(value)
-      ? (value as Record<string, unknown>)
-      : {};
-
-  return Object.fromEntries(
-    COMBAT_NPC_TYPES.map((npcType) => [
-      npcType,
-      normalizeAppearanceColor(
-        candidate[npcType],
-        DEFAULT_NPC_TYPE_COLORS[npcType],
-      ),
-    ]),
-  ) as unknown as NpcTypeColors;
+  const candidate = isObjectRecord(value) && !Array.isArray(value) ? value : {};
+  const colors: NpcTypeColors = { ...DEFAULT_NPC_TYPE_COLORS };
+  for (const npcType of COMBAT_NPC_TYPES) {
+    colors[npcType] = normalizeAppearanceColor(
+      candidate[npcType],
+      colors[npcType],
+    );
+  }
+  return colors;
 };
 
 const hexToRgb = (color: string) => {
@@ -88,7 +84,7 @@ const getReadableTextColor = (accent: string) => {
   return "#FFFFFF";
 };
 
-export const deriveNpcSurfaceColors = (accentValue: unknown) => {
+export const deriveNpcSurfaceColors = (accentValue: string) => {
   const accent = normalizeAppearanceColor(accentValue, "#FFFFFF");
   const [red, green, blue] = hexToRgb(accent);
 

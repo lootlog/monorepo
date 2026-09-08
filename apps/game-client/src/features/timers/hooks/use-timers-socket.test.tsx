@@ -1,146 +1,62 @@
-import { renderHook } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  fixtureValue,
-  nestedFixtureValue,
-  optionalFixtureValue,
-} from "@/test-utils/fixture-value";
-import { GatewayEvent } from "@/config/gateway";
-import type { Timer } from "@/api/timers.api";
-
-const mockOn = vi.fn();
-const mockOff = vi.fn();
-const mockUpsertTimer = vi.fn();
-const mockRemoveTimer = vi.fn();
-
-let socketState: {
-  socket: { on: typeof mockOn; off: typeof mockOff } | null;
-  connected: boolean;
-  joined: boolean;
-};
-
-vi.mock("@/contexts/socket-context", () => ({
-  useSocket: () => socketState,
-}));
-
-vi.mock("@/hooks/api/use-timers-cache", () => ({
-  useTimersCache: () => ({
-    upsertTimer: mockUpsertTimer,
-    removeTimer: mockRemoveTimer,
-  }),
-}));
-
+import { act, render } from "@testing-library/react";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { expect, it } from "vitest";
+import { SocketProvider } from "@/contexts/socket-context";
+import { queryKeys } from "@/features/public-api/query-keys";
+import { createTimerFixture } from "../timer-fixtures";
+import { createTimerHttpFixture } from "../timer-http-fixtures";
+import { createTimerRealtimeFixture } from "../timer-realtime-fixtures";
 import { useTimersSocket } from "./use-timers-socket";
 
-const createTimer = (overrides?: Partial<Timer>): Timer => ({
-  guildId: fixtureValue(overrides, "guildId", "guild-1"),
-  timerKey: fixtureValue(overrides, "timerKey", "tanroth"),
-  world: fixtureValue(overrides, "world", "pandora"),
-  npcId: fixtureValue(overrides, "npcId", 10),
-  minSpawnTime: fixtureValue(
-    overrides,
-    "minSpawnTime",
-    "2026-04-22T10:00:00.000Z",
-  ),
-  maxSpawnTime: fixtureValue(
-    overrides,
-    "maxSpawnTime",
-    "2026-04-22T10:05:00.000Z",
-  ),
-  updatedAt: fixtureValue(overrides, "updatedAt", "2026-04-22T09:59:00.000Z"),
-  wasReset: fixtureValue(overrides, "wasReset", false),
-  npc: {
-    id: nestedFixtureValue(overrides, "npc", "id", 10),
-    name: nestedFixtureValue(overrides, "npc", "name", "Tanroth"),
-    lvl: nestedFixtureValue(overrides, "npc", "lvl", 120),
-    prof: nestedFixtureValue(overrides, "npc", "prof", "W"),
-    icon: nestedFixtureValue(overrides, "npc", "icon", "icon.gif"),
-    wt: nestedFixtureValue(overrides, "npc", "wt", 10),
-    type: nestedFixtureValue(overrides, "npc", "type", "hero"),
-    margonemType: nestedFixtureValue(overrides, "npc", "margonemType", 4),
-    location: nestedFixtureValue(overrides, "npc", "location", "Ruins"),
-  } as never,
-  member: optionalFixtureValue(overrides, "member"),
-  members: optionalFixtureValue(overrides, "members"),
-  isCustomTime: fixtureValue(overrides, "isCustomTime", false),
-  isPending: fixtureValue(overrides, "isPending", false),
-});
+function TimerListener() {
+  useTimersSocket();
+  return null;
+}
 
-describe("useTimersSocket", () => {
-  beforeEach(() => {
-    mockOn.mockReset();
-    mockOff.mockReset();
-    mockUpsertTimer.mockReset();
-    mockRemoveTimer.mockReset();
-
-    socketState = {
-      socket: {
-        on: mockOn,
-        off: mockOff,
+it("updates world cache only while joined and subscribed, including listener cleanup", async () => {
+  const fixture = createTimerHttpFixture();
+  const gateway = createTimerRealtimeFixture();
+  const key = queryKeys.timers("pandora");
+  const content = (listening: boolean) => (
+    <QueryClientProvider client={fixture.queryClient}>
+      <SocketProvider>{listening && <TimerListener />}</SocketProvider>
+    </QueryClientProvider>
+  );
+  const view = render(content(true));
+  const timer = createTimerFixture();
+  const created = {
+    v: 1,
+    type: "timer.created",
+    data: { organizationId: "guild-1", payload: timer },
+  } as const;
+  try {
+    act(() => gateway.wire.open());
+    await gateway.receive(created);
+    expect(fixture.queryClient.getQueryData(key)).toEqual([]);
+    await gateway.join(["guild-1"]);
+    await gateway.receive(created);
+    expect(fixture.queryClient.getQueryData(key)).toEqual([
+      { ...timer, isPending: false },
+    ]);
+    await gateway.receive({
+      v: 1,
+      type: "timer.deleted",
+      data: {
+        organizationId: "guild-1",
+        payload: {
+          guildId: timer.guildId,
+          timerKey: timer.timerKey,
+          world: timer.world,
+        },
       },
-      connected: true,
-      joined: true,
-    };
-  });
-
-  it("does not register listeners until the socket is ready", () => {
-    socketState = {
-      socket: null,
-      connected: false,
-      joined: false,
-    };
-
-    renderHook(() => useTimersSocket());
-
-    expect(mockOn).not.toHaveBeenCalled();
-  });
-
-  it("registers timer listeners and forwards socket events to the cache", () => {
-    renderHook(() => useTimersSocket());
-
-    const createHandler = mockOn.mock.calls.find(
-      ([eventName]) => eventName === GatewayEvent.TIMERS_CREATE,
-    )?.[1] as (data: Timer) => void;
-    const deleteHandler = mockOn.mock.calls.find(
-      ([eventName]) => eventName === GatewayEvent.TIMERS_DELETE,
-    )?.[1] as (data: Timer) => void;
-
-    const timer = createTimer();
-
-    createHandler(timer);
-    deleteHandler(timer);
-
-    expect(mockOn).toHaveBeenCalledWith(
-      GatewayEvent.TIMERS_CREATE,
-      expect.any(Function),
-    );
-    expect(mockOn).toHaveBeenCalledWith(
-      GatewayEvent.TIMERS_DELETE,
-      expect.any(Function),
-    );
-    expect(mockUpsertTimer).toHaveBeenCalledWith(timer);
-    expect(mockRemoveTimer).toHaveBeenCalledWith(timer);
-  });
-
-  it("unregisters listeners on cleanup", () => {
-    const { unmount } = renderHook(() => useTimersSocket());
-
-    const createHandler = mockOn.mock.calls.find(
-      ([eventName]) => eventName === GatewayEvent.TIMERS_CREATE,
-    )?.[1];
-    const deleteHandler = mockOn.mock.calls.find(
-      ([eventName]) => eventName === GatewayEvent.TIMERS_DELETE,
-    )?.[1];
-
-    unmount();
-
-    expect(mockOff).toHaveBeenCalledWith(
-      GatewayEvent.TIMERS_CREATE,
-      createHandler,
-    );
-    expect(mockOff).toHaveBeenCalledWith(
-      GatewayEvent.TIMERS_DELETE,
-      deleteHandler,
-    );
-  });
+    });
+    expect(fixture.queryClient.getQueryData(key)).toEqual([]);
+    view.rerender(content(false));
+    await gateway.receive(created);
+    expect(fixture.queryClient.getQueryData(key)).toEqual([]);
+  } finally {
+    view.unmount();
+    gateway.cleanup();
+    fixture.cleanup();
+  }
 });

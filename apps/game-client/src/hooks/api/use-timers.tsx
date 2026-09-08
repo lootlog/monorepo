@@ -12,7 +12,7 @@ export const useTimers = ({ world }: UseTimersOptions) => {
     enabled: !!world,
     staleTime: 30_000,
     refetchOnWindowFocus: false,
-    queryFn: ({ signal }) => fetchTimers(world as string, signal),
+    queryFn: ({ signal }) => fetchTimers(world, signal),
   });
 
   return query;

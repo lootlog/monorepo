@@ -1,14 +1,13 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+// Vite replaces these values at compilation, so stubEnv cannot exercise missing build metadata.
 const { buildMetadata, buildTimestamp, commitSha } = vi.hoisted(() => ({
-  buildMetadata: {
-    commitSha: "1234567890abcdef1234567890abcdef12345678",
-  },
+  buildMetadata: { commitSha: "1234567890abcdef1234567890abcdef12345678" },
   buildTimestamp: "2026-07-23T10:20:30.000Z",
   commitSha: "1234567890abcdef1234567890abcdef12345678",
 }));
-
+// eslint-disable-next-line anti-slop/no-module-mocking -- Vite hard-defines these build metadata literals before execution; stubEnv cannot vary the missing-SHA boundary.
 vi.mock("@/config/app", () => ({
   APP_ENVIRONMENT: "production",
   BUILD_TIMESTAMP: buildTimestamp,
@@ -17,7 +16,6 @@ vi.mock("@/config/app", () => ({
   },
   GAME_CLIENT_PACKAGE_VERSION: "1.0.1",
 }));
-
 import { InformationSettingsTab } from "./information-settings-tab";
 
 describe("InformationSettingsTab", () => {

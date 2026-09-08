@@ -15,7 +15,13 @@ const guild = {
   reservationMaxAdvanceDays: 7,
 };
 
-const reservation = {
+const reservation: Parameters<typeof presentReservation>[0] = {
+  legacyCreatedByDiscordId: null,
+  legacyCreatedDate: null,
+  legacyFromDate: null,
+  legacyReservationId: null,
+  legacyToDate: null,
+  updatedAt: new Date("2026-08-26T11:00:00.000Z"),
   id: 1,
   guildId: guild.id,
   spotId: "driady",
@@ -49,7 +55,7 @@ describe("presentReservation", () => {
   });
 
   it("redacts source policy settings from another user's partner reservation", () => {
-    const result = presentReservation(reservation as never, {
+    const result = presentReservation(reservation, {
       guildId: "viewer-guild",
       userId: "viewer-user",
       discordId: "viewer-discord",
@@ -60,7 +66,7 @@ describe("presentReservation", () => {
   });
 
   it("keeps policy settings for a reservation in the current organization", () => {
-    const result = presentReservation(reservation as never, {
+    const result = presentReservation(reservation, {
       guildId: guild.id,
       userId: "viewer-user",
       discordId: "viewer-discord",
@@ -76,7 +82,7 @@ describe("presentReservation", () => {
   });
 
   it("keeps policy settings when the owner views a personal partner reservation", () => {
-    const result = presentReservation(reservation as never, {
+    const result = presentReservation(reservation, {
       guildId: null,
       userId: "owner-user",
       discordId: "owner-discord",
@@ -88,7 +94,7 @@ describe("presentReservation", () => {
   });
 
   it("does not expose source policy or edit eligibility to a historical owner through a partner calendar", () => {
-    const result = presentReservation(reservation as never, {
+    const result = presentReservation(reservation, {
       guildId: "viewer-guild",
       userId: "owner-user",
       discordId: "owner-discord",

@@ -23,10 +23,6 @@ export class MapsOperationFailure extends TaggedErrorClass<MapsOperationFailure>
   },
 ) {}
 
-interface GameMap {
-  readonly id: number;
-  readonly name: string;
-}
 const GameMapsJson = Schema.fromJsonString(
   Schema.Array(Schema.Struct({ id: Schema.Number, name: Schema.String })),
 );
@@ -34,7 +30,7 @@ const decodeGameMapsJson = Schema.decodeUnknownSync(GameMapsJson);
 
 export interface MapsOperationOptions {
   readonly httpClient: HttpClientValue;
-  readonly redis: RedisService;
+  readonly redis: Pick<RedisService, "get" | "set">;
   readonly url: URL;
 }
 
@@ -87,7 +83,7 @@ export const makeMapsOperation = (options: MapsOperationOptions) => {
     Effect.catch((error) =>
       Effect.logError("Failed to fetch maps").pipe(
         Effect.annotateLogs({ reason: error.reason }),
-        Effect.as([] as GameMap[]),
+        Effect.as([]),
       ),
     ),
     Effect.withSpan("MapsController_getMaps", {

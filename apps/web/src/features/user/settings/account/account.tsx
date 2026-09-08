@@ -26,22 +26,10 @@ export const AccountSettings: FC = () => {
 
     const deleteUserResponse = await authClient.deleteUser();
 
-    if (
-      typeof deleteUserResponse === "object" &&
-      deleteUserResponse !== null &&
-      "error" in deleteUserResponse &&
-      deleteUserResponse.error
-    ) {
-      const error = deleteUserResponse.error;
-      const errorMessage =
-        typeof error === "object" &&
-        error !== null &&
-        "message" in error &&
-        typeof error.message === "string"
-          ? error.message
-          : "Failed to delete auth account";
-
-      throw new Error(errorMessage);
+    if (deleteUserResponse.error) {
+      throw new Error(
+        deleteUserResponse.error.message ?? "Failed to delete auth account",
+      );
     }
 
     queryClient.clear();
@@ -64,7 +52,7 @@ export const AccountSettings: FC = () => {
               size="sm"
               className="w-full justify-center sm:w-auto"
               loading={isLoggingOut}
-              icon={<LogOut className="size-3.5" />}
+              icon=<LogOut className="size-3.5" />
               onClick={logout}
             >
               {t("settings.account.session.logout")}

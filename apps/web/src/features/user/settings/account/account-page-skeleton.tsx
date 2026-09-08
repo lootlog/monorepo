@@ -9,14 +9,14 @@ export const AccountSettingsPageSkeleton = () => {
     <ScrollArea className="h-full min-h-0">
       <div className="flex flex-col gap-4 px-3 pb-3">
         <SectionCard>
-          <SectionCardHeader title={<Skeleton className="h-4 w-32" />} />
+          <SectionCardHeader title=<Skeleton className="h-4 w-32" /> />
           <SectionCardContent>
             <Skeleton className="h-8 w-32 rounded-md" />
           </SectionCardContent>
         </SectionCard>
 
         <SectionCard>
-          <SectionCardHeader title={<Skeleton className="h-4 w-32" />} />
+          <SectionCardHeader title=<Skeleton className="h-4 w-32" /> />
           <SectionCardContent>
             <Skeleton className="h-8 w-32 rounded-md" />
           </SectionCardContent>

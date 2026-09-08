@@ -59,20 +59,18 @@ export const RecentKillsPreview = ({
             {kills && kills.length > 0 ? (
               <ChevronLink
                 className="inline-flex h-8 shrink-0 items-center gap-1 text-xs"
-                render={
-                  <Link
-                    to={
-                      activeHeroId
-                        ? "/$guildId/events/$eventId/heroes/$heroId/kills"
-                        : "/$guildId/events/$eventId/kills"
-                    }
-                    params={
-                      activeHeroId
-                        ? { guildId, eventId, heroId: activeHeroId }
-                        : { guildId, eventId }
-                    }
-                  />
-                }
+                render=<Link
+                  to={
+                    activeHeroId
+                      ? "/$guildId/events/$eventId/heroes/$heroId/kills"
+                      : "/$guildId/events/$eventId/kills"
+                  }
+                  params={
+                    activeHeroId
+                      ? { guildId, eventId, heroId: activeHeroId }
+                      : { guildId, eventId }
+                  }
+                />
               >
                 {t("events.kills.viewAll")}
               </ChevronLink>

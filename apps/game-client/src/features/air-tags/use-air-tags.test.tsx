@@ -1,98 +1,100 @@
-import { renderHook } from "@testing-library/react";
-import { GatewayEvent } from "@/config/gateway";
+import { act, renderHook } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+import {
+  getUsersControllerGetUserGameAccountPreferencesQueryKey,
+  type UserGameAccountPreferencesResponseDtoOutput,
+} from "@lootlog/client/main";
+import {
+  createNotificationsSettings,
+  createDetectorSettings,
+} from "@/lib/game-account-preferences";
+import { createAirTagTest } from "./air-tag-test";
+import { airTagReceiveController } from "./air-tag-receive-controller";
 import { useAirTags } from "./use-air-tags";
-
-const testState = vi.hoisted(() => ({
-  connected: true,
-  enabled: false,
-  joined: true,
-}));
-const socket = vi.hoisted(() => ({
-  off: vi.fn(),
-  on: vi.fn(),
-}));
-const runtime = vi.hoisted(() => ({
-  configure: vi.fn(),
-  handlePermissionsUpdated: vi.fn(),
-  handleUpdate: vi.fn(),
-  shutdown: vi.fn(),
-}));
-
-vi.mock("@/hooks/use-current-game-account-preferences", () => ({
-  useCurrentGameAccountPreferences: () => ({
-    data: { airTags: { enabled: testState.enabled } },
-  }),
-}));
-
-vi.mock("@/lib/socket", () => ({
-  getSocket: () => socket,
-}));
-
-vi.mock("@/store/global.store", () => ({
-  useGlobalStore: (
-    selector: (state: {
-      socketState: { connected: boolean; joined: boolean };
-    }) => unknown,
-  ) =>
-    selector({
-      socketState: {
-        connected: testState.connected,
-        joined: testState.joined,
-      },
-    }),
-}));
-
-vi.mock("./air-tag-runtime", () => ({
-  airTagRuntime: runtime,
-}));
+const settings = (
+  enabled: boolean,
+): UserGameAccountPreferencesResponseDtoOutput => ({
+  accountId: "202",
+  notifications: createNotificationsSettings(),
+  detector: createDetectorSettings(),
+  pings: { enabled: false },
+  airTags: { enabled },
+  hasStoredNotifications: true,
+  hasStoredDetector: true,
+  hasStoredPings: true,
+  hasStoredAirTags: true,
+  hasStoredPreferences: true,
+});
+const update = {
+  v: 1 as const,
+  type: "air-tag.updated" as const,
+  data: {
+    guildId: "guild-1",
+    world: "fobos",
+    mapId: 12,
+    epochId: "epoch",
+    epochStartedAt: 100,
+    revision: 2,
+    target: {
+      targetId: "guild-1",
+      nickname: "Target",
+      relation: 1 as const,
+      x: 20,
+      y: 20,
+      observedAt: Date.now(),
+    },
+  },
+};
 
 describe("useAirTags", () => {
-  beforeEach(() => {
-    testState.connected = true;
-    testState.enabled = false;
-    testState.joined = true;
-    vi.clearAllMocks();
+  it("ignores incoming targets and sends no subscription while disabled", async () => {
+    const test = createAirTagTest();
+    test.queryClient.setQueryData(
+      getUsersControllerGetUserGameAccountPreferencesQueryKey({
+        accountId: "202",
+      }),
+      settings(false),
+    );
+    const view = renderHook(() => useAirTags(), { wrapper: test.wrapper });
+    await test.join();
+    await test.receive(update);
+    expect(test.subscriptions()).toHaveLength(0);
+    expect(
+      airTagReceiveController.getRenderableTargets(Date.now(), 10000),
+    ).toEqual([]);
+    view.unmount();
+    expect(test.subscriptions()).toHaveLength(0);
   });
-
-  it("keeps socket listeners detached while the feature is disabled", () => {
-    const { unmount } = renderHook(() => useAirTags());
-
-    expect(runtime.configure).toHaveBeenCalledWith({
-      connected: true,
-      enabled: false,
-      joined: true,
+  it("applies updates only while ready and clears state on unmount", async () => {
+    const test = createAirTagTest();
+    test.queryClient.setQueryData(
+      getUsersControllerGetUserGameAccountPreferencesQueryKey({
+        accountId: "202",
+      }),
+      settings(true),
+    );
+    const view = renderHook(() => useAirTags(), { wrapper: test.wrapper });
+    await test.join();
+    await test.acknowledge(["guild-1"]);
+    await test.receive(update);
+    expect(
+      airTagReceiveController.getRenderableTargets(Date.now(), 10000),
+    ).toEqual([expect.objectContaining({ targetId: "guild-1", x: 20 })]);
+    act(() => test.wire.close());
+    await test.receive({
+      ...update,
+      data: {
+        ...update.data,
+        revision: 3,
+        target: { ...update.data.target, x: 40 },
+      },
     });
-    expect(socket.on).not.toHaveBeenCalled();
-
-    unmount();
-    expect(runtime.shutdown).toHaveBeenCalledOnce();
-  });
-
-  it("attaches listeners only while enabled and ready", () => {
-    testState.enabled = true;
-    const { rerender, unmount } = renderHook(() => useAirTags());
-
-    expect(socket.on).toHaveBeenCalledWith(
-      GatewayEvent.AIR_TAG_UPDATE,
-      expect.any(Function),
-    );
-    expect(socket.on).toHaveBeenCalledWith(
-      GatewayEvent.PERMISSIONS_UPDATED,
-      expect.any(Function),
-    );
-
-    testState.connected = false;
-    rerender();
-
-    expect(socket.off).toHaveBeenCalledWith(
-      GatewayEvent.AIR_TAG_UPDATE,
-      expect.any(Function),
-    );
-    expect(socket.off).toHaveBeenCalledWith(
-      GatewayEvent.PERMISSIONS_UPDATED,
-      expect.any(Function),
-    );
-
-    unmount();
+    expect(
+      airTagReceiveController.getRenderableTargets(Date.now(), 10000),
+    ).toEqual([expect.objectContaining({ targetId: "guild-1", x: 20 })]);
+    view.unmount();
+    expect(
+      airTagReceiveController.getRenderableTargets(Date.now(), 10000),
+    ).toEqual([]);
   });
 });

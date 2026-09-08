@@ -14,9 +14,8 @@ type TanStackTableHeaderProps<
   table: TanStackTable<TFeatures, TData>;
   className?: string;
   rowClassName?: string;
-  headClassName?:
-    | string
-    | ((header: Header<TFeatures, TData, unknown>) => string);
+  headClassName?: string;
+  getHeadClassName?: (header: Header<TFeatures, TData, unknown>) => string;
 };
 
 export const TanStackTableHeader = <
@@ -27,6 +26,7 @@ export const TanStackTableHeader = <
   className,
   rowClassName,
   headClassName,
+  getHeadClassName,
 }: TanStackTableHeaderProps<TFeatures, TData>) => {
   return (
     <TableHeader className={className}>
@@ -34,9 +34,7 @@ export const TanStackTableHeader = <
         <TableRow key={headerGroup.id} className={rowClassName}>
           {headerGroup.headers.map((header) => {
             const resolvedHeadClassName =
-              typeof headClassName === "function"
-                ? headClassName(header)
-                : headClassName;
+              getHeadClassName?.(header) ?? headClassName;
 
             return (
               <TableHead key={header.id} className={resolvedHeadClassName}>

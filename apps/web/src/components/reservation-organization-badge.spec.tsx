@@ -1,21 +1,15 @@
 // @vitest-environment happy-dom
 
-import type { ComponentProps } from "react";
+import { simulateLoadedImages } from "@/lib/testing/images";
+
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { ReservationOrganizationBadge } from "./reservation-organization-badge";
 
-vi.mock("@lootlog/ui/components/avatar", () => ({
-  Avatar: ({ children, ...props }: ComponentProps<"span">) => (
-    <span {...props}>{children}</span>
-  ),
-  AvatarImage: (props: ComponentProps<"img">) => <img {...props} />,
-  AvatarFallback: ({ children, ...props }: ComponentProps<"span">) => (
-    <span {...props}>{children}</span>
-  ),
-}));
-
 afterEach(cleanup);
+
+beforeEach(simulateLoadedImages);
+afterEach(() => vi.restoreAllMocks());
 
 describe("ReservationOrganizationBadge", () => {
   it("shows the organization name and Discord guild icon", () => {

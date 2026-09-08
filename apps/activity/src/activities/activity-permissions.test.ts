@@ -15,8 +15,14 @@ describe("Activity permissions", () => {
       }),
     );
     const redis = Redis.Redis.of({
-      send: <A>(command: string) =>
-        Effect.succeed((command === "GET" ? "not-json" : "OK") as unknown as A),
+      send: <A>(command: string) => {
+        if (command !== "GET" && command !== "PING" && command !== "SET") {
+          return Effect.die(new Error(`Unexpected Redis command: ${command}`));
+        }
+        const reply = command === "GET" ? "not-json" : "OK";
+        // SAFETY: This scenario calls GET as string | null and ignores PING/SET replies; Redis's caller-selected A is erased at this fake transport boundary.
+        return Effect.succeed(reply as A);
+      },
       subscribe: () => Queue.unbounded<Redis.RedisMessage, Redis.RedisError>(),
       eval:
         <

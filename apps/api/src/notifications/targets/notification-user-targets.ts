@@ -27,7 +27,7 @@ import type {
   UpdateNotificationTargetRequest,
 } from "#src/contracts/notifications/schemas";
 import { Error as NotificationError } from "#src/notifications/error";
-import type { JsonObject } from "#src/notifications/notification-database.types";
+import type { JsonObject } from "#src/database/json";
 import {
   NotificationJobKind,
   NotificationOwnerType,

@@ -1,4 +1,8 @@
-import { useInfiniteQuery, type QueryKey } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  type InfiniteData,
+  type QueryKey,
+} from "@tanstack/react-query";
 
 type CursorPage = {
   nextCursor: string | null;
@@ -15,12 +19,17 @@ export function useCursorInfiniteQuery<TPage extends CursorPage>({
   fetchPage,
   queryKey,
 }: UseCursorInfiniteQueryOptions<TPage>) {
-  return useInfiniteQuery({
+  return useInfiniteQuery<
+    TPage,
+    Error,
+    InfiniteData<TPage>,
+    QueryKey,
+    string | undefined
+  >({
     queryKey,
-    queryFn: ({ pageParam }) =>
-      fetchPage(typeof pageParam === "string" ? pageParam : undefined),
+    queryFn: ({ pageParam }) => fetchPage(pageParam),
     enabled,
-    initialPageParam: undefined as string | undefined,
+    initialPageParam: undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
   });
 }

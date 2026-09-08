@@ -26,7 +26,7 @@ import type { UserOnlineEventV1 } from "@lootlog/protocol/rabbit/events";
 import { AirTagService } from "#src/realtime/air-tag-service";
 import { MapPingService } from "#src/realtime/map-ping-service";
 import { RealtimeHub } from "#src/realtime/realtime-hub";
-import type { GatewaySocket, SessionData } from "#src/realtime/session";
+import type { SessionData } from "#src/realtime/session";
 
 let dragonfly: StartedTestContainer;
 let redisPort: number;
@@ -110,7 +110,7 @@ const makeSocket = (connectionId: string) => {
       return bytes.byteLength;
     },
     close: () => undefined,
-  } as unknown as GatewaySocket;
+  };
   return { socket, frames };
 };
 

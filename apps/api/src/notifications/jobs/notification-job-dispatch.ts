@@ -1,3 +1,6 @@
+import { isObjectRecord } from "@lootlog/schema/records";
+import type { DiscordNotificationSendCommand } from "@lootlog/schema/notifications";
+import type { NotificationContentModule } from "#src/notifications/content/notification-content.service";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Effect, Schema } from "effect";
 import type {
@@ -10,7 +13,7 @@ import {
   NotificationOwnerType,
   NotificationProvider,
 } from "#src/notifications/notification-enums";
-import type { JsonObject } from "#src/notifications/notification-database.types";
+import type { JsonValue, JsonObject } from "#src/database/json";
 
 export type NotificationDispatchJob = NotificationJobWithRelations;
 
@@ -32,7 +35,9 @@ export interface NotificationDispatchPermissions {
 }
 
 export interface NotificationDispatchPublisher {
-  readonly publish: (payload: unknown) => Effect.Effect<void, unknown, never>;
+  readonly publish: (
+    payload: DiscordNotificationSendCommand,
+  ) => Effect.Effect<void, unknown, never>;
 }
 
 export class NotificationJobDispatchFailure extends TaggedErrorClass<NotificationJobDispatchFailure>()(
@@ -43,10 +48,7 @@ export class NotificationJobDispatchFailure extends TaggedErrorClass<Notificatio
 const targetBlockedReason = (target: NotificationDispatchJob["target"]) => {
   if (!target.active) return "Notification target is disabled";
   if (target.canSend) return null;
-  const metadata =
-    target.metadata && typeof target.metadata === "object"
-      ? (target.metadata as JsonObject)
-      : null;
+  const metadata = isObjectRecord(target.metadata) ? target.metadata : null;
   const missingPermissions = Array.isArray(metadata?.missingPermissions)
     ? metadata.missingPermissions.filter(
         (permission): permission is string => typeof permission === "string",
@@ -62,12 +64,28 @@ const errorMessage = (cause: unknown) =>
     ? String(cause.message)
     : String(cause);
 
+const isPayloadObject = (value: JsonValue): value is JsonObject =>
+  value !== null && typeof value === "object" && !Array.isArray(value);
+
+const parseDispatchPayload = (value: JsonValue) => {
+  const payload = isPayloadObject(value) ? value : undefined;
+  return {
+    content: typeof payload?.content === "string" ? payload.content : undefined,
+    title: typeof payload?.title === "string" ? payload.title : "Powiadomienie",
+    message:
+      typeof payload?.message === "string"
+        ? payload.message
+        : "Masz nowe powiadomienie",
+    metadata: payload,
+  };
+};
+
 export const makeNotificationJobDispatch = (
   store: NotificationDispatchStore,
   permissions: NotificationDispatchPermissions,
   publisher: NotificationDispatchPublisher,
   scheduler: Pick<NotificationJobScheduler, "enqueue">,
-  parseAllowedMentions: (value: unknown) => unknown,
+  parseAllowedMentions: NotificationContentModule["parseAllowedMentions"],
 ) =>
   Effect.fn("notifications.jobs.dispatch")(function* (jobId: string) {
     const job = yield* store.find(jobId);
@@ -96,7 +114,7 @@ export const makeNotificationJobDispatch = (
       }
     }
     if (!(yield* store.claim(job.id))) return;
-    const payload = job.payloadSnapshot as JsonObject | null | undefined;
+    const payload = parseDispatchPayload(job.payloadSnapshot);
     const published = yield* publisher
       .publish({
         notificationJobId: job.id,
@@ -104,16 +122,10 @@ export const makeNotificationJobDispatch = (
         ownerType: job.ownerType,
         ownerId: job.ownerId,
         guildId: job.rule.guildId,
-        content:
-          typeof payload?.content === "string" ? payload.content : undefined,
-        title:
-          typeof payload?.title === "string" ? payload.title : "Powiadomienie",
-        message:
-          typeof payload?.message === "string"
-            ? payload.message
-            : "Masz nowe powiadomienie",
-        allowedMentions: parseAllowedMentions(payload?.allowedMentions),
-        metadata: payload && typeof payload === "object" ? payload : undefined,
+        ...payload,
+        allowedMentions: parseAllowedMentions(
+          payload.metadata?.allowedMentions,
+        ),
         target: {
           targetId: String(job.target.id),
           externalId: job.target.externalId,

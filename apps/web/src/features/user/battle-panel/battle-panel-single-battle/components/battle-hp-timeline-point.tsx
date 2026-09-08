@@ -22,7 +22,13 @@ export function BattleHpTimelinePoint({
 }: BattleHpTimelinePointProps) {
   const turn = getBattleTimelinePayloadTurn(payload);
 
-  if (typeof cx !== "number" || typeof cy !== "number" || turn === null) {
+  if (
+    cx === null ||
+    cx === undefined ||
+    cy === null ||
+    cy === undefined ||
+    turn === null
+  ) {
     return null;
   }
 

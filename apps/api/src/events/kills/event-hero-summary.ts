@@ -1,3 +1,5 @@
+import { extractEventTimerNpc } from "#src/events/respawn/event-timer-npc";
+import { isObjectRecord } from "@lootlog/schema/records";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, desc, eq, inArray, isNotNull, sql } from "drizzle-orm";
 import { Effect, Schema } from "effect";
@@ -66,10 +68,7 @@ export const makeEventHeroSummary = (
     load: Effect.Effect<S["Type"], unknown>,
   ) => {
     const key = `event-read:v2:${guildId}:${eventId}:hero-stats-v2:e30`;
-    const codec = makeJsonCodec(Schema.toType(schema), {
-      stringify: (value: unknown) => superjson.stringify(value),
-      parse: (text): unknown => superjson.parse(text),
-    });
+    const codec = makeJsonCodec(Schema.toType(schema), superjson);
     return redis
       .getOrSetJsonEffect({
         key,
@@ -96,19 +95,14 @@ export const makeEventHeroSummary = (
           heroNpcs,
         );
         return values.map((timer) => {
-          const npc =
-            timer.npc && typeof timer.npc === "object"
-              ? (timer.npc as { name?: unknown; icon?: unknown })
-              : {};
+          const npc = isObjectRecord(timer.npc) ? timer.npc : {};
           return {
+            npcLvl: Schema.is(Schema.Number)(npc.lvl) ? npc.lvl : null,
             npcId: timer.npcId,
             world: timer.world,
             minSpawnTime: timer.minSpawnTime,
             maxSpawnTime: timer.maxSpawnTime,
-            npc: {
-              name: typeof npc.name === "string" ? npc.name : "",
-              icon: typeof npc.icon === "string" ? npc.icon : null,
-            },
+            npc: extractEventTimerNpc(timer.npc),
           };
         });
       }).pipe(Effect.withSpan("EventsRankingController_getEventHeroTimers")),

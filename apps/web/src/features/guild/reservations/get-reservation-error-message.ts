@@ -1,4 +1,5 @@
 import { getApiErrorMessage, isApiError } from "@lootlog/client/transport";
+import { z } from "zod";
 import type { TFunction } from "i18next";
 
 const RESERVATION_ERROR_CODES = new Set([
@@ -29,27 +30,34 @@ const RESERVATION_ERROR_CODES = new Set([
   "RESERVATION_SHARE_WITH_SELF",
 ]);
 
+const reservationErrorBody = z.object({
+  code: z.string().optional().catch(undefined),
+  limit: z.number().optional().catch(undefined),
+  minimumMinutes: z.number().optional().catch(undefined),
+  maximumMinutes: z.number().optional().catch(undefined),
+  maximumDays: z.number().optional().catch(undefined),
+  granularityMinutes: z.number().optional().catch(undefined),
+});
+
 export const getReservationErrorMessage = (
-  error: unknown,
+  cause: unknown,
   t: TFunction,
 ): string => {
-  const data = isApiError(error) ? error.data : undefined;
-  const body = typeof data === "object" && data !== null ? data : undefined;
-  const code =
-    body && "code" in body && typeof body.code === "string"
-      ? body.code
-      : getApiErrorMessage(error);
+  const result = reservationErrorBody.safeParse(
+    isApiError(cause) ? cause.data : undefined,
+  );
+  const body = result.success ? result.data : undefined;
+  const code = body?.code ?? getApiErrorMessage(cause);
   if (code && RESERVATION_ERROR_CODES.has(code)) {
-    const detailFields: Record<string, string> = {
-      ACTIVE_LIMIT_REACHED: "limit",
-      RESERVATION_TOO_SHORT: "minimumMinutes",
-      RESERVATION_TOO_LONG: "maximumMinutes",
-      RESERVATION_TOO_FAR_IN_ADVANCE: "maximumDays",
-      INVALID_TIME_GRID: "granularityMinutes",
-    };
-    const field = detailFields[code];
-    const value = body && field ? Reflect.get(body, field) : undefined;
-    if (typeof value === "number" && Number.isFinite(value)) {
+    const details = new Map([
+      ["ACTIVE_LIMIT_REACHED", body?.limit],
+      ["RESERVATION_TOO_SHORT", body?.minimumMinutes],
+      ["RESERVATION_TOO_LONG", body?.maximumMinutes],
+      ["RESERVATION_TOO_FAR_IN_ADVANCE", body?.maximumDays],
+      ["INVALID_TIME_GRID", body?.granularityMinutes],
+    ]);
+    const value = details.get(code);
+    if (value !== undefined) {
       return t(`reservations.errors.${code}`, { context: "detailed", value });
     }
     return t(`reservations.errors.${code}`);

@@ -1,19 +1,12 @@
 // @vitest-environment happy-dom
 
-import type { ReactNode } from "react";
+import { createOrganizationTestWrapper } from "@/lib/testing/router";
+import { ThemeContext } from "@/contexts/theme-context";
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { SidebarNavItem } from "./sidebar-nav-item";
 
-vi.mock("@tanstack/react-router", () => ({
-  Link: ({ children }: { children: ReactNode }) => (
-    <a href="/events">{children}</a>
-  ),
-}));
-
-vi.mock("@/themes", () => ({
-  ThemeInteractiveFrame: ({ children }: { children: ReactNode }) => children,
-}));
+const wrapper = await createOrganizationTestWrapper();
 
 describe("SidebarNavItem", () => {
   afterEach(cleanup);
@@ -37,14 +30,24 @@ describe("SidebarNavItem", () => {
 
 const renderSidebarNavItem = (isActive: boolean) =>
   render(
-    <SidebarNavItem
-      url="/events"
-      available
-      isActive={isActive}
-      icon={<svg data-testid="navigation-icon" className="text-yellow-500" />}
-      label="Events"
-      isRukiaTheme={false}
-      isCatTheme={false}
-      onItemClick={() => undefined}
-    />,
+    <ThemeContext.Provider
+      value={{
+        theme: "default",
+        resolvedTheme: "default",
+        setTheme: () => {},
+        isLoading: false,
+      }}
+    >
+      <SidebarNavItem
+        url="/events"
+        available
+        isActive={isActive}
+        icon=<svg data-testid="navigation-icon" className="text-yellow-500" />
+        label="Events"
+        isRukiaTheme={false}
+        isCatTheme={false}
+        onItemClick={() => undefined}
+      />
+    </ThemeContext.Provider>,
+    { wrapper },
   );

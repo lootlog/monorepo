@@ -10,15 +10,15 @@ export const BattlePanelH2hSkeleton = () => {
     <div className="flex h-full w-full flex-col overflow-hidden bg-background">
       <div className="px-3 pt-3 pb-0">
         <PageHeader
-          title={<Skeleton className="h-5 w-40" />}
-          description={<Skeleton className="h-3 w-48" />}
-        ></PageHeader>
+          title=<Skeleton className="h-5 w-40" />
+          description=<Skeleton className="h-3 w-48" />
+        />
       </div>
 
       <div className="flex flex-1 overflow-hidden">
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden p-3">
           <SectionCard className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <SectionCardHeader title={<Skeleton className="h-4 w-32" />} />
+            <SectionCardHeader title=<Skeleton className="h-4 w-32" /> />
             <SectionCardContent className="flex min-h-0 flex-1 flex-col p-0">
               <div className="min-h-0 flex-1">
                 {Array.from({ length: 8 }).map((_, rowIndex) => (

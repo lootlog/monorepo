@@ -1,99 +1,62 @@
 // @vitest-environment happy-dom
 
-import type { ReactNode } from "react";
+import { initializeTestTranslations } from "@/lib/testing/i18n";
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
-import type { Loot } from "@/lib/loots/loot-types";
-import { useEventLoots } from "../../hooks/queries/use-event-loots";
+import { afterEach, describe, expect, it, onTestFinished } from "vitest";
+import { createLoot } from "@/lib/testing/loot";
+import { createLootTestWrapper } from "@/lib/testing/loot-wrapper";
+import { configureApiClients } from "@lootlog/client/transport";
 import { EventHeroLoots } from "./event-hero-loots";
 
-vi.mock("@tanstack/react-router", () => ({
-  Link: ({
-    children,
-    params,
-    search,
-    to: _to,
-    ...props
-  }: {
-    children: ReactNode;
-    params: { guildId: string };
-    search: { npcs: string };
-    to: string;
-    [key: string]: unknown;
-  }) => (
-    <a href={`/${params.guildId}?npcs=${search.npcs}`} {...props}>
-      {children}
-    </a>
-  ),
-}));
-
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
-vi.mock("../../hooks/queries/use-event-loots", () => ({
-  useEventLoots: vi.fn(),
-}));
-
-vi.mock(
-  "@/features/guild/loots-list/components/loots-list/loots-list-item",
-  () => ({
-    LootsListItem: ({
-      loot,
-      variant,
-    }: {
-      loot: Loot;
-      variant?: "card" | "embedded";
-    }) => (
-      <div data-testid={`loot-${loot.id}`} data-variant={variant}>
-        loot-item
-      </div>
-    ),
-  }),
-);
-
-vi.mock(
-  "@/features/guild/loots-list/components/loots-list/loot-details-dialog",
-  () => ({
-    LootDetailsDialog: () => <div data-testid="loot-details-dialog" />,
-  }),
-);
+await initializeTestTranslations();
 
 afterEach(() => {
   cleanup();
-  vi.clearAllMocks();
 });
 
 describe("EventHeroLoots", () => {
-  it("renders recent loots as embedded rows with the action in the header", () => {
-    vi.mocked(useEventLoots).mockReturnValue({
-      data: [{ id: "loot-1" }, { id: "loot-2" }] as unknown as Loot[],
-      isLoading: false,
-    } as ReturnType<typeof useEventLoots>);
-
+  it("renders recent loots as embedded rows with the action in the header", async () => {
+    const requests: URL[] = [];
+    onTestFinished(
+      configureApiClients({
+        main: {
+          baseUrl: "https://api.test",
+          fetch: async (input) => {
+            requests.push(
+              new URL(input instanceof Request ? input.url : input.toString()),
+            );
+            return Response.json([createLoot(1), createLoot(2)]);
+          },
+        },
+      }),
+    );
     render(
       <EventHeroLoots
         guildId="guild-one"
         heroNpcNames={["Potulny Berserker"]}
         world="Fobos"
       />,
+      { wrapper: await createLootTestWrapper() },
     );
 
+    await screen.findAllByTestId("loot-list-item");
     const action = screen.getByRole("link", { name: "events.loots.showAll" });
 
     expect(action.closest("header")).toBeTruthy();
-    expect(action.getAttribute("href")).toBe(
-      "/guild-one?npcs=Potulny Berserker",
+    const target = new URL(
+      action.getAttribute("href") ?? "",
+      "https://web.test",
     );
+    expect(target.pathname).toBe("/guild-one");
+    expect(target.searchParams.get("npcs")).toBe("Potulny Berserker");
     expect(action.getAttribute("class")).toContain("hover:text-primary");
     expect(action.getAttribute("class")).not.toContain("hover:bg-");
-    expect(screen.getByTestId("loot-loot-1").dataset.variant).toBe("embedded");
-    expect(screen.getByTestId("loot-loot-2").dataset.variant).toBe("embedded");
-    expect(screen.getByTestId("loot-details-dialog")).toBeTruthy();
-    expect(useEventLoots).toHaveBeenCalledWith(
-      expect.objectContaining({ limit: 10 }),
-    );
+    expect(
+      screen
+        .getAllByTestId("loot-list-item")
+        .map((row) => row.dataset.presentation),
+    ).toEqual(["embedded", "embedded"]);
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(requests[0]?.searchParams.get("limit")).toBe("10");
   });
 });

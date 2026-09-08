@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -31,7 +32,9 @@ afterEach(() => {
 
 it("opens deferred modals, restores focus and preserves create form state after closing", async () => {
   vi.stubEnv("VITE_ADDON_INSTALL_URL", "https://lootlog.test/addon.user.js");
-  const fetchGuilds = vi.fn(async () => Response.json([]));
+  const fetchGuilds = vi.fn<typeof fetch>(() =>
+    Promise.resolve(Response.json([])),
+  );
   const restore = configureApiClients({
     main: { baseUrl: "https://lootlog.test", fetch: fetchGuilds },
   });
@@ -54,7 +57,10 @@ it("opens deferred modals, restores focus and preserves create form state after 
       name: i18n.t("ui.tooltips.createLootlog"),
     });
     create.focus();
-    fireEvent.click(create);
+    await act(async () => {
+      fireEvent.click(create);
+      await vi.dynamicImportSettled();
+    });
     const dialog = await screen.findByRole(
       "dialog",
       { name: i18n.t("ui.modals.createLootlog.title") },
@@ -80,9 +86,12 @@ it("opens deferred modals, restores focus and preserves create form state after 
     const install = screen.getByRole("button", {
       name: i18n.t("ui.tooltips.installAddon"),
     });
-    for (let opening = 0; opening < 2; opening++) {
+    const openAndCloseInstaller = async () => {
       install.focus();
-      fireEvent.click(install);
+      await act(async () => {
+        fireEvent.click(install);
+        await vi.dynamicImportSettled();
+      });
       const installer = await screen.findByRole("dialog", {
         name: i18n.t("ui.modals.installAddon.title"),
       });
@@ -96,7 +105,9 @@ it("opens deferred modals, restores focus and preserves create form state after 
       fireEvent.click(within(installer).getByRole("button", { name: "Close" }));
       await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
       await waitFor(() => expect(document.activeElement).toBe(install));
-    }
+    };
+    await openAndCloseInstaller();
+    await openAndCloseInstaller();
   } finally {
     cleanup();
     client.clear();

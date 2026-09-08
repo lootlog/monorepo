@@ -1,3 +1,4 @@
+import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import { visibleReservationGuildIds } from "#src/reservations/reservation-visibility-query";
 import { activeGuildMemberJoin } from "#src/members/member-access-query";
 import { randomUUID } from "node:crypto";
@@ -71,12 +72,14 @@ export interface ReservationMutationPorts {
   readonly removeNotification: (
     notificationJobId: string,
   ) => Effect.Effect<unknown, unknown>;
-  readonly publish: (
-    routingKey:
+  readonly publish: <
+    Key extends
       | "guilds.reservations.create"
       | "guilds.reservations.delete"
       | "guilds.reservations.v2.changed",
-    payload: unknown,
+  >(
+    routingKey: Key,
+    payload: CanonicalRabbitEvent<Key>,
   ) => Effect.Effect<unknown, unknown>;
 }
 
@@ -879,11 +882,7 @@ export const makeReservationMutationsDataLayer = (
         create: (context, spotId, payload) =>
           operation(
             "createReservation",
-            create(
-              context,
-              spotId,
-              structuredClone(payload) as CreateReservationRequest,
-            ),
+            create(context, spotId, structuredClone(payload)),
           ),
         updateOwned: ({ userId, discordId }, reservationId, payload) =>
           operation(
@@ -892,7 +891,7 @@ export const makeReservationMutationsDataLayer = (
               userId,
               discordId,
               reservationId,
-              data: structuredClone(payload) as UpdateReservationRequest,
+              data: structuredClone(payload),
             }),
           ),
         deleteVisible: (context, reservationId) =>

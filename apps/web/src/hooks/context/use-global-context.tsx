@@ -2,5 +2,7 @@ import { GlobalContext } from "@/contexts/global-context";
 import { useContext } from "react";
 
 export const useGlobalContext = () => {
-  return useContext(GlobalContext);
+  const context = useContext(GlobalContext);
+  if (!context) throw new Error("GlobalContextProvider is required");
+  return context;
 };

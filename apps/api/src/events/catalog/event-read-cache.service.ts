@@ -7,18 +7,15 @@ import { stableJsonStringify } from "@lootlog/schema/stable-json";
 const EVENT_READ_CACHE_PREFIX = "event-read:v2";
 const EVENT_READ_CACHE_TTL_SECONDS = 10;
 
-const superJsonSerialization = {
-  stringify: (value: unknown) => superjson.stringify(value),
-  parse: (text: string): unknown => superjson.parse(text),
-};
-
-export const makeEventReadCache = (redis: RedisService) => {
+export const makeEventReadCache = (
+  redis: Pick<RedisService, "deleteByPattern" | "getOrSetJsonEffect">,
+) => {
   const logger = new Logger("EventReadCache");
-  const buildKey = (
+  const buildKey = <Params extends object>(
     guildId: string,
     eventSegment: string,
     scope: string,
-    params: Record<string, unknown>,
+    params: Params,
   ) =>
     [
       EVENT_READ_CACHE_PREFIX,
@@ -37,21 +34,21 @@ export const makeEventReadCache = (redis: RedisService) => {
   };
 
   return {
-    getGuildKey(
+    getGuildKey<Params extends object>(
       guildId: string,
       scope: string,
-      params: Record<string, unknown> = {},
+      params?: Params,
     ) {
-      return buildKey(guildId, "guild", scope, params);
+      return buildKey(guildId, "guild", scope, params ?? {});
     },
 
-    getEventKey(
+    getEventKey<Params extends object>(
       guildId: string,
       eventId: string,
       scope: string,
-      params: Record<string, unknown> = {},
+      params?: Params,
     ) {
-      return buildKey(guildId, eventId, scope, params);
+      return buildKey(guildId, eventId, scope, params ?? {});
     },
 
     getOrSet<S extends Schema.ConstraintDecoder<unknown>, E>(
@@ -59,10 +56,7 @@ export const makeEventReadCache = (redis: RedisService) => {
       schema: S,
       factory: () => Effect.Effect<S["Type"], E>,
     ): Effect.Effect<S["Type"], E> {
-      const codec = makeJsonCodec(
-        Schema.toType(schema),
-        superJsonSerialization,
-      );
+      const codec = makeJsonCodec(Schema.toType(schema), superjson);
       return redis.getOrSetJsonEffect({
         key,
         codec,

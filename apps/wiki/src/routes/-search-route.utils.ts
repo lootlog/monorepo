@@ -10,9 +10,10 @@ export const emptyBasicRouteSearch: BasicRouteSearch = {
   world: "",
 };
 
-export function validateBasicRouteSearch(
-  search: Record<string, unknown>,
-): BasicRouteSearch {
+export function validateBasicRouteSearch(search: {
+  query?: unknown;
+  world?: unknown;
+}): BasicRouteSearch {
   return {
     query: typeof search.query === "string" ? search.query : "",
     world: typeof search.world === "string" ? search.world : "",

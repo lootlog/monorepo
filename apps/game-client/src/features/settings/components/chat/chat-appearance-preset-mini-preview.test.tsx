@@ -1,19 +1,11 @@
 import { render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
   CHAT_APPEARANCE_COMPACT_PRESET,
   CHAT_APPEARANCE_READABLE_PRESET,
 } from "@lootlog/schema/chat-appearance";
 import { DEFAULT_NPC_TYPE_COLORS } from "@lootlog/schema/npc-appearance";
 import { ChatAppearancePresetMiniPreview } from "./chat-appearance-preset-mini-preview";
-
-vi.mock("@/components/npc-tile", () => ({
-  NpcTile: ({ npc }: { npc: { icon: string; nick: string } }) => (
-    <div data-icon={npc.icon} data-testid="preset-npc-avatar">
-      {npc.nick}
-    </div>
-  ),
-}));
 
 describe("ChatAppearancePresetMiniPreview", () => {
   it("renders a deterministic real player and NPC scene without interactions", async () => {
@@ -42,9 +34,9 @@ describe("ChatAppearancePresetMiniPreview", () => {
     expect(preview).toHaveTextContent("Spotkajmy się przy wejściu.");
     expect(preview).toHaveTextContent("Mroczny Łowca");
     expect(preview).toHaveTextContent("Stare Ruiny");
-    expect(screen.getByTestId("preset-npc-avatar")).toHaveAttribute(
-      "data-icon",
-      "tyt/maddok-tytan2.gif",
+    expect(screen.getByAltText("Mroczny Łowca")).toHaveAttribute(
+      "src",
+      expect.stringContaining("tyt/maddok-tytan2.gif"),
     );
     expect(
       preview.querySelector(
@@ -65,7 +57,7 @@ describe("ChatAppearancePresetMiniPreview", () => {
     expect(preview.style.getPropertyValue("--ll-chat-font-size")).toBe(
       "10.8px",
     );
-    expect(screen.queryByTestId("preset-npc-avatar")).not.toBeInTheDocument();
+    expect(screen.queryByAltText("Mroczny Łowca")).not.toBeInTheDocument();
     expect(preview).toHaveTextContent("Mroczny Łowca");
   });
 });

@@ -251,14 +251,16 @@ const setupCommand: SeedSubcommandHandler = async (options) => {
   console.log(chalk.green("\n✅ Complete setup finished successfully!"));
 };
 
-const SEED_SUBCOMMAND_HANDLERS: Record<string, SeedSubcommandHandler> = {
-  "scrape:items": scrapeItemsCommand,
-  "scrape:npcs": scrapeNpcsCommand,
-  "scrape:all": scrapeAllCommand,
-  "generate:players": generatePlayersCommand,
-  run: runSeedCommand,
-  setup: setupCommand,
-};
+const SEED_SUBCOMMAND_HANDLERS = new Map<string, SeedSubcommandHandler>(
+  Object.entries({
+    "scrape:items": scrapeItemsCommand,
+    "scrape:npcs": scrapeNpcsCommand,
+    "scrape:all": scrapeAllCommand,
+    "generate:players": generatePlayersCommand,
+    run: runSeedCommand,
+    setup: setupCommand,
+  } satisfies Record<string, SeedSubcommandHandler>),
+);
 
 export const seedCommand = async (args: string[]): Promise<void> => {
   if (args.length === 0 || args.includes("--help") || args.includes("-h")) {
@@ -272,7 +274,7 @@ export const seedCommand = async (args: string[]): Promise<void> => {
     return;
   }
   const options = parseOptions(rest);
-  const handler = SEED_SUBCOMMAND_HANDLERS[subcommand];
+  const handler = SEED_SUBCOMMAND_HANDLERS.get(subcommand);
 
   if (!handler) {
     console.error(chalk.red(`\n❌ Unknown subcommand: ${subcommand}\n`));

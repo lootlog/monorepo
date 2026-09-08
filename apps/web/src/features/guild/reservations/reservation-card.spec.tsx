@@ -1,27 +1,21 @@
 // @vitest-environment happy-dom
 
+import { initializeTestTranslations } from "@/lib/testing/i18n";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ReservationSpotsResponseDtoItem } from "@lootlog/client/main";
 import { ReservationCard } from "./reservation-card";
 
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string) => {
-      const translations: Record<string, string> = {
-        "reservations.card.freeNow": "Wolne teraz",
-        "reservations.card.noneDescription": "Kliknij, aby wybrać termin",
-        "reservations.card.partnerBadge": "Sojusz",
-        "reservations.card.pin": "Przypnij expowisko",
-        "reservations.card.occupied": "Zajęte teraz",
-        "reservations.card.next": "Najbliższa rezerwacja",
-        "reservations.card.level": "Poziom",
-        "reservations.card.open": "Otwórz rezerwacje",
-      };
-      return translations[key] ?? key;
-    },
-  }),
-}));
+await initializeTestTranslations({
+  "reservations.card.freeNow": "Wolne teraz",
+  "reservations.card.noneDescription": "Kliknij, aby wybrać termin",
+  "reservations.card.partnerBadge": "Sojusz",
+  "reservations.card.pin": "Przypnij expowisko",
+  "reservations.card.occupied": "Zajęte teraz",
+  "reservations.card.next": "Najbliższa rezerwacja",
+  "reservations.card.level": "Poziom",
+  "reservations.card.open": "Otwórz rezerwacje",
+});
 
 afterEach(cleanup);
 

@@ -1,4 +1,3 @@
-import type { Other } from "@lootlog/margonem/others";
 import { getFixedT } from "@/i18n/get-fixed-t";
 import {
   getSelectedLootlogGuildId,
@@ -73,7 +72,8 @@ export const appendCatchingGuildsTooltipSection: CharacterTooltipTransform = ({
     return currentHtml;
   }
 
-  const target = getOtherCatchingGuildsTarget(character as Other);
+  const target =
+    "d" in character ? getOtherCatchingGuildsTarget(character) : null;
   if (!target) {
     const ownersStatus = useOnlineCharacterOwnersStore.getState().status;
     if (ownersStatus === "loading") {

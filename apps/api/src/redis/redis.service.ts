@@ -144,7 +144,7 @@ export class RedisService {
   }
 
   async get(key: string): Promise<string | null> {
-    return this.run(this.redis.send("GET", this.prefixKey(key)));
+    return await this.run(this.redis.send("GET", this.prefixKey(key)));
   }
 
   async getJson<T>(key: string, codec: JsonCodec<T>): Promise<T | null> {
@@ -342,7 +342,7 @@ export class RedisService {
   }
 
   async del(key: string): Promise<number> {
-    return this.run(this.redis.send("DEL", this.prefixKey(key)));
+    return await this.run(this.redis.send("DEL", this.prefixKey(key)));
   }
 
   async deleteByPattern(
@@ -412,15 +412,15 @@ export class RedisService {
   }
 
   async incr(key: string): Promise<number> {
-    return this.run(this.redis.send("INCR", this.prefixKey(key)));
+    return await this.run(this.redis.send("INCR", this.prefixKey(key)));
   }
 
   async decr(key: string): Promise<number> {
-    return this.run(this.redis.send("DECR", this.prefixKey(key)));
+    return await this.run(this.redis.send("DECR", this.prefixKey(key)));
   }
 
   async expire(key: string, ttlSeconds: number): Promise<number> {
-    return this.run(
+    return await this.run(
       this.redis.send("EXPIRE", this.prefixKey(key), String(ttlSeconds)),
     );
   }
@@ -446,33 +446,37 @@ export class RedisService {
   ): Promise<TResult> {
     const prefixedKeys = keys.map((k) => this.prefixKey(k));
     const descriptor = this.scripts.get<TResult>(script, prefixedKeys.length);
-    return this.run(
+    return await this.run(
       this.redis.eval(descriptor)(...prefixedKeys, ...args.map(String)),
     );
   }
 
   async hset(key: string, field: string, value: string): Promise<number> {
-    return this.run(this.redis.send("HSET", this.prefixKey(key), field, value));
+    return await this.run(
+      this.redis.send("HSET", this.prefixKey(key), field, value),
+    );
   }
 
   async hget(key: string, field: string): Promise<string | null> {
-    return this.run(this.redis.send("HGET", this.prefixKey(key), field));
+    return await this.run(this.redis.send("HGET", this.prefixKey(key), field));
   }
 
   async hgetall(key: string): Promise<Record<string, string>> {
-    return this.run(this.redis.send("HGETALL", this.prefixKey(key)));
+    return await this.run(this.redis.send("HGETALL", this.prefixKey(key)));
   }
 
   async hdel(key: string, field: string): Promise<number> {
-    return this.run(this.redis.send("HDEL", this.prefixKey(key), field));
+    return await this.run(this.redis.send("HDEL", this.prefixKey(key), field));
   }
 
   async rpush(key: string, ...values: string[]): Promise<number> {
-    return this.run(this.redis.send("RPUSH", this.prefixKey(key), ...values));
+    return await this.run(
+      this.redis.send("RPUSH", this.prefixKey(key), ...values),
+    );
   }
 
   async ltrim(key: string, start: number, stop: number): Promise<"OK"> {
-    return this.run(
+    return await this.run(
       this.redis.send(
         "LTRIM",
         this.prefixKey(key),
@@ -483,7 +487,7 @@ export class RedisService {
   }
 
   async lrange(key: string, start: number, stop: number): Promise<string[]> {
-    return this.run(
+    return await this.run(
       this.redis.send(
         "LRANGE",
         this.prefixKey(key),
@@ -494,19 +498,19 @@ export class RedisService {
   }
 
   async lset(key: string, index: number, value: string): Promise<"OK"> {
-    return this.run(
+    return await this.run(
       this.redis.send("LSET", this.prefixKey(key), String(index), value),
     );
   }
 
   async lrem(key: string, count: number, value: string): Promise<number> {
-    return this.run(
+    return await this.run(
       this.redis.send("LREM", this.prefixKey(key), String(count), value),
     );
   }
 
   async llen(key: string): Promise<number> {
-    return this.run(this.redis.send("LLEN", this.prefixKey(key)));
+    return await this.run(this.redis.send("LLEN", this.prefixKey(key)));
   }
 
   async scan(pattern: string): Promise<string[]> {

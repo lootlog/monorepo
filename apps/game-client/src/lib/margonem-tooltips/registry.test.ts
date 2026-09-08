@@ -37,6 +37,7 @@ describe("CharacterTooltipTransformRegistry", () => {
     const registry = new CharacterTooltipTransformRegistry();
 
     registry.register(() => undefined);
+    registry.register(() => null);
 
     expect(
       registry.apply({
@@ -46,6 +47,19 @@ describe("CharacterTooltipTransformRegistry", () => {
         currentHtml: "<div>base</div>",
       }),
     ).toBe("<div>base</div>");
+  });
+
+  it("allows a transform to clear the tooltip", () => {
+    const registry = new CharacterTooltipTransformRegistry();
+    registry.register(() => "");
+    expect(
+      registry.apply({
+        kind: "hero",
+        character: {},
+        baseHtml: "base",
+        currentHtml: "base",
+      }),
+    ).toBe("");
   });
 
   it("continues after a failing transform", () => {

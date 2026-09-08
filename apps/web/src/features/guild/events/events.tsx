@@ -1,11 +1,14 @@
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { SectionCard } from "@/components/common/section-card/section-card";
+import {
+  SectionCard,
+  SectionCard as Card,
+} from "@/components/common/section-card/section-card";
 import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useParams, Link } from "@tanstack/react-router";
-import { SectionCard as Card } from "@/components/common/section-card/section-card";
+
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
@@ -37,8 +40,9 @@ import {
   getListEventsQueryKey,
   useDeleteEvent,
   useListEvents,
+  type EventListItemResponseDto,
 } from "@lootlog/client/main";
-import type { EventListItemResponseDto } from "@lootlog/client/main";
+
 import type { Event } from "./types/api";
 import { cn } from "cn";
 import {

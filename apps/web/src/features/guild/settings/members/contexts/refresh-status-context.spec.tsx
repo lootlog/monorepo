@@ -7,36 +7,22 @@ import {
 } from "@lootlog/client/main";
 import type { ReactNode } from "react";
 import { afterEach, expect, it, vi } from "vitest";
-import type { RefreshJobUpdate } from "@/types/refresh-job";
+import { createTestGateway } from "@/lib/testing/gateway";
+import { createOrganizationTestWrapper } from "@/lib/testing/router";
 import {
   RefreshStatusProvider,
   useRefreshStatus,
 } from "./refresh-status-context";
 
-const gateway = vi.hoisted(() => ({
-  listeners: new Set<(update: RefreshJobUpdate) => void>(),
-}));
-vi.mock("@tanstack/react-router", () => ({
-  useParams: () => ({ guildId: "our-vanity" }),
-  useSearch: () => ({}),
-}));
-vi.mock("@/hooks/utils/use-gateway", () => ({
-  useGateway: () => ({
-    connected: true,
-    socket: {
-      on: (_event: string, listener: (update: RefreshJobUpdate) => void) =>
-        gateway.listeners.add(listener),
-      off: (_event: string, listener: (update: RefreshJobUpdate) => void) =>
-        gateway.listeners.delete(listener),
-    },
-  }),
-}));
 afterEach(() => {
   cleanup();
-  gateway.listeners.clear();
+  vi.restoreAllMocks();
 });
 
-it("resolves the vanity route for refresh events and invalidates its member list only", () => {
+it("resolves the vanity route for refresh events and invalidates its member list only", async () => {
+  const gateway = createTestGateway();
+  const GatewayWrapper = gateway.wrapper;
+  const RouterWrapper = await createOrganizationTestWrapper("/our-vanity");
   const client = new QueryClient({
     defaultOptions: { queries: { staleTime: Infinity, retry: false } },
   });
@@ -56,25 +42,34 @@ it("resolves the vanity route for refresh events and invalidates its member list
   client.setQueryData(otherKey, []);
   const { result, unmount } = renderHook(useRefreshStatus, {
     wrapper: ({ children }: { children: ReactNode }) => (
-      <QueryClientProvider client={client}>
-        <RefreshStatusProvider>{children}</RefreshStatusProvider>
-      </QueryClientProvider>
+      <RouterWrapper>
+        <GatewayWrapper>
+          <QueryClientProvider client={client}>
+            <RefreshStatusProvider>{children}</RefreshStatusProvider>
+          </QueryClientProvider>
+        </GatewayWrapper>
+      </RouterWrapper>
     ),
   });
   const emit = (guildId: string) =>
     act(() => {
-      gateway.listeners.forEach((listener) =>
-        listener({
-          guildId,
-          jobId: 1,
-          status: "COMPLETED",
-          totalMembers: 2,
-          processedMembers: 2,
-          failedMembers: 1,
-          refreshedIds: ["refreshed"],
-          failedIds: ["failed"],
-        }),
-      );
+      gateway.deliver({
+        v: 1,
+        type: "member-refresh.updated",
+        data: {
+          organizationId: guildId,
+          payload: {
+            guildId,
+            jobId: 1,
+            status: "COMPLETED",
+            totalMembers: 2,
+            processedMembers: 2,
+            failedMembers: 1,
+            refreshedIds: ["refreshed"],
+            failedIds: ["failed"],
+          },
+        },
+      });
     });
   emit("other-id");
   expect(result.current.refreshedIds.size).toBe(0);

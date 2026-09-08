@@ -91,7 +91,7 @@ export const ChatInputConstraintsPlugin: FC = () => {
       ),
       editor.registerCommand(
         CONTROLLED_TEXT_INSERTION_COMMAND,
-        (eventOrText) => {
+        function handleControlledTextInsertion(eventOrText) {
           if (typeof eventOrText !== "string") {
             return false;
           }

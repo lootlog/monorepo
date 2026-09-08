@@ -33,11 +33,11 @@ import {
   invalidateMapTemplatesControllerGetTemplates,
   useMapTemplatesControllerCreateTemplate,
   useMapTemplatesControllerUpdateTemplate,
+  useMapsControllerGetMaps,
+  type GameMapResponseDtoOutput,
+  type MapTemplateResponseDto,
+  type MapTemplateResponseDtoMapsItem,
 } from "@lootlog/client/main";
-import { useMapsControllerGetMaps } from "@lootlog/client/main";
-import type { GameMapResponseDtoOutput } from "@lootlog/client/main";
-import type { MapTemplateResponseDto } from "@lootlog/client/main";
-import type { MapTemplateResponseDtoMapsItem } from "@lootlog/client/main";
 
 type MapTemplateFormDialogProps =
   | {
@@ -171,8 +171,8 @@ export const MapTemplateFormDialog = ({
 
   const onSubmit = (data: FormData) => {
     const payload = { name: data.name.trim(), maps: data.maps };
-    const errorHandler = (error: unknown) => {
-      if (getApiErrorStatus(error) === 400) {
+    const errorHandler = (cause: unknown) => {
+      if (getApiErrorStatus(cause) === 400) {
         toast.error(t("settings.mapTemplates.toasts.duplicateName"));
       } else {
         toast.error(
@@ -258,15 +258,13 @@ export const MapTemplateFormDialog = ({
                         {t("settings.mapTemplates.templateName")}
                       </FormLabel>
                       <FormControl
-                        render={
-                          <Input
-                            {...field}
-                            placeholder={t(
-                              "settings.mapTemplates.templateNamePlaceholder",
-                            )}
-                            className="h-9 text-sm"
-                          />
-                        }
+                        render=<Input
+                          {...field}
+                          placeholder={t(
+                            "settings.mapTemplates.templateNamePlaceholder",
+                          )}
+                          className="h-9 text-sm"
+                        />
                       />
                       <FormMessage />
                     </FormItem>
@@ -384,7 +382,7 @@ export const MapTemplateFormDialog = ({
                 type="submit"
                 size="sm"
                 loading={isPending}
-                icon={<Icon className="size-3.5" />}
+                icon=<Icon className="size-3.5" />
                 className="flex-1"
               >
                 {t("settings.mapTemplates.saveTemplate")}

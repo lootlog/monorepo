@@ -3,10 +3,7 @@ import { betterAuth } from "better-auth";
 import { Effect, Layer } from "effect";
 import { HttpRouter, HttpServer } from "effect/unstable/http";
 import { AuthService, createAuthService } from "#src/auth/auth-service";
-import {
-  BetterAuthRuntime,
-  type LootlogAuth,
-} from "#src/auth/provider/better-auth";
+import { BetterAuthRuntime } from "#src/auth/provider/better-auth";
 import { resolveBetterAuthBaseURL } from "#src/auth/provider/better-auth-url";
 import { normalizeBetterAuthRequest } from "./application.js";
 import { AuthRoutes } from "./server.js";
@@ -44,7 +41,7 @@ const makeRuntime = (authenticated = true) => {
     },
     handler: betterAuthHandler,
     options: { baseURL: "http://localhost/api/auth/idp" },
-  } as unknown as LootlogAuth;
+  } satisfies typeof BetterAuthRuntime.Service;
   const service = createAuthService({
     auth,
     appUrl: "http://localhost:3000",
@@ -52,13 +49,13 @@ const makeRuntime = (authenticated = true) => {
   });
   const boundary = HttpRouter.toWebHandler(
     AuthRoutes.pipe(
-      Layer.provide(Layer.succeed(AuthService, service)),
-      Layer.provide(Layer.succeed(BetterAuthRuntime, auth)),
+      Layer.provideMerge(Layer.succeed(AuthService, service)),
+      Layer.provideMerge(Layer.succeed(BetterAuthRuntime, auth)),
       Layer.provide(HttpServer.layerServices),
     ),
     { disableLogger: true },
   );
-  const run = boundary.handler as (request: Request) => Promise<Response>;
+  const run = boundary.handler;
 
   return {
     betterAuthHandler,
@@ -96,8 +93,8 @@ describe("Auth HttpApi contract", () => {
     expect(response.headers.get("x-auth-user-id")).toBe("user-1");
     expect(response.headers.get("x-auth-discord-id")).toBe("discord-1");
     expect(await response.json()).toEqual({ status: "OK" });
-    const getSessionHeaders = runtime.getSession.mock.calls.at(-1)?.[0]
-      ?.headers as Headers | undefined;
+    const getSessionHeaders =
+      runtime.getSession.mock.calls.at(-1)?.[0]?.headers;
     expect(getSessionHeaders?.get("cookie")).toBe(
       "local.session_token=test-session",
     );

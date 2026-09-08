@@ -1,8 +1,8 @@
+import type { AirTagSubscriptionAck } from "@lootlog/protocol/realtime";
 import {
   isAirTagScopeSnapshot,
   isAirTagUpdateEvent,
   type AirTagScopeSnapshot,
-  type AirTagSubscriptionAck,
   type AirTagTarget,
   type AirTagUpdateEvent,
 } from "@lootlog/schema/air-tag";
@@ -66,7 +66,9 @@ export class AirTagReceiveController {
     };
   }
 
-  applySubscriptionAck(acknowledgement: AirTagSubscriptionAck): void {
+  applySubscriptionAck(
+    acknowledgement: typeof AirTagSubscriptionAck.Type,
+  ): void {
     if (acknowledgement.requestId !== this.currentRequestId) return;
 
     const queuedUpdates = this.queuedUpdates;

@@ -4,21 +4,20 @@ import {
   useNpcDetectorStore,
 } from "./npc-detector.store";
 
-const createNpc = (id: number, nick = `npc-${id}`): GameNpcWithLocation =>
-  ({
-    icon: `${id}.gif`,
-    id,
-    location: "Test map",
-    lvl: 300,
-    nick,
-    notificationSent: false,
-    prof: "w",
-    tpl: id,
-    type: 3,
-    wt: 80,
-    x: 1,
-    y: 1,
-  }) as GameNpcWithLocation;
+const createNpc = (id: number, nick = `npc-${id}`): GameNpcWithLocation => ({
+  icon: `${id}.gif`,
+  id,
+  location: "Test map",
+  lvl: 300,
+  nick,
+  notificationSent: false,
+  prof: "w",
+  tpl: id,
+  type: 3,
+  wt: 80,
+  x: 1,
+  y: 1,
+});
 
 describe("useNpcDetectorStore", () => {
   beforeEach(() => {
@@ -33,7 +32,8 @@ describe("useNpcDetectorStore", () => {
     const npc = createNpc(1);
     useNpcDetectorStore.getState().addNpc(npc);
     const npcs = useNpcDetectorStore.getState().npcs;
-    const publish = vi.fn();
+    const publish =
+      vi.fn<Parameters<typeof useNpcDetectorStore.subscribe>[0]>();
     const unsubscribe = useNpcDetectorStore.subscribe(publish);
 
     useNpcDetectorStore.getState().removeNpc([2, 3]);
@@ -82,7 +82,8 @@ describe("useNpcDetectorStore", () => {
     useNpcDetectorStore
       .getState()
       .addNpc([createNpc(1), createNpc(2), createNpc(3)]);
-    const publish = vi.fn();
+    const publish =
+      vi.fn<Parameters<typeof useNpcDetectorStore.subscribe>[0]>();
     const unsubscribe = useNpcDetectorStore.subscribe(publish);
 
     useNpcDetectorStore.getState().setNpcStates([

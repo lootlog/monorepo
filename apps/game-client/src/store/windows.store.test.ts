@@ -12,6 +12,77 @@ describe("windows store", () => {
     localStorage.clear();
   });
 
+  it("hydrates partial saved windows without losing defaults or extension fields", async () => {
+    const initial = useWindowsStore.getInitialState();
+    localStorage.setItem(
+      storageKey("ll-windows-state"),
+      JSON.stringify({
+        version: 13,
+        state: {
+          "create-notification": {
+            size: { width: 420 },
+            position: { x: 35, y: 50 },
+            opacity: 2,
+            addonFlag: "keep",
+          },
+          settings: {
+            open: true,
+            size: { width: 900, height: "invalid" },
+            state: {
+              activeTab: "diagnostics",
+              activeSubsection: "debug",
+              addonOption: 17,
+            },
+          },
+          chat: {
+            open: false,
+            position: { x: -12, y: 70 },
+            opacity: 5,
+            locked: true,
+          },
+          addonPreferences: { enabled: true },
+          setOpen: "stored action",
+          toggleOpen: null,
+        },
+      }),
+    );
+    await useWindowsStore.persist.rehydrate();
+    const state = useWindowsStore.getState();
+    expect(state["create-notification"]).toMatchObject({
+      open: initial["create-notification"].open,
+      position: { x: 35, y: 50 },
+      size: { width: 420, height: initial["create-notification"].size.height },
+      opacity: 2,
+      addonFlag: "keep",
+    });
+    expect(state.settings).toMatchObject({
+      open: true,
+      size: { width: 900, height: initial.settings.size.height },
+      state: {
+        activeTab: "diagnostics",
+        activeSubsection: "debug",
+        addonOption: 17,
+      },
+    });
+    expect(state.chat).toMatchObject({
+      open: false,
+      position: { x: -12, y: 70 },
+      opacity: 5,
+      locked: true,
+    });
+    expect(state).toHaveProperty("addonPreferences", { enabled: true });
+    expect(state.setOpen).toBe(initial.setOpen);
+    expect(state.toggleOpen).toBe(initial.toggleOpen);
+    state.setOpen("chat", true);
+    expect(useWindowsStore.getState().chat.open).toBe(true);
+    const saved = JSON.parse(
+      localStorage.getItem(storageKey("ll-windows-state")) ?? "{}",
+    );
+    expect(saved).toHaveProperty("state.addonPreferences", { enabled: true });
+    expect(saved).toHaveProperty("state.create-notification.addonFlag", "keep");
+    expect(saved).not.toHaveProperty("state.setOpen");
+  });
+
   it("uses the new settings default size", () => {
     expect(useWindowsStore.getState().settings.size).toEqual({
       width: 760,
@@ -28,7 +99,7 @@ describe("windows store", () => {
       currentWindowFocus: "notifications",
       windowFocusHistory: ["notifications", "chat"],
     }));
-    const listener = vi.fn();
+    const listener = vi.fn<Parameters<typeof useWindowsStore.subscribe>[0]>();
     const unsubscribe = useWindowsStore.subscribe(listener);
     const stateBefore = useWindowsStore.getState();
 
@@ -58,7 +129,7 @@ describe("windows store", () => {
 
   it("does not publish when a window size is unchanged", () => {
     const currentSize = useWindowsStore.getState().notifications.size;
-    const listener = vi.fn();
+    const listener = vi.fn<Parameters<typeof useWindowsStore.subscribe>[0]>();
     const unsubscribe = useWindowsStore.subscribe(listener);
     const stateBefore = useWindowsStore.getState();
 
@@ -75,7 +146,7 @@ describe("windows store", () => {
       .getState()
       .setPosition("chat", useWindowsStore.getState().chat.position);
     const currentWindow = useWindowsStore.getState().chat;
-    const listener = vi.fn();
+    const listener = vi.fn<Parameters<typeof useWindowsStore.subscribe>[0]>();
     const unsubscribe = useWindowsStore.subscribe(listener);
     const stateBefore = useWindowsStore.getState();
 
@@ -100,13 +171,11 @@ describe("windows store", () => {
     const serializedState = localStorage.getItem(
       storageKey("ll-windows-state"),
     );
-    const persisted = JSON.parse(serializedState ?? "{}") as {
-      state?: Record<string, unknown>;
-    };
+    const persisted: unknown = JSON.parse(serializedState ?? "{}");
 
-    expect(persisted.state).toBeDefined();
-    expect(persisted.state).not.toHaveProperty("currentWindowFocus");
-    expect(persisted.state).not.toHaveProperty("windowFocusHistory");
+    expect(persisted).toHaveProperty("state");
+    expect(persisted).not.toHaveProperty("state.currentWindowFocus");
+    expect(persisted).not.toHaveProperty("state.windowFocusHistory");
   });
 
   it("preserves the active settings tab while closing and reopening", () => {
@@ -145,11 +214,17 @@ describe("createDeduplicatingStateStorage", () => {
   it("does not write a serialized state that is already persisted", () => {
     const values = new Map<string, string>();
     const storage = {
-      getItem: vi.fn((key: string) => values.get(key) ?? null),
-      removeItem: vi.fn((key: string) => values.delete(key)),
-      setItem: vi.fn((key: string, value: string) => {
-        values.set(key, value);
-      }),
+      getItem: vi.fn<Storage["getItem"]>(
+        (key: string) => values.get(key) ?? null,
+      ),
+      removeItem: vi.fn<Storage["removeItem"]>((key: string) =>
+        values.delete(key),
+      ),
+      setItem: vi.fn<(key: string, value: string) => void>(
+        (key: string, value: string) => {
+          values.set(key, value);
+        },
+      ),
     };
     const deduplicatedStorage = createDeduplicatingStateStorage(storage);
 
@@ -178,8 +253,11 @@ describe("migrateWindowsState", () => {
       11,
     );
 
-    expect(migrated.settings.size).toEqual({ width: 640, height: 470 });
-    expect(migrated.settings.state).toEqual({
+    expect(migrated).toHaveProperty("settings.size", {
+      width: 640,
+      height: 470,
+    });
+    expect(migrated).toHaveProperty("settings.state", {
       activeTab: "game-data",
       activeSubsection: "detector",
     });
@@ -228,9 +306,9 @@ describe("migrateWindowsState", () => {
       9,
     );
 
-    expect(migrated.notifications.position).toEqual({ x: 30, y: 40 });
+    expect(migrated).toHaveProperty("notifications.position", { x: 30, y: 40 });
     expect(migrated.currentWindowFocus).toBeUndefined();
-    expect(migrated.windowFocusHistory).toEqual([]);
+    expect(migrated).toHaveProperty("windowFocusHistory", []);
   });
 
   it("treats legacy settings position 0,0 as undefined", () => {
@@ -248,8 +326,8 @@ describe("migrateWindowsState", () => {
       3,
     );
 
-    expect(migrated.settings.hasDefinedPosition).toBe(false);
-    expect(migrated.settings.state).toEqual({
+    expect(migrated).toHaveProperty("settings.hasDefinedPosition", false);
+    expect(migrated).toHaveProperty("settings.state", {
       activeTab: "general",
       activeSubsection: "behavior",
     });
@@ -270,8 +348,8 @@ describe("migrateWindowsState", () => {
       3,
     );
 
-    expect(migrated.settings.hasDefinedPosition).toBe(true);
-    expect(migrated.settings.position).toEqual({ x: 24, y: 48 });
+    expect(migrated).toHaveProperty("settings.hasDefinedPosition", true);
+    expect(migrated).toHaveProperty("settings.position", { x: 24, y: 48 });
   });
 
   it("keeps max content height for notifications and npc detector", () => {
@@ -300,8 +378,8 @@ describe("migrateWindowsState", () => {
       5,
     );
 
-    expect(migrated.notifications.maxContentHeight).toBe(160);
-    expect(migrated["npc-detector"].maxContentHeight).toBe(220);
+    expect(migrated).toHaveProperty("notifications.maxContentHeight", 160);
+    expect(migrated).toHaveProperty("npc-detector.maxContentHeight", 220);
   });
 
   it("adds missing add timer window state for persisted windows", () => {
@@ -320,7 +398,7 @@ describe("migrateWindowsState", () => {
       6,
     );
 
-    expect(migrated["add-timer"].state).toEqual({});
+    expect(migrated).toHaveProperty("add-timer.state", {});
   });
 
   it("removes old online players feature state from persisted windows", () => {
@@ -394,7 +472,7 @@ describe("migrateWindowsState", () => {
       6,
     );
 
-    expect(migrated.chat).toEqual({
+    expect(migrated).toHaveProperty("chat", {
       open: true,
       position: { x: 10, y: 20 },
       hasDefinedPosition: true,
@@ -402,7 +480,7 @@ describe("migrateWindowsState", () => {
       opacity: 3,
       locked: true,
     });
-    expect(migrated.notifications).toEqual({
+    expect(migrated).toHaveProperty("notifications", {
       open: false,
       position: { x: 30, y: 40 },
       hasDefinedPosition: true,
@@ -420,7 +498,7 @@ describe("migrateWindowsState", () => {
       locked: false,
     });
     expect(migrated.currentWindowFocus).toBeUndefined();
-    expect(migrated.windowFocusHistory).toEqual([]);
+    expect(migrated).toHaveProperty("windowFocusHistory", []);
   });
 
   it("removes the retired Event Mode window from persisted state", () => {
@@ -448,6 +526,6 @@ describe("migrateWindowsState", () => {
     );
 
     expect(migrated).not.toHaveProperty("event-mode");
-    expect(migrated.chat.position).toEqual({ x: 10, y: 20 });
+    expect(migrated).toHaveProperty("chat.position", { x: 10, y: 20 });
   });
 });

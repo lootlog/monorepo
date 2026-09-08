@@ -2,7 +2,10 @@ import { GatewayEvent } from "@/config/gateway";
 import type { AppSocket, PermissionsUpdatedPayload } from "@/lib/socket";
 import { useEffect, useRef } from "react";
 
-type SocketWithListeners = Pick<AppSocket, "on" | "off">;
+type SocketWithListeners = {
+  on: (...args: Parameters<AppSocket["on"]>) => void;
+  off: (...args: Parameters<AppSocket["off"]>) => void;
+};
 
 type BufferedSocketIngressBaseOptions<TPayload> = {
   socket: SocketWithListeners | null;
@@ -175,10 +178,10 @@ export const useBufferedSocketIngress = <TPayload, TCancelPayload = never>({
       });
     };
 
-    socket.on(event as never, handleEvent as never);
+    socket.on(event, handleEvent);
 
     return () => {
-      socket.off(event as never, handleEvent as never);
+      socket.off(event, handleEvent);
       if (listenerGenerationRef.current === listenerGeneration) {
         listenerGenerationRef.current += 1;
         flushScheduledRef.current = false;
@@ -236,13 +239,10 @@ export const useBufferedSocketIngress = <TPayload, TCancelPayload = never>({
       onCancelRef.current?.(payload);
     };
 
-    socket.on(cancelOptions.cancelEvent as never, handleCancelEvent as never);
+    socket.on(cancelOptions.cancelEvent, handleCancelEvent);
 
     return () => {
-      socket.off(
-        cancelOptions.cancelEvent as never,
-        handleCancelEvent as never,
-      );
+      socket.off(cancelOptions.cancelEvent, handleCancelEvent);
     };
   }, [
     cancelOptions.cancelEvent,

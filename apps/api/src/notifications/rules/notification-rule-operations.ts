@@ -11,10 +11,7 @@ import {
   notificationTargetTable,
 } from "#src/database/drizzle/schema";
 import { NotificationFiltersResponse } from "#src/notifications/notification-response.schema";
-import type {
-  JsonObject,
-  JsonValue,
-} from "#src/notifications/notification-database.types";
+import type { JsonObject } from "#src/database/json";
 import type {
   CreateNotificationRuleRequest,
   UpdateNotificationRuleRequest,
@@ -131,7 +128,7 @@ export const makeNotificationRuleOperations = (
           ...link,
           target: {
             ...target,
-            metadata: target.metadata as JsonValue | null,
+            metadata: target.metadata,
           },
         })),
       }));

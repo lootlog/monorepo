@@ -14,7 +14,7 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react";
-import { type ComponentProps, type HTMLAttributes } from "react";
+import type { ComponentProps, HTMLAttributes } from "react";
 import { useTranslation } from "react-i18next";
 
 type BattleDamageTagKey = "fire" | "frost" | "lightning" | "poison" | "wound";
@@ -76,7 +76,9 @@ const sumWarriorValues = (
   warriors.reduce((total, warrior) => {
     const value = getValue(warrior);
     const safeValue =
-      typeof value === "number" && Number.isFinite(value) ? value : 0;
+      value !== null && value !== undefined && Number.isFinite(value)
+        ? value
+        : 0;
 
     return total + safeValue;
   }, 0);

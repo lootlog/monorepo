@@ -94,7 +94,11 @@ export const useUpdateSoundSettings = () => {
             );
           }
 
-          return newData as unknown as SoundSettingsResponseDto;
+          return {
+            ...newData,
+            createdAt: old.createdAt,
+            updatedAt: old.updatedAt,
+          };
         },
       );
 

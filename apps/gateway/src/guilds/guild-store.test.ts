@@ -1,11 +1,9 @@
+import { httpClientFromResponses } from "../../test/http-fixtures.js";
 import { describe, expect, mock, test } from "bun:test";
 import { Effect, Fiber } from "effect";
-import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
 import { makeGuildStore } from "./guild-store.js";
-import type { GatewayConfiguration } from "#src/config/gateway-config";
-import type { RedisGatewayStore } from "#src/platform/redis-store";
 
-const config = { apiUrl: "http://api.local" } as GatewayConfiguration;
+const config = { apiUrl: "http://api.local" };
 const options = { discordId: "discord-1", userId: "user-1" };
 const guilds = [
   {
@@ -19,27 +17,27 @@ const makeRedis = (cached: string | null = null) => {
   const set = mock(async () => "OK");
   const del = mock(async () => 1);
   return {
-    store: { command: { get, set, del } } as unknown as RedisGatewayStore,
+    store: { command: { get, set, del } },
     get,
     set,
     del,
   };
 };
 
-const httpResponse = (status: number, value: unknown) => ({
-  status,
-  arrayBuffer: Effect.succeed(
-    new TextEncoder().encode(JSON.stringify(value)).buffer,
-  ),
-});
+const httpResponse = (
+  status: number,
+  value: typeof guilds | Record<string, never>,
+) => Response.json(value, { status });
 
 describe("Gateway guild store", () => {
   test("serves a fresh Redis projection without outbound HTTP", async () => {
     const redis = makeRedis(JSON.stringify({ guilds, cachedAt: Date.now() }));
     const get = mock(() => Effect.die("HTTP must not run"));
-    const store = makeGuildStore(config, redis.store, {
-      get,
-    } as unknown as HttpClientValue);
+    const store = makeGuildStore(
+      config,
+      redis.store,
+      httpClientFromResponses(get),
+    );
 
     await expect(
       Effect.runPromise(store.getUserGuilds(options)),
@@ -56,9 +54,11 @@ describe("Gateway guild store", () => {
         ? Effect.fail(new Error("transport"))
         : Effect.succeed(httpResponse(200, guilds));
     });
-    const store = makeGuildStore(config, redis.store, {
-      get,
-    } as unknown as HttpClientValue);
+    const store = makeGuildStore(
+      config,
+      redis.store,
+      httpClientFromResponses(get),
+    );
 
     await expect(
       Effect.runPromise(store.getUserGuilds(options)),
@@ -70,9 +70,11 @@ describe("Gateway guild store", () => {
   test("does not retry a completed non-retryable response", async () => {
     const redis = makeRedis();
     const get = mock(() => Effect.succeed(httpResponse(404, {})));
-    const store = makeGuildStore(config, redis.store, {
-      get,
-    } as unknown as HttpClientValue);
+    const store = makeGuildStore(
+      config,
+      redis.store,
+      httpClientFromResponses(get),
+    );
 
     await expect(
       Effect.runPromise(store.getUserGuilds(options)),
@@ -92,9 +94,11 @@ describe("Gateway guild store", () => {
         ),
       ),
     );
-    const store = makeGuildStore(config, redis.store, {
-      get,
-    } as unknown as HttpClientValue);
+    const store = makeGuildStore(
+      config,
+      redis.store,
+      httpClientFromResponses(get),
+    );
     const fiber = Effect.runFork(store.getUserGuilds(options));
     while (get.mock.calls.length === 0) await Promise.resolve();
 

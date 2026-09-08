@@ -21,75 +21,12 @@ import {
   type JsonValue,
 } from "./guild-document-content.schema.js";
 import type {
-  DocsRepositoryFailure,
+  StoredDocument,
+  DocumentSummary,
+  StoredDocumentHistory,
+  DocumentHistorySummary,
   DocsRepositoryService,
 } from "./docs.repository.js";
-
-type DocumentRecord = {
-  id: string;
-  guildId: string;
-  title: string;
-  content?: JsonValue;
-  version: number;
-  createdByMemberId: string;
-  updatedByMemberId: string;
-  deletedAt?: Date | null;
-  deletedByMemberId?: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-type HistoryRecord = {
-  id: string;
-  documentId: string;
-  guildId: string;
-  version: number;
-  title: string;
-  content?: JsonValue;
-  action: "SAVE" | "DELETE" | "RESTORE";
-  actorMemberId: string;
-  editedAt: Date;
-};
-
-type DocsFailure =
-  | DocsRepositoryFailure
-  | InvalidRequestError
-  | ResourceNotFoundError;
-type DocsEffect = Effect.Effect<unknown, DocsFailure>;
-
-export interface DocsService {
-  readonly listDocuments: (guildId: string) => DocsEffect;
-  readonly createDocument: (
-    guildId: string,
-    memberId: string,
-    data: CreateDocumentRequest,
-  ) => DocsEffect;
-  readonly getDocument: (guildId: string, documentId: string) => DocsEffect;
-  readonly updateDocument: (
-    guildId: string,
-    documentId: string,
-    memberId: string,
-    data: UpdateDocumentRequest,
-  ) => DocsEffect;
-  readonly listHistory: (guildId: string, documentId: string) => DocsEffect;
-  readonly getHistorySnapshot: (
-    guildId: string,
-    documentId: string,
-    historyId: string,
-  ) => DocsEffect;
-  readonly listTrash: (guildId: string) => DocsEffect;
-  readonly moveDocumentToTrash: (
-    guildId: string,
-    documentId: string,
-    memberId: string,
-  ) => DocsEffect;
-  readonly restoreDocument: (
-    guildId: string,
-    documentId: string,
-    memberId: string,
-  ) => DocsEffect;
-  readonly purgeDocument: (guildId: string, documentId: string) => DocsEffect;
-}
 
 const normalizeTitle = (title: string) => {
   const normalizedTitle = title.trim();
@@ -126,7 +63,7 @@ const normalizeContent = (content: JsonValue) => {
 };
 
 const mapDocumentRecordWithEditors = (
-  document: DocumentRecord,
+  document: DocumentSummary,
   editorNameByMemberId: ReadonlyMap<string, string>,
 ) => ({
   id: document.id,
@@ -148,7 +85,7 @@ const mapDocumentRecordWithEditors = (
 });
 
 const mapHistoryRecordWithEditors = (
-  history: HistoryRecord,
+  history: DocumentHistorySummary,
   editorNameByMemberId: ReadonlyMap<string, string>,
 ) => ({
   id: history.id,
@@ -165,9 +102,7 @@ const mapHistoryRecordWithEditors = (
   editedAt: history.editedAt,
 });
 
-export const makeDocsService = (
-  repository: DocsRepositoryService,
-): DocsService => {
+export const makeDocsService = (repository: DocsRepositoryService) => {
   const getEditorNameByMemberId = (guildId: string, memberIds: string[]) => {
     const uniqueMemberIds = [...new Set(memberIds)];
     return repository
@@ -180,7 +115,10 @@ export const makeDocsService = (
       );
   };
 
-  const mapDocumentRecords = (guildId: string, documents: DocumentRecord[]) =>
+  const mapDocumentRecords = (
+    guildId: string,
+    documents: ReadonlyArray<DocumentSummary>,
+  ) =>
     getEditorNameByMemberId(
       guildId,
       documents.flatMap((document) => [
@@ -195,7 +133,7 @@ export const makeDocsService = (
       ),
     );
 
-  const mapDocumentRecord = (guildId: string, document: DocumentRecord) =>
+  const mapDocumentRecord = (guildId: string, document: StoredDocument) =>
     mapDocumentRecords(guildId, [document]).pipe(
       Effect.map(([mappedDocument]) => ({
         ...mappedDocument,
@@ -203,7 +141,10 @@ export const makeDocsService = (
       })),
     );
 
-  const mapHistoryRecords = (guildId: string, history: HistoryRecord[]) =>
+  const mapHistoryRecords = (
+    guildId: string,
+    history: ReadonlyArray<DocumentHistorySummary>,
+  ) =>
     getEditorNameByMemberId(
       guildId,
       history.map((entry) => entry.actorMemberId),
@@ -213,7 +154,7 @@ export const makeDocsService = (
       ),
     );
 
-  const mapHistoryRecord = (guildId: string, history: HistoryRecord) =>
+  const mapHistoryRecord = (guildId: string, history: StoredDocumentHistory) =>
     mapHistoryRecords(guildId, [history]).pipe(
       Effect.map(([mappedHistory]) => ({
         ...mappedHistory,
@@ -227,20 +168,15 @@ export const makeDocsService = (
       .pipe(
         Effect.flatMap((document) =>
           document
-            ? Effect.succeed(document as DocumentRecord)
+            ? Effect.succeed(document)
             : Effect.fail(new ResourceNotFoundError("Document not found")),
         ),
       );
 
   return {
-    listDocuments: (guildId) =>
+    listDocuments: (guildId: string) =>
       Effect.gen(function* () {
-        const result = (yield* repository.listDocuments(guildId)) as {
-          guild: { documentLimit: number | null } | null;
-          used: number;
-          trashed: number;
-          documents: DocumentRecord[];
-        };
+        const result = yield* repository.listDocuments(guildId);
         if (!result.guild) {
           return yield* Effect.fail(
             new ResourceNotFoundError("Guild not found"),
@@ -260,7 +196,11 @@ export const makeDocsService = (
           },
         };
       }),
-    createDocument: (guildId, memberId, data) =>
+    createDocument: (
+      guildId: string,
+      memberId: string,
+      data: CreateDocumentRequest,
+    ) =>
       Effect.gen(function* () {
         const title = yield* normalizeTitle(data.title);
         const document = yield* repository.createDocument({
@@ -270,13 +210,18 @@ export const makeDocsService = (
           content: EMPTY_DOCUMENT_CONTENT,
           defaultLimit: GUILD_DOCUMENT_DEFAULT_LIMIT,
         });
-        return yield* mapDocumentRecord(guildId, document as DocumentRecord);
+        return yield* mapDocumentRecord(guildId, document);
       }),
-    getDocument: (guildId, documentId) =>
+    getDocument: (guildId: string, documentId: string) =>
       Effect.flatMap(findDocumentOrFail(guildId, documentId), (document) =>
         mapDocumentRecord(guildId, document),
       ),
-    updateDocument: (guildId, documentId, memberId, data) =>
+    updateDocument: (
+      guildId: string,
+      documentId: string,
+      memberId: string,
+      data: UpdateDocumentRequest,
+    ) =>
       Effect.gen(function* () {
         const title = yield* normalizeTitle(data.title);
         const content = yield* normalizeContent(data.content);
@@ -287,17 +232,21 @@ export const makeDocsService = (
           title,
           content,
         });
-        return yield* mapDocumentRecord(guildId, document as DocumentRecord);
+        return yield* mapDocumentRecord(guildId, document);
       }),
-    listHistory: (guildId, documentId) =>
+    listHistory: (guildId: string, documentId: string) =>
       Effect.gen(function* () {
         yield* findDocumentOrFail(guildId, documentId);
         const history = yield* repository.listHistory(guildId, documentId);
         return {
-          items: yield* mapHistoryRecords(guildId, history as HistoryRecord[]),
+          items: yield* mapHistoryRecords(guildId, history),
         };
       }),
-    getHistorySnapshot: (guildId, documentId, historyId) =>
+    getHistorySnapshot: (
+      guildId: string,
+      documentId: string,
+      historyId: string,
+    ) =>
       Effect.gen(function* () {
         yield* findDocumentOrFail(guildId, documentId);
         const history = yield* repository.findHistory(
@@ -310,13 +259,11 @@ export const makeDocsService = (
             new ResourceNotFoundError("Document history not found"),
           );
         }
-        return yield* mapHistoryRecord(guildId, history as HistoryRecord);
+        return yield* mapHistoryRecord(guildId, history);
       }),
-    listTrash: (guildId) =>
+    listTrash: (guildId: string) =>
       Effect.gen(function* () {
-        const documents = (yield* repository.listTrash(
-          guildId,
-        )) as DocumentRecord[];
+        const documents = yield* repository.listTrash(guildId);
         const editors = yield* getEditorNameByMemberId(
           guildId,
           documents.flatMap((document) => [
@@ -341,7 +288,11 @@ export const makeDocsService = (
           }),
         };
       }),
-    moveDocumentToTrash: (guildId, documentId, memberId) =>
+    moveDocumentToTrash: (
+      guildId: string,
+      documentId: string,
+      memberId: string,
+    ) =>
       repository
         .changeTrashState({
           guildId,
@@ -350,7 +301,7 @@ export const makeDocsService = (
           action: "DELETE",
         })
         .pipe(Effect.as({ success: true })),
-    restoreDocument: (guildId, documentId, memberId) =>
+    restoreDocument: (guildId: string, documentId: string, memberId: string) =>
       repository
         .changeTrashState({
           guildId,
@@ -359,7 +310,9 @@ export const makeDocsService = (
           action: "RESTORE",
         })
         .pipe(Effect.as({ success: true })),
-    purgeDocument: (guildId, documentId) =>
+    purgeDocument: (guildId: string, documentId: string) =>
       repository.purge(guildId, documentId).pipe(Effect.as({ success: true })),
   };
 };
+
+export type DocsService = ReturnType<typeof makeDocsService>;

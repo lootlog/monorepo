@@ -105,7 +105,7 @@ export const NpcColorsSettings = () => {
       value,
       DEFAULT_NPC_TYPE_COLORS[npcType],
     );
-    const patch = { [npcType]: color } as Partial<NpcTypeColors>;
+    const patch = { [npcType]: color } satisfies Partial<NpcTypeColors>;
     setDraftState({
       source: settingsDocuments.data,
       value: { ...draft, ...patch },

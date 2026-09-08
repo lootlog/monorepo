@@ -29,6 +29,10 @@ export type MargonemCharacter = {
   world?: string;
 };
 
+// Character lists arrive from both the public API and versioned browser caches.
+// Field aliases and casing are decoded below before producing MargonemCharacter.
+type RawCharacterData = Record<string, unknown>;
+
 const toStringOrNull = (value: unknown) => {
   if (typeof value === "string") {
     return value;
@@ -42,7 +46,7 @@ const toStringOrNull = (value: unknown) => {
 };
 
 const findValueByAliases = (
-  characterData: Record<string, unknown>,
+  characterData: RawCharacterData,
   aliases: string[],
 ) => {
   for (const alias of aliases) {
@@ -64,7 +68,7 @@ const findValueByAliases = (
   return undefined;
 };
 
-const unwrapCharacterData = (characterData: Record<string, unknown>) => {
+const unwrapCharacterData = (characterData: RawCharacterData) => {
   const nestedCharacterCandidates = [
     characterData.character,
     characterData.char,
@@ -102,13 +106,11 @@ const normalizeCharacter = (character: unknown): MargonemCharacter | null => {
     });
   }
 
-  if (typeof character !== "object" || character === null) {
+  if (!isRecord(character)) {
     return null;
   }
 
-  const characterData = unwrapCharacterData(
-    character as Record<string, unknown>,
-  );
+  const characterData = unwrapCharacterData(character);
   const normalizedId = toNumberOrNull(
     findValueByAliases(characterData, ["id", "charId", "characterId"]),
   );
@@ -213,13 +215,14 @@ type CharacterListCacheEntry = {
   characters: MargonemCharacter[];
 };
 
-const parseJsonOrNull = (value: string | null): unknown => {
+const parseJsonOrNull = (value: string | null) => {
   if (!value) {
     return null;
   }
 
   try {
-    return JSON.parse(value) as unknown;
+    const parsed: unknown = JSON.parse(value);
+    return parsed;
   } catch {
     return null;
   }

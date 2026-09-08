@@ -1,44 +1,18 @@
 // @vitest-environment happy-dom
 
-import type { ReactNode } from "react";
+import { initializeTestTranslations } from "@/lib/testing/i18n";
+import { createOrganizationTestWrapper } from "@/lib/testing/router";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import type { EventMemberKill } from "../../hooks/queries/use-event-member-kill-history";
 import { MemberKillRow } from "./member-kill-row";
 
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
-vi.mock("@tanstack/react-router", () => ({
-  Link: ({
-    children,
-    params,
-    "aria-label": ariaLabel,
-  }: {
-    children: ReactNode;
-    params: Record<string, string>;
-    "aria-label"?: string;
-  }) => (
-    <a
-      href={`/${params.guildId}/events/${params.eventId}/heroes/${params.heroId}/kills/${params.killId}`}
-      aria-label={ariaLabel}
-    >
-      {children}
-    </a>
-  ),
-}));
-
-vi.mock("@/components/tiles", () => ({
-  NpcTile: ({ npc }: { npc: { name: string } }) => <span>{npc.name}</span>,
-}));
+await initializeTestTranslations();
 
 afterEach(cleanup);
 
 describe("MemberKillRow", () => {
-  it("links to kill details and expands the scoring breakdown separately", () => {
+  it("links to kill details and expands the scoring breakdown separately", async () => {
     render(
       <table>
         <tbody>
@@ -49,6 +23,7 @@ describe("MemberKillRow", () => {
           />
         </tbody>
       </table>,
+      { wrapper: await createOrganizationTestWrapper() },
     );
 
     const link = screen.getByRole("link", {

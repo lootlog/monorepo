@@ -1,3 +1,4 @@
+import { isRecord, isObjectRecord } from "@lootlog/schema/records";
 import { activeGuildMemberJoin } from "#src/members/member-access-query";
 import {
   and,
@@ -47,17 +48,12 @@ const visibleExpiredKeys = (
   overrides: unknown,
   world: string | undefined,
 ): ReadonlyArray<string> => {
-  if (!world || !overrides || typeof overrides !== "object") return [];
-  const alwaysVisible = (overrides as Record<string, unknown>)
-    .alwaysVisibleExpiredTimers;
-  if (
-    !alwaysVisible ||
-    typeof alwaysVisible !== "object" ||
-    Array.isArray(alwaysVisible)
-  ) {
+  if (!world || !isObjectRecord(overrides)) return [];
+  const alwaysVisible = overrides.alwaysVisibleExpiredTimers;
+  if (!isRecord(alwaysVisible)) {
     return [];
   }
-  const configured = (alwaysVisible as Record<string, unknown>)[world];
+  const configured = alwaysVisible[world];
   return Array.isArray(configured)
     ? configured.filter((key): key is string => typeof key === "string")
     : [];

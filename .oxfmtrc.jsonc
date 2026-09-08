@@ -4,6 +4,7 @@
   "singleQuote": false,
   "trailingComma": "all",
   "ignorePatterns": [
+    "tools/oxlint/anti-slop/**",
     ".agents/**",
     ".claude/**",
     "**/.claude/**",

@@ -2,7 +2,7 @@ import {
   eventsRankingControllerGetEventKillHistory,
   getEventsRankingControllerGetEventKillHistoryQueryKey,
 } from "@lootlog/client/main";
-import type { HeroKill, KillHistoryResponse } from "./use-hero-kill-history";
+import type { HeroKill } from "./use-hero-kill-history";
 import { useCursorInfiniteQuery } from "./use-cursor-infinite-query";
 
 interface UseEventKillHistoryOptions {
@@ -18,10 +18,12 @@ export const useEventKillHistory = ({
   heroId,
   limit = 20,
 }: UseEventKillHistoryOptions) => {
-  const baseParams = {
+  const baseParams: NonNullable<
+    Parameters<typeof eventsRankingControllerGetEventKillHistory>[1]
+  > = {
     limit: String(limit),
-    ...(heroId ? { heroId } : {}),
   };
+  if (heroId) baseParams.heroId = heroId;
 
   return useCursorInfiniteQuery({
     queryKey: getEventsRankingControllerGetEventKillHistoryQueryKey(
@@ -35,7 +37,7 @@ export const useEventKillHistory = ({
           ...baseParams,
           cursor,
         },
-      ) as Promise<KillHistoryResponse>,
+      ),
     enabled: !!guildId && !!eventId,
   });
 };

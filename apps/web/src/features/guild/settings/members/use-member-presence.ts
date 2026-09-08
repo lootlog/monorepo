@@ -1,3 +1,4 @@
+import type { GatewayClient } from "@/lib/gateway-client";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { GatewayEvent } from "@/config/gateway";
 import { useGateway } from "@/hooks/utils/use-gateway";
@@ -7,15 +8,23 @@ type UseMemberPresenceOptions<TPresence, TResponse, TUpdate> = {
     currentPresence: TPresence | undefined,
     payload: TUpdate,
   ) => TPresence;
-  fetchEvent: GatewayEvent;
+  fetchPresence: (
+    socket: GatewayClient,
+    guildId: string,
+    acknowledgement: (response?: TResponse) => void,
+  ) => void;
   guildId: string | undefined;
   mapResponse: (response: TResponse) => TPresence | undefined;
   updateEvent: GatewayEvent;
 };
 
-export function useMemberPresence<TPresence, TResponse, TUpdate>({
+export function useMemberPresence<
+  TPresence,
+  TResponse,
+  TUpdate extends { guildId: string },
+>({
   applyUpdate,
-  fetchEvent,
+  fetchPresence,
   guildId,
   mapResponse,
   updateEvent,
@@ -33,7 +42,7 @@ export function useMemberPresence<TPresence, TResponse, TUpdate>({
 
     const requestId = ++requestIdRef.current;
 
-    socket.emit(fetchEvent, { guildId }, (response?: TResponse) => {
+    fetchPresence(socket, guildId, (response?: TResponse) => {
       if (requestIdRef.current !== requestId || !response) {
         return;
       }
@@ -43,12 +52,7 @@ export function useMemberPresence<TPresence, TResponse, TUpdate>({
   });
 
   const handlePresenceUpdate = useEffectEvent((payload: TUpdate) => {
-    if (
-      !payload ||
-      typeof payload !== "object" ||
-      !("guildId" in payload) ||
-      payload.guildId !== guildId
-    ) {
+    if (payload?.guildId !== guildId) {
       return;
     }
 
@@ -90,7 +94,7 @@ export function useMemberPresence<TPresence, TResponse, TUpdate>({
     joined,
     guildId,
     refreshVersion,
-    fetchEvent,
+    fetchPresence,
     updateEvent,
   ]);
 

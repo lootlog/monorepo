@@ -1,76 +1,67 @@
-import { renderHook } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { MemberSummaryResponseDtoOutput } from "@lootlog/client/main";
+import { act, renderHook, waitFor } from "@testing-library/react";
+import { expect, it } from "vitest";
+import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
+import { createChatMember } from "@/features/chat/chat-test-fixtures";
+import { getGuildMembersSummaryQueryKey } from "./guild-members-summary-query";
 import { useMemberInvalidation } from "./use-member-invalidation";
-
-const mocks = vi.hoisted(() => ({
-  data: [] as MemberSummaryResponseDtoOutput[],
-  invalidateQueries: vi.fn(),
-}));
-
-vi.mock("@tanstack/react-query", () => ({
-  useQueryClient: () => ({ invalidateQueries: mocks.invalidateQueries }),
-}));
-
-vi.mock("@/hooks/api/guild-members-summary-query", () => ({
-  getGuildMembersSummaryQueryKey: ({ guildId }: { guildId: string }) => [
-    "members",
-    guildId,
-  ],
-  useGuildMembersSummary: () => ({ data: mocks.data }),
-}));
-
-const createMember = (userId: string): MemberSummaryResponseDtoOutput =>
-  ({ userId }) as MemberSummaryResponseDtoOutput;
-
-describe("useMemberInvalidation", () => {
-  beforeEach(() => {
-    mocks.data = [];
-    mocks.invalidateQueries.mockClear();
-  });
-
-  it("invalidates again when a member disappears after becoming present", () => {
-    const { rerender } = renderHook(
-      ({ memberIds }) => useMemberInvalidation("guild-1", memberIds),
-      { initialProps: { memberIds: ["member-1"] } },
+const setup = () => {
+  const fixture = createGuildPreferencesTest();
+  fixture.request.mockImplementation(() => Promise.resolve(Response.json([])));
+  for (const guildId of ["guild-1", "guild-2"])
+    fixture.queryClient.setQueryData(
+      getGuildMembersSummaryQueryKey({ guildId }),
+      [],
     );
-
-    expect(mocks.invalidateQueries).toHaveBeenCalledTimes(1);
-
-    rerender({ memberIds: ["member-1"] });
-    expect(mocks.invalidateQueries).toHaveBeenCalledTimes(1);
-
-    mocks.data = [createMember("member-1")];
-    rerender({ memberIds: [] });
-
-    mocks.data = [];
-    rerender({ memberIds: ["member-1"] });
-
-    expect(mocks.invalidateQueries).toHaveBeenCalledTimes(2);
-    expect(mocks.invalidateQueries).toHaveBeenLastCalledWith({
-      queryKey: ["members", "guild-1"],
-    });
-  });
-
-  it("resets checked identities when the guild context changes or disappears", () => {
-    const { rerender } = renderHook(
-      ({ guildId, memberIds }) => useMemberInvalidation(guildId, memberIds),
-      {
-        initialProps: {
-          guildId: "guild-1" as string | undefined,
-          memberIds: ["member-1"],
-        },
-      },
+  return fixture;
+};
+it("refetches a missing member again after the member disappears", async () => {
+  const fixture = setup();
+  const { rerender } = renderHook(
+    ({ memberIds }) => useMemberInvalidation("guild-1", memberIds),
+    { wrapper: fixture.wrapper, initialProps: { memberIds: ["member-1"] } },
+  );
+  await waitFor(() => expect(fixture.request).toHaveBeenCalledTimes(1));
+  rerender({ memberIds: ["member-1"] });
+  expect(fixture.request).toHaveBeenCalledTimes(1);
+  await act(async () => {
+    fixture.queryClient.setQueryData(
+      getGuildMembersSummaryQueryKey({ guildId: "guild-1" }),
+      [createChatMember({ userId: "member-1" })],
     );
-
-    rerender({ guildId: "guild-2", memberIds: ["member-1"] });
-    rerender({ guildId: undefined, memberIds: [] });
-    rerender({ guildId: "guild-1", memberIds: ["member-1"] });
-
-    expect(mocks.invalidateQueries.mock.calls).toEqual([
-      [{ queryKey: ["members", "guild-1"] }],
-      [{ queryKey: ["members", "guild-2"] }],
-      [{ queryKey: ["members", "guild-1"] }],
-    ]);
+    await Promise.resolve();
   });
+  rerender({ memberIds: [] });
+  act(() =>
+    fixture.queryClient.setQueryData(
+      getGuildMembersSummaryQueryKey({ guildId: "guild-1" }),
+      [],
+    ),
+  );
+  rerender({ memberIds: ["member-1"] });
+  await waitFor(() => expect(fixture.request).toHaveBeenCalledTimes(2));
+});
+it("resets checked identities when organization context changes or disappears", async () => {
+  const fixture = setup();
+  const { rerender } = renderHook<
+    void,
+    { guildId: string | undefined; memberIds: string[] }
+  >(({ guildId, memberIds }) => useMemberInvalidation(guildId, memberIds), {
+    wrapper: fixture.wrapper,
+    initialProps: { guildId: "guild-1", memberIds: ["member-1"] },
+  });
+  await waitFor(() => expect(fixture.request).toHaveBeenCalledTimes(1));
+  rerender({ guildId: "guild-2", memberIds: ["member-1"] });
+  await waitFor(() => expect(fixture.request).toHaveBeenCalledTimes(2));
+  rerender({ guildId: undefined, memberIds: [] });
+  rerender({ guildId: "guild-1", memberIds: ["member-1"] });
+  await waitFor(() => expect(fixture.request).toHaveBeenCalledTimes(3));
+  expect(
+    fixture.request.mock.calls.map(
+      ([input, init]) => new URL(new Request(input, init).url).pathname,
+    ),
+  ).toEqual([
+    "/guilds/guild-1/members/summary",
+    "/guilds/guild-2/members/summary",
+    "/guilds/guild-1/members/summary",
+  ]);
 });

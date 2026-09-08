@@ -1,7 +1,11 @@
+import type { TOptions } from "i18next";
 import * as z from "zod";
-import { CreateNotificationRuleDtoScheduleAnchor as NotificationScheduleAnchor } from "@lootlog/client/main";
-import { CreateNotificationRuleDtoScheduleIntervalType as NotificationScheduleIntervalType } from "@lootlog/client/main";
-import { CreateNotificationRuleDtoTriggerType as NotificationTriggerType } from "@lootlog/client/main";
+import {
+  CreateNotificationRuleDtoScheduleAnchor as NotificationScheduleAnchor,
+  CreateNotificationRuleDtoScheduleIntervalType as NotificationScheduleIntervalType,
+  CreateNotificationRuleDtoTriggerType as NotificationTriggerType,
+} from "@lootlog/client/main";
+
 import {
   GUILD_NOTIFICATION_TIMEZONE,
   parseDateTimeLocalInputToIsoString,
@@ -10,9 +14,7 @@ import { parseManualNotificationRuleNpcIds } from "./notification-rule-form-npc.
 
 export const ALL_WORLDS_VALUE = "__all_worlds__";
 
-const createRuleFormSchema = (
-  t: (key: string, options?: Record<string, unknown>) => string,
-) =>
+const createRuleFormSchema = (t: (key: string, options?: TOptions) => string) =>
   z.object({
     name: z.string(),
     triggerType: z.nativeEnum(NotificationTriggerType),
@@ -41,7 +43,7 @@ const createRuleFormSchema = (
   });
 
 type RuleFormData = z.infer<ReturnType<typeof createRuleFormSchema>>;
-type Translator = (key: string, options?: Record<string, unknown>) => string;
+type Translator = (key: string, options?: TOptions) => string;
 
 const addIssue = (
   ctx: z.RefinementCtx,

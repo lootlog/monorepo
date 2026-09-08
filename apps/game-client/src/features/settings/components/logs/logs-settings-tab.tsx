@@ -203,7 +203,9 @@ export const LogsSettingsTab: FC = () => {
           <div className="ll:min-w-0">
             <Select
               onValueChange={(value) =>
-                setStatusFilter(value as LogStatusFilter)
+                setStatusFilter(
+                  LOG_STATUS_VALUES.find((status) => status === value) ?? "all",
+                )
               }
               value={statusFilter}
             >

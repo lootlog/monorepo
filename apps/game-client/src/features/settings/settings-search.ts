@@ -1,7 +1,12 @@
+import type {
+  SettingsDomainValue,
+  SettingsSubsectionValue,
+} from "./constants/settings-tabs";
+
 export interface SettingsSearchItem {
-  categoryId: string;
+  categoryId: SettingsDomainValue;
   categoryLabel: string;
-  subsectionId: string;
+  subsectionId: SettingsSubsectionValue;
   subsectionLabel: string;
   controlId: string;
   label: string;

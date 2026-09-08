@@ -167,17 +167,17 @@ export const makeMemberStore = (database: ApiDatabaseValue) => {
           "memberStore.markSync.transaction",
           database.transaction((transaction) =>
             Effect.gen(function* () {
+              const update: Partial<typeof memberTable.$inferInsert> = {
+                lastDiscordAttemptAt: options.attemptedAt,
+                lastDiscordStatus: options.status,
+                updatedAt: options.attemptedAt,
+              };
+              if (options.markSynced)
+                update.lastDiscordSyncAt = options.attemptedAt;
+              if (options.deactivate) update.active = false;
               const rows = yield* transaction
                 .update(memberTable)
-                .set({
-                  lastDiscordAttemptAt: options.attemptedAt,
-                  lastDiscordStatus: options.status,
-                  ...(options.markSynced
-                    ? { lastDiscordSyncAt: options.attemptedAt }
-                    : {}),
-                  ...(options.deactivate ? { active: false } : {}),
-                  updatedAt: options.attemptedAt,
-                })
+                .set(update)
                 .where(eq(memberTable.id, existing.id))
                 .returning();
               if (options.deactivate) {

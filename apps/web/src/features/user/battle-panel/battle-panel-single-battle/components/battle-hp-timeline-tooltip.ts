@@ -1,3 +1,4 @@
+import { z } from "zod";
 import type { BattleTimelineResponseDtoOutputTimelineItem } from "@lootlog/client/battlelog";
 
 export type BattleHpTimelineTooltipDeltaKey =
@@ -78,58 +79,44 @@ export const formatBattleHpTimelineTooltipNumber = (
     minimumFractionDigits: 0,
   }).format(getRoundedTooltipNumber(value));
 
-export const getBattleHpTimelineTooltipPayload = (
-  payload: unknown,
-): BattleHpTimelineTooltipData | null => {
-  if (typeof payload !== "object" || payload === null) {
-    return null;
-  }
+const tooltipDelta = z.object({
+  key: z.enum(["damage", "healing", "mitigation"]),
+  labelKey: z.string(),
+  value: z.number(),
+});
+const tooltipLegendaryBonus = z.object({
+  labelKey: z.string(),
+  recipientName: z.string().nullable(),
+  team: z.number(),
+  color: z.string(),
+});
+const tooltipPayload = z
+  .object({
+    turn: z.coerce.number(),
+    team1: z.coerce.number(),
+    team2: z.coerce.number(),
+    momentum: z.coerce.number().optional(),
+    deltas: z
+      .array(tooltipDelta.nullable().catch(null))
+      .catch([])
+      .transform((values) => values.filter((value) => value !== null)),
+    legendaryBonuses: z
+      .array(tooltipLegendaryBonus.nullable().catch(null))
+      .catch([])
+      .transform((values) => values.filter((value) => value !== null)),
+    flagLabelKeys: z
+      .array(z.string().nullable().catch(null))
+      .catch([])
+      .transform((values) => values.filter((value) => value !== null)),
+  })
+  .transform((payload): BattleHpTimelineTooltipData => ({
+    ...payload,
+    momentum: payload.momentum ?? payload.team1 - payload.team2,
+  }));
 
-  if (!("turn" in payload) || !("team1" in payload) || !("team2" in payload)) {
-    return null;
-  }
-
-  const turn = Number(payload.turn);
-  const team1 = Number(payload.team1);
-  const team2 = Number(payload.team2);
-  const momentum = Number(
-    "momentum" in payload ? payload.momentum : team1 - team2,
-  );
-
-  if (
-    Number.isNaN(turn) ||
-    Number.isNaN(team1) ||
-    Number.isNaN(team2) ||
-    Number.isNaN(momentum)
-  ) {
-    return null;
-  }
-
-  const deltas =
-    "deltas" in payload && Array.isArray(payload.deltas)
-      ? payload.deltas.filter(isTooltipDelta)
-      : [];
-  const flagLabelKeys =
-    "flagLabelKeys" in payload && Array.isArray(payload.flagLabelKeys)
-      ? payload.flagLabelKeys.filter(
-          (value): value is string => typeof value === "string",
-        )
-      : [];
-  const legendaryBonuses =
-    "legendaryBonuses" in payload && Array.isArray(payload.legendaryBonuses)
-      ? payload.legendaryBonuses.filter(isTooltipLegendaryBonus)
-      : [];
-
-  return {
-    turn,
-    team1,
-    team2,
-    momentum,
-    deltas,
-    legendaryBonuses,
-    flagLabelKeys,
-  };
-};
+export const getBattleHpTimelineTooltipPayload = tooltipPayload
+  .nullable()
+  .catch(null).parse;
 
 export const buildBattleHpTimelineTooltipData = (
   turn: BattleHpTimelineTooltipTurn,
@@ -208,29 +195,3 @@ const getKnownFlagLabelKey = (flag: string) => {
 
   return `battlePanel.single.flags.${flag}`;
 };
-
-const isTooltipDelta = (
-  value: unknown,
-): value is BattleHpTimelineTooltipDelta =>
-  typeof value === "object" &&
-  value !== null &&
-  "key" in value &&
-  "labelKey" in value &&
-  "value" in value &&
-  typeof value.key === "string" &&
-  typeof value.labelKey === "string" &&
-  typeof value.value === "number";
-
-const isTooltipLegendaryBonus = (
-  value: unknown,
-): value is BattleHpTimelineTooltipLegendaryBonus =>
-  typeof value === "object" &&
-  value !== null &&
-  "labelKey" in value &&
-  "recipientName" in value &&
-  "team" in value &&
-  "color" in value &&
-  typeof value.labelKey === "string" &&
-  (typeof value.recipientName === "string" || value.recipientName === null) &&
-  typeof value.team === "number" &&
-  typeof value.color === "string";

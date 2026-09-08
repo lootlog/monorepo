@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "@effect/platform-bun": "catalog:",
+    "@lootlog/database": "workspace:*",
     "@lootlog/domain": "workspace:*",
     "@lootlog/instrumentation": "workspace:*",
     "@lootlog/messaging": "workspace:*",

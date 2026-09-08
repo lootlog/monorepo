@@ -1,3 +1,4 @@
+import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import { selectEventKillPoints } from "#src/events/kills/event-point-query";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
@@ -27,9 +28,9 @@ export class EventPointEditError extends TaggedErrorClass<EventPointEditError>()
 ) {}
 
 export interface EventRankingPublisher {
-  readonly publish: (
-    routingKey: RoutingKey,
-    payload: unknown,
+  readonly publish: <Key extends typeof RoutingKey.EVENT_RANKING_UPDATE>(
+    routingKey: Key,
+    payload: CanonicalRabbitEvent<Key>,
   ) => Effect.Effect<void, unknown>;
 }
 

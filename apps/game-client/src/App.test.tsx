@@ -4,7 +4,10 @@ import {
   RealtimeClient,
   type RealtimeWebSocket,
 } from "@lootlog/client/realtime";
-import App from "./App";
+import { createNativeRuntime } from "@/test/native-runtime";
+import { useGameStore } from "@/store/game.store";
+vi.stubGlobal("Engine", createNativeRuntime());
+const { default: App } = await import("./App");
 import { authClient } from "@/lib/auth-client";
 import { configureGameClientPlatform } from "@/lib/game-client-platform";
 import { disposeSocket } from "@/lib/socket";
@@ -61,11 +64,6 @@ function seedPrivateState() {
   });
 }
 
-// Keep this integration test focused on the auth/socket lifecycle, not gameplay UI.
-vi.mock("@/app-content", () => ({
-  AppContent: () => <div>Gameplay overlay</div>,
-}));
-
 let restorePlatform: (() => void) | undefined;
 afterEach(() => {
   disposeSocket();
@@ -106,12 +104,12 @@ describe("extension session lifecycle", () => {
     const socket: RealtimeWebSocket = {
       readyState: 0,
       binaryType: "arraybuffer",
-      addEventListener: vi.fn(),
-      send: vi.fn(),
-      close: vi.fn(),
+      addEventListener: vi.fn<RealtimeWebSocket["addEventListener"]>(),
+      send: vi.fn<RealtimeWebSocket["send"]>(),
+      close: vi.fn<RealtimeWebSocket["close"]>(),
     };
     const stateAtConnection: ReturnType<typeof privateState>[] = [];
-    const factory = vi.fn(() => {
+    const factory = vi.fn<() => RealtimeWebSocket>(() => {
       stateAtConnection.push(privateState());
       return socket;
     });
@@ -127,13 +125,15 @@ describe("extension session lifecycle", () => {
     await waitFor(() => expect(fetcher).toHaveBeenCalled());
     await screen.findByRole("link");
     expect(factory).not.toHaveBeenCalled();
-    expect(screen.queryByText("Gameplay overlay")).toBeNull();
+    expect(useGameStore.getState().game).toBeNull();
 
     userId = "first-user";
     act(() => {
       authClient.$store.notify("$sessionSignal");
     });
-    await screen.findByText("Gameplay overlay");
+    await waitFor(() =>
+      expect(useGameStore.getState().game?.hero.name).toBe("Tester"),
+    );
     expect(factory).toHaveBeenCalledOnce();
 
     seedPrivateState();
@@ -144,16 +144,14 @@ describe("extension session lifecycle", () => {
     });
     await waitFor(() => expect(factory).toHaveBeenCalledTimes(2));
     expect(stateAtConnection[1]).toEqual(clearedState);
-    expect(screen.getByText("Gameplay overlay")).toBeInTheDocument();
+    expect(useGameStore.getState().game?.hero.name).toBe("Tester");
 
     seedPrivateState();
     userId = null;
     act(() => {
       authClient.$store.notify("$sessionSignal");
     });
-    await waitFor(() =>
-      expect(screen.queryByText("Gameplay overlay")).toBeNull(),
-    );
+    await waitFor(() => expect(useGameStore.getState().game).toBeNull());
     expect(socket.close).toHaveBeenCalledWith(1000, "client disconnect");
     expect(factory).toHaveBeenCalledTimes(2);
     expect(privateState()).toEqual(clearedState);
@@ -163,7 +161,7 @@ describe("extension session lifecycle", () => {
   it("keeps the userscript overlay available without a session", () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json(null));
     const view = render(<App />);
-    expect(screen.getByText("Gameplay overlay")).toBeInTheDocument();
+    expect(useGameStore.getState().game?.hero.name).toBe("Tester");
     expect(screen.queryByRole("link")).toBeNull();
     view.unmount();
   });

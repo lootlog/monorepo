@@ -1,29 +1,24 @@
 import { describe, expect, it, vi } from "bun:test";
 import { Effect, Schema } from "effect";
-import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
+import { httpClientFromResponses } from "../../../../test/http-fixtures.js";
 import {
   makeReservationCatalogAdapter,
   type ReservationCatalogCache,
 } from "./reservation-catalog.adapter.js";
 
-const makeHttpClient = (status: number, payload: unknown) =>
-  ({
-    get: () =>
-      Effect.succeed({
-        status,
-        headers: {},
-        arrayBuffer: Effect.succeed(
-          new TextEncoder().encode(JSON.stringify(payload)).buffer,
-        ),
-      }),
-  }) as unknown as HttpClientValue;
+const makeHttpClient = (status: number, payload: typeof Schema.Json.Type) =>
+  httpClientFromResponses(() =>
+    Effect.succeed(Response.json(payload, { status })),
+  );
 
 const emptyCache = (): ReservationCatalogCache => ({
   getJson: () => Effect.succeed(null),
   setJson: vi.fn(() => Effect.succeed(undefined)),
 });
 
-const cacheWith = (value: unknown): ReservationCatalogCache => ({
+const cacheWith = (
+  value: typeof Schema.Json.Type,
+): ReservationCatalogCache => ({
   getJson: (_key, schema) =>
     Effect.sync(() => Schema.decodeUnknownSync(schema)(value)),
   setJson: vi.fn(() => Effect.succeed(undefined)),

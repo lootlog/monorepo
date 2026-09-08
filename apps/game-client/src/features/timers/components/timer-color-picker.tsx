@@ -47,9 +47,12 @@ export const TimerColorPicker: FC<TimerColorPickerProps> = ({
           return (
             <Tooltip key={id}>
               <TooltipTrigger asChild>
-                <div
+                <button
+                  type="button"
+                  aria-label={defaultColorNames[id] ?? getDefaultColorName(id)}
+                  aria-pressed={selectedColor === id}
                   className={cn(
-                    "ll:size-3.5 ll:rounded-full ll:box-border ll:border ll-custom-cursor-pointer",
+                    "ll:p-0 ll:appearance-none ll:size-3.5 ll:rounded-full ll:box-border ll:border ll-custom-cursor-pointer",
                     !overridden && color?.bgNoOpacity,
                     !overridden && color?.border,
                     {
@@ -76,9 +79,12 @@ export const TimerColorPicker: FC<TimerColorPickerProps> = ({
       {Object.values(customColors).map((color) => (
         <Tooltip key={color.id}>
           <TooltipTrigger asChild>
-            <div
+            <button
+              type="button"
+              aria-label={color.name}
+              aria-pressed={selectedColor === color.id}
               className={cn(
-                "ll:size-4 ll:rounded-md ll:box-border ll:border ll-custom-cursor-pointer",
+                "ll:p-0 ll:appearance-none ll:size-4 ll:rounded-md ll:box-border ll:border ll-custom-cursor-pointer",
                 {
                   " ll:ring-2 ll:ring-white": selectedColor === color.id,
                 },

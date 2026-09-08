@@ -1,51 +1,42 @@
 import { describe, expect, it } from "bun:test";
 import { Effect } from "effect";
+import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
 import {
   LootStatsQueryError,
   makeLootStatsQuery,
 } from "#src/loots/query/loot-stats-query";
 
 describe("makeLootStatsQuery", () => {
-  it("forwards the statement and a copy of its parameters", async () => {
-    const rows = [{ count: 3 }];
-    const calls: Array<{
-      statement: string;
-      parameters: ReadonlyArray<unknown>;
-    }> = [];
-    const query = makeLootStatsQuery({
-      unsafe: <Row extends Record<string, unknown>>(
-        statement: string,
-        parameters: ReadonlyArray<unknown>,
-      ) => {
-        calls.push({ statement, parameters });
-        return Effect.succeed(rows as unknown as Row[]);
-      },
-    });
-    const parameters = [1] as const;
-
-    await expect(
-      Effect.runPromise(query("loot-stats.test", "SELECT $1", parameters)),
-    ).resolves.toEqual(rows);
-    expect(calls).toEqual([{ statement: "SELECT $1", parameters: [1] }]);
-    expect(calls[0]?.parameters).not.toBe(parameters);
+  it("binds input as a value instead of executing SQL text", async () => {
+    const boundary = await createDatabaseBoundary();
+    try {
+      const query = makeLootStatsQuery(boundary.database.$client);
+      const value = "O'Connor; SELECT 42";
+      expect(
+        await boundary.run(
+          query("loot-stats.test", "SELECT $1::text AS value", [value]),
+        ),
+      ).toEqual([{ value }]);
+    } finally {
+      await boundary.dispose();
+    }
   });
 
   it("maps database failures to an operation-specific error", async () => {
-    const cause = new Error("database unavailable");
-    const query = makeLootStatsQuery({
-      unsafe: <Row extends Record<string, unknown>>() =>
-        Effect.fail<Error>(cause),
-    });
-
-    const error = await Effect.runPromise(
-      Effect.flip(query("loot-stats.read", "SELECT 1", [])),
-    );
-
-    expect(error).toBeInstanceOf(LootStatsQueryError);
-    expect(error).toMatchObject({
-      _tag: "LootStatsQueryError",
-      operation: "loot-stats.read",
-      cause,
-    });
+    const boundary = await createDatabaseBoundary();
+    try {
+      const query = makeLootStatsQuery(boundary.database.$client);
+      const error = await boundary.run(
+        Effect.flip(query("loot-stats.read", "SELECT missing_column", [])),
+      );
+      expect(error).toBeInstanceOf(LootStatsQueryError);
+      expect(error).toMatchObject({
+        _tag: "LootStatsQueryError",
+        operation: "loot-stats.read",
+        cause: { _tag: "SqlError" },
+      });
+    } finally {
+      await boundary.dispose();
+    }
   });
 });

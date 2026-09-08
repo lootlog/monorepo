@@ -240,10 +240,7 @@ export const makeEventPoints = (
     heroMapIds: Set<string>;
     killTime: Date;
     respawnStartTime: Date;
-  }): {
-    trackingDurationSeconds: number;
-    trackingDurationPercentage: number | undefined;
-  } {
+  }) {
     const trackingIntervals: Array<{ start: Date; end: Date }> = [];
 
     for (const assignment of params.assignments) {
@@ -297,9 +294,7 @@ export const makeEventPoints = (
         return;
       }
 
-      const scoringMode = normalizeEventScoringMode(
-        (event as { scoringMode?: unknown }).scoringMode,
-      );
+      const scoringMode = normalizeEventScoringMode(event.scoringMode);
       const scoringRules =
         scoringMode === "ADVANCED"
           ? normalizeEventScoringRules(event.scoringRules)
@@ -639,7 +634,7 @@ export const makeEventPoints = (
     heroMapIds: Set<string>;
     killTime: Date;
     respawnStartTime: Date;
-  }): { memberLeaveTime: Date | null; memberPresentAtKill: boolean } {
+  }) {
     let memberLeaveTime: Date | null = null;
     let memberPresentAtKill = false;
 
@@ -705,7 +700,7 @@ export const makeEventPoints = (
     until?: Date,
   ) {
     if (memberIds.length === 0) {
-      return Effect.succeed([] as MemberPresenceStats[]);
+      return Effect.succeed([]);
     }
 
     return Effect.gen(function* () {
@@ -790,13 +785,7 @@ export const makeEventPoints = (
     until?: Date,
   ) {
     if (mapIds.length === 0) {
-      return Effect.succeed(
-        [] as Array<{
-          mapId: string;
-          presenceTimeSeconds: number;
-          afkTimeSeconds: number;
-        }>,
-      );
+      return Effect.succeed([]);
     }
 
     return Effect.map(
@@ -848,14 +837,7 @@ export const makeEventPoints = (
     until?: Date,
   ) {
     if (mapIds.length === 0 || memberIds.length === 0) {
-      return Effect.succeed(
-        [] as Array<{
-          memberId: number;
-          mapId: string;
-          presenceTimeSeconds: number;
-          afkTimeSeconds: number;
-        }>,
-      );
+      return Effect.succeed([]);
     }
 
     return Effect.map(

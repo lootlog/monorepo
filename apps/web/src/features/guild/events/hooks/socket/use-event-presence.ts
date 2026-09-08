@@ -1,22 +1,10 @@
+import type {
+  PlayerPresence,
+  PlayerPresenceResponse,
+} from "@/lib/gateway-client";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { useGateway } from "@/hooks/utils/use-gateway";
 import { GatewayEvent } from "@/config/gateway";
-
-export interface PlayerPresence {
-  world: string;
-  name: string;
-  characterId: string;
-  accountId: string;
-  icon: string;
-  lvl: string;
-  prof: string;
-  margonemAccountVerified?: boolean;
-  mapId?: number;
-  mapName?: string;
-  isAfk: boolean;
-  updatedAt: number;
-  sessionId: string;
-}
 
 interface PresenceUpdatePayload {
   guildId: string;
@@ -33,16 +21,6 @@ interface UseEventPresenceOptions {
 }
 
 export type EventPresenceAccessState = "allowed" | "forbidden";
-
-type EventPresenceFetchPayload =
-  | {
-      status: "success";
-      players: Record<string, PlayerPresence[]>;
-    }
-  | {
-      status: "forbidden";
-      code: "ONLINE_PLAYERS_ACCESS_DENIED";
-    };
 
 export const useEventPresence = ({
   guildId,
@@ -65,7 +43,7 @@ export const useEventPresence = ({
     socket.emit(
       GatewayEvent.EVENT_PRESENCE_FETCH,
       { guildId, world },
-      (response?: EventPresenceFetchPayload) => {
+      (response?: PlayerPresenceResponse) => {
         if (requestIdRef.current !== requestId || !response) return;
 
         if (response.status === "forbidden") {

@@ -1,17 +1,33 @@
+import { Effect } from "effect";
 import { beforeEach, describe, expect, it, mock } from "bun:test";
 import {
   makeBattlePagination,
   type BattlePagination,
 } from "./pagination.service.js";
-import type { DrizzleDatabase } from "#src/database/database";
-import {
-  effectDatabaseBoundary,
-  runEffectService,
-} from "../../../test/effect-service.js";
+
+const createDatabaseFixture = () => {
+  const mockDrizzleService = {
+    run: mock((query) => Promise.resolve(query)),
+    db: {
+      query: {
+        battles: {
+          findMany: mock(),
+        },
+      },
+      select: mock().mockReturnValue({
+        from: mock().mockReturnValue({
+          where: mock(),
+        }),
+      }),
+      execute: mock(),
+    },
+  };
+  return mockDrizzleService;
+};
 
 describe("battle pagination", () => {
-  let service: ReturnType<typeof runEffectService<BattlePagination>>;
-  let drizzleService: { db: any; run: ReturnType<typeof mock> };
+  let service: BattlePagination;
+  let drizzleService: ReturnType<typeof createDatabaseFixture>;
 
   const mockBattles = [
     {
@@ -99,42 +115,25 @@ describe("battle pagination", () => {
   ];
 
   beforeEach(() => {
-    const mockDrizzleService = {
-      run: mock((query) => Promise.resolve(query)),
-      db: {
-        query: {
-          battles: {
-            findMany: mock(),
-          },
-        },
-        select: mock().mockReturnValue({
-          from: mock().mockReturnValue({
-            where: mock(),
-          }),
-        }),
-        execute: mock(),
-      },
-    };
+    const mockDrizzleService = createDatabaseFixture();
 
-    service = runEffectService(
-      makeBattlePagination(
-        effectDatabaseBoundary(
-          mockDrizzleService.db,
-        ) as unknown as DrizzleDatabase,
-      ),
-    );
+    service = makeBattlePagination(mockDrizzleService.db);
     drizzleService = mockDrizzleService;
   });
 
   describe("cursor pagination", () => {
     it("should return paginated results without cursor", async () => {
-      drizzleService.db.query.battles.findMany.mockResolvedValue(mockBattles);
+      drizzleService.db.query.battles.findMany.mockReturnValue(
+        Effect.succeed(mockBattles),
+      );
 
-      const result = await service.paginateBattles(() => undefined, {
-        size: 2,
-        sortOrder: "desc",
-        includeTotal: false,
-      });
+      const result = await Effect.runPromise(
+        service.paginateBattles(() => undefined, {
+          size: 2,
+          sortOrder: "desc",
+          includeTotal: false,
+        }),
+      );
 
       expect(result.data).toEqual(mockBattles);
       expect(result.pagination).toMatchObject({
@@ -146,15 +145,17 @@ describe("battle pagination", () => {
 
     it("should return paginated results with next cursor when more results exist", async () => {
       const battlesWithExtra = [...mockBattles, { ...mockBattles[0], id: "3" }];
-      drizzleService.db.query.battles.findMany.mockResolvedValue(
-        battlesWithExtra,
+      drizzleService.db.query.battles.findMany.mockReturnValue(
+        Effect.succeed(battlesWithExtra),
       );
 
-      const result = await service.paginateBattles(() => undefined, {
-        size: 2,
-        sortOrder: "desc",
-        includeTotal: false,
-      });
+      const result = await Effect.runPromise(
+        service.paginateBattles(() => undefined, {
+          size: 2,
+          sortOrder: "desc",
+          includeTotal: false,
+        }),
+      );
 
       expect(result.data).toHaveLength(2);
       expect(result.pagination).toMatchObject({
@@ -173,15 +174,17 @@ describe("battle pagination", () => {
         { ...mockBattles[0], id: "2", createdAt: new Date("2024-01-02") },
       ];
       drizzleService.db.query.battles.findMany
-        .mockResolvedValueOnce(mockBattles)
-        .mockResolvedValueOnce(previousWindow);
+        .mockReturnValueOnce(Effect.succeed(mockBattles))
+        .mockReturnValueOnce(Effect.succeed(previousWindow));
 
-      const result = await service.paginateBattles(() => undefined, {
-        cursor: currentCursor,
-        size: 2,
-        sortOrder: "desc",
-        includeTotal: false,
-      });
+      const result = await Effect.runPromise(
+        service.paginateBattles(() => undefined, {
+          cursor: currentCursor,
+          size: 2,
+          sortOrder: "desc",
+          includeTotal: false,
+        }),
+      );
 
       expect(result.pagination).toMatchObject({
         size: 2,
@@ -197,15 +200,17 @@ describe("battle pagination", () => {
         { ...mockBattles[0], id: "1", createdAt: new Date("2024-01-01") },
       ];
       drizzleService.db.query.battles.findMany
-        .mockResolvedValueOnce(mockBattles)
-        .mockResolvedValueOnce(previousWindow);
+        .mockReturnValueOnce(Effect.succeed(mockBattles))
+        .mockReturnValueOnce(Effect.succeed(previousWindow));
 
-      const result = await service.paginateBattles(() => undefined, {
-        cursor: currentCursor,
-        size: 2,
-        sortOrder: "desc",
-        includeTotal: false,
-      });
+      const result = await Effect.runPromise(
+        service.paginateBattles(() => undefined, {
+          cursor: currentCursor,
+          size: 2,
+          sortOrder: "desc",
+          includeTotal: false,
+        }),
+      );
 
       expect(result.pagination).toMatchObject({
         size: 2,
@@ -215,14 +220,18 @@ describe("battle pagination", () => {
     });
 
     it("should ignore invalid cursors when reporting previous page state", async () => {
-      drizzleService.db.query.battles.findMany.mockResolvedValue(mockBattles);
+      drizzleService.db.query.battles.findMany.mockReturnValue(
+        Effect.succeed(mockBattles),
+      );
 
-      const result = await service.paginateBattles(() => undefined, {
-        cursor: "invalid-cursor",
-        size: 2,
-        sortOrder: "desc",
-        includeTotal: false,
-      });
+      const result = await Effect.runPromise(
+        service.paginateBattles(() => undefined, {
+          cursor: "invalid-cursor",
+          size: 2,
+          sortOrder: "desc",
+          includeTotal: false,
+        }),
+      );
 
       expect(result.pagination).toMatchObject({
         size: 2,
@@ -233,13 +242,17 @@ describe("battle pagination", () => {
     });
 
     it("should work without includeTotal", async () => {
-      drizzleService.db.query.battles.findMany.mockResolvedValue(mockBattles);
+      drizzleService.db.query.battles.findMany.mockReturnValue(
+        Effect.succeed(mockBattles),
+      );
 
-      const result = await service.paginateBattles(() => undefined, {
-        size: 2,
-        sortOrder: "desc",
-        includeTotal: false,
-      });
+      const result = await Effect.runPromise(
+        service.paginateBattles(() => undefined, {
+          size: 2,
+          sortOrder: "desc",
+          includeTotal: false,
+        }),
+      );
 
       expect(result.pagination.total).toBeUndefined();
       expect(result.performance.countTime).toBeUndefined();

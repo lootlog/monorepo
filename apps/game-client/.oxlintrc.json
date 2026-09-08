@@ -1,4 +1,5 @@
 {
+  "extends": ["../../.oxlintrc.json"],
   "plugins": ["react", "typescript", "unicorn"],
   "ignorePatterns": [
     "**/node_modules",
@@ -23,7 +24,12 @@
   "rules": {
     "complexity": "error",
     "eqeqeq": "error",
-    "no-console": ["warn", { "allow": ["warn"] }],
+    "no-console": [
+      "warn",
+      {
+        "allow": ["warn"]
+      }
+    ],
     "no-debugger": "error",
     "no-alert": "error",
     "no-var": "error",
@@ -39,7 +45,6 @@
     "no-useless-return": "warn",
     "require-await": "warn",
     "no-await-in-loop": "warn",
-
     "@typescript-eslint/no-explicit-any": "warn",
     "@typescript-eslint/no-unused-vars": [
       "warn",
@@ -59,7 +64,6 @@
     "@typescript-eslint/ban-ts-comment": "warn",
     "@typescript-eslint/consistent-type-imports": "warn",
     "@typescript-eslint/no-import-type-side-effects": "warn",
-
     "react/react-in-jsx-scope": "off",
     "react/jsx-key": "error",
     "react/jsx-no-duplicate-props": "error",
@@ -74,8 +78,12 @@
     "react/jsx-curly-brace-presence": ["warn", "never"],
     "react-hooks/rules-of-hooks": "error",
     "react-hooks/exhaustive-deps": "warn",
-
-    "unicorn/catch-error-name": "warn",
+    "unicorn/catch-error-name": [
+      "warn",
+      {
+        "ignore": ["cause"]
+      }
+    ],
     "unicorn/error-message": "error",
     "unicorn/no-array-for-each": "off",
     "unicorn/no-null": "off",
@@ -84,6 +92,680 @@
     "unicorn/prefer-number-properties": "warn",
     "unicorn/prefer-string-slice": "warn",
     "unicorn/prefer-ternary": "off",
-    "unicorn/throw-new-error": "error"
-  }
+    "unicorn/throw-new-error": "error",
+    "vitest/valid-expect": [
+      "error",
+      {
+        "maxArgs": 2
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["src/extension/protocol.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["decodeMessage"]
+          }
+        ],
+        "anti-slop/no-unknown-returns": [
+          "error",
+          {
+            "boundaryFunctions": ["decodeMessage"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/extension/background-connection.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["receive", "executeGameCommand"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/hooks/game-events/helpers/battle.helpers.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["parseNumericHpValue"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["parseNumericHpValue"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/lib/margonem-runtime/margonem-runtime-bridge.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": [
+              "RuntimeFunction",
+              "observeIntent",
+              "parseIntent",
+              "createEnvelope",
+              "createEnvelopeSafely",
+              "triggerManualEvent"
+            ]
+          }
+        ],
+        "anti-slop/no-unknown-returns": [
+          "error",
+          {
+            "boundaryFunctions": ["RuntimeFunction"]
+          }
+        ],
+        "anti-slop/no-reflect-apply": [
+          "error",
+          {
+            "boundaryFunctions": [
+              "wrappedInbound",
+              "wrappedOutgoing",
+              "wrapper"
+            ]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["install", "parseIntent", "createEnvelope"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/lib/logs/log-actions.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": [
+              "serializeLogValue",
+              "serializeLogValueWithinBudget",
+              "getResponseBody",
+              "getResponseStatusCode",
+              "getErrorStatusCode",
+              "getLoggableErrorResponse",
+              "getErrorMessage"
+            ]
+          }
+        ],
+        "anti-slop/no-unknown-returns": [
+          "error",
+          {
+            "boundaryFunctions": [
+              "getResponseBody",
+              "getSuccessDetails",
+              "getErrorDetails"
+            ]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": [
+              "serializeLogValueWithinBudget",
+              "getResponseStatusCode",
+              "getErrorStatusCode",
+              "getLoggableErrorResponse",
+              "getErrorMessage"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/extension/http.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["executeExtensionHttp"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/store/online-players.store.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": [
+              "migrateOnlinePlayersState",
+              "sanitizeFiltersByGuildId"
+            ]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["migrateOnlinePlayersState"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/api/characters.api.ts"],
+      "rules": {
+        "anti-slop/no-unsafe-dictionary-type": [
+          "error",
+          {
+            "boundaryTypes": ["RawCharacterData"]
+          }
+        ],
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": [
+              "toStringOrNull",
+              "normalizeCharacter",
+              "normalizeCharacterList"
+            ]
+          }
+        ],
+        "anti-slop/no-unknown-returns": [
+          "error",
+          {
+            "boundaryFunctions": ["parseJsonOrNull"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["toStringOrNull"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/store/hotkeys.store.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["migrateHotkeysState", "migrateBinding"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["migrateBinding"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/lib/margonem-tooltips/patcher.ts"],
+      "rules": {
+        "anti-slop/no-known-value-widening": [
+          "error",
+          {
+            "boundaryBindings": ["lastOtherCanvasTipEvent"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["patchOtherPrototype"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/lib/online-players-presence.ts"],
+      "rules": {
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["normalizePresenceLevel"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/components/ui/scroll-area.tsx"],
+      "rules": {
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["setViewportRef"]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/components/guild-switcher.test.tsx",
+        "src/processors/battle-event-processor.golden.test.ts",
+        "src/processors/battle-event-processor.test.ts",
+        "src/features/command/command.test.tsx",
+        "src/features/chat/components/chat-input.test.tsx",
+        "src/features/settings/components/logs/logs-settings-tab.test.tsx"
+      ],
+      "rules": {
+        "anti-slop/no-module-mocking": [
+          "error",
+          {
+            "externalModules": ["sonner"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/hooks/use-local-storage.ts"],
+      "rules": {
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["reduceStorageState"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/lib/margonem-runtime/runtime-adapter.ts"],
+      "rules": {
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": [
+              "createRuntimeAdapter",
+              "getMargonemInterface"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/lib/api/generated-helpers.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": [
+              "getNumber",
+              "getString",
+              "normalizeSoundCategoryConfig"
+            ]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["getNumber", "getString", "normalizeTimerNpc"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/lib/margonem-runtime/runtime-state-projection.ts"],
+      "rules": {
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["resolveNpcIcon"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/features/chat/chat-query-cache.helpers.ts"],
+      "rules": {
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["getChatMessagesQueryGuildId"]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/features/chat/components/chat-input-constraints-plugin.tsx"
+      ],
+      "rules": {
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["handleControlledTextInsertion"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/lib/margonem-runtime/adapters/tooltip-runtime-adapter.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["hide", "show", "createTipWrapper"]
+          }
+        ],
+        "anti-slop/no-unknown-returns": [
+          "error",
+          {
+            "boundaryFunctions": ["hide", "show", "find"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/lib/margonem-runtime/adapters/glow-runtime-adapter.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["isNativeOtherGlowDrawable"]
+          }
+        ],
+        "anti-slop/no-unknown-returns": [
+          "error",
+          {
+            "boundaryFunctions": ["RuntimeOtherUpdate"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["isNativeOtherGlowDrawable"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/lib/loot-create-debug.ts"],
+      "rules": {
+        "anti-slop/no-unsafe-dictionary-type": [
+          "error",
+          {
+            "boundaryTypes": ["LootCreateDebugDetails"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/features/air-tags/air-tag-receive-controller.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["handleUpdate"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/store/settings.store.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["migrateSettingsState"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["migrateSettingsState"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/store/windows.store.ts"],
+      "rules": {
+        "anti-slop/no-unsafe-dictionary-type": [
+          "error",
+          {
+            "boundaryTypes": ["RawPersistedWindows"]
+          }
+        ],
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": [
+              "inferLegacyDefinedPosition",
+              "migrateWindowsState",
+              "parsePersistedWindow",
+              "readPersistedWindowPayload",
+              "mergePersistedWindows"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/extension/page-transport.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["resolve"]
+          }
+        ],
+        "anti-slop/no-unknown-returns": [
+          "error",
+          {
+            "boundaryFunctions": ["request"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/lib/margonem-account-proof.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["parseMargonemAccountProofResponse"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["extension/entrypoints/bridge.content.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["receiveBackgroundMessage"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "boundaryFunctions": ["receivePageConnection"],
+            "allowInTypeGuards": true
+          }
+        ]
+      }
+    },
+    {
+      "files": ["extension/entrypoints/background.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["receivePageMessage"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/components/ui/toggle-group.tsx"],
+      "rules": {
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "boundaryFunctions": ["setRefValue"],
+            "allowInTypeGuards": true
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/scripts/serve-local-build.mjs"],
+      "rules": {
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "boundaryFunctions": ["handleListening"],
+            "allowInTypeGuards": true
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/processors/dialog-processor.ts"],
+      "rules": {
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "boundaryFunctions": ["handle"],
+            "allowInTypeGuards": true
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/features/air-tags/air-tag-observation-controller.ts"],
+      "rules": {
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["handle"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/features/online-players/hooks/use-players-presence.tsx"],
+      "rules": {
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["applyOnlinePlayersUpdate"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/features/public-api/online-players-controller.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["requireNonEmptyString"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["requireNonEmptyString"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/store/timer-settings-codec.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["decodeTimerSettings"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/test/test-runtime-window.ts"],
+      "rules": {
+        "anti-slop/no-unsafe-dictionary-type": [
+          "error",
+          {
+            "boundaryTypes": ["TestRuntimeEngine"]
+          }
+        ],
+        "anti-slop/no-unknown-returns": [
+          "error",
+          {
+            "boundaryFunctions": ["_g"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/features/npc-detector/components/npcs-list.tsx"],
+      "rules": {
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "boundaryFunctions": ["supportsElementAnimation"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/lib/game-event-pipeline.golden.test.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["dispatchRuntimeEvent", "replayAndSnapshot"]
+          }
+        ],
+        "anti-slop/no-unknown-returns": [
+          "error",
+          {
+            "boundaryFunctions": ["dispatchRuntimeEvent"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/extension/background-connection.test.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["respond"]
+          }
+        ]
+      }
+    }
+  ]
 }

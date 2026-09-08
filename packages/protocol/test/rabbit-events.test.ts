@@ -13,15 +13,16 @@ describe("decodeRabbitEvent", () => {
     it.each([null, "https://cdn.discordapp.com/icons/guild/icon.webp"])(
       `${routingKey} preserves Discord icon %j`,
       (icon) => {
-        const payload = {
+        const basePayload = {
           guildId: "guild-1",
           name: "testowankox",
           icon,
           ownerId: "user-1",
-          ...(routingKey === RabbitRoutingKey.GUILDS_CREATE
-            ? { roles: [] }
-            : {}),
         };
+        const payload =
+          routingKey === RabbitRoutingKey.GUILDS_CREATE
+            ? { ...basePayload, roles: [] }
+            : basePayload;
         expect(
           decodeRabbitEventJson(routingKey, JSON.stringify(payload)),
         ).toEqual(payload);

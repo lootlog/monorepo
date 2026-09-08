@@ -10,19 +10,17 @@ import { getPermissionRefreshInfo } from "@/utils/get-permission-refresh-info";
 import { RefreshCcw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useThemeMeta } from "@/themes";
-import { getLootsControllerFetchLootsByGuildIdQueryKey } from "@lootlog/client/main";
-import { useQueryClient } from "@tanstack/react-query";
 import {
+  getLootsControllerFetchLootsByGuildIdQueryKey,
   getGuildsControllerGetGuildByIdQueryKey,
   invalidateGuildsControllerGetGuildPermissions,
   useGuildsControllerGetGuildById,
-} from "@lootlog/client/main";
-import {
   getMembersControllerGetMeQueryKey,
   invalidateMembersControllerGetMe,
   useMembersControllerGetMe,
   useMembersControllerRefreshMe,
 } from "@lootlog/client/main";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const GuildSidebarHeader = ({ guildId }: { guildId?: string }) => {
   const queryClient = useQueryClient();

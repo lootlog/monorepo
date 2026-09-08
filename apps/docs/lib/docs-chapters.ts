@@ -1,3 +1,5 @@
+import type { Separator } from "fumadocs-core/page-tree";
+
 export const docsChapters = [
   {
     id: "start",
@@ -63,11 +65,7 @@ export function getChapterBySlug(slug?: string[]): DocsChapter {
 }
 
 export function getChapterBySeparator(
-  separator: unknown,
+  separator: Separator["name"],
 ): DocsChapter | undefined {
-  if (typeof separator !== "string") {
-    return undefined;
-  }
-
   return docsChapters.find((chapter) => chapter.separator === separator);
 }

@@ -20,15 +20,20 @@ import {
   TimersInvariantViolation,
   toTimersDataFailure,
 } from "./timer-errors.js";
-import { mapTimerResponse } from "#src/timers/timer-projection";
+import {
+  mapTimerResponse,
+  type TimerPublishedEvent,
+} from "#src/timers/timer-projection";
 
 export interface RestoreTimerPorts {
   readonly invalidate: (pattern: string) => Effect.Effect<unknown, unknown>;
-  readonly publish: (
-    routingKey:
+  readonly publish: <
+    Key extends
       | typeof RabbitRoutingKey.GUILDS_TIMERS_UPDATE
       | typeof RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
-    payload: unknown,
+  >(
+    routingKey: Key,
+    payload: TimerPublishedEvent<Key>,
   ) => Effect.Effect<unknown, unknown>;
 }
 

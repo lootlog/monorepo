@@ -30,7 +30,8 @@ class Socket implements RealtimeWebSocket {
     );
   }
   send(data: string | Uint8Array) {
-    if (typeof data === "string") throw new Error("Expected binary protocol");
+    if (!(data instanceof Uint8Array))
+      throw new Error("Expected binary protocol");
     this.sent.push(data);
   }
   open() {
@@ -69,7 +70,7 @@ afterEach(() => {
 
 function setup() {
   const socket = new Socket();
-  const factory = vi.fn(() => socket);
+  const factory = vi.fn<() => Socket>(() => socket);
   const realtime = new RealtimeClient({
     url: "https://gateway.lootlog.pl",
     webSocketFactory: factory,

@@ -1,3 +1,8 @@
+import {
+  findNpcType,
+  NPC_TYPE_NAMES,
+  NPC_TYPE_SORT_ORDER,
+} from "@/constants/npc";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { ViewModeToggle } from "@/components/ui/view-mode-toggle";
@@ -17,7 +22,7 @@ import groupBy from "lodash/groupBy";
 import { Clock3, Globe2, SearchX } from "lucide-react";
 import { useState } from "react";
 import { SingleTimer } from "./single-timer";
-import { NPC_TYPE_NAMES, NPC_TYPE_SORT_ORDER } from "@/constants/npc";
+
 import { SearchInput } from "@/components/ui/search-input";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
@@ -98,12 +103,8 @@ export const Timers = () => {
   });
   const sorted = sortedByTime?.sort((a, b) => {
     return (
-      NPC_TYPE_SORT_ORDER.indexOf(
-        a.npc?.type as (typeof NPC_TYPE_SORT_ORDER)[number],
-      ) -
-      NPC_TYPE_SORT_ORDER.indexOf(
-        b.npc?.type as (typeof NPC_TYPE_SORT_ORDER)[number],
-      )
+      NPC_TYPE_SORT_ORDER.findIndex((type) => type === a.npc?.type) -
+      NPC_TYPE_SORT_ORDER.findIndex((type) => type === b.npc?.type)
     );
   });
 
@@ -149,7 +150,7 @@ export const Timers = () => {
               <div className="mb-4 flex size-14 items-center justify-center rounded-xl border border-border bg-background">
                 <ThemeEmptyStateIcon
                   className="size-8 text-muted-foreground"
-                  fallback={<Globe2 className="size-8 text-primary" />}
+                  fallback=<Globe2 className="size-8 text-primary" />
                 />
               </div>
               <h2 className="text-base font-semibold text-foreground">
@@ -174,7 +175,7 @@ export const Timers = () => {
                   {showsNoSearchResults ? (
                     <SearchX />
                   ) : (
-                    <ThemeEmptyStateIcon fallback={<Clock3 />} />
+                    <ThemeEmptyStateIcon fallback=<Clock3 /> />
                   )}
                 </EmptyMedia>
                 <EmptyTitle>{t(emptyTranslationKeys.title)}</EmptyTitle>
@@ -209,11 +210,13 @@ export const Timers = () => {
               {!isPending && timers && hasFilteredTimers && (
                 <div className="flex flex-col gap-4">
                   {Object.keys(groups).map((key) => {
+                    const npcType = findNpcType(key);
                     return (
                       <div key={key}>
                         <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground px-1 mb-2">
-                          {NPC_TYPE_NAMES[key as keyof typeof NPC_TYPE_NAMES] ??
-                            t("timers.npcType.manual")}{" "}
+                          {npcType
+                            ? NPC_TYPE_NAMES[npcType]
+                            : t("timers.npcType.manual")}{" "}
                           ({groups[key]?.length})
                         </p>
                         <div className={getTimerGroupClassName(viewMode)}>

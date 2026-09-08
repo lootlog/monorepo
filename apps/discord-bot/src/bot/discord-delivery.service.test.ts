@@ -5,10 +5,13 @@ import {
   NotificationTargetType,
   type DiscordNotificationSendCommand,
 } from "@lootlog/schema/notifications";
-import { ChannelType, type Client } from "discord.js";
+import { ChannelType } from "discord.js";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Effect, Fiber } from "effect";
-import { makeDiscordDelivery } from "./discord-delivery.service.js";
+import {
+  makeDiscordDelivery,
+  type DiscordDeliveryClient,
+} from "./discord-delivery.service.js";
 
 const command = (
   targetType: NotificationTargetType,
@@ -37,7 +40,7 @@ describe("Discord delivery", () => {
         fetch: mock(async () => ({ createDM: async () => ({ send }) })),
       },
       channels: { fetch: mock() },
-    } as unknown as Client;
+    } satisfies DiscordDeliveryClient;
     await Effect.runPromise(
       makeDiscordDelivery({ publish }, client).sendNotification(
         command(NotificationTargetType.DM),
@@ -70,7 +73,7 @@ describe("Discord delivery", () => {
           send,
         })),
       },
-    } as unknown as Client;
+    } satisfies DiscordDeliveryClient;
     const input = {
       ...command(NotificationTargetType.CHANNEL),
       content: "<@&123> alert",
@@ -96,7 +99,7 @@ describe("Discord delivery", () => {
           isSendable: () => true,
         })),
       },
-    } as unknown as Client;
+    } satisfies DiscordDeliveryClient;
     await Effect.runPromise(
       makeDiscordDelivery({ publish }, client).sendNotification(
         command(NotificationTargetType.CHANNEL),
@@ -120,7 +123,7 @@ describe("Discord delivery", () => {
     const client = {
       users: { fetch: mock() },
       channels: { fetch },
-    } as unknown as Client;
+    } satisfies DiscordDeliveryClient;
     const fiber = Effect.runFork(
       makeDiscordDelivery({ publish }, client).sendNotification(
         command(NotificationTargetType.CHANNEL),

@@ -21,17 +21,19 @@ type MembersLookupCache = {
   membersByGuildId: NotificationGuildMembersByGuildId;
 };
 
-const membersLookupCacheByOwner = new WeakMap<object, MembersLookupCache>();
+type MembersLookupCacheOwner = {
+  lookup?: MembersLookupCache;
+};
 
 const getStableMembersLookup = (
-  cacheOwner: object,
+  cacheOwner: MembersLookupCacheOwner,
   guildIds: readonly string[],
   memberDataByGuildId: readonly (
     | MemberSummaryResponseDtoOutput[]
     | undefined
   )[],
 ) => {
-  const cachedLookup = membersLookupCacheByOwner.get(cacheOwner);
+  const cachedLookup = cacheOwner.lookup;
   const unchanged =
     guildIds.length === memberDataByGuildId.length &&
     cachedLookup?.memberDataByGuildId.size === guildIds.length &&
@@ -60,7 +62,7 @@ const getStableMembersLookup = (
     memberDataByGuildId: nextMemberDataByGuildId,
     membersByGuildId: nextMembersByGuildId,
   };
-  membersLookupCacheByOwner.set(cacheOwner, nextCache);
+  cacheOwner.lookup = nextCache;
   return nextMembersByGuildId;
 };
 
@@ -68,7 +70,7 @@ export const useNotificationGuildMembers = (
   notifications: readonly StoredNotification[],
 ) => {
   const queryClient = useQueryClient();
-  const [cacheOwner] = useState(() => ({}));
+  const [cacheOwner] = useState<MembersLookupCacheOwner>(() => ({}));
   const invalidatedMemberKeysRef = useRef<Set<string>>(new Set());
   const guildIds = [...new Set(notifications.map(({ guildId }) => guildId))];
   const memberQueries = useQueries({

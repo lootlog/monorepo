@@ -57,7 +57,7 @@ describe("extension HTTP boundary", () => {
       const fetcher = vi.fn<typeof fetch>();
       await expect(
         executeExtensionHttp(request(url, method), signal(), fetcher),
-      ).rejects.toThrow();
+      ).rejects.toThrow("Extension HTTP operation is not allowed");
       expect(fetcher).not.toHaveBeenCalled();
     },
   );
@@ -136,7 +136,7 @@ describe("extension HTTP boundary", () => {
   });
 
   it("bounds streamed responses even without content-length", async () => {
-    const cancel = vi.fn();
+    const cancel = vi.fn<() => void>();
     const body = new ReadableStream<Uint8Array>({
       start(controller) {
         controller.enqueue(new Uint8Array(MAX_EXTENSION_HTTP_BYTES + 1));
@@ -152,11 +152,11 @@ describe("extension HTTP boundary", () => {
 
   it("does not fetch after cancellation", async () => {
     const controller = new AbortController();
-    controller.abort();
+    controller.abort(new Error("cancelled HTTP request"));
     const fetcher = vi.fn<typeof fetch>();
     await expect(
       executeExtensionHttp(request(), controller.signal, fetcher),
-    ).rejects.toThrow();
+    ).rejects.toThrow("cancelled HTTP request");
     expect(fetcher).not.toHaveBeenCalled();
   });
 });

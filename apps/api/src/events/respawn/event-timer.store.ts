@@ -7,7 +7,6 @@ import {
   playerSnapshotTable,
   timerTable,
 } from "#src/database/drizzle/schema";
-import type { Timer } from "#src/timers/timers.types";
 
 type TimerWrite = Omit<
   typeof timerTable.$inferInsert,
@@ -159,7 +158,7 @@ export const makeEventTimerStore = (database: ApiDatabaseValue) => {
             inArray(timerTable.timerKey, timerKeys),
           ),
         ),
-    ).pipe(Effect.map((timers) => timers as Timer[]));
+    ).pipe(Effect.map((timers) => timers));
   const findEventHeroTimersByNames = (
     guildId: string,
     world: string,
@@ -178,7 +177,7 @@ export const makeEventTimerStore = (database: ApiDatabaseValue) => {
           ),
         )
         .orderBy(desc(timerTable.maxSpawnTime)),
-    ).pipe(Effect.map((timers) => timers as Timer[]));
+    ).pipe(Effect.map((timers) => timers));
 
   return {
     findTimer,

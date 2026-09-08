@@ -1,3 +1,4 @@
+import { optionalPathString } from "#src/shared/http/handler-response";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { LootlogApi } from "../../lootlog-api.js";
 import {
@@ -20,32 +21,50 @@ export const LootsHandlers = HttpApiBuilder.group(
   (handlers) =>
     handlers
       .handle("LootsControllerFetchLootsByGuildId", ({ params, query }) =>
-        toRecordsHttpResponse(fetchLoots(params.guildId, query)),
+        toRecordsHttpResponse(
+          fetchLoots(optionalPathString(params.guildId), query),
+        ),
       )
       .handle("LootsControllerGetLootStats", ({ params, query }) =>
-        toRecordsHttpResponse(getLootStats(params.guildId, query)),
+        toRecordsHttpResponse(
+          getLootStats(optionalPathString(params.guildId), query),
+        ),
       )
       .handle("LootsControllerCountLootsByGuildId", ({ params, query }) =>
-        toRecordsHttpResponse(countLoots(params.guildId, query)),
+        toRecordsHttpResponse(
+          countLoots(optionalPathString(params.guildId), query),
+        ),
       )
       .handle("LootsControllerResolveLootItemByHid", ({ params, query }) =>
-        toRecordsHttpResponse(resolveLootItem(params.guildId, query)),
+        toRecordsHttpResponse(
+          resolveLootItem(optionalPathString(params.guildId), query),
+        ),
       )
       .handle("LootsControllerFetchLootById", ({ params }) =>
-        toRecordsHttpResponse(fetchLoot(params.guildId, params.lootId)),
+        toRecordsHttpResponse(
+          fetchLoot(optionalPathString(params.guildId), params.lootId),
+        ),
       )
       .handle("LootsControllerDeleteLoot", ({ params }) =>
-        toRecordsHttpResponse(archiveLoot(params.guildId, params.lootId)),
+        toRecordsHttpResponse(
+          archiveLoot(optionalPathString(params.guildId), params.lootId),
+        ),
       )
       .handle("LootsControllerCreateLoot", ({ payload }) =>
         toRecordsHttpResponse(createLoot(payload)),
       )
       .handle("LootsControllerGetComments", ({ params }) =>
-        toRecordsHttpResponse(getComments(params.guildId, params.lootId)),
+        toRecordsHttpResponse(
+          getComments(optionalPathString(params.guildId), params.lootId),
+        ),
       )
       .handle("LootsControllerCreateComment", ({ params, payload }) =>
         toRecordsHttpResponse(
-          createComment(params.guildId, params.lootId, payload),
+          createComment(
+            optionalPathString(params.guildId),
+            params.lootId,
+            payload,
+          ),
         ),
       )
       .handle("LootsControllerUpdateLoot", ({ params, payload }) =>

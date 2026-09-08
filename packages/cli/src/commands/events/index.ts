@@ -1,9 +1,11 @@
 import { chalk } from "zx";
 import { publish } from "./publish.js";
 
-const EVENTS_COMMANDS = {
-  publish,
-} as const;
+const EVENTS_COMMANDS = new Map(
+  Object.entries({
+    publish,
+  }),
+);
 
 export const events = async (args: string[]): Promise<void> => {
   const [subcommand, ...subArgs] = args;
@@ -33,8 +35,7 @@ ${chalk.bold("Requirements:")}
     return;
   }
 
-  const commandHandler =
-    EVENTS_COMMANDS[subcommand as keyof typeof EVENTS_COMMANDS];
+  const commandHandler = EVENTS_COMMANDS.get(subcommand);
 
   if (!commandHandler) {
     console.error(chalk.red(`\n❌ Unknown command: ${subcommand}\n`));

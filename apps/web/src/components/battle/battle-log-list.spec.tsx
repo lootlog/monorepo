@@ -40,6 +40,12 @@ const events: RawBattleParsedEvent[] = Array.from(
 );
 let desktop = true;
 
+function isScrollToOptions(
+  value: ScrollToOptions | number | undefined,
+): value is ScrollToOptions {
+  return typeof value === "object";
+}
+
 function Fixture(props: Partial<BattleLogListProps>) {
   const outer = useRef<HTMLDivElement>(null);
   const inner = useRef<HTMLDivElement>(null);
@@ -125,7 +131,7 @@ beforeEach(() => {
     this: HTMLElement,
     options?: ScrollToOptions | number,
   ) {
-    if (typeof options === "object")
+    if (isScrollToOptions(options))
       this.scrollTop = options.top ?? this.scrollTop;
     this.dispatchEvent(new Event("scroll"));
   });

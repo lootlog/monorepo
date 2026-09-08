@@ -5,6 +5,23 @@ import {
   useNotificationsStore,
 } from "./notifications.store";
 
+const createNpc = (
+  id: number,
+): NonNullable<NotificationWithServers["npc"]> => ({
+  id,
+  nick: "Hero",
+  name: "Hero",
+  icon: "npc.gif",
+  lvl: 200,
+  prof: "w",
+  wt: 80,
+  type: 2,
+  tpl: 1,
+  x: 1,
+  y: 2,
+  location: "Ithan",
+});
+
 const createNotification = (
   overrides?: Partial<NotificationWithServers>,
 ): NotificationWithServers => ({
@@ -154,9 +171,7 @@ describe("notifications.store", () => {
           ...createNotification({
             notificationId: "notification-1",
             message: undefined,
-            npc: {
-              id: 500,
-            } as never,
+            npc: createNpc(500),
           }),
           listKey: "notification-1",
           receivedAtMs: 1,
@@ -215,7 +230,7 @@ describe("notifications.store", () => {
       ...createNotification({
         notificationId,
         message: undefined,
-        npc: { id: npcId } as never,
+        npc: createNpc(npcId),
         world,
       }),
       listKey: notificationId,
@@ -257,7 +272,7 @@ describe("notifications.store", () => {
         },
       },
     });
-    const listener = vi.fn();
+    const listener = vi.fn<() => void>();
     const unsubscribe = useNotificationsStore.subscribe(listener);
 
     useNotificationsStore
@@ -313,9 +328,7 @@ describe("notifications.store", () => {
         notificationId: "notification-1",
         message: undefined,
         servers: ["guild-1"],
-        npc: {
-          id: 500,
-        } as never,
+        npc: createNpc(500),
       }),
     );
     const initialListKey =
@@ -326,9 +339,7 @@ describe("notifications.store", () => {
         notificationId: "notification-2",
         message: undefined,
         servers: ["guild-2"],
-        npc: {
-          id: 500,
-        } as never,
+        npc: createNpc(500),
       }),
     );
 
@@ -390,7 +401,7 @@ describe("notifications.store", () => {
         notification: createNotification({
           notificationId: "npc-1",
           message: undefined,
-          npc: { id: 500 } as never,
+          npc: createNpc(500),
           servers: ["guild-1"],
         }),
       },
@@ -398,7 +409,7 @@ describe("notifications.store", () => {
         notification: createNotification({
           notificationId: "npc-2",
           message: undefined,
-          npc: { id: 500 } as never,
+          npc: createNpc(500),
           servers: ["guild-2"],
         }),
       },
@@ -406,7 +417,7 @@ describe("notifications.store", () => {
         notification: createNotification({
           notificationId: "npc-2",
           message: undefined,
-          npc: { id: 500 } as never,
+          npc: createNpc(500),
           servers: ["guild-3"],
         }),
       },
@@ -414,7 +425,7 @@ describe("notifications.store", () => {
         notification: createNotification({
           notificationId: "npc-other-world",
           message: undefined,
-          npc: { id: 500 } as never,
+          npc: createNpc(500),
           servers: ["guild-4"],
           world: "gefion",
         }),
@@ -430,7 +441,7 @@ describe("notifications.store", () => {
         }),
       },
     ];
-    const listener = vi.fn();
+    const listener = vi.fn<() => void>();
     const unsubscribe = useNotificationsStore.subscribe(listener);
 
     useNotificationsStore.getState().presentNotifications(presentations);
@@ -532,7 +543,7 @@ describe("notifications.store", () => {
         },
       },
     });
-    const listener = vi.fn();
+    const listener = vi.fn<() => void>();
     const unsubscribe = useNotificationsStore.subscribe(listener);
 
     useNotificationsStore
@@ -548,7 +559,7 @@ describe("notifications.store", () => {
   });
 
   it("does not publish when removing a notification that does not exist", () => {
-    const listener = vi.fn();
+    const listener = vi.fn<() => void>();
     const unsubscribe = useNotificationsStore.subscribe(listener);
     const stateBefore = useNotificationsStore.getState();
 
@@ -560,7 +571,7 @@ describe("notifications.store", () => {
   });
 
   it("does not publish when clearing missing auto-hide state", () => {
-    const listener = vi.fn();
+    const listener = vi.fn<() => void>();
     const unsubscribe = useNotificationsStore.subscribe(listener);
     const stateBefore = useNotificationsStore.getState();
 
@@ -574,7 +585,7 @@ describe("notifications.store", () => {
   });
 
   it("does not publish invalid auto-hide transitions", () => {
-    const listener = vi.fn();
+    const listener = vi.fn<() => void>();
     const unsubscribe = useNotificationsStore.subscribe(listener);
     const stateBefore = useNotificationsStore.getState();
 
@@ -588,7 +599,7 @@ describe("notifications.store", () => {
   });
 
   it("does not publish when clearing an already empty notification store", () => {
-    const listener = vi.fn();
+    const listener = vi.fn<() => void>();
     const unsubscribe = useNotificationsStore.subscribe(listener);
     const stateBefore = useNotificationsStore.getState();
 

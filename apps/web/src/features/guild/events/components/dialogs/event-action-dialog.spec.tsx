@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 
+import { initializeTestTranslations } from "@/lib/testing/i18n";
 import {
   act,
   cleanup,
@@ -10,9 +11,7 @@ import {
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { EventActionDialog } from "./event-action-dialog";
 
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
-}));
+await initializeTestTranslations();
 
 afterEach(cleanup);
 

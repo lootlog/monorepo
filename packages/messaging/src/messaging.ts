@@ -95,12 +95,16 @@ export interface RabbitDelivery {
   readonly raw: ConsumeMessage;
 }
 
+// AMQP field tables are relayed intact, including broker and producer extensions.
+// Their values remain unknown until a consumer validates an owned header.
+type AmqpHeaders = Readonly<Record<string, unknown>>;
+
 export interface PublishOptions {
   readonly exchange?: RabbitExchangeName;
   readonly routingKey: RabbitRoutingKeyName;
   readonly content: Uint8Array;
   readonly contentType?: string;
-  readonly headers?: Readonly<Record<string, unknown>>;
+  readonly headers?: AmqpHeaders;
   readonly messageId?: string;
   readonly persistent?: boolean;
 }
@@ -191,11 +195,13 @@ const toDelivery = (message: ConsumeMessage): RabbitDelivery => ({
   raw: message,
 });
 
+const isRetryCount = Schema.is(
+  Schema.Int.check(Schema.isGreaterThanOrEqualTo(0)),
+);
+
 const readRetryCount = (message: ConsumeMessage): number => {
   const value = message.properties.headers?.["x-lootlog-retry-count"];
-  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0
-    ? value
-    : 0;
+  return isRetryCount(value) ? value : 0;
 };
 
 const makeService = (
@@ -382,13 +388,13 @@ const installTopology = (
         queues.map(async (queue) => {
           const queueOptions: Options.AssertQueue = {
             durable: queue.durable,
-            ...(queue.singleActiveConsumer
-              ? { arguments: { "x-single-active-consumer": true } }
-              : {}),
             messageTtl: queue.messageTtl,
             deadLetterExchange: queue.deadLetterExchange,
             deadLetterRoutingKey: queue.deadLetterRoutingKey,
           };
+          if (queue.singleActiveConsumer) {
+            queueOptions.arguments = { "x-single-active-consumer": true };
+          }
           await channel.assertQueue(queue.name, queueOptions);
           await channel.bindQueue(queue.name, queue.exchange, queue.routingKey);
         }),

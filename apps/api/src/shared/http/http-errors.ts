@@ -1,7 +1,11 @@
 import { Schema } from "effect";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 
-type ApplicationErrorBody = string | Readonly<Record<string, unknown>>;
+const ApplicationErrorBody = Schema.Union([
+  Schema.String,
+  Schema.Record(Schema.String, Schema.Unknown),
+]);
+type ApplicationErrorBody = typeof ApplicationErrorBody.Type;
 
 export const HttpStatus = {
   BAD_REQUEST: 400,
@@ -51,7 +55,7 @@ export class ApplicationError extends TaggedErrorClass<ApplicationError>()(
   {
     kind: Schema.Literals(Object.values(ApplicationErrorKind)),
     message: Schema.String,
-    response: Schema.Unknown,
+    response: ApplicationErrorBody,
   },
 ) {
   constructor(
@@ -67,7 +71,7 @@ export class ApplicationError extends TaggedErrorClass<ApplicationError>()(
   }
 
   getResponse(): ApplicationErrorBody {
-    return this.response as ApplicationErrorBody;
+    return this.response;
   }
 }
 

@@ -1,9 +1,11 @@
 import { chalk } from "zx";
 import { generate } from "./generate.js";
 
-const ENV_COMMANDS = {
-  generate,
-} as const;
+const ENV_COMMANDS = new Map(
+  Object.entries({
+    generate,
+  }),
+);
 
 export const env = async (args: string[]): Promise<void> => {
   const [subcommand, ...subArgs] = args;
@@ -28,7 +30,7 @@ ${chalk.bold("Global Options:")}
     return;
   }
 
-  const commandHandler = ENV_COMMANDS[subcommand as keyof typeof ENV_COMMANDS];
+  const commandHandler = ENV_COMMANDS.get(subcommand);
 
   if (!commandHandler) {
     console.error(chalk.red(`\n❌ Unknown command: ${subcommand}\n`));

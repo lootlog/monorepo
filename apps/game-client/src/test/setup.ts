@@ -9,39 +9,41 @@ afterEach(() => {
 
 Object.defineProperty(window, "matchMedia", {
   writable: true,
-  value: vi.fn().mockImplementation((query) => ({
+  value: vi.fn<Window["matchMedia"]>().mockImplementation((query) => ({
     matches: false,
     media: query,
     onchange: null,
-    addListener: vi.fn(),
-    removeListener: vi.fn(),
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    dispatchEvent: vi.fn(),
+    addListener: vi.fn<MediaQueryList["addListener"]>(),
+    removeListener: vi.fn<MediaQueryList["removeListener"]>(),
+    addEventListener: vi.fn<MediaQueryList["addEventListener"]>(),
+    removeEventListener: vi.fn<MediaQueryList["removeEventListener"]>(),
+    dispatchEvent: vi
+      .fn<MediaQueryList["dispatchEvent"]>()
+      .mockReturnValue(true),
   })),
 });
 
-class ResizeObserverMock {
+class ResizeObserverMock implements ResizeObserver {
   readonly callback: ResizeObserverCallback;
 
   constructor(callback: ResizeObserverCallback) {
     this.callback = callback;
   }
 
-  observe = vi.fn();
-  unobserve = vi.fn();
-  disconnect = vi.fn();
+  observe = vi.fn<ResizeObserver["observe"]>();
+  unobserve = vi.fn<ResizeObserver["unobserve"]>();
+  disconnect = vi.fn<ResizeObserver["disconnect"]>();
 }
 
-global.ResizeObserver = ResizeObserverMock as unknown as typeof ResizeObserver;
+global.ResizeObserver = ResizeObserverMock;
 
-if (typeof HTMLElement.prototype.getAnimations !== "function") {
+if (typeof HTMLElement.prototype.getAnimations === "undefined") {
   HTMLElement.prototype.getAnimations = () => [];
 }
 
 Object.defineProperty(window, "scrollTo", {
   writable: true,
-  value: vi.fn(),
+  value: vi.fn<Window["scrollTo"]>(),
 });
 
 const storageState = new Map<string, string>();
@@ -50,21 +52,23 @@ const localStorageMock: Storage = {
   get length() {
     return storageState.size;
   },
-  clear: vi.fn(() => {
+  clear: vi.fn<() => void>(() => {
     storageState.clear();
   }),
-  getItem: vi.fn((key: string) => {
+  getItem: vi.fn<Storage["getItem"]>((key: string) => {
     return storageState.get(key) ?? null;
   }),
-  key: vi.fn((index: number) => {
+  key: vi.fn<Storage["key"]>((index: number) => {
     return Array.from(storageState.keys())[index] ?? null;
   }),
-  removeItem: vi.fn((key: string) => {
+  removeItem: vi.fn<(key: string) => void>((key: string) => {
     storageState.delete(key);
   }),
-  setItem: vi.fn((key: string, value: string) => {
-    storageState.set(key, value);
-  }),
+  setItem: vi.fn<(key: string, value: string) => void>(
+    (key: string, value: string) => {
+      storageState.set(key, value);
+    },
+  ),
 };
 
 Object.defineProperty(window, "localStorage", {

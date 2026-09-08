@@ -1,3 +1,4 @@
+import { isObjectRecord } from "@lootlog/schema/records";
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import {
@@ -47,10 +48,10 @@ export const makeTimerSearch = (database: typeof ApiDatabase.Service) => {
       )
       .orderBy(timerTable.timerKey, desc(timerTable.updatedAt))
       .limit(boundedLimit);
-    return timers.flatMap((timer) => {
+    const projectSearchTimer = (timer: (typeof timers)[number]) => {
       const npc = parseNpc(timer.npc);
       if (!npc) return [];
-      const source = timer.npc as Record<string, unknown>;
+      const source = isObjectRecord(timer.npc) ? timer.npc : {};
       return [
         {
           npcId: timer.npcId,
@@ -69,7 +70,8 @@ export const makeTimerSearch = (database: typeof ApiDatabase.Service) => {
           latestRespawnRandomness: timer.latestRespawnRandomness,
         },
       ];
-    });
+    };
+    return timers.flatMap(projectSearchTimer);
   });
   return (guildId: string, world: string, search: string, limit?: number) =>
     operation(guildId, world, search, limit).pipe(

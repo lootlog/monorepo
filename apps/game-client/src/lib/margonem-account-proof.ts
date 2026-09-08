@@ -1,3 +1,4 @@
+import { isObjectRecord } from "@lootlog/schema/records";
 import { MARGONEM_ACCOUNT_VALIDATE_URL } from "@/config/api";
 
 export type MargonemAccountProof = {
@@ -115,11 +116,11 @@ function parseMargonemAccountProofResponse(
 function isMargonemAccountProofResponse(
   value: unknown,
 ): value is MargonemAccountProofResponse {
-  if (typeof value !== "object" || value === null) {
+  if (!isObjectRecord(value)) {
     return false;
   }
 
-  const data = value as Record<string, unknown>;
+  const data = value;
 
   return (
     (typeof data.user_id === "string" || typeof data.user_id === "number") &&

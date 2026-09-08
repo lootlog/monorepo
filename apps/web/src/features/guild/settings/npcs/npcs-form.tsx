@@ -17,8 +17,12 @@ import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { useEffect, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import { NPC_RARITY_CONFIG } from "@/features/guild/settings/npcs/npc-rarity-config";
-import type { LootlogConfigNpcResponseDtoOutput as LootlogConfigNpc } from "@lootlog/client/main";
-import type { UpdateLootlogConfigNpcDtoAllowedRaritiesItem } from "@lootlog/client/main";
+import {
+  type LootlogConfigNpcResponseDtoOutput as LootlogConfigNpc,
+  invalidateLootlogConfigControllerGetLootlogConfig,
+  useLootlogConfigControllerUpdateNpc,
+} from "@lootlog/client/main";
+
 import { cn } from "cn";
 import { toast } from "sonner";
 
@@ -26,10 +30,6 @@ import { Sparkles } from "lucide-react";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  invalidateLootlogConfigControllerGetLootlogConfig,
-  useLootlogConfigControllerUpdateNpc,
-} from "@lootlog/client/main";
 
 type NpcsFormProps = {
   npc: LootlogConfigNpc;
@@ -73,12 +73,9 @@ export const NpcsForm: FC<NpcsFormProps> = ({ npc }) => {
       {
         pathParams: { guildId: guildId ?? "", npcId: npc.id.toString() },
         data: {
-          allowedRarities: Object.entries(values)
-            .filter(([_rarity, isEnabled]) => isEnabled)
-            .map(
-              ([rarity]) =>
-                rarity as UpdateLootlogConfigNpcDtoAllowedRaritiesItem,
-            ),
+          allowedRarities: NPC_RARITY_CONFIG.filter(
+            ({ key }) => values[key],
+          ).map(({ key }) => key),
         },
       },
       {
@@ -100,7 +97,7 @@ export const NpcsForm: FC<NpcsFormProps> = ({ npc }) => {
   }
 
   const enabledCount = NPC_RARITY_CONFIG.filter((r) =>
-    form.watch(r.key as keyof z.infer<typeof formSchema>),
+    form.watch(r.key),
   ).length;
 
   return (
@@ -126,7 +123,7 @@ export const NpcsForm: FC<NpcsFormProps> = ({ npc }) => {
                 <FormField
                   key={rarity.key}
                   control={form.control}
-                  name={rarity.key as keyof z.infer<typeof formSchema>}
+                  name={rarity.key}
                   render={({ field }) => (
                     <FormItem
                       className={cn(
@@ -136,12 +133,10 @@ export const NpcsForm: FC<NpcsFormProps> = ({ npc }) => {
                       )}
                     >
                       <FormControl
-                        render={
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        }
+                        render=<Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
                       />
                       <div className="flex items-center gap-2 flex-1">
                         <div className={cn("p-1 rounded", rarity.bgColor)}>

@@ -216,7 +216,10 @@ const requireCaller = Effect.flatMap(
   (authorization) => authorization.requireCaller,
 );
 
-const requireGuild = (guildId: unknown, capability: PermissionValue) => {
+const requireGuild = (
+  guildId: string | undefined,
+  capability: PermissionValue,
+) => {
   if (typeof guildId !== "string") {
     return Effect.fail(
       new RecordsAccessDenied({
@@ -249,7 +252,7 @@ export const createKill = Effect.fn("kills.createKill")(function* (
 });
 
 export const getGuildKillStats = Effect.fn("kills.getGuildKillStats")(
-  function* (guildId: unknown, query: GuildKillStatsQuery) {
+  function* (guildId: string | undefined, query: GuildKillStatsQuery) {
     const caller = yield* requireGuild(guildId, Permission.LOOTLOG_ACCESS);
     return yield* data((service) => service.getGuildKillStats(caller, query));
   },
@@ -270,7 +273,7 @@ export const getUserNpcKills = Effect.fn("kills.getUserNpcKills")(function* (
 });
 
 export const getGuildTopNpcs = Effect.fn("kills.getGuildTopNpcs")(function* (
-  guildId: unknown,
+  guildId: string | undefined,
   query: GuildTopNpcsQuery,
 ) {
   const caller = yield* requireGuild(guildId, Permission.LOOTLOG_ACCESS);
@@ -279,7 +282,7 @@ export const getGuildTopNpcs = Effect.fn("kills.getGuildTopNpcs")(function* (
 
 export const getGuildTopKillersByType = Effect.fn(
   "kills.getGuildTopKillersByType",
-)(function* (guildId: unknown, query: GuildTopKillersQuery) {
+)(function* (guildId: string | undefined, query: GuildTopKillersQuery) {
   const caller = yield* requireGuild(guildId, Permission.LOOTLOG_ACCESS);
   return yield* data((service) =>
     service.getGuildTopKillersByType(caller, query),
@@ -287,7 +290,7 @@ export const getGuildTopKillersByType = Effect.fn(
 });
 
 export const getNpcKillers = Effect.fn("kills.getNpcKillers")(function* (
-  guildId: unknown,
+  guildId: string | undefined,
   npcId: string,
   query: NpcKillersQuery,
 ) {
@@ -305,7 +308,7 @@ export const getNpcKillers = Effect.fn("kills.getNpcKillers")(function* (
 });
 
 export const getMemberKills = Effect.fn("kills.getMemberKills")(function* (
-  guildId: unknown,
+  guildId: string | undefined,
   memberId: string,
   query: MemberKillsQuery,
 ) {
@@ -325,7 +328,7 @@ export const getMemberKills = Effect.fn("kills.getMemberKills")(function* (
 });
 
 export const fetchLoots = Effect.fn("loots.fetchLoots")(function* (
-  guildId: unknown,
+  guildId: string | undefined,
   query: LootsQuery,
 ) {
   const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_READ);
@@ -333,7 +336,7 @@ export const fetchLoots = Effect.fn("loots.fetchLoots")(function* (
 });
 
 export const getLootStats = Effect.fn("loots.getLootStats")(function* (
-  guildId: unknown,
+  guildId: string | undefined,
   query: LootStatsQuery,
 ) {
   const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_READ);
@@ -341,7 +344,7 @@ export const getLootStats = Effect.fn("loots.getLootStats")(function* (
 });
 
 export const countLoots = Effect.fn("loots.countLoots")(function* (
-  guildId: unknown,
+  guildId: string | undefined,
   query: LootsQuery,
 ) {
   const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_READ);
@@ -350,7 +353,7 @@ export const countLoots = Effect.fn("loots.countLoots")(function* (
 });
 
 export const resolveLootItem = Effect.fn("loots.resolveLootItem")(function* (
-  guildId: unknown,
+  guildId: string | undefined,
   query: ResolveLootItemQuery,
 ) {
   const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_READ);
@@ -358,7 +361,7 @@ export const resolveLootItem = Effect.fn("loots.resolveLootItem")(function* (
 });
 
 export const fetchLoot = Effect.fn("loots.fetchLoot")(function* (
-  guildId: unknown,
+  guildId: string | undefined,
   lootId: number,
 ) {
   const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_READ);
@@ -373,7 +376,7 @@ export const fetchLoot = Effect.fn("loots.fetchLoot")(function* (
 });
 
 export const archiveLoot = Effect.fn("loots.archiveLoot")(function* (
-  guildId: unknown,
+  guildId: string | undefined,
   lootId: number,
 ) {
   const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_ARCHIVE);
@@ -397,7 +400,7 @@ export const createLoot = Effect.fn("loots.createLoot")(function* (
 });
 
 export const getComments = Effect.fn("loots.getComments")(function* (
-  guildId: unknown,
+  guildId: string | undefined,
   lootId: number,
 ) {
   const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_READ);
@@ -414,7 +417,7 @@ export const getComments = Effect.fn("loots.getComments")(function* (
 });
 
 export const createComment = Effect.fn("loots.createComment")(function* (
-  guildId: unknown,
+  guildId: string | undefined,
   lootId: number,
   payload: CreateLootCommentRequest,
 ) {

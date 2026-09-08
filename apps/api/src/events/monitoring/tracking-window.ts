@@ -12,7 +12,7 @@ export function clipToWindow(params: {
   end: Date | null;
   windowStart: Date;
   windowEnd: Date;
-}): { start: Date; end: Date } {
+}): TrackingWindowInterval {
   const effectiveEnd = params.end ?? params.windowEnd;
   return {
     start: new Date(

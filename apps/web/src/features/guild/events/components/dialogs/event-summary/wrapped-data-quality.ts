@@ -176,19 +176,19 @@ export const buildWrappedQualityModel = (
 
   const topHunter = validateLeader({
     factId: "top-hunter",
-    result: data.leaders.topHunter as EventWrappedLeaderResult,
+    result: data.leaders.topHunter,
     sourceConsistent: killSourceConsistent,
     omissions,
   });
   const topScorer = validateLeader({
     factId: "top-scorer",
-    result: data.leaders.topScorer as EventWrappedLeaderResult,
+    result: data.leaders.topScorer,
     omissions,
   });
   const longestDuty = assignmentWindowValid
     ? validateLeader({
         factId: "longest-duty",
-        result: data.leaders.longestDuty as EventWrappedLeaderResult,
+        result: data.leaders.longestDuty,
         omissions,
       })
     : null;

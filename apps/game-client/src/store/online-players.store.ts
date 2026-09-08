@@ -1,3 +1,4 @@
+import { isObjectRecord } from "@lootlog/schema/records";
 import {
   ALL_PROFESSIONS_VALUE,
   PROFESSION_OPTIONS,
@@ -39,32 +40,30 @@ const isViewMode = (viewMode: unknown): viewMode is OnlinePlayersViewMode => {
 const isOnlinePlayersFiltersValue = (
   filters: unknown,
 ): filters is OnlinePlayersFiltersValue => {
-  if (typeof filters !== "object" || filters === null) {
+  if (!isObjectRecord(filters)) {
     return false;
   }
 
-  const candidate = filters as Record<string, unknown>;
-
   return (
-    typeof candidate.minLvl === "number" &&
-    typeof candidate.maxLvl === "number" &&
-    typeof candidate.selectedProfession === "string" &&
-    isProfessionFilterValue(candidate.selectedProfession)
+    typeof filters.minLvl === "number" &&
+    typeof filters.maxLvl === "number" &&
+    typeof filters.selectedProfession === "string" &&
+    isProfessionFilterValue(filters.selectedProfession)
   );
 };
 
 const sanitizeFiltersByGuildId = (
   filtersByGuildId: unknown,
 ): Record<string, OnlinePlayersFiltersValue | undefined> => {
-  if (typeof filtersByGuildId !== "object" || filtersByGuildId === null) {
+  if (!isObjectRecord(filtersByGuildId)) {
     return {};
   }
 
-  return Object.fromEntries(
-    Object.entries(filtersByGuildId).filter(([, filters]) =>
-      isOnlinePlayersFiltersValue(filters),
-    ),
-  );
+  const entries: Array<[string, OnlinePlayersFiltersValue]> = [];
+  for (const [guildId, filters] of Object.entries(filtersByGuildId)) {
+    if (isOnlinePlayersFiltersValue(filters)) entries.push([guildId, filters]);
+  }
+  return Object.fromEntries(entries);
 };
 
 export const migrateOnlinePlayersState = (
@@ -73,18 +72,15 @@ export const migrateOnlinePlayersState = (
   OnlinePlayersState,
   "viewMode" | "filtersVisible" | "filtersByGuildId"
 > => {
-  const state =
-    typeof persisted === "object" && persisted !== null
-      ? (persisted as Record<string, unknown>)
-      : {};
+  const state = isObjectRecord(persisted) ? persisted : undefined;
 
   return {
-    viewMode: isViewMode(state.viewMode) ? state.viewMode : DEFAULT_VIEW_MODE,
+    viewMode: isViewMode(state?.viewMode) ? state.viewMode : DEFAULT_VIEW_MODE,
     filtersVisible:
-      typeof state.filtersVisible === "boolean"
+      typeof state?.filtersVisible === "boolean"
         ? state.filtersVisible
         : DEFAULT_FILTERS_VISIBLE,
-    filtersByGuildId: sanitizeFiltersByGuildId(state.filtersByGuildId),
+    filtersByGuildId: sanitizeFiltersByGuildId(state?.filtersByGuildId),
   };
 };
 

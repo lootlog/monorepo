@@ -16,20 +16,13 @@ import {
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-const groupedActions = HOTKEY_ACTIONS.reduce<
-  Record<HotkeyCategory, HotkeyActionConfig[]>
->(
-  (acc, config) => {
-    (acc[config.category] ??= []).push(config);
-    return acc;
-  },
-  {} as Record<HotkeyCategory, HotkeyActionConfig[]>,
-);
-
-const categories = Object.entries(groupedActions) as [
-  HotkeyCategory,
-  HotkeyActionConfig[],
-][];
+const groupedActions = new Map<HotkeyCategory, HotkeyActionConfig[]>();
+for (const config of HOTKEY_ACTIONS) {
+  const actions = groupedActions.get(config.category);
+  if (actions) actions.push(config);
+  else groupedActions.set(config.category, [config]);
+}
+const categories = Array.from(groupedActions);
 
 const HOTKEY_CONTROL_CLASS_NAME = "ll:w-44";
 

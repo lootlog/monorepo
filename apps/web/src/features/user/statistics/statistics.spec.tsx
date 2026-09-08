@@ -1,3 +1,5 @@
+import { configureApiClients } from "@lootlog/client/transport";
+import type { UserKillAnalyticsResponseDtoOutput } from "@lootlog/client/main";
 // @vitest-environment happy-dom
 import {
   cleanup,
@@ -14,21 +16,45 @@ import {
   RouterProvider,
 } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, expect, it, vi, onTestFinished } from "vitest";
 import "@/i18n/config";
 import { ThemeContext } from "@/contexts/theme-context";
 import { Statistics } from "./statistics";
 import { parseStatisticsSearch } from "./statistics-search";
-const analytics = vi.hoisted(() => vi.fn());
-vi.mock("@lootlog/client/main", async () => ({
-  ...(await vi.importActual("@lootlog/client/main")),
-  useKillsControllerGetUserKillAnalytics: analytics,
-  useKillsControllerGetUserKillStats: () => ({
-    data: { overview: { killsByWorld: { pandora: 5 } } },
-  }),
-}));
 afterEach(cleanup);
-function renderStatistics(url: string) {
+function renderStatistics(
+  url: string,
+  response?: UserKillAnalyticsResponseDtoOutput,
+) {
+  const requests: URL[] = [];
+  onTestFinished(
+    configureApiClients({
+      main: {
+        baseUrl: "https://api.test",
+        fetch: (input) => {
+          const url = new URL(
+            input instanceof Request ? input.url : input.toString(),
+          );
+          if (url.pathname.endsWith("/analytics")) {
+            requests.push(url);
+            return response
+              ? Promise.resolve(Response.json(response))
+              : new Promise<Response>(() => {});
+          }
+          return Promise.resolve(
+            Response.json({
+              overview: {
+                totalKills: 5,
+                killsByWorld: { pandora: 5 },
+                killsByType: {},
+              },
+              topNpcs: [],
+            }),
+          );
+        },
+      },
+    }),
+  );
   const root = createRootRoute();
   const auth = createRoute({
     getParentRoute: () => root,
@@ -46,8 +72,10 @@ function renderStatistics(url: string) {
       initialEntries: [url],
     }),
   });
+  const queryClient = new QueryClient();
+  onTestFinished(() => queryClient.clear());
   render(
-    <QueryClientProvider client={new QueryClient()}>
+    <QueryClientProvider client={queryClient}>
       <ThemeContext.Provider
         value={{
           theme: "default",
@@ -60,25 +88,17 @@ function renderStatistics(url: string) {
       </ThemeContext.Provider>
     </QueryClientProvider>,
   );
-  return router;
+  return { router, requests };
 }
 
 it("restores URL filters, keeps them while changing tabs, and fetches the selected period", async () => {
-  analytics.mockReturnValue({
-    isPending: true,
-    isError: false,
-    isFetching: true,
-    data: undefined,
-    refetch: vi.fn(),
-  });
-  const router = renderStatistics(
+  const { router, requests } = renderStatistics(
     "/@me/statistics?tab=activity&days=90&world=pandora",
   );
   await screen.findByRole("heading", { level: 1, name: "Statystyki" });
-  expect(analytics.mock.lastCall?.[0]).toEqual({
-    days: "90",
-    world: "pandora",
-  });
+  await waitFor(() => expect(requests).toHaveLength(1));
+  expect(requests[0]?.searchParams.get("days")).toBe("90");
+  expect(requests[0]?.searchParams.get("world")).toBe("pandora");
   expect(
     screen
       .getByRole("link", { name: "Aktywność" })
@@ -108,27 +128,61 @@ it("restores URL filters, keeps them while changing tabs, and fetches the select
   fireEvent.pointerDown(weekOption, { pointerType: "mouse" });
   fireEvent.click(weekOption);
   await waitFor(() =>
-    expect(analytics.mock.lastCall?.[0]).toEqual({
-      days: "7",
-      world: "pandora",
-    }),
+    expect(
+      requests.some(
+        (request) =>
+          request.searchParams.get("days") === "7" &&
+          request.searchParams.get("world") === "pandora",
+      ),
+    ).toBe(true),
   );
 });
 
 it("does not present unavailable dated history as zero kills", async () => {
-  analytics.mockReturnValue({
-    isPending: false,
-    isError: false,
-    isFetching: false,
-    refetch: vi.fn(),
-    data: {
-      meta: { coverage: "unavailable", firstBucketAt: null },
-      overview: { totalKills: 0 },
+  const response: UserKillAnalyticsResponseDtoOutput = {
+    meta: {
+      timezone: "Europe/Warsaw",
+      generatedAt: "2026-09-06T12:00:00Z",
+      days: 30,
+      world: null,
+      startDate: "2026-08-08",
+      endDate: "2026-09-06",
+      firstBucketAt: null,
+      coverage: "unavailable",
+      allTimeKills: 0,
+      timedKills: 0,
+      untimedKills: 0,
+      includesCurrentHour: true,
     },
-  });
-  renderStatistics("/@me/statistics");
+    overview: {
+      totalKills: 0,
+      activeDays: 0,
+      averagePerDay: null,
+      currentStreak: 0,
+      longestStreak: 0,
+      uniqueNpcs: 0,
+    },
+    daily: [],
+    weekly: [],
+    hourlyWeekday: [],
+    types: [],
+    npcs: [],
+    npcGains: [],
+    worlds: [],
+    records: { bestDay: null, bestWeek: null, bestMonth: null },
+    comparison: {
+      currentKills: 0,
+      previousKills: 0,
+      deltaKills: 0,
+      deltaPercent: null,
+      currentThrough: "2026-09-06T12:00:00Z",
+      previousThrough: "2026-08-07T12:00:00Z",
+      partial: true,
+    },
+  };
+  renderStatistics("/@me/statistics", response);
   await screen.findByRole("heading", { level: 1, name: "Statystyki" });
-  expect(screen.getByText("Brak danych")).toBeTruthy();
+  expect(await screen.findByText("Brak danych")).toBeTruthy();
   expect(
     screen.queryByText("Brak zarejestrowanych bić w tym okresie."),
   ).toBeNull();

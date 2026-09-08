@@ -8,11 +8,8 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { Shield, Percent, Globe, HelpCircle } from "lucide-react";
-import type { EventScoringRules } from "@lootlog/domain/scoring";
 
-type ScoringRulesFormValues = {
-  scoringRules: EventScoringRules;
-};
+import type { ScoringRulesFormValues } from "./scoring-rules-editor";
 
 interface ScoringGlobalSettingsProps {
   register: UseFormRegister<ScoringRulesFormValues>;
@@ -33,9 +30,7 @@ export const ScoringGlobalSettings = ({
           </Label>
           <Tooltip>
             <TooltipTrigger
-              render={
-                <HelpCircle className="size-3 text-muted-foreground/30 cursor-help" />
-              }
+              render=<HelpCircle className="size-3 text-muted-foreground/30 cursor-help" />
             />
             <TooltipContent>
               <p className="text-xs">

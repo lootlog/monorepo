@@ -9,9 +9,7 @@ import { useTranslation } from "react-i18next";
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 
-type ScoringRulesFormValues = {
-  scoringRules: { rules: { conditions: unknown[] }[] };
-};
+import type { ScoringRulesFormValues } from "./scoring-rules-editor";
 
 interface ScoringConditionRespawnProps {
   control: Control<ScoringRulesFormValues>;
@@ -44,12 +42,10 @@ export const ScoringConditionRespawn = ({
           </Label>
           <Controller
             control={control}
-            name={
-              `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.operator` as `scoringRules.rules.${number}.conditions.${number}`
-            }
+            name={`scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.operator`}
             render={({ field }) => (
               <ScoringOperatorSelect
-                value={field.value as string}
+                value={field.value}
                 onChange={field.onChange}
               />
             )}
@@ -67,7 +63,7 @@ export const ScoringConditionRespawn = ({
               step={0.01}
               className="h-8 text-[12px] font-mono"
               {...register(
-                `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.value` as `scoringRules.rules.${number}.conditions.${number}`,
+                `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.value`,
                 { valueAsNumber: true },
               )}
             />

@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { DraggableWindow } from "@/components/draggable-window";
 import { Button } from "@/components/ui/button";
 import { storageKey } from "@/lib/storage-key";
@@ -7,6 +8,8 @@ import { useWindowsStore } from "@/store/windows.store";
 import { useEffect, useLayoutEffect, type FC } from "react";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useTranslation } from "react-i18next";
+
+const dismissedSchema = z.boolean();
 
 const STORAGE_KEY = storageKey("ll:backend-preferences-warning-dismissed");
 const WINDOW_WIDTH = 430;
@@ -28,6 +31,7 @@ export const BackendPreferencesWarning: FC = () => {
   const [dismissed, setDismissed] = useLocalStorage<boolean>(
     STORAGE_KEY,
     false,
+    dismissedSchema,
   );
   const centerX = Math.round((window.innerWidth - WINDOW_WIDTH) / 2);
   const centerY = Math.round((window.innerHeight - WINDOW_HEIGHT) / 2);

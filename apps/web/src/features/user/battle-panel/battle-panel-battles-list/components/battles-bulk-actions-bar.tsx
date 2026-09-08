@@ -45,7 +45,7 @@ export const BattlesBulkActionsBar = ({
               className="justify-center"
               onClick={onShare}
               loading={sharePending}
-              icon={<Share2 className="size-3.5" aria-hidden="true" />}
+              icon=<Share2 className="size-3.5" aria-hidden="true" />
               disabled={disabled}
             >
               {t("battlePanel.bulk.share")}

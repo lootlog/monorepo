@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import type { ReactNode } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { createNotificationTest } from "../notification-test";
+import { getUsersControllerGetCurrentUserAccessibleGuildsQueryKey } from "@lootlog/client/main";
+import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { useSettingsStore } from "@/store/settings.store";
 import {
   type StoredNotification,
@@ -8,65 +9,7 @@ import {
 } from "@/store/notifications.store";
 import { NotificationsList } from "./notifications-list";
 
-vi.mock("@/components/ui/scroll-area", () => ({
-  ScrollArea: ({ children }: { children: ReactNode }) => (
-    <div data-testid="scroll-area">{children}</div>
-  ),
-}));
-
-vi.mock("@/features/notifications/components/single-notification", () => ({
-  SingleNotification: ({
-    notification,
-    onRemoveNotification,
-  }: {
-    notification: StoredNotification;
-    onRemoveNotification: (notificationId: string) => void;
-  }) => (
-    <button
-      data-testid="single-notification"
-      onClick={() => onRemoveNotification(notification.notificationId)}
-    >
-      {notification.listKey}
-    </button>
-  ),
-}));
-
-vi.mock(
-  "@/features/notifications/hooks/use-notification-guild-members",
-  () => ({
-    useNotificationGuildMembers: () => ({}),
-  }),
-);
-
-vi.mock("@/hooks/use-current-user-notification-mutes", () => ({
-  useCurrentUserNotificationMutes: () => ({
-    isReady: true,
-    mutes: { players: [], npcs: [] },
-  }),
-}));
-
-vi.mock("@/hooks/api/use-user-preferences", () => ({
-  useUpdateUserPreferences: () => ({
-    isPending: false,
-    mutate: vi.fn(),
-  }),
-}));
-
-vi.mock("@lootlog/client/main", async () => ({
-  ...(await vi.importActual("@lootlog/client/main")),
-  usePartyReadyRoomControllerApply: () => ({
-    isPending: false,
-    mutate: vi.fn(),
-  }),
-  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey: () => ["guilds"],
-  useUsersControllerGetCurrentUserAccessibleGuilds: () => ({ data: [] }),
-}));
-
-vi.mock("@/lib/api/generated-helpers", () => ({
-  buildCurrentCharacterPayload: () => ({}),
-  getGuildNamesById: () => ({}),
-}));
-
+let test: ReturnType<typeof createNotificationTest>;
 const notification: StoredNotification = {
   createdAt: "2026-06-22T00:00:00.000Z",
   discordId: "discord-1",
@@ -88,6 +31,13 @@ const createNotifications = (count: number) =>
   }));
 
 describe("NotificationsList", () => {
+  beforeEach(() => {
+    test = createNotificationTest();
+    test.queryClient.setQueryData(
+      getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
+      [],
+    );
+  });
   afterEach(() => {
     act(() => {
       useSettingsStore.setState(useSettingsStore.getInitialState(), true);
@@ -102,15 +52,15 @@ describe("NotificationsList", () => {
   it("uses a CSS-only entry animation without whole-list layout animation", () => {
     useSettingsStore.setState({ animationEffectsEnabled: true });
 
-    render(<NotificationsList notifications={[notification]} />);
+    render(<NotificationsList notifications={[notification]} />, {
+      wrapper: test.wrapper,
+    });
 
-    expect(screen.getByTestId("single-notification").parentElement).toHaveClass(
-      "ll:animate-in",
-      "ll:fade-in-0",
-      "ll:slide-in-from-top-2",
-    );
     expect(
-      screen.getByTestId("single-notification").parentElement,
+      screen.getByText("hello").closest("[data-lootlog-notification-id]"),
+    ).toHaveClass("ll:animate-in", "ll:fade-in-0", "ll:slide-in-from-top-2");
+    expect(
+      screen.getByText("hello").closest("[data-lootlog-notification-id]"),
     ).toHaveAttribute(
       "data-lootlog-notification-id",
       notification.notificationId,
@@ -120,10 +70,12 @@ describe("NotificationsList", () => {
   it("renders without an animation class when animation effects are disabled", () => {
     useSettingsStore.setState({ animationEffectsEnabled: false });
 
-    render(<NotificationsList notifications={[notification]} />);
+    render(<NotificationsList notifications={[notification]} />, {
+      wrapper: test.wrapper,
+    });
 
     expect(
-      screen.getByTestId("single-notification").parentElement,
+      screen.getByText("hello").closest("[data-lootlog-notification-id]"),
     ).not.toHaveClass("ll:animate-in");
   });
 
@@ -133,9 +85,11 @@ describe("NotificationsList", () => {
       latestPresentationStartedEmpty: true,
     });
 
-    render(<NotificationsList notifications={createNotifications(8)} />);
+    render(<NotificationsList notifications={createNotifications(8)} />, {
+      wrapper: test.wrapper,
+    });
 
-    expect(screen.getAllByTestId("single-notification")).toHaveLength(2);
+    expect(screen.getAllByText("hello")).toHaveLength(2);
   });
 
   it("renders an incremental presentation without bulk staging", () => {
@@ -144,29 +98,40 @@ describe("NotificationsList", () => {
       latestPresentationStartedEmpty: false,
     });
 
-    render(<NotificationsList notifications={createNotifications(8)} />);
+    render(<NotificationsList notifications={createNotifications(8)} />, {
+      wrapper: test.wrapper,
+    });
 
-    expect(screen.getAllByTestId("single-notification")).toHaveLength(8);
+    expect(screen.getAllByText("hello")).toHaveLength(8);
   });
 
   it("finishes a CSS exit before manually removing the notification", () => {
     vi.useFakeTimers();
     useSettingsStore.setState({ animationEffectsEnabled: true });
-    useNotificationsStore.setState({ notifications: [notification] });
-    render(<NotificationsList notifications={[notification]} />);
+    const second = {
+      ...notification,
+      notificationId: "second",
+      listKey: "second",
+      message: "Second",
+    };
+    useNotificationsStore.setState({ notifications: [notification, second] });
+    render(<NotificationsList notifications={[notification, second]} />, {
+      wrapper: test.wrapper,
+    });
 
-    fireEvent.click(screen.getByTestId("single-notification"));
-
-    expect(screen.getByTestId("single-notification").parentElement).toHaveClass(
-      "ll:animate-out",
-      "ll:fade-out-0",
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Zamknij powiadomienie" })[0],
     );
-    expect(useNotificationsStore.getState().notifications).toHaveLength(1);
+
+    expect(
+      screen.getByText("hello").closest("[data-lootlog-notification-id]"),
+    ).toHaveClass("ll:animate-out", "ll:fade-out-0");
+    expect(useNotificationsStore.getState().notifications).toHaveLength(2);
 
     act(() => {
       vi.advanceTimersByTime(150);
     });
 
-    expect(useNotificationsStore.getState().notifications).toEqual([]);
+    expect(useNotificationsStore.getState().notifications).toEqual([second]);
   });
 });

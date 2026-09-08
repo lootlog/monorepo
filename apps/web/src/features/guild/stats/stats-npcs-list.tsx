@@ -1,3 +1,4 @@
+import { findNpcType } from "@/constants/npc";
 import { TextLink } from "@lootlog/ui/components/text-link";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { PageHeader } from "@/components/common/page-header";
@@ -26,9 +27,9 @@ import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
 import {
   getKillsControllerGetGuildTopNpcsQueryKey,
   useKillsControllerGetGuildTopNpcs,
+  type GuildTopNpcsResponseDtoOutputTopNpcsItem,
 } from "@lootlog/client/main";
-import type { GuildTopNpcsResponseDtoOutputTopNpcsItem } from "@lootlog/client/main";
-import type { NpcType } from "@lootlog/client/main";
+
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { LevelFilters } from "./components/level-filters";
 import { NpcStatsFiltersMobile } from "./components/npc-stats-filters-mobile";
@@ -105,7 +106,9 @@ export const StatsNpcsList: React.FC = () => {
 
   const handleNpcTypeChange = (value: string | null) => {
     if (value === null) return;
-    setNpcType(value as NpcType | "ALL");
+    const npcType = findNpcType(value);
+    if (value !== "ALL" && !npcType) return;
+    setNpcType(npcType ?? "ALL");
     setCursor(0);
   };
 
@@ -303,15 +306,13 @@ export const StatsNpcsList: React.FC = () => {
                                 <TextLink
                                   className="text-sm leading-tight"
                                   onClick={(event) => event.stopPropagation()}
-                                  render={
-                                    <Link
-                                      to="/$guildId/stats/npcs/$npcId"
-                                      params={{
-                                        guildId,
-                                        npcId: String(npc.npcId),
-                                      }}
-                                    />
-                                  }
+                                  render=<Link
+                                    to="/$guildId/stats/npcs/$npcId"
+                                    params={{
+                                      guildId,
+                                      npcId: String(npc.npcId),
+                                    }}
+                                  />
                                 >
                                   {npc.npcName}
                                 </TextLink>

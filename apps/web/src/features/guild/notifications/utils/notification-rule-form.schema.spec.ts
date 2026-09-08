@@ -1,3 +1,4 @@
+import type { TOptions } from "i18next";
 import { describe, expect, it } from "vitest";
 import {
   NotificationScheduleAnchor,
@@ -8,7 +9,7 @@ import {
   ruleFormSchema,
 } from "./notification-rule-form.schema";
 
-const t = (key: string, options?: Record<string, unknown>) =>
+const t = (key: string, options?: TOptions) =>
   options?.count ? `${key}:${options.count}` : key;
 
 const createBaseTimerFormValues = () => ({

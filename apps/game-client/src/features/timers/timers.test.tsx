@@ -1,493 +1,187 @@
-import { act, render, screen } from "@testing-library/react";
-import type { ReactNode } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  fixtureValue,
-  nestedFixtureValue,
-  optionalFixtureValue,
-} from "@/test-utils/fixture-value";
-import type { Timer } from "@/api/timers.api";
+import { act, render, screen, within, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { afterEach, expect, it, onTestFinished, vi } from "vitest";
+import { configureApiClients } from "@lootlog/client/transport";
+import { queryKeys } from "@/features/public-api/query-keys";
+import { useTimersStore, DEFAULT_TIMERS_FILTERS } from "@/store/timers.store";
+import { useSettingsStore } from "@/store/settings.store";
+import { useWindowsStore } from "@/store/windows.store";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
-
-const mockUseTimers = vi.fn();
-const mockUseTimersSocket = vi.fn();
-const mockToggleOpen = vi.fn();
-const mockSetOpen = vi.fn();
-const mockSetSelectedGuildIdsForTimers = vi.fn();
-const mockSetTimerFiltersSearchText = vi.fn();
-const mockSetTimersFilters = vi.fn();
-const timersContentSpy = vi.fn();
-const timersActionsSpy = vi.fn();
-const timersUnderBagActionsSpy = vi.fn();
-
-let timersOpen = true;
-let worldByGuildId: Record<string, string> = {
-  "guild-1": "gefion",
-};
-let allowWorldSelection = true;
-let guildIdByCharId: Record<string, string> = {
-  "101": "guild-1",
-};
-let timersStoreState = {
-  hiddenTimers: {},
-  pinnedTimers: {},
-  alwaysVisibleExpiredTimers: {},
-  generalConfig: {
-    removeTimerAfterMs: 30_000,
-    timersGrouping: false,
-    timersUnderBag: false,
-    countdownMode: "max" as const,
-    compactView: false,
-  },
-  timerFiltersEnabled: true,
-  toggleTimerFiltersEnabled: vi.fn(),
-  colorFiltersEnabled: true,
-  toggleColorFiltersEnabled: vi.fn(),
-  timerFiltersSearchText: "tan",
-  setTimerFiltersSearchText: mockSetTimerFiltersSearchText,
-  timersSortOrder: "asc" as const,
-  setTimersSortOrder: vi.fn(),
-  timersFilters: {},
-  setTimersFilters: mockSetTimersFilters,
-  displayConfig: {
-    showType: true,
-    showLevel: false,
-    fontSize: 11,
-    minColumnWidth: 120,
-    singleTimerDisplayMode: "row" as const,
-  },
-  timersColors: {},
-  customColors: {},
-  defaultColorNames: {},
-  overriddenDefaultColors: {},
-};
-
-vi.mock("@/hooks/api/use-timers", () => ({
-  useTimers: (...args: unknown[]) => mockUseTimers(...args),
-}));
-
-vi.mock("@/store/windows.store", () => ({
-  useWindowsStore: (
-    selector: (state: {
-      timers: { open: boolean };
-      toggleOpen: typeof mockToggleOpen;
-      setOpen: typeof mockSetOpen;
-    }) => unknown,
-  ) =>
-    selector({
-      timers: { open: timersOpen },
-      toggleOpen: mockToggleOpen,
-      setOpen: mockSetOpen,
-    }),
-}));
-
-vi.mock("@/store/settings.store", () => ({
-  useSettingsStore: () => ({
-    worldByGuildId,
-    allowWorldSelection,
-    guildIdByCharId,
-  }),
-}));
-
-vi.mock("@/store/timers.store", () => ({
-  DEFAULT_TIMERS_FILTERS: {
-    minLvl: 0,
-    maxLvl: 300,
-    selectedNpcTypes: ["hero", "elite2", "elite3", "titan"],
-    selectedColors: [],
-  },
-  useTimersStore: () => timersStoreState,
-}));
-
-vi.mock("@/features/timers/hooks/use-timers-socket", () => ({
-  useTimersSocket: () => mockUseTimersSocket(),
-}));
-
-vi.mock("@/components/draggable-window", () => ({
-  DraggableWindow: ({
-    children,
-    isOpen,
-    title,
-    actions,
-  }: {
-    children: ReactNode;
-    isOpen: boolean;
-    title: string;
-    actions?: ReactNode;
-  }) => (
-    <div data-testid="draggable-window" data-open={String(isOpen)}>
-      <h1>{title}</h1>
-      {actions}
-      {children}
-    </div>
-  ),
-}));
-
-vi.mock("@/features/timers/under-bag-timers", () => ({
-  UnderBagTimers: ({ children }: { children: ReactNode }) => (
-    <div data-testid="under-bag">{children}</div>
-  ),
-}));
-
-vi.mock("@/features/timers/components/timers-actions", () => ({
-  TimersActions: (props: { underBag?: boolean }) => {
-    if (props.underBag) {
-      timersUnderBagActionsSpy(props);
-      return <div>TimersUnderBagActions</div>;
-    }
-    timersActionsSpy(props);
-    return <div>TimersActions</div>;
-  },
-}));
-
-vi.mock("@/features/timers/components/timers-content", () => ({
-  TimersContent: (props: unknown) => {
-    timersContentSpy(props);
-    return <div>TimersContent</div>;
-  },
-}));
-
+import { createTimerFixture } from "./timer-fixtures";
+import { createTimerViewFixture } from "./timer-view-fixtures";
 import { Timers } from "./timers";
 
-const createTimer = (overrides?: Partial<Timer>): Timer => ({
-  actorCharacter: optionalFixtureValue(overrides, "actorCharacter"),
-  actorCharactersByMemberId: optionalFixtureValue(
-    overrides,
-    "actorCharactersByMemberId",
-  ),
-  guildId: fixtureValue(overrides, "guildId", "guild-1"),
-  timerKey: fixtureValue(overrides, "timerKey", "timer-1"),
-  world: fixtureValue(overrides, "world", "pandora"),
-  npcId: fixtureValue(overrides, "npcId", 10),
-  minSpawnTime: fixtureValue(
-    overrides,
-    "minSpawnTime",
-    "2099-04-22T10:00:00.000Z",
-  ),
-  maxSpawnTime: fixtureValue(
-    overrides,
-    "maxSpawnTime",
-    "2099-04-22T10:05:00.000Z",
-  ),
-  updatedAt: fixtureValue(overrides, "updatedAt", "2099-04-22T09:59:00.000Z"),
-  wasReset: fixtureValue(overrides, "wasReset", false),
-  npc: {
-    id: nestedFixtureValue(overrides, "npc", "id", 10),
-    name: nestedFixtureValue(overrides, "npc", "name", "Tanroth"),
-    lvl: nestedFixtureValue(overrides, "npc", "lvl", 120),
-    prof: nestedFixtureValue(overrides, "npc", "prof", "W"),
-    icon: nestedFixtureValue(overrides, "npc", "icon", "icon.gif"),
-    wt: nestedFixtureValue(overrides, "npc", "wt", 10),
-    type: nestedFixtureValue(overrides, "npc", "type", "hero"),
-    margonemType: nestedFixtureValue(overrides, "npc", "margonemType", 4),
-    location: nestedFixtureValue(overrides, "npc", "location", "Ruins"),
-  } as never,
-  member: optionalFixtureValue(overrides, "member"),
-});
-
-describe("Timers", () => {
-  beforeEach(() => {
-    setTestRuntimeGame({
-      hero: { characterId: "101" },
-      interface: "si",
-      world: "pandora",
-    });
-    mockUseTimers.mockReset();
-    mockUseTimersSocket.mockReset();
-    mockToggleOpen.mockReset();
-    mockSetOpen.mockReset();
-    mockSetSelectedGuildIdsForTimers.mockReset();
-    mockSetTimerFiltersSearchText.mockReset();
-    mockSetTimersFilters.mockReset();
-    timersContentSpy.mockReset();
-    timersActionsSpy.mockReset();
-    timersUnderBagActionsSpy.mockReset();
-
-    timersOpen = true;
-    worldByGuildId = {
-      "guild-1": "gefion",
-    };
-    allowWorldSelection = true;
-    guildIdByCharId = {
-      "101": "guild-1",
-    };
-    timersStoreState = {
-      ...timersStoreState,
-      hiddenTimers: {},
-      pinnedTimers: {},
-      alwaysVisibleExpiredTimers: {},
-      generalConfig: {
-        removeTimerAfterMs: 30_000,
-        timersGrouping: false,
-        timersUnderBag: false,
-        countdownMode: "max",
-        compactView: false,
-      },
-      timerFiltersEnabled: true,
-      colorFiltersEnabled: true,
-      timerFiltersSearchText: "tan",
-      timersSortOrder: "asc",
-      timersFilters: {},
-      timersColors: {},
-      customColors: {},
-      defaultColorNames: {},
-      overriddenDefaultColors: {},
-      displayConfig: {
-        showType: true,
-        showLevel: false,
-        fontSize: 11,
-        minColumnWidth: 120,
-        singleTimerDisplayMode: "row",
-      },
-    };
-
-    mockUseTimers.mockReturnValue({
-      data: [],
-      error: null,
-      isFetching: false,
-      isLoading: false,
-      refetch: vi.fn(),
-    });
+const createVisibleTimer = () =>
+  createTimerFixture({
+    world: "gefion",
+    minSpawnTime: "2099-04-22T10:00:00.000Z",
+    maxSpawnTime: "2099-04-22T10:05:00.000Z",
   });
-
-  it("queries timers once for the selected guild world and passes deduplicated data to the content", () => {
-    const member = { id: 77, name: "Alderaan" };
-    const actorCharacter = { id: "character-77", name: "Alderaan" };
-    mockUseTimers.mockReturnValue({
-      data: [
-        createTimer({
-          guildId: "guild-1",
-          timerKey: "same",
-          updatedAt: "2099-04-22T09:59:00.000Z",
-        }),
-        createTimer({
-          actorCharacter: actorCharacter as never,
-          guildId: "guild-1",
-          member: member as never,
-          timerKey: "same",
-          updatedAt: "2099-04-22T09:59:01.000Z",
-        }),
-      ],
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.useRealTimers();
+});
+const mountTimers = (
+  setup: (
+    fixture: ReturnType<typeof createTimerViewFixture>,
+  ) => void = () => {},
+) => {
+  const fixture = createTimerViewFixture([createVisibleTimer()]);
+  setup(fixture);
+  const view = render(
+    <QueryClientProvider client={fixture.queryClient}>
+      <Timers />
+    </QueryClientProvider>,
+  );
+  onTestFinished(() => {
+    view.unmount();
+    fixture.cleanup();
+  });
+  return { ...fixture, view };
+};
+it("deduplicates timers and shows the same visible state in the regular and under-bag surfaces", () => {
+  const fixture = mountTimers((value) =>
+    value.queryClient.setQueryData(queryKeys.timers("gefion"), [
+      createVisibleTimer(),
+      { ...createVisibleTimer(), updatedAt: "2099-04-22T09:59:01.000Z" },
+    ]),
+  );
+  expect(screen.getAllByText(/\[H\] Tanroth/)).toHaveLength(1);
+  expect(
+    within(fixture.gameColumn).queryByText(/\[H\] Tanroth/),
+  ).not.toBeInTheDocument();
+  act(() =>
+    useTimersStore.setState((state) => ({
+      generalConfig: { ...state.generalConfig, timersUnderBag: true },
+    })),
+  );
+  expect(within(fixture.gameColumn).getByText(/\[H\] Tanroth/)).toBeVisible();
+  expect(screen.getAllByText(/\[H\] Tanroth/)).toHaveLength(1);
+});
+it("opens add timer with the selected guild without changing the saved creation preference", async () => {
+  const user = userEvent.setup();
+  mountTimers(() =>
+    useSettingsStore.setState({
+      selectedGuildIdsForTimersByCharId: { "101": ["guild-2"] },
+    }),
+  );
+  await user.click(screen.getByRole("button", { name: "+" }));
+  expect(useWindowsStore.getState()["add-timer"]).toMatchObject({
+    open: true,
+    state: { guildId: "guild-1" },
+  });
+  expect(useSettingsStore.getState().selectedGuildIdsForTimersByCharId).toEqual(
+    { "101": ["guild-2"] },
+  );
+});
+it("recovers from empty filters without erasing the user's saved hidden timers", async () => {
+  const user = userEvent.setup();
+  mountTimers(() =>
+    useTimersStore.setState({
+      timerFiltersSearchText: "missing",
+      hiddenTimers: { "guild-1": ["timer-1"] },
+    }),
+  );
+  expect(screen.queryByText(/\[H\] Tanroth/)).not.toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "Pokaż wszystkie" }));
+  expect(useTimersStore.getState().timerFiltersSearchText).toBe("");
+  expect(useTimersStore.getState().timersFilters["guild-1"]).toEqual(
+    DEFAULT_TIMERS_FILTERS,
+  );
+  expect(useTimersStore.getState().hiddenTimers).toEqual({
+    "guild-1": ["timer-1"],
+  });
+  expect(screen.getByText(/\[H\] Tanroth/)).toBeVisible();
+});
+it("retries a failed world request and displays the recovered timer", async () => {
+  const user = userEvent.setup();
+  const requests: Request[] = [];
+  const fixture = mountTimers((value) => {
+    value.queryClient.removeQueries({ queryKey: queryKeys.timers("gefion") });
+    const restore = configureApiClients({
+      main: {
+        baseUrl: "https://api.example.test",
+        fetch: (input, init) => {
+          requests.push(new Request(input, init));
+          return Promise.resolve(
+            requests.length === 1
+              ? Response.json({ message: "offline" }, { status: 503 })
+              : Response.json([
+                  {
+                    ...createVisibleTimer(),
+                    npc: {
+                      ...createVisibleTimer().npc,
+                      wt: "85",
+                      margonemType: "2",
+                      location: "Ruins",
+                    },
+                  },
+                ]),
+          );
+        },
+      },
     });
-    timersStoreState = {
-      ...timersStoreState,
-      defaultColorNames: { red: "Red" },
-      timersColors: { Tanroth: "red" },
-    };
-
-    render(<Timers />);
-
-    expect(mockUseTimers).toHaveBeenCalledTimes(1);
-    expect(mockUseTimers).toHaveBeenCalledWith({
-      world: "gefion",
-    });
-    expect(mockUseTimersSocket).toHaveBeenCalledTimes(1);
-    const contentInput = timersContentSpy.mock.calls.at(-1)?.[0] as {
-      sortedTimers: Array<
-        Timer & {
-          actorCharactersByMemberId?: Record<string, unknown>;
-          maxTimeLeft: number;
-          members?: unknown[];
-          minTimeLeft: number;
-        }
-      >;
-    };
-    expect(contentInput.sortedTimers).toEqual([
-      expect.objectContaining({
-        actorCharactersByMemberId: { "77": actorCharacter },
-        maxTimeLeft: expect.any(Number),
-        members: [member],
-        minTimeLeft: expect.any(Number),
-        updatedAt: "2099-04-22T09:59:01.000Z",
-      }),
+    onTestFinished(restore);
+  });
+  expect(
+    await screen.findByText("Nie udało się załadować timerów"),
+  ).toBeVisible();
+  await user.click(screen.getByRole("button", { name: "Spróbuj ponownie" }));
+  expect(await screen.findByText(/\[H\] Tanroth/)).toBeVisible();
+  expect(requests).toHaveLength(2);
+  expect(
+    requests.every(
+      (request) => new URL(request.url).searchParams.get("world") === "gefion",
+    ),
+  ).toBe(true);
+  await waitFor(() => expect(fixture.queryClient.isFetching()).toBe(0));
+});
+it("uses the game world under the NI bag when world selection is disabled", () => {
+  const fixture = mountTimers((value) => {
+    setTestRuntimeGame({ interface: "ni", world: "pandora" });
+    value.queryClient.setQueryData(queryKeys.timers("pandora"), [
+      createVisibleTimer(),
     ]);
-    expect(timersContentSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        settingsKey: "guild-1",
-        areFiltersActive: true,
-        colorStatistics: [{ color: "red", total: 1, active: 1, name: "Red" }],
-        compactView: false,
-      }),
-    );
-    expect(screen.getByText("TimersActions")).toBeInTheDocument();
+    useTimersStore.setState((state) => ({
+      generalConfig: { ...state.generalConfig, timersUnderBag: true },
+    }));
   });
-
-  it("projects the same timer state for the window and under-bag surfaces", () => {
-    const nowSpy = vi
-      .spyOn(Date, "now")
-      .mockReturnValue(new Date("2099-04-22T09:00:00.000Z").getTime());
-    mockUseTimers.mockReturnValue({ data: [createTimer()] });
-
-    const regularRender = render(<Timers />);
-    const regularTimers = (
-      timersContentSpy.mock.calls.at(-1)?.[0] as
-        | { sortedTimers: unknown[] }
-        | undefined
-    )?.sortedTimers;
-    expect(regularTimers).toBeDefined();
-    regularRender.unmount();
-
-    setTestRuntimeGame({
-      hero: { characterId: "101" },
-      interface: "ni",
-      world: "pandora",
-    });
-    timersStoreState = {
-      ...timersStoreState,
-      generalConfig: {
-        ...timersStoreState.generalConfig,
-        timersUnderBag: true,
-      },
-    };
-
-    render(<Timers />);
-
-    const underBagTimers = (
-      timersContentSpy.mock.calls.at(-1)?.[0] as
-        | { sortedTimers: unknown[] }
-        | undefined
-    )?.sortedTimers;
-    expect(underBagTimers).toBeDefined();
-    expect(underBagTimers).toEqual(regularTimers);
-    nowSpy.mockRestore();
-  });
-
-  it("passes initial loading and retry state to the timer content", () => {
-    const refetch = vi.fn();
-    const error = new Error("network");
-    mockUseTimers.mockReturnValue({
-      data: undefined,
-      error,
-      isFetching: false,
-      isLoading: false,
-      refetch,
-    });
-
-    render(<Timers />);
-
-    expect(timersContentSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        error,
-        initialLoading: false,
-        onRetry: expect.any(Function),
-      }),
-    );
-
-    const contentProps = timersContentSpy.mock.calls[0]?.[0] as {
-      onRetry: () => void;
-    };
-    contentProps.onRetry();
-    expect(refetch).toHaveBeenCalledOnce();
-  });
-
-  it("opens add timer with the selected timers guild", () => {
-    render(<Timers />);
-
-    const timersContentProps = timersContentSpy.mock.calls[0]?.[0] as {
-      onAddTimer: () => void;
-    };
-
-    timersContentProps.onAddTimer();
-
-    expect(mockSetSelectedGuildIdsForTimers).not.toHaveBeenCalled();
-    expect(mockSetOpen).toHaveBeenCalledWith("add-timer", true, {
-      guildId: "guild-1",
-    });
-    expect(mockToggleOpen).not.toHaveBeenCalled();
-  });
-
-  it("resets timer filters without removing saved hidden timers", () => {
-    timersStoreState = {
-      ...timersStoreState,
-      hiddenTimers: {
-        "guild-1": ["timer-1"],
-      },
-    };
-    render(<Timers />);
-
-    const timersContentProps = timersContentSpy.mock.calls.at(-1)?.[0] as {
-      onResetFilters: () => void;
-    };
-
-    act(() => timersContentProps.onResetFilters());
-
-    expect(mockSetTimerFiltersSearchText).toHaveBeenCalledWith("");
-    expect(mockSetTimersFilters).toHaveBeenCalledWith("guild-1", {
-      minLvl: 0,
-      maxLvl: 300,
-      selectedNpcTypes: ["hero", "elite2", "elite3", "titan"],
-      selectedColors: [],
-    });
-    expect(timersStoreState.hiddenTimers).toEqual({
-      "guild-1": ["timer-1"],
-    });
-  });
-
-  it("renders the under-bag path when enabled for the ni interface", () => {
-    setTestRuntimeGame({
-      hero: { characterId: "101" },
-      interface: "ni",
-      world: "pandora",
-    });
-    allowWorldSelection = false;
-    worldByGuildId = {};
-    guildIdByCharId = {};
-    timersStoreState = {
-      ...timersStoreState,
-      generalConfig: {
-        ...timersStoreState.generalConfig,
-        timersUnderBag: true,
-      },
-    };
-    mockUseTimers.mockReturnValue({
-      data: [createTimer()],
-    });
-
-    render(<Timers />);
-
-    expect(mockUseTimers).toHaveBeenCalledWith({
-      world: "pandora",
-    });
-    expect(screen.getByTestId("under-bag")).toBeInTheDocument();
-    expect(screen.getByText("TimersUnderBagActions")).toBeInTheDocument();
-    expect(screen.queryByTestId("draggable-window")).not.toBeInTheDocument();
-    expect(timersContentSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        isUnderBag: true,
-      }),
-    );
-  });
-
-  it("keeps the under-bag clock idle when every timer is filtered out", () => {
-    setTestRuntimeGame({
-      hero: { characterId: "101" },
-      interface: "ni",
-      world: "pandora",
-    });
-    timersStoreState = {
-      ...timersStoreState,
-      generalConfig: {
-        ...timersStoreState.generalConfig,
-        timersUnderBag: true,
-      },
-    };
-    mockUseTimers.mockReturnValue({ data: [createTimer()] });
-    timersStoreState.timerFiltersSearchText = "missing";
-
-    render(<Timers />);
-
-    expect(timersContentSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ sortedTimers: [] }),
-    );
-  });
-
-  it("keeps only socket ingress active while the timers window is hidden", () => {
-    timersOpen = false;
-
-    render(<Timers />);
-
-    expect(mockUseTimersSocket).toHaveBeenCalledOnce();
-    expect(mockUseTimers).not.toHaveBeenCalled();
-    expect(timersContentSpy).not.toHaveBeenCalled();
-  });
+  expect(within(fixture.gameColumn).getByText(/\[H\] Tanroth/)).toBeVisible();
+  expect(
+    fixture.queryClient
+      .getQueryCache()
+      .find({ queryKey: queryKeys.timers("pandora") })
+      ?.getObserversCount(),
+  ).toBe(1);
+  expect(
+    fixture.queryClient
+      .getQueryCache()
+      .find({ queryKey: queryKeys.timers("gefion") })
+      ?.getObserversCount(),
+  ).toBe(0);
 });
+it.each(["filtered", "closed"] as const)(
+  "does not start countdown work when timers are %s",
+  (state) => {
+    vi.useFakeTimers();
+    const intervals = vi.spyOn(globalThis, "setInterval");
+    const fixture = mountTimers(() => {
+      if (state === "closed")
+        useWindowsStore.getState().setOpen("timers", false);
+      else
+        useTimersStore.setState((value) => ({
+          timerFiltersSearchText: "missing",
+          generalConfig: { ...value.generalConfig, timersUnderBag: true },
+        }));
+    });
+    expect(intervals).not.toHaveBeenCalled();
+    expect(screen.queryByText(/\[H\] Tanroth/)).not.toBeInTheDocument();
+    expect(
+      fixture.queryClient
+        .getQueryCache()
+        .find({ queryKey: queryKeys.timers("gefion") })
+        ?.getObserversCount(),
+    ).toBe(state === "closed" ? 0 : 1);
+  },
+);

@@ -17,6 +17,7 @@ import {
   useEventsAssignmentControllerSelfAssignMember,
   useEventsMonitoringControllerCloseRespawnWindow,
   useEventsMonitoringControllerGetCoordination,
+  type EventCoordinationResponseDtoHeroesItem,
 } from "@lootlog/client/main";
 import { EventActionDialog } from "./components/dialogs/event-action-dialog";
 import { EventCoordinationHeroCard } from "./components/coordination/event-coordination-hero-card";
@@ -25,7 +26,6 @@ import { invalidateMapQueries } from "./hooks/mutations/invalidate-map-queries";
 import { invalidateRespawnQueries } from "./hooks/mutations/invalidate-respawn-queries";
 import { invalidateKillQueries } from "./hooks/mutations/invalidate-kill-queries";
 import { getAssignmentAvailability } from "./utils/get-assignment-availability";
-import type { EventCoordinationResponseDtoHeroesItem } from "@lootlog/client/main";
 
 const getRouteId = (value: string | undefined) => value ?? "";
 

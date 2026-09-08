@@ -3,8 +3,6 @@ import { Permission } from "@lootlog/schema/permissions";
 import { Effect } from "effect";
 import { TestClock } from "effect/testing";
 import { PresenceStore } from "./presence-store.js";
-import type { RedisGatewayStore } from "#src/platform/redis-store";
-import type { CoveragePublisher } from "#src/rabbit/coverage-publisher";
 import type { RealtimeHub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
 
@@ -69,14 +67,17 @@ class RecordingHub {
   readonly events: unknown[] = [];
 
   async publishPresence(
-    _scope: unknown,
-    basic: unknown,
-    precise: unknown,
+    _scope: Parameters<RealtimeHub["publishPresence"]>[0],
+    basic: Parameters<RealtimeHub["publishPresence"]>[1],
+    precise: Parameters<RealtimeHub["publishPresence"]>[2],
   ): Promise<void> {
     this.presenceEvents.push({ basic, precise });
   }
 
-  async publishToScope(_scope: unknown, event: unknown): Promise<void> {
+  async publishToScope(
+    _scope: Parameters<RealtimeHub["publishToScope"]>[0],
+    event: Parameters<RealtimeHub["publishToScope"]>[1],
+  ): Promise<void> {
     this.events.push(event);
   }
 
@@ -123,8 +124,12 @@ const session = (permissions: Permission[]): SessionData => ({
   backpressureStrikes: 0,
 });
 
-const socket = (data: SessionData): GatewaySocket =>
-  ({ data }) as GatewaySocket;
+const socket = (data: SessionData): GatewaySocket => ({
+  data,
+  send: () => 0,
+  close: () => {},
+  getBufferedAmount: () => 0,
+});
 
 const secondGuild = (permissions: Permission[]) => ({
   guild: { id: "organization-2", ownerId: "someone-else" },
@@ -135,8 +140,8 @@ describe("PresenceStore", () => {
   test("batches map metadata while ignoring missing, malformed and other-map sessions", async () => {
     const redis = new MemoryRedis();
     const store = new PresenceStore(
-      { command: redis } as unknown as RedisGatewayStore,
-      new RecordingHub() as unknown as RealtimeHub,
+      { command: redis },
+      new RecordingHub(),
       () => 10_000,
     );
     for (let index = 0; index < 5; index++) {
@@ -181,11 +186,7 @@ describe("PresenceStore", () => {
   test("uses server lastSeen and separates basic from precise location", async () => {
     const redis = new MemoryRedis();
     const hub = new RecordingHub();
-    const store = new PresenceStore(
-      { command: redis } as unknown as RedisGatewayStore,
-      hub as unknown as RealtimeHub,
-      () => 10_000,
-    );
+    const store = new PresenceStore({ command: redis }, hub, () => 10_000);
     const publisher = socket(session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]));
     await Effect.runPromise(
       store.publish(publisher, {
@@ -233,11 +234,7 @@ describe("PresenceStore", () => {
     let now = 1_000;
     const redis = new MemoryRedis();
     const hub = new RecordingHub();
-    const store = new PresenceStore(
-      { command: redis } as unknown as RedisGatewayStore,
-      hub as unknown as RealtimeHub,
-      () => now,
-    );
+    const store = new PresenceStore({ command: redis }, hub, () => now);
     await Effect.runPromise(
       store.publish(socket(session([Permission.LOOTLOG_ONLINE_PLAYERS_READ])), {
         organizationIds: ["organization-1"],
@@ -269,10 +266,10 @@ describe("PresenceStore", () => {
     const coverage = new RecordingCoverage();
     const publisher = socket(session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]));
     const store = new PresenceStore(
-      { command: redis } as unknown as RedisGatewayStore,
-      hub as unknown as RealtimeHub,
+      { command: redis },
+      hub,
       () => 10_000,
-      coverage as unknown as CoveragePublisher,
+      coverage,
     );
     await Effect.runPromise(
       store.publish(publisher, {
@@ -323,7 +320,7 @@ describe("PresenceStore", () => {
         { command: redis },
         hub,
         () => 10_000,
-        coverage as unknown as CoveragePublisher,
+        coverage,
       );
 
       await Effect.runPromise(
@@ -421,7 +418,7 @@ describe("PresenceStore", () => {
         { command: new MemoryRedis() },
         new RecordingHub(),
         () => 10_000,
-        coverage as unknown as CoveragePublisher,
+        coverage,
       );
       const publisher = socket(
         session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]),
@@ -469,10 +466,10 @@ describe("PresenceStore", () => {
     );
     const publisher = socket(publisherData);
     const store = new PresenceStore(
-      { command: redis } as unknown as RedisGatewayStore,
-      hub as unknown as RealtimeHub,
+      { command: redis },
+      hub,
       () => 10_000,
-      coverage as unknown as CoveragePublisher,
+      coverage,
     );
     await Effect.runPromise(
       store.publish(publisher, {
@@ -513,11 +510,7 @@ describe("PresenceStore", () => {
     const redis = new MemoryRedis();
     const hub = new RecordingHub();
     const publisher = socket(session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]));
-    const store = new PresenceStore(
-      { command: redis } as unknown as RedisGatewayStore,
-      hub as unknown as RealtimeHub,
-      () => now,
-    );
+    const store = new PresenceStore({ command: redis }, hub, () => now);
     await Effect.runPromise(
       store.publish(publisher, { organizationIds: ["organization-1"] }),
     );

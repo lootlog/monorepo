@@ -57,7 +57,7 @@ export const makeLootQueryPersistence = (
 
   const findItemSnapshotIds = (names: ReadonlyArray<string>) =>
     names.length === 0
-      ? Effect.succeed([] as ReadonlyArray<{ id: number }>)
+      ? Effect.succeed([])
       : protect(
           "loots.query.item-snapshots",
           database

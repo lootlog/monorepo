@@ -18,7 +18,8 @@ const renderResizeHandle = ({
   allowHorizontalResize?: boolean;
   allowVerticalResize?: boolean;
 }) => {
-  const handleResize = vi.fn();
+  const handleResize =
+    vi.fn<(size: { width: number; height: number }) => void>();
 
   Object.defineProperty(HTMLDivElement.prototype, "offsetWidth", {
     configurable: true,
@@ -38,8 +39,8 @@ const renderResizeHandle = ({
           allowHorizontalResize={allowHorizontalResize}
           allowVerticalResize={allowVerticalResize}
           onResize={handleResize}
-          onResizeStart={vi.fn()}
-          onResizeEnd={vi.fn()}
+          onResizeStart={vi.fn<() => void>()}
+          onResizeEnd={vi.fn<() => void>()}
         />
       </div>
     </div>,

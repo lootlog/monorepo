@@ -73,17 +73,15 @@ export const EventRankingPoints = ({
     <Popover open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
       <Tooltip>
         <PopoverTrigger
-          render={
-            <TooltipTrigger
-              render={
-                <button
-                  type="button"
-                  aria-label={t("events.points.history")}
-                  className="ml-auto flex min-h-9 items-center justify-end gap-1 rounded-md px-1 text-sm outline-none transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring"
-                />
-              }
-            />
-          }
+          render=<TooltipTrigger
+            render={
+              <button
+                type="button"
+                aria-label={t("events.points.history")}
+                className="ml-auto flex min-h-9 items-center justify-end gap-1 rounded-md px-1 text-sm outline-none transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring"
+              />
+            }
+          />
         >
           <Info className="size-3.5 shrink-0 text-amber-400" />
           {pointsValue}

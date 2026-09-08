@@ -11,7 +11,7 @@ export const EventsPageSkeleton = () => {
       <div className="flex flex-col gap-3">
         {Array.from({ length: 4 }).map((_, i) => (
           <SectionCard key={i} className="border-border bg-card ">
-            <SectionCardHeader title={<Skeleton className="h-4 w-32" />} />
+            <SectionCardHeader title=<Skeleton className="h-4 w-32" /> />
             <SectionCardContent>
               <div className="flex items-center gap-3">
                 <Skeleton className="h-8 w-8 shrink-0 rounded-lg" />

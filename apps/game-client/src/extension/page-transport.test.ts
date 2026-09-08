@@ -27,7 +27,7 @@ function setup() {
     else queue.push(request);
   };
   channel.port2.start();
-  const closed = vi.fn();
+  const closed = vi.fn<() => void>();
   const platform = createPageTransport(channel.port1, closed);
   cleanups.push(() => {
     platform.dispose();
@@ -137,7 +137,9 @@ describe("page transport", () => {
   it("propagates transport errors without turning them into HTTP responses", async () => {
     const bridge = setup();
     const result = bridge.platform.fetch("https://lootlog.pl/api/timers");
-    const rejection = expect(result).rejects.toThrow("Network unavailable");
+    const rejection = (async () => {
+      await expect(result).rejects.toThrow("Network unavailable");
+    })();
     const request = await bridge.next();
     bridge.send({
       type: "error",
@@ -153,9 +155,11 @@ describe("page transport", () => {
     const result = bridge.platform.fetch("https://lootlog.pl/api/timers", {
       signal: controller.signal,
     });
-    const rejection = expect(result).rejects.toMatchObject({
-      name: "AbortError",
-    });
+    const rejection = (async () => {
+      await expect(result).rejects.toMatchObject({
+        name: "AbortError",
+      });
+    })();
     const request = await bridge.next();
     controller.abort();
     await rejection;
@@ -168,7 +172,9 @@ describe("page transport", () => {
       method: "POST",
       body: "{}",
     });
-    const rejection = expect(result).rejects.toThrow("outcome may be unknown");
+    const rejection = (async () => {
+      await expect(result).rejects.toThrow("outcome may be unknown");
+    })();
     const oldRequest = await bridge.next();
     bridge.send({ type: "reset" });
     await rejection;
@@ -195,7 +201,9 @@ describe("page transport", () => {
   it("rejects pending and future requests when disposed", async () => {
     const bridge = setup();
     const result = bridge.platform.fetch("https://lootlog.pl/api/timers");
-    const rejection = expect(result).rejects.toThrow("disconnected");
+    const rejection = (async () => {
+      await expect(result).rejects.toThrow("disconnected");
+    })();
     await bridge.next();
     bridge.platform.dispose();
     await rejection;
@@ -210,7 +218,7 @@ describe("page transport", () => {
     await vi.waitFor(() => expect(bridge.closed).toHaveBeenCalledOnce());
     await expect(
       bridge.platform.fetch("https://lootlog.pl/api/timers"),
-    ).rejects.toThrow();
+    ).rejects.toThrow("Extension transport disposed");
     expect(
       bridge.received.filter((request) => request.type === "http"),
     ).toHaveLength(0);
@@ -219,7 +227,7 @@ describe("page transport", () => {
   it("isolates subscriber exceptions from pending HTTP mutations", async () => {
     const bridge = setup();
     const realtime = bridge.platform.createRealtime();
-    const listener = vi.fn();
+    const listener = vi.fn<Parameters<typeof realtime.subscribe>[0]>();
     realtime.subscribe(() => {
       throw new Error("Broken UI subscriber");
     });
@@ -254,11 +262,13 @@ describe("page transport", () => {
     const heartbeat = realtime.request("presence.heartbeat", {
       sessionId: "session",
     });
-    const rejection = expect(heartbeat).rejects.toMatchObject({
-      code: "RATE_LIMITED",
-      retryable: true,
-      retryAfterMs: 1000,
-    });
+    const rejection = (async () => {
+      await expect(heartbeat).rejects.toMatchObject({
+        code: "RATE_LIMITED",
+        retryable: true,
+        retryAfterMs: 1000,
+      });
+    })();
     const heartbeatRequest = await bridge.next();
     expect(heartbeatRequest).toMatchObject({
       command: { type: "presence.heartbeat", data: { sessionId: "session" } },
@@ -278,8 +288,8 @@ describe("page transport", () => {
   it("delivers realtime state and events and honors unsubscription", async () => {
     const bridge = setup();
     const realtime = bridge.platform.createRealtime();
-    const states = vi.fn();
-    const events = vi.fn();
+    const states = vi.fn<Parameters<typeof realtime.subscribeState>[0]>();
+    const events = vi.fn<Parameters<typeof realtime.subscribe>[0]>();
     const unsubscribe = realtime.subscribe(events);
     realtime.subscribeState(states);
     expect(states).toHaveBeenCalledWith("disconnected");

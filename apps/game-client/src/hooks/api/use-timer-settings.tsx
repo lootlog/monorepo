@@ -1,4 +1,9 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { z } from "zod";
+import {
+  useMutation,
+  useQueryClient,
+  type QueryKey,
+} from "@tanstack/react-query";
 import type { UpdateTimerSettingsPayload } from "@lootlog/schema/timer-settings";
 import {
   getTimerSettingsControllerGetGlobalSettingsQueryKey,
@@ -8,6 +13,12 @@ import {
   type MigrateTimerSettingsDto,
   type UpdateTimerSettingsDto,
 } from "@lootlog/client/main";
+
+const queryPath = z.string();
+const hasQueryPathPrefix = (queryKey: QueryKey, prefix: string) => {
+  const path = queryPath.safeParse(queryKey[0]);
+  return path.success && path.data.startsWith(prefix);
+};
 
 const TIMER_SETTINGS_QUERY_KEY =
   getTimerSettingsControllerGetGlobalSettingsQueryKey();
@@ -54,8 +65,7 @@ export const useUpdateTimerSettings = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: TIMER_SETTINGS_QUERY_KEY });
       queryClient.invalidateQueries({
-        predicate: ({ queryKey }) =>
-          typeof queryKey[0] === "string" && queryKey[0].startsWith("/timers"),
+        predicate: ({ queryKey }) => hasQueryPathPrefix(queryKey, "/timers"),
       });
     },
   });
@@ -71,8 +81,7 @@ export const useMigrateTimerSettings = () => {
       queryClient.invalidateQueries({ queryKey: TIMER_SETTINGS_QUERY_KEY });
       queryClient.invalidateQueries({
         predicate: ({ queryKey }) =>
-          typeof queryKey[0] === "string" &&
-          queryKey[0].startsWith("/timer-settings/guilds/"),
+          hasQueryPathPrefix(queryKey, "/timer-settings/guilds/"),
       });
     },
   });

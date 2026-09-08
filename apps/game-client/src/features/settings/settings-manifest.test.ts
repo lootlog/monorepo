@@ -14,9 +14,8 @@ const catalogHasKey = (key: SettingsCatalogKey) => {
     return path in DEVICE_SETTINGS_CATALOG;
   }
 
-  return (
-    domain in SETTINGS_CATALOG &&
-    path in SETTINGS_CATALOG[domain as keyof typeof SETTINGS_CATALOG].fields
+  return Object.entries(SETTINGS_CATALOG).some(
+    ([name, catalog]) => name === domain && path in catalog.fields,
   );
 };
 

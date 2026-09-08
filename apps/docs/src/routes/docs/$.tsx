@@ -89,6 +89,15 @@ function DocsRoute() {
   const { toc } = use(page.load());
   const MDX = page.body;
   const chapter = getChapterBySlug(slugs);
+  const layoutStyle: DocsLayoutStyle = {
+    "--fd-header-height": "72px",
+    gridTemplate: `"header header header"
+"sidebar toc-popover toc"
+"sidebar main toc" 1fr / var(--fd-sidebar-col) minmax(0, 1fr) var(--fd-toc-width)`,
+  };
+  const chapterStyle: ChapterStyle = {
+    "--active-chapter-color": chapter.color,
+  };
 
   return (
     <DocsLayout
@@ -102,12 +111,7 @@ function DocsRoute() {
       slots={{ header: DocsHeader }}
       containerProps={{
         className: "docs-layout",
-        style: {
-          "--fd-header-height": "72px",
-          gridTemplate: `"header header header"
-"sidebar toc-popover toc"
-"sidebar main toc" 1fr / var(--fd-sidebar-col) minmax(0, 1fr) var(--fd-toc-width)`,
-        } as DocsLayoutStyle,
+        style: layoutStyle,
       }}
       sidebar={{
         collapsible: false,
@@ -138,7 +142,7 @@ function DocsRoute() {
         toc={toc}
         footer={{ className: "docs-page-footer" }}
         className={`docs-article docs-chapter-${chapter.id}`}
-        style={{ "--active-chapter-color": chapter.color } as ChapterStyle}
+        style={chapterStyle}
       >
         <div className="docs-article-content">
           <DocsChapterRail activeChapterId={chapter.id} />

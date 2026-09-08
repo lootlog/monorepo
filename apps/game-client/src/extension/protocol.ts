@@ -8,6 +8,8 @@ export const MAX_MESSAGE_LENGTH = 20 * 1024 * 1024;
 export const MAX_PENDING_REQUESTS = 64;
 export const REQUEST_TIMEOUT_MS = 30_000;
 
+const SerializedMessageSchema = z.string().max(MAX_MESSAGE_LENGTH);
+
 const id = z.string().min(1).max(80);
 export const ExtensionRequestSchema = z.discriminatedUnion("type", [
   z.strictObject({
@@ -57,9 +59,9 @@ export const ExtensionMessageSchema = z.discriminatedUnion("type", [
 export type ExtensionMessage = z.infer<typeof ExtensionMessageSchema>;
 
 export function decodeMessage(value: unknown): unknown {
-  if (typeof value !== "string" || value.length > MAX_MESSAGE_LENGTH)
-    throw new Error("Invalid extension message");
-  return JSON.parse(value);
+  const parsed = SerializedMessageSchema.safeParse(value);
+  if (!parsed.success) throw new Error("Invalid extension message");
+  return JSON.parse(parsed.data);
 }
 
 export function encodeMessage(

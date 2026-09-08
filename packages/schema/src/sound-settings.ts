@@ -1,7 +1,7 @@
-export interface NpcTypeSoundConfig {
+export type NpcTypeSoundConfig = {
   volume: number;
   soundUrl: string;
-}
+};
 
 export interface UserSoundSettings {
   userId: string;

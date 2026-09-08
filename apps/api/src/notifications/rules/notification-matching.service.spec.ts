@@ -5,9 +5,9 @@ import { notificationMatchingPolicy as service } from "#src/notifications/rules/
 
 describe("NotificationMatchingService", () => {
   it("returns empty filters for invalid filter payloads", () => {
-    expect(service.parseFilters(null as never)).toEqual({});
-    expect(service.parseFilters([] as never)).toEqual({});
-    expect(service.parseFilters("invalid" as never)).toEqual({});
+    expect(service.parseFilters(null)).toEqual({});
+    expect(service.parseFilters([])).toEqual({});
+    expect(service.parseFilters("invalid")).toEqual({});
   });
 
   it("allows guild owners to view any loot", () => {

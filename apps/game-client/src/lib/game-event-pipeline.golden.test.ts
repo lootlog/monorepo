@@ -1,5 +1,10 @@
-import type { GameEvent } from "@lootlog/margonem/game-events";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { z } from "zod";
+import { configureApiClients } from "@lootlog/client/transport";
+import { airTagObservationController } from "@/features/air-tags/air-tag-observation-controller";
+import { airTagRuntime } from "@/features/air-tags/air-tag-runtime";
+import { mapPingController } from "@/features/map-pings/map-ping-controller";
+import { mapPingInteractionController } from "@/features/map-pings/map-ping-interaction-controller";
+import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 import { useBattlePanelStore } from "@/store/battle-panel.store";
 import { useFriendsStore } from "@/store/friends.store";
 import { useBattleStore } from "@/store/game-store/battle.store";
@@ -8,65 +13,57 @@ import { useLootStore } from "@/store/game-store/loot.store";
 import { useGlobalStore } from "@/store/global.store";
 import { usePartyStore } from "@/store/party.store";
 import { EventDispatcher } from "./event-dispatcher";
-import { margonemRuntimeBridge } from "./margonem-runtime/margonem-runtime-bridge";
+import {
+  margonemRuntimeBridge,
+  type RuntimeFunction,
+} from "./margonem-runtime/margonem-runtime-bridge";
 import { runtimeEventPipeline } from "./margonem-runtime/runtime-event-pipeline";
-import type * as ApiModule from "@/api";
 import { useGameStore } from "@/store/game.store";
 import { useNpcsStore } from "@/store/npcs.store";
 import { useOthersStore } from "@/store/others.store";
 
-const effects = vi.hoisted(() => ({
-  cancelMapPingInteraction: vi.fn(),
-  clearMapPings: vi.fn(),
-  handleAirTagMapChange: vi.fn(),
-  observeOtherPlayers: vi.fn(),
-}));
-
-const api = vi.hoisted(() => ({
-  createBattle: vi.fn().mockResolvedValue({ battleId: "battle-1" }),
-  createKill: vi.fn().mockResolvedValue({ updated: 1 }),
-  createLoot: vi.fn().mockResolvedValue({ id: 1 }),
-}));
-
-vi.mock("@/api", async (importOriginal) => ({
-  ...(await importOriginal<typeof ApiModule>()),
-  createBattle: api.createBattle,
-  createKill: api.createKill,
-  createLoot: api.createLoot,
-}));
-
-vi.mock("@/features/air-tags/air-tag-observation-controller", () => ({
-  airTagObservationController: { handle: effects.observeOtherPlayers },
-}));
-
-vi.mock("@/features/air-tags/air-tag-runtime", () => ({
-  airTagRuntime: { handleMapChange: effects.handleAirTagMapChange },
-}));
-
-vi.mock("@/features/map-pings/map-ping-controller", () => ({
-  mapPingController: { clear: effects.clearMapPings },
-}));
-
-vi.mock("@/features/map-pings/map-ping-interaction-controller", () => ({
-  mapPingInteractionController: { cancel: effects.cancelMapPingInteraction },
-}));
-
-vi.mock("@/lib/game", () => ({
-  Game: {
-    getAccountId: () => null,
-    getNpc: () => undefined,
-    getOther: () => ({ account: 222 }),
-    getWorldName: () => "pandora",
-    hero: { account: 67_890, id: 12_345 },
-    map: { id: 13, name: "Nithal" },
-  },
-}));
-
-type PipelineWindow = Window & {
-  successData?: (payload: GameEvent | string) => unknown;
+const effects = {
+  cancelMapPingInteraction: vi.spyOn(mapPingInteractionController, "cancel"),
+  clearMapPings: vi.spyOn(mapPingController, "clear"),
+  handleAirTagMapChange: vi.spyOn(airTagRuntime, "handleMapChange"),
+  observeOtherPlayers: vi.spyOn(airTagObservationController, "handle"),
 };
 
-const pipelineWindow = window as PipelineWindow;
+type CapturedRequest = { path: string; body: unknown };
+const requests: CapturedRequest[] = [];
+const restoreApi = configureApiClients({
+  main: { baseUrl: "https://api.example.test", fetch: captureHttp },
+  battlelog: { baseUrl: "https://battlelog.example.test", fetch: captureHttp },
+});
+async function captureHttp(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+): Promise<Response> {
+  const request = new Request(input, init);
+  const path = new URL(request.url).pathname;
+  const body: unknown = JSON.parse(await request.text());
+  requests.push({ path, body });
+  if (path === "/loots")
+    return Response.json({ id: 1, submittedGuilds: [], rejectedGuilds: [] });
+  if (path === "/kills") return Response.json({ updated: 1 });
+  if (path === "/battles") return Response.json({ battleId: "battle-1" });
+  return new Response(null, { status: 404 });
+}
+const requestsFor = (path: string) =>
+  requests.filter((request) => request.path === path);
+const submittedBattleSchema = z.object({
+  events: z.array(
+    z.object({
+      f: z
+        .object({
+          m: z.array(z.string()).optional(),
+          w: z.record(z.string(), z.unknown()).optional(),
+        })
+        .optional(),
+    }),
+  ),
+});
+const pipelineWindow: Window & { successData?: RuntimeFunction } = window;
 const originalSuccessData = pipelineWindow.successData;
 
 const combinedEvent = {
@@ -122,7 +119,7 @@ const combinedEvent = {
     },
   },
   town: { id: 13, name: "Nithal" },
-} as unknown as GameEvent;
+};
 
 const finalFightEvent = {
   f: {
@@ -143,7 +140,7 @@ const finalFightEvent = {
       },
     },
   },
-} as unknown as GameEvent;
+};
 
 const fightLootEvent = {
   f: {},
@@ -164,7 +161,7 @@ const fightLootEvent = {
     source: "fight",
     states: { "loot-1": 1 },
   },
-} as unknown as GameEvent;
+};
 
 const keuktaWarriors = {
   "220": {
@@ -224,7 +221,7 @@ const keuktaIncrementalEvents = [
       m: keuktaMoves.slice(80),
     },
   },
-] as GameEvent[];
+];
 
 const compactKeuktaEvent = {
   ev: 1_785_091_976.4,
@@ -234,14 +231,12 @@ const compactKeuktaEvent = {
     m: keuktaMoves,
     w: keuktaWarriors,
   },
-} as GameEvent;
+};
 
 function resetPipelineState(): void {
   runtimeEventPipeline.cleanup();
   margonemRuntimeBridge.cleanup();
-  api.createBattle.mockClear();
-  api.createKill.mockClear();
-  api.createLoot.mockClear();
+  requests.length = 0;
   effects.cancelMapPingInteraction.mockClear();
   effects.clearMapPings.mockClear();
   effects.handleAirTagMapChange.mockClear();
@@ -294,13 +289,13 @@ function resetPipelineState(): void {
   runtimeEventPipeline.setReady(true);
 }
 
-function dispatchRuntimeEvent(payload: GameEvent | string): unknown {
+// The replay enters the real foreign successData boundary, including fragmentary
+// native packets and their serialized forms; the bridge owns field decoding.
+function dispatchRuntimeEvent(payload: unknown): unknown {
   return dispatchRuntimeEvents([payload])[0];
 }
 
-function dispatchRuntimeEvents(
-  payloads: readonly (GameEvent | string)[],
-): unknown[] {
+function dispatchRuntimeEvents(payloads: readonly unknown[]): unknown[] {
   const results = payloads.map((payload) =>
     pipelineWindow.successData?.(payload),
   );
@@ -308,10 +303,10 @@ function dispatchRuntimeEvents(
   return results;
 }
 
-function replayAndSnapshot(payload: GameEvent | string) {
+function replayAndSnapshot(payload: unknown) {
   resetPipelineState();
   const dispatcher = new EventDispatcher();
-  pipelineWindow.successData = vi.fn(() => "game-result");
+  pipelineWindow.successData = vi.fn<() => string>(() => "game-result");
   margonemRuntimeBridge.setupProxies();
   dispatcher.register();
 
@@ -343,6 +338,10 @@ function replayAndSnapshot(payload: GameEvent | string) {
 }
 
 describe("game event pipeline golden replay", () => {
+  afterAll(() => {
+    restoreApi();
+    vi.restoreAllMocks();
+  });
   afterEach(() => {
     runtimeEventPipeline.cleanup();
     margonemRuntimeBridge.cleanup();
@@ -408,27 +407,26 @@ describe("game event pipeline golden replay", () => {
     resetPipelineState();
     useBattleStore.setState({ battleState: "in-battle" });
     const dispatcher = new EventDispatcher();
-    pipelineWindow.successData = vi.fn(() => "game-result");
+    pipelineWindow.successData = vi.fn<() => string>(() => "game-result");
     margonemRuntimeBridge.setupProxies();
     dispatcher.register();
     const finalFightLootEvent = {
       ...finalFightEvent,
       ...fightLootEvent,
       f: finalFightEvent.f,
-    } as GameEvent;
+    };
 
     dispatchRuntimeEvent(finalFightLootEvent);
 
-    expect(api.createLoot).toHaveBeenCalledOnce();
-    expect(api.createLoot).toHaveBeenCalledWith(
+    await vi.waitFor(() => expect(requestsFor("/loots")).toHaveLength(1));
+    expect(requestsFor("/loots")[0]?.body).toEqual(
       expect.objectContaining({
         loots: [expect.objectContaining({ id: 9001, name: "Unique loot" })],
         npcs: [expect.objectContaining({ id: 100, name: "Boss" })],
         source: "FIGHT",
       }),
-      expect.objectContaining({ source: "fight" }),
     );
-    await vi.waitFor(() => expect(api.createKill).toHaveBeenCalledOnce());
+    await vi.waitFor(() => expect(requestsFor("/kills")).toHaveLength(1));
 
     dispatcher.cleanup();
   });
@@ -437,20 +435,19 @@ describe("game event pipeline golden replay", () => {
     resetPipelineState();
     useBattleStore.setState({ battleState: "in-battle" });
     const dispatcher = new EventDispatcher();
-    pipelineWindow.successData = vi.fn(() => "game-result");
+    pipelineWindow.successData = vi.fn<() => string>(() => "game-result");
     margonemRuntimeBridge.setupProxies();
     dispatcher.register();
 
     dispatchRuntimeEvents([finalFightEvent, fightLootEvent]);
 
-    expect(api.createLoot).toHaveBeenCalledOnce();
-    expect(api.createLoot).toHaveBeenCalledWith(
+    await vi.waitFor(() => expect(requestsFor("/loots")).toHaveLength(1));
+    expect(requestsFor("/loots")[0]?.body).toEqual(
       expect.objectContaining({
         npcs: [expect.objectContaining({ id: 100, name: "Boss" })],
       }),
-      expect.objectContaining({ source: "fight" }),
     );
-    await vi.waitFor(() => expect(api.createKill).toHaveBeenCalledOnce());
+    await vi.waitFor(() => expect(requestsFor("/kills")).toHaveLength(1));
 
     dispatcher.cleanup();
   });
@@ -476,7 +473,7 @@ describe("game event pipeline golden replay", () => {
       });
       const firstDispatcher = new EventDispatcher();
       const secondDispatcher = new EventDispatcher();
-      pipelineWindow.successData = vi.fn(() => "game-result");
+      pipelineWindow.successData = vi.fn<() => string>(() => "game-result");
       margonemRuntimeBridge.setupProxies();
       firstDispatcher.register();
       secondDispatcher.register();
@@ -525,7 +522,7 @@ describe("game event pipeline golden replay", () => {
             },
           },
         },
-      } as GameEvent);
+      });
 
       const finalWarriorPatches =
         hpFormat === "modern"
@@ -543,19 +540,19 @@ describe("game event pipeline golden replay", () => {
           m: ["final"],
           w: finalWarriorPatches,
         },
-      } as unknown as GameEvent;
+      };
 
       if (lootTiming === "same packet") {
         dispatchRuntimeEvent({
           ...fightLootEvent,
           ...fragmentaryFinalFightEvent,
-        } as GameEvent);
+        });
       } else {
         dispatchRuntimeEvents([fragmentaryFinalFightEvent, fightLootEvent]);
       }
 
-      expect(api.createLoot).toHaveBeenCalledOnce();
-      expect(api.createLoot).toHaveBeenCalledWith(
+      await vi.waitFor(() => expect(requestsFor("/loots")).toHaveLength(1));
+      expect(requestsFor("/loots")[0]?.body).toEqual(
         expect.objectContaining({
           npcs: [
             {
@@ -591,19 +588,18 @@ describe("game event pipeline golden replay", () => {
             },
           ]),
         }),
-        expect.objectContaining({ source: "fight" }),
       );
-      await vi.waitFor(() => expect(api.createKill).toHaveBeenCalledOnce());
+      await vi.waitFor(() => expect(requestsFor("/kills")).toHaveLength(1));
 
       firstDispatcher.cleanup();
       secondDispatcher.cleanup();
     },
   );
 
-  it("submits dialog loot after projection removes the talked NPC", () => {
+  it("submits dialog loot after projection removes the talked NPC", async () => {
     resetPipelineState();
     const dispatcher = new EventDispatcher();
-    pipelineWindow.successData = vi.fn(() => "game-result");
+    pipelineWindow.successData = vi.fn<() => string>(() => "game-result");
     margonemRuntimeBridge.setupProxies();
     dispatcher.register();
     const talkedNpc = Object.freeze({
@@ -629,16 +625,15 @@ describe("game event pipeline golden replay", () => {
       item: fightLootEvent.item,
       loot: { source: "dialog", states: { "loot-1": 1 } },
       npcs_del: [{ id: 501 }],
-    } as unknown as GameEvent);
+    });
 
     expect(useNpcsStore.getState().getNpc(501)).toBeUndefined();
-    expect(api.createLoot).toHaveBeenCalledOnce();
-    expect(api.createLoot).toHaveBeenCalledWith(
+    await vi.waitFor(() => expect(requestsFor("/loots")).toHaveLength(1));
+    expect(requestsFor("/loots")[0]?.body).toEqual(
       expect.objectContaining({
         npcs: [expect.objectContaining({ id: 501, name: "Talked NPC" })],
         source: "DIALOG",
       }),
-      expect.objectContaining({ source: "dialog" }),
     );
 
     dispatcher.cleanup();
@@ -648,7 +643,7 @@ describe("game event pipeline golden replay", () => {
     resetPipelineState();
     const firstDispatcher = new EventDispatcher();
     const secondDispatcher = new EventDispatcher();
-    pipelineWindow.successData = vi.fn(() => "game-result");
+    pipelineWindow.successData = vi.fn<() => string>(() => "game-result");
     margonemRuntimeBridge.setupProxies();
     firstDispatcher.register();
     secondDispatcher.register();
@@ -658,10 +653,10 @@ describe("game event pipeline golden replay", () => {
     }
     dispatchRuntimeEvent(compactKeuktaEvent);
 
-    await vi.waitFor(() => expect(api.createBattle).toHaveBeenCalledOnce());
-    const submittedBattle = api.createBattle.mock.calls[0]?.[0] as
-      | ApiModule.CreateBattleOptions
-      | undefined;
+    await vi.waitFor(() => expect(requestsFor("/battles")).toHaveLength(1));
+    const submittedBattle = submittedBattleSchema.parse(
+      requestsFor("/battles")[0]?.body,
+    );
     const submittedMoves =
       submittedBattle?.events.flatMap((event) => event.f?.m ?? []) ?? [];
 
@@ -698,21 +693,21 @@ describe("game event pipeline golden replay", () => {
       .mockReturnValue(Date.parse("2026-07-26T18:52:57.000Z"));
     resetPipelineState();
     const dispatcher = new EventDispatcher();
-    pipelineWindow.successData = vi.fn(() => "game-result");
+    pipelineWindow.successData = vi.fn<() => string>(() => "game-result");
     margonemRuntimeBridge.setupProxies();
     dispatcher.register();
 
     for (const event of keuktaIncrementalEvents) {
       dispatchRuntimeEvent(event);
     }
-    await vi.waitFor(() => expect(api.createBattle).toHaveBeenCalledOnce());
+    await vi.waitFor(() => expect(requestsFor("/battles")).toHaveLength(1));
     dateNow.mockReturnValue(Date.parse("2026-07-26T18:53:07.001Z"));
     dispatchRuntimeEvent({
       ...compactKeuktaEvent,
       ev: 1_785_091_986.4,
     });
 
-    await vi.waitFor(() => expect(api.createBattle).toHaveBeenCalledTimes(2));
+    await vi.waitFor(() => expect(requestsFor("/battles")).toHaveLength(2));
 
     dispatcher.cleanup();
     dateNow.mockRestore();

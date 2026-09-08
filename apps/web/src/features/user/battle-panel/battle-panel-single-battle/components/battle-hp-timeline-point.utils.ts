@@ -1,8 +1,9 @@
-export const getBattleTimelinePayloadTurn = (payload: unknown) => {
-  if (typeof payload !== "object" || payload === null || !("turn" in payload)) {
-    return null;
-  }
+import { z } from "zod";
 
-  const turn = Number(payload.turn);
-  return Number.isNaN(turn) ? null : turn;
-};
+export const getBattleTimelinePayloadTurn = z
+  .object({
+    turn: z.coerce.number(),
+  })
+  .transform(({ turn }) => turn)
+  .nullable()
+  .catch(null).parse;

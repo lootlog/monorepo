@@ -10,17 +10,14 @@ import {
   HttpServerResponse,
 } from "effect/unstable/http";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
-import {
-  BetterAuthRuntime,
-  type LootlogAuth,
-} from "#src/auth/provider/better-auth";
+import { BetterAuthRuntime } from "#src/auth/provider/better-auth";
 import { BETTER_AUTH_INTERNAL_PATH } from "#src/auth/provider/better-auth-url";
 import { AppConfig } from "#src/config/env";
 import { AuthApi } from "#src/http-api/auth-api";
 import { normalizeBetterAuthRequest } from "./application.js";
 import { AuthHandlers } from "./auth-handlers.js";
 
-const makeBetterAuthHandler = (auth: LootlogAuth) =>
+const makeBetterAuthHandler = (auth: typeof BetterAuthRuntime.Service) =>
   Effect.fn("BetterAuth.rawHandler")(
     function* (request: HttpServerRequest.HttpServerRequest) {
       const webRequest = yield* HttpServerRequest.toWeb(request);

@@ -6,22 +6,25 @@ import {
   createAuthService,
   HttpResponseError,
   normalizeScopes,
+  type AuthProvider,
 } from "./auth-service.js";
-import type { LootlogAuth } from "#src/auth/provider/better-auth";
 const findDiscordAccountId = () => Effect.succeed("account-row-1");
 
 const createFakeAuth = () => {
-  const getSession = mock(() => Promise.resolve(null));
-  const getJwks = mock(() =>
+  const getSession = mock<AuthProvider["api"]["getSession"]>(() =>
+    Promise.resolve(null),
+  );
+  const getJwks = mock<AuthProvider["api"]["getJwks"]>(() =>
     Promise.resolve({ keys: [] } satisfies JSONWebKeySet),
   );
-  const getAccessToken = mock(() => Promise.resolve(null));
+  const getAccessToken = mock<AuthProvider["api"]["getAccessToken"]>(() =>
+    Promise.resolve(null),
+  );
 
   return {
     auth: {
       api: { getSession, getJwks, getAccessToken },
-      handler: mock(() => Promise.resolve(new Response())),
-    } as unknown as LootlogAuth,
+    } satisfies AuthProvider,
     getAccessToken,
     getJwks,
     getSession,
@@ -59,9 +62,8 @@ describe("AuthService", () => {
   it("prefers a valid session and preserves the internal user id", async () => {
     const { auth, getSession } = createFakeAuth();
     getSession.mockResolvedValue({
-      session: {},
       user: { id: "user-1", discordId: "discord-1" },
-    } as never);
+    });
     const service = createAuthService({
       auth,
       appUrl: "http://localhost:3000",
@@ -89,7 +91,7 @@ describe("AuthService", () => {
     const { auth, getJwks } = createFakeAuth();
     getJwks.mockResolvedValue({
       keys: [{ ...publicJwk, alg: "EdDSA", kid: "test-key" }],
-    } as never);
+    });
     const service = createAuthService({
       auth,
       appUrl: issuer,
@@ -112,7 +114,7 @@ describe("AuthService", () => {
       accessToken: "token-123",
       accessTokenExpiresAt: new Date(Date.now() + 60_000),
       scopes: "guilds identify",
-    } as never);
+    });
     const service = createAuthService({
       auth,
       appUrl: "http://localhost:3000",
@@ -149,7 +151,7 @@ describe("AuthService", () => {
       accessToken: "token-123",
       accessTokenExpiresAt: new Date(Date.now() - 1_000),
       scopes: [],
-    } as never);
+    });
     await expect(
       Effect.runPromise(
         service.getIdpTokenResponse({
@@ -162,7 +164,7 @@ describe("AuthService", () => {
       body: { error: "TOKEN_EXPIRED" },
     });
 
-    getAccessToken.mockResolvedValue({ accessToken: "" } as never);
+    getAccessToken.mockResolvedValue({ accessToken: "" });
     await expect(
       Effect.runPromise(
         service.getIdpTokenResponse({
@@ -179,9 +181,8 @@ describe("AuthService", () => {
   it("requires reauthentication when Better Auth cannot refresh the Discord token", async () => {
     const { auth, getAccessToken, getSession } = createFakeAuth();
     getSession.mockResolvedValue({
-      session: {},
       user: { id: "user-1", discordId: "discord-1" },
-    } as never);
+    });
     getAccessToken.mockRejectedValue(
       new APIError("BAD_REQUEST", {
         code: "FAILED_TO_GET_ACCESS_TOKEN",

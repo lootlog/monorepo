@@ -1,3 +1,5 @@
+import type { makeUserGuildList } from "./user-guild-list.data-layer.js";
+import type { makeCurrentUserGuilds } from "./current-user-guilds.data-layer.js";
 import { statusCodeResponse } from "#src/shared/http/handler-response";
 import {
   readGuildConfigurationCache,
@@ -107,9 +109,7 @@ export class AccountOrganizationData extends Context.Service<
       userId: string,
       payload: UpdateUserPreferencesRequest,
     ) => DataEffect;
-    readonly getCurrentUserGuilds: (
-      identity: AuthenticatedIdentity,
-    ) => DataEffect;
+    readonly getCurrentUserGuilds: ReturnType<typeof makeCurrentUserGuilds>;
     readonly getCurrentUserAccessibleGuilds: (
       identity: AuthenticatedIdentity,
     ) => DataEffect;
@@ -122,10 +122,7 @@ export class AccountOrganizationData extends Context.Service<
       accountId: string,
       payload: UpdateUserGameAccountPreferencesRequest,
     ) => DataEffect;
-    readonly getUserGuilds: (
-      identity: AuthenticatedIdentity,
-      source?: string,
-    ) => DataEffect;
+    readonly getUserGuilds: ReturnType<typeof makeUserGuildList>;
     readonly getUserGuildsWithPermissions: (
       identity: AuthenticatedIdentity,
     ) => DataEffect;
@@ -181,39 +178,31 @@ const validateGuildConfigurationAgainstStored = (
 
 const buildGuildConfigurationUpdate = (
   payload: UpdateOrganizationConfigRequest,
-) => ({
-  ...(Object.hasOwn(payload, "vanityUrl")
-    ? { vanityUrl: generateSlug(payload.vanityUrl ?? undefined) }
-    : {}),
-  ...(payload.publicStatsCardEnabled === undefined
-    ? {}
-    : { publicStatsCardEnabled: payload.publicStatsCardEnabled }),
-  ...(payload.reservationMaxDurationMinutes === undefined
-    ? {}
-    : {
-        reservationMaxDurationMinutes: payload.reservationMaxDurationMinutes,
-      }),
-  ...(payload.reservationMinDurationMinutes === undefined
-    ? {}
-    : {
-        reservationMinDurationMinutes: payload.reservationMinDurationMinutes,
-      }),
-  ...(payload.reservationTimeGranularityMinutes === undefined
-    ? {}
-    : {
-        reservationTimeGranularityMinutes:
-          payload.reservationTimeGranularityMinutes,
-      }),
-  ...(payload.reservationMaxAdvanceDays === undefined
-    ? {}
-    : { reservationMaxAdvanceDays: payload.reservationMaxAdvanceDays }),
-  ...(payload.reservationActiveLimitPerSpot === undefined
-    ? {}
-    : {
-        reservationActiveLimitPerSpot: payload.reservationActiveLimitPerSpot,
-      }),
-  updatedAt: new Date(),
-});
+) => {
+  const update: Partial<typeof guildTable.$inferInsert> = {
+    updatedAt: new Date(),
+  };
+  if (Object.hasOwn(payload, "vanityUrl")) {
+    update.vanityUrl = generateSlug(payload.vanityUrl ?? undefined);
+  }
+  if (payload.publicStatsCardEnabled !== undefined)
+    update.publicStatsCardEnabled = payload.publicStatsCardEnabled;
+  if (payload.reservationMaxDurationMinutes !== undefined)
+    update.reservationMaxDurationMinutes =
+      payload.reservationMaxDurationMinutes;
+  if (payload.reservationMinDurationMinutes !== undefined)
+    update.reservationMinDurationMinutes =
+      payload.reservationMinDurationMinutes;
+  if (payload.reservationTimeGranularityMinutes !== undefined)
+    update.reservationTimeGranularityMinutes =
+      payload.reservationTimeGranularityMinutes;
+  if (payload.reservationMaxAdvanceDays !== undefined)
+    update.reservationMaxAdvanceDays = payload.reservationMaxAdvanceDays;
+  if (payload.reservationActiveLimitPerSpot !== undefined)
+    update.reservationActiveLimitPerSpot =
+      payload.reservationActiveLimitPerSpot;
+  return update;
+};
 
 export class GuildConfigurationData extends Context.Service<
   GuildConfigurationData,

@@ -1,3 +1,4 @@
+import type { ComponentProps } from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { expect, it, vi } from "vitest";
@@ -6,7 +7,8 @@ import { LogsActionCard } from "./logs-action-card";
 
 it("toggles details with the keyboard without toggling when copying an action", async () => {
   const user = userEvent.setup();
-  const onCopyAction = vi.fn();
+  const onCopyAction =
+    vi.fn<ComponentProps<typeof LogsActionCard>["onCopyAction"]>();
   render(
     <LogsActionCard
       action={{
@@ -18,7 +20,9 @@ it("toggles details with the keyboard without toggling when copying an action", 
         requests: [],
       }}
       onCopyAction={onCopyAction}
-      onCopyRequest={vi.fn()}
+      onCopyRequest={vi.fn<
+        ComponentProps<typeof LogsActionCard>["onCopyRequest"]
+      >()}
     />,
   );
   const header = screen.getByRole("button", { name: "audit-example" });

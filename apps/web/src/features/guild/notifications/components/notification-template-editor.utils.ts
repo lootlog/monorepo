@@ -19,9 +19,7 @@ import {
   $isNotificationTemplateVariableNode,
 } from "./notification-template-variable-node";
 
-export const createPreviewTemplateValues = (
-  t: (key: string) => string,
-): Record<string, string> => ({
+export const createPreviewTemplateValues = (t: (key: string) => string) => ({
   ruleName: t("settings.notifications.templateEditor.previewValues.ruleName"),
   npcName: t("settings.notifications.templateEditor.previewValues.npcName"),
   npcId: "101",

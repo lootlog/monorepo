@@ -12,7 +12,7 @@ export const AppearanceSettingsPageSkeleton = () => {
           {Array.from({ length: 8 }).map((_, i) => (
             <SectionCard key={i}>
               <SectionCardHeader
-                title={<Skeleton className="mb-3 h-24 w-full rounded-lg" />}
+                title=<Skeleton className="mb-3 h-24 w-full rounded-lg" />
               />
               <SectionCardContent>
                 <Skeleton className="mb-1 h-4 w-24" />

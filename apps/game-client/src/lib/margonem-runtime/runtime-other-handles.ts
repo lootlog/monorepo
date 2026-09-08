@@ -1,17 +1,19 @@
-import type { Other } from "@lootlog/margonem/others";
+import type { OtherHandle } from "@lootlog/margonem/others";
 
 class RuntimeOtherHandleRegistry {
-  private handlesById: Readonly<Record<string, Other>> = Object.freeze({});
+  private handlesById: Readonly<Record<string, OtherHandle>> = Object.freeze(
+    {},
+  );
 
-  replace(handlesById: Readonly<Record<string, Other>>): void {
+  replace(handlesById: Readonly<Record<string, OtherHandle>>): void {
     this.handlesById = Object.freeze({ ...handlesById });
   }
 
   applyBatch(batch: {
     removeIds?: readonly string[];
-    upserts?: Readonly<Record<string, Other>>;
+    upserts?: Readonly<Record<string, OtherHandle>>;
   }): void {
-    let writableHandlesById: Record<string, Other> | null = null;
+    let writableHandlesById: Record<string, OtherHandle> | null = null;
     const getWritableHandlesById = () => {
       writableHandlesById ??= { ...this.handlesById };
       return writableHandlesById;
@@ -32,11 +34,11 @@ class RuntimeOtherHandleRegistry {
     }
   }
 
-  get(id: string): Other | undefined {
+  get(id: string): OtherHandle | undefined {
     return this.handlesById[id];
   }
 
-  getAll(): Readonly<Record<string, Other>> {
+  getAll(): Readonly<Record<string, OtherHandle>> {
     return this.handlesById;
   }
 
@@ -46,16 +48,3 @@ class RuntimeOtherHandleRegistry {
 }
 
 export const runtimeOtherHandles = new RuntimeOtherHandleRegistry();
-
-export function replaceRuntimeOtherHandlesForCompatibility(
-  handlesById: Readonly<Record<string, unknown>>,
-): void {
-  runtimeOtherHandles.replace(handlesById as Readonly<Record<string, Other>>);
-}
-
-export function upsertRuntimeOtherHandleForCompatibility(
-  id: string,
-  handle: unknown,
-): void {
-  runtimeOtherHandles.applyBatch({ upserts: { [id]: handle as Other } });
-}

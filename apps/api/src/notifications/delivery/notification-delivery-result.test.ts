@@ -1,34 +1,19 @@
+import { createNotificationJobFixture } from "../../../test/notification-fixtures.js";
 import { describe, expect, it } from "bun:test";
 import { Effect } from "effect";
 import type { DiscordNotificationDeliveryResultEvent } from "@lootlog/schema/notifications";
-import {
-  makeNotificationDeliveryResult,
-  type NotificationDeliveryJob,
-} from "#src/notifications/delivery/notification-delivery-result";
-import {
-  NotificationJobStatus,
-  NotificationOwnerType,
-} from "#src/notifications/notification-enums";
+import { makeNotificationDeliveryResult } from "#src/notifications/delivery/notification-delivery-result";
 
-const job = (attemptCount: number): NotificationDeliveryJob =>
-  ({
-    id: "job-1",
-    ruleId: 7,
-    targetId: 9,
-    ownerType: NotificationOwnerType.USER,
-    ownerId: "user-1",
-    status: NotificationJobStatus.PROCESSING,
-    sourceEntityType: "loot",
-    attemptCount,
-  }) as unknown as NotificationDeliveryJob;
+const job = (attemptCount: number) =>
+  createNotificationJobFixture({ attemptCount });
 
-const failedEvent = {
+const failedEvent: DiscordNotificationDeliveryResultEvent = {
   notificationJobId: "job-1",
   success: false,
   retryable: true,
   deliveredAt: "2026-09-02T12:00:00.000Z",
   errorMessage: "temporary failure",
-} as DiscordNotificationDeliveryResultEvent;
+};
 
 describe("notification delivery result", () => {
   it("requeues retryable delivery failures through attempt three", async () => {

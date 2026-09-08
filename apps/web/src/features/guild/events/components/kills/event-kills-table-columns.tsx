@@ -8,7 +8,7 @@ import { NpcTile } from "@/components/tiles";
 import type { HeroKill } from "../../hooks/queries/use-hero-kill-history";
 import { formatDateTime } from "../../utils/format-date";
 import { formatDurationHuman } from "../../utils/format-duration";
-import { coreTableFeatures } from "@/lib/tanstack-table-features";
+import type { coreTableFeatures } from "@/lib/tanstack-table-features";
 
 type CreateEventKillsTableColumnsOptions = {
   eventId: string;
@@ -66,12 +66,10 @@ export const createEventKillsTableColumns = ({
               aria-label={detailLabel}
               title={detailLabel}
               className="inline-flex max-w-full min-w-0 items-center text-sm"
-              render={
-                <Link
-                  to="/$guildId/events/$eventId/heroes/$heroId/kills/$killId"
-                  params={getKillDetailParams(kill, guildId, eventId)}
-                />
-              }
+              render=<Link
+                to="/$guildId/events/$eventId/heroes/$heroId/kills/$killId"
+                params={getKillDetailParams(kill, guildId, eventId)}
+              />
             >
               <span className="truncate font-semibold">
                 {kill.heroNpc.npcName}

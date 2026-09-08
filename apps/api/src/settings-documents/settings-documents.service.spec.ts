@@ -54,6 +54,9 @@ describe("settings documents Effect module", () => {
     repository.findDocuments.mockReturnValue(
       Effect.succeed([
         {
+          id: 1,
+          userId: "user-1",
+          createdAt: new Date("2026-07-24T00:00:00.000Z"),
           domain: "appearance",
           scopeType: "USER",
           scopeId: "user-1",
@@ -62,6 +65,9 @@ describe("settings documents Effect module", () => {
           updatedAt: new Date("2026-07-24T01:00:00.000Z"),
         },
         {
+          id: 2,
+          userId: "user-1",
+          createdAt: new Date("2026-07-24T00:00:00.000Z"),
           domain: "appearance",
           scopeType: "GAME_ACCOUNT",
           scopeId: "account-1",
@@ -69,7 +75,7 @@ describe("settings documents Effect module", () => {
           schemaVersion: 1,
           updatedAt: new Date("2026-07-24T02:00:00.000Z"),
         },
-      ] as never),
+      ]),
     );
     const service = makeSettingsDocuments(repository);
 

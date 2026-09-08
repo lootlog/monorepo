@@ -1,6 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { encode } from "@msgpack/msgpack";
 import {
+  decodePresenceSnapshot,
+  isMapPingAcknowledgement,
+  isAirTagSubscriptionAcknowledgement,
+  isAirTagObservationAcknowledgement,
+  isPresenceFetchResult,
   decodeRealtimeFrame,
   encodeRealtimeFrame,
   RealtimeCodecError,
@@ -16,7 +21,7 @@ describe("realtime MessagePack codec", () => {
   test.each([false, true])(
     "preserves presence locations when included: %s",
     (includeLocation) => {
-      const presence = {
+      const basePresence = {
         userId: "user-1",
         sessionId: "session-1",
         organizationIds: ["organization-1"],
@@ -25,10 +30,13 @@ describe("realtime MessagePack codec", () => {
         confidence: "verified" as const,
         isAfk: false,
         lastSeen: 1_000,
-        ...(includeLocation
-          ? { location: { map: "Kwieciste Przejście", mapId: 42, x: 4, y: 7 } }
-          : {}),
       };
+      const presence = includeLocation
+        ? {
+            ...basePresence,
+            location: { map: "Kwieciste Przejście", mapId: 42, x: 4, y: 7 },
+          }
+        : basePresence;
       const frames = [
         {
           v: 1,
@@ -70,6 +78,9 @@ describe("realtime MessagePack codec", () => {
   test.each([undefined, "discord-1"])(
     "round-trips presence deltas with optional Discord identity %s",
     (discordId) => {
+      const identity = discordId
+        ? { userId: "user-1", discordId }
+        : { userId: "user-1" };
       const frame = {
         v: 1,
         type: "presence.delta",
@@ -80,15 +91,13 @@ describe("realtime MessagePack codec", () => {
           changes: [
             {
               action: "remove",
-              userId: "user-1",
+              ...identity,
               sessionId: "session-0",
-              ...(discordId ? { discordId } : {}),
             },
             {
               action: "upsert",
               presence: {
-                userId: "user-1",
-                ...(discordId ? { discordId } : {}),
+                ...identity,
                 sessionId: "session-1",
                 organizationIds: ["organization-1"],
                 platform: "web-app",
@@ -191,13 +200,26 @@ test("realtime policy snapshots and legacy permission events share the v1 codec"
     ],
   } as const;
   for (const includePolicy of [false, true]) {
-    const data = {
+    const baseData = {
       organizationIds: ["organization-1"],
       subscriptionScopes: [
         { topic: "organization.timers", organizationId: "organization-1" },
       ],
-      ...(includePolicy ? { accessPolicy } : {}),
     } as const;
+    const data = includePolicy ? { ...baseData, accessPolicy } : baseData;
+    const permissionData = includePolicy
+      ? ({
+          ...data,
+          changes: [
+            {
+              organizationId: "organization-1",
+              areas: ["timers"],
+              restricted: true,
+              expanded: false,
+            },
+          ],
+        } as const)
+      : data;
     const frames = [
       {
         v: 1,
@@ -207,24 +229,77 @@ test("realtime policy snapshots and legacy permission events share the v1 codec"
       {
         v: 1,
         type: "permissions.updated",
-        data: {
-          ...data,
-          ...(includePolicy
-            ? {
-                changes: [
-                  {
-                    organizationId: "organization-1",
-                    areas: ["timers"],
-                    restricted: true,
-                    expanded: false,
-                  },
-                ],
-              }
-            : {}),
-        },
+        data: permissionData,
       },
     ] satisfies RealtimeFrame[];
     for (const frame of frames)
       expect(decodeRealtimeFrame(encodeRealtimeFrame(frame))).toEqual(frame);
   }
+});
+
+describe("presence request acknowledgement", () => {
+  test("decodes the gateway snapshot and rejects malformed acknowledgements", () => {
+    const snapshot = {
+      organizationId: "organization-1",
+      revision: 4,
+      presences: [],
+    };
+    expect(decodePresenceSnapshot(snapshot)).toEqual(snapshot);
+    expect(() =>
+      decodePresenceSnapshot({ ...snapshot, presences: [{}] }),
+    ).toThrow();
+    expect(() => decodePresenceSnapshot({ presences: [] })).toThrow();
+  });
+});
+
+describe("realtime acknowledgement validation", () => {
+  test("accepts extensible acknowledgements and rejects malformed success payloads", () => {
+    expect(
+      isMapPingAcknowledgement({
+        status: "accepted",
+        pingId: "ping",
+        extension: { revision: 2 },
+      }),
+    ).toBe(true);
+    expect(isMapPingAcknowledgement({ status: "accepted", pingId: 2 })).toBe(
+      false,
+    );
+    expect(
+      isAirTagSubscriptionAcknowledgement({
+        status: "accepted",
+        requestId: "request",
+        scopes: [],
+      }),
+    ).toBe(true);
+    expect(
+      isAirTagSubscriptionAcknowledgement({
+        status: "accepted",
+        requestId: "request",
+        scopes: [{ guildId: "organization" }],
+      }),
+    ).toBe(false);
+    expect(
+      isAirTagObservationAcknowledgement({
+        status: "accepted",
+        acceptedScopes: 1,
+        acceptedTargets: 2,
+      }),
+    ).toBe(true);
+    expect(
+      isAirTagObservationAcknowledgement({
+        status: "accepted",
+        acceptedScopes: -1,
+        acceptedTargets: 2,
+      }),
+    ).toBe(false);
+  });
+  test("retains empty legacy presence responses while rejecting invalid presence arrays", () => {
+    expect(isPresenceFetchResult({})).toBe(true);
+    expect(isPresenceFetchResult({ presences: undefined })).toBe(true);
+    expect(isPresenceFetchResult({ presences: [] })).toBe(true);
+    expect(isPresenceFetchResult({ presences: null })).toBe(false);
+    expect(isPresenceFetchResult({ presences: [{ platform: "game" }] })).toBe(
+      false,
+    );
+  });
 });

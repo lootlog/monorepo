@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 
+import { initializeTestTranslations } from "@/lib/testing/i18n";
 import {
   cleanup,
   fireEvent,
@@ -7,7 +8,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import {
   createMemoryHistory,
   createRootRoute,
@@ -17,9 +18,7 @@ import {
 } from "@tanstack/react-router";
 import { AppBreadcrumbs } from "./app-breadcrumbs";
 
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
-}));
+await initializeTestTranslations();
 
 describe("AppBreadcrumbs", () => {
   afterEach(cleanup);

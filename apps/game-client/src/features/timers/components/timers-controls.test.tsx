@@ -1,211 +1,89 @@
 import { createEvent, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { InputHTMLAttributes, ReactNode } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { NpcType } from "@/api/npcs.api";
-
-const mockSetTimerFiltersSearchText = vi.fn();
-const mockSetTimersFilters = vi.fn();
-const initialSelectedNpcTypes: NpcType[] = [NpcType.HERO];
-
-let timersStoreState = {
-  timerFiltersSearchText: "",
-  setTimerFiltersSearchText: mockSetTimerFiltersSearchText,
-  timersFilters: {
-    "guild-1": {
-      minLvl: 10,
-      maxLvl: 200,
-      selectedNpcTypes: initialSelectedNpcTypes,
-      selectedColors: ["red"],
-    },
-  },
-  setTimersFilters: mockSetTimersFilters,
-  customColors: {
-    "custom-1": {
-      id: "custom-1",
-      name: "Custom One",
-      backgroundColor: "#abc",
-      borderColor: "#def",
-    },
-  },
-  defaultColorNames: {
-    red: "Red",
-  },
-  overriddenDefaultColors: {},
-  hiddenDefaultColors: ["blue"],
-  colorFiltersEnabled: true,
-};
-
-vi.mock("@/store/timers.store", () => ({
-  DEFAULT_TIMERS_FILTERS: {
-    minLvl: 0,
-    maxLvl: 300,
-    selectedNpcTypes: [
-      NpcType.ELITE2,
-      NpcType.ELITE3,
-      NpcType.HERO,
-      NpcType.TITAN,
-    ],
-    selectedColors: [],
-  },
-  useTimersStore: () => timersStoreState,
-}));
-
-vi.mock("@/components/ui/input", () => ({
-  Input: ({
-    onChange,
-    value,
-    ...props
-  }: InputHTMLAttributes<HTMLInputElement>) => (
-    <input value={value} onChange={onChange} {...props} />
-  ),
-}));
-
-vi.mock("@/components/ui/tooltip", () => ({
-  Tooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
-  TooltipTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
-  TooltipContent: ({ children }: { children: ReactNode }) => <>{children}</>,
-}));
-
-vi.mock("lucide-react", () => ({
-  Eye: ({ onClick }: { onClick?: () => void }) => (
-    <button type="button" onClick={onClick} aria-label="Eye">
-      Eye
-    </button>
-  ),
-  EyeOff: ({ onClick }: { onClick?: () => void }) => (
-    <button type="button" onClick={onClick} aria-label="EyeOff">
-      EyeOff
-    </button>
-  ),
-  Filter: ({ onClick }: { onClick?: () => void }) => (
-    <button type="button" onClick={onClick} aria-label="Filter">
-      Filter
-    </button>
-  ),
-  Palette: ({ onClick }: { onClick?: () => void }) => (
-    <button type="button" onClick={onClick} aria-label="Palette">
-      Palette
-    </button>
-  ),
-  SortAsc: ({ onClick }: { onClick?: () => void }) => (
-    <button type="button" onClick={onClick} aria-label="SortAsc">
-      SortAsc
-    </button>
-  ),
-  SortDesc: ({ onClick }: { onClick?: () => void }) => (
-    <button type="button" onClick={onClick} aria-label="SortDesc">
-      SortDesc
-    </button>
-  ),
-}));
-
-vi.mock("./global-timer-history-popover", () => ({
-  GlobalTimerHistoryPopover: () => null,
-}));
-
+import { useTimersStore } from "@/store/timers.store";
+import { getFixedT } from "@/i18n/get-fixed-t";
 import { TimersActions } from "./timers-actions";
 import { TimersFilters } from "./timers-filters";
 
-describe("timers controls", () => {
-  beforeEach(() => {
-    mockSetTimerFiltersSearchText.mockReset();
-    mockSetTimersFilters.mockReset();
-    timersStoreState = {
-      timerFiltersSearchText: "",
-      setTimerFiltersSearchText: mockSetTimerFiltersSearchText,
-      timersFilters: {
-        "guild-1": {
-          minLvl: 10,
-          maxLvl: 200,
-          selectedNpcTypes: [NpcType.HERO],
-          selectedColors: ["red"],
-        },
+const resetStore = () =>
+  useTimersStore.setState(useTimersStore.getInitialState(), true);
+beforeEach(() => {
+  resetStore();
+  useTimersStore.setState({
+    timersFilters: {
+      "guild-1": {
+        minLvl: 10,
+        maxLvl: 200,
+        selectedNpcTypes: [NpcType.HERO],
+        selectedColors: ["red"],
       },
-      setTimersFilters: mockSetTimersFilters,
-      customColors: {
-        "custom-1": {
-          id: "custom-1",
-          name: "Custom One",
-          backgroundColor: "#abc",
-          borderColor: "#def",
-        },
+    },
+    customColors: {
+      "custom-1": {
+        id: "custom-1",
+        name: "Custom One",
+        backgroundColor: "#abc",
+        borderColor: "#def",
       },
-      defaultColorNames: {
-        red: "Red",
-      },
-      overriddenDefaultColors: {},
-      hiddenDefaultColors: ["blue"],
-      colorFiltersEnabled: true,
-    };
+    },
+    defaultColorNames: { red: "Red" },
+    overriddenDefaultColors: {},
+    hiddenDefaultColors: ["blue"],
+    colorFiltersEnabled: true,
   });
+});
+afterEach(resetStore);
 
-  it("updates search, clamped level ranges, npc types, and colors", async () => {
+describe("timers controls", () => {
+  it("updates actual search, clamped level ranges, npc types, and color filters", async () => {
     const user = userEvent.setup();
-
     render(<TimersFilters filtersKey="guild-1" />);
-
     fireEvent.change(screen.getByPlaceholderText("Szukaj..."), {
       target: { value: "tan" },
     });
-    expect(mockSetTimerFiltersSearchText).toHaveBeenLastCalledWith("tan");
-
+    expect(useTimersStore.getState().timerFiltersSearchText).toBe("tan");
     fireEvent.change(screen.getByPlaceholderText("Od"), {
       target: { value: "-50" },
     });
-    expect(mockSetTimersFilters).toHaveBeenCalledWith(
-      "guild-1",
-      expect.objectContaining({
-        minLvl: 0,
-      }),
-    );
-
     fireEvent.change(screen.getByPlaceholderText("Do"), {
       target: { value: "999" },
     });
-    expect(mockSetTimersFilters).toHaveBeenCalledWith(
-      "guild-1",
-      expect.objectContaining({
-        maxLvl: 500,
-      }),
-    );
-
+    expect(useTimersStore.getState().timersFilters["guild-1"]).toMatchObject({
+      minLvl: 0,
+      maxLvl: 500,
+    });
     await user.click(screen.getByRole("button", { name: "H" }));
-    expect(mockSetTimersFilters).toHaveBeenCalledWith(
-      "guild-1",
-      expect.objectContaining({
-        selectedNpcTypes: [],
-      }),
-    );
-
-    const colorButtons = screen.getAllByRole("button");
-    const lastColorButton = colorButtons.at(-1);
-    if (!lastColorButton) throw new Error("Expected a color button");
-    await user.click(lastColorButton);
-    expect(mockSetTimersFilters).toHaveBeenCalledWith(
-      "guild-1",
-      expect.objectContaining({
-        selectedColors: ["red", "custom-1"],
-      }),
-    );
+    expect(
+      useTimersStore.getState().timersFilters["guild-1"].selectedNpcTypes,
+    ).toEqual([]);
+    const custom = screen.getAllByRole("button").at(-1);
+    if (!custom) throw new Error("Expected custom color trigger");
+    await user.hover(custom);
+    expect(await screen.findByText("Custom One")).toBeVisible();
+    await user.click(custom);
+    expect(
+      useTimersStore.getState().timersFilters["guild-1"].selectedColors,
+    ).toEqual(["red", "custom-1"]);
   });
 
-  it("selects only the right-clicked npc type", () => {
-    timersStoreState.timersFilters["guild-1"].selectedNpcTypes = [
-      NpcType.ELITE2,
-      NpcType.ELITE3,
-      NpcType.HERO,
-      NpcType.TITAN,
-    ];
-
+  it("selects only the right-clicked npc type and preserves the other filters", () => {
+    useTimersStore.getState().setTimersFilters("guild-1", {
+      ...useTimersStore.getState().timersFilters["guild-1"],
+      selectedNpcTypes: [
+        NpcType.ELITE2,
+        NpcType.ELITE3,
+        NpcType.HERO,
+        NpcType.TITAN,
+      ],
+    });
     render(<TimersFilters filtersKey="guild-1" />);
-
-    const elite2Button = screen.getByRole("button", { name: "E2" });
-    const contextMenuEvent = createEvent.contextMenu(elite2Button);
-    fireEvent(elite2Button, contextMenuEvent);
-
-    expect(contextMenuEvent.defaultPrevented).toBe(true);
-    expect(mockSetTimersFilters).toHaveBeenCalledWith("guild-1", {
+    const button = screen.getByRole("button", { name: "E2" });
+    const event = createEvent.contextMenu(button);
+    fireEvent(button, event);
+    expect(event.defaultPrevented).toBe(true);
+    expect(useTimersStore.getState().timersFilters["guild-1"]).toEqual({
       minLvl: 10,
       maxLvl: 200,
       selectedNpcTypes: [NpcType.ELITE2],
@@ -213,53 +91,52 @@ describe("timers controls", () => {
     });
   });
 
-  it("dispatches toolbar actions for regular and under-bag controls", async () => {
+  it("dispatches toolbar actions in regular and under-bag layouts using real controls", async () => {
     const user = userEvent.setup();
-    const toggleTimerFiltersEnabled = vi.fn();
-    const toggleColorFiltersEnabled = vi.fn();
-    const setTimersSortOrder = vi.fn();
-    const setShowHiddenTimers = vi.fn();
-
-    const { rerender } = render(
+    const t = getFixedT("timers");
+    const toggleTimerFiltersEnabled = vi.fn<() => void>();
+    const toggleColorFiltersEnabled = vi.fn<() => void>();
+    const setTimersSortOrder = vi.fn<(order: "asc" | "desc") => void>();
+    const setShowHiddenTimers = vi.fn<(show: boolean) => void>();
+    const actions = (underBag: boolean) => (
       <TimersActions
-        timerFiltersEnabled
+        underBag={underBag}
+        timerFiltersEnabled={!underBag}
         toggleTimerFiltersEnabled={toggleTimerFiltersEnabled}
-        colorFiltersEnabled={false}
+        colorFiltersEnabled={underBag}
         toggleColorFiltersEnabled={toggleColorFiltersEnabled}
-        timersSortOrder="asc"
+        timersSortOrder={underBag ? "desc" : "asc"}
         setTimersSortOrder={setTimersSortOrder}
-        showHiddenTimers={false}
+        showHiddenTimers={underBag}
         setShowHiddenTimers={setShowHiddenTimers}
-      />,
+      />
     );
-
-    await user.click(screen.getByRole("button", { name: "Filter" }));
-    await user.click(screen.getByRole("button", { name: "Palette" }));
-    await user.click(screen.getByRole("button", { name: "SortAsc" }));
-    await user.click(screen.getByRole("button", { name: "EyeOff" }));
-
-    expect(toggleTimerFiltersEnabled).toHaveBeenCalledTimes(1);
-    expect(toggleColorFiltersEnabled).toHaveBeenCalledTimes(1);
+    const view = render(actions(false));
+    await user.tab();
+    expect(
+      screen.getByRole("button", { name: t("toolbar.hideFilters") }),
+    ).toHaveFocus();
+    await user.keyboard("{Enter}");
+    await user.click(
+      screen.getByRole("button", { name: t("toolbar.enableColorFilters") }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: t("toolbar.sortDesc") }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: t("toolbar.showHiddenTimers") }),
+    );
+    expect(toggleTimerFiltersEnabled).toHaveBeenCalledOnce();
+    expect(toggleColorFiltersEnabled).toHaveBeenCalledOnce();
     expect(setTimersSortOrder).toHaveBeenCalledWith("desc");
     expect(setShowHiddenTimers).toHaveBeenCalledWith(true);
-
-    rerender(
-      <TimersActions
-        underBag
-        timerFiltersEnabled={false}
-        toggleTimerFiltersEnabled={toggleTimerFiltersEnabled}
-        colorFiltersEnabled
-        toggleColorFiltersEnabled={toggleColorFiltersEnabled}
-        timersSortOrder="desc"
-        setTimersSortOrder={setTimersSortOrder}
-        showHiddenTimers
-        setShowHiddenTimers={setShowHiddenTimers}
-      />,
+    view.rerender(actions(true));
+    await user.click(
+      screen.getByRole("button", { name: t("toolbar.sortAsc") }),
     );
-
-    await user.click(screen.getByRole("button", { name: "SortDesc" }));
-    await user.click(screen.getByRole("button", { name: "Eye" }));
-
+    await user.click(
+      screen.getByRole("button", { name: t("toolbar.hideHiddenTimers") }),
+    );
     expect(setTimersSortOrder).toHaveBeenCalledWith("asc");
     expect(setShowHiddenTimers).toHaveBeenCalledWith(false);
   });

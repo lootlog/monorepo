@@ -1,35 +1,53 @@
+import type { PlayerPresenceUpdatePayload } from "@/lib/online-players-presence";
 import { useGameStore } from "@/store/game.store";
 import { useSettingsStore } from "@/store/settings.store";
 import { GatewayEvent } from "@/config/gateway";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({
-  join: vi.fn(),
-  request: vi.fn(),
-  requestProof: vi.fn(),
-  subscribe: vi.fn(),
-  subscribeState: vi.fn(),
-  setReconnectHandler: vi.fn(),
-  serverListeners: [] as Array<(event: unknown) => void>,
-}));
+import {
+  RealtimeClient,
+  type ServerEvent,
+  type ClientCommand,
+  type BasicPresence,
+} from "@lootlog/client/realtime";
+import { configureGameClientPlatform } from "@/lib/game-client-platform";
+import { RealtimeWire } from "@/test/realtime-wire";
 
-vi.mock("@lootlog/client/realtime", () => ({
-  REALTIME_JSON_SUBPROTOCOL: "lootlog.realtime.json.v1",
-  REALTIME_SUBPROTOCOL: "lootlog.realtime.v1",
-  RealtimeClient: class {
-    join = mocks.join;
-    request = mocks.request;
-    subscribe = mocks.subscribe;
-    subscribeState = mocks.subscribeState;
-    setReconnectHandler = mocks.setReconnectHandler;
-    connect = vi.fn();
-    disconnect = vi.fn();
-  },
-}));
-
-vi.mock("@/lib/margonem-account-proof", () => ({
-  requestMargonemAccountProof: mocks.requestProof,
-}));
+type SocketServerResponse =
+  | Awaited<ReturnType<AppSocket["emitWithAck"]>>
+  | { presences: BasicPresence[] };
+const mocks = {
+  join: vi.fn<
+    (
+      data: Extract<ClientCommand, { type: "session.join" }>["data"],
+    ) => Promise<Awaited<ReturnType<AppSocket["join"]>>>
+  >(),
+  request:
+    vi.fn<
+      (
+        type: ClientCommand["type"],
+        data: ClientCommand["data"],
+      ) => Promise<SocketServerResponse>
+    >(),
+};
+let wire: RealtimeWire;
+let restorePlatform = () => {};
+let proofAvailable = true;
+const proofRequests: Request[] = [];
+const sockets: AppSocket[] = [];
+const createSocket = () => {
+  const socket = new AppSocket();
+  sockets.push(socket);
+  socket.connect();
+  wire.open();
+  return socket;
+};
+afterEach(() => {
+  sockets.splice(0).forEach((socket) => socket.dispose());
+  restorePlatform();
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
 
 import { AppSocket, type GameSessionJoinData } from "./socket";
 
@@ -47,25 +65,60 @@ const joinData: GameSessionJoinData = {
 describe("game realtime verification and presence selection", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.subscribeState.mockImplementation((listener) =>
-      listener("disconnected"),
-    );
-    mocks.subscribe.mockImplementation((listener) => {
-      mocks.serverListeners.push(listener);
-    });
-    mocks.serverListeners.length = 0;
+    wire = new RealtimeWire();
+    proofAvailable = true;
+    proofRequests.length = 0;
+    mocks.join.mockReset();
+    mocks.request.mockReset();
     mocks.join.mockResolvedValue({
       connectionId: "connection-1",
       organizationIds: ["organization-1"],
     });
-    mocks.requestProof.mockResolvedValue({
-      userId: "20",
-      characterId: "10",
-      token: "token",
-      ts: 1_700_000_000,
-      validatedString: "20+token+1700000000",
-      signatureBase64: "signature",
+    mocks.request.mockResolvedValue(undefined);
+    const originalSend = wire.send.bind(wire);
+    vi.spyOn(wire, "send").mockImplementation((bytes) => {
+      originalSend(bytes);
+      const frame = wire.frames[wire.frames.length - 1];
+      if (
+        !frame ||
+        !("type" in frame) ||
+        !("requestId" in frame) ||
+        !frame.requestId
+      )
+        throw new Error("Expected request frame");
+      const requestId = frame.requestId;
+      const reply =
+        frame.type === "session.join"
+          ? mocks.join(frame.data)
+          : mocks.request(frame.type, frame.data);
+      void Promise.resolve(reply).then((data) =>
+        wire.receive({ v: 1, requestId, status: "success", data }),
+      );
     });
+    const realtime = new RealtimeClient({
+      url: "https://gateway.test",
+      webSocketFactory: () => wire,
+    });
+    restorePlatform = configureGameClientPlatform({
+      fetch: globalThis.fetch,
+      createRealtime: () => realtime,
+    });
+    vi.stubGlobal(
+      "fetch",
+      async (input: string | URL | Request, init?: RequestInit) => {
+        const request = new Request(input, init);
+        proofRequests.push(request);
+        if (!proofAvailable) return new Response(null, { status: 503 });
+        const token = new URLSearchParams(await request.text()).get("token");
+        return Response.json({
+          user_id: "20",
+          token,
+          ts: 1700000000,
+          validatedString: `20+${token}+1700000000`,
+          signatureBase64: "signature",
+        });
+      },
+    );
     useSettingsStore.setState({
       guildIdByCharId: {},
       presenceOrganizationIdsByCharId: {},
@@ -73,16 +126,16 @@ describe("game realtime verification and presence selection", () => {
   });
 
   it("preserves Discord member identity across presence fetch, snapshot and deltas", async () => {
-    const socket = new AppSocket();
-    const listener = vi.fn();
+    const socket = createSocket();
+    const listener = vi.fn<(payload: PlayerPresenceUpdatePayload) => void>();
     socket.on(GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE, listener);
     const presence = {
       userId: "internal-user-1",
       discordId: "discord-1",
       sessionId: "session-1",
-      platform: "game",
-      status: "online",
-      confidence: "reported",
+      platform: "game" as const,
+      status: "online" as const,
+      confidence: "reported" as const,
       isAfk: false,
       lastSeen: 1,
       organizationIds: ["organization-1"],
@@ -95,22 +148,31 @@ describe("game realtime verification and presence selection", () => {
     ).resolves.toMatchObject({
       players: { "discord-1": [{ discordId: "discord-1" }] },
     });
-    for (const event of [
+    const events: ServerEvent[] = [
       {
+        v: 1,
         type: "presence.snapshot",
-        data: { organizationId: "organization-1", presences: [presence] },
+        data: {
+          organizationId: "organization-1",
+          revision: 1,
+          presences: [presence],
+        },
       },
       {
+        v: 1,
         type: "presence.delta",
         data: {
           organizationId: "organization-1",
+          revision: 1,
           changes: [{ action: "upsert", presence }],
         },
       },
       {
+        v: 1,
         type: "presence.delta",
         data: {
           organizationId: "organization-1",
+          revision: 1,
           changes: [
             {
               action: "remove",
@@ -121,8 +183,9 @@ describe("game realtime verification and presence selection", () => {
           ],
         },
       },
-    ])
-      mocks.serverListeners[0]?.(event);
+    ];
+    for (const event of events) wire.receive(event);
+    await vi.waitFor(() => expect(listener).toHaveBeenCalledTimes(3));
     expect(listener).toHaveBeenCalledTimes(3);
     for (const [payload] of listener.mock.calls)
       expect(payload).toMatchObject({
@@ -135,27 +198,23 @@ describe("game realtime verification and presence selection", () => {
   });
 
   it("joins as reported before upgrading the session with a connection-bound proof", async () => {
-    const socket = new AppSocket();
+    const socket = createSocket();
     await socket.join(joinData);
 
-    expect(mocks.requestProof).toHaveBeenCalledWith({
-      socketId: "connection-1",
-      accountId: "20",
-      characterId: "10",
-      clanId: 30,
-    });
+    expect(proofRequests).toHaveLength(1);
+    expect(proofRequests[0]?.method).toBe("POST");
     expect(mocks.join).toHaveBeenCalledTimes(2);
-    expect(mocks.join.mock.calls[0]?.[0]).toMatchObject({
-      margonemAccountProof: undefined,
-    });
+    expect(mocks.join.mock.calls[0]?.[0]).not.toHaveProperty(
+      "margonemAccountProof",
+    );
     expect(mocks.join.mock.calls[1]?.[0]).toMatchObject({
       margonemAccountProof: { signatureBase64: "signature" },
     });
   });
 
   it("keeps the reported session when an account proof is unavailable", async () => {
-    mocks.requestProof.mockRejectedValueOnce(new Error("Proof unavailable"));
-    const socket = new AppSocket();
+    proofAvailable = false;
+    const socket = createSocket();
 
     await expect(socket.join(joinData)).resolves.toMatchObject({
       connectionId: "connection-1",
@@ -163,9 +222,9 @@ describe("game realtime verification and presence selection", () => {
     });
 
     expect(mocks.join).toHaveBeenCalledTimes(1);
-    expect(mocks.join.mock.calls[0]?.[0]).toMatchObject({
-      margonemAccountProof: undefined,
-    });
+    expect(mocks.join.mock.calls[0]?.[0]).not.toHaveProperty(
+      "margonemAccountProof",
+    );
   });
 
   it("publishes to the joined organization by default", async () => {
@@ -190,10 +249,10 @@ describe("game realtime verification and presence selection", () => {
     useSettingsStore.setState({
       guildIdByCharId: { "10": "organization-1" },
     });
-    const socket = new AppSocket();
+    const socket = createSocket();
     await socket.join(joinData);
     socket.emit(GatewayEvent.PLAYER_PRESENCE_UPDATE, { isAfk: false });
-    await Promise.resolve();
+    await vi.waitFor(() => expect(mocks.request).toHaveBeenCalled());
 
     expect(mocks.request).toHaveBeenCalledWith(
       "presence.publish",
@@ -228,7 +287,7 @@ describe("game realtime verification and presence selection", () => {
       useSettingsStore.setState({
         presenceOrganizationIdsByCharId: { "10": selectedIds },
       });
-      const socket = new AppSocket();
+      const socket = createSocket();
       mocks.join.mockResolvedValue({
         connectionId: "connection-1",
         organizationIds: ["organization-1", "organization-2"],
@@ -236,7 +295,7 @@ describe("game realtime verification and presence selection", () => {
       const { clan: _clan, ...clanlessJoinData } = joinData;
       await socket.join(clanlessJoinData);
       socket.emit(GatewayEvent.PLAYER_PRESENCE_UPDATE, { isAfk: false });
-      await Promise.resolve();
+      await vi.waitFor(() => expect(mocks.request).toHaveBeenCalled());
 
       expect(mocks.request).toHaveBeenCalledWith(
         "presence.publish",
@@ -248,14 +307,18 @@ describe("game realtime verification and presence selection", () => {
   );
 
   it("passes exact map-ping and air-tag acknowledgements through unchanged", async () => {
-    const mapAck = { status: "accepted", pingId: "ping-1" };
+    const mapAck = {
+      status: "accepted" as const,
+      pingId: "ping-1",
+      extension: { sequence: 1 },
+    };
     const subscriptionAck = {
-      status: "accepted",
+      status: "accepted" as const,
       requestId: "air-request-1",
       scopes: [],
     };
     const observationAck = {
-      status: "accepted",
+      status: "accepted" as const,
       acceptedScopes: 1,
       acceptedTargets: 2,
     };
@@ -263,7 +326,7 @@ describe("game realtime verification and presence selection", () => {
       .mockResolvedValueOnce(mapAck)
       .mockResolvedValueOnce(subscriptionAck)
       .mockResolvedValueOnce(observationAck);
-    const socket = new AppSocket();
+    const socket = createSocket();
 
     await expect(
       socket.emitWithAck(GatewayEvent.MAP_PING_SEND, {
@@ -272,24 +335,82 @@ describe("game realtime verification and presence selection", () => {
         x: 1,
         y: 2,
       }),
-    ).resolves.toBe(mapAck);
+    ).resolves.toEqual(mapAck);
     await expect(
       socket.emitWithAck(GatewayEvent.AIR_TAG_SUBSCRIPTION, {
         requestId: "air-request-1",
         enabled: true,
         expectedMapId: 7,
       }),
-    ).resolves.toBe(subscriptionAck);
+    ).resolves.toEqual(subscriptionAck);
     await expect(
       socket.emitWithAck(GatewayEvent.AIR_TAG_OBSERVATION, {
         expectedMapId: 7,
         observations: [],
       }),
-    ).resolves.toBe(observationAck);
+    ).resolves.toEqual(observationAck);
     expect(mocks.request).toHaveBeenNthCalledWith(2, "air-tag.subscription", {
       requestId: "air-request-1",
       enabled: true,
       expectedMapId: 7,
     });
+  });
+  it("keeps unsupported legacy commands local and resolves without an acknowledgement payload", async () => {
+    const socket = createSocket();
+    await expect(
+      socket.emitWithAck(GatewayEvent.CHAT_MESSAGE),
+    ).resolves.toBeUndefined();
+    expect(wire.frames).toHaveLength(0);
+  });
+
+  it("reports one timeout and ignores a later successful server acknowledgement", async () => {
+    let complete: ((response: SocketServerResponse) => void) | undefined;
+    mocks.request.mockReturnValueOnce(
+      new Promise<SocketServerResponse>((resolve) => {
+        complete = resolve;
+      }),
+    );
+    const socket = createSocket();
+    const acknowledgement =
+      vi.fn<(error: Error | null, response?: SocketServerResponse) => void>();
+    socket
+      .timeout(5)
+      .emit(
+        GatewayEvent.MAP_PING_SEND,
+        { expectedMapId: 7, type: "enemy", x: 1, y: 2 },
+        acknowledgement,
+      );
+    await vi.waitFor(() => expect(acknowledgement).toHaveBeenCalledOnce());
+    expect(acknowledgement.mock.calls[0]?.[0]?.message).toBe(
+      "Realtime acknowledgement timeout",
+    );
+    complete?.({ status: "accepted", pingId: "late" });
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    expect(acknowledgement).toHaveBeenCalledOnce();
+    expect(mocks.request).toHaveBeenCalledOnce();
+  });
+
+  it("rejects malformed successful map acknowledgements before they reach consumers", async () => {
+    mocks.request.mockReturnValueOnce(
+      new Promise<SocketServerResponse>(() => {}),
+    );
+    const socket = createSocket();
+    const result = socket.emitWithAck(GatewayEvent.MAP_PING_SEND, {
+      expectedMapId: 7,
+      type: "enemy",
+      x: 1,
+      y: 2,
+    });
+    await vi.waitFor(() => expect(wire.frames).toHaveLength(1));
+    const frame = wire.frames[0];
+    if (!frame || !("requestId" in frame) || !frame.requestId)
+      throw new Error("Missing request");
+    wire.receive({
+      v: 1,
+      requestId: frame.requestId,
+      status: "success",
+      data: { status: "accepted", pingId: 8 },
+    });
+    await expect(result).rejects.toThrow("Invalid map-ping.send response");
   });
 });

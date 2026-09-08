@@ -1,4 +1,5 @@
 // @vitest-environment happy-dom
+import { initializeTestTranslations } from "@/lib/testing/i18n";
 import {
   cleanup,
   fireEvent,
@@ -14,9 +15,7 @@ import {
 import { afterEach, expect, it, vi } from "vitest";
 import { StatisticsQueryPanel } from "./statistics-query-panel";
 
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
-}));
+await initializeTestTranslations();
 afterEach(cleanup);
 
 function Panel({ fetchData }: { fetchData: () => Promise<string> }) {

@@ -22,14 +22,11 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { ChevronDown, GripVertical, Trash2, Info } from "lucide-react";
 import { cn } from "cn";
-import type { EventScoringRules } from "@lootlog/domain/scoring";
 import { ScoringRuleSummary } from "./scoring-rule-summary";
 import { ScoringConditionsEditor } from "./scoring-conditions-editor";
 import { ScoringActionEditor } from "./scoring-action-editor";
 
-type ScoringRulesFormValues = {
-  scoringRules: EventScoringRules;
-};
+import type { ScoringRulesFormValues } from "./scoring-rules-editor";
 
 interface ScoringRuleCardProps {
   control: Control<ScoringRulesFormValues>;
@@ -171,9 +168,7 @@ export const ScoringRuleCard = ({
                 </span>
                 <Tooltip>
                   <TooltipTrigger
-                    render={
-                      <Info className="size-3 text-blue-400/50 cursor-help" />
-                    }
+                    render=<Info className="size-3 text-blue-400/50 cursor-help" />
                   />
                   <TooltipContent>
                     <p>{t("events.scoring.conditionAndHint")}</p>

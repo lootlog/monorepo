@@ -20,14 +20,14 @@ import {
 
 const runtime = ManagedRuntime.make(ApiDatabaseLive);
 const guildId = "guild-lifecycle-test";
-const decodeCreated = (payload: unknown) =>
+const decodeCreated = (payload: typeof GuildCreated.Encoded) =>
   Schema.decodeUnknownSync(GuildCreated)(
     decodeRabbitEventJson(
       RabbitRoutingKey.GUILDS_CREATE,
       JSON.stringify(payload),
     ),
   );
-const decodeUpdated = (payload: unknown) =>
+const decodeUpdated = (payload: typeof GuildUpdated.Encoded) =>
   Schema.decodeUnknownSync(GuildUpdated)(
     decodeRabbitEventJson(
       RabbitRoutingKey.GUILDS_UPDATE,

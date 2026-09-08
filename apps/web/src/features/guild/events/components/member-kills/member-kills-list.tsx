@@ -26,7 +26,7 @@ type MemberKillsListProps = {
   hasError: boolean;
   hasNextPage?: boolean;
   isFetchingNextPage: boolean;
-  fetchNextPage: () => Promise<unknown> | unknown;
+  fetchNextPage: () => void;
 };
 
 export const MemberKillsList = ({

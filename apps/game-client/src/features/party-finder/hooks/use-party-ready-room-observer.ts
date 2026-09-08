@@ -1,4 +1,4 @@
-import type { PartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
+import { decodePartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
 import { useEffect, useRef } from "react";
 import { partyReadyRoomControllerObserveParty } from "@lootlog/client/main";
 import {
@@ -54,10 +54,10 @@ export function usePartyReadyRoomObserver(): void {
       },
     )
       .then((projection) => {
-        mergeProjection(projection as unknown as PartyReadyRoomProjection);
+        mergeProjection(decodePartyReadyRoomProjection(projection));
       })
-      .catch((error: unknown) => {
-        console.warn("Failed to report the observed party snapshot", error);
+      .catch((cause: unknown) => {
+        console.warn("Failed to report the observed party snapshot", cause);
       });
   }, [
     ownedReadyRoom,

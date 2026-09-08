@@ -1,19 +1,19 @@
+import { initializeTestTranslations } from "@/lib/testing/i18n";
 // @vitest-environment happy-dom
 
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import type {
   EventConfig,
   KillDetail,
 } from "../../hooks/queries/use-kill-detail";
 import { KillDetailSummary } from "./kill-detail-summary";
 
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string, options?: { duration?: string }) =>
-      options?.duration ? `${key}:${options.duration}` : key,
-  }),
-}));
+await initializeTestTranslations({
+  "events.killDetail.overdueBy": "events.killDetail.overdueBy:{{duration}}",
+  "events.killDetail.respawnFasterBy":
+    "events.killDetail.respawnFasterBy:{{duration}}",
+});
 
 afterEach(cleanup);
 

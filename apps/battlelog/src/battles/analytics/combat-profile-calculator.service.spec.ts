@@ -1,3 +1,4 @@
+import { createBattleFixture } from "../../../test/battle-fixtures.js";
 import { describe, expect, it } from "bun:test";
 import type { InflatedBattleWithWarriors } from "./battle-analytics.types.js";
 import { combatProfileCalculator } from "./combat-profile-calculator.service.js";
@@ -21,7 +22,7 @@ function createBattle({
   hasFlee = false,
   winningTeam = 1,
 }: TestBattleInput): InflatedBattleWithWarriors {
-  return {
+  return createBattleFixture({
     id,
     type: "1v1",
     winningTeam,
@@ -68,7 +69,7 @@ function createBattle({
         ph: 5,
       },
     ],
-  } as InflatedBattleWithWarriors;
+  });
 }
 
 describe("combat-profile calculator", () => {

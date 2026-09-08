@@ -2,11 +2,11 @@
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { TFunction } from "i18next";
+import { initializeTestTranslations } from "@/lib/testing/i18n";
 import type { MapTimelineData } from "../../types/api";
 import { KillMapsTimelineTable } from "./kill-maps-timeline-table";
 
-const t = ((key: string) => key) as TFunction;
+const { t } = await initializeTestTranslations();
 const startTime = new Date("2026-08-12T08:00:00.000Z");
 const endTime = new Date("2026-08-12T10:00:00.000Z");
 
@@ -118,14 +118,11 @@ describe("KillMapsTimelineTable", () => {
     fireEvent.click(assignmentToggle);
     expect(assignmentToggle.getAttribute("aria-expanded")).toBe("true");
     expect(screen.getAllByText(/\d{2}:\d{2} – \d{2}:\d{2}/)).toHaveLength(2);
-    expect(
-      consoleError.mock.calls.some((call) =>
-        call.some(
-          (argument) =>
-            typeof argument === "string" && argument.includes("same key"),
-        ),
-      ),
-    ).toBe(false);
+    expect(consoleError.mock.calls).not.toEqual(
+      expect.arrayContaining([
+        expect.arrayContaining([expect.stringContaining("same key")]),
+      ]),
+    );
 
     consoleError.mockRestore();
   });

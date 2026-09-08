@@ -28,7 +28,7 @@ type EventKillsTableBaseProps = {
 };
 
 type EventKillsTableHistoryProps = EventKillsTableBaseProps & {
-  fetchNextPage: () => Promise<unknown> | unknown;
+  fetchNextPage: () => void;
   hasNextPage?: boolean;
   isFetchingNextPage: boolean;
   resetKey: string;
@@ -197,7 +197,7 @@ export const EventKillsTable = (props: EventKillsTableProps) => {
           table={table}
           className="bg-secondary/25"
           rowClassName="border-border/80"
-          headClassName={(header) =>
+          getHeadClassName={(header) =>
             cn(
               "h-9 px-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground",
               getColumnClassName(header.column.id, isPreview),
@@ -207,7 +207,7 @@ export const EventKillsTable = (props: EventKillsTableProps) => {
         <TanStackTableBody
           table={table}
           rowClassName="group h-11 border-border/70 hover:bg-muted/20"
-          cellClassName={(cell) =>
+          getCellClassName={(cell) =>
             cn(
               "h-11 overflow-hidden p-2 align-middle",
               getColumnClassName(cell.column.id, isPreview),

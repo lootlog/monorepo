@@ -91,11 +91,7 @@ export const recordsServicesLive = Layer.effect(
             }),
             () => effect,
             (heldLock) =>
-              Effect.tryPromise(() =>
-                (
-                  heldLock as Awaited<ReturnType<typeof redlock.acquire>>
-                ).release(),
-              ).pipe(Effect.ignore),
+              Effect.tryPromise(() => heldLock.release()).pipe(Effect.ignore),
           ),
       },
     );
@@ -171,10 +167,8 @@ export const recordsServicesLive = Layer.effect(
             publish: (exchange, routingKey, event) =>
               rabbit
                 .publish({
-                  exchange: exchange as "default",
-                  routingKey: routingKey as Parameters<
-                    typeof rabbit.publish
-                  >[0]["routingKey"],
+                  exchange: exchange,
+                  routingKey: routingKey,
                   content: new TextEncoder().encode(JSON.stringify(event)),
                 })
                 .pipe(Effect.asVoid),

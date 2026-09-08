@@ -1,3 +1,4 @@
+import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import { topMemberDisplayRoles } from "#src/members/member-display-role";
 import { eventMapScope } from "#src/events/event-scope-query";
 import { invalidateEventCachePatterns } from "#src/events/catalog/event-cache-invalidation";
@@ -33,18 +34,22 @@ export class EventMapAssignmentError extends TaggedErrorClass<EventMapAssignment
 ) {}
 
 export interface EventAssignmentPublisher {
-  readonly publish: (
-    routingKey: RoutingKey,
-    payload: unknown,
+  readonly publish: <
+    Key extends
+      | typeof RoutingKey.EVENT_MAP_STATUS_UPDATE
+      | typeof RoutingKey.PRESENCE_CHECK_REQUEST,
+  >(
+    routingKey: Key,
+    payload: CanonicalRabbitEvent<Key>,
   ) => Effect.Effect<void, unknown>;
 }
 
 export const makeEventMapAssignments = (
   database: typeof ApiDatabase.Service,
-  redis: RedisService,
-  timers: EventTimersPort,
+  redis: Pick<RedisService, "deleteByPattern">,
+  timers: Pick<EventTimersPort, "getEventRespawnTimer">,
   publisher: EventAssignmentPublisher,
-  logger: Logger,
+  logger: Pick<Logger, "warn">,
 ) => {
   const query = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
     effect.pipe(

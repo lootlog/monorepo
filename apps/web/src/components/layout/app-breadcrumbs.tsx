@@ -69,7 +69,7 @@ export const AppBreadcrumbs = ({ breadcrumbs }: AppBreadcrumbsProps) => {
               <BreadcrumbItem className={breadcrumbItemClassNames[visibility]}>
                 {breadcrumbPath ? (
                   <TextLink
-                    render={<Link to={breadcrumbPath} />}
+                    render=<Link to={breadcrumbPath} />
                     className="inline-flex min-h-6 min-w-0 max-w-full items-center truncate"
                   >
                     {breadcrumb.label}

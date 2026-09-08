@@ -5,6 +5,7 @@ import { createLocalJWKSet, jwtVerify, type JSONWebKeySet } from "jose";
 import {
   Context,
   DateTime,
+  Function,
   Effect,
   Layer,
   Option,
@@ -17,7 +18,6 @@ import { authAccounts } from "#src/database/drizzle.schema";
 import {
   BetterAuthRuntime,
   type AppUserSession,
-  type LootlogAuth,
 } from "#src/auth/provider/better-auth";
 export interface VerifiedIdentity {
   readonly userId: string;
@@ -43,10 +43,30 @@ export class HttpResponseError extends TaggedErrorClass<HttpResponseError>()(
   },
 ) {}
 
-type AccessTokenPayload = Awaited<
-  ReturnType<LootlogAuth["api"]["getAccessToken"]>
->;
-type DiscordAccessTokenPayload = AccessTokenPayload & { accessToken: string };
+type SessionIdentity = {
+  readonly user: Pick<AppUserSession["user"], "id" | "discordId">;
+};
+type AccessTokenPayload = {
+  readonly accessToken?: string;
+  readonly accessTokenExpiresAt?: string | number | Date;
+  readonly scopes?: string | ReadonlyArray<unknown>;
+} | null;
+
+export interface AuthProvider {
+  readonly api: {
+    readonly getSession: (input: {
+      headers: Headers;
+    }) => Promise<SessionIdentity | null>;
+    readonly getJwks: () => Promise<JSONWebKeySet>;
+    readonly getAccessToken: (input: {
+      body: { userId: string; accountId: string };
+    }) => Promise<AccessTokenPayload>;
+  };
+}
+
+type DiscordAccessTokenPayload = NonNullable<AccessTokenPayload> & {
+  accessToken: string;
+};
 
 const hasDiscordAccessToken = (
   token: AccessTokenPayload,
@@ -55,8 +75,12 @@ const hasDiscordAccessToken = (
   Predicate.isString(token.accessToken) &&
   token.accessToken.length > 0;
 
+type AuthFailureBody =
+  | { readonly message: string; readonly statusCode?: number }
+  | { readonly error: string; readonly requiresReauth?: boolean };
+
 const unauthorized = (
-  body: unknown = {
+  body: AuthFailureBody = {
     message: "Unauthorized",
     statusCode: 401,
   },
@@ -68,39 +92,34 @@ const reauthenticationRequired = () =>
     requiresReauth: true,
   });
 
-const internalServerError = (body: unknown) =>
+const internalServerError = (body: AuthFailureBody) =>
   new HttpResponseError({ status: 500, body });
 
-const parseExpiresAt = (input: unknown): Option.Option<DateTime.Utc> => {
-  if (
-    !Predicate.isString(input) &&
-    !Predicate.isNumber(input) &&
-    !(input instanceof Date)
-  ) {
-    return Option.none();
-  }
+const parseExpiresAt = Function.compose(
+  Schema.decodeUnknownOption(
+    Schema.Union([Schema.String, Schema.Number, Schema.Date]),
+  ),
+  Option.flatMap(DateTime.make),
+);
 
-  return DateTime.make(input);
-};
-
-export const normalizeScopes = (scopes: unknown): ReadonlyArray<string> => {
-  if (globalThis.Array.isArray(scopes)) {
+export const normalizeScopes = Function.compose(
+  Schema.decodeUnknownOption(
+    Schema.Union([Schema.String, Schema.Array(Schema.Unknown)]),
+  ),
+  (result): ReadonlyArray<string> => {
+    if (result._tag === "None") return [];
+    const scopes = result.value;
+    if (Predicate.isString(scopes)) return scopes.split(/\s+/).filter(Boolean);
     return scopes.filter(Predicate.isString);
-  }
-
-  if (Predicate.isString(scopes)) {
-    return scopes.split(/\s+/).filter(Boolean);
-  }
-
-  return [];
-};
+  },
+);
 
 export const createAuthService = ({
   auth,
   appUrl,
   findDiscordAccountId,
 }: {
-  readonly auth: LootlogAuth;
+  readonly auth: AuthProvider;
   readonly appUrl: string;
   readonly findDiscordAccountId: (
     request: AccessTokenRequest,
@@ -126,11 +145,10 @@ export const createAuthService = ({
 
       return yield* Effect.tryPromise({
         try: async () => {
-          const { payload } = await jwtVerify(
-            token,
-            createLocalJWKSet(jwks as JSONWebKeySet),
-            { issuer: appUrl, audience: appUrl },
-          );
+          const { payload } = await jwtVerify(token, createLocalJWKSet(jwks), {
+            issuer: appUrl,
+            audience: appUrl,
+          });
 
           if (
             !Predicate.isString(payload.sub) ||
@@ -151,7 +169,7 @@ export const createAuthService = ({
 
   const buildVerifiedIdentityFromRequest = Effect.fn(
     "AuthService.buildVerifiedIdentityFromRequest",
-  )(function* (session: AppUserSession | null, authorizationHeader?: string) {
+  )(function* (session: SessionIdentity | null, authorizationHeader?: string) {
     if (session) {
       return {
         userId: session.user.id,
@@ -322,7 +340,7 @@ export const createAuthService = ({
 
         if (error instanceof APIError) {
           return yield* new HttpResponseError({
-            status: typeof error.status === "number" ? error.status : 400,
+            status: Schema.is(Schema.Number)(error.status) ? error.status : 400,
             body: { error: "ACCOUNT_NOT_FOUND" },
           });
         }

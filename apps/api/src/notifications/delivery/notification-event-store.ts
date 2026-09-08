@@ -8,7 +8,7 @@ import {
   timerTable,
   watchedItemTable,
 } from "#src/database/drizzle/schema";
-import type { JsonValue } from "#src/notifications/notification-database.types";
+import type { JsonValue } from "#src/database/json";
 
 export const makeNotificationEventStore = (database: ApiDatabaseValue) => {
   const targetsByRuleIds = (ruleIds: number[]) =>
@@ -41,7 +41,7 @@ export const makeNotificationEventStore = (database: ApiDatabaseValue) => {
         const entries = result.get(link.ruleId) ?? [];
         entries.push({
           ...link,
-          target: { ...target, metadata: target.metadata as JsonValue | null },
+          target: { ...target, metadata: target.metadata },
         });
         result.set(link.ruleId, entries);
       }
@@ -66,7 +66,7 @@ export const makeNotificationEventStore = (database: ApiDatabaseValue) => {
         ),
       );
 
-  const watchedItemsForLoot = (itemIds: number[], world: string) =>
+  const watchedItemsForLoot = (itemIds: ReadonlyArray<number>, world: string) =>
     Effect.gen(function* () {
       if (itemIds.length === 0) return [];
       const rows = yield* database
@@ -93,7 +93,7 @@ export const makeNotificationEventStore = (database: ApiDatabaseValue) => {
           ...watchedItem,
           notificationRule: {
             ...rule,
-            filters: rule.filters as JsonValue | null,
+            filters: rule.filters,
             targets: targets.get(rule.id) ?? [],
           },
         }));

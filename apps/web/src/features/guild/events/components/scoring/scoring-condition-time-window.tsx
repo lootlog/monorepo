@@ -4,9 +4,7 @@ import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { ArrowRight } from "lucide-react";
 
-type ScoringRulesFormValues = {
-  scoringRules: { rules: { conditions: unknown[] }[] };
-};
+import type { ScoringRulesFormValues } from "./scoring-rules-editor";
 
 interface ScoringConditionTimeWindowProps {
   register: UseFormRegister<ScoringRulesFormValues>;
@@ -31,7 +29,7 @@ export const ScoringConditionTimeWindow = ({
           type="time"
           className="h-8 text-[12px] font-mono"
           {...register(
-            `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.from` as `scoringRules.rules.${number}.conditions.${number}`,
+            `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.from`,
           )}
         />
       </div>
@@ -44,7 +42,7 @@ export const ScoringConditionTimeWindow = ({
           type="time"
           className="h-8 text-[12px] font-mono"
           {...register(
-            `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.to` as `scoringRules.rules.${number}.conditions.${number}`,
+            `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.to`,
           )}
         />
       </div>

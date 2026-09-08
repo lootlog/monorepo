@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -5,13 +6,24 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { getApiErrorMessage } from "@lootlog/client/transport";
-import { CreateNotificationRuleDtoScheduleAnchor as NotificationScheduleAnchor } from "@lootlog/client/main";
-import { CreateNotificationRuleDtoScheduleIntervalType as NotificationScheduleIntervalType } from "@lootlog/client/main";
-import { CreateNotificationRuleDtoScheduleStrategy as NotificationScheduleStrategy } from "@lootlog/client/main";
-import { CreateNotificationRuleDtoTriggerType as NotificationTriggerType } from "@lootlog/client/main";
-import type { CreateNotificationRuleDtoTriggerType } from "@lootlog/client/main";
-import type { NotificationTargetResponseDto } from "@lootlog/client/main";
-import type { NotificationRuleResponseDto } from "@lootlog/client/main";
+import {
+  CreateNotificationRuleDtoScheduleAnchor as NotificationScheduleAnchor,
+  CreateNotificationRuleDtoScheduleIntervalType as NotificationScheduleIntervalType,
+  CreateNotificationRuleDtoScheduleStrategy as NotificationScheduleStrategy,
+  CreateNotificationRuleDtoTriggerType as NotificationTriggerType,
+  type CreateNotificationRuleDtoTriggerType,
+  type NotificationTargetResponseDto,
+  type NotificationRuleResponseDto,
+  getNotificationsGuildControllerGetGuildRulesQueryKey,
+  getNotificationsGuildControllerGetGuildTargetsQueryKey,
+  useNotificationsGuildControllerCreateGuildRule,
+  useNotificationsGuildControllerGetGuildRules,
+  useNotificationsGuildControllerGetGuildTargets,
+  useNotificationsGuildControllerUpdateGuildRule,
+  useRolesControllerGetGuildRoles,
+  useGuildsControllerGetWorldsByGuildId,
+} from "@lootlog/client/main";
+
 import { useQueryClient } from "@tanstack/react-query";
 import {
   getDefaultGuildNotificationRuleContentTemplate,
@@ -37,17 +49,9 @@ import {
 } from "../utils/notification-rule-form-npc.utils";
 import { ROUTES } from "@/config/routes";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import {
-  getNotificationsGuildControllerGetGuildRulesQueryKey,
-  getNotificationsGuildControllerGetGuildTargetsQueryKey,
-  useNotificationsGuildControllerCreateGuildRule,
-  useNotificationsGuildControllerGetGuildRules,
-  useNotificationsGuildControllerGetGuildTargets,
-  useNotificationsGuildControllerUpdateGuildRule,
-} from "@lootlog/client/main";
+
 import { invalidateGuildNotificationQueries } from "../notifications-api";
-import { useRolesControllerGetGuildRoles } from "@lootlog/client/main";
-import { useGuildsControllerGetWorldsByGuildId } from "@lootlog/client/main";
+
 import {
   getNpcsControllerGetNpcsQueryKey,
   useNpcsControllerGetNpcs,
@@ -226,13 +230,15 @@ const useNotificationRuleData = (
   };
 };
 
+const notificationRuleRouteParams = z.object({ ruleId: z.string().optional() });
+
 export const useNotificationRuleForm = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const guildId = useGuildId();
   const queryClient = useQueryClient();
   const params = useParams({ strict: false });
-  const ruleId = (params as { ruleId?: string }).ruleId;
+  const ruleId = notificationRuleRouteParams.parse(params).ruleId;
   const isCreateMode = ruleId === undefined;
   const { targetsQuery, rulesQuery, worlds, guildRoles, rule, maxNpcCount } =
     useNotificationRuleData(guildId, ruleId);

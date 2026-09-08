@@ -1,4 +1,5 @@
 {
+  "extends": ["../../.oxlintrc.json"],
   "rules": {
     "complexity": "error",
     "@typescript-eslint/consistent-type-imports": "off"

@@ -1,11 +1,15 @@
 import type { Other } from "@lootlog/margonem/others";
 import type { MargonemTooltipCharacter } from "@/lib/margonem-tooltips/types";
 
+// CanvasTip forwards event/object to jQuery tipShow/tipHide; addons may wrap
+// these calls. Preserve the foreign arguments and return values unchanged.
 export type RuntimeCanvasTip = {
   hide?: (event: unknown) => unknown;
   show?: (event: unknown, object: unknown) => unknown;
 };
 
+// The found container passes directly to WhoIsHere.createTipWrapper, which
+// invokes the native jQuery .tip extension; Lootlog does not inspect this value.
 type JQueryLike = {
   find?: (selector: string) => unknown;
 };
@@ -22,7 +26,7 @@ type TooltipRuntimeWindow = Window & {
   };
 };
 
-const getRuntimeWindow = () => window as TooltipRuntimeWindow;
+const getRuntimeWindow = (): TooltipRuntimeWindow => window;
 
 export const getRuntimeCanvasTip = (): RuntimeCanvasTip | undefined => {
   return getRuntimeWindow().Engine?.canvasTip;

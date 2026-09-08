@@ -1,83 +1,37 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { ReactNode } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-
-const mockSetOpen = vi.fn();
-const addTimerFormSpy = vi.fn();
-
-let addTimerOpen = true;
-let addTimerGuildId: string | undefined = "guild-1";
-
-vi.mock("@/store/windows.store", () => ({
-  useWindowsStore: (
-    selector: (state: {
-      "add-timer": { open: boolean; state: { guildId?: string } };
-      setOpen: typeof mockSetOpen;
-    }) => unknown,
-  ) =>
-    selector({
-      "add-timer": { open: addTimerOpen, state: { guildId: addTimerGuildId } },
-      setOpen: mockSetOpen,
-    }),
-}));
-
-vi.mock("@/components/draggable-window", () => ({
-  DraggableWindow: ({
-    children,
-    isOpen,
-    title,
-    onClose,
-  }: {
-    children: ReactNode;
-    isOpen: boolean;
-    title: string;
-    onClose?: () => void;
-  }) => (
-    <section data-testid="draggable-window" data-open={String(isOpen)}>
-      <h1>{title}</h1>
-      <button type="button" onClick={onClose}>
-        close
-      </button>
-      {children}
-    </section>
-  ),
-}));
-
-vi.mock("@/features/timers/components/add-timer-form", () => ({
-  AddTimerForm: (props: unknown) => {
-    addTimerFormSpy(props);
-    return <div>AddTimerForm</div>;
-  },
-}));
-
+import { QueryClientProvider } from "@tanstack/react-query";
+import { expect, it, onTestFinished } from "vitest";
+import { useWindowsStore } from "@/store/windows.store";
+import { createAddTimerFixture } from "./add-timer-fixtures";
 import { AddTimer } from "./add-timer";
 
-describe("AddTimer", () => {
-  beforeEach(() => {
-    addTimerOpen = true;
-    addTimerGuildId = "guild-1";
-    mockSetOpen.mockReset();
-    addTimerFormSpy.mockReset();
+it("renders the real add form with its window's guild and closes through the window store", async () => {
+  const user = userEvent.setup();
+  const fixture = createAddTimerFixture();
+  useWindowsStore.getState().setOpen("add-timer", true, { guildId: "guild-1" });
+  const view = render(
+    <QueryClientProvider client={fixture.queryClient}>
+      <AddTimer />
+    </QueryClientProvider>,
+  );
+  onTestFinished(() => {
+    view.unmount();
+    fixture.cleanup();
   });
-
-  it("renders the add timer window and closes it through the window store", async () => {
-    const user = userEvent.setup();
-
-    render(<AddTimer />);
-
-    expect(screen.getByTestId("draggable-window")).toHaveAttribute(
-      "data-open",
-      "true",
-    );
-    expect(screen.getByRole("heading", { name: "Dodaj timer" })).toBeVisible();
-    expect(screen.getByText("AddTimerForm")).toBeVisible();
-    expect(addTimerFormSpy).toHaveBeenCalledWith({
-      initialGuildId: "guild-1",
-    });
-
-    await user.click(screen.getByRole("button", { name: "close" }));
-
-    expect(mockSetOpen).toHaveBeenCalledWith("add-timer", false);
-  });
+  expect(screen.getByText("Dodaj timer")).toBeVisible();
+  expect(screen.getByLabelText("Nazwa")).toBeVisible();
+  expect(screen.getByRole("button", { name: "A" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await user.click(screen.getByRole("button", { name: "Zamknij okno" }));
+  expect(useWindowsStore.getState()["add-timer"].open).toBe(false);
+  const windowElement = screen
+    .getByText("Dodaj timer")
+    .closest("[data-window-id]");
+  if (windowElement) fireEvent.animationEnd(windowElement);
+  await waitFor(() =>
+    expect(screen.queryByLabelText("Nazwa")).not.toBeInTheDocument(),
+  );
 });

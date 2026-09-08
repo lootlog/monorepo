@@ -96,9 +96,7 @@ export const PlayerVsPlayerFilterToolbar = ({
                 onMaxLevelChange={onMaxLevelChange}
                 inputClassName="w-full"
                 containerClassName="flex-1"
-                separator={
-                  <ArrowRight className="size-4 shrink-0 text-muted-foreground" />
-                }
+                separator=<ArrowRight className="size-4 shrink-0 text-muted-foreground" />
               />
             </div>
           </div>

@@ -6,20 +6,8 @@ import {
   QueryObserver,
 } from "@tanstack/react-query";
 import { afterEach, expect, it, vi } from "vitest";
-import { GatewayEvent } from "@/config/gateway";
-import { GatewayClient } from "@/lib/gateway-client";
+import { createTestGateway } from "@/lib/testing/gateway";
 import { useKillStatsUpdates } from "./use-kill-stats-updates";
-
-vi.mock("@/lib/gateway-client", () => ({
-  GatewayClient: class {
-    on() {
-      return this;
-    }
-    off() {
-      return this;
-    }
-  },
-}));
 
 const clients: QueryClient[] = [];
 afterEach(() => {
@@ -36,16 +24,9 @@ it("coalesces kill hints, refreshes active statistics without attributing kills,
     defaultOptions: { queries: { retry: false } },
   });
   clients.push(client);
-  const socket = new GatewayClient();
-  const handlers = new Map<GatewayEvent, () => void>();
-  vi.spyOn(socket, "on").mockImplementation((event, handler) => {
-    handlers.set(event, handler);
-    return socket;
-  });
-  vi.spyOn(socket, "off").mockImplementation((event) => {
-    handlers.delete(event);
-    return socket;
-  });
+  const gateway = createTestGateway();
+  gateway.request.mockResolvedValue(undefined);
+  const socket = gateway.socket;
   const totals = ["/users/@me/stats/kills", { world: "alpha" }];
   const activity = ["/users/@me/stats/kills/activity", { from: "2026-01-01" }];
   const analytics = ["/users/@me/stats/kills/analytics", { days: "30" }];
@@ -66,7 +47,12 @@ it("coalesces kill hints, refreshes active statistics without attributing kills,
     ),
   });
   act(() => {
-    for (let i = 0; i < 20; i++) handlers.get(GatewayEvent.KILLS_CHANGED)?.();
+    for (let i = 0; i < 20; i++)
+      gateway.deliver({
+        v: 1,
+        type: "kills.changed",
+        data: { guildId: "guild-1" },
+      });
   });
   expect(queryFn).not.toHaveBeenCalled();
   await act(() => vi.advanceTimersByTimeAsync(1_000));
@@ -77,13 +63,28 @@ it("coalesces kill hints, refreshes active statistics without attributing kills,
   expect(client.getQueryState(feed)?.isInvalidated).toBe(false);
   await act(() => vi.advanceTimersByTimeAsync(60_000));
   expect(queryFn).toHaveBeenCalledTimes(1);
-  act(() => handlers.get(GatewayEvent.JOIN)?.());
+  act(() =>
+    gateway.deliver({
+      v: 1,
+      type: "session.joined",
+      data: {
+        connectionId: "connection-1",
+        organizationIds: [],
+        subscriptionScopes: [],
+      },
+    }),
+  );
   await act(() => vi.advanceTimersByTimeAsync(1_000));
   expect(queryFn).toHaveBeenCalledTimes(2);
-  act(() => handlers.get(GatewayEvent.KILLS_CHANGED)?.());
+  act(() =>
+    gateway.deliver({
+      v: 1,
+      type: "kills.changed",
+      data: { guildId: "guild-1" },
+    }),
+  );
   unmount();
   await vi.advanceTimersByTimeAsync(1_000);
   expect(queryFn).toHaveBeenCalledTimes(2);
-  expect(handlers.size).toBe(0);
   unsubscribe();
 });

@@ -1,40 +1,18 @@
 import { act, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { Timer } from "@/api/timers.api";
+import { createTimerFixture } from "../timer-fixtures";
 import { TimerClockProvider } from "./timer-clock-provider";
-
-vi.mock("./timer-tile-view", () => ({
-  TimerTileView: ({
-    hasPassedRedThreshold,
-    isMinSpawnTime,
-    timeLabel,
-  }: {
-    hasPassedRedThreshold: boolean;
-    isMinSpawnTime: boolean;
-    timeLabel: string;
-  }) => (
-    <output data-testid="live-timer">
-      {`${timeLabel}:${String(isMinSpawnTime)}:${String(hasPassedRedThreshold)}`}
-    </output>
-  ),
-}));
 
 import { TimerLiveTile } from "./timer-live-tile";
 
 const NOW = new Date("2026-07-20T10:00:00.000Z");
 
-const createTimer = (): Timer =>
-  ({
-    guildId: "guild-1",
-    timerKey: "timer-1",
-    world: "gefion",
-    npcId: 10,
+const createTimer = () =>
+  createTimerFixture({
     minSpawnTime: new Date(NOW.getTime() + 4_000).toISOString(),
     maxSpawnTime: new Date(NOW.getTime() + 5_000).toISOString(),
     updatedAt: NOW.toISOString(),
-    wasReset: false,
-    npc: { id: 10, name: "Tanroth" },
-  }) as Timer;
+  });
 
 describe("TimerLiveTile", () => {
   beforeEach(() => {
@@ -59,29 +37,25 @@ describe("TimerLiveTile", () => {
       </TimerClockProvider>,
     );
 
-    expect(screen.getByTestId("live-timer")).toHaveTextContent(
-      "00:00:04:false:false",
-    );
+    expect(screen.getByText("00:00:04")).toBeVisible();
 
     act(() => {
       vi.advanceTimersByTime(1_000);
     });
-    expect(screen.getByTestId("live-timer")).toHaveTextContent(
-      "00:00:03:false:false",
-    );
+    expect(screen.getByText("00:00:03")).toBeVisible();
 
     act(() => {
       vi.advanceTimersByTime(4_000);
     });
-    expect(screen.getByTestId("live-timer")).toHaveTextContent(
-      "00:00:00:true:false",
+    expect(screen.getByText("00:00:00").parentElement).toHaveClass(
+      "ll:text-orange-400",
     );
 
     act(() => {
       vi.advanceTimersByTime(1_000);
     });
-    expect(screen.getByTestId("live-timer")).toHaveTextContent(
-      "-00:00:01:true:true",
+    expect(screen.getByText("-00:00:01").parentElement).toHaveClass(
+      "ll:text-red-500",
     );
   });
 });

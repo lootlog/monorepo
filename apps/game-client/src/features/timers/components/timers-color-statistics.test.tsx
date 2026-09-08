@@ -1,30 +1,21 @@
 import { render, screen } from "@testing-library/react";
-import type { ReactNode } from "react";
-import { describe, expect, it, vi } from "vitest";
-
-vi.mock("@/components/ui/tooltip", () => ({
-  Tooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
-  TooltipTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
-  TooltipContent: ({ children }: { children: ReactNode }) => (
-    <div>{children}</div>
-  ),
-}));
-
-vi.mock("lucide-react", () => ({
-  Info: () => <span>Info</span>,
-}));
+import userEvent from "@testing-library/user-event";
+import { describe, expect, it } from "vitest";
 
 import { TimersColorStatistics } from "./timers-color-statistics";
 
 describe("TimersColorStatistics", () => {
-  it("shows an empty-state message when there are no color stats", () => {
+  it("shows an empty-state message when there are no color stats", async () => {
     render(<TimersColorStatistics colorStatistics={[]} />);
 
-    expect(screen.getByText("Statystyki kolorów timerów")).toBeVisible();
+    await userEvent.hover(
+      screen.getByRole("button", { name: "Statystyki kolorów timerów" }),
+    );
+    expect(await screen.findByText("Statystyki kolorów timerów")).toBeVisible();
     expect(screen.getByText("Brak ustawionych kolorów")).toBeVisible();
   });
 
-  it("renders default and custom color summaries", () => {
+  it("renders default and custom color summaries", async () => {
     render(
       <TimersColorStatistics
         colorStatistics={[
@@ -41,7 +32,11 @@ describe("TimersColorStatistics", () => {
       />,
     );
 
-    expect(screen.getByText("Red: 2/4")).toBeVisible();
+    await userEvent.tab();
+    expect(
+      screen.getByRole("button", { name: "Statystyki kolorów timerów" }),
+    ).toHaveFocus();
+    expect(await screen.findByText("Red: 2/4")).toBeVisible();
     expect(screen.getByText("Custom One: 1/1")).toBeVisible();
   });
 });

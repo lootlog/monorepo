@@ -2,7 +2,11 @@ import { randomUUID } from "node:crypto";
 import { Logger } from "#src/infrastructure/logger";
 import type { RedisStore } from "#src/infrastructure/redis-store";
 import type { BattleAnalyticsCriteria } from "#src/battles/analytics/query-battle-analytics";
-import type { BattleStatisticsQuery } from "#src/battles/analytics/query-battle-statistics";
+import type {
+  AbyssSeasonsQuery,
+  BattleStatisticsQuery,
+  PlayerVsPlayerQuery,
+} from "#src/battles/analytics/query-battle-statistics";
 import { type Cause, Effect, Exit } from "effect";
 import { stableJsonStringify } from "@lootlog/schema/stable-json";
 
@@ -162,7 +166,11 @@ export const makeBattleAnalyticsCache = (redisService: RedisStore) => {
     prefix: string,
     metric: string,
     userId: string,
-    query: object,
+    query:
+      | BattleStatisticsQuery
+      | AbyssSeasonsQuery
+      | PlayerVsPlayerQuery
+      | { characterId?: string; world?: string },
   ): string =>
     [
       prefix,

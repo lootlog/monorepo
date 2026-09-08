@@ -43,25 +43,23 @@ export function DashboardActivity() {
         className="shrink-0"
         icon={Activity}
         title={t("statistics.activity")}
-        actions={
-          <AnimatedToggleGroup
-            size="default"
-            label={t("statistics.activity")}
-            value={mode}
-            onValueChange={setMode}
-            options={[
-              { value: "online", label: t("statistics.online") },
-              { value: "kills", label: t("statistics.kills") },
-            ]}
-          />
-        }
+        actions=<AnimatedToggleGroup
+          size="default"
+          label={t("statistics.activity")}
+          value={mode}
+          onValueChange={setMode}
+          options={[
+            { value: "online", label: t("statistics.online") },
+            { value: "kills", label: t("statistics.kills") },
+          ]}
+        />
       />
       <SectionCardContent className="dashboard-activity-content flex min-h-0 flex-col overflow-y-auto">
         {mode === "online" ? (
           <StatisticsQueryState
             query={online}
             centered
-            loading={<DashboardActivitySkeleton />}
+            loading=<DashboardActivitySkeleton />
           >
             {online.data && (
               <>
@@ -101,7 +99,7 @@ export function DashboardActivity() {
           <StatisticsQueryState
             query={kills}
             centered
-            loading={<DashboardActivitySkeleton />}
+            loading=<DashboardActivitySkeleton />
           >
             {kills.data && (
               <ActivityHeatmap

@@ -1,267 +1,180 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import type { ReactNode, Ref } from "react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { afterEach, beforeEach, expect, it, onTestFinished, vi } from "vitest";
+import { defaultDetectorSettings } from "@lootlog/schema/account-preferences";
+import {
+  useNpcDetectorStore,
+  type GameNpcWithLocation,
+} from "@/store/npc-detector.store";
+import { useSettingsStore } from "@/store/settings.store";
 import { NpcsList } from "./npcs-list";
 
-const mocks = vi.hoisted(() => ({
-  npcListItem: vi.fn((_props: unknown) => null),
-  activeDetectionAnimations: {} as Record<number, number>,
-  clearDetectionAnimation: vi.fn(),
-  orchestration: {
-    isCreatingNpcPartyGathering: false,
-    isSendingNpcNotification: false,
-    startNpcNotification: vi.fn(),
-    startNpcPartyGathering: vi.fn(),
-  },
-  usePartyGatheringOrchestration: vi.fn(),
-  setNpcStates: vi.fn(),
-  animationEffectsEnabled: false,
-}));
-
-vi.mock("@/components/ui/scroll-area", () => ({
-  ScrollArea: ({
-    children,
-    ref,
-  }: {
-    children: ReactNode;
-    ref?: Ref<HTMLDivElement>;
-  }) => (
-    <div data-testid="npc-scroll-viewport" ref={ref}>
-      {children}
-    </div>
-  ),
-}));
-
-vi.mock("@/features/npc-detector/components/npc-list-item", () => ({
-  NpcListItem: (props: { npc: { id: number } }) => {
-    mocks.npcListItem(props);
-    return <div data-testid={`npc-${props.npc.id}`} />;
-  },
-}));
-
-vi.mock(
-  "@/features/party-finder/hooks/use-party-gathering-orchestration",
-  () => ({
-    usePartyGatheringOrchestration: () =>
-      mocks.usePartyGatheringOrchestration(),
-  }),
-);
-
-vi.mock("@/store/npc-detector.store", () => ({
-  useNpcDetectorStore: (
-    selector: (state: Record<string, unknown>) => unknown,
-  ) =>
-    selector({
-      activeDetectionAnimations: mocks.activeDetectionAnimations,
-      clearDetectionAnimation: mocks.clearDetectionAnimation,
-      latestDetectionAnimationCycle: 0,
-      npcs: [{ id: 1 }, { id: 2 }],
-      removeNpc: vi.fn(),
-      setNpcState: vi.fn(),
-      setNpcStates: mocks.setNpcStates,
-    }),
-}));
-
-vi.mock("@/store/settings.store", () => ({
-  useSettingsStore: (selector: (state: Record<string, unknown>) => unknown) =>
-    selector({ animationEffectsEnabled: mocks.animationEffectsEnabled }),
-}));
-
-vi.mock("@/store/party-finder.store", () => ({
-  selectOwnedReadyRoom: () => null,
-  usePartyFinderStore: (
-    selector: (state: Record<string, unknown>) => unknown,
-  ) => selector({}),
-}));
-
-vi.mock("@/store/windows.store", () => ({
-  useWindowsStore: (selector: (state: Record<string, unknown>) => unknown) =>
-    selector({ setOpen: vi.fn() }),
-}));
-
-describe("NpcsList", () => {
-  beforeEach(() => {
-    Object.defineProperty(HTMLElement.prototype, "clientHeight", {
-      configurable: true,
-      value: 320,
-    });
-    mocks.npcListItem.mockClear();
-    mocks.activeDetectionAnimations = {};
-    mocks.animationEffectsEnabled = false;
-    mocks.clearDetectionAnimation.mockReset();
-    mocks.setNpcStates.mockReset();
-    mocks.usePartyGatheringOrchestration.mockReset();
-    mocks.usePartyGatheringOrchestration.mockReturnValue(mocks.orchestration);
+const createNpc = (id: number): GameNpcWithLocation => ({
+  id,
+  tpl: id,
+  nick: `NPC ${id}`,
+  icon: "npc.gif",
+  prof: "w",
+  lvl: 120,
+  wt: 85,
+  type: 2,
+  x: 10,
+  y: 20,
+  location: "Ithan",
+  notificationSent: false,
+});
+const StoredNpcs = () => {
+  const npcs = useNpcDetectorStore((state) => state.npcs);
+  return <NpcsList detectorSettings={defaultDetectorSettings} npcs={npcs} />;
+};
+beforeEach(() => {
+  vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(320);
+  useNpcDetectorStore.setState(useNpcDetectorStore.getInitialState(), true);
+  useSettingsStore.setState({ animationEffectsEnabled: false });
+});
+afterEach(() => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
+});
+const mountNpcs = (npcs: GameNpcWithLocation[], animate = false) => {
+  useNpcDetectorStore.setState({ npcs });
+  useSettingsStore.setState({ animationEffectsEnabled: animate });
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: Infinity } },
   });
-
-  afterEach(() => {
-    vi.useRealTimers();
+  const view = render(
+    <QueryClientProvider client={queryClient}>
+      <StoredNpcs />
+    </QueryClientProvider>,
+  );
+  onTestFinished(() => {
+    view.unmount();
+    queryClient.clear();
   });
-
-  it("creates one orchestration observer for the whole list", () => {
-    render(
-      <NpcsList
-        detectorSettings={{ routingRules: [] } as never}
-        npcs={[{ id: 1 }, { id: 2 }] as never}
-      />,
-    );
-
-    expect(mocks.usePartyGatheringOrchestration).toHaveBeenCalledOnce();
-    expect(mocks.npcListItem).toHaveBeenCalledTimes(2);
-    expect(mocks.npcListItem.mock.calls[0]?.[0]).toMatchObject({
-      orchestration: mocks.orchestration,
-    });
-    expect(mocks.npcListItem.mock.calls[1]?.[0]).toMatchObject({
-      orchestration: mocks.orchestration,
-    });
-  });
-
-  it("bounds mounted rows for a large NPC list", () => {
-    const npcs = Array.from({ length: 500 }, (_, id) => ({ id }));
-
-    render(
-      <NpcsList
-        detectorSettings={{ routingRules: [] } as never}
-        npcs={npcs as never}
-      />,
-    );
-
-    expect(screen.getAllByRole("listitem").length).toBeLessThanOrEqual(20);
-    expect(screen.getByTestId("npc-0")).toBeInTheDocument();
-    expect(screen.queryByTestId("npc-100")).not.toBeInTheDocument();
-  });
-
-  it("mounts NPC rows reached by scrolling", () => {
-    const npcs = Array.from({ length: 500 }, (_, id) => ({ id }));
-
-    render(
-      <NpcsList
-        detectorSettings={{ routingRules: [] } as never}
-        npcs={npcs as never}
-      />,
-    );
-
-    const viewport = screen.getByTestId("npc-scroll-viewport");
-    viewport.scrollTop = 100 * 54;
-    fireEvent.scroll(viewport);
-
-    expect(screen.getByTestId("npc-100")).toBeInTheDocument();
-    expect(screen.queryByTestId("npc-0")).not.toBeInTheDocument();
-  });
-
-  it("does not replay an entry animation when virtualization remounts an existing row", () => {
-    mocks.animationEffectsEnabled = true;
-    const npcs = Array.from({ length: 500 }, (_, id) => ({ id }));
-
-    render(
-      <NpcsList
-        detectorSettings={{ routingRules: [] } as never}
-        npcs={npcs as never}
-      />,
-    );
-
-    const viewport = screen.getByTestId("npc-scroll-viewport");
-    viewport.scrollTop = 100 * 54;
-    fireEvent.scroll(viewport);
-
-    expect(screen.getByTestId("npc-100").parentElement).not.toHaveClass(
-      "ll-npc-list-enter",
-    );
-  });
-
-  it("animates existing rows from their previous position when detections reorder the list", () => {
-    mocks.animationEffectsEnabled = true;
-    const animate = vi.fn(() => ({
-      cancel: vi.fn(),
+  const viewport = view.container.querySelector(
+    "[data-ll-scroll-area-viewport]",
+  );
+  if (!(viewport instanceof HTMLElement))
+    throw new Error("Expected the native NPC scroll viewport");
+  return { viewport };
+};
+it("bounds mounted rows for five hundred NPCs and mounts rows reached by scrolling", () => {
+  const { viewport } = mountNpcs(
+    Array.from({ length: 500 }, (_, id) => createNpc(id)),
+  );
+  expect(screen.getAllByRole("listitem").length).toBeLessThanOrEqual(20);
+  expect(screen.getByText("NPC 0")).toBeVisible();
+  expect(screen.queryByText("NPC 100")).not.toBeInTheDocument();
+  viewport.scrollTop = 100 * 54;
+  fireEvent.scroll(viewport);
+  expect(screen.getByText("NPC 100")).toBeVisible();
+  expect(screen.queryByText("NPC 0")).not.toBeInTheDocument();
+  expect(screen.getAllByRole("listitem").length).toBeLessThanOrEqual(20);
+});
+it("does not replay entry animation when virtualization remounts an existing row", () => {
+  const { viewport } = mountNpcs(
+    Array.from({ length: 500 }, (_, id) => createNpc(id)),
+    true,
+  );
+  viewport.scrollTop = 100 * 54;
+  fireEvent.scroll(viewport);
+  expect(
+    screen.getByText("NPC 100").closest('[role="listitem"]'),
+  ).not.toHaveClass("ll-npc-list-enter");
+});
+it("animates retained rows from their previous positions after detections reorder the list", () => {
+  const animate = vi.fn<HTMLElement["animate"]>(() => {
+    const events = new EventTarget();
+    const animation: Animation = {
+      addEventListener: events.addEventListener.bind(events),
+      removeEventListener: events.removeEventListener.bind(events),
+      dispatchEvent: events.dispatchEvent.bind(events),
+      currentTime: null,
+      effect: null,
+      id: "npc-layout",
       oncancel: null,
       onfinish: null,
-    }));
-    const originalAnimate = HTMLElement.prototype.animate;
-    HTMLElement.prototype.animate = animate as never;
-
-    try {
-      const { rerender } = render(
-        <NpcsList
-          detectorSettings={{ routingRules: [] } as never}
-          npcs={[{ id: 1 }, { id: 2 }] as never}
-        />,
-      );
-      animate.mockClear();
-
-      rerender(
-        <NpcsList
-          detectorSettings={{ routingRules: [] } as never}
-          npcs={[{ id: 3 }, { id: 1 }, { id: 2 }] as never}
-        />,
-      );
-
-      expect(animate).toHaveBeenCalledTimes(2);
-      expect(animate).toHaveBeenCalledWith(
-        [{ transform: "translateY(-54px)" }, { transform: "translateY(0)" }],
-        expect.objectContaining({ duration: 180 }),
-      );
-    } finally {
-      HTMLElement.prototype.animate = originalAnimate;
-    }
+      onremove: null,
+      overallProgress: null,
+      pending: false,
+      playState: "running" as const,
+      playbackRate: 1,
+      replaceState: "active" as const,
+      startTime: null,
+      timeline: null,
+      get ready() {
+        return Promise.resolve(animation);
+      },
+      get finished() {
+        return Promise.resolve(animation);
+      },
+      cancel: vi.fn<Animation["cancel"]>(),
+      commitStyles: vi.fn<Animation["commitStyles"]>(),
+      finish: vi.fn<Animation["finish"]>(),
+      pause: vi.fn<Animation["pause"]>(),
+      persist: vi.fn<Animation["persist"]>(),
+      play: vi.fn<Animation["play"]>(),
+      reverse: vi.fn<Animation["reverse"]>(),
+      updatePlaybackRate: vi.fn<Animation["updatePlaybackRate"]>(),
+    };
+    return animation;
   });
-
-  it("retains a removed visible row until its exit animation completes", () => {
-    mocks.animationEffectsEnabled = true;
-    const { rerender } = render(
-      <NpcsList
-        detectorSettings={{ routingRules: [] } as never}
-        npcs={[{ id: 1 }, { id: 2 }] as never}
-      />,
-    );
-
-    rerender(
-      <NpcsList
-        detectorSettings={{ routingRules: [] } as never}
-        npcs={[{ id: 2 }] as never}
-      />,
-    );
-
-    const exitingNpc = screen.getByTestId("npc-1");
-    expect(exitingNpc.parentElement).toHaveClass(
-      "ll:animate-out",
-      "ll:fade-out-0",
-    );
-
-    fireEvent.animationEnd(exitingNpc.parentElement as HTMLElement);
-
-    expect(screen.queryByTestId("npc-1")).not.toBeInTheDocument();
+  const original = Object.getOwnPropertyDescriptor(
+    HTMLElement.prototype,
+    "animate",
+  );
+  Object.defineProperty(HTMLElement.prototype, "animate", {
+    configurable: true,
+    value: animate,
   });
-
-  it("expires cooldowns and detection animations while their row is offscreen", () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-07-20T12:00:00.000Z"));
-    mocks.activeDetectionAnimations = { 0: 7 };
-    const npcs = Array.from({ length: 500 }, (_, id) => ({
-      id,
+  onTestFinished(() => {
+    if (original)
+      Object.defineProperty(HTMLElement.prototype, "animate", original);
+    else Reflect.deleteProperty(HTMLElement.prototype, "animate");
+  });
+  mountNpcs([createNpc(1), createNpc(2)], true);
+  animate.mockClear();
+  act(() =>
+    useNpcDetectorStore.setState({
+      npcs: [createNpc(3), createNpc(1), createNpc(2)],
+    }),
+  );
+  expect(animate).toHaveBeenCalledTimes(2);
+  expect(animate).toHaveBeenCalledWith(
+    [{ transform: "translateY(-54px)" }, { transform: "translateY(0)" }],
+    expect.objectContaining({ duration: 180 }),
+  );
+});
+it("retains a removed visible row until its exit animation finishes", () => {
+  mountNpcs([createNpc(1), createNpc(2)], true);
+  act(() => useNpcDetectorStore.getState().removeNpc(1));
+  const exiting = screen.getByText("NPC 1").closest('[aria-hidden="true"]');
+  expect(exiting).toHaveClass("ll:animate-out", "ll:fade-out-0");
+  if (!exiting) throw new Error("Expected an exiting NPC row");
+  fireEvent.animationEnd(exiting);
+  expect(screen.queryByText("NPC 1")).not.toBeInTheDocument();
+  expect(screen.getByText("NPC 2")).toBeVisible();
+});
+it("expires cooldowns and detection animations while their row is offscreen", () => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2026-07-20T12:00:00.000Z"));
+  useNpcDetectorStore.setState({ activeDetectionAnimations: { 0: 7 } });
+  const { viewport } = mountNpcs(
+    Array.from({ length: 500 }, (_, id) => ({
+      ...createNpc(id),
       notificationSent: id === 0,
-    }));
-
-    render(
-      <NpcsList
-        detectorSettings={{ routingRules: [] } as never}
-        npcs={npcs as never}
-      />,
-    );
-
-    const viewport = screen.getByTestId("npc-scroll-viewport");
-    viewport.scrollTop = 100 * 54;
-    fireEvent.scroll(viewport);
-    expect(screen.queryByTestId("npc-0")).not.toBeInTheDocument();
-
-    act(() => vi.advanceTimersByTime(5500));
-
-    expect(mocks.setNpcStates).toHaveBeenCalledWith([
-      { npcId: 0, npc: { notificationSent: false } },
-    ]);
-    expect(mocks.clearDetectionAnimation).toHaveBeenCalledWith(0, 7);
-
-    viewport.scrollTop = 0;
-    fireEvent.scroll(viewport);
-    expect(screen.getByTestId("npc-0")).toBeInTheDocument();
-  });
+    })),
+  );
+  viewport.scrollTop = 100 * 54;
+  fireEvent.scroll(viewport);
+  expect(screen.queryByText("NPC 0")).not.toBeInTheDocument();
+  act(() => vi.advanceTimersByTime(5500));
+  expect(
+    useNpcDetectorStore.getState().npcs.find((npc) => npc.id === 0)
+      ?.notificationSent,
+  ).toBe(false);
+  expect(useNpcDetectorStore.getState().activeDetectionAnimations).toEqual({});
+  viewport.scrollTop = 0;
+  fireEvent.scroll(viewport);
+  expect(screen.getByText("NPC 0")).toBeVisible();
 });

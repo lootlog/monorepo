@@ -1,18 +1,10 @@
+import i18n from "@/i18n/config";
 import { render, screen } from "@testing-library/react";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { HotkeysSettingsTab } from "./hotkeys-settings-tab";
 
-const testState = vi.hoisted(() => ({
-  gameInterface: "si" as "ni" | "si",
-}));
-
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
-}));
-
 describe("HotkeysSettingsTab", () => {
   beforeEach(() => {
-    testState.gameInterface = "si";
     setTestRuntimeGame({ interface: "si" });
   });
 
@@ -20,17 +12,16 @@ describe("HotkeysSettingsTab", () => {
     render(<HotkeysSettingsTab />);
 
     expect(
-      screen.queryByText("settings.hotkeys.actions.map-ping.label"),
+      screen.queryByText(i18n.t("settings.hotkeys.actions.map-ping.label")),
     ).not.toBeInTheDocument();
   });
 
   it("shows the map ping hotkey on the new interface", () => {
-    testState.gameInterface = "ni";
     setTestRuntimeGame({ interface: "ni" });
     render(<HotkeysSettingsTab />);
 
     expect(
-      screen.getByText("settings.hotkeys.actions.map-ping.label"),
+      screen.getByText(i18n.t("settings.hotkeys.actions.map-ping.label")),
     ).toBeInTheDocument();
   });
 });

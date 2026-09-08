@@ -1,3 +1,4 @@
+import type { Hero } from "@lootlog/margonem/hero";
 import type { Other } from "@lootlog/margonem/others";
 import type { RuntimeOther } from "@/lib/margonem-runtime/runtime.types";
 import { create } from "zustand";
@@ -64,7 +65,7 @@ export function getCharacterTooltipCatchingGuildsCharacterKey(
 }
 
 export function getOtherCatchingGuildsTarget(
-  other: Other | RuntimeOther,
+  other: { d: Pick<Other["d"] | Hero["d"], "account" | "id"> } | RuntimeOther,
 ): CharacterTooltipCatchingGuildsTarget | null {
   const accountId =
     "d" in other ? String(other.d?.account ?? "") : other.accountId;

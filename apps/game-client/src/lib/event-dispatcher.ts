@@ -18,7 +18,7 @@ import type {
   RuntimeFact,
 } from "@/lib/margonem-runtime/runtime.types";
 
-function runSafe(name: string, handler: () => unknown): void {
+function runSafe(name: string, handler: () => void | Promise<void>): void {
   try {
     const result = handler();
 

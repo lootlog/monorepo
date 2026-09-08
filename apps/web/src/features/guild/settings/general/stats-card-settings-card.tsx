@@ -7,16 +7,14 @@ import { Copy, Eye, ImageOff, RefreshCw } from "lucide-react";
 import { useCopyToClipboard } from "usehooks-ts";
 import { Button } from "@lootlog/ui/components/button";
 
-import {
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-} from "@lootlog/ui/components/form";
+import { FormControl, FormField, FormItem } from "@lootlog/ui/components/form";
 import { Switch } from "@lootlog/ui/components/switch";
 import { API_URL } from "@/config/api";
-import { useAuthenticatedGuildStatsCardControllerRefreshStatsCard } from "@lootlog/client/main";
-import type { GuildResponseDtoOutput } from "@lootlog/client/main";
+import {
+  useAuthenticatedGuildStatsCardControllerRefreshStatsCard,
+  type GuildResponseDtoOutput,
+} from "@lootlog/client/main";
+
 import type { GeneralFormValues } from "./general-form.schema";
 import type { UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
@@ -97,31 +95,29 @@ export const StatsCardSettingsCard = ({
         title={t("settings.general.statsCard.title")}
         description={t("settings.general.statsCard.description")}
         icon={Eye}
-        actions={
-          <FormField
-            control={form.control}
-            name="publicStatsCardEnabled"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl
-                  render={
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      aria-label={t("settings.general.statsCard.toggleLabel")}
-                    />
-                  }
-                />
-              </FormItem>
-            )}
-          />
-        }
+        actions=<FormField
+          control={form.control}
+          name="publicStatsCardEnabled"
+          render={({ field }) => (
+            <FormItem>
+              <FormControl
+                render={
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    aria-label={t("settings.general.statsCard.toggleLabel")}
+                  />
+                }
+              />
+            </FormItem>
+          )}
+        />
       />
       <SectionCardContent>
         <div className=" space-y-3">
-          <FormDescription className="text-xs">
+          <p className="text-xs text-muted-foreground">
             {t("settings.general.statsCard.toggleDescription")}
-          </FormDescription>
+          </p>
 
           <div className="w-full max-w-xl overflow-hidden">
             {savedEnabled && !imageError ? (
@@ -157,7 +153,7 @@ export const StatsCardSettingsCard = ({
               size="sm"
               disabled={!savedEnabled}
               loading={isCopying}
-              icon={<Copy className="size-4" />}
+              icon=<Copy className="size-4" />
               onClick={handleCopyLink}
             >
               {t("settings.general.statsCard.copyLink")}
@@ -168,7 +164,7 @@ export const StatsCardSettingsCard = ({
               size="sm"
               disabled={!savedEnabled || refreshStatsCard.isPending}
               loading={refreshStatsCard.isPending}
-              icon={<RefreshCw className="size-4" />}
+              icon=<RefreshCw className="size-4" />
               onClick={handleRefresh}
             >
               {t("settings.general.statsCard.refresh")}

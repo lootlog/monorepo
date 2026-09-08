@@ -4,7 +4,8 @@ import { useSearch } from "@tanstack/react-router";
 import { useTheme } from "@/hooks/context/use-theme";
 import { ThemeCard } from "@lootlog/ui/components/theme-card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { THEME_CATALOG, THEME_IDS, type ThemeId } from "@/themes";
+import { THEME_CATALOG } from "@/themes/catalog";
+import { isThemeId } from "@/themes/resolver";
 
 export const AppearanceSettings: FC = () => {
   const { theme, setTheme } = useTheme();
@@ -13,12 +14,8 @@ export const AppearanceSettings: FC = () => {
   });
 
   useEffect(() => {
-    if (
-      themeParam &&
-      (THEME_IDS as readonly string[]).includes(themeParam) &&
-      themeParam !== theme
-    ) {
-      setTheme(themeParam as ThemeId);
+    if (themeParam && isThemeId(themeParam) && themeParam !== theme) {
+      setTheme(themeParam);
     }
   }, [themeParam]);
   const { t } = useTranslation();
@@ -39,7 +36,7 @@ export const AppearanceSettings: FC = () => {
               colors={themeOption.colors}
               backgroundImage={themeOption.backgroundImage}
               isActive={theme === themeOption.name}
-              onClick={() => setTheme(themeOption.name as typeof theme)}
+              onClick={() => setTheme(themeOption.name)}
             />
           ))}
         </div>

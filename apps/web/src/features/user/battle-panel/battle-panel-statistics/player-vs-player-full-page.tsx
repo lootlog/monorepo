@@ -25,7 +25,10 @@ import {
   resetBattlePanelCursorPagination,
   type Period,
 } from "@/features/user/battle-panel/battle-panel-search";
-import { useBattlesControllerGetPlayerVsPlayerBattles } from "@lootlog/client/battlelog";
+import {
+  useBattlesControllerGetPlayerVsPlayerBattles,
+  type PlayerVsPlayerPaginatedResponseDtoOutput,
+} from "@lootlog/client/battlelog";
 import { getRouteErrorMessage } from "@/lib/router/route-errors";
 import { Label } from "@lootlog/ui/components/label";
 import { Separator } from "@lootlog/ui/components/separator";
@@ -38,7 +41,7 @@ import { AlertCircle, ArrowRight, SearchX, Swords } from "lucide-react";
 import { useQueryStates } from "nuqs";
 import { useState, type KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
-import type { PlayerVsPlayerPaginatedResponseDtoOutput } from "@lootlog/client/battlelog";
+
 import { playerVsPlayerColumns } from "./components/player-vs-player-columns";
 import { PlayerVsPlayerFilterToolbar } from "./components/player-vs-player-filter-toolbar";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
@@ -68,10 +71,7 @@ export function PlayerVsPlayerFullPage() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
-  const params = useParams({ strict: false }) as {
-    myId?: string;
-    opponentId?: string;
-  };
+  const params = useParams({ strict: false });
 
   const opponentId = params.opponentId ?? params.myId;
   const [queryState, setQueryState] = useQueryStates(
@@ -270,9 +270,7 @@ export function PlayerVsPlayerFullPage() {
             onMaxLevelChange={handleMaxLevelChange}
             inputClassName="w-full"
             containerClassName="flex-1"
-            separator={
-              <ArrowRight className="size-4 shrink-0 text-muted-foreground" />
-            }
+            separator=<ArrowRight className="size-4 shrink-0 text-muted-foreground" />
           />
         </div>
       </div>

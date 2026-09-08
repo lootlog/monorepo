@@ -261,7 +261,7 @@ function isOneOf<const Values extends readonly string[]>(
   values: Values,
   value: unknown,
 ): value is Values[number] {
-  return typeof value === "string" && values.includes(value as Values[number]);
+  return typeof value === "string" && values.includes(value);
 }
 
 function toNumber(value: unknown, fallback: number, min = 0, max?: number) {
@@ -370,48 +370,47 @@ export function normalizeEventScoringMode(value: unknown): EventScoringMode {
   return isOneOf(EVENT_SCORING_MODES, value) ? value : "SIMPLE";
 }
 
+function parseRule(rule: unknown, index: number): EventScoringRule | null {
+  if (!isRecord(rule)) {
+    return null;
+  }
+
+  const action = parseAction(rule.action);
+  if (!action) {
+    return null;
+  }
+
+  const conditions = Array.isArray(rule.conditions)
+    ? rule.conditions
+        .map(parseCondition)
+        .filter(
+          (condition): condition is EventScoringCondition => condition !== null,
+        )
+    : [];
+  const normalizedRule: EventScoringRule = {
+    id:
+      typeof rule.id === "string" && rule.id.trim()
+        ? rule.id.trim()
+        : `rule-${index + 1}`,
+    enabled: rule.enabled !== false,
+    conditions,
+    action,
+  };
+
+  if (typeof rule.name === "string" && rule.name.trim()) {
+    normalizedRule.name = rule.name.trim();
+  }
+
+  return normalizedRule;
+}
+
 export function normalizeEventScoringRules(value: unknown): EventScoringRules {
   if (!isRecord(value)) {
     return cloneDefaultRules();
   }
 
   const normalizedRules = (
-    Array.isArray(value.rules)
-      ? value.rules.map((rule, index) => {
-          if (!isRecord(rule)) {
-            return null;
-          }
-
-          const action = parseAction(rule.action);
-          if (!action) {
-            return null;
-          }
-
-          const conditions = Array.isArray(rule.conditions)
-            ? rule.conditions
-                .map(parseCondition)
-                .filter(
-                  (condition): condition is EventScoringCondition =>
-                    condition !== null,
-                )
-            : [];
-          const normalizedRule: EventScoringRule = {
-            id:
-              typeof rule.id === "string" && rule.id.trim()
-                ? rule.id.trim()
-                : `rule-${index + 1}`,
-            enabled: rule.enabled !== false,
-            conditions,
-            action,
-          };
-
-          if (typeof rule.name === "string" && rule.name.trim()) {
-            normalizedRule.name = rule.name.trim();
-          }
-
-          return normalizedRule;
-        })
-      : []
+    Array.isArray(value.rules) ? value.rules.map(parseRule) : []
   ).filter((rule): rule is EventScoringRule => rule !== null);
 
   return {
@@ -479,7 +478,7 @@ function evaluateCondition(params: {
       };
     const left = values[condition.factor];
 
-    return typeof left === "number" && Number.isFinite(left)
+    return left !== null && left !== undefined && Number.isFinite(left)
       ? compareNumeric(left, condition.operator, condition.value)
       : false;
   }
@@ -597,7 +596,8 @@ export function evaluateEventScoring(params: {
         actionType: rule.action.type,
       });
     } else if (
-      typeof context.trackingDurationPercentage === "number" &&
+      context.trackingDurationPercentage !== null &&
+      context.trackingDurationPercentage !== undefined &&
       Number.isFinite(context.trackingDurationPercentage) &&
       context.trackingDurationPercentage >= minimumTrackingPercentage
     ) {

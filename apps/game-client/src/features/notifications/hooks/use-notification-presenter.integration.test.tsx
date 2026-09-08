@@ -1,6 +1,7 @@
+import { createNotificationTest } from "../notification-test";
 import { act, Profiler, useEffect, type ProfilerOnRenderCallback } from "react";
 import { render } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
   useNotificationPresenter,
   type NotificationPresentationRequest,
@@ -8,25 +9,7 @@ import {
 import { useNotificationsStore } from "@/store/notifications.store";
 import { useWindowsStore } from "@/store/windows.store";
 
-const mocks = vi.hoisted(() => ({
-  playSounds: vi.fn(),
-}));
-
-vi.mock("@/hooks/use-current-game-account-notification-settings", () => ({
-  useCurrentGameAccountNotificationSettings: () => ({
-    settings: {
-      message: {
-        autoHideTimeout: 0,
-        sound: false,
-      },
-    },
-  }),
-}));
-
-vi.mock("@/hooks/use-sound-playback", () => ({
-  useSoundPlayback: () => ({ playSounds: mocks.playSounds }),
-}));
-
+let test: ReturnType<typeof createNotificationTest>;
 let presentNotifications:
   | ((requests: readonly NotificationPresentationRequest[]) => void)
   | undefined;
@@ -47,6 +30,7 @@ const NotificationPresentationProbe = () => {
 
 describe("useNotificationPresenter React batching", () => {
   beforeEach(() => {
+    test = createNotificationTest();
     presentNotifications = undefined;
     useNotificationsStore.setState({
       notifications: [],
@@ -71,6 +55,7 @@ describe("useNotificationPresenter React batching", () => {
       <Profiler id="notification-presentation" onRender={onRender}>
         <NotificationPresentationProbe />
       </Profiler>,
+      { wrapper: test.wrapper },
     );
 
     act(() => {

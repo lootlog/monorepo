@@ -1,12 +1,12 @@
 export const roundValue = (value: string | number): string => {
-  let strValue = typeof value === "string" ? value : String(value);
+  let strValue = String(value);
 
   strValue = strValue.replace(",", ".");
 
   const numValue = Number.parseFloat(strValue);
 
   if (Number.isNaN(numValue)) {
-    return typeof value === "string" ? value : String(value);
+    return String(value);
   }
 
   return Math.round(numValue).toString();

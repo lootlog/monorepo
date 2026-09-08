@@ -12,7 +12,7 @@ export function usePartyReadyRoomSocket(): void {
     if (!socket || !connected) return;
 
     const handleUpdate = (update: PartyReadyRoomClientUpdate) => {
-      if ((update as { schemaVersion?: number }).schemaVersion !== 3) {
+      if (update.schemaVersion !== 3) {
         return;
       }
       applyUpdate(update);

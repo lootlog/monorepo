@@ -294,7 +294,7 @@ export const useMapPings = () => {
 
     const trigger = resolveTrigger(event);
     const mapId = useGameStore.getState().game?.map.id;
-    if (!trigger || typeof mapId !== "number" || !Number.isInteger(mapId)) {
+    if (!trigger || mapId === undefined || !Number.isInteger(mapId)) {
       return false;
     }
 

@@ -8,7 +8,7 @@ export const getPrimaryModifierKeyLabel = (
   platformNavigator: PlatformNavigator | undefined = typeof navigator ===
   "undefined"
     ? undefined
-    : (navigator as PlatformNavigator),
+    : navigator,
 ): "Ctrl" | "⌘" => {
   if (!platformNavigator) {
     return "Ctrl";
