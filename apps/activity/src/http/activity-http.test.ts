@@ -10,6 +10,7 @@ import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { Redis } from "effect/unstable/persistence";
 import { ActivityConfig } from "#src/config/activity-config";
 import { ApiHttpClient, ApiHttpClientFailure } from "#src/http/api-http-client";
+import { OnlineRepository } from "#src/online/online-repository";
 import { Permissions } from "#src/activities/activity-permissions";
 import {
   ActivityHealth,
@@ -36,11 +37,20 @@ const health: ActivityHealthValue = {
   check: () =>
     Effect.succeed({ status: "ok", info: {}, error: null, details: {} }),
 };
+const unusedOnlineRepository = Layer.succeed(OnlineRepository, {
+  ingest: () =>
+    Effect.die(new Error("Unexpected online ingest in activity route test")),
+  find: () =>
+    Effect.die(new Error("Unexpected online query in activity route test")),
+  prune: () =>
+    Effect.die(new Error("Unexpected online pruning in activity route test")),
+});
+
 const makeBoundary = (capabilities: Permission[]) => {
   const routes = ActivityRoutes.pipe(
-    Layer.provide(Layer.succeed(ActivityRepository, repository)),
-    Layer.provide(Layer.succeed(ActivityHealth, health)),
-    Layer.provide(
+    Layer.provideMerge(Layer.succeed(ActivityRepository, repository)),
+    Layer.provideMerge(Layer.succeed(ActivityHealth, health)),
+    Layer.provideMerge(
       Layer.succeed(
         Permissions,
         Permissions.of({
@@ -50,12 +60,13 @@ const makeBoundary = (capabilities: Permission[]) => {
         }),
       ),
     ),
+    Layer.provideMerge(unusedOnlineRepository),
     Layer.provide(HttpServer.layerServices),
   );
   const boundary = HttpRouter.toWebHandler(routes, { disableLogger: true });
   return {
     dispose: boundary.dispose,
-    handler: boundary.handler as (request: Request) => Promise<Response>,
+    handler: boundary.handler,
   };
 };
 const headers = {
@@ -129,10 +140,14 @@ for (const failure of ["status", "transport", "invalid-body"] as const) {
     const redis = Redis.Redis.of({
       send: <A>(command: string, ...args: ReadonlyArray<string | number>) =>
         Effect.sync(() => {
-          if (command === "GET")
-            return (cache.get(String(args[0])) ?? null) as A;
+          if (command !== "GET" && command !== "SET" && command !== "PING") {
+            throw new Error(`Unexpected Redis command: ${command}`);
+          }
           if (command === "SET") cache.set(String(args[0]), String(args[1]));
-          return "OK" as A;
+          const reply =
+            command === "GET" ? (cache.get(String(args[0])) ?? null) : "OK";
+          // SAFETY: These cache scenarios request string | null for GET and ignore SET/PING replies; Redis's caller-selected A is erased at the fake transport boundary.
+          return reply as A;
         }),
       subscribe: () => Queue.unbounded<Redis.RedisMessage, Redis.RedisError>(),
       eval:
@@ -196,14 +211,15 @@ for (const failure of ["status", "transport", "invalid-body"] as const) {
     );
     const boundary = HttpRouter.toWebHandler(
       ActivityRoutes.pipe(
-        Layer.provide(permissions),
-        Layer.provide(Layer.succeed(ActivityRepository, repository)),
-        Layer.provide(Layer.succeed(ActivityHealth, health)),
+        Layer.provideMerge(permissions),
+        Layer.provideMerge(Layer.succeed(ActivityRepository, repository)),
+        Layer.provideMerge(Layer.succeed(ActivityHealth, health)),
+        Layer.provideMerge(unusedOnlineRepository),
         Layer.provide(HttpServer.layerServices),
       ),
       { disableLogger: true },
     );
-    const handler = boundary.handler as (request: Request) => Promise<Response>;
+    const handler = boundary.handler;
     try {
       const response = await handler(
         new Request("https://activity/guilds/g/activity-logs", { headers }),

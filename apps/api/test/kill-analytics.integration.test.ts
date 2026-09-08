@@ -35,7 +35,7 @@ const readAnalytics = (world?: string) =>
       cache,
     ).getUserKillAnalytics("analytics-owner", {
       days: 7,
-      ...(world ? { world } : {}),
+      world: world || undefined,
     });
   }).pipe(
     Effect.provide(ApiDatabaseLive),

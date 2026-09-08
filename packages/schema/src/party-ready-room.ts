@@ -1,3 +1,5 @@
+import { Schema } from "effect";
+
 export const PARTY_READY_ROOM_STATUSES = ["ACTIVE", "CANCELLED"] as const;
 
 export const PARTY_READY_ROOM_PARTY_PRESENCE_STATES = [
@@ -50,37 +52,19 @@ export interface PartyReadyRoomProjectionBase {
   expiresAt: string;
 }
 
-export interface PartyReadyRoomOrganizerProjection extends PartyReadyRoomProjectionBase {
-  viewer: "ORGANIZER";
-  participants: Record<string, PartyReadyRoomParticipant>;
-  ownedParticipantIds: string[];
-}
-
-export interface PartyReadyRoomParticipantProjection extends PartyReadyRoomProjectionBase {
-  viewer: "PARTICIPANT";
-  participants: Record<string, PartyReadyRoomParticipant>;
-}
-
+export type PartyReadyRoomOrganizerProjection =
+  typeof PartyReadyRoomOrganizerProjectionSchema.Type;
+export type PartyReadyRoomParticipantProjection =
+  typeof PartyReadyRoomParticipantProjectionSchema.Type;
 export type PartyReadyRoomProjection =
-  | PartyReadyRoomOrganizerProjection
-  | PartyReadyRoomParticipantProjection;
+  typeof PartyReadyRoomProjectionSchema.Type;
 
-export interface PartyReadyRoomUpsertUpdate {
-  schemaVersion: 3;
-  type: "UPSERT";
-  projection: PartyReadyRoomProjection;
-}
-
-export interface PartyReadyRoomRemoveUpdate {
-  schemaVersion: 3;
-  type: "REMOVE";
-  notificationId: string;
-  revision: number;
-}
-
+export type PartyReadyRoomUpsertUpdate =
+  typeof PartyReadyRoomUpsertUpdateSchema.Type;
+export type PartyReadyRoomRemoveUpdate =
+  typeof PartyReadyRoomRemoveUpdateSchema.Type;
 export type PartyReadyRoomClientUpdate =
-  | PartyReadyRoomUpsertUpdate
-  | PartyReadyRoomRemoveUpdate;
+  typeof PartyReadyRoomClientUpdateSchema.Type;
 
 export interface PartyReadyRoomUpdateEnvelope {
   recipientDiscordId: string;
@@ -144,4 +128,54 @@ export const PartyReadyRoomAggregateSchema = Schema.Struct({
   expiresAt: Schema.String,
   participants: Schema.Record(Schema.String, PartyReadyRoomParticipantSchema),
 });
-import { Schema } from "effect";
+
+const activeProjectionFields = {
+  ...PartyReadyRoomAggregateSchema.fields,
+  participants: Schema.Record(
+    Schema.String,
+    Schema.mutableKey(PartyReadyRoomParticipantSchema),
+  ),
+  status: Schema.Literal("ACTIVE"),
+};
+
+export const PartyReadyRoomOrganizerProjectionSchema = Schema.Struct({
+  ...activeProjectionFields,
+  viewer: Schema.Literal("ORGANIZER"),
+  ownedParticipantIds: Schema.mutable(Schema.Array(Schema.String)),
+});
+
+export const PartyReadyRoomParticipantProjectionSchema = Schema.Struct({
+  ...activeProjectionFields,
+  viewer: Schema.Literal("PARTICIPANT"),
+});
+
+export const PartyReadyRoomProjectionSchema = Schema.Union([
+  PartyReadyRoomOrganizerProjectionSchema,
+  PartyReadyRoomParticipantProjectionSchema,
+]);
+
+export const decodePartyReadyRoomProjection = Schema.decodeUnknownSync(
+  PartyReadyRoomProjectionSchema,
+);
+
+export const PartyReadyRoomUpsertUpdateSchema = Schema.Struct({
+  schemaVersion: Schema.Literal(3),
+  type: Schema.Literal("UPSERT"),
+  projection: PartyReadyRoomProjectionSchema,
+});
+
+export const PartyReadyRoomRemoveUpdateSchema = Schema.Struct({
+  schemaVersion: Schema.Literal(3),
+  type: Schema.Literal("REMOVE"),
+  notificationId: Schema.String,
+  revision: Schema.Number,
+});
+
+export const PartyReadyRoomClientUpdateSchema = Schema.Union([
+  PartyReadyRoomUpsertUpdateSchema,
+  PartyReadyRoomRemoveUpdateSchema,
+]);
+
+export const decodePartyReadyRoomClientUpdate = Schema.decodeUnknownSync(
+  PartyReadyRoomClientUpdateSchema,
+);

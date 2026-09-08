@@ -1,4 +1,10 @@
-import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
+import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
+import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
+import { isRecord } from "@lootlog/schema/records";
+import {
+  NpcTypeEnum as NpcType,
+  NpcTypeSchema,
+} from "@lootlog/schema/npc-type";
 import { Schema } from "effect";
 import type { Member, PlayerSnapshot, Timer } from "#src/timers/timers.types";
 import {
@@ -6,7 +12,7 @@ import {
   nullableIsoDatetimeCodec,
 } from "#src/shared/schema/response-codecs";
 
-const NPC_TYPE_VALUES = new Set<string>(Object.values(NpcType));
+const isNpcType = Schema.is(NpcTypeSchema);
 export type TimerProjection = Timer & {
   readonly member?: Member | null;
   readonly actorCharacter?: PlayerSnapshot | null;
@@ -52,14 +58,11 @@ export const CachedTimerProjectionSchema = Schema.Struct({
 export type CachedTimerProjection = typeof CachedTimerProjectionSchema.Type;
 
 export const mapTimerNpc = (npc: unknown) => {
-  if (!npc || typeof npc !== "object" || Array.isArray(npc)) return null;
-  const value = npc as Record<string, unknown>;
+  if (!isRecord(npc)) return null;
+  const value = npc;
   const rawType =
     typeof value.type === "string" ? value.type.toUpperCase() : null;
-  const type =
-    rawType && NPC_TYPE_VALUES.has(rawType)
-      ? (rawType as NpcType)
-      : NpcType.NPC;
+  const type = isNpcType(rawType) ? rawType : NpcType.NPC;
   return {
     id: typeof value.id === "number" ? value.id : 0,
     name: typeof value.name === "string" ? value.name : "",
@@ -129,6 +132,11 @@ export const mapTimerMember = (member: CachedTimerProjection["member"]) =>
       }
     : undefined;
 
+type TimerAssociations = {
+  member?: NonNullable<ReturnType<typeof mapTimerMember>>;
+  actorCharacter?: NonNullable<ReturnType<typeof mapTimerCharacter>>;
+};
+
 export const mapTimerResponse = (timer: CachedTimerProjection) => {
   const member = mapTimerMember(timer.member);
   const actorCharacter = mapTimerCharacter(
@@ -136,7 +144,12 @@ export const mapTimerResponse = (timer: CachedTimerProjection) => {
     timer.actorCharacterLvl,
   );
 
+  const associations: TimerAssociations = {};
+  if (member !== undefined) associations.member = member;
+  if (actorCharacter !== undefined)
+    associations.actorCharacter = actorCharacter;
   return {
+    ...associations,
     guildId: timer.guildId,
     npcId: timer.npcId,
     timerKey: timer.timerKey,
@@ -145,9 +158,22 @@ export const mapTimerResponse = (timer: CachedTimerProjection) => {
     maxSpawnTime: toTimerDate(timer.maxSpawnTime) ?? new Date(),
     npc: mapTimerNpc(timer.npc),
     wasReset: timer.wasReset,
-    ...(member === undefined ? {} : { member }),
-    ...(actorCharacter === undefined ? {} : { actorCharacter }),
     deletedAt: toTimerDate(timer.deletedAt),
     updatedAt: toTimerDate(timer.updatedAt) ?? new Date(),
   };
 };
+
+export const timerNpcField = (npc: unknown, key: string) =>
+  isRecord(npc) ? npc[key] : undefined;
+
+export type TimerPublishedEvent<
+  Key extends
+    | typeof RabbitRoutingKey.GUILDS_TIMERS_UPDATE
+    | typeof RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED
+    | typeof RabbitRoutingKey.GUILDS_TIMERS_DELETE
+    | typeof RabbitRoutingKey.NOTIFICATIONS_TIMER_DELETED,
+> = Key extends
+  | typeof RabbitRoutingKey.GUILDS_TIMERS_UPDATE
+  | typeof RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED
+  ? ReturnType<typeof mapTimerResponse>
+  : CanonicalRabbitEvent<Key>;

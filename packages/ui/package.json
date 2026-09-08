@@ -13,7 +13,8 @@
     "./types/*": "./src/types/*.ts",
     "./hooks/*": "./src/hooks/*.ts",
     "./i18n/translations/item-stats.json": "./src/i18n/translations/item-stats.json",
-    "./postcss.config.mjs": "./postcss.config.mjs"
+    "./postcss.config.mjs": "./postcss.config.mjs",
+    "./i18n/translation-lookup": "./src/i18n/translation-lookup.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",
@@ -26,6 +27,7 @@
     "@base-ui/react": "^1.7.0",
     "@fontsource-variable/geist": "^5.3.0",
     "@fontsource-variable/geist-mono": "^5.3.0",
+    "@lootlog/schema": "workspace:*",
     "@tailwindcss/postcss": "catalog:",
     "class-variance-authority": "^0.7.1",
     "cmdk": "1.1.1",

@@ -136,7 +136,7 @@ export function ActivityHeatmap({
               )}
               <Tooltip>
                 <TooltipTrigger
-                  render={<button type="button" />}
+                  render=<button type="button" />
                   ref={(element) => {
                     if (element) buttons.current.set(index, element);
                     else buttons.current.delete(index);
@@ -163,13 +163,13 @@ export function ActivityHeatmap({
                     showDetails ? () => setSelectedDate(day.date) : undefined
                   }
                   onKeyDown={(event) => {
-                    const moves: Record<string, number> = {
-                      ArrowRight: 7,
-                      ArrowLeft: -7,
-                      ArrowDown: 1,
-                      ArrowUp: -1,
-                    };
-                    let next = index + (moves[event.key] ?? 0);
+                    const moves = new Map([
+                      ["ArrowRight", 7],
+                      ["ArrowLeft", -7],
+                      ["ArrowDown", 1],
+                      ["ArrowUp", -1],
+                    ]);
+                    let next = index + (moves.get(event.key) ?? 0);
                     if (event.key === "Home") next = 0;
                     if (event.key === "End") next = days.length - 1;
                     if (next === index) return;

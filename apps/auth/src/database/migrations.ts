@@ -3,10 +3,16 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { migrate } from "drizzle-orm/effect-postgres/migrator";
-import type { PgClient } from "@effect/sql-pg";
 import { Effect } from "effect";
 import type { SqlError } from "effect/unstable/sql/SqlError";
 import type { AuthDatabaseValue } from "./drizzle.js";
+
+export interface AuthMigrationClient {
+  readonly unsafe: <A extends object>(
+    sql: string,
+    values?: ReadonlyArray<unknown>,
+  ) => Effect.Effect<ReadonlyArray<A>, SqlError>;
+}
 
 const migrationsSchema = "drizzle";
 const migrationsTable = "__drizzle_migrations";
@@ -381,7 +387,7 @@ function readLocalMigrations(): LocalMigration[] {
 }
 
 const ensureMigrationTracking = Effect.fn("ensureMigrationTracking")(function* (
-  client: PgClient.PgClient,
+  client: AuthMigrationClient,
 ) {
   yield* client.unsafe(`CREATE SCHEMA IF NOT EXISTS ${migrationsSchema}`);
   yield* client.unsafe(`
@@ -394,7 +400,7 @@ const ensureMigrationTracking = Effect.fn("ensureMigrationTracking")(function* (
 });
 
 const getTrackedMigrationCount = Effect.fn("getTrackedMigrationCount")(
-  function* (client: PgClient.PgClient) {
+  function* (client: AuthMigrationClient) {
     const result = yield* client.unsafe<{ count: string }>(
       `SELECT COUNT(*)::text AS count FROM ${migrationsSchema}.${migrationsTable}`,
     );
@@ -404,7 +410,7 @@ const getTrackedMigrationCount = Effect.fn("getTrackedMigrationCount")(
 );
 
 const readTrackedMigrations = Effect.fn("readTrackedMigrations")(function* (
-  client: PgClient.PgClient,
+  client: AuthMigrationClient,
 ) {
   const relation = yield* client.unsafe<{ relation: string | null }>(
     `SELECT to_regclass($1)::text AS relation`,
@@ -459,7 +465,7 @@ function hasCompatibleMigrationTracking(
 }
 
 const getExistingAuthTableCount = Effect.fn("getExistingAuthTableCount")(
-  function* (client: PgClient.PgClient) {
+  function* (client: AuthMigrationClient) {
     const result = yield* client.unsafe<{ count: string }>(
       `
       SELECT COUNT(*)::text AS count
@@ -475,7 +481,7 @@ const getExistingAuthTableCount = Effect.fn("getExistingAuthTableCount")(
 );
 
 const readAuthSchemaFingerprint = Effect.fn("readAuthSchemaFingerprint")(
-  function* (client: PgClient.PgClient) {
+  function* (client: AuthMigrationClient) {
     const result = yield* client.unsafe<SchemaColumn>(
       `
       SELECT
@@ -497,7 +503,7 @@ const readAuthSchemaFingerprint = Effect.fn("readAuthSchemaFingerprint")(
 );
 
 const readAuthIndexes = Effect.fn("readAuthIndexes")(function* (
-  client: PgClient.PgClient,
+  client: AuthMigrationClient,
 ) {
   const result = yield* client.unsafe<SchemaIndex>(
     `
@@ -536,7 +542,7 @@ const readAuthIndexes = Effect.fn("readAuthIndexes")(function* (
 });
 
 const readAuthForeignKeys = Effect.fn("readAuthForeignKeys")(function* (
-  client: PgClient.PgClient,
+  client: AuthMigrationClient,
 ) {
   const result = yield* client.unsafe<SchemaForeignKey>(
     `
@@ -612,7 +618,7 @@ function matchesSchemaVariant(
 }
 
 const readCount = Effect.fn("readCount")(function* (
-  client: PgClient.PgClient,
+  client: AuthMigrationClient,
   sql: string,
 ) {
   const result = yield* client.unsafe<{ count: string }>(sql);
@@ -620,7 +626,7 @@ const readCount = Effect.fn("readCount")(function* (
 });
 
 const readIntegrityViolations = Effect.fn("readIntegrityViolations")(function* (
-  client: PgClient.PgClient,
+  client: AuthMigrationClient,
   hasIssuer: boolean,
 ) {
   const checks: ReadonlyArray<{
@@ -737,7 +743,7 @@ function getPlanStatus(
 }
 
 export const planAuthMigration = Effect.fn("planAuthMigration")(function* (
-  client: PgClient.PgClient,
+  client: AuthMigrationClient,
 ): Effect.fn.Return<AuthMigrationPlan, SqlError> {
   const existingAuthTableCount = yield* getExistingAuthTableCount(client);
   const localMigrations = readLocalMigrations();
@@ -904,7 +910,7 @@ export const planAuthMigration = Effect.fn("planAuthMigration")(function* (
 
 export const assertAuthSchemaFingerprint = Effect.fn(
   "assertAuthSchemaFingerprint",
-)(function* (client: PgClient.PgClient) {
+)(function* (client: AuthMigrationClient) {
   const plan = yield* planAuthMigration(client);
 
   if (plan.status !== "up-to-date" || plan.source !== "better-auth-1.7") {
@@ -917,7 +923,7 @@ export const assertAuthSchemaFingerprint = Effect.fn(
 });
 
 const markMigrationsAsApplied = Effect.fn("markMigrationsAsApplied")(function* (
-  client: PgClient.PgClient,
+  client: AuthMigrationClient,
   localMigrations: ReadonlyArray<LocalMigration>,
 ) {
   yield* Effect.all(
@@ -935,7 +941,7 @@ const markMigrationsAsApplied = Effect.fn("markMigrationsAsApplied")(function* (
 });
 
 export const initializeAuthMigrations = Effect.fn("initializeAuthMigrations")(
-  function* (client: PgClient.PgClient, preflightPlan?: AuthMigrationPlan) {
+  function* (client: AuthMigrationClient, preflightPlan?: AuthMigrationPlan) {
     const plan = preflightPlan ?? (yield* planAuthMigration(client));
 
     if (plan.status === "blocked") {
@@ -980,7 +986,7 @@ export const initializeAuthMigrations = Effect.fn("initializeAuthMigrations")(
 
 export const runAuthMigrations = Effect.fn("runAuthMigrations")(function* (
   database: AuthDatabaseValue,
-  client: PgClient.PgClient,
+  client: AuthMigrationClient,
 ) {
   const preflightPlan = yield* planAuthMigration(client);
   if (preflightPlan.status === "blocked") {

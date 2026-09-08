@@ -174,11 +174,7 @@ export const makePublicGuildStatsCard = (options: {
           Effect.catch((error) =>
             options.cache
               .del(cooldownKey)
-              .pipe(
-                Effect.andThen(
-                  Effect.fail(error as PublicGuildStatsCardFailure),
-                ),
-              ),
+              .pipe(Effect.andThen(Effect.fail(error))),
           ),
         );
         return { nextRefreshAt };

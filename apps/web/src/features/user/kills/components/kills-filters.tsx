@@ -1,3 +1,4 @@
+import { findTrackableNpcType } from "../npc-types";
 import { useTranslation } from "react-i18next";
 import { Globe } from "lucide-react";
 import { Input } from "@lootlog/ui/components/input";
@@ -69,7 +70,9 @@ export const KillsFilters: React.FC<KillsFiltersProps> = ({
 
   const handleNpcTypeChange = (value: string | null) => {
     if (value === null) return;
-    onNpcTypeChange(value === "all" ? undefined : [value as NpcType]);
+    const npcType = findTrackableNpcType(value);
+    if (value !== "all" && !npcType) return;
+    onNpcTypeChange(npcType ? [npcType] : undefined);
   };
 
   const handleMinLvlChange = (e: React.ChangeEvent<HTMLInputElement>) => {

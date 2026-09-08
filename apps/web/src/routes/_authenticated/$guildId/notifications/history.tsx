@@ -1,5 +1,4 @@
-import { getNotificationsGuildControllerGetGuildJobsQueryOptions } from "@lootlog/client/main";
-import { prefetchRouteQuery } from "@/lib/router/route-prefetch";
+import { loadNotificationHistory } from "@/features/guild/notifications/load-notification-history";
 import { createFileRoute } from "@tanstack/react-router";
 import { NotificationsHistoryPage } from "@/features/guild/notifications/notifications-history-page";
 import { NotificationHistorySkeleton } from "@/features/guild/notifications/notification-history-skeleton";
@@ -7,14 +6,7 @@ import { NotificationHistorySkeleton } from "@/features/guild/notifications/noti
 export const Route = createFileRoute(
   "/_authenticated/$guildId/notifications/history",
 )({
-  loader: ({ context, params }) => {
-    void prefetchRouteQuery(
-      context.queryClient,
-      getNotificationsGuildControllerGetGuildJobsQueryOptions({
-        guildId: params.guildId,
-      }),
-    );
-  },
+  loader: loadNotificationHistory,
   component: NotificationsHistoryPage,
   pendingComponent: NotificationHistorySkeleton,
 });

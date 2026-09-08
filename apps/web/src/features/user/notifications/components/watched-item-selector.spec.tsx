@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 
+import { initializeTestTranslations } from "@/lib/testing/i18n";
 import {
   cleanup,
   fireEvent,
@@ -10,9 +11,7 @@ import {
 import { afterEach, expect, it, vi } from "vitest";
 import { WatchedItemSelector } from "./watched-item-selector";
 
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
-}));
+await initializeTestTranslations();
 afterEach(cleanup);
 
 it("distinguishes an item-search outage from a successful empty search and recovers", async () => {

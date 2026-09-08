@@ -1,3 +1,4 @@
+import type { JsonValue } from "#src/database/json";
 // Hand-maintained API database schema. Generate SQL migrations from this source.
 // drizzle/legacy-prisma is immutable adoption evidence, not a schema input.
 import { sql } from "drizzle-orm";
@@ -1194,7 +1195,7 @@ export const notificationTargetTable = pgTable(
     externalId: text("externalId").notNull(),
     displayName: text("displayName"),
     guildName: text("guildName"),
-    metadata: jsonb("metadata"),
+    metadata: jsonb("metadata").$type<JsonValue>(),
     active: boolean("active").default(true).notNull(),
     canSend: boolean("canSend").default(true).notNull(),
     lastSyncedAt: timestamp("lastSyncedAt", { mode: "date", precision: 3 }),
@@ -1233,7 +1234,7 @@ export const notificationRuleTable = pgTable(
     guildId: text("guildId"),
     world: text("world"),
     name: text("name"),
-    filters: jsonb("filters"),
+    filters: jsonb("filters").$type<JsonValue>(),
     contentTemplate: text("contentTemplate"),
     scheduleStrategy: notificationScheduleStrategyEnum("scheduleStrategy"),
     scheduleAnchor: notificationScheduleAnchorEnum("scheduleAnchor"),
@@ -1326,7 +1327,7 @@ export const notificationJobTable = pgTable(
     sourceEntityType: text("sourceEntityType"),
     sourceEntityId: text("sourceEntityId"),
     sourceEventId: text("sourceEventId"),
-    payloadSnapshot: jsonb("payloadSnapshot").notNull(),
+    payloadSnapshot: jsonb("payloadSnapshot").$type<JsonValue>().notNull(),
     attemptCount: integer("attemptCount").default(0).notNull(),
     lastError: text("lastError"),
     blockedReason: text("blockedReason"),
@@ -1660,7 +1661,7 @@ export const eventTable = pgTable(
     scoringMode: eventScoringModeEnum("scoringMode")
       .default("SIMPLE")
       .notNull(),
-    scoringRules: jsonb("scoringRules"),
+    scoringRules: jsonb("scoringRules").$type<JsonValue>(),
     rulebookMarkdown: text("rulebookMarkdown"),
   },
   (table) => [
@@ -2013,7 +2014,7 @@ export const eventKillPointTable = pgTable(
     timeOnMapSeconds: integer("timeOnMapSeconds").notNull(),
     afkPercentage: doublePrecision("afkPercentage").notNull(),
     wasPresent: boolean("wasPresent").notNull(),
-    bonusBreakdown: jsonb("bonusBreakdown"),
+    bonusBreakdown: jsonb("bonusBreakdown").$type<JsonValue>(),
     mapPresenceData: jsonb("mapPresenceData"),
     createdAt: timestamp("createdAt", { mode: "date", precision: 3 })
       .defaultNow()

@@ -14,7 +14,7 @@ import {
   or,
   sql,
 } from "drizzle-orm";
-import { Effect } from "effect";
+import { Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
   eventHeroKillTable,
@@ -33,23 +33,41 @@ import {
 
 type Database = ApiDatabaseValue;
 type KillPointInsert = Omit<typeof eventKillPointTable.$inferInsert, "id">;
-type JsonValue =
-  | string
-  | number
-  | boolean
-  | null
-  | JsonValue[]
-  | { [key: string]: JsonValue };
+const MapPresenceSnapshot = Schema.Array(
+  Schema.Struct({
+    mapId: Schema.String,
+    mapName: Schema.String,
+    presenceTimeSeconds: Schema.Number,
+    afkTimeSeconds: Schema.Number,
+  }),
+);
+const decodeMapPresence = Schema.decodeUnknownSync(
+  Schema.NullOr(MapPresenceSnapshot),
+  { onExcessProperty: "preserve" },
+);
+const GapTimelineSnapshot = Schema.Array(
+  Schema.Struct({
+    mapId: Schema.String,
+    mapName: Schema.String,
+    gapType: Schema.Literals(["UNASSIGNED", "UNCOVERED"]),
+    startedAt: Schema.Union([Schema.String, Schema.Date]),
+    endedAt: Schema.NullOr(Schema.Union([Schema.String, Schema.Date])),
+    durationSeconds: Schema.Number,
+  }),
+);
+const decodeGapTimeline = Schema.decodeUnknownSync(GapTimelineSnapshot, {
+  onExcessProperty: "preserve",
+});
 const normalizePointJson = <T extends typeof eventKillPointTable.$inferSelect>(
   point: T,
 ) => ({
   ...point,
-  bonusBreakdown: point.bonusBreakdown as JsonValue | null,
-  mapPresenceData: point.mapPresenceData as JsonValue | null,
+  bonusBreakdown: point.bonusBreakdown,
+  mapPresenceData: decodeMapPresence(point.mapPresenceData),
 });
 const normalizeEventJson = <T extends typeof eventTable.$inferSelect>(
   event: T,
-) => ({ ...event, scoringRules: event.scoringRules as JsonValue | null });
+) => ({ ...event, scoringRules: event.scoringRules });
 
 export const makeEventKillStore = (database: ApiDatabaseValue) => {
   function run<A>(
@@ -521,7 +539,16 @@ export const makeEventKillStore = (database: ApiDatabaseValue) => {
         .from(eventRespawnWindowSummaryTable)
         .where(eq(eventRespawnWindowSummaryTable.killId, killId))
         .limit(1),
-    ).pipe(Effect.map((rows) => rows[0] ?? null));
+    ).pipe(
+      Effect.map((rows) =>
+        rows[0]
+          ? {
+              ...rows[0],
+              gapsTimeline: decodeGapTimeline(rows[0].gapsTimeline),
+            }
+          : null,
+      ),
+    );
   }
 
   function findTimelineAssignments(params: {

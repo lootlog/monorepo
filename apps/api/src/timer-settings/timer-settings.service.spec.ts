@@ -1,11 +1,11 @@
 import type { SettingsDocumentsResponse } from "#src/settings-documents/settings-documents.service";
 import { describe, expect, it, vi } from "bun:test";
-import { Effect } from "effect";
+import { Effect, Schema } from "effect";
 import { makeTimerSettings } from "./timer-settings.service.js";
 
 const createResponse = (
-  appearance: Record<string, unknown> = {},
-  timers: Record<string, unknown> = {},
+  appearance: Record<string, typeof Schema.Json.Type> = {},
+  timers: Record<string, typeof Schema.Json.Type> = {},
 ): SettingsDocumentsResponse => ({
   domains: {
     appearance: {
@@ -26,27 +26,33 @@ const createResponse = (
 describe("timer settings Effect module", () => {
   it("combines appearance and behavior documents for the legacy response", async () => {
     const settingsDocumentsService = {
-      getPreferences: vi.fn().mockReturnValue(
-        Effect.succeed(
-          createResponse(
-            {
-              timers: {
-                displayConfig: { fontSize: 14 },
-                hiddenDefaultColors: ["legacy"],
+      parseDomains: () => {
+        throw new Error("Unexpected domain parser");
+      },
+      patchPreferences: () => Effect.die("Unexpected preferences patch"),
+      getPreferences: vi
+        .fn<Parameters<typeof makeTimerSettings>[0]["getPreferences"]>()
+        .mockReturnValue(
+          Effect.succeed(
+            createResponse(
+              {
+                timers: {
+                  displayConfig: { fontSize: 14 },
+                  hiddenDefaultColors: ["legacy"],
+                },
               },
-            },
-            {
-              generalConfig: { countdownMode: "min" },
-              timerFiltersEnabled: true,
-              colorFiltersEnabled: false,
-              timersSortOrder: "desc",
-              syncEnabled: true,
-            },
+              {
+                generalConfig: { countdownMode: "min" },
+                timerFiltersEnabled: true,
+                colorFiltersEnabled: false,
+                timersSortOrder: "desc",
+                syncEnabled: true,
+              },
+            ),
           ),
         ),
-      ),
     };
-    const service = makeTimerSettings(settingsDocumentsService as never);
+    const service = makeTimerSettings(settingsDocumentsService);
 
     await expect(
       Effect.runPromise(service.getGlobalSettings("user-1")),
@@ -62,9 +68,13 @@ describe("timer settings Effect module", () => {
   it("patches appearance and behavior atomically", async () => {
     const response = createResponse();
     const settingsDocumentsService = {
+      parseDomains: () => {
+        throw new Error("Unexpected domain parser");
+      },
+      getPreferences: () => Effect.die("Unexpected preferences read"),
       patchPreferences: vi.fn(() => Effect.succeed(response)),
     };
-    const service = makeTimerSettings(settingsDocumentsService as never);
+    const service = makeTimerSettings(settingsDocumentsService);
 
     await Effect.runPromise(
       service.updateGlobalSettings("user-1", {
@@ -96,15 +106,19 @@ describe("timer settings Effect module", () => {
 
   it("uses a private guild layer for hidden and pinned timers", async () => {
     const settingsDocumentsService = {
+      parseDomains: () => {
+        throw new Error("Unexpected domain parser");
+      },
+      getPreferences: () => Effect.die("Unexpected preferences read"),
       patchPreferences: vi
-        .fn()
+        .fn<Parameters<typeof makeTimerSettings>[0]["patchPreferences"]>()
         .mockReturnValue(
           Effect.succeed(
             createResponse({}, { hiddenTimers: ["timer-1"], pinnedTimers: [] }),
           ),
         ),
     };
-    const service = makeTimerSettings(settingsDocumentsService as never);
+    const service = makeTimerSettings(settingsDocumentsService);
 
     await Effect.runPromise(
       service.updateGuildSettings("user-1", "guild-1", {

@@ -1,4 +1,4 @@
-import { Context, Effect, Layer, Redacted } from "effect";
+import { Context, Effect, Layer, Predicate, Redacted } from "effect";
 import { Meilisearch } from "meilisearch";
 import { SearchConfig } from "#src/config/search-config";
 import { makeItemsModule } from "#src/items/items.service";
@@ -123,5 +123,6 @@ export class SearchOperations extends Context.Service<
   ).pipe(Layer.provide(SearchConfig.layer));
 }
 
-const asArray = <A>(value: A | ReadonlyArray<A>): ReadonlyArray<A> =>
-  Array.isArray(value) ? value : [value as A];
+const asArray = (
+  value: string | ReadonlyArray<string>,
+): ReadonlyArray<string> => (Predicate.isString(value) ? [value] : value);

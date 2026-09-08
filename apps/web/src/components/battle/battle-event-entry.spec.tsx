@@ -1,7 +1,8 @@
+// @vitest-environment happy-dom
 import type { RawBattleParsedEvent } from "@/lib/api/battlelog-types";
-import { isValidElement, type ReactElement } from "react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { BattleEventEntry } from "./battle-event-entry";
 
 const createEvent = (): RawBattleParsedEvent => ({
@@ -12,28 +13,7 @@ const createEvent = (): RawBattleParsedEvent => ({
   defenderId: "2",
 });
 
-type BattleEventEntryElementProps = {
-  "data-battle-turn": number;
-  onClick?: () => void;
-};
-
-const renderBattleEventEntry = (onSelect = vi.fn()) =>
-  BattleEventEntry({
-    event: createEvent(),
-    eventIndex: 6,
-    onSelect,
-    turn: 7,
-  });
-
-const getBattleEventEntryElement = (
-  element: ReturnType<typeof renderBattleEventEntry>,
-) => {
-  if (!isValidElement<BattleEventEntryElementProps>(element)) {
-    throw new Error("Expected BattleEventEntry to return a React element");
-  }
-
-  return element as ReactElement<BattleEventEntryElementProps>;
-};
+afterEach(cleanup);
 
 describe("BattleEventEntry", () => {
   it("renders a subtle turn badge and keeps the battle turn data attribute", () => {
@@ -48,12 +28,17 @@ describe("BattleEventEntry", () => {
 
   it("keeps the row selectable", () => {
     const onSelect = vi.fn();
-    const element = getBattleEventEntryElement(
-      renderBattleEventEntry(onSelect),
+    render(
+      <BattleEventEntry
+        event={createEvent()}
+        eventIndex={6}
+        turn={7}
+        onSelect={onSelect}
+      />,
     );
-
-    expect(element.props["data-battle-turn"]).toBe(7);
-    element.props.onClick?.();
+    const element = screen.getByRole("button");
+    expect(element.getAttribute("data-battle-turn")).toBe("7");
+    fireEvent.click(element);
 
     expect(onSelect).toHaveBeenCalledTimes(1);
   });

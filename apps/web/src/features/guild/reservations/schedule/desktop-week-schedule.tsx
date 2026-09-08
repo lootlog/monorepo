@@ -307,7 +307,10 @@ export function DesktopWeekSchedule({
                     ? () => onReservationCancel(segment.reservation.id)
                     : undefined
                 }
-                cancelDisabled={cancellingReservationId != null}
+                cancelDisabled={
+                  cancellingReservationId !== null &&
+                  cancellingReservationId !== undefined
+                }
                 isCancelPending={
                   cancellingReservationId === segment.reservation.id
                 }

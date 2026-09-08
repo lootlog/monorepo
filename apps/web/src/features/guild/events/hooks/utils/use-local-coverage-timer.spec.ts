@@ -46,7 +46,7 @@ describe("useLocalCoverageTimer", () => {
         useLocalCoverageTimer(status, activeGap),
       {
         initialProps: {
-          status: "ASSIGNED_ABSENT" as MapStatus,
+          status: "ASSIGNED_ABSENT",
           activeGap: previousGap,
         },
       },
@@ -111,7 +111,7 @@ describe("useLocalCoverageTimer", () => {
       ({ status }: { status: MapStatus }) =>
         useLocalCoverageTimer(status, staleGap),
       {
-        initialProps: { status: "ASSIGNED_ABSENT" as MapStatus },
+        initialProps: { status: "ASSIGNED_ABSENT" },
       },
     );
 

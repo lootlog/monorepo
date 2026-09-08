@@ -33,16 +33,15 @@ import { cn } from "cn";
 import {
   getKillsControllerGetNpcKillersQueryKey,
   useKillsControllerGetNpcKillers,
+  getMembersControllerGetGuildMemberReferencesQueryKey,
+  useMembersControllerGetGuildMemberReferences,
+  type MemberReferenceResponseDtoOutput as GuildMember,
 } from "@lootlog/client/main";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { NpcKillersFiltersMobile } from "./components/npc-killers-filters-mobile";
 import { buildNpcKillersParams } from "./utils/build-stats-query-params";
-import {
-  getMembersControllerGetGuildMemberReferencesQueryKey,
-  useMembersControllerGetGuildMemberReferences,
-} from "@lootlog/client/main";
-import type { MemberReferenceResponseDtoOutput as GuildMember } from "@lootlog/client/main";
+
 import {
   KillStatsPeriodSelect,
   type KillStatsPeriod,
@@ -386,15 +385,13 @@ export const NpcKillersPage: React.FC = () => {
                             <TableCell>
                               <TextLink
                                 className="flex items-center gap-3 text-sm"
-                                render={
-                                  <Link
-                                    to="/$guildId/stats/members/$memberId"
-                                    params={{
-                                      guildId,
-                                      memberId: killer.memberId.toString(),
-                                    }}
-                                  />
-                                }
+                                render=<Link
+                                  to="/$guildId/stats/members/$memberId"
+                                  params={{
+                                    guildId,
+                                    memberId: killer.memberId.toString(),
+                                  }}
+                                />
                               >
                                 <Avatar className="h-8 w-8">
                                   <AvatarImage

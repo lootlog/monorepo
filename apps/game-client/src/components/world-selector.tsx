@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { Combobox, type ComboboxGroup } from "@/components/ui/combobox";
 import {
   getGuildsControllerGetWorldsByGuildIdQueryKey,
@@ -13,6 +14,9 @@ import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import { useDelayedVisibility } from "@/hooks/ui/use-delayed-visibility";
 import { useVisibleLootlogGuilds } from "@/hooks/use-visible-lootlog-guilds";
+
+const recentWorldsSchema = z.array(z.string());
+const DEFAULT_RECENT_WORLDS: string[] = [];
 
 const recentWorldsKey = (accountId: string, characterId: string) =>
   storageKey(`ll:recent-worlds:${accountId}:${characterId}`);
@@ -65,10 +69,12 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
     },
   );
 
-  const [recentWorlds, setRecentWorlds] = useLocalStorage<string[]>(
-    recentWorldsKey(accountId, characterId),
-    [],
-  );
+  const [recentWorlds = DEFAULT_RECENT_WORLDS, setRecentWorlds] =
+    useLocalStorage<string[]>(
+      recentWorldsKey(accountId, characterId),
+      DEFAULT_RECENT_WORLDS,
+      recentWorldsSchema,
+    );
   const showLoading = useDelayedVisibility(isLoading);
 
   useEffect(() => {

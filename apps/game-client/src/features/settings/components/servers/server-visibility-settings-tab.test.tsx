@@ -1,53 +1,37 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  fireEvent,
+  render as renderUi,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import { beforeEach, describe, expect, it } from "vitest";
 import { ServerVisibilitySettingsTab } from "./server-visibility-settings-tab";
 import { useGameStore } from "@/store/game.store";
 import { useSettingsStore } from "@/store/settings.store";
 
-const mockUpdatePreferences = vi.fn();
-
-vi.mock("@lootlog/client/main", async () => ({
-  ...(await vi.importActual("@lootlog/client/main")),
-  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey: () => [
-    "accessible-guilds",
-  ],
-  useUsersControllerGetCurrentUserAccessibleGuilds: () => ({
-    data: [
-      { id: "guild-1", name: "Alpha", icon: null },
-      {
-        id: "guild-2",
-        name: "Beta",
-        icon: "https://cdn.discordapp.com/icons/guild-2/beta.png",
-      },
-      { id: "guild-3", name: "Gamma", icon: null },
-    ],
-    isLoading: false,
-    isError: false,
-    refetch: vi.fn(),
-  }),
-}));
-
-vi.mock("@/hooks/api/use-user-preferences", () => ({
-  useUserPreferences: () => ({
-    data: {
-      guildsOrder: ["guild-2", "guild-1"],
-      hiddenGuildIds: ["guild-2", "temporarily-unavailable"],
-    },
-    isLoading: false,
-    isError: false,
-    refetch: vi.fn(),
-  }),
-  useUpdateUserPreferences: () => ({
-    mutate: mockUpdatePreferences,
-    isPending: false,
-    isSuccess: false,
-    isError: false,
-  }),
-}));
+import {
+  createGuildPreferencesTest,
+  createTestGuild,
+} from "@/test/guild-preferences-test";
+let harness: ReturnType<typeof createGuildPreferencesTest>;
+const render = () =>
+  renderUi(<ServerVisibilitySettingsTab />, { wrapper: harness.wrapper });
 
 describe("ServerVisibilitySettingsTab", () => {
   beforeEach(() => {
-    mockUpdatePreferences.mockReset();
+    harness = createGuildPreferencesTest();
+    harness.queryClient.setQueryData(harness.guildsKey, [
+      createTestGuild("guild-1", "Alpha"),
+      {
+        ...createTestGuild("guild-2", "Beta"),
+        icon: "https://cdn.discordapp.com/icons/guild-2/beta.png",
+      },
+      createTestGuild("guild-3", "Gamma"),
+    ]);
+    harness.setPreferences({
+      guildsOrder: ["guild-2", "guild-1"],
+      hiddenGuildIds: ["guild-2", "temporarily-unavailable"],
+    });
     useGameStore.getState().clearGame();
     useSettingsStore.setState({
       guildIdByCharId: {},
@@ -56,7 +40,7 @@ describe("ServerVisibilitySettingsTab", () => {
   });
 
   it("shows ordered guilds with avatars and visibility counts", () => {
-    render(<ServerVisibilitySettingsTab />);
+    render();
 
     expect(screen.getByText("2 widoczne")).toBeInTheDocument();
     expect(screen.getByText("1 ukryty")).toBeInTheDocument();
@@ -77,13 +61,13 @@ describe("ServerVisibilitySettingsTab", () => {
   });
 
   it("uses the full section width for search", () => {
-    render(<ServerVisibilitySettingsTab />);
+    render();
 
     expect(screen.getByRole("search")).toHaveClass("ll:w-full");
   });
 
   it("filters hidden guilds and searches by name", () => {
-    render(<ServerVisibilitySettingsTab />);
+    render();
 
     fireEvent.click(screen.getByRole("button", { name: "Ukryte" }));
     expect(screen.getByText("Beta")).toBeInTheDocument();
@@ -97,8 +81,8 @@ describe("ServerVisibilitySettingsTab", () => {
     expect(screen.queryByText("Beta")).not.toBeInTheDocument();
   });
 
-  it("saves the full hidden guild snapshot", () => {
-    render(<ServerVisibilitySettingsTab />);
+  it("saves the full hidden guild snapshot", async () => {
+    render();
 
     fireEvent.click(
       screen.getByRole("switch", {
@@ -106,19 +90,27 @@ describe("ServerVisibilitySettingsTab", () => {
       }),
     );
 
-    expect(mockUpdatePreferences).toHaveBeenCalledWith({
-      hiddenGuildIds: ["guild-2", "temporarily-unavailable", "guild-1"],
-    });
+    await waitFor(() =>
+      expect(harness.request.mock.calls[0]?.[1]?.body).toBe(
+        JSON.stringify({
+          hiddenGuildIds: ["guild-2", "temporarily-unavailable", "guild-1"],
+        }),
+      ),
+    );
   });
 
-  it("shows every guild with one reset action", () => {
-    render(<ServerVisibilitySettingsTab />);
+  it("shows every guild with one reset action", async () => {
+    render();
 
     fireEvent.click(screen.getByRole("button", { name: "Pokaż wszystkie" }));
 
-    expect(mockUpdatePreferences).toHaveBeenCalledWith({
-      hiddenGuildIds: ["temporarily-unavailable"],
-    });
+    await waitFor(() =>
+      expect(harness.request.mock.calls[0]?.[1]?.body).toBe(
+        JSON.stringify({
+          hiddenGuildIds: ["temporarily-unavailable"],
+        }),
+      ),
+    );
   });
 
   it("hides presence publication controls while preserving stored preferences", () => {
@@ -145,7 +137,7 @@ describe("ServerVisibilitySettingsTab", () => {
       presenceOrganizationIdsByCharId: { "10": ["guild-1"] },
     });
 
-    render(<ServerVisibilitySettingsTab />);
+    render();
 
     expect(
       screen.queryByRole("switch", {

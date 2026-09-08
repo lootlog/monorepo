@@ -1,3 +1,4 @@
+import { z } from "zod";
 import type { SearchWarrior } from "@/lib/api/battlelog-types";
 import {
   createLoader,
@@ -22,7 +23,7 @@ export const PERIOD_VALUES = [
   "all",
 ] as const;
 
-const HEAD_TO_HEAD_SORT_BY_VALUES = [
+export const HEAD_TO_HEAD_SORT_BY_VALUES = [
   "wins",
   "losses",
   "totalBattles",
@@ -54,16 +55,6 @@ type BattlePanelBattlesRouteSearch = Partial<{
   minLevel: number;
   maxLevel: number;
 }>;
-type BattlePanelStandardSchemaResult<Output> =
-  | { value: Output; issues?: undefined }
-  | { issues: ReadonlyArray<{ message: string }> };
-type BattlePanelStandardSchema<Output> = {
-  "~standard": {
-    version: 1;
-    vendor: string;
-    validate: (input: unknown) => BattlePanelStandardSchemaResult<Output>;
-  };
-};
 export type HeadToHeadSortBy = (typeof HEAD_TO_HEAD_SORT_BY_VALUES)[number];
 export type Period = (typeof PERIOD_VALUES)[number];
 
@@ -131,153 +122,105 @@ export const battlePanelSingleBattleSearchParsers = {
   turn: parseAsInteger,
 };
 
-const isSearchRecord = (input: unknown): input is Record<string, unknown> =>
-  input !== null && typeof input === "object";
+const routeSearchString = z
+  .union([
+    z.string(),
+    z
+      .array(z.string().optional().catch(undefined))
+      .transform((values) => values.find((value) => value !== undefined)),
+  ])
+  .optional()
+  .catch(undefined);
 
-const getRouteSearchString = (value: unknown): string | undefined => {
-  if (typeof value === "string") {
-    return value;
-  }
-
-  if (!Array.isArray(value)) {
-    return undefined;
-  }
-
-  return value.find((item): item is string => typeof item === "string");
-};
-
-const getRouteSearchStringArray = (value: unknown): string[] | undefined => {
-  const rawValues = Array.isArray(value) ? value : [value];
-  const parsedValues = rawValues.flatMap((item) => {
-    if (typeof item !== "string") {
-      return [];
-    }
-
-    return item
-      .split(",")
-      .map((part) => part.trim())
-      .filter(Boolean);
+const routeSearchStrings = z
+  .union([
+    z.string().transform((value) => [value]),
+    z.array(z.string().optional().catch(undefined)),
+  ])
+  .catch([])
+  .transform((values) => {
+    const parts = values.flatMap(
+      (value) =>
+        value
+          ?.split(",")
+          .map((part) => part.trim())
+          .filter(Boolean) ?? [],
+    );
+    return parts.length ? parts : undefined;
   });
 
-  if (parsedValues.length === 0) {
-    return undefined;
-  }
+const routeSearchLiterals = <Value extends string>(allowed: readonly Value[]) =>
+  routeSearchStrings.transform((values) => {
+    const selected = values?.filter((value): value is Value =>
+      allowed.some((candidate) => candidate === value),
+    );
+    return selected?.length ? selected : undefined;
+  });
 
-  return parsedValues;
-};
+const routeSearchInteger = z
+  .union([
+    z.number(),
+    routeSearchString.transform((value) => {
+      const parsed = value ? Number.parseInt(value, 10) : NaN;
+      return Number.isNaN(parsed) ? undefined : parsed;
+    }),
+  ])
+  .catch(undefined);
 
-const getRouteSearchLiteralArray = <Value extends string>(
-  value: unknown,
-  allowedValues: readonly Value[],
-): Value[] | undefined => {
-  const parsedValues = getRouteSearchStringArray(value);
+const routeSearchBoolean = z
+  .union([
+    z.boolean(),
+    routeSearchString.transform((value) => {
+      if (value === "true") return true;
+      if (value === "false") return false;
+      return undefined;
+    }),
+  ])
+  .catch(undefined);
 
-  if (!parsedValues) {
-    return undefined;
-  }
-
-  const allowedValueSet = new Set<string>(allowedValues);
-  const filteredValues = parsedValues.filter((item): item is Value =>
-    allowedValueSet.has(item),
-  );
-
-  if (filteredValues.length === 0) {
-    return undefined;
-  }
-
-  return filteredValues;
-};
-
-const getRouteSearchInteger = (value: unknown): number | undefined => {
-  if (typeof value === "number") {
-    if (Number.isFinite(value)) {
-      return value;
-    }
-
-    return undefined;
-  }
-
-  const stringValue = getRouteSearchString(value);
-
-  if (!stringValue) {
-    return undefined;
-  }
-
-  const parsedValue = Number.parseInt(stringValue, 10);
-
-  if (Number.isNaN(parsedValue)) {
-    return undefined;
-  }
-
-  return parsedValue;
-};
-
-const getRouteSearchBoolean = (value: unknown): boolean | undefined => {
-  if (typeof value === "boolean") {
-    return value;
-  }
-
-  const stringValue = getRouteSearchString(value);
-
-  if (stringValue === "true") {
-    return true;
-  }
-
-  if (stringValue === "false") {
-    return false;
-  }
-
-  return undefined;
-};
-
-const parseBattlePanelBattlesRouteSearch = (
-  input: unknown,
-): BattlePanelBattlesRouteSearch => {
-  if (!isSearchRecord(input)) {
-    return {};
-  }
-
-  const search: BattlePanelBattlesRouteSearch = {};
-  const cursor = getRouteSearchString(input.cursor);
-  const page = getRouteSearchInteger(input.page);
-  const world = getRouteSearchString(input.world);
-  const type = getRouteSearchLiteralArray(input.type, BATTLE_TYPE_VALUES);
-  const warriorSearch = getRouteSearchString(input.search);
-  const result = getRouteSearchLiteralArray(input.result, BATTLE_RESULT_VALUES);
-  const ph = getRouteSearchBoolean(input.ph);
-  const startDate = getRouteSearchString(input.startDate);
-  const endDate = getRouteSearchString(input.endDate);
-  const characterId = getRouteSearchStringArray(input.characterId);
-  const minLevel = getRouteSearchInteger(input.minLevel);
-  const maxLevel = getRouteSearchInteger(input.maxLevel);
-
-  if (cursor !== undefined) search.cursor = cursor;
-  if (page !== undefined) search.page = page;
-  if (world !== undefined) search.world = world;
-  if (type !== undefined) search.type = type;
-  if (warriorSearch !== undefined) search.search = warriorSearch;
-  if (result !== undefined) search.result = result;
-  if (ph !== undefined) search.ph = ph;
-  if (startDate !== undefined) search.startDate = startDate;
-  if (endDate !== undefined) search.endDate = endDate;
-  if (characterId !== undefined) search.characterId = characterId;
-  if (minLevel !== undefined) search.minLevel = minLevel;
-  if (maxLevel !== undefined) search.maxLevel = maxLevel;
-
-  return search;
-};
+const battlePanelBattlesRouteSearch = z
+  .object({
+    cursor: routeSearchString,
+    page: routeSearchInteger,
+    world: routeSearchString,
+    type: routeSearchLiterals(BATTLE_TYPE_VALUES),
+    search: routeSearchString,
+    result: routeSearchLiterals(BATTLE_RESULT_VALUES),
+    ph: routeSearchBoolean,
+    startDate: routeSearchString,
+    endDate: routeSearchString,
+    characterId: routeSearchStrings,
+    minLevel: routeSearchInteger,
+    maxLevel: routeSearchInteger,
+  })
+  .partial()
+  .catch({})
+  .transform((input): BattlePanelBattlesRouteSearch => {
+    const search: BattlePanelBattlesRouteSearch = {};
+    if (input.cursor !== undefined) search.cursor = input.cursor;
+    if (input.page !== undefined) search.page = input.page;
+    if (input.world !== undefined) search.world = input.world;
+    if (input.type !== undefined) search.type = input.type;
+    if (input.search !== undefined) search.search = input.search;
+    if (input.result !== undefined) search.result = input.result;
+    if (input.ph !== undefined) search.ph = input.ph;
+    if (input.startDate !== undefined) search.startDate = input.startDate;
+    if (input.endDate !== undefined) search.endDate = input.endDate;
+    if (input.characterId !== undefined) search.characterId = input.characterId;
+    if (input.minLevel !== undefined) search.minLevel = input.minLevel;
+    if (input.maxLevel !== undefined) search.maxLevel = input.maxLevel;
+    return search;
+  });
 
 export const battlePanelBattlesSearchSchema = {
   "~standard": {
-    version: 1,
+    version: 1 as const,
     vendor: "lootlog",
-    validate(input) {
-      return {
-        value: parseBattlePanelBattlesRouteSearch(input),
-      };
+    validate(input: Parameters<typeof battlePanelBattlesRouteSearch.parse>[0]) {
+      return { value: battlePanelBattlesRouteSearch.parse(input) };
     },
   },
-} satisfies BattlePanelStandardSchema<BattlePanelBattlesRouteSearch>;
+};
 
 export const battlePanelStatisticsSearchSchema = createStandardSchemaV1(
   battlePanelStatisticsSearchParsers,

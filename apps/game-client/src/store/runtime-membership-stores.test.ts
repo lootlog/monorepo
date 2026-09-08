@@ -23,7 +23,7 @@ describe("runtime membership stores", () => {
     ] as const;
     usePartyStore.getState().replaceParty(members);
     const currentMembers = usePartyStore.getState().members;
-    const subscriber = vi.fn();
+    const subscriber = vi.fn<Parameters<typeof usePartyStore.subscribe>[0]>();
     const unsubscribe = usePartyStore.subscribe(subscriber);
 
     usePartyStore.getState().replaceParty([{ ...members[0] }]);
@@ -47,7 +47,7 @@ describe("runtime membership stores", () => {
     ] as const;
     useFriendsStore.getState().replaceFriends(friends, 25);
     const currentFriends = useFriendsStore.getState().friends;
-    const subscriber = vi.fn();
+    const subscriber = vi.fn<Parameters<typeof useFriendsStore.subscribe>[0]>();
     const unsubscribe = useFriendsStore.subscribe(subscriber);
 
     useFriendsStore.getState().replaceFriends([{ ...friends[0] }], 25);

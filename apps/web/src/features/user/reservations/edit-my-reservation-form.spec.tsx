@@ -1,91 +1,32 @@
+import { createOrganizationTestWrapper } from "@/lib/testing/router";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { configureApiClients } from "@lootlog/client/transport";
+import {
+  waitFor,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
 // @vitest-environment happy-dom
 
-import type { ComponentProps, ReactNode } from "react";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { initializeTestTranslations } from "@/lib/testing/i18n";
+
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { MyReservationsResponseDtoItemsItem } from "@lootlog/client/main";
 import { EditMyReservationForm } from "./edit-my-reservation-form";
 
-const mocks = vi.hoisted(() => ({
-  invalidateQueries: vi.fn<(options: unknown) => Promise<void>>(),
-  mutate: vi.fn<(options: unknown) => void>(),
-}));
-
-vi.mock("@tanstack/react-query", () => ({
-  useQueryClient: () => ({ invalidateQueries: mocks.invalidateQueries }),
-}));
-
-vi.mock("@lootlog/client/main", async () => ({
-  ...(await vi.importActual("@lootlog/client/main")),
-  getListMyReservationsQueryKey: () => ["my-reservations"],
-  useUpdateMyReservation: () => ({
-    isPending: false,
-    mutate: mocks.mutate,
-  }),
-  useNotificationsUserControllerGetUserTargets: () => ({
-    data: [
-      {
-        targetType: "DM",
-        active: true,
-        canSend: true,
-      },
-    ],
-    isSuccess: true,
-  }),
-}));
-
-vi.mock("@lootlog/ui/components/date-time-picker", () => ({
-  DateTimePicker: ({
-    value,
-    placeholder,
-  }: {
-    value?: Date;
-    placeholder: string;
-  }) => (
-    <input
-      aria-label={placeholder}
-      value={value?.toISOString() ?? ""}
-      readOnly
-    />
-  ),
-}));
-
-vi.mock("@lootlog/ui/components/select", () => ({
-  Select: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  SelectTrigger: ({ children }: { children: ReactNode }) => (
-    <div>{children}</div>
-  ),
-  SelectValue: () => null,
-  SelectContent: ({ children }: { children: ReactNode }) => (
-    <div>{children}</div>
-  ),
-  SelectItem: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-}));
-
-vi.mock("@tanstack/react-router", () => ({
-  Link: ({ children, ...props }: ComponentProps<"a">) => (
-    <a {...props}>{children}</a>
-  ),
-}));
-
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string) => {
-      const translations: Record<string, string> = {
-        "reservations.schedule.dialog.startDate": "Data rozpoczęcia",
-        "reservations.schedule.dialog.startDatePlaceholder": "Wybierz początek",
-        "reservations.schedule.dialog.endDate": "Data zakończenia",
-        "reservations.schedule.dialog.endDatePlaceholder": "Wybierz koniec",
-        "reservations.schedule.dialog.comment": "Komentarz",
-        "reservations.schedule.dialog.commentPlaceholder": "Dodaj komentarz",
-        "reservations.schedule.dialog.reminder": "Przypomnienie",
-        "common.cancel": "Anuluj",
-        "common.save": "Zapisz",
-      };
-      return translations[key] ?? key;
-    },
-  }),
-}));
+await initializeTestTranslations({
+  "reservations.schedule.dialog.startDate": "Data rozpoczęcia",
+  "reservations.schedule.dialog.startDatePlaceholder": "Wybierz początek",
+  "reservations.schedule.dialog.endDate": "Data zakończenia",
+  "reservations.schedule.dialog.endDatePlaceholder": "Wybierz koniec",
+  "reservations.schedule.dialog.comment": "Komentarz",
+  "reservations.schedule.dialog.commentPlaceholder": "Dodaj komentarz",
+  "reservations.schedule.dialog.reminder": "Przypomnienie",
+  "common.cancel": "Anuluj",
+  "common.save": "Zapisz",
+});
 
 const reservation: MyReservationsResponseDtoItemsItem = {
   id: 42,
@@ -116,20 +57,46 @@ const reservation: MyReservationsResponseDtoItemsItem = {
 
 afterEach(() => {
   cleanup();
-  vi.clearAllMocks();
+  vi.unstubAllGlobals();
   vi.useRealTimers();
 });
 
 describe("EditMyReservationForm", () => {
-  it("submits the editable reservation fields through the typed update flow", () => {
-    vi.useFakeTimers();
+  it("submits the editable reservation fields through the typed update flow", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-08-26T12:00:00.000Z"));
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false, gcTime: 0 } },
+    });
+    const restore = configureApiClients({
+      main: { baseUrl: "https://api.test" },
+    });
+    const updates: { url: string; body: string | null | undefined }[] = [];
+    vi.stubGlobal(
+      "fetch",
+      async (input: string | URL | Request, init?: RequestInit) => {
+        const request = new Request(input, init);
+        if (request.method === "PATCH") {
+          updates.push({ url: request.url, body: await request.text() });
+          return Response.json(reservation);
+        }
+        return Response.json([
+          { targetType: "DM", active: true, canSend: true },
+        ]);
+      },
+    );
+    const RouterWrapper = await createOrganizationTestWrapper();
+    const onSuccess = vi.fn();
     render(
-      <EditMyReservationForm
-        reservation={reservation}
-        onCancel={vi.fn()}
-        onSuccess={vi.fn()}
-      />,
+      <RouterWrapper>
+        <QueryClientProvider client={client}>
+          <EditMyReservationForm
+            reservation={reservation}
+            onCancel={vi.fn()}
+            onSuccess={onSuccess}
+          />
+        </QueryClientProvider>
+      </RouterWrapper>,
     );
 
     fireEvent.change(screen.getByLabelText("Komentarz"), {
@@ -137,14 +104,18 @@ describe("EditMyReservationForm", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Zapisz" }));
 
-    expect(mocks.mutate).toHaveBeenCalledWith({
-      pathParams: { reservationId: 42 },
-      data: {
-        startsAt: reservation.startsAt,
-        endsAt: reservation.endsAt,
-        comment: "Zmieniony komentarz",
-        reminderMinutesBefore: 15,
+    await waitFor(() => expect(onSuccess).toHaveBeenCalledOnce());
+    expect(updates).toEqual([
+      {
+        url: "https://api.test/users/@me/reservations/42",
+        body: JSON.stringify({
+          startsAt: reservation.startsAt,
+          endsAt: reservation.endsAt,
+          comment: "Zmieniony komentarz",
+          reminderMinutesBefore: 15,
+        }),
       },
-    });
+    ]);
+    restore();
   });
 });

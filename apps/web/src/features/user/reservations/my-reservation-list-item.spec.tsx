@@ -1,69 +1,34 @@
+import type { ReactElement } from "react";
+import { createOrganizationTestWrapper } from "@/lib/testing/router";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  getUsersControllerGetCurrentUserGuildsQueryKey,
+  type MyReservationsResponseDtoItemsItem,
+} from "@lootlog/client/main";
+import { initializeTestTranslations } from "@/lib/testing/i18n";
 // @vitest-environment happy-dom
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import type { ComponentProps, ReactNode } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
-import type { MyReservationsResponseDtoItemsItem } from "@lootlog/client/main";
+import { simulateLoadedImages } from "@/lib/testing/images";
+import {
+  waitFor,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
+import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
+
 import { MyReservationListItem } from "./my-reservation-list-item";
 
 const guildIconUrl =
   "https://cdn.discordapp.com/icons/guild-1/current-guild-icon.webp";
 
-vi.mock("@lootlog/client/main", async () => ({
-  ...(await vi.importActual("@lootlog/client/main")),
-  useUsersControllerGetCurrentUserGuilds: () => ({
-    data: [
-      {
-        id: "guild-1",
-        name: "ZGARBIENI",
-        icon: guildIconUrl,
-        vanityUrl: "zgarbieni",
-        ownerId: "owner-1",
-        publicStatsCardEnabled: true,
-        hasLootlogAccess: true,
-        isAccessDataStale: false,
-      },
-    ],
-  }),
-}));
-
-vi.mock("@lootlog/ui/components/avatar", () => ({
-  Avatar: ({ children }: { children: ReactNode }) => <span>{children}</span>,
-  AvatarImage: ({ src, alt }: { src?: string; alt?: string }) => (
-    <img src={src} alt={alt} />
-  ),
-  AvatarFallback: ({ children }: { children: ReactNode }) => (
-    <span>{children}</span>
-  ),
-}));
-
-vi.mock("@tanstack/react-router", () => ({
-  Link: ({ children, to, ...props }: ComponentProps<"a"> & { to: string }) => (
-    <a {...props} href={to}>
-      {children}
-    </a>
-  ),
-}));
-
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string, values?: { spot?: string }) => {
-      if (key === "reservations.my.open") {
-        return `Otwórz rezerwację na ${values?.spot}`;
-      }
-      if (key === "reservations.my.cancel") {
-        return `Anuluj rezerwację na ${values?.spot}`;
-      }
-      if (key === "reservations.my.edit") {
-        return `Edytuj rezerwację na ${values?.spot}`;
-      }
-      if (key === "reservations.details.cancel") {
-        return "Anuluj rezerwację";
-      }
-      return key;
-    },
-  }),
-}));
+await initializeTestTranslations({
+  "reservations.my.open": "Otwórz rezerwację na {{spot}}",
+  "reservations.my.cancel": "Anuluj rezerwację na {{spot}}",
+  "reservations.my.edit": "Edytuj rezerwację na {{spot}}",
+  "reservations.details.cancel": "Anuluj rezerwację",
+});
 
 const reservation: MyReservationsResponseDtoItemsItem = {
   id: 1,
@@ -92,21 +57,52 @@ const reservation: MyReservationsResponseDtoItemsItem = {
   reminderMinutesBefore: null,
 };
 
+const RouterWrapper = await createOrganizationTestWrapper();
+const client = new QueryClient({
+  defaultOptions: {
+    queries: { staleTime: Infinity, retry: false, gcTime: Infinity },
+  },
+});
+client.setQueryData(getUsersControllerGetCurrentUserGuildsQueryKey(), [
+  {
+    id: "guild-1",
+    name: "ZGARBIENI",
+    icon: guildIconUrl,
+    vanityUrl: "zgarbieni",
+    ownerId: "owner-1",
+    publicStatsCardEnabled: true,
+    hasLootlogAccess: true,
+    isAccessDataStale: false,
+  },
+]);
+const renderItem = (ui: ReactElement) =>
+  render(ui, {
+    wrapper: ({ children }) => (
+      <RouterWrapper>
+        <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      </RouterWrapper>
+    ),
+  });
+beforeEach(simulateLoadedImages);
+afterEach(() => vi.restoreAllMocks());
+
 describe("MyReservationListItem", () => {
   afterEach(cleanup);
 
-  it("uses the current Discord guild avatar when the reservation snapshot has none", () => {
-    const { container } = render(
+  it("uses the current Discord guild avatar when the reservation snapshot has none", async () => {
+    const { container } = renderItem(
       <MyReservationListItem reservation={reservation} />,
     );
 
-    expect(container.querySelector("img")?.getAttribute("src")).toBe(
-      guildIconUrl,
+    await waitFor(() =>
+      expect(container.querySelector("img")?.getAttribute("src")).toBe(
+        guildIconUrl,
+      ),
     );
   });
 
   it("keeps the reservation link as the only navigation focus target", () => {
-    render(<MyReservationListItem reservation={reservation} />);
+    renderItem(<MyReservationListItem reservation={reservation} />);
     const link = screen.getByRole("link");
     expect(link.getAttribute("aria-label")).toContain("ZGARBIENI");
     expect(link.querySelector('[tabindex="0"], a, button')).toBeNull();
@@ -115,7 +111,7 @@ describe("MyReservationListItem", () => {
   });
 
   it("makes the reservation row a link to its calendar", () => {
-    render(<MyReservationListItem reservation={reservation} />);
+    renderItem(<MyReservationListItem reservation={reservation} />);
 
     const link = screen.getByRole("link", {
       name: "Otwórz rezerwację na potepione-zamczysko — ZGARBIENI",
@@ -128,7 +124,7 @@ describe("MyReservationListItem", () => {
 
   it("shows the cancel action for a cancellable upcoming reservation", () => {
     const onCancel = vi.fn();
-    render(
+    renderItem(
       <MyReservationListItem
         reservation={reservation}
         showCancel
@@ -148,7 +144,7 @@ describe("MyReservationListItem", () => {
   it("exposes compact icon actions for editing and cancellation", () => {
     const onEdit = vi.fn();
     const onCancel = vi.fn();
-    render(
+    renderItem(
       <MyReservationListItem
         reservation={reservation}
         showEdit

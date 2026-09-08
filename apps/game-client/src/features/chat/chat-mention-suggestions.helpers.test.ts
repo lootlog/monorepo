@@ -187,7 +187,8 @@ describe("chat mention suggestions helpers", () => {
 
   it("returns an empty member suggestion list for non-array runtime input", () => {
     expect(
-      getChatMentionMemberSuggestions("broken" as unknown as never[]),
+      // @ts-expect-error Intentionally malformed runtime input exercises the non-array fallback.
+      getChatMentionMemberSuggestions("broken"),
     ).toEqual([]);
   });
 

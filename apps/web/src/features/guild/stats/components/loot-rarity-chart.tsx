@@ -109,8 +109,7 @@ export const LootRarityChart: React.FC<LootRarityChartProps> = ({
                           }}
                         />
                         <span className="text-muted-foreground">
-                          {chartConfig[name as "LEGENDARY" | "HEROIC"]?.label ??
-                            String(name)}
+                          {chartConfig[name]?.label ?? String(name)}
                         </span>
                       </div>
                       <span className="font-mono font-medium tabular-nums">

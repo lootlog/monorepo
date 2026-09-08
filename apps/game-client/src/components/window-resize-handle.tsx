@@ -80,11 +80,9 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
     const startX = e.clientX;
     const startY = e.clientY;
     const startWidth =
-      (e.currentTarget.parentElement?.parentElement as HTMLElement)
-        ?.offsetWidth ?? minWidth;
+      e.currentTarget.parentElement?.parentElement?.offsetWidth ?? minWidth;
     const startHeight =
-      (e.currentTarget.parentElement?.parentElement as HTMLElement)
-        ?.offsetHeight ?? minHeight;
+      e.currentTarget.parentElement?.parentElement?.offsetHeight ?? minHeight;
 
     const handleMouseMove = (e: MouseEvent) => {
       if (!isWindowResizeSessionActive(sessionId)) return;
@@ -147,11 +145,9 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
     const startX = touch.pageX - window.scrollX;
     const startY = touch.pageY - window.scrollY;
     const startWidth =
-      (e.currentTarget.parentElement?.parentElement as HTMLElement)
-        ?.offsetWidth ?? minWidth;
+      e.currentTarget.parentElement?.parentElement?.offsetWidth ?? minWidth;
     const startHeight =
-      (e.currentTarget.parentElement?.parentElement as HTMLElement)
-        ?.offsetHeight ?? minHeight;
+      e.currentTarget.parentElement?.parentElement?.offsetHeight ?? minHeight;
 
     const handleTouchMove = (e: TouchEvent) => {
       if (!isWindowResizeSessionActive(sessionId)) return;

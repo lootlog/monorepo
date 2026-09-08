@@ -1,3 +1,4 @@
+import { z } from "zod";
 import {
   patchActiveLootLists,
   LOOTS_QUERY_GC_TIME_MS,
@@ -19,10 +20,11 @@ import {
   getLootsControllerFetchLootByIdQueryKey,
   lootsControllerFetchLootById,
   lootsControllerFetchLootsByGuildId,
+  useUsersControllerGetCurrentUserAccessibleGuilds,
+  type LootShareResponseDto,
+  type LootsControllerFetchLootsByGuildIdParams,
 } from "@lootlog/client/main";
-import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/client/main";
-import type { LootShareResponseDto } from "@lootlog/client/main";
-import type { LootsControllerFetchLootsByGuildIdParams } from "@lootlog/client/main";
+
 import { GatewayEvent } from "@/config/gateway";
 import { useGateway } from "@/hooks/utils/use-gateway";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -237,16 +239,27 @@ const lootMatchesParams = (
   return true;
 };
 
-const lootMatchesQueryKey = (loot: Loot, queryKey: QueryKey): boolean => {
-  const params = queryKey[1];
-  if (!params || typeof params !== "object" || Array.isArray(params)) {
-    return false;
-  }
+const lootListQueryFilters = z.object({
+  world: z.string().optional(),
+  hid: z.string().optional(),
+  search: z.string().optional(),
+  npcs: z.array(z.string()).optional(),
+  npcTypes: z.array(z.string()).optional(),
+  players: z.array(z.string()).optional(),
+  rarities: z.array(z.string()).optional(),
+  professions: z.array(z.string()).optional(),
+  itemNames: z.array(z.string()).optional(),
+  npcLevelMin: z.number().optional(),
+  npcLevelMax: z.number().optional(),
+  itemLevelMin: z.number().optional(),
+  itemLevelMax: z.number().optional(),
+  playerLevelMin: z.number().optional(),
+  playerLevelMax: z.number().optional(),
+});
 
-  return lootMatchesParams(
-    loot,
-    params as LootsControllerFetchLootsByGuildIdParams,
-  );
+const lootMatchesQueryKey = (loot: Loot, queryKey: QueryKey): boolean => {
+  const params = lootListQueryFilters.safeParse(queryKey[1]);
+  return params.success && lootMatchesParams(loot, params.data);
 };
 
 const upsertLootIntoInfiniteData = (
@@ -360,19 +373,16 @@ export const LootsList: FC = () => {
       : ["loots", "missing-guild"],
     queryFn: ({ pageParam }) => {
       if (!guildId) {
-        return Promise.resolve([] as Loot[]);
+        return Promise.resolve(EMPTY_LOOTS);
       }
 
       return lootsControllerFetchLootsByGuildId(
         { guildId },
         {
           ...lootQueryParams,
-          cursor:
-            typeof pageParam === "number" && pageParam > 0
-              ? pageParam
-              : undefined,
+          cursor: pageParam > 0 ? pageParam : undefined,
         },
-      ) as Promise<Loot[]>;
+      );
     },
     getNextPageParam: (lastPage) =>
       lastPage.length === LOOTS_PAGE_LIMIT
@@ -391,10 +401,10 @@ export const LootsList: FC = () => {
 
       let loot: Loot | null = null;
       try {
-        loot = (await lootsControllerFetchLootById({
+        loot = await lootsControllerFetchLootById({
           guildId,
           lootId: payload.lootId,
-        })) as Loot | null;
+        });
       } catch {
         return;
       }
@@ -611,7 +621,7 @@ export const LootsList: FC = () => {
           <div className="mb-4 flex size-14 items-center justify-center rounded-xl border border-border bg-background">
             <ThemeEmptyStateIcon
               className="size-8 text-muted-foreground"
-              fallback={<Globe2 className="size-8 text-primary" />}
+              fallback=<Globe2 className="size-8 text-primary" />
             />
           </div>
           <h2 className="text-base font-semibold text-foreground">
@@ -640,7 +650,7 @@ export const LootsList: FC = () => {
               {hasActiveFilters ? (
                 <SearchX />
               ) : (
-                <ThemeEmptyStateIcon fallback={<PackageOpen />} />
+                <ThemeEmptyStateIcon fallback=<PackageOpen /> />
               )}
             </EmptyMedia>
             <EmptyTitle>

@@ -1,9 +1,9 @@
-import type { GameEvent, OtherEntry } from "@lootlog/margonem/game-events";
+import type { GameEvent } from "@lootlog/margonem/game-events";
 import { appendFileSync, writeFileSync } from "node:fs";
 import { createElement, Profiler, type ProfilerOnRenderCallback } from "react";
 import { flushSync } from "react-dom";
 import { createRoot, type Root } from "react-dom/client";
-import { afterAll, bench, describe } from "vitest";
+import { afterAll, bench, describe, type BenchFunction } from "vitest";
 import { EventDispatcher } from "@/lib/event-dispatcher";
 import { useGameStore } from "@/store/game.store";
 import { useNpcsStore } from "@/store/npcs.store";
@@ -14,7 +14,10 @@ import {
   SiRuntimeAdapter,
   type MargonemRuntimeAdapter,
 } from "./runtime-adapter";
-import { MargonemRuntimeBridge } from "./margonem-runtime-bridge";
+import {
+  MargonemRuntimeBridge,
+  type RuntimeFunction,
+} from "./margonem-runtime-bridge";
 import { RuntimeEventPipeline } from "./runtime-event-pipeline";
 import { RuntimeStateProjection } from "./runtime-state-projection";
 
@@ -57,11 +60,11 @@ const warriors = Object.fromEntries(
 const replayEvent = {
   f: { init: "1", m: ["turn"], w: warriors },
   item: {},
-  loot: { source: "fight" },
+  loot: { source: "fight", states: {} },
   npcs,
   npcs_del: [{ id: 2 }, { id: 70 }, { id: 119 }],
   other,
-} as unknown as GameEvent;
+} satisfies GameEvent;
 const stringReplayEvent = JSON.stringify(replayEvent);
 const npcTemplates = npcs.map((npc) => ({
   id: npc.tpl,
@@ -78,12 +81,12 @@ const npcIcons = npcs.map((npc) => ({
 }));
 const fullReplayEvent = {
   ...replayEvent,
-  chat: { channels: [] },
-} as unknown as GameEvent;
+  chat: { channels: {} },
+} satisfies GameEvent;
 const npcMetadataEvent = {
   icons: npcIcons,
   npc_tpls: npcTemplates,
-} as unknown as GameEvent;
+} satisfies GameEvent;
 
 const game = Object.freeze({
   hero: Object.freeze({
@@ -120,28 +123,43 @@ const runtimeOthers = Object.freeze(
     }),
   ),
 );
-const adapter = {
+const adapter: MargonemRuntimeAdapter = {
+  interface: "si",
+  getAllNpcs: () => [],
+  getAllOtherHandles: () => ({}),
+  getAllOthers: () => runtimeOthers,
+  getOtherHandle: () => undefined,
+  getParty: () => [],
+  isReady: () => true,
+  getStateSnapshot: () => ({
+    game,
+    npcs: [],
+    others: runtimeOthers,
+    party: [],
+    friends: [],
+  }),
   getGameSnapshot: () => game,
   getNpc: () => undefined,
   getOther: (id: string) => runtimeOthers[id],
-} as unknown as MargonemRuntimeAdapter;
+};
 
 describe("runtime bridge mixed replay (50 players, 120 NPCs)", () => {
-  const runtimeWindow = window as Window & {
-    successData?: (payload: GameEvent | string) => unknown;
-  };
+  const runtimeWindow: Window & { successData?: RuntimeFunction } = window;
   const originalSuccessData = runtimeWindow.successData;
   const bridge = new MargonemRuntimeBridge({ adapter, interface: "si" });
-  let dispatchPayload: ((payload: GameEvent | string) => unknown) | null = null;
+  let dispatchPayload: RuntimeFunction | null = null;
   const dispatch = (payload: GameEvent | string) => {
-    if (dispatchPayload) return dispatchPayload(payload);
+    if (dispatchPayload) {
+      dispatchPayload(payload);
+      return;
+    }
     runtimeWindow.successData = () => undefined;
     bridge.install();
     if (!runtimeWindow.successData) {
       throw new Error("Runtime benchmark bridge did not install");
     }
     dispatchPayload = runtimeWindow.successData.bind(runtimeWindow);
-    return dispatchPayload(payload);
+    dispatchPayload(payload);
   };
 
   afterAll(() => {
@@ -166,122 +184,7 @@ describe("runtime bridge mixed replay (50 players, 120 NPCs)", () => {
   );
 });
 
-type ReplayWindow = Window & {
-  Engine?: {
-    communication: { parseJSON: (payload: GameEvent | string) => unknown };
-    hero: { d: Record<string, unknown> };
-    interface: { alreadyInitialised: boolean };
-    map: { d: Record<string, unknown> };
-    npcs: {
-      check: () => Record<string, { d: Record<string, unknown> }>;
-      getById: (id: number) => { d: Record<string, unknown> } | undefined;
-    };
-    others: {
-      check: () => Record<string, { d: Record<string, unknown> }>;
-      getById: (id: number) => { d: Record<string, unknown> } | undefined;
-    };
-    worldConfig: { getWorldName: () => string };
-  };
-  g?: Record<string, unknown>;
-  hero?: Record<string, unknown>;
-  map?: Record<string, unknown>;
-  successData?: (payload: GameEvent | string) => unknown;
-};
-
-type FullReplayHarness = {
-  bridge: MargonemRuntimeBridge;
-  cleanup: () => void;
-  dispatch: (payload: GameEvent | string) => unknown;
-  getMetrics: () => {
-    commits: number;
-    dispatches: number;
-    gameStoreUpdates: number;
-    gameSnapshotReads: number;
-    npcReads: number;
-    npcsStoreUpdates: number;
-    otherReads: number;
-    othersStoreUpdates: number;
-  };
-  resetMetrics: () => void;
-};
-
-type BenchmarkController = {
-  addEventListener: (type: "cycle", listener: (event: Event) => void) => void;
-  removeEventListener: (
-    type: "cycle",
-    listener: (event: Event) => void,
-  ) => void;
-};
-
-type BenchmarkCycleEvent = Event & {
-  task: {
-    name: string;
-    result?: { samples: number[] };
-  };
-};
-
-const heroMovementEvent = {
-  h: { x: 12, y: 8 },
-} as unknown as GameEvent;
-const alternateHeroMovementEvent = {
-  h: { x: 13, y: 8 },
-} as unknown as GameEvent;
-
-function RuntimeReplayProjection() {
-  const heroX = useGameStore((state) => state.game?.hero.x);
-  const visibleOtherCount = useOthersStore(
-    (state) => Object.keys(state.othersById).length,
-  );
-
-  return createElement("output", null, `${heroX}:${visibleOtherCount}`);
-}
-
-function createCountingAdapter(
-  adapter: MargonemRuntimeAdapter,
-  onGameSnapshotRead: () => void,
-  onNpcRead: () => void,
-  onOtherRead: () => void,
-): MargonemRuntimeAdapter {
-  return {
-    interface: adapter.interface,
-    getAllNpcs: () => adapter.getAllNpcs(),
-    getAllOtherHandles: () => adapter.getAllOtherHandles(),
-    getAllOthers: () => adapter.getAllOthers(),
-    getGameSnapshot: () => {
-      onGameSnapshotRead();
-      return adapter.getGameSnapshot();
-    },
-    getNpc: (id) => {
-      onNpcRead();
-      return adapter.getNpc(id);
-    },
-    getOther: (id) => {
-      onOtherRead();
-      return adapter.getOther(id);
-    },
-    getOtherHandle: (id) => adapter.getOtherHandle(id),
-    getParty: () => adapter.getParty(),
-    getStateSnapshot: () => adapter.getStateSnapshot(),
-    isReady: () => adapter.isReady(),
-  };
-}
-
-function createFullReplayHarness(
-  runtimeInterface: RuntimeInterface,
-): FullReplayHarness {
-  const reactEnvironment = globalThis as typeof globalThis & {
-    IS_REACT_ACT_ENVIRONMENT?: boolean;
-  };
-  const previousReactActEnvironment = reactEnvironment.IS_REACT_ACT_ENVIRONMENT;
-  reactEnvironment.IS_REACT_ACT_ENVIRONMENT = false;
-  const replayWindow = window as ReplayWindow;
-  const previousRuntime = {
-    Engine: replayWindow.Engine,
-    g: replayWindow.g,
-    hero: replayWindow.hero,
-    map: replayWindow.map,
-    successData: replayWindow.successData,
-  };
+function createReplayState() {
   const rawHero = {
     account: 1,
     id: 1,
@@ -326,6 +229,126 @@ function createFullReplayHarness(
       },
     ]),
   );
+  return { rawHero, rawMap, rawNpcs, rawOthers };
+}
+type ReplayState = ReturnType<typeof createReplayState>;
+
+type ReplayWindow = Window & {
+  Engine?: {
+    communication: { parseJSON: (payload: GameEvent) => string };
+    hero: { d: ReplayState["rawHero"] };
+    interface: { alreadyInitialised: boolean };
+    map: { d: ReplayState["rawMap"] };
+    npcs: {
+      check: () => Record<string, { d: ReplayState["rawNpcs"][string] }>;
+      getById: (
+        id: number,
+      ) => { d: ReplayState["rawNpcs"][string] } | undefined;
+    };
+    others: {
+      check: () => Record<string, { d: ReplayState["rawOthers"][string] }>;
+      getById: (
+        id: number,
+      ) => { d: ReplayState["rawOthers"][string] } | undefined;
+    };
+    worldConfig: { getWorldName: () => string };
+  };
+  g?: {
+    init: number;
+    npc: ReplayState["rawNpcs"];
+    other: ReplayState["rawOthers"];
+    worldConfig: { getWorldName: () => string };
+  };
+  hero?: ReplayState["rawHero"];
+  map?: ReplayState["rawMap"];
+  successData?: (payload: GameEvent) => string;
+};
+
+type FullReplayHarness = {
+  bridge: MargonemRuntimeBridge;
+  cleanup: () => void;
+  dispatch: (payload: GameEvent) => string;
+  getMetrics: () => {
+    commits: number;
+    dispatches: number;
+    gameStoreUpdates: number;
+    gameSnapshotReads: number;
+    npcReads: number;
+    npcsStoreUpdates: number;
+    otherReads: number;
+    othersStoreUpdates: number;
+  };
+  resetMetrics: () => void;
+};
+
+type BenchmarkController = ThisParameterType<BenchFunction>;
+type BenchmarkCycleEvent = Event & {
+  task: BenchmarkController["tasks"][number];
+};
+
+const heroMovementEvent = {
+  h: { x: 12, y: 8 },
+} satisfies GameEvent;
+const alternateHeroMovementEvent = {
+  h: { x: 13, y: 8 },
+} satisfies GameEvent;
+
+function RuntimeReplayProjection() {
+  const heroX = useGameStore((state) => state.game?.hero.x);
+  const visibleOtherCount = useOthersStore(
+    (state) => Object.keys(state.othersById).length,
+  );
+
+  return createElement("output", null, `${heroX}:${visibleOtherCount}`);
+}
+
+function createCountingAdapter(
+  adapter: MargonemRuntimeAdapter,
+  onGameSnapshotRead: () => void,
+  onNpcRead: () => void,
+  onOtherRead: () => void,
+): MargonemRuntimeAdapter {
+  return {
+    interface: adapter.interface,
+    getAllNpcs: () => adapter.getAllNpcs(),
+    getAllOtherHandles: () => adapter.getAllOtherHandles(),
+    getAllOthers: () => adapter.getAllOthers(),
+    getGameSnapshot: () => {
+      onGameSnapshotRead();
+      return adapter.getGameSnapshot();
+    },
+    getNpc: (id) => {
+      onNpcRead();
+      return adapter.getNpc(id);
+    },
+    getOther: (id) => {
+      onOtherRead();
+      return adapter.getOther(id);
+    },
+    getOtherHandle: (id) => adapter.getOtherHandle(id),
+    getParty: () => adapter.getParty(),
+    getStateSnapshot: () => adapter.getStateSnapshot(),
+    isReady: () => adapter.isReady(),
+  };
+}
+
+function createFullReplayHarness(
+  runtimeInterface: RuntimeInterface,
+): FullReplayHarness {
+  const reactEnvironment: typeof globalThis & {
+    IS_REACT_ACT_ENVIRONMENT?: boolean;
+  } = globalThis;
+  const previousReactActEnvironment = reactEnvironment.IS_REACT_ACT_ENVIRONMENT;
+  reactEnvironment.IS_REACT_ACT_ENVIRONMENT = false;
+  const replayWindow: ReplayWindow = window;
+  const previousRuntime = {
+    Engine: replayWindow.Engine,
+    g: replayWindow.g,
+    hero: replayWindow.hero,
+    map: replayWindow.map,
+    successData: replayWindow.successData,
+  };
+  const { rawHero, rawMap, rawNpcs, rawOthers } = createReplayState();
   let gameSnapshotReads = 0;
   let dispatches = 0;
   let npcReads = 0;
@@ -335,15 +358,11 @@ function createFullReplayHarness(
   let othersStoreUpdates = 0;
   let commits = 0;
 
-  const originalHandler = (payload: GameEvent | string): string => {
-    const event = typeof payload === "string" ? JSON.parse(payload) : payload;
+  const originalHandler = (event: GameEvent): string => {
     if (event.h) {
       rawHero.x = rawHero.x === 12 ? 13 : 12;
     }
-    for (const [id, entry] of Object.entries(event.other ?? {}) as [
-      string,
-      OtherEntry,
-    ][]) {
+    for (const [id, entry] of Object.entries(event.other ?? {})) {
       if ("del" in entry) {
         delete rawOthers[id];
         continue;
@@ -514,10 +533,7 @@ function createFullReplayHarness(
   };
 }
 
-function getLatencyPercentiles(samples: readonly number[]): {
-  p50: number;
-  p95: number;
-} {
+function getLatencyPercentiles(samples: readonly number[]) {
   const durations = [...samples].sort((left, right) => left - right);
   return {
     p50: durations[Math.floor(durations.length * 0.5)] ?? 0,
@@ -532,9 +548,9 @@ for (const runtimeInterface of ["ni", "si"] as const) {
       if (harness) return harness;
 
       harness = createFullReplayHarness(runtimeInterface);
-      const handleCycle = (event: Event) => {
+      const handleCycle = (event: BenchmarkCycleEvent) => {
         if (!harness) return;
-        const task = (event as BenchmarkCycleEvent).task;
+        const task = event.task;
         const metrics = harness.getMetrics();
         if (task.result) {
           const latency = getLatencyPercentiles(task.result.samples);
@@ -603,9 +619,7 @@ for (const runtimeInterface of ["ni", "si"] as const) {
     bench(
       "hero movement through adapters, processors, Zustand and React",
       function () {
-        const activeHarness = getHarness(
-          this as unknown as BenchmarkController,
-        );
+        const activeHarness = getHarness(this);
         flushSync(() => activeHarness.dispatch(heroMovementEvent));
       },
       { iterations: 1_000, warmupIterations: 100 },
@@ -614,12 +628,8 @@ for (const runtimeInterface of ["ni", "si"] as const) {
     bench(
       "50-player movement through adapters, processors, Zustand and React",
       function () {
-        const activeHarness = getHarness(
-          this as unknown as BenchmarkController,
-        );
-        flushSync(() =>
-          activeHarness.dispatch({ other } as unknown as GameEvent),
-        );
+        const activeHarness = getHarness(this);
+        flushSync(() => activeHarness.dispatch({ other } satisfies GameEvent));
       },
       { iterations: 1_000, warmupIterations: 100 },
     );
@@ -627,9 +637,7 @@ for (const runtimeInterface of ["ni", "si"] as const) {
     bench(
       "crowded battle, NPC, loot and movement replay",
       function () {
-        const activeHarness = getHarness(
-          this as unknown as BenchmarkController,
-        );
+        const activeHarness = getHarness(this);
         flushSync(() => activeHarness.dispatch(fullReplayEvent));
       },
       { iterations: 500, warmupIterations: 50 },

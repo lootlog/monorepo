@@ -1,6 +1,9 @@
 import { useEffect } from "react";
 import { useSoundSettings } from "@/hooks/api/use-sound-settings";
-import { DEFAULT_SOUND_URLS } from "@/features/settings/config/default-sounds";
+import {
+  DEFAULT_SOUND_URLS,
+  getDefaultSoundUrl,
+} from "@/features/settings/config/default-sounds";
 import { useQueryClient } from "@tanstack/react-query";
 import type { UserSoundSettings } from "@lootlog/schema/sound-settings";
 import { normalizeSoundSettings } from "@/lib/api/generated-helpers";
@@ -29,15 +32,13 @@ const getSoundUrl = (
   key: string,
 ) => {
   const soundConfig =
-    category === "pings"
-      ? undefined
-      : settings[`${category as ConfigurableSoundCategory}Config`]?.[key];
+    category === "pings" ? undefined : settings[`${category}Config`]?.[key];
 
   if (soundConfig?.soundUrl) {
     return soundConfig.soundUrl;
   }
 
-  return DEFAULT_SOUND_URLS[key];
+  return getDefaultSoundUrl(key);
 };
 
 export const useSoundPlayback = () => {

@@ -6,12 +6,12 @@ import { useTranslation } from "react-i18next";
 import { Package } from "lucide-react";
 
 import { Skeleton } from "@lootlog/ui/components/skeleton";
-import type { LootStatsResponseDtoOutputTopContributorsItem } from "@lootlog/client/main";
-import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
+  type LootStatsResponseDtoOutputTopContributorsItem,
   getMembersControllerGetGuildMemberReferencesQueryKey,
   useMembersControllerGetGuildMemberReferences,
 } from "@lootlog/client/main";
+import { useGuildId } from "@/hooks/context/use-guild-id";
 
 type LootTopContributorsProps = {
   data?: LootStatsResponseDtoOutputTopContributorsItem[];
@@ -46,7 +46,7 @@ export const LootTopContributors: React.FC<LootTopContributorsProps> = ({
     return (
       <SectionCard className="flex flex-col">
         <SectionCardHeader
-          title={<Skeleton className="h-5 w-40" />}
+          title=<Skeleton className="h-5 w-40" />
           icon={Package}
         />
         <SectionCardContent className="flex flex-col gap-3">

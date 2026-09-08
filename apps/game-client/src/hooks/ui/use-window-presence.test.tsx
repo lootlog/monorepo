@@ -124,7 +124,7 @@ describe("useWindowPresence", () => {
   });
 
   it("cancels a prepared entry when the window closes before the next frame", () => {
-    const cancelAnimationFrame = vi.fn();
+    const cancelAnimationFrame = vi.fn<typeof window.cancelAnimationFrame>();
     vi.stubGlobal(
       "requestAnimationFrame",
       vi.fn((_callback: FrameRequestCallback) => 7),

@@ -1,3 +1,4 @@
+import { normalizeTimerResponse, type Timer } from "@/api/timers.api";
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { NpcType } from "@/api/npcs.api";
@@ -6,7 +7,6 @@ import {
   nestedFixtureValue,
   optionalFixtureValue,
 } from "@/test-utils/fixture-value";
-import type { Timer } from "@/api/timers.api";
 import { useTimersStore } from "@/store/timers.store";
 import { useTimerDisplay } from "./use-timer-display";
 
@@ -116,11 +116,15 @@ describe("useTimerDisplay", () => {
   it("shows only the manual indicator for manual timers without a known NPC type", () => {
     const { result } = renderHook(() =>
       useTimerDisplay(
-        createTimer({
+        normalizeTimerResponse({
+          ...createTimer(),
+          member: undefined,
           npc: {
             ...createTimer().npc,
             type: NpcType.NPC,
-            margonemType: "999" as never,
+            margonemType: "999",
+            wt: "10",
+            location: "Ruins",
           },
         }),
       ),

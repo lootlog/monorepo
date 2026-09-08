@@ -5,9 +5,7 @@ import {
   getApiErrorStatus,
 } from "@lootlog/client/transport";
 
-export const getRouteErrorStatus = (error: unknown) => {
-  return getApiErrorStatus(error);
-};
+export const getRouteErrorStatus = getApiErrorStatus;
 
 export const getRouteErrorMessage = getApiErrorMessage;
 
@@ -19,10 +17,6 @@ export const normalizeRouteErrorStatus = (
   }
 
   return 500;
-};
-
-const isRouteLoaderCancelledError = (error: unknown) => {
-  return isCancelledError(error);
 };
 
 const createRouteLoaderAbortError = () => {
@@ -38,7 +32,7 @@ export const withRouteLoaderCancellation = async <T>(
   try {
     return await loader();
   } catch (error) {
-    if (isRouteLoaderCancelledError(error)) {
+    if (isCancelledError(error)) {
       if (abortController.signal.aborted) {
         throw createRouteLoaderAbortError();
       }
@@ -51,18 +45,15 @@ export const withRouteLoaderCancellation = async <T>(
 };
 
 export const throwForbiddenRouteError = (message = ""): never => {
-  const forbiddenError = new Error(message) as Error & {
-    status: number;
-  };
-  forbiddenError.status = 403;
+  const forbiddenError = Object.assign(new Error(message), { status: 403 });
 
   throw forbiddenError;
 };
 
-export const rethrowNotFoundOrError = (error: unknown): never => {
-  if (getRouteErrorStatus(error) === 404) {
+export const rethrowNotFoundOrError = (cause: unknown): never => {
+  if (getRouteErrorStatus(cause) === 404) {
     throw notFound({ throw: true });
   }
 
-  throw error;
+  throw cause;
 };

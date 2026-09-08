@@ -1,20 +1,18 @@
 import { parseFiniteNumber as normalizeNpcWeight } from "@lootlog/schema/numbers";
-import { NpcTypeEnum } from "@lootlog/schema/npc-type";
+import { Schema } from "effect";
+import { NpcTypeEnum, NpcTypeSchema } from "@lootlog/schema/npc-type";
 import type {
   NpcRoutingData,
   NpcRoutingTier,
 } from "@lootlog/schema/npc-routing";
 import { getNpcTypeByWt } from "./npc-type.js";
 
-const NPC_TYPE_VALUES = new Set<NpcTypeEnum>(Object.values(NpcTypeEnum));
+const isNpcTypeEnum = Schema.is(NpcTypeSchema);
+const isNumericNpcType = Schema.is(Schema.Number);
 const HERO_ROUTING_NPC_TYPES = new Set<NpcTypeEnum>([
   NpcTypeEnum.HERO,
   NpcTypeEnum.EVENT_HERO,
 ]);
-
-function isNpcTypeEnum(value: string): value is NpcTypeEnum {
-  return NPC_TYPE_VALUES.has(value as NpcTypeEnum);
-}
 
 export function resolveNpcType(
   npc?: NpcRoutingData | null,
@@ -23,7 +21,7 @@ export function resolveNpcType(
     return null;
   }
 
-  if (typeof npc.type === "string" && isNpcTypeEnum(npc.type)) {
+  if (isNpcTypeEnum(npc.type)) {
     return npc.type;
   }
 
@@ -37,7 +35,7 @@ export function resolveNpcType(
     NpcTypeEnum,
     weight,
     npc.prof ?? undefined,
-    typeof npc.type === "number" ? npc.type : undefined,
+    isNumericNpcType(npc.type) ? npc.type : undefined,
   );
 }
 

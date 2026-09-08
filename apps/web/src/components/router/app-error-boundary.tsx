@@ -21,7 +21,7 @@ export class AppErrorBoundary extends Component<
     return { hasError: true };
   }
 
-  public componentDidCatch(error: unknown, errorInfo: ErrorInfo) {
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught application error", error, errorInfo);
   }
 

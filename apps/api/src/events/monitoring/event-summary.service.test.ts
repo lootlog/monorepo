@@ -1,18 +1,20 @@
+import { EffectDrizzleQueryError } from "drizzle-orm/effect-core/errors";
 import { Effect } from "effect";
 import { describe, expect, it, mock } from "bun:test";
 import { makeEventSummary } from "#src/events/monitoring/event-summary.service";
 import type { EventSummaryStore } from "#src/events/monitoring/event-summary.repository";
 
-const makeStore = (overrides: Record<string, unknown> = {}) =>
-  ({
-    findMaps: () => Effect.succeed([]),
-    findPresenceLogs: () => Effect.succeed([]),
-    findGaps: () => Effect.succeed([]),
-    saveSummary: () => Effect.succeed({ deletedLogs: 0, deletedGaps: 0 }),
-    heroExists: () => Effect.succeed(true),
-    findSummaries: () => Effect.succeed([]),
-    ...overrides,
-  }) as unknown as EventSummaryStore;
+const makeStore = (
+  overrides: Partial<EventSummaryStore> = {},
+): EventSummaryStore => ({
+  findMaps: () => Effect.succeed([]),
+  findPresenceLogs: () => Effect.succeed([]),
+  findGaps: () => Effect.succeed([]),
+  saveSummary: () => Effect.succeed({ deletedLogs: 0, deletedGaps: 0 }),
+  heroExists: () => Effect.succeed(true),
+  findSummaries: () => Effect.succeed([]),
+  ...overrides,
+});
 
 describe("EventSummary", () => {
   it("does not persist an empty hero window", async () => {
@@ -54,7 +56,11 @@ describe("EventSummary", () => {
   });
 
   it("propagates a typed store failure without persisting partial state", async () => {
-    const failure = new Error("database unavailable");
+    const failure = new EffectDrizzleQueryError({
+      query: "SELECT",
+      params: [],
+      cause: new Error("database unavailable"),
+    });
     const summary = makeEventSummary(
       makeStore({ findMaps: () => Effect.fail(failure) }),
     );
@@ -71,6 +77,6 @@ describe("EventSummary", () => {
           false,
         ),
       ),
-    ).rejects.toThrow("database unavailable");
+    ).rejects.toBe(failure);
   });
 });

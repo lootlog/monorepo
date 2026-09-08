@@ -1,3 +1,4 @@
+import { decodeOpenApiDocument, isJsonObject } from "./openapi-document.js";
 import { expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { parse } from "yaml";
@@ -94,38 +95,29 @@ test.each([
 ] as const)(
   "%s exceptions enforce the complete generated error schema",
   (service, key, path, method, status, schemaName) => {
-    const document = parse(
-      readFileSync(
-        new URL(`../../../apps/${service}/openapi.yaml`, import.meta.url),
-        "utf8",
+    const document = decodeOpenApiDocument(
+      parse(
+        readFileSync(
+          new URL(`../../../apps/${service}/openapi.yaml`, import.meta.url),
+          "utf8",
+        ),
       ),
-    ) as {
-      paths: Record<
-        string,
-        Record<
-          string,
-          {
-            responses: Record<
-              string,
-              Parameters<typeof normalizeAllowedChanges>[2]
-            >;
-          }
-        >
-      >;
-    };
-    const operation = document.paths[path]?.[method];
+    );
+    const operation = document.paths?.[path]?.[method];
     expect(operation).toBeDefined();
-    if (!operation) throw new Error("Missing test operation");
+    if (!isJsonObject(operation) || !isJsonObject(operation.responses))
+      throw new Error("Missing test operation responses");
+    const operationResponses = operation.responses;
     expect(normalizeAllowedChanges(service, key, operation)).not.toHaveProperty(
       `responses.${status}`,
     );
     expect(() =>
       normalizeAllowedChanges(service, key, {
         ...operation,
-        responses: { ...operation.responses, [status]: {} },
+        responses: { ...operationResponses, [status]: {} },
       }),
     ).toThrow(`must declare a ${status} ${schemaName}`);
-    const responses = { ...operation.responses };
+    const responses = { ...operationResponses };
     delete responses[status];
     expect(() =>
       normalizeAllowedChanges(service, key, { ...operation, responses }),

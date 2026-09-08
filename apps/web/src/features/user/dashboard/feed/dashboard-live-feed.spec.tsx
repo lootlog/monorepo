@@ -1,3 +1,5 @@
+import { createTestGateway } from "@/lib/testing/gateway";
+import { configureApiClients } from "@lootlog/client/transport";
 // @vitest-environment happy-dom
 import {
   act,
@@ -14,46 +16,70 @@ import {
 } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Storage as MemoryStorage } from "happy-dom";
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, onTestFinished, vi } from "vitest";
 import "@/i18n/config";
 import { DashboardLiveFeed } from "./dashboard-live-feed";
-import { feedResponse } from "./live-feed-test-data";
+import { feedResponse, feedKill } from "./live-feed-test-data";
 import { GatewayEvent } from "@/config/gateway";
-const mocks = vi.hoisted(() => {
-  const handlers = new Map<string, Set<(payload?: unknown) => void>>();
-  return {
-    request: vi.fn(),
-    handlers,
-    socket: {
-      on: (name: string, handler: (payload?: unknown) => void) => {
-        const listeners = handlers.get(name) ?? new Set();
-        listeners.add(handler);
-        handlers.set(name, listeners);
+const mocks = {
+  request: vi.fn<() => Promise<ReturnType<typeof feedResponse>>>(),
+};
+let gateway: ReturnType<typeof createTestGateway>;
+function deliverLifecycleEvent(
+  event: GatewayEvent,
+  organizationIds = [feedKill.guild.id],
+) {
+  if (event === GatewayEvent.CONNECT) {
+    gateway.setConnectionState("ready");
+    return;
+  }
+  if (event === GatewayEvent.DISCONNECT) {
+    gateway.setConnectionState("disconnected");
+    return;
+  }
+  if (event === GatewayEvent.JOIN) {
+    gateway.deliver({
+      v: 1,
+      type: "session.joined",
+      data: {
+        connectionId: "connection-1",
+        organizationIds,
+        subscriptionScopes: [],
       },
-      off: (name: string, handler: (payload?: unknown) => void) => {
-        handlers.get(name)?.delete(handler);
+    });
+    return;
+  }
+  if (event === GatewayEvent.PERMISSIONS_UPDATED) {
+    gateway.deliver({
+      v: 1,
+      type: "permissions.updated",
+      data: { organizationIds, subscriptionScopes: [] },
+    });
+    return;
+  }
+  throw new Error("Unexpected gateway lifecycle event");
+}
+beforeEach(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2026-09-06T12:01:00Z"));
+  gateway = createTestGateway();
+  gateway.request.mockResolvedValue(undefined);
+  onTestFinished(
+    configureApiClients({
+      main: {
+        baseUrl: "https://api.test",
+        fetch: async () => Response.json(await mocks.request()),
       },
-      emit: (name: string, payload?: unknown) =>
-        handlers.get(name)?.forEach((handler) => handler(payload)),
-    },
-  };
+    }),
+  );
+  mocks.request.mockReset();
+  vi.stubGlobal("localStorage", new MemoryStorage());
 });
-vi.mock("@/hooks/utils/use-gateway", () => ({
-  useGateway: () => ({ socket: mocks.socket, connected: false }),
-}));
-vi.mock("@lootlog/client/main", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@lootlog/client/main")>()),
-  getUsersControllerGetUserFeedQueryKey: () => ["user-feed"],
-  getUsersControllerGetUserFeedQueryOptions: () => ({
-    queryKey: ["user-feed"],
-    queryFn: mocks.request,
-  }),
-}));
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
   vi.useRealTimers();
-  mocks.handlers.clear();
+  vi.restoreAllMocks();
 });
 it("keeps focused visible rows and scroll position until the reader applies a grouped update", async () => {
   vi.stubGlobal("localStorage", new MemoryStorage());
@@ -67,10 +93,15 @@ it("keeps focused visible rows and scroll position until the reader applies a gr
     routeTree: root,
     history: createMemoryHistory({ initialEntries: ["/"] }),
   });
+  const queryClient = new QueryClient();
+  onTestFinished(() => queryClient.clear());
+  const GatewayWrapper = gateway.wrapper;
   render(
-    <QueryClientProvider client={new QueryClient()}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>,
+    <GatewayWrapper>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
+    </GatewayWrapper>,
   );
   await act(() => vi.advanceTimersByTimeAsync(0));
   const link = screen.getByRole("link", { name: "Bicie: Heros" });
@@ -82,7 +113,11 @@ it("keeps focused visible rows and scroll position until the reader applies a gr
   scroller.scrollTop = 120;
   fireEvent.scroll(scroller);
   act(() =>
-    mocks.socket.emit(GatewayEvent.FEED_ENTRY, feedResponse(4).items[0]),
+    gateway.deliver({
+      v: 1,
+      type: "feed.entry",
+      data: { ...feedKill, count: 4, version: 4 },
+    }),
   );
   await act(() => vi.advanceTimersByTimeAsync(1000));
   expect(screen.queryByText("×4")).toBeNull();
@@ -123,10 +158,15 @@ it("adds organization copies to one row and preserves that row during an HTTP re
     routeTree: root,
     history: createMemoryHistory({ initialEntries: ["/"] }),
   });
+  const queryClient = new QueryClient();
+  onTestFinished(() => queryClient.clear());
+  const GatewayWrapper = gateway.wrapper;
   render(
-    <QueryClientProvider client={new QueryClient()}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>,
+    <GatewayWrapper>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
+    </GatewayWrapper>,
   );
   await act(() => vi.advanceTimersByTimeAsync(0));
   const link = screen.getByRole("link", { name: "Bicie: Heros" });
@@ -134,10 +174,14 @@ it("adds organization copies to one row and preserves that row during an HTTP re
   const item = response.items[0];
   if (!item) throw new Error("Missing fixture");
   act(() =>
-    mocks.socket.emit(GatewayEvent.FEED_ENTRY, {
-      ...item,
-      id: "copy",
-      guild: { id: "second", name: "Druga organizacja", vanityUrl: null },
+    gateway.deliver({
+      v: 1,
+      type: "feed.entry",
+      data: {
+        ...item,
+        id: "copy",
+        guild: { id: "second", name: "Druga organizacja", vanityUrl: null },
+      },
     }),
   );
   expect(screen.getAllByRole("link", { name: "Bicie: Heros" })).toHaveLength(1);
@@ -152,7 +196,7 @@ it("adds organization copies to one row and preserves that row during an HTTP re
     GatewayEvent.CONNECT,
     GatewayEvent.JOIN,
   ]) {
-    act(() => mocks.socket.emit(event, { status: "success" }));
+    act(() => deliverLifecycleEvent(event));
     expect(
       screen.getByRole("link", { name: "Bicie: Heros" }).closest("li"),
     ).toBe(row);
@@ -164,6 +208,7 @@ it("adds organization copies to one row and preserves that row during an HTTP re
   );
   expect(screen.queryByRole("status", { name: "Ładowanie..." })).toBeNull();
   await act(async () => {
+    await vi.advanceTimersByTimeAsync(0);
     finish(response);
     await vi.advanceTimersByTimeAsync(0);
   });
@@ -192,10 +237,15 @@ it("keeps the same focused row throughout debounced permission revalidation", as
     routeTree: root,
     history: createMemoryHistory({ initialEntries: ["/"] }),
   });
+  const queryClient = new QueryClient();
+  onTestFinished(() => queryClient.clear());
+  const GatewayWrapper = gateway.wrapper;
   render(
-    <QueryClientProvider client={new QueryClient()}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>,
+    <GatewayWrapper>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
+    </GatewayWrapper>,
   );
   await act(() => vi.advanceTimersByTimeAsync(0));
   const link = screen.getByRole("link", { name: "Bicie: Heros" });
@@ -204,22 +254,22 @@ it("keeps the same focused row throughout debounced permission revalidation", as
   const source = feedResponse().items[0];
   if (!source) throw new Error("Missing fixture");
   act(() =>
-    mocks.socket.emit(GatewayEvent.FEED_ENTRY, {
-      ...source,
-      id: "revoked-copy",
-      groupKey: source.id,
-      guild: { id: "revoked", name: "Odebrana organizacja", vanityUrl: null },
+    gateway.deliver({
+      v: 1,
+      type: "feed.entry",
+      data: {
+        ...source,
+        id: "revoked-copy",
+        groupKey: source.id,
+        guild: { id: "revoked", name: "Odebrana organizacja", vanityUrl: null },
+      },
     }),
   );
   expect(
     screen.getByRole("link", { name: "Odebrana organizacja" }),
   ).toBeTruthy();
   for (let index = 0; index < 3; index += 1) {
-    act(() =>
-      mocks.socket.emit(GatewayEvent.PERMISSIONS_UPDATED, {
-        guilds: [{ guild: { id: "organization" } }],
-      }),
-    );
+    act(() => deliverLifecycleEvent(GatewayEvent.PERMISSIONS_UPDATED));
     expect(
       screen.queryByRole("link", { name: "Odebrana organizacja" }),
     ).toBeNull();

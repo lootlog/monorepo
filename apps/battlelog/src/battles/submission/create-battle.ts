@@ -21,28 +21,16 @@ const CreateBattleFightEventWarriorSchema = Schema.Struct({
   team: Schema.Number,
 });
 
-const requiredWarriorSnapshotFields = [
-  "originalId",
-  "name",
-  "lvl",
-  "prof",
-  "icon",
-  "team",
-] as const;
-
-const hasCompleteWarriorSnapshotShape = (value: unknown): boolean =>
-  Predicate.isObject(value) &&
-  requiredWarriorSnapshotFields.every((field) => field in value);
-
-const removeIncompleteWarriorSnapshots = (value: unknown): unknown => {
-  if (!Predicate.isObject(value)) return value;
-
-  return Object.fromEntries(
-    Object.entries(value).filter(([, warrior]) =>
-      hasCompleteWarriorSnapshotShape(warrior),
+const hasCompleteWarriorSnapshot = Schema.is(
+  Schema.Struct(
+    Object.fromEntries(
+      Object.keys(CreateBattleFightEventWarriorSchema.fields).map((key) => [
+        key,
+        Schema.Unknown,
+      ]),
     ),
-  );
-};
+  ),
+);
 
 export const WarriorsRecordSchema = Schema.Record(
   Schema.String,
@@ -68,7 +56,13 @@ const decodeOptionalWarriorsRecord = Schema.decodeUnknownEffect(
 const OptionalWarriorsRecordSchema = Schema.Unknown.pipe(
   Schema.decodeTo(optionalWarriorsRecord, {
     decode: SchemaGetter.transformOrFail((value) => {
-      const warriors = removeIncompleteWarriorSnapshots(value);
+      const warriors = Predicate.isObject(value)
+        ? Object.fromEntries(
+            Object.entries(value).filter(([, warrior]) =>
+              hasCompleteWarriorSnapshot(warrior),
+            ),
+          )
+        : value;
       const normalized =
         Predicate.isObject(warriors) && Object.keys(warriors).length === 0
           ? undefined

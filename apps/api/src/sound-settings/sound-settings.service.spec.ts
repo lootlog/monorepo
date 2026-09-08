@@ -1,10 +1,10 @@
 import type { SettingsDomainResolution } from "@lootlog/schema/settings-documents";
 import { describe, expect, it, vi } from "bun:test";
-import { Effect } from "effect";
+import { Effect, Schema } from "effect";
 import { makeSoundSettings } from "./sound-settings.service.js";
 
 const createResolution = (
-  effective: Record<string, unknown> = {},
+  effective: Record<string, typeof Schema.Json.Type> = {},
 ): SettingsDomainResolution => ({
   effective,
   layers: [],
@@ -14,7 +14,7 @@ const createResolution = (
 });
 
 const createSettingsDocumentsMock = (
-  effective: Record<string, unknown> = {},
+  effective: Record<string, typeof Schema.Json.Type> = {},
 ) => {
   let currentEffective = effective;
   const getPreferences = vi.fn(() =>
@@ -22,11 +22,15 @@ const createSettingsDocumentsMock = (
       domains: { sounds: createResolution(currentEffective) },
     }),
   );
-  const patchPreferences = vi.fn((_userId, payload) => {
+  const patchPreferences = vi.fn<
+    Parameters<typeof makeSoundSettings>[0]["patchPreferences"]
+  >((_userId, payload) => {
     const operation = payload.operations[0];
     currentEffective = {
       ...currentEffective,
-      ...operation.set,
+      ...Schema.decodeUnknownSync(Schema.Record(Schema.String, Schema.Json))(
+        operation.set,
+      ),
     };
 
     return Effect.succeed({
@@ -35,6 +39,9 @@ const createSettingsDocumentsMock = (
   });
 
   return {
+    parseDomains: () => {
+      throw new Error("Unexpected domain parser");
+    },
     getPreferences,
     patchPreferences,
   };
@@ -43,7 +50,7 @@ const createSettingsDocumentsMock = (
 describe("sound settings Effect module", () => {
   it("returns normalized document defaults", async () => {
     const settingsDocuments = createSettingsDocumentsMock();
-    const service = makeSoundSettings(settingsDocuments as never);
+    const service = makeSoundSettings(settingsDocuments);
 
     await expect(
       Effect.runPromise(service.getSettings("user-1")),
@@ -63,7 +70,7 @@ describe("sound settings Effect module", () => {
     const settingsDocuments = createSettingsDocumentsMock({
       notificationsVolume: 0.5,
     });
-    const service = makeSoundSettings(settingsDocuments as never);
+    const service = makeSoundSettings(settingsDocuments);
 
     await Effect.runPromise(
       service.updateSettings("user-1", {
@@ -96,7 +103,7 @@ describe("sound settings Effect module", () => {
         },
       },
     });
-    const service = makeSoundSettings(settingsDocuments as never);
+    const service = makeSoundSettings(settingsDocuments);
 
     await Effect.runPromise(
       service.updateSettings("user-1", {
@@ -135,7 +142,7 @@ describe("sound settings Effect module", () => {
         },
       },
     });
-    const service = makeSoundSettings(settingsDocuments as never);
+    const service = makeSoundSettings(settingsDocuments);
 
     await Effect.runPromise(
       service.updateSettings("user-1", {
@@ -161,7 +168,7 @@ describe("sound settings Effect module", () => {
 
   it("does not persist device-local master volume", async () => {
     const settingsDocuments = createSettingsDocumentsMock();
-    const service = makeSoundSettings(settingsDocuments as never);
+    const service = makeSoundSettings(settingsDocuments);
 
     await Effect.runPromise(
       service.updateSettings("user-1", { masterVolume: 0.9 }),

@@ -1,3 +1,4 @@
+import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import { and, eq, isNull } from "drizzle-orm";
@@ -41,9 +42,14 @@ export interface EventRespawnQueue {
 }
 
 export interface EventRespawnPublisher {
-  readonly publish: (
-    routingKey: RoutingKey,
-    payload: unknown,
+  readonly publish: <
+    Key extends
+      | typeof RoutingKey.EVENT_MAP_STATUS_UPDATE
+      | typeof RoutingKey.EVENT_RESPAWN_WINDOW_CLOSED
+      | typeof RoutingKey.EVENT_RESPAWN_WINDOW_OPENED,
+  >(
+    routingKey: Key,
+    payload: CanonicalRabbitEvent<Key>,
   ) => Effect.Effect<void, unknown>;
 }
 
@@ -109,7 +115,15 @@ export const makeEventRespawnCommands = (
         ),
       { concurrency: "unbounded", discard: true },
     );
-  const publish = (routingKey: RoutingKey, payload: unknown) =>
+  const publish = <
+    Key extends
+      | typeof RoutingKey.EVENT_MAP_STATUS_UPDATE
+      | typeof RoutingKey.EVENT_RESPAWN_WINDOW_CLOSED
+      | typeof RoutingKey.EVENT_RESPAWN_WINDOW_OPENED,
+  >(
+    routingKey: Key,
+    payload: CanonicalRabbitEvent<Key>,
+  ) =>
     bestEffort(
       "events.respawn.publish",
       publisher.publish(routingKey, payload),
@@ -344,7 +358,7 @@ export const makeEventRespawnCommands = (
           ).open(guild, eventId, heroId, {
             minSpawnTime: data.newMinSpawnTime,
             maxSpawnTime: data.newMaxSpawnTime,
-          } as OpenRespawnWindowRequest);
+          });
         }
         return { success: true };
       }).pipe(Effect.withSpan("EventsMonitoringController_closeRespawnWindow")),

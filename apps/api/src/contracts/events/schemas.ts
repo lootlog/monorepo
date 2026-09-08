@@ -355,7 +355,7 @@ export type UpdateEventRequest = typeof UpdateEventRequest.Type;
 export const UpdateEventRequest = Schema.Struct({
   name: Schema.optionalKey(Schema.String),
   startsAt: Schema.optionalKey(DateTimeString),
-  endsAt: Schema.optionalKey(DateTimeString),
+  endsAt: Schema.optionalKey(Schema.NullOr(DateTimeString)),
   heroNpcs: Schema.optionalKey(Schema.Array(EventHeroDefinition)),
   basePointsPerKill: Schema.optionalKey(NonNegativeSafeInteger),
   assignmentTimeoutMinutes: Schema.optionalKey(NonNegativeSafeInteger),

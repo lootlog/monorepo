@@ -70,21 +70,26 @@ const getBattleDetailLayoutState = ({
 }) => {
   const timelineTurns = timeline?.timeline ?? [];
   const hasTimeline = timelineTurns.length > 0;
+  const layoutStyle: CSSProperties &
+    Record<
+      | "--battle-chart-height"
+      | "--battle-scroll-viewport-height"
+      | "--battle-side-card-height",
+      string
+    > = {
+    "--battle-chart-height": `${chartHeight}px`,
+    "--battle-scroll-viewport-height": scrollViewportHeight
+      ? `${scrollViewportHeight}px`
+      : "100dvh",
+    "--battle-side-card-height": `max(0px, calc(var(--battle-scroll-viewport-height) - var(--battle-chart-height) - ${
+      STICKY_TOP_OFFSET_PX + STICKY_CONTENT_GAP_PX + SIDE_CARD_BOTTOM_OFFSET_PX
+    }px))`,
+  };
   return {
     hasSideContent: Boolean(sideContent),
     hasTimeline,
     is1v1: battle?.type === "1v1",
-    layoutStyle: {
-      "--battle-chart-height": `${chartHeight}px`,
-      "--battle-scroll-viewport-height": scrollViewportHeight
-        ? `${scrollViewportHeight}px`
-        : "100dvh",
-      "--battle-side-card-height": `max(0px, calc(var(--battle-scroll-viewport-height) - var(--battle-chart-height) - ${
-        STICKY_TOP_OFFSET_PX +
-        STICKY_CONTENT_GAP_PX +
-        SIDE_CARD_BOTTOM_OFFSET_PX
-      }px))`,
-    } as CSSProperties,
+    layoutStyle,
     shouldRenderTimelineSlot: isTimelinePending || hasTimeline,
     timelineTurns,
   };
@@ -217,7 +222,10 @@ export function BattleDetailView({
   }, [battleId, queryState.turn]);
 
   useLayoutEffect(() => {
-    if (scrollAnimationFrameRef.current != null) {
+    if (
+      scrollAnimationFrameRef.current !== null &&
+      scrollAnimationFrameRef.current !== undefined
+    ) {
       cancelAnimationFrame(scrollAnimationFrameRef.current);
       scrollAnimationFrameRef.current = null;
     }
@@ -276,7 +284,10 @@ export function BattleDetailView({
 
   useEffect(
     () => () => {
-      if (scrollAnimationFrameRef.current == null) {
+      if (
+        scrollAnimationFrameRef.current === null ||
+        scrollAnimationFrameRef.current === undefined
+      ) {
         return;
       }
 
@@ -286,7 +297,10 @@ export function BattleDetailView({
   );
 
   const handleTurnSelect = (turn: number) => {
-    if (scrollAnimationFrameRef.current != null) {
+    if (
+      scrollAnimationFrameRef.current !== null &&
+      scrollAnimationFrameRef.current !== undefined
+    ) {
       cancelAnimationFrame(scrollAnimationFrameRef.current);
       scrollAnimationFrameRef.current = null;
     }
@@ -370,7 +384,11 @@ export function BattleDetailView({
       occlusionBottom,
     });
 
-    if (activeTurn == null || activeTurn === selectedTurnRef.current) {
+    if (
+      activeTurn === null ||
+      activeTurn === undefined ||
+      activeTurn === selectedTurnRef.current
+    ) {
       return;
     }
 
@@ -380,7 +398,10 @@ export function BattleDetailView({
   };
 
   const handleBattleScroll = () => {
-    if (scrollAnimationFrameRef.current != null) {
+    if (
+      scrollAnimationFrameRef.current !== null &&
+      scrollAnimationFrameRef.current !== undefined
+    ) {
       return;
     }
 

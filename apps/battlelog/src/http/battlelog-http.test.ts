@@ -1,11 +1,19 @@
+import {
+  unusedBattles,
+  unusedBattleAnalytics,
+  unusedDeleteQueue,
+} from "../../test/battle-fixtures.js";
+import { makeBattlelogOperations } from "../battles/battlelog-operations.js";
 import { afterAll, describe, expect, it } from "bun:test";
 import { makeBattlelogTestBoundary } from "./battlelog-http.js";
 
-const boundary = makeBattlelogTestBoundary({
-  battles: {} as never,
-  publicBattles: {} as never,
-  internal: {} as never,
-});
+const boundary = makeBattlelogTestBoundary(
+  makeBattlelogOperations(
+    unusedBattles,
+    unusedBattleAnalytics,
+    unusedDeleteQueue,
+  ),
+);
 const handler = boundary.handler;
 afterAll(() => boundary.dispose());
 

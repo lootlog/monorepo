@@ -1,18 +1,9 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { MessageType } from "@/api/chat.api";
 import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/client/main";
 import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
 import { ChatNpcMessageView } from "./chat-npc-message-view";
-
-vi.mock("@/components/npc-tile", () => ({
-  NpcTile: ({ npc }: { npc: { nick: string } }) => <div>{npc.nick} tile</div>,
-}));
-
-vi.mock("@lootlog/domain/npc-type", async (importOriginal) => ({
-  ...(await importOriginal()),
-  getNpcTypeByWt: () => "HERO",
-}));
 
 const message: ChatMessageType = {
   id: "npc-message-1",
@@ -62,7 +53,9 @@ describe("ChatNpcMessageView", () => {
 
     expect(screen.getByText("[Northern Guard]")).toBeInTheDocument();
     expect(screen.getByText("Arianna:")).toHaveStyle({ color: "#abcdef" });
-    expect(screen.getByText("Dark Hunter tile")).toBeInTheDocument();
+    expect(
+      screen.getByRole("img", { name: "Dark Hunter" }),
+    ).toBeInTheDocument();
     const npcName = screen.getByText("Dark Hunter");
     const countBadge = screen.getByText("x3");
 
@@ -98,7 +91,9 @@ describe("ChatNpcMessageView", () => {
     );
 
     expect(screen.queryByText("[Northern Guard]")).not.toBeInTheDocument();
-    expect(screen.queryByText("Dark Hunter tile")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("img", { name: "Dark Hunter" }),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText("(120m)")).not.toBeInTheDocument();
     expect(screen.queryByText("Old Ruins")).not.toBeInTheDocument();
     expect(screen.queryByText(/\[\d{2}:\d{2}\]/)).not.toBeInTheDocument();

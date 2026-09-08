@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { and, eq, gt, inArray, isNull, lte, or } from "drizzle-orm";
 import { Clock, Effect } from "effect";
-import { type RedlockService } from "#src/redis/redlock";
+import type { RedlockService } from "#src/redis/redlock";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventHeroNpcTable,

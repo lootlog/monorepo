@@ -41,11 +41,13 @@ export const getMemberKillScoringViewModel = (
     point,
     hasManualPointsAdjustment: scoring.manualAdjustmentPoints !== 0,
     trackingPercentage:
-      typeof point?.trackingDurationPercentage === "number"
+      point?.trackingDurationPercentage !== undefined &&
+      point.trackingDurationPercentage !== null
         ? `${Math.round(point.trackingDurationPercentage)}%`
         : "-",
     trackingTime:
-      typeof point?.trackingDurationSeconds === "number" &&
+      point?.trackingDurationSeconds !== undefined &&
+      point.trackingDurationSeconds !== null &&
       point.trackingDurationSeconds >= 0
         ? formatDurationHuman(point.trackingDurationSeconds)
         : "-",

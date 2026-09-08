@@ -1,7 +1,7 @@
 import { useAuthScopes } from "@/hooks/api/use-auth-scopes";
 import { authClient } from "@/lib/auth-client";
 import { useAuthRecoveryStore } from "@/store/auth-recovery.store";
-import { ApiError } from "@lootlog/client/transport";
+import { isReauthenticationError } from "@/lib/api-reauthentication";
 import { DISCORD_AUTH_SCOPES } from "@lootlog/schema/discord";
 import { LoaderCircle } from "lucide-react";
 import { useRef, useState } from "react";
@@ -10,26 +10,6 @@ import { AuthenticationRecovery } from "./authentication-recovery";
 
 type Props = {
   children: React.ReactNode;
-};
-
-type ApiErrorData = {
-  requiresReauth?: boolean;
-};
-
-const isReauthenticationError = (error: unknown) => {
-  if (!(error instanceof ApiError)) {
-    return false;
-  }
-
-  if (error.status === 401) {
-    return true;
-  }
-
-  return (
-    typeof error.data === "object" &&
-    error.data !== null &&
-    (error.data as ApiErrorData).requiresReauth === true
-  );
 };
 
 export const AuthenticationGuard = ({ children }: Props) => {

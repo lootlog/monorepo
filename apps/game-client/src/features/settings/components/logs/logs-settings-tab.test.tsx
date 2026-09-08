@@ -1,3 +1,4 @@
+import type { toast as SonnerToast } from "sonner";
 import {
   fireEvent,
   render,
@@ -12,13 +13,13 @@ import { LOGS_STORAGE_KEY, useLogsStore } from "@/store/logs.store";
 import { useSettingsStore } from "@/store/settings.store";
 
 const toastMocks = vi.hoisted(() => ({
-  success: vi.fn(),
-  error: vi.fn(),
+  success: vi.fn<typeof SonnerToast.success>(),
+  error: vi.fn<typeof SonnerToast.error>(),
 }));
-const mockClipboardWriteText = vi.fn();
-const mockCreateObjectURL = vi.fn();
-const mockRevokeObjectURL = vi.fn();
-const mockAnchorClick = vi.fn();
+const mockClipboardWriteText = vi.fn<Clipboard["writeText"]>();
+const mockCreateObjectURL = vi.fn<typeof URL.createObjectURL>();
+const mockRevokeObjectURL = vi.fn<typeof URL.revokeObjectURL>();
+const mockAnchorClick = vi.fn<HTMLAnchorElement["click"]>();
 
 vi.mock("sonner", () => ({
   toast: {
@@ -279,7 +280,9 @@ describe("LogsSettingsTab", () => {
     expect(mockAnchorClick).toHaveBeenCalledTimes(1);
     expect(mockRevokeObjectURL).toHaveBeenCalledWith("blob:logs");
 
-    const exportedBlob = mockCreateObjectURL.mock.calls[0][0] as Blob;
+    const exportedBlob = mockCreateObjectURL.mock.calls[0][0];
+    if (!(exportedBlob instanceof Blob))
+      throw new Error("Expected exported JSON blob");
     const exportedText = await exportedBlob.text();
 
     expect(exportedText).toContain('"searchTerm": "/loots"');

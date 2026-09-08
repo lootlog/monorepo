@@ -1,4 +1,7 @@
-import { statusCodeResponse } from "#src/shared/http/handler-response";
+import {
+  optionalPathString,
+  statusCodeResponse,
+} from "#src/shared/http/handler-response";
 import { applicationErrorResponse } from "../../application-error-response.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Layer, Schema } from "effect";
@@ -122,7 +125,7 @@ export class LootlogConfigData extends Context.Service<
   );
 }
 
-const authorize = (guildId: unknown) => {
+const authorize = (guildId: string | undefined) => {
   if (typeof guildId !== "string") {
     return Effect.fail(
       new LootlogConfigAccessDenied({
@@ -142,7 +145,7 @@ const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
   );
 
 export const getLootlogConfig = Effect.fn("getLootlogConfig")(function* (
-  requestedGuildId: unknown,
+  requestedGuildId: string | undefined,
 ) {
   const { guildId } = yield* authorize(requestedGuildId);
   const data = yield* LootlogConfigData;
@@ -151,7 +154,7 @@ export const getLootlogConfig = Effect.fn("getLootlogConfig")(function* (
 
 export const updateLootlogConfigNpc = Effect.fn("updateLootlogConfigNpc")(
   function* (
-    requestedGuildId: unknown,
+    requestedGuildId: string | undefined,
     npcId: string,
     payload: UpdateNpcLootlogConfigRequest,
   ) {
@@ -183,11 +186,15 @@ export const LootlogConfigHandlers = HttpApiBuilder.group(
   (handlers) =>
     handlers
       .handle("LootlogConfigControllerGetLootlogConfig", ({ params }) =>
-        orDieHttpFailure(getLootlogConfig(params.guildId)),
+        orDieHttpFailure(getLootlogConfig(optionalPathString(params.guildId))),
       )
       .handle("LootlogConfigControllerUpdateNpc", ({ params, payload }) =>
         orDieHttpFailure(
-          updateLootlogConfigNpc(params.guildId, params.npcId, payload),
+          updateLootlogConfigNpc(
+            optionalPathString(params.guildId),
+            params.npcId,
+            payload,
+          ),
         ),
       ),
 );

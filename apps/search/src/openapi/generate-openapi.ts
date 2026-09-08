@@ -7,7 +7,7 @@ const document = OpenApi.fromApi(SearchApi);
 const numberWithDefault = (defaultValue: number) => ({
   schema: { type: "number", default: defaultValue },
 });
-const formArray = (items: Record<string, unknown>) => ({
+const formArray = (items: { type: "string" }) => ({
   schema: { type: "array", items },
   style: "form",
   explode: true,

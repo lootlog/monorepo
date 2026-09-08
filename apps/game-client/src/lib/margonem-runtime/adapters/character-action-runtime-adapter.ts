@@ -26,10 +26,10 @@ type CharacterActionRuntimeWindow = Window & {
       }) => void;
     };
   };
-  _g?: (command: string) => unknown;
+  _g?: (command: string) => void;
 };
 
-const getRuntimeWindow = () => window as CharacterActionRuntimeWindow;
+const getRuntimeWindow = (): CharacterActionRuntimeWindow => window;
 
 export const sanitizeFriendInviteNick = (nick: string) => {
   return nick

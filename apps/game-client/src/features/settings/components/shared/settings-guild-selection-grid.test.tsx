@@ -20,7 +20,7 @@ const guilds: Guild[] = [
 describe("SettingsGuildSelectionGrid", () => {
   it("keeps multi-select behavior for existing callers", async () => {
     const user = userEvent.setup();
-    const onToggle = vi.fn();
+    const onToggle = vi.fn<(guildId: string) => void>();
 
     render(
       <SettingsGuildSelectionGrid
@@ -43,7 +43,7 @@ describe("SettingsGuildSelectionGrid", () => {
 
   it("switches selection in single-choice mode", async () => {
     const user = userEvent.setup();
-    const onSelect = vi.fn();
+    const onSelect = vi.fn<(guildId: string) => void>();
 
     render(
       <SettingsGuildSelectionGrid
@@ -67,7 +67,7 @@ describe("SettingsGuildSelectionGrid", () => {
 
   it("does not clear the current guild in single-choice mode", async () => {
     const user = userEvent.setup();
-    const onSelect = vi.fn();
+    const onSelect = vi.fn<(guildId: string) => void>();
 
     render(
       <SettingsGuildSelectionGrid

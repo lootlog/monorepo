@@ -26,7 +26,11 @@ interface DecodedCursor {
   id: string;
 }
 
-export const makeBattlePagination = (drizzle: DrizzleDatabase) => {
+type BattlePaginationDatabase = Pick<DrizzleDatabase, "select" | "execute"> & {
+  query: { battles: Pick<DrizzleDatabase["query"]["battles"], "findMany"> };
+};
+
+export const makeBattlePagination = (drizzle: BattlePaginationDatabase) => {
   const logger = new Logger("BattlePagination");
 
   const encodeCursor = (createdAt: Date, id: string): string =>

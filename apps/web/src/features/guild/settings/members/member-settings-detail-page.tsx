@@ -15,9 +15,12 @@ import { Permission } from "@lootlog/schema/permissions";
 import { getColorFromRole } from "@/utils/get-color-from-role";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
-import { useGuildsControllerGetGuildById } from "@lootlog/client/main";
-import { useMembersControllerGetGuildMembers } from "@lootlog/client/main";
-import type { MemberResponseDto as GuildMember } from "@lootlog/client/main";
+import {
+  useGuildsControllerGetGuildById,
+  useMembersControllerGetGuildMembers,
+  type MemberResponseDto as GuildMember,
+} from "@lootlog/client/main";
+
 import { memberActivityStatsQueryOptions } from "@/features/guild/settings/members/member-activity-stats-api";
 import { mapMemberActivityStatsByDiscordIdAndSource } from "@/features/guild/settings/members/member-activity-stats.utils";
 import { isMemberOnlineInGame } from "@/features/guild/settings/members/member-game-presence.utils";

@@ -10,9 +10,7 @@ import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { EVENT_SCORING_NUMERIC_FACTORS } from "@lootlog/domain/scoring";
 
-type ScoringRulesFormValues = {
-  scoringRules: { rules: { conditions: unknown[] }[] };
-};
+import type { ScoringRulesFormValues } from "./scoring-rules-editor";
 
 interface ScoringConditionNumericProps {
   control: Control<ScoringRulesFormValues>;
@@ -37,15 +35,11 @@ export const ScoringConditionNumeric = ({
         </Label>
         <Controller
           control={control}
-          name={
-            `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.factor` as `scoringRules.rules.${number}.conditions.${number}`
-          }
+          name={`scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.factor`}
           render={({ field }) => (
             <ScoringFactorSelect
               factors={EVENT_SCORING_NUMERIC_FACTORS}
-              value={
-                field.value as (typeof EVENT_SCORING_NUMERIC_FACTORS)[number]
-              }
+              value={field.value}
               onChange={field.onChange}
             />
           )}
@@ -57,12 +51,10 @@ export const ScoringConditionNumeric = ({
         </Label>
         <Controller
           control={control}
-          name={
-            `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.operator` as `scoringRules.rules.${number}.conditions.${number}`
-          }
+          name={`scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.operator`}
           render={({ field }) => (
             <ScoringOperatorSelect
-              value={field.value as string}
+              value={field.value}
               onChange={field.onChange}
             />
           )}
@@ -77,7 +69,7 @@ export const ScoringConditionNumeric = ({
           step={0.01}
           className="h-8 text-[12px] font-mono"
           {...register(
-            `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.value` as `scoringRules.rules.${number}.conditions.${number}`,
+            `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.value`,
             { valueAsNumber: true },
           )}
         />

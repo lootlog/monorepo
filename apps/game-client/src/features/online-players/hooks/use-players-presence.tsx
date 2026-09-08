@@ -84,7 +84,7 @@ export const usePlayersPresence = (
   const setOnlinePlayers: Dispatch<SetStateAction<PlayerPresenceResponse>> = (
     update,
   ) => {
-    setPresenceResource((currentResource) => {
+    setPresenceResource(function applyOnlinePlayersUpdate(currentResource) {
       const scopedResource =
         currentResource.scopeKey === scopeKey
           ? currentResource
@@ -118,9 +118,12 @@ export const usePlayersPresence = (
   const policyRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
-  const presenceUpdateControllerRef = useRef({
+  const presenceUpdateControllerRef = useRef<{
+    pendingUpdates: Map<string, PlayerPresence>;
+    frame: number | null;
+  }>({
     pendingUpdates: new Map<string, PlayerPresence>(),
-    frame: null as number | null,
+    frame: null,
   });
 
   useEffect(() => {
@@ -205,7 +208,7 @@ export const usePlayersPresence = (
           onlinePlayers: normalizePresenceResponse(data.players),
         });
       })
-      .catch((requestError: unknown) => {
+      .catch((cause: unknown) => {
         if (requestIdRef.current !== currentRequestId) return;
 
         setPresenceResource((current) => ({
@@ -213,7 +216,7 @@ export const usePlayersPresence = (
             ? current
             : createEmptyPresenceResource(scopeKey)),
           loading: false,
-          error: requestError,
+          error: cause,
         }));
       });
   }, [
@@ -253,11 +256,22 @@ export const usePlayersPresence = (
 
       if (
         normalizedPresence.guildId !== selectedGuildIdRef.current ||
-        normalizedPresence.player?.world !== worldRef.current
+        (normalizedPresence.player?.world !== worldRef.current &&
+          !(
+            normalizedPresence.status === "offline" &&
+            normalizedPresence.sessionId &&
+            !normalizedPresence.player
+          ))
       )
         return;
 
-      const presenceKey = `${normalizedPresence.discordId}:${getPresenceKey(normalizedPresence)}`;
+      const updateKey =
+        normalizedPresence.status === "offline" && normalizedPresence.sessionId
+          ? `session:${normalizedPresence.sessionId}`
+          : getPresenceKey(normalizedPresence);
+      const presenceKey = `${normalizedPresence.discordId}:${updateKey}`;
+      // Keep coalesced updates in receive order relative to session removals.
+      presenceUpdateController.pendingUpdates.delete(presenceKey);
       presenceUpdateController.pendingUpdates.set(presenceKey, allowedPresence);
       if (presenceUpdateController.frame !== null) return;
 

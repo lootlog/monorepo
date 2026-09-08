@@ -1,4 +1,5 @@
 {
+  "extends": ["../../.oxlintrc.json"],
   "plugins": ["react", "typescript", "unicorn"],
   "ignorePatterns": [
     "**/node_modules",

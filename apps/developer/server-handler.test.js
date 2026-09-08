@@ -20,7 +20,7 @@ async function startServer(context, serverEntry, clientDirectory) {
   context.after(() => server.close());
 
   const address = server.address();
-  assert(address && typeof address === "object");
+  assert.equal(address?.family, "IPv4");
 
   return `http://127.0.0.1:${address.port}`;
 }

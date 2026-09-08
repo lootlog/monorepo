@@ -1,150 +1,105 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { configureApiClients } from "@lootlog/client/transport";
+import {
+  getUsersControllerGetCurrentUserGuildsQueryKey,
+  getUsersControllerGetUserPreferencesQueryKey,
+} from "@lootlog/client/main";
+import { createUserPreferences } from "@/lib/testing/preferences";
+import { z } from "zod";
 // @vitest-environment happy-dom
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import type {
-  ButtonHTMLAttributes,
-  HTMLAttributes,
-  InputHTMLAttributes,
-} from "react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { initializeTestTranslations } from "@/lib/testing/i18n";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  onTestFinished,
+} from "vitest";
 import { ServerVisibilitySettings } from "./server-visibility-settings";
 
-const mocks = vi.hoisted(() => ({
-  mutate: vi.fn(),
-  refetchGuilds: vi.fn(),
-  refetchPreferences: vi.fn(),
-}));
+let requests: Request[];
+let client: QueryClient;
+const renderSettings = () =>
+  render(
+    <QueryClientProvider client={client}>
+      <ServerVisibilitySettings />
+    </QueryClientProvider>,
+  );
 
-vi.mock("@lootlog/client/main", async () => ({
-  ...(await vi.importActual("@lootlog/client/main")),
-  useUsersControllerGetCurrentUserGuilds: () => ({
-    data: [
-      { id: "guild-1", name: "Alpha", icon: null },
-      { id: "guild-2", name: "Beta", icon: null },
-      { id: "guild-3", name: "Gamma", icon: null },
-    ],
-    isLoading: false,
-    isError: false,
-    refetch: mocks.refetchGuilds,
-  }),
-}));
-
-vi.mock("@/hooks/api/user/use-user-preferences", () => ({
-  useUserPreferences: () => ({
-    data: {
-      guildsOrder: ["guild-2", "guild-1"],
-      hiddenGuildIds: ["guild-2", "temporarily-unavailable"],
-    },
-    isLoading: false,
-    isError: false,
-    refetch: mocks.refetchPreferences,
-  }),
-  useUpdateUserPreferences: () => ({
-    mutate: mocks.mutate,
-    isPending: false,
-    isSuccess: false,
-    isError: false,
-  }),
-}));
-
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string, values?: { count?: number; name?: string }) => {
-      const translations: Record<string, string> = {
-        "settings.servers.title": "Widoczność serwerów",
-        "settings.servers.description": "Opis",
-        "settings.servers.searchPlaceholder": "Szukaj serwera",
-        "settings.servers.filters.all": "Wszystkie",
-        "settings.servers.filters.visible": "Widoczne",
-        "settings.servers.filters.hidden": "Ukryte",
-        "settings.servers.showAll": "Pokaż wszystkie",
-        "settings.servers.hiddenInGameClient": "Ukryty w grze",
-        "settings.servers.visibleInGameClient": "Widoczny w grze",
-        "settings.servers.noResults": "Brak wyników",
-      };
-
-      if (key === "settings.servers.visibleCount") {
-        return `${values?.count} widoczne`;
-      }
-      if (key === "settings.servers.hiddenCount") {
-        return `${values?.count} ukryty`;
-      }
-      if (key === "settings.servers.switchLabel") {
-        return `Pokaż ${values?.name} w grze`;
-      }
-
-      return translations[key] ?? key;
-    },
-  }),
-}));
-
-vi.mock("@lootlog/ui/components/scroll-area", () => ({
-  ScrollArea: ({ children }: HTMLAttributes<HTMLDivElement>) => (
-    <div>{children}</div>
-  ),
-}));
-
-vi.mock("@lootlog/ui/components/card", () => ({
-  Card: ({ children }: HTMLAttributes<HTMLDivElement>) => <div>{children}</div>,
-}));
-
-vi.mock("@lootlog/ui/components/button", () => ({
-  Button: ({
-    children,
-    size: _size,
-    variant: _variant,
-    ...props
-  }: ButtonHTMLAttributes<HTMLButtonElement> & {
-    size?: string;
-    variant?: string;
-  }) => <button {...props}>{children}</button>,
-}));
-
-vi.mock("@lootlog/ui/components/input", () => ({
-  Input: (props: InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
-}));
-
-vi.mock("@lootlog/ui/components/switch", () => ({
-  Switch: ({
-    checked,
-    onCheckedChange,
-    ...props
-  }: ButtonHTMLAttributes<HTMLButtonElement> & {
-    checked: boolean;
-    onCheckedChange: (checked: boolean) => void;
-  }) => (
-    <button
-      {...props}
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onCheckedChange(!checked)}
-    />
-  ),
-}));
-
-vi.mock("@lootlog/ui/components/avatar", () => ({
-  Avatar: ({ children }: HTMLAttributes<HTMLDivElement>) => (
-    <div>{children}</div>
-  ),
-  AvatarImage: () => null,
-  AvatarFallback: ({ children }: HTMLAttributes<HTMLDivElement>) => (
-    <span>{children}</span>
-  ),
-}));
-
-vi.mock("@lootlog/ui/components/spinner", () => ({
-  Spinner: () => <span />,
-}));
+await initializeTestTranslations({
+  "settings.servers.visibleCount": "{{count}} widoczne",
+  "settings.servers.hiddenCount": "{{count}} ukryty",
+  "settings.servers.switchLabel": "Pokaż {{name}} w grze",
+  "settings.servers.title": "Widoczność serwerów",
+  "settings.servers.description": "Opis",
+  "settings.servers.searchPlaceholder": "Szukaj serwera",
+  "settings.servers.filters.all": "Wszystkie",
+  "settings.servers.filters.visible": "Widoczne",
+  "settings.servers.filters.hidden": "Ukryte",
+  "settings.servers.showAll": "Pokaż wszystkie",
+  "settings.servers.hiddenInGameClient": "Ukryty w grze",
+  "settings.servers.visibleInGameClient": "Widoczny w grze",
+  "settings.servers.noResults": "Brak wyników",
+});
 
 describe("ServerVisibilitySettings", () => {
   afterEach(cleanup);
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    client = new QueryClient({
+      defaultOptions: { queries: { staleTime: Infinity, retry: false } },
+    });
+    onTestFinished(() => client.clear());
+    const guilds = ["Alpha", "Beta", "Gamma"].map((name, index) => ({
+      id: `guild-${index + 1}`,
+      name,
+      icon: null,
+    }));
+    let preferences = createUserPreferences({
+      guildsOrder: ["guild-2", "guild-1"],
+      hiddenGuildIds: ["guild-2", "temporarily-unavailable"],
+    });
+    client.setQueryData(
+      getUsersControllerGetCurrentUserGuildsQueryKey(),
+      guilds,
+    );
+    client.setQueryData(
+      getUsersControllerGetUserPreferencesQueryKey(),
+      preferences,
+    );
+    requests = [];
+    onTestFinished(
+      configureApiClients({
+        main: {
+          baseUrl: "https://api.test",
+          fetch: async (input, init) => {
+            const request = new Request(input, init);
+            if (request.method === "PATCH") {
+              requests.push(request.clone());
+              const update = z
+                .object({ hiddenGuildIds: z.array(z.string()) })
+                .parse(await request.json());
+              preferences = { ...preferences, ...update };
+            }
+            return Response.json(preferences);
+          },
+        },
+      }),
+    );
   });
 
   it("renders ordered guilds and visibility counts", () => {
-    render(<ServerVisibilitySettings />);
+    renderSettings();
 
     expect(screen.getByText("2 widoczne · 1 ukryty")).toBeTruthy();
     expect(
@@ -158,8 +113,8 @@ describe("ServerVisibilitySettings", () => {
     ]);
   });
 
-  it("filters, saves snapshots and preserves unavailable hidden IDs", () => {
-    render(<ServerVisibilitySettings />);
+  it("filters, saves snapshots and preserves unavailable hidden IDs", async () => {
+    renderSettings();
 
     fireEvent.click(screen.getByRole("button", { name: "Ukryte" }));
     expect(screen.getByText("Beta")).toBeTruthy();
@@ -170,12 +125,21 @@ describe("ServerVisibilitySettings", () => {
       target: { value: "alpha" },
     });
     fireEvent.click(screen.getByRole("switch", { name: "Pokaż Alpha w grze" }));
-    expect(mocks.mutate).toHaveBeenCalledWith({
+    await waitFor(() => expect(requests).toHaveLength(1));
+    expect(await requests[0]?.json()).toEqual({
       hiddenGuildIds: ["guild-2", "temporarily-unavailable", "guild-1"],
     });
+    await waitFor(() =>
+      expect(
+        screen
+          .getByRole("button", { name: "Pokaż wszystkie" })
+          .hasAttribute("disabled"),
+      ).toBe(false),
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "Pokaż wszystkie" }));
-    expect(mocks.mutate.mock.lastCall?.[0]).toEqual({
+    await waitFor(() => expect(requests).toHaveLength(2));
+    expect(await requests[1]?.json()).toEqual({
       hiddenGuildIds: ["temporarily-unavailable"],
     });
   });

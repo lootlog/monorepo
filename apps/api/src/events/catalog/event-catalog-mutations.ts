@@ -1,3 +1,4 @@
+import { isObjectRecord } from "@lootlog/schema/records";
 import { eventHeroScope } from "#src/events/event-scope-query";
 import { invalidateEventCachePatterns } from "#src/events/catalog/event-cache-invalidation";
 import { makeEventMapHydration } from "./event-map-hydration.js";
@@ -203,11 +204,11 @@ export const makeEventCatalogMutations = (
               .orderBy(desc(timerTable.updatedAt))
               .limit(1),
           );
-          const npc = timerRows[0]?.npc as
-            | { id: number; icon: string }
-            | undefined;
-          npcId = npc?.id;
-          npcIcon = npc?.icon;
+          const npc = timerRows[0]?.npc;
+          if (isObjectRecord(npc)) {
+            npcId = Schema.is(Schema.Number)(npc.id) ? npc.id : undefined;
+            npcIcon = Schema.is(Schema.String)(npc.icon) ? npc.icon : undefined;
+          }
         }
         const heroId = randomUUID();
         yield* query(

@@ -143,12 +143,12 @@ export const MemberAssignmentModal = ({
                           pendingAction.memberId === member.id
                         }
                         disabled={Boolean(pendingAction)}
-                        icon={<X className="size-3" />}
+                        icon=<X className="size-3" />
                         aria-label={t("events.maps.unassign")}
                         onClick={() => handleUnassign(member.id)}
                         className="size-5 p-0.5 rounded-full hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
                         title={t("events.maps.unassign")}
-                      ></Button>
+                      />
                     </div>
                   ))}
                 </div>

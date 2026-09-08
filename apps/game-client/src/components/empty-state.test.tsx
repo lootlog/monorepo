@@ -7,7 +7,7 @@ import { EmptyState } from "./empty-state";
 describe("EmptyState", () => {
   it("renders accessible centered content and an optional action", async () => {
     const user = userEvent.setup();
-    const onAction = vi.fn();
+    const onAction = vi.fn<() => void>();
 
     render(
       <EmptyState

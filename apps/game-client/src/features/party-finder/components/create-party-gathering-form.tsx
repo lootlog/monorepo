@@ -7,13 +7,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import * as z from "zod";
 import { useGameStore } from "@/store/game.store";
 import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 
-const createFormSchema = (
-  t: (key: string, options?: Record<string, unknown>) => string,
-) =>
+const createFormSchema = (t: TFunction<"partyFinder">) =>
   z
     .object({
       description: z.string().max(200).optional(),
@@ -33,7 +32,8 @@ const createFormSchema = (
       },
     );
 
-type FormData = z.infer<ReturnType<typeof createFormSchema>>;
+type FormSchema = ReturnType<typeof createFormSchema>;
+type FormData = z.output<FormSchema>;
 
 export const CreatePartyGatheringForm = () => {
   const { t } = useTranslation("partyFinder");
@@ -46,8 +46,8 @@ export const CreatePartyGatheringForm = () => {
     handleSubmit,
     formState: { errors },
     reset,
-  } = useForm<FormData>({
-    resolver: zodResolver(createFormSchema(t)) as never,
+  } = useForm<z.input<FormSchema>, undefined, FormData>({
+    resolver: zodResolver(createFormSchema(t)),
     defaultValues: {
       description: "",
       minLvl: "",

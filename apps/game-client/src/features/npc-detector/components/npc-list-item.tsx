@@ -8,9 +8,9 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "cn";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
-import type {
-  DetectorNpcType,
-  DetectorSettings,
+import {
+  getDetectorNpcSettings,
+  type DetectorSettings,
 } from "@lootlog/schema/account-preferences";
 import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
 import type {
@@ -142,7 +142,7 @@ export const NpcListItem = ({
     : MESSAGE_BUTTON_COOLDOWN_RING_CIRCUMFERENCE;
 
   const npcType = getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type);
-  const settingsByNpcType = detectorSettings[npcType as DetectorNpcType];
+  const settingsByNpcType = getDetectorNpcSettings(detectorSettings, npcType);
   const { guildIds: resolvedGuildIds, world } = resolveNpcNotificationRouting({
     routingRules: detectorSettings.routingRules,
     npcLevel: npc.lvl,

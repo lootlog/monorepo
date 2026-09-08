@@ -5,7 +5,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
+import { getTimerColor } from "@/features/timers/constants/timer-colors";
 import { cn } from "cn";
 import { useTranslation } from "react-i18next";
 
@@ -29,9 +29,12 @@ export const TimersColorStatistics: FC<TimersColorStatisticsProps> = ({
 
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
+      <TooltipTrigger
+        aria-label={t("colorStatistics.title")}
+        className="ll:absolute ll:left-1 ll:inline-flex ll:border-0 ll:bg-transparent ll:p-0 ll:focus-visible:outline ll:focus-visible:outline-2 ll:focus-visible:outline-blue-400"
+      >
         <Info
-          className="ll-custom-cursor-pointer ll:stroke-gray-400 ll:hover:stroke-gray-200 ll:transition-colors ll:absolute ll:left-1"
+          className="ll-custom-cursor-pointer ll:stroke-gray-400 ll:hover:stroke-gray-200 ll:transition-colors"
           size={14}
         />
       </TooltipTrigger>
@@ -46,8 +49,7 @@ export const TimersColorStatistics: FC<TimersColorStatisticsProps> = ({
             </p>
           ) : (
             colorStatistics.map((stat) => {
-              const defaultColor =
-                TIMERS_COLORS[stat.color as keyof typeof TIMERS_COLORS];
+              const defaultColor = getTimerColor(stat.color);
               const hasCustomColors =
                 stat.bgColor !== undefined || stat.borderColor !== undefined;
 

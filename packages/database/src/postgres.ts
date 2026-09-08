@@ -16,7 +16,8 @@ export const makePostgresLayer = (options: PgClient.PgPoolConfig) =>
       const services = yield* Effect.context<never>();
       const pool = yield* Effect.acquireRelease(
         Effect.sync(() => {
-          const pool = new pg.Pool({
+          const poolOptions: pg.PoolConfig &
+            Pick<PgClient.PgPoolConfig, "stream"> = {
             connectionString: options.url
               ? Redacted.value(options.url)
               : undefined,
@@ -26,10 +27,10 @@ export const makePostgresLayer = (options: PgClient.PgPoolConfig) =>
             password: options.password
               ? Redacted.value(options.password)
               : undefined,
-            // pg and Effect resolve different Node TLS type versions; pass TLS options unchanged.
+            // SAFETY: pg and Effect use Node TLS connection options from different type
+            // versions. The driver receives the original options without transformation.
             ssl: options.ssl as pg.PoolConfig["ssl"],
             port: options.port,
-            ...(options.stream ? { stream: options.stream } : {}),
             connectionTimeoutMillis: Duration.toMillis(
               Duration.fromInputUnsafe(options.connectTimeout ?? "5 seconds"),
             ),
@@ -49,7 +50,9 @@ export const makePostgresLayer = (options: PgClient.PgPoolConfig) =>
                   ),
             application_name: options.applicationName ?? "@effect/sql-pg",
             types: options.types,
-          });
+          };
+          if (options.stream) poolOptions.stream = options.stream;
+          const pool = new pg.Pool(poolOptions);
           pool.on("error", () => {
             Effect.runForkWith(services)(
               Effect.logError("PostgreSQL idle connection failed").pipe(

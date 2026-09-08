@@ -12,7 +12,10 @@ import { ResourceNotFoundError } from "#src/infrastructure/http-error";
 
 /** SQL removal and its object cleanup intent commit together; retries need no battle row. */
 export const makeBattleDeletion = (
-  database: DrizzleDatabase,
+  database: Pick<
+    DrizzleDatabase,
+    "select" | "delete" | "update" | "transaction"
+  >,
   objects: Pick<BattleObjectStorage, "deleteBattleData">,
   analytics: Pick<BattleAnalytics, "invalidateAnalyticsCache">,
 ) => {
@@ -36,7 +39,7 @@ export const makeBattleDeletion = (
             .delete(battleObjectDeletions)
             .where(eq(battleObjectDeletions.battleId, item.battleId));
         }).pipe(
-          Effect.catch((cause) =>
+          Effect.catch((error) =>
             Effect.gen(function* () {
               yield* database
                 .update(battleObjectDeletions)
@@ -46,7 +49,7 @@ export const makeBattleDeletion = (
                 .where(eq(battleObjectDeletions.battleId, item.battleId));
               yield* Effect.logWarning(
                 "Battle object deletion remains pending",
-                cause,
+                error,
               ).pipe(Effect.annotateLogs({ battleId: item.battleId }));
             }),
           ),
@@ -76,8 +79,8 @@ export const makeBattleDeletion = (
     yield* analytics
       .invalidateAnalyticsCache(userId)
       .pipe(
-        Effect.catch((cause) =>
-          Effect.logWarning("Battle analytics cleanup remains pending", cause),
+        Effect.catch((error) =>
+          Effect.logWarning("Battle analytics cleanup remains pending", error),
         ),
       );
     return { message: "Battle deleted successfully" };
@@ -105,10 +108,10 @@ export const makeBattleDeletion = (
       yield* analytics
         .invalidateAnalyticsCache(userId)
         .pipe(
-          Effect.catch((cause) =>
+          Effect.catch((error) =>
             Effect.logWarning(
               "Battle analytics cleanup remains pending",
-              cause,
+              error,
             ),
           ),
         );

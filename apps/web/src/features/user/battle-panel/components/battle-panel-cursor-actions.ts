@@ -8,7 +8,7 @@ export const createBattlePanelCursorActions = (
     | { nextCursor?: string | null; previousCursor?: string | null }
     | undefined,
   page: number,
-  change: (state: { cursor: string; page: number }) => unknown,
+  change: (state: { cursor: string; page: number }) => void,
 ) => {
   const move = (direction: "next" | "previous") => {
     const cursor =

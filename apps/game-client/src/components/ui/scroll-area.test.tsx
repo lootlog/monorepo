@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { createRef } from "react";
+import { createRef, type PointerEventHandler } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ScrollArea } from "./scroll-area";
 
@@ -116,9 +116,9 @@ describe("ScrollArea", () => {
     const { container } = render(
       <ScrollArea orientation="horizontal">Content</ScrollArea>,
     );
-    const viewport = container.querySelector(
-      "[data-ll-scroll-area-viewport]",
-    ) as HTMLDivElement;
+    const viewport = container.querySelector("[data-ll-scroll-area-viewport]");
+    if (!(viewport instanceof HTMLDivElement))
+      throw new Error("Missing scroll viewport");
     Object.defineProperties(viewport, {
       clientWidth: { configurable: true, value: 100 },
       scrollLeft: { configurable: true, value: 0, writable: true },
@@ -149,9 +149,9 @@ describe("ScrollArea", () => {
     const { container } = render(
       <ScrollArea orientation="horizontal">Content</ScrollArea>,
     );
-    const viewport = container.querySelector(
-      "[data-ll-scroll-area-viewport]",
-    ) as HTMLDivElement;
+    const viewport = container.querySelector("[data-ll-scroll-area-viewport]");
+    if (!(viewport instanceof HTMLDivElement))
+      throw new Error("Missing scroll viewport");
     Object.defineProperties(viewport, {
       clientWidth: { configurable: true, value: 100 },
       scrollLeft: { configurable: true, value: 0, writable: true },
@@ -170,9 +170,9 @@ describe("ScrollArea", () => {
     const { container } = render(
       <ScrollArea orientation="horizontal">Content</ScrollArea>,
     );
-    const viewport = container.querySelector(
-      "[data-ll-scroll-area-viewport]",
-    ) as HTMLDivElement;
+    const viewport = container.querySelector("[data-ll-scroll-area-viewport]");
+    if (!(viewport instanceof HTMLDivElement))
+      throw new Error("Missing scroll viewport");
     Object.defineProperties(viewport, {
       clientWidth: { configurable: true, value: 100 },
       scrollLeft: { configurable: true, value: 0, writable: true },
@@ -188,7 +188,7 @@ describe("ScrollArea", () => {
     vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(100);
     vi.spyOn(HTMLElement.prototype, "scrollHeight", "get").mockReturnValue(300);
     vi.spyOn(HTMLElement.prototype, "scrollWidth", "get").mockReturnValue(100);
-    const onParentPointerDown = vi.fn();
+    const onParentPointerDown = vi.fn<PointerEventHandler<HTMLDivElement>>();
 
     render(
       <div onPointerDown={onParentPointerDown}>
@@ -202,7 +202,9 @@ describe("ScrollArea", () => {
         (child) => child.getAttribute("data-orientation") === "vertical",
       );
       expect(element).toBeDefined();
-      return element as HTMLElement;
+      if (!(element instanceof HTMLElement))
+        throw new Error("Missing scrollbar");
+      return element;
     });
 
     fireEvent.pointerDown(scrollbar, { button: 0, clientY: 20 });

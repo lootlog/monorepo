@@ -26,7 +26,7 @@ export const LootStatsPageSkeleton = () => {
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <SectionCard key={i}>
-            <SectionCardHeader title={<Skeleton className="mb-2 h-3 w-16" />} />
+            <SectionCardHeader title=<Skeleton className="mb-2 h-3 w-16" /> />
             <SectionCardContent className="flex flex-col gap-3">
               <Skeleton className="h-7 w-20" />
             </SectionCardContent>
@@ -36,13 +36,13 @@ export const LootStatsPageSkeleton = () => {
 
       <div className="grid gap-4 md:grid-cols-2">
         <SectionCard>
-          <SectionCardHeader title={<Skeleton className="mb-3 h-5 w-32" />} />
+          <SectionCardHeader title=<Skeleton className="mb-3 h-5 w-32" /> />
           <SectionCardContent className="flex flex-col gap-3">
             <Skeleton className="h-48 w-full rounded-lg" />
           </SectionCardContent>
         </SectionCard>
         <SectionCard>
-          <SectionCardHeader title={<Skeleton className="mb-3 h-5 w-32" />} />
+          <SectionCardHeader title=<Skeleton className="mb-3 h-5 w-32" /> />
           <SectionCardContent className="flex flex-col gap-3">
             <Skeleton className="h-48 w-full rounded-lg" />
           </SectionCardContent>

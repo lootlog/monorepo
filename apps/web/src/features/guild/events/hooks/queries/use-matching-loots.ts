@@ -2,9 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import {
   getLootsControllerFetchLootsByGuildIdQueryKey,
   lootsControllerFetchLootsByGuildId,
+  type LootsControllerFetchLootsByGuildIdParams,
 } from "@lootlog/client/main";
-import type { LootsControllerFetchLootsByGuildIdParams } from "@lootlog/client/main";
-import type { Loot } from "@/lib/loots/loot-types";
 
 const MATCHING_LOOTS_TIME_WINDOW_MS = 5 * 60 * 1000;
 
@@ -54,10 +53,7 @@ export const useMatchingLoots = ({
       { guildId },
       params,
     ),
-    queryFn: () =>
-      lootsControllerFetchLootsByGuildId({ guildId }, params) as Promise<
-        Loot[]
-      >,
+    queryFn: () => lootsControllerFetchLootsByGuildId({ guildId }, params),
     enabled: enabled && isValidParams,
   });
 };

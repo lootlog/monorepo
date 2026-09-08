@@ -2,18 +2,19 @@ import {
   ReservationFormFields,
   toReminderOffset,
   type ReminderValue,
-  type ReminderOffset,
+  toReminderValue,
 } from "@/features/guild/reservations/schedule/reservation-form-fields";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { resolveReservationSettings } from "@lootlog/domain/reservations";
 import { toast } from "sonner";
-import type { MyReservationsResponseDtoItemsItem } from "@lootlog/client/main";
 import {
+  type MyReservationsResponseDtoItemsItem,
   getListMyReservationsQueryKey,
   useUpdateMyReservation,
 } from "@lootlog/client/main";
+
 import { Button } from "@lootlog/ui/components/button";
 import { getReservationErrorMessage } from "@/features/guild/reservations/get-reservation-error-message";
 import {
@@ -28,9 +29,6 @@ type EditMyReservationFormProps = {
   onCancel: () => void;
   onSuccess: () => void;
 };
-
-const toReminderValue = (value: ReminderOffset | null): ReminderValue =>
-  value === null ? "none" : (String(value) as ReminderValue);
 
 export function EditMyReservationForm({
   reservation,

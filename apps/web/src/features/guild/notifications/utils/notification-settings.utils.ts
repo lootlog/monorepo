@@ -1,11 +1,12 @@
 import type { BadgeProps } from "@lootlog/ui/components/badge";
-import { CreateNotificationRuleDtoScheduleAnchor as NotificationScheduleAnchor } from "@lootlog/client/main";
-import type { CreateNotificationRuleDtoScheduleAnchor } from "@lootlog/client/main";
-import { CreateNotificationRuleDtoTriggerType as NotificationTriggerType } from "@lootlog/client/main";
-import type { CreateNotificationRuleDtoTriggerType } from "@lootlog/client/main";
-import type { GuildNotificationRulesResponseDto } from "@lootlog/client/main";
-import type { NotificationJobsResponseDto } from "@lootlog/client/main";
-import type { NotificationTargetResponseDto } from "@lootlog/client/main";
+import {
+  CreateNotificationRuleDtoScheduleAnchor as NotificationScheduleAnchor,
+  CreateNotificationRuleDtoTriggerType as NotificationTriggerType,
+  type CreateNotificationRuleDtoTriggerType,
+  type GuildNotificationRulesResponseDto,
+  type NotificationJobsResponseDto,
+  type NotificationTargetResponseDto,
+} from "@lootlog/client/main";
 
 type GuildNotificationTarget = NotificationTargetResponseDto;
 type GuildNotificationRule = GuildNotificationRulesResponseDto["items"][number];
@@ -14,7 +15,7 @@ export type GuildNotificationJob =
 
 export const getJobStatusBadgeProps = (
   status: string,
-): { variant: BadgeProps["variant"]; className?: string } => {
+): Pick<BadgeProps, "variant" | "className"> => {
   switch (status) {
     case "SENT":
       return {
@@ -57,8 +58,8 @@ export const getNotificationTriggerTranslationKey = (
 export const isSupportedGuildNotificationTrigger = (
   triggerType: CreateNotificationRuleDtoTriggerType,
 ) =>
-  SUPPORTED_GUILD_NOTIFICATION_TRIGGER_TYPES.includes(
-    triggerType as (typeof SUPPORTED_GUILD_NOTIFICATION_TRIGGER_TYPES)[number],
+  SUPPORTED_GUILD_NOTIFICATION_TRIGGER_TYPES.some(
+    (supported) => supported === triggerType,
   );
 
 export const getGuildNotificationTargetLabel = (
@@ -79,13 +80,13 @@ export const getGuildNotificationRuleNpcIds = (
     return [];
   }
 
-  if (typeof filters.npcId === "number") {
+  if (filters.npcId !== undefined && filters.npcId !== null) {
     npcIds.add(String(filters.npcId));
   }
 
   if (Array.isArray(filters.npcIds)) {
     for (const npcId of filters.npcIds) {
-      if (typeof npcId === "number") {
+      if (npcId !== undefined && npcId !== null) {
         npcIds.add(String(npcId));
       }
     }
@@ -145,17 +146,13 @@ export const getGuildNotificationRuleScheduleTranslationKey = (
   rule: Pick<GuildNotificationRule, "scheduleAnchor" | "scheduleOffsetMinutes">,
 ) => {
   if (
-    rule.scheduleAnchor ===
-      (NotificationScheduleAnchor.MAX_SPAWN as CreateNotificationRuleDtoScheduleAnchor) &&
+    rule.scheduleAnchor === NotificationScheduleAnchor.MAX_SPAWN &&
     rule.scheduleOffsetMinutes === 0
   ) {
     return "settings.notifications.schedule.maxSpawnExact";
   }
 
-  if (
-    rule.scheduleAnchor ===
-    (NotificationScheduleAnchor.MAX_SPAWN as CreateNotificationRuleDtoScheduleAnchor)
-  ) {
+  if (rule.scheduleAnchor === NotificationScheduleAnchor.MAX_SPAWN) {
     return "settings.notifications.schedule.maxSpawnBefore";
   }
 

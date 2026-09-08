@@ -102,7 +102,7 @@ export const StatsCustomizationModal = ({
     <Dialog open={open} onOpenChange={setOpen}>
       {compactTrigger ? (
         <Tooltip>
-          <TooltipTrigger render={<DialogTrigger render={triggerButton} />} />
+          <TooltipTrigger render=<DialogTrigger render={triggerButton} /> />
           <TooltipContent>{triggerLabel}</TooltipContent>
         </Tooltip>
       ) : (

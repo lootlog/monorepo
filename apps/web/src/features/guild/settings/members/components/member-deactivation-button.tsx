@@ -16,8 +16,9 @@ import {
   getMembersControllerGetGuildMembersQueryKey,
   getMembersControllerGetMemberLootlogConfigSummaryQueryKey,
   useMembersControllerDeactivateMember,
+  type MemberResponseDto as GuildMember,
 } from "@lootlog/client/main";
-import type { MemberResponseDto as GuildMember } from "@lootlog/client/main";
+
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { UserX } from "lucide-react";
@@ -105,7 +106,7 @@ export const MemberDeactivationButton = ({
           </AlertDialogCancel>
           <AlertDialogAction
             disabled={!guildId || deactivateMemberMutation.isPending}
-            render={<Button loading={deactivateMemberMutation.isPending} />}
+            render=<Button loading={deactivateMemberMutation.isPending} />
             onClick={(event) => {
               event.preventBaseUIHandler();
               if (!guildId || deactivateMemberMutation.isPending) {

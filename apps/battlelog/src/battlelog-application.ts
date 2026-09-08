@@ -20,7 +20,7 @@ import { makeBattleListFilter } from "#src/battles/catalog/battle-list-filter.se
 import { makeBattleMetadata } from "#src/battles/catalog/battle-metadata.service";
 import { makeBattlePagination } from "#src/battles/analytics/pagination.service";
 import { BattlelogConfig, type BattlelogConfiguration } from "#src/config/env";
-import { makeDrizzleDatabase, PgClientLive } from "#src/database/database";
+import { drizzleDatabaseEffect, PgClientLive } from "#src/database/database";
 import { makeBattleObjectStorage } from "#src/infrastructure/battle-object-storage";
 import { makeRedisStore } from "#src/infrastructure/redis-store";
 
@@ -44,7 +44,7 @@ export class BattlelogApplication extends Context.Service<
     BattlelogApplication,
     Effect.gen(function* () {
       const config = yield* BattlelogConfig;
-      const drizzle = yield* makeDrizzleDatabase;
+      const drizzle = yield* drizzleDatabaseEffect;
       const redisClient = yield* Redis.Redis;
       const redisFibers = yield* FiberSet.make<unknown, unknown>();
       const runRedis = yield* FiberSet.runtimePromise(redisFibers)<never>();
@@ -75,8 +75,8 @@ export class BattlelogApplication extends Context.Service<
         metadataService,
       );
       yield* battlesService.drainObjectDeletions.pipe(
-        Effect.catch((cause) =>
-          Effect.logError("Battle object cleanup retry failed", cause),
+        Effect.catch((error) =>
+          Effect.logError("Battle object cleanup retry failed", error),
         ),
         Effect.repeat(Schedule.spaced("5 seconds")),
         Effect.forkScoped,

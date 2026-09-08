@@ -9,17 +9,16 @@ import { useSettingsStore } from "@/store/settings.store";
 import { useGameStore } from "@/store/game.store";
 import { appendCatchingGuildsTooltipSection } from "./catching-guilds";
 
-const createOther = (): Other =>
-  ({
-    d: {
-      account: 9822301,
-      icon: "other.gif",
-      id: "617",
-      lvl: 300,
-      nick: "Other",
-      prof: "w",
-    },
-  }) as Other;
+const createOther = (): Other => ({
+  d: {
+    account: 9822301,
+    icon: "other.gif",
+    id: "617",
+    lvl: 300,
+    nick: "Other",
+    prof: "w",
+  },
+});
 
 function setOnlineOwner(guildMemberName?: string): void {
   useOnlineCharacterOwnersStore.getState().setPresenceResponse(
@@ -212,7 +211,7 @@ describe("appendCatchingGuildsTooltipSection", () => {
     expect(
       appendCatchingGuildsTooltipSection({
         baseHtml: "<div>Other</div>",
-        character: { d: {} } as Other,
+        character: {},
         currentHtml: "<div>Other</div>",
         kind: "other",
       }),

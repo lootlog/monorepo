@@ -61,23 +61,24 @@ export enum DiscordGuildSyncStatus {
   NOT_FOUND = "NOT_FOUND",
 }
 
-export interface NotificationFilters {
-  guildIds?: string[];
-  world?: string;
-  npcId?: number | null;
-  npcIds?: number[];
-  itemId?: number | null;
-  itemIds?: number[];
-}
+export const NotificationFiltersSchema = Schema.Struct({
+  guildIds: Schema.optionalKey(Schema.mutable(Schema.Array(Schema.String))),
+  world: Schema.optionalKey(Schema.String),
+  npcId: Schema.optionalKey(Schema.NullOr(Schema.Number)),
+  npcIds: Schema.optionalKey(Schema.mutable(Schema.Array(Schema.Number))),
+  itemId: Schema.optionalKey(Schema.NullOr(Schema.Number)),
+  itemIds: Schema.optionalKey(Schema.mutable(Schema.Array(Schema.Number))),
+});
+export type NotificationFilters = typeof NotificationFiltersSchema.Type;
 
 export interface LootCreatedNotificationEventV2 {
   version: 2;
   lootId: number;
   world: string;
-  guildIds: string[];
-  itemIds: number[];
-  itemNames: string[];
-  npcs: Array<{
+  guildIds: ReadonlyArray<string>;
+  itemIds: ReadonlyArray<number>;
+  itemNames: ReadonlyArray<string>;
+  npcs: ReadonlyArray<{
     type: string | null;
     lvl: number | null;
   }>;
@@ -94,19 +95,19 @@ export interface DiscordGuildChannelSnapshot {
   canView: boolean;
   canSend: boolean;
   hasRequiredPermissions: boolean;
-  requiredPermissions: string[];
-  grantedPermissions: string[];
-  missingPermissions: string[];
+  requiredPermissions: ReadonlyArray<string>;
+  grantedPermissions: ReadonlyArray<string>;
+  missingPermissions: ReadonlyArray<string>;
   lastSyncedAt: string;
 }
 
 export interface DiscordGuildSyncState {
   guildId: string;
-  status: DiscordGuildSyncStatus;
+  status: `${DiscordGuildSyncStatus}`;
   hasRequiredPermissions: boolean;
-  requiredPermissions: string[];
-  grantedPermissions: string[];
-  missingPermissions: string[];
+  requiredPermissions: ReadonlyArray<string>;
+  grantedPermissions: ReadonlyArray<string>;
+  missingPermissions: ReadonlyArray<string>;
   channelCount: number;
   selectableChannelCount: number;
   lastAttemptAt: string | null;
@@ -117,7 +118,7 @@ export interface DiscordGuildSyncState {
 
 export interface DiscordGuildChannelsSyncedEvent {
   guildId: string;
-  channels: DiscordGuildChannelSnapshot[];
+  channels: ReadonlyArray<DiscordGuildChannelSnapshot>;
   syncState: DiscordGuildSyncState;
 }
 
@@ -135,7 +136,7 @@ export interface DiscordGuildChannelDeletedEvent {
 
 export interface DiscordGuildChannelsSyncFailedEvent {
   guildId: string;
-  status: DiscordGuildSyncStatus;
+  status: `${DiscordGuildSyncStatus}`;
   lastAttemptAt: string;
   lastError: string;
 }
@@ -151,26 +152,43 @@ export interface DiscordNotificationSendTarget {
   targetType: NotificationTargetType;
 }
 
-export interface DiscordNotificationAllowedMentions {
+export type DiscordNotificationAllowedMentions = {
   parse?: Array<"roles" | "users" | "everyone">;
   roles?: string[];
   users?: string[];
   repliedUser?: boolean;
-}
+};
 
-export interface DiscordNotificationSendCommand {
-  notificationJobId: string;
-  provider: NotificationProvider.DISCORD;
-  ownerType: NotificationOwnerType;
-  ownerId: string;
-  guildId?: string | null;
-  content?: string;
-  title: string;
-  message: string;
-  metadata?: Record<string, unknown>;
-  allowedMentions?: DiscordNotificationAllowedMentions;
-  target: DiscordNotificationSendTarget;
-}
+export const DiscordNotificationSendCommandSchema = Schema.Struct({
+  notificationJobId: Schema.String,
+  provider: Schema.Literal("DISCORD"),
+  ownerType: Schema.Literals(["GUILD", "USER"]),
+  ownerId: Schema.String,
+  guildId: Schema.optionalKey(Schema.NullOr(Schema.String)),
+  content: Schema.optionalKey(Schema.String),
+  title: Schema.String,
+  message: Schema.String,
+  metadata: Schema.optionalKey(Schema.Record(Schema.String, Schema.Json)),
+  allowedMentions: Schema.optionalKey(
+    Schema.Struct({
+      parse: Schema.optionalKey(
+        Schema.mutable(
+          Schema.Array(Schema.Literals(["roles", "users", "everyone"])),
+        ),
+      ),
+      roles: Schema.optionalKey(Schema.mutable(Schema.Array(Schema.String))),
+      users: Schema.optionalKey(Schema.mutable(Schema.Array(Schema.String))),
+      repliedUser: Schema.optionalKey(Schema.Boolean),
+    }),
+  ),
+  target: Schema.Struct({
+    targetId: Schema.String,
+    externalId: Schema.String,
+    targetType: Schema.Literals(["CHANNEL", "DM"]),
+  }),
+});
+export type DiscordNotificationSendCommand =
+  typeof DiscordNotificationSendCommandSchema.Type;
 
 export interface DiscordNotificationDeliveryResultEvent {
   notificationJobId: string;
@@ -183,29 +201,29 @@ export interface DiscordNotificationDeliveryResultEvent {
 }
 
 export const NotificationOwnerTypeSchema = Schema.Literals([
-  NotificationOwnerType.GUILD,
-  NotificationOwnerType.USER,
+  `${NotificationOwnerType.GUILD}`,
+  `${NotificationOwnerType.USER}`,
 ]);
 export const NotificationProviderSchema = Schema.Literal(
-  NotificationProvider.DISCORD,
+  `${NotificationProvider.DISCORD}`,
 );
 export const NotificationTargetTypeSchema = Schema.Literals([
-  NotificationTargetType.CHANNEL,
-  NotificationTargetType.DM,
+  `${NotificationTargetType.CHANNEL}`,
+  `${NotificationTargetType.DM}`,
 ]);
 export const NotificationTriggerTypeSchema = Schema.Literals([
-  NotificationTriggerType.TIMER_BEFORE_SPAWN,
-  NotificationTriggerType.NPC_SPAWNED,
-  NotificationTriggerType.WATCHED_ITEM_DROPPED,
-  NotificationTriggerType.SCHEDULED_MESSAGE,
+  `${NotificationTriggerType.TIMER_BEFORE_SPAWN}`,
+  `${NotificationTriggerType.NPC_SPAWNED}`,
+  `${NotificationTriggerType.WATCHED_ITEM_DROPPED}`,
+  `${NotificationTriggerType.SCHEDULED_MESSAGE}`,
 ]);
 export const NotificationJobStatusSchema = Schema.Literals([
-  NotificationJobStatus.PENDING,
-  NotificationJobStatus.PROCESSING,
-  NotificationJobStatus.SENT,
-  NotificationJobStatus.FAILED,
-  NotificationJobStatus.BLOCKED,
-  NotificationJobStatus.CANCELED,
+  `${NotificationJobStatus.PENDING}`,
+  `${NotificationJobStatus.PROCESSING}`,
+  `${NotificationJobStatus.SENT}`,
+  `${NotificationJobStatus.FAILED}`,
+  `${NotificationJobStatus.BLOCKED}`,
+  `${NotificationJobStatus.CANCELED}`,
 ]);
 export const DiscordGuildSyncStatusSchema = Schema.Literals([
   DiscordGuildSyncStatus.SYNCED,

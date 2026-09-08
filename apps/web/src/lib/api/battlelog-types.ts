@@ -1,19 +1,21 @@
-import type { BattleCharactersResponseDtoOutputCharactersItem } from "@lootlog/client/battlelog";
-import type { BattleDurationStatsResponseDtoOutput } from "@lootlog/client/battlelog";
-import type { BattleRawResponseDtoOutputRawData } from "@lootlog/client/battlelog";
-import type { BattleRawResponseDtoOutputRawDataEventsItem } from "@lootlog/client/battlelog";
-import type { BattleResponseDtoOutput } from "@lootlog/client/battlelog";
-import type { BattleResponseDtoOutputWarriorsItem } from "@lootlog/client/battlelog";
-import type { BattleWarriorsSearchResponseDtoOutputWarriorsItem } from "@lootlog/client/battlelog";
-import type { BattlesControllerGetDashboardBattlesParams } from "@lootlog/client/battlelog";
-import type { BattlesListResponseDtoOutput } from "@lootlog/client/battlelog";
-import type { BattlesListResponseDtoOutputBattlesItem } from "@lootlog/client/battlelog";
-import type { BattlesListResponseDtoOutputBattlesItemWarriorsItem } from "@lootlog/client/battlelog";
-import type { AbyssSeasonResponseDtoOutput } from "@lootlog/client/battlelog";
-import type { HeadToHeadPaginatedResponseDtoOutputRecordsItem } from "@lootlog/client/battlelog";
-import type { PlayerVsPlayerPaginatedResponseDtoOutputBattlesItem } from "@lootlog/client/battlelog";
-import type { RatingDeltaByOpponentResponseDtoOutput } from "@lootlog/client/battlelog";
-import type { StreakResponseDtoOutput } from "@lootlog/client/battlelog";
+import type {
+  BattleCharactersResponseDtoOutputCharactersItem,
+  BattleDurationStatsResponseDtoOutput,
+  BattleRawResponseDtoOutputRawData,
+  BattleRawResponseDtoOutputRawDataEventsItem,
+  BattleResponseDtoOutput,
+  BattleResponseDtoOutputWarriorsItem,
+  BattleWarriorsSearchResponseDtoOutputWarriorsItem,
+  BattlesControllerGetDashboardBattlesParams,
+  BattlesListResponseDtoOutput,
+  BattlesListResponseDtoOutputBattlesItem,
+  BattlesListResponseDtoOutputBattlesItemWarriorsItem,
+  AbyssSeasonResponseDtoOutput,
+  HeadToHeadPaginatedResponseDtoOutputRecordsItem,
+  PlayerVsPlayerPaginatedResponseDtoOutputBattlesItem,
+  RatingDeltaByOpponentResponseDtoOutput,
+  StreakResponseDtoOutput,
+} from "@lootlog/client/battlelog";
 
 export type Battle =
   | BattleResponseDtoOutput

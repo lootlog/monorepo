@@ -1,15 +1,15 @@
-import { act, renderHook } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { act, renderHook, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi, onTestFinished } from "vitest";
 import { useHotkeys } from "@/hooks/use-hotkeys";
-import { useHotkeysStore } from "@/store/hotkeys.store";
+import { migrateHotkeysState, useHotkeysStore } from "@/store/hotkeys.store";
 import { useWindowsStore } from "@/store/windows.store";
 
-const enqueueReadyRoomInvitations = vi.fn(() => Promise.resolve());
-
-vi.mock("@/features/party-finder/ready-room-invitation-coordinator", () => ({
-  canEnqueueReadyRoomInvitations: () => true,
-  enqueueReadyRoomInvitations: () => enqueueReadyRoomInvitations(),
-}));
+import { configureApiClients } from "@lootlog/client/transport";
+import { readyRoomOrganizerFixture } from "@/test/ready-room-fixtures";
+import { setTestRuntimeGame } from "@/test/test-runtime-window";
+import { usePartyFinderStore } from "@/store/party-finder.store";
+import { useGlobalStore } from "@/store/global.store";
+import { resetReadyRoomInvitationCoordinatorForTests } from "@/features/party-finder/ready-room-invitation-coordinator";
 
 describe("useHotkeys", () => {
   beforeEach(() => {
@@ -53,6 +53,25 @@ describe("useHotkeys", () => {
     expect(useWindowsStore.getState()["quick-access"].open).toBe(true);
   });
 
+  it("keeps persisted binding precedence when legacy bindings overlap", () => {
+    const binding = { key: "X", shift: false, ctrl: false, alt: false };
+    useHotkeysStore.setState(
+      migrateHotkeysState({
+        bindings: {
+          "toggle-quick-access": binding,
+          "toggle-command": binding,
+        },
+      }),
+    );
+    useWindowsStore.setState(useWindowsStore.getInitialState(), true);
+    renderHook(() => useHotkeys());
+
+    act(() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "X" })));
+
+    expect(useWindowsStore.getState()["quick-access"].open).toBe(false);
+    expect(useWindowsStore.getState().command.open).toBe(false);
+  });
+
   it("runs a global action from an auxiliary mouse binding", () => {
     useHotkeysStore.getState().setBinding("toggle-quick-access", {
       type: "mouse",
@@ -76,7 +95,7 @@ describe("useHotkeys", () => {
     canvas.id = "GAME_CANVAS";
     document.body.append(input, canvas);
     input.focus();
-    const onMapPingStart = vi.fn(() => true);
+    const onMapPingStart = vi.fn<() => boolean>(() => true);
     renderHook(() => useHotkeys({ onMapPingStart }));
 
     const event = new MouseEvent("mousedown", {
@@ -99,8 +118,8 @@ describe("useHotkeys", () => {
     const canvas = document.createElement("canvas");
     canvas.id = "GAME_CANVAS";
     document.body.append(canvas);
-    const onMapPingStart = vi.fn(() => true);
-    const onMapPingEnd = vi.fn();
+    const onMapPingStart = vi.fn<() => boolean>(() => true);
+    const onMapPingEnd = vi.fn<(event: KeyboardEvent | MouseEvent) => void>();
     renderHook(() => useHotkeys({ onMapPingStart, onMapPingEnd }));
 
     act(() => {
@@ -133,8 +152,8 @@ describe("useHotkeys", () => {
       ctrl: false,
       alt: false,
     });
-    const onMapPingStart = vi.fn(() => true);
-    const onMapPingEnd = vi.fn();
+    const onMapPingStart = vi.fn<() => boolean>(() => true);
+    const onMapPingEnd = vi.fn<(event: KeyboardEvent | MouseEvent) => void>();
     renderHook(() => useHotkeys({ onMapPingStart, onMapPingEnd }));
 
     act(() => {
@@ -168,8 +187,8 @@ describe("useHotkeys", () => {
       ctrl: false,
       alt: false,
     });
-    const onMapPingStart = vi.fn(() => true);
-    const onMapPingCancel = vi.fn();
+    const onMapPingStart = vi.fn<() => boolean>(() => true);
+    const onMapPingCancel = vi.fn<() => void>();
     renderHook(() => useHotkeys({ onMapPingStart, onMapPingCancel }));
 
     act(() => {
@@ -194,7 +213,29 @@ describe("useHotkeys", () => {
     expect(onMapPingCancel).toHaveBeenCalledOnce();
   });
 
-  it("enqueues every explicit rapid invite-all hotkey activation", () => {
+  it("enqueues every explicit rapid invite-all hotkey activation", async () => {
+    resetReadyRoomInvitationCoordinatorForTests();
+    onTestFinished(resetReadyRoomInvitationCoordinatorForTests);
+    setTestRuntimeGame({
+      hero: {
+        accountId: "organizer-account",
+        characterId: "organizer-character",
+      },
+    });
+    usePartyFinderStore.getState().clearReadyRooms();
+    usePartyFinderStore.getState().mergeProjection(readyRoomOrganizerFixture);
+    usePartyFinderStore.getState().setReadyRoomsSynchronized(true);
+    useGlobalStore.getState().setSocketState({ connected: true, joined: true });
+    const requests: Request[] = [];
+    const fetch: typeof globalThis.fetch = (input, init) => {
+      requests.push(new Request(input, init));
+      return Promise.resolve(Response.json({ targets: [] }));
+    };
+    onTestFinished(
+      configureApiClients({
+        main: { baseUrl: "https://api.example.test", fetch },
+      }),
+    );
     renderHook(() => useHotkeys());
 
     act(() => {
@@ -206,6 +247,12 @@ describe("useHotkeys", () => {
       );
     });
 
-    expect(enqueueReadyRoomInvitations).toHaveBeenCalledTimes(2);
+    await waitFor(() => expect(requests).toHaveLength(2));
+    expect(await requests[0].json()).toEqual({
+      participantIds: ["participant-1"],
+    });
+    expect(await requests[1].json()).toEqual({
+      participantIds: ["participant-1"],
+    });
   });
 });

@@ -44,9 +44,7 @@ export const LootStatsFiltersMobile = ({
         <Label>{t("loots.stats.filters.period")}</Label>
         <PeriodSelector
           value={period}
-          onValueChange={(value) =>
-            onPeriodChange(value as LootsControllerGetLootStatsPeriod)
-          }
+          onValueChange={(value) => onPeriodChange(value)}
           width="w-full"
           className="h-9"
         />

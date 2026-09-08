@@ -9,7 +9,7 @@ import {
 } from "@lootlog/schema/npc-routing";
 import { Permission } from "@lootlog/schema/permissions";
 import type { ServerEvent } from "@lootlog/protocol/realtime";
-import { Option, Predicate, Schema } from "effect";
+import { Function, Option, Predicate, Schema } from "effect";
 import type { UserGuildData } from "#src/guilds/guild";
 import type { SessionData } from "#src/realtime/session";
 
@@ -54,8 +54,7 @@ export const isOrganizationAdministrator = (
   );
 };
 
-const npcRouting = (npc: unknown): Routing | null => {
-  const decoded = decodeNpc(npc);
+const npcRouting = Function.compose(decodeNpc, (decoded): Routing | null => {
   if (
     Option.isNone(decoded) ||
     !Number.isFinite(decoded.value.lvl) ||
@@ -67,13 +66,12 @@ const npcRouting = (npc: unknown): Routing | null => {
     tier: getNpcRoutingTier(decoded.value),
     npcLevel: decoded.value.lvl,
   };
-};
+});
 
 const mutationRouting = (
-  value: unknown,
+  decoded: ReturnType<typeof decodeRouting>,
   requiresLevel: boolean,
 ): Routing | null => {
-  const decoded = decodeRouting(value);
   if (Option.isNone(decoded)) return null;
   const routing = decoded.value;
   if (routing.npcLevel === undefined) {
@@ -115,7 +113,10 @@ const eventRouting = (event: NpcEvent): Routing | null => {
     case "timer.deleted":
     case "chat.updated":
     case "chat.deleted":
-      return mutationRouting(payload.routing, event.type === "timer.deleted");
+      return mutationRouting(
+        decodeRouting(payload.routing),
+        event.type === "timer.deleted",
+      );
   }
 };
 

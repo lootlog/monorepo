@@ -57,15 +57,13 @@ export const EventHeroLoots = ({
             <>
               <ChevronLink
                 className="inline-flex h-8 shrink-0 items-center gap-1 text-xs"
-                render={
-                  <Link
-                    to="/$guildId"
-                    params={{ guildId }}
-                    search={{
-                      npcs: activeHeroName ?? heroNpcNames.join(","),
-                    }}
-                  />
-                }
+                render=<Link
+                  to="/$guildId"
+                  params={{ guildId }}
+                  search={{
+                    npcs: activeHeroName ?? heroNpcNames.join(","),
+                  }}
+                />
               >
                 {t("events.loots.showAll")}
               </ChevronLink>

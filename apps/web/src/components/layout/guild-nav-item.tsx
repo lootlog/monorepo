@@ -65,7 +65,7 @@ export const GuildNavItem: FC<GuildNavItemProps> = ({
       )}
     >
       <AvatarImage
-        src={guild.icon as string}
+        src={guild.icon ?? undefined}
         alt={guild.name}
         className={cn(
           "pointer-events-none select-none transition-opacity",
@@ -93,7 +93,8 @@ export const GuildNavItem: FC<GuildNavItemProps> = ({
                 render={
                   <div className="relative mb-2 flex w-full items-center justify-center">
                     <Link
-                      to={`/${guild.vanityUrl ?? guild.id}` as string}
+                      to="/$guildId"
+                      params={{ guildId: guild.vanityUrl ?? guild.id }}
                       draggable={false}
                       className="group/guild-item isolate block relative"
                       onClick={handleClick}

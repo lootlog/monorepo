@@ -1,44 +1,44 @@
-import { render, screen } from "@testing-library/react";
-import type { ReactNode } from "react";
-import { describe, expect, it, vi } from "vitest";
-
-vi.mock("@/components/settings/settings-sync-status", () => ({
-  SettingsSyncStatus: () => <div>sync-status</div>,
-}));
-
-vi.mock("@/components/settings/settings-tab-layout", () => ({
-  SettingsTabLayout: ({
-    title,
-    description,
-    children,
-  }: {
-    title: string;
-    description?: string;
-    children: ReactNode;
-  }) => (
-    <section>
-      <h1>{title}</h1>
-      {description ? <p>{description}</p> : null}
-      {children}
-    </section>
-  ),
-}));
-
-vi.mock("@/hooks/use-game-account-preferences-sync-status", () => ({
-  useGameAccountPreferencesSyncIndicator: () => "idle",
-}));
-
-vi.mock("./notification-category-form", () => ({
-  NotificationCategoryForm: ({ categoryKey }: { categoryKey: string }) => (
-    <div>{categoryKey}</div>
-  ),
-}));
+import { getUsersControllerGetUserGameAccountPreferencesQueryKey } from "@lootlog/client/main";
+import { createGameAccountPreferences } from "@/test/game-account-preferences-fixtures";
+import { setTestRuntimeGame } from "@/test/test-runtime-window";
+import {
+  act,
+  render as renderUi,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import { Profiler } from "react";
+import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import { NotificationsSettingsTab } from "./notifications-settings-tab";
 
+let harness: ReturnType<typeof createGuildPreferencesTest>;
+beforeEach(() => {
+  harness = createGuildPreferencesTest();
+});
+const render = () => {
+  let commits = 0;
+  return renderUi(
+    <Profiler
+      id="settings"
+      onRender={() => {
+        commits += 1;
+        if (commits > 20)
+          throw new Error(
+            "Settings repeatedly reset their form without input changes",
+          );
+      }}
+    >
+      <NotificationsSettingsTab />
+    </Profiler>,
+    { wrapper: harness.wrapper },
+  );
+};
+
 describe("NotificationsSettingsTab", () => {
   it("renders translated tab copy instead of raw settings keys", () => {
-    render(<NotificationsSettingsTab />);
+    render();
 
     expect(
       screen.getByRole("heading", { name: "Ustawienia powiadomień" }),
@@ -54,5 +54,27 @@ describe("NotificationsSettingsTab", () => {
     expect(
       screen.queryByText("settings.notifications.title"),
     ).not.toBeInTheDocument();
+  });
+  it("applies refreshed account preferences without restarting the form reset loop", async () => {
+    setTestRuntimeGame({ hero: { accountId: "202" } });
+    const key = getUsersControllerGetUserGameAccountPreferencesQueryKey({
+      accountId: "202",
+    });
+    const initial = createGameAccountPreferences("202");
+    initial.notifications.ELITE2.show = true;
+    harness.queryClient.setQueryData(key, initial);
+    render();
+    const control = document.getElementById("ELITE2-show");
+    expect(control).toBeChecked();
+    act(() =>
+      harness.queryClient.setQueryData(key, {
+        ...initial,
+        notifications: {
+          ...initial.notifications,
+          ELITE2: { ...initial.notifications.ELITE2, show: false },
+        },
+      }),
+    );
+    await waitFor(() => expect(control).not.toBeChecked());
   });
 });

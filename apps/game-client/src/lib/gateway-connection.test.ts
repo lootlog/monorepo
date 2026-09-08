@@ -21,11 +21,12 @@ class GatewayWebSocket extends EventTarget {
 
   send(data: string | Uint8Array) {
     const json = this.protocols.includes("lootlog.realtime.json.v1");
-    expect(typeof data === "string").toBe(json);
+    if (data instanceof Uint8Array === json)
+      throw new Error("Unexpected realtime encoding");
     const request =
-      typeof data === "string"
-        ? parseRealtimeFrame(JSON.parse(data))
-        : decodeRealtimeFrame(data);
+      data instanceof Uint8Array
+        ? decodeRealtimeFrame(data)
+        : parseRealtimeFrame(JSON.parse(data));
     if (!("requestId" in request) || !request.requestId) {
       throw new Error("Expected a realtime request");
     }

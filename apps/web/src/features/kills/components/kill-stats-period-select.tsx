@@ -20,7 +20,10 @@ export const KillStatsPeriodSelect: React.FC<KillStatsPeriodSelectProps> = ({
   return (
     <PeriodSelector
       value={value}
-      onValueChange={(nextValue) => onValueChange(nextValue as KillStatsPeriod)}
+      onValueChange={(nextValue) => {
+        if (nextValue !== "90d" && nextValue !== "180d")
+          onValueChange(nextValue);
+      }}
       excludePeriods={["90d", "180d"]}
       allLabel={allLabel}
       width={className ?? "w-[140px]"}

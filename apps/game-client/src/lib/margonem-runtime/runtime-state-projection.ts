@@ -58,10 +58,8 @@ type Dependencies = {
   adapter: MargonemRuntimeAdapter;
 };
 
-const EMPTY_NPCS = Object.freeze({}) as Readonly<Record<number, RuntimeNpc>>;
-const EMPTY_OTHERS = Object.freeze({}) as Readonly<
-  Record<string, RuntimeOther>
->;
+const EMPTY_NPCS: Readonly<Record<number, RuntimeNpc>> = Object.freeze({});
+const EMPTY_OTHERS: Readonly<Record<string, RuntimeOther>> = Object.freeze({});
 
 function deletesOther(entry: OtherEntry): boolean {
   return "del" in entry && entry.del === 1;
@@ -364,7 +362,7 @@ export class RuntimeStateProjection {
     const heroLevel = useGameStore.getState().game?.hero.level;
 
     for (const rawNpc of event.npcs ?? []) {
-      const npc = this.composeNpc(rawNpc as AppliedNpcEntry, heroLevel);
+      const npc = this.composeNpc(rawNpc, heroLevel);
       if (npc) upserts.push(npc);
     }
 
@@ -426,6 +424,8 @@ export class RuntimeStateProjection {
     }
   }
 
+  // NpcManager.mergeNpcDataWithNpcIconData resolves raw icon.id to its string
+  // before game storage; ingress can contain either that reference or the string.
   private resolveNpcIcon(icon: AppliedNpcEntry["icon"]): string | undefined {
     if (typeof icon === "string") return icon;
     return this.icons.get(getOptionalProperty(icon, "id") ?? -1);

@@ -1,57 +1,18 @@
 // @vitest-environment happy-dom
 
+import { initializeTestTranslations } from "@/lib/testing/i18n";
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
-import type { Loot } from "@/lib/loots/loot-types";
+import { afterEach, describe, expect, it } from "vitest";
+import { createLoot } from "@/lib/testing/loot";
+import { createLootTestWrapper } from "@/lib/testing/loot-wrapper";
 import { MatchingLootsSection } from "./matching-loots-section";
 
-vi.mock("@tanstack/react-router", () => ({
-  Link: ({
-    children,
-    params,
-    search,
-    to: _to,
-    ...props
-  }: {
-    children: React.ReactNode;
-    params: { guildId: string };
-    search: { npcs: string };
-    to: string;
-    [key: string]: unknown;
-  }) => (
-    <a href={`/${params.guildId}?npcs=${search.npcs}`} {...props}>
-      {children}
-    </a>
-  ),
-}));
-
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
-vi.mock(
-  "@/features/guild/loots-list/components/loots-list/loots-list-item",
-  () => ({
-    LootsListItem: ({
-      loot,
-      variant,
-    }: {
-      loot: Loot;
-      variant?: "card" | "embedded";
-    }) => (
-      <div data-testid={`loot-${loot.id}`} data-variant={variant}>
-        loot-item
-      </div>
-    ),
-  }),
-);
+await initializeTestTranslations();
 
 afterEach(cleanup);
 
 describe("MatchingLootsSection", () => {
-  it("renders matching loots as embedded rows inside one shared card", () => {
+  it("renders matching loots as embedded rows inside one shared card", async () => {
     render(
       <MatchingLootsSection
         loots={[createLoot(1), createLoot(2)]}
@@ -59,6 +20,7 @@ describe("MatchingLootsSection", () => {
         guildId="guild-one"
         npcName="Potulny Berserker"
       />,
+      { wrapper: await createLootTestWrapper() },
     );
 
     const section = screen.getByTestId("matching-loots-card");
@@ -69,19 +31,25 @@ describe("MatchingLootsSection", () => {
     expect(header?.className).toContain("min-h-12");
     expect(header?.className).toContain("py-2");
     expect(screen.queryByText("2")).toBeNull();
-    expect(screen.getByTestId("loot-1").dataset.variant).toBe("embedded");
-    expect(screen.getByTestId("loot-2").dataset.variant).toBe("embedded");
+    expect(
+      screen
+        .getAllByTestId("loot-list-item")
+        .map((row) => row.dataset.presentation),
+    ).toEqual(["embedded", "embedded"]);
     const showAllLink = screen.getByRole("link", {
       name: "events.loots.showAll",
     });
-    expect(showAllLink.getAttribute("href")).toBe(
-      "/guild-one?npcs=Potulny Berserker",
+    const target = new URL(
+      showAllLink.getAttribute("href") ?? "",
+      "https://web.test",
     );
+    expect(target.pathname).toBe("/guild-one");
+    expect(target.searchParams.get("npcs")).toBe("Potulny Berserker");
     expect(showAllLink.getAttribute("class")).toContain("hover:text-primary");
     expect(showAllLink.getAttribute("class")).not.toContain("hover:bg-");
   });
 
-  it("keeps loading and empty states inside the shared card", () => {
+  it("keeps loading and empty states inside the shared card", async () => {
     const { rerender } = render(
       <MatchingLootsSection
         loots={[]}
@@ -89,6 +57,7 @@ describe("MatchingLootsSection", () => {
         guildId="guild-one"
         npcName="Potulny Berserker"
       />,
+      { wrapper: await createLootTestWrapper() },
     );
 
     expect(screen.getByTestId("matching-loots-card")).toBeTruthy();
@@ -111,7 +80,3 @@ describe("MatchingLootsSection", () => {
     expect(screen.getByText("events.killDetail.noLoots")).toBeTruthy();
   });
 });
-
-function createLoot(id: number): Loot {
-  return { id } as Loot;
-}

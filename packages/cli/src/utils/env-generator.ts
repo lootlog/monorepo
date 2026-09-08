@@ -48,14 +48,16 @@ const LOCAL_DATABASES = {
 
 type LocalDatabaseName = keyof typeof LOCAL_DATABASES;
 
-const APP_DATABASES: Record<string, LocalDatabaseName> = {
-  root: "lootlog",
-  "apps/api": "lootlog",
-  "apps/auth": "users",
-  "apps/activity": "activityLog",
-  "apps/battlelog": "battleLog",
-  "apps/search": "lootlog",
-};
+const APP_DATABASES = new Map<string, LocalDatabaseName>(
+  Object.entries({
+    root: "lootlog",
+    "apps/api": "lootlog",
+    "apps/auth": "users",
+    "apps/activity": "activityLog",
+    "apps/battlelog": "battleLog",
+    "apps/search": "lootlog",
+  } satisfies Record<string, LocalDatabaseName>),
+);
 
 const SHARED_KEYS = [
   "ACTIVITY_EVENT_SIGNATURE_SECRET",
@@ -208,7 +210,7 @@ const getDatabaseName = (
   envFileName: string | undefined,
   originalValue: string,
 ): LocalDatabaseName => {
-  const appDatabase = envFileName ? APP_DATABASES[envFileName] : undefined;
+  const appDatabase = envFileName ? APP_DATABASES.get(envFileName) : undefined;
 
   if (appDatabase) {
     return appDatabase;
@@ -255,15 +257,17 @@ const deriveAuthPostgresValue = (
   sharedValues: Map<string, string>,
 ): string | null => {
   const credentials = getDatabaseCredentials(sharedValues, "users");
-  const postgresValuesByKey: Partial<Record<string, string>> = {
-    POSTGRESQL_HOST: DEFAULT_POSTGRESQL_HOST,
-    POSTGRESQL_PORT: credentials.port,
-    POSTGRESQL_USER: credentials.user,
-    POSTGRESQL_PASSWORD: credentials.password,
-    POSTGRESQL_DATABASE: credentials.database,
-  };
+  const postgresValuesByKey = new Map(
+    Object.entries({
+      POSTGRESQL_HOST: DEFAULT_POSTGRESQL_HOST,
+      POSTGRESQL_PORT: credentials.port,
+      POSTGRESQL_USER: credentials.user,
+      POSTGRESQL_PASSWORD: credentials.password,
+      POSTGRESQL_DATABASE: credentials.database,
+    }),
+  );
 
-  return postgresValuesByKey[key] ?? null;
+  return postgresValuesByKey.get(key) ?? null;
 };
 
 export const enhanceVariablesWithDerivedValues = (

@@ -1,7 +1,5 @@
-import type {
-  BattleWarrior,
-  RawBattleParsedEvent,
-} from "@/lib/api/battlelog-types";
+import { createBattleWarrior as buildBattleWarrior } from "@/lib/testing/battle";
+import type { RawBattleParsedEvent } from "@/lib/api/battlelog-types";
 import { describe, expect, it } from "vitest";
 import {
   buildBattleLogRawSearchText,
@@ -10,23 +8,23 @@ import {
   normalizeBattleLogSearchText,
 } from "./battle-log-search";
 
-const attacker = {
+const attacker = buildBattleWarrior({
   originalId: "617",
   name: "Demodras",
   lvl: 306,
   prof: "b",
   icon: "/paid/her_atka_k.gif",
   team: 2,
-} as BattleWarrior;
+});
 
-const defender = {
+const defender = buildBattleWarrior({
   originalId: "38798",
   name: "zpwrama",
   lvl: 309,
   prof: "w",
   icon: "/kuf/uni_xxxiv_ork_m2.gif",
   team: 1,
-} as BattleWarrior;
+});
 
 describe("battle log search", () => {
   it("normalizes case and Polish diacritics", () => {

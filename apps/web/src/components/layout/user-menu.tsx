@@ -134,13 +134,11 @@ export const UserMenu = () => {
               <DropdownMenuItem
                 closeOnClick={false}
                 disabled={isLogoutPending}
-                render={
-                  <Button
-                    variant="ghost"
-                    loading={isLogoutPending}
-                    icon={<LogOut className="size-4" />}
-                  />
-                }
+                render=<Button
+                  variant="ghost"
+                  loading={isLogoutPending}
+                  icon={<LogOut className="size-4" />}
+                />
                 onClick={logout}
                 className="w-full justify-start rounded-lg px-2.5 py-2"
               >

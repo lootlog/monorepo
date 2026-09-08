@@ -105,8 +105,10 @@ export const applyPresenceUpdates = (
     let updatedAccountPresences: PlayerPresence[] | undefined;
 
     if (update.status === "offline") {
-      const filteredPresences = currentAccountPresences.filter(
-        (presence) => getPresenceKey(presence) !== presenceKey,
+      const filteredPresences = currentAccountPresences.filter((presence) =>
+        update.sessionId
+          ? presence.sessionId !== update.sessionId
+          : getPresenceKey(presence) !== presenceKey,
       );
       if (filteredPresences.length === currentAccountPresences.length) {
         continue;
@@ -146,6 +148,7 @@ export const applyPresenceUpdates = (
   return next;
 };
 
+// Decode the legacy wire level: numbers retain fractions, strings use integer parsing.
 const normalizePresenceLevel = (level?: number | string) => {
   if (typeof level === "number" && Number.isFinite(level)) {
     return level;

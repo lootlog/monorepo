@@ -18,10 +18,10 @@ export interface KillQueryCache {
   ) => Effect.Effect<S["Type"], unknown>;
 }
 
-export const buildKillQueryCacheKey = (
+export const buildKillQueryCacheKey = <Params extends object>(
   scope: string,
   ownerId: string,
-  params: Record<string, unknown>,
+  params: Params,
 ) =>
   `kill-stats:${scope}:${ownerId}:${Buffer.from(stableJsonStringify(params)).toString("base64url")}`;
 

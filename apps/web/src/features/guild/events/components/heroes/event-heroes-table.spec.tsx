@@ -1,92 +1,48 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { configureApiClients } from "@lootlog/client/transport";
+import { RouterProvider } from "@tanstack/react-router";
+import { createOrganizationTestRouter } from "@/lib/testing/router";
+import { initializeTestTranslations } from "@/lib/testing/i18n";
 // @vitest-environment happy-dom
 
 import type { ReactNode } from "react";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  cleanup,
+  fireEvent,
+  render as renderElement,
+  screen,
+} from "@testing-library/react";
+import { afterEach, describe, expect, it, onTestFinished, vi } from "vitest";
 import { EventHeroesTable } from "./event-heroes-table";
 
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string, options?: Record<string, unknown>) => {
-      if (key === "events.heroes.columns.idValue") {
-        return `ID: ${String(options?.id)}`;
-      }
+await initializeTestTranslations({
+  "events.heroes.columns.idValue": "ID: {{id}}",
+});
 
-      return key;
-    },
-  }),
-}));
-
-vi.mock("@tanstack/react-router", () => ({
-  Link: ({
-    children,
-    className,
-    params,
-  }: {
-    children: ReactNode;
-    className?: string;
-    params: Record<string, string>;
-  }) => (
-    <a
-      href={`/${params.guildId}/events/${params.eventId}/heroes/${params.heroId}`}
-      className={className}
-    >
-      {children}
-    </a>
-  ),
-}));
-
-vi.mock("@/components/tiles", () => ({
-  NpcTile: ({ npc }: { npc: { name: string } }) => <span>{npc.name}</span>,
-}));
-
-vi.mock("./hero-window-status-badge", () => ({
-  HeroWindowStatusBadge: () => <span>hero-status</span>,
-}));
-
-vi.mock("./hero-timer-display", () => ({
-  HeroTimerDisplay: () => <span>hero-timer</span>,
-}));
-
-vi.mock("@lootlog/ui/components/dropdown-menu", () => ({
-  DropdownMenu: ({ children }: { children: ReactNode }) => (
-    <div>{children}</div>
-  ),
-  DropdownMenuContent: ({ children }: { children: ReactNode }) => (
-    <div>{children}</div>
-  ),
-  DropdownMenuItem: ({
-    children,
-    onClick,
-  }: {
-    children: ReactNode;
-    onClick?: () => void;
-  }) => <button onClick={onClick}>{children}</button>,
-  DropdownMenuTrigger: ({
-    children,
-    render,
-  }: {
-    children?: ReactNode;
-    render?: ReactNode;
-  }) => render ?? children,
-}));
-
-vi.mock("@lootlog/ui/components/confirm-delete-dialog", () => ({
-  ConfirmDeleteDialog: ({
-    onConfirm,
-    trigger,
-  }: {
-    onConfirm: () => void;
-    trigger: ReactNode;
-  }) => (
-    <div>
-      {trigger}
-      <button type="button" onClick={onConfirm}>
-        confirm-delete
-      </button>
-    </div>
-  ),
-}));
+async function render(element: ReactNode) {
+  const queryClient = new QueryClient();
+  onTestFinished(() => queryClient.clear());
+  onTestFinished(
+    configureApiClients({
+      main: {
+        baseUrl: "https://api.test",
+        fetch: async () =>
+          Response.json({
+            hasTimer: true,
+            windowStatus: "WAITING",
+            minSpawnTime: "2026-08-12T09:00:00Z",
+            maxSpawnTime: "2026-08-12T09:30:00Z",
+            overdueMs: null,
+          }),
+      },
+    }),
+  );
+  const router = createOrganizationTestRouter(
+    <QueryClientProvider client={queryClient}>{element}</QueryClientProvider>,
+  );
+  await router.load();
+  return renderElement(<RouterProvider router={router} />);
+}
 
 afterEach(cleanup);
 
@@ -149,13 +105,13 @@ describe("EventHeroesTable", () => {
     ],
   };
 
-  it("renders responsive hero data and preserves all interactions", () => {
+  it("renders responsive hero data and preserves all interactions", async () => {
     const onAddHero = vi.fn();
     const onDeleteHero = vi.fn();
     const onEditHero = vi.fn();
     const onManageMaps = vi.fn();
 
-    const { container } = render(
+    const { container } = await render(
       <EventHeroesTable
         {...defaultProps}
         onAddHero={onAddHero}
@@ -204,8 +160,8 @@ describe("EventHeroesTable", () => {
     expect(actionsHeader.querySelector(".sr-only")).toBeTruthy();
 
     expect(screen.getByText("Potulny Berserker (284w)")).toBeTruthy();
-    expect(screen.getByText("hero-status")).toBeTruthy();
-    expect(screen.getByText("hero-timer")).toBeTruthy();
+    expect(await screen.findByText("Oczekiwanie")).toBeTruthy();
+    expect(container.querySelector(".lucide-clock")).not.toBeNull();
     expect(container.querySelector(".lucide-chevron-right")).toBeNull();
     expect(
       screen
@@ -228,11 +184,23 @@ describe("EventHeroesTable", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "events.heroes.addButton" }),
     );
-    fireEvent.click(screen.getByRole("button", { name: "events.heroes.edit" }));
     fireEvent.click(
-      screen.getByRole("button", { name: "events.heroes.manageMaps" }),
+      screen.getByRole("button", { name: "events.heroes.actions" }),
     );
-    fireEvent.click(screen.getByRole("button", { name: "confirm-delete" }));
+    fireEvent.click(
+      await screen.findByRole("menuitem", { name: "events.heroes.edit" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "events.heroes.actions" }),
+    );
+    fireEvent.click(
+      await screen.findByRole("menuitem", { name: "events.heroes.manageMaps" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "events.heroes.actions" }),
+    );
+    fireEvent.click(await screen.findByText("events.heroes.deleteAction"));
+    fireEvent.click(await screen.findByRole("button", { name: "Usuń" }));
 
     expect(onAddHero).toHaveBeenCalledOnce();
     expect(onEditHero).toHaveBeenCalledWith(defaultProps.rows[0]?.hero);
@@ -240,8 +208,8 @@ describe("EventHeroesTable", () => {
     expect(onDeleteHero).toHaveBeenCalledWith("hero-1");
   });
 
-  it("omits management controls and the whole actions column", () => {
-    render(<EventHeroesTable {...defaultProps} canManage={false} />);
+  it("omits management controls and the whole actions column", async () => {
+    await render(<EventHeroesTable {...defaultProps} canManage={false} />);
 
     expect(
       screen.queryByRole("button", { name: "events.heroes.addButton" }),
@@ -256,8 +224,8 @@ describe("EventHeroesTable", () => {
     ).toBeNull();
   });
 
-  it("keeps the empty state inside the card", () => {
-    render(<EventHeroesTable {...defaultProps} rows={[]} />);
+  it("keeps the empty state inside the card", async () => {
+    await render(<EventHeroesTable {...defaultProps} rows={[]} />);
 
     const emptyState = screen.getByText("events.heroes.empty");
     expect(emptyState.closest('[data-slot="card"]')).toBeTruthy();

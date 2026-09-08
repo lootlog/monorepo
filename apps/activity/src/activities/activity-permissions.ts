@@ -8,6 +8,9 @@ import { Redis } from "effect/unstable/persistence";
 import { ActivityConfig } from "#src/config/activity-config";
 import { ApiHttpClient } from "#src/http/api-http-client";
 
+const CachedPermissions = Schema.Array(UserGuildPermissionsDtoSchema);
+type CachedValue = string | typeof CachedPermissions.Type;
+
 export interface PermissionsValue {
   readonly resolveGuildId: (id: string) => Effect.Effect<string | null, Error>;
   readonly getUserGuildPermissions: (
@@ -26,7 +29,10 @@ export class Permissions extends Context.Service<
     Effect.gen(function* () {
       const config = yield* ActivityConfig;
       const apiHttpClient = yield* ApiHttpClient;
-      const memory = new Map<string, { expiresAt: number; value: unknown }>();
+      const memory = new Map<
+        string,
+        { expiresAt: number; value: CachedValue }
+      >();
       const redis = yield* Redis.Redis;
       if (config.redisUrl) {
         yield* redis
@@ -39,9 +45,12 @@ export class Permissions extends Context.Service<
       }
       const get = <A>(
         key: string,
-        decodeValue: (value: unknown) => A,
-        decodeJson: (value: string) => A,
+        schema: Schema.Codec<A>,
       ): Effect.Effect<A | undefined, Redis.RedisError | Error> => {
+        const decodeValue = Schema.decodeUnknownSync(schema);
+        const decodeJson = Schema.decodeUnknownSync(
+          Schema.fromJsonString(schema),
+        );
         const decode = <Value>(value: Value, decoder: (value: Value) => A) =>
           Effect.try({
             try: () => decoder(value),
@@ -63,7 +72,7 @@ export class Permissions extends Context.Service<
       };
       const set = (
         key: string,
-        value: unknown,
+        value: CachedValue,
       ): Effect.Effect<void, Redis.RedisError> => {
         if (config.redisUrl) {
           return redis
@@ -75,23 +84,16 @@ export class Permissions extends Context.Service<
         });
       };
       const decodeGuild = Schema.decodeUnknownSync(
-        Schema.Struct({ id: Schema.NonEmptyString }),
+        Schema.fromJsonString(Schema.Struct({ id: Schema.NonEmptyString })),
       );
       const decodePermissions = Schema.decodeUnknownSync(
-        Schema.Array(UserGuildPermissionsDtoSchema),
-      );
-      const decodeString = Schema.decodeUnknownSync(Schema.String);
-      const decodeStringJson = Schema.decodeUnknownSync(
-        Schema.fromJsonString(Schema.String),
-      );
-      const decodePermissionsJson = Schema.decodeUnknownSync(
-        Schema.fromJsonString(Schema.Array(UserGuildPermissionsDtoSchema)),
+        Schema.fromJsonString(CachedPermissions),
       );
       const resolveGuildId = Effect.fn("Permissions.resolveGuildId")(function* (
         id: string,
       ) {
         const key = `guild-id:${id}`;
-        const cached = yield* get(key, decodeString, decodeStringJson).pipe(
+        const cached = yield* get(key, Schema.String).pipe(
           Effect.mapError(
             (cause) => new Error("Guild cache read failed", { cause }),
           ),
@@ -107,12 +109,7 @@ export class Permissions extends Context.Service<
             new Error(`Guild resolution failed with ${response.status}`),
           );
         const guild = yield* Effect.try({
-          try: () =>
-            decodeGuild(
-              Schema.decodeUnknownSync(Schema.fromJsonString(Schema.Unknown))(
-                new TextDecoder().decode(response.body),
-              ),
-            ),
+          try: () => decodeGuild(new TextDecoder().decode(response.body)),
           catch: (cause) => new Error("Guild response was invalid", { cause }),
         });
         yield* set(key, guild.id).pipe(
@@ -125,11 +122,9 @@ export class Permissions extends Context.Service<
       const getUserPermissions = Effect.fn("Permissions.getUserPermissions")(
         function* (discordId: string, userId: string) {
           const key = `permissions:${userId}:${discordId}`;
-          const cached = yield* get(
-            key,
-            decodePermissions,
-            decodePermissionsJson,
-          ).pipe(Effect.catch(() => Effect.succeed(undefined)));
+          const cached = yield* get(key, CachedPermissions).pipe(
+            Effect.catch(() => Effect.succeed(undefined)),
+          );
           if (cached) return cached;
           const url = new URL(
             "/internal/guilds/user-permissions",
@@ -150,11 +145,7 @@ export class Permissions extends Context.Service<
                 }
                 return Effect.try({
                   try: () =>
-                    decodePermissions(
-                      Schema.decodeUnknownSync(
-                        Schema.fromJsonString(Schema.Unknown),
-                      )(new TextDecoder().decode(response.body)),
-                    ),
+                    decodePermissions(new TextDecoder().decode(response.body)),
                   catch: (cause) =>
                     new Error("Permissions response was invalid", { cause }),
                 });

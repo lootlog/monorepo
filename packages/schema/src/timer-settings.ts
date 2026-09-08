@@ -68,11 +68,6 @@ export interface UserGuildTimerSettings {
   updatedAt?: Date;
 }
 
-export interface MigrateTimerSettingsPayload {
-  localData: Record<string, unknown>;
-  conflictResolution?: "local" | "remote" | "merge";
-}
-
 export interface UpdateTimerSettingsPayload {
   generalConfig?: Partial<TimersGeneralConfig>;
   displayConfig?: Partial<TimersDisplayConfig>;

@@ -1,3 +1,4 @@
+import type { TOptions } from "i18next";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import type { AbyssSeason } from "@/lib/api/battlelog-types";
@@ -14,7 +15,7 @@ type AbyssSummaryCardsProps = {
   season?: AbyssSeason;
 };
 
-type Translate = (key: string, options?: Record<string, unknown>) => string;
+type Translate = (key: string, options?: TOptions) => string;
 
 const getSeasonRecord = (season: AbyssSeason | undefined, t: Translate) => {
   if (!season) {

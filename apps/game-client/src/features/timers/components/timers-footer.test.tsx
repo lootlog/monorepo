@@ -1,103 +1,50 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { ReactNode } from "react";
-import { describe, expect, it, vi } from "vitest";
-
-const timersColorStatisticsSpy = vi.fn();
-const globalHistorySpy = vi.fn();
-
-vi.mock("./timers-color-statistics", () => ({
-  TimersColorStatistics: (props: unknown) => {
-    timersColorStatisticsSpy(props);
-    return <div>TimersColorStatistics</div>;
-  },
-}));
-
-vi.mock("@/features/timers/components/timers-connection-status", () => ({
-  TimersConnectionStatus: () => <div>TimersConnectionStatus</div>,
-}));
-
-vi.mock("./global-timer-history-popover", () => ({
-  GlobalTimerHistoryPopover: (props: unknown) => {
-    globalHistorySpy(props);
-    return <div>GlobalTimerHistoryPopover</div>;
-  },
-}));
-
-vi.mock("@/components/ui/button", () => ({
-  Button: ({
-    children,
-    onClick,
-  }: {
-    children: ReactNode;
-    onClick?: () => void;
-  }) => (
-    <button type="button" onClick={onClick}>
-      {children}
-    </button>
-  ),
-}));
-
-vi.mock("@/components/ui/tooltip", () => ({
-  Tooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
-  TooltipTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
-  TooltipContent: ({ children }: { children: ReactNode }) => <>{children}</>,
-}));
-
+import { QueryClientProvider } from "@tanstack/react-query";
+import { expect, it, vi } from "vitest";
+import { createTimerHttpFixture } from "../timer-http-fixtures";
 import { TimersFooter } from "./timers-footer";
 
-describe("TimersFooter", () => {
-  it("renders statistics, socket status, and the add action", async () => {
-    const user = userEvent.setup();
-    const onAddTimer = vi.fn();
-    const colorStatistics = [
-      { color: "red", total: 2, active: 1, name: "Red" },
-    ];
-
-    render(
+it("shows color totals, disconnected status and the add action with history only outside grouping", async () => {
+  const user = userEvent.setup();
+  const fixture = createTimerHttpFixture();
+  const onAddTimer = vi.fn<() => void>();
+  const footer = (isGrouping: boolean) => (
+    <QueryClientProvider client={fixture.queryClient}>
       <TimersFooter
-        colorStatistics={colorStatistics}
+        colorStatistics={[{ color: "red", total: 2, active: 1, name: "Red" }]}
         guildId="guild-1"
-        isGrouping={false}
+        world="pandora"
+        isGrouping={isGrouping}
         onAddTimer={onAddTimer}
-        world="pandora"
-      />,
-    );
-
-    expect(screen.getByText("TimersColorStatistics")).toBeVisible();
-    expect(screen.getByText("TimersConnectionStatus")).toBeVisible();
-    expect(screen.getByText("GlobalTimerHistoryPopover")).toBeVisible();
-    expect(screen.getByText("Dodaj timer")).toBeVisible();
-    expect(timersColorStatisticsSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        colorStatistics,
-      }),
-    );
-    expect(globalHistorySpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        guildId: "guild-1",
-        world: "pandora",
-      }),
-    );
-
-    await user.click(screen.getByRole("button", { name: "+" }));
-
-    expect(onAddTimer).toHaveBeenCalledTimes(1);
-  });
-
-  it("hides global history for grouping view", () => {
-    render(
-      <TimersFooter
-        colorStatistics={[]}
-        guildId="guild-1"
-        isGrouping
-        onAddTimer={vi.fn()}
-        world="pandora"
-      />,
-    );
-
+      />
+    </QueryClientProvider>
+  );
+  const view = render(footer(false));
+  try {
     expect(
-      screen.queryByText("GlobalTimerHistoryPopover"),
+      screen.getByRole("button", { name: "Historia timerów" }),
+    ).toBeVisible();
+    await user.hover(
+      screen.getByRole("button", { name: "Statystyki kolorów timerów" }),
+    );
+    expect(await screen.findByText("Red: 1/2")).toBeVisible();
+    await user.hover(
+      screen.getByRole("button", { name: "Nie połączono z żadnym serwerem" }),
+    );
+    expect(
+      await screen.findByText("Nie połączono z żadnym serwerem"),
+    ).toBeVisible();
+    await user.hover(screen.getByRole("button", { name: "+" }));
+    expect(await screen.findByText("Dodaj timer")).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "+" }));
+    expect(onAddTimer).toHaveBeenCalledOnce();
+    view.rerender(footer(true));
+    expect(
+      screen.queryByRole("button", { name: "Historia timerów" }),
     ).not.toBeInTheDocument();
-  });
+  } finally {
+    view.unmount();
+    fixture.cleanup();
+  }
 });

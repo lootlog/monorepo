@@ -3,10 +3,12 @@ import { SectionCardContent } from "@/components/common/section-card/section-car
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { NotificationFormSkeleton } from "./notification-form-skeleton";
 import { MultiSelect } from "@/components/ui/multi-select";
-import { CreateNotificationRuleDtoScheduleAnchor as NotificationScheduleAnchor } from "@lootlog/client/main";
-import { CreateNotificationRuleDtoScheduleIntervalType as NotificationScheduleIntervalType } from "@lootlog/client/main";
-import { CreateNotificationRuleDtoTriggerType as NotificationTriggerType } from "@lootlog/client/main";
-import type { CreateNotificationRuleDtoTriggerType } from "@lootlog/client/main";
+import {
+  CreateNotificationRuleDtoScheduleAnchor as NotificationScheduleAnchor,
+  CreateNotificationRuleDtoScheduleIntervalType as NotificationScheduleIntervalType,
+  CreateNotificationRuleDtoTriggerType as NotificationTriggerType,
+} from "@lootlog/client/main";
+
 import { Button } from "@lootlog/ui/components/button";
 
 import {
@@ -138,8 +140,7 @@ export const NotificationRuleFormPage = () => {
                             onValueChange={(value) => {
                               if (!value) return;
                               field.onChange(value);
-                              const nextType =
-                                value as CreateNotificationRuleDtoTriggerType;
+                              const nextType = value;
                               form.setValue(
                                 "contentTemplate",
                                 getDefaultContentTemplate(nextType),
@@ -246,14 +247,12 @@ export const NotificationRuleFormPage = () => {
                             {t("settings.notifications.fields.name")}
                           </FormLabel>
                           <FormControl
-                            render={
-                              <Input
-                                {...field}
-                                placeholder={t(
-                                  "settings.notifications.placeholders.name",
-                                )}
-                              />
-                            }
+                            render=<Input
+                              {...field}
+                              placeholder={t(
+                                "settings.notifications.placeholders.name",
+                              )}
+                            />
                           />
                           <FormMessage />
                         </FormItem>
@@ -338,12 +337,10 @@ export const NotificationRuleFormPage = () => {
                                 </p>
                               </div>
                               <FormControl
-                                render={
-                                  <Switch
-                                    checked={field.value}
-                                    onCheckedChange={handleManualNpcEntryChange}
-                                  />
-                                }
+                                render=<Switch
+                                  checked={field.value}
+                                  onCheckedChange={handleManualNpcEntryChange}
+                                />
                               />
                             </FormItem>
                           )}
@@ -369,17 +366,15 @@ export const NotificationRuleFormPage = () => {
                                   )}
                                 </p>
                                 <FormControl
-                                  render={
-                                    <Textarea
-                                      {...field}
-                                      value={field.value ?? ""}
-                                      rows={4}
-                                      placeholder={t(
-                                        "settings.notifications.placeholders.manualNpcIds",
-                                      )}
-                                      className="font-mono"
-                                    />
-                                  }
+                                  render=<Textarea
+                                    {...field}
+                                    value={field.value ?? ""}
+                                    rows={4}
+                                    placeholder={t(
+                                      "settings.notifications.placeholders.manualNpcIds",
+                                    )}
+                                    className="font-mono"
+                                  />
                                 />
                                 <p className="text-xs text-muted-foreground">
                                   {t(
@@ -408,28 +403,26 @@ export const NotificationRuleFormPage = () => {
                                   )}
                                 </p>
                                 <FormControl
-                                  render={
-                                    <MultiSelect
-                                      options={npcOptions}
-                                      value={field.value ?? []}
-                                      onValueChange={field.onChange}
-                                      onClose={field.onChange}
-                                      placeholder={t(
-                                        "settings.notifications.placeholders.npcs",
-                                      )}
-                                      controlledSearch
-                                      searchValue={npcSearch}
-                                      onSearchChange={setNpcSearch}
-                                      loading={searchedNpcQuery.isFetching}
-                                      errorMessage={npcSearchError}
-                                      searchPlaceholder={t(
-                                        "settings.notifications.placeholders.searchNpcs",
-                                      )}
-                                      emptyMessage={t(
-                                        "settings.notifications.empty.npcs",
-                                      )}
-                                    />
-                                  }
+                                  render=<MultiSelect
+                                    options={npcOptions}
+                                    value={field.value ?? []}
+                                    onValueChange={field.onChange}
+                                    onClose={field.onChange}
+                                    placeholder={t(
+                                      "settings.notifications.placeholders.npcs",
+                                    )}
+                                    controlledSearch
+                                    searchValue={npcSearch}
+                                    onSearchChange={setNpcSearch}
+                                    loading={searchedNpcQuery.isFetching}
+                                    errorMessage={npcSearchError}
+                                    searchPlaceholder={t(
+                                      "settings.notifications.placeholders.searchNpcs",
+                                    )}
+                                    emptyMessage={t(
+                                      "settings.notifications.empty.npcs",
+                                    )}
+                                  />
                                 />
                                 <FormMessage />
                               </FormItem>
@@ -567,16 +560,14 @@ export const NotificationRuleFormPage = () => {
                                   )}
                                 </FormLabel>
                                 <FormControl
-                                  render={
-                                    <Input
-                                      {...field}
-                                      type="number"
-                                      inputMode="numeric"
-                                      min="1"
-                                      max="24"
-                                      step="1"
-                                    />
-                                  }
+                                  render=<Input
+                                    {...field}
+                                    type="number"
+                                    inputMode="numeric"
+                                    min="1"
+                                    max="24"
+                                    step="1"
+                                  />
                                 />
                                 <FormMessage />
                               </FormItem>
@@ -601,18 +592,16 @@ export const NotificationRuleFormPage = () => {
                                     if (!value) return;
                                     field.onChange(value);
                                   }}
-                                  items={[
-                                    ...[0, 1, 2, 3, 4, 5, 6].map((day) => ({
-                                      value: String(day),
-                                      label: (
-                                        <>
-                                          {t(
-                                            `settings.notifications.weekdays.${day}`,
-                                          )}
-                                        </>
-                                      ),
-                                    })),
-                                  ]}
+                                  items={[0, 1, 2, 3, 4, 5, 6].map((day) => ({
+                                    value: String(day),
+                                    label: (
+                                      <>
+                                        {t(
+                                          `settings.notifications.weekdays.${day}`,
+                                        )}
+                                      </>
+                                    ),
+                                  }))}
                                 >
                                   <FormControl
                                     render={
@@ -649,15 +638,13 @@ export const NotificationRuleFormPage = () => {
                                   )}
                                 </FormLabel>
                                 <FormControl
-                                  render={
-                                    <Input
-                                      {...field}
-                                      type="time"
-                                      placeholder={t(
-                                        "settings.notifications.placeholders.scheduleTimeOfDay",
-                                      )}
-                                    />
-                                  }
+                                  render=<Input
+                                    {...field}
+                                    type="time"
+                                    placeholder={t(
+                                      "settings.notifications.placeholders.scheduleTimeOfDay",
+                                    )}
+                                  />
                                 />
                                 <FormMessage />
                               </FormItem>
@@ -677,16 +664,14 @@ export const NotificationRuleFormPage = () => {
                                   )}
                                 </FormLabel>
                                 <FormControl
-                                  render={
-                                    <Input
-                                      {...field}
-                                      type="datetime-local"
-                                      min={formatDateTimeLocalInputValue(
-                                        new Date().toISOString(),
-                                        GUILD_NOTIFICATION_TIMEZONE,
-                                      )}
-                                    />
-                                  }
+                                  render=<Input
+                                    {...field}
+                                    type="datetime-local"
+                                    min={formatDateTimeLocalInputValue(
+                                      new Date().toISOString(),
+                                      GUILD_NOTIFICATION_TIMEZONE,
+                                    )}
+                                  />
                                 />
                                 <FormMessage />
                               </FormItem>
@@ -706,15 +691,13 @@ export const NotificationRuleFormPage = () => {
                                   )}
                                 </FormLabel>
                                 <FormControl
-                                  render={
-                                    <Input
-                                      {...field}
-                                      type="datetime-local"
-                                      placeholder={t(
-                                        "settings.notifications.placeholders.scheduledUntil",
-                                      )}
-                                    />
-                                  }
+                                  render=<Input
+                                    {...field}
+                                    type="datetime-local"
+                                    placeholder={t(
+                                      "settings.notifications.placeholders.scheduledUntil",
+                                    )}
+                                  />
                                 />
                                 <FormMessage />
                               </FormItem>
@@ -733,17 +716,15 @@ export const NotificationRuleFormPage = () => {
                             {t("settings.notifications.fields.contentTemplate")}
                           </FormLabel>
                           <FormControl
-                            render={
-                              <NotificationTemplateEditor
-                                key={`${rule?.id ?? "create"}-${watchedTriggerType}-${formResetKey}`}
-                                value={field.value ?? ""}
-                                onChange={field.onChange}
-                                roles={guildRoles}
-                                triggerType={watchedTriggerType}
-                                disabled={isSubmitting}
-                                previewButtonClassName="lg:hidden"
-                              />
-                            }
+                            render=<NotificationTemplateEditor
+                              key={`${rule?.id ?? "create"}-${watchedTriggerType}-${formResetKey}`}
+                              value={field.value ?? ""}
+                              onChange={field.onChange}
+                              roles={guildRoles}
+                              triggerType={watchedTriggerType}
+                              disabled={isSubmitting}
+                              previewButtonClassName="lg:hidden"
+                            />
                           />
                           <FormMessage />
                         </FormItem>
@@ -831,18 +812,16 @@ export const NotificationRuleFormPage = () => {
                                 )}
                               </FormLabel>
                               <FormControl
-                                render={
-                                  <Input
-                                    {...field}
-                                    type="number"
-                                    inputMode="numeric"
-                                    min="0"
-                                    step="1"
-                                    placeholder={t(
-                                      "settings.notifications.placeholders.scheduleOffsetMinutes",
-                                    )}
-                                  />
-                                }
+                                render=<Input
+                                  {...field}
+                                  type="number"
+                                  inputMode="numeric"
+                                  min="0"
+                                  step="1"
+                                  placeholder={t(
+                                    "settings.notifications.placeholders.scheduleOffsetMinutes",
+                                  )}
+                                />
                               />
                               <FormMessage />
                             </FormItem>
@@ -877,24 +856,22 @@ export const NotificationRuleFormPage = () => {
                             </Button>
                           </div>
                           <FormControl
-                            render={
-                              <MultiSelect
-                                options={targetOptions}
-                                value={field.value}
-                                onValueChange={field.onChange}
-                                onClose={field.onChange}
-                                placeholder={t(
-                                  "settings.notifications.placeholders.targets",
-                                )}
-                                searchPlaceholder={t(
-                                  "settings.notifications.placeholders.searchTargets",
-                                )}
-                                emptyMessage={t(
-                                  "settings.notifications.empty.targetsSelect",
-                                )}
-                                commandSearch
-                              />
-                            }
+                            render=<MultiSelect
+                              options={targetOptions}
+                              value={field.value}
+                              onValueChange={field.onChange}
+                              onClose={field.onChange}
+                              placeholder={t(
+                                "settings.notifications.placeholders.targets",
+                              )}
+                              searchPlaceholder={t(
+                                "settings.notifications.placeholders.searchTargets",
+                              )}
+                              emptyMessage={t(
+                                "settings.notifications.empty.targetsSelect",
+                              )}
+                              commandSearch
+                            />
                           />
                           <FormMessage />
                         </FormItem>
@@ -918,12 +895,10 @@ export const NotificationRuleFormPage = () => {
                               </p>
                             </div>
                             <FormControl
-                              render={
-                                <Switch
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                />
-                              }
+                              render=<Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
                             />
                           </FormItem>
                         )}

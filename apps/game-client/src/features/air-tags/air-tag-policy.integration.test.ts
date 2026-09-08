@@ -4,17 +4,11 @@ import {
   diffAccessPolicies,
 } from "@lootlog/protocol/realtime/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
-import type { AirTagSubscriptionAck } from "@lootlog/schema/air-tag";
-import { GatewayEvent } from "@/config/gateway";
-import { useGameStore } from "@/store/game.store";
-import { AirTagRuntime } from "./air-tag-runtime";
-import { airTagReceiveController } from "./air-tag-receive-controller";
 
-const transport = vi.hoisted(() => ({ emit: vi.fn() }));
-vi.mock("@/lib/socket", () => ({ getSocket: () => transport }));
-vi.mock("./air-tag-renderer", () => ({
-  airTagRenderer: { register: vi.fn(), unregister: vi.fn() },
-}));
+import { createAirTagTest } from "./air-tag-test";
+import { useGameStore } from "@/store/game.store";
+
+import { airTagReceiveController } from "./air-tag-receive-controller";
 
 afterEach(() => {
   airTagReceiveController.clear();
@@ -23,7 +17,7 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-it("keeps authorized air targets while coalescing grants and excludes revoked targets from late acknowledgements", () => {
+it("keeps authorized air targets while coalescing grants and excludes revoked targets from late acknowledgements", async () => {
   vi.useFakeTimers();
   useGameStore.getState().replaceGame({
     hero: {
@@ -60,48 +54,19 @@ it("keeps authorized air targets while coalescing grants and excludes revoked ta
   const expanded = makePolicy(["guild-1", "guild-2"]);
   const expandedAgain = makePolicy(["guild-1", "guild-2", "guild-3"]);
   const restricted = makePolicy(["guild-2"]);
-  const runtime = new AirTagRuntime();
-  const acknowledgeLastSubscription = () => {
-    const call = transport.emit.mock.calls
-      .filter(([event]) => event === GatewayEvent.AIR_TAG_SUBSCRIPTION)
-      .at(-1);
-    if (!call) throw new Error("Expected air subscription");
-    const payload = call[1] as { requestId: string };
-    const acknowledge = call[2] as (ack: AirTagSubscriptionAck) => void;
-    acknowledge({
-      status: "accepted",
-      requestId: payload.requestId,
-      scopes: ["guild-1", "guild-2"].map((guildId) => ({
-        guildId,
-        world: "fobos",
-        mapId: 12,
-        epochId: "epoch",
-        epochStartedAt: 100,
-        revision: 1,
-        targets: [
-          {
-            targetId: guildId,
-            nickname: guildId,
-            relation: 1,
-            x: 10,
-            y: 10,
-            observedAt: Date.now(),
-          },
-        ],
-      })),
-    });
-  };
+  const test = createAirTagTest();
+  const { runtime } = test;
   try {
     runtime.handlePermissionsUpdated({
       accessPolicy: initial,
       changes: diffAccessPolicies(makePolicy([]), initial),
     });
     runtime.configure({ connected: true, enabled: true, joined: true });
-    acknowledgeLastSubscription();
+    await test.acknowledge();
     expect(
       airTagReceiveController.getRenderableTargets(Date.now(), 10_000),
     ).toHaveLength(1);
-    transport.emit.mockClear();
+    test.wire.frames.length = 0;
     runtime.handlePermissionsUpdated({
       accessPolicy: initial,
       changes: [
@@ -113,7 +78,7 @@ it("keeps authorized air targets while coalescing grants and excludes revoked ta
         },
       ],
     });
-    expect(transport.emit).not.toHaveBeenCalled();
+    expect(test.subscriptions()).toHaveLength(0);
     runtime.handlePermissionsUpdated({
       accessPolicy: expanded,
       changes: diffAccessPolicies(initial, expanded),
@@ -127,9 +92,9 @@ it("keeps authorized air targets while coalescing grants and excludes revoked ta
       airTagReceiveController.getRenderableTargets(Date.now(), 10_000),
     ).toHaveLength(1);
     vi.advanceTimersByTime(4999);
-    expect(transport.emit).not.toHaveBeenCalled();
+    expect(test.subscriptions()).toHaveLength(0);
     vi.advanceTimersByTime(1);
-    expect(transport.emit).toHaveBeenCalledTimes(1);
+    expect(test.subscriptions()).toHaveLength(1);
     expect(
       airTagReceiveController.getRenderableTargets(Date.now(), 10_000),
     ).toHaveLength(1);
@@ -140,21 +105,21 @@ it("keeps authorized air targets while coalescing grants and excludes revoked ta
     expect(
       airTagReceiveController.getRenderableTargets(Date.now(), 10_000),
     ).toEqual([]);
-    acknowledgeLastSubscription();
+    await test.acknowledge();
     expect(
       airTagReceiveController.getRenderableTargets(Date.now(), 10_000),
     ).toEqual([expect.objectContaining({ targetId: "guild-2" })]);
-    expect(transport.emit).toHaveBeenCalledTimes(1);
-    transport.emit.mockClear();
+    expect(test.subscriptions()).toHaveLength(1);
+    test.wire.frames.length = 0;
     runtime.handlePermissionsUpdated();
     runtime.handlePermissionsUpdated();
     expect(
       airTagReceiveController.getRenderableTargets(Date.now(), 10_000),
     ).toEqual([]);
     vi.advanceTimersByTime(4999);
-    expect(transport.emit).not.toHaveBeenCalled();
+    expect(test.subscriptions()).toHaveLength(0);
     vi.advanceTimersByTime(1);
-    expect(transport.emit).toHaveBeenCalledTimes(1);
+    expect(test.subscriptions()).toHaveLength(1);
   } finally {
     runtime.shutdown();
   }

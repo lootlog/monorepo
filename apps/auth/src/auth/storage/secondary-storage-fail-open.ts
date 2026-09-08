@@ -9,7 +9,7 @@ type SecondaryStorageOperation =
 
 export type SecondaryStorageErrorHandler = (
   operation: SecondaryStorageOperation,
-  error: unknown,
+  cause: unknown,
 ) => void;
 
 const noopErrorHandler: SecondaryStorageErrorHandler = () => {};

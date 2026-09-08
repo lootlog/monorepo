@@ -1,3 +1,5 @@
+import { RealtimeStoreError } from "./realtime-errors.js";
+import { httpClientFromResponses } from "../../test/http-fixtures.js";
 import {
   canReadPolicyNpc,
   createAccessPolicySnapshot,
@@ -13,13 +15,7 @@ import {
   type ServerEvent,
 } from "@lootlog/protocol/realtime";
 import { makeGuildStore, type GuildStore } from "#src/guilds/guild-store";
-import type { GatewayConfiguration } from "#src/config/gateway-config";
-import type { RedisGatewayStore } from "#src/platform/redis-store";
-import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
-import type { MargonemProofVerifier } from "#src/auth/margonem-proof";
 import type { ActivityPublisher } from "#src/rabbit/activity-publisher";
-import type { AirTagService } from "#src/realtime/air-tag-service";
-import type { MapPingService } from "#src/realtime/map-ping-service";
 import type { PresenceStore } from "#src/realtime/presence-store";
 import type { RealtimeHub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
@@ -34,7 +30,7 @@ const guild = (
 
 class FakeGuildStore {
   guilds: UserGuildData[] = [guild()];
-  getUserGuilds(): Effect.Effect<UserGuildData[], unknown> {
+  getUserGuilds() {
     return Effect.succeed(this.guilds);
   }
   invalidate(): Effect.Effect<void> {
@@ -48,26 +44,38 @@ class FakeHub {
   readonly events: unknown[] = [];
   readonly sockets: GatewaySocket[] = [];
   onPermissionRebalance(): void {}
+  subscribe(): void {
+    throw new Error("Unexpected subscribe");
+  }
+  unsubscribe(): void {
+    throw new Error("Unexpected unsubscribe");
+  }
   publishPermissionRebalance(): Effect.Effect<void, unknown> {
     return Effect.void;
   }
-  sendResponse(_socket: GatewaySocket, response: unknown): boolean {
+  sendResponse(
+    _socket: GatewaySocket,
+    response: Parameters<RealtimeHub["sendResponse"]>[1],
+  ): boolean {
     this.deliveryOrder.push("response");
     this.responses.push(response);
     return true;
   }
-  sendEvent(_socket: GatewaySocket, event: unknown): boolean {
+  sendEvent(
+    _socket: GatewaySocket,
+    event: Parameters<RealtimeHub["sendEvent"]>[1],
+  ): boolean {
     this.deliveryOrder.push("event");
     this.events.push(event);
     return true;
   }
   replaceSubscriptions(
     socket: GatewaySocket,
-    scopes: ReadonlyArray<{ topic: string }>,
+    scopes: Parameters<RealtimeHub["replaceSubscriptions"]>[1],
   ): void {
     socket.data.subscriptions = new Map(
       scopes.map((scope, index) => [String(index), scope]),
-    ) as SessionData["subscriptions"];
+    );
   }
   getLocalSocketsForUser(userId: string): GatewaySocket[] {
     return this.sockets.filter((socket) => socket.data.userId === userId);
@@ -80,7 +88,7 @@ class FakeActivity {
     type: "CONNECT_EVENT" | "DISCONNECT_EVENT",
     _session: SessionData,
     ids?: ReadonlyArray<string>,
-  ): Effect.Effect<void> {
+  ): ReturnType<ActivityPublisher["publish"]> {
     return Effect.sync(() => this.calls.push({ type, ids })).pipe(
       Effect.asVoid,
     );
@@ -88,6 +96,10 @@ class FakeActivity {
 }
 
 class FakePresence {
+  heartbeat: PresenceStore["heartbeat"] = () =>
+    Effect.die("Unexpected heartbeat");
+  publish = () => Effect.die("Unexpected presence publish");
+  snapshot = () => Effect.die("Unexpected snapshot");
   readonly reconciled: GatewaySocket[] = [];
 
   reconcileAccess(socket: GatewaySocket): Effect.Effect<void> {
@@ -109,7 +121,7 @@ class FakePresence {
   }
 }
 
-const makeSocket = (): { socket: GatewaySocket; closes: number[] } => {
+const makeSocket = () => {
   const closes: number[] = [];
   const data: SessionData = {
     discordId: "discord-1",
@@ -126,8 +138,12 @@ const makeSocket = (): { socket: GatewaySocket; closes: number[] } => {
   return {
     socket: {
       data,
-      close: (code: number) => closes.push(code),
-    } as unknown as GatewaySocket,
+      close: (code: number) => {
+        closes.push(code);
+      },
+      send: () => 0,
+      getBufferedAmount: () => 0,
+    },
     closes,
   };
 };
@@ -138,15 +154,20 @@ const setup = (guildStore?: GuildStore) => {
   const activity = new FakeActivity();
   const presence = new FakePresence();
   const handler = new CommandHandler(
-    guildStore ?? (guilds as unknown as GuildStore),
+    guildStore ?? guilds,
     {
       verify: () => Effect.succeed({ valid: false, reason: "not supplied" }),
-    } as unknown as MargonemProofVerifier,
-    presence as unknown as PresenceStore,
-    hub as unknown as RealtimeHub,
-    activity as unknown as ActivityPublisher,
-    {} as MapPingService,
-    { clearSubscription: () => undefined } as unknown as AirTagService,
+    },
+    presence,
+    hub,
+    activity,
+    { send: () => Promise.reject(new Error("Unexpected map ping")) },
+    {
+      updateSubscription: () =>
+        Promise.reject(new Error("Unexpected air tag subscribe")),
+      publishObservations: () =>
+        Promise.reject(new Error("Unexpected air tag observation")),
+    },
   );
   return { handler, guilds, hub, activity, presence };
 };
@@ -243,7 +264,7 @@ describe("CommandHandler session lifecycle", () => {
       let requests = 0;
       let invalidations = 0;
       const store = makeGuildStore(
-        { apiUrl: "http://api.local" } as GatewayConfiguration,
+        { apiUrl: "http://api.local" },
         {
           command: {
             get: async () => cached,
@@ -257,19 +278,13 @@ describe("CommandHandler session lifecycle", () => {
               return 1;
             },
           },
-        } as unknown as RedisGatewayStore,
-        {
-          get: () =>
-            Effect.sync(() => {
-              requests++;
-              return {
-                status: 200,
-                arrayBuffer: Effect.succeed(
-                  new TextEncoder().encode("[]").buffer,
-                ),
-              };
-            }),
-        } as unknown as HttpClientValue,
+        },
+        httpClientFromResponses(() =>
+          Effect.sync(() => {
+            requests++;
+            return Response.json([]);
+          }),
+        ),
       );
       const local = setup(store);
       const remote = setup(store);
@@ -695,18 +710,25 @@ describe("CommandHandler session lifecycle", () => {
   });
 
   test("does not expose dependency failures through command responses", async () => {
-    const { handler, guilds, hub } = setup();
-    guilds.getUserGuilds = () => Effect.fail(new Error("database secret"));
+    const { handler, presence, hub } = setup();
+    presence.heartbeat = () =>
+      Effect.fail(
+        new RealtimeStoreError({
+          operation: "presence.heartbeat",
+          cause: new Error("database secret"),
+        }),
+      );
     const target = makeSocket();
+    target.socket.data.joined = true;
     await Effect.runPromise(
       handler.handle(
         target.socket,
         Buffer.from(
           encode({
             v: 1,
-            type: "session.join",
+            type: "presence.heartbeat",
             requestId: "request-dependency",
-            data: {},
+            data: { sessionId: "connection-1" },
           }),
         ),
       ),

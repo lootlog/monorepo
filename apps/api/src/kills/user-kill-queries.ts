@@ -8,7 +8,6 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, eq, gte, ilike, inArray, lte, type SQL } from "drizzle-orm";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import { Effect, Schema } from "effect";
-import { stableJsonStringify } from "@lootlog/schema/stable-json";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   userKillStatsBucketTable,
@@ -22,23 +21,18 @@ import {
   type UserNpcKillsQuery as GetUserNpcKillsDto,
 } from "#src/contracts/kills/schemas";
 
-import type { KillQueryCache } from "./kill-query-support.js";
+import {
+  buildKillQueryCacheKey,
+  type KillQueryCache,
+} from "./kill-query-support.js";
 import { getKillStatsPeriodStart } from "./kill-stats-period.js";
 
 const CACHE_TTL_SECONDS = 30;
-const CACHE_PREFIX = "kill-stats";
 
 export class UserKillQueriesError extends TaggedErrorClass<UserKillQueriesError>()(
   "UserKillQueriesError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}
-
-const cacheKey = (
-  scope: string,
-  userId: string,
-  params: Record<string, unknown>,
-) =>
-  `${CACHE_PREFIX}:${scope}:${userId}:${Buffer.from(stableJsonStringify(params)).toString("base64url")}`;
 
 type UserStat =
   | typeof userKillStatsTable.$inferSelect
@@ -107,16 +101,13 @@ export const makeUserKillQueries = (
             userKillStatsBucketTable,
             gte(userKillStatsBucketTable.periodStart, options.periodStart),
           ),
-        ) as Effect.Effect<ReadonlyArray<UserStat>, unknown>;
+        );
     }
 
     return database
       .select()
       .from(userKillStatsTable)
-      .where(conditions(userKillStatsTable)) as Effect.Effect<
-      ReadonlyArray<UserStat>,
-      unknown
-    >;
+      .where(conditions(userKillStatsTable));
   };
 
   const cached = <S extends Schema.ConstraintDecoder<unknown>>(
@@ -137,7 +128,9 @@ export const makeUserKillQueries = (
     const periodStart = getKillStatsPeriodStart(query.period);
 
     return cached(
-      cacheKey("user-overview", userId, { query: { ...query, npcTypes } }),
+      buildKillQueryCacheKey("user-overview", userId, {
+        query: { ...query, npcTypes },
+      }),
       "user kill stats",
       UserKillStatsResponse,
       protect(
@@ -204,7 +197,7 @@ export const makeUserKillQueries = (
     const periodStart = getKillStatsPeriodStart(query.period);
 
     return cached(
-      cacheKey("user-npcs", userId, { query }),
+      buildKillQueryCacheKey("user-npcs", userId, { query }),
       "user npc kills",
       UserNpcKillsResponse,
       protect(

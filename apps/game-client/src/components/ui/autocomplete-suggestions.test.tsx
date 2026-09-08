@@ -17,7 +17,7 @@ describe("AutocompleteSuggestions", () => {
         isOpen
         keyExtractor={(item: string) => item}
         loadingMessage="Searching"
-        onSelect={vi.fn()}
+        onSelect={vi.fn<(value: string) => void>()}
         renderItem={(item: string) => item}
         selectedIndex={-1}
         showNoResults

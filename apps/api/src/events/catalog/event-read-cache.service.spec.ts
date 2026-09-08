@@ -33,7 +33,7 @@ describe("EventReadCache", () => {
             ),
       );
     },
-    deleteByPattern: vi.fn<(...args: unknown[]) => Promise<number>>(),
+    deleteByPattern: vi.fn<RedisService["deleteByPattern"]>(),
   };
 
   beforeEach(() => {
@@ -42,7 +42,7 @@ describe("EventReadCache", () => {
   });
 
   it("round-trips nested and array Date values through the cache codec", async () => {
-    const service = makeEventReadCache(redis as unknown as RedisService);
+    const service = makeEventReadCache(redis);
 
     const value = {
       createdAt: new Date("2026-06-19T10:00:00.000Z"),
@@ -69,7 +69,7 @@ describe("EventReadCache", () => {
   });
 
   it("feeds revived Date values into response DTO encoding", async () => {
-    const service = makeEventReadCache(redis as unknown as RedisService);
+    const service = makeEventReadCache(redis);
 
     const value = {
       data: [

@@ -18,8 +18,10 @@ describe("DialogProcessor", () => {
   it("ignores invalid dialog payloads", () => {
     processor.handle({});
     processor.handle({ d: ["a", "b"] });
-    processor.handle({ d: "invalid" as never });
-    processor.handle({ d: ["a", "b", 123 as never] });
+    // @ts-expect-error Deliberately malformed external dialog payload.
+    processor.handle({ d: "invalid" });
+    // @ts-expect-error Deliberately non-string external dialog identifier.
+    processor.handle({ d: ["a", "b", 123] });
 
     expect(useDialogStore.getState().npcContext).toBeNull();
   });

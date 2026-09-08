@@ -1,153 +1,61 @@
 import { act, renderHook } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { DEFAULT_SOUND_URLS } from "@/features/settings/config/default-sounds";
+import { createNotificationTest } from "@/features/notifications/notification-test";
 import { useSoundPlayback } from "./use-sound-playback";
-
-const mocks = vi.hoisted(() => ({
-  cachedSettings: undefined as unknown,
-  soundSettings: {
-    userId: "user-1",
-    masterVolume: 0.5,
-    notificationsVolume: 0.5,
-    detectorVolume: 0,
-    timersVolume: 0,
-    pingsVolume: 0,
-    notificationsConfig: {
-      message: { volume: 0.5, soundUrl: "" },
-    },
-    detectorConfig: {},
-    timersConfig: {},
-  },
-}));
-
-vi.mock("@/hooks/api/use-sound-settings", () => ({
-  useSoundSettings: () => ({ data: mocks.soundSettings }),
-}));
-
-vi.mock("@tanstack/react-query", () => ({
-  useQueryClient: () => ({
-    getQueryData: () => mocks.cachedSettings,
-  }),
-}));
-
-vi.mock("@/lib/api/generated-helpers", () => ({
-  normalizeSoundSettings: (settings: unknown) => settings,
-}));
-
-vi.mock("@lootlog/client/main", async () => ({
-  ...(await vi.importActual("@lootlog/client/main")),
-  getSoundSettingsControllerGetSettingsQueryKey: () => ["sound-settings"],
-}));
-
-const audioInstances: AudioMock[] = [];
-
-class AudioMock {
-  currentTime = 3;
-  onended: (() => void) | null = null;
-  playbackRate = 1;
-  preservesPitch = true;
-  preload = "";
-  src: string;
-  volume = 1;
-  readonly load = vi.fn();
-  readonly pause = vi.fn();
-  readonly play = vi.fn<() => Promise<void>>().mockResolvedValue();
-  readonly removeAttribute = vi.fn((attribute: string) => {
-    if (attribute === "src") this.src = "";
-  });
-
-  constructor(src = "") {
-    this.src = src;
-    audioInstances.push(this);
-  }
-}
-
+let test: ReturnType<typeof createNotificationTest>;
 describe("useSoundPlayback", () => {
   beforeEach(() => {
-    audioInstances.length = 0;
-    mocks.cachedSettings = undefined;
-    mocks.soundSettings.notificationsConfig.message.soundUrl = "";
-    delete (
-      mocks.soundSettings.notificationsConfig as Record<
-        string,
-        { volume: number; soundUrl: string }
-      >
-    ).HERO;
-    vi.stubGlobal("Audio", AudioMock);
+    test = createNotificationTest();
   });
-
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
-  it("preloads after the first interaction and reuses the media element", () => {
-    const { result, unmount } = renderHook(() => useSoundPlayback());
-
-    expect(audioInstances).toHaveLength(0);
-
-    act(() => {
-      window.dispatchEvent(new Event("pointerdown"));
+  it("preloads after first interaction and reuses the media element", () => {
+    const { result, unmount } = renderHook(() => useSoundPlayback(), {
+      wrapper: test.wrapper,
     });
-
-    expect(audioInstances).toHaveLength(1);
-    expect(audioInstances[0]?.src).toBe(DEFAULT_SOUND_URLS.message);
-    expect(audioInstances[0]?.preload).toBe("auto");
-
+    expect(test.audio).toHaveLength(0);
+    act(() => window.dispatchEvent(new Event("pointerdown")));
+    expect(test.audio).toHaveLength(1);
+    expect(test.audio[0]?.src).toBe(DEFAULT_SOUND_URLS.message);
+    expect(test.audio[0]?.preload).toBe("auto");
     act(() => {
       result.current.playSound("notifications", "message");
       result.current.playSound("notifications", "message");
     });
-
-    expect(audioInstances).toHaveLength(1);
-    expect(audioInstances[0]?.load).toHaveBeenCalledTimes(1);
-    expect(audioInstances[0]?.play).toHaveBeenCalledTimes(2);
-    expect(audioInstances[0]?.pause).toHaveBeenCalledTimes(1);
-
+    expect(test.audio).toHaveLength(1);
+    expect(test.load).toHaveBeenCalledTimes(1);
+    expect(test.play).toHaveBeenCalledTimes(2);
+    expect(test.pause).toHaveBeenCalledTimes(1);
     unmount();
-
-    expect(audioInstances[0]?.removeAttribute).toHaveBeenCalledWith("src");
-    expect(audioInstances[0]?.onended).toBeNull();
+    expect(test.audio[0]?.getAttribute("src")).toBeNull();
+    expect(test.audio[0]?.onended).toBeNull();
   });
-
   it("shares one cached media element across hook consumers", () => {
-    const first = renderHook(() => useSoundPlayback());
-    const second = renderHook(() => useSoundPlayback());
-
-    act(() => {
-      window.dispatchEvent(new Event("pointerdown"));
+    const first = renderHook(() => useSoundPlayback(), {
+      wrapper: test.wrapper,
     });
-
-    expect(audioInstances).toHaveLength(1);
-
+    const second = renderHook(() => useSoundPlayback(), {
+      wrapper: test.wrapper,
+    });
+    act(() => window.dispatchEvent(new Event("pointerdown")));
+    expect(test.audio).toHaveLength(1);
     first.unmount();
-    expect(audioInstances[0]?.removeAttribute).not.toHaveBeenCalled();
-
+    expect(test.audio[0]?.getAttribute("src")).not.toBeNull();
     second.unmount();
-    expect(audioInstances[0]?.removeAttribute).toHaveBeenCalledWith("src");
+    expect(test.audio[0]?.getAttribute("src")).toBeNull();
   });
-
   it("plays one sound when different settings keys resolve to the same URL", () => {
-    mocks.soundSettings.notificationsConfig.message.soundUrl =
-      "shared-notification.mp3";
-    const notificationsConfig = mocks.soundSettings
-      .notificationsConfig as Record<
-      string,
-      { volume: number; soundUrl: string }
-    >;
-    notificationsConfig.HERO = {
-      volume: 0.5,
-      soundUrl: "shared-notification.mp3",
+    test.soundSettings.notificationsConfig = {
+      message: { volume: 0.5, soundUrl: "https://audio.test/shared.mp3" },
+      HERO: { volume: 0.5, soundUrl: "https://audio.test/shared.mp3" },
     };
-    const { result, unmount } = renderHook(() => useSoundPlayback());
-
-    act(() => {
-      result.current.playSounds("notifications", ["message", "HERO"]);
+    test.setSounds();
+    const { result, unmount } = renderHook(() => useSoundPlayback(), {
+      wrapper: test.wrapper,
     });
-
-    expect(audioInstances).toHaveLength(1);
-    expect(audioInstances[0]?.src).toBe("shared-notification.mp3");
-    expect(audioInstances[0]?.play).toHaveBeenCalledTimes(1);
-
+    act(() => result.current.playSounds("notifications", ["message", "HERO"]));
+    expect(test.audio).toHaveLength(1);
+    expect(test.audio[0]?.src).toBe("https://audio.test/shared.mp3");
+    expect(test.play).toHaveBeenCalledOnce();
     unmount();
   });
 });

@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { PartyReadyRoomClientUpdate } from "@lootlog/schema/party-ready-room";
+import { decodePartyReadyRoomClientUpdate } from "@lootlog/schema/party-ready-room";
 import {
   getChatControllerGetChatMessagesQueryKey,
   partyReadyRoomControllerCancel,
@@ -31,7 +31,7 @@ export const useCancelPartyGathering = () => {
         { notificationId: ownedReadyRoom.notificationId },
         { expectedRevision: ownedReadyRoom.revision },
       );
-      state.applyUpdate(response as unknown as PartyReadyRoomClientUpdate);
+      state.applyUpdate(decodePartyReadyRoomClientUpdate(response));
       await Promise.all(
         ownedReadyRoom.guildIds.map((guildId) =>
           queryClient.invalidateQueries({

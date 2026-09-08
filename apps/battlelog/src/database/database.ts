@@ -4,9 +4,9 @@ import { Config, Effect, Layer } from "effect";
 import { relations } from "./relations.js";
 
 /** The Effect-native Drizzle service. Queries retain interruption and tracing. */
-export const makeDrizzleDatabase = makeWithDefaults({ relations });
+export const drizzleDatabaseEffect = makeWithDefaults({ relations });
 
-export type DrizzleDatabase = Effect.Success<typeof makeDrizzleDatabase>;
+export type DrizzleDatabase = Effect.Success<typeof drizzleDatabaseEffect>;
 
 export const PgClientLive = Layer.unwrap(
   Effect.gen(function* () {

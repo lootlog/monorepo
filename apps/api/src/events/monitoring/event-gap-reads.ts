@@ -37,11 +37,14 @@ export const makeEventGapReads = (
         attributes: { adapter: "events.gaps.drizzle", retryCount: 0 },
       }),
     );
-  const cached = <S extends Schema.ConstraintDecoder<unknown>>(
+  const cached = <
+    S extends Schema.ConstraintDecoder<unknown>,
+    Params extends object,
+  >(
     guildId: string,
     eventId: string,
     scope: string,
-    params: Record<string, unknown>,
+    params: Params,
     schema: S,
     load: Effect.Effect<S["Type"], unknown>,
   ) => {
@@ -52,10 +55,7 @@ export const makeEventGapReads = (
       scope,
       Buffer.from(stableJsonStringify(params)).toString("base64url"),
     ].join(":");
-    const codec = makeJsonCodec(Schema.toType(schema), {
-      stringify: (value: unknown) => superjson.stringify(value),
-      parse: (text): unknown => superjson.parse(text),
-    });
+    const codec = makeJsonCodec(Schema.toType(schema), superjson);
     return redis
       .getOrSetJsonEffect({
         key,

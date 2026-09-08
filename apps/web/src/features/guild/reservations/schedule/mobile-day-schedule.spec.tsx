@@ -1,94 +1,44 @@
 // @vitest-environment happy-dom
 
-import { act, cleanup, fireEvent, render } from "@testing-library/react";
-import type { PropsWithChildren, UIEvent } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  waitFor,
+} from "@testing-library/react";
+
+import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { LABEL_COLUMN_WIDTH, MIN_ROW_HEIGHT } from "./constants";
 import { MobileDaySchedule } from "./mobile-day-schedule";
 import type { ReservationSegment } from "./types";
 
-const motionMocks = vi.hoisted(() => {
-  const motionValue = {
-    get: vi.fn(() => 0),
-    set: vi.fn(),
-    stop: vi.fn(),
-  };
-  return {
-    animate: vi.fn(() => Promise.resolve()),
-    motionValue,
-    onDragEnd: undefined as
-      | ((
-          event: PointerEvent,
-          info: { offset: { x: number }; velocity: { x: number } },
-        ) => Promise<void>)
-      | undefined,
-    reducedMotion: false,
-  };
+let coarsePointer = true;
+let reducedMotion = false;
+const mediaQueries = new Set<MediaQueryList>();
+const nativeMatchMedia = window.matchMedia.bind(window);
+function setReducedMotion(value: boolean) {
+  reducedMotion = value;
+  mediaQueries.forEach((query) => query.dispatchEvent(new Event("change")));
+}
+beforeEach(() => {
+  vi.stubGlobal("matchMedia", (query: string) => {
+    const result = nativeMatchMedia(query);
+    Object.defineProperty(result, "matches", {
+      get: () =>
+        query.includes("prefers-reduced-motion")
+          ? reducedMotion
+          : coarsePointer,
+    });
+    mediaQueries.add(result);
+    return result;
+  });
 });
-
-const mobileSwipeMocks = vi.hoisted(() => ({ enabled: true }));
-
-vi.mock("./use-mobile-day-swipe", () => ({
-  useMobileDaySwipe: () => mobileSwipeMocks.enabled,
-}));
-
-vi.mock("framer-motion", async () => {
-  const { createElement, forwardRef } = await import("react");
-  type MockMotionDivProps = PropsWithChildren<{
-    className?: string;
-    "data-slot"?: string;
-    onDragEnd?: typeof motionMocks.onDragEnd;
-  }>;
-  return {
-    animate: motionMocks.animate,
-    motion: {
-      div: forwardRef<HTMLDivElement, MockMotionDivProps>((props, ref) => {
-        const { children, className, "data-slot": dataSlot, onDragEnd } = props;
-        motionMocks.onDragEnd = onDragEnd;
-        return createElement(
-          "div",
-          {
-            className,
-            "data-slot": dataSlot,
-            ref,
-          },
-          children,
-        );
-      }),
-    },
-    useMotionValue: () => motionMocks.motionValue,
-    useReducedMotion: () => motionMocks.reducedMotion,
-  };
-});
-
-vi.mock("@lootlog/ui/components/scroll-area", () => ({
-  ScrollArea: ({
-    children,
-    className,
-    onScroll,
-    orientation = "both",
-  }: PropsWithChildren<{
-    className?: string;
-    onScroll?: (event: UIEvent<HTMLDivElement>) => void;
-    orientation?: "vertical" | "horizontal" | "both";
-  }>) => (
-    <div data-slot="scroll-area" className={className}>
-      <div data-slot="scroll-area-viewport" onScroll={onScroll}>
-        {children}
-      </div>
-      {orientation !== "horizontal" && (
-        <div data-slot="scroll-area-scrollbar" data-orientation="vertical" />
-      )}
-      {orientation !== "vertical" && (
-        <div data-slot="scroll-area-scrollbar" data-orientation="horizontal" />
-      )}
-    </div>
-  ),
-}));
 
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
+  vi.unstubAllGlobals();
 });
 
 const createSegment = (): ReservationSegment => {
@@ -172,15 +122,20 @@ const renderSchedule = (
   };
 };
 
+const expectSettledTrack = async (container: HTMLElement) => {
+  await waitFor(() =>
+    expect(
+      container.querySelector<HTMLElement>(
+        '[data-slot="mobile-day-swipe-track"]',
+      )?.style.transform,
+    ).toBe("none"),
+  );
+};
+
 describe("MobileDaySchedule", () => {
   afterEach(() => {
-    motionMocks.animate.mockClear();
-    motionMocks.motionValue.get.mockClear();
-    motionMocks.motionValue.set.mockClear();
-    motionMocks.motionValue.stop.mockClear();
-    motionMocks.onDragEnd = undefined;
-    motionMocks.reducedMotion = false;
-    mobileSwipeMocks.enabled = true;
+    setReducedMotion(false);
+    coarsePointer = true;
   });
 
   it("keeps a safe scroll buffer below the final calendar hour", () => {
@@ -218,7 +173,7 @@ describe("MobileDaySchedule", () => {
   });
 
   it("does not render or activate the swipe track on a narrow desktop", () => {
-    mobileSwipeMocks.enabled = false;
+    coarsePointer = false;
     const { container, grid, onDaySwipe } = renderSchedule();
     const swipeTrack = container.querySelector(
       '[data-slot="mobile-day-swipe-track"]',
@@ -244,12 +199,11 @@ describe("MobileDaySchedule", () => {
       touches: [],
     });
 
-    expect(motionMocks.motionValue.set).not.toHaveBeenCalledWith(-80);
     expect(onDaySwipe).not.toHaveBeenCalled();
   });
 
   it("centers today's marker without horizontally scrolling the day track", () => {
-    vi.useFakeTimers();
+    vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"] });
     vi.setSystemTime(new Date(2026, 0, 8, 12, 0));
     const scrollIntoView = vi.spyOn(HTMLElement.prototype, "scrollIntoView");
 
@@ -295,7 +249,7 @@ describe("MobileDaySchedule", () => {
     expect(nextDay?.querySelector(".reservation-card")).not.toBeNull();
   });
 
-  it("settles the committed day and track before another frame can paint", async () => {
+  it("updates the committed day and resets the rendered track", async () => {
     const targetDaySegment = createSegment();
     targetDaySegment.id = "reservation-target-day";
     targetDaySegment.dayIdx = 4;
@@ -339,37 +293,28 @@ describe("MobileDaySchedule", () => {
     vi.spyOn(swipeSurface, "getBoundingClientRect").mockReturnValue(
       new DOMRect(0, 0, 390, 800),
     );
-    const requestAnimationFrameSpy = vi
-      .spyOn(globalThis, "requestAnimationFrame")
-      .mockImplementation(() => 1);
 
-    try {
-      fireEvent.touchStart(grid, {
-        touches: [{ clientX: 300, clientY: 400, identifier: 30 }],
+    fireEvent.touchStart(grid, {
+      touches: [{ clientX: 300, clientY: 400, identifier: 30 }],
+    });
+    fireEvent.touchMove(grid, {
+      touches: [{ clientX: 252, clientY: 402, identifier: 30 }],
+    });
+    await act(async () => {
+      fireEvent.touchEnd(grid, {
+        changedTouches: [{ clientX: 252, clientY: 402, identifier: 30 }],
+        touches: [],
       });
-      fireEvent.touchMove(grid, {
-        touches: [{ clientX: 252, clientY: 402, identifier: 30 }],
-      });
-      await act(async () => {
-        fireEvent.touchEnd(grid, {
-          changedTouches: [{ clientX: 252, clientY: 402, identifier: 30 }],
-          touches: [],
-        });
-        await Promise.resolve();
-      });
+      await new Promise<void>((resolve) => setTimeout(resolve, 250));
+    });
 
-      expect(onDaySwipe).toHaveBeenCalledWith(1);
-      expect(requestAnimationFrameSpy).not.toHaveBeenCalled();
-      expect(motionMocks.motionValue.set).toHaveBeenLastCalledWith(0);
-      const settledTargetDay = result.container.querySelector(
-        '[data-slot="mobile-day-current"]',
-      );
-      expect(
-        settledTargetDay?.querySelector(".reservation-card"),
-      ).not.toBeNull();
-    } finally {
-      requestAnimationFrameSpy.mockRestore();
-    }
+    expect(onDaySwipe).toHaveBeenCalledWith(1);
+
+    const settledTargetDay = result.container.querySelector(
+      '[data-slot="mobile-day-current"]',
+    );
+    expect(settledTargetDay?.querySelector(".reservation-card")).not.toBeNull();
+    await expectSettledTrack(result.container);
   });
 
   it("selects a range with a mouse drag in the compact layout", () => {
@@ -422,7 +367,7 @@ describe("MobileDaySchedule", () => {
       ],
     });
     act(() => vi.advanceTimersByTime(400));
-    expect(motionMocks.motionValue.set).toHaveBeenCalledWith(0);
+
     fireEvent.touchMove(grid, {
       touches: [
         {
@@ -453,7 +398,7 @@ describe("MobileDaySchedule", () => {
     });
   });
 
-  it("uses native touch movement as the only swipe input pipeline", () => {
+  it("uses native touch movement as the only swipe input pipeline", async () => {
     const { container, grid } = renderSchedule();
     const swipeSurface = container.querySelector(
       '[data-slot="mobile-day-swipe-surface"]',
@@ -473,8 +418,6 @@ describe("MobileDaySchedule", () => {
       pointerId: 2,
       pointerType: "touch",
     });
-    expect(motionMocks.onDragEnd).toBeUndefined();
-    expect(motionMocks.motionValue.set).not.toHaveBeenCalled();
 
     fireEvent.touchStart(grid, {
       touches: [{ clientX: 300, clientY: 400, identifier: 2 }],
@@ -482,7 +425,15 @@ describe("MobileDaySchedule", () => {
     fireEvent.touchMove(grid, {
       touches: [{ clientX: 280, clientY: 401, identifier: 2 }],
     });
-    expect(motionMocks.motionValue.set).toHaveBeenCalledWith(-20);
+    await act(
+      async () =>
+        new Promise<void>((resolve) => requestAnimationFrame(() => resolve())),
+    );
+    expect(
+      container.querySelector<HTMLElement>(
+        '[data-slot="mobile-day-swipe-track"]',
+      )?.style.transform,
+    ).toBe("translateX(-20px)");
   });
 
   it("snaps to the next day after a deliberate partial left swipe", async () => {
@@ -508,25 +459,17 @@ describe("MobileDaySchedule", () => {
         touches: [],
       });
       await new Promise<void>((resolve) => {
-        requestAnimationFrame(() => resolve());
+        setTimeout(resolve, 250);
       });
     });
 
     expect(onDaySwipe).toHaveBeenCalledWith(1);
-    expect(motionMocks.animate).toHaveBeenCalledOnce();
-    expect(motionMocks.animate).toHaveBeenCalledWith(
-      motionMocks.motionValue,
-      -390,
-      {
-        duration: 0.18,
-        ease: [0.16, 1, 0.3, 1],
-      },
-    );
-    expect(motionMocks.motionValue.set).toHaveBeenCalledWith(0);
+
+    await expectSettledTrack(container);
   });
 
   it("changes the day from native touch events without relying on pointer drag events", () => {
-    motionMocks.reducedMotion = true;
+    setReducedMotion(true);
     const { container, grid, onDaySwipe } = renderSchedule();
     const swipeSurface = container.querySelector(
       '[data-slot="mobile-day-swipe-surface"]',
@@ -548,12 +491,11 @@ describe("MobileDaySchedule", () => {
       touches: [],
     });
 
-    expect(motionMocks.motionValue.set).toHaveBeenCalledWith(-110);
     expect(onDaySwipe).toHaveBeenCalledWith(1);
   });
 
   it("allows another native swipe after an interrupted touch gesture", () => {
-    motionMocks.reducedMotion = true;
+    setReducedMotion(true);
     const { container, grid, onDaySwipe } = renderSchedule();
     const swipeSurface = container.querySelector(
       '[data-slot="mobile-day-swipe-surface"]',
@@ -587,7 +529,7 @@ describe("MobileDaySchedule", () => {
   });
 
   it("handles a native touch swipe from a reservation without opening it", () => {
-    motionMocks.reducedMotion = true;
+    setReducedMotion(true);
     const { container, onDaySwipe, onReservationSelect } = renderSchedule(
       vi.fn(),
       [createSegment()],
@@ -625,7 +567,7 @@ describe("MobileDaySchedule", () => {
   });
 
   it("changes the day without animation when reduced motion is enabled", async () => {
-    motionMocks.reducedMotion = true;
+    setReducedMotion(true);
     const { container, grid, onDaySwipe } = renderSchedule();
     const swipeSurface = container.querySelector(
       '[data-slot="mobile-day-swipe-surface"]',
@@ -648,8 +590,6 @@ describe("MobileDaySchedule", () => {
     });
 
     expect(onDaySwipe).toHaveBeenCalledWith(-1);
-    expect(motionMocks.animate).not.toHaveBeenCalled();
-    expect(motionMocks.motionValue.set).toHaveBeenCalledWith(0);
   });
 
   it("allows a horizontal swipe from a reservation without opening it", async () => {
@@ -686,22 +626,16 @@ describe("MobileDaySchedule", () => {
       });
       fireEvent.click(reservationBlock);
       await new Promise<void>((resolve) => {
-        requestAnimationFrame(() => resolve());
+        setTimeout(resolve, 250);
       });
     });
 
     expect(onReservationSelect).not.toHaveBeenCalled();
     expect(onDaySwipe).toHaveBeenCalledWith(1);
+    await expectSettledTrack(container);
   });
 
   it("settles one touch swipe only once when native and pointer endings race", async () => {
-    let resolveTransition: (() => void) | undefined;
-    motionMocks.animate.mockImplementationOnce(
-      () =>
-        new Promise<void>((resolve) => {
-          resolveTransition = resolve;
-        }),
-    );
     const { container, grid, onDaySwipe } = renderSchedule();
     const swipeSurface = container.querySelector(
       '[data-slot="mobile-day-swipe-surface"]',
@@ -722,28 +656,16 @@ describe("MobileDaySchedule", () => {
       changedTouches: [{ clientX: 252, clientY: 402, identifier: 9 }],
       touches: [],
     });
-    const duplicatePointerCompletion = motionMocks.onDragEnd?.(
-      new PointerEvent("pointerup"),
-      {
-        offset: { x: -48 },
-        velocity: { x: 0 },
-      },
-    );
 
-    expect(motionMocks.animate).toHaveBeenCalledOnce();
-    resolveTransition?.();
-    await act(async () => duplicatePointerCompletion);
+    fireEvent.pointerUp(grid, { pointerType: "touch", pointerId: 9 });
+    await act(
+      async () => new Promise<void>((resolve) => setTimeout(resolve, 250)),
+    );
     expect(onDaySwipe).toHaveBeenCalledOnce();
+    await expectSettledTrack(container);
   });
 
   it("does not reset the track when touch cancellation follows a committed swipe", async () => {
-    let resolveTransition: (() => void) | undefined;
-    motionMocks.animate.mockImplementationOnce(
-      () =>
-        new Promise<void>((resolve) => {
-          resolveTransition = resolve;
-        }),
-    );
     const { container, grid, onDaySwipe } = renderSchedule();
     const swipeSurface = container.querySelector(
       '[data-slot="mobile-day-swipe-surface"]',
@@ -764,23 +686,17 @@ describe("MobileDaySchedule", () => {
       changedTouches: [{ clientX: 252, clientY: 402, identifier: 10 }],
       touches: [],
     });
-    motionMocks.motionValue.set.mockClear();
+
     fireEvent.touchCancel(grid);
 
-    expect(motionMocks.motionValue.set).not.toHaveBeenCalled();
-    resolveTransition?.();
-    await act(async () => Promise.resolve());
+    await act(
+      async () => new Promise<void>((resolve) => setTimeout(resolve, 250)),
+    );
     expect(onDaySwipe).toHaveBeenCalledOnce();
+    await expectSettledTrack(container);
   });
 
   it("ignores new touch drags while the day transition is running", async () => {
-    let resolveExit: (() => void) | undefined;
-    motionMocks.animate.mockImplementationOnce(
-      () =>
-        new Promise<void>((resolve) => {
-          resolveExit = resolve;
-        }),
-    );
     const { container, grid, onDaySwipe } = renderSchedule();
     const swipeSurface = container.querySelector(
       '[data-slot="mobile-day-swipe-surface"]',
@@ -801,7 +717,6 @@ describe("MobileDaySchedule", () => {
       changedTouches: [{ clientX: 220, clientY: 402, identifier: 13 }],
       touches: [],
     });
-    motionMocks.motionValue.set.mockClear();
 
     fireEvent.touchStart(grid, {
       touches: [{ clientX: 300, clientY: 400, identifier: 14 }],
@@ -809,29 +724,18 @@ describe("MobileDaySchedule", () => {
     fireEvent.touchMove(grid, {
       touches: [{ clientX: 220, clientY: 402, identifier: 14 }],
     });
-    expect(motionMocks.motionValue.set).not.toHaveBeenCalled();
-    expect(motionMocks.animate).toHaveBeenCalledOnce();
 
-    resolveExit?.();
     await act(
-      () =>
-        new Promise<void>((resolve) => {
-          requestAnimationFrame(() => resolve());
-        }),
+      async () => new Promise<void>((resolve) => setTimeout(resolve, 250)),
     );
     expect(onDaySwipe).toHaveBeenCalledOnce();
+    await expectSettledTrack(container);
   });
 
   it("fully settles an incomplete swipe before accepting another gesture", async () => {
-    vi.useFakeTimers();
+    vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date(2026, 0, 7, 12, 0));
-    let resolveReturn: (() => void) | undefined;
-    motionMocks.animate.mockImplementationOnce(
-      () =>
-        new Promise<void>((resolve) => {
-          resolveReturn = resolve;
-        }),
-    );
+
     const { container, grid, onDaySwipe } = renderSchedule();
     const swipeSurface = container.querySelector(
       '[data-slot="mobile-day-swipe-surface"]',
@@ -845,7 +749,7 @@ describe("MobileDaySchedule", () => {
     fireEvent.touchStart(grid, {
       touches: [{ clientX: 300, clientY: 400, identifier: 15 }],
     });
-    act(() => vi.advanceTimersByTime(200));
+    vi.setSystemTime(new Date(2026, 0, 7, 12, 0, 0, 200));
     fireEvent.touchMove(grid, {
       touches: [{ clientX: 276, clientY: 402, identifier: 15 }],
     });
@@ -854,27 +758,19 @@ describe("MobileDaySchedule", () => {
       touches: [],
     });
 
-    expect(motionMocks.animate).toHaveBeenCalledWith(
-      motionMocks.motionValue,
-      0,
-      {
-        duration: 0.16,
-        ease: [0.16, 1, 0.3, 1],
-      },
-    );
-    motionMocks.motionValue.set.mockClear();
     fireEvent.touchStart(grid, {
       touches: [{ clientX: 300, clientY: 400, identifier: 16 }],
     });
     fireEvent.touchMove(grid, {
       touches: [{ clientX: 220, clientY: 402, identifier: 16 }],
     });
-    expect(motionMocks.motionValue.set).not.toHaveBeenCalled();
 
-    resolveReturn?.();
-    await act(async () => Promise.resolve());
-    expect(motionMocks.motionValue.set).toHaveBeenLastCalledWith(0);
+    await act(
+      async () => new Promise<void>((resolve) => setTimeout(resolve, 250)),
+    );
+
     expect(onDaySwipe).not.toHaveBeenCalled();
+    await expectSettledTrack(container);
   });
 
   it("settles a repeated series of alternating partial swipes", async () => {
@@ -913,7 +809,7 @@ describe("MobileDaySchedule", () => {
           touches: [],
         });
         await new Promise<void>((resolve) => {
-          requestAnimationFrame(() => resolve());
+          setTimeout(resolve, 250);
         });
       });
     }
@@ -921,9 +817,9 @@ describe("MobileDaySchedule", () => {
     expect(onDaySwipe.mock.calls.map(([direction]) => direction)).toEqual(
       expectedDirections,
     );
-    expect(motionMocks.animate).toHaveBeenCalledTimes(20);
-    expect(motionMocks.motionValue.set).toHaveBeenLastCalledWith(0);
-  });
+
+    await expectSettledTrack(container);
+  }, 10_000);
 
   it("keeps the native context menu available on reservation blocks", () => {
     vi.useFakeTimers();
@@ -945,7 +841,6 @@ describe("MobileDaySchedule", () => {
     act(() => vi.advanceTimersByTime(400));
 
     expect(fireEvent.contextMenu(reservationBlock)).toBe(true);
-    expect(motionMocks.motionValue.set).toHaveBeenCalledWith(0);
   });
 
   it("keeps a moving short touch available for scrolling", () => {

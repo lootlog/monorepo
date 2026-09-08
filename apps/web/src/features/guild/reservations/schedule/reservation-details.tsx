@@ -177,7 +177,7 @@ export function ReservationDetails({
           variant="destructive"
           className="w-full sm:w-auto"
           loading={deleteMutation.isPending}
-          icon={<Trash2 />}
+          icon=<Trash2 />
           onClick={() =>
             deleteMutation.mutate({
               pathParams: {

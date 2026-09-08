@@ -7,7 +7,7 @@ import type { FC, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { CategoryVolumeControl } from "./category-volume-control";
 import { SoundFieldInput } from "./sound-field-input";
-import { DEFAULT_SOUND_URLS } from "../../config/default-sounds";
+import { getDefaultSoundUrl } from "../../config/default-sounds";
 import type { SoundCategory } from "./types";
 
 interface CategoryAccordionItemProps {
@@ -85,7 +85,7 @@ export const CategoryAccordionItem: FC<CategoryAccordionItemProps> = ({
                 key={field.key}
                 label={field.label}
                 soundUrl={soundUrl}
-                placeholder={DEFAULT_SOUND_URLS[field.key]}
+                placeholder={getDefaultSoundUrl(field.key)}
                 error={hasError}
                 onSoundUrlChange={(value) => onSoundUrlChange(field.key, value)}
                 onPlaySound={() => onPlaySound(field.key, soundUrl)}

@@ -28,7 +28,7 @@ export function getBattleActionValues(
   mode: "generic" | "spell" | "attack" = "generic",
 ) {
   const presentation = getBattleActionPresentation(action);
-  return {
+  const values = {
     name: attacker?.name,
     defenderName: defender?.name,
     value:
@@ -37,10 +37,10 @@ export function getBattleActionValues(
         : roundValue(action.value),
     hp: roundHpPercentage(event.attackerHpPercentage),
     defenderHp: roundHpPercentage(event.defenderHpPercentage),
-    ...(mode === "generic" ? { v1: 0 } : {}),
-    ...(mode === "spell" ? {} : presentation.values),
-    ...getDynamicBattleValues(action.value),
   };
+  if (mode === "generic") Object.assign(values, { v1: 0 });
+  if (mode !== "spell") Object.assign(values, presentation.values);
+  return Object.assign(values, getDynamicBattleValues(action.value));
 }
 
 export function groupBattleAttackDamage(

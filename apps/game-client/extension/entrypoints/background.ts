@@ -42,7 +42,7 @@ export default defineBackground(() => {
       },
     };
     active = owner;
-    port.onMessage.addListener((message: unknown) => {
+    port.onMessage.addListener(function receivePageMessage(message: unknown) {
       void connection.receive(message).catch(() => owner.close());
     });
     port.onDisconnect.addListener(() => {

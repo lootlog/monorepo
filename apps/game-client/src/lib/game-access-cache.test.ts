@@ -119,7 +119,9 @@ it("does no work for repeated policy snapshots and coalesces expansions without 
   const key = ["/timers", { world: "alpha" }];
   const row = timer("a", "ELITE2", 50);
   client.setQueryData(key, [row]);
-  const fetch = vi.fn().mockResolvedValue([row, timer("a", "TITAN")]);
+  const fetch = vi
+    .fn<() => Promise<ReturnType<typeof timer>[]>>()
+    .mockResolvedValue([row, timer("a", "TITAN")]);
   const observer = new QueryObserver(client, {
     queryKey: key,
     queryFn: fetch,
@@ -166,7 +168,9 @@ it("conservatively clears legacy snapshots and coalesces old gateway refreshes",
   const key = ["/timers", { world: "alpha" }];
   const row = timer("a", "TITAN");
   client.setQueryData(key, [row]);
-  const fetch = vi.fn().mockResolvedValue([]);
+  const fetch = vi
+    .fn<() => Promise<ReturnType<typeof timer>[]>>()
+    .mockResolvedValue([]);
   const observer = new QueryObserver(client, {
     queryKey: key,
     queryFn: fetch,
@@ -192,7 +196,9 @@ it("does not retry a cancelled history request for a removed organization", asyn
   const before = policy();
   manager.apply({ accessPolicy: before });
   const key = ["/guilds/a/timers/titan/history"];
-  const fetch = vi.fn(() => new Promise(() => {}));
+  const fetch = vi.fn<() => Promise<ReturnType<typeof timer>[]>>(
+    () => new Promise(() => {}),
+  );
   const observer = new QueryObserver(client, { queryKey: key, queryFn: fetch });
   const off = observer.subscribe(() => {});
   expect(fetch).toHaveBeenCalledTimes(1);

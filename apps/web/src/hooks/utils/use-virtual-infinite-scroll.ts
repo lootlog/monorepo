@@ -6,7 +6,7 @@ type VirtualItemLike = {
 
 type UseVirtualInfiniteScrollOptions = {
   enabled?: boolean;
-  fetchNextPage: () => Promise<unknown> | unknown;
+  fetchNextPage: () => void;
   hasNextPage?: boolean;
   isFetchingNextPage: boolean;
   itemCount: number;

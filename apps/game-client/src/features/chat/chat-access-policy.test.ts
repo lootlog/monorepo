@@ -75,7 +75,7 @@ describe("chat policy reconciliation", () => {
     applyChatAccessPolicy(client, policy());
     const rows = [message("one", "titan")];
     client.setQueryData(key("one"), rows);
-    const fetch = vi.fn().mockResolvedValue(rows);
+    const fetch = vi.fn<() => Promise<ChatMessage[]>>().mockResolvedValue(rows);
     const observer = new QueryObserver(client, {
       queryKey: key("one"),
       queryFn: fetch,
@@ -126,7 +126,7 @@ describe("chat policy reconciliation", () => {
     let resolve: ((rows: ChatMessage[]) => void) | undefined;
     const rows = [message("two", "allowed")];
     const fetch = vi
-      .fn()
+      .fn<() => Promise<ChatMessage[]>>()
       .mockImplementationOnce(
         () =>
           new Promise<ChatMessage[]>((done) => {
@@ -161,7 +161,7 @@ describe("chat policy reconciliation", () => {
     applyChatAccessPolicy(client, policy());
     client.setQueryData(key("one"), [message("one", "revoked")]);
     client.setQueryData(key("two"), [message("two", "inactive")]);
-    const fetch = vi.fn().mockResolvedValue([]);
+    const fetch = vi.fn<() => Promise<ChatMessage[]>>().mockResolvedValue([]);
     const observer = new QueryObserver(client, {
       queryKey: key("one"),
       queryFn: fetch,
@@ -188,7 +188,7 @@ describe("chat policy reconciliation", () => {
     applyChatAccessPolicy(client, policy(false));
     const rows = [message("one", "elite", 100, 20)];
     client.setQueryData(key("one"), rows);
-    const fetch = vi.fn().mockResolvedValue(rows);
+    const fetch = vi.fn<() => Promise<ChatMessage[]>>().mockResolvedValue(rows);
     const observer = new QueryObserver(client, {
       queryKey: key("one"),
       queryFn: fetch,
@@ -214,7 +214,7 @@ describe("chat policy reconciliation", () => {
     const low = message("one", "low", 50);
     client.setQueryData(key("one"), [low, message("one", "high", 300)]);
     let resolve: ((rows: ChatMessage[]) => void) | undefined;
-    const fetch = vi.fn(
+    const fetch = vi.fn<() => Promise<ChatMessage[]>>(
       () =>
         new Promise<ChatMessage[]>((done) => {
           resolve = done;

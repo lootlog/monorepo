@@ -109,9 +109,9 @@ export const LootTopNpcsChart: React.FC<LootTopNpcsChartProps> = ({
               <ChartTooltip
                 content=<ChartTooltipContent
                   labelFormatter={(_, payload) => {
-                    const item = payload[0]?.payload as
-                      | Record<string, unknown>
-                      | undefined;
+                    const item = chartData.find(
+                      (point) => point === payload[0]?.payload,
+                    );
                     return String(item?.fullName ?? "");
                   }}
                 />

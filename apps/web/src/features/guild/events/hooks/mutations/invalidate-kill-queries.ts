@@ -1,3 +1,4 @@
+import { z } from "zod";
 import type { Query, QueryClient } from "@tanstack/react-query";
 import {
   getEventsRankingControllerGetEventHeroStatsQueryKey,
@@ -16,9 +17,9 @@ const getEventHeroesPathPrefix = (guildId: string, eventId: string) =>
   `/guilds/${guildId}/events/${eventId}/heroes/`;
 
 const isEventKillQuery = (query: Query, guildId: string, eventId: string) => {
-  const [path] = query.queryKey;
+  const path = z.string().safeParse(query.queryKey[0]).data;
 
-  if (typeof path !== "string") {
+  if (path === undefined) {
     return false;
   }
 

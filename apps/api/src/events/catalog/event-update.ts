@@ -40,7 +40,7 @@ const updatedDate = (value: string | null | undefined, current: Date | null) =>
 
 const updatedScoring = (
   currentRules: (typeof eventTable.$inferSelect)["scoringRules"],
-  currentMode: unknown,
+  currentMode: (typeof eventTable.$inferSelect)["scoringMode"],
   requestedMode: EventScoringMode | undefined,
   requestedRules: UpdateEventRequest["scoringRules"],
 ) => {
@@ -63,9 +63,9 @@ const updatedScoring = (
 export const makeEventUpdate =
   (
     database: typeof ApiDatabase.Service,
-    redis: RedisService,
-    catalogRead: EventsCatalogRead,
-    logger: Logger,
+    redis: Pick<RedisService, "deleteByPattern">,
+    catalogRead: Pick<EventsCatalogRead, "hydrateMutation">,
+    logger: Pick<Logger, "warn">,
   ) =>
   (guild: { id: string }, eventId: string, data: UpdateEventRequest) =>
     Effect.gen(function* () {

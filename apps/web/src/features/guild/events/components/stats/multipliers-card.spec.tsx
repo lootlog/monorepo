@@ -1,22 +1,15 @@
 // @vitest-environment happy-dom
 
 import { cleanup, render, screen, within } from "@testing-library/react";
-import type { TFunction } from "i18next";
+import { initializeTestTranslations } from "@/lib/testing/i18n";
 import type { EventScoringRules } from "@lootlog/domain/scoring";
 import { afterEach, describe, expect, it } from "vitest";
 import { MultipliersCard } from "./multipliers-card";
 
-const t = ((key: string, options?: { points?: number }) => {
-  if (key === "events.scoring.actionSummary.basePoints") {
-    return `[${options?.points}]`;
-  }
-
-  if (key === "events.scoring.actionSummary.bonusPoints") {
-    return `[+${options?.points}]`;
-  }
-
-  return key;
-}) as TFunction;
+const { t } = await initializeTestTranslations({
+  "events.scoring.actionSummary.basePoints": "[{{points}}]",
+  "events.scoring.actionSummary.bonusPoints": "[+{{points}}]",
+});
 
 const scoringRules: EventScoringRules = {
   version: 1,
@@ -86,10 +79,12 @@ describe("MultipliersCard", () => {
     });
     const items = within(list).getAllByRole("listitem");
     expect(items).toHaveLength(3);
+    if (!items[0] || !items[1] || !items[2])
+      throw new Error("Missing scoring rules");
     expect(items[0]?.textContent).toContain("Applied rule");
-    expect(within(items[0] as HTMLElement).getByText("[1]")).toBeTruthy();
-    expect(within(items[1] as HTMLElement).getByText("[+0.25]")).toBeTruthy();
-    expect(within(items[2] as HTMLElement).getByText("[+0.5]")).toBeTruthy();
+    expect(within(items[0]).getByText("[1]")).toBeTruthy();
+    expect(within(items[1]).getByText("[+0.25]")).toBeTruthy();
+    expect(within(items[2]).getByText("[+0.5]")).toBeTruthy();
     const firstItemText = items[0]?.textContent ?? "";
     expect(firstItemText).toContain("events.scoring.always");
     expect(firstItemText.indexOf("events.scoring.always")).toBeLessThan(

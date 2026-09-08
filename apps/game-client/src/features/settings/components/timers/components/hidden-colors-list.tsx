@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { Tile } from "@/components/ui/tile";
-import type { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
 import { getDefaultColorName } from "@/features/timers/utils/get-default-color-name";
 import { RotateCcw } from "lucide-react";
 import type { FC } from "react";
@@ -37,7 +36,7 @@ export const HiddenColorsList: FC<HiddenColorsListProps> = ({
                 {colorNames[colorId] ?? getDefaultColorName(colorId)}
               </span>
               <Tile
-                color={colorId as keyof typeof TIMERS_COLORS}
+                color={colorId}
                 className="ll:h-6 ll:w-full ll:items-center ll:justify-center ll:mt-1"
               >
                 <span className="ll:text-[10px] ll:text-white ll:whitespace-nowrap ll:flex ll:justify-between ll:w-full ll:px-1 ll:items-center ll:h-full">

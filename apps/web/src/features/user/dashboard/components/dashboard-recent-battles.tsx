@@ -31,7 +31,7 @@ export function DashboardRecentBattles() {
         icon={Swords}
         title={t("statistics.recentBattles.title")}
         actions={
-          <ChevronLink render={<Link to="/@me/battle-panel" />}>
+          <ChevronLink render=<Link to="/@me/battle-panel" />>
             {t("statistics.recentBattles.showAll")}
           </ChevronLink>
         }
@@ -64,12 +64,10 @@ export function DashboardRecentBattles() {
                 key={battle.id}
                 battle={battle}
                 now={now}
-                actions={
-                  <DashboardRecentBattleActions
-                    battle={battle}
-                    actions={actions}
-                  />
-                }
+                actions=<DashboardRecentBattleActions
+                  battle={battle}
+                  actions={actions}
+                />
               />
             ))}
           </ul>

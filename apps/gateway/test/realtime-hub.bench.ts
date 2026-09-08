@@ -1,3 +1,4 @@
+import { unusedFederationStore } from "./realtime-fixtures.js";
 import assert from "node:assert/strict";
 import type {
   BasicPresence,
@@ -6,9 +7,8 @@ import type {
 } from "@lootlog/protocol/realtime";
 import { Redacted } from "effect";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
-import type { RedisGatewayStore } from "#src/platform/redis-store";
 import { getScopeKey, RealtimeHub } from "#src/realtime/realtime-hub";
-import type { GatewaySocket, SessionData } from "#src/realtime/session";
+import type { SessionData } from "#src/realtime/session";
 
 // Run with `bun run perf:routing`. This measures routing and encoding, not network I/O.
 const connections = 5_000;
@@ -36,7 +36,7 @@ const config = {
   maxBackpressureBytes: 1_048_576,
   maxBackpressureStrikes: 3,
 } satisfies GatewayConfiguration;
-const redis = { publish: async () => {} } as unknown as RedisGatewayStore;
+const redis = { ...unusedFederationStore, publish: () => Promise.resolve() };
 const presence: BasicPresence = {
   userId: "user-0",
   discordId: "discord-0",
@@ -102,13 +102,15 @@ for (const scenario of [
     const organizationId =
       scenario === "presence" ? `organization-${index % 30}` : "organization-0";
     // Default client subscriptions omit world/map; recipient filters still apply.
-    const mapScope: SubscriptionScope = {
-      topic: "map.pings",
-      organizationId,
-      ...(scenario === "map.pings.exact"
-        ? { world: "tempest", mapId: index % 100 }
-        : {}),
-    };
+    const mapScope: SubscriptionScope =
+      scenario === "map.pings.exact"
+        ? {
+            topic: "map.pings",
+            organizationId,
+            world: "tempest",
+            mapId: index % 100,
+          }
+        : { topic: "map.pings", organizationId };
     const scopes: SubscriptionScope[] =
       scenario === "presence"
         ? presenceTopics.map((topic) => ({ topic, organizationId }))
@@ -133,12 +135,13 @@ for (const scenario of [
     };
     hub.register({
       data,
+      close: () => {},
       getBufferedAmount: () => 0,
       send: (bytes: Uint8Array) => {
         deliveries++;
         return bytes.byteLength;
       },
-    } as unknown as GatewaySocket);
+    });
   }
   const publish =
     scenario === "presence"

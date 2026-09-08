@@ -1,41 +1,19 @@
+import { configureApiClients } from "@lootlog/client/transport";
+import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { renderHook, waitFor } from "@testing-library/react";
 import type { PartyReadyRoomOrganizerProjection } from "@lootlog/schema/party-ready-room";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { usePartyReadyRoomObserver } from "@/features/party-finder/hooks/use-party-ready-room-observer";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 import { usePartyStore } from "@/store/party.store";
 import { useGlobalStore } from "@/store/global.store";
 
-vi.mock("@/features/party-finder/ready-room-character-identity", () => ({
-  getCurrentReadyRoomCharacterIdentity: () => ({
-    accountId: "account",
-    characterId: "character",
-  }),
-}));
-
-const observeParty = vi.fn<
-  (
-    path: { notificationId: string },
-    data: {
-      memberCharacterIds: string[];
-      organizerAccountId: string;
-      organizerCharacterId: string;
-    },
-  ) => Promise<unknown>
->();
-
-vi.mock("@lootlog/client/main", async () => ({
-  ...(await vi.importActual("@lootlog/client/main")),
-  partyReadyRoomControllerObserveParty: (
-    path: { notificationId: string },
-    data: {
-      memberCharacterIds: string[];
-      organizerAccountId: string;
-      organizerCharacterId: string;
-    },
-  ) => observeParty(path, data),
-}));
-
+const observeParty = vi.fn<(request: Request) => Promise<Response>>();
+let restoreClient = () => {};
+afterEach(() => {
+  restoreClient();
+  vi.unstubAllGlobals();
+});
 const projection = {
   schemaVersion: 3,
   notificationId: "room-1",
@@ -63,7 +41,20 @@ const projection = {
 describe("usePartyReadyRoomObserver", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    observeParty.mockResolvedValue(projection);
+    restoreClient = configureApiClients({
+      main: { baseUrl: "https://api.test" },
+    });
+    vi.stubGlobal(
+      "fetch",
+      (input: string | URL | Request, init?: RequestInit) =>
+        observeParty(new Request(input, init)),
+    );
+    observeParty.mockImplementation(() =>
+      Promise.resolve(Response.json(projection)),
+    );
+    setTestRuntimeGame({
+      hero: { accountId: "account", characterId: "character" },
+    });
     usePartyFinderStore.getState().clearReadyRooms();
     usePartyFinderStore.getState().mergeProjection(projection);
     usePartyFinderStore.getState().setReadyRoomsSynchronized(true);
@@ -99,15 +90,13 @@ describe("usePartyReadyRoomObserver", () => {
     ]);
 
     await waitFor(() => expect(observeParty).toHaveBeenCalledTimes(2));
-    expect(observeParty).toHaveBeenNthCalledWith(
-      2,
-      { notificationId: "room-1" },
-      {
-        memberCharacterIds: ["10", "20"],
-        organizerAccountId: "account",
-        organizerCharacterId: "character",
-      },
-    );
+    const request = observeParty.mock.calls[1]?.[0];
+    expect(request?.url).toContain("room-1");
+    expect(await request?.json()).toEqual({
+      memberCharacterIds: ["10", "20"],
+      organizerAccountId: "account",
+      organizerCharacterId: "character",
+    });
   });
 
   it("does not report another character's party for the organizer", async () => {

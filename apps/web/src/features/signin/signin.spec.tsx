@@ -1,71 +1,77 @@
 // @vitest-environment happy-dom
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { initializeTestTranslations } from "@/lib/testing/i18n";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import {
+  createMemoryHistory,
+  createRootRoute,
+  createRoute,
+  createRouter,
+  RouterProvider,
+} from "@tanstack/react-router";
+import type { ApiServiceConfig } from "@lootlog/client/transport";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { SignIn } from "./signin";
 
-const mocks = vi.hoisted(() => ({
-  search: {
-    error: "state_security_mismatch" as string | undefined,
-    redirect: "/@me" as string | undefined,
-  },
-  signInSocial: vi.fn(),
-  toastError: vi.fn(),
-}));
+const signInFetch = vi.fn<NonNullable<ApiServiceConfig["fetch"]>>();
+vi.stubGlobal("fetch", signInFetch);
+const { SignIn } = await import("./signin");
+const { Route } = await import("../../routes/signin");
+await initializeTestTranslations();
 
-vi.mock("@tanstack/react-router", () => ({
-  useSearch: () => mocks.search,
-}));
+const renderSignIn = async () => {
+  const root = createRootRoute();
+  const signin = createRoute({
+    getParentRoute: () => root,
+    path: "signin",
+    component: SignIn,
+    validateSearch: Route.options.validateSearch,
+  });
+  const router = createRouter({
+    routeTree: root.addChildren([signin]),
+    history: createMemoryHistory({
+      initialEntries: [
+        "/signin?error=state_security_mismatch&redirect=%2F%40me",
+      ],
+    }),
+  });
+  await router.load();
+  return render(<RouterProvider router={router} />);
+};
 
-vi.mock("@/lib/auth-client", () => ({
-  authClient: {
-    signIn: {
-      social: mocks.signInSocial,
-    },
-  },
-}));
-
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
-}));
-
-vi.mock("sonner", () => ({
-  toast: { error: mocks.toastError },
-}));
+beforeEach(() => {
+  signInFetch.mockReset();
+  signInFetch.mockImplementation(() => new Promise<Response>(() => undefined));
+});
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 describe("SignIn OAuth recovery", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mocks.search.error = "state_security_mismatch";
-    mocks.search.redirect = "/@me";
-    mocks.signInSocial.mockReturnValue(new Promise(() => undefined));
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  it("shows a callback failure without automatically restarting OAuth", () => {
-    render(<SignIn />);
-
+  it("shows a callback failure without automatically restarting OAuth", async () => {
+    await renderSignIn();
     expect(screen.getByText("auth.signin.callbackFailed")).toBeTruthy();
-    expect(mocks.signInSocial).not.toHaveBeenCalled();
+    expect(signInFetch).not.toHaveBeenCalled();
   });
 
-  it("starts one OAuth flow after an explicit retry", () => {
-    render(<SignIn />);
-
+  it("starts one OAuth flow after an explicit retry", async () => {
+    await renderSignIn();
     const button = screen.getByRole("button", { name: "auth.signin.submit" });
     fireEvent.click(button);
     fireEvent.click(button);
-
-    expect(mocks.signInSocial).toHaveBeenCalledTimes(1);
-    expect(mocks.signInSocial).toHaveBeenCalledWith(
-      expect.objectContaining({
-        callbackURL: `${window.location.origin}/@me`,
-        errorCallbackURL: window.location.href,
-        provider: "discord",
-      }),
-    );
+    await waitFor(() => expect(signInFetch).toHaveBeenCalledTimes(1));
+    expect(
+      JSON.parse(String(signInFetch.mock.calls[0]?.[1]?.body)),
+    ).toMatchObject({
+      callbackURL: `${window.location.origin}/@me`,
+      errorCallbackURL: window.location.href,
+      provider: "discord",
+    });
   });
 });

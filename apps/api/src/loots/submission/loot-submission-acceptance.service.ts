@@ -13,7 +13,7 @@ import {
 } from "#src/shared/http/http-errors";
 import { createHash } from "node:crypto";
 import { RoutingKey } from "#src/rabbitmq/routing-key";
-import type { ItemRarityEnum as ItemRarity } from "@lootlog/schema/item-rarity";
+import { ItemRaritySchema } from "@lootlog/schema/item-rarity";
 import {
   LootShareSourceEnum as LootShareSource,
   ProfessionEnum as Profession,
@@ -495,7 +495,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
   ) {
     if (primaryNpcType !== NpcType.COLOSSUS) {
       return Effect.succeed({
-        share: {} as Record<string, never>,
+        share: {},
         source: LootShareSource.NONE,
       });
     }
@@ -503,7 +503,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
       Effect.map((ambiguous) => {
         if (ambiguous) {
           return {
-            share: {} as Record<string, never>,
+            share: {},
             source: LootShareSource.NONE,
           };
         }
@@ -514,7 +514,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         return share
           ? { share, source: LootShareSource.ITEM_OWNER }
           : {
-              share: {} as Record<string, never>,
+              share: {},
               source: LootShareSource.NONE,
             };
       }),
@@ -550,10 +550,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     return assigned.size === players.length ? share : null;
   }
 
-  private processNpcs(npcs: CreateLootRequest["npcs"]): {
-    primary: CreateLootRequest["npcs"][number];
-    mapped: ProcessedNpc[];
-  } {
+  private processNpcs(npcs: CreateLootRequest["npcs"]) {
     const sorted = [...npcs].sort((left, right) => right.wt - left.wt);
     const primary = sorted[0];
     if (!primary) {
@@ -592,7 +589,11 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
   private getItemStats(item: CreateLootRequest["loots"][number]) {
     const parsedStats = this.parseItemStats(item.stat);
     const lvl = parsedStats["lvl"] ? Number(parsedStats["lvl"]) : 0;
-    const rarity = parsedStats["rarity"]?.toUpperCase() as ItemRarity;
+    const rawRarity = parsedStats["rarity"]?.toUpperCase();
+    const rarity =
+      rawRarity === undefined
+        ? undefined
+        : Schema.decodeUnknownSync(ItemRaritySchema)(rawRarity);
     const requiredProf = parsedStats["reqp"];
     const prof = requiredProf
       ? requiredProf
@@ -679,7 +680,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
   private normalizeCharacterAndAccount(
     id: string | number,
     accountId: string | number,
-  ): { characterId: number; accountId: number } {
+  ) {
     const account = String(accountId ?? "");
     const character = String(id ?? "");
     if (account && character.endsWith(account)) {

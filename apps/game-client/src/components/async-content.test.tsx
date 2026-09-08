@@ -84,7 +84,7 @@ describe("AsyncContent", () => {
   });
 
   it("shows a retry action when loading fails without content", () => {
-    const onRetry = vi.fn();
+    const onRetry = vi.fn<() => void>();
 
     render(
       <AsyncContent

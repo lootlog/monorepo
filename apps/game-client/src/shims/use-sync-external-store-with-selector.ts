@@ -19,6 +19,7 @@ export function useSyncExternalStoreWithSelector<Snapshot, Selection>(
       prevSnapshotRef.current !== undefined &&
       Object.is(prevSnapshotRef.current, nextSnapshot)
     ) {
+      // SAFETY: A stored snapshot is written together with its selector result below, including undefined selections.
       return prevSelectionRef.current as Selection;
     }
 

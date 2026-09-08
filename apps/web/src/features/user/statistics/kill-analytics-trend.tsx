@@ -36,17 +36,15 @@ export function KillAnalyticsTrend({ title, data }: KillAnalyticsTrendProps) {
     <SectionCard>
       <SectionCardHeader
         title={title}
-        actions={
-          <AnimatedToggleGroup
-            label={t("statistics.view")}
-            value={view}
-            onValueChange={setView}
-            options={[
-              { value: "chart", label: t("statistics.chart") },
-              { value: "table", label: t("statistics.table") },
-            ]}
-          />
-        }
+        actions=<AnimatedToggleGroup
+          label={t("statistics.view")}
+          value={view}
+          onValueChange={setView}
+          options={[
+            { value: "chart", label: t("statistics.chart") },
+            { value: "table", label: t("statistics.table") },
+          ]}
+        />
       />
       <SectionCardContent className={view === "table" ? "p-0" : undefined}>
         {view === "chart" ? (

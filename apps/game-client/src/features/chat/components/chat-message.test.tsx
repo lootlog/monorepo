@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render as renderUi, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { MessageType } from "@/api/chat.api";
 import type {
@@ -6,148 +6,23 @@ import type {
   MemberSummaryResponseDtoOutput as GuildMember,
 } from "@lootlog/client/main";
 
+import type { ReactElement } from "react";
+import { createChatTestWrapper } from "../chat-test-wrapper";
+import { createChatMessage } from "../chat-test-fixtures";
+import { setTestRuntimeGame } from "@/test/test-runtime-window";
+import {
+  subscribeToChatScrollToMessage,
+  type ChatScrollToMessageEvent,
+} from "../chat-scroll-to-message";
 import { ChatMessage } from "./chat-message";
 
-const mocks = vi.hoisted(() => ({
-  dispatchChatScrollToMessage: vi.fn(),
-}));
-
-vi.mock("@/features/chat/chat-scroll-to-message", () => ({
-  dispatchChatScrollToMessage: mocks.dispatchChatScrollToMessage,
-}));
-
-vi.mock("@/hooks/discord/use-member-color", () => ({
-  useMemberColor: () => "abcdef",
-}));
-
-vi.mock("@/components/character-tile", () => ({
-  CharacterTile: ({ character }: { character: { nick: string } }) => (
-    <div>{character.nick}</div>
-  ),
-}));
-
-vi.mock("@/components/npc-tile", () => ({
-  NpcTile: ({ npc }: { npc: { nick: string } }) => <div>{npc.nick} tile</div>,
-}));
-
-vi.mock("@/components/ui/context-menu", () => ({
-  ContextMenu: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  ContextMenuContent: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  ContextMenuItem: ({ children }: { children: React.ReactNode }) => (
-    <button type="button">{children}</button>
-  ),
-  ContextMenuTrigger: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-}));
-
-vi.mock("@/components/ui/input", () => ({
-  Input: (props: React.ComponentProps<"input">) => <input {...props} />,
-}));
-
-vi.mock("@/components/ui/tooltip", () => ({
-  Tooltip: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  TooltipContent: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  TooltipTrigger: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-}));
-
-vi.mock("./party-gathering-card", () => ({
-  PartyGatheringCard: ({ guildName }: { guildName: string }) => (
-    <div>party:{guildName}</div>
-  ),
-}));
-
-vi.mock("@/features/npc-detector/components/npc-list-item", () => ({
-  NPCS_WITH_LOCATION: ["hero"],
-}));
-
-vi.mock("@/api/npcs.api", () => ({
-  NpcType: {
-    HERO: "hero",
-  },
-}));
-
-vi.mock("@lootlog/domain/npc-type", async (importOriginal) => ({
-  ...(await importOriginal()),
-  getNpcTypeByWt: () => "HERO",
-}));
-
-vi.mock("@/constants/margonem", () => ({
-  NPC_NAMES: {
-    hero: {
-      shortname: "H",
-    },
-  },
-}));
-
-vi.mock("@/lib/game", () => ({
-  Game: {
-    hero: {
-      nick: "CurrentHero",
-    },
-    interface: "si",
-  },
-}));
-
-vi.mock("@tanstack/react-query", async () => {
-  const actual = await vi.importActual("@tanstack/react-query");
-
-  return {
-    ...actual,
-    useQueryClient: () => ({
-      setQueryData: vi.fn(),
-    }),
-  };
-});
-
-vi.mock("@lootlog/client/main", async () => ({
-  ...(await vi.importActual("@lootlog/client/main")),
-  getChatControllerGetChatMessagesQueryKey: ({
-    guildId,
-  }: {
-    guildId: string;
-  }) => [guildId],
-  useChatControllerUpdateChatMessage: () => ({
-    mutate: vi.fn(),
-    isPending: false,
-  }),
-  useChatControllerDeleteChatMessage: () => ({
-    mutate: vi.fn(),
-    isPending: false,
-  }),
-}));
-
-const makeChatMessage = (
-  overrides?: Partial<ChatMessageType>,
-): ChatMessageType => ({
-  id: "message-1",
-  guildId: "guild-1",
-  message: "hello",
-  senderId: "user-1",
-  timestamp: "2026-01-01T10:00:00.000Z",
-  type: MessageType.NORMAL,
-  characterData: {
-    nick: "Hero",
-    id: 1,
-    acc: 1,
-    lvl: 100,
-    prof: "w",
-    icon: "hero.png",
-  },
-  canEdit: false,
-  canDelete: false,
-  ...overrides,
-});
+const render = (ui: ReactElement) =>
+  renderUi(ui, { wrapper: createChatTestWrapper().wrapper });
+const makeChatMessage = (overrides?: Partial<ChatMessageType>) =>
+  createChatMessage({ message: "hello", ...overrides });
+beforeEach(() =>
+  setTestRuntimeGame({ interface: "si", hero: { name: "CurrentHero" } }),
+);
 
 const member: GuildMember = {
   id: 1,
@@ -191,7 +66,9 @@ describe("ChatMessage", () => {
       />,
     );
 
-    expect(screen.getByText("party:Guild")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Dołącz do grupy" }),
+    ).toBeInTheDocument();
   });
 
   it("renders nothing without guild name", () => {
@@ -223,6 +100,7 @@ describe("ChatMessage", () => {
       />,
     );
 
+    fireEvent.contextMenu(screen.getByText("Member:"));
     expect(screen.getByText("Edytuj")).toBeInTheDocument();
     expect(screen.getByText("Usuń")).toBeInTheDocument();
   });
@@ -240,6 +118,7 @@ describe("ChatMessage", () => {
       />,
     );
 
+    fireEvent.contextMenu(screen.getByText("Member:"));
     expect(screen.queryByText("Edytuj")).not.toBeInTheDocument();
     expect(screen.getByText("Usuń")).toBeInTheDocument();
   });
@@ -266,7 +145,8 @@ describe("ChatMessage", () => {
   });
 
   it("routes every reply jump through the virtual list controller", () => {
-    mocks.dispatchChatScrollToMessage.mockClear();
+    const listener = vi.fn<(event: ChatScrollToMessageEvent) => void>();
+    const unsubscribe = subscribeToChatScrollToMessage(listener);
 
     render(
       <ChatMessage
@@ -286,8 +166,11 @@ describe("ChatMessage", () => {
 
     fireEvent.click(screen.getByText("quoted message"));
 
-    expect(mocks.dispatchChatScrollToMessage).toHaveBeenCalledOnce();
-    expect(mocks.dispatchChatScrollToMessage).toHaveBeenCalledWith("message-0");
+    expect(listener).toHaveBeenCalledOnce();
+    expect(listener.mock.calls[0]?.[0].detail).toEqual({
+      messageId: "message-0",
+    });
+    unsubscribe();
   });
 
   it("highlights targeted mentions in the message body", () => {
@@ -335,7 +218,7 @@ describe("ChatMessage", () => {
   });
 
   it("shows the reply action only for replyable message types", () => {
-    const onReply = vi.fn();
+    const onReply = vi.fn<() => void>();
 
     const { rerender } = render(
       <ChatMessage
@@ -347,6 +230,7 @@ describe("ChatMessage", () => {
       />,
     );
 
+    fireEvent.contextMenu(screen.getByText("Member:"));
     expect(screen.getByText("Odpowiedz")).toBeInTheDocument();
 
     rerender(
@@ -387,6 +271,7 @@ describe("ChatMessage", () => {
       />,
     );
 
+    fireEvent.contextMenu(screen.getByText("Member:"));
     expect(screen.queryByText("Edytuj")).not.toBeInTheDocument();
     expect(screen.queryByText("Usuń")).not.toBeInTheDocument();
   });

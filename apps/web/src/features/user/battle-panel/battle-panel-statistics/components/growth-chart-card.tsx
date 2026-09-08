@@ -8,20 +8,20 @@ import {
 import { BattlePanelChartFrame } from "./battle-panel-chart-frame";
 import { StatCard } from "./stat-card";
 
-type GrowthChartCardProps = {
-  chartData: Record<string, unknown>[];
+type GrowthChartCardProps<TData extends { date: string }> = {
+  chartData: TData[];
   color: string;
-  dataKey: string;
+  dataKey: keyof TData & string;
   description: string;
   emptyMessage: string;
   isLoading?: boolean;
   label: string;
   title: string;
-  tooltipDate: (value: unknown) => string;
-  tooltipValue: (value: unknown, payload: Record<string, unknown>) => string;
+  tooltipDate: (value: string) => string;
+  tooltipValue: (value: TData[keyof TData], payload: TData) => string;
 };
 
-export function GrowthChartCard({
+export function GrowthChartCard<TData extends { date: string }>({
   chartData,
   color,
   dataKey,
@@ -32,7 +32,7 @@ export function GrowthChartCard({
   title,
   tooltipDate,
   tooltipValue,
-}: GrowthChartCardProps) {
+}: GrowthChartCardProps<TData>) {
   const chartConfig = {
     [dataKey]: { label, color },
   } satisfies ChartConfig;
@@ -68,22 +68,19 @@ export function GrowthChartCard({
                   <YAxis tickLine={false} axisLine={false} tickMargin={4} />
                   <ChartTooltip
                     cursor={false}
-                    content={
-                      <ChartTooltipContent
-                        indicator="line"
-                        labelFormatter={tooltipDate}
-                        formatter={(value, _name, properties) => [
-                          tooltipValue(
-                            value,
-                            (properties.payload ?? {}) as Record<
-                              string,
-                              unknown
-                            >,
-                          ),
+                    content=<ChartTooltipContent
+                      indicator="line"
+                      labelFormatter={(date) => tooltipDate(String(date ?? ""))}
+                      formatter={(_value, _name, properties) => {
+                        const point = chartData.find(
+                          (entry) => entry === properties.payload,
+                        );
+                        return [
+                          point ? tooltipValue(point[dataKey], point) : "",
                           "",
-                        ]}
-                      />
-                    }
+                        ];
+                      }}
+                    />
                   />
                   <Line
                     dataKey={dataKey}

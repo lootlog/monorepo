@@ -1,3 +1,4 @@
+import { createNotificationTest } from "../notification-test";
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -6,19 +7,7 @@ import {
 } from "@/store/notifications.store";
 import { useVisibleNotifications } from "./use-visible-notifications";
 
-const mockUseCurrentGameAccountNotificationSettings = vi.fn();
-
-vi.mock("@/hooks/use-current-game-account-notification-settings", () => ({
-  useCurrentGameAccountNotificationSettings: () =>
-    mockUseCurrentGameAccountNotificationSettings(),
-}));
-
-vi.mock("@/lib/game", () => ({
-  Game: {
-    getWorldName: () => "pandora",
-  },
-}));
-
+let test: ReturnType<typeof createNotificationTest>;
 const createStoredNotification = (
   overrides?: Partial<StoredNotification>,
 ): StoredNotification => ({
@@ -38,17 +27,7 @@ describe("useVisibleNotifications", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-04-17T10:00:00.000Z"));
-    mockUseCurrentGameAccountNotificationSettings.mockReset();
-    mockUseCurrentGameAccountNotificationSettings.mockReturnValue({
-      settings: {
-        message: {
-          show: true,
-          ignoreOtherWorlds: false,
-          guildIds: ["guild-1"],
-          autoHideTimeout: 30,
-        },
-      },
-    });
+    test = createNotificationTest();
     useNotificationsStore.setState({
       notifications: [],
       notificationAutoHideByListKey: {},
@@ -90,7 +69,9 @@ describe("useVisibleNotifications", () => {
       },
     });
 
-    renderHook(() => useVisibleNotifications({ autoCleanup: true }));
+    renderHook(() => useVisibleNotifications({ autoCleanup: true }), {
+      wrapper: test.wrapper,
+    });
 
     expect(setIntervalSpy).not.toHaveBeenCalled();
 
@@ -137,7 +118,9 @@ describe("useVisibleNotifications", () => {
       },
     });
 
-    renderHook(() => useVisibleNotifications({ autoCleanup: true }));
+    renderHook(() => useVisibleNotifications({ autoCleanup: true }), {
+      wrapper: test.wrapper,
+    });
 
     act(() => {
       vi.advanceTimersByTime(5_000);
@@ -162,7 +145,9 @@ describe("useVisibleNotifications", () => {
       notificationAutoHideByListKey: {},
     });
 
-    renderHook(() => useVisibleNotifications({ autoCleanup: true }));
+    renderHook(() => useVisibleNotifications({ autoCleanup: true }), {
+      wrapper: test.wrapper,
+    });
 
     act(() => {
       vi.advanceTimersByTime(29_999);
@@ -182,16 +167,8 @@ describe("useVisibleNotifications", () => {
   });
 
   it("keeps mention notifications visible even when message notifications are hidden", () => {
-    mockUseCurrentGameAccountNotificationSettings.mockReturnValue({
-      settings: {
-        message: {
-          show: false,
-          ignoreOtherWorlds: false,
-          guildIds: ["guild-1"],
-          autoHideTimeout: 30,
-        },
-      },
-    });
+    test.preferences.notifications.message.show = false;
+    test.setPreferences();
     useNotificationsStore.setState({
       notifications: [
         createStoredNotification({
@@ -202,7 +179,9 @@ describe("useVisibleNotifications", () => {
       ],
     });
 
-    const { result } = renderHook(() => useVisibleNotifications());
+    const { result } = renderHook(() => useVisibleNotifications(), {
+      wrapper: test.wrapper,
+    });
 
     expect(result.current.notifications).toEqual([
       expect.objectContaining({

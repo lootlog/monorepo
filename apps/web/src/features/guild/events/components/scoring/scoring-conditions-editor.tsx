@@ -19,7 +19,6 @@ import { Plus, X } from "lucide-react";
 import {
   EVENT_SCORING_CONDITION_TYPES,
   type EventScoringCondition,
-  type EventScoringRules,
 } from "@lootlog/domain/scoring";
 import { getScoringConditionTypeLabel } from "../../utils/scoring-rule-labels";
 import { createDefaultScoringCondition } from "../../utils/scoring-condition-defaults";
@@ -28,9 +27,7 @@ import { ScoringConditionBoolean } from "./scoring-condition-boolean";
 import { ScoringConditionTimeWindow } from "./scoring-condition-time-window";
 import { ScoringConditionRespawn } from "./scoring-condition-respawn";
 
-type ScoringRulesFormValues = {
-  scoringRules: EventScoringRules;
-};
+import type { ScoringRulesFormValues } from "./scoring-rules-editor";
 
 interface ScoringConditionsEditorProps {
   control: Control<ScoringRulesFormValues>;
@@ -138,16 +135,7 @@ const ConditionRow = ({
   const conditionPath =
     `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}` as const;
 
-  const conditionControl = control as unknown as Control<{
-    scoringRules: { rules: { conditions: unknown[] }[] };
-  }>;
-  const conditionRegister = register as unknown as UseFormRegister<{
-    scoringRules: { rules: { conditions: unknown[] }[] };
-  }>;
-
-  const colors =
-    CONDITION_COLORS[conditionType as EventScoringCondition["type"]] ??
-    CONDITION_COLORS.NUMERIC;
+  const colors = CONDITION_COLORS[conditionType] ?? CONDITION_COLORS.NUMERIC;
 
   return (
     <>
@@ -173,26 +161,26 @@ const ConditionRow = ({
               <Select
                 value={field.value}
                 onValueChange={(nextConditionType) => {
+                  const selectedType = EVENT_SCORING_CONDITION_TYPES.find(
+                    (type) => type === nextConditionType,
+                  );
+                  if (!selectedType) return;
                   setValue(
                     conditionPath,
-                    createDefaultScoringCondition(
-                      nextConditionType as EventScoringCondition["type"],
-                    ),
+                    createDefaultScoringCondition(selectedType),
                     { shouldDirty: true, shouldValidate: true },
                   );
                 }}
-                items={[
-                  ...EVENT_SCORING_CONDITION_TYPES.map(
-                    (conditionTypeOption) => ({
-                      value: conditionTypeOption,
-                      label: (
-                        <>
-                          {getScoringConditionTypeLabel(conditionTypeOption, t)}
-                        </>
-                      ),
-                    }),
-                  ),
-                ]}
+                items={EVENT_SCORING_CONDITION_TYPES.map(
+                  (conditionTypeOption) => ({
+                    value: conditionTypeOption,
+                    label: (
+                      <>
+                        {getScoringConditionTypeLabel(conditionTypeOption, t)}
+                      </>
+                    ),
+                  }),
+                )}
               >
                 <SelectTrigger
                   size="sm"
@@ -228,8 +216,8 @@ const ConditionRow = ({
         {/* Condition fields */}
         {conditionType === "NUMERIC" && (
           <ScoringConditionNumeric
-            control={conditionControl}
-            register={conditionRegister}
+            control={control}
+            register={register}
             ruleIndex={ruleIndex}
             conditionIndex={conditionIndex}
           />
@@ -237,7 +225,7 @@ const ConditionRow = ({
 
         {conditionType === "BOOLEAN" && (
           <ScoringConditionBoolean
-            control={conditionControl}
+            control={control}
             ruleIndex={ruleIndex}
             conditionIndex={conditionIndex}
           />
@@ -245,7 +233,7 @@ const ConditionRow = ({
 
         {conditionType === "KILL_TIME_IN_WINDOW" && (
           <ScoringConditionTimeWindow
-            register={conditionRegister}
+            register={register}
             ruleIndex={ruleIndex}
             conditionIndex={conditionIndex}
           />
@@ -253,8 +241,8 @@ const ConditionRow = ({
 
         {conditionType === "RESPAWN_WINDOW_COVERAGE" && (
           <ScoringConditionRespawn
-            control={conditionControl}
-            register={conditionRegister}
+            control={control}
+            register={register}
             ruleIndex={ruleIndex}
             conditionIndex={conditionIndex}
           />

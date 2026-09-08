@@ -1,106 +1,26 @@
-import { render, screen } from "@testing-library/react";
+import { render as renderUi, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useWindowsStore } from "@/store/windows.store";
 
-vi.mock(
-  "@/features/settings/components/battle-panel/battle-panel-settings-tab",
-  () => ({
-    BattlePanelSettingsTab: () => <div>Battle panel tab</div>,
-  }),
-);
-
-vi.mock("@/features/settings/components/catching/catching-settings", () => ({
-  CatchingSettings: () => <div>Catching tab</div>,
-}));
-
-vi.mock("@/features/settings/components/debug/debug-tab", () => ({
-  DebugTab: () => <div>Debug tab</div>,
-}));
-
-vi.mock(
-  "@/features/settings/components/detector/detector-settings-tab",
-  () => ({
-    DetectorSettingsTab: () => <div>Detector tab</div>,
-  }),
-);
-
-vi.mock("@/features/settings/components/general/general-settings-tab", () => ({
-  GeneralSettingsTab: () => <div>General tab</div>,
-}));
-
-vi.mock(
-  "@/features/settings/components/hidden-timers/hidden-timers-tab",
-  () => ({
-    HiddenTimersTab: () => <div>Hidden timers tab</div>,
-  }),
-);
-
-vi.mock("@/features/settings/components/hotkeys/hotkeys-settings-tab", () => ({
-  HotkeysSettingsTab: () => <div>Hotkeys tab</div>,
-}));
-
-vi.mock("@/features/settings/components/logs/logs-settings-tab", () => ({
-  LogsSettingsTab: () => <div>Logs tab</div>,
-}));
-
-vi.mock(
-  "@/features/settings/components/notification-mutes/notification-mutes-settings-tab",
-  () => ({
-    NotificationMutesSettingsTab: () => <div>Notification mutes tab</div>,
-  }),
-);
-
-vi.mock(
-  "@/features/settings/components/notifications/notifications-settings-tab",
-  () => ({
-    NotificationsSettingsTab: () => <div>Notifications tab</div>,
-  }),
-);
-
-vi.mock("@/features/settings/components/sounds/sounds-settings-tab", () => ({
-  SoundsSettingsTab: () => <div>Sounds tab</div>,
-}));
-
-vi.mock("@/features/settings/components/chat/chat-appearance-settings", () => ({
-  ChatAppearanceSettingsForm: () => (
-    <details data-testid="chat-advanced-settings">
-      <summary>Więcej opcji</summary>
-      <div id="chat-font-scale" data-settings-control>
-        Skala tekstu
-      </div>
-    </details>
-  ),
-}));
-vi.mock(
-  "@/features/settings/components/timers/timers-settings-appearance",
-  () => ({
-    TimersSettingsAppearance: () => <div>Timer appearance</div>,
-  }),
-);
-vi.mock(
-  "@/features/settings/components/timers/timers-settings-general",
-  () => ({
-    TimersSettingsGeneral: () => <div>Timer behavior</div>,
-  }),
-);
-vi.mock("@/features/settings/components/timers/timers-settings-colors", () => ({
-  TimersSettingsColors: () => <div>Timer colors</div>,
-}));
-vi.mock(
-  "@/features/settings/components/information/information-settings-tab",
-  () => ({
-    InformationSettingsTab: () => <div>Build information</div>,
-  }),
-);
+import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
+import { createSoundSettings } from "@/test/sound-settings-fixtures";
+import { getSoundSettingsControllerGetSettingsQueryKey } from "@lootlog/client/main";
+let harness: ReturnType<typeof createGuildPreferencesTest>;
+const render = () => renderUi(<SettingsTabs />, { wrapper: harness.wrapper });
 
 import { SettingsTabs } from "./settings-tabs";
 
 describe("SettingsTabs", () => {
   beforeEach(() => {
+    harness = createGuildPreferencesTest();
+    harness.queryClient.setQueryData(
+      getSoundSettingsControllerGetSettingsQueryKey(),
+      createSoundSettings(),
+    );
     Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
       configurable: true,
-      value: vi.fn(),
+      value: vi.fn<HTMLElement["scrollIntoView"]>(),
     });
     useWindowsStore.setState((state) => ({
       ...state,
@@ -114,7 +34,7 @@ describe("SettingsTabs", () => {
 
   it("renders ten domain tabs in order and opens the selected domain", async () => {
     const user = userEvent.setup();
-    render(<SettingsTabs />);
+    render();
 
     const tabs = screen.getAllByRole("tab");
     const tabNames = tabs.map((tab) => tab.textContent);
@@ -136,12 +56,12 @@ describe("SettingsTabs", () => {
     await user.click(soundsTab);
 
     expect(soundsTab).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByText("Sounds tab")).toBeInTheDocument();
+    expect(screen.getByText("Głośność główna")).toBeInTheDocument();
   });
 
   it("groups search results by domain and subsection", async () => {
     const user = userEvent.setup();
-    render(<SettingsTabs />);
+    render();
 
     await user.type(
       screen.getByRole("textbox", { name: "Szukaj w ustawieniach" }),
@@ -157,7 +77,7 @@ describe("SettingsTabs", () => {
 
   it("groups sound controls under the standalone sounds domain", async () => {
     const user = userEvent.setup();
-    render(<SettingsTabs />);
+    render();
 
     await user.type(
       screen.getByRole("textbox", { name: "Szukaj w ustawieniach" }),
@@ -170,9 +90,9 @@ describe("SettingsTabs", () => {
     ).toBeInTheDocument();
   });
 
-  it("opens advanced settings before revealing a search result", async () => {
+  it("reveals and highlights the real control selected from search", async () => {
     const user = userEvent.setup();
-    render(<SettingsTabs />);
+    render();
 
     await user.type(
       screen.getByRole("textbox", { name: "Szukaj w ustawieniach" }),
@@ -180,14 +100,18 @@ describe("SettingsTabs", () => {
     );
     await user.click(screen.getByRole("option", { name: "Skala tekstu" }));
 
-    expect(await screen.findByTestId("chat-advanced-settings")).toHaveAttribute(
-      "open",
+    await waitFor(() =>
+      expect(
+        document
+          .getElementById("chat-font-scale")
+          ?.closest("[data-settings-control]"),
+      ).toHaveAttribute("data-settings-highlighted", "true"),
     );
   });
 
   it("shows subsection navigation only when the domain has multiple subsections", async () => {
     const user = userEvent.setup();
-    render(<SettingsTabs />);
+    render();
 
     expect(
       screen.queryByRole("button", { name: "Zachowanie" }),
@@ -211,7 +135,7 @@ describe("SettingsTabs", () => {
       },
     }));
 
-    render(<SettingsTabs />);
+    render();
 
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Dźwięki" })).toBeInTheDocument();

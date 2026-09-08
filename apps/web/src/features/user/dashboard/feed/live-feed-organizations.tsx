@@ -29,16 +29,14 @@ export const LiveFeedOrganizations = ({ organizations }: Props) => {
         {organizations.map((organization) => (
           <Tooltip key={organization.id}>
             <TooltipTrigger
-              render={
-                <Link
-                  to="/$guildId"
-                  params={{
-                    guildId: organization.vanityUrl ?? organization.id,
-                  }}
-                  aria-label={organization.name}
-                  className="size-8 shrink-0 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                />
-              }
+              render=<Link
+                to="/$guildId"
+                params={{
+                  guildId: organization.vanityUrl ?? organization.id,
+                }}
+                aria-label={organization.name}
+                className="size-8 shrink-0 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              />
             >
               <Avatar className="size-8 rounded-xl" aria-hidden>
                 <AvatarImage

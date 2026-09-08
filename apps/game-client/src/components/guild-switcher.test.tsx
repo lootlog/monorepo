@@ -1,61 +1,31 @@
+import type { toast as SonnerToast, Action, ExternalToast } from "sonner";
 import {
   act,
   fireEvent,
-  render,
+  render as renderUi,
   screen,
   waitFor,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { GuildIdentity } from "@/lib/api/generated-helpers";
+import type { ReactElement } from "react";
+import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
+import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { useSettingsStore } from "@/store/settings.store";
 import { useGameStore } from "@/store/game.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { GuildSwitcher } from "./guild-switcher";
 
-const mockUseAccessibleGuilds = vi.fn();
-const mockUseUserPreferences = vi.fn();
-const mockUpdatePreferences = vi.fn();
-const mockToastSuccess = vi.hoisted(() => vi.fn());
-const runtime = vi.hoisted(() => ({ heroId: 123 as number | undefined }));
-
-vi.mock("@lootlog/client/main", async () => ({
-  ...(await vi.importActual("@lootlog/client/main")),
-  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey: () => [
-    "accessible-guilds",
-  ],
-  useUsersControllerGetCurrentUserAccessibleGuilds: () =>
-    mockUseAccessibleGuilds(),
-}));
-
-vi.mock("@/hooks/api/use-user-preferences", () => ({
-  useUserPreferences: () => mockUseUserPreferences(),
-  useUpdateUserPreferences: () => ({
-    mutate: mockUpdatePreferences,
-  }),
-}));
-
+const isToastAction = (action: ExternalToast["action"]): action is Action =>
+  typeof action === "object" && action !== null && "onClick" in action;
+const mockToastSuccess = vi.hoisted(() => vi.fn<typeof SonnerToast.success>());
 vi.mock("sonner", () => ({
   toast: {
-    error: vi.fn(),
+    error: vi.fn<typeof SonnerToast.error>(),
     success: mockToastSuccess,
   },
 }));
-
-vi.mock("@/lib/game", () => ({
-  Game: {
-    hero: {
-      get id() {
-        return runtime.heroId;
-      },
-    },
-  },
-}));
-
-const createGuild = (id: string, name: string): GuildIdentity => ({
-  id,
-  name,
-  icon: null,
-});
+let harness: ReturnType<typeof createGuildPreferencesTest>;
+const render = (ui: ReactElement) => renderUi(ui, { wrapper: harness.wrapper });
 
 describe("GuildSwitcher", () => {
   afterEach(() => {
@@ -64,7 +34,8 @@ describe("GuildSwitcher", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    runtime.heroId = 123;
+    harness = createGuildPreferencesTest();
+    setTestRuntimeGame({ hero: { characterId: "123" } });
     useGameStore.getState().replaceGame({
       hero: {
         accountId: "1",
@@ -90,30 +61,6 @@ describe("GuildSwitcher", () => {
         state: {},
       },
     }));
-
-    mockUseAccessibleGuilds.mockReturnValue({
-      data: [
-        createGuild("guild-1", "Alpha"),
-        createGuild("guild-2", "Beta"),
-        createGuild("guild-3", "Gamma"),
-      ],
-      isFetched: true,
-    });
-    mockUseUserPreferences.mockReturnValue({
-      data: {
-        guildsOrder: [],
-        hiddenGuildIds: [],
-      },
-      isFetched: true,
-    });
-    mockUpdatePreferences.mockImplementation(
-      (
-        _payload: unknown,
-        options?: {
-          onSuccess?: () => void;
-        },
-      ) => options?.onSuccess?.(),
-    );
   });
 
   it("hides a guild from its context menu and can undo the change", async () => {
@@ -124,42 +71,48 @@ describe("GuildSwitcher", () => {
       await screen.findByText("Ukryj w grze", {}, { timeout: 1000 }),
     );
 
-    expect(mockUpdatePreferences).toHaveBeenCalledWith(
-      { hiddenGuildIds: ["guild-1"] },
-      expect.any(Object),
+    await waitFor(() =>
+      expect(
+        harness.request.mock.calls.filter(
+          ([, init]) => init?.method === "PATCH",
+        ),
+      ).toHaveLength(1),
     );
-
-    const toastOptions = mockToastSuccess.mock.calls[0]?.[1] as {
-      action: { onClick: () => void };
-    };
-    mockUseUserPreferences.mockReturnValue({
-      data: {
-        guildsOrder: [],
-        hiddenGuildIds: ["guild-1", "guild-2"],
-      },
-      isFetched: true,
-    });
+    expect(harness.request.mock.calls[0]?.[1]?.body).toBe(
+      JSON.stringify({ hiddenGuildIds: ["guild-1"] }),
+    );
+    await waitFor(() => expect(mockToastSuccess).toHaveBeenCalledOnce());
+    const action = mockToastSuccess.mock.calls[0]?.[1]?.action;
+    if (!isToastAction(action)) throw new Error("Expected undo action");
+    act(() =>
+      harness.setPreferences({ hiddenGuildIds: ["guild-1", "guild-2"] }),
+    );
     rerender(<GuildSwitcher />);
-    toastOptions.action.onClick();
-
-    expect(mockUpdatePreferences).toHaveBeenLastCalledWith({
-      hiddenGuildIds: ["guild-2"],
-    });
+    fireEvent.click(document.body);
+    renderUi(<button onClick={action.onClick}>Undo hidden guild</button>);
+    fireEvent.click(screen.getByRole("button", { name: "Undo hidden guild" }));
+    await waitFor(() =>
+      expect(
+        harness.request.mock.calls.filter(
+          ([, init]) => init?.method === "PATCH",
+        ),
+      ).toHaveLength(2),
+    );
+    expect(
+      harness.request.mock.calls.filter(
+        ([, init]) => init?.method === "PATCH",
+      )[1]?.[1]?.body,
+    ).toBe(JSON.stringify({ hiddenGuildIds: ["guild-2"] }));
   });
 
-  it("keeps cached guilds visible after a preferences refetch error", () => {
-    mockUseUserPreferences.mockReturnValue({
-      data: {
-        guildsOrder: [],
-        hiddenGuildIds: [],
-      },
-      error: new Error("refetch failed"),
-      isFetched: true,
-      isLoading: false,
-      refetch: vi.fn(),
-    });
-
+  it("keeps cached guilds visible after a preferences refetch error", async () => {
     render(<GuildSwitcher />);
+    harness.request.mockRejectedValue(new Error("refetch failed"));
+    await act(async () => {
+      await harness.queryClient.refetchQueries({
+        queryKey: harness.preferencesKey,
+      });
+    });
 
     expect(screen.getByRole("button", { name: "A" })).toBeInTheDocument();
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
@@ -173,13 +126,8 @@ describe("GuildSwitcher", () => {
 
   it("shows a delayed loading status while guilds are unavailable", () => {
     vi.useFakeTimers();
-    mockUseAccessibleGuilds.mockReturnValue({
-      data: undefined,
-      error: null,
-      isFetched: false,
-      isLoading: true,
-      refetch: vi.fn(),
-    });
+    harness.queryClient.removeQueries({ queryKey: harness.guildsKey });
+    harness.request.mockImplementation(() => new Promise(() => {}));
 
     render(<GuildSwitcher />);
 
@@ -190,7 +138,7 @@ describe("GuildSwitcher", () => {
   });
 
   it("does not write a selection before the character identity is available", () => {
-    runtime.heroId = undefined;
+    setTestRuntimeGame({ hero: { characterId: "" } });
     useGameStore.getState().clearGame();
     render(<GuildSwitcher />);
 
@@ -210,13 +158,7 @@ describe("GuildSwitcher", () => {
   });
 
   it("renders guilds in the user preferences order and appends missing guilds", () => {
-    mockUseUserPreferences.mockReturnValue({
-      data: {
-        guildsOrder: ["guild-2", "guild-1"],
-        hiddenGuildIds: [],
-      },
-      isFetched: true,
-    });
+    harness.setPreferences({ guildsOrder: ["guild-2", "guild-1"] });
 
     render(<GuildSwitcher />);
 
@@ -226,14 +168,11 @@ describe("GuildSwitcher", () => {
   });
 
   it("falls back to the first ordered guild when the current selection is missing", async () => {
-    const handleChange = vi.fn();
+    const handleChange = vi.fn<(guildId: string) => void>();
 
-    mockUseUserPreferences.mockReturnValue({
-      data: {
-        guildsOrder: ["guild-2", "guild-1"],
-        hiddenGuildIds: [],
-      },
-      isFetched: true,
+    harness.setPreferences({
+      guildsOrder: ["guild-2", "guild-1"],
+      hiddenGuildIds: [],
     });
 
     render(<GuildSwitcher value="missing-guild" onChange={handleChange} />);
@@ -278,13 +217,10 @@ describe("GuildSwitcher", () => {
   });
 
   it("removes hidden guilds and falls back to the first visible guild", async () => {
-    const handleChange = vi.fn();
-    mockUseUserPreferences.mockReturnValue({
-      data: {
-        guildsOrder: ["guild-2", "guild-1"],
-        hiddenGuildIds: ["guild-2"],
-      },
-      isFetched: true,
+    const handleChange = vi.fn<(guildId: string) => void>();
+    harness.setPreferences({
+      guildsOrder: ["guild-2", "guild-1"],
+      hiddenGuildIds: ["guild-2"],
     });
 
     render(<GuildSwitcher value="guild-2" onChange={handleChange} />);
@@ -297,12 +233,9 @@ describe("GuildSwitcher", () => {
   });
 
   it("does not render a server picker when only one guild is visible", () => {
-    mockUseUserPreferences.mockReturnValue({
-      data: {
-        guildsOrder: [],
-        hiddenGuildIds: ["guild-2", "guild-3"],
-      },
-      isFetched: true,
+    harness.setPreferences({
+      guildsOrder: [],
+      hiddenGuildIds: ["guild-2", "guild-3"],
     });
 
     render(<GuildSwitcher allowAll value="all" />);
@@ -314,12 +247,9 @@ describe("GuildSwitcher", () => {
   });
 
   it("shows a full-width settings notice when every guild is hidden", () => {
-    mockUseUserPreferences.mockReturnValue({
-      data: {
-        guildsOrder: [],
-        hiddenGuildIds: ["guild-1", "guild-2", "guild-3"],
-      },
-      isFetched: true,
+    harness.setPreferences({
+      guildsOrder: [],
+      hiddenGuildIds: ["guild-1", "guild-2", "guild-3"],
     });
 
     const { container } = render(<GuildSwitcher allowAll value="all" />);

@@ -66,7 +66,10 @@ const syncStateWrite = (guildId: string, state: DiscordGuildSyncState) => {
   const lastSuccessAt = state.lastSuccessAt
     ? new Date(state.lastSuccessAt)
     : lastAttemptAt;
-  const values = {
+  const values: Omit<
+    typeof discordGuildSyncStateTable.$inferInsert,
+    "guildId"
+  > = {
     status: state.status,
     hasRequiredPermissions: state.hasRequiredPermissions,
     requiredPermissions: [...state.requiredPermissions],
@@ -76,11 +79,11 @@ const syncStateWrite = (guildId: string, state: DiscordGuildSyncState) => {
     selectableChannelCount: state.selectableChannelCount,
     lastAttemptAt,
     lastError: state.lastError,
-    ...(state.status === DiscordGuildSyncStatus.SYNCED
-      ? { lastSuccessAt }
-      : {}),
+
     updatedAt: now,
   };
+  if (state.status === DiscordGuildSyncStatus.SYNCED)
+    values.lastSuccessAt = lastSuccessAt;
   return { now, lastSuccessAt, values, guildId };
 };
 
@@ -188,6 +191,13 @@ const reconcile = (
     return removedIds;
   });
 
+const discordSyncErrorMessage = (error: unknown) =>
+  typeof error === "string"
+    ? error
+    : error instanceof Error
+      ? error.message
+      : "Unknown Discord sync error";
+
 const recordFailure = (
   database: typeof ApiDatabase.Service,
   guildId: string,
@@ -214,12 +224,7 @@ const recordFailure = (
         selectableChannelCount: 0,
         lastAttemptAt: now,
         lastSuccessAt: null,
-        lastError:
-          typeof error === "string"
-            ? error
-            : error instanceof Error
-              ? error.message
-              : "Unknown Discord sync error",
+        lastError: discordSyncErrorMessage(error),
         createdAt: now,
         updatedAt: now,
       })
@@ -228,12 +233,7 @@ const recordFailure = (
         set: {
           status: DiscordGuildSyncStatus.FAILED,
           lastAttemptAt: now,
-          lastError:
-            typeof error === "string"
-              ? error
-              : error instanceof Error
-                ? error.message
-                : "Unknown Discord sync error",
+          lastError: discordSyncErrorMessage(error),
           updatedAt: now,
         },
       });

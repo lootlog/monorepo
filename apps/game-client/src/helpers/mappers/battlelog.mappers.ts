@@ -1,6 +1,5 @@
 import type { BattleEventPayload, BattleEventWarriorPayload } from "@/api";
 import type { GameEvent, W } from "@lootlog/margonem/game-events";
-import { isEmpty } from "@/utils/object-utils";
 
 const mapBattleWarriorToPayload = ({
   icon,
@@ -28,8 +27,6 @@ export const mapBattleEventsToPayload = (
     Object.entries(event.f?.w ?? {}).forEach(([key, warrior]) => {
       const entry = mapBattleWarriorToPayload(warrior);
 
-      if (isEmpty(entry)) return;
-
       fightWarriors[key] = entry;
     });
 
@@ -39,7 +36,8 @@ export const mapBattleEventsToPayload = (
           endBattle: event.f.endBattle,
           init: event.f.init,
           auto: event.f.auto,
-          w: isEmpty(fightWarriors) ? undefined : fightWarriors,
+          w:
+            Object.keys(fightWarriors).length === 0 ? undefined : fightWarriors,
         }
       : undefined;
 

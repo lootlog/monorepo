@@ -1,18 +1,18 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { configureApiClients } from "@lootlog/client/transport";
+import { beforeEach, describe, expect, it, vi, onTestFinished } from "vitest";
 import { useLogsStore } from "@/store/logs.store";
 import { createLoot, type CreateLootOptions } from "./loot.api";
 
-const { post } = vi.hoisted(() => ({
-  post: vi.fn(),
-}));
-
-vi.mock("@lootlog/client/transport", () => ({
-  createApiClient: () => ({ post }),
-}));
-
+const http = vi.fn<typeof fetch>();
 describe("createLoot", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    http.mockReset();
+    onTestFinished(
+      configureApiClients({
+        main: { baseUrl: "https://api.example.test", fetch: http },
+        battlelog: { baseUrl: "https://battle.example.test", fetch: http },
+      }),
+    );
     useLogsStore.getState().clearActions();
   });
 
@@ -64,13 +64,18 @@ describe("createLoot", () => {
       rejectedGuilds: [],
       submittedGuilds: [{ guildId: "guild-1", guildName: "Guild" }],
     };
-    post.mockResolvedValue(response);
+    http.mockResolvedValue(Response.json(response));
 
     await expect(
       createLoot(options, { attemptId: "attempt-1", source: "fight" }),
     ).resolves.toEqual(response);
 
-    expect(post).toHaveBeenCalledWith("/loots", options);
+    expect(http).toHaveBeenCalledTimes(1);
+    const call = http.mock.calls[0];
+    if (!call) throw new Error("Missing HTTP request");
+    const request = new Request(...call);
+    expect(new URL(request.url).pathname).toBe("/loots");
+    expect(await request.json()).toEqual(options);
     const [action] = useLogsStore.getState().actions;
     expect(action?.payload).toEqual(options);
     expect(action?.requests[0]?.payload).toEqual(options);
@@ -95,9 +100,16 @@ describe("createLoot", () => {
         },
       ],
     };
-    post.mockResolvedValue({ id: 1, rejectedGuilds: [], submittedGuilds: [] });
+    http.mockResolvedValue(
+      Response.json({ id: 1, rejectedGuilds: [], submittedGuilds: [] }),
+    );
     await createLoot(options, { attemptId: "snapshot", source: "fight" });
-    expect(post).toHaveBeenCalledWith("/loots", options);
+    expect(http).toHaveBeenCalledTimes(1);
+    const call = http.mock.calls[0];
+    if (!call) throw new Error("Missing HTTP request");
+    const request = new Request(...call);
+    expect(new URL(request.url).pathname).toBe("/loots");
+    expect(await request.json()).toEqual(options);
     const [action] = useLogsStore.getState().actions;
     expect(action?.payload).not.toHaveProperty("mapPlayersSnapshot");
     expect(action?.requests[0]?.payload).not.toHaveProperty(

@@ -19,7 +19,7 @@ describe("game realtime handshake", () => {
       vi.stubEnv("VITE_GATEWAY_URL", "https://gateway.example.test");
       vi.stubEnv("VITE_GATEWAY_SOCKET_PATH", "/ws");
       vi.stubEnv("VITE_GATEWAY_FRAME_ENCODING", encoding);
-      const fetcher = vi.fn();
+      const fetcher = vi.fn<typeof fetch>();
       vi.stubGlobal("fetch", fetcher);
       const handshakes: Array<{ url: string; protocols?: string[] }> = [];
       vi.stubGlobal(

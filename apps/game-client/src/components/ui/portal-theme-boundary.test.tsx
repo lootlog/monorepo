@@ -1,7 +1,7 @@
 import "@/index.css";
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { ReactElement } from "react";
+import type { ReactElement, ComponentProps } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   ContextMenu,
@@ -113,7 +113,7 @@ describe("overlay theme boundary", () => {
   });
 
   it("keeps a context menu open when item selection is prevented", () => {
-    const onSelect = vi.fn();
+    const onSelect = vi.fn<() => void>();
 
     renderInsideLootlogRoot(
       <ContextMenu>
@@ -174,7 +174,8 @@ describe("overlay theme boundary", () => {
 
   it("reports an outside press through the popover root", async () => {
     const user = userEvent.setup();
-    const onOpenChange = vi.fn();
+    const onOpenChange =
+      vi.fn<NonNullable<ComponentProps<typeof Popover>["onOpenChange"]>>();
 
     renderInsideLootlogRoot(
       <Popover open onOpenChange={onOpenChange}>

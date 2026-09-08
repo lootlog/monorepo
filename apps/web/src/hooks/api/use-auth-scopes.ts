@@ -4,17 +4,16 @@ import {
   useAuthControllerGetScopes,
 } from "@lootlog/client/auth";
 
-const normalizeAuthScopes = (data: unknown): string[] => {
-  if (Array.isArray(data)) {
-    return data.filter((scope): scope is string => typeof scope === "string");
-  }
+import { z } from "zod";
 
-  if (typeof data === "string") {
-    return data.split(/\s+/).filter(Boolean);
-  }
-
-  return [];
-};
+const normalizeAuthScopes = z
+  .union([
+    z
+      .array(z.string().nullable().catch(null))
+      .transform((scopes) => scopes.filter((scope) => scope !== null)),
+    z.string().transform((scopes) => scopes.split(/\s+/).filter(Boolean)),
+  ])
+  .catch([]).parse;
 
 export const authScopesQueryOptions = () =>
   getAuthControllerGetScopesQueryOptions({

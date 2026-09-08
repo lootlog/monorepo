@@ -18,7 +18,7 @@ export const LootsListItem = ({ loot, isNew, variant = "card" }: Props) => {
     (item) => item.rarity === ItemRarity.LEGENDARY,
   );
   let initialAnimation: false | { opacity: number; scale?: number } = false;
-  const animate: { opacity: number; scale?: number } = {
+  const animate = {
     opacity: 1,
     scale: 1,
   };
@@ -34,12 +34,10 @@ export const LootsListItem = ({ loot, isNew, variant = "card" }: Props) => {
   const lootContent = (
     <LootPresentation
       loot={loot}
-      headerActions={
-        <LootHeaderActions
-          commentsCount={loot.commentsCount}
-          onOpenDetails={() => openLootDetails(loot.id)}
-        />
-      }
+      headerActions=<LootHeaderActions
+        commentsCount={loot.commentsCount}
+        onOpenDetails={() => openLootDetails(loot.id)}
+      />
       onShowPlayerLoots={(playerName) => setFilters({ players: [playerName] })}
       selectedPlayerNames={filters.players}
       selectedItemNames={filters.itemNames}

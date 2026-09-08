@@ -475,7 +475,7 @@ export const BattlesTable = ({
               table={table}
               className="sticky top-0 z-10 bg-background"
               rowClassName="border-b-1! border-border"
-              headClassName={(header) =>
+              getHeadClassName={(header) =>
                 cn(
                   "whitespace-nowrap align-middle",
                   getColumnResponsiveClassName(header.column.id),
@@ -484,7 +484,7 @@ export const BattlesTable = ({
             />
             <TanStackTableBody
               table={table}
-              rowClassName={(row) =>
+              getRowClassName={(row) =>
                 cn(
                   "h-14 border-b border-border",
                   getRowClassName(row.original),
@@ -492,7 +492,7 @@ export const BattlesTable = ({
                     "ring-2 ring-inset ring-primary/45",
                 )
               }
-              cellClassName={(cell) =>
+              getCellClassName={(cell) =>
                 cn(
                   "whitespace-nowrap align-middle",
                   getColumnResponsiveClassName(cell.column.id),

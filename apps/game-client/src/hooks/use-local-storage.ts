@@ -1,3 +1,5 @@
+import type { JsonValue } from "@lootlog/schema/http-scalars";
+import type { ZodType } from "zod";
 import {
   useEffect,
   useReducer,
@@ -5,19 +7,17 @@ import {
   type SetStateAction,
 } from "react";
 
-type UseLocalStorageReturn<T> = [
+type UseLocalStorageReturn<T extends typeof JsonValue.Type> = [
   T | undefined,
   Dispatch<SetStateAction<T | undefined>>,
   () => void,
 ];
 
-type UseLocalStorageReturnWithInitialValue<T> = [
-  T,
-  Dispatch<SetStateAction<T>>,
-  () => void,
-];
-
-const readStoredValue = <T>(key: string, initialValue?: T): T | undefined => {
+const readStoredValue = <T extends typeof JsonValue.Type>(
+  key: string,
+  initialValue: T | undefined,
+  schema: ZodType<T>,
+): T | undefined => {
   try {
     const item = window.localStorage.getItem(key);
 
@@ -25,23 +25,16 @@ const readStoredValue = <T>(key: string, initialValue?: T): T | undefined => {
       return initialValue;
     }
 
-    return JSON.parse(item) as T;
+    return schema.parse(JSON.parse(item));
   } catch {
     return initialValue;
   }
 };
 
-export function useLocalStorage<T>(
+export function useLocalStorage<T extends typeof JsonValue.Type>(
   key: string,
-  initialValue: T,
-): UseLocalStorageReturnWithInitialValue<T>;
-export function useLocalStorage<T>(
-  key: string,
-  initialValue?: T,
-): UseLocalStorageReturn<T>;
-export function useLocalStorage<T>(
-  key: string,
-  initialValue?: T,
+  initialValue: T | undefined,
+  schema: ZodType<T>,
 ): UseLocalStorageReturn<T> {
   type StorageState = {
     key: string;
@@ -52,41 +45,40 @@ export function useLocalStorage<T>(
     | { key: string; type: "hydrate"; value: T | undefined }
     | { type: "remove" }
     | { type: "set"; value: SetStateAction<T | undefined> };
-  const [storageState, dispatch] = useReducer(
-    (state: StorageState, action: StorageAction): StorageState => {
-      if (action.type === "hydrate") {
-        return {
-          key: action.key,
-          shouldPersist: false,
-          value: action.value,
-        };
-      }
-      if (action.type === "remove") {
-        return { ...state, shouldPersist: true, value: undefined };
-      }
+  const reduceStorageState = (
+    state: StorageState,
+    action: StorageAction,
+  ): StorageState => {
+    if (action.type === "hydrate") {
+      return {
+        key: action.key,
+        shouldPersist: false,
+        value: action.value,
+      };
+    }
+    if (action.type === "remove") {
+      return { ...state, shouldPersist: true, value: undefined };
+    }
 
-      const nextValue =
-        typeof action.value === "function"
-          ? (action.value as (currentValue: T | undefined) => T | undefined)(
-              state.value,
-            )
-          : action.value;
-      return { ...state, shouldPersist: true, value: nextValue };
-    },
-    {
-      key,
-      shouldPersist: false,
-      value: readStoredValue(key, initialValue),
-    },
-  );
+    const nextValue =
+      typeof action.value === "function"
+        ? action.value(state.value)
+        : action.value;
+    return { ...state, shouldPersist: true, value: nextValue };
+  };
+  const [storageState, dispatch] = useReducer(reduceStorageState, {
+    key,
+    shouldPersist: false,
+    value: readStoredValue(key, initialValue, schema),
+  });
 
   useEffect(() => {
     dispatch({
       key,
       type: "hydrate",
-      value: readStoredValue(key, initialValue),
+      value: readStoredValue(key, initialValue, schema),
     });
-  }, [initialValue, key]);
+  }, [initialValue, key, schema]);
 
   useEffect(() => {
     if (!storageState.shouldPersist || storageState.key !== key) return;

@@ -124,11 +124,11 @@ export function DocsChapterRail({ activeChapterId }: DocsChapterRailProps) {
     >
       {docsChapters.map((chapter, index) => {
         const range = segmentRanges?.[index];
-        const style = {
+        const style: SegmentStyle = {
           "--segment-color": chapter.color,
           "--segment-height": range ? `${range.height}px` : undefined,
           "--segment-top": range ? `${range.top}px` : undefined,
-        } as SegmentStyle;
+        };
 
         return (
           <span

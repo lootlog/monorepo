@@ -1,17 +1,11 @@
+import { initializeTestTranslations } from "@/lib/testing/i18n";
 // @vitest-environment happy-dom
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MultiSelect } from "./multi-select";
 
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string, values?: { label?: string }) =>
-      key === "common.removeOption"
-        ? `Usuń ${values?.label ?? ""}`.trim()
-        : key,
-  }),
-}));
+await initializeTestTranslations({ "common.removeOption": "Usuń {{label}}" });
 
 afterEach(() => {
   cleanup();
@@ -152,9 +146,9 @@ describe("MultiSelect", () => {
     );
 
     fireEvent.click(screen.getByRole("combobox"));
-    const searchInput = screen.getByPlaceholderText(
-      "Szukaj...",
-    ) as HTMLInputElement;
+    const searchInput = screen.getByPlaceholderText("Szukaj...");
+    if (!(searchInput instanceof HTMLInputElement))
+      throw new Error("Missing search input");
 
     fireEvent.change(searchInput, { target: { value: "Quet" } });
 

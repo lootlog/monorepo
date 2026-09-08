@@ -18,17 +18,20 @@ import { DateTimePicker } from "@lootlog/ui/components/date-time-picker";
 import { toast } from "sonner";
 import { Trophy, Settings, BookOpenText } from "lucide-react";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { getListEventsQueryKey, useCreateEvent } from "@lootlog/client/main";
-import type { EventListItemResponseDto } from "@lootlog/client/main";
+import {
+  getListEventsQueryKey,
+  useCreateEvent,
+  type EventListItemResponseDto,
+} from "@lootlog/client/main";
+
 import {
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,
   type EventScoringMode,
   type EventScoringRules,
-} from "@lootlog/domain/scoring";
-import {
   normalizeEventScoringMode,
   normalizeEventScoringRules,
 } from "@lootlog/domain/scoring";
+
 import { getApiErrorMessage } from "@lootlog/client/transport";
 import { ScoringRulesEditor } from "../scoring/scoring-rules-editor";
 import { ScoringModeSelector } from "../scoring/scoring-mode-selector";
@@ -118,33 +121,29 @@ export const EventCreateDialog = ({
 
     const normalizedMode = normalizeEventScoringMode(data.scoringMode);
 
+    const request: Parameters<typeof createEvent.mutate>[0]["data"] = {
+      name: data.name.trim(),
+      world: data.world.trim(),
+      startsAt: data.startsAt?.toISOString(),
+      endsAt: data.endsAt?.toISOString(),
+      participationConfirmationMinutes: Number.isFinite(
+        data.participationConfirmationMinutes,
+      )
+        ? Math.max(0, Math.round(data.participationConfirmationMinutes))
+        : 0,
+      scoringMode: normalizedMode,
+    };
+    if (data.rulebookMarkdown?.trim().length)
+      request.rulebookMarkdown = data.rulebookMarkdown.trim();
+    if (normalizedMode === "ADVANCED")
+      request.scoringRules = normalizeEventScoringRules(data.scoringRules);
+
     createEvent.mutate(
       {
         pathParams: {
           guildId: guildId ?? "",
         },
-        data: {
-          name: data.name.trim(),
-          world: data.world.trim(),
-          startsAt: data.startsAt?.toISOString(),
-          endsAt: data.endsAt?.toISOString(),
-          participationConfirmationMinutes: Number.isFinite(
-            data.participationConfirmationMinutes,
-          )
-            ? Math.max(0, Math.round(data.participationConfirmationMinutes))
-            : 0,
-          scoringMode: normalizedMode,
-          ...(data.rulebookMarkdown?.trim().length
-            ? {
-                rulebookMarkdown: data.rulebookMarkdown.trim(),
-              }
-            : {}),
-          ...(normalizedMode === "ADVANCED"
-            ? {
-                scoringRules: normalizeEventScoringRules(data.scoringRules),
-              }
-            : {}),
-        },
+        data: request,
       },
       {
         onSuccess: (eventData) => {
@@ -319,9 +318,10 @@ export const EventCreateDialog = ({
                   {t("events.scoring.title")}
                 </Label>
                 <ScoringRulesEditor
-                  control={form.control}
-                  register={form.register}
-                  setValue={form.setValue}
+                  value={form.watch("scoringRules")}
+                  onChange={(value) =>
+                    form.setValue("scoringRules", value, { shouldDirty: true })
+                  }
                 />
               </div>
             )}

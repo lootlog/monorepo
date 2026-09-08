@@ -1,3 +1,4 @@
+import type { RuntimeDrawable } from "@/lib/margonem-runtime/adapters/renderer-runtime-adapter";
 import {
   MapPingController,
   resolveHandheldMiniMapTile,
@@ -12,15 +13,15 @@ describe("map ping coordinates", () => {
   it("keeps the per-frame draw listener detached while there are no pings", () => {
     const originalEngine = testRuntimeWindow.Engine;
     const originalApi = testRuntimeWindow.API;
-    const addCallbackToEvent = vi.fn();
-    const removeCallbackFromEvent = vi.fn();
+    const addCallbackToEvent = vi.fn<() => void>();
+    const removeCallbackFromEvent = vi.fn<() => void>();
     testRuntimeWindow.Engine = {
       apiData: { CALL_DRAW_ADD_TO_RENDERER: "call_draw_add_to_renderer" },
-    } as never;
+    };
     testRuntimeWindow.API = {
       addCallbackToEvent,
       removeCallbackFromEvent,
-    } as never;
+    };
     const controller = new MapPingController(() => 1_000);
 
     expect(controller.register()).toBe(true);
@@ -75,14 +76,14 @@ describe("map ping coordinates", () => {
     let now = 1_000;
     const originalEngine = testRuntimeWindow.Engine;
     const originalApi = testRuntimeWindow.API;
-    const removeCallbackFromEvent = vi.fn();
+    const removeCallbackFromEvent = vi.fn<() => void>();
     testRuntimeWindow.Engine = {
       apiData: { CALL_DRAW_ADD_TO_RENDERER: "call_draw_add_to_renderer" },
-    } as never;
+    };
     testRuntimeWindow.API = {
-      addCallbackToEvent: vi.fn(),
+      addCallbackToEvent: vi.fn<() => void>(),
       removeCallbackFromEvent,
-    } as never;
+    };
     const controller = new MapPingController(() => now);
 
     controller.register();
@@ -197,8 +198,11 @@ describe("map ping coordinates", () => {
 
   it("deduplicates received pings and stops rendering them after expiry", () => {
     let now = 1_000;
-    let drawFrame!: () => void;
-    const renderer = { add: vi.fn(), getHighestOrderWithoutSort: () => 10 };
+    let drawFrame: (() => void) | undefined;
+    const renderer = {
+      add: vi.fn<(drawable: RuntimeDrawable) => void>(),
+      getHighestOrderWithoutSort: () => 10,
+    };
     const originalEngine = testRuntimeWindow.Engine;
     const originalApi = testRuntimeWindow.API;
     testRuntimeWindow.Engine = {
@@ -209,13 +213,15 @@ describe("map ping coordinates", () => {
         size: { x: 100, y: 100 },
         offset: [0, 0],
       },
-    } as never;
+    };
     testRuntimeWindow.API = {
-      addCallbackToEvent: vi.fn((_event, callback) => {
-        drawFrame = callback as () => void;
-      }),
-      removeCallbackFromEvent: vi.fn(),
-    } as never;
+      addCallbackToEvent: vi.fn<(event: string, callback: () => void) => void>(
+        (_event, callback) => {
+          drawFrame = callback;
+        },
+      ),
+      removeCallbackFromEvent: vi.fn<() => void>(),
+    };
     const controller = new MapPingController(() => now);
     const event = {
       pingId: "ping-1",
@@ -231,6 +237,7 @@ describe("map ping coordinates", () => {
     expect(controller.register()).toBe(true);
     expect(controller.addRemote(event, "Uwaga")).toBe(true);
     expect(controller.addRemote(event, "Uwaga")).toBe(false);
+    if (!drawFrame) throw new Error("Expected draw callback");
     drawFrame();
     expect(renderer.add).toHaveBeenCalledTimes(1);
 

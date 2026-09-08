@@ -13,7 +13,10 @@ import {
 } from "@lootlog/schema/air-tag";
 import { Schema } from "effect";
 import { Logger } from "#src/platform/logger";
-import type { RedisGatewayStore } from "#src/platform/redis-store";
+import type {
+  RedisGatewayStore,
+  RedisScriptReply,
+} from "#src/platform/redis-store";
 import type { RealtimeHub } from "#src/realtime/realtime-hub";
 import type { AirTagScope, GatewaySocket } from "#src/realtime/session";
 import { canSubscribe } from "#src/realtime/subscription-policy";
@@ -157,7 +160,6 @@ if #targets == 0 then encoded=string.gsub(encoded,'"targets":{}','"targets":[]',
 return encoded
 `;
 
-type RateLimitResult = [accepted: number, retryAfterMs: number];
 interface MergeResult {
   epochId: string;
   epochStartedAt: number;
@@ -187,6 +189,14 @@ const SnapshotResultJson = Schema.fromJsonString(
   }),
 );
 
+type ScriptStore = {
+  command: Pick<RedisGatewayStore["command"], "get"> & {
+    eval(
+      ...args: Parameters<RedisGatewayStore["command"]["eval"]>
+    ): Promise<RedisScriptReply>;
+  };
+};
+
 export class AirTagService {
   private readonly logger = new Logger(AirTagService.name);
   private readonly subscriptionOperations = new WeakMap<
@@ -195,8 +205,11 @@ export class AirTagService {
   >();
 
   constructor(
-    private readonly redis: RedisGatewayStore,
-    private readonly hub: RealtimeHub,
+    private readonly redis: ScriptStore,
+    private readonly hub: Pick<
+      RealtimeHub,
+      "subscribe" | "unsubscribe" | "publishToScopes"
+    >,
   ) {}
 
   updateSubscription(
@@ -419,7 +432,9 @@ export class AirTagService {
         crypto.randomUUID(),
       );
       if (!Array.isArray(result)) return null;
-      return result.map(Number) as RateLimitResult;
+      return Schema.decodeUnknownSync(
+        Schema.Tuple([Schema.Number, Schema.Number]),
+      )(result.map(Number));
     } catch (error) {
       this.logger.warn("Failed to apply air tag rate limit", error);
       return null;

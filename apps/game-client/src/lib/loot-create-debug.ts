@@ -15,9 +15,13 @@ export const createLootDebugContext = (
   source,
 });
 
+// Opt-in diagnostics accept fields from several processing stages; values are
+// forwarded to the console after removing the private map-player snapshot.
+type LootCreateDebugDetails = Record<string, unknown>;
+
 export const logLootCreateDebug = (
   stage: string,
-  details: Record<string, unknown>,
+  details: LootCreateDebugDetails,
 ): void => {
   if (!useSettingsStore.getState().lootDebugLoggingEnabled) {
     return;

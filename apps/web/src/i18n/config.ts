@@ -82,9 +82,9 @@ export function loadAuthenticatedTranslations() {
         true,
       );
     })
-    .catch((error: unknown) => {
+    .catch((cause: unknown) => {
       authenticatedTranslations = undefined;
-      throw error;
+      throw cause;
     });
   return authenticatedTranslations;
 }

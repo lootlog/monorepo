@@ -1,3 +1,5 @@
+import { Predicate } from "effect";
+
 const DEFAULT_REQUIRED_PROFESSIONS = ["w", "p", "h", "m", "b", "t"] as const;
 
 const numericValuePattern = /^[+-]?\d+(?:\.\d+)?$/;
@@ -55,7 +57,7 @@ export const createItemSearchFields = (statRaw: string): ItemSearchFields => {
     const normalizedValue = normalizeStatValue(value);
     stats[key] = normalizedValue;
 
-    if (typeof normalizedValue === "number") {
+    if (Predicate.isNumber(normalizedValue)) {
       numericStats[key] = normalizedValue;
     }
   }

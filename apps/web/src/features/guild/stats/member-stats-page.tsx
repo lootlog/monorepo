@@ -1,3 +1,4 @@
+import { findNpcType } from "@/constants/npc";
 import { TextLink } from "@lootlog/ui/components/text-link";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { PageHeader } from "@/components/common/page-header";
@@ -32,14 +33,18 @@ import { NpcTile } from "@/components/tiles/npc-tile";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { cn } from "cn";
-import { useKillsControllerGetMemberKills } from "@lootlog/client/main";
-import type { NpcType } from "@lootlog/client/main";
-import type { MemberKillsResponseDtoOutput } from "@lootlog/client/main";
+import {
+  useKillsControllerGetMemberKills,
+  type NpcType,
+  type MemberKillsResponseDtoOutput,
+  useMembersControllerGetGuildMemberReferences,
+} from "@lootlog/client/main";
+
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { LevelFilters } from "./components/level-filters";
 import { NpcStatsFiltersMobile } from "./components/npc-stats-filters-mobile";
-import { useMembersControllerGetGuildMemberReferences } from "@lootlog/client/main";
+
 import {
   buildMemberKillsParams,
   DEFAULT_MEMBER_KILLS_LIMIT,
@@ -157,7 +162,9 @@ export const MemberStatsPage: React.FC = () => {
 
   const handleNpcTypeChange = (value: string | null) => {
     if (value === null) return;
-    setNpcType(value as NpcType | "ALL");
+    const npcType = findNpcType(value);
+    if (value !== "ALL" && !npcType) return;
+    setNpcType(npcType ?? "ALL");
     setCursor(0);
   };
 
@@ -424,15 +431,13 @@ export const MemberStatsPage: React.FC = () => {
                           <TableCell>
                             <TextLink
                               className="flex items-center gap-3 text-sm"
-                              render={
-                                <Link
-                                  to="/$guildId/stats/npcs/$npcId"
-                                  params={{
-                                    guildId,
-                                    npcId: npc.npcId.toString(),
-                                  }}
-                                />
-                              }
+                              render=<Link
+                                to="/$guildId/stats/npcs/$npcId"
+                                params={{
+                                  guildId,
+                                  npcId: npc.npcId.toString(),
+                                }}
+                              />
                             >
                               {npc.npcIcon && (
                                 <div className="w-8 flex-shrink-0">

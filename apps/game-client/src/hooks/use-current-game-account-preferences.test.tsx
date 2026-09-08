@@ -1,148 +1,76 @@
-import { renderHook } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { renderHook, waitFor } from "@testing-library/react";
+import { expect, it } from "vitest";
 import {
   defaultDetectorSettings,
   defaultNotificationsSettings,
 } from "@lootlog/schema/account-preferences";
+import { createNotificationsSettings } from "@/lib/game-account-preferences";
 import {
-  createDetectorSettings,
-  createNotificationsSettings,
-} from "@/lib/game-account-preferences";
-import { useCurrentGameAccountPreferences } from "@/hooks/use-current-game-account-preferences";
-import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
-import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
-import { useGameStore } from "@/store/game.store";
-
-const mockUseUserGameAccountPreferences = vi.fn();
-
-vi.mock("@/hooks/api/use-user-account-preferences", () => ({
-  useUserGameAccountPreferences: (...args: unknown[]) =>
-    mockUseUserGameAccountPreferences(...args),
-}));
-
-vi.mock("@/lib/game", () => ({
-  Game: {
-    hero: {
-      account: 202,
-    },
-    getAccountId: () => "202",
-  },
-}));
-
-vi.mock("@/store/global.store", () => ({
-  useGlobalStore: (
-    selector: (state: { gameState: { gameInitialized: boolean } }) => boolean,
-  ) =>
-    selector({
-      gameState: {
-        gameInitialized: true,
-      },
+  createAccountPreferences,
+  createAccountPreferencesTest,
+} from "@/test/account-preferences-test";
+import { useCurrentGameAccountPreferences } from "./use-current-game-account-preferences";
+import { useCurrentGameAccountDetectorSettings } from "./use-current-game-account-detector-settings";
+import { useCurrentGameAccountNotificationSettings } from "./use-current-game-account-notification-settings";
+it("keeps notifications unready while preferences are unavailable", () => {
+  const fixture = createAccountPreferencesTest(
+    () => new Promise<Response>(() => undefined),
+  );
+  const { result } = renderHook(
+    () => useCurrentGameAccountNotificationSettings(),
+    { wrapper: fixture.wrapper },
+  );
+  expect(result.current.accountId).toBe("202");
+  expect(result.current.isReady).toBe(false);
+  expect(result.current.settings).toEqual(defaultNotificationsSettings);
+});
+it("returns the shared account preference query", () => {
+  const fixture = createAccountPreferencesTest();
+  const preferences = createAccountPreferences();
+  fixture.queryClient.setQueryData(fixture.queryKey, preferences);
+  const { result } = renderHook(() => useCurrentGameAccountPreferences(), {
+    wrapper: fixture.wrapper,
+  });
+  expect(result.current.accountId).toBe("202");
+  expect(result.current.data).toEqual(preferences);
+  expect(result.current.isFetching).toBe(false);
+});
+it("marks notifications ready after defaults are stored", () => {
+  const fixture = createAccountPreferencesTest();
+  fixture.queryClient.setQueryData(
+    fixture.queryKey,
+    createAccountPreferences({
+      notifications: createNotificationsSettings(["guild-1"]),
+      hasStoredNotifications: true,
     }),
-}));
-
-describe("current game account preference hooks", () => {
-  beforeEach(() => {
-    mockUseUserGameAccountPreferences.mockReset();
-    useGameStore.getState().replaceGame({
-      hero: {
-        accountId: "202",
-        characterId: "101",
-        currentHp: 1,
-        icon: "hero.gif",
-        level: 300,
-        maxHp: 1,
-        name: "Hero",
-        profession: "w",
-        x: 1,
-        y: 2,
-      },
-      interface: "ni",
-      map: { id: 1, name: "Map", visibility: 30 },
-      world: "pandora",
-    });
+  );
+  const { result } = renderHook(
+    () => useCurrentGameAccountNotificationSettings(),
+    { wrapper: fixture.wrapper },
+  );
+  expect(result.current.isReady).toBe(true);
+  expect(result.current.settings).toEqual(
+    createNotificationsSettings(["guild-1"]),
+  );
+});
+it("keeps detector settings unready until stored data or a failed query", () => {
+  const fixture = createAccountPreferencesTest(
+    () => new Promise<Response>(() => undefined),
+  );
+  const { result } = renderHook(() => useCurrentGameAccountDetectorSettings(), {
+    wrapper: fixture.wrapper,
   });
-
-  it("keeps notification settings unready until stored values exist", () => {
-    mockUseUserGameAccountPreferences.mockReturnValue({
-      data: undefined,
-      isFetched: true,
-    });
-
-    const { result } = renderHook(() =>
-      useCurrentGameAccountNotificationSettings(),
-    );
-
-    expect(result.current.accountId).toBe("202");
-    expect(result.current.isReady).toBe(false);
-    expect(result.current.settings).toEqual(defaultNotificationsSettings);
+  expect(result.current.accountId).toBe("202");
+  expect(result.current.isReady).toBe(false);
+  expect(result.current.settings).toEqual(defaultDetectorSettings);
+});
+it("uses detector defaults after an HTTP error", async () => {
+  const fixture = createAccountPreferencesTest(() =>
+    Response.json({ message: "unavailable" }, { status: 503 }),
+  );
+  const { result } = renderHook(() => useCurrentGameAccountDetectorSettings(), {
+    wrapper: fixture.wrapper,
   });
-
-  it("returns shared account preference query state", () => {
-    mockUseUserGameAccountPreferences.mockReturnValue({
-      data: { accountId: "202" },
-      isFetched: true,
-      isFetching: false,
-      isLoading: false,
-    });
-
-    const { result } = renderHook(() => useCurrentGameAccountPreferences());
-
-    expect(result.current.accountId).toBe("202");
-    expect(result.current.data).toEqual({ accountId: "202" });
-    expect(result.current.isFetching).toBe(false);
-  });
-
-  it("marks notification settings as ready after notification defaults are stored", () => {
-    mockUseUserGameAccountPreferences.mockReturnValue({
-      data: {
-        accountId: "202",
-        notifications: createNotificationsSettings(["guild-1"]),
-        detector: createDetectorSettings(),
-        hasStoredNotifications: true,
-        hasStoredDetector: false,
-        hasStoredPreferences: false,
-      },
-      isFetched: true,
-    });
-
-    const { result } = renderHook(() =>
-      useCurrentGameAccountNotificationSettings(),
-    );
-
-    expect(result.current.isReady).toBe(true);
-    expect(result.current.settings).toEqual(
-      createNotificationsSettings(["guild-1"]),
-    );
-  });
-
-  it("keeps detector settings unready until stored values exist or query errors", () => {
-    mockUseUserGameAccountPreferences.mockReturnValue({
-      data: undefined,
-      isFetched: true,
-      isError: false,
-    });
-
-    const { result } = renderHook(() =>
-      useCurrentGameAccountDetectorSettings(),
-    );
-
-    expect(result.current.accountId).toBe("202");
-    expect(result.current.isReady).toBe(false);
-    expect(result.current.settings).toEqual(defaultDetectorSettings);
-  });
-
-  it("treats detector settings as ready after a query error fallback", () => {
-    mockUseUserGameAccountPreferences.mockReturnValue({
-      data: undefined,
-      isFetched: true,
-      isError: true,
-    });
-
-    const { result } = renderHook(() =>
-      useCurrentGameAccountDetectorSettings(),
-    );
-
-    expect(result.current.isReady).toBe(true);
-    expect(result.current.settings).toEqual(defaultDetectorSettings);
-  });
+  await waitFor(() => expect(result.current.isReady).toBe(true));
+  expect(result.current.settings).toEqual(defaultDetectorSettings);
 });

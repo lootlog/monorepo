@@ -1,8 +1,10 @@
-import type { EventCoordinationResponseDtoHeroesItem } from "@lootlog/client/main";
-import type { EventCoordinationResponseDtoHeroesItemActiveGapsItem } from "@lootlog/client/main";
-import type { EventCoordinationResponseDtoHeroesItemPriority } from "@lootlog/client/main";
-import type { EventCoordinationResponseDtoHeroesItemRecommendedAction } from "@lootlog/client/main";
-import type { EventCoordinationResponseDtoHeroesItemTimerStatus } from "@lootlog/client/main";
+import type {
+  EventCoordinationResponseDtoHeroesItem,
+  EventCoordinationResponseDtoHeroesItemActiveGapsItem,
+  EventCoordinationResponseDtoHeroesItemPriority,
+  EventCoordinationResponseDtoHeroesItemRecommendedAction,
+  EventCoordinationResponseDtoHeroesItemTimerStatus,
+} from "@lootlog/client/main";
 
 export function getCoordinationPriorityTone(
   priority: EventCoordinationResponseDtoHeroesItemPriority,

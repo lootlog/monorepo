@@ -13,7 +13,7 @@ import { KillMapAssignmentGroup } from "./kill-map-assignment-group";
 import { KillMapCoverageDiagnostics } from "./kill-map-coverage-diagnostics";
 import { KillMapGapAudit } from "./kill-map-gap-audit";
 import { getKillMapTimelineColumnClassName } from "./kill-map-timeline-table-utils";
-import { expandingTableFeatures } from "@/lib/tanstack-table-features";
+import type { expandingTableFeatures } from "@/lib/tanstack-table-features";
 
 interface KillMapTimelineTableRowProps {
   row: Row<typeof expandingTableFeatures, MapTimelineData>;

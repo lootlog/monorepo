@@ -7,7 +7,10 @@ import { NpcTypeEnum } from "@lootlog/schema/npc-type";
 import { SCRAPER_CONFIG, SEED_CONFIG } from "../config.js";
 import type { GeneratedPlayer } from "./players-generator.js";
 import { getProfByShortname } from "@lootlog/domain/profession";
-import type { ProfessionEnum as Profession } from "@lootlog/schema/loot";
+import type {
+  LootSourceEnum,
+  ProfessionEnum as Profession,
+} from "@lootlog/schema/loot";
 
 interface NpcData {
   id: number;
@@ -72,7 +75,7 @@ interface GeneratedLoot {
   }>;
   lootShare: Record<string, string[]>;
   world: string;
-  source: string;
+  source: LootSourceEnum;
   location: string;
 }
 

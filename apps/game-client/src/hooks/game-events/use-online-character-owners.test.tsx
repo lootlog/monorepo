@@ -1,147 +1,149 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { GatewayEvent } from "@/config/gateway";
+import { describe, expect, it } from "vitest";
+import { createRealtimeTest } from "@/test/realtime-test";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 import { useSettingsStore } from "@/store/settings.store";
-import { useGameStore } from "@/store/game.store";
-
-const mocks = vi.hoisted(() => ({
-  emitWithAck: vi.fn(),
-  socketOff: vi.fn(),
-  socketOn: vi.fn(),
-  socket: {
-    emitWithAck: vi.fn(),
-    off: vi.fn(),
-    on: vi.fn(),
-    timeout() {
-      return this;
-    },
-  },
-  useGuildMembersSummary: vi.fn((..._arguments: unknown[]) => ({
-    data: undefined,
-  })),
-}));
-
-vi.mock("@/contexts/socket-context", () => ({
-  useSocket: () => ({
-    connected: true,
-    joined: true,
-    socket: mocks.socket,
-  }),
-}));
-
-vi.mock("@/hooks/api/guild-members-summary-query", () => ({
-  useGuildMembersSummary: (...arguments_: unknown[]) =>
-    mocks.useGuildMembersSummary(...arguments_),
-}));
-
 import { useOnlineCharacterOwners } from "./use-online-character-owners";
 
+async function setup() {
+  const test = createRealtimeTest();
+  useCharacterTooltipCatchingGuildsStore.getState().clear();
+  useOnlineCharacterOwnersStore.getState().clearOwners();
+  useSettingsStore.setState({
+    guildIdByCharId: { "1": "guild-1" },
+    worldByGuildId: { "guild-1": "pandora" },
+  });
+  const view = renderHook(() => useOnlineCharacterOwners(), {
+    wrapper: test.wrapper,
+  });
+  test.open();
+  await test.join();
+  const requests = () =>
+    test.wire.frames.flatMap((frame) =>
+      "type" in frame && frame.type === "presence.fetch" ? [frame] : [],
+    );
+  const activate = (active: boolean) =>
+    act(() =>
+      useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(active),
+    );
+  const respond = (
+    index: number,
+    error?: { code: string; message: string; retryable: boolean },
+  ) => {
+    const request = requests()[index];
+    if (!request?.requestId) throw new Error("Presence request not sent");
+    const requestId = request.requestId;
+    act(() =>
+      test.wire.receive(
+        error
+          ? { v: 1, requestId, status: "error", error }
+          : {
+              v: 1,
+              requestId,
+              status: "success",
+              data: { presences: [] },
+            },
+      ),
+    );
+  };
+  return {
+    ...test,
+    httpRequests: test.requests,
+    view,
+    requests,
+    activate,
+    respond,
+  };
+}
+
 describe("useOnlineCharacterOwners", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mocks.socket.emitWithAck = mocks.emitWithAck;
-    mocks.socket.off = mocks.socketOff;
-    mocks.socket.on = mocks.socketOn;
-    useCharacterTooltipCatchingGuildsStore.getState().clear();
-    useOnlineCharacterOwnersStore.getState().clearOwners();
-    useSettingsStore.setState({
-      guildIdByCharId: { "hero-1": "guild-1" },
-      worldByGuildId: { "guild-1": "tempest" },
+  it("does no owner HTTP or presence request until Shift is pressed", async () => {
+    const test = await setup();
+    expect(test.requests()).toHaveLength(0);
+    expect(
+      test.httpRequests.some((path) => path.endsWith("/members/summary")),
+    ).toBe(false);
+    test.activate(true);
+    await waitFor(() => expect(test.requests()).toHaveLength(1));
+    expect(test.requests()[0]?.data).toEqual({
+      organizationId: "guild-1",
+      world: "pandora",
     });
-    useGameStore.getState().replaceGame({
-      hero: {
-        accountId: "1",
-        characterId: "hero-1",
-        currentHp: 1,
-        icon: "hero.gif",
-        level: 300,
-        maxHp: 1,
-        name: "Hero",
-        profession: "w",
-        x: 1,
-        y: 2,
-      },
-      interface: "ni",
-      map: { id: 1, name: "Map", visibility: 30 },
-      world: "tempest",
-    });
-    Object.defineProperty(window, "Engine", {
-      configurable: true,
-      value: {
-        hero: { d: { id: "hero-1" } },
-      },
-    });
-    mocks.emitWithAck.mockResolvedValue({
-      status: "success",
-      players: {},
-    });
+    await waitFor(() =>
+      expect(
+        test.httpRequests.some((path) => path.endsWith("/members/summary")),
+      ).toBe(true),
+    );
+    test.respond(0);
+    await waitFor(() =>
+      expect(useOnlineCharacterOwnersStore.getState().status).toBe("success"),
+    );
   });
 
-  it("does no owner query or socket work until Shift is pressed", async () => {
-    renderHook(() => useOnlineCharacterOwners());
+  it("retries transient acknowledgement failures and permits a fresh Shift activation", async () => {
+    const test = await setup();
+    test.activate(true);
+    await waitFor(() => expect(test.requests()).toHaveLength(1));
+    test.respond(0, {
+      code: "UNAVAILABLE",
+      message: "Temporary service failure",
+      retryable: true,
+    });
+    await waitFor(() => expect(test.requests()).toHaveLength(2));
+    test.respond(1, {
+      code: "UNAVAILABLE",
+      message: "Temporary service failure",
+      retryable: true,
+    });
+    await waitFor(() =>
+      expect(useOnlineCharacterOwnersStore.getState().status).toBe("error"),
+    );
+    test.activate(false);
+    expect(
+      useOnlineCharacterOwnersStore.getState().ownersByCharacterKey,
+    ).toEqual({});
+    test.activate(true);
+    await waitFor(() => expect(test.requests()).toHaveLength(3));
+    test.respond(2);
+    await waitFor(() =>
+      expect(useOnlineCharacterOwnersStore.getState().status).toBe("success"),
+    );
+  });
 
-    expect(mocks.emitWithAck).not.toHaveBeenCalled();
-    expect(mocks.socketOn).not.toHaveBeenCalled();
-    expect(mocks.useGuildMembersSummary).toHaveBeenLastCalledWith(
-      { guildId: "guild-1" },
-      expect.objectContaining({
-        query: expect.objectContaining({ enabled: false }),
+  it("retries a malformed success acknowledgement instead of reporting access denial", async () => {
+    const test = await setup();
+    test.activate(true);
+    await waitFor(() => expect(test.requests()).toHaveLength(1));
+    const requestId = test.requests()[0]?.requestId;
+    if (!requestId) throw new Error("Presence request not sent");
+    act(() =>
+      test.wire.receive({
+        v: 1,
+        requestId,
+        status: "success",
+        data: { presences: "invalid" },
       }),
     );
-
-    act(() => {
-      useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
-    });
-
-    await waitFor(() => {
-      expect(mocks.emitWithAck).toHaveBeenCalledWith(
-        GatewayEvent.ONLINE_PLAYERS_PRESENCE_FETCH,
-        { guildId: "guild-1", world: "tempest" },
-      );
-      expect(mocks.socketOn).toHaveBeenCalledWith(
-        GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
-        expect.any(Function),
-      );
-      expect(mocks.useGuildMembersSummary).toHaveBeenLastCalledWith(
-        { guildId: "guild-1" },
-        expect.objectContaining({
-          query: expect.objectContaining({ enabled: true }),
-        }),
-      );
-    });
+    await waitFor(() => expect(test.requests()).toHaveLength(2));
+    test.respond(1);
+    await waitFor(() =>
+      expect(useOnlineCharacterOwnersStore.getState().status).toBe("success"),
+    );
   });
 
-  it("retries a failed acknowledgement and permits a fresh Shift activation", async () => {
-    mocks.emitWithAck.mockRejectedValue(new Error("ack timeout"));
-    renderHook(() => useOnlineCharacterOwners());
-    act(() => {
-      useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+  it("preserves explicit gateway access denial without retrying it", async () => {
+    const test = await setup();
+    test.activate(true);
+    await waitFor(() => expect(test.requests()).toHaveLength(1));
+    test.respond(0, {
+      code: "COMMAND_REJECTED",
+      message: "organization access denied",
+      retryable: false,
     });
-
-    await waitFor(() => {
-      expect(mocks.emitWithAck).toHaveBeenCalledTimes(2);
-      expect(useOnlineCharacterOwnersStore.getState().status).toBe("error");
-    });
-
-    mocks.emitWithAck.mockResolvedValue({ status: "success", players: {} });
-    act(() => {
-      useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(false);
-    });
-    await waitFor(() => {
-      expect(mocks.socketOff).toHaveBeenCalledWith(
-        GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
-        expect.any(Function),
-      );
-    });
-    act(() => {
-      useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
-    });
-
-    await waitFor(() => {
-      expect(mocks.emitWithAck).toHaveBeenCalledTimes(3);
-      expect(useOnlineCharacterOwnersStore.getState().status).toBe("success");
-    });
+    await waitFor(() =>
+      expect(useOnlineCharacterOwnersStore.getState().status).toBe("forbidden"),
+    );
+    expect(test.requests()).toHaveLength(1);
   });
 });

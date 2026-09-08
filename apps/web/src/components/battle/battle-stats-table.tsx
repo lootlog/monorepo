@@ -8,10 +8,7 @@ import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
 import { cn } from "cn";
 import { useTranslation } from "react-i18next";
 import type { StatsCustomizationConfig } from "@/types/stats-customization.types";
-import type {
-  Battle,
-  BattleWarrior as Warrior,
-} from "@/lib/api/battlelog-types";
+import type { Battle } from "@/lib/api/battlelog-types";
 import { BATTLE_SURFACE_COLORS } from "./utils/battle-color-palette";
 
 interface BattleStatsTableProps {
@@ -185,7 +182,7 @@ export function BattleStatsTable({
           data={sortedWarriors}
           expandedRows={expandedRows}
           getRowClassName={(row) => {
-            const warrior = row.original as Warrior;
+            const warrior = row.original;
 
             return cn({
               [BATTLE_SURFACE_COLORS.team.friendlyRow]:

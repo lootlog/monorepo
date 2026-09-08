@@ -45,7 +45,10 @@ export const ItemStack: FC<Props> = ({
     if (!isExpanded) return;
 
     const handleClickOutside = (e: PointerEvent) => {
-      if (stackRef.current && !stackRef.current.contains(e.target as Node)) {
+      if (
+        stackRef.current &&
+        (!(e.target instanceof Node) || !stackRef.current.contains(e.target))
+      ) {
         setIsExpanded(false);
       }
     };

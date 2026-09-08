@@ -1,6 +1,15 @@
 {
+  "extends": ["../../.oxlintrc.json"],
   "rules": {
     "complexity": "error",
     "@typescript-eslint/consistent-type-imports": "off"
-  }
+  },
+  "overrides": [
+    {
+      "files": ["src/http/activity-http.ts"],
+      "rules": {
+        "react-hooks/rules-of-hooks": "off"
+      }
+    }
+  ]
 }

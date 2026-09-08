@@ -9,6 +9,8 @@ import { makeDocsService } from "./docs.service.js";
 
 const content = { root: { children: [], type: "root", version: 1 } };
 const document = {
+  deletedAt: null,
+  deletedByMemberId: null,
   id: "doc-1",
   guildId: "guild-1",
   title: "Plan",
@@ -157,7 +159,7 @@ describe("docs service", () => {
       version: 1,
       title: "Plan",
       content,
-      action: "SAVE",
+      action: "SAVE" as const,
       actorMemberId: "discord-1",
       editedAt: document.updatedAt,
     };
@@ -178,7 +180,7 @@ describe("docs service", () => {
           guildId: "guild-1",
           version: 1,
           title: "Plan",
-          action: "SAVE",
+          action: "SAVE" as const,
           actorMemberId: "discord-1",
           editedAt: document.updatedAt,
           actor: { memberId: "discord-1", name: "Kamil" },

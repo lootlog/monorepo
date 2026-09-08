@@ -1,5 +1,8 @@
 import { operationIdentifiers } from "../../operation-identifiers.js";
-import { statusCodeResponse } from "#src/shared/http/handler-response";
+import {
+  optionalPathString,
+  statusCodeResponse,
+} from "#src/shared/http/handler-response";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import {
   Permission,
@@ -88,7 +91,7 @@ export class NotificationsAuthorization extends Context.Service<
 
 const operationIds = operationIdentifiers(
   LootlogApi.groups.notifications.endpoints,
-) as Record<NotificationEndpointIdentifier, string>;
+);
 
 const operationFailure = (cause: unknown): NotificationsHttpFailure => {
   if (
@@ -152,15 +155,15 @@ export const NotificationsHandlers = HttpApiBuilder.group(
         Effect.flatMap(authorization.requireCaller, (caller) =>
           operation(endpoint, run(caller)),
         ),
-      ) as Effect.Effect<never, never>;
+      );
 
     const guild = <A>(
       endpoint: NotificationEndpointIdentifier,
-      guildId: unknown,
+      guildId: string | undefined,
       run: (caller: NotificationGuildCaller) => Effect.Effect<A, unknown>,
     ) => {
       const caller =
-        typeof guildId === "string"
+        guildId !== undefined
           ? authorization.requireGuild({
               guildId,
               capabilities: [Permission.OWNER, Permission.ADMIN],
@@ -176,14 +179,14 @@ export const NotificationsHandlers = HttpApiBuilder.group(
         Effect.flatMap(caller, (authorized) =>
           operation(endpoint, run(authorized)),
         ),
-      ) as Effect.Effect<never, never>;
+      );
     };
 
     return handlers.handleAll({
       NotificationsGuildControllerGetGuildTargets: ({ params }) =>
         guild(
           "NotificationsGuildControllerGetGuildTargets",
-          params.guildId,
+          optionalPathString(params.guildId),
           ({ guild: currentGuild }) =>
             services.guildTargets
               .list(currentGuild.id)
@@ -198,7 +201,7 @@ export const NotificationsHandlers = HttpApiBuilder.group(
       NotificationsGuildControllerGetAvailableGuildTargets: ({ params }) =>
         guild(
           "NotificationsGuildControllerGetAvailableGuildTargets",
-          params.guildId,
+          optionalPathString(params.guildId),
           ({ guild: currentGuild }) =>
             services.guildTargets
               .available(currentGuild.id)
@@ -214,7 +217,7 @@ export const NotificationsHandlers = HttpApiBuilder.group(
       NotificationsGuildControllerCreateGuildTarget: ({ params, payload }) =>
         guild(
           "NotificationsGuildControllerCreateGuildTarget",
-          params.guildId,
+          optionalPathString(params.guildId),
           ({ guild: currentGuild }) =>
             services.guildTargets
               .create(currentGuild.id, payload)
@@ -227,7 +230,7 @@ export const NotificationsHandlers = HttpApiBuilder.group(
       NotificationsGuildControllerUpdateGuildTarget: ({ params, payload }) =>
         guild(
           "NotificationsGuildControllerUpdateGuildTarget",
-          params.guildId,
+          optionalPathString(params.guildId),
           ({ guild: currentGuild }) =>
             Effect.flatMap(
               integerParameter(params.targetId, "targetId"),
@@ -242,7 +245,7 @@ export const NotificationsHandlers = HttpApiBuilder.group(
       NotificationsGuildControllerDeleteGuildTarget: ({ params }) =>
         guild(
           "NotificationsGuildControllerDeleteGuildTarget",
-          params.guildId,
+          optionalPathString(params.guildId),
           ({ guild: currentGuild }) =>
             Effect.flatMap(
               integerParameter(params.targetId, "targetId"),
@@ -252,7 +255,7 @@ export const NotificationsHandlers = HttpApiBuilder.group(
       NotificationsGuildControllerGetGuildRules: ({ params }) =>
         guild(
           "NotificationsGuildControllerGetGuildRules",
-          params.guildId,
+          optionalPathString(params.guildId),
           ({ guild: currentGuild }) =>
             services.rules
               .listGuild(currentGuild.id)
@@ -265,7 +268,7 @@ export const NotificationsHandlers = HttpApiBuilder.group(
       NotificationsGuildControllerCreateGuildRule: ({ params, payload }) =>
         guild(
           "NotificationsGuildControllerCreateGuildRule",
-          params.guildId,
+          optionalPathString(params.guildId),
           ({ guild: currentGuild }) =>
             services.rules
               .createGuild(currentGuild.id, payload)
@@ -278,7 +281,7 @@ export const NotificationsHandlers = HttpApiBuilder.group(
       NotificationsGuildControllerUpdateGuildRule: ({ params, payload }) =>
         guild(
           "NotificationsGuildControllerUpdateGuildRule",
-          params.guildId,
+          optionalPathString(params.guildId),
           ({ guild: currentGuild }) =>
             Effect.flatMap(integerParameter(params.ruleId, "ruleId"), (id) =>
               services.rules.updateGuild(currentGuild.id, id, payload),
@@ -291,7 +294,7 @@ export const NotificationsHandlers = HttpApiBuilder.group(
       NotificationsGuildControllerDeleteGuildRule: ({ params }) =>
         guild(
           "NotificationsGuildControllerDeleteGuildRule",
-          params.guildId,
+          optionalPathString(params.guildId),
           ({ guild: currentGuild }) =>
             Effect.flatMap(integerParameter(params.ruleId, "ruleId"), (id) =>
               services.rules.deleteGuild(currentGuild.id, id),
@@ -300,7 +303,7 @@ export const NotificationsHandlers = HttpApiBuilder.group(
       NotificationsGuildControllerRebuildGuildRuleJobs: ({ params }) =>
         guild(
           "NotificationsGuildControllerRebuildGuildRuleJobs",
-          params.guildId,
+          optionalPathString(params.guildId),
           ({ guild: currentGuild }) =>
             Effect.flatMap(integerParameter(params.ruleId, "ruleId"), (id) =>
               services.rules.rebuildGuildJobs(currentGuild.id, id),
@@ -309,7 +312,7 @@ export const NotificationsHandlers = HttpApiBuilder.group(
       NotificationsGuildControllerTriggerGuildRuleTest: ({ params }) =>
         guild(
           "NotificationsGuildControllerTriggerGuildRuleTest",
-          params.guildId,
+          optionalPathString(params.guildId),
           ({ guild: currentGuild }) =>
             Effect.flatMap(integerParameter(params.ruleId, "ruleId"), (id) =>
               services.rules.testGuild(currentGuild.id, id),
@@ -318,7 +321,7 @@ export const NotificationsHandlers = HttpApiBuilder.group(
       NotificationsGuildControllerGetGuildJobs: ({ params }) =>
         guild(
           "NotificationsGuildControllerGetGuildJobs",
-          params.guildId,
+          optionalPathString(params.guildId),
           ({ guild: currentGuild }) =>
             services.jobOperations
               .listGuild(currentGuild.id)
@@ -331,7 +334,7 @@ export const NotificationsHandlers = HttpApiBuilder.group(
       NotificationsGuildControllerCancelGuildJob: ({ params }) =>
         guild(
           "NotificationsGuildControllerCancelGuildJob",
-          params.guildId,
+          optionalPathString(params.guildId),
           ({ guild: currentGuild }) =>
             services.jobOperations.cancelGuild(currentGuild.id, params.jobId),
         ),

@@ -1,11 +1,12 @@
 import type { Queue } from "bullmq";
-import { Effect } from "effect";
+import { Effect, Schema } from "effect";
 import { battlelogOperation } from "./battlelog-operation.js";
 import type { Battles } from "#src/battles/battles.service";
 import type { DeleteUserBattlesJobData } from "#src/battles/deletion/delete-user-battles.processor";
-import type {
-  BattleResponseInput,
-  BattlesListResponseInput,
+import {
+  BattleResponseSchemas,
+  type BattleResponseInput,
+  type BattlesListResponseInput,
 } from "#src/battles/catalog/battle-response";
 import type { CreateBattleInput } from "#src/battles/submission/create-battle";
 import type { BattleAnalyticsCriteria } from "#src/battles/analytics/query-battle-analytics";
@@ -31,9 +32,11 @@ const normalizeBattleResponse = (
   updatedAt: battle.updatedAt.toISOString(),
   warriors: battle.warriors.map((warrior) => ({
     ...warrior,
-    spellsUsedMap: warrior.spellsUsedMap as Record<string, number>,
+    spellsUsedMap: warrior.spellsUsedMap,
   })),
-  statistics: battle.statistics as BattleResponseInput["statistics"],
+  statistics: Schema.decodeUnknownSync(
+    BattleResponseSchemas.battle.fields.statistics,
+  )(battle.statistics),
 });
 
 const normalizeBattlesListResponse = (
@@ -46,7 +49,7 @@ const normalizeBattlesListResponse = (
 export const makeBattlelogOperations = (
   battles: Battles,
   analytics: BattleAnalytics,
-  deleteQueue: Queue<DeleteUserBattlesJobData>,
+  deleteQueue: Pick<Queue<DeleteUserBattlesJobData>, "add">,
 ) => ({
   battles: {
     createBattle: battlelogOperation(

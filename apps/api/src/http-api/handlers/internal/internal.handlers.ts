@@ -40,9 +40,9 @@ export interface InternalGuildsCache {
     value: string,
     ttl: number,
   ) => Effect.Effect<void, unknown>;
-  readonly setJson: (
+  readonly setJson: <Value>(
     key: string,
-    value: unknown,
+    value: Value,
     ttl: number,
   ) => Effect.Effect<void, unknown>;
   readonly del: (key: string) => Effect.Effect<void, unknown>;

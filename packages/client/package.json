@@ -35,6 +35,7 @@
     "@tanstack/react-query": "catalog:",
     "@types/bun": "catalog:",
     "@types/node": "catalog:",
+    "effect": "catalog:",
     "orval": "^8.26.0",
     "react": "catalog:",
     "typescript": "catalog:",
