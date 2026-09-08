@@ -5,21 +5,28 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "dev": "BASE_PATH=/developer/ vite dev",
+    "dev": "vite dev",
     "build": "vite build",
     "start": "bun server.js",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint .",
-    "test": "bun test server-handler.test.js"
+    "test": "bun test server-handler.test.js src"
   },
   "dependencies": {
     "@lootlog/ui": "workspace:*",
+    "@scalar/api-reference-react": "^0.9.67",
     "@tanstack/react-router": "catalog:",
     "@tanstack/react-start": "^1.168.49",
+    "better-auth": "1.7.2",
+    "fumadocs-core": "^16.15.4",
+    "fumadocs-mdx": "^15.4.0",
+    "fumadocs-ui": "^16.15.4",
     "react": "catalog:",
-    "react-dom": "catalog:"
+    "react-dom": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
+    "@lootlog/sdk": "workspace:*",
     "@lootlog/typescript-config": "workspace:*",
     "@tailwindcss/vite": "catalog:",
     "@types/node": "catalog:",

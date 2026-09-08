@@ -1,0 +1,70 @@
+---
+title: Realtime dla integracji serwerowych
+description: Odbieraj zmiany przez WebSocket, a zapisy wykonuj przez HTTP.
+---
+
+## Uwierzytelnianie
+
+Integracja serwerowa przekazuje `X-Api-Key` w nagłówku połączenia WebSocket. Natywne WebSocket w przeglądarce nie pozwala ustawiać tego nagłówka. Userscript korzysta z [API game-clienta](/docs/game-client), bez osobnego połączenia z kluczem.
+
+Wybieraj gateway z tego samego środowiska co klucz: `dev-gateway.lootlog.pl` albo `gateway.lootlog.pl`. SDK udostępnia klienta istniejącego protokołu realtime i możliwość podłączenia serwerowej implementacji WebSocket.
+
+## Przykład w Bun
+
+Poniższy przykład uruchom po stronie serwera w Bun. W projekcie TypeScript użyj typów Bun oraz biblioteki `ES2022` lub `ESNext` bez `DOM`, aby konstruktor WebSocket obsługiwał opcje serwerowe. Ustaw `LOOTLOG_API_KEY` i `LOOTLOG_ORGANIZATION_ID` dla środowiska dev. Fabryka WebSocket dodaje nagłówek klucza; nie przekazuj go w URL.
+
+```ts
+import {
+  RealtimeClient,
+  REALTIME_JSON_SUBPROTOCOL,
+} from "@lootlog/sdk/realtime";
+
+const apiKey = process.env.LOOTLOG_API_KEY;
+const organizationId = process.env.LOOTLOG_ORGANIZATION_ID;
+if (!apiKey || !organizationId)
+  throw new Error("Missing Lootlog configuration");
+
+const client = new RealtimeClient({
+  url: "wss://dev-gateway.lootlog.pl",
+  protocols: [REALTIME_JSON_SUBPROTOCOL],
+  frameEncoding: "json",
+  webSocketFactory: (url, protocols) =>
+    new WebSocket(url, {
+      protocols,
+      headers: { "X-Api-Key": apiKey },
+    }),
+});
+const stopEvents = client.subscribe((event) => {
+  if (event.type === "timer.created") console.log(event.data);
+});
+const stopState = client.subscribeState((state) => console.log(state));
+
+// Przed połączeniem zapamiętaj sesję i subskrypcję do odtworzenia.
+await client.join({});
+await client.subscribeScope({
+  topic: "organization.timers",
+  organizationId,
+  world: "fobos",
+});
+client.connect();
+
+process.once("SIGINT", () => {
+  stopEvents();
+  stopState();
+  client.disconnect();
+});
+```
+
+Stan `ready` oznacza zakończone dołączenie do sesji. SDK odtwarza zapamiętaną sesję i subskrypcje po reconnect. Przykład wypisuje tylko zdarzenia `timer.created`; pierwszą listę timerów pobierz osobno przez HTTP. W działającej integracji ogranicz czas lub liczbę ponowień po trwałym błędzie uwierzytelnienia i powiadom operatora.
+
+## Dozwolone działania
+
+Integracja odbiera dostępne zdarzenia oraz korzysta z dozwolonych subskrypcji i zapytań. Jej zakres jest ograniczony Organizacjami klucza i aktualnymi uprawnieniami użytkownika. Zapisy, na przykład dodanie timera, wykonuj przez HTTP.
+
+Połączenie integracji nie oznacza obecności postaci w grze. Obecność i obserwacje gry publikuje game-client.
+
+## Rozłączenie
+
+Po utracie połączenia oznacz dane jako nieaktualne. SDK odtwarza subskrypcje po ponownym połączeniu; pobierz wtedy aktualny stan przez HTTP. Nie zakładaj, że otrzymasz wszystkie zdarzenia z czasu przerwy.
+
+Autoryzacja wymaga odnowienia najpóźniej co 60 sekund. Usunięcie klucza, utrata dostępu lub brak możliwości odnowienia blokuje dalszą komunikację. Nie ponawiaj bez końca połączenia odrzuconego z powodu nieważnego klucza.

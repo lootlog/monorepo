@@ -1,26 +1,14 @@
-import { activeGuildMemberJoin } from "#src/members/member-access-query";
+import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 
-import {
-  and,
-  arrayOverlaps,
-  desc,
-  eq,
-  gt,
-  inArray,
-  isNull,
-  or,
-} from "drizzle-orm";
+import { and, desc, eq, gt, inArray, isNull, or } from "drizzle-orm";
 import { Clock, Effect, Layer } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   guildTable,
-  memberTable,
-  memberToRoleTable,
   reservationShareInvitationTable,
   reservationShareTable,
-  roleTable,
 } from "#src/database/drizzle/schema";
 import {
   ResourceConflictError,
@@ -89,28 +77,18 @@ export const makeReservationSharingDataLayer = (
         );
 
       const administrativeGuilds = (discordId: string) =>
-        database
-          .selectDistinct({
-            id: guildTable.id,
-            name: guildTable.name,
-            icon: guildTable.icon,
-          })
-          .from(guildTable)
-          .leftJoin(memberTable, activeGuildMemberJoin(discordId))
-          .leftJoin(memberToRoleTable, eq(memberToRoleTable.A, memberTable.id))
-          .leftJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
-          .where(
-            and(
-              eq(guildTable.active, true),
-              or(
-                eq(guildTable.ownerId, discordId),
-                arrayOverlaps(roleTable.permissions, [
-                  Permission.OWNER,
-                  Permission.ADMIN,
-                ]),
-              ),
-            ),
-          );
+        selectAccessibleGuilds(database, discordId, [
+          Permission.OWNER,
+          Permission.ADMIN,
+        ]).pipe(
+          Effect.map((rows) =>
+            rows.map(({ guild }) => ({
+              id: guild.id,
+              name: guild.name,
+              icon: guild.icon,
+            })),
+          ),
+        );
 
       const findUsableInvitation = (token: string) =>
         Effect.gen(function* () {

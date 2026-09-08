@@ -29,6 +29,12 @@ import type {
   NotificationMutes,
   UserPreferences,
 } from "@lootlog/schema/user-preferences";
+import {
+  requestApiKeyAccess,
+  requestScopedIdentity,
+} from "#src/runtime/auth/forward-auth-identity";
+import { selectAccessibleGuilds } from "#src/members/member-access-query";
+import { PermissionDeniedError } from "#src/shared/http/http-errors";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   userGameAccountSettingsTable,
@@ -406,6 +412,47 @@ const readPreferences = (
 export const makeUserPreferencesData = (
   database: typeof ApiDatabase.Service,
 ) => {
+  const visibleOrganizationIds = Effect.gen(function* () {
+    if (!(yield* requestApiKeyAccess)) return undefined;
+    const identity = yield* requestScopedIdentity;
+    const memberships = yield* selectAccessibleGuilds(
+      database,
+      identity.discordId,
+    );
+    return new Set(memberships.map(({ guild }) => guild.id));
+  });
+  const scopePreferences = (value: UserPreferences) =>
+    Effect.gen(function* () {
+      const ids = yield* visibleOrganizationIds;
+      if (!ids) return value;
+      return {
+        ...value,
+        guildsOrder: value.guildsOrder.filter((id) => ids.has(id)),
+        hiddenGuildIds: value.hiddenGuildIds.filter((id) => ids.has(id)),
+      };
+    });
+  const scopeGamePreferences = (value: UserGameAccountPreferences) =>
+    Effect.gen(function* () {
+      const ids = yield* visibleOrganizationIds;
+      if (!ids) return value;
+      const notifications = cloneNotifications(value.notifications);
+      for (const type of NOTIFICATION_TYPES)
+        notifications[type].guildIds = notifications[type].guildIds.filter(
+          (id) => ids.has(id),
+        );
+      return {
+        ...value,
+        notifications,
+        detector: {
+          ...value.detector,
+          routingRules: value.detector.routingRules.filter(
+            (rule) =>
+              rule.guildIds.length > 0 &&
+              rule.guildIds.every((id) => ids.has(id)),
+          ),
+        },
+      };
+    });
   const readGamePreferences = (userId: string, accountId: string) =>
     database
       .select({ settings: userGameAccountSettingsTable.settings })
@@ -435,6 +482,15 @@ export const makeUserPreferencesData = (
     userId: string,
     payload: UpdateUserPreferencesRequest,
   ) {
+    if (
+      (yield* requestApiKeyAccess) &&
+      (payload.guildsOrder !== undefined ||
+        payload.hiddenGuildIds !== undefined)
+    ) {
+      return yield* new PermissionDeniedError(
+        "Organization preference lists require a session",
+      );
+    }
     const current = yield* readPreferences(database, userId);
     const legacyAppearance =
       current.settings && "chatAppearance" in current.settings
@@ -579,6 +635,17 @@ export const makeUserPreferencesData = (
     accountId: string,
     payload: UpdateUserGameAccountPreferencesRequest,
   ) {
+    if (
+      (yield* requestApiKeyAccess) &&
+      (payload.detector?.routingRules !== undefined ||
+        NOTIFICATION_TYPES.some(
+          (type) => payload.notifications?.[type]?.guildIds !== undefined,
+        ))
+    ) {
+      return yield* new PermissionDeniedError(
+        "Organization preference routing requires a session",
+      );
+    }
     const stored = yield* readGamePreferences(userId, accountId);
     const current = gamePreferencesResponse(accountId, stored);
     const notifications = cloneNotifications(current.notifications);
@@ -668,17 +735,33 @@ export const makeUserPreferencesData = (
     );
   return {
     getUserPreferences: (userId: string) =>
-      mapError(getUserPreferences(userId)),
+      mapError(
+        getUserPreferences(userId).pipe(Effect.flatMap(scopePreferences)),
+      ),
     getUserGameAccountPreferences: (userId: string, accountId: string) =>
-      mapError(getUserGameAccountPreferences(userId, accountId)),
+      mapError(
+        getUserGameAccountPreferences(userId, accountId).pipe(
+          Effect.flatMap(scopeGamePreferences),
+        ),
+      ),
     updateUserPreferences: (
       userId: string,
       payload: UpdateUserPreferencesRequest,
-    ) => mapError(updateUserPreferences(userId, payload)),
+    ) =>
+      mapError(
+        updateUserPreferences(userId, payload).pipe(
+          Effect.flatMap(scopePreferences),
+        ),
+      ),
     updateUserGameAccountPreferences: (
       userId: string,
       accountId: string,
       payload: UpdateUserGameAccountPreferencesRequest,
-    ) => mapError(updateUserGameAccountPreferences(userId, accountId, payload)),
+    ) =>
+      mapError(
+        updateUserGameAccountPreferences(userId, accountId, payload).pipe(
+          Effect.flatMap(scopeGamePreferences),
+        ),
+      ),
   };
 };

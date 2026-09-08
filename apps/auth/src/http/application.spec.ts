@@ -1,3 +1,4 @@
+import { ApiKeyService } from "#src/auth/api-key-service";
 import { afterAll, describe, expect, it, mock } from "bun:test";
 import { betterAuth } from "better-auth";
 import { Effect, Layer } from "effect";
@@ -50,6 +51,20 @@ const makeRuntime = (authenticated = true) => {
   const boundary = HttpRouter.toWebHandler(
     AuthRoutes.pipe(
       Layer.provideMerge(Layer.succeed(AuthService, service)),
+      Layer.provideMerge(
+        Layer.succeed(
+          ApiKeyService,
+          ApiKeyService.of({
+            session: () => Effect.succeed("user-1"),
+            list: () => Effect.die("Not configured"),
+            create: () => Effect.die("Not configured"),
+            rename: () => Effect.die("Not configured"),
+            remove: () => Effect.die("Not configured"),
+            verify: () => Effect.die("Not configured"),
+            statuses: () => Effect.die("Not configured"),
+          }),
+        ),
+      ),
       Layer.provideMerge(Layer.succeed(BetterAuthRuntime, auth)),
       Layer.provide(HttpServer.layerServices),
     ),
@@ -76,6 +91,40 @@ describe("Auth HttpApi contract", () => {
     expect(resolveBetterAuthBaseURL("http://localhost/api/auth/")).toBe(
       "http://localhost/api/auth/idp",
     );
+  });
+
+  it.each([86400, 86400 * 60, 86400 * 366])(
+    "rejects unsupported key expiration %s before creation",
+    async (expiresIn) => {
+      const response = await runtime.run(
+        new Request("http://localhost/auth/api-keys", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            name: "Invalid expiry",
+            organizationIds: ["123"],
+            mode: "read",
+            personalData: false,
+            expiresIn,
+          }),
+        }),
+      );
+      expect(response.status).toBe(400);
+    },
+  );
+
+  it("blocks the raw plugin endpoints so API key policies cannot be bypassed", async () => {
+    const response = await runtime.run(
+      new Request("http://localhost/idp/api-key/create", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          name: "Bypass",
+          metadata: { organizationIds: ["other"] },
+        }),
+      }),
+    );
+    expect(response.status).toBe(404);
   });
 
   it("serves the existing health status", async () => {

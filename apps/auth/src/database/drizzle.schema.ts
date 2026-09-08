@@ -2,6 +2,7 @@
 // Update this source and generate reviewed SQL migrations when auth storage changes.
 import {
   index,
+  integer,
   pgTable,
   text,
   timestamp,
@@ -161,7 +162,52 @@ export const authJwks = pgTable("jwks", {
   crv: text("crv"),
 });
 
+export const authApiKeys = pgTable(
+  "apikey",
+  {
+    id: text("id").primaryKey(),
+    configId: text("configId").notNull().default("default"),
+    name: text("name"),
+    start: text("start"),
+    prefix: text("prefix"),
+    referenceId: text("referenceId")
+      .notNull()
+      .references(() => authUsers.id, { onDelete: "cascade" }),
+    key: text("key").notNull(),
+    enabled: boolean("enabled").default(true),
+    rateLimitEnabled: boolean("rateLimitEnabled").default(true),
+    refillInterval: integer("refillInterval"),
+    refillAmount: integer("refillAmount"),
+    rateLimitTimeWindow: integer("rateLimitTimeWindow"),
+    rateLimitMax: integer("rateLimitMax"),
+    requestCount: integer("requestCount"),
+    remaining: integer("remaining"),
+    lastRefillAt: timestamp("lastRefillAt", {
+      mode: "date",
+      withTimezone: true,
+    }),
+    lastRequest: timestamp("lastRequest", { mode: "date", withTimezone: true }),
+    expiresAt: timestamp("expiresAt", { mode: "date", withTimezone: true }),
+    createdAt: timestamp("createdAt", {
+      mode: "date",
+      withTimezone: true,
+    }).notNull(),
+    updatedAt: timestamp("updatedAt", {
+      mode: "date",
+      withTimezone: true,
+    }).notNull(),
+    permissions: text("permissions"),
+    metadata: text("metadata"),
+  },
+  (table) => [
+    uniqueIndex("apikey_key_uidx").on(table.key),
+    index("apikey_referenceId_idx").on(table.referenceId),
+    index("apikey_configId_idx").on(table.configId),
+  ],
+);
+
 export const betterAuthSchema = {
+  apikey: authApiKeys,
   user: authUsers,
   session: authSessions,
   account: authAccounts,

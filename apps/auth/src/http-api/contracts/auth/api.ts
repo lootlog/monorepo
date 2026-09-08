@@ -1,7 +1,9 @@
+import { Schema } from "effect";
 /** Endpoints owned by the auth HTTP module. */
 import {
   HttpApiEndpoint,
   HttpApiGroup,
+  HttpApiSchema,
   OpenApi,
 } from "effect/unstable/httpapi";
 import {
@@ -15,6 +17,11 @@ import {
 export class AuthGroup extends HttpApiGroup.make("auth").add(
   HttpApiEndpoint.get("AuthControllerVerify", "/auth/verify", {
     headers: AuthControllerVerifyHeaders,
+    error: [401, 429, 503].map((status) =>
+      Schema.Struct({ message: Schema.String }).pipe(
+        HttpApiSchema.status(status),
+      ),
+    ),
     success: AuthControllerVerify200,
   })
     .annotate(OpenApi.Identifier, "AuthController_verify")

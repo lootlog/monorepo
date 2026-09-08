@@ -59,6 +59,62 @@ describe("AuthService", () => {
     ).rejects.toBeInstanceOf(HttpResponseError);
   });
 
+  it("never falls back to a session when an explicit API key is rejected", async () => {
+    const { auth, getSession } = createFakeAuth();
+    getSession.mockResolvedValue({
+      user: { id: "user", discordId: "discord" },
+    });
+    const service = createAuthService({
+      auth,
+      appUrl: "https://auth.test",
+      findDiscordAccountId,
+      verifyApiKey: () =>
+        Effect.fail(
+          new HttpResponseError({ status: 401, body: { message: "Rejected" } }),
+        ),
+    });
+    await expect(
+      Effect.runPromise(
+        service.verifyRequestIdentity({
+          headers: new Headers({
+            "x-api-key": "invalid",
+            cookie: "session=valid",
+          }),
+        }),
+      ),
+    ).rejects.toMatchObject({ status: 401 });
+    expect(getSession).not.toHaveBeenCalled();
+  });
+
+  it("returns key grants only from the key verifier", async () => {
+    const { auth, getSession } = createFakeAuth();
+    const identity = {
+      userId: "user",
+      discordId: "discord",
+      apiKeyAccess: {
+        keyId: "key",
+        organizationIds: ["123"],
+        mode: "read" as const,
+        personalData: false,
+        expiresAt: null,
+      },
+    };
+    const service = createAuthService({
+      auth,
+      appUrl: "https://auth.test",
+      findDiscordAccountId,
+      verifyApiKey: () => Effect.succeed(identity),
+    });
+    expect(
+      await Effect.runPromise(
+        service.verifyRequestIdentity({
+          headers: new Headers({ "x-api-key": "valid" }),
+        }),
+      ),
+    ).toEqual(identity);
+    expect(getSession).not.toHaveBeenCalled();
+  });
+
   it("prefers a valid session and preserves the internal user id", async () => {
     const { auth, getSession } = createFakeAuth();
     getSession.mockResolvedValue({

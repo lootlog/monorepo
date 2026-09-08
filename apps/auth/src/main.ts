@@ -1,3 +1,5 @@
+import { FetchHttpClient } from "effect/unstable/http";
+import { ApiKeyService } from "#src/auth/api-key-service";
 import { BunRuntime } from "@effect/platform-bun";
 import { installScopedLogRunner } from "@lootlog/instrumentation";
 import { Effect, Layer } from "effect";
@@ -35,7 +37,15 @@ const BetterAuthLive = BetterAuthRuntime.layer.pipe(
   Layer.provide(AppConfig.layer),
 );
 
+const ApiKeysLive = ApiKeyService.layer.pipe(
+  Layer.provide(FetchHttpClient.layer),
+  Layer.provide(BetterAuthLive),
+  Layer.provide(InfrastructureLive),
+  Layer.provide(AppConfig.layer),
+);
+
 const AuthServicesLive = AuthService.layer.pipe(
+  Layer.provideMerge(ApiKeysLive),
   Layer.provideMerge(BetterAuthLive),
   Layer.provideMerge(InfrastructureLive),
   Layer.provideMerge(AppConfig.layer),

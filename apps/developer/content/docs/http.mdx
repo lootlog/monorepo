@@ -1,0 +1,41 @@
+---
+title: Pierwsze żądanie HTTP
+description: Utwórz klucz, wybierz środowisko i odczytaj dane Organizacji.
+---
+
+## Przygotowanie
+
+Zaloguj się przez Discord w [panelu kluczy](/keys). Wybierz Organizacje i zakres odczytu. Zapisz sekret — zobaczysz go tylko raz. W aplikacji serwerowej przechowuj go w zmiennej środowiskowej lub magazynie sekretów.
+
+Na dev używaj `https://dev-api.lootlog.pl`; produkcja ma adres `https://api.lootlog.pl`. Pozostałe usługi mają hosty `dev-activity`, `dev-battlelog`, `dev-search` na dev oraz `activity`, `battlelog`, `search` na produkcji.
+
+```bash
+export LOOTLOG_API_URL=https://dev-api.lootlog.pl
+# LOOTLOG_API_KEY ustaw przez magazyn sekretów swojego środowiska.
+curl --fail-with-body "$LOOTLOG_API_URL/users/@me/guilds" \
+  -H "X-Api-Key: $LOOTLOG_API_KEY"
+```
+
+## Referencja operacji
+
+[Scalar](/reference) pokazuje dostępne operacje, parametry i schematy odpowiedzi na podstawie wygenerowanego OpenAPI. Wybierz usługę i wprowadź klucz do wykonania żądania. Portal nie zapisuje klucza trwale; żądanie trafia bezpośrednio do wybranego środowiska Lootloga.
+
+Przesyłaj klucz wyłącznie nagłówkiem `X-Api-Key`. Nie dodawaj go do adresu URL. Błędny klucz powoduje odmowę dostępu, nawet jeśli przeglądarka ma również aktywną sesję.
+
+## Zapisy
+
+Operacja zapisu wymaga klucza odczyt/zapis i odpowiednich aktualnych uprawnień użytkownika w Organizacji. Klucz nie daje dostępu do zarządzania kontem, innymi kluczami ani operacji wewnętrznych.
+
+Nie ponawiaj automatycznie zapisów po utracie odpowiedzi. Żądanie mogło zostać wykonane; najpierw sprawdź wynik operacji. Zasady idempotencji konkretnej operacji znajdziesz w referencji.
+
+## Ustawienia użytkownika i Organizacje
+
+Dostęp do własnych danych pozwala odczytywać i zmieniać obsługiwane ustawienia osobiste, ale nie rozszerza zakresu Organizacji.
+
+- W `GET /users/@me/preferences` pola `guildsOrder` i `hiddenGuildIds` zawierają wyłącznie Organizacje wybrane dla klucza, do których nadal masz dostęp. Próba zmiany tych dwóch pól kluczem zwraca `403`; ich edycja wymaga sesji użytkownika.
+- W `GET /users/@me/game-preferences/accounts/{id}` reguły detektora odnoszące się do innych Organizacji są ukryte, a `guildIds` w ustawieniach powiadomień ograniczone do dozwolonych Organizacji. Zmiana `detector.routingRules` lub `guildIds` powiadomień kluczem zwraca `403` i wymaga sesji.
+- Obsługiwane ustawienia osobiste, takie jak motyw, wygląd i przełączniki, nadal można zmieniać kluczem odczyt/zapis z dostępem do własnych danych.
+
+Feed Organizacji i pokoje gotowości nie wymagają opcji dostępu do własnych danych tylko dlatego, że ich adres zaczyna się od `/users/@me`. Obowiązuje zakres Organizacji. Współdzielony zasób obejmujący kilka Organizacji jest dostępny kluczem tylko wtedy, gdy wszystkie wymagane Organizacje mieszczą się w jego aktualnym zakresie.
+
+Ogólne dokumenty ustawień pod `/preferences` oraz operacje rodziny `/timer-settings` (odczyt, zapis i migracja) wymagają sesji użytkownika. Nie są częścią API dostępnego kluczem. Ograniczenie dotyczy ustawień timerów, nie odczytu ani zapisu samych timerów. Typowane preferencje konta i obsługiwane ustawienia dźwięku pozostają dostępne zgodnie z zakresem klucza.

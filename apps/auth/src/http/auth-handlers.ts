@@ -86,6 +86,9 @@ export const AuthHandlers = Layer.merge(
             headers: {
               "X-Auth-Discord-Id": identity.discordId,
               "X-Auth-User-Id": identity.userId,
+              "X-Auth-Api-Key-Access": identity.apiKeyAccess
+                ? JSON.stringify(identity.apiKeyAccess)
+                : "",
             },
           }),
         ),

@@ -1,23 +1,150 @@
-@import "tailwindcss" source("../");
-@import "@lootlog/ui/globals.css";
-
-@font-face {
-  font-family: "Geist";
-  src: url("https://cdn.jsdelivr.net/npm/geist@1.3.1/dist/fonts/geist-sans/Geist-Variable.woff2")
-    format("woff2");
-  font-weight: 100 900;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Geist Mono";
-  src: url("https://cdn.jsdelivr.net/npm/geist@1.3.1/dist/fonts/geist-mono/GeistMono-Variable.woff2")
-    format("woff2");
-  font-weight: 100 900;
-  font-display: swap;
-}
-
+@import "tailwindcss";
+@import "fumadocs-ui/css/neutral.css";
+@import "fumadocs-ui/css/preset.css";
+@source "../../node_modules/fumadocs-ui/dist/**/*.js";
 @theme {
-  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "Geist Mono", ui-monospace, monospace;
+  --font-sans: ui-sans-serif, system-ui, sans-serif;
+}
+:root {
+  color-scheme: dark;
+}
+body {
+  margin: 0;
+}
+.portal-page {
+  max-width: 1100px;
+  margin: auto;
+  padding: 24px;
+}
+.portal-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding-block: 12px 32px;
+  align-items: center;
+}
+.portal-nav a {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.portal-page h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-block: 20px;
+}
+.portal-page p {
+  margin-block: 12px;
+  color: #b8b8c1;
+}
+.portal-form,
+.portal-key,
+.portal-secret {
+  border: 1px solid #34343b;
+  border-radius: 12px;
+  padding: 24px;
+  margin-block: 24px;
+}
+.portal-form {
+  display: grid;
+  gap: 20px;
+}
+.portal-page label {
+  display: grid;
+  gap: 8px;
+}
+.portal-page input:not([type="checkbox"]),
+.portal-page select {
+  border: 1px solid #62626d;
+  background: #18181c;
+  border-radius: 6px;
+  padding: 10px;
+  color: white;
+  width: 100%;
+}
+.portal-page button {
+  background: #eeeef2;
+  color: #18181c;
+  border-radius: 6px;
+  padding: 10px 16px;
+  cursor: pointer;
+}
+.portal-page button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+.portal-page :focus-visible {
+  outline: 3px solid #a7b8ff;
+  outline-offset: 4px;
+}
+.portal-page fieldset {
+  display: grid;
+  gap: 12px;
+}
+.portal-page label:has(input[type="checkbox"]) {
+  display: flex;
+  align-items: center;
+}
+.portal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+.portal-secret {
+  border-color: #a7b8ff;
+}
+.portal-secret code {
+  display: block;
+  overflow-wrap: anywhere;
+  padding-block: 20px;
+  user-select: all;
+}
+.portal-error {
+  color: #ffb4b4;
+}
+.portal-key dl {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  padding-block: 16px;
+}
+.portal-key dt {
+  color: #b8b8c1;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation: none !important;
+    transition: none !important;
+  }
+}
+.portal-key dl > div {
+  min-width: 0;
+  max-width: 100%;
+}
+.portal-key dd {
+  overflow-wrap: anywhere;
+}
+.portal-page label:has(input[type="checkbox"]) {
+  min-height: 32px;
+}
+.portal-page input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+@media (max-width: 480px) {
+  .portal-page {
+    padding: 16px;
+  }
+  .portal-form,
+  .portal-key,
+  .portal-secret {
+    padding: 16px;
+  }
+  .portal-nav {
+    gap: 16px;
+  }
 }

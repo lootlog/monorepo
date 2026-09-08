@@ -1,3 +1,9 @@
+import {
+  notificationApiKeyOrganizations,
+  notificationRuleInApiKeyScope,
+  requireNotificationRuleApiKeyScope,
+} from "../notification-api-key-scope.js";
+import { parseNotificationFilters } from "./notification-matching.service.js";
 import { readNotificationTestUsage } from "../jobs/notification-test-usage.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
@@ -29,6 +35,7 @@ import {
 import {
   InvalidRequestError,
   ResourceConflictError,
+  PermissionDeniedError,
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 
@@ -79,7 +86,9 @@ export const makeNotificationRuleOperations = (
 ) => {
   const loadRules = (ownerType: NotificationOwnerTypeValue, ownerId: string) =>
     Effect.gen(function* () {
-      const ruleRows = yield* database
+      const organizations = yield* notificationApiKeyOrganizations(database);
+      const organizationIds = organizations?.map((guild) => guild.id);
+      const loadedRows = yield* database
         .select()
         .from(notificationRuleTable)
         .where(
@@ -92,6 +101,9 @@ export const makeNotificationRuleOperations = (
           desc(notificationRuleTable.enabled),
           desc(notificationRuleTable.updatedAt),
         );
+      const ruleRows = loadedRows.filter((rule) =>
+        notificationRuleInApiKeyScope(rule, organizationIds),
+      );
       const ruleIds = ruleRows.map(({ id }) => id);
       const links =
         ruleIds.length === 0
@@ -247,7 +259,9 @@ export const makeNotificationRuleOperations = (
         ),
         Effect.flatMap((rows) =>
           rows[0]
-            ? Effect.succeed(rows[0])
+            ? requireNotificationRuleApiKeyScope(database, rows[0]).pipe(
+                Effect.as(rows[0]),
+              )
             : Effect.fail(
                 new ResourceNotFoundError(
                   NotificationError.NOTIFICATION_RULE_NOT_FOUND,
@@ -381,6 +395,21 @@ export const makeNotificationRuleOperations = (
       try: () => createNotificationRuleValues(ownerType, ownerId, data),
       catch: (cause) => cause,
     });
+    const organizations = yield* notificationApiKeyOrganizations(database);
+    if (
+      organizations &&
+      ownerType === NotificationOwnerType.USER &&
+      values.triggerType !== "SCHEDULED_MESSAGE"
+    ) {
+      if (organizations.length === 0)
+        return yield* new PermissionDeniedError(
+          "Notification rule requires an accessible API key organization",
+        );
+      values.filters = {
+        ...values.filters,
+        guildIds: organizations.map((guild) => guild.id),
+      };
+    }
     const now = new Date(yield* Clock.currentTimeMillis);
     const rule = yield* database.transaction((transaction) =>
       Effect.gen(function* () {
@@ -419,6 +448,27 @@ export const makeNotificationRuleOperations = (
       try: () => updateNotificationRuleValues(ownerType, existing, data),
       catch: (cause) => cause,
     });
+    const organizations = yield* notificationApiKeyOrganizations(database);
+    if (
+      organizations &&
+      ownerType === NotificationOwnerType.USER &&
+      values.triggerType !== "SCHEDULED_MESSAGE"
+    ) {
+      const existingGuildIds = parseNotificationFilters(
+        existing.filters,
+      ).guildIds;
+      const guildIds = existingGuildIds?.length
+        ? existingGuildIds
+        : organizations.map((guild) => guild.id);
+      if (guildIds.length === 0)
+        return yield* new PermissionDeniedError(
+          "Notification rule requires an accessible API key organization",
+        );
+      values.filters = {
+        ...parseNotificationFilters(values.filters),
+        guildIds,
+      };
+    }
     yield* database.transaction((transaction) =>
       Effect.gen(function* () {
         yield* transaction

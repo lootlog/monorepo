@@ -1,3 +1,4 @@
+import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
 import { describe, expect, it } from "bun:test";
 import { Effect, FileSystem, Layer, Path, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
@@ -154,6 +155,7 @@ describe("Users and Guilds HttpApi handlers", () => {
             GuildsHandlers.pipe(HttpRouter.provideRequest(services)),
           ),
           Effect.provide(Layer.succeed(BearerSecurityMiddleware, bearer)),
+          Effect.provide(apiKeyEndpointPolicyLayer("main")),
         );
         return yield* client.guilds.GuildsControllerGetManageableUserGuilds();
       }),
@@ -192,6 +194,7 @@ describe("Users and Guilds HttpApi handlers", () => {
             GuildsHandlers.pipe(HttpRouter.provideRequest(services)),
           ),
           Effect.provide(Layer.succeed(BearerSecurityMiddleware, bearer)),
+          Effect.provide(apiKeyEndpointPolicyLayer("main")),
         );
 
         return yield* Effect.all([

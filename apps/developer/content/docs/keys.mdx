@@ -1,0 +1,20 @@
+---
+title: Klucze i uprawnienia
+description: Osobisty klucz, jawny zakres Organizacji i aktualne uprawnienia użytkownika.
+---
+
+## Zakres
+
+Klucz należy do użytkownika. Wybierasz Organizacje oraz odczyt albo odczyt/zapis. Dostęp do własnych danych jest osobną opcją, domyślnie wyłączoną. Nie ma dodatkowego ACL pozwalającego na tworzenie kluczy.
+
+Dostęp jest przecięciem zakresu klucza i aktualnych uprawnień użytkownika. Usunięcie członka z Organizacji odbiera dostęp do jej danych także integracji. Klucz obejmujący kilka Organizacji może nadal działać w pozostałych. Dołączenie do nowej Organizacji nie dodaje jej automatycznie do zakresu.
+
+## Tworzenie i rotacja
+
+[Panel kluczy](/keys) pozwala utworzyć maksymalnie 10 aktywnych kluczy. Wybierz 30, 90 lub 365 dni albo ważność bezterminową. Domyślna ważność wynosi 90 dni.
+
+Sekret jest wyświetlany tylko po utworzeniu. Nazwę można zmienić. Zmiana zakresu wymaga nowego klucza: utwórz go, podmień sekret w integracji, sprawdź działanie i usuń stary.
+
+## Usunięcie
+
+Usunięty lub wygasły klucz przestaje uwierzytelniać nowe żądania HTTP. Otwarte połączenie realtime traci autoryzację najpóźniej po 60 sekundach bez skutecznego odnowienia. Nie zapisuj sekretów w logach ani komunikatach o błędach.

@@ -1,3 +1,4 @@
+import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
 import { BunHttpServer } from "@effect/platform-bun";
 import {
   httpServerMetrics,
@@ -410,7 +411,11 @@ export const BattlelogHandlers = Layer.mergeAll(
       ),
     ),
   ),
-).pipe(Layer.provide(BearerSecurityLive));
+).pipe(
+  Layer.provide(
+    Layer.merge(BearerSecurityLive, apiKeyEndpointPolicyLayer("battlelog")),
+  ),
+);
 
 const openApiFile = async (): Promise<Blob> => {
   const colocated = Bun.file(new URL("../../openapi.yaml", import.meta.url));

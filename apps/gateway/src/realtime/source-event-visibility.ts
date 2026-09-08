@@ -1,3 +1,4 @@
+import { canReadApiKeyEvent } from "#src/realtime/api-key-event-visibility";
 import type { GuildLootEventNpc } from "@lootlog/protocol/rabbit/events";
 import { Option, Schema } from "effect";
 import {
@@ -59,6 +60,7 @@ export const canReadSourceEvent = (
   event: Event,
   sourceNpcs: readonly LootVisibilityNpc[] = [],
 ): boolean => {
+  if (!canReadApiKeyEvent(session, event)) return false;
   if (event.type === "notification.volunteer")
     return session.supportsNotificationVolunteer === true;
   if (!canReadNpcSourceEvent(session, event)) return false;

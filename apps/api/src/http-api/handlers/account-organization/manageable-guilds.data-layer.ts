@@ -1,5 +1,7 @@
 import type { RESTAPIPartialCurrentUserGuild } from "discord-api-types/v10";
 import { Effect } from "effect";
+import { apiKeyAllowsOrganization } from "@lootlog/schema/api-key-policy";
+import { requestApiKeyAccess } from "#src/runtime/auth/forward-auth-identity";
 import { isDiscordAdministrator } from "#src/discord/is-discord-administrator";
 import {
   ApplicationError,
@@ -17,6 +19,7 @@ export const makeManageableGuilds = (
 ) => {
   const getManageableUserGuilds = Effect.fn("getManageableUserGuilds")(
     function* (identity: AuthenticatedIdentity) {
+      const apiKey = yield* requestApiKeyAccess;
       const guilds = yield* getDiscordGuilds(identity).pipe(
         Effect.catch((error) =>
           error instanceof ApplicationError &&
@@ -26,6 +29,7 @@ export const makeManageableGuilds = (
         ),
       );
       return guilds
+        .filter((guild) => apiKeyAllowsOrganization(apiKey, guild.id))
         .filter((guild) => isDiscordAdministrator(BigInt(guild.permissions)))
         .map((guild) => ({
           id: guild.id,

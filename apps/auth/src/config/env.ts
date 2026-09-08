@@ -9,6 +9,9 @@ const splitCommaSeparated = (value: string): string[] =>
 const optionalString = (name: string) => Config.option(Config.string(name));
 
 export interface AuthConfig {
+  readonly apiUrl?: string;
+  readonly apiKeysEnabled?: boolean;
+  readonly apiKeyStatusSecret?: Redacted.Redacted<string>;
   readonly environment: string;
   readonly port: number;
   readonly serviceName: string;
@@ -39,6 +42,15 @@ export interface AuthConfig {
 }
 
 export const authConfig = Config.all({
+  apiUrl: Config.option(Config.string("API_URL")).pipe(
+    Config.map(Option.getOrUndefined),
+  ),
+  apiKeysEnabled: Config.boolean("API_KEYS_ENABLED").pipe(
+    Config.withDefault(false),
+  ),
+  apiKeyStatusSecret: Config.option(
+    Config.redacted("API_KEY_STATUS_SECRET"),
+  ).pipe(Config.map(Option.getOrUndefined)),
   environment: Config.literals(["local", "dev", "staging", "prod"], "ENV").pipe(
     Config.withDefault("local"),
   ),

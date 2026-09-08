@@ -1,4 +1,8 @@
 import {
+  notificationApiKeyOrganizations,
+  notificationRuleInApiKeyScope,
+} from "../notification-api-key-scope.js";
+import {
   mapNotificationTarget,
   updateNotificationTarget,
 } from "#src/notifications/targets/notification-target-store";
@@ -15,6 +19,7 @@ import {
 } from "#src/database/drizzle/schema";
 import {
   InvalidRequestError,
+  PermissionDeniedError,
   ResourceConflictError,
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
@@ -104,6 +109,30 @@ export const makeNotificationUserTargets = (
         ),
       );
 
+  const requireTargetScope = (targetId: number) =>
+    Effect.gen(function* () {
+      const organizations = yield* notificationApiKeyOrganizations(database);
+      if (!organizations) return;
+      const organizationIds = organizations.map((guild) => guild.id);
+      const rules = yield* database
+        .select({ rule: notificationRuleTable })
+        .from(notificationRuleTargetTable)
+        .innerJoin(
+          notificationRuleTable,
+          eq(notificationRuleTargetTable.ruleId, notificationRuleTable.id),
+        )
+        .where(eq(notificationRuleTargetTable.targetId, targetId));
+      if (
+        rules.some(
+          ({ rule }) => !notificationRuleInApiKeyScope(rule, organizationIds),
+        )
+      ) {
+        return yield* new PermissionDeniedError(
+          "Notification target affects organizations outside the API key scope",
+        );
+      }
+    });
+
   const recentUsage = (targetIds: number[]) =>
     readNotificationTestUsage(database, targetIds, TEST_WINDOW_MS).pipe(
       Effect.mapError(databaseFailure("notifications.userTargets.testUsage")),
@@ -162,6 +191,22 @@ export const makeNotificationUserTargets = (
         ),
       );
     }
+    const organizations = yield* notificationApiKeyOrganizations(database);
+    if (organizations) {
+      const existing = yield* database
+        .select({ id: notificationTargetTable.id })
+        .from(notificationTargetTable)
+        .where(
+          and(
+            eq(notificationTargetTable.ownerType, NotificationOwnerType.USER),
+            eq(notificationTargetTable.ownerId, discordId),
+            eq(notificationTargetTable.targetType, NotificationTargetType.DM),
+            eq(notificationTargetTable.externalId, discordId),
+          ),
+        )
+        .limit(1);
+      if (existing[0]) yield* requireTargetScope(existing[0].id);
+    }
     const now = new Date(yield* Clock.currentTimeMillis);
     const target = yield* database
       .transaction((transaction) =>
@@ -199,17 +244,29 @@ export const makeNotificationUserTargets = (
           const created = rows[0];
           if (!created) return yield* Effect.fail("target-not-returned");
           const watchedRules = yield* transaction
-            .select({ ruleId: watchedItemTable.notificationRuleId })
+            .select({
+              ruleId: watchedItemTable.notificationRuleId,
+              rule: notificationRuleTable,
+            })
             .from(watchedItemTable)
+            .innerJoin(
+              notificationRuleTable,
+              eq(watchedItemTable.notificationRuleId, notificationRuleTable.id),
+            )
             .where(
               and(
                 eq(watchedItemTable.userId, discordId),
                 isNotNull(watchedItemTable.notificationRuleId),
               ),
             );
-          const ruleIds = watchedRules.flatMap(({ ruleId }) =>
-            ruleId === null ? [] : [ruleId],
-          );
+          const ruleIds = watchedRules
+            .filter(({ rule }) =>
+              notificationRuleInApiKeyScope(
+                rule,
+                organizations?.map((guild) => guild.id),
+              ),
+            )
+            .flatMap(({ ruleId }) => (ruleId === null ? [] : [ruleId]));
           if (ruleIds.length > 0) {
             yield* transaction
               .insert(notificationRuleTargetTable)
@@ -236,6 +293,7 @@ export const makeNotificationUserTargets = (
     data: UpdateNotificationTargetRequest,
   ) {
     yield* find(discordId, targetId);
+    yield* requireTargetScope(targetId);
     const rows = yield* updateNotificationTarget(
       database,
       targetId,
@@ -273,6 +331,7 @@ export const makeNotificationUserTargets = (
     targetId: number,
   ) {
     yield* find(discordId, targetId);
+    yield* requireTargetScope(targetId);
     const ruleIds = yield* orphanedRules(targetId);
     yield* jobs.cancel({ targetId });
     yield* Effect.forEach(ruleIds, (ruleId) => jobs.cancel({ ruleId }), {

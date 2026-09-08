@@ -1,3 +1,4 @@
+import { requestApiKeyAccess } from "#src/runtime/auth/forward-auth-identity";
 import { isRecord } from "@lootlog/schema/records";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
@@ -143,6 +144,7 @@ const validateScopes = (
   scopes: ReadonlyArray<SettingsScope>,
 ): Effect.Effect<void, SettingsDocumentsFailure> =>
   Effect.gen(function* () {
+    const access = yield* requestApiKeyAccess;
     for (const scope of scopes) {
       if (scope.type === "USER" && scope.id !== userId) {
         return yield* requestError(
@@ -151,6 +153,12 @@ const validateScopes = (
         );
       }
       if (scope.type === "GUILD") {
+        if (access && !access.organizationIds.includes(scope.id)) {
+          return yield* requestError(
+            403,
+            "Guild settings are outside the API key scope",
+          );
+        }
         const isMember = yield* repository.hasActiveGuildMembership(
           userId,
           scope.id,

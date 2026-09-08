@@ -13,7 +13,7 @@ import type {
   PublicOnlinePlayers,
   PublicTimer,
   PublicUser,
-} from "./types";
+} from "@lootlog/game-client-api";
 
 const mapOnlinePlayerPresence = (
   presence: PlayerPresence,

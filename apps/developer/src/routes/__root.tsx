@@ -4,6 +4,8 @@ import {
   Scripts,
   createRootRoute,
 } from "@tanstack/react-router";
+import { RootProvider } from "fumadocs-ui/provider/tanstack";
+import { polishTranslations, portalText } from "~/lib/translations";
 import appCss from "~/styles/app.css?url";
 
 export const Route = createRootRoute({
@@ -11,10 +13,10 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lootlog Developer Portal" },
+      { title: portalText.title },
       {
         name: "description",
-        content: "Portal deweloperski Lootlog - wkrótce",
+        content: portalText.description,
       },
     ],
     links: [{ rel: "stylesheet", href: appCss }],
@@ -29,7 +31,12 @@ function RootComponent() {
         <HeadContent />
       </head>
       <body className="min-h-screen bg-background text-foreground antialiased">
-        <Outlet />
+        <RootProvider
+          theme={{ enabled: false }}
+          i18n={{ locale: "pl", translations: polishTranslations }}
+        >
+          <Outlet />
+        </RootProvider>
         <Scripts />
       </body>
     </html>

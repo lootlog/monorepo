@@ -10,7 +10,7 @@ import type {
   ApiEventName,
   LootlogGameClientApi,
   PublicSocketState,
-} from "./types";
+} from "@lootlog/game-client-api";
 import type { GuildResponseDtoOutput } from "@lootlog/client/main";
 import type { Timer } from "@/api";
 

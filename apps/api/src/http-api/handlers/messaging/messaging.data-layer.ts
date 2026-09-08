@@ -1,20 +1,15 @@
 import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
-import { activeGuildMemberJoin } from "#src/members/member-access-query";
+import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { randomUUID } from "node:crypto";
 import { v4 as uuid } from "uuid";
-import { and, arrayOverlaps, eq, or } from "drizzle-orm";
+
 import { Clock, Effect, Layer, Schema } from "effect";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { Permission } from "@lootlog/schema/permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import {
-  guildTable,
-  memberTable,
-  memberToRoleTable,
-  roleTable,
-} from "#src/database/drizzle/schema";
+
 import {
   InvalidRequestError,
   PermissionDeniedError,
@@ -168,22 +163,9 @@ export const makeMessagingDataLayer = (
           Effect.mapError((cause) => new MessagingOperationError({ cause })),
         );
       const guildIdsFor = (discordId: string) =>
-        database
-          .selectDistinct({ id: guildTable.id })
-          .from(guildTable)
-          .leftJoin(memberTable, activeGuildMemberJoin(discordId))
-          .leftJoin(memberToRoleTable, eq(memberToRoleTable.A, memberTable.id))
-          .leftJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
-          .where(
-            and(
-              eq(guildTable.active, true),
-              or(
-                eq(guildTable.ownerId, discordId),
-                arrayOverlaps(roleTable.permissions, [...permissionSet]),
-              ),
-            ),
-          )
-          .pipe(Effect.map((guilds) => guilds.map(({ id }) => id)));
+        selectAccessibleGuilds(database, discordId, permissionSet).pipe(
+          Effect.map((rows) => rows.map(({ guild }) => guild.id)),
+        );
       const metadata = (notificationId: string) =>
         redis.get(`notification:${notificationId}`).pipe(
           Effect.map((value): NotificationMetadata | null => {
