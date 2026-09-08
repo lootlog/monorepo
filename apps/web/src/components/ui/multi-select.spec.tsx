@@ -13,6 +13,23 @@ afterEach(() => {
 });
 
 describe("MultiSelect", () => {
+  it("keeps the last label for duplicate option values", () => {
+    render(
+      <MultiSelect
+        onClose={() => {}}
+        onValueChange={() => {}}
+        options={[
+          { value: "selected", label: "Previous label" },
+          { value: "selected", label: "Latest label" },
+        ]}
+        value={["selected"]}
+      />,
+    );
+
+    expect(screen.getByText("Latest label")).toBeTruthy();
+    expect(screen.queryByText("Previous label")).toBeNull();
+  });
+
   it("shows search failure instead of empty or stale results while preserving selected values", () => {
     render(
       <MultiSelect

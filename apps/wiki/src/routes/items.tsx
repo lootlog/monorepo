@@ -360,7 +360,19 @@ function ItemsRoute() {
       worldValue,
     });
 
-    if (isSameSearchState(nextSearch, search)) {
+    if (
+      isSameSearchState(nextSearch, {
+        advancedFilter: search.advancedFilter,
+        maxLevel: search.maxLevel,
+        minLevel: search.minLevel,
+        professions: search.professions,
+        query: search.query,
+        rarities: search.rarities,
+        sort: search.sort,
+        types: search.types,
+        world: search.world,
+      })
+    ) {
       return;
     }
 
@@ -533,12 +545,10 @@ function ItemsRoute() {
                   onValueChange={(value) => {
                     if (value !== null) setSortValue(value);
                   }}
-                  items={[
-                    ...sortOptions.map((sortOption) => ({
-                      value: sortOption,
-                      label: <>{t(`filters.sortOptions.${sortOption}`)}</>,
-                    })),
-                  ]}
+                  items={sortOptions.map((sortOption) => ({
+                    value: sortOption,
+                    label: <>{t(`filters.sortOptions.${sortOption}`)}</>,
+                  }))}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue />

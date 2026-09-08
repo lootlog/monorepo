@@ -38,6 +38,7 @@ export const GuildsSelector: FC = () => {
   useLayoutEffect(() => {
     latestHiddenGuildIds.current = preferencesQuery.data?.hiddenGuildIds ?? [];
   }, [preferencesQuery.data?.hiddenGuildIds]);
+  const { mutate: updatePreferences } = updateUserPreferences;
 
   const getOrderedGuilds = () => {
     if (!guilds?.length) {
@@ -50,17 +51,19 @@ export const GuildsSelector: FC = () => {
   const orderedGuildsKey = orderedGuilds.map((guild) => guild.id).join(":");
   const pendingOrderKey = pendingOrder?.join(":");
 
+  if (!isDragging && pendingOrder && orderedGuildsKey === pendingOrderKey) {
+    setPendingOrder(null);
+  }
+
   useEffect(() => {
     if (!isDragging && pendingOrder) {
       if (orderedGuildsKey !== pendingOrderKey) {
-        updateUserPreferences.mutate(
+        updatePreferences(
           { guildsOrder: pendingOrder },
           {
             onSettled: () => setPendingOrder(null),
           },
         );
-      } else {
-        setPendingOrder(null);
       }
     }
   }, [
@@ -68,7 +71,7 @@ export const GuildsSelector: FC = () => {
     orderedGuildsKey,
     pendingOrder,
     pendingOrderKey,
-    updateUserPreferences.mutate,
+    updatePreferences,
   ]);
 
   const handleReorder = (newGuilds: typeof guilds) => {
@@ -100,7 +103,7 @@ export const GuildsSelector: FC = () => {
         )
       : [...confirmedHiddenGuildIds, guildId];
 
-    updateUserPreferences.mutate(
+    updatePreferences(
       { hiddenGuildIds: nextHiddenGuildIds },
       {
         onSuccess: () => {
@@ -125,7 +128,7 @@ export const GuildsSelector: FC = () => {
                     );
                   }
 
-                  updateUserPreferences.mutate({
+                  updatePreferences({
                     hiddenGuildIds: undoHiddenGuildIds,
                   });
                 },

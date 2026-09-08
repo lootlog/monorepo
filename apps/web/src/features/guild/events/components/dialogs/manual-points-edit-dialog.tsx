@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from "react";
+import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
 import {
@@ -43,14 +43,14 @@ export const ManualPointsEditDialog = ({
   const pointsInputId = useId();
   const commentInputId = useId();
 
-  useEffect(() => {
-    if (!open) {
-      return;
+  const [wasOpen, setWasOpen] = useState(open);
+  if (wasOpen !== open) {
+    setWasOpen(open);
+    if (open) {
+      setPointsDeltaValue("");
+      setCommentValue("");
     }
-
-    setPointsDeltaValue("");
-    setCommentValue("");
-  }, [open]);
+  }
 
   const parsedPointsDelta = parseEditablePoints(pointsDeltaValue);
   const nextPoints =

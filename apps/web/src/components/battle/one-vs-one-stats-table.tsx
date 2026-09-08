@@ -216,9 +216,6 @@ export function OneVsOneStatsTable({
   const { t } = useTranslation();
   const [internalHideZeros, setInternalHideZeros] = useState(true);
   const [statSearchQuery, setStatSearchQuery] = useState("");
-  const [activeStatSearchKey, setActiveStatSearchKey] = useState<string | null>(
-    null,
-  );
   const statsScrollViewportRef = useRef<HTMLDivElement>(null);
   const statSearchAnimationFrameRef = useRef<number | null>(null);
   const booleanLabels = {
@@ -343,16 +340,20 @@ export function OneVsOneStatsTable({
     [],
   );
 
+  const activeStatSearchKey = getMatchingStatSearchKey(
+    statSearchQuery,
+    visibleStats,
+  );
+
   useEffect(() => {
-    const matchingKey = getMatchingStatSearchKey(statSearchQuery, visibleStats);
-    setActiveStatSearchKey(matchingKey);
+    const matchingKey = activeStatSearchKey;
 
     if (!matchingKey) {
       return;
     }
 
     scrollToStatSearchKey(matchingKey);
-  }, [statSearchQuery, visibleStats]);
+  }, [activeStatSearchKey, statSearchQuery, visibleStats]);
 
   if (!user || !opponent) {
     return (

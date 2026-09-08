@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { Link as LinkIcon } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import {
@@ -27,19 +27,22 @@ export const GuildDocLinkDialog = ({
 }: GuildDocLinkDialogProps) => {
   const { t } = useTranslation();
   const [url, setUrl] = useState("");
-  const [text, setText] = useState("");
+  const [text, setText] = useState(selectedText);
   const needsText = selectedText.trim().length === 0;
   const canSubmit =
     url.trim().length > 0 && (!needsText || text.trim().length > 0);
 
-  useEffect(() => {
-    if (!open) {
-      return;
+  const [previousInput, setPreviousInput] = useState({ open, selectedText });
+  if (
+    previousInput.open !== open ||
+    previousInput.selectedText !== selectedText
+  ) {
+    setPreviousInput({ open, selectedText });
+    if (open) {
+      setUrl("");
+      setText(selectedText);
     }
-
-    setUrl("");
-    setText(selectedText);
-  }, [open, selectedText]);
+  }
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

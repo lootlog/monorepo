@@ -174,9 +174,11 @@
         "@typescript-eslint/consistent-type-imports": "off",
         "@typescript-eslint/no-explicit-any": "off",
         "@typescript-eslint/no-non-null-assertion": "off",
+        // Polling, pagination, migrations and rate-limited work are sequential.
         "no-await-in-loop": "off",
         "no-unused-vars": "off",
         "require-await": "off",
+        // Typed implementations infer signatures; assertion-only spies need no signature.
         "vitest/require-mock-type-parameters": "off",
         "unicorn/prefer-number-properties": "off",
         "unicorn/prefer-string-slice": "off"
@@ -1422,6 +1424,39 @@
           }
         ]
       }
+    },
+    {
+      // Console output is the CLI and benchmark interface.
+      "files": ["packages/cli/**", "**/*.bench.ts"],
+      "rules": {
+        "no-console": "off"
+      }
+    },
+    {
+      // Context supplies a stable component; render does not create it.
+      "files": ["packages/ui/src/components/spinner.tsx"],
+      "rules": {
+        "react/static-components": "off"
+      }
+    },
+    {
+      "files": [
+        // Controlled date and router values synchronize editable drafts.
+        "packages/ui/src/components/date-time-picker.tsx",
+        "apps/wiki/src/routes/-use-basic-search-form.ts",
+        "apps/wiki/src/routes/items.tsx"
+      ],
+      "rules": {
+        "react/set-state-in-effect": "off"
+      }
+    },
+    {
+      // Async fakes preserve Promise contracts; fixtures use asserted indices.
+      "files": ["**/*.test.{ts,tsx}", "**/*.spec.{ts,tsx}"],
+      "rules": {
+        "require-await": "off",
+        "@typescript-eslint/no-non-null-assertion": "off"
+      }
     }
   ],
   "rules": {
@@ -1451,7 +1486,7 @@
     "no-console": [
       "warn",
       {
-        "allow": ["warn"]
+        "allow": ["warn", "error"]
       }
     ],
     "no-debugger": "error",
@@ -1468,7 +1503,8 @@
     "no-useless-concat": "warn",
     "no-useless-return": "warn",
     "require-await": "warn",
-    "no-await-in-loop": "warn",
+    // Polling, pagination, migrations and rate-limited work are sequential.
+    "no-await-in-loop": "off",
     "@typescript-eslint/no-explicit-any": "warn",
     "@typescript-eslint/no-unused-vars": [
       "warn",
@@ -1499,7 +1535,14 @@
     "react/no-unknown-property": "error",
     "react/self-closing-comp": "warn",
     "react/jsx-boolean-value": "warn",
-    "react/jsx-curly-brace-presence": ["warn", "never"],
+    "react/jsx-curly-brace-presence": [
+      "warn",
+      {
+        "props": "never",
+        "children": "never",
+        "propElementValues": "ignore"
+      }
+    ],
     "react-hooks/rules-of-hooks": "error",
     "react-hooks/exhaustive-deps": "warn",
     "unicorn/catch-error-name": [
@@ -1519,6 +1562,17 @@
     "unicorn/throw-new-error": "error",
     "vitest/no-disabled-tests": "warn",
     "vitest/no-focused-tests": "error",
-    "vitest/valid-expect": "error"
+    "vitest/valid-expect": "error",
+    // Typed implementations infer signatures; assertion-only spies need no signature.
+    "vitest/require-mock-type-parameters": "off",
+    // React Compiler safely skips unsupported RHF and TanStack APIs.
+    "react/incompatible-library": "off",
+    // Effect generators capture their owning service with self.
+    "@typescript-eslint/no-this-alias": [
+      "warn",
+      {
+        "allowedNames": ["self"]
+      }
+    ]
   }
 }

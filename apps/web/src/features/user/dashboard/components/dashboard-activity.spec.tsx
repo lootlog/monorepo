@@ -104,17 +104,37 @@ it("defaults to lightweight online and enables kills activity only on demand", a
 
 it("requests 112 inclusive days and hides older cached kill activity", async () => {
   vi.setSystemTime(new Date("2026-09-06T12:00:00Z"));
-  onlineResponse = { ...onlineDefaults, ...{ status: "fresh", days: [] } };
+  onlineResponse = {
+    ...onlineDefaults,
+    status: "fresh",
+    days: [],
+  };
   killsResponse = {
     ...killsDefaults,
-    ...{
-      meta: { ...killsDefaults.meta, coverage: "complete" },
-      daily: [
-        { date: "2026-05-17", kills: 8, partial: false, worlds: [] },
-        { date: "2026-05-18", kills: 9, partial: false, worlds: [] },
-        { date: "2026-09-06", kills: 10, partial: true, worlds: [] },
-      ],
+    meta: {
+      ...killsDefaults.meta,
+      coverage: "complete",
     },
+    daily: [
+      {
+        date: "2026-05-17",
+        kills: 8,
+        partial: false,
+        worlds: [],
+      },
+      {
+        date: "2026-05-18",
+        kills: 9,
+        partial: false,
+        worlds: [],
+      },
+      {
+        date: "2026-09-06",
+        kills: 10,
+        partial: true,
+        worlds: [],
+      },
+    ],
   };
   renderActivity();
   await waitFor(() => expect(onlineRequests).toHaveLength(1));
@@ -131,25 +151,31 @@ it("uses the lowest activity level for missing days in both tabs without details
   vi.setSystemTime(new Date("2026-09-06T12:00:00Z"));
   onlineResponse = {
     ...onlineDefaults,
-    ...{
-      status: "fresh",
-      days: [
-        {
-          date: "2026-09-01",
-          onlineSeconds: null,
-          partial: false,
-          worlds: [],
-          worldsComplete: true,
-        },
-      ],
-    },
+    status: "fresh",
+    days: [
+      {
+        date: "2026-09-01",
+        onlineSeconds: null,
+        partial: false,
+        worlds: [],
+        worldsComplete: true,
+      },
+    ],
   };
   killsResponse = {
     ...killsDefaults,
-    ...{
-      meta: { ...killsDefaults.meta, coverage: "partial" },
-      daily: [{ date: "2026-09-01", kills: null, partial: false, worlds: [] }],
+    meta: {
+      ...killsDefaults.meta,
+      coverage: "partial",
     },
+    daily: [
+      {
+        date: "2026-09-01",
+        kills: null,
+        partial: false,
+        worlds: [],
+      },
+    ],
   };
   renderActivity();
   for (const mode of ["Online", "Bicia"]) {
@@ -169,39 +195,40 @@ it("passes each day's source worlds independently in both activity tabs", async 
   vi.setSystemTime(new Date("2026-09-06T12:00:00Z"));
   onlineResponse = {
     ...onlineDefaults,
-    ...{
-      status: "fresh",
-      days: [
-        {
-          date: "2026-09-01",
-          onlineSeconds: 3600,
-          partial: false,
-          worlds: ["luvia"],
-          worldsComplete: true,
-        },
-        {
-          date: "2026-09-02",
-          onlineSeconds: 1800,
-          partial: false,
-          worlds: ["pandora"],
-          worldsComplete: false,
-        },
-      ],
-    },
+    status: "fresh",
+    days: [
+      {
+        date: "2026-09-01",
+        onlineSeconds: 3600,
+        partial: false,
+        worlds: ["luvia"],
+        worldsComplete: true,
+      },
+      {
+        date: "2026-09-02",
+        onlineSeconds: 1800,
+        partial: false,
+        worlds: ["pandora"],
+        worldsComplete: false,
+      },
+    ],
   };
   killsResponse = {
     ...killsDefaults,
-    ...{
-      daily: [
-        {
-          date: "2026-09-01",
-          kills: 12,
-          partial: false,
-          worlds: ["gordion", "luvia"],
-        },
-        { date: "2026-09-02", kills: 0, partial: false, worlds: [] },
-      ],
-    },
+    daily: [
+      {
+        date: "2026-09-01",
+        kills: 12,
+        partial: false,
+        worlds: ["gordion", "luvia"],
+      },
+      {
+        date: "2026-09-02",
+        kills: 0,
+        partial: false,
+        worlds: [],
+      },
+    ],
   };
   renderActivity();
   await screen.findByRole("button", { name: /1 września/ });

@@ -161,7 +161,7 @@ const routeSearchInteger = z
   .union([
     z.number(),
     routeSearchString.transform((value) => {
-      const parsed = value ? Number.parseInt(value, 10) : NaN;
+      const parsed = value ? Number.parseInt(value, 10) : Number.NaN;
       return Number.isNaN(parsed) ? undefined : parsed;
     }),
   ])
