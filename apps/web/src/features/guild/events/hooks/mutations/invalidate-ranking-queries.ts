@@ -1,3 +1,4 @@
+import { z } from "zod";
 import type { Query, QueryClient } from "@tanstack/react-query";
 import { getListEventRankingQueryKey } from "@lootlog/client/main";
 
@@ -9,10 +10,10 @@ const isEventRankingHistoryQuery = (
   guildId: string,
   eventId: string,
 ) => {
-  const [path] = query.queryKey;
+  const path = z.string().safeParse(query.queryKey[0]).data;
 
   return (
-    typeof path === "string" &&
+    path !== undefined &&
     path.startsWith(getEventRankingHistoryPathPrefix(guildId, eventId)) &&
     path.endsWith("/history")
   );

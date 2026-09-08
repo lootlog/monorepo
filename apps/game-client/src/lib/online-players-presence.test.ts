@@ -101,10 +101,16 @@ describe("online players presence", () => {
   it("uses an acknowledgement timeout and retries once", async () => {
     const response = { status: "success" as const, players: {} };
     const emitWithAck = vi
-      .fn()
+      .fn<
+        ReturnType<
+          Parameters<typeof requestServerPresence>[0]["timeout"]
+        >["emitWithAck"]
+      >()
       .mockRejectedValueOnce(new Error("ack timeout"))
       .mockResolvedValueOnce(response);
-    const timeout = vi.fn(() => ({ emitWithAck }));
+    const timeout = vi.fn<
+      Parameters<typeof requestServerPresence>[0]["timeout"]
+    >(() => ({ emitWithAck }));
 
     await expect(
       requestServerPresence({ timeout }, "guild-1", "tempest"),

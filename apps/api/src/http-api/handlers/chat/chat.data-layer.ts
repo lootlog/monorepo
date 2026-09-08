@@ -3,10 +3,7 @@ import { and, eq, isNotNull } from "drizzle-orm";
 import { Effect, Layer, Schema } from "effect";
 import { Capability, createAccessPolicy } from "@lootlog/domain/access-policy";
 import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
-import {
-  RabbitRoutingKey,
-  type RabbitRoutingKeyName,
-} from "@lootlog/protocol/rabbit/topology";
+import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { CHAT_MESSAGE_LIMIT } from "@lootlog/schema/chat";
 import { Permission } from "@lootlog/schema/permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -59,10 +56,26 @@ export interface ChatRedis {
   readonly del: (key: string) => Effect.Effect<unknown, unknown>;
 }
 
+type ChatEventPayloads = {
+  [RabbitRoutingKey.GUILDS_SEND_MESSAGE]: ChatStoredMessage;
+  [RabbitRoutingKey.GUILDS_CLEAR_MESSAGES]: { readonly guildId: string };
+  [RabbitRoutingKey.GUILDS_DELETE_MESSAGE]: {
+    readonly guildId: string;
+    readonly messageId: string;
+    readonly routing: ReturnType<typeof routingFor>;
+  };
+  [RabbitRoutingKey.GUILDS_UPDATE_MESSAGE]: {
+    readonly guildId: string;
+    readonly messageId: string;
+    readonly message: string;
+    readonly routing: ReturnType<typeof routingFor>;
+  };
+};
+
 export interface ChatEvents {
-  readonly publish: (
-    routingKey: RabbitRoutingKeyName,
-    payload: unknown,
+  readonly publish: <Key extends keyof ChatEventPayloads>(
+    routingKey: Key,
+    payload: ChatEventPayloads[Key],
   ) => Effect.Effect<void, unknown>;
 }
 

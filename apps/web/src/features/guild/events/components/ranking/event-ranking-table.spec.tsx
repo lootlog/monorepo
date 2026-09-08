@@ -1,11 +1,13 @@
+import { createOrganizationTestWrapper } from "@/lib/testing/router";
 // @vitest-environment happy-dom
 
-import { Profiler, type ReactNode } from "react";
+import { initializeTestTranslations } from "@/lib/testing/i18n";
+import { Profiler, type ReactElement } from "react";
 import {
   act,
   cleanup,
   fireEvent,
-  render,
+  render as renderElement,
   screen,
 } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -18,36 +20,9 @@ const mocks = vi.hoisted(() => ({
   fetch: vi.fn(),
 }));
 
-vi.mock("@tanstack/react-router", () => ({
-  Link: ({
-    children,
-    params,
-    "aria-label": ariaLabel,
-    className,
-    tabIndex,
-  }: {
-    children?: ReactNode;
-    params: Record<string, string>;
-    "aria-label"?: string;
-    className?: string;
-    tabIndex?: number;
-  }) => (
-    <a
-      href={`/${params.guildId}/events/${params.eventId}/members/${params.memberId}`}
-      aria-label={ariaLabel}
-      className={className}
-      tabIndex={tabIndex}
-    >
-      {children}
-    </a>
-  ),
-}));
-
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string) => key,
-  }),
-}));
+await initializeTestTranslations();
+const wrapper = await createOrganizationTestWrapper();
+const render = (element: ReactElement) => renderElement(element, { wrapper });
 
 describe("EventRankingTable", () => {
   let restoreApiClients: () => void;

@@ -1,3 +1,5 @@
+import { unusedFederationStore } from "../../test/realtime-fixtures.js";
+import { createRabbitDelivery } from "../../test/rabbit-fixtures.js";
 import { describe, expect, test } from "bun:test";
 import { Effect } from "effect";
 import type {
@@ -5,10 +7,8 @@ import type {
   RabbitMessagingService,
 } from "@lootlog/messaging";
 import { decodeRealtimeFrame } from "@lootlog/protocol/realtime/codec";
-import type { GatewayConfiguration } from "#src/config/gateway-config";
-import type { RedisGatewayStore } from "#src/platform/redis-store";
 import { RealtimeHub } from "#src/realtime/realtime-hub";
-import type { GatewaySocket, SessionData } from "#src/realtime/session";
+import type { SessionData } from "#src/realtime/session";
 import { RabbitBridge } from "./rabbit-bridge.js";
 
 describe("volunteer delivery", () => {
@@ -31,8 +31,8 @@ describe("volunteer delivery", () => {
       {
         maxBackpressureBytes: 1024,
         maxBackpressureStrikes: 3,
-      } as GatewayConfiguration,
-      { publish: async () => {} } as unknown as RedisGatewayStore,
+      },
+      { ...unusedFederationStore, publish: () => Promise.resolve() },
       () => {},
     );
     const targets = ["organizer", "other-member", "legacy-organizer"].map(
@@ -61,7 +61,7 @@ describe("volunteer delivery", () => {
             return frame.byteLength;
           },
           close: () => {},
-        } as GatewaySocket);
+        });
         return frames;
       },
     );
@@ -90,18 +90,21 @@ describe("volunteer delivery", () => {
           yield* bridge.start();
           const handle = handlers.get("gateway-guilds-notifications-volunteer");
           if (!handle) throw new Error("Missing volunteer consumer");
-          yield* handle({
-            content: Buffer.from(
-              JSON.stringify({
-                notificationId: "notification",
-                targetDiscordId: "organizer",
-                volunteerDiscordId: "volunteer",
-                world: "tempest",
-                character,
-              }),
+          yield* handle(
+            createRabbitDelivery(
+              "guilds.notifications.volunteer",
+              Buffer.from(
+                JSON.stringify({
+                  notificationId: "notification",
+                  targetDiscordId: "organizer",
+                  volunteerDiscordId: "volunteer",
+                  world: "tempest",
+                  character,
+                }),
+              ),
+              "volunteer-delivery",
             ),
-            properties: { messageId: "volunteer-delivery" },
-          } as unknown as RabbitDelivery);
+          );
         }),
       ),
     );

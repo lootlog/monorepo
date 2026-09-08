@@ -360,7 +360,7 @@ export const CreateNotificationRuleRequest = Schema.Struct({
     Schema.makeFilter((data) => {
       if (data.npcId === undefined && data.npcIds === undefined)
         return undefined;
-      return typeof data.npcId === "number" ||
+      return (data.npcId !== undefined && data.npcId !== null) ||
         (data.npcIds !== undefined && data.npcIds.length > 0)
         ? undefined
         : {
@@ -412,7 +412,7 @@ export const UpdateNotificationRuleRequest = Schema.Struct({
     Schema.makeFilter((data) => {
       if (data.npcId === undefined && data.npcIds === undefined)
         return undefined;
-      return typeof data.npcId === "number" ||
+      return (data.npcId !== undefined && data.npcId !== null) ||
         (data.npcIds !== undefined && data.npcIds.length > 0)
         ? undefined
         : {

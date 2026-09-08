@@ -4,8 +4,11 @@ import { SectionCard } from "@/components/common/section-card/section-card";
 import { SearchInput } from "@/components/ui/search-input";
 import { NpcsTable } from "@/features/guild/settings/npcs/npcs-table";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useLootlogConfigControllerGetLootlogConfig } from "@lootlog/client/main";
-import { NpcType } from "@lootlog/client/main";
+import {
+  useLootlogConfigControllerGetLootlogConfig,
+  NpcType,
+} from "@lootlog/client/main";
+
 import { Button } from "@lootlog/ui/components/button";
 
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";

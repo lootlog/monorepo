@@ -53,13 +53,8 @@ import { getAssignmentAvailability } from "./utils/get-assignment-availability";
 import {
   getGuildsControllerGetGuildByIdQueryKey,
   useGuildsControllerGetGuildById,
-} from "@lootlog/client/main";
-import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
-import {
   getMembersControllerGetMeQueryKey,
   useMembersControllerGetMe,
-} from "@lootlog/client/main";
-import {
   getEventsMonitoringControllerGetActiveGapsForHeroQueryKey,
   getListEventHeroTimersQueryKey,
   getListEventMapsQueryKey,
@@ -76,11 +71,14 @@ import {
   useListEventMaps,
   useListEventRanking,
   useShowEventOverview,
+  type EventOverviewResponseDto,
 } from "@lootlog/client/main";
+import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
+
 import { invalidateKillQueries } from "./hooks/mutations/invalidate-kill-queries";
 import { invalidateMapQueries } from "./hooks/mutations/invalidate-map-queries";
 import { invalidateRespawnQueries } from "./hooks/mutations/invalidate-respawn-queries";
-import type { EventOverviewResponseDto } from "@lootlog/client/main";
+
 import type { EventMapsResponse } from "./types/api";
 
 const getMapCoverageCountClassName = (
@@ -177,7 +175,7 @@ const isHeroDetailLoading = (isLoading: boolean, isMapsLoading: boolean) =>
   isLoading || isMapsLoading;
 
 const isHeroDetailMissing = (
-  error: unknown,
+  error: Error | null,
   event: EventOverview | undefined,
   hero: ReturnType<typeof getEventHero>,
 ) => Boolean(error || !event || !hero);
@@ -814,7 +812,7 @@ export const HeroDetail = () => {
                                     className="size-9 px-0 @2xl/maps:w-auto @2xl/maps:px-3"
                                     onClick={handleClearAllAssignments}
                                     loading={isClearingAssignments}
-                                    icon={<Eraser className="size-4" />}
+                                    icon=<Eraser className="size-4" />
                                     disabled={
                                       uniqueMembers.length === 0 ||
                                       pendingAssignmentCount > 0

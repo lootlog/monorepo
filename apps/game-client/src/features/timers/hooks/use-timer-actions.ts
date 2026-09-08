@@ -2,22 +2,12 @@ import {
   timersControllerDeleteTimer,
   timersControllerResetTimer,
 } from "@lootlog/client/main";
-import { isApiError } from "@lootlog/client/transport";
+import { getApiErrorStringField } from "@lootlog/client/transport";
 import { buildCurrentTimerActorCharacterPayload } from "@/lib/api/generated-helpers";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import { useTimersStore } from "@/store/timers.store";
 import { getFixedT } from "@/i18n/get-fixed-t";
 import { useShallow } from "zustand/react/shallow";
-
-const getApiErrorMessage = (error: unknown) => {
-  return isApiError(error) &&
-    typeof error.data === "object" &&
-    error.data !== null &&
-    "message" in error.data &&
-    typeof error.data.message === "string"
-    ? error.data.message
-    : undefined;
-};
 
 export const useTimerActions = (
   timer: TimerWithTimeLeft,
@@ -54,8 +44,8 @@ export const useTimerActions = (
         ) ?? false,
     })),
   );
-  const getResetTimerErrorMessage = (error: unknown) => {
-    const apiMessage = getApiErrorMessage(error);
+  const getResetTimerErrorMessage = (cause: unknown) => {
+    const apiMessage = getApiErrorStringField(cause, "message");
 
     if (apiMessage === "EVENT_TIMER_CANNOT_BE_RESET") {
       return t("messages.resetEventWindowForbidden");
@@ -63,8 +53,8 @@ export const useTimerActions = (
 
     return t("messages.resetFailed", { name: timer.npc.name });
   };
-  const getDeleteTimerErrorMessage = (error: unknown) => {
-    const apiMessage = getApiErrorMessage(error);
+  const getDeleteTimerErrorMessage = (cause: unknown) => {
+    const apiMessage = getApiErrorStringField(cause, "message");
 
     if (apiMessage === "EVENT_TIMER_MUST_USE_EVENT_CLOSE") {
       return t("messages.deleteEventWindowForbidden");

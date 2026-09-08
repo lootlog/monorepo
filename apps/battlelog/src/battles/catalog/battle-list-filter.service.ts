@@ -21,7 +21,16 @@ export type BattleListWhereBuilder = (
   battlesRef: typeof battles,
 ) => SQL | undefined;
 
-export const makeBattleListFilter = (drizzle: DrizzleDatabase) => {
+type BattleListFilterDatabase = Pick<DrizzleDatabase, "select"> & {
+  query: {
+    userCharacters: Pick<
+      DrizzleDatabase["query"]["userCharacters"],
+      "findMany"
+    >;
+  };
+};
+
+export const makeBattleListFilter = (drizzle: BattleListFilterDatabase) => {
   const warriorExists = makeWarriorExists(drizzle);
 
   const appendTeamResultConditions = (
@@ -147,7 +156,7 @@ export const makeBattleListFilter = (drizzle: DrizzleDatabase) => {
 
         if (query.world) conditions.push(eq(battlesRef.world, query.world));
         if (query.userId) conditions.push(eq(battlesRef.userId, query.userId));
-        if (typeof query.public === "boolean")
+        if (query.public !== undefined)
           conditions.push(eq(battlesRef.public, query.public));
 
         if (characterIds.length) {

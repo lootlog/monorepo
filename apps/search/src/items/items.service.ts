@@ -116,10 +116,11 @@ export const makeItemsModule = (
       offset,
       attributesToSearchOn: ["name", "stat"],
       attributesToRetrieve: itemAttributesToRetrieve,
-      ...(facets && facets.length > 0 ? { facets } : {}),
-      ...(filters.length > 0 ? { filter: filters.join(" AND ") } : {}),
-      ...(sort && sort.length > 0 ? { sort } : {}),
     };
+
+    if (facets && facets.length > 0) query.facets = facets;
+    if (filters.length > 0) query.filter = filters.join(" AND ");
+    if (sort && sort.length > 0) query.sort = sort;
 
     return yield* attemptMeilisearch("search.items", () =>
       index.search(searchTerm, query),

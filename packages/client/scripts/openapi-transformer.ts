@@ -1,10 +1,13 @@
+import { isObjectRecord } from "@lootlog/schema/records";
+import {
+  decodeOpenApiDocument,
+  isJsonObject,
+  type JsonValue,
+} from "./openapi-document.js";
 import { sanitizeOpenApiDocument } from "@lootlog/protocol/openapi";
 
-type OpenApiSchema = Record<string, unknown>;
-type OpenApiDocument = {
-  components?: {
-    schemas?: Record<string, OpenApiSchema>;
-  };
+type MutableOpenApiDocument = {
+  components?: { schemas?: Record<string, JsonValue> };
 };
 
 const replaceSchemaRef = (value: unknown, fromRef: string, toRef: string) => {
@@ -13,11 +16,11 @@ const replaceSchemaRef = (value: unknown, fromRef: string, toRef: string) => {
     return;
   }
 
-  if (!value || typeof value !== "object") {
+  if (!isObjectRecord(value)) {
     return;
   }
 
-  const dictionary = value as Record<string, unknown>;
+  const dictionary = value;
 
   if (dictionary.$ref === fromRef) {
     dictionary.$ref = toRef;
@@ -29,7 +32,7 @@ const replaceSchemaRef = (value: unknown, fromRef: string, toRef: string) => {
 };
 
 const replaceComponentSchema = (
-  document: OpenApiDocument,
+  document: MutableOpenApiDocument,
   fromSchemaName: string,
   toSchemaName: string,
 ) => {
@@ -47,12 +50,12 @@ const replaceComponentSchema = (
   delete schemas[fromSchemaName];
 };
 
-const aliasJsonValueSchema = (document: OpenApiDocument) => {
+const aliasJsonValueSchema = (document: MutableOpenApiDocument) => {
   const schemas = document.components?.schemas;
   const generatedSchemaName = "NotificationTargetResponseDto__schema0";
   const generatedSchema = schemas?.[generatedSchemaName];
 
-  if (!schemas || !generatedSchema || typeof generatedSchema !== "object") {
+  if (!schemas || !isJsonObject(generatedSchema)) {
     return;
   }
 
@@ -65,11 +68,16 @@ const aliasJsonValueSchema = (document: OpenApiDocument) => {
   delete schemas[generatedSchemaName];
 };
 
-export default function transformOpenApiDocument<TDocument>(
-  inputDocument: TDocument,
-) {
-  const document = sanitizeOpenApiDocument(inputDocument) as TDocument &
-    OpenApiDocument;
+export default function transformOpenApiDocument(inputDocument: unknown) {
+  const parsed = decodeOpenApiDocument(sanitizeOpenApiDocument(inputDocument));
+  if (!parsed.components?.schemas) return parsed;
+  const document = {
+    ...parsed,
+    components: {
+      ...parsed.components,
+      schemas: { ...parsed.components.schemas },
+    },
+  };
 
   aliasJsonValueSchema(document);
   replaceComponentSchema(

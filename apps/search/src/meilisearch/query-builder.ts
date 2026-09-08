@@ -1,14 +1,11 @@
-import { isObjectRecord as isRecord } from "@lootlog/schema/records";
-type UnknownRecord = Record<string, unknown>;
+import { Function, Option, Schema } from "effect";
 
-export function getMeilisearchErrorCode(error: unknown): string | null {
-  if (!isRecord(error) || !isRecord(error.cause)) {
-    return null;
-  }
-
-  const { code } = error.cause;
-  return typeof code === "string" ? code : null;
-}
+export const getMeilisearchErrorCode = Function.compose(
+  Schema.decodeUnknownOption(
+    Schema.Struct({ cause: Schema.Struct({ code: Schema.String }) }),
+  ),
+  (result) => Option.getOrNull(Option.map(result, (error) => error.cause.code)),
+);
 
 export function buildMeilisearchStringInFilter(
   fieldName: string,
@@ -22,7 +19,7 @@ export function buildMeilisearchStringInFilter(
 export function buildMeilisearchSearchTermFilter(
   fieldName: string,
   search: string | string[] | undefined,
-): { searchTerm: string; filter?: string } {
+) {
   if (Array.isArray(search)) {
     return {
       searchTerm: "",

@@ -1,31 +1,17 @@
+import { configureApiClients } from "@lootlog/client/transport";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi, onTestFinished } from "vitest";
 import * as UsersModule from "@lootlog/client/main";
 import type {
-  UpdateUserPreferencesDtoTheme,
   UpdateUserPreferencesDto,
   UserPreferencesResponseDtoOutput,
 } from "@lootlog/client/main";
 
 import { useUpdateUserPreferences } from "./use-user-preferences";
 
-const { mockUpdateUserPreferences } = vi.hoisted(() => ({
-  mockUpdateUserPreferences: vi.fn(),
-}));
-
-vi.mock("@lootlog/client/main", async () => {
-  const actual = await vi.importActual<typeof UsersModule>(
-    "@lootlog/client/main",
-  );
-
-  return {
-    ...actual,
-    usersControllerUpdateUserPreferences: (...args: unknown[]) =>
-      mockUpdateUserPreferences(...args),
-  };
-});
+const respond = vi.fn<() => Promise<UserPreferencesResponseDtoOutput>>();
 
 const createTestUserPreferences = (): UserPreferencesResponseDtoOutput => ({
   userId: "user-1",
@@ -58,17 +44,6 @@ const createTestUserPreferences = (): UserPreferencesResponseDtoOutput => ({
   },
 });
 
-const createDeferred = <T,>() => {
-  let resolve!: (value: T) => void;
-  let reject!: (error?: unknown) => void;
-  const promise = new Promise<T>((res, rej) => {
-    resolve = res;
-    reject = rej;
-  });
-
-  return { promise, resolve, reject };
-};
-
 const createWrapper = (queryClient: QueryClient) => {
   return ({ children }: { children: ReactNode }) =>
     createElement(QueryClientProvider, { client: queryClient }, children);
@@ -89,11 +64,21 @@ describe("useUpdateUserPreferences", () => {
       },
     });
 
-    mockUpdateUserPreferences.mockReset();
+    respond.mockReset();
+    const restore = configureApiClients({
+      main: {
+        baseUrl: "https://api.example.test",
+        fetch: async () => Response.json(await respond()),
+      },
+    });
+    onTestFinished(() => {
+      restore();
+      queryClient.clear();
+    });
   });
 
   it("optimistically merges player mute updates without replacing NPC mutes", async () => {
-    const deferred = createDeferred<UserPreferencesResponseDtoOutput>();
+    const deferred = Promise.withResolvers<UserPreferencesResponseDtoOutput>();
     const previousData = createTestUserPreferences();
     const nextPlayers = [{ discordId: "discord-2", displayName: "Beta" }];
     const payload: UpdateUserPreferencesDto = {
@@ -102,7 +87,7 @@ describe("useUpdateUserPreferences", () => {
       },
     };
 
-    mockUpdateUserPreferences.mockReturnValue(deferred.promise);
+    respond.mockReturnValue(deferred.promise);
     queryClient.setQueryData(
       UsersModule.getUsersControllerGetUserPreferencesQueryKey(),
       previousData,
@@ -135,13 +120,13 @@ describe("useUpdateUserPreferences", () => {
   });
 
   it("optimistically merges a partial chat appearance patch", async () => {
-    const deferred = createDeferred<UserPreferencesResponseDtoOutput>();
+    const deferred = Promise.withResolvers<UserPreferencesResponseDtoOutput>();
     const previousData = createTestUserPreferences();
     const payload: UpdateUserPreferencesDto = {
       chatAppearance: { messageGapPx: 12 },
     };
 
-    mockUpdateUserPreferences.mockReturnValue(deferred.promise);
+    respond.mockReturnValue(deferred.promise);
     queryClient.setQueryData(
       UsersModule.getUsersControllerGetUserPreferencesQueryKey(),
       previousData,
@@ -174,10 +159,10 @@ describe("useUpdateUserPreferences", () => {
   });
 
   it("optimistically replaces hidden guild ids", async () => {
-    const deferred = createDeferred<UserPreferencesResponseDtoOutput>();
+    const deferred = Promise.withResolvers<UserPreferencesResponseDtoOutput>();
     const previousData = createTestUserPreferences();
 
-    mockUpdateUserPreferences.mockReturnValue(deferred.promise);
+    respond.mockReturnValue(deferred.promise);
     queryClient.setQueryData(
       UsersModule.getUsersControllerGetUserPreferencesQueryKey(),
       previousData,
@@ -208,10 +193,12 @@ describe("useUpdateUserPreferences", () => {
   });
 
   it("serializes rapid preference updates", async () => {
-    const firstDeferred = createDeferred<UserPreferencesResponseDtoOutput>();
-    const secondDeferred = createDeferred<UserPreferencesResponseDtoOutput>();
+    const firstDeferred =
+      Promise.withResolvers<UserPreferencesResponseDtoOutput>();
+    const secondDeferred =
+      Promise.withResolvers<UserPreferencesResponseDtoOutput>();
     const previousData = createTestUserPreferences();
-    mockUpdateUserPreferences
+    respond
       .mockReturnValueOnce(firstDeferred.promise)
       .mockReturnValueOnce(secondDeferred.promise);
     queryClient.setQueryData(
@@ -227,17 +214,13 @@ describe("useUpdateUserPreferences", () => {
       result.current.mutate({ hiddenGuildIds: ["guild-1", "guild-2"] });
     });
 
-    await waitFor(() =>
-      expect(mockUpdateUserPreferences).toHaveBeenCalledTimes(1),
-    );
+    await waitFor(() => expect(respond).toHaveBeenCalledTimes(1));
 
     firstDeferred.resolve({
       ...previousData,
       hiddenGuildIds: ["guild-1"],
     });
-    await waitFor(() =>
-      expect(mockUpdateUserPreferences).toHaveBeenCalledTimes(2),
-    );
+    await waitFor(() => expect(respond).toHaveBeenCalledTimes(2));
 
     secondDeferred.resolve({
       ...previousData,
@@ -247,7 +230,7 @@ describe("useUpdateUserPreferences", () => {
   });
 
   it("optimistically merges NPC mute updates without replacing player mutes", async () => {
-    const deferred = createDeferred<UserPreferencesResponseDtoOutput>();
+    const deferred = Promise.withResolvers<UserPreferencesResponseDtoOutput>();
     const previousData = createTestUserPreferences();
     const nextNpcs = [
       {
@@ -266,7 +249,7 @@ describe("useUpdateUserPreferences", () => {
       },
     };
 
-    mockUpdateUserPreferences.mockReturnValue(deferred.promise);
+    respond.mockReturnValue(deferred.promise);
     queryClient.setQueryData(
       UsersModule.getUsersControllerGetUserPreferencesQueryKey(),
       previousData,
@@ -306,7 +289,7 @@ describe("useUpdateUserPreferences", () => {
       },
     };
 
-    mockUpdateUserPreferences.mockRejectedValue(new Error("Request failed"));
+    respond.mockRejectedValue(new Error("Request failed"));
     queryClient.setQueryData(
       UsersModule.getUsersControllerGetUserPreferencesQueryKey(),
       previousData,
@@ -342,7 +325,7 @@ describe("useUpdateUserPreferences", () => {
       },
     };
 
-    mockUpdateUserPreferences.mockResolvedValue(serverData);
+    respond.mockResolvedValue(serverData);
     queryClient.setQueryData(
       UsersModule.getUsersControllerGetUserPreferencesQueryKey(),
       previousData,
@@ -354,7 +337,7 @@ describe("useUpdateUserPreferences", () => {
 
     await act(async () => {
       await result.current.mutateAsync({
-        theme: "default" as UpdateUserPreferencesDtoTheme,
+        theme: "default",
       });
     });
 

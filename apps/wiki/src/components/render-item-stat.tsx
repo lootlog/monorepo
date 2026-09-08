@@ -1,57 +1,27 @@
+import { createTranslationLookup } from "@lootlog/ui/i18n/translation-lookup";
 import {
-  formatNumericText,
+  formatItemDisplayValue,
   getItemStatTemplateValues,
   type ItemDisplayValue,
 } from "@lootlog/ui/components/item-stat-utils";
 import itemStats from "@lootlog/ui/i18n/translations/item-stats.json";
 import type { ReactNode } from "react";
 
-type TranslationValue = string | TranslationTree;
+const tagClassNames = new Map(
+  Object.entries({
+    description: "block text-center text-muted-foreground",
+    gold: "text-primary",
+    legbon: "block w-full text-green-500",
+    value: "font-bold text-primary",
+  }),
+);
 
-interface TranslationTree {
-  [key: string]: TranslationValue;
-}
-
-const tagClassNames = {
-  description: "block text-center text-muted-foreground",
-  gold: "text-primary",
-  legbon: "block w-full text-green-500",
-  value: "font-bold text-primary",
-} as const;
-
+const translations = createTranslationLookup(itemStats);
 function resolveTranslation(path: string) {
   const normalizedPath = path.startsWith("itemStats.")
     ? path.slice("itemStats.".length)
     : path;
-  const value = normalizedPath
-    .split(".")
-    .reduce<unknown>((currentValue, segment) => {
-      if (
-        currentValue &&
-        typeof currentValue === "object" &&
-        segment in currentValue
-      ) {
-        return (currentValue as TranslationTree)[segment];
-      }
-
-      return undefined;
-    }, itemStats);
-
-  return typeof value === "string" ? value : undefined;
-}
-
-function formatValue(
-  rawValue: string | string[] | number | boolean | undefined,
-) {
-  if (Array.isArray(rawValue)) {
-    return rawValue.join(",\u00A0");
-  }
-
-  if (typeof rawValue === "string") {
-    return formatNumericText(rawValue);
-  }
-
-  return String(rawValue ?? "");
+  return translations.get(normalizedPath);
 }
 
 function interpolateTemplate(template: string, values: Record<string, string>) {
@@ -75,7 +45,7 @@ function renderTaggedTemplate(template: string) {
 
     nodes.push(
       <span
-        className={tagClassNames[tagName as keyof typeof tagClassNames]}
+        className={tagClassNames.get(tagName)}
         key={`${tagName}-${match.index}`}
       >
         {renderTaggedTemplate(tagContent)}
@@ -103,7 +73,7 @@ export function renderItemStat(displayValue: ItemDisplayValue) {
       <span>
         <span className="text-muted-foreground">{displayValue.key}: </span>
         <span className="font-semibold text-primary">
-          {formatValue(displayValue.value)}
+          {formatItemDisplayValue(displayValue.value)}
         </span>
       </span>
     );

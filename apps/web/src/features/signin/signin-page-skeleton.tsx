@@ -6,8 +6,8 @@ export const SigninPageSkeleton = () => (
   <div className="flex min-h-screen items-center justify-center bg-background px-4">
     <PageHeader
       className="w-full max-w-md"
-      title={<Skeleton className="h-5 w-48" />}
-      description={<Skeleton className="h-3 w-full" />}
+      title=<Skeleton className="h-5 w-48" />
+      description=<Skeleton className="h-3 w-full" />
     >
       <SectionCardContent>
         <Skeleton className="h-10 w-full rounded-md" />

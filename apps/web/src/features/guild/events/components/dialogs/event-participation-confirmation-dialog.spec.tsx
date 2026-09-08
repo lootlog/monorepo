@@ -1,84 +1,73 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { configureApiClients } from "@lootlog/client/transport";
+import {
+  getListPendingParticipationConfirmationsQueryKey,
+  type PendingParticipationConfirmationsResponseDto,
+} from "@lootlog/client/main";
+import { initializeTestTranslations } from "@/lib/testing/i18n";
 // @vitest-environment happy-dom
 
 import {
   act,
   cleanup,
   fireEvent,
-  render,
+  render as renderElement,
   screen,
 } from "@testing-library/react";
-import { useSyncExternalStore } from "react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { ReactElement } from "react";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  onTestFinished,
+  vi,
+} from "vitest";
 import { EventParticipationConfirmationDialog } from "./event-participation-confirmation-dialog";
 
-const mocks = vi.hoisted(() => ({
-  acknowledgeExpired: vi.fn(),
-  confirmParticipation: vi.fn(),
-  data: {
-    items: [] as Array<ReturnType<typeof createConfirmation>>,
-    expiredItems: [] as Array<ReturnType<typeof createConfirmation>>,
-  },
-  invalidateQueries: vi.fn(),
-  listeners: new Set<() => void>(),
-}));
-
-vi.mock("@tanstack/react-query", () => ({
-  useQueryClient: () => ({
-    invalidateQueries: mocks.invalidateQueries,
-  }),
-}));
-
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string, fallback?: string) => fallback ?? key,
-  }),
-}));
-
-vi.mock("sonner", () => ({
-  toast: {
-    error: vi.fn(),
-    success: vi.fn(),
-  },
-}));
-
-vi.mock("@lootlog/client/main", async () => ({
-  ...(await vi.importActual("@lootlog/client/main")),
-  getListPendingParticipationConfirmationsQueryKey: () => [
-    "participation-confirmations",
-  ],
-  useAcknowledgeExpiredParticipationConfirmations: () => ({
-    isPending: false,
-    mutateAsync: mocks.acknowledgeExpired,
-  }),
-  useConfirmParticipationForKill: () => ({
-    isPending: false,
-    mutateAsync: mocks.confirmParticipation,
-  }),
-  useListPendingParticipationConfirmations: () => {
-    const data = useSyncExternalStore(
-      (listener) => {
-        mocks.listeners.add(listener);
-        return () => mocks.listeners.delete(listener);
-      },
-      () => mocks.data,
-    );
-
-    return {
-      data,
-      isLoading: false,
-    };
-  },
-}));
+const initialData: PendingParticipationConfirmationsResponseDto = {
+  items: [],
+  expiredItems: [],
+};
+const mocks = {
+  confirmParticipation: vi.fn<() => Promise<Response>>(),
+  data: initialData,
+};
+let queryClient: QueryClient;
+let requests: Request[];
+const queryKey = getListPendingParticipationConfirmationsQueryKey({
+  guildId: "guild-1",
+  eventId: "event-1",
+});
+function render(element: ReactElement) {
+  queryClient.setQueryData(queryKey, mocks.data);
+  return renderElement(
+    <QueryClientProvider client={queryClient}>{element}</QueryClientProvider>,
+  );
+}
+async function expectAcknowledged(killId: string) {
+  await act(() => vi.advanceTimersByTimeAsync(0));
+  const request = requests.find((request) =>
+    request.url.endsWith("/participation-confirmations/expired/acknowledge"),
+  );
+  if (!request) throw new Error("Missing acknowledgement request");
+  expect(new URL(request.url).pathname).toBe(
+    "/guilds/guild-1/events/event-1/participation-confirmations/expired/acknowledge",
+  );
+  expect(await request.json()).toEqual({ killIds: [killId] });
+}
+await initializeTestTranslations({});
 
 describe("EventParticipationConfirmationDialog", () => {
   it("keeps bulk confirmation busy after one request fails until every request settles", async () => {
-    let failFirst = (_reason?: unknown) => {};
+    let failFirst = (_reason: Error) => {};
     let finishLast = () => {};
-    const first = new Promise<void>((_resolve, reject) => {
+    const first = new Promise<Response>((_resolve, reject) => {
       failFirst = reject;
     });
-    const last = new Promise<void>((resolve) => {
-      finishLast = resolve;
+    const last = new Promise<Response>((resolve) => {
+      finishLast = () => resolve(Response.json({}));
     });
     mocks.confirmParticipation
       .mockReturnValueOnce(first)
@@ -103,7 +92,9 @@ describe("EventParticipationConfirmationDialog", () => {
     fireEvent.click(bulk);
     expect(bulk.getAttribute("aria-busy")).toBe("true");
     await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
       failFirst(new Error("request failed"));
+      await vi.advanceTimersByTimeAsync(0);
     });
     expect(bulk.hasAttribute("disabled")).toBe(true);
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
@@ -113,6 +104,7 @@ describe("EventParticipationConfirmationDialog", () => {
     await act(async () => {
       finishLast();
       await last;
+      await vi.advanceTimersByTimeAsync(0);
     });
     expect(bulk.hasAttribute("disabled")).toBe(false);
     expect(bulk.getAttribute("aria-busy")).not.toBe("true");
@@ -126,7 +118,28 @@ describe("EventParticipationConfirmationDialog", () => {
       items: [],
       expiredItems: [],
     };
-    mocks.listeners.clear();
+    requests = [];
+    mocks.confirmParticipation.mockReset().mockResolvedValue(Response.json({}));
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { staleTime: Infinity, retry: false } },
+    });
+    onTestFinished(() => queryClient.clear());
+    onTestFinished(
+      configureApiClients({
+        main: {
+          baseUrl: "https://api.test",
+          fetch: (input, init) => {
+            const request = new Request(input, init);
+            requests.push(request);
+            if (request.url.endsWith("/confirm-participation"))
+              return mocks.confirmParticipation();
+            return Promise.resolve(
+              Response.json(request.method === "GET" ? mocks.data : {}),
+            );
+          },
+        },
+      }),
+    );
   });
 
   afterEach(() => {
@@ -134,7 +147,7 @@ describe("EventParticipationConfirmationDialog", () => {
     vi.useRealTimers();
   });
 
-  it("shows an expired confirmation and acknowledges it after dismissal", () => {
+  it("shows an expired confirmation and acknowledges it after dismissal", async () => {
     mocks.data.expiredItems = [
       createConfirmation({
         killId: "expired-kill",
@@ -153,18 +166,10 @@ describe("EventParticipationConfirmationDialog", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
 
-    expect(mocks.acknowledgeExpired).toHaveBeenCalledWith({
-      pathParams: {
-        guildId: "guild-1",
-        eventId: "event-1",
-      },
-      data: {
-        killIds: ["expired-kill"],
-      },
-    });
+    await expectAcknowledged("expired-kill");
   });
 
-  it("shows and acknowledges a stale pending response whose deadline has passed", () => {
+  it("shows and acknowledges a stale pending response whose deadline has passed", async () => {
     mocks.data.items = [
       createConfirmation({
         killId: "stale-pending-kill",
@@ -183,18 +188,10 @@ describe("EventParticipationConfirmationDialog", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
 
-    expect(mocks.acknowledgeExpired).toHaveBeenCalledWith({
-      pathParams: {
-        guildId: "guild-1",
-        eventId: "event-1",
-      },
-      data: {
-        killIds: ["stale-pending-kill"],
-      },
-    });
+    await expectAcknowledged("stale-pending-kill");
   });
 
-  it("shows expiration feedback when the last active confirmation expires", () => {
+  it("shows expiration feedback when the last active confirmation expires", async () => {
     mocks.data.items = [
       createConfirmation({
         killId: "active-kill",
@@ -219,18 +216,10 @@ describe("EventParticipationConfirmationDialog", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
 
-    expect(mocks.acknowledgeExpired).toHaveBeenCalledWith({
-      pathParams: {
-        guildId: "guild-1",
-        eventId: "event-1",
-      },
-      data: {
-        killIds: ["active-kill"],
-      },
-    });
+    await expectAcknowledged("active-kill");
   });
 
-  it("keeps a confirmation actionable at its exact deadline", () => {
+  it("keeps a confirmation actionable at its exact deadline", async () => {
     mocks.data.items = [
       createConfirmation({
         killId: "deadline-kill",
@@ -248,7 +237,7 @@ describe("EventParticipationConfirmationDialog", () => {
     expect(screen.getByRole("button", { name: "Potwierdź" })).toBeTruthy();
   });
 
-  it("shows expired feedback alongside a new active confirmation without submitting expired kills", () => {
+  it("shows expired feedback alongside a new active confirmation without submitting expired kills", async () => {
     mocks.data.items = [
       createConfirmation({
         killId: "active-kill",
@@ -285,17 +274,18 @@ describe("EventParticipationConfirmationDialog", () => {
       }),
     );
 
+    await act(() => vi.advanceTimersByTimeAsync(0));
     expect(mocks.confirmParticipation).toHaveBeenCalledTimes(1);
-    expect(mocks.confirmParticipation).toHaveBeenCalledWith({
-      pathParams: {
-        guildId: "guild-1",
-        eventId: "event-1",
-        killId: "active-kill",
-      },
-    });
+    expect(
+      requests
+        .filter((request) => request.url.endsWith("/confirm-participation"))
+        .map((request) => new URL(request.url).pathname),
+    ).toEqual([
+      "/guilds/guild-1/events/event-1/kills/active-kill/confirm-participation",
+    ]);
   });
 
-  it("allows a future active confirmation after expired feedback is dismissed", () => {
+  it("allows a future active confirmation after expired feedback is dismissed", async () => {
     mocks.data.expiredItems = [
       createConfirmation({
         killId: "expired-kill",
@@ -322,10 +312,9 @@ describe("EventParticipationConfirmationDialog", () => {
       ],
     };
     act(() => {
-      for (const listener of mocks.listeners) {
-        listener();
-      }
+      queryClient.setQueryData(queryKey, mocks.data);
     });
+    await act(() => vi.advanceTimersByTimeAsync(0));
 
     expect(screen.getByRole("button", { name: "Potwierdź" })).toBeTruthy();
   });

@@ -35,9 +35,9 @@ export interface MemberReadCache {
     key: string,
     schema: S,
   ) => Effect.Effect<S["Type"] | null, unknown>;
-  readonly setJson: (
+  readonly setJson: <Value>(
     key: string,
-    value: unknown,
+    value: Value,
     ttl: number,
   ) => Effect.Effect<unknown, unknown>;
 }

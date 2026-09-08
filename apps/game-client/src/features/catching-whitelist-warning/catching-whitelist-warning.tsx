@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { type FC, useEffect, useRef } from "react";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { DraggableWindow } from "@/components/draggable-window";
@@ -11,9 +12,12 @@ import {
   useUserLootlogConfigControllerGetUserLootlogConfigByAccountId,
 } from "@lootlog/client/main";
 
+const dismissedCharactersSchema = z.record(z.string(), z.boolean());
+
 const STORAGE_KEY = storageKey("ll:catching-whitelist-warning-dismissed");
 
 type DismissedCharacters = Record<string, boolean>;
+const DEFAULT_DISMISSED_CHARACTERS: DismissedCharacters = {};
 
 export const CatchingWhitelistWarning: FC = () => {
   const { t } = useTranslation(["catchingWhitelistWarning", "common"]);
@@ -41,8 +45,14 @@ export const CatchingWhitelistWarning: FC = () => {
   const characterId = useGameStore(
     (state) => state.game?.hero.characterId ?? "",
   );
-  const [dismissedCharacters, setDismissedCharacters] =
-    useLocalStorage<DismissedCharacters>(STORAGE_KEY, {});
+  const [
+    dismissedCharacters = DEFAULT_DISMISSED_CHARACTERS,
+    setDismissedCharacters,
+  ] = useLocalStorage<DismissedCharacters>(
+    STORAGE_KEY,
+    DEFAULT_DISMISSED_CHARACTERS,
+    dismissedCharactersSchema,
+  );
   const checkedCharacterIdsRef = useRef(new Set<string>());
 
   useEffect(() => {

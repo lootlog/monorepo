@@ -28,17 +28,15 @@ const event = (endsAt: Date | null = null) => ({
 
 const persistenceWith = (
   overrides: Partial<PinnedEventsPersistence> = {},
-): PinnedEventsPersistence =>
-  ({
-    removeInactive: () => Effect.void,
-    findActive: () => Effect.succeed([]),
-    findEvent: () => Effect.succeed(event()),
-    remove: () => Effect.void,
-    pin: () =>
-      Effect.succeed({ pinnedAt: new Date("2026-08-16T11:00:00.000Z") }),
-    removeFromGuild: () => Effect.void,
-    ...overrides,
-  }) as PinnedEventsPersistence;
+): PinnedEventsPersistence => ({
+  removeInactive: () => Effect.void,
+  findActive: () => Effect.succeed([]),
+  findEvent: () => Effect.succeed(event()),
+  remove: () => Effect.void,
+  pin: () => Effect.succeed({ pinnedAt: new Date("2026-08-16T11:00:00.000Z") }),
+  removeFromGuild: () => Effect.void,
+  ...overrides,
+});
 
 describe("event pins Effect module", () => {
   it("removes inactive pins before returning the active projection", async () => {

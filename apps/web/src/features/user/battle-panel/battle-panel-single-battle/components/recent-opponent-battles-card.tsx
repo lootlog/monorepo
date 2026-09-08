@@ -52,33 +52,29 @@ export function RecentOpponentBattlesCard({
         actions={
           <Tooltip>
             <TooltipTrigger
-              render={
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-8 shrink-0"
-                  render={
-                    <Link
-                      aria-label={t(
-                        "battlePanel.single.recentOpponent.viewAllAria",
-                        {
-                          opponent: context.opponentName,
-                        },
-                      )}
-                      to={
-                        ROUTES.user.battlePanel.playerVsPlayer(
-                          context.characterId,
-                          context.opponentId,
-                        ) as string
-                      }
-                      search={{ period: "all" }}
-                    >
-                      <ArrowUpRight className="size-3.5" />
-                    </Link>
-                  }
-                  nativeButton={false}
-                />
-              }
+              render=<Button
+                variant="ghost"
+                size="icon"
+                className="size-8 shrink-0"
+                render={
+                  <Link
+                    aria-label={t(
+                      "battlePanel.single.recentOpponent.viewAllAria",
+                      {
+                        opponent: context.opponentName,
+                      },
+                    )}
+                    to={ROUTES.user.battlePanel.playerVsPlayer(
+                      context.characterId,
+                      context.opponentId,
+                    )}
+                    search={{ period: "all" }}
+                  >
+                    <ArrowUpRight className="size-3.5" />
+                  </Link>
+                }
+                nativeButton={false}
+              />
             />
             <TooltipContent>
               {t("battlePanel.single.recentOpponent.viewAllAria", {

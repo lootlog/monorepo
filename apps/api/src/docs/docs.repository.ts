@@ -39,40 +39,58 @@ export class DocsPersistenceError extends TaggedErrorClass<DocsPersistenceError>
 
 export type DocsRepositoryFailure = ApplicationError | DocsPersistenceError;
 
+export type StoredDocument = typeof guildDocumentTable.$inferSelect;
+export type DocumentSummary = Omit<
+  StoredDocument,
+  "content" | "deletedAt" | "deletedByMemberId"
+>;
+export type StoredDocumentHistory =
+  typeof guildDocumentHistoryTable.$inferSelect;
+export type DocumentHistorySummary = Omit<StoredDocumentHistory, "content">;
+type DocumentListing = {
+  readonly guild: Pick<typeof guildTable.$inferSelect, "documentLimit"> | null;
+  readonly used: number;
+  readonly trashed: number;
+  readonly documents: ReadonlyArray<DocumentSummary>;
+};
+
 export interface DocsRepositoryService {
   readonly listDocuments: (
     guildId: string,
-  ) => Effect.Effect<unknown, DocsRepositoryFailure>;
+  ) => Effect.Effect<DocumentListing, DocsRepositoryFailure>;
   readonly createDocument: (options: {
     guildId: string;
     memberId: string;
     title: string;
     content: GuildDocumentContent;
     defaultLimit: number;
-  }) => Effect.Effect<unknown, DocsRepositoryFailure>;
+  }) => Effect.Effect<StoredDocument, DocsRepositoryFailure>;
   readonly findActive: (
     guildId: string,
     documentId: string,
-  ) => Effect.Effect<unknown | null, DocsRepositoryFailure>;
+  ) => Effect.Effect<StoredDocument | null, DocsRepositoryFailure>;
   readonly updateDocument: (options: {
     guildId: string;
     documentId: string;
     memberId: string;
     title: string;
     content: GuildDocumentContent;
-  }) => Effect.Effect<unknown, DocsRepositoryFailure>;
+  }) => Effect.Effect<StoredDocument, DocsRepositoryFailure>;
   readonly listHistory: (
     guildId: string,
     documentId: string,
-  ) => Effect.Effect<ReadonlyArray<unknown>, DocsRepositoryFailure>;
+  ) => Effect.Effect<
+    ReadonlyArray<DocumentHistorySummary>,
+    DocsRepositoryFailure
+  >;
   readonly findHistory: (
     guildId: string,
     documentId: string,
     historyId: string,
-  ) => Effect.Effect<unknown | null, DocsRepositoryFailure>;
+  ) => Effect.Effect<StoredDocumentHistory | null, DocsRepositoryFailure>;
   readonly listTrash: (
     guildId: string,
-  ) => Effect.Effect<ReadonlyArray<unknown>, DocsRepositoryFailure>;
+  ) => Effect.Effect<ReadonlyArray<StoredDocument>, DocsRepositoryFailure>;
   readonly changeTrashState: (options: {
     guildId: string;
     documentId: string;

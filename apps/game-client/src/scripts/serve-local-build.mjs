@@ -87,7 +87,7 @@ const run = async () => {
     process.exitCode = 1;
   });
 
-  server.listen(port, DEFAULT_HOST, () => {
+  server.listen(port, DEFAULT_HOST, function handleListening() {
     const address = server.address();
     if (!address || typeof address === "string") {
       throw new Error("Could not determine the local server address");

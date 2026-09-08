@@ -1,3 +1,4 @@
+import { findNpcType } from "@/constants/npc";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
@@ -16,13 +17,14 @@ import {
   SelectValue,
 } from "@lootlog/ui/components/select";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
-import type { GuildKillStatsResponseDtoOutputMemberRankingItem } from "@lootlog/client/main";
-import type { NpcType } from "@lootlog/client/main";
-import { TRACKABLE_NPC_TYPES } from "../constants";
 import {
+  type GuildKillStatsResponseDtoOutputMemberRankingItem,
+  type NpcType,
   getMembersControllerGetGuildMemberReferencesQueryKey,
   useMembersControllerGetGuildMemberReferences,
 } from "@lootlog/client/main";
+
+import { TRACKABLE_NPC_TYPES } from "../constants";
 
 const STORAGE_KEY = "stats-podium-npc-type";
 
@@ -67,7 +69,7 @@ export const MemberRankingPodiumCard: React.FC<
     return (
       <SectionCard className="flex flex-col">
         <SectionCardHeader
-          title={<Skeleton className="h-5 w-40" />}
+          title=<Skeleton className="h-5 w-40" />
           icon={Users}
           actions={
             <div className="flex items-center justify-between">
@@ -105,13 +107,14 @@ export const MemberRankingPodiumCard: React.FC<
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <Select
               value={selectedNpcType}
-              onValueChange={(value) => setSelectedNpcType(value as NpcType)}
-              items={[
-                ...TRACKABLE_NPC_TYPES.map((type) => ({
-                  value: type,
-                  label: <>{t(`npcType.${type}`)}</>,
-                })),
-              ]}
+              onValueChange={(value) => {
+                const npcType = findNpcType(value);
+                if (npcType) setSelectedNpcType(npcType);
+              }}
+              items={TRACKABLE_NPC_TYPES.map((type) => ({
+                value: type,
+                label: <>{t(`npcType.${type}`)}</>,
+              }))}
             >
               <SelectTrigger className="w-[120px] h-8">
                 <SelectValue />

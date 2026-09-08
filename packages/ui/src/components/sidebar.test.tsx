@@ -1,11 +1,20 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useEffect } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Sidebar, SidebarProvider, SidebarTrigger } from "./sidebar";
 
-vi.mock("@lootlog/ui/hooks/use-mobile", () => ({
-  useIsMobile: () => true,
-}));
+beforeEach(() => {
+  const matchMedia = window.matchMedia.bind(window);
+  vi.spyOn(window, "matchMedia").mockImplementation((query) => {
+    const result = matchMedia(query);
+    if (query === "(max-width: 767px)")
+      Object.defineProperty(result, "matches", { value: true });
+    return result;
+  });
+});
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe("mobile sidebar", () => {
   it("preserves hidden content while disconnecting its effects", async () => {

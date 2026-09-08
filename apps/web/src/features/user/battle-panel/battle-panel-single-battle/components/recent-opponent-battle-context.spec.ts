@@ -1,29 +1,33 @@
+import {
+  createBattle as buildBattle,
+  createBattleWarrior,
+} from "@/lib/testing/battle";
 import { describe, expect, it } from "vitest";
 import { getRecentOpponentBattleContext } from "./recent-opponent-battle-context";
 import type { Battle } from "@/lib/api/battlelog-types";
 
 const createBattle = (overrides: Partial<Battle> = {}): Battle =>
-  ({
+  buildBattle({
     id: "battle-1",
     characterId: "617",
     type: "1v1",
     world: "gordion",
     warriors: [
-      {
+      createBattleWarrior({
         lvl: 300,
         originalId: "617",
         name: "Demodras",
         prof: "b",
-      },
-      {
+      }),
+      createBattleWarrior({
         lvl: 300,
         originalId: "38798",
         name: "zpwrama",
         prof: "p",
-      },
+      }),
     ],
     ...overrides,
-  }) as Battle;
+  });
 
 describe("getRecentOpponentBattleContext", () => {
   it("returns the current character and 1v1 opponent", () => {
@@ -52,11 +56,11 @@ describe("getRecentOpponentBattleContext", () => {
       getRecentOpponentBattleContext(
         createBattle({
           warriors: [
-            {
+            createBattleWarrior({
               originalId: "617",
               name: "Demodras",
-            },
-          ] as Battle["warriors"],
+            }),
+          ],
         }),
       ),
     ).toBeNull();

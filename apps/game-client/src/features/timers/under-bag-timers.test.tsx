@@ -23,7 +23,7 @@ describe("UnderBagTimers", () => {
       </div>
     `;
 
-    const wheelListener = vi.fn();
+    const wheelListener = vi.fn<(event: Event) => void>();
     document
       .querySelector(".right-main-column-wrapper")
       ?.addEventListener("wheel", wheelListener);

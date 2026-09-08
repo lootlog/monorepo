@@ -13,7 +13,7 @@ import { useTranslation } from "react-i18next";
 interface SoundFieldInputProps {
   label: string;
   soundUrl: string;
-  placeholder: string;
+  placeholder?: string;
   error?: string;
   onSoundUrlChange: (value: string) => void;
   onPlaySound: () => void;

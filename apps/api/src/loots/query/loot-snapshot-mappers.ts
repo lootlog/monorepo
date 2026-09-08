@@ -20,7 +20,9 @@ type LootNpcWithSnapshot = {
   npcSnapshot: typeof npcSnapshotTable.$inferSelect;
 };
 
-const parseNumber = (value: unknown): number | null => {
+const parseNumber = (
+  value: number | string | null | undefined,
+): number | null => {
   if (value === null || value === undefined) return null;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;

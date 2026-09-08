@@ -29,7 +29,8 @@
   },
   "dependencies": {
     "@lootlog/datetime": "workspace:*",
-    "@lootlog/schema": "workspace:*"
+    "@lootlog/schema": "workspace:*",
+    "effect": "catalog:"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",

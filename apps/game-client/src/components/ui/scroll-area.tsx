@@ -32,6 +32,16 @@ export const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(
   ) => {
     const viewportRef = useRef<HTMLDivElement | null>(null);
 
+    // React forwarded refs are either callbacks or mutable ref objects.
+    const setViewportRef = (element: HTMLDivElement | null) => {
+      viewportRef.current = element;
+      if (typeof ref === "function") {
+        ref(element);
+      } else if (ref) {
+        ref.current = element;
+      }
+    };
+
     useEffect(() => {
       const viewport = viewportRef.current;
       if (!viewport || orientation !== "horizontal") return;
@@ -78,14 +88,7 @@ export const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(
         )}
       >
         <BaseScrollArea.Viewport
-          ref={(element) => {
-            viewportRef.current = element;
-            if (typeof ref === "function") {
-              ref(element);
-            } else if (ref) {
-              ref.current = element;
-            }
-          }}
+          ref={setViewportRef}
           data-ll-scroll-area-viewport=""
           className="ll:h-full ll:w-full ll:max-h-[inherit] ll:rounded-[inherit] ll:select-text"
           style={{ ...overflowStyle, ...viewportStyle }}

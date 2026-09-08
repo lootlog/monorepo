@@ -6,17 +6,18 @@ import {
 import { Button } from "@lootlog/ui/components/button";
 import { RefreshCcw } from "lucide-react";
 import { useContext, type FC } from "react";
-import type { MemberResponseDto as GuildMember } from "@lootlog/client/main";
+import {
+  type MemberResponseDto as GuildMember,
+  getLootsControllerFetchLootsByGuildIdQueryKey,
+  getMembersControllerGetGuildMembersQueryKey,
+  useMembersControllerRefreshMember,
+} from "@lootlog/client/main";
 import { getPermissionRefreshInfo } from "@/utils/get-permission-refresh-info";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useQueryClient } from "@tanstack/react-query";
 import { RefreshStatusContext } from "@/features/guild/settings/members/contexts/refresh-status-context";
 import { toast } from "sonner";
-import { getLootsControllerFetchLootsByGuildIdQueryKey } from "@lootlog/client/main";
-import {
-  getMembersControllerGetGuildMembersQueryKey,
-  useMembersControllerRefreshMember,
-} from "@lootlog/client/main";
+
 import { useTranslation } from "react-i18next";
 import { cn } from "cn";
 
@@ -134,7 +135,7 @@ export const MemberSyncButton: FC<MemberSyncButtonProps> = ({
               size="sm"
               variant={variant}
               loading={isPending}
-              icon={<RefreshCcw className="size-4" />}
+              icon=<RefreshCcw className="size-4" />
               disabled={
                 isPending ||
                 !canRefresh ||

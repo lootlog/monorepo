@@ -4,10 +4,6 @@ import { DEFAULT_NPC_TYPE_COLORS } from "@lootlog/schema/npc-appearance";
 import { describe, expect, it, vi } from "vitest";
 import { ChatAppearancePresetCard } from "./chat-appearance-preset-card";
 
-vi.mock("@/components/npc-tile", () => ({
-  NpcTile: ({ npc }: { npc: { nick: string } }) => <div>{npc.nick}</div>,
-}));
-
 describe("ChatAppearancePresetCard", () => {
   it("uses the compact card shell around a real preset preview", () => {
     render(
@@ -15,7 +11,7 @@ describe("ChatAppearancePresetCard", () => {
         description="Readable preset description"
         name="Readable"
         npcTypeColors={DEFAULT_NPC_TYPE_COLORS}
-        onSelect={vi.fn()}
+        onSelect={vi.fn<() => void>()}
         selected
         settings={CHAT_APPEARANCE_READABLE_PRESET}
       />,

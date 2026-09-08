@@ -16,7 +16,9 @@ const runWith = (
     Layer.provide(
       Layer.succeed(
         FetchHttpClient.Fetch,
-        fetchImplementation as typeof globalThis.fetch,
+        Object.assign(fetchImplementation, {
+          preconnect: globalThis.fetch.preconnect,
+        }),
       ),
     ),
   );
@@ -29,11 +31,13 @@ const runWith = (
 
 describe("Activity API HttpClient", () => {
   it("retries idempotent transport failures and returns the bounded body", async () => {
-    const fetchImplementation = mock(async () => {
+    const fetchImplementation = mock(() => {
       if (fetchImplementation.mock.calls.length < 3) {
-        throw new Error("connection reset");
+        return Promise.reject(new Error("connection reset"));
       }
-      return new Response(JSON.stringify({ id: "guild-1" }), { status: 200 });
+      return Promise.resolve(
+        new Response(JSON.stringify({ id: "guild-1" }), { status: 200 }),
+      );
     });
 
     const response = await runWith(fetchImplementation);
@@ -46,8 +50,8 @@ describe("Activity API HttpClient", () => {
   });
 
   it("rejects responses above the configured one-megabyte limit", async () => {
-    const fetchImplementation = mock(
-      async () => new Response(new Uint8Array(1024 * 1024 + 1)),
+    const fetchImplementation = mock(() =>
+      Promise.resolve(new Response(new Uint8Array(1024 * 1024 + 1))),
     );
 
     await expect(runWith(fetchImplementation)).rejects.toMatchObject({
@@ -59,8 +63,8 @@ describe("Activity API HttpClient", () => {
   });
 
   it("does not retry completed non-success responses", async () => {
-    const fetchImplementation = mock(
-      async () => new Response("missing", { status: 404 }),
+    const fetchImplementation = mock(() =>
+      Promise.resolve(new Response("missing", { status: 404 })),
     );
 
     await expect(runWith(fetchImplementation)).resolves.toMatchObject({

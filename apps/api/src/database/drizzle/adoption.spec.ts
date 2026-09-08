@@ -39,7 +39,11 @@ const makeClient = ({
   }>;
   readonly catalog?: {
     readonly tables: ReadonlyArray<string>;
-    readonly columns: ReadonlyArray<Record<string, unknown>>;
+    readonly columns: ReadonlyArray<
+      Omit<(typeof EXPECTED_API_CATALOG.columns)[number], "isNullable"> & {
+        readonly isNullable: boolean | string;
+      }
+    >;
     readonly enums: ReadonlyArray<{
       readonly name: string;
       readonly values: ReadonlyArray<string>;

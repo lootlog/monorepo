@@ -2,8 +2,9 @@ import {
   getNotificationsGuildControllerGetGuildJobsQueryOptions,
   getNotificationsGuildControllerGetGuildRulesQueryOptions,
   getNotificationsGuildControllerGetGuildTargetsQueryOptions,
+  getGuildsControllerGetGuildDiscordSyncStatusQueryOptions,
 } from "@lootlog/client/main";
-import { getGuildsControllerGetGuildDiscordSyncStatusQueryOptions } from "@lootlog/client/main";
+
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 import { prefetchRouteQuery } from "@/lib/router/route-prefetch";
 

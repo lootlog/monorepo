@@ -175,7 +175,7 @@ export const GuildDocTrashDialog = ({
                             restoreDocument.variables?.pathParams.docId ===
                               document.id
                           }
-                          icon={<RotateCcw className="size-3.5" />}
+                          icon=<RotateCcw className="size-3.5" />
                           onClick={() => void handleRestore(document.id)}
                         >
                           {t("docs.trash.restore")}

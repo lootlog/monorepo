@@ -32,11 +32,11 @@ export class AuthRedisStorage extends Context.Service<
       const runPromise = yield* FiberSet.runtimePromise(fibers)<never>();
       const run = <A>(effect: Effect.Effect<A, Redis.RedisError>) =>
         runPromise(effect);
-      const logRedisWarning = (message: string, error: unknown) => {
+      const logRedisWarning = (message: string, cause: unknown) => {
         void runPromise(
           Effect.logWarning(message).pipe(
             Effect.annotateLogs({
-              error: error instanceof Error ? error.message : String(error),
+              error: cause instanceof Error ? cause.message : String(cause),
             }),
           ),
         );

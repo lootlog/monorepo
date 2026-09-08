@@ -1,47 +1,56 @@
+import { BearerSecurityMiddleware } from "#src/http-api/contracts/shared";
+import { BunHttpServer } from "@effect/platform-bun";
+import {
+  HttpApi,
+  HttpApiBuilder,
+  HttpApiEndpoint,
+  HttpApiGroup,
+} from "effect/unstable/httpapi";
 import { expect, test } from "bun:test";
-import { Effect, Redacted } from "effect";
-import { HttpServerRequest, HttpServerResponse } from "effect/unstable/http";
+import { Effect, Layer, Schema } from "effect";
+import { HttpRouter, HttpServerResponse } from "effect/unstable/http";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import {
-  forwardAuthMiddleware,
+  ForwardAuthMiddlewareLive,
   readForwardAuthIdentity,
 } from "#src/runtime/auth/forward-auth-middleware";
 
-const requestLayer = (headers: HeadersInit = {}) =>
-  Effect.provideService(
-    HttpServerRequest.HttpServerRequest,
-    HttpServerRequest.fromWeb(
-      new Request("http://localhost/protected", { headers }),
-    ),
-  );
-
-const runProtected = (headers: HeadersInit = {}) =>
-  Effect.runPromise(
-    forwardAuthMiddleware
-      .bearer(
-        Effect.map(ForwardAuthIdentity, ({ userId, discordId }) =>
-          HttpServerResponse.text(`${userId}:${discordId}`),
+const endpoint = HttpApiEndpoint.get("protected", "/protected", {
+  success: Schema.String,
+});
+const group = HttpApiGroup.make("protected")
+  .add(endpoint)
+  .middleware(BearerSecurityMiddleware);
+const api = HttpApi.make("test").add(group);
+const runProtected = async (
+  headers: HeadersInit = {},
+  handler: Effect.Effect<
+    HttpServerResponse.HttpServerResponse,
+    never,
+    ForwardAuthIdentity
+  > = Effect.map(ForwardAuthIdentity, ({ userId, discordId }) =>
+    HttpServerResponse.text(`${userId}:${discordId}`),
+  ),
+) => {
+  const boundary = HttpRouter.toWebHandler(
+    HttpApiBuilder.layer(api).pipe(
+      Layer.provide(
+        HttpApiBuilder.group(api, "protected", (handlers) =>
+          handlers.handleRaw("protected", () => handler),
         ),
-        {
-          credential: Redacted.make(""),
-          endpoint: undefined as never,
-          group: undefined as never,
-        },
-      )
-      .pipe(
-        requestLayer(headers),
-      ) as Effect.Effect<HttpServerResponse.HttpServerResponse>,
+      ),
+      Layer.provide(ForwardAuthMiddlewareLive),
+      Layer.provide(BunHttpServer.layerHttpServices),
+    ),
+    { disableLogger: true },
   );
-
-const responseText = (response: HttpServerResponse.HttpServerResponse) => {
-  const body = response.body.toJSON() as {
-    readonly _tag?: unknown;
-    readonly body?: unknown;
-  };
-  if (body._tag !== "Uint8Array" || typeof body.body !== "string") {
-    throw new Error("Expected a text response body");
+  try {
+    return await boundary.handler(
+      new Request("http://localhost/protected", { headers }),
+    );
+  } finally {
+    await boundary.dispose();
   }
-  return body.body;
 };
 
 test("reads the complete trusted forward-auth identity", () => {
@@ -71,7 +80,7 @@ test("provides the request identity without requiring an Authorization header", 
   });
 
   expect(response.status).toBe(200);
-  expect(responseText(response)).toBe("user-1:discord-1");
+  expect(await response.text()).toBe("user-1:discord-1");
 });
 
 test("does not accept a bearer credential without trusted forward-auth headers", async () => {
@@ -84,22 +93,12 @@ test("does not accept a bearer credential without trusted forward-auth headers",
 
 test("does not execute the protected handler after a failed forward-auth check", async () => {
   let handlerExecuted = false;
-  const effect = forwardAuthMiddleware.bearer(
+  const response = await runProtected(
+    {},
     Effect.sync(() => {
       handlerExecuted = true;
       return HttpServerResponse.empty({ status: 204 });
     }),
-    {
-      credential: Redacted.make(""),
-      endpoint: undefined as never,
-      group: undefined as never,
-    },
-  );
-
-  const response = await Effect.runPromise(
-    effect.pipe(
-      requestLayer(),
-    ) as Effect.Effect<HttpServerResponse.HttpServerResponse>,
   );
 
   expect(response.status).toBe(401);
@@ -112,7 +111,7 @@ test("matches header names case-insensitively through the Web request boundary",
     "X-Auth-Discord-Id": "discord-1",
   });
 
-  expect(responseText(response)).toBe("user-1:discord-1");
+  expect(await response.text()).toBe("user-1:discord-1");
 });
 
 test("keeps concurrent request identities isolated", async () => {
@@ -127,6 +126,6 @@ test("keeps concurrent request identities isolated", async () => {
     }),
   ]);
 
-  expect(responseText(first)).toBe("user-1:discord-1");
-  expect(responseText(second)).toBe("user-2:discord-2");
+  expect(await first.text()).toBe("user-1:discord-1");
+  expect(await second.text()).toBe("user-2:discord-2");
 });

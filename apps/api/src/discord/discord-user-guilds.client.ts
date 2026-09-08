@@ -469,9 +469,10 @@ export class DiscordUserGuildsClient {
         response.headers,
       );
 
-      return (await parseResponse(
-        response,
-      )) as RESTGetAPICurrentUserGuildsResult;
+      const guilds = await parseResponse(response);
+      if (!isApiGuildArray(guilds))
+        throw new TypeError("Invalid Discord guild list response");
+      return guilds;
     } catch (error: unknown) {
       await recordInvalidDiscordRequest(this.diagnostics, "guilds", error);
 

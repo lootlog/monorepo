@@ -1,7 +1,7 @@
 import { DiscordGuildSyncStatus } from "@lootlog/schema/notifications";
 import { describe, expect, it, vi } from "bun:test";
 import { Effect } from "effect";
-import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
+import { httpClientFromResponses } from "../../test/http-fixtures.js";
 import { makeDiscordBotClient } from "./discord-bot-client.js";
 
 describe("DiscordBotClientService", () => {
@@ -23,43 +23,34 @@ describe("DiscordBotClientService", () => {
         updatedAt: "2026-09-03T00:00:00.000Z",
       },
     };
-    const post = vi.fn(() =>
-      Effect.succeed({
-        status: 200,
-        headers: {},
-        arrayBuffer: Effect.succeed(
-          new TextEncoder().encode(JSON.stringify(payload)).buffer,
-        ),
-      }),
-    );
+    const post = vi.fn(() => Effect.succeed(Response.json(payload)));
 
     await expect(
       Effect.runPromise(
         makeDiscordBotClient(
-          { post } as unknown as HttpClientValue,
+          httpClientFromResponses(post),
           new URL("http://discord-bot"),
         ).refreshGuildChannels("guild-a"),
       ),
     ).resolves.toEqual(payload);
     expect(post).toHaveBeenCalledWith(
-      "http://discord-bot/internal/guilds/guild-a/channels/refresh",
-      expect.objectContaining({ body: expect.anything() }),
+      expect.objectContaining({
+        url: "http://discord-bot/internal/guilds/guild-a/channels/refresh",
+        method: "POST",
+        body: expect.anything(),
+      }),
     );
   });
 
   it("fails closed on a non-success response", async () => {
     const get = vi.fn(() =>
-      Effect.succeed({
-        status: 503,
-        headers: {},
-        arrayBuffer: Effect.succeed(new ArrayBuffer(0)),
-      }),
+      Effect.succeed(new Response(null, { status: 503 })),
     );
 
     await expect(
       Effect.runPromise(
         makeDiscordBotClient(
-          { get } as unknown as HttpClientValue,
+          httpClientFromResponses(get),
           new URL("http://discord-bot"),
         ).getGuildSyncStatus("guild-a"),
       ),

@@ -4,9 +4,12 @@ import {
   Formatter,
   Inspectable,
   Logger,
-  Predicate,
+  Schema,
   type Tracer,
 } from "effect";
+
+const isLogContext = Schema.is(Schema.Struct({ context: Schema.String }));
+const isLogMessage = Schema.is(Schema.Struct({ message: Schema.String }));
 
 // Promise-based adapters run outside an Effect fiber, but belong to its span.
 export const logSpanContext = new AsyncLocalStorage<
@@ -27,16 +30,13 @@ export const makeJsonLogger = (config: {
       const parts: ReadonlyArray<unknown> = (
         Array.isArray(entry.message) ? entry.message : [entry.message]
       ).filter((part) => part !== undefined);
-      const context = parts.find(
-        (part) => Predicate.isObject(part) && typeof part.context === "string",
-      );
+      const context = parts.find(isLogContext);
       const span = options.fiber.currentSpan;
       return Formatter.formatJson({
         ...entry,
         message: parts
           .map((part) => {
-            if (Predicate.isObject(part) && typeof part.message === "string")
-              return part.message;
+            if (isLogMessage(part)) return part.message;
             return Inspectable.toStringUnknown(part, 0);
           })
           .join(" "),
@@ -45,9 +45,7 @@ export const makeJsonLogger = (config: {
         service: config.serviceName,
         environment: config.environment,
         commit: config.commitSha,
-        context: Predicate.isObject(context)
-          ? context.context
-          : entry.annotations.context,
+        context: context ? context.context : entry.annotations.context,
         trace_id: span?.traceId,
         span_id: span?.spanId,
       });

@@ -1,4 +1,9 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import {
+  fireEvent,
+  render as renderUi,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MessageType } from "@/api/chat.api";
 import type {
@@ -7,90 +12,22 @@ import type {
 } from "@lootlog/client/main";
 
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
+import type { ReactElement } from "react";
+import userEvent from "@testing-library/user-event";
+import { configureApiClients } from "@lootlog/client/transport";
+import { createChatTestWrapper } from "../chat-test-wrapper";
+import { createChatReadyRoom } from "../chat-test-fixtures";
 import { PartyGatheringCard } from "./party-gathering-card";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 import { useWindowsStore } from "@/store/windows.store";
 
 beforeEach(() => setTestRuntimeGame());
 
-vi.mock("@/hooks/discord/use-member-color", () => ({
-  useMemberColor: () => "abcdef",
-}));
-
-const applyToReadyRoom = vi.fn();
-
-vi.mock("@lootlog/client/main", async () => ({
-  ...(await vi.importActual("@lootlog/client/main")),
-  usePartyReadyRoomControllerApply: () => ({
-    mutate: applyToReadyRoom,
-    isPending: false,
-  }),
-}));
-
-vi.mock("@/components/character-tile", () => ({
-  CharacterTile: ({ character }: { character: { nick: string } }) => (
-    <div>{character.nick} tile</div>
-  ),
-}));
-
-vi.mock("@/components/ui/tooltip", () => ({
-  Tooltip: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  TooltipContent: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="character-tooltip-content">{children}</div>
-  ),
-  TooltipTrigger: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-}));
-
-vi.mock("@/components/ui/button", () => ({
-  Button: (props: React.ComponentProps<"button">) => <button {...props} />,
-}));
-
-vi.mock("@/lib/game", () => ({
-  Game: {
-    getAccountId: () => "999",
-    hero: {
-      account: 999,
-      id: 999,
-      lvl: 200,
-      nick: "CurrentHero",
-    },
-  },
-}));
-
-vi.mock("@/lib/api/generated-helpers", () => ({
-  buildCurrentCharacterPayload: () => ({}),
-}));
-
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string, values?: { max?: number; min?: number }) => {
-      if (key === "contextMenu.unknownUser") {
-        return "Unknown user";
-      }
-
-      if (key === "partyGathering.levelRange") {
-        return `Range ${values?.min}-${values?.max}`;
-      }
-
-      if (key === "partyGathering.volunteering") {
-        return "Volunteering";
-      }
-
-      if (key === "partyGathering.requiredLevel") {
-        return `Required ${values?.min}-${values?.max}`;
-      }
-      if (key === "partyGathering.joined") {
-        return "Joined party";
-      }
-
-      return "Join party";
-    },
-  }),
-}));
+const fetchRequest = vi.fn<typeof fetch>();
+let restoreApi: () => void;
+const render = (ui: ReactElement) =>
+  renderUi(ui, { wrapper: createChatTestWrapper().wrapper });
+afterEach(() => restoreApi());
 
 const member: MemberSummaryResponseDtoOutput = {
   id: 1,
@@ -144,7 +81,12 @@ const makeMessage = (
 
 describe("PartyGatheringCard", () => {
   beforeEach(() => {
-    applyToReadyRoom.mockReset();
+    fetchRequest
+      .mockReset()
+      .mockResolvedValue(Response.json({ schemaVersion: 2 }));
+    restoreApi = configureApiClients({
+      main: { baseUrl: "https://api.example.test", fetch: fetchRequest },
+    });
     usePartyFinderStore.getState().clearReadyRooms();
     useWindowsStore.getState().setOpen("party-finder", false);
   });
@@ -160,12 +102,14 @@ describe("PartyGatheringCard", () => {
       />,
     );
 
-    const characterRow = screen
-      .getAllByText("Leader tile")
-      .at(-1)?.parentElement;
+    const characterTile = document.querySelector<HTMLElement>(
+      '[style*="leader.png"]',
+    );
+    expect(characterTile).toBeInTheDocument();
+    const characterRow = characterTile?.parentElement;
     const npcRow = screen.getByText("Hydra (250m)").parentElement;
     const card = characterRow?.parentElement;
-    const joinButton = screen.getByRole("button", { name: "Join party" });
+    const joinButton = screen.getByRole("button", { name: "Dołącz do grupy" });
 
     expect(card?.className).toContain("ll:overflow-hidden");
     expect(characterRow?.className).toContain("ll:max-w-full");
@@ -176,7 +120,8 @@ describe("PartyGatheringCard", () => {
     expect(joinButton.className).toContain("ll:max-w-full");
   });
 
-  it("shows the organizer character tooltip", () => {
+  it("shows the organizer character tooltip", async () => {
+    const user = userEvent.setup();
     render(
       <PartyGatheringCard
         all={false}
@@ -187,12 +132,14 @@ describe("PartyGatheringCard", () => {
       />,
     );
 
-    expect(screen.getByTestId("character-tooltip-content")).toHaveTextContent(
+    await user.hover(screen.getByText("Member:"));
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(
       "Leader (200w)",
     );
   });
 
-  it("keeps the organizer tooltip after the gathering ends", () => {
+  it("keeps the organizer tooltip after the gathering ends", async () => {
+    const user = userEvent.setup();
     render(
       <PartyGatheringCard
         all={false}
@@ -203,12 +150,13 @@ describe("PartyGatheringCard", () => {
       />,
     );
 
-    expect(screen.getByTestId("character-tooltip-content")).toHaveTextContent(
+    await user.hover(screen.getByText("Member:"));
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(
       "Leader (200w)",
     );
   });
 
-  it("applies to the Ready Room from the explicit join click", () => {
+  it("applies to the Ready Room from the explicit join click", async () => {
     render(
       <PartyGatheringCard
         all={false}
@@ -219,20 +167,19 @@ describe("PartyGatheringCard", () => {
       />,
     );
 
-    expect(applyToReadyRoom).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole("button", { name: "Join party" }));
-    expect(applyToReadyRoom).toHaveBeenCalledWith(
-      {
-        pathParams: { notificationId: "notification-1" },
-        data: { character: {}, world: "tempest" },
-      },
-      expect.objectContaining({ onSuccess: expect.any(Function) }),
+    expect(fetchRequest).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Dołącz do grupy" }));
+    await waitFor(() => expect(fetchRequest).toHaveBeenCalledOnce());
+    const [url, options] = fetchRequest.mock.calls[0] ?? [];
+    expect(String(url)).toContain("notification-1");
+    expect(options?.method).toBe("POST");
+    expect(options?.body).toContain('"world":"tempest"');
+    expect(options?.body).toContain('"accountId":"202"');
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Dołącz do grupy" }),
+      ).toBeEnabled(),
     );
-
-    const mutationOptions = applyToReadyRoom.mock.calls[0]?.[1] as {
-      onSuccess: (projection: unknown) => void;
-    };
-    mutationOptions.onSuccess({ schemaVersion: 2 });
     expect(useWindowsStore.getState()["party-finder"].open).toBe(false);
   });
 
@@ -240,20 +187,28 @@ describe("PartyGatheringCard", () => {
     setTestRuntimeGame({
       hero: { accountId: "999", characterId: "999" },
     });
-    usePartyFinderStore.getState().mergeProjection({
-      schemaVersion: 3,
-      notificationId: "notification-1",
-      revision: 2,
-      status: "ACTIVE",
-      viewer: "PARTICIPANT",
-      participants: {
-        participant: {
-          participantId: "participant",
-          discordId: "discord-1",
-          character: { accountId: "999", characterId: "999" },
+    usePartyFinderStore.getState().mergeProjection(
+      createChatReadyRoom({
+        notificationId: "notification-1",
+        participants: {
+          participant: {
+            participantId: "participant",
+            discordId: "discord-1",
+            character: {
+              accountId: "999",
+              characterId: "999",
+              nick: "CurrentHero",
+              lvl: 230,
+              prof: "w",
+              icon: "hero.gif",
+            },
+            partyPresence: "OUTSIDE",
+            createdAt: "2026-07-21T10:00:00.000Z",
+            updatedAt: "2026-07-21T10:00:00.000Z",
+          },
         },
-      },
-    } as never);
+      }),
+    );
 
     render(
       <PartyGatheringCard
@@ -265,7 +220,9 @@ describe("PartyGatheringCard", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: "Joined party" })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Zapisano do grupy" }),
+    ).toBeDisabled();
   });
 
   it("allows another character with the same nickname to apply", () => {
@@ -288,6 +245,8 @@ describe("PartyGatheringCard", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: "Join party" })).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Dołącz do grupy" }),
+    ).toBeVisible();
   });
 });

@@ -9,7 +9,7 @@ import {
 } from "#src/notifications/notification-enums";
 import { GUILD_NOTIFICATION_TIMEZONE } from "#src/notifications/rules/schedule-timezone";
 import { calculateNextOccurrenceInTimeZone } from "#src/notifications/rules/notification-schedule-time";
-import type { JsonValue } from "#src/notifications/notification-database.types";
+import type { JsonValue } from "#src/database/json";
 
 export type NotificationRecurringRule = NotificationRuleWithTargets;
 

@@ -1,10 +1,11 @@
+import type { TOptions } from "i18next";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import type { MemberResponseDto as GuildMember } from "@lootlog/client/main";
 import type { MemberActivityStats } from "@/features/guild/settings/members/member-activity-stats-api";
 import type { ReactNode } from "react";
-import { Permission } from "@lootlog/schema/permissions";
+import type { Permission } from "@lootlog/schema/permissions";
 import { useTranslation } from "react-i18next";
 import { cn } from "cn";
 import { PERMISSION_CATEGORIES } from "@/features/guild/settings/roles/constants/permission-categories";
@@ -77,7 +78,7 @@ const DetailField = ({ label, value }: { label: string; value: ReactNode }) => (
   </div>
 );
 
-type Translate = (key: string, options?: Record<string, unknown>) => string;
+type Translate = (key: string, options?: TOptions) => string;
 
 const getMemberActivityPresentation = ({
   gameActivityStats,
@@ -349,7 +350,7 @@ export const MemberData = ({
               const color = getColorFromRoleColor(role.color);
               const filteredPermissions = role.permissions.filter(
                 (permission) => permission !== "OWNER",
-              ) as Permission[];
+              );
 
               return (
                 <div key={role.id} className="py-3">

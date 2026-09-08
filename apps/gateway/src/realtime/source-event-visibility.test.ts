@@ -1,3 +1,4 @@
+import type { NpcRoutingData } from "@lootlog/schema/npc-routing";
 import { describe, expect, test } from "bun:test";
 import { Permission } from "@lootlog/schema/permissions";
 import type { ServerEvent } from "@lootlog/protocol/realtime";
@@ -26,7 +27,9 @@ const reader = (
   confidence: "reported",
   backpressureStrikes: 0,
 });
-const timer = (npc: unknown): Event => ({
+const timer = (
+  npc: (NpcRoutingData & { lvl?: number }) | null | undefined,
+): Event => ({
   v: 1,
   type: "timer.created",
   data: {
@@ -34,7 +37,9 @@ const timer = (npc: unknown): Event => ({
     payload: { guildId: "organization", npc },
   },
 });
-const timerDeleted = (routing: unknown): Event => ({
+const timerDeleted = (
+  routing: { tier?: string; npcLevel?: number } | undefined,
+): Event => ({
   v: 1,
   type: "timer.deleted",
   data: {

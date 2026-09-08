@@ -1,57 +1,57 @@
 import { describe, expect, test } from "bun:test";
 import { Permission } from "@lootlog/schema/permissions";
-import type { RedisGatewayStore } from "#src/platform/redis-store";
-import type { RealtimeHub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
 import { AirTagService } from "./air-tag-service.js";
 
-const makeSocket = (): GatewaySocket =>
-  ({
-    data: {
-      discordId: "discord-1",
-      userId: "user-1",
-      connectionId: "connection-1",
-      platform: "game",
-      joined: true,
-      guilds: [
-        {
-          guild: { id: "organization-1", ownerId: "owner" },
-          roles: [
-            {
-              id: "role",
-              lvlRangeFrom: 0,
-              lvlRangeTo: 500,
-              permissions: [Permission.LOOTLOG_ONLINE_PLAYERS_READ],
-            },
-          ],
-        },
-      ],
-      subscriptions: new Map(),
-      airTagScopes: [],
-      confidence: "verified",
-      backpressureStrikes: 0,
-      presence: {
-        userId: "user-1",
-        sessionId: "presence-1",
-        organizationIds: ["organization-1"],
-        platform: "game",
-        status: "online",
-        confidence: "verified",
-        isAfk: false,
-        lastSeen: 1,
-        character: {
-          world: "classic",
-          name: "Hero",
-          lvl: 100,
-          icon: "icon",
-          characterId: "123",
-          accountId: "456",
-          prof: "w",
-        },
-        location: { mapId: 7, map: "Map" },
+const makeSocket = (): GatewaySocket => ({
+  send: () => 0,
+  close: () => {},
+  getBufferedAmount: () => 0,
+  data: {
+    discordId: "discord-1",
+    userId: "user-1",
+    connectionId: "connection-1",
+    platform: "game",
+    joined: true,
+    guilds: [
+      {
+        guild: { id: "organization-1", ownerId: "owner" },
+        roles: [
+          {
+            id: "role",
+            lvlRangeFrom: 0,
+            lvlRangeTo: 500,
+            permissions: [Permission.LOOTLOG_ONLINE_PLAYERS_READ],
+          },
+        ],
       },
-    } satisfies SessionData,
-  }) as unknown as GatewaySocket;
+    ],
+    subscriptions: new Map(),
+    airTagScopes: [],
+    confidence: "verified",
+    backpressureStrikes: 0,
+    presence: {
+      userId: "user-1",
+      sessionId: "presence-1",
+      organizationIds: ["organization-1"],
+      platform: "game",
+      status: "online",
+      confidence: "verified",
+      isAfk: false,
+      lastSeen: 1,
+      character: {
+        world: "classic",
+        name: "Hero",
+        lvl: 100,
+        icon: "icon",
+        characterId: "123",
+        accountId: "456",
+        prof: "w",
+      },
+      location: { mapId: 7, map: "Map" },
+    },
+  } satisfies SessionData,
+});
 
 describe("AirTagService legacy parity", () => {
   test("returns snapshots on subscribe and exact counts/events for observations", async () => {
@@ -96,14 +96,18 @@ describe("AirTagService legacy parity", () => {
       publishToScopes: async (...arguments_: unknown[]) => {
         publications.push(arguments_);
       },
-    } as unknown as RealtimeHub;
+    };
     const service = new AirTagService(
       {
         command: {
           get: async () => null,
-          eval: async () => evaluations.shift(),
+          eval: async () => {
+            const reply = evaluations.shift();
+            if (reply === undefined) throw new Error("Unexpected Redis script");
+            return reply;
+          },
         },
-      } as unknown as RedisGatewayStore,
+      },
       hub,
     );
     const socket = makeSocket();
@@ -164,10 +168,20 @@ describe("AirTagService legacy parity", () => {
         command: {
           eval: async () => {
             evaluations += 1;
+            return null;
           },
+          get: () => Promise.reject(new Error("Unexpected Redis read")),
         },
-      } as unknown as RedisGatewayStore,
-      {} as RealtimeHub,
+      },
+      {
+        subscribe: () => {
+          throw new Error("Unexpected subscribe");
+        },
+        unsubscribe: () => {
+          throw new Error("Unexpected unsubscribe");
+        },
+        publishToScopes: () => Promise.reject(new Error("Unexpected publish")),
+      },
     );
     expect(
       await service.publishObservations(makeSocket(), {

@@ -1,3 +1,4 @@
+import { createBattleWarrior as buildBattleWarrior } from "@/lib/testing/battle";
 // @vitest-environment happy-dom
 import { describe, expect, it } from "vitest";
 import i18next from "i18next";
@@ -12,14 +13,14 @@ import { BattleEventEntry } from "../battle-event-entry";
 import { buildBattleLogVisibleText } from "./battle-log-visible-text";
 import { normalizeBattleLogSearchText } from "./battle-log-search";
 
-const attacker: BattleWarrior = {
+const attacker: BattleWarrior = buildBattleWarrior({
   originalId: "1",
   name: "Łucznik <A&B>",
   lvl: 100,
   prof: "h",
   icon: "",
   team: 1,
-} as BattleWarrior;
+});
 const defender: BattleWarrior = {
   ...attacker,
   originalId: "2",

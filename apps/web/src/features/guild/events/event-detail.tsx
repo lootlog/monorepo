@@ -21,7 +21,23 @@ import type {
   EventMapLocation,
   EventMapsResponse,
 } from "./types/api";
-import type { EventOverviewResponseDto } from "@lootlog/client/main";
+import {
+  type EventOverviewResponseDto,
+  getEventsRankingControllerGetEventHeroStatsQueryKey,
+  getListEventHeroTimersQueryKey,
+  getListEventMapsQueryKey,
+  getListEventRankingQueryKey,
+  getListEventsQueryKey,
+  getShowEventOverviewQueryKey,
+  useDeleteEvent,
+  useEventsAssignmentControllerDeleteHero,
+  useEventsRankingControllerGetEventHeroStats,
+  useListEventHeroTimers,
+  useListEventMaps,
+  useListEventRanking,
+  useShowEventOverview,
+  useUpdateEvent,
+} from "@lootlog/client/main";
 import { EventRankingPreview } from "./components/ranking/event-ranking-preview";
 import {
   Trophy,
@@ -54,22 +70,7 @@ import {
   normalizeEventScoringRules,
 } from "@lootlog/domain/scoring";
 import { getEventStatusAtTimestamp } from "./utils/event-activity";
-import {
-  getEventsRankingControllerGetEventHeroStatsQueryKey,
-  getListEventHeroTimersQueryKey,
-  getListEventMapsQueryKey,
-  getListEventRankingQueryKey,
-  getListEventsQueryKey,
-  getShowEventOverviewQueryKey,
-  useDeleteEvent,
-  useEventsAssignmentControllerDeleteHero,
-  useEventsRankingControllerGetEventHeroStats,
-  useListEventHeroTimers,
-  useListEventMaps,
-  useListEventRanking,
-  useShowEventOverview,
-  useUpdateEvent,
-} from "@lootlog/client/main";
+
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { invalidateEventDetailQueries } from "./hooks/mutations/invalidate-event-queries";
 import { useToggleEventPin } from "./hooks/mutations/use-toggle-event-pin";
@@ -191,8 +192,10 @@ const isPinActionDisabled = (
   isPending: (eventId: string) => boolean,
 ) => !eventId || !isEventActive || isPending(eventId);
 
-const hasEventDetailErrors = (mapsError: unknown, rankingError: unknown) =>
-  Boolean(mapsError || rankingError);
+const hasEventDetailErrors = (
+  mapsError: Error | null,
+  rankingError: Error | null,
+) => Boolean(mapsError || rankingError);
 
 const getEventRouteQuery = (
   guildId: string | undefined,
@@ -507,7 +510,7 @@ export const EventDetail = () => {
                     eventId: queryEventId,
                   },
                   data: {
-                    endsAt: null as never,
+                    endsAt: null,
                   },
                 });
                 toast.success(t("events.resumeSuccess"));
@@ -619,14 +622,12 @@ export const EventDetail = () => {
                       size="sm"
                       variant="outline"
                       loading={isPinPending(event.id)}
-                      icon={
-                        <Star
-                          className={cn(
-                            "size-4",
-                            eventIsPinned && "fill-current",
-                          )}
-                        />
-                      }
+                      icon=<Star
+                        className={cn(
+                          "size-4",
+                          eventIsPinned && "fill-current",
+                        )}
+                      />
                       aria-label={pinActionLabel}
                       title={pinActionLabel}
                       aria-pressed={eventIsPinned}

@@ -23,7 +23,9 @@ export class EventAccessError extends TaggedErrorClass<EventAccessError>()(
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}
 
-export const makeEventAccess = (database: typeof ApiDatabase.Service) => {
+export const makeEventAccess = (
+  database: Pick<typeof ApiDatabase.Service, "select">,
+) => {
   const query = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
     effect.pipe(
       Effect.mapError((cause) => new EventAccessError({ operation, cause })),

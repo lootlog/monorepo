@@ -1,149 +1,83 @@
-import { renderHook } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { StrictMode } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createNativeRuntime } from "@/test/native-runtime";
+import { useGameStore } from "@/store/game.store";
+import { useGlobalStore } from "@/store/global.store";
+vi.stubGlobal("Engine", createNativeRuntime());
+const { useInit } = await import("./use-init");
 
-const mockSetGameState = vi.fn();
-const mockSetupProxies = vi.fn();
-const mockSetGameInitCallback = vi.fn();
-const mockCleanup = vi.fn();
-const mockGetInitializeState = vi.fn();
-const mockPipelineInstall = vi.fn();
-const mockPipelineSetReady = vi.fn();
-const mockPipelineCleanup = vi.fn();
-const mockProjectionBootstrap = vi.fn();
-const mockProjectionCleanup = vi.fn();
-const mockInteractionInstall = vi.fn();
-const mockInteractionCleanup = vi.fn();
-
-let capturedGameInitCallback: (() => boolean) | null = null;
-
-vi.mock("@/store/global.store", () => ({
-  useGlobalStore: (
-    selector: (state: { setGameState: typeof mockSetGameState }) => unknown,
-  ) =>
-    selector({
-      setGameState: mockSetGameState,
-    }),
-}));
-
-vi.mock("@/lib/margonem-runtime/margonem-runtime-bridge", () => ({
-  margonemRuntimeBridge: {
-    setupProxies: (...args: unknown[]) => mockSetupProxies(...args),
-    setGameInitCallback: (callback: () => boolean) => {
-      capturedGameInitCallback = callback;
-      mockSetGameInitCallback(callback);
-    },
-    cleanup: (...args: unknown[]) => mockCleanup(...args),
-  },
-}));
-
-vi.mock("@/lib/margonem-runtime/runtime-adapter", () => ({
-  isMargonemRuntimeReady: (...args: unknown[]) =>
-    mockGetInitializeState(...args),
-}));
-
-vi.mock("@/lib/margonem-runtime/runtime-event-pipeline", () => ({
-  runtimeEventPipeline: {
-    install: (...args: unknown[]) => mockPipelineInstall(...args),
-    setReady: (...args: unknown[]) => mockPipelineSetReady(...args),
-    cleanup: (...args: unknown[]) => mockPipelineCleanup(...args),
-  },
-}));
-
-vi.mock("@/lib/margonem-runtime/runtime-state-projection", () => ({
-  runtimeStateProjection: {
-    bootstrap: (...args: unknown[]) => mockProjectionBootstrap(...args),
-    cleanup: (...args: unknown[]) => mockProjectionCleanup(...args),
-  },
-}));
-
-vi.mock("@/lib/margonem-runtime/runtime-interaction-coordinator", () => ({
-  runtimeInteractionCoordinator: {
-    install: (...args: unknown[]) => mockInteractionInstall(...args),
-    cleanup: (...args: unknown[]) => mockInteractionCleanup(...args),
-  },
-}));
-
-import { useInit } from "./use-init";
+beforeEach(() => {
+  useGlobalStore.getState().setGameState({ gameInitialized: false });
+  useGameStore.getState().clearGame();
+});
+afterEach(() => vi.unstubAllGlobals());
 
 describe("useInit", () => {
-  beforeEach(() => {
-    capturedGameInitCallback = null;
-    mockSetGameState.mockReset();
-    mockSetupProxies.mockReset();
-    mockSetGameInitCallback.mockReset();
-    mockCleanup.mockReset();
-    mockGetInitializeState.mockReset();
-    mockPipelineInstall.mockReset();
-    mockPipelineSetReady.mockReset();
-    mockPipelineCleanup.mockReset();
-    mockProjectionBootstrap.mockReset();
-    mockProjectionBootstrap.mockReturnValue(true);
-    mockProjectionCleanup.mockReset();
-    mockInteractionInstall.mockReset();
-    mockInteractionCleanup.mockReset();
-  });
-
-  it("registers proxies and cleans them up on unmount", () => {
+  it("restores the original native packet callback on unmount", () => {
+    const engine = createNativeRuntime();
+    const original = engine.communication.parseJSON;
+    vi.stubGlobal("Engine", engine);
     const { unmount } = renderHook(() => useInit());
-
-    expect(mockSetupProxies).toHaveBeenCalledTimes(1);
-    expect(mockSetGameInitCallback).toHaveBeenCalledTimes(1);
-    expect(mockPipelineInstall).toHaveBeenCalledTimes(1);
-    expect(mockInteractionInstall).toHaveBeenCalledTimes(1);
-
+    expect(engine.communication.parseJSON).not.toBe(original);
+    expect(useGameStore.getState().game?.hero.name).toBe("Tester");
     unmount();
-
-    expect(mockCleanup).toHaveBeenCalledTimes(1);
-    expect(mockPipelineCleanup).toHaveBeenCalledTimes(1);
-    expect(mockProjectionCleanup).toHaveBeenCalledTimes(1);
-    expect(mockInteractionCleanup).toHaveBeenCalledTimes(1);
+    expect(engine.communication.parseJSON).toBe(original);
+    expect(useGameStore.getState().game).toBeNull();
   });
 
-  it("does not initialize the game before the client is ready", () => {
-    mockGetInitializeState.mockReturnValue(false);
+  it("waits for native readiness before publishing the initial snapshot", () => {
+    const engine = createNativeRuntime();
+    engine.interface.alreadyInitialised = false;
+    vi.stubGlobal("Engine", engine);
     renderHook(() => useInit());
-
-    expect(capturedGameInitCallback).not.toBeNull();
-    expect(capturedGameInitCallback?.()).toBe(false);
-    expect(mockSetGameState).not.toHaveBeenCalled();
-    expect(mockPipelineSetReady).not.toHaveBeenCalled();
-  });
-
-  it("initializes the game only once", () => {
-    mockGetInitializeState.mockReturnValue(true);
-    renderHook(() => useInit());
-
-    expect(capturedGameInitCallback).not.toBeNull();
-    expect(capturedGameInitCallback?.()).toBe(false);
-    expect(mockSetGameState).toHaveBeenCalledTimes(1);
-    expect(mockSetGameState).toHaveBeenCalledWith({
-      gameInitialized: true,
+    expect(useGlobalStore.getState().gameState.gameInitialized).toBe(false);
+    expect(useGameStore.getState().game).toBeNull();
+    act(() => {
+      engine.interface.alreadyInitialised = true;
+      engine.communication.parseJSON({});
     });
-    expect(mockPipelineSetReady).toHaveBeenCalledTimes(1);
-    expect(mockPipelineSetReady).toHaveBeenCalledWith(true);
-    expect(mockProjectionBootstrap).toHaveBeenCalledTimes(1);
+    expect(useGlobalStore.getState().gameState.gameInitialized).toBe(true);
+    expect(useGameStore.getState().game?.hero.name).toBe("Tester");
   });
 
-  it("reinitializes the runtime after the StrictMode cleanup cycle", () => {
-    mockGetInitializeState.mockReturnValue(true);
-
-    renderHook(() => useInit(), { wrapper: StrictMode });
-
-    expect(mockProjectionCleanup).toHaveBeenCalledOnce();
-    expect(mockProjectionBootstrap).toHaveBeenCalledTimes(2);
-    expect(mockPipelineSetReady).toHaveBeenCalledTimes(2);
-    expect(mockSetGameState).toHaveBeenCalledTimes(2);
-  });
-
-  it("keeps the pipeline paused when the initial snapshot fails", () => {
-    mockGetInitializeState.mockReturnValue(true);
-    mockProjectionBootstrap.mockReturnValue(false);
-
+  it("does not reread the initial snapshot on later packets", () => {
+    const engine = createNativeRuntime();
+    vi.stubGlobal("Engine", engine);
     renderHook(() => useInit());
+    engine.hero.d.nick = "Native value without a packet update";
+    act(() => {
+      engine.communication.parseJSON({});
+    });
+    expect(useGameStore.getState().game?.hero.name).toBe("Tester");
+  });
 
-    expect(mockProjectionBootstrap).toHaveBeenCalledOnce();
-    expect(mockSetGameState).not.toHaveBeenCalled();
-    expect(mockPipelineSetReady).not.toHaveBeenCalled();
+  it("reinitializes after the StrictMode cleanup cycle", async () => {
+    const engine = createNativeRuntime();
+    vi.stubGlobal("Engine", engine);
+    renderHook(() => useInit(), { wrapper: StrictMode });
+    expect(useGameStore.getState().game?.hero.name).toBe("Tester");
+    act(() => {
+      engine.communication.parseJSON({ h: { nick: "Updated" } });
+    });
+    await waitFor(() =>
+      expect(useGameStore.getState().game?.hero.name).toBe("Updated"),
+    );
+  });
+
+  it("retries when a ready client initially cannot supply its snapshot", () => {
+    const engine = createNativeRuntime();
+    vi.spyOn(engine.worldConfig, "getWorldName").mockImplementationOnce(() => {
+      throw new Error("Native world is not initialized yet");
+    });
+    vi.stubGlobal("Engine", engine);
+    renderHook(() => useInit());
+    expect(useGlobalStore.getState().gameState.gameInitialized).toBe(false);
+    expect(useGameStore.getState().game).toBeNull();
+    act(() => {
+      engine.communication.parseJSON({});
+    });
+    expect(useGlobalStore.getState().gameState.gameInitialized).toBe(true);
+    expect(useGameStore.getState().game?.world).toBe("pandora");
   });
 });

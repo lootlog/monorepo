@@ -68,16 +68,17 @@ export function StatisticsOverview({
         />
         <SectionCardContent>
           <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {[
-              { key: "current", value: data.comparison.currentKills },
-              { key: "previous", value: data.comparison.previousKills },
-              { key: "change", value: data.comparison.deltaKills },
-            ].map(({ key, value }) => (
+            {(
+              [
+                { key: "current", value: data.comparison.currentKills },
+                { key: "previous", value: data.comparison.previousKills },
+                { key: "change", value: data.comparison.deltaKills },
+              ] satisfies Array<{ key: keyof typeof ranges; value: number }>
+            ).map(({ key, value }) => (
               <div key={key}>
                 <dt className="text-xs text-muted-foreground">
                   {t(`statistics.${key}`)}
-                  {ranges[key as keyof typeof ranges] &&
-                    ` (${ranges[key as keyof typeof ranges]})`}
+                  {ranges[key] && ` (${ranges[key]})`}
                 </dt>
                 <dd className="text-xl font-semibold tabular-nums">
                   {value.toLocaleString("pl-PL")}

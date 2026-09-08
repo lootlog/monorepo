@@ -1,3 +1,4 @@
+import { isObjectRecord } from "@lootlog/schema/records";
 import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
 import { RedisService } from "#src/redis/redis.service";
 import type { DiscordEndpoint } from "./discord.types.js";
@@ -69,15 +70,11 @@ export class DiscordRateLimiterService {
       return null;
     }
 
-    const remaining =
-      typeof rateLimitData.remaining === "number"
-        ? rateLimitData.remaining
-        : null;
+    const remaining = rateLimitData.remaining ?? null;
 
     return {
       bucket: rateLimitData.bucket ?? null,
-      limit:
-        typeof rateLimitData.limit === "number" ? rateLimitData.limit : null,
+      limit: rateLimitData.limit ?? null,
       remaining,
       resetAt: rateLimitData.resetAt,
       retryAfter: rateLimitData.retryAfter,
@@ -250,11 +247,11 @@ export class DiscordRateLimiterService {
 }
 
 function isUserRateLimitData(value: unknown): value is UserRateLimitData {
-  if (typeof value !== "object" || value === null) {
+  if (!isObjectRecord(value)) {
     return false;
   }
 
-  const data = value as Partial<UserRateLimitData>;
+  const data = value;
   const isOptional = (field: unknown, type: "number" | "string"): boolean =>
     field === undefined || field === null || typeof field === type;
 

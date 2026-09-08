@@ -5,12 +5,18 @@ import { toast } from "sonner";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
-import { ItemImage } from "@lootlog/ui/components/item-image";
+import {
+  ItemImage,
+  resolveItemRarity,
+} from "@lootlog/ui/components/item-image";
 import { ItemTile } from "@/components/tiles";
 import { getUserNotificationsErrorMessage } from "@/features/user/notifications/utils/get-user-notifications-error-message";
 import { useQueryClient } from "@tanstack/react-query";
-import { useNotificationsUserControllerDeleteWatchedItem } from "@lootlog/client/main";
-import type { WatchedItemResponseDto } from "@lootlog/client/main";
+import {
+  useNotificationsUserControllerDeleteWatchedItem,
+  type WatchedItemResponseDto,
+} from "@lootlog/client/main";
+
 import { ItemRarity } from "@/lib/loots/loot-types";
 
 type WatchedItemCardProps = {
@@ -50,7 +56,7 @@ export const WatchedItemCard = ({
   };
 
   const snapshot = watchedItem.itemSnapshot;
-  const rarity = (snapshot?.rarity as ItemRarity | null) ?? ItemRarity.COMMON;
+  const rarity = resolveItemRarity(snapshot?.rarity);
   const apiRarity = rarity === ItemRarity.COMMON ? null : rarity;
   const displayName = snapshot?.name ?? watchedItem.itemName;
   const displayIcon = snapshot?.icon ?? null;

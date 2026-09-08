@@ -3,7 +3,7 @@ import { NOTIFICATIONS_DISPATCH_QUEUE } from "#src/notifications/jobs/dispatch-q
 import { NOTIFICATIONS_HISTORY_RETENTION_LIMIT } from "#src/notifications/jobs/history";
 import { Error as NotificationError } from "#src/notifications/error";
 import { makeNotificationContent } from "#src/notifications/content/notification-content.service";
-import type { JsonValue } from "#src/notifications/notification-database.types";
+
 import { makeNotificationDeliveryResult } from "#src/notifications/delivery/notification-delivery-result";
 import {
   makeNotificationEventStore,
@@ -137,10 +137,10 @@ export const notificationsServicesLive = Layer.effect(
               routingKey: RabbitRoutingKey.NOTIFICATIONS_DISCORD_SEND,
               content: new TextEncoder().encode(JSON.stringify(payload)),
             })
-            .pipe(Effect.asVoid) as Effect.Effect<void, unknown, never>,
+            .pipe(Effect.asVoid),
       },
       notificationScheduler,
-      (value) => content.parseAllowedMentions(value as JsonValue),
+      (value) => content.parseAllowedMentions(value),
     );
     const recurrence = makeNotificationJobRecurrence(
       {
@@ -215,7 +215,7 @@ export const notificationsServicesLive = Layer.effect(
               ...options,
               notificationRule: {
                 ...options.notificationRule,
-                filters: options.notificationRule.filters as JsonValue,
+                filters: options.notificationRule.filters,
               },
             }),
           createTestJob: notificationScheduler.create,
@@ -230,15 +230,9 @@ export const notificationsServicesLive = Layer.effect(
           database,
           {
             list: (discordId, userId) =>
-              userGuilds.getUserGuilds({ userId, discordId }).pipe(
-                Effect.map(
-                  (guilds) =>
-                    guilds as ReadonlyArray<{
-                      readonly id: string;
-                      readonly vanityUrl: string | null;
-                    }>,
-                ),
-              ),
+              userGuilds
+                .getUserGuilds({ userId, discordId })
+                .pipe(Effect.map((guilds) => guilds)),
           },
           {
             cancel: notificationScheduler.cancel,

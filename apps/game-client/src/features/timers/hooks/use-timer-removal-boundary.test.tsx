@@ -1,3 +1,4 @@
+import { createTimerFixture } from "../timer-fixtures";
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Timer } from "@/api/timers.api";
@@ -8,19 +9,13 @@ import {
 
 const NOW = new Date("2026-07-20T10:00:00.000Z").getTime();
 
-const createTimer = (overrides?: Partial<Timer>): Timer =>
-  ({
-    guildId: "guild-1",
-    timerKey: "timer-1",
-    world: "gefion",
-    npcId: 10,
-    minSpawnTime: new Date(NOW + 4_000).toISOString(),
-    maxSpawnTime: new Date(NOW + 5_000).toISOString(),
+const createTimer = (overrides: Partial<Timer> = {}) =>
+  createTimerFixture({
+    minSpawnTime: new Date(NOW + 4000).toISOString(),
+    maxSpawnTime: new Date(NOW + 5000).toISOString(),
     updatedAt: new Date(NOW).toISOString(),
-    wasReset: false,
-    npc: { id: 10, name: "Tanroth" },
     ...overrides,
-  }) as Timer;
+  });
 
 describe("useTimerRemovalBoundary", () => {
   beforeEach(() => {

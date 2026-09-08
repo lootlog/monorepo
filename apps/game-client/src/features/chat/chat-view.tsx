@@ -1,4 +1,4 @@
-import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import { DraggableWindow } from "@/components/draggable-window";
@@ -32,7 +32,7 @@ import { useVisibleLootlogGuilds } from "@/hooks/use-visible-lootlog-guilds";
 interface ChatViewProps {
   isOpen: boolean;
   selectedGuildId: string;
-  setSelectedGuildId: Dispatch<SetStateAction<string>>;
+  setSelectedGuildId: (guildId: string) => void;
   unreadCountByGuildId: ChatUnreadCountByGuildId;
 }
 

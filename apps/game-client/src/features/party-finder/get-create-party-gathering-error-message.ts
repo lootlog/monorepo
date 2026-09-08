@@ -1,34 +1,22 @@
 import { getFixedT } from "@/i18n/get-fixed-t";
-import { isApiError } from "@lootlog/client/transport";
+import { getApiErrorStringField, isApiError } from "@lootlog/client/transport";
 import { ActivePartyGatheringError } from "./active-party-gathering-error";
 
-export const getCreatePartyGatheringErrorMessage = (error: unknown): string => {
+export const getCreatePartyGatheringErrorMessage = (cause: unknown): string => {
   const t = getFixedT("partyFinder");
   const defaultMessage = t("errors.defaultCreate");
 
-  if (error instanceof ActivePartyGatheringError) {
+  if (cause instanceof ActivePartyGatheringError) {
     return t("errors.activeGatheringExists");
   }
 
-  if (!isApiError(error)) {
+  if (!isApiError(cause)) {
     return defaultMessage;
   }
 
-  const responseStatus = error.status;
-  const errorMessage =
-    typeof error.data === "object" &&
-    error.data !== null &&
-    "message" in error.data &&
-    typeof error.data.message === "string"
-      ? error.data.message
-      : undefined;
-  const errorCode =
-    typeof error.data === "object" &&
-    error.data !== null &&
-    "code" in error.data &&
-    typeof error.data.code === "string"
-      ? error.data.code
-      : undefined;
+  const responseStatus = cause.status;
+  const errorMessage = getApiErrorStringField(cause, "message");
+  const errorCode = getApiErrorStringField(cause, "code");
 
   if (responseStatus === 403) {
     return t("errors.forbidden");

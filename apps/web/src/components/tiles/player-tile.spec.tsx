@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 
+import { initializeTestTranslations } from "@/lib/testing/i18n";
 import {
   cleanup,
   fireEvent,
@@ -10,9 +11,7 @@ import {
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PlayerTile } from "./player-tile";
 
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
-}));
+await initializeTestTranslations();
 
 afterEach(() => {
   cleanup();
@@ -54,17 +53,17 @@ describe("PlayerTile", () => {
     );
     const trigger = container.firstElementChild;
 
-    expect(trigger).not.toBeNull();
+    if (!trigger) throw new Error("Missing player tile trigger");
 
-    fireEvent.pointerEnter(trigger as Element, { pointerType: "mouse" });
-    fireEvent.mouseEnter(trigger as Element);
-    fireEvent.mouseMove(trigger as Element);
+    fireEvent.pointerEnter(trigger, { pointerType: "mouse" });
+    fireEvent.mouseEnter(trigger);
+    fireEvent.mouseMove(trigger);
 
     const tooltip = await screen.findByRole("tooltip");
     expect(tooltip.textContent).toBe("Tester (123w)");
 
-    fireEvent.mouseLeave(trigger as Element);
-    fireEvent.mouseOut(trigger as Element, { relatedTarget: document.body });
+    fireEvent.mouseLeave(trigger);
+    fireEvent.mouseOut(trigger, { relatedTarget: document.body });
 
     await waitFor(() => {
       expect(screen.queryByRole("tooltip")).toBeNull();
@@ -93,13 +92,13 @@ describe("PlayerTile", () => {
       '[data-slot="tooltip-trigger"]',
     );
 
-    expect(tooltipTrigger).not.toBeNull();
+    if (!tooltipTrigger) throw new Error("Missing tooltip trigger");
 
-    fireEvent.pointerEnter(tooltipTrigger as Element, {
+    fireEvent.pointerEnter(tooltipTrigger, {
       pointerType: "mouse",
     });
-    fireEvent.mouseEnter(tooltipTrigger as Element);
-    fireEvent.mouseMove(tooltipTrigger as Element);
+    fireEvent.mouseEnter(tooltipTrigger);
+    fireEvent.mouseMove(tooltipTrigger);
 
     const tooltip = await screen.findByRole("tooltip");
     expect(tooltip.textContent).toBe("Tester (123w)");

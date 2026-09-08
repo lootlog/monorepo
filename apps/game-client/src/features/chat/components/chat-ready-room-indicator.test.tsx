@@ -1,8 +1,9 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import type { PartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createChatReadyRoom } from "../chat-test-fixtures";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
+import { configureApiClients } from "@lootlog/client/transport";
 import { ChatReadyRoomIndicator } from "./chat-ready-room-indicator";
 
 beforeEach(() =>
@@ -11,77 +12,30 @@ beforeEach(() =>
   }),
 );
 
-const withdraw = vi.fn();
+const fetchRequest = vi.fn<typeof fetch>();
+let restoreApi: () => void;
+afterEach(() => {
+  restoreApi();
+  usePartyFinderStore.getState().clearReadyRooms();
+});
 
-vi.mock("@/lib/game", () => ({
-  Game: {
-    getAccountId: () => "account-1",
-    hero: { id: 101 },
-  },
-}));
-
-vi.mock("@lootlog/client/main", async () => ({
-  ...(await vi.importActual("@lootlog/client/main")),
-  partyReadyRoomControllerWithdraw: (...args: unknown[]) => withdraw(...args),
-}));
-
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string, values?: { organizer?: string }) =>
-      key === "partyGathering.registration.organizer"
-        ? `Zapisano do grupy: ${values?.organizer}`
-        : key === "states.partyPresence.OUTSIDE"
-          ? "poza grupą"
-          : "Wycofaj zgłoszenie",
-  }),
-}));
-
-const projection: PartyReadyRoomProjection = {
-  schemaVersion: 3,
-  notificationId: "room-1",
-  organizerDiscordId: "organizer",
-  organizerCharacter: {
-    accountId: "organizer-account",
-    characterId: "organizer-character",
-    icon: "organizer.gif",
-    lvl: 200,
-    nick: "Leader",
-    prof: "w",
-  },
-  guildIds: ["guild-1"],
-  world: "Fobos",
-  status: "ACTIVE",
-  revision: 2,
-  createdAt: "2026-07-21T10:00:00.000Z",
-  updatedAt: "2026-07-21T10:00:00.000Z",
-  expiresAt: "2099-07-21T10:30:00.000Z",
-  viewer: "PARTICIPANT",
-  participants: {
-    "participant-1": {
-      participantId: "participant-1",
-      discordId: "participant",
-      character: {
-        accountId: "account-1",
-        characterId: "101",
-        icon: "hero.gif",
-        lvl: 190,
-        nick: "Hero",
-        prof: "m",
-      },
-      partyPresence: "OUTSIDE",
-      createdAt: "2026-07-21T10:00:00.000Z",
-      updatedAt: "2026-07-21T10:00:00.000Z",
-    },
-  },
-};
+const projection = createChatReadyRoom();
 
 describe("ChatReadyRoomIndicator", () => {
   beforeEach(() => {
-    withdraw.mockReset().mockResolvedValue({
-      schemaVersion: 3,
-      type: "REMOVE",
-      notificationId: "room-1",
-      revision: 3,
+    fetchRequest.mockReset().mockResolvedValue(
+      Response.json({
+        schemaVersion: 3,
+        type: "REMOVE",
+        notificationId: "room-1",
+        revision: 3,
+      }),
+    );
+    restoreApi = configureApiClients({
+      main: {
+        baseUrl: "https://api.example.test",
+        fetch: fetchRequest,
+      },
     });
     usePartyFinderStore.getState().clearReadyRooms();
     usePartyFinderStore.getState().mergeProjection(projection);
@@ -96,9 +50,11 @@ describe("ChatReadyRoomIndicator", () => {
     fireEvent.click(screen.getByRole("button", { name: "Wycofaj zgłoszenie" }));
 
     await waitFor(() => {
-      expect(withdraw).toHaveBeenCalledWith(
-        { notificationId: "room-1" },
-        { participantId: "participant-1" },
+      expect(fetchRequest).toHaveBeenCalledOnce();
+      const [url, options] = fetchRequest.mock.calls[0] ?? [];
+      expect(String(url)).toContain("room-1");
+      expect(options?.body).toBe(
+        JSON.stringify({ participantId: "participant-1" }),
       );
       expect(
         screen.queryByText("Zapisano do grupy: Leader"),

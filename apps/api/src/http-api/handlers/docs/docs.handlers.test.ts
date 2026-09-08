@@ -1,3 +1,7 @@
+import {
+  createGuildFixture,
+  createMemberFixture,
+} from "../../../../test/organization-fixtures.js";
 import { describe, expect, it } from "bun:test";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
@@ -19,8 +23,8 @@ import {
 const caller: AuthorizedDocsCaller = {
   discordId: "discord-1",
   userId: "user-1",
-  guild: { id: "guild-a" } as AuthorizedDocsCaller["guild"],
-  member: { userId: "user-1" } as AuthorizedDocsCaller["member"],
+  guild: createGuildFixture({ id: "guild-a" }),
+  member: createMemberFixture({ userId: "user-1", guildId: "guild-a" }),
   accessPolicy: createAccessPolicy({
     capabilities: [
       Permission.LOOTLOG_DOCS_READ,
@@ -82,17 +86,19 @@ const services = (
 describe("Docs HttpApi handlers", () => {
   it("encodes service timestamps before generated HTTP validation", async () => {
     const createdAt = new Date("2026-09-01T10:00:00.000Z");
-    const service = new Proxy(
-      {},
-      {
-        get: () => () =>
-          Effect.succeed({
-            ...document,
-            createdAt,
-            updatedAt: createdAt,
-          }),
-      },
-    ) as DocsService;
+    const service: DocsService = {
+      createDocument: () =>
+        Effect.succeed({ ...document, createdAt, updatedAt: createdAt }),
+      listDocuments: unexpected,
+      getDocument: unexpected,
+      updateDocument: unexpected,
+      listHistory: unexpected,
+      getHistorySnapshot: unexpected,
+      listTrash: unexpected,
+      moveDocumentToTrash: unexpected,
+      restoreDocument: unexpected,
+      purgeDocument: unexpected,
+    };
 
     const result = await Effect.runPromise(
       DocsData.makeService(service).create(caller, { title: "Raid notes" }),

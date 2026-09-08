@@ -20,6 +20,7 @@ import { GuildDocEditorEditablePlugin } from "./guild-doc-editor-editable-plugin
 import { GuildDocCodeHighlightPlugin } from "./guild-doc-code-highlight-plugin";
 import {
   type GuildDocEditorContent,
+  guildDocContent,
   normalizeGuildDocEditorContent,
 } from "./guild-doc-editor-content";
 import { guildDocEditorNodes } from "./guild-doc-editor-nodes";
@@ -75,15 +76,13 @@ export const GuildDocEditor = ({
         {editable && <GuildDocEditorToolbar />}
         <div className="relative min-h-[420px] flex-1">
           <RichTextPlugin
-            contentEditable={
-              <ContentEditable
-                className={cn(
-                  "absolute inset-0 overflow-auto px-4 py-4 text-sm outline-none",
-                  "selection:bg-primary/20",
-                  editable ? "cursor-text" : "cursor-default",
-                )}
-              />
-            }
+            contentEditable=<ContentEditable
+              className={cn(
+                "absolute inset-0 overflow-auto px-4 py-4 text-sm outline-none",
+                "selection:bg-primary/20",
+                editable ? "cursor-text" : "cursor-default",
+              )}
+            />
             placeholder={null}
             ErrorBoundary={LexicalErrorBoundary}
           />
@@ -107,9 +106,7 @@ export const GuildDocEditor = ({
                   return;
                 }
 
-                onChange(
-                  editorState.toJSON() as unknown as GuildDocEditorContent,
-                );
+                onChange(guildDocContent.parse(editorState.toJSON()));
               }}
             />
           )}

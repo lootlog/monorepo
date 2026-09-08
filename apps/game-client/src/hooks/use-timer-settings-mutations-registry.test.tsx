@@ -1,41 +1,51 @@
-import { renderHook } from "@testing-library/react";
-import { StrictMode, type ReactNode } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { act, renderHook, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { configureApiClients } from "@lootlog/client/transport";
+import { StrictMode, type PropsWithChildren } from "react";
+import { afterEach, expect, it, onTestFinished, vi } from "vitest";
 import {
   debouncedSyncGlobalSettings,
   disposeTimerSettingsSync,
 } from "@/store/timer-settings-sync";
 import { useTimerSettingsMutationsRegistry } from "./use-timer-settings-mutations-registry";
 
-const mocks = vi.hoisted(() => ({
-  mutateGlobalSettings: vi.fn(),
-}));
-
-vi.mock("./api/use-timer-settings", () => ({
-  useUpdateTimerSettings: () => ({ mutate: mocks.mutateGlobalSettings }),
-}));
-
-const StrictModeWrapper = ({ children }: { children: ReactNode }) => (
-  <StrictMode>{children}</StrictMode>
-);
-
-describe("useTimerSettingsMutationsRegistry", () => {
-  afterEach(() => {
-    disposeTimerSettingsSync();
-    vi.useRealTimers();
-    vi.clearAllMocks();
+afterEach(() => {
+  disposeTimerSettingsSync();
+  vi.useRealTimers();
+});
+it("registers real HTTP synchronization in StrictMode and cancels pending work on unmount", async () => {
+  const requests: Request[] = [];
+  const restore = configureApiClients({
+    main: {
+      baseUrl: "https://api.example.test",
+      fetch: (input, init) => {
+        requests.push(new Request(input, init));
+        return Promise.resolve(Response.json({}));
+      },
+    },
   });
-
-  it("does not deliver a pending mutation after StrictMode unmount", () => {
-    vi.useFakeTimers();
-    const { unmount } = renderHook(useTimerSettingsMutationsRegistry, {
-      wrapper: StrictModeWrapper,
-    });
-
-    debouncedSyncGlobalSettings({ syncEnabled: true });
-    unmount();
-    vi.advanceTimersByTime(500);
-
-    expect(mocks.mutateGlobalSettings).not.toHaveBeenCalled();
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: Infinity } },
   });
+  const Wrapper = ({ children }: PropsWithChildren) => (
+    <StrictMode>
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    </StrictMode>
+  );
+  const view = renderHook(useTimerSettingsMutationsRegistry, {
+    wrapper: Wrapper,
+  });
+  onTestFinished(() => {
+    view.unmount();
+    queryClient.clear();
+    restore();
+  });
+  act(() => debouncedSyncGlobalSettings({ syncEnabled: true }));
+  await waitFor(() => expect(requests).toHaveLength(1));
+  expect(await requests[0]?.json()).toEqual({ syncEnabled: true });
+  vi.useFakeTimers();
+  act(() => debouncedSyncGlobalSettings({ syncEnabled: false }));
+  view.unmount();
+  await act(() => vi.advanceTimersByTimeAsync(500));
+  expect(requests).toHaveLength(1);
 });

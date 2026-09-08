@@ -1,4 +1,4 @@
-import type { GameEvent } from "@lootlog/margonem/game-events";
+import { createBattleWarrior } from "@/processors/battle-test-fixtures";
 import { describe, expect, it } from "vitest";
 import { MAX_BATTLE_CAPTURE_EVENTS, useBattleStore } from "./battle.store";
 
@@ -9,7 +9,7 @@ describe("battle capture accumulator", () => {
     const unsubscribe = useBattleStore.subscribe(() => {
       publications += 1;
     });
-    const event = { f: { m: ["turn"] } } as GameEvent;
+    const event = { f: { m: ["turn"] } };
 
     for (let index = 0; index < MAX_BATTLE_CAPTURE_EVENTS; index += 1) {
       useBattleStore.getState().addEvent(event);
@@ -24,7 +24,7 @@ describe("battle capture accumulator", () => {
 
   it("discards the whole capture after the event limit overflows", () => {
     useBattleStore.getState().clearEvents();
-    const event = { f: { m: ["turn"] } } as GameEvent;
+    const event = { f: { m: ["turn"] } };
 
     for (let index = 0; index <= MAX_BATTLE_CAPTURE_EVENTS; index += 1) {
       useBattleStore.getState().addEvent(event);
@@ -43,7 +43,7 @@ describe("battle capture accumulator", () => {
 
     useBattleStore.getState().addEvent({
       f: { m: ["x".repeat(2_700_000)] },
-    } as GameEvent);
+    });
 
     expect(useBattleStore.getState().getCaptureSnapshot()).toEqual(
       expect.objectContaining({
@@ -57,7 +57,7 @@ describe("battle capture accumulator", () => {
     useBattleStore.getState().clearEvents();
     useBattleStore.getState().addEvent({
       f: { m: ["x".repeat(2_700_000)] },
-    } as GameEvent);
+    });
 
     useBattleStore.getState().clearEvents();
 
@@ -71,8 +71,8 @@ describe("battle capture accumulator", () => {
 
   it("returns an immutable capture snapshot while later packets arrive", () => {
     useBattleStore.getState().clearEvents();
-    const firstEvent = { f: { m: ["first"] } } as GameEvent;
-    const laterEvent = { f: { m: ["later"] } } as GameEvent;
+    const firstEvent = { f: { m: ["first"] } };
+    const laterEvent = { f: { m: ["later"] } };
     useBattleStore.getState().addEvent(firstEvent);
 
     const snapshot = useBattleStore.getState().getCaptureSnapshot();
@@ -95,7 +95,7 @@ describe("battle capture accumulator", () => {
     useBattleStore.getState().applyBatch({
       battleState: "in-battle",
       battleWarriors: {
-        "1": { id: 1, name: "warrior" } as never,
+        "1": createBattleWarrior(1, { name: "warrior" }),
       },
       lastBattleHash: "battle",
       lastKillHash: "kill",

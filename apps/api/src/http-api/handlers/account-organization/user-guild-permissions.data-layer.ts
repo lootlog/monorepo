@@ -21,9 +21,9 @@ export interface UserGuildPermissionsCache {
     key: string,
     schema: S,
   ) => Effect.Effect<S["Type"] | null, unknown>;
-  readonly setJson: (
+  readonly setJson: <Value>(
     key: string,
-    value: unknown,
+    value: Value,
     ttlSeconds: number,
   ) => Effect.Effect<unknown, unknown>;
 }

@@ -22,7 +22,7 @@ export function StatsOverviewCard(props: Props) {
   if (props.loading)
     return (
       <SectionCard className={className}>
-        <SectionCardHeader title={<Skeleton className="h-4 w-24" />} />
+        <SectionCardHeader title=<Skeleton className="h-4 w-24" /> />
         <SectionCardContent>
           <Skeleton className="h-6 w-10" />
         </SectionCardContent>

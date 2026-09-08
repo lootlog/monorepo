@@ -1,7 +1,7 @@
 import "@/index.css";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { createRef } from "react";
+import { createRef, type ComponentProps } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { Collapsible, CollapsibleContent } from "./collapsible";
 import { Slider } from "./slider";
@@ -12,7 +12,8 @@ import { ToggleGroup, ToggleGroupItem } from "./toggle-group";
 describe("Base UI control adapters", () => {
   it("preserves the switch checked contract", async () => {
     const user = userEvent.setup();
-    const onCheckedChange = vi.fn();
+    const onCheckedChange =
+      vi.fn<NonNullable<ComponentProps<typeof Switch>["onCheckedChange"]>>();
 
     render(<Switch checked onCheckedChange={onCheckedChange} />);
 
@@ -41,7 +42,8 @@ describe("Base UI control adapters", () => {
 
   it("marks the selected tab and reports tab changes", async () => {
     const user = userEvent.setup();
-    const onValueChange = vi.fn();
+    const onValueChange =
+      vi.fn<NonNullable<ComponentProps<typeof Tabs>["onValueChange"]>>();
 
     render(
       <Tabs value="first" onValueChange={onValueChange}>
@@ -63,7 +65,7 @@ describe("Base UI control adapters", () => {
 
   it("keeps the single-value toggle-group interface", async () => {
     const user = userEvent.setup();
-    const onValueChange = vi.fn();
+    const onValueChange = vi.fn<(value: string) => void>();
 
     render(
       <ToggleGroup type="single" value="row" onValueChange={onValueChange}>
@@ -104,26 +106,20 @@ describe("Base UI control adapters", () => {
   });
 
   it("moves one indicator between unequal single-value segments", async () => {
-    const segmentGeometry = {
-      Row: { left: 2, width: 45 },
-      Column: { left: 47, width: 70 },
-      Stack: { left: 117, width: 58 },
-    };
+    const segmentGeometry = new Map([
+      ["Row", { left: 2, width: 45 }],
+      ["Column", { left: 47, width: 70 }],
+      ["Stack", { left: 117, width: 58 }],
+    ]);
     const offsetLeft = vi
       .spyOn(HTMLElement.prototype, "offsetLeft", "get")
       .mockImplementation(function getOffsetLeft(this: HTMLElement) {
-        return (
-          segmentGeometry[this.textContent as keyof typeof segmentGeometry]
-            ?.left ?? 0
-        );
+        return segmentGeometry.get(this.textContent ?? "")?.left ?? 0;
       });
     const offsetWidth = vi
       .spyOn(HTMLElement.prototype, "offsetWidth", "get")
       .mockImplementation(function getOffsetWidth(this: HTMLElement) {
-        return (
-          segmentGeometry[this.textContent as keyof typeof segmentGeometry]
-            ?.width ?? 0
-        );
+        return segmentGeometry.get(this.textContent ?? "")?.width ?? 0;
       });
 
     const { container, rerender } = render(
@@ -248,7 +244,7 @@ describe("Base UI control adapters", () => {
 
   it("keeps keyboard selection for segmented controls", async () => {
     const user = userEvent.setup();
-    const onValueChange = vi.fn();
+    const onValueChange = vi.fn<(value: string) => void>();
 
     render(
       <ToggleGroup type="single" value="row" onValueChange={onValueChange}>
@@ -265,8 +261,10 @@ describe("Base UI control adapters", () => {
   });
 
   it("keeps the array-valued slider interface and accessible name", () => {
-    const onValueChange = vi.fn();
-    const onValueCommit = vi.fn();
+    const onValueChange =
+      vi.fn<NonNullable<ComponentProps<typeof Slider>["onValueChange"]>>();
+    const onValueCommit =
+      vi.fn<NonNullable<ComponentProps<typeof Slider>["onValueCommit"]>>();
 
     render(
       <Slider
@@ -328,8 +326,10 @@ describe("Base UI control adapters", () => {
   });
 
   it("keeps the array-valued slider interface for pointer changes", () => {
-    const onValueChange = vi.fn();
-    const onValueCommit = vi.fn();
+    const onValueChange =
+      vi.fn<NonNullable<ComponentProps<typeof Slider>["onValueChange"]>>();
+    const onValueCommit =
+      vi.fn<NonNullable<ComponentProps<typeof Slider>["onValueCommit"]>>();
 
     const { container } = render(
       <Slider
@@ -349,21 +349,21 @@ describe("Base UI control adapters", () => {
       throw new Error("Slider control was not rendered");
     }
 
-    sliderControl.getBoundingClientRect = () =>
-      ({
-        bottom: 8,
-        height: 8,
-        left: 0,
-        right: 100,
-        top: 0,
-        width: 100,
-        x: 0,
-        y: 0,
-        toJSON: () => ({}),
-      }) as DOMRect;
-    sliderControl.setPointerCapture = vi.fn();
-    sliderControl.hasPointerCapture = vi.fn(() => true);
-    sliderControl.releasePointerCapture = vi.fn();
+    sliderControl.getBoundingClientRect = () => ({
+      bottom: 8,
+      height: 8,
+      left: 0,
+      right: 100,
+      top: 0,
+      width: 100,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
+    sliderControl.setPointerCapture = vi.fn<HTMLElement["setPointerCapture"]>();
+    sliderControl.hasPointerCapture = vi.fn<() => boolean>(() => true);
+    sliderControl.releasePointerCapture =
+      vi.fn<HTMLElement["releasePointerCapture"]>();
 
     fireEvent.pointerDown(sliderControl, {
       button: 0,
@@ -406,7 +406,8 @@ describe("Base UI control adapters", () => {
       name: "Volume",
     }).parentElement;
 
-    fireEvent.pointerDown(sliderThumb as HTMLElement, {
+    if (!sliderThumb) throw new Error("Slider thumb was not rendered");
+    fireEvent.pointerDown(sliderThumb, {
       button: 0,
       clientX: 25,
       pointerId: 2,

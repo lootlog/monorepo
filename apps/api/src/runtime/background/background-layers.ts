@@ -8,25 +8,13 @@ import {
 import {
   decodeRabbitEventJson,
   type CanonicalRabbitEventRoutingKey,
-  type GuildCreated,
-  type GuildDeleted,
-  type GuildRoleChanged,
-  type GuildRoleDeleted,
-  type GuildUpdated,
+  type CanonicalRabbitEvent,
 } from "@lootlog/protocol/rabbit/events";
 import {
   RabbitRoutingKey,
   type RabbitRoutingKeyName,
 } from "@lootlog/protocol/rabbit/topology";
-import type {
-  DiscordGuildChannelDeletedEvent,
-  DiscordGuildChannelUpsertedEvent,
-  DiscordGuildChannelsSyncFailedEvent,
-  DiscordGuildChannelsSyncedEvent,
-  DiscordGuildSyncStateUpdatedEvent,
-  DiscordNotificationDeliveryResultEvent,
-  LootCreatedNotificationEventV2,
-} from "@lootlog/schema/notifications";
+
 import { Worker } from "bullmq";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { Queue as ApiQueue } from "#src/rabbitmq/queue";
@@ -55,31 +43,6 @@ import { NotificationsServices } from "#src/runtime/features/notifications";
 import { GuildDiscordSync } from "#src/runtime/features/organizations";
 import { MemberServices } from "#src/runtime/features/members";
 
-interface PresenceCoveragePayload {
-  readonly guildId: string;
-  readonly mapName: string;
-  readonly discordId: string;
-  readonly hasPlayer: boolean;
-  readonly isAfk?: boolean;
-}
-
-interface TimerUpdatedPayload {
-  readonly guildId: string;
-  readonly world: string;
-  readonly npcId: number;
-  readonly timerKey: string;
-  readonly minSpawnTime: string;
-  readonly maxSpawnTime: string;
-  readonly npc?: { readonly name?: string } | null;
-}
-
-interface TimerDeletedPayload {
-  readonly guildId: string;
-  readonly world: string;
-  readonly timerKey: string;
-  readonly npcId?: number;
-}
-
 const rabbitRetryPolicy = (
   retryRoutingKey: RabbitRoutingKeyName,
   deadLetterRoutingKey: RabbitRoutingKeyName,
@@ -99,8 +62,8 @@ export const RabbitConsumers = Layer.effectDiscard(
     const database = yield* ApiDatabase;
     const { dispatchLootPublications } = yield* RecordsServices;
     yield* dispatchLootPublications().pipe(
-      Effect.catch((cause) =>
-        Effect.logError("Loot publication dispatch failed", cause),
+      Effect.catch((error) =>
+        Effect.logError("Loot publication dispatch failed", error),
       ),
       Effect.repeat(Schedule.spaced("1 second")),
       Effect.forkScoped,
@@ -129,11 +92,11 @@ export const RabbitConsumers = Layer.effectDiscard(
       logger: applicationLogger,
     });
 
-    const consume = <Payload>(
+    const consume = <Key extends CanonicalRabbitEventRoutingKey>(
       queue: string,
-      routingKey: CanonicalRabbitEventRoutingKey,
+      routingKey: Key,
       handler: (
-        payload: Payload,
+        payload: CanonicalRabbitEvent<Key>,
         delivery: RabbitDelivery,
       ) => Effect.Effect<unknown, unknown> | Promise<void> | void,
       failurePolicy: FailurePolicy = { strategy: "nack" },
@@ -142,10 +105,7 @@ export const RabbitConsumers = Layer.effectDiscard(
         rabbit.consume({ queue, failurePolicy }, (delivery) =>
           Effect.try({
             try: () =>
-              decodeRabbitEventJson(
-                routingKey,
-                decodeRabbitText(delivery),
-              ) as Payload,
+              decodeRabbitEventJson(routingKey, decodeRabbitText(delivery)),
             catch: (cause) => cause,
           }).pipe(
             Effect.flatMap((payload) => {
@@ -189,70 +149,70 @@ export const RabbitConsumers = Layer.effectDiscard(
       ),
     } as const;
 
-    yield* consume<GuildCreated>(
+    yield* consume(
       ApiQueue.GUILDS_CREATE,
       RabbitRoutingKey.GUILDS_CREATE,
       (data) => guildLifecycle.createGuild(data),
       retry.guildCreate,
     );
-    yield* consume<GuildUpdated>(
+    yield* consume(
       ApiQueue.GUILDS_UPDATE,
       RabbitRoutingKey.GUILDS_UPDATE,
       (data) => guildLifecycle.updateGuild(data),
       retry.guildUpdate,
     );
-    yield* consume<GuildDeleted>(
+    yield* consume(
       ApiQueue.GUILDS_DELETE,
       RabbitRoutingKey.GUILDS_DELETE,
       (data) => guildLifecycle.deleteGuild(data),
       retry.guildDelete,
     );
-    yield* consume<GuildRoleChanged>(
+    yield* consume(
       ApiQueue.GUILDS_CREATE_ROLE,
       RabbitRoutingKey.GUILDS_CREATE_ROLE,
       (data) => guildLifecycle.upsertRole(data),
       retry.roleCreate,
     );
-    yield* consume<GuildRoleChanged>(
+    yield* consume(
       ApiQueue.GUILDS_UPDATE_ROLE,
       RabbitRoutingKey.GUILDS_UPDATE_ROLE,
       (data) => guildLifecycle.upsertRole(data),
       retry.roleUpdate,
     );
-    yield* consume<GuildRoleDeleted>(
+    yield* consume(
       ApiQueue.GUILDS_DELETE_ROLE,
       RabbitRoutingKey.GUILDS_DELETE_ROLE,
       (data) => guildLifecycle.deleteRole(data),
       retry.roleDelete,
     );
 
-    yield* consume<DiscordGuildChannelsSyncedEvent>(
+    yield* consume(
       "backend-discord-guild-channels-synced",
       RabbitRoutingKey.DISCORD_GUILD_CHANNELS_SYNCED,
       (data) => guildSync.handleGuildChannelsSynced(data),
     );
-    yield* consume<DiscordGuildChannelUpsertedEvent>(
+    yield* consume(
       "backend-discord-guild-channel-upserted",
       RabbitRoutingKey.DISCORD_GUILD_CHANNEL_UPSERTED,
       (data) => guildSync.handleGuildChannelUpserted(data),
     );
-    yield* consume<DiscordGuildChannelDeletedEvent>(
+    yield* consume(
       "backend-discord-guild-channel-deleted",
       RabbitRoutingKey.DISCORD_GUILD_CHANNEL_DELETED,
       (data) => guildSync.handleGuildChannelDeleted(data),
     );
-    yield* consume<DiscordGuildChannelsSyncFailedEvent>(
+    yield* consume(
       "backend-discord-guild-channels-sync-failed",
       RabbitRoutingKey.DISCORD_GUILD_CHANNELS_SYNC_FAILED,
       (data) => guildSync.handleGuildChannelsSyncFailed(data),
     );
-    yield* consume<DiscordGuildSyncStateUpdatedEvent>(
+    yield* consume(
       "backend-discord-guild-sync-state-updated",
       RabbitRoutingKey.DISCORD_GUILD_SYNC_STATE_UPDATED,
       (data) => guildSync.handleGuildSyncStateUpdated(data),
     );
 
-    yield* consume<PresenceCoveragePayload>(
+    yield* consume(
       ApiQueue.PRESENCE_COVERAGE_CHECK,
       RabbitRoutingKey.PRESENCE_COVERAGE_CHECK,
       ({ guildId, mapName, discordId, hasPlayer, isAfk }) =>
@@ -266,17 +226,17 @@ export const RabbitConsumers = Layer.effectDiscard(
       { strategy: "requeue" },
     );
 
-    yield* consume<TimerUpdatedPayload>(
+    yield* consume(
       "backend-notifications-timer-updated",
       RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
       (data) => notificationEvents.handleTimerUpdated(data),
     );
-    yield* consume<TimerDeletedPayload>(
+    yield* consume(
       "backend-notifications-timer-deleted",
       RabbitRoutingKey.NOTIFICATIONS_TIMER_DELETED,
       (data) => notificationEvents.handleTimerDeleted(data),
     );
-    yield* consume<LootCreatedNotificationEventV2>(
+    yield* consume(
       "backend-notifications-loot-created",
       RabbitRoutingKey.NOTIFICATIONS_LOOT_CREATED,
       (data) =>
@@ -285,12 +245,12 @@ export const RabbitConsumers = Layer.effectDiscard(
           .pipe(Effect.tapError(() => Effect.sleep("1 second"))),
       { strategy: "requeue" },
     );
-    yield* consume<DiscordNotificationDeliveryResultEvent>(
+    yield* consume(
       "backend-notifications-delivery-result",
       RabbitRoutingKey.NOTIFICATIONS_DELIVERY_RESULT,
       (data) => notificationEvents.handleDeliveryResult(data),
     );
-    yield* consume<DiscordGuildChannelDeletedEvent>(
+    yield* consume(
       "backend-notifications-discord-guild-channel-deleted",
       RabbitRoutingKey.DISCORD_GUILD_CHANNEL_DELETED,
       (data) => notificationEvents.handleDiscordGuildChannelDeleted(data),

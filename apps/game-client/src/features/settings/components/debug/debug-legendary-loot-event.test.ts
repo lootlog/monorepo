@@ -1,5 +1,13 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { CreateLootOptions } from "@/api/loot.api";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+  onTestFinished,
+} from "vitest";
+import { configureApiClients } from "@lootlog/client/transport";
 import { EventDispatcher } from "@/lib/event-dispatcher";
 import type { RuntimeGameSnapshot } from "@/lib/margonem-runtime/runtime.types";
 import { useBattleStore } from "@/store/game-store/battle.store";
@@ -8,13 +16,7 @@ import { useNpcsStore } from "@/store/npcs.store";
 import { useOthersStore } from "@/store/others.store";
 import { createDebugLegendaryLootEvent } from "./debug-legendary-loot-event";
 
-const { post } = vi.hoisted(() => ({
-  post: vi.fn<(path: string, body: unknown) => Promise<unknown>>(),
-}));
-
-vi.mock("@lootlog/client/transport", () => ({
-  createApiClient: () => ({ post }),
-}));
+const requests: Request[] = [];
 
 const game = {
   hero: {
@@ -35,18 +37,22 @@ const game = {
 } satisfies RuntimeGameSnapshot;
 
 const lootRequests = () =>
-  post.mock.calls.flatMap(([path, body]) =>
-    path === "/loots" ? [body as CreateLootOptions] : [],
-  );
+  requests.filter((request) => new URL(request.url).pathname === "/loots");
 
 describe("debug legendary loot event", () => {
   beforeEach(() => {
-    post.mockReset();
-    post.mockResolvedValue({
-      id: 999,
-      submittedGuilds: [],
-      rejectedGuilds: [],
-    });
+    requests.length = 0;
+    const fetch: typeof globalThis.fetch = (input, init) => {
+      requests.push(new Request(input, init));
+      return Promise.resolve(
+        Response.json({ id: 999, submittedGuilds: [], rejectedGuilds: [] }),
+      );
+    };
+    onTestFinished(
+      configureApiClients({
+        main: { baseUrl: "https://api.example.test", fetch },
+      }),
+    );
     useBattleStore.getState().clearEvents();
     useBattleStore.setState({
       battleState: "idle",
@@ -70,9 +76,13 @@ describe("debug legendary loot event", () => {
   });
 
   afterEach(async () => {
-    await vi.waitFor(() =>
-      expect(useBattleStore.getState().battleState).toBe("idle"),
-    );
+    await vi.waitFor(() => {
+      if (useBattleStore.getState().battleState !== "idle") {
+        throw new Error(
+          "Debug battle finalization did not finish before cleanup",
+        );
+      }
+    });
   });
 
   it("composes a legendary elite II request with the live map population", async () => {
@@ -80,7 +90,7 @@ describe("debug legendary loot event", () => {
     dispatcher.handleEvent(createDebugLegendaryLootEvent(game));
 
     await vi.waitFor(() => expect(lootRequests()).toHaveLength(1));
-    expect(lootRequests()[0]).toMatchObject({
+    expect(await lootRequests()[0].json()).toMatchObject({
       world: "pandora",
       location: "Ithan",
       source: "FIGHT",
@@ -130,7 +140,9 @@ describe("debug legendary loot event", () => {
     dispatcher.handleEvent(createDebugLegendaryLootEvent(game));
 
     await vi.waitFor(() => expect(lootRequests()).toHaveLength(2));
-    const [first, second] = lootRequests();
+    const [first, second] = await Promise.all(
+      lootRequests().map((request) => request.json()),
+    );
     expect(first?.loots[0]?.hid).toEqual(expect.any(String));
     expect(second?.loots[0]?.hid).toEqual(expect.any(String));
     expect(first?.loots[0]?.hid).not.toBe(second?.loots[0]?.hid);
@@ -141,6 +153,8 @@ describe("debug legendary loot event", () => {
     new EventDispatcher().handleEvent(createDebugLegendaryLootEvent(game));
 
     await vi.waitFor(() => expect(lootRequests()).toHaveLength(1));
-    expect(lootRequests()[0]).not.toHaveProperty("mapPlayersSnapshot");
+    expect(await lootRequests()[0].json()).not.toHaveProperty(
+      "mapPlayersSnapshot",
+    );
   });
 });

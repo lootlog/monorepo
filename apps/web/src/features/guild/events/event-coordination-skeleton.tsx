@@ -8,14 +8,14 @@ export const EventCoordinationSkeleton = () => {
   return (
     <div className="flex flex-col gap-4 px-3 py-3">
       <PageHeader
-        title={<Skeleton className="h-5 w-40" />}
-        description={<Skeleton className="h-3 w-56 max-w-full" />}
+        title=<Skeleton className="h-5 w-40" />
+        description=<Skeleton className="h-3 w-56 max-w-full" />
       />
 
       <div className="flex flex-col gap-3">
         {Array.from({ length: 5 }).map((_, index) => (
           <SectionCard key={index} className="border-border bg-card ">
-            <SectionCardHeader title={<Skeleton className="h-4 w-32" />} />
+            <SectionCardHeader title=<Skeleton className="h-4 w-32" /> />
             <SectionCardContent>
               <div className="flex items-center gap-3">
                 <Skeleton className="h-10 w-10 shrink-0 rounded-lg" />

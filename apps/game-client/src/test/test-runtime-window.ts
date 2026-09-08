@@ -1,20 +1,21 @@
+type TestRuntimeEngine = {
+  [key: string]: unknown;
+  communication?: Record<string, unknown>;
+  hero?: { d: { id: number } };
+};
+
 export type TestRuntimeWindow = Window & {
   API?: {
-    addCallbackToEvent: (...args: never[]) => unknown;
-    removeCallbackFromEvent: (...args: never[]) => unknown;
+    addCallbackToEvent: (...args: never[]) => void;
+    removeCallbackFromEvent: (...args: never[]) => void;
   };
-  Engine?: {
-    [key: string]: unknown;
-    communication?: Record<string, unknown>;
-    hero?: { d: { id: number } };
-  };
+  Engine?: TestRuntimeEngine;
   _g?: (command: string, ...args: unknown[]) => unknown;
   getCookie?: (name: string) => string | null | undefined;
   message?: (text: string) => void;
 };
 
-export const testRuntimeWindow: TestRuntimeWindow =
-  window as unknown as TestRuntimeWindow;
+export const testRuntimeWindow: TestRuntimeWindow = window;
 
 const DEFAULT_TEST_HERO: RuntimeHero = {
   accountId: "202",

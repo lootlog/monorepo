@@ -1,3 +1,7 @@
+import {
+  createBattleWarrior as buildBattleWarrior,
+  createBattle as buildBattle,
+} from "@/lib/testing/battle";
 import type { Battle, BattleWarrior } from "@/lib/api/battlelog-types";
 import { describe, expect, it } from "vitest";
 import { getBattleTeamPresentation } from "./battle-team-presentation";
@@ -11,14 +15,14 @@ const createWarrior = ({
   originalId: string;
   team: number;
 }): BattleWarrior =>
-  ({
+  buildBattleWarrior({
     name,
     originalId,
     team,
-  }) as BattleWarrior;
+  });
 
 const createBattle = (overrides: Partial<Battle> = {}): Battle =>
-  ({
+  buildBattle({
     characterId: "defender-user",
     warriors: [
       createWarrior({
@@ -38,7 +42,7 @@ const createBattle = (overrides: Partial<Battle> = {}): Battle =>
       }),
     ],
     ...overrides,
-  }) as Battle;
+  });
 
 const getTeamNames = (team: BattleWarrior[]) =>
   team.map((warrior) => warrior.name);

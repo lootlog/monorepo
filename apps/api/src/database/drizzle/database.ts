@@ -2,8 +2,9 @@ import { makePostgresLayer } from "@lootlog/database";
 import { makeWithDefaults } from "drizzle-orm/effect-postgres";
 import { Config, Context, Effect, Layer } from "effect";
 
-export type ApiDatabaseValue = Effect.Success<
-  ReturnType<typeof makeWithDefaults>
+export type ApiDatabaseValue = Omit<
+  Effect.Success<ReturnType<typeof makeWithDefaults>>,
+  "$client"
 >;
 
 export class ApiDatabase extends Context.Service<

@@ -1,5 +1,12 @@
 import { isObjectRecord as isObject } from "@lootlog/schema/records";
-export type ApiService = "activity" | "auth" | "battlelog" | "main" | "search";
+const API_SERVICES = [
+  "activity",
+  "auth",
+  "battlelog",
+  "main",
+  "search",
+] as const;
+export type ApiService = (typeof API_SERVICES)[number];
 
 type FetchImplementation = (
   input: RequestInfo | URL,
@@ -27,26 +34,27 @@ export type ApiRequestOptions = RequestInit & {
 };
 
 export type ApiClientRequestOptions = ApiRequestOptions & {
-  params?: Record<string, unknown>;
+  params?: RawQueryParameters;
 };
 
-type ApiRequestBody = unknown;
+// Query serialization preserves nested values and delegates scalar coercion to String.
+type RawQueryParameters = Record<string, unknown>;
 
 export type ApiClient = {
   get<T>(path: string, options?: ApiClientRequestOptions): Promise<T>;
   post<T>(
     path: string,
-    body?: ApiRequestBody,
+    body?: unknown,
     options?: ApiClientRequestOptions,
   ): Promise<T>;
   put<T>(
     path: string,
-    body?: ApiRequestBody,
+    body?: unknown,
     options?: ApiClientRequestOptions,
   ): Promise<T>;
   patch<T>(
     path: string,
-    body?: ApiRequestBody,
+    body?: unknown,
     options?: ApiClientRequestOptions,
   ): Promise<T>;
   delete<T>(path: string, options?: ApiClientRequestOptions): Promise<T>;
@@ -93,11 +101,10 @@ const rebuildServiceConfigurations = (): void => {
   serviceConfigurations.clear();
 
   for (const registration of configurationRegistrations) {
-    for (const [service, configuration] of Object.entries(
-      registration.configurations,
-    )) {
+    for (const service of API_SERVICES) {
+      const configuration = registration.configurations[service];
       if (configuration) {
-        serviceConfigurations.set(service as ApiService, configuration);
+        serviceConfigurations.set(service, configuration);
       }
     }
   }
@@ -190,7 +197,7 @@ const appendQueryValue = (
   );
 };
 
-const serializeQueryParams = (params: Record<string, unknown>) => {
+const serializeQueryParams = (params: RawQueryParameters) => {
   const entries: string[] = [];
   const ancestors = new Set<object>();
 
@@ -211,7 +218,7 @@ const buildRequestUrl = ({
   path,
 }: {
   baseUrl: string;
-  params?: Record<string, unknown>;
+  params?: RawQueryParameters;
   path: string;
 }) => {
   const normalizedBaseUrl = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
@@ -246,7 +253,8 @@ const parseResponse = async (response: Response) => {
   }
 
   try {
-    return JSON.parse(responseText) as unknown;
+    const parsed: unknown = JSON.parse(responseText);
+    return parsed;
   } catch {
     return responseText;
   }
@@ -265,7 +273,7 @@ const isBinaryBody = (body: unknown): body is BodyInit => {
 };
 
 const createRequestBody = (
-  body: ApiRequestBody,
+  body: unknown,
   headers: Headers,
 ): BodyInit | undefined => {
   if (body === undefined) {
@@ -439,6 +447,8 @@ export const executeApiRequest = async <TData>(
     throw error;
   }
 
+  // SAFETY: generated callers supply TData from the matching OpenAPI response contract.
+  // This transport decodes content types; endpoint-specific validation belongs to the service contract.
   return data as TData;
 };
 
@@ -446,7 +456,7 @@ const requestWithBody = <TData>(
   service: ApiService,
   method: string,
   path: string,
-  body: ApiRequestBody,
+  body: unknown,
   options: ApiClientRequestOptions = {},
 ) => {
   try {
@@ -500,7 +510,7 @@ export const createApiClient = (
       ),
     post: <TData>(
       path: string,
-      body?: ApiRequestBody,
+      body?: unknown,
       options?: ApiClientRequestOptions,
     ) =>
       requestWithBody<TData>(
@@ -512,7 +522,7 @@ export const createApiClient = (
       ),
     put: <TData>(
       path: string,
-      body?: ApiRequestBody,
+      body?: unknown,
       options?: ApiClientRequestOptions,
     ) =>
       requestWithBody<TData>(
@@ -524,7 +534,7 @@ export const createApiClient = (
       ),
     patch: <TData>(
       path: string,
-      body?: ApiRequestBody,
+      body?: unknown,
       options?: ApiClientRequestOptions,
     ) =>
       requestWithBody<TData>(
@@ -547,6 +557,16 @@ export const createApiClient = (
 
 export const isApiError = (error: unknown): error is ApiError<unknown> => {
   return error instanceof ApiError;
+};
+
+/** Read a raw API error field without normalizing display text or array messages. */
+export const getApiErrorStringField = (
+  cause: unknown,
+  field: "message" | "code" | "notificationId",
+): string | undefined => {
+  if (!isApiError(cause) || !isObject(cause.data)) return undefined;
+  const value = cause.data[field];
+  return typeof value === "string" ? value : undefined;
 };
 
 export const getApiErrorStatus = (error: unknown) => {

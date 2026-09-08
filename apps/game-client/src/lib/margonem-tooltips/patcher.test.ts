@@ -1,3 +1,5 @@
+import type { RuntimeCanvasTip } from "@/lib/margonem-runtime/adapters/tooltip-runtime-adapter";
+import { seedRuntimeOthers } from "@/test/runtime-other-fixtures";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   installCharacterTooltipTransforms,
@@ -13,27 +15,20 @@ import { useOthersStore } from "@/store/others.store";
 import { testRuntimeWindow } from "@/test/test-runtime-window";
 import type { Other } from "@lootlog/margonem/others";
 
-type TestCharacter = {
-  canvasObjectType?: string;
-  d: { account?: number; id?: string; nick: string };
-  createStrTip?: () => string;
-  tip?: [string, string];
-  tipUpdate?: () => void;
-  updateTip?: () => void;
-};
+type TestCharacter = Other & { canvasObjectType?: string };
 
 const originalWindowEngine = testRuntimeWindow.Engine;
 
 function createCharacter(nick: string): TestCharacter {
   const character: TestCharacter = {
-    d: { nick },
+    d: { nick, id: nick, account: 1, lvl: 300, prof: "w", icon: "other.gif" },
     createStrTip: () => `<div>${nick}</div>`,
   };
 
-  character.updateTip = vi.fn(() => {
+  character.updateTip = vi.fn<() => void>(() => {
     character.tip = [String(character.createStrTip?.() ?? ""), "t_other"];
   });
-  character.tipUpdate = vi.fn(() => {
+  character.tipUpdate = vi.fn<() => void>(() => {
     character.tip = [String(character.createStrTip?.() ?? ""), "t_other"];
   });
 
@@ -43,10 +38,7 @@ function createCharacter(nick: string): TestCharacter {
 function setRuntime(
   hero: TestCharacter,
   others: Record<string, TestCharacter>,
-  canvasTip?: {
-    hide: ReturnType<typeof vi.fn>;
-    show: ReturnType<typeof vi.fn>;
-  },
+  canvasTip?: RuntimeCanvasTip,
 ) {
   Object.defineProperty(window, "Engine", {
     configurable: true,
@@ -56,16 +48,6 @@ function setRuntime(
       others,
     },
   });
-}
-
-function asOther(character: TestCharacter): Other {
-  return character as unknown as Other;
-}
-
-function asOtherRecord(
-  others: Record<string, TestCharacter>,
-): Record<string, Other> {
-  return others as unknown as Record<string, Other>;
 }
 
 function setOnlineOwner(character: TestCharacter): void {
@@ -114,7 +96,7 @@ describe("installCharacterTooltipTransforms", () => {
     const hero = createCharacter("Hero");
     const other = createCharacter("Other");
     setRuntime(hero, { 1: other });
-    useOthersStore.getState().setMany(asOtherRecord({ 1: other }));
+    seedRuntimeOthers({ 1: other });
 
     characterTooltipTransforms.register(({ currentHtml }) => {
       return `${currentHtml}<div class="ll-tooltip-extra">extra</div>`;
@@ -136,7 +118,7 @@ describe("installCharacterTooltipTransforms", () => {
     const hero = createCharacter("Hero");
     const other = createCharacter("Other");
     setRuntime(hero, { 1: other });
-    useOthersStore.getState().setMany(asOtherRecord({ 1: other }));
+    seedRuntimeOthers({ 1: other });
 
     characterTooltipTransforms.register(({ currentHtml }) => {
       return `${currentHtml}<span>one</span>`;
@@ -157,12 +139,12 @@ describe("installCharacterTooltipTransforms", () => {
     const originalHeroCreateStrTip = hero.createStrTip;
     const originalOtherCreateStrTip = other.createStrTip;
     setRuntime(hero, { 1: other });
-    useOthersStore.getState().setMany(asOtherRecord({ 1: other }));
+    seedRuntimeOthers({ 1: other });
 
     characterTooltipTransforms.register(() => "<div>replacement</div>");
 
     const cleanup = installCharacterTooltipTransforms();
-    patchOtherCharacterTooltip(asOther(other));
+    patchOtherCharacterTooltip(other);
     expect(hero.createStrTip?.()).toBe("<div>replacement</div>");
     expect(other.createStrTip?.()).toBe("<div>replacement</div>");
 
@@ -179,10 +161,10 @@ describe("installCharacterTooltipTransforms", () => {
     const other = createCharacter("Other");
     const originalOtherCreateStrTip = other.createStrTip;
     setRuntime(hero, { 1: other });
-    useOthersStore.getState().setMany(asOtherRecord({ 1: other }));
+    seedRuntimeOthers({ 1: other });
     characterTooltipTransforms.register(() => "<div>replacement</div>");
     const cleanup = installCharacterTooltipTransforms();
-    patchOtherCharacterTooltip(asOther(other));
+    patchOtherCharacterTooltip(other);
 
     try {
       expect(other.createStrTip?.()).toBe("<div>replacement</div>");
@@ -204,10 +186,10 @@ describe("installCharacterTooltipTransforms", () => {
     other.d.id = "1";
     other.d.account = 2;
     setRuntime(hero, { 1: other });
-    useOthersStore.getState().setMany(asOtherRecord({ 1: other }));
+    seedRuntimeOthers({ 1: other });
     characterTooltipTransforms.register(() => "<div>replacement</div>");
     const cleanup = installCharacterTooltipTransforms();
-    patchOtherCharacterTooltip(asOther(other));
+    patchOtherCharacterTooltip(other);
 
     try {
       useOthersStore.getState().applyBatch({
@@ -242,7 +224,7 @@ describe("installCharacterTooltipTransforms", () => {
     const cleanup = installCharacterTooltipTransforms();
 
     others[1] = other;
-    patchOtherCharacterTooltip(asOther(other));
+    patchOtherCharacterTooltip(other);
 
     expect(other.tip?.[0]).toBe("<div>Other</div><span>new</span>");
     expect(other.tipUpdate).toHaveBeenCalledOnce();
@@ -263,7 +245,7 @@ describe("installCharacterTooltipTransforms", () => {
 
     const cleanup = installCharacterTooltipTransforms();
 
-    patchOtherCharacterTooltips([asOther(first), asOther(second)]);
+    patchOtherCharacterTooltips([first, second]);
 
     expect(first.tip?.[0]).toBe("<div>First</div><span>batch</span>");
     expect(second.tip?.[0]).toBe("<div>Second</div><span>batch</span>");
@@ -275,9 +257,9 @@ describe("installCharacterTooltipTransforms", () => {
   it("does not double-transform prototype-based other tooltips", () => {
     const hero = createCharacter("Hero");
     class PrototypeOther {
-      d = { nick: "Other" };
+      d = createCharacter("Other").d;
       tip?: [string, string];
-      tipUpdate = vi.fn(() => {
+      tipUpdate = vi.fn<() => void>(() => {
         this.tip = [this.createStrTip(), "t_other"];
       });
 
@@ -287,16 +269,14 @@ describe("installCharacterTooltipTransforms", () => {
     }
     const other = new PrototypeOther();
     setRuntime(hero, { 1: other });
-    useOthersStore
-      .getState()
-      .setMany(asOtherRecord({ 1: other as unknown as TestCharacter }));
+    seedRuntimeOthers({ 1: other });
 
     characterTooltipTransforms.register(({ currentHtml }) => {
       return `${currentHtml}<span>once</span>`;
     });
 
     const cleanup = installCharacterTooltipTransforms();
-    patchOtherCharacterTooltip(asOther(other as unknown as TestCharacter));
+    patchOtherCharacterTooltip(other);
 
     expect(other.createStrTip()).toBe("<div>Other</div><span>once</span>");
     expect(other.tip?.[0]).toBe("<div>Other</div><span>once</span>");
@@ -309,26 +289,19 @@ describe("installCharacterTooltipTransforms", () => {
     const first = createCharacter("First");
     const second = createCharacter("Second");
     const canvasTip = {
-      hide: vi.fn(),
-      show: vi.fn(),
+      hide: vi.fn<NonNullable<RuntimeCanvasTip["hide"]>>(),
+      show: vi.fn<NonNullable<RuntimeCanvasTip["show"]>>(),
     };
     first.canvasObjectType = "OTHER";
-    first.d = { account: 9822301, id: "617", nick: "First" };
+    first.d = { ...first.d, account: 9822301, id: "617", nick: "First" };
     second.canvasObjectType = "OTHER";
-    second.d = { account: 9822301, id: "30016", nick: "Second" };
+    second.d = { ...second.d, account: 9822301, id: "30016", nick: "Second" };
     setRuntime(hero, { 1: first, 2: second }, canvasTip);
-    useOthersStore.getState().setMany(asOtherRecord({ 1: first, 2: second }));
+    seedRuntimeOthers({ 1: first, 2: second });
     setOnlineOwner(first);
 
     const cleanup = installCharacterTooltipTransforms();
-    const runtimeCanvasTip = (
-      testRuntimeWindow.Engine as unknown as {
-        canvasTip: {
-          hide: (event: unknown) => unknown;
-          show: (event: unknown, object: unknown) => unknown;
-        };
-      }
-    ).canvasTip;
+    const runtimeCanvasTip = canvasTip;
 
     second.tipUpdate?.();
     expect(
@@ -363,23 +336,17 @@ describe("installCharacterTooltipTransforms", () => {
     const hero = createCharacter("Hero");
     const other = createCharacter("Other");
     const canvasTip = {
-      hide: vi.fn(),
-      show: vi.fn(),
+      hide: vi.fn<NonNullable<RuntimeCanvasTip["hide"]>>(),
+      show: vi.fn<NonNullable<RuntimeCanvasTip["show"]>>(),
     };
     other.canvasObjectType = "OTHER";
-    other.d = { account: 9822301, id: "617", nick: "Other" };
+    other.d = { ...other.d, account: 9822301, id: "617", nick: "Other" };
     setRuntime(hero, { 1: other }, canvasTip);
-    useOthersStore.getState().setMany(asOtherRecord({ 1: other }));
+    seedRuntimeOthers({ 1: other });
     setOnlineOwner(other);
 
     const cleanup = installCharacterTooltipTransforms();
-    const runtimeCanvasTip = (
-      testRuntimeWindow.Engine as unknown as {
-        canvasTip: {
-          show: (event: unknown, object: unknown) => unknown;
-        };
-      }
-    ).canvasTip;
+    const runtimeCanvasTip = canvasTip;
 
     useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
     runtimeCanvasTip.show({}, other);
@@ -398,24 +365,17 @@ describe("installCharacterTooltipTransforms", () => {
     const hero = createCharacter("Hero");
     const other = createCharacter("Other");
     const canvasTip = {
-      hide: vi.fn(),
-      show: vi.fn(),
+      hide: vi.fn<NonNullable<RuntimeCanvasTip["hide"]>>(),
+      show: vi.fn<NonNullable<RuntimeCanvasTip["show"]>>(),
     };
     const originalCanvasTipShow = canvasTip.show;
     other.canvasObjectType = "OTHER";
-    other.d = { account: 9822301, id: "617", nick: "Other" };
+    other.d = { ...other.d, account: 9822301, id: "617", nick: "Other" };
     setRuntime(hero, { 1: other }, canvasTip);
-    useOthersStore.getState().setMany(asOtherRecord({ 1: other }));
+    seedRuntimeOthers({ 1: other });
 
     const cleanup = installCharacterTooltipTransforms();
-    const runtimeCanvasTip = (
-      testRuntimeWindow.Engine as unknown as {
-        canvasTip: {
-          hide: (event: unknown) => unknown;
-          show: (event: unknown, object: unknown) => unknown;
-        };
-      }
-    ).canvasTip;
+    const runtimeCanvasTip = canvasTip;
     const hoverEvent = { clientX: 10, clientY: 20 };
 
     runtimeCanvasTip.show(hoverEvent, other);
@@ -434,14 +394,14 @@ describe("installCharacterTooltipTransforms", () => {
     const hero = createCharacter("Hero");
     const other = createCharacter("Other");
     const canvasTip = {
-      hide: vi.fn(),
-      show: vi.fn(),
+      hide: vi.fn<NonNullable<RuntimeCanvasTip["hide"]>>(),
+      show: vi.fn<NonNullable<RuntimeCanvasTip["show"]>>(),
     };
     const originalCanvasTipShow = canvasTip.show;
     other.canvasObjectType = "OTHER";
-    other.d = { account: 9822301, id: "617", nick: "Other" };
+    other.d = { ...other.d, account: 9822301, id: "617", nick: "Other" };
     setRuntime(hero, { 1: other }, canvasTip);
-    useOthersStore.getState().setMany(asOtherRecord({ 1: other }));
+    seedRuntimeOthers({ 1: other });
 
     characterTooltipTransforms.register(({ currentHtml }) => {
       if (!useCharacterTooltipCatchingGuildsStore.getState().isShiftPressed) {
@@ -452,14 +412,7 @@ describe("installCharacterTooltipTransforms", () => {
     });
 
     const cleanup = installCharacterTooltipTransforms();
-    const runtimeCanvasTip = (
-      testRuntimeWindow.Engine as unknown as {
-        canvasTip: {
-          hide: (event: unknown) => unknown;
-          show: (event: unknown, object: unknown) => unknown;
-        };
-      }
-    ).canvasTip;
+    const runtimeCanvasTip = canvasTip;
     const hoverEvent = { clientX: 10, clientY: 20 };
 
     expect(other.tip).toBeUndefined();

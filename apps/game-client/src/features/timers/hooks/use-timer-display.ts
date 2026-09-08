@@ -1,4 +1,4 @@
-import { NPC_NAMES } from "@/constants/margonem";
+import { getNpcTypeNames } from "@/constants/margonem";
 import type { Timer } from "@/api/timers.api";
 import { useTimersStore } from "@/store/timers.store";
 import { getTimerColorConfig } from "../utils/timer-helpers";
@@ -11,7 +11,7 @@ const getTimerShortname = (timer: Timer, showType: boolean) => {
     return "";
   }
 
-  const typeShortname = NPC_NAMES[timer.npc.type]?.shortname;
+  const typeShortname = getNpcTypeNames(timer.npc.type)?.shortname;
   const manualTimer =
     Number(timer.npc.margonemType) === MANUAL_TIMER_MARGONEM_TYPE;
 
@@ -37,7 +37,7 @@ export const useTimerDisplay = (timer: Timer) => {
     useShallow((state) => {
       const colorConfig = getTimerColorConfig(
         timer.npc.name,
-        state.timersColors as Record<string, string>,
+        state.timersColors,
         state.customColors,
         state.overriddenDefaultColors,
       );

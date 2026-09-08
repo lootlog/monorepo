@@ -1,304 +1,195 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import ReactDOM from "react-dom/client";
 import { RealtimeClient } from "@lootlog/client/realtime";
-
-const runtimeMocks = vi.hoisted(() => {
-  const render = vi.fn();
-  const unmount = vi.fn();
-  const teardownPublicApi = vi.fn();
-  const clearQueryClient = vi.fn();
-  const disposeSoundPlayback = vi.fn();
-  const disposeSocket = vi.fn();
-  const resetTransientRuntimeState = vi.fn();
-
-  return {
-    bootstrapPublicApi: vi.fn(() => teardownPublicApi),
-    clearQueryClient,
-    createRoot: vi.fn(() => ({ render, unmount })),
-    disposeSoundPlayback,
-    disposeSocket,
-    resetTransientRuntimeState,
-    render,
-    teardownPublicApi,
-    unmount,
-  };
-});
+import {
+  bootstrapGameClient,
+  getLootlogRootZIndex,
+  type GameClientRuntime,
+} from "./bootstrap";
+import { queryClient } from "@/lib/query-client";
+import { useChatStore } from "@/store/chat.store";
+import { getGameClientPlatform } from "@/lib/game-client-platform";
+import * as apiModule from "@/lib/configure-api-clients";
 
 type RuntimeWindow = Window & {
-  __lootlogGameClientRuntime?: {
-    dispose: () => void;
-    version?: string;
-  };
+  __lootlogGameClientRuntime?: GameClientRuntime;
 };
-
-const loadMain = () => {
-  vi.resetModules();
-  return import("./main");
-};
-
-vi.mock("react-dom/client", () => ({
-  default: {
-    createRoot: runtimeMocks.createRoot,
-  },
-}));
-
-vi.mock("./App", () => ({
-  default: () => null,
-}));
-
-vi.mock("@/features/public-api", () => ({
-  bootstrapPublicApi: runtimeMocks.bootstrapPublicApi,
-}));
-
-vi.mock("@/lib/query-client", () => ({
-  queryClient: { clear: runtimeMocks.clearQueryClient },
-}));
-
-vi.mock("@/lib/sound-playback", () => ({
-  disposeSoundPlayback: runtimeMocks.disposeSoundPlayback,
-}));
-
-vi.mock("@/lib/socket", () => ({
-  disposeSocket: runtimeMocks.disposeSocket,
-}));
-
-vi.mock("@/lib/runtime-state", () => ({
-  resetTransientRuntimeState: runtimeMocks.resetTransientRuntimeState,
-}));
+const runtimeWindow: RuntimeWindow = window;
+beforeEach(() => {
+  vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json(null));
+});
+afterEach(() => {
+  runtimeWindow.__lootlogGameClientRuntime?.dispose();
+  delete runtimeWindow.__lootlogGameClientRuntime;
+  document.getElementById("lootlog-root")?.remove();
+  document.cookie = "interface=; Max-Age=0";
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
 
 describe("getLootlogRootZIndex", () => {
-  afterEach(() => {
-    (window as RuntimeWindow).__lootlogGameClientRuntime?.dispose();
-    delete (window as RuntimeWindow).__lootlogGameClientRuntime;
-    document.getElementById("lootlog-root")?.remove();
-    document.cookie = "interface=; Max-Age=0";
-    vi.unstubAllGlobals();
-    runtimeMocks.bootstrapPublicApi.mockClear();
-    runtimeMocks.clearQueryClient.mockClear();
-    runtimeMocks.createRoot.mockClear();
-    runtimeMocks.disposeSoundPlayback.mockClear();
-    runtimeMocks.disposeSocket.mockClear();
-    runtimeMocks.resetTransientRuntimeState.mockClear();
-    runtimeMocks.render.mockClear();
-    runtimeMocks.teardownPublicApi.mockClear();
-    runtimeMocks.unmount.mockClear();
-    runtimeMocks.bootstrapPublicApi.mockImplementation(
-      () => runtimeMocks.teardownPublicApi,
-    );
+  it.each([
+    { cookie: "si", expected: 449 },
+    { cookie: "ni", expected: 11 },
+    { cookie: null, expected: 11 },
+  ])("uses the native cookie value $cookie", ({ cookie, expected }) => {
+    vi.stubGlobal("getCookie", () => cookie);
+    expect(getLootlogRootZIndex()).toBe(expected);
   });
-
-  it("uses z-index 449 for the si interface cookie", async () => {
-    vi.stubGlobal(
-      "getCookie",
-      vi.fn(() => "si"),
-    );
-
-    const { getLootlogRootZIndex } = await loadMain();
-
-    expect(getLootlogRootZIndex()).toBe(449);
-  });
-
-  it("uses z-index 11 for the ni interface cookie", async () => {
-    vi.stubGlobal(
-      "getCookie",
-      vi.fn(() => "ni"),
-    );
-
-    const { getLootlogRootZIndex } = await loadMain();
-
-    expect(getLootlogRootZIndex()).toBe(11);
-  });
-
-  it("falls back to z-index 11 when the interface cookie is missing", async () => {
-    vi.stubGlobal(
-      "getCookie",
-      vi.fn(() => null),
-    );
-
-    const { getLootlogRootZIndex } = await loadMain();
-
-    expect(getLootlogRootZIndex()).toBe(11);
-  });
-
-  it("reads document.cookie when window.getCookie is unavailable", async () => {
+  it("reads document.cookie when the native cookie reader is unavailable", () => {
     document.cookie = "interface=si";
-
-    const { getLootlogRootZIndex } = await loadMain();
-
     expect(getLootlogRootZIndex()).toBe(449);
   });
+});
 
-  it("bootstraps one root and disposes the root and public API once", async () => {
-    const { bootstrapGameClient } = await loadMain();
-    const firstRuntime = bootstrapGameClient();
-    const reloadedMain = await loadMain();
-    const secondRuntime = reloadedMain.bootstrapGameClient();
-
-    expect(firstRuntime).toBe(secondRuntime);
-    expect(runtimeMocks.createRoot).toHaveBeenCalledTimes(1);
-    expect(runtimeMocks.createRoot).toHaveBeenCalledWith(
-      expect.any(HTMLDivElement),
-    );
-    expect(runtimeMocks.render).toHaveBeenCalledTimes(1);
-    expect(runtimeMocks.bootstrapPublicApi).toHaveBeenCalledTimes(1);
+describe("game client startup", () => {
+  it("creates one root and public API, clears private state on disposal, and can restart", async () => {
+    const createRoot = vi.spyOn(ReactDOM, "createRoot");
+    await import("./main");
+    const first = bootstrapGameClient();
+    const publicApi = window.lootlogGameClientApi;
+    const second = bootstrapGameClient();
+    expect(first).toBe(second);
+    expect(window.lootlogGameClientApi).toBe(publicApi);
+    expect(publicApi?.apiVersion).toBe(1);
+    expect(createRoot).toHaveBeenCalledOnce();
     expect(document.querySelectorAll("#lootlog-root")).toHaveLength(1);
-
-    firstRuntime.dispose();
-    secondRuntime.dispose();
-
-    expect(runtimeMocks.unmount).toHaveBeenCalledTimes(1);
-    expect(runtimeMocks.teardownPublicApi).toHaveBeenCalledTimes(1);
-    expect(runtimeMocks.clearQueryClient).toHaveBeenCalledTimes(1);
-    expect(runtimeMocks.disposeSoundPlayback).toHaveBeenCalledTimes(1);
-    expect(runtimeMocks.disposeSocket).toHaveBeenCalledTimes(1);
-    expect(runtimeMocks.resetTransientRuntimeState).toHaveBeenCalledTimes(1);
+    queryClient.setQueryData(["private-test"], { secret: "old session" });
+    useChatStore.getState().setReplyDraft({
+      guildId: "guild",
+      messageId: "id",
+      senderNick: "Player",
+      message: "Private reply",
+      type: "NORMAL",
+    });
+    const unmount = vi.spyOn(first.root, "unmount");
+    first.dispose();
+    second.dispose();
+    expect(unmount).toHaveBeenCalledOnce();
+    expect(queryClient.getQueryData(["private-test"])).toBeUndefined();
+    expect(useChatStore.getState().replyDraft).toBeNull();
+    expect(window.lootlogGameClientApi).toBeUndefined();
     expect(document.getElementById("lootlog-root")).toBeNull();
-
-    const restartedRuntime = bootstrapGameClient();
-
-    expect(restartedRuntime).not.toBe(firstRuntime);
-    expect(runtimeMocks.createRoot).toHaveBeenCalledTimes(2);
-    expect(runtimeMocks.bootstrapPublicApi).toHaveBeenCalledTimes(2);
-
-    restartedRuntime.dispose();
+    const restarted = bootstrapGameClient();
+    expect(restarted).not.toBe(first);
+    expect(createRoot).toHaveBeenCalledTimes(2);
+    expect(window.lootlogGameClientApi?.apiVersion).toBe(1);
   });
 
-  it("disposes an older runtime version before bootstrapping the current one", async () => {
-    const disposePreviousRuntime = vi.fn();
-    (window as RuntimeWindow).__lootlogGameClientRuntime = {
-      dispose: disposePreviousRuntime,
-      version: "older-version",
-    };
-
-    await loadMain();
-
-    expect(disposePreviousRuntime).toHaveBeenCalledTimes(1);
-    expect(runtimeMocks.createRoot).toHaveBeenCalledTimes(1);
-    expect(
-      (window as RuntimeWindow).__lootlogGameClientRuntime?.version,
-    ).not.toBe("older-version");
+  it("disposes an older version before starting the current one", () => {
+    const previous = bootstrapGameClient();
+    previous.version = "older-version";
+    const dispose = vi.spyOn(previous, "dispose");
+    const current = bootstrapGameClient();
+    expect(dispose).toHaveBeenCalledOnce();
+    expect(previous.state).toBe("disposed");
+    expect(current).not.toBe(previous);
+    expect(current.version).not.toBe("older-version");
   });
 
-  it("lets the extension replace the same-version userscript, then keeps userscript reloads from replacing it", async () => {
-    const { bootstrapGameClient } = await loadMain();
+  it("lets the extension replace the userscript, then preserves it on userscript reload", () => {
     const userscript = bootstrapGameClient();
-    const realtime = new RealtimeClient({ url: "https://gateway.lootlog.pl" });
     const extension = bootstrapGameClient({
       fetch: globalThis.fetch,
-      createRealtime: () => realtime,
+      createRealtime: () =>
+        new RealtimeClient({ url: "https://gateway.lootlog.pl" }),
     });
     expect(extension.version).toBe(userscript.version);
     expect(extension.installation).toBe("extension");
     expect(userscript.state).toBe("disposed");
     expect(extension.state).toBe("ready");
-    expect(runtimeMocks.unmount).toHaveBeenCalledTimes(1);
-    expect(runtimeMocks.createRoot).toHaveBeenCalledTimes(2);
-
-    const reloadedUserscript = await loadMain();
-    expect(reloadedUserscript.bootstrapGameClient()).toBe(extension);
-    expect(extension.state).toBe("ready");
-    expect(runtimeMocks.createRoot).toHaveBeenCalledTimes(2);
+    expect(bootstrapGameClient()).toBe(extension);
     expect(document.querySelectorAll("#lootlog-root")).toHaveLength(1);
   });
 
-  it("finishes disposal after multiple failures and reports the first one only once", async () => {
-    const { bootstrapGameClient } = await loadMain();
+  it("finishes disposal after failures and reports only the first error once", () => {
     const runtime = bootstrapGameClient();
     const first = new Error("unmount failed");
-    runtimeMocks.unmount.mockImplementationOnce(() => {
-      throw first;
-    });
-    runtimeMocks.teardownPublicApi.mockImplementationOnce(() => {
-      throw new Error("public API teardown failed");
-    });
-
-    expect(() => runtime.dispose()).toThrow(first);
-    expect(runtimeMocks.disposeSoundPlayback).toHaveBeenCalledTimes(1);
-    expect(runtimeMocks.disposeSocket).toHaveBeenCalledTimes(1);
-    expect(runtimeMocks.resetTransientRuntimeState).toHaveBeenCalledTimes(1);
-    expect(runtimeMocks.clearQueryClient).toHaveBeenCalledTimes(1);
-    expect(document.getElementById("lootlog-root")).toBeNull();
-    expect(
-      (window as RuntimeWindow).__lootlogGameClientRuntime,
-    ).toBeUndefined();
-    expect(() => runtime.dispose()).not.toThrow();
-    expect(runtimeMocks.unmount).toHaveBeenCalledTimes(1);
-  });
-
-  it("preserves the startup error when disposal also fails", async () => {
-    const original = new Error("render failed");
-    runtimeMocks.render.mockImplementationOnce(() => {
-      throw original;
-    });
-    runtimeMocks.unmount.mockImplementationOnce(() => {
-      throw new Error("unmount failed");
-    });
-
-    await expect(loadMain()).rejects.toThrow(original);
-    expect(runtimeMocks.clearQueryClient).toHaveBeenCalledTimes(1);
-    expect(document.getElementById("lootlog-root")).toBeNull();
-    expect(
-      (window as RuntimeWindow).__lootlogGameClientRuntime,
-    ).toBeUndefined();
-  });
-
-  it("restores the platform when client configuration fails before creating a root", async () => {
-    const { bootstrapGameClient } = await loadMain();
-    bootstrapGameClient().dispose();
-    const platformModule = await import("@/lib/game-client-platform");
-    const apiModule = await import("@/lib/configure-api-clients");
-    const previous = platformModule.getGameClientPlatform();
-    const error = new Error("client configuration failed");
-    const configure = vi
-      .spyOn(apiModule, "configureGameApiClients")
+    const realUnmount = runtime.root.unmount.bind(runtime.root);
+    const unmount = vi
+      .spyOn(runtime.root, "unmount")
       .mockImplementationOnce(() => {
-        throw error;
+        realUnmount();
+        throw first;
       });
-    const realtime = new RealtimeClient({ url: "https://gateway.lootlog.pl" });
-    try {
-      expect(() =>
-        bootstrapGameClient({
-          fetch: globalThis.fetch,
-          createRealtime: () => realtime,
-        }),
-      ).toThrow(error);
-      expect(platformModule.getGameClientPlatform()).toBe(previous);
-      expect(document.getElementById("lootlog-root")).toBeNull();
-      expect(
-        (window as RuntimeWindow).__lootlogGameClientRuntime,
-      ).toBeUndefined();
-    } finally {
-      configure.mockRestore();
-    }
+    const realClear = queryClient.clear.bind(queryClient);
+    vi.spyOn(queryClient, "clear").mockImplementationOnce(() => {
+      realClear();
+      throw new Error("cache cleanup failed");
+    });
+    expect(() => runtime.dispose()).toThrow(first);
+    expect(window.lootlogGameClientApi).toBeUndefined();
+    expect(runtime.state).toBe("disposed");
+    expect(document.getElementById("lootlog-root")).toBeNull();
+    expect(runtimeWindow.__lootlogGameClientRuntime).toBeUndefined();
+    expect(() => runtime.dispose()).not.toThrow();
+    expect(unmount).toHaveBeenCalledOnce();
   });
 
-  it("removes the allocated root when public API bootstrap fails", async () => {
-    const error = new Error("public API bootstrap failure");
-    runtimeMocks.bootstrapPublicApi.mockImplementationOnce(() => {
-      throw error;
+  it("preserves the render error even if unmount also fails", () => {
+    const original = new Error("render failed");
+    const createRoot = ReactDOM.createRoot.bind(ReactDOM);
+    vi.spyOn(ReactDOM, "createRoot").mockImplementation((...args) => {
+      const root = createRoot(...args);
+      vi.spyOn(root, "render").mockImplementationOnce(() => {
+        throw original;
+      });
+      const unmount = root.unmount.bind(root);
+      vi.spyOn(root, "unmount").mockImplementationOnce(() => {
+        unmount();
+        throw new Error("unmount failed");
+      });
+      return root;
     });
-
-    await expect(loadMain()).rejects.toThrow(error);
-
-    expect(runtimeMocks.createRoot).toHaveBeenCalledTimes(1);
-    expect(runtimeMocks.unmount).toHaveBeenCalledTimes(1);
+    expect(() => bootstrapGameClient()).toThrow(original);
+    expect(window.lootlogGameClientApi).toBeUndefined();
     expect(document.getElementById("lootlog-root")).toBeNull();
-    expect(
-      (window as RuntimeWindow).__lootlogGameClientRuntime,
-    ).toBeUndefined();
+    expect(runtimeWindow.__lootlogGameClientRuntime).toBeUndefined();
   });
 
-  it("removes the root element when React root creation fails", async () => {
-    const error = new Error("React root creation failure");
-    runtimeMocks.createRoot.mockImplementationOnce(() => {
-      throw error;
-    });
-
-    await expect(loadMain()).rejects.toThrow(error);
-
-    expect(runtimeMocks.bootstrapPublicApi).not.toHaveBeenCalled();
+  it("restores the previous platform when configuration fails before root allocation", () => {
+    const previous = getGameClientPlatform();
+    const failure = new Error("client configuration failed");
+    vi.spyOn(apiModule, "configureGameApiClients").mockImplementationOnce(
+      () => {
+        throw failure;
+      },
+    );
+    expect(() =>
+      bootstrapGameClient({
+        fetch: globalThis.fetch,
+        createRealtime: () =>
+          new RealtimeClient({ url: "https://gateway.lootlog.pl" }),
+      }),
+    ).toThrow(failure);
+    expect(getGameClientPlatform()).toBe(previous);
     expect(document.getElementById("lootlog-root")).toBeNull();
-    expect(
-      (window as RuntimeWindow).__lootlogGameClientRuntime,
-    ).toBeUndefined();
+    expect(runtimeWindow.__lootlogGameClientRuntime).toBeUndefined();
+  });
+
+  it("removes the allocated root when the native window refuses public API exposure", () => {
+    const failure = new Error("public API exposure failed");
+    const defineProperty = Object.defineProperty;
+    vi.spyOn(Object, "defineProperty").mockImplementation(
+      (target, property, attributes) => {
+        if (target === window && property === "lootlogGameClientApi")
+          throw failure;
+        return defineProperty(target, property, attributes);
+      },
+    );
+    expect(() => bootstrapGameClient()).toThrow(failure);
+    expect(document.getElementById("lootlog-root")).toBeNull();
+    expect(runtimeWindow.__lootlogGameClientRuntime).toBeUndefined();
+  });
+
+  it("removes the allocated element when React root creation fails", () => {
+    const failure = new Error("React root creation failed");
+    vi.spyOn(ReactDOM, "createRoot").mockImplementationOnce(() => {
+      throw failure;
+    });
+    expect(() => bootstrapGameClient()).toThrow(failure);
+    expect(document.getElementById("lootlog-root")).toBeNull();
+    expect(window.lootlogGameClientApi).toBeUndefined();
+    expect(runtimeWindow.__lootlogGameClientRuntime).toBeUndefined();
   });
 });

@@ -1,34 +1,23 @@
+import { configureApiClients } from "@lootlog/client/transport";
+import { getBattlesControllerGetDashboardBattlesQueryKey } from "@lootlog/client/battlelog";
+import { toast } from "sonner";
 // @vitest-environment happy-dom
+import { initializeTestTranslations } from "@/lib/testing/i18n";
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import type { Battle } from "@/lib/api/battlelog-types";
+import { afterEach, beforeEach, expect, it, onTestFinished, vi } from "vitest";
+import { createBattle } from "@/lib/testing/battle";
 import { useBattleTableActions } from "./use-battle-table-actions";
 
-const mocks = vi.hoisted(() => ({
-  update: vi.fn(),
-  remove: vi.fn(),
-  invalidate: vi.fn().mockResolvedValue(undefined),
-  copy: vi.fn().mockResolvedValue(true),
+const mocks = {
+  update: vi.fn<() => Promise<void>>(),
+  remove: vi.fn<() => Promise<void>>(),
+  copy: vi.fn<(text: string) => Promise<void>>(),
   error: vi.fn(),
-}));
-vi.mock("@lootlog/client/battlelog", () => ({
-  useBattlesControllerUpdateBattle: () => ({ mutateAsync: mocks.update }),
-  useBattlesControllerDeleteBattle: () => ({ mutateAsync: mocks.remove }),
-  invalidateBattlesControllerGetBattle: mocks.invalidate,
-  invalidateBattlesControllerGetDashboardBattles: mocks.invalidate,
-  invalidatePublicBattlesControllerGetPublicBattle: mocks.invalidate,
-  invalidatePublicBattlesControllerGetPublicBattleRaw: mocks.invalidate,
-  invalidatePublicBattlesControllerGetPublicBattleTimeline: mocks.invalidate,
-}));
-vi.mock("usehooks-ts", () => ({
-  useCopyToClipboard: () => [null, mocks.copy],
-}));
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
-}));
-vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: mocks.error } }));
+};
+await initializeTestTranslations();
+const dashboardKey = getBattlesControllerGetDashboardBattlesQueryKey();
 
 const deferred = () => {
   let resolve!: () => void;
@@ -40,14 +29,17 @@ const deferred = () => {
   return { promise, resolve, reject };
 };
 const battles = [
-  { id: "one", public: false },
-  { id: "two", public: false },
-] as Battle[];
+  createBattle({ id: "one", public: false }),
+  createBattle({ id: "two", public: false }),
+];
 const setup = () => {
   const queryClient = new QueryClient();
+  queryClient.setQueryData(dashboardKey, { battles: [] });
+  onTestFinished(() => queryClient.clear());
   const removeBattleFromSelection = vi.fn();
   return {
     removeBattleFromSelection,
+    queryClient,
     ...renderHook(
       () =>
         useBattleTableActions({
@@ -65,14 +57,31 @@ const setup = () => {
     ),
   };
 };
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.spyOn(navigator.clipboard, "writeText").mockImplementation(mocks.copy);
+  vi.spyOn(toast, "error").mockImplementation(mocks.error);
+  onTestFinished(
+    configureApiClients({
+      battlelog: {
+        baseUrl: "https://battlelog.test",
+        fetch: async (_input, init) => {
+          if (init?.method === "DELETE") await mocks.remove();
+          else await mocks.update();
+          return Response.json({});
+        },
+      },
+    }),
+  );
 });
 
 it("keeps bulk sharing busy through clipboard completion and rejects duplicate clicks", async () => {
   const clipboard = deferred();
-  mocks.update.mockResolvedValue({});
+  mocks.update.mockResolvedValue(undefined);
   mocks.copy.mockReturnValue(clipboard.promise);
   const { result } = setup();
   let operation: Promise<void>;
@@ -97,13 +106,14 @@ it("waits for every deletion after a partial failure and retains the failed sele
   mocks.remove
     .mockReturnValueOnce(first.promise)
     .mockReturnValueOnce(second.promise);
-  const { result, removeBattleFromSelection } = setup();
+  const { result, removeBattleFromSelection, queryClient } = setup();
   let operation: Promise<void>;
   act(() => {
     result.current.setIsBulkDeleteDialogOpen(true);
   });
   await act(async () => {
     operation = result.current.handleBulkDelete();
+    await Promise.resolve();
     first.reject(new Error("offline"));
   });
   expect(result.current.isDeletePending).toBe(true);
@@ -115,7 +125,7 @@ it("waits for every deletion after a partial failure and retains the failed sele
   expect(result.current.isDeletePending).toBe(false);
   expect(result.current.isBulkDeleteDialogOpen).toBe(true);
   expect(removeBattleFromSelection).toHaveBeenCalledExactlyOnceWith("two");
-  expect(mocks.invalidate).toHaveBeenCalled();
+  expect(queryClient.getQueryState(dashboardKey)?.isInvalidated).toBe(true);
   expect(mocks.error).toHaveBeenCalledWith(
     "battlePanel.toasts.bulkBattleDeleteError",
     { duration: 3000 },
@@ -125,7 +135,7 @@ it("waits for every deletion after a partial failure and retains the failed sele
 it("identifies only the battle being shared while other row actions are blocked", async () => {
   const update = deferred();
   mocks.update.mockReturnValue(update.promise);
-  mocks.copy.mockResolvedValue(true);
+  mocks.copy.mockResolvedValue(undefined);
   const { result } = setup();
   let operation: Promise<void>;
   act(() => {

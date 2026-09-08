@@ -58,7 +58,7 @@ export function createAutoTimer(
     ...(timer.customMaxSpawnTime && {
       customMaxSpawnTime: timer.customMaxSpawnTime.toISOString(),
     }),
-  } as Partial<CreateTimerFromGameClientDto> as CreateTimerFromGameClientDto;
+  } satisfies CreateTimerFromGameClientDto;
 
   return runSingleLoggedAction({
     actionType: "create_timer",
@@ -225,7 +225,7 @@ const normalizeTimer = (timer: TimerResponseDto): Timer => {
 export const normalizeTimerResponse = normalizeTimer;
 
 export async function fetchTimers(
-  world: string,
+  world: string | undefined,
   signal?: AbortSignal,
 ): Promise<Timer[]> {
   const timers = await timersControllerGetAllTimers({ world }, { signal });

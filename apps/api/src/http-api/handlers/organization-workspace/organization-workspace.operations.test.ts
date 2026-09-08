@@ -30,7 +30,7 @@ import {
   toOrganizationWorkspaceHttpResponse,
 } from "./organization-workspace.operations.js";
 
-import { Etag, HttpPlatform } from "effect/unstable/http";
+import { Etag, HttpPlatform, HttpRouter } from "effect/unstable/http";
 import { HttpApiTest } from "effect/unstable/httpapi";
 import { LootlogApi } from "../../lootlog-api.js";
 import { ReservationsHandlers } from "../reservations/reservations.handlers.js";
@@ -350,9 +350,7 @@ describe("Reservations and Roles HttpApi handlers", () => {
     );
 
     expect(error).toBe(failure);
-    expect((error as OrganizationWorkspaceOperationError).cause).toBe(
-      serviceForbidden,
-    );
+    expect(error).toHaveProperty("cause", serviceForbidden);
   });
 
   it("lists reciprocal partner Organizations with OWNER-or-ADMIN authority", async () => {
@@ -440,9 +438,7 @@ describe("Reservations and Roles HttpApi handlers", () => {
     );
 
     expect(error).toBe(failure);
-    expect((error as OrganizationWorkspaceOperationError).cause).toBe(
-      invitationNotFound,
-    );
+    expect(error).toHaveProperty("cause", invitationNotFound);
   });
 
   it("keeps an unauthorized target Organization hidden during invitation acceptance", async () => {
@@ -523,7 +519,9 @@ describe("reservation HTTP error responses", () => {
         const client = yield* HttpApiTest.groups(LootlogApi, [
           "reservations",
         ]).pipe(
-          Effect.provide(ReservationsHandlers),
+          Effect.provide(
+            ReservationsHandlers.pipe(HttpRouter.provideRequest(services)),
+          ),
           Effect.provide(Layer.succeed(BearerSecurityMiddleware, bearer)),
         );
         const response = yield* client.reservations.createReservation({
@@ -537,13 +535,7 @@ describe("reservation HTTP error responses", () => {
         return { status: response.status, text: yield* response.text };
       }),
     ).pipe(Effect.provide(services), Effect.provide(platform));
-    // HttpApiBuilder retains phantom handler requirements after concrete layers are provided.
-    const response = await Effect.runPromise(
-      request as unknown as Effect.Effect<
-        { status: number; text: string },
-        unknown
-      >,
-    );
+    const response = await Effect.runPromise(request);
     expect(response.status).toBe(status);
     expect(JSON.parse(response.text)).toEqual(body);
   });

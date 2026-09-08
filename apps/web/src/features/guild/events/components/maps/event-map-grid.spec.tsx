@@ -1,31 +1,16 @@
+import { RouterProvider } from "@tanstack/react-router";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { getGuildsControllerGetGuildPermissionsQueryKey } from "@lootlog/client/main";
+import { createOrganizationTestRouter } from "@/lib/testing/router";
 // @vitest-environment happy-dom
 
+import { initializeTestTranslations } from "@/lib/testing/i18n";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, onTestFinished } from "vitest";
 import type { EventMap, EventMapLocation } from "../../types/api";
 import { EventMapGrid } from "./event-map-grid";
 
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
-vi.mock("@/hooks/api/use-guild-permissions", () => ({
-  useGuildPermissions: () => ({
-    data: { allows: () => false, allowsAny: () => false },
-  }),
-}));
-
-vi.mock("./map-card", () => ({
-  getMapStatus: () => "UNASSIGNED",
-  MapCard: ({ map }: { map: EventMap }) => (
-    <div data-map-row={map.id}>{map.mapName}</div>
-  ),
-  STATUS_STYLES: {
-    UNASSIGNED: {},
-  },
-}));
+await initializeTestTranslations();
 
 const eventMap: EventMap = {
   id: "map-1",
@@ -45,8 +30,20 @@ const location: EventMapLocation = {
 describe("EventMapGrid location sections", () => {
   afterEach(cleanup);
 
-  it("hides collapsed map rows without unmounting them", () => {
-    render(<EventMapGrid locations={[location]} maps={[]} vertical />);
+  it("hides collapsed map rows without unmounting them", async () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(
+      getGuildsControllerGetGuildPermissionsQueryKey({ guildId: "guild-1" }),
+      [],
+    );
+    onTestFinished(() => queryClient.clear());
+    const router = createOrganizationTestRouter(
+      <QueryClientProvider client={queryClient}>
+        <EventMapGrid locations={[location]} maps={[]} vertical />
+      </QueryClientProvider>,
+    );
+    await router.load();
+    render(<RouterProvider router={router} />);
 
     const locationToggle = screen.getByRole("button", { name: /Mazury/ });
     const mapRow = screen.getByText("Moczary Rybiego Oka");

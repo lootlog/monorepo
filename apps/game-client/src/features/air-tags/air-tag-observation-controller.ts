@@ -136,7 +136,7 @@ export class AirTagObservationController {
     const runtimeOthers = runtimeOtherHandles.getAll();
 
     for (const [fallbackTargetId, other] of Object.entries(runtimeOthers)) {
-      if (!other.d) continue;
+      if (!("d" in other) || !other.d) continue;
 
       const targetId = String(other.d.id ?? fallbackTargetId);
       this.handleCreate(targetId, other.d);
@@ -149,7 +149,7 @@ export class AirTagObservationController {
     const observation = this.toObservation(targetId, create);
     if (
       !observation ||
-      typeof create.dir !== "number" ||
+      create.dir === undefined ||
       !Number.isInteger(create.dir)
     ) {
       return;
@@ -210,12 +210,12 @@ export class AirTagObservationController {
     const observation = {
       targetId,
       nickname: create.nick,
-      ...(create.clan ? { clan: create.clan } : {}),
       relation: create.relation,
       x: create.x,
       y: create.y,
     };
 
+    if (create.clan) Object.assign(observation, { clan: create.clan });
     return isAirTagObservation(observation) ? observation : null;
   }
 
@@ -223,14 +223,15 @@ export class AirTagObservationController {
     target.lastPublishedAt = publishedAt;
     target.lastPublishedX = target.x;
     target.lastPublishedY = target.y;
-    this.pending.set(target.targetId, {
+    const observation: AirTagObservation = {
       targetId: target.targetId,
       nickname: target.nickname,
-      ...(target.clan ? { clan: target.clan } : {}),
       relation: target.relation,
       x: target.x,
       y: target.y,
-    });
+    };
+    if (target.clan) observation.clan = target.clan;
+    this.pending.set(target.targetId, observation);
     this.scheduleBatch();
   }
 

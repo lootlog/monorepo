@@ -1,439 +1,322 @@
-import { act, renderHook } from "@testing-library/react";
-import type {
-  MapPingAck,
-  MapPingEvent,
-  MapPingType,
-} from "@lootlog/schema/map-ping";
-import { GatewayEvent } from "@/config/gateway";
-import { useMapPings } from "./use-map-pings";
+import { encodeRealtimeFrame } from "@lootlog/protocol/realtime/codec";
+import { act, renderHook, waitFor } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  getSoundSettingsControllerGetSettingsQueryKey,
+  getUsersControllerGetUserGameAccountPreferencesQueryKey,
+  type UserGameAccountPreferencesResponseDtoOutput,
+  type SoundSettingsResponseDto,
+} from "@lootlog/client/main";
+import { createRealtimeTest } from "@/test/realtime-test";
+import {
+  createNotificationsSettings,
+  createDetectorSettings,
+} from "@/lib/game-account-preferences";
+import { useGlobalStore } from "@/store/global.store";
+import { useSettingsStore } from "@/store/settings.store";
 import { useGameStore } from "@/store/game.store";
+import { disposeSoundPlayback } from "@/lib/sound-playback";
+import { useMapPings } from "./use-map-pings";
+import { mapPingController } from "./map-ping-controller";
+import {
+  mapPingInteractionController,
+  MAP_PING_HOLD_DELAY_MS,
+} from "./map-ping-interaction-controller";
 
-const testState = vi.hoisted(() => ({
-  connected: true,
-  gameInterface: "ni" as "ni" | "si",
-  joined: true,
-  pingsEnabled: true,
-}));
-const socketHandlers = vi.hoisted(
-  () => new Map<string, (payload: MapPingEvent) => void>(),
-);
-const socket = vi.hoisted(() => ({
-  emit: vi.fn(),
-  off: vi.fn(),
-  on: vi.fn(),
-  timeout: vi.fn(),
-}));
-const controller = vi.hoisted(() => ({
-  addOptimistic: vi.fn(() => "local-ping-1"),
-  addRemote: vi.fn(() => true),
-  clear: vi.fn(),
-  isTileValid: vi.fn(() => true),
-  register: vi.fn(() => true),
-  remove: vi.fn(),
-  resolveTile: vi.fn(() => ({ x: 12, y: 8 })),
-  unregister: vi.fn(),
-}));
-const interactionController = vi.hoisted(() => ({
-  begin: vi.fn(() => true),
-  cancel: vi.fn(),
-  complete: vi.fn(() => ({
+const preferences = (
+  enabled: boolean,
+): UserGameAccountPreferencesResponseDtoOutput => ({
+  accountId: "1",
+  notifications: createNotificationsSettings(),
+  detector: createDetectorSettings(),
+  pings: { enabled },
+  airTags: { enabled: true },
+  hasStoredNotifications: true,
+  hasStoredDetector: true,
+  hasStoredPings: true,
+  hasStoredAirTags: true,
+  hasStoredPreferences: true,
+});
+const remotePing = () => ({
+  v: 1 as const,
+  type: "map-ping.received" as const,
+  data: {
+    pingId: "remote-1",
+    world: "pandora",
     mapId: 42,
-    tile: { x: 12, y: 8 },
-    type: "attention" as MapPingType,
-  })),
-  updatePointer: vi.fn(),
-}));
-const playSound = vi.hoisted(() => vi.fn());
-
-vi.mock("@/contexts/socket-context", () => ({
-  useSocket: () => ({
-    socket,
-    connected: testState.connected,
-    joined: testState.joined,
-  }),
-}));
-
-vi.mock("@/hooks/use-current-game-account-preferences", () => ({
-  useCurrentGameAccountPreferences: () => ({
-    data: { pings: { enabled: testState.pingsEnabled } },
-  }),
-}));
-
-vi.mock("@/lib/game", () => ({
-  Game: {
-    getAccountId: () => "account-1",
-    getWorldName: () => "aether",
-    hero: { nick: "Sender" },
-    get interface() {
-      return testState.gameInterface;
-    },
-    map: { id: 42 },
+    type: "attention" as const,
+    x: 12,
+    y: 8,
+    sender: { characterId: "123", name: "Other" },
+    createdAt: Date.now(),
   },
-}));
-
-vi.mock("@/lib/margonem-runtime/runtime-adapter", () => ({
-  getMargonemInterface: () => testState.gameInterface,
-}));
-
-vi.mock("@/lib/sound-playback", () => ({ playSound }));
-
-vi.mock("@/lib/query-client", () => ({
-  queryClient: {
-    getQueryData: () => ({ pings: { enabled: testState.pingsEnabled } }),
-  },
-}));
-
-vi.mock("@/store/global.store", () => ({
-  useGlobalStore: (
-    selector: (state: { gameState: { gameInitialized: boolean } }) => unknown,
-  ) => selector({ gameState: { gameInitialized: true } }),
-}));
-
-vi.mock("./map-ping-controller", () => ({
-  isMapPingSurface: (target: EventTarget | null) =>
-    target instanceof HTMLCanvasElement && target.id === "GAME_CANVAS",
-  mapPingController: controller,
-}));
-
-vi.mock("./map-ping-interaction-controller", () => ({
-  createMapPingPressIdentity: (event: KeyboardEvent | MouseEvent) =>
-    event instanceof KeyboardEvent
-      ? { kind: "keyboard", code: event.code }
-      : { kind: "mouse", button: event.button },
-  mapPingInteractionController: interactionController,
-}));
-
-const createMapMouseEvent = () => {
+});
+const setup = async ({
+  enabled = true,
+  connected = true,
+  joined = true,
+  oldInterface = false,
+} = {}) => {
+  const test = createRealtimeTest();
+  const preferenceKey = getUsersControllerGetUserGameAccountPreferencesQueryKey(
+    { accountId: "1" },
+  );
+  test.queryClient.setQueryData(preferenceKey, preferences(enabled));
+  useGlobalStore.setState({ gameState: { gameInitialized: joined } });
+  if (oldInterface) {
+    const game = useGameStore.getState().game;
+    if (!game) throw new Error("Missing game");
+    useGameStore.getState().replaceGame({ ...game, interface: "si" });
+  }
+  useSettingsStore.setState({ soundsMuted: false, masterVolume: 1 });
+  const play = vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
+  vi.spyOn(HTMLMediaElement.prototype, "load").mockImplementation(() => {});
+  vi.spyOn(HTMLMediaElement.prototype, "pause").mockImplementation(() => {});
+  const addDraw = vi.fn<(event: string, callback: () => void) => void>();
+  const removeDraw = vi.fn<(event: string, callback: () => void) => void>();
+  vi.stubGlobal("API", {
+    addCallbackToEvent: addDraw,
+    removeCallbackFromEvent: removeDraw,
+  });
+  vi.stubGlobal("Engine", {
+    apiData: { CALL_DRAW_ADD_TO_RENDERER: "call_draw_add_to_renderer" },
+    map: { d: { id: 42 }, offset: [0, 0], size: { x: 100, y: 100 } },
+  });
   const canvas = document.createElement("canvas");
   canvas.id = "GAME_CANVAS";
-  const event = new MouseEvent("mousedown", { button: 1 });
-  canvas.dispatchEvent(event);
-  return event;
+  canvas.width = 640;
+  canvas.height = 640;
+  document.body.append(canvas);
+  vi.spyOn(canvas, "getBoundingClientRect").mockReturnValue(
+    new DOMRect(0, 0, 640, 640),
+  );
+  const view = renderHook(() => useMapPings(), { wrapper: test.wrapper });
+  if (connected) {
+    test.open();
+    if (joined) {
+      await act(async () => {
+        await vi.waitFor(() => {
+          if (
+            !test.wire.frames.some(
+              (frame) => "type" in frame && frame.type === "session.join",
+            )
+          )
+            throw new Error("Waiting for automatic join");
+        });
+        const request = test.wire.frames.find(
+          (frame) => "type" in frame && frame.type === "session.join",
+        );
+        if (!request || !("requestId" in request) || !request.requestId)
+          throw new Error("Missing join request");
+        test.wire.receive({
+          v: 1,
+          requestId: request.requestId,
+          status: "success",
+          data: { connectionId: "test", organizationIds: ["guild-1"] },
+        });
+      });
+    }
+  }
+  const sound: SoundSettingsResponseDto = {
+    userId: "user",
+    masterVolume: 1,
+    notificationsVolume: 1,
+    detectorVolume: 1,
+    timersVolume: 1,
+    pingsVolume: 1,
+    notificationsConfig: null,
+    detectorConfig: null,
+    timersConfig: null,
+    createdAt: "2026-01-01",
+    updatedAt: "2026-01-01",
+  };
+  test.queryClient.setQueryData(
+    getSoundSettingsControllerGetSettingsQueryKey(),
+    sound,
+  );
+  const event = (outside = false) => {
+    const element = outside ? document.createElement("div") : canvas;
+    const mouse = new MouseEvent("mousedown", {
+      button: 1,
+      clientX: 400,
+      clientY: 272,
+    });
+    element.dispatchEvent(mouse);
+    return mouse;
+  };
+  const tap = () => {
+    let started = false;
+    act(() => {
+      started = view.result.current.onMapPingStart(event());
+      view.result.current.onMapPingEnd(
+        new MouseEvent("mouseup", { button: 1 }),
+      );
+    });
+    return started;
+  };
+  const pingRequests = () =>
+    test.wire.frames.filter(
+      (frame) => "type" in frame && frame.type === "map-ping.send",
+    );
+  const setEnabled = (value: boolean) =>
+    test.queryClient.setQueryData(preferenceKey, preferences(value));
+  return {
+    ...test,
+    ...view,
+    play,
+    addDraw,
+    removeDraw,
+    event,
+    tap,
+    pingRequests,
+    setEnabled,
+    canvas,
+  };
 };
-
-const createOutsideMouseEvent = () => {
-  const element = document.createElement("div");
-  const event = new MouseEvent("mousedown", { button: 1 });
-  element.dispatchEvent(event);
-  return event;
-};
-
-const triggerMapPingTap = (handlers: ReturnType<typeof useMapPings>) => {
-  const started = handlers.onMapPingStart(createMapMouseEvent());
-  handlers.onMapPingEnd(new MouseEvent("mouseup", { button: 1 }));
-  return started;
-};
-
-const setGameInterface = (gameInterface: "ni" | "si") => {
-  const game = useGameStore.getState().game;
-  if (!game) throw new Error("Expected initialized game state");
-  useGameStore.getState().replaceGame({ ...game, interface: gameInterface });
-};
+afterEach(() => {
+  mapPingController.unregister();
+  mapPingInteractionController.cancel();
+  disposeSoundPlayback();
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+  document.querySelector("#GAME_CANVAS")?.remove();
+});
 
 describe("useMapPings", () => {
-  beforeEach(() => {
-    testState.connected = true;
-    testState.gameInterface = "ni";
-    testState.joined = true;
-    testState.pingsEnabled = true;
-    socketHandlers.clear();
-    vi.clearAllMocks();
-    socket.timeout.mockReturnValue(socket);
-    socket.on.mockImplementation((event, handler) => {
-      socketHandlers.set(event, handler);
-    });
-    controller.addRemote.mockReturnValue(true);
-    controller.register.mockReturnValue(true);
-    controller.resolveTile.mockReturnValue({ x: 12, y: 8 });
-    interactionController.begin.mockReturnValue(true);
-    interactionController.complete.mockReturnValue({
-      mapId: 42,
-      tile: { x: 12, y: 8 },
-      type: "attention",
-    });
-    useGameStore.getState().replaceGame({
-      hero: {
-        accountId: "account-1",
-        characterId: "1",
-        currentHp: 1,
-        icon: "hero.gif",
-        level: 300,
-        maxHp: 1,
-        name: "Sender",
-        profession: "w",
-        x: 1,
-        y: 2,
-      },
-      interface: "ni",
-      map: { id: 42, name: "Map", visibility: 30 },
-      world: "aether",
-    });
-  });
-
-  it("plays one sound immediately when a local ping is triggered", () => {
-    const { result } = renderHook(() => useMapPings());
-
-    act(() => {
-      expect(triggerMapPingTap(result.current)).toBe(true);
-    });
-
-    expect(controller.addOptimistic).toHaveBeenCalledWith(
-      { x: 12, y: 8 },
-      42,
-      "Sender",
-      "attention",
-      "Uwaga",
-    );
-    expect(interactionController.begin).toHaveBeenCalledWith({
-      identity: { kind: "mouse", button: 1 },
-      mapId: 42,
-      origin: { x: 0, y: 0 },
-      tile: { x: 12, y: 8 },
-    });
-    expect(playSound).toHaveBeenCalledTimes(1);
-    expect(playSound).toHaveBeenCalledWith("pings", "mapPing", {
+  it("plays one immediate local sound and sends the resolved map coordinates", async () => {
+    const test = await setup();
+    expect(test.tap()).toBe(true);
+    expect(test.addDraw).toHaveBeenCalledOnce();
+    expect(test.play).toHaveBeenCalledOnce();
+    expect(test.play.mock.instances[0]).toMatchObject({
       playbackRate: 1,
       preservesPitch: false,
     });
-    expect(socket.emit).toHaveBeenCalledWith(
-      GatewayEvent.MAP_PING_SEND,
-      { expectedMapId: 42, type: "attention", x: 12, y: 8 },
-      expect.any(Function),
-    );
+    expect(test.pingRequests()).toEqual([
+      expect.objectContaining({
+        data: { expectedMapId: 42, type: "attention", x: 12, y: 8 },
+      }),
+    ]);
   });
-
-  it("propagates a selected contextual type to rendering, sound, and socket", () => {
-    interactionController.complete.mockReturnValueOnce({
-      mapId: 42,
-      tile: { x: 12, y: 8 },
-      type: "enemy",
-    });
-    const { result } = renderHook(() => useMapPings());
-
+  it("propagates a held contextual selection to sound and gateway", async () => {
+    const test = await setup();
     act(() => {
-      triggerMapPingTap(result.current);
+      test.result.current.onMapPingStart(test.event());
     });
-
-    expect(controller.addOptimistic).toHaveBeenCalledWith(
-      { x: 12, y: 8 },
-      42,
-      "Sender",
-      "enemy",
-      "Wróg",
+    await new Promise<void>((resolve) =>
+      setTimeout(resolve, MAP_PING_HOLD_DELAY_MS + 10),
     );
-    expect(playSound).toHaveBeenCalledWith("pings", "mapPing", {
+    act(() => {
+      test.canvas.dispatchEvent(
+        new MouseEvent("mousemove", {
+          bubbles: true,
+          clientX: 480,
+          clientY: 272,
+        }),
+      );
+      test.result.current.onMapPingEnd(
+        new MouseEvent("mouseup", { button: 1 }),
+      );
+    });
+    expect(test.pingRequests()).toEqual([
+      expect.objectContaining({
+        data: { expectedMapId: 42, type: "enemy", x: 12, y: 8 },
+      }),
+    ]);
+    expect(test.play.mock.instances[0]).toMatchObject({
       playbackRate: 1.35,
       preservesPitch: false,
     });
-    expect(socket.emit).toHaveBeenCalledWith(
-      GatewayEvent.MAP_PING_SEND,
-      { expectedMapId: 42, type: "enemy", x: 12, y: 8 },
-      expect.any(Function),
+  });
+  it("uses the latest cached preference before the query rerenders", async () => {
+    const test = await setup({ enabled: false });
+    test.setEnabled(true);
+    expect(test.tap()).toBe(true);
+    expect(test.pingRequests()).toHaveLength(1);
+  });
+  it("rejects local pings on the old interface", async () => {
+    const test = await setup({ oldInterface: true });
+    expect(test.tap()).toBe(false);
+    expect(test.play).not.toHaveBeenCalled();
+    expect(test.addDraw).not.toHaveBeenCalled();
+    expect(test.pingRequests()).toHaveLength(0);
+  });
+  it("installs no map pointer listener while disabled", async () => {
+    const addListener = vi.spyOn(window, "addEventListener");
+    const test = await setup({ enabled: false });
+    expect(addListener.mock.calls.some(([type]) => type === "mousemove")).toBe(
+      false,
     );
+    expect(test.addDraw).not.toHaveBeenCalled();
   });
-
-  it("uses the latest cached preference for a local ping trigger", () => {
-    testState.pingsEnabled = false;
-    const { result } = renderHook(() => useMapPings());
-    testState.pingsEnabled = true;
-
-    act(() => {
-      expect(triggerMapPingTap(result.current)).toBe(true);
-    });
-
-    expect(socket.emit).toHaveBeenCalledWith(
-      GatewayEvent.MAP_PING_SEND,
-      { expectedMapId: 42, type: "attention", x: 12, y: 8 },
-      expect.any(Function),
-    );
-  });
-
-  it("does not trigger a local ping on the old interface", () => {
-    testState.gameInterface = "si";
-    setGameInterface("si");
-    const { result } = renderHook(() => useMapPings());
-
-    act(() => {
-      expect(result.current.onMapPingStart(createMapMouseEvent())).toBe(false);
-    });
-
-    expect(controller.register).not.toHaveBeenCalled();
-    expect(controller.addOptimistic).not.toHaveBeenCalled();
-    expect(playSound).not.toHaveBeenCalled();
-    expect(socket.emit).not.toHaveBeenCalled();
-  });
-
-  it("installs no controller, pointer, or socket listeners while disabled", () => {
-    testState.pingsEnabled = false;
-    const windowAddEventListener = vi.spyOn(window, "addEventListener");
-
-    renderHook(() => useMapPings());
-
-    expect(controller.register).not.toHaveBeenCalled();
-    expect(
-      windowAddEventListener.mock.calls.some(
-        ([eventName]) => eventName === "mousemove",
-      ),
-    ).toBe(false);
-    expect(socket.on).not.toHaveBeenCalledWith(
-      GatewayEvent.MAP_PING_RECEIVE,
-      expect.any(Function),
-    );
-  });
-
   it.each([
-    {
-      name: "pings are disabled",
-      configure: () => {
-        testState.pingsEnabled = false;
-      },
-      event: createMapMouseEvent,
-    },
-    {
-      name: "the socket is disconnected",
-      configure: () => {
-        testState.connected = false;
-      },
-      event: createMapMouseEvent,
-    },
-    {
-      name: "the socket has not joined",
-      configure: () => {
-        testState.joined = false;
-      },
-      event: createMapMouseEvent,
-    },
-    {
-      name: "the trigger is outside a map surface",
-      configure: () => undefined,
-      event: createOutsideMouseEvent,
-    },
-  ])("stays silent when $name", ({ configure, event }) => {
-    configure();
-    const { result } = renderHook(() => useMapPings());
-
-    act(() => {
-      expect(result.current.onMapPingStart(event())).toBe(false);
-    });
-
-    expect(playSound).not.toHaveBeenCalled();
-    expect(socket.emit).not.toHaveBeenCalled();
+    { name: "disabled", options: { enabled: false } },
+    { name: "disconnected", options: { connected: false } },
+    { name: "not joined", options: { joined: false } },
+  ])("stays silent when $name", async ({ options }) => {
+    const test = await setup(options);
+    expect(test.tap()).toBe(false);
+    expect(test.play).not.toHaveBeenCalled();
+    expect(test.pingRequests()).toHaveLength(0);
   });
-
-  it("does not replay the local sound when the gateway rejects the ping", () => {
-    const { result } = renderHook(() => useMapPings());
-    act(() => {
-      triggerMapPingTap(result.current);
-    });
-    const acknowledgement = socket.emit.mock.calls[0]?.[2] as (
-      error: Error | null,
-      response?: MapPingAck,
-    ) => void;
-
-    act(() => {
-      acknowledgement(null, {
-        status: "rejected",
-        code: "invalid-context",
-      });
-    });
-
-    expect(controller.remove).toHaveBeenCalledWith("local-ping-1");
-    expect(playSound).toHaveBeenCalledTimes(1);
+  it("ignores a trigger outside a map surface", async () => {
+    const test = await setup();
+    expect(test.result.current.onMapPingStart(test.event(true))).toBe(false);
+    expect(test.play).not.toHaveBeenCalled();
+    expect(test.pingRequests()).toHaveLength(0);
   });
-
-  it("keeps playing one sound for a received remote ping", () => {
-    renderHook(() => useMapPings());
-    const event: MapPingEvent = {
-      pingId: "remote-ping-1",
-      world: "aether",
-      mapId: 42,
-      type: "attention",
-      x: 12,
-      y: 8,
-      sender: { characterId: "123", name: "Other" },
-      createdAt: Date.now(),
-    };
-
-    act(() => {
-      socketHandlers.get(GatewayEvent.MAP_PING_RECEIVE)?.(event);
-    });
-
-    expect(controller.addRemote).toHaveBeenCalledWith(event, "Uwaga");
-    expect(playSound).toHaveBeenCalledTimes(1);
-    expect(playSound).toHaveBeenCalledWith("pings", "mapPing", {
-      playbackRate: 1,
-      preservesPitch: false,
-    });
+  it("removes a rejected optimistic ping without replaying its sound", async () => {
+    const test = await setup();
+    test.tap();
+    const request = test.pingRequests()[0];
+    if (!request || !("requestId" in request) || !request.requestId)
+      throw new Error("Missing ping request");
+    const requestId = request.requestId;
+    act(() =>
+      test.wire.receive({
+        v: 1,
+        requestId,
+        status: "success",
+        data: { status: "rejected", code: "invalid-context" },
+      }),
+    );
+    await waitFor(() => expect(test.removeDraw).toHaveBeenCalledOnce());
+    expect(test.play).toHaveBeenCalledOnce();
   });
-
-  it("subscribes for received pings after the preference becomes enabled", () => {
-    testState.pingsEnabled = false;
-    const { rerender } = renderHook(() => useMapPings());
-    testState.pingsEnabled = true;
-    rerender();
-    const event: MapPingEvent = {
-      pingId: "remote-ping-after-enable",
-      world: "aether",
-      mapId: 42,
-      type: "attention",
-      x: 12,
-      y: 8,
-      sender: { characterId: "123", name: "Other" },
-      createdAt: Date.now(),
-    };
-
-    act(() => {
-      socketHandlers.get(GatewayEvent.MAP_PING_RECEIVE)?.(event);
-    });
-
-    expect(controller.addRemote).toHaveBeenCalledWith(event, "Uwaga");
-    expect(playSound).toHaveBeenCalledWith("pings", "mapPing", {
-      playbackRate: 1,
-      preservesPitch: false,
-    });
+  it("plays once for a received remote ping and ignores redelivery", async () => {
+    const test = await setup();
+    await test.receive(remotePing(), remotePing());
+    expect(test.addDraw).toHaveBeenCalledOnce();
+    expect(test.play).toHaveBeenCalledOnce();
   });
-
-  it("ignores a received ping on the old interface", () => {
-    testState.gameInterface = "si";
-    setGameInterface("si");
-    renderHook(() => useMapPings());
-    const event: MapPingEvent = {
-      pingId: "remote-ping-on-si",
-      world: "aether",
-      mapId: 42,
-      type: "attention",
-      x: 12,
-      y: 8,
-      sender: { characterId: "123", name: "Other" },
-      createdAt: Date.now(),
-    };
-
-    act(() => {
-      socketHandlers.get(GatewayEvent.MAP_PING_RECEIVE)?.(event);
+  it("receives pings after preferences become enabled", async () => {
+    const test = await setup({ enabled: false });
+    await act(async () => {
+      test.setEnabled(true);
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
     });
-
-    expect(controller.addRemote).not.toHaveBeenCalled();
-    expect(playSound).not.toHaveBeenCalled();
+    await test.receive(remotePing());
+    expect(test.play).toHaveBeenCalledOnce();
   });
-
-  it("drops an unknown runtime ping type before presentation lookup", () => {
-    renderHook(() => useMapPings());
-    const event = {
-      pingId: "remote-unsupported-ping",
-      world: "aether",
-      mapId: 42,
-      type: "unsupported",
-      x: 12,
-      y: 8,
-      sender: { characterId: "123", name: "Other" },
-      createdAt: Date.now(),
-    } as unknown as MapPingEvent;
-
-    act(() => {
-      socketHandlers.get(GatewayEvent.MAP_PING_RECEIVE)?.(event);
-    });
-
-    expect(controller.addRemote).not.toHaveBeenCalled();
-    expect(playSound).not.toHaveBeenCalled();
+  it("ignores remote pings on the old interface", async () => {
+    const test = await setup({ oldInterface: true });
+    await test.receive(remotePing());
+    expect(test.play).not.toHaveBeenCalled();
+    expect(test.addDraw).not.toHaveBeenCalled();
+  });
+  it("drops an unsupported raw ping type before presentation", async () => {
+    const test = await setup();
+    const bytes = encodeRealtimeFrame(remotePing());
+    const text = new TextDecoder().decode(bytes);
+    const marker = new TextEncoder().encode("attention");
+    const offset = bytes.findIndex((_, index) =>
+      marker.every((byte, j) => bytes[index + j] === byte),
+    );
+    expect(text).toContain("attention");
+    expect(offset).toBeGreaterThanOrEqual(0);
+    bytes.set(new TextEncoder().encode("bad-value"), offset);
+    await act(() => test.wire.receiveBytes(bytes));
+    expect(test.play).not.toHaveBeenCalled();
+    expect(test.addDraw).not.toHaveBeenCalled();
   });
 });

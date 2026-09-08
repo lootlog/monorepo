@@ -11,8 +11,10 @@ import {
 } from "@lootlog/ui/components/chart";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid } from "recharts";
 import { useTranslation } from "react-i18next";
-import type { LootStatsResponseDtoOutputTimelineItem } from "@lootlog/client/main";
-import type { LootsControllerGetLootStatsPeriod } from "@lootlog/client/main";
+import type {
+  LootStatsResponseDtoOutputTimelineItem,
+  LootsControllerGetLootStatsPeriod,
+} from "@lootlog/client/main";
 
 const RARITY_COLORS: Record<"LEGENDARY" | "HEROIC", string> = {
   LEGENDARY: "#ef4444",
@@ -121,11 +123,11 @@ export const LootTimelineChart: React.FC<LootTimelineChartProps> = ({
               <ChartTooltip
                 content=<ChartTooltipContent
                   labelFormatter={(_, payload) => {
-                    const item = payload[0]?.payload as
-                      | Record<string, unknown>
-                      | undefined;
-                    const fullDate = item?.fullDate;
-                    if (typeof fullDate !== "string") return "";
+                    const item = chartData.find(
+                      (point) => point === payload[0]?.payload,
+                    );
+                    if (!item) return "";
+                    const fullDate = item.fullDate;
                     const date = new Date(fullDate);
                     return date.toLocaleDateString("pl-PL", {
                       weekday: "short",

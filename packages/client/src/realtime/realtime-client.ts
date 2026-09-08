@@ -1,5 +1,6 @@
 import {
   decodeRealtimeFrame,
+  isServerEventFrame,
   PRESENCE_HEARTBEAT_INTERVAL_MS,
   REALTIME_PROTOCOL_VERSION,
   type ClientCommand,
@@ -32,7 +33,7 @@ export interface RealtimeWebSocket {
     type: "open" | "close" | "error" | "message",
     listener: (event: { readonly data?: unknown }) => void,
   ): void;
-  send(data: string | Uint8Array): void;
+  send(data: string | Uint8Array<ArrayBuffer>): void;
   close(code?: number, reason?: string): void;
 }
 
@@ -87,7 +88,7 @@ const normalizeUrl = (baseUrl: string, path: string): string => {
 };
 
 const nativeWebSocketFactory: RealtimeWebSocketFactory = (url, protocols) =>
-  new WebSocket(url, protocols) as RealtimeWebSocket;
+  new WebSocket(url, protocols);
 
 const WEBSOCKET_OPEN = 1;
 
@@ -229,6 +230,7 @@ export class RealtimeClient {
       }, this.requestTimeoutMs);
       this.pending.set(requestId, { type, resolve, reject, timeout });
       try {
+        // SAFETY: the command discriminator and payload are coupled by CommandData<Type>.
         activeSocket.send(
           this.encodeFrame({
             v: REALTIME_PROTOCOL_VERSION,
@@ -248,6 +250,7 @@ export class RealtimeClient {
   send<Type extends CommandType>(type: Type, data: CommandData<Type>): void {
     const activeSocket = this.socket;
     if (!activeSocket || activeSocket.readyState !== WEBSOCKET_OPEN) return;
+    // SAFETY: the command discriminator and payload are coupled by CommandData<Type>.
     activeSocket.send(
       this.encodeFrame({
         v: REALTIME_PROTOCOL_VERSION,
@@ -335,12 +338,11 @@ export class RealtimeClient {
       }
       return;
     }
-    if (!("type" in frame) || frame.type === "session.join") return;
-    const event = frame as ServerEvent;
-    for (const listener of this.eventListeners) listener(event);
+    if (!isServerEventFrame(frame)) return;
+    for (const listener of this.eventListeners) listener(frame);
   }
 
-  private encodeFrame(frame: ClientCommand): string | Uint8Array {
+  private encodeFrame(frame: ClientCommand): string | Uint8Array<ArrayBuffer> {
     return this.frameEncoding === "json"
       ? JSON.stringify(frame)
       : encodeRealtimeFrame(frame);

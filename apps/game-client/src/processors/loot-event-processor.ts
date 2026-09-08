@@ -18,7 +18,6 @@ import {
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import { createLoot } from "@/api";
 import { useBattleStore } from "@/store/game-store/battle.store";
-import { isEmpty } from "@/utils/object-utils";
 import { useLootStore } from "@/store/game-store/loot.store";
 import {
   useDialogStore,
@@ -51,7 +50,7 @@ export class LootEventProcessor {
       event,
     });
 
-    if (isEmpty(battleStore.battleWarriors)) {
+    if (Object.keys(battleStore.battleWarriors).length === 0) {
       logLootCreateDebug("skipped", {
         ...debugContext,
         reason: "missing-battle-warriors",
@@ -104,7 +103,7 @@ export class LootEventProcessor {
       ? npcContext.source
       : "fallback-lookup";
 
-    if (!npc || isEmpty(npc)) {
+    if (!npc || Object.keys(npc).length === 0) {
       logLootCreateDebug("skipped", {
         ...debugContext,
         eventNpcDelIds,
@@ -195,7 +194,7 @@ export class LootEventProcessor {
     npcs: Npc[],
     loots: ReturnType<typeof getLoot>,
     game: RuntimeGameSnapshot,
-  ): { mapPlayersSnapshot?: MapPlayerSnapshot[] } {
+  ) {
     if (!loots.some((item) => getItemRarity(item.stat ?? "") === "legendary"))
       return {};
     const primary = npcs.reduce<Npc | undefined>(

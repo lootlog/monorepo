@@ -45,13 +45,13 @@ describe("Effect Ready Room repository", () => {
     }> = [];
     const redis: ReadyRoomRedis = {
       getJson: () => Effect.succeed(null),
-      eval: <A>(
+      eval: (
         script: string,
         keys: ReadonlyArray<string>,
         arguments_: ReadonlyArray<string | number>,
       ) => {
         calls.push({ script, keys, arguments_ });
-        return Effect.succeed(["CREATED"] as A);
+        return Effect.succeed(["CREATED"]);
       },
     };
 
@@ -73,9 +73,9 @@ describe("Effect Ready Room repository", () => {
   test("maps a Redis CAS mismatch to a typed conflict result", async () => {
     const redis: ReadyRoomRedis = {
       getJson: () => Effect.succeed(null),
-      eval: <A>(script: string) => {
+      eval: (script: string) => {
         expect(script).toBe(COMMIT_READY_ROOM_SCRIPT);
-        return Effect.succeed(["CONFLICT"] as A);
+        return Effect.succeed(["CONFLICT"]);
       },
     };
     const current = aggregate();
@@ -92,9 +92,9 @@ describe("Effect Ready Room repository", () => {
     let evalCount = 0;
     const redis: ReadyRoomRedis = {
       getJson: () => Effect.succeed(null),
-      eval: <A>() => {
+      eval: () => {
         evalCount += 1;
-        return Effect.succeed([] as A);
+        return Effect.succeed([]);
       },
     };
 

@@ -29,16 +29,14 @@ import {
   useNotificationsGuildControllerGetGuildJobs,
   useNotificationsGuildControllerGetGuildRules,
   useNotificationsGuildControllerGetGuildTargets,
+  type NotificationTargetResponseDto,
+  getGuildsControllerGetGuildDiscordSyncStatusQueryKey,
+  useGuildsControllerGetGuildDiscordSyncStatus,
 } from "@lootlog/client/main";
 import { hasConfirmedGuildDiscordPermissions } from "@/features/guild/settings/utils/has-confirmed-guild-discord-permissions";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { buildDiscordBotInstallUrl } from "@/utils/build-discord-bot-install-url";
 import { isSupportedGuildNotificationTrigger } from "./utils/notification-settings.utils";
-import type { NotificationTargetResponseDto } from "@lootlog/client/main";
-import {
-  getGuildsControllerGetGuildDiscordSyncStatusQueryKey,
-  useGuildsControllerGetGuildDiscordSyncStatus,
-} from "@lootlog/client/main";
 
 const getResolvedGuildId = (guildId: string | undefined) => guildId ?? "";
 
@@ -183,7 +181,7 @@ export const NotificationsSettings = () => {
                     </div>
                   }
                 />
-                <SectionCardContent className="flex flex-col gap-3"></SectionCardContent>
+                <SectionCardContent className="flex flex-col gap-3" />
               </SectionCard>
             ) : null}
 

@@ -1,7 +1,7 @@
 import {
   act,
   fireEvent,
-  render,
+  render as renderUi,
   screen,
   waitFor,
 } from "@testing-library/react";
@@ -9,25 +9,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useWindowsStore } from "@/store/windows.store";
 import { Settings } from "./settings";
 
-vi.mock("@/features/settings/components/settings-tabs", async () => {
-  const { useWindowsStore: useMockWindowsStore } = await vi.importActual<{
-    useWindowsStore: typeof useWindowsStore;
-  }>("@/store/windows.store");
-
-  return {
-    SettingsTabs: () => {
-      const activeTab = useMockWindowsStore(
-        (state) => state.settings.state.activeTab,
-      );
-
-      return <div>{activeTab ?? "general"}</div>;
-    },
-  };
-});
+import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
+let harness: ReturnType<typeof createGuildPreferencesTest>;
+const render = () => renderUi(<Settings />, { wrapper: harness.wrapper });
 
 describe("Settings", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    harness = createGuildPreferencesTest();
 
     Object.defineProperty(window, "innerWidth", {
       configurable: true,
@@ -65,7 +54,7 @@ describe("Settings", () => {
       },
     }));
 
-    render(<Settings />);
+    render();
 
     const windowElement = await waitFor(() =>
       document.querySelector('[data-ll-draggable-window="settings"]'),
@@ -95,7 +84,7 @@ describe("Settings", () => {
       },
     }));
 
-    render(<Settings />);
+    render();
 
     const windowElement = await waitFor(() =>
       document.querySelector('[data-ll-draggable-window="settings"]'),
@@ -123,14 +112,24 @@ describe("Settings", () => {
       },
     }));
 
-    render(<Settings />);
+    render();
 
-    expect(await screen.findByText("notifications")).toBeInTheDocument();
+    expect(
+      await screen.findByRole("tab", { name: "Powiadomienia", selected: true }),
+    ).toBeInTheDocument();
 
     act(() => useWindowsStore.getState().setOpen("settings", false));
 
-    expect(screen.getByText("notifications")).toBeInTheDocument();
-    expect(screen.queryByText("general")).toBeNull();
+    expect(
+      screen.getByRole("tab", {
+        name: "Powiadomienia",
+        selected: true,
+        hidden: true,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("tab", { name: "Ogólne", selected: true }),
+    ).toBeNull();
 
     const windowElement = document.querySelector(
       '[data-ll-draggable-window="settings"]',
@@ -142,10 +141,18 @@ describe("Settings", () => {
 
     fireEvent.animationEnd(windowBody, { animationName: "ll-window-exit" });
 
-    expect(screen.queryByText("notifications")).toBeNull();
+    expect(
+      screen.queryByRole("tab", {
+        name: "Powiadomienia",
+        selected: true,
+        hidden: true,
+      }),
+    ).toBeNull();
 
     act(() => useWindowsStore.getState().setOpen("settings", true));
 
-    expect(await screen.findByText("notifications")).toBeInTheDocument();
+    expect(
+      await screen.findByRole("tab", { name: "Powiadomienia", selected: true }),
+    ).toBeInTheDocument();
   });
 });

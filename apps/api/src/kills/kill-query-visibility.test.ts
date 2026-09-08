@@ -2,6 +2,7 @@ import { Database, type SQLQueryBindings } from "bun:sqlite";
 import { describe, expect, it } from "bun:test";
 import { createAccessPolicy, Capability } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
+import { Schema } from "effect";
 import { PgDialect } from "drizzle-orm/pg-core";
 import { npcKillStatsTable } from "#src/database/drizzle/schema";
 import {
@@ -65,10 +66,9 @@ const visibleNpcIds = (roles: KillQueryRole[], administrative = false) => {
     );
     if (!condition) throw new Error("Missing organization predicate");
     const query = new PgDialect().sqlToQuery(condition);
-    const parameters = query.params.map((value) => {
-      if (typeof value === "string" || typeof value === "number") return value;
-      throw new Error("Unexpected visibility query parameter");
-    });
+    const parameters = Schema.decodeUnknownSync(
+      Schema.Array(Schema.Union([Schema.String, Schema.Number])),
+    )(query.params);
     return database
       .query<{ npcId: number }, SQLQueryBindings[]>(
         `SELECT "npcId" FROM "NpcKillStats" WHERE ${query.sql} ORDER BY "npcId"`,

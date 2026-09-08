@@ -19,8 +19,10 @@ import {
 } from "../notifications-api";
 import { getApiErrorMessage } from "@lootlog/client/transport";
 import { getGuildNotificationTargetLabel } from "../utils/notification-settings.utils";
-import { useNotificationsGuildControllerDeleteGuildTarget } from "@lootlog/client/main";
-import type { NotificationTargetResponseDto } from "@lootlog/client/main";
+import {
+  useNotificationsGuildControllerDeleteGuildTarget,
+  type NotificationTargetResponseDto,
+} from "@lootlog/client/main";
 
 type NotificationTargetCardProps = {
   target: NotificationTargetResponseDto;

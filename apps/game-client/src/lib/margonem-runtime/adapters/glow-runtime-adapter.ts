@@ -1,5 +1,5 @@
 import { isObjectRecord as isObject } from "@lootlog/schema/records";
-import type { Other } from "@lootlog/margonem/others";
+import type { Other, OtherHandle } from "@lootlog/margonem/others";
 import type { CharacterTooltipCatchingGuildsEntry } from "@/store/character-tooltip-catching-guilds.store";
 
 export const LOOTLOG_OTHER_GLOW_BLUE = "#3ed1de";
@@ -20,10 +20,6 @@ export function getLootlogOtherGlowColor(
 }
 
 type RuntimeOther = Other & {
-  d: Other["d"] & {
-    x?: number;
-    y?: number;
-  };
   fw?: number;
   fh?: number;
   imgLoaded?: boolean;
@@ -33,6 +29,7 @@ type RuntimeOther = Other & {
   waterTopModify?: number;
 };
 
+// Other.update may be wrapped by another addon; preserve its return value.
 type RuntimeOtherUpdate = (this: RuntimeOther, ...args: unknown[]) => unknown;
 
 type RuntimeWindow = Window &
@@ -61,7 +58,7 @@ type RuntimeWindow = Window &
           width: number;
         } | null;
         offset?: [number, number];
-        water?: Record<string, unknown>;
+        water?: Record<number, number>;
       };
       mapShift?: {
         getShift?: () => [number, number];
@@ -77,9 +74,11 @@ type OriginalGetDrawableList = () => unknown[];
 const MASK_PATH = "/img/mask.png";
 
 function getRuntimeWindow(): RuntimeWindow {
-  return window as RuntimeWindow;
+  return window;
 }
 
+// OthersManager.getDrawableList mixes characters, pets, markers and glows.
+// Classify only known native glow capabilities; retain every other object by identity.
 function isNativeOtherGlowDrawable(drawable: unknown): boolean {
   if (!isObject(drawable)) return false;
 
@@ -285,11 +284,18 @@ class LootlogOtherGlowManager {
     this.nativeGlowSuppressed = nativeGlowSuppressed;
   }
 
-  setGlow(other: Other, color: string): void {
-    if (!other?.d || other.d.id === undefined || other.d.id === null) return;
+  setGlow(other: OtherHandle, color: string): void {
+    if (
+      !other ||
+      !("d" in other) ||
+      !other.d ||
+      other.d.id === undefined ||
+      other.d.id === null
+    )
+      return;
 
     const characterId = String(other.d.id);
-    const runtimeOther = other as RuntimeOther;
+    const runtimeOther: RuntimeOther = other;
     const existingGlow = this.glowsByCharacterId.get(characterId);
 
     if (existingGlow) {

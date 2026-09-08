@@ -11,12 +11,14 @@ class AudioMock {
   preload = "";
   src: string;
   volume = 1;
-  readonly load = vi.fn();
-  readonly pause = vi.fn();
+  readonly load = vi.fn<() => void>();
+  readonly pause = vi.fn<() => void>();
   readonly play = vi.fn<() => Promise<void>>().mockResolvedValue();
-  readonly removeAttribute = vi.fn((attribute: string) => {
-    if (attribute === "src") this.src = "";
-  });
+  readonly removeAttribute = vi.fn<(attribute: string) => void>(
+    (attribute: string) => {
+      if (attribute === "src") this.src = "";
+    },
+  );
 
   constructor(src = "") {
     this.src = src;

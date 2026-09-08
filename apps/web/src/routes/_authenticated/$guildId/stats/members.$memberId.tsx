@@ -5,8 +5,11 @@ import {
   buildMemberKillsParams,
   DEFAULT_MEMBER_KILLS_LIMIT,
 } from "@/features/guild/stats/utils/build-stats-query-params";
-import { getKillsControllerGetMemberKillsQueryOptions } from "@lootlog/client/main";
-import { getMembersControllerGetGuildMemberReferencesQueryOptions } from "@lootlog/client/main";
+import {
+  getKillsControllerGetMemberKillsQueryOptions,
+  getMembersControllerGetGuildMemberReferencesQueryOptions,
+} from "@lootlog/client/main";
+
 import {
   rethrowNotFoundOrError,
   withRouteLoaderCancellation,

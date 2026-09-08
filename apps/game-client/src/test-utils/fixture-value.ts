@@ -16,13 +16,11 @@ export const optionalFixtureValue = <ObjectType, Key extends keyof ObjectType>(
 export const nestedFixtureValue = <
   ObjectType,
   ParentKey extends keyof ObjectType,
-  NestedObject extends NonNullable<ObjectType[ParentKey]>,
-  Key extends keyof NestedObject,
+  Key extends keyof NonNullable<ObjectType[ParentKey]>,
   Fallback,
 >(
   source: ObjectType | undefined,
   parentKey: ParentKey,
   key: Key,
   fallback: Fallback,
-) =>
-  (source?.[parentKey] as NestedObject | null | undefined)?.[key] ?? fallback;
+) => source?.[parentKey]?.[key] ?? fallback;

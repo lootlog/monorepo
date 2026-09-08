@@ -15,12 +15,13 @@ import { Button } from "@lootlog/ui/components/button";
 import { Label } from "@lootlog/ui/components/label";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Textarea } from "@lootlog/ui/components/textarea";
-import type { EventOverviewResponseDto } from "@lootlog/client/main";
 import {
+  type EventOverviewResponseDto,
   getShowEventOverviewQueryKey,
   useShowEventOverview,
   useUpdateEvent,
 } from "@lootlog/client/main";
+
 import { invalidateEventDetailQueries } from "./hooks/mutations/invalidate-event-queries";
 
 interface EventRulebookFormData {
@@ -88,10 +89,7 @@ export const EventEditRulebookPage = () => {
       await updateEvent.mutateAsync({
         pathParams: routeParams,
         data: {
-          rulebookMarkdown:
-            normalizedRulebookMarkdown.length > 0
-              ? normalizedRulebookMarkdown
-              : (null as never),
+          rulebookMarkdown: normalizedRulebookMarkdown,
         },
       });
       form.reset({

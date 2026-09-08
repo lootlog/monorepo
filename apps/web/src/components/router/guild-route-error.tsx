@@ -22,7 +22,7 @@ export const GuildRouteError = ({ error, reset }: ErrorComponentProps) => {
     <RouteErrorState
       status={normalizedStatus}
       description={getRouteErrorMessage(error)}
-      primaryAction={<RouteRetryButton onRetry={handleRetry} />}
+      primaryAction=<RouteRetryButton onRetry={handleRetry} />
       secondaryAction={
         <Button variant="outline" onClick={() => void navigate({ to: "/@me" })}>
           {t("common.routeErrors.actions.goToDashboard")}

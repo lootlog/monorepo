@@ -1,12 +1,7 @@
 import { makeRuleId } from "../../utils/scoring-rule-templates";
-import { useState } from "react";
-import {
-  useFieldArray,
-  useWatch,
-  type Control,
-  type UseFormRegister,
-  type UseFormSetValue,
-} from "react-hook-form";
+import { useEffect, useEffectEvent, useState } from "react";
+import { isEqual } from "lodash";
+import { useFieldArray, useWatch, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
 import { Label } from "@lootlog/ui/components/label";
@@ -22,14 +17,13 @@ import { ScoringRuleCard } from "./scoring-rule-card";
 import { ScoringRuleTemplatesMenu } from "./scoring-rule-templates-menu";
 import { ScoringSimulatorDialog } from "./scoring-simulator-dialog";
 
-type ScoringRulesFormValues = {
+export type ScoringRulesFormValues = {
   scoringRules: EventScoringRules;
 };
 
-interface ScoringRulesEditorProps<TFieldValues extends ScoringRulesFormValues> {
-  control: Control<TFieldValues>;
-  register: UseFormRegister<TFieldValues>;
-  setValue: UseFormSetValue<TFieldValues>;
+interface ScoringRulesEditorProps {
+  value: EventScoringRules;
+  onChange: (value: EventScoringRules) => void;
 }
 
 const defaultRule = () => ({
@@ -40,21 +34,35 @@ const defaultRule = () => ({
   action: createDefaultScoringAction(),
 });
 
-export const ScoringRulesEditor = <
-  TFieldValues extends ScoringRulesFormValues,
->({
-  control,
-  register,
-  setValue,
-}: ScoringRulesEditorProps<TFieldValues>) => {
+export const ScoringRulesEditor = ({
+  value,
+  onChange,
+}: ScoringRulesEditorProps) => {
   const { t } = useTranslation();
   const [simulatorOpen, setSimulatorOpen] = useState(false);
+  const form = useForm<ScoringRulesFormValues>({
+    defaultValues: { scoringRules: value },
+  });
+  const notifyChange = useEffectEvent(onChange);
 
-  const scopedControl = control as unknown as Control<ScoringRulesFormValues>;
-  const scopedRegister =
-    register as unknown as UseFormRegister<ScoringRulesFormValues>;
-  const scopedSetValue =
-    setValue as unknown as UseFormSetValue<ScoringRulesFormValues>;
+  useEffect(() => {
+    if (!isEqual(form.getValues("scoringRules"), value)) {
+      form.setValue("scoringRules", value);
+    }
+  }, [form, value]);
+
+  useEffect(() => {
+    const subscription = form.watch((_values, { name }) => {
+      if (name) notifyChange(form.getValues("scoringRules"));
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
+
+  const {
+    control: scopedControl,
+    register: scopedRegister,
+    setValue: scopedSetValue,
+  } = form;
 
   const { fields, append, remove } = useFieldArray({
     control: scopedControl,

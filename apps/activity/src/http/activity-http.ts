@@ -11,7 +11,7 @@ import {
   Permission,
   type Permission as PermissionValue,
 } from "@lootlog/schema/permissions";
-import { Context, Effect, Layer, Schema } from "effect";
+import { Context, Effect, Function, Layer, Schema } from "effect";
 import { statfs } from "node:fs/promises";
 import {
   HttpRouter,
@@ -19,10 +19,7 @@ import {
   HttpServerResponse,
 } from "effect/unstable/http";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
-import {
-  ActivityNotFound,
-  ActivityRepository,
-} from "#src/activities/activity-repository";
+import { ActivityRepository } from "#src/activities/activity-repository";
 import { ActivityConfig } from "#src/config/activity-config";
 import { ApiHttpClient } from "#src/http/api-http-client";
 import { ActivityApi } from "#src/http-api/activity-api";
@@ -177,17 +174,16 @@ const authorize = Effect.fn("Activity.authorize")(function* (
   return guildId;
 });
 
-const repositoryFailure = (error: unknown) =>
-  error instanceof ActivityNotFound ||
-  (typeof error === "object" &&
-    error !== null &&
-    "_tag" in error &&
-    error._tag === "ActivityNotFound")
-    ? new ActivityHttpFailure({ status: 404, message: "Activity not found" })
-    : new ActivityHttpFailure({
-        status: 500,
-        message: "Internal server error",
-      });
+const repositoryFailure = Function.compose(
+  Schema.is(Schema.Struct({ _tag: Schema.Literal("ActivityNotFound") })),
+  (notFound) =>
+    notFound
+      ? new ActivityHttpFailure({ status: 404, message: "Activity not found" })
+      : new ActivityHttpFailure({
+          status: 500,
+          message: "Internal server error",
+        }),
+);
 
 const jsonOperation = <A, R>(effect: Effect.Effect<A, unknown, R>) =>
   effect.pipe(

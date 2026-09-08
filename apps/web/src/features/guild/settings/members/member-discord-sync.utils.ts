@@ -36,25 +36,21 @@ export type MemberDiscordSyncPresentation = {
   showListIndicator: boolean;
 };
 
-const blockingStatusCopyKeys: Partial<
-  Record<string, MemberDiscordSyncCopyKey>
-> = {
-  NOT_FOUND: "notFound",
-  UNAUTHORIZED: "unauthorized",
-  MANUALLY_DEACTIVATED: "manuallyDeactivated",
-  GUILD_NOT_IN_DISCORD_LIST: "guildNotInDiscordList",
-  GUILD_DEACTIVATED: "guildDeactivated",
-  ACCOUNT_DELETED: "accountDeleted",
-};
+const blockingStatusCopyKeys = new Map<string, MemberDiscordSyncCopyKey>([
+  ["NOT_FOUND", "notFound"],
+  ["UNAUTHORIZED", "unauthorized"],
+  ["MANUALLY_DEACTIVATED", "manuallyDeactivated"],
+  ["GUILD_NOT_IN_DISCORD_LIST", "guildNotInDiscordList"],
+  ["GUILD_DEACTIVATED", "guildDeactivated"],
+  ["ACCOUNT_DELETED", "accountDeleted"],
+]);
 
-const transientStatusCopyKeys: Partial<
-  Record<string, MemberDiscordSyncCopyKey>
-> = {
-  RATE_LIMITED: "rateLimited",
-  AUTH_SERVICE_UNAVAILABLE: "authServiceUnavailable",
-  DISCORD_SERVICE_UNAVAILABLE: "discordServiceUnavailable",
-  ERROR: "error",
-};
+const transientStatusCopyKeys = new Map<string, MemberDiscordSyncCopyKey>([
+  ["RATE_LIMITED", "rateLimited"],
+  ["AUTH_SERVICE_UNAVAILABLE", "authServiceUnavailable"],
+  ["DISCORD_SERVICE_UNAVAILABLE", "discordServiceUnavailable"],
+  ["ERROR", "error"],
+]);
 
 const discordHttpStatusPattern = /^DISCORD_HTTP_\d+$/;
 
@@ -104,7 +100,7 @@ export const getMemberDiscordSyncPresentation = (
     };
   }
 
-  const blockingCopyKey = blockingStatusCopyKeys[status];
+  const blockingCopyKey = blockingStatusCopyKeys.get(status);
   if (blockingCopyKey) {
     return {
       copyKey: blockingCopyKey,
@@ -114,7 +110,7 @@ export const getMemberDiscordSyncPresentation = (
     };
   }
 
-  const transientCopyKey = transientStatusCopyKeys[status];
+  const transientCopyKey = transientStatusCopyKeys.get(status);
   if (transientCopyKey) {
     return {
       copyKey: transientCopyKey,

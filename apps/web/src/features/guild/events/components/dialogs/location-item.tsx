@@ -80,12 +80,12 @@ export const LocationItem = ({
         size="icon"
         type="button"
         aria-label={t("events.delete")}
-        icon={<Trash2 className="size-3" />}
+        icon=<Trash2 className="size-3" />
         onClick={() => handleDeleteLocation(location.id)}
         className="size-6 p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
         disabled={deletionDisabled}
         loading={isDeleting}
-      ></Button>
+      />
     </Reorder.Item>
   );
 };

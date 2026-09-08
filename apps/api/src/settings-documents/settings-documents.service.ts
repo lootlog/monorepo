@@ -239,10 +239,9 @@ export const makeSettingsDocuments = (
       const domains = [
         ...new Set(domainsValue.split(",").map((item) => item.trim())),
       ];
-      return domains.length === 0 ||
-        domains.some((domain) => !isSettingsDomain(domain))
+      return domains.length === 0 || !domains.every(isSettingsDomain)
         ? Effect.fail(requestError(400, "Unknown settings domain"))
-        : Effect.succeed(domains as SettingsDomain[]);
+        : Effect.succeed(domains);
     },
   };
 };

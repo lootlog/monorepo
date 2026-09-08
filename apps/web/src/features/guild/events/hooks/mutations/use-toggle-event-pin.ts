@@ -4,8 +4,9 @@ import {
   useListPinnedEvents,
   usePinEvent,
   useUnpinEvent,
+  type PinnedEventResponseDto,
 } from "@lootlog/client/main";
-import type { PinnedEventResponseDto } from "@lootlog/client/main";
+
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import {
@@ -14,12 +15,11 @@ import {
   restorePinnedEvent,
 } from "./event-pin-cache";
 
-type PinMutationVariables = {
-  pathParams: {
-    eventId: string;
-    guildId: string;
-  };
-};
+import { z } from "zod";
+
+const pinMutationVariables = z.object({
+  pathParams: z.object({ eventId: z.string(), guildId: z.string() }),
+});
 
 export const useToggleEventPin = (guildId: string) => {
   const { t } = useTranslation();
@@ -108,14 +108,12 @@ export const useToggleEventPin = (guildId: string) => {
   const pendingPinPaths = useMutationState({
     filters: { mutationKey: ["pinEvent"], status: "pending" },
     select: (mutation) =>
-      (mutation.state.variables as PinMutationVariables | undefined)
-        ?.pathParams,
+      pinMutationVariables.safeParse(mutation.state.variables).data?.pathParams,
   });
   const pendingUnpinPaths = useMutationState({
     filters: { mutationKey: ["unpinEvent"], status: "pending" },
     select: (mutation) =>
-      (mutation.state.variables as PinMutationVariables | undefined)
-        ?.pathParams,
+      pinMutationVariables.safeParse(mutation.state.variables).data?.pathParams,
   });
 
   const isPinned = (eventId: string) =>

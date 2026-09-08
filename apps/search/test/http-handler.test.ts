@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { SearchOperationFailure } from "../src/meilisearch/search-operation-failure.js";
-import { Effect, Layer } from "effect";
+import { Context, Effect, Layer } from "effect";
 import { HttpRouter, HttpServer } from "effect/unstable/http";
 import {
   SearchOperations,
@@ -35,7 +35,8 @@ const makeBoundary = (overrides: Partial<SearchOperationsValue> = {}) => {
     ),
     { disableLogger: true },
   );
-  const handler = boundary.handler as (request: Request) => Promise<Response>;
+  const handler = (request: Request) =>
+    boundary.handler(request, Context.make(SearchOperations, operations));
   return {
     handler,
     dispose: boundary.dispose,

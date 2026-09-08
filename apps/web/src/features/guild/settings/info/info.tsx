@@ -17,8 +17,8 @@ import {
   invalidateGuildsControllerGetGuildDiscordSyncStatus,
   useGuildsControllerGetGuildDiscordSyncStatus,
   useGuildsControllerRefreshGuildDiscordSync,
+  invalidateNotificationsGuildControllerGetAvailableGuildTargets,
 } from "@lootlog/client/main";
-import { invalidateNotificationsGuildControllerGetAvailableGuildTargets } from "@lootlog/client/main";
 
 type GuildSyncPresentationData = {
   channelCount?: number;
@@ -152,7 +152,7 @@ export const InfoSettings = () => {
                           refreshMutation.mutate({ pathParams: { guildId } })
                         }
                         loading={refreshMutation.isPending}
-                        icon={<RefreshCcw className="size-3.5" />}
+                        icon=<RefreshCcw className="size-3.5" />
                       >
                         {t("settings.guildInfo.refresh")}
                       </Button>

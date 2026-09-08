@@ -96,7 +96,7 @@ export function ReservationSharingSettings() {
               type="button"
               className="w-full lg:w-auto"
               loading={createMutation.isPending}
-              icon={<Plus />}
+              icon=<Plus />
               onClick={() => createMutation.mutate({ pathParams: { guildId } })}
             >
               {t("settings.reservations.sharing.createInvite")}
@@ -126,7 +126,7 @@ export function ReservationSharingSettings() {
                 variant="outline"
                 className="shrink-0"
                 loading={isCopying}
-                icon={<Copy />}
+                icon=<Copy />
                 onClick={() => {
                   if (isCopying) return;
                   setIsCopying(true);

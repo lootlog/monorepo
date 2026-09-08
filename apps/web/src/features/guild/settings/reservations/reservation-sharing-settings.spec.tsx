@@ -1,5 +1,9 @@
+import { createOrganizationTestWrapper } from "@/lib/testing/router";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { configureApiClients } from "@lootlog/client/transport";
 // @vitest-environment happy-dom
 
+import { initializeTestTranslations } from "@/lib/testing/i18n";
 import {
   cleanup,
   fireEvent,
@@ -7,160 +11,127 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import type { HTMLAttributes, InputHTMLAttributes } from "react";
+
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ReservationSharingSettings } from "./reservation-sharing-settings";
 
-const mocks = vi.hoisted(() => ({
-  createdInvitationResponse: {
-    id: "invitation-1",
-    invitePath: "/reservation-sharing/invitations/invitation-1",
-    createdAt: "2026-08-26T00:00:00.000Z",
-    expiresAt: "2026-09-02T00:00:00.000Z",
-  } as Record<string, string>,
-  invalidateQueries: vi.fn(),
-}));
+await initializeTestTranslations({
+  "settings.reservations.sharing.title": "Współdzielone rezerwacje",
+  "settings.reservations.sharing.description": "Opis",
+  "settings.reservations.sharing.createInvite": "Utwórz zaproszenie",
+  "settings.reservations.sharing.inviteReady": "Zaproszenie gotowe",
+  "settings.reservations.sharing.inviteLink": "Link zaproszenia",
+  "settings.reservations.sharing.copy": "Kopiuj",
+  "settings.reservations.sharing.singleUseNotice": "Informacja",
+  "settings.reservations.sharing.partners": "Połączone organizacje",
+  "settings.reservations.sharing.noPartners": "Brak organizacji",
+  "settings.reservations.sharing.pending": "Oczekujące zaproszenia",
+  "settings.reservations.sharing.pendingInvite": "Zaproszenie",
+  "settings.reservations.sharing.expires": "Wygasa",
+  "settings.reservations.sharing.revoke": "Wycofaj",
+});
 
-vi.mock("@tanstack/react-query", () => ({
-  useQueryClient: () => ({ invalidateQueries: mocks.invalidateQueries }),
-}));
-
-vi.mock("@/hooks/context/use-guild-id", () => ({
-  useGuildId: () => "guild-1",
-}));
-
-vi.mock("@/features/guild/reservations/get-reservation-error-message", () => ({
-  getReservationErrorMessage: () => "Błąd",
-}));
-
-vi.mock("@lootlog/client/main", async () => ({
-  ...(await vi.importActual("@lootlog/client/main")),
-  getListReservationSharesQueryKey: () => ["reservation-shares"],
-  useListReservationShares: () => ({
-    data: {
-      shares: [],
-      pendingInvitations: [
-        {
-          id: "invitation-1",
-          createdAt: "2026-08-26T00:00:00.000Z",
-          expiresAt: "2026-09-02T00:00:00.000Z",
-        },
-      ],
+type InvitationResponse = {
+  id: string;
+  createdAt: string;
+  expiresAt: string;
+} & ({ invitePath: string } | { inviteUrl: string });
+const defaultInvitation = {
+  id: "invitation-1",
+  invitePath: "/reservation-sharing/invitations/invitation-1",
+  createdAt: "2026-08-26T00:00:00.000Z",
+  expiresAt: "2026-09-02T00:00:00.000Z",
+};
+let createdInvitationResponse: InvitationResponse = defaultInvitation;
+let restoreClient = () => {};
+const renderSettings = async () => {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: 0 } },
+  });
+  restoreClient = configureApiClients({
+    main: { baseUrl: "https://api.test" },
+  });
+  let revoked = false;
+  vi.stubGlobal(
+    "fetch",
+    async (input: string | URL | Request, init?: RequestInit) => {
+      const request = new Request(input, init);
+      if (request.method === "POST")
+        return Response.json(createdInvitationResponse);
+      if (request.method === "DELETE") {
+        revoked = true;
+        return new Response(null, { status: 204 });
+      }
+      return Response.json({
+        shares: [],
+        pendingInvitations: revoked ? [] : [defaultInvitation],
+      });
     },
-    isPending: false,
-    isError: false,
-  }),
-  useCreateReservationShareInvitation: ({ mutation }: any) => ({
-    isPending: false,
-    mutate: (variables: unknown) =>
-      mutation.onSuccess?.(
-        mocks.createdInvitationResponse,
-        variables,
-        undefined,
-      ),
-  }),
-  useRevokeReservationShareInvitation: ({ mutation }: any) => ({
-    isPending: false,
-    mutate: (variables: unknown) =>
-      mutation.onSuccess?.(undefined, variables, undefined),
-  }),
-  useRevokeReservationShare: () => ({
-    isPending: false,
-    mutateAsync: vi.fn(),
-  }),
-}));
-
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string) => {
-      const translations: Record<string, string> = {
-        "settings.reservations.sharing.title": "Współdzielone rezerwacje",
-        "settings.reservations.sharing.description": "Opis",
-        "settings.reservations.sharing.createInvite": "Utwórz zaproszenie",
-        "settings.reservations.sharing.inviteReady": "Zaproszenie gotowe",
-        "settings.reservations.sharing.inviteLink": "Link zaproszenia",
-        "settings.reservations.sharing.copy": "Kopiuj",
-        "settings.reservations.sharing.singleUseNotice": "Informacja",
-        "settings.reservations.sharing.partners": "Połączone organizacje",
-        "settings.reservations.sharing.noPartners": "Brak organizacji",
-        "settings.reservations.sharing.pending": "Oczekujące zaproszenia",
-        "settings.reservations.sharing.pendingInvite": "Zaproszenie",
-        "settings.reservations.sharing.expires": "Wygasa",
-        "settings.reservations.sharing.revoke": "Wycofaj",
-      };
-
-      return translations[key] ?? key;
-    },
-  }),
-}));
-
-vi.mock("@lootlog/ui/components/card", () => ({
-  Card: ({ children, ...props }: HTMLAttributes<HTMLDivElement>) => (
-    <div {...props}>{children}</div>
-  ),
-}));
-
-vi.mock("@lootlog/ui/components/input", () => ({
-  Input: (props: InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
-}));
-
-vi.mock("@lootlog/ui/components/confirm-delete-dialog", () => ({
-  ConfirmDeleteDialog: () => null,
-}));
-
+  );
+  const Wrapper = await createOrganizationTestWrapper();
+  render(
+    <Wrapper>
+      <QueryClientProvider client={client}>
+        <ReservationSharingSettings />
+      </QueryClientProvider>
+    </Wrapper>,
+  );
+  await screen.findByText("Oczekujące zaproszenia");
+};
 describe("ReservationSharingSettings", () => {
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
-    mocks.createdInvitationResponse = {
-      id: "invitation-1",
-      invitePath: "/reservation-sharing/invitations/invitation-1",
-      createdAt: "2026-08-26T00:00:00.000Z",
-      expiresAt: "2026-09-02T00:00:00.000Z",
-    };
+    restoreClient();
+    vi.unstubAllGlobals();
+    createdInvitationResponse = defaultInvitation;
   });
 
-  it("builds the invitation URL from the current web origin", () => {
-    render(<ReservationSharingSettings />);
+  it("builds the invitation URL from the current web origin", async () => {
+    await renderSettings();
 
     fireEvent.click(screen.getByRole("button", { name: "Utwórz zaproszenie" }));
 
     expect(
-      screen.getByRole<HTMLInputElement>("textbox", {
-        name: "Link zaproszenia",
-      }).value,
+      (
+        await screen.findByRole<HTMLInputElement>("textbox", {
+          name: "Link zaproszenia",
+        })
+      ).value,
     ).toBe(
       `${window.location.origin}/reservation-sharing/invitations/invitation-1`,
     );
   });
 
-  it("supports the previous API response during a Web-first rollout", () => {
-    mocks.createdInvitationResponse = {
+  it("supports the previous API response during a Web-first rollout", async () => {
+    createdInvitationResponse = {
       id: "invitation-1",
       inviteUrl:
         "http://localhost/reservation-sharing/invitations/invitation-1",
       createdAt: "2026-08-26T00:00:00.000Z",
       expiresAt: "2026-09-02T00:00:00.000Z",
     };
-    render(<ReservationSharingSettings />);
+    await renderSettings();
 
     fireEvent.click(screen.getByRole("button", { name: "Utwórz zaproszenie" }));
 
     expect(
-      screen.getByRole<HTMLInputElement>("textbox", {
-        name: "Link zaproszenia",
-      }).value,
+      (
+        await screen.findByRole<HTMLInputElement>("textbox", {
+          name: "Link zaproszenia",
+        })
+      ).value,
     ).toBe(
       `${window.location.origin}/reservation-sharing/invitations/invitation-1`,
     );
   });
 
   it("hides a newly created link after its invitation is revoked", async () => {
-    render(<ReservationSharingSettings />);
+    await renderSettings();
 
     fireEvent.click(screen.getByRole("button", { name: "Utwórz zaproszenie" }));
     expect(
-      screen.getByRole("textbox", { name: "Link zaproszenia" }),
+      await screen.findByRole("textbox", { name: "Link zaproszenia" }),
     ).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Wycofaj" }));
@@ -172,7 +143,7 @@ describe("ReservationSharingSettings", () => {
     });
   });
   it("keeps copy busy until the clipboard request settles and allows retry after failure", async () => {
-    let rejectCopy: (reason?: unknown) => void = () => {};
+    let rejectCopy: (cause?: unknown) => void = () => {};
     const writeText = vi.fn(
       () =>
         new Promise<void>((_resolve, reject) => {
@@ -183,9 +154,9 @@ describe("ReservationSharingSettings", () => {
       configurable: true,
       value: { writeText },
     });
-    render(<ReservationSharingSettings />);
+    await renderSettings();
     fireEvent.click(screen.getByRole("button", { name: "Utwórz zaproszenie" }));
-    const copy = screen.getByRole<HTMLButtonElement>("button", {
+    const copy = await screen.findByRole<HTMLButtonElement>("button", {
       name: "Kopiuj",
     });
     fireEvent.click(copy);
@@ -205,9 +176,9 @@ describe("ReservationSharingSettings", () => {
       configurable: true,
       value: { writeText },
     });
-    render(<ReservationSharingSettings />);
+    await renderSettings();
     fireEvent.click(screen.getByRole("button", { name: "Utwórz zaproszenie" }));
-    const copy = screen.getByRole<HTMLButtonElement>("button", {
+    const copy = await screen.findByRole<HTMLButtonElement>("button", {
       name: "Kopiuj",
     });
     fireEvent.click(copy);

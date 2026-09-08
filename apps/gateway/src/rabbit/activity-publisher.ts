@@ -64,9 +64,9 @@ export class ActivityPublisher {
               headers: { [ACTIVITY_EVENT_SIGNATURE_HEADER]: signature },
             })
             .pipe(
-              Effect.catch((cause) =>
+              Effect.catch((error) =>
                 Effect.logWarning("Activity event publication failed").pipe(
-                  Effect.annotateLogs({ cause, guildId, type }),
+                  Effect.annotateLogs({ error, guildId, type }),
                 ),
               ),
             );

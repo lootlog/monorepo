@@ -1,10 +1,13 @@
-import type { KillsControllerGetGuildKillStatsParams } from "@lootlog/client/main";
-import type { KillsControllerGetGuildTopNpcsParams } from "@lootlog/client/main";
-import type { KillsControllerGetMemberKillsParams } from "@lootlog/client/main";
-import type { KillsControllerGetNpcKillersParams } from "@lootlog/client/main";
-import type { LootsControllerGetLootStatsParams } from "@lootlog/client/main";
-import type { LootsControllerGetLootStatsPeriod } from "@lootlog/client/main";
-import type { NpcType } from "@lootlog/client/main";
+import type {
+  KillsControllerGetGuildKillStatsParams,
+  KillsControllerGetGuildTopNpcsParams,
+  KillsControllerGetMemberKillsParams,
+  KillsControllerGetNpcKillersParams,
+  LootsControllerGetLootStatsParams,
+  LootsControllerGetLootStatsPeriod,
+  NpcType,
+} from "@lootlog/client/main";
+
 import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
 
 export const DEFAULT_MEMBER_KILLS_LIMIT = 40;

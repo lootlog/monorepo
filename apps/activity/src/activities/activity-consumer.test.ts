@@ -31,7 +31,7 @@ const payload = {
 
 const makeDelivery = (
   content: string,
-  headers: Record<string, unknown> = {},
+  headers: NonNullable<RabbitDelivery["properties"]["headers"]> = {},
 ): RabbitDelivery => {
   const raw = {
     content: Buffer.from(content),
@@ -58,7 +58,7 @@ const makeDelivery = (
       appId: undefined,
       clusterId: undefined,
     },
-  } as RabbitDelivery["raw"];
+  } satisfies RabbitDelivery["raw"];
   return {
     content: new Uint8Array(raw.content),
     exchange: raw.fields.exchange,

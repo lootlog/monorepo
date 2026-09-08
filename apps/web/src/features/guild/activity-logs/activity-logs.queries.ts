@@ -2,12 +2,12 @@ import { infiniteQueryOptions } from "@tanstack/react-query";
 import {
   activitiesControllerFindByGuild,
   getActivitiesControllerFindByGuildQueryKey,
+  ActivitiesControllerFindByGuildSourceItem,
+  ActivitiesControllerFindByGuildTypeItem,
+  type ActivitiesControllerFindByGuildParams,
+  type ActivitiesControllerFindByGuildSourceItem as ActivitySource,
+  type ActivitiesControllerFindByGuildTypeItem as ActivityType,
 } from "@lootlog/client/activity";
-import { ActivitiesControllerFindByGuildSourceItem } from "@lootlog/client/activity";
-import { ActivitiesControllerFindByGuildTypeItem } from "@lootlog/client/activity";
-import type { ActivitiesControllerFindByGuildParams } from "@lootlog/client/activity";
-import type { ActivitiesControllerFindByGuildSourceItem as ActivitySource } from "@lootlog/client/activity";
-import type { ActivitiesControllerFindByGuildTypeItem as ActivityType } from "@lootlog/client/activity";
 
 export type ActivityLogsQueryOptions = {
   guildId?: string;
@@ -30,10 +30,10 @@ const activityLogSourceValues = Object.values(
 );
 
 const isActivityLogType = (value: string): value is ActivityType =>
-  activityLogTypeValues.includes(value as ActivityType);
+  activityLogTypeValues.some((type) => type === value);
 
 const isActivityLogSource = (value: string): value is ActivitySource =>
-  activityLogSourceValues.includes(value as ActivitySource);
+  activityLogSourceValues.some((source) => source === value);
 
 export const getActivityLogTypes = (values: string[]): ActivityType[] =>
   values.filter(isActivityLogType);
@@ -75,16 +75,16 @@ export const activityLogsInfiniteQueryOptions = ({
       { guildId: guildId ?? "" },
       baseParams,
     ),
-    queryFn: ({ pageParam }) =>
+    queryFn: ({ pageParam }: { pageParam: string | undefined }) =>
       activitiesControllerFindByGuild(
         { guildId: guildId ?? "" },
         {
           ...baseParams,
-          cursor: typeof pageParam === "string" ? pageParam : undefined,
+          cursor: pageParam,
         },
       ),
     enabled: Boolean(guildId),
-    initialPageParam: undefined as string | undefined,
+    initialPageParam: undefined,
     getNextPageParam: (lastPage) =>
       lastPage.hasMore ? lastPage.nextCursor : undefined,
   });

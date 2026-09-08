@@ -8,8 +8,8 @@ export function BattleHpTimelineChartSkeleton() {
   return (
     <SectionCard aria-hidden="true">
       <SectionCardHeader
-        title={<Skeleton className="h-4 w-36" />}
-        actions={<Skeleton className="h-8 w-24" />}
+        title=<Skeleton className="h-4 w-36" />
+        actions=<Skeleton className="h-8 w-24" />
       />
 
       <div className="relative m-3 h-36 w-full overflow-hidden rounded-md bg-background/35 px-4 py-4">

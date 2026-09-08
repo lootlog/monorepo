@@ -1,3 +1,4 @@
+import { isObjectRecord } from "@lootlog/schema/records";
 import { makeJsonCodec } from "#src/redis/redis.service";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { makeDiscordBotClient } from "#src/discord-bot-client/discord-bot-client";
@@ -123,8 +124,7 @@ export const accountOrganizationOperationsLive = Layer.effect(
             );
           }),
           Effect.flatMap((body) =>
-            typeof body === "object" &&
-            body !== null &&
+            isObjectRecord(body) &&
             "status" in body &&
             body.status === "ACCEPTED"
               ? Effect.void

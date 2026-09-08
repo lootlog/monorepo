@@ -1,10 +1,12 @@
 import type { BattleWarrior as Warrior } from "@/lib/api/battlelog-types";
 
+export type BattleStatValue = Warrior[keyof Warrior];
+
 export interface BattleStatDefinition {
   key: keyof Warrior;
   labelKey: string;
   color?: string;
-  format?: (value: unknown) => string;
+  format?: (value: BattleStatValue) => string;
 }
 
 export interface BattleStatCategoryDefinition {

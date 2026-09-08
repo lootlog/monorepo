@@ -1,3 +1,4 @@
+import { Schema } from "effect";
 import { isRecord } from "@lootlog/schema/records";
 import {
   CHAT_APPEARANCE_READABLE_PRESET,
@@ -45,15 +46,18 @@ export const getCharacterSettingsScopeId = (
 export type SettingsValueSource = "DEFAULT" | SettingsScope;
 export type SettingsPersistence = "SERVER_DOCUMENT" | "DEVICE";
 
+// Values arrive from versioned storage and are validated per catalog field before use.
+export type RawSettingsValues = Record<string, unknown>;
+
 export interface SettingsDocumentLayer {
   scope: SettingsScope;
-  overrides: Record<string, unknown>;
+  overrides: RawSettingsValues;
   schemaVersion?: number;
   updatedAt?: string;
 }
 
 export interface SettingsDomainResolution {
-  effective: Record<string, unknown>;
+  effective: RawSettingsValues;
   layers: SettingsDocumentLayer[];
   sources: Record<string, SettingsValueSource>;
   schemaVersion: number;
@@ -69,7 +73,7 @@ export interface SettingsFieldDefinition {
 
 export interface SettingsDocumentMigration {
   fromVersion: number;
-  migrate: (overrides: Record<string, unknown>) => Record<string, unknown>;
+  migrate: (overrides: RawSettingsValues) => RawSettingsValues;
 }
 
 export interface SettingsDomainDefinition {
@@ -78,25 +82,18 @@ export interface SettingsDomainDefinition {
   migrations: readonly SettingsDocumentMigration[];
 }
 
-const isBoolean = (value: unknown) => typeof value === "boolean";
-const isString = (value: unknown) => typeof value === "string";
-const isStringArray = (value: unknown) =>
-  Array.isArray(value) && value.every((item) => typeof item === "string");
-
-const isFiniteNumber = (value: unknown): value is number =>
-  typeof value === "number" && Number.isFinite(value);
-const isNumberInRange =
-  (minimum: number, maximum: number) => (value: unknown) =>
-    isFiniteNumber(value) && value >= minimum && value <= maximum;
-const isOneOf =
-  <TValue extends string>(values: readonly TValue[]) =>
-  (value: unknown): value is TValue =>
-    typeof value === "string" && values.includes(value as TValue);
+const isBoolean = Schema.is(Schema.Boolean);
+const isString = Schema.is(Schema.String);
+const isStringArray = Schema.is(Schema.Array(Schema.String));
+const isNumberInRange = (minimum: number, maximum: number) =>
+  Schema.is(Schema.Finite.check(Schema.isBetween({ minimum, maximum })));
+const isOneOf = <TValue extends string>(values: readonly TValue[]) =>
+  Schema.is(Schema.Literals(values));
 
 const field = (
-  defaultValue: unknown,
+  defaultValue: SettingsFieldDefinition["defaultValue"],
   scopes: readonly SettingsScopeType[],
-  isValid: (value: unknown) => boolean,
+  isValid: SettingsFieldDefinition["isValid"],
 ): SettingsFieldDefinition => ({
   defaultValue,
   persistence: "SERVER_DOCUMENT",
@@ -342,7 +339,7 @@ export type SettingsCatalogKey =
 
 export const migrateSettingsDocument = (
   domain: SettingsDomain,
-  overrides: Record<string, unknown>,
+  overrides: RawSettingsValues,
   fromVersion: number,
 ) => {
   const definition = SETTINGS_CATALOG[domain];
@@ -371,10 +368,7 @@ export const migrateSettingsDocument = (
   return migratedOverrides;
 };
 
-export const isSettingsDomain = (value: string): value is SettingsDomain =>
-  SETTINGS_DOMAINS.includes(value as SettingsDomain);
-
-export const isSettingsScopeType = (
-  value: string,
-): value is SettingsScopeType =>
-  SETTINGS_SCOPE_TYPES.includes(value as SettingsScopeType);
+export const isSettingsDomain = Schema.is(Schema.Literals(SETTINGS_DOMAINS));
+export const isSettingsScopeType = Schema.is(
+  Schema.Literals(SETTINGS_SCOPE_TYPES),
+);

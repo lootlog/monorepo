@@ -6,12 +6,11 @@ import {
   invalidateBattlesControllerGetBattleRawData,
   invalidateBattlesControllerGetDashboardBattles,
   useBattlesControllerDeleteBattle,
-} from "@lootlog/client/battlelog";
-import {
   invalidatePublicBattlesControllerGetPublicBattle,
   invalidatePublicBattlesControllerGetPublicBattleRaw,
   invalidatePublicBattlesControllerGetPublicBattleTimeline,
 } from "@lootlog/client/battlelog";
+
 import { Button } from "@lootlog/ui/components/button";
 import {
   AlertDialog,
@@ -184,21 +183,19 @@ export const BattlePanelSingleBattleActions: FC<
       >
         <Tooltip>
           <TooltipTrigger
-            render={
-              <AlertDialogTrigger
-                render={
-                  <Button
-                    aria-label={t("battlePanel.actions.delete")}
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-destructive hover:text-destructive"
-                    disabled={isBusy}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                }
-              />
-            }
+            render=<AlertDialogTrigger
+              render={
+                <Button
+                  aria-label={t("battlePanel.actions.delete")}
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-destructive hover:text-destructive"
+                  disabled={isBusy}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              }
+            />
           />
           <TooltipContent>{t("battlePanel.actions.delete")}</TooltipContent>
         </Tooltip>

@@ -62,7 +62,7 @@ const DEFAULT_TILE_SIZE = 32;
 
 class MargonemRendererRuntimeAdapter implements RendererRuntimeAdapter {
   private get runtimeWindow(): RendererRuntimeWindow {
-    return window as RendererRuntimeWindow;
+    return window;
   }
 
   addDrawable(drawable: RuntimeDrawable): void {

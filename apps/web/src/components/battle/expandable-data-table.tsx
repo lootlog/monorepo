@@ -10,7 +10,6 @@ import {
   flexRender,
   type ColumnDef,
   type Row,
-  type RowData,
   type SortingState,
   useTable,
 } from "@tanstack/react-table";
@@ -36,7 +35,7 @@ type ExpandedRowType =
   | "details"
   | "damageDealt";
 
-interface ExpandableDataTableProps<TData extends RowData> {
+interface ExpandableDataTableProps<TData extends Warrior> {
   columns: ColumnDef<typeof sortedTableFeatures, TData>[];
   data: TData[];
   getRowClassName?: (row: Row<typeof sortedTableFeatures, TData>) => string;
@@ -76,7 +75,7 @@ const renderExpandedContent = (
   }
 };
 
-export function ExpandableDataTable<TData extends RowData>({
+export function ExpandableDataTable<TData extends Warrior>({
   columns,
   data,
   getRowClassName,
@@ -143,7 +142,7 @@ export function ExpandableDataTable<TData extends RowData>({
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => {
-                const warrior = row.original as Warrior;
+                const warrior = row.original;
                 const expansionType = expandedRows.get(warrior.id);
 
                 return (

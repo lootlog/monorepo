@@ -5,18 +5,12 @@ import type {
   SettingsDocuments,
   SettingsDocumentsFailure,
 } from "#src/settings-documents/settings-documents.service";
-import { Effect } from "effect";
+import { Effect, Schema } from "effect";
 import type { UpdateSoundSettingsRequest } from "#src/contracts/sound-settings/schemas";
 
 type SoundConfigMap = Record<string, NpcTypeSoundConfig>;
 type SoundConfigPatch = Record<string, Partial<NpcTypeSoundConfig> | undefined>;
-type JsonValue =
-  | string
-  | number
-  | boolean
-  | null
-  | JsonValue[]
-  | { [key: string]: JsonValue };
+type JsonValue = typeof Schema.Json.Type;
 type SoundEffect = Effect.Effect<unknown, SettingsDocumentsFailure>;
 
 export interface SoundSettings {
@@ -117,15 +111,15 @@ const toCompatibilitySettings = (
     notificationsConfig: mergeSoundConfigMap(
       effective.notificationsConfig,
       defaults.notificationsConfig,
-    ) as unknown as JsonValue,
+    ),
     detectorConfig: mergeSoundConfigMap(
       effective.detectorConfig,
       defaults.detectorConfig,
-    ) as unknown as JsonValue,
+    ),
     timersConfig: mergeSoundConfigMap(
       effective.timersConfig,
       defaults.timersConfig,
-    ) as unknown as JsonValue,
+    ),
     createdAt: updatedAt.toISOString(),
     updatedAt: updatedAt.toISOString(),
   };
@@ -155,7 +149,9 @@ export const makeSoundSettings = (
           timersConfig,
           ...scalarPatch
         } = dto;
-        const set: Record<string, JsonValue> = { ...scalarPatch };
+        const set: Partial<
+          Record<keyof UpdateSoundSettingsRequest, JsonValue>
+        > = { ...scalarPatch };
         const defaults = getDefaultSettingsData();
         if (notificationsConfig) {
           set.notificationsConfig = soundConfigMapToJson(

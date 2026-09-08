@@ -135,7 +135,8 @@ export const BattleLogList: FC<BattleLogListProps> = ({
   }, [visibleRangeKey, isDesktop]);
 
   let requestedTurn: number | null | undefined = resizedTurn;
-  if (activeSearchTurn != null) requestedTurn = activeSearchTurn;
+  if (activeSearchTurn !== null && activeSearchTurn !== undefined)
+    requestedTurn = activeSearchTurn;
   else if (scrollToSelectedTurnRequestId > 0) requestedTurn = selectedTurn;
   const notifyScrollComplete = useEffectEvent((turn: number) => {
     setResizedTurn(null);
@@ -146,7 +147,7 @@ export const BattleLogList: FC<BattleLogListProps> = ({
     onSelectedTurnScrollCancel?.(turn);
   });
   useEffect(() => {
-    if (requestedTurn == null) return;
+    if (requestedTurn === null || requestedTurn === undefined) return;
     if (requestedTurn < 1 || requestedTurn > (events?.length ?? 0)) {
       notifyScrollCancel(requestedTurn);
       return;
@@ -258,12 +259,12 @@ export const BattleLogList: FC<BattleLogListProps> = ({
               onBlur={() => setFocusedIndex(null)}
               event={event}
               attacker={
-                event.attackerId == null
+                event.attackerId === null || event.attackerId === undefined
                   ? undefined
                   : warriorsMap.get(event.attackerId)
               }
               defender={
-                event.defenderId == null
+                event.defenderId === null || event.defenderId === undefined
                   ? undefined
                   : warriorsMap.get(event.defenderId)
               }

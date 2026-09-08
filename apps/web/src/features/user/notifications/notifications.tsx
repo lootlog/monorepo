@@ -19,8 +19,8 @@ import {
   getNotificationsUserControllerGetWatchedItemsQueryKey,
   useNotificationsUserControllerGetUserTargets,
   useNotificationsUserControllerGetWatchedItems,
+  useUsersControllerGetCurrentUserAccessibleGuilds,
 } from "@lootlog/client/main";
-import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/client/main";
 
 export const UserNotifications = () => {
   const { t } = useTranslation();

@@ -1,3 +1,4 @@
+import { decodeClientCommand } from "@lootlog/protocol/realtime";
 import {
   decodeRealtimeFrame,
   encodeRealtimeFrame,
@@ -139,6 +140,16 @@ describe("RealtimeClient", () => {
         v: 1,
         type: "permissions.updated",
         data: { organizationIds: ["org-1"], subscriptionScopes: [] },
+      }),
+    );
+    await flushMessages();
+
+    // Commands decoded from a server connection must never reach event consumers.
+    socketAt(sockets, 0).message(
+      encodeRealtimeFrame({
+        v: 1,
+        type: "presence.fetch",
+        data: { organizationId: "org-1" },
       }),
     );
     await flushMessages();
@@ -351,10 +362,10 @@ describe("RealtimeClient", () => {
     const joined = client.join(joinData);
     const request = socket.sent.at(-1);
 
-    expect(typeof request).toBe("string");
-    const frame = JSON.parse(request as string) as {
-      requestId: string;
-    };
+    if (request === undefined || request instanceof Uint8Array)
+      throw new Error("Expected a JSON request");
+    const frame = decodeClientCommand(JSON.parse(request));
+    expect(frame.requestId).toBeDefined();
     socket.message(
       JSON.stringify({
         v: 1,

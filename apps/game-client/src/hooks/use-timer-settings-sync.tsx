@@ -1,3 +1,4 @@
+import { decodeTimerSettings } from "@/store/timer-settings-codec";
 import { useEffect, useRef, useState } from "react";
 import { useTimersStore, TIMERS_STORAGE_KEY } from "@/store/timers.store";
 import {
@@ -38,30 +39,25 @@ const applyRemoteTimerSettings = (
   remoteSettings: NonNullable<ReturnType<typeof useTimerSettings>["data"]>,
 ) => {
   const localStore = useTimersStore.getState();
+  const decoded = decodeTimerSettings(remoteSettings);
   useTimersStore.setState({
     updatedAt: remoteSettings.updatedAt
       ? new Date(remoteSettings.updatedAt).getTime()
       : undefined,
-    generalConfig:
-      remoteSettings.generalConfig as typeof localStore.generalConfig,
-    displayConfig:
-      remoteSettings.displayConfig as typeof localStore.displayConfig,
-    customColors: remoteSettings.customColors as typeof localStore.customColors,
+    generalConfig: { ...localStore.generalConfig, ...decoded.generalConfig },
+    displayConfig: { ...localStore.displayConfig, ...decoded.displayConfig },
+    customColors: decoded.customColors ?? localStore.customColors,
     alwaysVisibleExpiredTimers:
-      remoteSettings.alwaysVisibleExpiredTimers as typeof localStore.alwaysVisibleExpiredTimers,
-    timersColors: remoteSettings.timersColors as Record<
-      string,
-      string | undefined
-    >,
-    defaultColorNames: remoteSettings.defaultColorNames as Record<
-      string,
-      string
-    >,
+      decoded.alwaysVisibleExpiredTimers ??
+      localStore.alwaysVisibleExpiredTimers,
+    timersColors: decoded.timersColors ?? localStore.timersColors,
+    defaultColorNames:
+      decoded.defaultColorNames ?? localStore.defaultColorNames,
     overriddenDefaultColors:
-      remoteSettings.overriddenDefaultColors as typeof localStore.overriddenDefaultColors,
-    hiddenDefaultColors: remoteSettings.hiddenDefaultColors as string[],
+      decoded.overriddenDefaultColors ?? localStore.overriddenDefaultColors,
+    hiddenDefaultColors: remoteSettings.hiddenDefaultColors,
     timerFiltersEnabled: remoteSettings.timerFiltersEnabled,
-    timersSortOrder: remoteSettings.timersSortOrder as "asc" | "desc",
+    timersSortOrder: remoteSettings.timersSortOrder,
     syncEnabled: remoteSettings.syncEnabled,
   });
 };

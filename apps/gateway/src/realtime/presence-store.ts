@@ -60,7 +60,8 @@ const fromPromise = <A>(
   });
 
 const withoutLocation = (presence: Basic | Precise): Basic => {
-  const { location: _location, ...basic } = presence as Precise;
+  if (!("location" in presence)) return presence;
+  const { location: _location, ...basic } = presence;
   return basic;
 };
 
@@ -77,7 +78,7 @@ export class PresenceStore {
       "instanceId" | "publishPresence" | "publishToScope" | "refreshRegistry"
     >,
     private readonly now: () => number = Date.now,
-    private readonly coverage?: CoveragePublisher,
+    private readonly coverage?: Pick<CoveragePublisher, "publish">,
     private readonly onlineHistory?: Pick<OnlineHistory, "observe">,
   ) {}
 
@@ -106,7 +107,7 @@ export class PresenceStore {
         return undefined;
       }
 
-      const presence: Basic | Precise = {
+      const basic: Basic = {
         userId: socket.data.userId,
         discordId: socket.data.discordId,
         sessionId: socket.data.connectionId,
@@ -117,8 +118,10 @@ export class PresenceStore {
         isAfk: data.isAfk ?? false,
         lastSeen: self.now(),
         character: socket.data.character ?? data.character,
-        ...(data.location ? { location: data.location } : {}),
       };
+      const presence = data.location
+        ? { ...basic, location: data.location }
+        : basic;
       socket.data.presence = presence;
 
       for (const organizationId of selectedOrganizationIds) {
@@ -259,8 +262,8 @@ export class PresenceStore {
 
   runExpirySweep() {
     return this.sweepExpired().pipe(
-      Effect.catch((cause) =>
-        Effect.logError("Presence expiry sweep failed; retrying", cause),
+      Effect.catch((error) =>
+        Effect.logError("Presence expiry sweep failed; retrying", error),
       ),
       Effect.repeat(Schedule.spaced(this.sweepSchedule)),
     );

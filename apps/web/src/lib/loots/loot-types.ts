@@ -1,11 +1,13 @@
-import { LootItemResponseDtoRarity } from "@lootlog/client/main";
-import type { LootItemResponseDto } from "@lootlog/client/main";
-import type { LootNpcResponseDto } from "@lootlog/client/main";
-import type { LootPlayerResponseDto } from "@lootlog/client/main";
-import { LootResponseDtoSource } from "@lootlog/client/main";
-import type { LootCommentResponseDto } from "@lootlog/client/main";
-import type { LootResponseDto } from "@lootlog/client/main";
-import type { LootShareResponseDto } from "@lootlog/client/main";
+import {
+  LootItemResponseDtoRarity,
+  type LootItemResponseDto,
+  type LootNpcResponseDto,
+  type LootPlayerResponseDto,
+  LootResponseDtoSource,
+  type LootCommentResponseDto,
+  type LootResponseDto,
+  type LootShareResponseDto,
+} from "@lootlog/client/main";
 
 export type Loot = LootResponseDto;
 export type Item = LootItemResponseDto;

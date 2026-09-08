@@ -1,3 +1,4 @@
+import { optionalPathString } from "#src/shared/http/handler-response";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { LootlogApi } from "../../lootlog-api.js";
 import {
@@ -11,9 +12,13 @@ export const RolesHandlers = HttpApiBuilder.group(
   (handlers) =>
     handlers
       .handle("RolesControllerGetGuildRoles", ({ params }) =>
-        getGuildRolesFromPath(params.guildId),
+        getGuildRolesFromPath(optionalPathString(params.guildId)),
       )
       .handle("RolesControllerUpdateGuildRole", ({ params, payload }) =>
-        updateGuildRoleFromPath(params.guildId, params.roleId, payload),
+        updateGuildRoleFromPath(
+          optionalPathString(params.guildId),
+          params.roleId,
+          payload,
+        ),
       ),
 );

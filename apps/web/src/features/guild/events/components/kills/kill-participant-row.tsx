@@ -1,3 +1,4 @@
+import type { TOptions } from "i18next";
 import { TextLink } from "@lootlog/ui/components/text-link";
 import { Fragment, useState } from "react";
 import { Link } from "@tanstack/react-router";
@@ -43,7 +44,7 @@ interface KillParticipantRowProps {
   isEditPending?: boolean;
 }
 
-type Translate = (key: string, options?: Record<string, unknown>) => string;
+type Translate = (key: string, options?: TOptions) => string;
 
 const buildParticipantScoringView = (
   participant: KillDetailParticipant,
@@ -66,11 +67,13 @@ const buildParticipantScoringView = (
     scoringItems,
     totalAfkSeconds,
     trackingDuration:
-      typeof participant.trackingDurationSeconds === "number"
+      participant.trackingDurationSeconds !== null &&
+      participant.trackingDurationSeconds !== undefined
         ? formatDurationHuman(participant.trackingDurationSeconds)
         : "-",
     trackingPercentage:
-      typeof participant.trackingDurationPercentage === "number"
+      participant.trackingDurationPercentage !== null &&
+      participant.trackingDurationPercentage !== undefined
         ? `${Math.round(participant.trackingDurationPercentage)}%`
         : "-",
   };
@@ -141,12 +144,10 @@ export const KillParticipantRow = ({
             {memberLinkParams ? (
               <TextLink
                 className="inline-flex w-fit max-w-full min-w-0 items-center text-sm"
-                render={
-                  <Link
-                    to="/$guildId/events/$eventId/members/$memberId"
-                    params={memberLinkParams}
-                  />
-                }
+                render=<Link
+                  to="/$guildId/events/$eventId/members/$memberId"
+                  params={memberLinkParams}
+                />
               >
                 <span className="truncate">{participant.member.name}</span>
               </TextLink>

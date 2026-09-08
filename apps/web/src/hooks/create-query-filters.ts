@@ -11,15 +11,12 @@ export const createQueryFilters = <T extends UseQueryStatesKeysMap>(
 
     const hasActiveFilters = Object.values(filters).some((value) => {
       if (Array.isArray(value)) return value.length > 0;
-      if (typeof value === "string") return value !== "";
+      if (value === "") return false;
       return value !== null && value !== undefined;
     });
 
     const clearFilters = () => {
-      const nulled = Object.fromEntries(
-        Object.keys(schema).map((key) => [key, null]),
-      ) as { [K in keyof T]: null };
-      setFilters(nulled);
+      setFilters(null);
     };
 
     return {

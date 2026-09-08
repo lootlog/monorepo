@@ -18,6 +18,7 @@ import { BattleStatsTableHeader } from "./battle-stats-table-header";
 import { useTranslation } from "react-i18next";
 import type {
   BattleStatDefinition,
+  BattleStatValue,
   BattleStatCategoryDefinition,
   StatsCustomizationConfig,
 } from "@/types/stats-customization.types";
@@ -57,17 +58,17 @@ type VisibleStatCategory = {
 };
 
 const formatValue = (
-  value: unknown,
-  formatter?: (value: unknown) => string,
+  value: BattleStatValue,
+  formatter?: (value: BattleStatValue) => string,
   booleanLabels?: { yes: string; no: string },
 ): string => {
   if (formatter) {
     return formatter(value);
   }
-  if (typeof value === "number") {
-    return value.toLocaleString("pl-PL");
+  if (Number.isFinite(value)) {
+    return Number(value).toLocaleString("pl-PL");
   }
-  if (typeof value === "boolean") {
+  if (value === true || value === false) {
     return value
       ? (booleanLabels?.yes ?? "true")
       : (booleanLabels?.no ?? "false");
@@ -150,9 +151,10 @@ const getVisibleStats = ({
           ? orderedStats.filter((stat) => {
               const userValue = user[stat.key];
               const opponentValue = opponent[stat.key];
-              const userNumber = typeof userValue === "number" ? userValue : 0;
-              const opponentNumber =
-                typeof opponentValue === "number" ? opponentValue : 0;
+              const userNumber = Number.isFinite(userValue) ? userValue : 0;
+              const opponentNumber = Number.isFinite(opponentValue)
+                ? opponentValue
+                : 0;
               return userNumber !== 0 || opponentNumber !== 0;
             })
           : orderedStats;
@@ -291,7 +293,10 @@ export function OneVsOneStatsTable({
   });
 
   const scrollToStatSearchKey = (searchKey: string) => {
-    if (statSearchAnimationFrameRef.current != null) {
+    if (
+      statSearchAnimationFrameRef.current !== null &&
+      statSearchAnimationFrameRef.current !== undefined
+    ) {
       cancelAnimationFrame(statSearchAnimationFrameRef.current);
     }
 
@@ -326,7 +331,10 @@ export function OneVsOneStatsTable({
 
   useEffect(
     () => () => {
-      if (statSearchAnimationFrameRef.current == null) {
+      if (
+        statSearchAnimationFrameRef.current === null ||
+        statSearchAnimationFrameRef.current === undefined
+      ) {
         return;
       }
 
@@ -365,16 +373,14 @@ export function OneVsOneStatsTable({
         <BattleStatsTableHeader
           title={headerTitle ?? t("battlePanel.single.statistics.title")}
           compact={compact}
-          leading={
-            <SearchInput
-              aria-label={t("battleUi.customization.searchStat")}
-              className={cn(compact ? "h-8 text-sm" : "h-9 text-sm")}
-              placeholder={t("battleUi.customization.searchStat")}
-              value={statSearchQuery}
-              wrapperClassName="w-full"
-              onChange={(event) => setStatSearchQuery(event.target.value)}
-            />
-          }
+          leading=<SearchInput
+            aria-label={t("battleUi.customization.searchStat")}
+            className={cn(compact ? "h-8 text-sm" : "h-9 text-sm")}
+            placeholder={t("battleUi.customization.searchStat")}
+            value={statSearchQuery}
+            wrapperClassName="w-full"
+            onChange={(event) => setStatSearchQuery(event.target.value)}
+          />
           actions={
             headerActions ?? (
               <>

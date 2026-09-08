@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { Button } from "@lootlog/ui/components/button";
 import { useTranslation } from "react-i18next";
@@ -29,6 +30,7 @@ const parseSearch = (searchString: string) => {
     ? searchString.slice(1)
     : searchString;
   const searchParams = new URLSearchParams(normalizedSearch);
+  // SAFETY: The null-prototype dictionary starts empty; this function only assigns URLSearchParams strings or string arrays.
   const parsedSearch = Object.create(null) as Record<string, string | string[]>;
   const seenKeys = new Set<string>();
 
@@ -46,10 +48,16 @@ const parseSearch = (searchString: string) => {
   return parsedSearch;
 };
 
-const stringifySearch = (search: Record<string, unknown>) => {
+const searchValuesSchema = z.record(
+  z.string(),
+  z.union([z.array(z.coerce.string().nullish()), z.coerce.string()]).nullish(),
+);
+const stringifySearch = (
+  search: Parameters<typeof searchValuesSchema.parse>[0],
+) => {
   const searchParams = new URLSearchParams();
 
-  for (const [key, value] of Object.entries(search)) {
+  for (const [key, value] of Object.entries(searchValuesSchema.parse(search))) {
     if (value === null || value === undefined) {
       continue;
     }
@@ -104,7 +112,7 @@ function App() {
           <RouteErrorState
             status={500}
             description={t("common.routeErrors.global.description")}
-            primaryAction={<RouteRetryButton onRetry={reset} />}
+            primaryAction=<RouteRetryButton onRetry={reset} />
             secondaryAction={
               <Button
                 variant="outline"

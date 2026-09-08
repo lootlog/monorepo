@@ -1,6 +1,10 @@
+import {
+  createGuildFixture,
+  createMemberFixture,
+} from "../../test/organization-fixtures.js";
 import { describe, expect, it } from "bun:test";
 import { Effect, FileSystem, Layer, Path } from "effect";
-import { Etag, HttpPlatform } from "effect/unstable/http";
+import { Etag, HttpPlatform, HttpRouter } from "effect/unstable/http";
 import { HttpApiTest } from "effect/unstable/httpapi";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
@@ -11,14 +15,12 @@ import { LootlogApi } from "./lootlog-api.js";
 import {
   EventsHandlers,
   EventsAuthorization,
-  type AuthorizedEventCaller,
 } from "./handlers/events/events.handlers.js";
 import { EventOperations } from "./handlers/events/events.data-layer.js";
 import {
   TimersHandlers,
   TimersAuthorization,
   TimersData,
-  type TimersGuildAccess,
 } from "./handlers/timers/timers.handlers.js";
 import { toTimersDataFailure } from "./handlers/timers/timer-errors.js";
 import {
@@ -41,21 +43,121 @@ const bearer = Layer.succeed(
   }),
 );
 
-// Fail only at the operation boundary; the real HTTP handler and serializer run below.
-const failingOperations = <A>(failure: unknown): A =>
-  new Proxy(
-    {},
-    {
-      get: () => new Proxy({}, { get: () => () => Effect.fail(failure) }),
-    },
-  ) as A;
-
-const run = (
-  effect: Effect.Effect<{ status: number; text: string }, unknown, unknown>,
-) =>
-  Effect.runPromise(
-    effect as Effect.Effect<{ status: number; text: string }, unknown>,
-  );
+const unexpected = () => Effect.die("Unexpected operation");
+const unusedEvents = {
+  assignment: {
+    assignMember: unexpected,
+    selfAssignMember: unexpected,
+    selfUnassignMember: unexpected,
+    addHero: unexpected,
+    updateHero: unexpected,
+    deleteHero: unexpected,
+    addMap: unexpected,
+    deleteMap: unexpected,
+    getLocations: unexpected,
+    createLocation: unexpected,
+    updateLocation: unexpected,
+    deleteLocation: unexpected,
+    reorderLocations: unexpected,
+    assignMapToLocation: unexpected,
+    unassignMember: unexpected,
+  },
+  catalog: {
+    hydrateMutation: unexpected,
+    getEvents: unexpected,
+    getEvent: unexpected,
+    getEventOverview: unexpected,
+    getEventMaps: unexpected,
+    getWrapped: unexpected,
+    createEvent: unexpected,
+    deleteEvent: unexpected,
+    recalculatePoints: unexpected,
+    updateEvent: unexpected,
+  },
+  monitoring: {
+    getCoordination: unexpected,
+    getKillTimelineData: unexpected,
+    getHeroCoverageGaps: unexpected,
+    getMapCoverageGaps: unexpected,
+    getActiveGapForMap: unexpected,
+    getActiveGapsForHero: unexpected,
+    getHeroPresenceStats: unexpected,
+    getHeroRespawnConfig: unexpected,
+    closeRespawnWindow: unexpected,
+    openRespawnWindow: unexpected,
+  },
+  pins: {
+    listPinnedEvents: unexpected,
+    pinEvent: unexpected,
+    unpinEvent: unexpected,
+  },
+  ranking: {
+    getPendingParticipationConfirmations: unexpected,
+    acknowledgeExpiredParticipationConfirmations: unexpected,
+    confirmParticipationForKill: unexpected,
+    getRanking: unexpected,
+    updateRankingPoints: unexpected,
+    getEventHeroTimers: unexpected,
+    getEventHeroStats: unexpected,
+    getEventKillHistory: unexpected,
+    getMemberKillHistory: unexpected,
+    getHeroKillHistory: unexpected,
+    getKillDetail: unexpected,
+    updateKillPoint: unexpected,
+  },
+} satisfies EventOperations["Service"];
+const unusedNotifications = {
+  guildTargets: {
+    available: unexpected,
+    create: unexpected,
+    list: unexpected,
+    remove: unexpected,
+    removeChannel: unexpected,
+    update: unexpected,
+  },
+  userTargets: {
+    create: unexpected,
+    list: unexpected,
+    remove: unexpected,
+    triggerTest: unexpected,
+    update: unexpected,
+  },
+  jobOperations: {
+    cancelGuild: unexpected,
+    listGuild: unexpected,
+    listUser: unexpected,
+  },
+  rules: {
+    createGuild: unexpected,
+    createUser: unexpected,
+    deleteGuild: unexpected,
+    deleteUser: unexpected,
+    listGuild: unexpected,
+    listUser: unexpected,
+    rebuildGuildJobs: unexpected,
+    testGuild: unexpected,
+    updateGuild: unexpected,
+    updateUser: unexpected,
+  },
+  watchedItems: {
+    create: unexpected,
+    list: unexpected,
+    quickAdd: unexpected,
+    remove: unexpected,
+  },
+} satisfies NotificationOperations["Service"];
+const unusedTimers = {
+  getAll: unexpected,
+  getRecentHistory: unexpected,
+  getGuildTimers: unexpected,
+  searchNpcs: unexpected,
+  createAuto: unexpected,
+  reset: unexpected,
+  delete: unexpected,
+  getHistory: unexpected,
+  restore: unexpected,
+  createManual: unexpected,
+} satisfies TimersData["Service"];
 
 describe("domain errors across the HTTP boundary", () => {
   it.each([
@@ -67,7 +169,7 @@ describe("domain errors across the HTTP boundary", () => {
     },
     { message: "USER_DISCORD_DM_TARGET_MUST_BE_ACTIVE_AND_CAN_SEND" },
   ])("preserves notification conflict $message", async (body) => {
-    const result = await run(
+    const result = await Effect.runPromise(
       Effect.scoped(
         Effect.gen(function* () {
           const client = yield* HttpApiTest.groups(LootlogApi, [
@@ -94,12 +196,13 @@ describe("domain errors across the HTTP boundary", () => {
               Effect.die("unexpected organization authorization"),
           }),
         ),
-        Effect.provideService(
-          NotificationOperations,
-          failingOperations<NotificationOperations["Service"]>(
-            new ResourceConflictError(body),
-          ),
-        ),
+        Effect.provideService(NotificationOperations, {
+          ...unusedNotifications,
+          userTargets: {
+            ...unusedNotifications.userTargets,
+            triggerTest: () => Effect.fail(new ResourceConflictError(body)),
+          },
+        }),
         Effect.provide(platform),
       ),
     );
@@ -109,7 +212,7 @@ describe("domain errors across the HTTP boundary", () => {
 
   it("keeps a timer lock race a conflict through the event endpoint", async () => {
     const body = { message: "TIMER_RACE_CONDITION" };
-    const result = await run(
+    const result = await Effect.runPromise(
       Effect.scoped(
         Effect.gen(function* () {
           const client = yield* HttpApiTest.groups(LootlogApi, ["events"]).pipe(
@@ -135,22 +238,26 @@ describe("domain errors across the HTTP boundary", () => {
             requireGuild: () =>
               Effect.succeed({
                 ...identity,
-                guild: { id: "guild-1" } as AuthorizedEventCaller["guild"],
-                member: {} as AuthorizedEventCaller["member"],
+                guild: createGuildFixture(),
+                member: createMemberFixture(),
                 roles: [],
                 accessPolicy: createAccessPolicy({ capabilities: [] }),
               }),
           }),
         ),
-        Effect.provideService(
-          EventOperations,
-          failingOperations<EventOperations["Service"]>(
-            new EventTimersError({
-              operation: "eventTimers.closeRespawn",
-              cause: new ResourceConflictError(body),
-            }),
-          ),
-        ),
+        Effect.provideService(EventOperations, {
+          ...unusedEvents,
+          monitoring: {
+            ...unusedEvents.monitoring,
+            closeRespawnWindow: () =>
+              Effect.fail(
+                new EventTimersError({
+                  operation: "eventTimers.closeRespawn",
+                  cause: new ResourceConflictError(body),
+                }),
+              ),
+          },
+        }),
         Effect.provide(platform),
       ),
     );
@@ -160,11 +267,29 @@ describe("domain errors across the HTTP boundary", () => {
   it("preserves the reason when restoring a timer conflicts", async () => {
     const body = { message: "EXISTING_TIMER" };
     const failure = toTimersDataFailure(new ResourceConflictError(body));
-    const result = await run(
+    const services = Layer.mergeAll(
+      Layer.succeed(TimersAuthorization, {
+        identity: Effect.succeed(identity),
+        requireGuild: () =>
+          Effect.succeed({
+            ...identity,
+            guild: createGuildFixture(),
+            roles: [],
+            accessPolicy: createAccessPolicy({ capabilities: [] }),
+          }),
+      }),
+      Layer.succeed(TimersData, {
+        ...unusedTimers,
+        restore: () => Effect.fail(failure),
+      }),
+    );
+    const result = await Effect.runPromise(
       Effect.scoped(
         Effect.gen(function* () {
           const client = yield* HttpApiTest.groups(LootlogApi, ["timers"]).pipe(
-            Effect.provide(TimersHandlers),
+            Effect.provide(
+              TimersHandlers.pipe(HttpRouter.provideRequest(services)),
+            ),
             Effect.provide(bearer),
           );
           const response =
@@ -174,29 +299,7 @@ describe("domain errors across the HTTP boundary", () => {
             });
           return { status: response.status, text: yield* response.text };
         }),
-      ).pipe(
-        Effect.provideService(
-          TimersAuthorization,
-          TimersAuthorization.of({
-            identity: Effect.succeed(identity),
-            requireGuild: () =>
-              Effect.succeed({
-                ...identity,
-                guild: { id: "guild-1" } as TimersGuildAccess["guild"],
-                roles: [],
-                accessPolicy: createAccessPolicy({ capabilities: [] }),
-              }),
-          }),
-        ),
-        Effect.provideService(
-          TimersData,
-          new Proxy(
-            {},
-            { get: () => () => Effect.fail(failure) },
-          ) as TimersData["Service"],
-        ),
-        Effect.provide(platform),
-      ),
+      ).pipe(Effect.provide(services), Effect.provide(platform)),
     );
     expect(result.status).toBe(409);
     expect(JSON.parse(result.text)).toEqual(body);

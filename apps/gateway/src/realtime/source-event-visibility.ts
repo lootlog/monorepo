@@ -1,3 +1,5 @@
+import type { GuildLootEventNpc } from "@lootlog/protocol/rabbit/events";
+import { Option, Schema } from "effect";
 import {
   canViewLoot,
   type LootVisibilityNpc,
@@ -8,6 +10,14 @@ import { canReadNpcSourceEvent } from "#src/realtime/npc-event-visibility";
 import type { SessionData } from "#src/realtime/session";
 
 type Event = typeof ServerEvent.Type;
+
+export const lootEventVisibilityNpcs = (
+  npcs: ReadonlyArray<typeof GuildLootEventNpc.Type>,
+): LootVisibilityNpc[] =>
+  npcs.map((npc) => ({
+    level: npc.lvl ?? null,
+    type: Option.getOrNull(Schema.decodeUnknownOption(Schema.String)(npc.type)),
+  }));
 
 const canReadLootSource = (
   session: SessionData,
@@ -58,10 +68,7 @@ export const canReadSourceEvent = (
       return canReadLootSource(
         session,
         event.data.guildId,
-        event.data.npcs.map((npc) => ({
-          level: npc.lvl ?? null,
-          type: typeof npc.type === "string" ? npc.type : null,
-        })),
+        lootEventVisibilityNpcs(event.data.npcs),
         false,
       );
     case "kills.changed":

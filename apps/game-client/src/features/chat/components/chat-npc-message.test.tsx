@@ -1,5 +1,6 @@
+import userEvent from "@testing-library/user-event";
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { MessageType } from "@/api/chat.api";
 import type {
   ChatMessageResponseDtoOutput as ChatMessageType,
@@ -7,43 +8,6 @@ import type {
 } from "@lootlog/client/main";
 
 import { ChatNpcMessage } from "./chat-npc-message";
-
-vi.mock("@/components/npc-tile", () => ({
-  NpcTile: ({ npc }: { npc: { nick: string } }) => <div>{npc.nick} tile</div>,
-}));
-
-vi.mock("@/components/character-tile", () => ({
-  CharacterTile: ({ character }: { character: { nick: string } }) => (
-    <div>{character.nick} character tile</div>
-  ),
-}));
-
-vi.mock("@/components/ui/tooltip", () => ({
-  Tooltip: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  TooltipContent: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="character-tooltip-content">{children}</div>
-  ),
-  TooltipTrigger: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-}));
-
-vi.mock("@/hooks/discord/use-member-color", () => ({
-  useMemberColor: () => "abcdef",
-}));
-
-vi.mock("@/api/npcs.api", () => ({
-  NpcType: {
-    HERO: "hero",
-  },
-}));
-
-vi.mock("@lootlog/domain/npc-type", async (importOriginal) => ({
-  ...(await importOriginal()),
-  getNpcTypeByWt: () => "HERO",
-}));
 
 const makeChatMessage = (
   overrides?: Partial<ChatMessageType>,
@@ -100,7 +64,7 @@ describe("ChatNpcMessage", () => {
 
     expect(screen.getByText("Member:")).toBeInTheDocument();
     expect(screen.getByText("[Guild]")).toBeInTheDocument();
-    expect(screen.getByText("Hydra tile")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Hydra" })).toBeInTheDocument();
     expect(screen.getByText("Hydra")).toBeInTheDocument();
     expect(screen.getByText("Hydra").parentElement).toHaveTextContent(
       "Hydra(250m)",
@@ -136,7 +100,8 @@ describe("ChatNpcMessage", () => {
     expect(screen.getByText("Hero:")).toBeInTheDocument();
   });
 
-  it("shows the sender character tooltip", () => {
+  it("shows the sender character tooltip", async () => {
+    const user = userEvent.setup();
     render(
       <ChatNpcMessage
         all={false}
@@ -146,9 +111,8 @@ describe("ChatNpcMessage", () => {
       />,
     );
 
-    expect(screen.getByTestId("character-tooltip-content")).toHaveTextContent(
-      "Hero (100w)",
-    );
+    await user.hover(screen.getByText("Member:"));
+    expect(await screen.findByRole("tooltip")).toHaveTextContent("Hero (100w)");
   });
 
   it("omits the location row when npc location is empty", () => {
@@ -195,7 +159,9 @@ describe("ChatNpcMessage", () => {
     );
 
     expect(screen.queryByText("[Guild]")).not.toBeInTheDocument();
-    expect(screen.queryByText("Hydra tile")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("img", { name: "Hydra" }),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText("(250m)")).not.toBeInTheDocument();
     expect(screen.queryByText("Swamp")).not.toBeInTheDocument();
     expect(screen.queryByText("(7, 9)")).not.toBeInTheDocument();

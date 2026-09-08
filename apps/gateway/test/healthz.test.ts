@@ -11,20 +11,17 @@ import {
 import { makeObservabilityLayer } from "@lootlog/instrumentation/observability";
 import { makeGatewayAuth } from "../src/auth/auth-service.js";
 
-import {
-  createGatewayFetch,
-  type GatewayApplicationService,
-} from "../src/app.js";
+import { createGatewayFetch } from "../src/app.js";
 
 const auth = makeGatewayAuth({
   allowedWebOrigins: new Set(["https://lootlog.example"]),
   allowedExtensionOrigins: new Set(),
 });
 const application = {
-  config: { websocketPath: "/ws" },
+  config: { websocketPath: "/ws", environment: "test" },
   runPromise: Effect.runPromise,
   auth,
-} as unknown as GatewayApplicationService;
+};
 
 const server = { upgrade: () => false };
 
@@ -268,10 +265,10 @@ describe("gateway HTTP boundary", () => {
           }
         | undefined;
       const authenticated = {
-        config: { websocketPath: "/ws" },
+        config: { websocketPath: "/ws", environment: "test" },
         runPromise: Effect.runPromise,
         auth,
-      } as unknown as GatewayApplicationService;
+      };
       const request = new Request("https://gateway.example/ws", {
         headers: {
           origin: "https://classic.margonem.pl",
@@ -312,7 +309,7 @@ describe("gateway HTTP boundary", () => {
       config: { websocketPath: "/ws", environment: "local" },
       runPromise: Effect.runPromise,
       auth,
-    } as unknown as GatewayApplicationService;
+    };
     const request = new Request("https://gateway.example/ws", {
       headers: {
         origin: "https://classic.margonem.pl",

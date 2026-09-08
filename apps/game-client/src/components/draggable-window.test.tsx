@@ -29,10 +29,13 @@ class ResizeObserverMock {
   disconnect() {}
 }
 
-class MutationObserverMock {
+class MutationObserverMock implements MutationObserver {
+  takeRecords(): MutationRecord[] {
+    return [];
+  }
   constructor(private readonly callback: MutationCallback) {
     mutationObserverCallbacks.push(() => {
-      this.callback([], this as unknown as MutationObserver);
+      this.callback([], this);
     });
   }
 
@@ -432,7 +435,7 @@ describe("DraggableWindow", () => {
   });
 
   it("resizes only width when auto height mode is not armed", async () => {
-    const handleMaxContentHeightChange = vi.fn();
+    const handleMaxContentHeightChange = vi.fn<(height: number) => void>();
     const { container } = render(
       <DraggableWindow
         isOpen
@@ -480,8 +483,8 @@ describe("DraggableWindow", () => {
   });
 
   it("uses the resize handle to update max content height when armed and keeps width resizable", async () => {
-    const handleMaxContentHeightChange = vi.fn();
-    const handleArmedChange = vi.fn();
+    const handleMaxContentHeightChange = vi.fn<(height: number) => void>();
+    const handleArmedChange = vi.fn<(armed: boolean) => void>();
 
     const { container } = render(
       <DraggableWindow

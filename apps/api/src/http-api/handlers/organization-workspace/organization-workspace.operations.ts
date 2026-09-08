@@ -743,14 +743,14 @@ export const revokeReservationShare = Effect.fn("revokeReservationShare")(
   },
 );
 
-export const getGuildRolesFromPath = (guildId: unknown) =>
+export const getGuildRolesFromPath = (guildId: string | undefined) =>
   toDeclaredOrganizationWorkspaceError(
     Effect.flatMap(pathString(guildId, "guildId"), getGuildRoles),
     [403],
   );
 
 export const updateGuildRoleFromPath = (
-  guildId: unknown,
+  guildId: string | undefined,
   roleId: string,
   payload: UpdateRolePermissionsRequest,
 ) =>

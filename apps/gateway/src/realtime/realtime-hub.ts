@@ -8,10 +8,11 @@ import {
   encodeRealtimeFrame,
   tryDecodeRealtimeFrame,
 } from "@lootlog/protocol/realtime/codec";
-import type {
-  Response as RealtimeResponse,
-  ServerEvent,
-  SubscriptionScope,
+import {
+  type Response as RealtimeResponse,
+  type ServerEvent,
+  isServerEventFrame,
+  type SubscriptionScope,
 } from "@lootlog/protocol/realtime";
 import { Effect, Schema } from "effect";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
@@ -86,6 +87,16 @@ const matchingScopeAudienceKeys = (scope: Scope): string[] => {
   return keys.map((key) => JSON.stringify(key));
 };
 
+type RealtimeFederationStore = Pick<
+  RedisGatewayStore,
+  "publish" | "subscribe"
+> & {
+  command: Pick<
+    RedisGatewayStore["command"],
+    "set" | "del" | "sadd" | "srem" | "expire" | "smembers" | "mget"
+  >;
+};
+
 export class RealtimeHub {
   private readonly logger = new Logger(RealtimeHub.name);
   private readonly sockets = new Map<string, GatewaySocket>();
@@ -98,8 +109,11 @@ export class RealtimeHub {
   readonly instanceId = crypto.randomUUID();
 
   constructor(
-    private readonly config: GatewayConfiguration,
-    private readonly redis: RedisGatewayStore,
+    private readonly config: Pick<
+      GatewayConfiguration,
+      "maxBackpressureBytes" | "maxBackpressureStrikes"
+    >,
+    private readonly redis: RealtimeFederationStore,
     private readonly runBackground: BackgroundTaskRunner = unmanagedBackgroundTaskRunner,
   ) {}
 
@@ -381,10 +395,7 @@ export class RealtimeHub {
     readonly organizationId?: string;
     readonly presenceAudience?: "basic" | "precise";
     readonly frame: Event;
-  }): {
-    readonly message: FederatedRealtimeMessage;
-    readonly bytes: Uint8Array;
-  } {
+  }) {
     const bytes = encodeRealtimeFrame(options.frame);
     return {
       bytes,
@@ -439,8 +450,8 @@ export class RealtimeHub {
       );
       return;
     }
-    if (!("type" in decoded.success)) return;
-    const frame = decoded.success as Event;
+    if (!isServerEventFrame(decoded.success)) return;
+    const frame = decoded.success;
     let jsonFrame: string | undefined;
     // Remote frames must be re-encoded after validation strips unknown fields.
     let binaryFrame = localBytes;

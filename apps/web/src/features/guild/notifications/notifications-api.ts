@@ -6,11 +6,11 @@ import {
   invalidateNotificationsGuildControllerGetGuildJobs,
   invalidateNotificationsGuildControllerGetGuildRules,
   invalidateNotificationsGuildControllerGetGuildTargets,
+  type GuildNotificationRulesResponseDto,
+  type NotificationJobsResponseDto,
+  type NotificationTargetResponseDto,
 } from "@lootlog/client/main";
 import type { QueryClient } from "@tanstack/react-query";
-import type { GuildNotificationRulesResponseDto } from "@lootlog/client/main";
-import type { NotificationJobsResponseDto } from "@lootlog/client/main";
-import type { NotificationTargetResponseDto } from "@lootlog/client/main";
 
 export type GuildNotificationCacheSnapshot = {
   rules: GuildNotificationRulesResponseDto | undefined;
@@ -205,9 +205,9 @@ export const getGuildNotificationMutationCallbacks = (
   onSuccess: async () => {
     if (guildId) await invalidateGuildNotificationQueries(queryClient, guildId);
   },
-  onError: (
-    _error: unknown,
-    _variables: unknown,
+  onError: <TError, TVariables>(
+    _error: TError,
+    _variables: TVariables,
     previousNotifications: GuildNotificationCacheSnapshot | undefined,
   ) => {
     if (guildId)

@@ -1,3 +1,7 @@
+import {
+  createBattle as buildBattle,
+  createBattleWarrior,
+} from "@/lib/testing/battle";
 import { describe, expect, it } from "vitest";
 import type { Battle } from "@/lib/api/battlelog-types";
 import {
@@ -31,14 +35,14 @@ function createMatch(
 }
 
 function createDuelBattle(id: string): Battle {
-  return {
+  return buildBattle({
     id,
     type: "1v1",
     warriors: [
-      { name: "gorilla banana", team: 1 },
-      { name: "imbi woj", team: 2 },
+      createBattleWarrior({ name: "gorilla banana", team: 1 }),
+      createBattleWarrior({ name: "imbi woj", team: 2 }),
     ],
-  } as Battle;
+  });
 }
 
 describe("resolveDocumentTitle", () => {
@@ -133,8 +137,8 @@ describe("resolveDocumentTitle", () => {
               id: "battle-1",
               type: "group",
               warriors: [
-                { name: "gorilla banana", team: 1 },
-                { name: "imbi woj", team: 2 },
+                createBattleWarrior({ name: "gorilla banana", team: 1 }),
+                createBattleWarrior({ name: "imbi woj", team: 2 }),
               ],
             },
           },

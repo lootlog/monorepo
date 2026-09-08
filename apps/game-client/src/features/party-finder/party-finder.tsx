@@ -75,8 +75,8 @@ export const PartyFinder = () => {
           <div className="ll:shrink-0 ll:p-2 ll:border-t ll:border-gray-700 ll:flex ll:flex-col ll:gap-1.5">
             <Button
               onClick={() => {
-                void inviteParticipants().catch((error: unknown) => {
-                  console.warn("Failed to resolve party invitations", error);
+                void inviteParticipants().catch((cause: unknown) => {
+                  console.warn("Failed to resolve party invitations", cause);
                 });
               }}
               disabled={

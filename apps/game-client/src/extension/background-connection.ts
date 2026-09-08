@@ -79,22 +79,22 @@ export function createBackgroundConnection(
         if (!controller.signal.aborted)
           send({ type: "result", id: message.id, data: result ?? null });
       } catch (error) {
-        if (!controller.signal.aborted)
-          send({
+        if (!controller.signal.aborted) {
+          const response: Extract<ExtensionMessage, { type: "error" }> = {
             type: "error",
             id: message.id,
             message:
               error instanceof Error
                 ? error.message
                 : "Extension request failed",
-            ...(error instanceof RealtimeRequestError
-              ? {
-                  code: error.code,
-                  retryable: error.retryable,
-                  retryAfterMs: error.retryAfterMs,
-                }
-              : {}),
-          });
+          };
+          if (error instanceof RealtimeRequestError) {
+            response.code = error.code;
+            response.retryable = error.retryable;
+            response.retryAfterMs = error.retryAfterMs;
+          }
+          send(response);
+        }
       } finally {
         clearTimeout(timeout);
         pending.delete(message.id);
@@ -112,10 +112,7 @@ export function createBackgroundConnection(
   };
 }
 
-function executeGameCommand(
-  realtime: RealtimeClient,
-  command: unknown,
-): Promise<unknown> {
+function executeGameCommand(realtime: RealtimeClient, command: unknown) {
   const frame = decodeRealtimeFrame(command);
   if ("status" in frame) throw new Error("Expected a client command");
   switch (frame.type) {

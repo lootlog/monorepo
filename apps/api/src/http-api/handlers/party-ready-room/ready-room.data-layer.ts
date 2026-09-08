@@ -35,6 +35,7 @@ import {
 import {
   makeReadyRoomRepository,
   type ReadyRoomRedis,
+  type CommitReadyRoomResult,
 } from "./ready-room.repository.js";
 
 const ROOM_LIFETIME_MS = 30 * 60 * 1000;
@@ -202,9 +203,7 @@ export const makeReadyRoomDataLayer = (
               new ResourceConflictError({ code: "REVISION_CONFLICT" }),
             );
       };
-      const assertCommitted = <A extends { readonly status: string }>(
-        result: A,
-      ) => {
+      const assertCommitted = (result: CommitReadyRoomResult) => {
         if (result.status === "missing") {
           return Effect.fail(
             new ResourceNotFoundError({ code: "ROOM_EXPIRED" }),
@@ -215,7 +214,7 @@ export const makeReadyRoomDataLayer = (
             new ResourceConflictError({ code: "REVISION_CONFLICT" }),
           );
         }
-        return Effect.succeed(result as A & { readonly status: "committed" });
+        return Effect.succeed(result);
       };
 
       const accessibleGuildIds = (discordId: string) =>
@@ -462,15 +461,6 @@ export const makeReadyRoomDataLayer = (
                 organizerCharacter: structuredClone(payload.character),
                 guildIds: [...guildIds],
                 world: payload.world,
-                ...(payload.description === undefined
-                  ? {}
-                  : { description: payload.description }),
-                ...(payload.minLvl === undefined
-                  ? {}
-                  : { minLvl: payload.minLvl }),
-                ...(payload.maxLvl === undefined
-                  ? {}
-                  : { maxLvl: payload.maxLvl }),
                 status: "ACTIVE",
                 revision: 1,
                 createdAt: timestamp,
@@ -478,6 +468,12 @@ export const makeReadyRoomDataLayer = (
                 expiresAt: new Date(now + ROOM_LIFETIME_MS).toISOString(),
                 participants: {},
               };
+              if (payload.description !== undefined)
+                aggregate.description = payload.description;
+              if (payload.minLvl !== undefined)
+                aggregate.minLvl = payload.minLvl;
+              if (payload.maxLvl !== undefined)
+                aggregate.maxLvl = payload.maxLvl;
               const result = yield* repository.create(aggregate);
               if (result.status === "active-room-exists") {
                 return yield* Effect.fail(

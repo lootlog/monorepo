@@ -27,8 +27,17 @@ const decodeCharacterIdsJson = Schema.decodeUnknownSync(
   Schema.fromJsonString(Schema.mutable(Schema.Array(Schema.String))),
 );
 
+type BattleAnalyticsQueryDatabase = Pick<DrizzleDatabase, "select"> & {
+  query: {
+    userCharacters: Pick<
+      DrizzleDatabase["query"]["userCharacters"],
+      "findFirst" | "findMany"
+    >;
+  };
+};
+
 export const makeBattleAnalyticsQuery = (
-  drizzle: DrizzleDatabase,
+  drizzle: BattleAnalyticsQueryDatabase,
   cache: BattleAnalyticsCache,
 ) => {
   const warriorExists = makeWarriorExists(drizzle);
@@ -77,17 +86,17 @@ export const makeBattleAnalyticsQuery = (
       return undefined;
     }
 
-    const periodDays: Record<string, number> = {
-      "24h": 1,
-      "3d": 3,
-      "7d": 7,
-      "14d": 14,
-      "30d": 30,
-      "90d": 90,
-      "180d": 180,
-    };
+    const periodDays = new Map<string, number>([
+      ["24h", 1],
+      ["3d", 3],
+      ["7d", 7],
+      ["14d", 14],
+      ["30d", 30],
+      ["90d", 90],
+      ["180d", 180],
+    ]);
 
-    const days = periodDays[period];
+    const days = periodDays.get(period);
     return days === undefined
       ? undefined
       : new Date(Date.now() - days * DAY_MS);
@@ -106,10 +115,10 @@ export const makeBattleAnalyticsQuery = (
 
   const getDateRangeFilter = (query: DateRangeQuery): AnalyticsDateRange => {
     if (query.startDate || query.endDate) {
-      return {
-        ...(query.startDate ? { startDate: new Date(query.startDate) } : {}),
-        ...(query.endDate ? { endDate: new Date(query.endDate) } : {}),
-      };
+      const range: AnalyticsDateRange = {};
+      if (query.startDate) range.startDate = new Date(query.startDate);
+      if (query.endDate) range.endDate = new Date(query.endDate);
+      return range;
     }
 
     return {

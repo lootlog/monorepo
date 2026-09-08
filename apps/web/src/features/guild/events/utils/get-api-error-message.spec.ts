@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ApiError } from "@lootlog/client/transport";
-import { getApiErrorMessage } from "@lootlog/client/transport";
+import { ApiError, getApiErrorMessage } from "@lootlog/client/transport";
 
 describe("getApiErrorMessage", () => {
   it("returns the first API validation message", () => {

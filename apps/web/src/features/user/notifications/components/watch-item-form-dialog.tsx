@@ -28,14 +28,16 @@ import { USER_WATCHED_ITEMS_LIMIT } from "@/features/user/notifications/constant
 import { WatchedItemSelector } from "@/features/user/notifications/components/watched-item-selector";
 import { getUserNotificationsErrorMessage } from "@/features/user/notifications/utils/get-user-notifications-error-message";
 import { useQueries, useQueryClient } from "@tanstack/react-query";
-import { getGuildsControllerGetWorldsByGuildIdQueryOptions } from "@lootlog/client/main";
-import { useNotificationsUserControllerCreateWatchedItem } from "@lootlog/client/main";
+import {
+  getGuildsControllerGetWorldsByGuildIdQueryOptions,
+  useNotificationsUserControllerCreateWatchedItem,
+  type WatchedItemResponseDto,
+} from "@lootlog/client/main";
+
 import {
   getItemsControllerGetItemsQueryKey,
   useItemsControllerGetItems,
 } from "@lootlog/client/search";
-import type { SearchItemsResponseDtoOutputHitsItem } from "@lootlog/client/search";
-import type { WatchedItemResponseDto } from "@lootlog/client/main";
 
 const watchFormSchema = z
   .object({
@@ -96,8 +98,6 @@ type WatchFormDialogProps = {
   watchedItems: WatchedItemResponseDto[];
   guildOptions: Array<{ value: string; label: string }>;
 };
-
-type GameItem = SearchItemsResponseDtoOutputHitsItem;
 
 export const WatchFormDialog = ({
   open,
@@ -284,24 +284,22 @@ export const WatchFormDialog = ({
                       {t("settings.userNotifications.fields.guilds")}
                     </FormLabel>
                     <FormControl
-                      render={
-                        <MultiSelect
-                          options={guildOptions}
-                          value={field.value}
-                          onValueChange={field.onChange}
-                          onClose={field.onChange}
-                          placeholder={t(
-                            "settings.userNotifications.placeholders.guilds",
-                          )}
-                          searchPlaceholder={t(
-                            "settings.userNotifications.placeholders.searchGuilds",
-                          )}
-                          emptyMessage={t(
-                            "settings.userNotifications.empty.guilds",
-                          )}
-                          commandSearch
-                        />
-                      }
+                      render=<MultiSelect
+                        options={guildOptions}
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        onClose={field.onChange}
+                        placeholder={t(
+                          "settings.userNotifications.placeholders.guilds",
+                        )}
+                        searchPlaceholder={t(
+                          "settings.userNotifications.placeholders.searchGuilds",
+                        )}
+                        emptyMessage={t(
+                          "settings.userNotifications.empty.guilds",
+                        )}
+                        commandSearch
+                      />
                     />
                   </FormItem>
                 )}
@@ -316,14 +314,12 @@ export const WatchFormDialog = ({
                       {t("settings.notifications.fields.world")}
                     </FormLabel>
                     <FormControl
-                      render={
-                        <WorldSwitcher
-                          worlds={worldOptions}
-                          value={field.value || null}
-                          onValueChange={(world) => field.onChange(world ?? "")}
-                          width="w-full"
-                        />
-                      }
+                      render=<WorldSwitcher
+                        worlds={worldOptions}
+                        value={field.value || null}
+                        onValueChange={(world) => field.onChange(world ?? "")}
+                        width="w-full"
+                      />
                     />
                   </FormItem>
                 )}
@@ -340,15 +336,13 @@ export const WatchFormDialog = ({
                           {t("settings.userNotifications.manualEntry.itemId")}
                         </FormLabel>
                         <FormControl
-                          render={
-                            <Input
-                              {...field}
-                              disabled={!selectedWorld}
-                              placeholder={t(
-                                "settings.userNotifications.manualEntry.itemIdPlaceholder",
-                              )}
-                            />
-                          }
+                          render=<Input
+                            {...field}
+                            disabled={!selectedWorld}
+                            placeholder={t(
+                              "settings.userNotifications.manualEntry.itemIdPlaceholder",
+                            )}
+                          />
                         />
                         {form.formState.errors.manualItemId ? (
                           <p className="text-sm text-destructive">
@@ -370,15 +364,13 @@ export const WatchFormDialog = ({
                           {t("settings.userNotifications.manualEntry.itemName")}
                         </FormLabel>
                         <FormControl
-                          render={
-                            <Input
-                              {...field}
-                              disabled={!selectedWorld}
-                              placeholder={t(
-                                "settings.userNotifications.manualEntry.itemNamePlaceholder",
-                              )}
-                            />
-                          }
+                          render=<Input
+                            {...field}
+                            disabled={!selectedWorld}
+                            placeholder={t(
+                              "settings.userNotifications.manualEntry.itemNamePlaceholder",
+                            )}
+                          />
                         />
                         {form.formState.errors.manualItemName ? (
                           <p className="text-sm text-destructive">
@@ -401,37 +393,35 @@ export const WatchFormDialog = ({
                         {t("settings.userNotifications.fields.item")}
                       </FormLabel>
                       <FormControl
-                        render={
-                          <WatchedItemSelector
-                            disabled={!selectedWorld}
-                            loading={isItemsLoading}
-                            errorMessage={
-                              itemSearchQuery.isError
-                                ? t("common.searchUnavailable")
-                                : undefined
-                            }
-                            items={itemSearchResults}
-                            searchValue={itemSearchValue}
-                            selectedItem={field.value as GameItem | null}
-                            placeholder={t(
-                              "settings.userNotifications.placeholders.item",
-                            )}
-                            searchPlaceholder={t(
-                              "settings.userNotifications.placeholders.searchItems",
-                            )}
-                            emptyMessage={t(
-                              "settings.userNotifications.empty.items",
-                            )}
-                            loadingMessage={t(
-                              "settings.userNotifications.loading.items",
-                            )}
-                            disabledMessage={t(
-                              "settings.userNotifications.validation.worldRequired",
-                            )}
-                            onSearchChange={setItemSearchValue}
-                            onSelect={field.onChange}
-                          />
-                        }
+                        render=<WatchedItemSelector
+                          disabled={!selectedWorld}
+                          loading={isItemsLoading}
+                          errorMessage={
+                            itemSearchQuery.isError
+                              ? t("common.searchUnavailable")
+                              : undefined
+                          }
+                          items={itemSearchResults}
+                          searchValue={itemSearchValue}
+                          selectedItem={field.value}
+                          placeholder={t(
+                            "settings.userNotifications.placeholders.item",
+                          )}
+                          searchPlaceholder={t(
+                            "settings.userNotifications.placeholders.searchItems",
+                          )}
+                          emptyMessage={t(
+                            "settings.userNotifications.empty.items",
+                          )}
+                          loadingMessage={t(
+                            "settings.userNotifications.loading.items",
+                          )}
+                          disabledMessage={t(
+                            "settings.userNotifications.validation.worldRequired",
+                          )}
+                          onSearchChange={setItemSearchValue}
+                          onSelect={field.onChange}
+                        />
                       />
                       {form.formState.errors.item ? (
                         <p className="text-sm text-destructive">
@@ -451,12 +441,10 @@ export const WatchFormDialog = ({
                 render={({ field }) => (
                   <FormItem className="flex items-center gap-2">
                     <FormControl
-                      render={
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      }
+                      render=<Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
                     />
                     <FormLabel className="!mt-0 text-xs text-muted-foreground">
                       {t("settings.userNotifications.manualEntry.checkbox")}

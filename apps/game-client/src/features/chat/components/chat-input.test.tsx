@@ -1,31 +1,72 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { type toast as SonnerToast, toast } from "sonner";
+import {
+  fireEvent,
+  render as renderUi,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Permission } from "@lootlog/schema/permissions";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type {
-  ChatMessageResponseDtoOutput,
-  MemberSummaryResponseDtoOutput,
-  NullableMemberResponseDto,
-  RoleResponseDtoOutput,
+import {
+  type ChatMessageResponseDtoOutput,
+  type MemberSummaryResponseDtoOutput,
+  type NullableMemberResponseDto,
+  type RoleResponseDtoOutput,
+  getChatControllerGetChatMessagesQueryKey,
+  getGuildsControllerGetGuildPermissionsQueryKey,
+  getMembersControllerGetMeQueryKey,
+  getMembersControllerGetGuildMembersSummaryQueryKey,
+  getRolesControllerGetGuildRolesQueryKey,
 } from "@lootlog/client/main";
-import { ApiError } from "@lootlog/client/transport";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { ReactElement } from "react";
+import { useChatStore } from "@/store/chat.store";
+
+import { configureApiClients } from "@lootlog/client/transport";
 import { MessageType } from "@/api/chat.api";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
-import { toast } from "sonner";
+
 import { ChatInput } from "./chat-input";
 
-beforeEach(() => setTestRuntimeGame());
+beforeEach(() =>
+  setTestRuntimeGame({ world: "tempest", hero: { name: "CurrentHero" } }),
+);
 
-const mockSendChatMessage = vi.fn();
-const mockStartNotificationMessage = vi.fn();
-const mockHandlePartyCommand = vi.fn();
-const mockClearReplyDraft = vi.fn();
-const mockSetQueryData = vi.fn();
-const mockScrollIntoView = vi.fn();
-const mockClearChatMessages = vi.fn();
+const sendRequest = vi.fn<typeof fetch>();
+const notificationRequest = vi.fn<typeof fetch>();
+const clearRequest = vi.fn<typeof fetch>();
+const mockScrollIntoView = vi.fn<HTMLElement["scrollIntoView"]>();
+let queryClient: QueryClient;
+let restoreApi: () => void;
+const chatQueryKey = getChatControllerGetChatMessagesQueryKey({
+  guildId: "guild-1",
+});
+const render = (ui: ReactElement) => {
+  const guild = { guildId: "guild-1" };
+  queryClient.setQueryData(
+    getGuildsControllerGetGuildPermissionsQueryKey(guild),
+    mockGuildPermissions,
+  );
+  queryClient.setQueryData(
+    getMembersControllerGetMeQueryKey(guild),
+    mockCurrentMember,
+  );
+  queryClient.setQueryData(
+    getMembersControllerGetGuildMembersSummaryQueryKey(guild),
+    mockGuildMembers,
+  );
+  queryClient.setQueryData(
+    getRolesControllerGetGuildRolesQueryKey(guild),
+    mockGuildRoles,
+  );
+  return renderUi(
+    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>,
+  );
+};
 
 vi.mock("sonner", () => ({
-  toast: { error: vi.fn() },
+  toast: { error: vi.fn<typeof SonnerToast.error>() },
 }));
 
 let mockGuildMembers: MemberSummaryResponseDtoOutput[] = [
@@ -114,162 +155,6 @@ const createSentMessageResponse = (): ChatMessageResponseDtoOutput => ({
   canDelete: false,
 });
 
-vi.mock("@tanstack/react-query", async () => {
-  const actual = await vi.importActual("@tanstack/react-query");
-
-  return {
-    ...actual,
-    useQueryClient: () => ({
-      getQueryState: () => ({ data: [], fetchStatus: "idle" }),
-      setQueryData: mockSetQueryData,
-    }),
-  };
-});
-
-vi.mock("@lootlog/client/main", async () => ({
-  ...(await vi.importActual("@lootlog/client/main")),
-  getChatControllerGetChatMessagesQueryKey: ({
-    guildId,
-  }: {
-    guildId: string;
-  }) => [guildId],
-  useChatControllerClearChatMessages: () => ({
-    mutateAsync: mockClearChatMessages,
-    isPending: false,
-  }),
-  useChatControllerSendChatMessage: () => ({
-    mutateAsync: mockSendChatMessage,
-    isPending: false,
-  }),
-  getGuildsControllerGetGuildPermissionsQueryKey: ({
-    guildId,
-  }: {
-    guildId: string;
-  }) => ["guild-permissions", guildId],
-  useGuildsControllerGetGuildPermissions: (
-    _: { guildId: string },
-    options?: {
-      query?: {
-        enabled?: boolean;
-      };
-    },
-  ) => ({
-    data: options?.query?.enabled === false ? undefined : mockGuildPermissions,
-  }),
-  getMembersControllerGetMeQueryKey: ({ guildId }: { guildId: string }) => [
-    "members",
-    guildId,
-    "me",
-  ],
-  getMembersControllerGetGuildMembersSummaryQueryKey: ({
-    guildId,
-  }: {
-    guildId: string;
-  }) => ["members", guildId],
-  getMembersControllerGetGuildMembersSummaryQueryOptions: (
-    { guildId }: { guildId: string },
-    options?: {
-      query?: {
-        enabled?: boolean;
-        select?: (members: MemberSummaryResponseDtoOutput[]) => unknown;
-      };
-    },
-  ) => ({
-    queryKey: ["members", guildId],
-    queryFn: () => Promise.resolve(mockGuildMembers),
-    enabled: options?.query?.enabled ?? true,
-    ...options?.query,
-  }),
-  useMembersControllerGetGuildMembersSummary: (
-    _: { guildId: string },
-    options?: {
-      query?: {
-        enabled?: boolean;
-        select?: (members: MemberSummaryResponseDtoOutput[]) => unknown;
-      };
-    },
-  ) => ({
-    data:
-      options?.query?.enabled === false
-        ? undefined
-        : (options?.query?.select?.(mockGuildMembers) ?? mockGuildMembers),
-    isFetching: false,
-  }),
-  useMembersControllerGetMe: (
-    _: { guildId: string },
-    options?: {
-      query?: {
-        enabled?: boolean;
-      };
-    },
-  ) => ({
-    data: options?.query?.enabled === false ? undefined : mockCurrentMember,
-    isFetching: false,
-  }),
-  getRolesControllerGetGuildRolesQueryKey: ({
-    guildId,
-  }: {
-    guildId: string;
-  }) => ["roles", guildId],
-  useRolesControllerGetGuildRoles: (
-    _: { guildId: string },
-    options?: {
-      query?: {
-        enabled?: boolean;
-        select?: (roles: RoleResponseDtoOutput[]) => unknown;
-      };
-    },
-  ) => ({
-    data:
-      options?.query?.enabled === false
-        ? undefined
-        : (options?.query?.select?.(mockGuildRoles) ?? mockGuildRoles),
-    isFetching: false,
-  }),
-}));
-
-vi.mock("@/lib/game", () => ({
-  Game: {
-    getAccountId: () => null,
-    getWorldName: () => "tempest",
-    hero: {
-      id: 1,
-      nick: "CurrentHero",
-    },
-  },
-}));
-
-vi.mock("@/features/command/hooks/use-party-command", () => ({
-  usePartyCommand: () => ({
-    handlePartyCommand: mockHandlePartyCommand,
-  }),
-}));
-
-vi.mock("@/features/chat/hooks/use-notification-chat-orchestration", () => ({
-  isNotificationRateLimitError: (error: unknown) =>
-    typeof error === "object" &&
-    error !== null &&
-    "status" in error &&
-    error.status === 429,
-  useNotificationChatOrchestration: () => ({
-    isCreatingNotificationMessage: false,
-    startNotificationMessage: mockStartNotificationMessage,
-  }),
-}));
-
-vi.mock("@/store/chat.store", () => ({
-  useChatStore: (
-    selector: (state: {
-      replyDraft: null;
-      clearReplyDraft: typeof mockClearReplyDraft;
-    }) => unknown,
-  ) =>
-    selector({
-      replyDraft: null,
-      clearReplyDraft: mockClearReplyDraft,
-    }),
-}));
-
 describe("ChatInput", () => {
   const getEditor = () => {
     return screen.getByRole("textbox", { name: "Wiadomość..." });
@@ -280,10 +165,14 @@ describe("ChatInput", () => {
 
     expect(editorShell).not.toBeNull();
 
-    return editorShell as HTMLElement;
+    if (!editorShell) throw new Error("Expected editor shell");
+    return editorShell;
   };
 
   afterEach(() => {
+    restoreApi();
+    queryClient.clear();
+    useChatStore.setState(useChatStore.getInitialState(), true);
     vi.restoreAllMocks();
   });
 
@@ -291,13 +180,37 @@ describe("ChatInput", () => {
     vi.spyOn(HTMLElement.prototype, "scrollIntoView").mockImplementation(
       mockScrollIntoView,
     );
-    mockSendChatMessage.mockReset();
-    mockStartNotificationMessage.mockReset();
-    mockHandlePartyCommand.mockReset();
-    mockClearReplyDraft.mockReset();
-    mockSetQueryData.mockReset();
+    sendRequest
+      .mockReset()
+      .mockResolvedValue(Response.json(createSentMessageResponse()));
+    notificationRequest.mockReset();
+    clearRequest.mockReset();
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false, staleTime: Infinity },
+        mutations: { retry: false },
+      },
+    });
+    queryClient.setQueryData(chatQueryKey, []);
+    useChatStore.setState(useChatStore.getInitialState(), true);
+    restoreApi = configureApiClients({
+      main: {
+        baseUrl: "https://api.example.test",
+        fetch: (input, init) => {
+          const url = new URL(
+            input instanceof Request ? input.url : String(input),
+          );
+          if (url.pathname.endsWith("/chat-messages")) {
+            if (init?.method === "DELETE") return clearRequest(input, init);
+            return sendRequest(input, init);
+          }
+          if (url.pathname.startsWith("/messaging"))
+            return notificationRequest(input, init);
+          throw new Error(`Unexpected HTTP request: ${url.pathname}`);
+        },
+      },
+    });
     mockScrollIntoView.mockReset();
-    mockClearChatMessages.mockReset();
     vi.mocked(toast.error).mockReset();
     mockGuildMembers = [
       { id: 1, userId: "user-1", name: "Raider", color: 0x12ab34 },
@@ -375,7 +288,7 @@ describe("ChatInput", () => {
     await user.keyboard("{Enter}");
 
     expect(editor.textContent).toBe("@Raid Team ");
-    expect(mockSendChatMessage).not.toHaveBeenCalled();
+    expect(sendRequest).not.toHaveBeenCalled();
   });
 
   it("completes and cycles mention suggestions with Tab", async () => {
@@ -388,7 +301,7 @@ describe("ChatInput", () => {
 
     await user.keyboard("{Tab}");
     expect(editor.textContent).toBe("@Raid Team ");
-    expect(mockSendChatMessage).not.toHaveBeenCalled();
+    expect(sendRequest).not.toHaveBeenCalled();
 
     await user.keyboard("{Tab}");
     expect(editor.textContent).toBe("@Raider ");
@@ -528,11 +441,11 @@ describe("ChatInput", () => {
   it("cuts selected text through controlled state instead of native contentEditable mutation", async () => {
     const user = userEvent.setup();
     const clipboardData = {
-      setData: vi.fn(),
+      setData: vi.fn<DataTransfer["setData"]>(),
     };
     render(<ChatInput selectedGuildId="guild-1" />);
 
-    const editor = getEditor() as HTMLDivElement;
+    const editor = getEditor();
     await user.click(editor);
     await user.paste("hello world");
 
@@ -577,7 +490,9 @@ describe("ChatInput", () => {
     expect(textNode).toBeInstanceOf(Text);
     expect(selection).not.toBeNull();
 
-    selection?.setBaseAndExtent(textNode as Text, 11, textNode as Text, 6);
+    if (!(textNode instanceof Text) || !selection)
+      throw new Error("Expected text selection");
+    selection.setBaseAndExtent(textNode, 11, textNode, 6);
     fireEvent(document, new Event("selectionchange"));
     fireEvent.keyDown(editor, { key: "ArrowRight", shiftKey: true });
     fireEvent.keyUp(editor, { key: "ArrowRight", shiftKey: true });
@@ -590,7 +505,7 @@ describe("ChatInput", () => {
   it("deletes reverse selections without collapsing them first", async () => {
     const user = userEvent.setup();
     const clipboardData = {
-      setData: vi.fn(),
+      setData: vi.fn<DataTransfer["setData"]>(),
     };
     render(<ChatInput selectedGuildId="guild-1" />);
 
@@ -602,7 +517,9 @@ describe("ChatInput", () => {
     const selection = document.getSelection();
 
     expect(textNode).toBeInstanceOf(Text);
-    selection?.setBaseAndExtent(textNode as Text, 11, textNode as Text, 6);
+    if (!(textNode instanceof Text) || !selection)
+      throw new Error("Expected text selection");
+    selection.setBaseAndExtent(textNode, 11, textNode, 6);
     fireEvent(document, new Event("selectionchange"));
     fireEvent.cut(editor, { clipboardData });
 
@@ -633,7 +550,7 @@ describe("ChatInput", () => {
 
   it("keeps resolved mentions atomic and serializes them as plain chat text", async () => {
     const user = userEvent.setup();
-    mockSendChatMessage.mockResolvedValue(createSentMessageResponse());
+    sendRequest.mockResolvedValue(Response.json(createSentMessageResponse()));
     render(<ChatInput selectedGuildId="guild-1" />);
 
     const editor = getEditor();
@@ -653,14 +570,10 @@ describe("ChatInput", () => {
     await user.paste("@ra");
     await user.keyboard("{Enter}{Enter}");
     await waitFor(() => {
-      expect(mockSendChatMessage).toHaveBeenCalledTimes(1);
+      expect(sendRequest).toHaveBeenCalledTimes(1);
     });
-    expect(mockSendChatMessage).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          message: "@Raid Team ",
-        }),
-      }),
+    expect(sendRequest.mock.calls[0]?.[1]?.body).toContain(
+      '"message":"@Raid Team "',
     );
   });
 
@@ -686,7 +599,7 @@ describe("ChatInput", () => {
     fireEvent.keyDown(editor, { key: "Enter", isComposing: true });
     fireEvent.compositionEnd(editor, { data: "ć" });
 
-    expect(mockSendChatMessage).not.toHaveBeenCalled();
+    expect(sendRequest).not.toHaveBeenCalled();
     expect(editor.textContent).toBe("zażółć");
   });
 
@@ -718,7 +631,7 @@ describe("ChatInput", () => {
     });
     fireEvent.cut(editor, {
       clipboardData: {
-        setData: vi.fn(),
+        setData: vi.fn<DataTransfer["setData"]>(),
       },
     });
 
@@ -758,10 +671,8 @@ describe("ChatInput", () => {
   });
 
   it("ignores repeated notification submits until orchestration finishes", async () => {
-    const deferred = Promise.withResolvers<{
-      result: ChatMessageResponseDtoOutput;
-    }>();
-    mockStartNotificationMessage.mockReturnValue(deferred.promise);
+    const deferred = Promise.withResolvers<Response>();
+    notificationRequest.mockReturnValue(deferred.promise);
     const user = userEvent.setup();
     render(<ChatInput selectedGuildId="guild-1" />);
     const editor = getEditor();
@@ -771,23 +682,22 @@ describe("ChatInput", () => {
     fireEvent.keyDown(editor, { key: "Enter" });
     fireEvent.keyDown(editor, { key: "Enter" });
 
-    expect(mockStartNotificationMessage).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(notificationRequest).toHaveBeenCalledTimes(1));
     expect(editor).toHaveAttribute("tabindex", "-1");
 
-    deferred.resolve({ result: createSentMessageResponse() });
+    deferred.resolve(
+      Response.json({
+        guildIds: ["guild-1"],
+        notificationId: "notification-1",
+      }),
+    );
     await waitFor(() => expect(editor).toHaveAttribute("tabindex", "0"));
     expect(editor.textContent).toBe("");
   });
 
   it("shows only the notification rate-limit error for a 429 response", async () => {
-    mockStartNotificationMessage.mockRejectedValue(
-      new ApiError({
-        status: 429,
-        data: { retryAfterMs: 1_000 },
-        url: "/messaging",
-        method: "POST",
-        message: "Request failed",
-      }),
+    notificationRequest.mockResolvedValue(
+      Response.json({ retryAfterMs: 1_000 }, { status: 429 }),
     );
     const user = userEvent.setup();
     render(<ChatInput selectedGuildId="guild-1" />);
@@ -831,7 +741,7 @@ describe("ChatInput", () => {
   it("opens a confirmation popover for /clr and clears the guild chat after confirming", async () => {
     const user = userEvent.setup();
     mockGuildPermissions = [Permission.OWNER];
-    mockClearChatMessages.mockResolvedValue({ success: true });
+    clearRequest.mockResolvedValue(Response.json({ success: true }));
     render(<ChatInput selectedGuildId="guild-1" />);
 
     const editor = getEditor();
@@ -841,25 +751,26 @@ describe("ChatInput", () => {
     await user.keyboard("{Enter}");
 
     expect(screen.getByText("Wyczyścić czat?")).toBeInTheDocument();
-    expect(mockSendChatMessage).not.toHaveBeenCalled();
+    expect(sendRequest).not.toHaveBeenCalled();
 
     await user.click(screen.getByRole("button", { name: "Wyczyść" }));
 
     await waitFor(() => {
-      expect(mockClearChatMessages).toHaveBeenCalledWith({
-        pathParams: { guildId: "guild-1" },
-      });
+      expect(clearRequest).toHaveBeenCalledOnce();
+      expect(String(clearRequest.mock.calls[0]?.[0])).toBe(
+        "https://api.example.test/guilds/guild-1/chat-messages",
+      );
     });
-    expect(mockSetQueryData).toHaveBeenCalledWith(["guild-1"], []);
+    expect(queryClient.getQueryData(chatQueryKey)).toEqual([]);
     expect(editor.textContent).toBe("");
     expect(screen.queryByText("Wyczyścić czat?")).not.toBeInTheDocument();
   });
 
   it("stops keyboard events from bubbling outside the editor", async () => {
     const user = userEvent.setup();
-    const windowKeyDownHandler = vi.fn();
-    const windowKeyPressHandler = vi.fn();
-    const windowKeyUpHandler = vi.fn();
+    const windowKeyDownHandler = vi.fn<(event: KeyboardEvent) => void>();
+    const windowKeyPressHandler = vi.fn<(event: KeyboardEvent) => void>();
+    const windowKeyUpHandler = vi.fn<(event: KeyboardEvent) => void>();
     window.addEventListener("keydown", windowKeyDownHandler);
     window.addEventListener("keypress", windowKeyPressHandler);
     window.addEventListener("keyup", windowKeyUpHandler);
@@ -885,8 +796,8 @@ describe("ChatInput", () => {
 
   it("restores editor focus after sending a message", async () => {
     const user = userEvent.setup();
-    const onMessageSent = vi.fn();
-    mockSendChatMessage.mockResolvedValue(createSentMessageResponse());
+    const onMessageSent = vi.fn<() => void>();
+    sendRequest.mockResolvedValue(Response.json(createSentMessageResponse()));
     render(
       <ChatInput onMessageSent={onMessageSent} selectedGuildId="guild-1" />,
     );
@@ -897,7 +808,7 @@ describe("ChatInput", () => {
     await user.keyboard("{Enter}");
 
     await waitFor(() => {
-      expect(mockSendChatMessage).toHaveBeenCalledTimes(1);
+      expect(sendRequest).toHaveBeenCalledTimes(1);
     });
     await waitFor(() => {
       expect(editor).toHaveFocus();
@@ -908,7 +819,7 @@ describe("ChatInput", () => {
 
   it("preserves the draft and restores focus after a send error", async () => {
     const user = userEvent.setup();
-    mockSendChatMessage.mockRejectedValue(new Error("send failed"));
+    sendRequest.mockRejectedValue(new Error("send failed"));
     render(<ChatInput selectedGuildId="guild-1" />);
 
     const editor = getEditor();
@@ -917,7 +828,7 @@ describe("ChatInput", () => {
     await user.keyboard("{Enter}");
 
     await waitFor(() => {
-      expect(mockSendChatMessage).toHaveBeenCalledTimes(1);
+      expect(sendRequest).toHaveBeenCalledTimes(1);
     });
     await waitFor(() => {
       expect(editor).toHaveFocus();

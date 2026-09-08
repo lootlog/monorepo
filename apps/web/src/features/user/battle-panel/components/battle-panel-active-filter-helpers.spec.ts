@@ -1,3 +1,4 @@
+import type { TOptions } from "i18next";
 import { describe, expect, it } from "vitest";
 import {
   buildBattleListFilterLabels,
@@ -11,7 +12,7 @@ import {
   removePlayerVsPlayerFilter,
 } from "./battle-panel-active-filter-helpers";
 
-const translate = (key: string, options?: Record<string, unknown>) => {
+const translate = (key: string, options?: TOptions) => {
   if (!options) {
     return key;
   }

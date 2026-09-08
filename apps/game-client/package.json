@@ -61,6 +61,7 @@
   },
   "devDependencies": {
     "@aklinker1/zero-zip": "1.0.1",
+    "@napi-rs/canvas": "^1.0.8",
     "@rolldown/plugin-babel": "^0.2.3",
     "@tailwindcss/postcss": "catalog:",
     "@tailwindcss/vite": "catalog:",

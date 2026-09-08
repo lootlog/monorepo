@@ -6,8 +6,11 @@ import { useTranslation } from "react-i18next";
 import { Badge } from "@lootlog/ui/components/badge";
 
 import { NotificationTargetCard } from "./notification-target-card";
-import type { GuildNotificationRulesResponseDto } from "@lootlog/client/main";
-import type { NotificationTargetResponseDto } from "@lootlog/client/main";
+import type {
+  GuildNotificationRulesResponseDto,
+  NotificationTargetResponseDto,
+} from "@lootlog/client/main";
+
 import {
   getGuildNotificationTargetUsageCount,
   getGuildNotificationOrphanedRuleCount,

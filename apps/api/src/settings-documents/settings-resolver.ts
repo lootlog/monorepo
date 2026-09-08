@@ -11,7 +11,7 @@ import type {
   SettingsValueSource,
 } from "@lootlog/schema/settings-documents";
 
-type JsonRecord = Record<string, unknown>;
+export type JsonRecord = Record<string, unknown>;
 
 interface ApplySettingsPatchInput {
   domain: SettingsDomain;
@@ -63,10 +63,9 @@ const setPath = (target: JsonRecord, path: string, value: unknown) => {
   let currentTarget = target;
   for (const segment of segments) {
     const nestedValue = currentTarget[segment];
-    if (!isRecord(nestedValue)) {
-      currentTarget[segment] = {};
-    }
-    currentTarget = currentTarget[segment] as JsonRecord;
+    const child = isRecord(nestedValue) ? nestedValue : {};
+    currentTarget[segment] = child;
+    currentTarget = child;
   }
 
   currentTarget[finalSegment] = cloneValue(value);
@@ -194,13 +193,14 @@ export const resolveSettingsDomain = (
     .sort((left, right) => left.getTime() - right.getTime());
   const updatedAt = updatedValues[updatedValues.length - 1];
 
-  return {
+  const resolution: SettingsDomainResolution = {
     effective,
     layers: migratedLayers,
     sources,
     schemaVersion: definition.schemaVersion,
-    ...(updatedAt ? { updatedAt } : {}),
   };
+  if (updatedAt) return { ...resolution, updatedAt };
+  return resolution;
 };
 
 export const applySettingsPatch = ({

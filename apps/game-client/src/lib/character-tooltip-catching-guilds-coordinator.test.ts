@@ -51,16 +51,12 @@ function createApiError(status?: number): ApiError {
   });
 }
 
-function createDeferred<T>() {
-  let resolve!: (value: T) => void;
-  let reject!: (reason?: unknown) => void;
-  const promise = new Promise<T>((promiseResolve, promiseReject) => {
-    resolve = promiseResolve;
-    reject = promiseReject;
-  });
-
-  return { promise, reject, resolve };
-}
+type CoordinatorDependencies = NonNullable<
+  ConstructorParameters<typeof CharacterTooltipCatchingGuildsCoordinator>[0]
+>;
+type FetchPlayers = NonNullable<
+  CoordinatorDependencies["fetchPlayersCatchingGuilds"]
+>;
 
 function getEntry(target: CharacterTooltipCatchingGuildsTarget) {
   return useCharacterTooltipCatchingGuildsStore.getState().entriesByKey[
@@ -102,7 +98,7 @@ describe("CharacterTooltipCatchingGuildsCoordinator", () => {
     const firstTarget = createTarget("1");
     const missingTarget = createTarget("2");
     const fetchPlayersCatchingGuilds = vi
-      .fn()
+      .fn<FetchPlayers>()
       .mockResolvedValue(createResponse([firstTarget]));
     const coordinator = new CharacterTooltipCatchingGuildsCoordinator({
       fetchPlayersCatchingGuilds,
@@ -121,10 +117,10 @@ describe("CharacterTooltipCatchingGuildsCoordinator", () => {
     async (status) => {
       const target = createTarget("1");
       const fetchPlayersCatchingGuilds = vi
-        .fn()
+        .fn<FetchPlayers>()
         .mockRejectedValueOnce(createApiError(status))
         .mockResolvedValueOnce(createResponse([target]));
-      const sleep = vi.fn().mockResolvedValue(undefined);
+      const sleep = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
       const coordinator = new CharacterTooltipCatchingGuildsCoordinator({
         fetchPlayersCatchingGuilds,
         sleep,
@@ -143,11 +139,11 @@ describe("CharacterTooltipCatchingGuildsCoordinator", () => {
   it("does not retry a non-retryable 4xx response", async () => {
     const target = createTarget("1");
     const fetchPlayersCatchingGuilds = vi
-      .fn()
+      .fn<FetchPlayers>()
       .mockRejectedValue(createApiError(400));
     const coordinator = new CharacterTooltipCatchingGuildsCoordinator({
       fetchPlayersCatchingGuilds,
-      sleep: vi.fn().mockResolvedValue(undefined),
+      sleep: vi.fn<() => Promise<void>>().mockResolvedValue(undefined),
     });
 
     coordinator.sync([target], true);
@@ -160,8 +156,8 @@ describe("CharacterTooltipCatchingGuildsCoordinator", () => {
 
   it("aborts a timed-out attempt, retries once, and never leaves loading", async () => {
     const target = createTarget("1");
-    const fetchPlayersCatchingGuilds = vi.fn(
-      (_players: unknown, signal: AbortSignal) =>
+    const fetchPlayersCatchingGuilds = vi.fn<FetchPlayers>(
+      (_players, signal) =>
         new Promise<never>((_resolve, reject) => {
           signal.addEventListener("abort", () => reject(createApiError()));
         }),
@@ -170,7 +166,7 @@ describe("CharacterTooltipCatchingGuildsCoordinator", () => {
       fetchPlayersCatchingGuilds,
       requestTimeoutMs: 1,
       retryDelayMs: 0,
-      sleep: vi.fn().mockResolvedValue(undefined),
+      sleep: vi.fn<() => Promise<void>>().mockResolvedValue(undefined),
     });
 
     coordinator.sync([target], true);
@@ -184,9 +180,10 @@ describe("CharacterTooltipCatchingGuildsCoordinator", () => {
   it("queues a player that appears while another batch is in flight", async () => {
     const firstTarget = createTarget("1");
     const lateTarget = createTarget("2");
-    const firstRequest = createDeferred<ReturnType<typeof createResponse>>();
+    const firstRequest =
+      Promise.withResolvers<ReturnType<typeof createResponse>>();
     const fetchPlayersCatchingGuilds = vi
-      .fn()
+      .fn<FetchPlayers>()
       .mockReturnValueOnce(firstRequest.promise)
       .mockResolvedValueOnce(createResponse([lateTarget]));
     const coordinator = new CharacterTooltipCatchingGuildsCoordinator({
@@ -209,10 +206,10 @@ describe("CharacterTooltipCatchingGuildsCoordinator", () => {
 
   it("aborts and ignores an in-flight result after dispose", async () => {
     const target = createTarget("1");
-    const request = createDeferred<ReturnType<typeof createResponse>>();
+    const request = Promise.withResolvers<ReturnType<typeof createResponse>>();
     let requestSignal: AbortSignal | undefined;
     const coordinator = new CharacterTooltipCatchingGuildsCoordinator({
-      fetchPlayersCatchingGuilds: vi.fn((_players, signal) => {
+      fetchPlayersCatchingGuilds: vi.fn<FetchPlayers>((_players, signal) => {
         requestSignal = signal;
         return request.promise;
       }),
@@ -233,9 +230,10 @@ describe("CharacterTooltipCatchingGuildsCoordinator", () => {
     const inFlightTarget = createTarget("1");
     const queuedTarget = createTarget("2");
     const hoveredTarget = createTarget("3");
-    const firstRequest = createDeferred<ReturnType<typeof createResponse>>();
+    const firstRequest =
+      Promise.withResolvers<ReturnType<typeof createResponse>>();
     const fetchPlayersCatchingGuilds = vi
-      .fn()
+      .fn<FetchPlayers>()
       .mockReturnValueOnce(firstRequest.promise)
       .mockResolvedValueOnce(createResponse([hoveredTarget, queuedTarget]));
     const coordinator = new CharacterTooltipCatchingGuildsCoordinator({
@@ -266,8 +264,10 @@ describe("CharacterTooltipCatchingGuildsCoordinator", () => {
 
   it("keeps an in-flight result in cache after Shift is released", async () => {
     const target = createTarget("1");
-    const request = createDeferred<ReturnType<typeof createResponse>>();
-    const fetchPlayersCatchingGuilds = vi.fn().mockReturnValue(request.promise);
+    const request = Promise.withResolvers<ReturnType<typeof createResponse>>();
+    const fetchPlayersCatchingGuilds = vi
+      .fn<FetchPlayers>()
+      .mockReturnValue(request.promise);
     const coordinator = new CharacterTooltipCatchingGuildsCoordinator({
       fetchPlayersCatchingGuilds,
     });
@@ -284,9 +284,10 @@ describe("CharacterTooltipCatchingGuildsCoordinator", () => {
   it("does not apply an old owner's result to the same character", async () => {
     const oldOwnerTarget = createTarget("1", "old-owner");
     const newOwnerTarget = createTarget("1", "new-owner");
-    const oldOwnerRequest = createDeferred<ReturnType<typeof createResponse>>();
+    const oldOwnerRequest =
+      Promise.withResolvers<ReturnType<typeof createResponse>>();
     const fetchPlayersCatchingGuilds = vi
-      .fn()
+      .fn<FetchPlayers>()
       .mockReturnValueOnce(oldOwnerRequest.promise)
       .mockResolvedValueOnce(createResponse([newOwnerTarget], ["guild-new"]));
     const coordinator = new CharacterTooltipCatchingGuildsCoordinator({
@@ -310,7 +311,7 @@ describe("CharacterTooltipCatchingGuildsCoordinator", () => {
     const target = createTarget("1");
     let now = 1_000;
     const fetchPlayersCatchingGuilds = vi
-      .fn()
+      .fn<FetchPlayers>()
       .mockResolvedValue(createResponse([target]));
     const coordinator = new CharacterTooltipCatchingGuildsCoordinator({
       fetchPlayersCatchingGuilds,
@@ -337,7 +338,7 @@ describe("CharacterTooltipCatchingGuildsCoordinator", () => {
   it("retries an API error on the next Shift activation", async () => {
     const target = createTarget("1");
     const fetchPlayersCatchingGuilds = vi
-      .fn()
+      .fn<FetchPlayers>()
       .mockRejectedValueOnce(createApiError(400))
       .mockResolvedValueOnce(createResponse([target]));
     const coordinator = new CharacterTooltipCatchingGuildsCoordinator({
@@ -361,7 +362,7 @@ describe("CharacterTooltipCatchingGuildsCoordinator", () => {
     const target = createTarget("1");
     let now = 1_000;
     const fetchPlayersCatchingGuilds = vi
-      .fn()
+      .fn<FetchPlayers>()
       .mockRejectedValueOnce(createApiError(400))
       .mockResolvedValueOnce(createResponse([target]));
     const coordinator = new CharacterTooltipCatchingGuildsCoordinator({

@@ -16,51 +16,54 @@ export type BattleLogSearchMatch = {
 export type BattleLogSearchDirection = "previous" | "next";
 
 const DIACRITICS_REGEX = /\p{Diacritic}/gu;
-const POLISH_CHARACTER_REPLACEMENTS: Record<string, string> = {
-  Ł: "L",
-  ł: "l",
-};
+const POLISH_CHARACTER_REPLACEMENTS = new Map([
+  ["Ł", "L"],
+  ["ł", "l"],
+]);
 
-const ACTION_SEARCH_LABELS: Record<string, readonly string[]> = {
-  "+crit": ["Cios krytyczny"],
-  "+critwound": ["Rana krytyczna"],
-  "+legbon_anguish": ["Krwawa udręka"],
-  "+legbon_curse": ["Klątwa"],
-  "+legbon_frenzy_main": ["Eskalacja szału", "Szał"],
-  "+legbon_frenzy_off": ["Eskalacja szału", "Szał"],
-  "+legbon_holytouch": ["Dotyk anioła"],
-  "+legbon_puncture": ["Przeszywająca skuteczność"],
-  "+legbon_verycrit": ["Cios bardzo krytyczny"],
-  "+of_crit": ["Cios krytyczny broni pomocniczej"],
-  "+of_wound": ["Głęboka rana broni pomocniczej"],
-  "+of_woundpoison": ["Głęboka rana pomocnicza", "Głęboka rana z trucizną"],
-  "+wound": ["Głęboka rana"],
-  "+woundpoison": ["Głęboka rana z trucizną"],
-  "-arrowblock": ["Blok strzały"],
-  "-blok": ["Blok"],
-  "-block": ["Blok"],
-  "-contra": ["Kontratak"],
-  "-evade": ["Unik"],
-  "-legbon_cleanse": ["Płomienne oczyszczenie", "Oczyszczenie"],
-  "-legbon_critred": ["Krytyczna osłona"],
-  "-legbon_facade": ["Fasada opieki"],
-  "-legbon_glare": ["Oślepienie"],
-  "-legbon_retaliation": ["Aura odwetu", "Odwet"],
-  "-parry": ["Parowanie"],
-  "-pierceb": ["Blok przebicia"],
-  anguish: ["Krwawa udręka", "Udręka"],
-  critwound: ["Rana krytyczna"],
-  fire: ["Ogień"],
-  heal: ["Leczenie", "Przywrócono punkty życia"],
-  injure: ["Rana"],
-  legbon_holytouch_heal: ["Dotyk anioła"],
-  legbon_lastheal: ["Ostatni ratunek"],
-  light: ["Błyskawica"],
-  poison: ["Trucizna"],
-  wound: ["Głęboka rana"],
-};
+const ACTION_SEARCH_LABELS = new Map([
+  ["+crit", ["Cios krytyczny"]],
+  ["+critwound", ["Rana krytyczna"]],
+  ["+legbon_anguish", ["Krwawa udręka"]],
+  ["+legbon_curse", ["Klątwa"]],
+  ["+legbon_frenzy_main", ["Eskalacja szału", "Szał"]],
+  ["+legbon_frenzy_off", ["Eskalacja szału", "Szał"]],
+  ["+legbon_holytouch", ["Dotyk anioła"]],
+  ["+legbon_puncture", ["Przeszywająca skuteczność"]],
+  ["+legbon_verycrit", ["Cios bardzo krytyczny"]],
+  ["+of_crit", ["Cios krytyczny broni pomocniczej"]],
+  ["+of_wound", ["Głęboka rana broni pomocniczej"]],
+  ["+of_woundpoison", ["Głęboka rana pomocnicza", "Głęboka rana z trucizną"]],
+  ["+wound", ["Głęboka rana"]],
+  ["+woundpoison", ["Głęboka rana z trucizną"]],
+  ["-arrowblock", ["Blok strzały"]],
+  ["-blok", ["Blok"]],
+  ["-block", ["Blok"]],
+  ["-contra", ["Kontratak"]],
+  ["-evade", ["Unik"]],
+  ["-legbon_cleanse", ["Płomienne oczyszczenie", "Oczyszczenie"]],
+  ["-legbon_critred", ["Krytyczna osłona"]],
+  ["-legbon_facade", ["Fasada opieki"]],
+  ["-legbon_glare", ["Oślepienie"]],
+  ["-legbon_retaliation", ["Aura odwetu", "Odwet"]],
+  ["-parry", ["Parowanie"]],
+  ["-pierceb", ["Blok przebicia"]],
+  ["anguish", ["Krwawa udręka", "Udręka"]],
+  ["critwound", ["Rana krytyczna"]],
+  ["fire", ["Ogień"]],
+  ["heal", ["Leczenie", "Przywrócono punkty życia"]],
+  ["injure", ["Rana"]],
+  ["legbon_holytouch_heal", ["Dotyk anioła"]],
+  ["legbon_lastheal", ["Ostatni ratunek"]],
+  ["light", ["Błyskawica"]],
+  ["poison", ["Trucizna"]],
+  ["wound", ["Głęboka rana"]],
+]);
 
-const appendSearchPart = (parts: string[], value: unknown): void => {
+const appendSearchPart = (
+  parts: string[],
+  value: string | number | null | undefined,
+): void => {
   if (value === null || value === undefined) {
     return;
   }
@@ -96,7 +99,7 @@ const appendActionSearchParts = (
   appendSearchPart(parts, action.actionType);
   appendSearchPart(parts, action.param);
 
-  ACTION_SEARCH_LABELS[action.actionType]?.forEach((label) => {
+  ACTION_SEARCH_LABELS.get(action.actionType)?.forEach((label) => {
     appendSearchPart(parts, label);
   });
 };
@@ -105,7 +108,7 @@ export const normalizeBattleLogSearchText = (value: string): string =>
   value
     .replace(
       /[Łł]/g,
-      (character) => POLISH_CHARACTER_REPLACEMENTS[character] ?? character,
+      (character) => POLISH_CHARACTER_REPLACEMENTS.get(character) ?? character,
     )
     .normalize("NFD")
     .replace(DIACRITICS_REGEX, "")

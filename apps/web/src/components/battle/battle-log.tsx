@@ -80,11 +80,11 @@ export const BattleLog: FC<BattleLogProps> = ({
     ? events.map((event, eventIndex) => {
         const turn = eventIndex + 1;
         const attacker =
-          event.attackerId == null
+          event.attackerId === null || event.attackerId === undefined
             ? undefined
             : warriorsMap.get(event.attackerId);
         const defender =
-          event.defenderId == null
+          event.defenderId === null || event.defenderId === undefined
             ? undefined
             : warriorsMap.get(event.defenderId);
         return {
@@ -122,7 +122,7 @@ export const BattleLog: FC<BattleLogProps> = ({
   }, [onTurnFocus, onTurnSelect]);
 
   useEffect(() => {
-    if (activeSearchTurn == null) {
+    if (activeSearchTurn === null || activeSearchTurn === undefined) {
       return;
     }
 

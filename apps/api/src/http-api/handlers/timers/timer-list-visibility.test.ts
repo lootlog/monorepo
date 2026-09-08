@@ -1,70 +1,84 @@
 import { expect, it } from "bun:test";
-import { Effect } from "effect";
-import type { SQL } from "drizzle-orm";
-import { PgDialect } from "drizzle-orm/pg-core";
 import { Permission } from "@lootlog/schema/permissions";
-import type { ApiDatabase } from "#src/database/drizzle/database";
+import { createDatabaseBoundary } from "../../../../test/database-fixtures.js";
+import {
+  createGuildFixture,
+  createMemberFixture,
+} from "../../../../test/organization-fixtures.js";
+import {
+  guildTable,
+  memberTable,
+  memberToRoleTable,
+  roleTable,
+  timerTable,
+} from "#src/database/drizzle/schema";
 import { makeAllTimerList } from "./timer-list.data-layer.js";
 
 it.each([Permission.ADMIN, Permission.LOOTLOG_TIMERS_READ])(
   "applies all-organization timer visibility for %s",
   async (permission) => {
-    let organizationCondition: SQL | undefined;
-    const guild = { id: "organization", ownerId: "other-user" };
-    const role = {
-      permissions: [permission],
-      lvlRangeFrom: 200,
-      lvlRangeTo: 500,
-    };
-    const timer = {
-      guildId: guild.id,
-      npcId: 105,
-      timerKey: "105:npc",
-      world: "world",
-      npc: { id: 105, lvl: 105, type: "HERO", name: "NPC" },
-      minSpawnTime: new Date(),
-      maxSpawnTime: new Date(Date.now() + 60_000),
-      wasReset: false,
-      actorCharacterLvl: null,
-      deletedAt: null,
-      updatedAt: new Date(),
-    };
-    const query = (rows: unknown[], capture = false) => {
-      const result = Object.assign(Effect.succeed(rows), {
-        from: () => result,
-        leftJoin: () => result,
-        where: (condition: SQL) => {
-          if (capture) organizationCondition = condition;
-          return result;
-        },
-        orderBy: () => result,
-      });
-      return result;
-    };
-    // Model the external database result sets while exercising the actual
-    // authorization SQL construction and timer response filtering.
-    const database = {
-      selectDistinct: () => query([{ guild }], true),
-      select: (selection: { timer?: unknown }) =>
-        query(
-          selection.timer
-            ? [{ timer, member: null, actorCharacter: null }]
-            : [{ member: { guildId: guild.id }, role }],
+    const boundary = await createDatabaseBoundary();
+    try {
+      const database = boundary.database;
+      const now = new Date();
+      await boundary.run(
+        database.insert(guildTable).values([
+          createGuildFixture({ id: "organization", ownerId: "other-user" }),
+          createGuildFixture({
+            id: "hidden-organization",
+            ownerId: "other-user",
+          }),
+        ]),
+      );
+      await boundary.run(
+        database.insert(memberTable).values(
+          createMemberFixture({
+            guildId: "organization",
+            userId: "discord",
+            globalUserId: "user",
+          }),
         ),
-    } as unknown as typeof ApiDatabase.Service;
-    const timers = await Effect.runPromise(
-      makeAllTimerList(database)({
-        userId: "user",
-        discordId: "discord",
-      }),
-    );
-    expect(timers.map((entry) => entry.npcId)).toEqual(
-      permission === Permission.ADMIN ? [105] : [],
-    );
-    if (!organizationCondition)
-      throw new Error("Missing organization predicate");
-    const parameters = new PgDialect().sqlToQuery(organizationCondition).params;
-    const permissionParameter = parameters.find(Array.isArray);
-    expect(permissionParameter).toContain(permission);
+      );
+      await boundary.run(
+        database.insert(roleTable).values({
+          id: "role-1",
+          guildId: "organization",
+          name: "Role",
+          permissions: [permission],
+          lvlRangeFrom: 200,
+          lvlRangeTo: 500,
+          updatedAt: now,
+        }),
+      );
+      await boundary.run(
+        database.insert(memberToRoleTable).values({ A: 1, B: "role-1" }),
+      );
+      await boundary.run(
+        database.insert(timerTable).values(
+          ["organization", "hidden-organization"].map((guildId) => ({
+            guildId,
+            createdById: 1,
+            npcId: 105,
+            timerKey: "105:npc",
+            world: "world",
+            npc: { id: 105, lvl: 105, type: "HERO", name: "NPC" },
+            minSpawnTime: now,
+            maxSpawnTime: new Date(now.getTime() + 60_000),
+            updatedAt: now,
+          })),
+        ),
+      );
+      const timers = await boundary.run(
+        makeAllTimerList(database)({ userId: "user", discordId: "discord" }),
+      );
+      expect(timers.map((entry) => entry.npcId)).toEqual(
+        permission === Permission.ADMIN ? [105] : [],
+      );
+      expect(timers.every((entry) => entry.guildId === "organization")).toBe(
+        true,
+      );
+    } finally {
+      await boundary.dispose();
+    }
   },
 );

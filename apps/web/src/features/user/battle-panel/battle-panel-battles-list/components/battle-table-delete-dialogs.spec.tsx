@@ -1,11 +1,10 @@
 // @vitest-environment happy-dom
+import { initializeTestTranslations } from "@/lib/testing/i18n";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { BattleTableDeleteDialogs } from "./battle-table-delete-dialogs";
 
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
-}));
+await initializeTestTranslations();
 afterEach(cleanup);
 
 it("keeps confirmation open after submission and allows retry after pending ends", () => {

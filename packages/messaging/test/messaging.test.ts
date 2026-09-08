@@ -1,6 +1,6 @@
 import { describe, expect, mock, test } from "bun:test";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
-import type { ConsumeMessage } from "amqplib";
+import type { ConsumeMessage, Options } from "amqplib";
 import { Deferred, Effect, Fiber } from "effect";
 import {
   RabbitMessaging,
@@ -47,7 +47,7 @@ const makeChannel = () => {
       _exchange: string,
       _routingKey: string,
       _content: Buffer,
-      _options?: unknown,
+      _options?: Options.Publish,
     ) => true,
   );
   const cancel = mock((consumerTag: string) =>

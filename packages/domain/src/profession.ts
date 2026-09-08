@@ -9,7 +9,7 @@ const PROFESSION_BY_SHORTNAME = new Map<string, ProfessionEnum>([
   ["w", "WARRIOR"],
 ]);
 
-const SHORTNAME_BY_PROFESSION = new Map(
+const SHORTNAME_BY_PROFESSION = new Map<string, string>(
   Array.from(PROFESSION_BY_SHORTNAME, ([shortname, profession]) => [
     profession,
     shortname,
@@ -20,6 +20,5 @@ export const getProfByShortname = (
   shortname: string,
 ): ProfessionEnum | undefined => PROFESSION_BY_SHORTNAME.get(shortname);
 
-export const getShortnameByProf = (
-  profession: ProfessionEnum,
-): string | undefined => SHORTNAME_BY_PROFESSION.get(profession);
+export const getShortnameByProf = (profession: string): string | undefined =>
+  SHORTNAME_BY_PROFESSION.get(profession);

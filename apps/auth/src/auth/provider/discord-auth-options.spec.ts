@@ -122,34 +122,37 @@ describe("Discord OAuth identity", () => {
     instance = await createTestInstance();
 
     activeDiscordProfile = createDiscordProfile({ id: DISCORD_A });
-    globalThis.fetch = mock((input: URL | RequestInfo) => {
-      const requestURL =
-        input instanceof Request ? input.url : input.toString();
-      const parsedRequestURL = new URL(requestURL);
+    globalThis.fetch = Object.assign(
+      mock((input: URL | RequestInfo) => {
+        const requestURL =
+          input instanceof Request ? input.url : input.toString();
+        const parsedRequestURL = new URL(requestURL);
 
-      if (requestURL === "https://discord.com/api/oauth2/token") {
-        return Promise.resolve(
-          Response.json({
-            access_token: `access-token-${activeDiscordProfile.id}`,
-            refresh_token: `refresh-token-${activeDiscordProfile.id}`,
-            token_type: "Bearer",
-            expires_in: 3600,
-            scope: "identify email",
-          }),
+        if (requestURL === "https://discord.com/api/oauth2/token") {
+          return Promise.resolve(
+            Response.json({
+              access_token: `access-token-${activeDiscordProfile.id}`,
+              refresh_token: `refresh-token-${activeDiscordProfile.id}`,
+              token_type: "Bearer",
+              expires_in: 3600,
+              scope: "identify email",
+            }),
+          );
+        }
+
+        if (
+          parsedRequestURL.origin === "https://discord.com" &&
+          decodeURIComponent(parsedRequestURL.pathname) === "/api/users/@me"
+        ) {
+          return Promise.resolve(Response.json(activeDiscordProfile));
+        }
+
+        return Promise.reject(
+          new Error(`Unexpected external request: ${requestURL}`),
         );
-      }
-
-      if (
-        parsedRequestURL.origin === "https://discord.com" &&
-        decodeURIComponent(parsedRequestURL.pathname) === "/api/users/@me"
-      ) {
-        return Promise.resolve(Response.json(activeDiscordProfile));
-      }
-
-      return Promise.reject(
-        new Error(`Unexpected external request: ${requestURL}`),
-      );
-    }) as unknown as typeof fetch;
+      }),
+      { preconnect: originalFetch.preconnect },
+    );
   });
 
   afterEach(() => {

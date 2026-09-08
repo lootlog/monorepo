@@ -5,15 +5,22 @@ export interface WidgetManager {
   getDefaultWidgetSet: () => Widgets;
   createOneWidget: (
     clName: string,
-    storeData: {},
+    storeData: Record<string, [index: number, position: string] | false>,
     additionalBarHide: boolean,
-    wigdetsWithoutFreeSlot: [],
+    wigdetsWithoutFreeSlot: string[],
   ) => void;
 }
 
-export type Widgets = {
-  [key: string]: {};
-};
+/** Fields read by WidgetManager.createOneWidget from its native definition table. */
+export interface WidgetDefinition {
+  default?: boolean;
+  index?: number;
+  pos?: string;
+  txt?: string;
+  type?: string;
+}
+
+export type Widgets = Record<string, WidgetDefinition>;
 
 export type WidgetFirstSlot = {
   slot: number;

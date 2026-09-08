@@ -127,8 +127,11 @@ export const NpcsTable = ({ guildId, isMobile, npcs }: NpcsTableProps) => {
                 isLastNpc && "border-b-0",
               )}
               onClickCapture={(event) => {
-                const target = event.target as HTMLElement;
-                if (target.closest("button,a,[data-npc-row-action]")) {
+                const target = event.target;
+                if (
+                  target instanceof Element &&
+                  target.closest("button,a,[data-npc-row-action]")
+                ) {
                   return;
                 }
 
@@ -146,12 +149,10 @@ export const NpcsTable = ({ guildId, isMobile, npcs }: NpcsTableProps) => {
               <TableCell className="min-w-0 overflow-hidden">
                 <TextLink
                   className="block truncate text-sm"
-                  render={
-                    <Link
-                      to="/$guildId/settings/npcs/$npcId"
-                      params={npcRouteParams}
-                    />
-                  }
+                  render=<Link
+                    to="/$guildId/settings/npcs/$npcId"
+                    params={npcRouteParams}
+                  />
                 >
                   {t(`npcType.${npc.npcType}`)}
                 </TextLink>

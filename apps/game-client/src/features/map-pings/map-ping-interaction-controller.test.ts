@@ -49,7 +49,7 @@ describe("MapPingInteractionController", () => {
     const controller = new MapPingInteractionController({
       getViewport: () => ({ height: 600, width: 800 }),
     });
-    const listener = vi.fn();
+    const listener = vi.fn<() => void>();
     controller.subscribe(listener);
 
     startInteraction(controller);

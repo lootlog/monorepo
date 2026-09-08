@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { PageHeader } from "@/components/common/page-header";
 import { useState, useEffect, useRef } from "react";
@@ -19,26 +20,34 @@ import {
 } from "./components/kills-filters";
 import { createKillsColumns } from "./components/kills-columns";
 import { KillsMobileList } from "./components/kills-mobile-list";
-import type { NpcType } from "@/features/user/kills/npc-types";
-import type { KillsControllerGetUserNpcKillsParams } from "@lootlog/client/main";
 import {
+  findTrackableNpcType,
+  type NpcType,
+} from "@/features/user/kills/npc-types";
+import {
+  type KillsControllerGetUserNpcKillsParams,
   getKillsControllerGetUserNpcKillsQueryKey,
   useKillsControllerGetUserNpcKills,
 } from "@lootlog/client/main";
+
 import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { sortingTableFeatures } from "@/lib/tanstack-table-features";
 
-type KillsSearchParams = {
-  world?: string;
-  npcType?: string;
-  search?: string;
-  cursor?: string;
-  minLvl?: string;
-  maxLvl?: string;
-  sortBy?: string;
-  period?: KillStatsPeriod;
-};
+const killsSearchSchema = z.object({
+  world: z.string().optional().catch(undefined),
+  npcType: z.string().optional().catch(undefined),
+  search: z.string().optional().catch(undefined),
+  cursor: z.string().optional().catch(undefined),
+  minLvl: z.string().optional().catch(undefined),
+  maxLvl: z.string().optional().catch(undefined),
+  sortBy: z.string().optional().catch(undefined),
+  period: z
+    .enum(["all", "24h", "3d", "7d", "14d", "30d"])
+    .optional()
+    .catch(undefined),
+});
+type KillsSearchParams = z.infer<typeof killsSearchSchema>;
 
 const ITEMS_PER_PAGE = 20;
 
@@ -50,7 +59,10 @@ const getKillsFilters = (
 ): KillsFiltersState => ({
   world: searchParams.world,
   npcTypes: searchParams.npcType
-    ? (searchParams.npcType.split(",") as NpcType[])
+    ? searchParams.npcType
+        .split(",")
+        .map(findTrackableNpcType)
+        .filter((type) => type !== undefined)
     : undefined,
   search: debouncedSearch || undefined,
   minLvl: debouncedMinLvl ? Number(debouncedMinLvl) : undefined,
@@ -82,7 +94,7 @@ const getNextSearchParams = (
 export const KillsPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const searchParams = useSearch({ strict: false }) as KillsSearchParams;
+  const searchParams = killsSearchSchema.parse(useSearch({ strict: false }));
   const isMobile = useIsMobile();
 
   const [searchInput, setSearchInput] = useState(searchParams.search ?? "");

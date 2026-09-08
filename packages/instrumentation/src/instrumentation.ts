@@ -4,6 +4,7 @@ import {
   HttpRouter,
   HttpServerError,
   HttpServerRequest,
+  type HttpServerResponse,
 } from "effect/unstable/http";
 import { currentLogSpan } from "./logging.js";
 
@@ -63,11 +64,14 @@ export const recordHttpServerMetrics = (input: {
 }) => {
   if (input.route !== undefined && isHealthcheck(input.route))
     return Effect.void;
-  const attributes = {
+  const methodAttributes = {
     "http.request.method": input.method,
     "http.response.status_code": String(input.status),
-    ...(input.route === undefined ? {} : { "http.route": input.route }),
   };
+  const attributes =
+    input.route === undefined
+      ? methodAttributes
+      : { ...methodAttributes, "http.route": input.route };
   return Effect.all(
     [
       Metric.update(
@@ -83,45 +87,57 @@ export const recordHttpServerMetrics = (input: {
   );
 };
 
-const RequestMetrics = Context.Reference<{ route?: string } | undefined>(
+interface RequestMetricsState {
+  route?: string;
+}
+
+const RequestMetrics = Context.Reference<RequestMetricsState | undefined>(
   "@lootlog/instrumentation/RequestMetrics",
   { defaultValue: () => undefined },
 );
 
 // Capture the matched template before HttpEffect restores the request context.
-export const httpServerRouteMetrics = HttpRouter.middleware((httpApp) =>
-  Effect.gen(function* () {
-    const metrics = yield* RequestMetrics;
-    const { route } = yield* HttpRouter.RouteContext;
-    if (metrics) metrics.route = route.path;
-    return yield* httpApp;
-  }),
+export const httpServerRouteMetrics = HttpRouter.middleware(
+  <E, R>(httpApp: Effect.Effect<HttpServerResponse.HttpServerResponse, E, R>) =>
+    Effect.gen(function* () {
+      const metrics = yield* RequestMetrics;
+      const { route } = yield* HttpRouter.RouteContext;
+      if (metrics) metrics.route = route.path;
+      return yield* httpApp;
+    }),
 ).layer;
 
 export const isHealthcheck = (url: string) =>
   /^\/+healthz\/*(?:[?#]|$)/i.test(url);
 
-export const httpServerMetrics = HttpMiddleware.make((httpApp) =>
-  Effect.gen(function* () {
-    const request = yield* HttpServerRequest.HttpServerRequest;
-    if (isHealthcheck(request.url)) {
-      return yield* HttpMiddleware.withLoggerDisabled(httpApp);
-    }
-    const startedAt = yield* Clock.currentTimeNanos;
-    const metrics: { route?: string } = {};
-    return yield* httpApp.pipe(
-      Effect.onExit((exit) =>
-        Effect.gen(function* () {
-          const completedAt = yield* Clock.currentTimeNanos;
-          yield* recordHttpServerMetrics({
-            route: metrics.route,
-            method: request.method,
-            status: HttpServerError.exitResponse(exit).status,
-            durationMilliseconds: Number(completedAt - startedAt) / 1_000_000,
-          });
-        }),
-      ),
-      Effect.provideService(RequestMetrics, metrics),
-    );
-  }),
+export const httpServerMetrics = HttpMiddleware.make(
+  <E, R>(
+    httpApp: Effect.Effect<
+      HttpServerResponse.HttpServerResponse,
+      E,
+      R | HttpServerRequest.HttpServerRequest
+    >,
+  ) =>
+    Effect.gen(function* () {
+      const request = yield* HttpServerRequest.HttpServerRequest;
+      if (isHealthcheck(request.url)) {
+        return yield* HttpMiddleware.withLoggerDisabled(httpApp);
+      }
+      const startedAt = yield* Clock.currentTimeNanos;
+      const metrics: RequestMetricsState = {};
+      return yield* httpApp.pipe(
+        Effect.onExit((exit) =>
+          Effect.gen(function* () {
+            const completedAt = yield* Clock.currentTimeNanos;
+            yield* recordHttpServerMetrics({
+              route: metrics.route,
+              method: request.method,
+              status: HttpServerError.exitResponse(exit).status,
+              durationMilliseconds: Number(completedAt - startedAt) / 1_000_000,
+            });
+          }),
+        ),
+        Effect.provideService(RequestMetrics, metrics),
+      );
+    }),
 );

@@ -10,16 +10,14 @@ export const UserNotificationsPageSkeleton = () => {
     <ScrollArea className="h-full min-h-0">
       <div className="flex flex-col gap-3 px-3 py-3">
         <PageHeader
-          title={<Skeleton className="h-5 w-40" />}
-          description={<Skeleton className="h-3 w-48" />}
-        ></PageHeader>
+          title=<Skeleton className="h-5 w-40" />
+          description=<Skeleton className="h-3 w-48" />
+        />
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <div className="space-y-4 lg:col-span-2">
             <SectionCard>
-              <SectionCardHeader
-                title={<Skeleton className="mb-3 h-5 w-40" />}
-              />
+              <SectionCardHeader title=<Skeleton className="mb-3 h-5 w-40" /> />
               <SectionCardContent>
                 <div className="space-y-2">
                   {Array.from({ length: 4 }).map((_, i) => (
@@ -31,9 +29,7 @@ export const UserNotificationsPageSkeleton = () => {
           </div>
           <div className="space-y-4">
             <SectionCard>
-              <SectionCardHeader
-                title={<Skeleton className="mb-3 h-5 w-32" />}
-              />
+              <SectionCardHeader title=<Skeleton className="mb-3 h-5 w-32" /> />
               <SectionCardContent>
                 <div className="space-y-2">
                   <Skeleton className="h-10 rounded-md" />

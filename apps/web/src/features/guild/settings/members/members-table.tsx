@@ -311,9 +311,7 @@ export const MembersTable = ({
           } = getMemberDisplayData(member);
           const isOnline = onlineSources.length > 0;
           const memberPermissions = Array.from(
-            new Set(
-              member.roles.flatMap((role) => role.permissions as Permission[]),
-            ),
+            new Set(member.roles.flatMap((role) => role.permissions)),
           );
           const hasAdminPermission = memberPermissions.includes(
             Permission.ADMIN,
@@ -355,8 +353,11 @@ export const MembersTable = ({
                   : "border-border hover:bg-accent/35",
               )}
               onClickCapture={(event) => {
-                const target = event.target as HTMLElement;
-                if (target.closest("button,a,[data-member-row-action]")) {
+                const target = event.target;
+                if (
+                  target instanceof Element &&
+                  target.closest("button,a,[data-member-row-action]")
+                ) {
                   return;
                 }
 
@@ -374,12 +375,10 @@ export const MembersTable = ({
               <TableCell className="min-w-0 overflow-hidden">
                 <TextLink
                   className="flex min-w-0 items-center gap-3 text-sm"
-                  render={
-                    <Link
-                      to="/$guildId/settings/members/$memberId"
-                      params={memberRouteParams}
-                    />
-                  }
+                  render=<Link
+                    to="/$guildId/settings/members/$memberId"
+                    params={memberRouteParams}
+                  />
                 >
                   <Avatar className="size-8 shrink-0 rounded-lg">
                     <AvatarImage
@@ -510,12 +509,10 @@ export const MembersTable = ({
               <TableCell className="overflow-hidden text-xs text-muted-foreground">
                 <TextLink
                   className="block truncate text-sm"
-                  render={
-                    <Link
-                      to="/$guildId/settings/members/$memberId"
-                      params={memberRouteParams}
-                    />
-                  }
+                  render=<Link
+                    to="/$guildId/settings/members/$memberId"
+                    params={memberRouteParams}
+                  />
                 >
                   {member.lastDiscordSyncAt
                     ? t("settings.members.discordSync.lastConfirmedCompact", {
@@ -527,12 +524,10 @@ export const MembersTable = ({
               <TableCell className="overflow-hidden text-xs text-muted-foreground">
                 <TextLink
                   className="block truncate text-sm"
-                  render={
-                    <Link
-                      to="/$guildId/settings/members/$memberId"
-                      params={memberRouteParams}
-                    />
-                  }
+                  render=<Link
+                    to="/$guildId/settings/members/$memberId"
+                    params={memberRouteParams}
+                  />
                 >
                   {activityLabel}
                 </TextLink>
@@ -540,12 +535,10 @@ export const MembersTable = ({
               <TableCell className="overflow-hidden text-right text-xs tabular-nums">
                 <TextLink
                   className="inline-flex max-w-full items-center justify-end gap-3 text-sm"
-                  render={
-                    <Link
-                      to="/$guildId/settings/members/$memberId"
-                      params={memberRouteParams}
-                    />
-                  }
+                  render=<Link
+                    to="/$guildId/settings/members/$memberId"
+                    params={memberRouteParams}
+                  />
                 >
                   <span className="inline-flex min-w-0 items-center gap-1">
                     <MousePointerClick className="size-3 text-muted-foreground" />

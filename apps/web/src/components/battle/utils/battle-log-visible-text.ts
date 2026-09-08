@@ -11,16 +11,16 @@ import {
 } from "./battle-action-values";
 import { roundHpPercentage } from "./value-utils";
 
-const interpolationEntities: Record<string, string> = {
-  "&amp;": "&",
-  "&lt;": "<",
-  "&gt;": ">",
-  "&quot;": '"',
-  "&#39;": "'",
-  "&#x2F;": "/",
-  "&#x60;": "`",
-  "&#x3D;": "=",
-};
+const interpolationEntities = new Map([
+  ["&amp;", "&"],
+  ["&lt;", "<"],
+  ["&gt;", ">"],
+  ["&quot;", '"'],
+  ["&#39;", "'"],
+  ["&#x2F;", "/"],
+  ["&#x60;", "`"],
+  ["&#x3D;", "="],
+]);
 
 // Read translation markup before decoding names; the result is text, never HTML.
 const readTranslationText = (translation: string): string => {
@@ -45,13 +45,13 @@ const readTranslationText = (translation: string): string => {
 const translateText = (
   t: TFunction,
   key: string,
-  values: Record<string, unknown>,
+  values: Record<string, string | number | undefined>,
 ) =>
   readTranslationText(
     t(key, { ...values, interpolation: { escapeValue: true } }),
   ).replace(
     /&(?:amp|lt|gt|quot|#39|#x2F|#x60|#x3D);/g,
-    (entity) => interpolationEntities[entity] ?? entity,
+    (entity) => interpolationEntities.get(entity) ?? entity,
   );
 
 export function buildBattleLogVisibleText({

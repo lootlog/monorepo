@@ -1,3 +1,5 @@
+import { loadNotificationHistory } from "./load-notification-history";
+import { loadNotificationRuleForm } from "./load-notification-rule-form";
 import { QueryClient } from "@tanstack/react-query";
 import {
   createMemoryHistory,
@@ -7,9 +9,6 @@ import {
 } from "@tanstack/react-router";
 import { configureApiClients } from "@lootlog/client/transport";
 import { afterEach, expect, it, vi } from "vitest";
-import { Route as HistoryRoute } from "../../../routes/_authenticated/$guildId/notifications/history";
-import { Route as CreateRoute } from "../../../routes/_authenticated/$guildId/notifications/create";
-import { Route as EditRoute } from "../../../routes/_authenticated/$guildId/notifications/$ruleId";
 import type { RouterContext } from "@/App";
 
 afterEach(() => vi.unstubAllGlobals());
@@ -17,12 +16,12 @@ afterEach(() => vi.unstubAllGlobals());
 it.each([
   {
     name: "history",
-    loader: HistoryRoute.options.loader,
+    loader: loadNotificationHistory,
     endpoints: ["/guilds/42/notifications/jobs"],
   },
   {
     name: "create",
-    loader: CreateRoute.options.loader,
+    loader: loadNotificationRuleForm,
     endpoints: [
       "/guilds/42/notifications/targets",
       "/guilds/42/notifications/rules",
@@ -32,7 +31,7 @@ it.each([
   },
   {
     name: "edit",
-    loader: EditRoute.options.loader,
+    loader: loadNotificationRuleForm,
     endpoints: [
       "/guilds/42/notifications/targets",
       "/guilds/42/notifications/rules",
@@ -64,17 +63,7 @@ it.each([
       const route = createRoute({
         getParentRoute: () => root,
         path: "/$guildId/$ruleId",
-        loader: (context) => {
-          if (typeof loader !== "function")
-            throw new Error("Expected notifications loader");
-          // This isolated route supplies both IDs and the shared query context.
-          const isolatedLoader = loader as (input: {
-            abortController: AbortController;
-            context: { queryClient: QueryClient };
-            params: { guildId: string; ruleId: string };
-          }) => Promise<unknown> | void;
-          return isolatedLoader(context);
-        },
+        loader,
       });
       const router = createRouter({
         routeTree: root.addChildren([route]),

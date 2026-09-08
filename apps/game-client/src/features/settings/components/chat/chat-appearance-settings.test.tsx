@@ -1,18 +1,27 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { QueryClientProvider } from "@tanstack/react-query";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
 import { DEFAULT_NPC_TYPE_COLORS } from "@lootlog/schema/npc-appearance";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({
-  allowWorldSelection: false,
-  patchPreferences: vi.fn(),
-  refetchPreferences: vi.fn(),
-  refetchSettingsDocuments: vi.fn(),
-}));
+import {
+  getSettingsDocumentsControllerGetPreferencesQueryKey,
+  type SettingsDocumentsResponseDtoOutput,
+  type UserPreferencesResponseDtoOutput,
+} from "@lootlog/client/main";
+import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
+import { useSettingsStore } from "@/store/settings.store";
+let harness: ReturnType<typeof createGuildPreferencesTest>;
+const patchRequest = vi.fn<typeof fetch>();
 
-const settingsDocuments = {
+const settingsDocuments: SettingsDocumentsResponseDtoOutput = {
   domains: {
     appearance: {
       effective: {
@@ -26,75 +35,27 @@ const settingsDocuments = {
   },
 };
 
-vi.mock("@/hooks/api/use-user-preferences", () => ({
-  useUserPreferences: () => ({
-    data: {
-      userId: "user-1",
-      chatAppearance: CHAT_APPEARANCE_READABLE_PRESET,
-    },
-    refetch: mocks.refetchPreferences,
-  }),
-}));
-
-vi.mock("@/store/settings.store", () => ({
-  useSettingsStore: (
-    selector: (state: { allowWorldSelection: boolean }) => unknown,
-  ) => selector({ allowWorldSelection: mocks.allowWorldSelection }),
-}));
-
-vi.mock("@/hooks/api/use-settings-documents", async (importOriginal) => ({
-  ...(await importOriginal()),
-  useAppearanceSettingsDocuments: () => ({
-    data: settingsDocuments,
-    params: { domains: "appearance" },
-    refetch: mocks.refetchSettingsDocuments,
-  }),
-}));
-
-vi.mock("@lootlog/client/main", async () => ({
-  ...(await vi.importActual("@lootlog/client/main")),
-  getSettingsDocumentsControllerGetPreferencesQueryKey: () => [
-    "settings-documents",
-  ],
-  settingsDocumentsControllerPatchPreferences: mocks.patchPreferences,
-  getUsersControllerGetUserPreferencesQueryKey: () => ["user-preferences"],
-}));
-
-vi.mock("@/components/ui/slider", () => ({
-  Slider: ({
-    "aria-label": ariaLabel,
-    onValueChange,
-    onValueCommit,
-  }: {
-    "aria-label": string;
-    onValueChange?: (value: number[]) => void;
-    onValueCommit?: (value: number[]) => void;
-  }) => (
-    <div>
-      <button type="button" onClick={() => onValueChange?.([70])}>
-        Change {ariaLabel}
-      </button>
-      <button type="button" onClick={() => onValueCommit?.([70])}>
-        Commit {ariaLabel}
-      </button>
-    </div>
-  ),
-}));
-
 import { ChatAppearanceSettingsForm } from "./chat-appearance-settings";
 
 describe("ChatAppearanceSettingsForm", () => {
   beforeEach(() => {
-    mocks.allowWorldSelection = false;
-    mocks.patchPreferences.mockReset();
-    mocks.refetchPreferences.mockReset();
-    mocks.refetchSettingsDocuments.mockReset();
+    harness = createGuildPreferencesTest();
+    useSettingsStore.setState({ allowWorldSelection: false });
+    harness.setPreferences({ userId: "user-1" });
+    harness.queryClient.setQueryData(
+      getSettingsDocumentsControllerGetPreferencesQueryKey({
+        domains: "appearance",
+      }),
+      settingsDocuments,
+    );
+    patchRequest
+      .mockReset()
+      .mockResolvedValue(Response.json(settingsDocuments));
+    harness.request.mockImplementation(patchRequest);
   });
 
   it("shows the guild label option only when world selection is allowed", () => {
-    const queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false } },
-    });
+    const queryClient = harness.queryClient;
     const { rerender } = render(
       <QueryClientProvider client={queryClient}>
         <ChatAppearanceSettingsForm />
@@ -105,7 +66,7 @@ describe("ChatAppearanceSettingsForm", () => {
       screen.queryByRole("switch", { name: "Gildia" }),
     ).not.toBeInTheDocument();
 
-    mocks.allowWorldSelection = true;
+    act(() => useSettingsStore.setState({ allowWorldSelection: true }));
     rerender(
       <QueryClientProvider client={queryClient}>
         <ChatAppearanceSettingsForm />
@@ -116,9 +77,7 @@ describe("ChatAppearanceSettingsForm", () => {
   });
 
   it("aligns every segmented control to the right edge", () => {
-    const queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false } },
-    });
+    const queryClient = harness.queryClient;
     const { container } = render(
       <QueryClientProvider client={queryClient}>
         <ChatAppearanceSettingsForm />
@@ -135,9 +94,7 @@ describe("ChatAppearanceSettingsForm", () => {
   });
 
   it("uses two preset cards without scope or inheritance controls", () => {
-    const queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false } },
-    });
+    const queryClient = harness.queryClient;
     render(
       <QueryClientProvider client={queryClient}>
         <ChatAppearanceSettingsForm />
@@ -166,28 +123,22 @@ describe("ChatAppearanceSettingsForm", () => {
   });
 
   it("keeps slider changes local until the interaction is committed", async () => {
-    const user = userEvent.setup();
-    const queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false } },
-    });
-    queryClient.setQueryData(["user-preferences"], {
-      userId: "user-1",
-      chatAppearance: CHAT_APPEARANCE_READABLE_PRESET,
-    });
-    queryClient.setQueryData(["settings-documents"], settingsDocuments);
-    mocks.patchPreferences.mockResolvedValue({
-      domains: {
-        appearance: {
-          ...settingsDocuments.domains.appearance,
-          effective: {
-            chat: {
-              ...CHAT_APPEARANCE_READABLE_PRESET,
-              fontScalePercent: 70,
+    const queryClient = harness.queryClient;
+    patchRequest.mockResolvedValue(
+      Response.json({
+        domains: {
+          appearance: {
+            ...settingsDocuments.domains.appearance,
+            effective: {
+              chat: {
+                ...CHAT_APPEARANCE_READABLE_PRESET,
+                fontScalePercent: 70,
+              },
             },
           },
         },
-      },
-    });
+      }),
+    );
 
     render(
       <QueryClientProvider client={queryClient}>
@@ -200,37 +151,55 @@ describe("ChatAppearanceSettingsForm", () => {
       .closest("button");
     expect(restoreDefaultsButton).toHaveClass("ll:invisible");
 
-    await user.click(
-      screen.getByRole("button", { name: "Change Skala tekstu" }),
+    const slider = screen.getByRole("slider", { name: "Skala tekstu" });
+    const sliderControl = slider.parentElement?.parentElement;
+    if (!sliderControl) throw new Error("Expected slider control");
+    vi.spyOn(sliderControl, "getBoundingClientRect").mockReturnValue(
+      new DOMRect(0, 0, 100, 8),
     );
+    sliderControl.setPointerCapture = vi.fn<HTMLElement["setPointerCapture"]>();
+    sliderControl.hasPointerCapture = vi
+      .fn<HTMLElement["hasPointerCapture"]>()
+      .mockReturnValue(true);
+    sliderControl.releasePointerCapture =
+      vi.fn<HTMLElement["releasePointerCapture"]>();
+    fireEvent.pointerDown(sliderControl, {
+      button: 0,
+      clientX: 0,
+      clientY: 4,
+      pointerId: 1,
+      pointerType: "mouse",
+    });
 
     expect(restoreDefaultsButton).not.toHaveClass("ll:invisible");
     expect(screen.queryByText("Własne ustawienia")).not.toBeInTheDocument();
     expect(
-      queryClient.getQueryData<{
-        chatAppearance: { fontScalePercent: number };
-      }>(["user-preferences"])?.chatAppearance.fontScalePercent,
+      queryClient.getQueryData<UserPreferencesResponseDtoOutput>(
+        harness.preferencesKey,
+      )?.chatAppearance.fontScalePercent,
     ).toBe(100);
-    expect(mocks.patchPreferences).not.toHaveBeenCalled();
+    expect(patchRequest).not.toHaveBeenCalled();
 
-    await user.click(
-      screen.getByRole("button", { name: "Commit Skala tekstu" }),
-    );
+    fireEvent.pointerUp(document, {
+      button: 0,
+      clientX: 0,
+      clientY: 4,
+      pointerId: 1,
+      pointerType: "mouse",
+    });
 
     expect(
-      queryClient.getQueryData<{
-        chatAppearance: { fontScalePercent: number };
-      }>(["user-preferences"])?.chatAppearance.fontScalePercent,
+      queryClient.getQueryData<UserPreferencesResponseDtoOutput>(
+        harness.preferencesKey,
+      )?.chatAppearance.fontScalePercent,
     ).toBe(70);
-    await waitFor(() => expect(mocks.patchPreferences).toHaveBeenCalledOnce());
+    await waitFor(() => expect(patchRequest).toHaveBeenCalledOnce());
   });
 
   it("updates NPC location and coordinates with one control", async () => {
     const user = userEvent.setup();
-    const queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false } },
-    });
-    mocks.patchPreferences.mockResolvedValue(settingsDocuments);
+    const queryClient = harness.queryClient;
+    patchRequest.mockResolvedValue(Response.json(settingsDocuments));
 
     render(
       <QueryClientProvider client={queryClient}>
@@ -245,20 +214,22 @@ describe("ChatAppearanceSettingsForm", () => {
     );
 
     await waitFor(() => {
-      expect(mocks.patchPreferences).toHaveBeenCalledWith({
-        operations: [
-          {
-            domain: "appearance",
-            scope: { type: "USER", id: "user-1" },
-            set: {
-              chat: {
-                showNpcLocationAndCoordinates: false,
+      expect(patchRequest.mock.calls[0]?.[1]?.body).toBe(
+        JSON.stringify({
+          operations: [
+            {
+              domain: "appearance",
+              scope: { type: "USER", id: "user-1" },
+              set: {
+                chat: {
+                  showNpcLocationAndCoordinates: false,
+                },
               },
+              unset: [],
             },
-            unset: [],
-          },
-        ],
-      });
+          ],
+        }),
+      );
     });
     expect(screen.queryByText("Nazwa lokacji NPC")).not.toBeInTheDocument();
     expect(screen.queryByText("Koordynaty NPC")).not.toBeInTheDocument();

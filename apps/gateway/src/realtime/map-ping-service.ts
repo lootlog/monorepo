@@ -1,3 +1,4 @@
+import { Schema } from "effect";
 import {
   isMapPingType,
   type MapPingAck,
@@ -5,7 +6,10 @@ import {
   type MapPingSendPayload,
 } from "@lootlog/schema/map-ping";
 import { Logger } from "#src/platform/logger";
-import type { RedisGatewayStore } from "#src/platform/redis-store";
+import type {
+  RedisGatewayStore,
+  RedisScriptReply,
+} from "#src/platform/redis-store";
 import type { RealtimeHub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket } from "#src/realtime/session";
 import { canSubscribe } from "#src/realtime/subscription-policy";
@@ -30,14 +34,20 @@ redis.call("PEXPIRE", KEYS[1], window)
 return {1, now, 0}
 `;
 
-type RateLimitResult = [accepted: number, now: number, retryAfterMs: number];
+type ScriptStore = {
+  command: {
+    eval(
+      ...args: Parameters<RedisGatewayStore["command"]["eval"]>
+    ): Promise<RedisScriptReply>;
+  };
+};
 
 export class MapPingService {
   private readonly logger = new Logger(MapPingService.name);
 
   constructor(
-    private readonly redis: RedisGatewayStore,
-    private readonly hub: RealtimeHub,
+    private readonly redis: ScriptStore,
+    private readonly hub: Pick<RealtimeHub, "publishToScopes">,
   ) {}
 
   async send(
@@ -139,7 +149,9 @@ export class MapPingService {
         pingId,
       );
       if (!Array.isArray(result)) return null;
-      return result.map(Number) as RateLimitResult;
+      return Schema.decodeUnknownSync(
+        Schema.Tuple([Schema.Number, Schema.Number, Schema.Number]),
+      )(result.map(Number));
     } catch (error) {
       this.logger.warn("Failed to apply map ping rate limit", error);
       return null;

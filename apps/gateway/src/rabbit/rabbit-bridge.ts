@@ -1,16 +1,14 @@
-import {
-  type MessagingError,
-  type RabbitMessagingService,
-  type RabbitConsumer,
-  type RabbitDelivery,
+import { lootEventVisibilityNpcs } from "#src/realtime/source-event-visibility";
+import type {
+  MessagingError,
+  RabbitMessagingService,
+  RabbitConsumer,
+  RabbitDelivery,
 } from "@lootlog/messaging";
 import {
   decodeRabbitEventJson,
   type CanonicalRabbitEventRoutingKey,
-  type GuildLootCreatedEventV2,
-  type GuildKillsAcceptedV1,
-  type GuildLootShareUpdatedEventV2,
-  type ReservationChangedEventV2,
+  type CanonicalRabbitEvent,
 } from "@lootlog/protocol/rabbit/events";
 import {
   RabbitExchange,
@@ -22,7 +20,7 @@ import type {
   ServerEvent,
   SubscriptionScope,
 } from "@lootlog/protocol/realtime";
-import { Effect, type Scope } from "effect";
+import { Effect, Option, Schema, type Types, type Scope } from "effect";
 import type { CommandHandler } from "#src/realtime/command-handler";
 import type { RealtimeHub } from "#src/realtime/realtime-hub";
 import type { PresenceStore } from "#src/realtime/presence-store";
@@ -212,18 +210,19 @@ export const gatewayConsumerSpecs: ReadonlyArray<ConsumerSpec> = [
 
 export const gatewayQueueDefinitions: ReadonlyArray<RabbitQueueDefinition> =
   gatewayConsumerSpecs.flatMap((spec) => {
-    const main: RabbitQueueDefinition = {
+    const mainBase = {
       name: spec.queue,
       exchange: RabbitExchange.DEFAULT,
       routingKey: spec.routingKey,
       durable: true,
-      ...(spec.retryRoutingKey
-        ? {
-            deadLetterExchange: RabbitExchange.RETRY,
-            deadLetterRoutingKey: spec.retryRoutingKey,
-          }
-        : {}),
     };
+    const main: RabbitQueueDefinition = spec.retryRoutingKey
+      ? {
+          ...mainBase,
+          deadLetterExchange: RabbitExchange.RETRY,
+          deadLetterRoutingKey: spec.retryRoutingKey,
+        }
+      : mainBase;
     if (!spec.retryRoutingKey || !spec.deadLetterRoutingKey) return [main];
     const retryQueue: RabbitQueueDefinition = {
       name: `${spec.queue}.retry`,
@@ -256,32 +255,20 @@ export const gatewayDeadLetterSpecs = gatewayConsumerSpecs.flatMap((spec) =>
     : [],
 );
 
-const decodeDelivery = (
-  routingKey: CanonicalRabbitEventRoutingKey,
-  delivery: RabbitDelivery,
-): unknown =>
-  decodeRabbitEventJson(routingKey, new TextDecoder().decode(delivery.content));
-
-const record = (value: unknown): Record<string, unknown> => {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    throw new Error("RabbitMQ payload must be an object");
-  }
-  return value as Record<string, unknown>;
-};
-
-const requiredString = (value: unknown, field: string): string => {
-  const candidate = record(value)[field];
-  if (typeof candidate !== "string" || candidate.length === 0) {
-    throw new Error(`RabbitMQ payload requires ${field}`);
-  }
-  return candidate;
-};
-
-const organizationEvent = (
-  type: Extract<Event, { data: { organizationId: string } }>["type"],
+const record = Schema.decodeUnknownSync(
+  Schema.Record(Schema.String, Schema.Unknown),
+);
+type OrganizationEvent = Extract<
+  Event,
+  { data: { organizationId: string; payload: unknown } }
+>;
+const organizationEvent = <Payload>(
+  type: OrganizationEvent["type"],
   organizationId: string,
-  payload: unknown,
-): Event => ({ v: 1, type, data: { organizationId, payload } }) as Event;
+  payload: Payload,
+): OrganizationEvent & {
+  data: { organizationId: string; payload: Payload };
+} => ({ v: 1, type, data: { organizationId, payload } });
 
 export class RabbitBridge {
   private consumers: RabbitConsumer[] = [];
@@ -316,7 +303,7 @@ export class RabbitBridge {
           (delivery: RabbitDelivery) =>
             handle(
               spec.routingKey,
-              decodeDelivery(spec.routingKey, delivery),
+              new TextDecoder().decode(delivery.content),
               delivery.properties.messageId,
             ),
         );
@@ -353,14 +340,16 @@ export class RabbitBridge {
 
   private handle(
     routingKey: CanonicalRabbitEventRoutingKey,
-    payload: unknown,
+    serializedPayload: string,
     messageId?: string,
   ): Effect.Effect<void, unknown> {
     const fromPromise = <A>(evaluate: () => Promise<A>) =>
       Effect.tryPromise({ try: evaluate, catch: (cause) => cause });
     if (routingKey === RabbitRoutingKey.PRESENCE_CHECK_REQUEST) {
-      const guildId = requiredString(payload, "guildId");
-      const mapName = requiredString(payload, "mapName");
+      const { guildId, mapName } = decodeRabbitEventJson(
+        routingKey,
+        serializedPayload,
+      );
       return this.presence.coverageForMap(guildId, mapName).pipe(
         Effect.flatMap((presences) =>
           Effect.forEach(
@@ -384,25 +373,29 @@ export class RabbitBridge {
       routingKey === RabbitRoutingKey.GUILDS_MEMBERS_ADD_ROLE ||
       routingKey === RabbitRoutingKey.GUILDS_MEMBERS_REMOVE_ROLE
     ) {
+      const payload = decodeRabbitEventJson(routingKey, serializedPayload);
       return this.commands.rebalanceAcrossInstances(
-        requiredString(payload, "discordId"),
-        requiredString(payload, "userId"),
+        payload.discordId,
+        payload.userId,
       );
     }
-    if (routingKey === RabbitRoutingKey.GUILDS_MEMBERS_ADD) return Effect.void;
+    if (routingKey === RabbitRoutingKey.GUILDS_MEMBERS_ADD) {
+      decodeRabbitEventJson(routingKey, serializedPayload);
+      return Effect.void;
+    }
 
     if (routingKey === RabbitRoutingKey.GUILDS_NOTIFICATIONS_VOLUNTEER) {
-      const data = record(payload);
+      const data = decodeRabbitEventJson(routingKey, serializedPayload);
       return fromPromise(() =>
-        this.hub.publishToDiscord(requiredString(data, "targetDiscordId"), {
+        this.hub.publishToDiscord(data.targetDiscordId, {
           v: 1,
           type: "notification.volunteer",
           data: {
-            notificationId: requiredString(data, "notificationId"),
+            notificationId: data.notificationId,
             volunteer: {
               ...record(data.character),
-              discordId: requiredString(data, "volunteerDiscordId"),
-              world: requiredString(data, "world"),
+              discordId: data.volunteerDiscordId,
+              world: data.world,
             },
           },
         }),
@@ -410,7 +403,7 @@ export class RabbitBridge {
     }
 
     if (routingKey === RabbitRoutingKey.GUILDS_KILLS_ACCEPTED_V1) {
-      const data = payload as GuildKillsAcceptedV1;
+      const data = decodeRabbitEventJson(routingKey, serializedPayload);
       return fromPromise(async () => {
         const scope = {
           topic: "organization.loots" as const,
@@ -443,7 +436,10 @@ export class RabbitBridge {
       });
     }
     if (routingKey === RabbitRoutingKey.GUILDS_LOOTS_CREATE) {
-      const { feedEntry, ...data } = payload as GuildLootCreatedEventV2;
+      const { feedEntry, ...data } = decodeRabbitEventJson(
+        routingKey,
+        serializedPayload,
+      );
       return fromPromise(async () => {
         const scope = {
           topic: "organization.loots" as const,
@@ -465,17 +461,14 @@ export class RabbitBridge {
             messageId ? `${messageId}:feed` : undefined,
             {
               recipientPlatform: "web-app",
-              sourceNpcs: data.npcs.map((npc) => ({
-                level: npc.lvl ?? null,
-                type: typeof npc.type === "string" ? npc.type : null,
-              })),
+              sourceNpcs: lootEventVisibilityNpcs(data.npcs),
             },
           );
         }
       });
     }
     if (routingKey === RabbitRoutingKey.GUILDS_LOOTS_SHARE_UPDATE) {
-      const data = payload as GuildLootShareUpdatedEventV2;
+      const data = decodeRabbitEventJson(routingKey, serializedPayload);
       return fromPromise(() =>
         this.hub.publishToScope(
           { topic: "organization.loots", organizationId: data.guildId },
@@ -484,7 +477,7 @@ export class RabbitBridge {
       );
     }
     if (routingKey === RabbitRoutingKey.GUILDS_RESERVATIONS_CHANGED_V2) {
-      const data = payload as ReservationChangedEventV2;
+      const data = decodeRabbitEventJson(routingKey, serializedPayload);
       return Effect.forEach(
         new Set(data.audienceGuildIds),
         (organizationId) =>
@@ -498,33 +491,29 @@ export class RabbitBridge {
       );
     }
 
-    const data = record(payload);
-    const organizationId =
-      typeof data.guildId === "string"
-        ? data.guildId
-        : typeof data.organizationId === "string"
-          ? data.organizationId
-          : undefined;
-
     if (routingKey === RabbitRoutingKey.USERS_PARTY_READY_ROOM_UPDATED) {
-      const recipientDiscordId = requiredString(data, "recipientDiscordId");
-      const eligible = Array.isArray(data.eligibleGuildIds)
-        ? data.eligibleGuildIds.filter(
-            (id): id is string => typeof id === "string",
-          )
-        : [];
+      const data = decodeRabbitEventJson(routingKey, serializedPayload);
       return Effect.forEach(
-        eligible,
+        data.eligibleGuildIds,
         (id) =>
           fromPromise(() =>
             this.hub.publishToDiscord(
-              recipientDiscordId,
+              data.recipientDiscordId,
               organizationEvent("party-ready-room.updated", id, data.update),
             ),
           ),
         { discard: true },
       );
     }
+    const payload = decodeRabbitEventJson(routingKey, serializedPayload);
+    const data = record(payload);
+    const organizationId =
+      Option.getOrUndefined(
+        Schema.decodeUnknownOption(Schema.String)(data.guildId),
+      ) ??
+      Option.getOrUndefined(
+        Schema.decodeUnknownOption(Schema.String)(data.organizationId),
+      );
     if (!organizationId) return Effect.void;
 
     const routed = this.routeOrganizationEvent(
@@ -541,12 +530,15 @@ export class RabbitBridge {
   private routeOrganizationEvent(
     routingKey: CanonicalRabbitEventRoutingKey,
     organizationId: string,
-    payload: unknown,
+    payload: CanonicalRabbitEvent<CanonicalRabbitEventRoutingKey>,
   ): { readonly scope: Scope; readonly event: Event } | null {
     const definitions: Partial<
       Record<
         RabbitRoutingKeyName,
-        { readonly topic: Scope["topic"]; readonly type: Event["type"] }
+        {
+          readonly topic: Scope["topic"];
+          readonly type: OrganizationEvent["type"];
+        }
       >
     > = {
       [RabbitRoutingKey.GUILDS_TIMERS_UPDATE]: {
@@ -621,20 +613,21 @@ export class RabbitBridge {
     const definition = definitions[routingKey];
     if (!definition) return null;
     const payloadRecord = record(payload);
-    const eventId = payloadRecord.eventId;
-    const world = payloadRecord.world;
+    const eventId = Option.getOrUndefined(
+      Schema.decodeUnknownOption(Schema.String)(payloadRecord.eventId),
+    );
+    const world = Option.getOrUndefined(
+      Schema.decodeUnknownOption(Schema.String)(payloadRecord.world),
+    );
+    const scope: Types.Mutable<Scope> = {
+      topic: definition.topic,
+      organizationId,
+    };
+    if (eventId !== undefined) scope.eventId = eventId;
+    if (world !== undefined) scope.world = world;
     return {
-      scope: {
-        topic: definition.topic,
-        organizationId,
-        ...(typeof eventId === "string" ? { eventId } : {}),
-        ...(typeof world === "string" ? { world } : {}),
-      },
-      event: organizationEvent(
-        definition.type as never,
-        organizationId,
-        payload,
-      ),
+      scope,
+      event: organizationEvent(definition.type, organizationId, payload),
     };
   }
 }
