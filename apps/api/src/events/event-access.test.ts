@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
-import type { ApiDatabase } from "#src/database/drizzle/database";
+
 import type { roleTable } from "#src/database/drizzle/schema";
 import { makeEventAccess } from "#src/events/event-access";
 
@@ -22,7 +22,11 @@ const role = (from: number, to: number): Role => ({
 
 describe("event access Effect module", () => {
   it("keeps hero visibility fail-closed to one matching role range", () => {
-    const access = makeEventAccess({} as typeof ApiDatabase.Service);
+    const access = makeEventAccess({
+      select: () => {
+        throw new Error("Unexpected database access");
+      },
+    });
     const policy = createAccessPolicy({
       capabilities: [Permission.LOOTLOG_EVENTS_READ],
     });

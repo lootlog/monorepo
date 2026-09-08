@@ -7,7 +7,16 @@ import {
 } from "./build-loot-share-maps";
 
 describe("buildLootShareMaps", () => {
-  const players = [{ id: "player-1" }, { id: "player-2" }] as Loot["players"];
+  const players: Loot["players"] = ["player-1", "player-2"].map((id) => ({
+    id,
+    name: id,
+    lvl: null,
+    prof: null,
+    icon: null,
+    characterId: null,
+    accountId: null,
+    hpp: null,
+  }));
 
   it("assigns stable player colors by display order", () => {
     expect(buildLootPlayerColorMap(players)).toEqual({
@@ -39,7 +48,7 @@ describe("buildLootShareMaps", () => {
       lootShare: {
         "player-1": ["item-1"],
       },
-    } as Pick<Loot, "players" | "lootShare">;
+    };
 
     expect(buildLootShareMaps(loot)).toEqual({
       playerColorMap: {

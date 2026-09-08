@@ -17,8 +17,14 @@ const SearchInput = forwardRef<
   }
 >(({ className, wrapperClassName, endAdornment, ...props }, ref) => {
   return (
-    <InputGroup className={cn(wrapperClassName, className)}>
-      <InputGroupAddon>
+    <InputGroup
+      className={cn(
+        "has-[>[data-align=inline-start]]:[&>input]:pl-2 rounded-xl border-border bg-background dark:bg-background hover:border-foreground/20 hover:bg-foreground/[0.04] dark:hover:bg-foreground/[0.04]",
+        wrapperClassName,
+        className,
+      )}
+    >
+      <InputGroupAddon className="pl-3">
         <Search aria-hidden="true" />
       </InputGroupAddon>
       <InputGroupInput
@@ -28,7 +34,9 @@ const SearchInput = forwardRef<
         className={className}
       />
       {endAdornment ? (
-        <InputGroupAddon align="inline-end">{endAdornment}</InputGroupAddon>
+        <InputGroupAddon align="inline-end" className="pr-3">
+          {endAdornment}
+        </InputGroupAddon>
       ) : null}
     </InputGroup>
   );

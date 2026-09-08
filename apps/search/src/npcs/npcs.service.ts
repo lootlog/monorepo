@@ -1,5 +1,5 @@
-import { NpcTypeEnum } from "@lootlog/schema/npc-type";
-import { Effect } from "effect";
+import { NpcTypeSchema } from "@lootlog/schema/npc-type";
+import { Effect, Predicate, Schema } from "effect";
 import type { Meilisearch, SearchParams } from "meilisearch";
 import { buildMeilisearchSearchTermFilter } from "#src/meilisearch/query-builder";
 import {
@@ -23,16 +23,14 @@ type RawNpcHit = Omit<NpcHit, "margonemType" | "prof" | "type"> & {
 const normalizeNpcHit = (npc: RawNpcHit): NpcHit => {
   const prof = npc.prof ?? "";
   let margonemType = 0;
-  if (typeof npc.margonemType === "number") {
+  if (Predicate.isNumber(npc.margonemType)) {
     margonemType = npc.margonemType;
-  } else if (typeof npc.type === "number") {
+  } else if (Predicate.isNumber(npc.type)) {
     margonemType = npc.type;
   }
-  const type =
-    typeof npc.type === "string" &&
-    Object.values(NpcTypeEnum).includes(npc.type as NpcTypeEnum)
-      ? (npc.type as NpcTypeEnum)
-      : getNpcTypeByWt(npc.wt, prof, margonemType);
+  const type = Schema.is(NpcTypeSchema)(npc.type)
+    ? npc.type
+    : getNpcTypeByWt(npc.wt, prof, margonemType);
 
   return { ...npc, prof, margonemType, type };
 };

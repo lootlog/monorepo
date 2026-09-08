@@ -1,21 +1,17 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const mockDebouncedSyncGlobalSettings = vi.fn();
-const mockDebouncedSyncGuildSettings = vi.fn();
-
-vi.mock("./timer-settings-sync", () => ({
-  debouncedSyncGlobalSettings: (...args: unknown[]) =>
-    mockDebouncedSyncGlobalSettings(...args),
-  debouncedSyncGuildSettings: (...args: unknown[]) =>
-    mockDebouncedSyncGuildSettings(...args),
-}));
+import {
+  registerGlobalSettingsMutation,
+  disposeTimerSettingsSync,
+} from "./timer-settings-sync";
+import type {
+  UpdateTimerSettingsPayload,
+  CustomTimerColor,
+} from "@lootlog/schema/timer-settings";
+const syncGlobal = vi.fn<(payload: UpdateTimerSettingsPayload) => void>();
 
 import { NpcType } from "@/api/npcs.api";
-import {
-  TIMERS_STORAGE_KEY,
-  useTimersStore,
-  type CustomTimerColor,
-} from "./timers.store";
+import { TIMERS_STORAGE_KEY, useTimersStore } from "./timers.store";
 
 const resetTimersStore = () => {
   useTimersStore.setState({
@@ -51,21 +47,31 @@ const resetTimersStore = () => {
   });
 };
 
+afterEach(() => {
+  disposeTimerSettingsSync();
+  vi.useRealTimers();
+});
+
 describe("timers.store", () => {
   beforeEach(() => {
-    mockDebouncedSyncGlobalSettings.mockReset();
-    mockDebouncedSyncGuildSettings.mockReset();
+    syncGlobal.mockReset();
+    vi.useFakeTimers();
+    registerGlobalSettingsMutation(syncGlobal);
     window.localStorage.removeItem(TIMERS_STORAGE_KEY);
     resetTimersStore();
   });
 
-  it("deduplicates hidden and pinned timers and syncs guild settings", () => {
+  it("deduplicates hidden and pinned timers", () => {
     const store = useTimersStore.getState();
 
     store.hideTimer("guild-1", "timer-1");
+    vi.advanceTimersByTime(500);
     store.hideTimer("guild-1", "timer-1");
+    vi.advanceTimersByTime(500);
     store.pinTimer("guild-1", "timer-7");
+    vi.advanceTimersByTime(500);
     store.pinTimer("guild-1", "timer-7");
+    vi.advanceTimersByTime(500);
 
     expect(useTimersStore.getState().hiddenTimers).toEqual({
       "guild-1": ["timer-1"],
@@ -73,34 +79,6 @@ describe("timers.store", () => {
     expect(useTimersStore.getState().pinnedTimers).toEqual({
       "guild-1": ["timer-7"],
     });
-    expect(mockDebouncedSyncGuildSettings).toHaveBeenNthCalledWith(
-      1,
-      "guild-1",
-      {
-        hiddenTimers: ["timer-1"],
-      },
-    );
-    expect(mockDebouncedSyncGuildSettings).toHaveBeenNthCalledWith(
-      2,
-      "guild-1",
-      {
-        hiddenTimers: ["timer-1"],
-      },
-    );
-    expect(mockDebouncedSyncGuildSettings).toHaveBeenNthCalledWith(
-      3,
-      "guild-1",
-      {
-        pinnedTimers: ["timer-7"],
-      },
-    );
-    expect(mockDebouncedSyncGuildSettings).toHaveBeenNthCalledWith(
-      4,
-      "guild-1",
-      {
-        pinnedTimers: ["timer-7"],
-      },
-    );
   });
 
   it("reveals and unpins timers", () => {
@@ -115,7 +93,9 @@ describe("timers.store", () => {
 
     const store = useTimersStore.getState();
     store.revealTimer("guild-1", "timer-1");
+    vi.advanceTimersByTime(500);
     store.unpinTimer("guild-1", "timer-8");
+    vi.advanceTimersByTime(500);
 
     expect(useTimersStore.getState().hiddenTimers["guild-1"]).toEqual([
       "timer-2",
@@ -123,20 +103,6 @@ describe("timers.store", () => {
     expect(useTimersStore.getState().pinnedTimers["guild-1"]).toEqual([
       "timer-7",
     ]);
-    expect(mockDebouncedSyncGuildSettings).toHaveBeenNthCalledWith(
-      1,
-      "guild-1",
-      {
-        hiddenTimers: ["timer-2"],
-      },
-    );
-    expect(mockDebouncedSyncGuildSettings).toHaveBeenNthCalledWith(
-      2,
-      "guild-1",
-      {
-        pinnedTimers: ["timer-7"],
-      },
-    );
   });
 
   it("updates global config and filter preferences with sync side effects", () => {
@@ -157,15 +123,20 @@ describe("timers.store", () => {
 
     const store = useTimersStore.getState();
     store.setGeneralConfig(nextGeneralConfig);
+    vi.advanceTimersByTime(500);
     store.setDisplayConfig(nextDisplayConfig);
+    vi.advanceTimersByTime(500);
     store.setTimersSortOrder("desc");
+    vi.advanceTimersByTime(500);
     store.setSyncEnabled(false);
+    vi.advanceTimersByTime(500);
     store.setTimersFilters("global", {
       minLvl: 50,
       maxLvl: 150,
       selectedNpcTypes: [NpcType.HERO],
       selectedColors: ["custom-1"],
     });
+    vi.advanceTimersByTime(500);
 
     expect(useTimersStore.getState()).toMatchObject({
       generalConfig: nextGeneralConfig,
@@ -182,16 +153,16 @@ describe("timers.store", () => {
       },
     });
     expect(useTimersStore.getState().updatedAt).toEqual(expect.any(Number));
-    expect(mockDebouncedSyncGlobalSettings).toHaveBeenCalledWith({
+    expect(syncGlobal).toHaveBeenCalledWith({
       generalConfig: nextGeneralConfig,
     });
-    expect(mockDebouncedSyncGlobalSettings).toHaveBeenCalledWith({
+    expect(syncGlobal).toHaveBeenCalledWith({
       displayConfig: nextDisplayConfig,
     });
-    expect(mockDebouncedSyncGlobalSettings).toHaveBeenCalledWith({
+    expect(syncGlobal).toHaveBeenCalledWith({
       timersSortOrder: "desc",
     });
-    expect(mockDebouncedSyncGlobalSettings).toHaveBeenCalledWith({
+    expect(syncGlobal).toHaveBeenCalledWith({
       syncEnabled: false,
     });
   });
@@ -200,23 +171,26 @@ describe("timers.store", () => {
     const store = useTimersStore.getState();
 
     store.showExpiredTimerAlways("experimental", "123:test-boss");
+    vi.advanceTimersByTime(500);
     store.showExpiredTimerAlways("experimental", "123:test-boss");
+    vi.advanceTimersByTime(500);
     store.hideExpiredTimerAlways("experimental", "123:test-boss");
+    vi.advanceTimersByTime(500);
 
     expect(useTimersStore.getState().alwaysVisibleExpiredTimers).toEqual({
       experimental: [],
     });
-    expect(mockDebouncedSyncGlobalSettings).toHaveBeenNthCalledWith(1, {
+    expect(syncGlobal).toHaveBeenNthCalledWith(1, {
       alwaysVisibleExpiredTimers: {
         experimental: ["123:test-boss"],
       },
     });
-    expect(mockDebouncedSyncGlobalSettings).toHaveBeenNthCalledWith(2, {
+    expect(syncGlobal).toHaveBeenNthCalledWith(2, {
       alwaysVisibleExpiredTimers: {
         experimental: ["123:test-boss"],
       },
     });
-    expect(mockDebouncedSyncGlobalSettings).toHaveBeenNthCalledWith(3, {
+    expect(syncGlobal).toHaveBeenNthCalledWith(3, {
       alwaysVisibleExpiredTimers: {
         experimental: [],
       },
@@ -242,13 +216,14 @@ describe("timers.store", () => {
     });
 
     useTimersStore.getState().deleteCustomColor("custom-1");
+    vi.advanceTimersByTime(500);
 
     expect(useTimersStore.getState().customColors).toEqual({});
     expect(useTimersStore.getState().timersColors).toEqual({
       Tanroth: undefined,
       Heros: "default-1",
     });
-    expect(mockDebouncedSyncGlobalSettings).toHaveBeenCalledWith({
+    expect(syncGlobal).toHaveBeenCalledWith({
       customColors: {},
       timersColors: {
         Tanroth: undefined,
@@ -276,6 +251,7 @@ describe("timers.store", () => {
     });
 
     useTimersStore.getState().deleteDefaultColor("default-1");
+    vi.advanceTimersByTime(500);
 
     expect(useTimersStore.getState().hiddenDefaultColors).toEqual([
       "default-1",
@@ -286,11 +262,12 @@ describe("timers.store", () => {
     });
 
     useTimersStore.getState().restoreDefaultColor("default-1");
+    vi.advanceTimersByTime(500);
 
     expect(useTimersStore.getState().hiddenDefaultColors).toEqual([]);
     expect(useTimersStore.getState().defaultColorNames).toEqual({});
     expect(useTimersStore.getState().overriddenDefaultColors).toEqual({});
-    expect(mockDebouncedSyncGlobalSettings).toHaveBeenLastCalledWith({
+    expect(syncGlobal).toHaveBeenLastCalledWith({
       hiddenDefaultColors: [],
       overriddenDefaultColors: {},
       defaultColorNames: {},
@@ -310,11 +287,12 @@ describe("timers.store", () => {
     });
 
     useTimersStore.getState().resetDefaultColor("red");
+    vi.advanceTimersByTime(500);
 
     expect(useTimersStore.getState().hiddenDefaultColors).toEqual([]);
     expect(useTimersStore.getState().defaultColorNames).toEqual({});
     expect(useTimersStore.getState().overriddenDefaultColors).toEqual({});
-    expect(mockDebouncedSyncGlobalSettings).toHaveBeenLastCalledWith({
+    expect(syncGlobal).toHaveBeenLastCalledWith({
       overriddenDefaultColors: {},
       defaultColorNames: {},
     });
@@ -329,7 +307,9 @@ describe("timers.store", () => {
       countdownMode: "max",
       compactView: true,
     });
+    vi.advanceTimersByTime(500);
     store.setTimerFiltersSearchText("tanroth");
+    vi.advanceTimersByTime(500);
 
     const persistedState = JSON.parse(
       window.localStorage.getItem(TIMERS_STORAGE_KEY) ?? "null",

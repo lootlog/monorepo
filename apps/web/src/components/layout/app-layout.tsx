@@ -9,6 +9,7 @@ import { UserSidebarNav } from "@/components/layout/user-sidebar-nav";
 import { Toaster } from "@lootlog/ui/components/sonner";
 import { SidebarProvider } from "@lootlog/ui/components/sidebar";
 import { Outlet, useLocation, useMatches } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { GlobalModals } from "@/components/common/global-modals";
 
 const ThemeAnnouncement = lazy(() =>
@@ -17,6 +18,7 @@ const ThemeAnnouncement = lazy(() =>
   })),
 );
 export const AppLayout = () => {
+  const { t } = useTranslation();
   const location = useLocation();
   const guildRouteMatch = useMatches({
     select: (matches) =>
@@ -42,21 +44,27 @@ export const AppLayout = () => {
     <GuildSidebarNavPlaceholder />
   );
 
+  const sidebarStyle:
+    | (CSSProperties & { "--sidebar-width": string })
+    | undefined = isStandaloneRoute ? { "--sidebar-width": "4rem" } : undefined;
+
   return (
     <div
       className="flex h-dvh w-full flex-col overflow-hidden bg-background text-foreground"
       data-design-system="signal-v2"
     >
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:text-foreground focus:outline-2 focus:outline-ring"
+      >
+        {t("layout.navigation.skipToContent")}
+      </a>
       <Suspense fallback={null}>
         <ThemeAnnouncement />
       </Suspense>
       <SidebarProvider
         className="min-h-0 flex-1 overflow-hidden"
-        style={
-          isStandaloneRoute
-            ? ({ "--sidebar-width": "4rem" } as CSSProperties)
-            : undefined
-        }
+        style={sidebarStyle}
       >
         <AppSidebar
           compact={isStandaloneRoute}

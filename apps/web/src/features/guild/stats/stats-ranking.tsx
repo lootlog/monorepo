@@ -30,8 +30,9 @@ import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import {
   getKillsControllerGetGuildKillStatsQueryKey,
   useKillsControllerGetGuildKillStats,
+  type NpcType,
 } from "@lootlog/client/main";
-import type { NpcType } from "@lootlog/client/main";
+
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { LevelFilters } from "./components/level-filters";
 import { StatsRankingFiltersMobile } from "./components/stats-ranking-filters-mobile";
@@ -348,15 +349,13 @@ export const StatsRanking: React.FC = () => {
                                 <TextLink
                                   className="text-sm"
                                   onClick={(event) => event.stopPropagation()}
-                                  render={
-                                    <Link
-                                      to="/$guildId/stats/members/$memberId"
-                                      params={{
-                                        guildId,
-                                        memberId: String(member.memberId),
-                                      }}
-                                    />
-                                  }
+                                  render=<Link
+                                    to="/$guildId/stats/members/$memberId"
+                                    params={{
+                                      guildId,
+                                      memberId: String(member.memberId),
+                                    }}
+                                  />
                                 >
                                   {member.memberName}
                                 </TextLink>

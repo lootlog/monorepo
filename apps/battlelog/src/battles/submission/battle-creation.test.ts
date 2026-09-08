@@ -1,26 +1,34 @@
-import { afterEach, describe, expect, it, mock, spyOn } from "bun:test";
-import { Effect, Schema } from "effect";
+import { PgliteClient } from "@effect/sql-pglite";
+import { makeWithDefaults } from "drizzle-orm/effect-pglite";
+import { migrate } from "drizzle-orm/effect-pglite/migrator";
+import { fileURLToPath } from "node:url";
+import { relations } from "#src/database/relations";
+import {
+  unusedBattleAnalytics,
+  unusedDeleteQueue,
+} from "../../../test/battle-fixtures.js";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  mock,
+  spyOn,
+} from "bun:test";
+import { Effect, ManagedRuntime, Schema } from "effect";
 import { BattleResponseSchemas } from "#src/battles/catalog/battle-response";
-import { setTimeout as sleep } from "node:timers/promises";
+import { battles } from "#src/database/schema";
 import { Logger } from "#src/infrastructure/logger";
-import type { RedisStore } from "#src/infrastructure/redis-store";
+import type { JsonCodec } from "#src/infrastructure/redis-store";
 import { makeBattlelogOperations } from "#src/battles/battlelog-operations";
 import { makeBattles, type Battles } from "#src/battles/battles.service";
-import type { BattleAnalytics } from "#src/battles/analytics/battle-analytics.service";
-import type { BattleListFilter } from "#src/battles/catalog/battle-list-filter.service";
-import type { BattleMetadata } from "#src/battles/catalog/battle-metadata.service";
-import type { BattlePagination } from "#src/battles/analytics/pagination.service";
-import type { DrizzleDatabase } from "#src/database/database";
-import { battles, battleWarriors } from "#src/database/schema";
-import type { BattleObjectStorage } from "#src/infrastructure/battle-object-storage";
 import { makeBattlelogTestBoundary } from "#src/http/battlelog-http";
-import {
-  effectDatabaseBoundary,
-  runEffectService,
-} from "../../../test/effect-service.js";
 
 type TestApplication = ReturnType<typeof makeBattlelogTestBoundary> & {
-  battles: ReturnType<typeof runEffectService<Battles>>;
+  battles: Battles;
 };
 
 const requestJson = async <S extends Schema.ConstraintDecoder<unknown>>(
@@ -29,19 +37,22 @@ const requestJson = async <S extends Schema.ConstraintDecoder<unknown>>(
   path: string,
   schema: S,
   expectedStatus: number,
-  body?: unknown,
+  body?: typeof Schema.Json.Type,
 ) => {
   const response = await handler(
     new Request(`http://battlelog.test${path}`, {
       method,
       headers: { "content-type": "application/json", ...authHeaders },
-      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+      body: body === undefined ? undefined : JSON.stringify(body),
     }),
   );
   expect(response.status).toBe(expectedStatus);
   return { body: Schema.decodeUnknownSync(schema)(await response.json()) };
 };
-const postBattle = (handler: TestApplication["handler"], body: unknown) =>
+const postBattle = (
+  handler: TestApplication["handler"],
+  body: typeof Schema.Json.Type,
+) =>
   requestJson(
     handler,
     "POST",
@@ -108,188 +119,56 @@ const authHeaders = {
   "x-auth-user-id": "user-1",
 };
 
-type StoredBattle = Record<string, unknown> & {
-  createdAt: Date;
-  id: string;
-  submissionId?: string;
-  userId: string;
-  warriors: StoredWarrior[];
-};
-
-type StoredWarrior = Record<string, unknown> & {
-  battleId: string;
-  id: string;
-  name: string;
-  turns: number;
-};
+// Compile PostgreSQL WASM and apply migrations once, outside individual test budgets.
+const databaseRuntime = ManagedRuntime.make(PgliteClient.layer({}));
+const databaseEffect = makeWithDefaults({ relations });
+let sharedDatabase: Effect.Success<typeof databaseEffect>;
 
 const createDatabaseBoundary = ({
   beforeTransaction,
-}: {
-  beforeTransaction?: () => Promise<void>;
-} = {}) => {
-  const storedBattles: StoredBattle[] = [];
-
-  const findBattle = ({
-    where,
-  }: {
-    where?: Record<string, unknown>;
-  }): StoredBattle | undefined => {
-    if (!where) return undefined;
-    if (typeof where.id === "string") {
-      return storedBattles.find((battle) => battle.id === where.id);
-    }
-    if (typeof where.submissionId === "string") {
-      return storedBattles.find(
-        (battle) => battle.submissionId === where.submissionId,
-      );
-    }
-    if (typeof where.semanticFingerprint === "string") {
-      const cutoff =
-        typeof where.createdAt === "object" &&
-        where.createdAt &&
-        "gte" in where.createdAt &&
-        where.createdAt.gte instanceof Date
-          ? where.createdAt.gte
-          : new Date(0);
-      return storedBattles.find(
-        (battle) =>
-          battle.semanticFingerprint === where.semanticFingerprint &&
-          battle.userId === where.userId &&
-          battle.createdAt >= cutoff,
-      );
-    }
-    return undefined;
-  };
-
-  const createInsert = (table: unknown) => ({
-    values: (input: Record<string, unknown> | Record<string, unknown>[]) => ({
-      returning: async () => {
-        if (table === battles) {
-          const values = input as Record<string, unknown>;
-          if (
-            values.submissionId &&
-            storedBattles.some(
-              (battle) => battle.submissionId === values.submissionId,
-            )
-          ) {
-            throw Object.assign(new Error("duplicate submission id"), {
-              code: "23505",
-            });
-          }
-          const battle: StoredBattle = {
-            difficultyRank: null,
-            honorPoints: 0,
-            id: `battle-${storedBattles.length + 1}`,
-            public: false,
-            result: null,
-            ratingDelta: null,
-            opponentLvl: null,
-            opponentOplvl: null,
-            opponentRating: null,
-            rating: null,
-            status: null,
-            pointsGained: null,
-            placementCur: null,
-            placementMax: null,
-            dailyStageId: null,
-            dailyPointsCur: null,
-            dailyPointsMax: null,
-            dailyPointsStep: null,
-            dailyRewardsLast: null,
-            dailyRewardsCur: null,
-            dailyRewardsMax: null,
-            createdAt: new Date(Date.now()),
-            updatedAt: new Date(Date.now()),
-            ...values,
-            userId: String(values.userId),
-            warriors: [],
-          };
-          storedBattles.push(battle);
-          return [battle];
-        }
-
-        if (table === battleWarriors) {
-          const values = input as Record<string, unknown>[];
-          const insertedWarriors = values.map(
-            (warrior, index): StoredWarrior => ({
-              id: `warrior-${index + 1}`,
-              ...warrior,
-              battleId: String(warrior.battleId),
-              name: String(warrior.name),
-              turns: Number(warrior.turns),
-            }),
-          );
-          const battle = storedBattles.find(
-            (candidate) => candidate.id === insertedWarriors[0]?.battleId,
-          );
-          if (battle) battle.warriors = insertedWarriors;
-          return insertedWarriors;
-        }
-
-        return [];
-      },
-    }),
-  });
-
-  const createUpdate = () => ({
-    set: (values: Record<string, unknown>) => ({
-      where: () => ({
-        returning: async () => {
-          const duration = Number(values.duration);
-          const battle = storedBattles.find(
-            (candidate) => Number(candidate.duration) < duration,
-          );
-          if (!battle) return [];
-
-          Object.assign(battle, values);
-          return [{ id: battle.id }];
-        },
-      }),
-    }),
-  });
-
+}: { beforeTransaction?: () => Promise<void> } = {}) => {
+  const database = sharedDatabase;
+  let transactionCount = 0;
+  type Transaction = Parameters<Parameters<typeof database.transaction>[0]>[0];
+  const transaction = <A, E, R>(
+    factory: (transaction: Transaction) => Effect.Effect<A, E, R>,
+  ) =>
+    Effect.gen(function* () {
+      transactionCount += 1;
+      if (beforeTransaction) yield* Effect.promise(beforeTransaction);
+      return yield* database.transaction(factory);
+    });
   return {
     service: {
-      run: mock((query) =>
-        Effect.isEffect(query)
-          ? Effect.runPromise(query as Effect.Effect<unknown, unknown, never>)
-          : Promise.resolve(query),
-      ),
       db: {
-        query: {
-          battles: {
-            findFirst: mock(async (query) => findBattle(query) ?? null),
-          },
-        },
-        transaction: mock(async (factory) => {
-          await beforeTransaction?.();
-          const result = factory({ insert: createInsert });
-          return Effect.isEffect(result)
-            ? Effect.runPromise(
-                result as Effect.Effect<unknown, unknown, never>,
-              )
-            : result;
-        }),
-        update: mock(createUpdate),
+        query: database.query,
+        select: database.select.bind(database),
+        delete: database.delete.bind(database),
+        update: database.update.bind(database),
+        transaction,
       },
     },
-    storedBattles,
+    getStoredBattles: () =>
+      databaseRuntime.runPromise(
+        database.query.battles.findMany({ with: { warriors: true } }),
+      ),
+    getTransactionCount: () => transactionCount,
   };
 };
 
 const createRedisBoundary = ({
   now = Date.now,
+  onRenew = () => {},
+  onContention = () => {},
 }: {
   now?: () => number;
+  onRenew?: () => void;
+  onContention?: () => void;
 } = {}) => {
-  const values = new Map<
-    string,
-    { expiresAt: number | null; value: unknown }
-  >();
+  const values = new Map<string, { expiresAt: number | null; value: string }>();
   const locks = new Map<string, { expiresAt: number | null; token: string }>();
 
-  return {
+  const boundary = {
     del: mock(async (key: string) => (values.delete(key) ? 1 : 0)),
     deleteByPattern: mock(),
     eval: mock(
@@ -305,6 +184,7 @@ const createRedisBoundary = ({
         ) {
           if (ttlSeconds !== undefined) {
             lock.expiresAt = now() + Number(ttlSeconds) * 1_000;
+            onRenew();
             return 1;
           }
           locks.delete(key);
@@ -313,7 +193,7 @@ const createRedisBoundary = ({
         return 0;
       },
     ),
-    getJson: mock(async (key: string) => {
+    readCachedJson: mock(async (key: string) => {
       const cached = values.get(key);
       if (!cached) return null;
       if (cached.expiresAt !== null && cached.expiresAt <= now()) {
@@ -322,21 +202,20 @@ const createRedisBoundary = ({
       }
       return cached.value;
     }),
-    getOrSetJsonBestEffort: mock(
-      ({ factory }: { factory: () => Promise<unknown> }) => factory(),
-    ),
-    setJson: mock(async (key: string, value: unknown, ttlSeconds?: number) => {
+    setJson: <T>(key: string, value: T, ttlSeconds?: number) => {
       values.set(key, {
         expiresAt: ttlSeconds ? now() + ttlSeconds * 1_000 : null,
-        value,
+        value: JSON.stringify(value),
       });
-    }),
+      return Promise.resolve();
+    },
     setNX: mock(async (key: string, token: string, ttlSeconds?: number) => {
       const existingLock = locks.get(key);
       if (
         existingLock &&
         (existingLock.expiresAt === null || existingLock.expiresAt > now())
       ) {
+        onContention();
         return false;
       }
       locks.set(key, {
@@ -346,51 +225,61 @@ const createRedisBoundary = ({
       return true;
     }),
   };
+  return {
+    ...boundary,
+    getJson: async <T>(key: string, codec: JsonCodec<T>): Promise<T | null> => {
+      const serialized = await boundary.readCachedJson(key);
+      return serialized === null ? null : codec.parse(serialized);
+    },
+  };
 };
 
-const createTestApplication = async ({
+const createTestApplication = ({
   beforeTransaction,
   redis = createRedisBoundary(),
-  waitTimeoutMs = 30,
+  waitTimeoutMs = 10_000,
+  lockTtlSeconds = 30,
 }: {
   beforeTransaction?: () => Promise<void>;
   redis?: ReturnType<typeof createRedisBoundary>;
   waitTimeoutMs?: number;
+  lockTtlSeconds?: number;
 } = {}) => {
   const database = createDatabaseBoundary({ beforeTransaction });
-  const drizzle = effectDatabaseBoundary(
-    database.service.db,
-  ) as unknown as DrizzleDatabase;
-  const redisService = redis as unknown as RedisStore;
+  const drizzle = database.service.db;
+  const redisService = redis;
   const analyticsService = {
+    ...unusedBattleAnalytics,
     invalidateAnalyticsCache: mock(() => Effect.void),
-  } as unknown as BattleAnalytics;
+  };
   const battlesModule = makeBattles(
     drizzle,
     {
       uploadBattleData: mock(),
       getBattleData: mock(),
-    } as unknown as BattleObjectStorage,
+      deleteBattleData: mock(),
+    },
     redisService,
-    {} as BattlePagination,
+    { paginateBattles: () => Effect.die("Unexpected pagination") },
     analyticsService,
-    {} as BattleListFilter,
+    { buildFilterConditions: () => Effect.die("Unexpected list filter") },
     {
       upsertUserCharacter: mock(() => Effect.void),
-    } as unknown as BattleMetadata,
+      getUserCharacters: () => Effect.die("Unexpected character list"),
+      getUserWorlds: () => Effect.die("Unexpected world list"),
+      searchWarriors: () => Effect.die("Unexpected warrior search"),
+    },
     {
       cacheTtlSeconds: 10,
       lockRefreshIntervalMs: 10,
-      lockTtlSeconds: 0.03,
+      lockTtlSeconds,
       waitIntervalMs: 1,
       waitTimeoutMs,
     },
   );
-  const battlesService = runEffectService(battlesModule);
+  const battlesService = battlesModule;
   const boundary = makeBattlelogTestBoundary(
-    makeBattlelogOperations(battlesModule, analyticsService, {
-      add: mock(),
-    } as never),
+    makeBattlelogOperations(battlesModule, analyticsService, unusedDeleteQueue),
   );
   const app: TestApplication = {
     ...boundary,
@@ -402,6 +291,25 @@ const createTestApplication = async ({
 describe("battle creation deduplication", () => {
   let app: TestApplication;
 
+  beforeAll(async () => {
+    sharedDatabase = await databaseRuntime.runPromise(databaseEffect);
+    await databaseRuntime.runPromise(
+      migrate(sharedDatabase, {
+        migrationsFolder: fileURLToPath(
+          new URL("../../../drizzle", import.meta.url),
+        ),
+      }),
+    );
+  }, 60_000);
+
+  beforeEach(async () => {
+    await databaseRuntime.runPromise(sharedDatabase.delete(battles));
+  });
+
+  afterAll(async () => {
+    await databaseRuntime.dispose();
+  });
+
   afterEach(async () => {
     try {
       await app?.dispose();
@@ -411,9 +319,7 @@ describe("battle creation deduplication", () => {
   });
 
   it("stores one canonical battle for duplicated incremental and compact payloads", async () => {
-    const testApplication = await createTestApplication({
-      waitTimeoutMs: 1_000,
-    });
+    const testApplication = createTestApplication();
     app = testApplication.app;
 
     const [firstResponse, secondResponse] = await Promise.all([
@@ -440,11 +346,11 @@ describe("battle creation deduplication", () => {
     );
 
     expect(cashtelan.turns).toBe(12);
-    expect(testApplication.database.storedBattles).toHaveLength(1);
+    expect(await testApplication.database.getStoredBattles()).toHaveLength(1);
   });
 
   it("preserves the incremental duration when a compact replay arrives first", async () => {
-    const testApplication = await createTestApplication();
+    const testApplication = createTestApplication();
     app = testApplication.app;
 
     const compactResponse = await postBattle(app.handler, {
@@ -459,15 +365,23 @@ describe("battle creation deduplication", () => {
     });
 
     expect(incrementalResponse.body).toEqual(compactResponse.body);
-    expect(testApplication.database.storedBattles).toHaveLength(1);
+    expect(await testApplication.database.getStoredBattles()).toHaveLength(1);
     expect(
-      Number(testApplication.database.storedBattles[0]?.duration),
+      Number((await testApplication.database.getStoredBattles())[0]?.duration),
     ).toBeCloseTo(0.3, 5);
   });
 
   it("keeps equivalent creation single-flight after the initial lock TTL", async () => {
     let currentTime = 0;
-    const redis = createRedisBoundary({ now: () => currentTime });
+    const renewed = Promise.withResolvers<void>();
+    const contended = Promise.withResolvers<void>();
+    const redis = createRedisBoundary({
+      now: () => currentTime,
+      onRenew: () => {
+        if (currentTime === 10) renewed.resolve();
+      },
+      onContention: contended.resolve,
+    });
     let releaseTransaction!: () => void;
     const transactionGate = new Promise<void>((resolve) => {
       releaseTransaction = resolve;
@@ -476,8 +390,9 @@ describe("battle creation deduplication", () => {
     const transactionStarted = new Promise<void>((resolve) => {
       markTransactionStarted = resolve;
     });
-    const testApplication = await createTestApplication({
+    const testApplication = createTestApplication({
       redis,
+      lockTtlSeconds: 0.03,
       beforeTransaction: async () => {
         markTransactionStarted();
         await transactionGate;
@@ -485,36 +400,37 @@ describe("battle creation deduplication", () => {
     });
     app = testApplication.app;
     const battlesService = app.battles;
-    const firstCreation = battlesService.createBattle({
-      data: {
-        ...battleContext,
-        submissionId: "long-running-first",
-        events: [battleEvent],
-      },
-      userId: "user-1",
-    });
+    const firstCreation = Effect.runPromise(
+      battlesService.createBattle({
+        data: {
+          ...battleContext,
+          submissionId: "long-running-first",
+          events: [battleEvent],
+        },
+        userId: "user-1",
+      }),
+    );
 
     await transactionStarted;
     currentTime = 10;
-    while (redis.eval.mock.calls.length === 0) {
-      await sleep(1);
-    }
+    await renewed.promise;
     currentTime = 31;
 
-    const secondCreation = battlesService.createBattle({
-      data: {
-        ...battleContext,
-        submissionId: "long-running-second",
-        events: [battleEvent],
-      },
-      userId: "user-1",
-    });
-    await sleep(0);
+    const secondCreation = Effect.runPromise(
+      battlesService.createBattle({
+        data: {
+          ...battleContext,
+          submissionId: "long-running-second",
+          events: [battleEvent],
+        },
+        userId: "user-1",
+      }),
+    );
+    await contended.promise;
     const transactionCallsDuringContention =
-      testApplication.database.service.db.transaction.mock.calls.length;
+      testApplication.database.getTransactionCount();
 
     releaseTransaction();
-    await sleep(1);
     const [firstResult, secondResult] = await Promise.all([
       firstCreation,
       secondCreation,
@@ -522,7 +438,7 @@ describe("battle creation deduplication", () => {
 
     expect(secondResult).toEqual(firstResult);
     expect(transactionCallsDuringContention).toBe(1);
-    expect(testApplication.database.storedBattles).toHaveLength(1);
+    expect(await testApplication.database.getStoredBattles()).toHaveLength(1);
   });
 
   it("waits for an in-flight creation to finish after losing the lock", async () => {
@@ -537,8 +453,12 @@ describe("battle creation deduplication", () => {
       markTransactionStarted = resolve;
     });
     const redis = createRedisBoundary();
-    redis.eval.mockResolvedValue(0);
-    const testApplication = await createTestApplication({
+    const renewalFailed = Promise.withResolvers<void>();
+    redis.eval.mockImplementation(() => {
+      renewalFailed.resolve();
+      return Promise.resolve(0);
+    });
+    const testApplication = createTestApplication({
       beforeTransaction: async () => {
         markTransactionStarted();
         await transactionGate;
@@ -548,15 +468,16 @@ describe("battle creation deduplication", () => {
     app = testApplication.app;
     const battlesService = app.battles;
     let creationSettled = false;
-    const creationOutcome = battlesService
-      .createBattle({
+    const creationOutcome = Effect.runPromise(
+      battlesService.createBattle({
         data: {
           ...battleContext,
           submissionId: "lost-lock",
           events: [battleEvent],
         },
         userId: "user-1",
-      })
+      }),
+    )
       .then(
         () => "resolved",
         () => "rejected",
@@ -566,19 +487,18 @@ describe("battle creation deduplication", () => {
       });
 
     await transactionStarted;
-    await sleep(10);
+    await renewalFailed.promise;
     const settledBeforeTransactionFinished = creationSettled;
 
     releaseTransaction();
-    await sleep(0);
 
     await expect(creationOutcome).resolves.toBe("rejected");
     expect(settledBeforeTransactionFinished).toBe(false);
-    expect(testApplication.database.storedBattles).toHaveLength(1);
+    expect(await testApplication.database.getStoredBattles()).toHaveLength(1);
   });
 
   it("preserves separate battle events that do not have event ids", async () => {
-    const testApplication = await createTestApplication();
+    const testApplication = createTestApplication();
     app = testApplication.app;
 
     const response = await postBattle(app.handler, {
@@ -613,7 +533,7 @@ describe("battle creation deduplication", () => {
   });
 
   it("preserves distinct battle events that share an event id", async () => {
-    const testApplication = await createTestApplication();
+    const testApplication = createTestApplication();
     app = testApplication.app;
 
     const response = await postBattle(app.handler, {
@@ -653,7 +573,7 @@ describe("battle creation deduplication", () => {
     const dateNow = spyOn(Date, "now").mockReturnValue(
       Date.parse("2026-07-26T18:52:57.000Z"),
     );
-    const testApplication = await createTestApplication();
+    const testApplication = createTestApplication();
     app = testApplication.app;
 
     const firstResponse = await postBattle(app.handler, {
@@ -669,15 +589,15 @@ describe("battle creation deduplication", () => {
     });
 
     expect(secondResponse.body.battleId).not.toBe(firstResponse.body.battleId);
-    expect(testApplication.database.storedBattles).toHaveLength(2);
+    expect(await testApplication.database.getStoredBattles()).toHaveLength(2);
     dateNow.mockRestore();
   });
 
   it("returns 503 without storing a battle when Redis is unavailable", async () => {
     spyOn(Logger.prototype, "error").mockImplementation(() => undefined);
     const redis = createRedisBoundary();
-    redis.getJson.mockRejectedValue(new Error("Redis unavailable"));
-    const testApplication = await createTestApplication({ redis });
+    redis.readCachedJson.mockRejectedValue(new Error("Redis unavailable"));
+    const testApplication = createTestApplication({ redis });
     app = testApplication.app;
 
     await requestJson(app.handler, "POST", "/battles", Schema.Unknown, 503, {
@@ -686,15 +606,18 @@ describe("battle creation deduplication", () => {
       events: [battleEvent],
     });
 
-    expect(testApplication.database.storedBattles).toHaveLength(0);
+    expect(await testApplication.database.getStoredBattles()).toHaveLength(0);
   });
 
   it("returns 503 without storing a battle when the deduplication lock times out", async () => {
     spyOn(Logger.prototype, "error").mockImplementation(() => undefined);
     const redis = createRedisBoundary();
-    redis.getJson.mockResolvedValue(null);
+    redis.readCachedJson.mockResolvedValue(null);
     redis.setNX.mockResolvedValue(false);
-    const testApplication = await createTestApplication({ redis });
+    const testApplication = createTestApplication({
+      redis,
+      waitTimeoutMs: 30,
+    });
     app = testApplication.app;
 
     await requestJson(app.handler, "POST", "/battles", Schema.Unknown, 503, {
@@ -703,6 +626,6 @@ describe("battle creation deduplication", () => {
       events: [battleEvent],
     });
 
-    expect(testApplication.database.storedBattles).toHaveLength(0);
+    expect(await testApplication.database.getStoredBattles()).toHaveLength(0);
   });
 });

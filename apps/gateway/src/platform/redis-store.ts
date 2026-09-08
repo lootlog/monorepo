@@ -1,3 +1,4 @@
+import { RedisScriptCache } from "@lootlog/database/redis-script";
 import type { LootVisibilityNpc } from "@lootlog/domain/loot-visibility";
 import { SubscriptionScope } from "@lootlog/protocol/realtime";
 import { Effect, Queue, Schedule, Schema } from "effect";
@@ -83,7 +84,7 @@ export class RedisGatewayStore {
   ) {
     const prefix = (key: string) => `${config.keyPrefix}:${key}`;
     const run = this.runEffect;
-    const scripts = new Map<string, Redis.Script<any>>();
+    const scripts = new RedisScriptCache();
     this.command = {
       get: (key) => run(redis.send("GET", prefix(key))),
       set: (key, value, ...options) =>
@@ -98,22 +99,17 @@ export class RedisGatewayStore {
         run(redis.send("SREM", prefix(key), ...members)),
       smembers: (key) => run(redis.send("SMEMBERS", prefix(key))),
       mget: (keys) => run(redis.send("MGET", ...keys.map(prefix))),
-      eval: (script, numberOfKeys, ...keysAndArgs) =>
-        (() => {
-          const cacheKey = `${numberOfKeys}:${script}`;
-          let descriptor = scripts.get(cacheKey);
-          if (descriptor === undefined) {
-            descriptor = Redis.script(
-              (...parameters: ReadonlyArray<unknown>) => parameters,
-              { lua: script, numberOfKeys },
-            );
-            scripts.set(cacheKey, descriptor);
-          }
-          const parameters = keysAndArgs.map((value, index) =>
-            index < numberOfKeys ? prefix(String(value)) : String(value),
-          );
-          return run(redis.eval(descriptor)(...parameters));
-        })(),
+      eval: <A>(
+        script: string,
+        numberOfKeys: number,
+        ...keysAndArgs: ReadonlyArray<string | number>
+      ) => {
+        const descriptor = scripts.get<A>(script, numberOfKeys);
+        const parameters = keysAndArgs.map((value, index) =>
+          index < numberOfKeys ? prefix(String(value)) : String(value),
+        );
+        return run(redis.eval(descriptor)(...parameters));
+      },
       flushdb: () => run(redis.send("FLUSHDB")),
     };
     this.channel = `${config.keyPrefix}:realtime:federation:v1`;
@@ -151,10 +147,8 @@ export class RedisGatewayStore {
           try {
             const message = decodeFederatedRealtimeMessage(raw);
             if (
-              typeof message.id === "string" &&
-              typeof message.sourceInstanceId === "string" &&
-              (typeof message.frame === "string" ||
-                message.control?.type === "permissions.rebalance")
+              message.frame !== undefined ||
+              message.control?.type === "permissions.rebalance"
             ) {
               listener(message);
             }
@@ -176,13 +170,19 @@ export class RedisGatewayStore {
   }
 }
 
+export type RedisScriptReply =
+  | string
+  | number
+  | null
+  | ReadonlyArray<RedisScriptReply>;
+
 export interface RedisGatewayCommands {
   readonly get: (key: string) => Promise<string | null>;
   readonly set: (
     key: string,
     value: string,
     ...options: ReadonlyArray<string | number>
-  ) => Promise<unknown>;
+  ) => Promise<string | null>;
   readonly del: (...keys: string[]) => Promise<number>;
   readonly expire: (key: string, seconds: number) => Promise<number>;
   readonly incr: (key: string) => Promise<number>;
@@ -195,5 +195,5 @@ export interface RedisGatewayCommands {
     numberOfKeys: number,
     ...keysAndArgs: ReadonlyArray<string | number>
   ) => Promise<A>;
-  readonly flushdb: () => Promise<unknown>;
+  readonly flushdb: () => Promise<"OK">;
 }

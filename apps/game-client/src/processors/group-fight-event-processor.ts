@@ -42,12 +42,7 @@ type Capture = {
 };
 
 function eventTime(event: GameEvent): string | null {
-  if (
-    typeof event.ev !== "number" ||
-    !Number.isFinite(event.ev) ||
-    event.ev <= 0
-  )
-    return null;
+  if (!Number.isFinite(event.ev) || event.ev <= 0) return null;
   const date = new Date(event.ev * 1000);
   return Number.isFinite(date.getTime()) ? date.toISOString() : null;
 }
@@ -178,18 +173,16 @@ export class GroupFightEventProcessor {
     const qualification: CreateGroupFightOptions["qualification"] =
       isGroupFightMap(game.map.name)
         ? { source: "CATALOG" }
-        : {
-            source: "NPC_OBSERVED",
-            ...(observedNpc
-              ? {
-                  npc: {
-                    id: observedNpc.id,
-                    name: observedNpc.name,
-                    wt: observedNpc.weight,
-                  },
-                }
-              : {}),
-          };
+        : observedNpc
+          ? {
+              source: "NPC_OBSERVED",
+              npc: {
+                id: observedNpc.id,
+                name: observedNpc.name,
+                wt: observedNpc.weight,
+              },
+            }
+          : { source: "NPC_OBSERVED" };
     return {
       context: {
         world: game.world,

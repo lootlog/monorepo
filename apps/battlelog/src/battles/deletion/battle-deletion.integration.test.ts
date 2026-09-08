@@ -8,7 +8,7 @@ import { makePostgresLayer } from "@lootlog/database";
 import { Effect, Redacted } from "effect";
 import pg from "pg";
 import { readdir } from "node:fs/promises";
-import { makeDrizzleDatabase } from "#src/database/database";
+import { drizzleDatabaseEffect } from "#src/database/database";
 import { makeBattleDeletion } from "./battle-deletion.js";
 
 let postgres: StartedPostgreSqlContainer;
@@ -98,7 +98,7 @@ for (const mode of ["single", "user"] as const) {
     await run(
       Effect.gen(function* () {
         const deletion = makeBattleDeletion(
-          yield* makeDrizzleDatabase,
+          yield* drizzleDatabaseEffect,
           storage,
           analytics,
         );
@@ -142,7 +142,7 @@ for (const mode of ["single", "user"] as const) {
     await run(
       Effect.gen(function* () {
         const restarted = makeBattleDeletion(
-          yield* makeDrizzleDatabase,
+          yield* drizzleDatabaseEffect,
           storage,
           analytics,
         );
@@ -166,7 +166,7 @@ it("rolls back database removal if durable cleanup cannot be recorded", async ()
       run(
         Effect.gen(function* () {
           const deletion = makeBattleDeletion(
-            yield* makeDrizzleDatabase,
+            yield* drizzleDatabaseEffect,
             { deleteBattleData: async () => {} },
             { invalidateAnalyticsCache: () => Effect.void },
           );

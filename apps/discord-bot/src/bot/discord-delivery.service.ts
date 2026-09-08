@@ -6,7 +6,7 @@ import {
   type DiscordNotificationDeliveryResultEvent,
   type DiscordNotificationSendCommand,
 } from "@lootlog/schema/notifications";
-import { ChannelType, type Client, DiscordAPIError } from "discord.js";
+import { ChannelType, DiscordAPIError } from "discord.js";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { NON_RETRYABLE_DISCORD_ERROR_CODES } from "./non-retryable-discord-error-codes.js";
 import type { RabbitPublisher } from "./rabbit-publisher.js";
@@ -34,10 +34,7 @@ const truncateToDiscordLimit = (content: string) =>
     : `${content.slice(0, discordMessageLimit - 1)}…`;
 
 const notificationContent = (command: DiscordNotificationSendCommand) => {
-  if (
-    typeof command.content === "string" &&
-    command.content.trim().length > 0
-  ) {
+  if (command.content !== undefined && command.content.trim().length > 0) {
     return truncateToDiscordLimit(command.content);
   }
   if (command.title.trim().length === 0) {
@@ -54,39 +51,63 @@ const messageOptions = (command: DiscordNotificationSendCommand) => ({
       : command.allowedMentions,
 });
 
-const isRetryableDiscordError = (error: unknown) => {
-  if (error instanceof DiscordAPIError) {
-    return !NON_RETRYABLE_DISCORD_ERROR_CODES.has(Number(error.code));
+const isRetryableDiscordError = (cause: unknown) => {
+  if (cause instanceof DiscordAPIError) {
+    return !NON_RETRYABLE_DISCORD_ERROR_CODES.has(Number(cause.code));
   }
   return (
-    error instanceof Error &&
-    (error.name === "AbortError" ||
-      error.message.includes("ETIMEDOUT") ||
-      error.message.includes("ECONNRESET") ||
-      error.message.includes("ECONNREFUSED") ||
-      error.message.includes("fetch failed"))
+    cause instanceof Error &&
+    (cause.name === "AbortError" ||
+      cause.message.includes("ETIMEDOUT") ||
+      cause.message.includes("ECONNRESET") ||
+      cause.message.includes("ECONNREFUSED") ||
+      cause.message.includes("fetch failed"))
   );
 };
 
-const discordErrorCode = (error: unknown) => {
-  if (error instanceof DiscordAPIError) return String(error.code);
-  return error instanceof Error ? error.name : "UNKNOWN_DISCORD_ERROR";
+const discordErrorCode = (cause: unknown) => {
+  if (cause instanceof DiscordAPIError) return String(cause.code);
+  return cause instanceof Error ? cause.name : "UNKNOWN_DISCORD_ERROR";
 };
 
 const deliveryFailure = (
   operation: DiscordDeliveryFailure["operation"],
-  error: unknown,
+  cause: unknown,
 ) =>
   new DiscordDeliveryFailure({
     operation,
-    errorCode: discordErrorCode(error),
-    reason: error instanceof Error ? error.message : String(error),
-    retryable: isRetryableDiscordError(error),
+    errorCode: discordErrorCode(cause),
+    reason: cause instanceof Error ? cause.message : String(cause),
+    retryable: isRetryableDiscordError(cause),
   });
+
+type DeliveryMessage = { readonly id: string };
+type MessageSender = {
+  readonly send: (
+    options: ReturnType<typeof messageOptions>,
+  ) => Promise<DeliveryMessage>;
+};
+export interface DiscordDeliveryClient {
+  readonly users: {
+    readonly fetch: (
+      id: string,
+    ) => Promise<{ readonly createDM: () => Promise<MessageSender> }>;
+  };
+  readonly channels: {
+    readonly fetch: (id: string) => Promise<
+      | ({
+          readonly type: ChannelType;
+          readonly isTextBased: () => boolean;
+          readonly isSendable: () => boolean;
+        } & Partial<MessageSender>)
+      | null
+    >;
+  };
+}
 
 export const makeDiscordDelivery = (
   publisher: RabbitPublisher,
-  client: Client,
+  client: DiscordDeliveryClient,
 ) => {
   const publishDeliveryResult = (
     payload: DiscordNotificationDeliveryResultEvent,
@@ -142,7 +163,8 @@ export const makeDiscordDelivery = (
           !channel ||
           channel.type === ChannelType.DM ||
           !channel.isTextBased() ||
-          !channel.isSendable()
+          !channel.isSendable() ||
+          !channel.send
         ) {
           throw new Error("Discord channel is not text-based");
         }

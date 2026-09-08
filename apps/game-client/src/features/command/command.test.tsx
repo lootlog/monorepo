@@ -1,3 +1,4 @@
+import { type toast as SonnerToast, toast } from "sonner";
 import {
   act,
   fireEvent,
@@ -5,218 +6,144 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import { ApiError } from "@lootlog/client/transport";
-import type { ReactNode } from "react";
-import { toast } from "sonner";
+import { configureApiClients } from "@lootlog/client/transport";
+import { getUsersControllerGetCurrentUserAccessibleGuildsQueryKey } from "@lootlog/client/main";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { useWindowsStore } from "@/store/windows.store";
+import { useChatStore } from "@/store/chat.store";
+import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { CommandWindow } from "./command";
 
-const mocks = vi.hoisted(() => ({
-  handlePartyCommand: vi.fn(),
-  sendChatMessage: vi.fn(),
-  setOpen: vi.fn(),
-  startNotificationMessage: vi.fn(),
-}));
-
 vi.mock("sonner", () => ({
-  toast: { error: vi.fn() },
+  toast: { error: vi.fn<typeof SonnerToast.error>() },
 }));
-
-vi.mock("@/components/draggable-window", () => ({
-  DraggableWindow: ({
-    children,
-    isOpen,
-  }: {
-    children: ReactNode;
-    isOpen: boolean;
-  }) => (isOpen ? children : null),
-}));
-
-vi.mock("@/components/guild-multi-selector", () => ({
-  GuildMultiSelector: () => null,
-}));
-
-vi.mock("./components/command-actions", () => ({
-  CommandActions: () => null,
-}));
-
-vi.mock("./components/command-suggestions", () => ({
-  CommandSuggestions: () => null,
-  useCommandSuggestions: () => ({
-    filtered: [],
-    handleKeyDown: () => false,
-    isOpen: false,
-    selectedIndex: 0,
-  }),
-}));
-
-vi.mock("@/features/command/hooks/use-party-command", () => ({
-  usePartyCommand: () => ({ handlePartyCommand: mocks.handlePartyCommand }),
-}));
-
-vi.mock("@/hooks/api/use-send-chat-message", () => ({
-  useSendChatMessage: () => ({ mutateAsync: mocks.sendChatMessage }),
-}));
-
-vi.mock("@/features/chat/hooks/use-notification-chat-orchestration", () => ({
-  isNotificationRateLimitError: (error: unknown) =>
-    typeof error === "object" &&
-    error !== null &&
-    "status" in error &&
-    error.status === 429,
-  useNotificationChatOrchestration: () => ({
-    startNotificationMessage: mocks.startNotificationMessage,
-  }),
-}));
-
-vi.mock("@/store/chat.store", () => ({
-  useChatStore: (
-    selector: (state: {
-      selectedInputGuildIds: string[];
-      setSelectedInputGuildIds: () => void;
-    }) => unknown,
-  ) =>
-    selector({
-      selectedInputGuildIds: ["guild-1"],
-      setSelectedInputGuildIds: vi.fn(),
-    }),
-}));
-
-vi.mock("@/store/game.store", () => ({
-  useGameStore: (selector: (state: unknown) => unknown) =>
-    selector({
-      game: {
-        hero: {
-          accountId: "456",
-          characterId: "123",
-          icon: "hero.gif",
-          level: 200,
-          name: "Hero",
-          profession: "w",
-        },
-        world: "tempest",
-      },
-    }),
-}));
-
-vi.mock("@/store/windows.store", () => ({
-  useWindowsStore: (
-    selector: (state: {
-      command: { autofocus: boolean; open: boolean };
-      setOpen: typeof mocks.setOpen;
-    }) => unknown,
-  ) =>
-    selector({
-      command: { autofocus: false, open: true },
-      setOpen: mocks.setOpen,
-    }),
-}));
-
-const createDeferred = <T,>() => {
-  let resolve: (value: T) => void = () => {
-    throw new Error("Deferred promise was not initialized");
-  };
-  let reject: (reason?: unknown) => void = () => {
-    throw new Error("Deferred promise was not initialized");
-  };
-  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
-    resolve = resolvePromise;
-    reject = rejectPromise;
-  });
-
-  return { promise, reject, resolve };
+const notificationRequest = vi.fn<typeof fetch>();
+const chatRequest = vi.fn<typeof fetch>();
+let queryClient: QueryClient;
+let restoreApi: () => void;
+const mount = () =>
+  render(
+    <QueryClientProvider client={queryClient}>
+      <CommandWindow />
+    </QueryClientProvider>,
+  );
+const submit = (message: string) => {
+  const textarea = screen.getByPlaceholderText("Wiadomość...");
+  fireEvent.change(textarea, { target: { value: message } });
+  const form = textarea.closest("form");
+  if (!form) throw new Error("Expected command form");
+  fireEvent.submit(form);
+  return { textarea, form };
 };
-
+beforeEach(() => {
+  vi.clearAllMocks();
+  setTestRuntimeGame({
+    world: "tempest",
+    hero: {
+      accountId: "456",
+      characterId: "123",
+      name: "Hero",
+      level: 200,
+      profession: "w",
+      icon: "hero.gif",
+    },
+  });
+  useChatStore.setState({ selectedInputGuildIds: ["guild-1"] });
+  useWindowsStore.setState(useWindowsStore.getInitialState(), true);
+  useWindowsStore.getState().setOpen("command", true);
+  queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false, staleTime: Infinity },
+      mutations: { retry: false },
+    },
+  });
+  queryClient.setQueryData(
+    getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
+    [],
+  );
+  chatRequest.mockReset().mockResolvedValue(Response.json([]));
+  notificationRequest.mockReset();
+  restoreApi = configureApiClients({
+    main: {
+      baseUrl: "https://api.example.test",
+      fetch: (input, init) => {
+        const pathname = new URL(
+          input instanceof Request ? input.url : String(input),
+        ).pathname;
+        if (pathname.startsWith("/messaging"))
+          return notificationRequest(input, init);
+        if (pathname.endsWith("/chat-messages"))
+          return chatRequest(input, init);
+        throw new Error(`Unexpected HTTP request: ${pathname}`);
+      },
+    },
+  });
+});
+afterEach(() => {
+  restoreApi();
+  queryClient.clear();
+  useChatStore.setState(useChatStore.getInitialState(), true);
+  useWindowsStore.setState(useWindowsStore.getInitialState(), true);
+  vi.restoreAllMocks();
+});
 describe("CommandWindow", () => {
-  const getTextarea = () => screen.getByPlaceholderText("Wiadomość...");
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   it("ignores repeated submits and unlocks after a successful notification", async () => {
-    const deferred = createDeferred<unknown>();
-    mocks.startNotificationMessage.mockReturnValue(deferred.promise);
-    render(<CommandWindow />);
-    const textarea = getTextarea();
-    fireEvent.change(textarea, { target: { value: "!alarm" } });
-    const form = textarea.closest("form");
-
-    if (!form) {
-      throw new Error("Expected command form");
-    }
+    const deferred = Promise.withResolvers<Response>();
+    notificationRequest.mockReturnValue(deferred.promise);
+    mount();
+    const { textarea, form } = submit("!alarm");
     fireEvent.submit(form);
-    fireEvent.submit(form);
-
-    await waitFor(() =>
-      expect(mocks.startNotificationMessage).toHaveBeenCalledTimes(1),
+    await waitFor(() => expect(notificationRequest).toHaveBeenCalledOnce());
+    await waitFor(() => expect(textarea).toBeDisabled());
+    act(() =>
+      deferred.resolve(
+        Response.json({
+          guildIds: ["guild-1"],
+          notificationId: "notification-1",
+        }),
+      ),
     );
-    await waitFor(() => expect(textarea).toBeDisabled());
-
-    act(() => deferred.resolve({}));
-
-    await waitFor(() => expect(textarea).not.toBeDisabled());
+    await waitFor(() =>
+      expect(useWindowsStore.getState().command.open).toBe(false),
+    );
+    expect(chatRequest).toHaveBeenCalledOnce();
     expect(textarea).toHaveValue("");
-    expect(mocks.setOpen).toHaveBeenCalledWith("command", false);
   });
-
   it("unlocks and preserves the notification message after an error", async () => {
-    const deferred = createDeferred<unknown>();
-    mocks.startNotificationMessage.mockReturnValue(deferred.promise);
-    render(<CommandWindow />);
-    const textarea = getTextarea();
-    fireEvent.change(textarea, { target: { value: "!alarm" } });
-    const form = textarea.closest("form");
-    if (!form) {
-      throw new Error("Expected command form");
-    }
-    fireEvent.submit(form);
-
+    const deferred = Promise.withResolvers<Response>();
+    notificationRequest.mockReturnValue(deferred.promise);
+    mount();
+    const { textarea } = submit("!alarm");
     await waitFor(() => expect(textarea).toBeDisabled());
-    act(() => deferred.reject(new Error("unavailable")));
-
+    act(() =>
+      deferred.resolve(
+        Response.json({ message: "unavailable" }, { status: 503 }),
+      ),
+    );
     await waitFor(() => expect(textarea).not.toBeDisabled());
     expect(textarea).toHaveValue("!alarm");
-    expect(mocks.setOpen).not.toHaveBeenCalledWith("command", false);
+    expect(useWindowsStore.getState().command.open).toBe(true);
+    expect(chatRequest).not.toHaveBeenCalled();
   });
-
   it("unlocks an ordinary message after its own request", async () => {
-    const deferred = createDeferred<unknown>();
-    mocks.sendChatMessage.mockReturnValue(deferred.promise);
-    render(<CommandWindow />);
-    const textarea = getTextarea();
-    fireEvent.change(textarea, { target: { value: "hello" } });
-    const form = textarea.closest("form");
-    if (!form) {
-      throw new Error("Expected command form");
-    }
-    fireEvent.submit(form);
-
+    const deferred = Promise.withResolvers<Response>();
+    chatRequest.mockReturnValue(deferred.promise);
+    mount();
+    const { textarea } = submit("hello");
     await waitFor(() => expect(textarea).toBeDisabled());
-    expect(mocks.startNotificationMessage).not.toHaveBeenCalled();
-    act(() => deferred.resolve({}));
-
-    await waitFor(() => expect(textarea).not.toBeDisabled());
-  });
-
-  it("shows only the translated rate-limit error for a 429 response", async () => {
-    mocks.startNotificationMessage.mockRejectedValue(
-      new ApiError({
-        status: 429,
-        data: { retryAfterMs: 1_000 },
-        url: "/messaging",
-        method: "POST",
-        message: "Request failed",
-      }),
+    expect(notificationRequest).not.toHaveBeenCalled();
+    act(() => deferred.resolve(Response.json([])));
+    await waitFor(() =>
+      expect(useWindowsStore.getState().command.open).toBe(false),
     );
-    render(<CommandWindow />);
-    const textarea = getTextarea();
-    fireEvent.change(textarea, { target: { value: "!alarm" } });
-    const form = textarea.closest("form");
-    if (!form) {
-      throw new Error("Expected command form");
-    }
-    fireEvent.submit(form);
-
+  });
+  it("shows only the translated rate-limit error for a 429 response", async () => {
+    notificationRequest.mockResolvedValue(
+      Response.json({ retryAfterMs: 1000 }, { status: 429 }),
+    );
+    mount();
+    const { textarea } = submit("!alarm");
     await waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith(
         "Wysyłasz powiadomienia zbyt szybko. Spróbuj ponownie za chwilę.",

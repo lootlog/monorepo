@@ -1,3 +1,4 @@
+import { Globe } from "lucide-react";
 import { useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocalStorage } from "usehooks-ts";
@@ -102,6 +103,7 @@ export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({
     <div className="relative">
       <ThemeSurfaceOverlay subtle rounded="rounded-md" />
       <FilterPopover
+        icon={Globe}
         options={options}
         value={displayValue}
         onValueChange={handleSelect}

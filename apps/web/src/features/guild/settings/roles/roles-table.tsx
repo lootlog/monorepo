@@ -108,11 +108,8 @@ export const RolesTable = ({ guildId, isMobile, roles }: RolesTableProps) => {
         <col />
         <col className="w-16" />
       </colgroup>
-      <TableHeader
-        className="sticky top-0 z-10 bg-sidebar/95  [&_tr]:!border-b-0"
-        style={{ boxShadow: "inset 0 -1px 0 var(--border)" }}
-      >
-        <TableRow className="h-10 border-b-0 hover:bg-transparent">
+      <TableHeader className="sticky top-0 z-10 bg-background">
+        <TableRow className="border-b-1! border-border">
           <TableHead>{t("settings.roles.table.role")}</TableHead>
           <TableHead>{t("settings.roles.table.levelRange")}</TableHead>
           <TableHead>{t("settings.roles.table.permissions")}</TableHead>
@@ -134,12 +131,15 @@ export const RolesTable = ({ guildId, isMobile, roles }: RolesTableProps) => {
               role="link"
               tabIndex={0}
               className={cn(
-                "relative h-16 cursor-pointer border-b border-border/70 transition-colors hover:bg-muted/35",
+                "relative h-14 cursor-pointer border-b border-border transition-colors hover:bg-accent/35",
                 isLastRole && "border-b-0",
               )}
               onClickCapture={(event) => {
-                const target = event.target as HTMLElement;
-                if (target.closest("button,a,[data-role-row-action]")) {
+                const target = event.target;
+                if (
+                  target instanceof Element &&
+                  target.closest("button,a,[data-role-row-action]")
+                ) {
                   return;
                 }
 
@@ -157,12 +157,10 @@ export const RolesTable = ({ guildId, isMobile, roles }: RolesTableProps) => {
               <TableCell className="min-w-0 overflow-hidden">
                 <TextLink
                   className="flex min-w-0 items-center gap-3 text-sm"
-                  render={
-                    <Link
-                      to="/$guildId/settings/roles/$roleId"
-                      params={roleRouteParams}
-                    />
-                  }
+                  render=<Link
+                    to="/$guildId/settings/roles/$roleId"
+                    params={roleRouteParams}
+                  />
                 >
                   <span
                     className="size-3 shrink-0 rounded-full"
@@ -176,12 +174,10 @@ export const RolesTable = ({ guildId, isMobile, roles }: RolesTableProps) => {
               <TableCell className="overflow-hidden text-xs text-muted-foreground">
                 <TextLink
                   className="block truncate text-sm"
-                  render={
-                    <Link
-                      to="/$guildId/settings/roles/$roleId"
-                      params={roleRouteParams}
-                    />
-                  }
+                  render=<Link
+                    to="/$guildId/settings/roles/$roleId"
+                    params={roleRouteParams}
+                  />
                 >
                   {t("settings.roles.levelRange", {
                     from: role.lvlRangeFrom,
@@ -242,7 +238,7 @@ export const RolesTable = ({ guildId, isMobile, roles }: RolesTableProps) => {
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="size-8"
+                        className="size-7 md:size-8"
                         aria-label={t("settings.roles.actions.more")}
                       >
                         <MoreHorizontal className="size-4" />

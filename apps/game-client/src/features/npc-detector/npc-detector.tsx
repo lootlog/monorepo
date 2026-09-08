@@ -5,7 +5,7 @@ import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
-import type { DetectorNpcType } from "@lootlog/schema/account-preferences";
+import { getDetectorNpcSettings } from "@lootlog/schema/account-preferences";
 import { NpcType } from "@/api/npcs.api";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -47,13 +47,8 @@ export const NpcDetector = () => {
   };
 
   const filteredNpcs = npcs.filter((npc) => {
-    const npcType = getNpcTypeByWt(
-      NpcType,
-      npc.wt,
-      npc.prof,
-      npc.type,
-    ) as DetectorNpcType;
-    const settingsByNpcType = settings[npcType];
+    const npcType = getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type);
+    const settingsByNpcType = getDetectorNpcSettings(settings, npcType);
     return settingsByNpcType?.notifyWindow && settingsByNpcType?.detect;
   });
 

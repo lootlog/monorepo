@@ -1,10 +1,12 @@
+import type { ComponentProps } from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { NpcColorEditorPopover } from "./npc-color-editor-popover";
 
 describe("NpcColorEditorPopover", () => {
   it("shows faithful samples and a spaced restore action", () => {
-    const onReset = vi.fn();
+    const onReset =
+      vi.fn<ComponentProps<typeof NpcColorEditorPopover>["onReset"]>();
 
     render(
       <NpcColorEditorPopover
@@ -13,9 +15,15 @@ describe("NpcColorEditorPopover", () => {
         npcType="HERO"
         open
         saving={false}
-        onOpenChange={vi.fn()}
-        onDraftChange={vi.fn()}
-        onCommit={vi.fn()}
+        onOpenChange={vi.fn<
+          ComponentProps<typeof NpcColorEditorPopover>["onOpenChange"]
+        >()}
+        onDraftChange={vi.fn<
+          ComponentProps<typeof NpcColorEditorPopover>["onDraftChange"]
+        >()}
+        onCommit={vi.fn<
+          ComponentProps<typeof NpcColorEditorPopover>["onCommit"]
+        >()}
         onReset={onReset}
       >
         <button type="button">Hero</button>
@@ -36,8 +44,10 @@ describe("NpcColorEditorPopover", () => {
   });
 
   it("restores the saved color when Escape closes the popover", () => {
-    const onDraftChange = vi.fn();
-    const onOpenChange = vi.fn();
+    const onDraftChange =
+      vi.fn<ComponentProps<typeof NpcColorEditorPopover>["onDraftChange"]>();
+    const onOpenChange =
+      vi.fn<ComponentProps<typeof NpcColorEditorPopover>["onOpenChange"]>();
 
     render(
       <NpcColorEditorPopover
@@ -48,8 +58,12 @@ describe("NpcColorEditorPopover", () => {
         saving={false}
         onOpenChange={onOpenChange}
         onDraftChange={onDraftChange}
-        onCommit={vi.fn()}
-        onReset={vi.fn()}
+        onCommit={vi.fn<
+          ComponentProps<typeof NpcColorEditorPopover>["onCommit"]
+        >()}
+        onReset={vi.fn<
+          ComponentProps<typeof NpcColorEditorPopover>["onReset"]
+        >()}
       >
         <button type="button">Hero</button>
       </NpcColorEditorPopover>,

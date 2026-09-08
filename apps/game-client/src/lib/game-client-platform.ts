@@ -4,7 +4,7 @@ import {
   REALTIME_SUBPROTOCOL,
 } from "@lootlog/client/realtime";
 import { GATEWAY_URL, GATEWAY_SOCKET_PATH } from "@/config/gateway";
-import { requestRealtimeTicket } from "./realtime-ticket";
+import { REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY } from "@lootlog/protocol/realtime";
 
 export type GameRealtimeClient = Pick<
   RealtimeClient,
@@ -22,15 +22,15 @@ export interface GameClientPlatform {
   createRealtime: () => GameRealtimeClient;
 }
 
-export function createGameRealtimeClient(
-  extensionOrigin?: string,
-): RealtimeClient {
+export function createGameRealtimeClient(): RealtimeClient {
   const readable = import.meta.env.VITE_GATEWAY_FRAME_ENCODING === "json";
   return new RealtimeClient({
     url: GATEWAY_URL,
     path: GATEWAY_SOCKET_PATH || "/ws",
-    protocols: [readable ? REALTIME_JSON_SUBPROTOCOL : REALTIME_SUBPROTOCOL],
-    ticketProvider: () => requestRealtimeTicket(extensionOrigin),
+    protocols: [
+      readable ? REALTIME_JSON_SUBPROTOCOL : REALTIME_SUBPROTOCOL,
+      REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
+    ],
     frameEncoding: readable ? "json" : "messagepack",
   });
 }

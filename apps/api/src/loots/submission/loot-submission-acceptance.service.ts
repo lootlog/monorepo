@@ -1,3 +1,4 @@
+import type { MapPlayersSnapshot } from "#src/contracts/loots/map-players-snapshot";
 import { createItemStatsHash } from "@lootlog/database/snapshot-hash";
 import { Effect, Schema } from "effect";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
@@ -12,7 +13,7 @@ import {
 } from "#src/shared/http/http-errors";
 import { createHash } from "node:crypto";
 import { RoutingKey } from "#src/rabbitmq/routing-key";
-import type { ItemRarityEnum as ItemRarity } from "@lootlog/schema/item-rarity";
+import { ItemRaritySchema } from "@lootlog/schema/item-rarity";
 import {
   LootShareSourceEnum as LootShareSource,
   ProfessionEnum as Profession,
@@ -29,7 +30,7 @@ import type {
 } from "#src/contracts/loots/schemas";
 import { ErrorKey } from "#src/loots/error-key";
 import { getItemTypeByCl } from "#src/shared/margonem/item-type";
-import { getProfByShortname } from "#src/shared/margonem/profession";
+import { getProfByShortname } from "@lootlog/domain/profession";
 import {
   LootPublicationPayload,
   type LootPublication,
@@ -219,16 +220,26 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         type: npc.type,
         wt: npc.wt,
       }));
+      const mapPlayersSnapshot =
+        options.submission.source === "FIGHT" &&
+        primaryNpcType === NpcType.ELITE2 &&
+        options.submission.loots.some(
+          (item) => self.getItemStats(item).rarity === "LEGENDARY",
+        )
+          ? (options.submission.mapPlayersSnapshot ?? null)
+          : null;
       if (existingLootId !== null) {
         yield* self.acceptExistingLoot(
           existingLootId,
           outcome.submissionData,
           socketNpcs,
+          mapPlayersSnapshot,
         );
         return self.createResponse(existingLootId, outcome);
       }
 
       const lootId = yield* self.createNewLoot({
+        mapPlayersSnapshot,
         npcData,
         outcome,
         primaryNpcType,
@@ -318,6 +329,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     lootId: number,
     submissions: LootSubmissionData[],
     socketNpcs: LootEventNpc[],
+    mapPlayersSnapshot: MapPlayersSnapshot | null,
   ): Effect.Effect<void, unknown> {
     const self = this;
     return Effect.gen(function* () {
@@ -335,7 +347,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         submissions,
         existingSubmissions,
       );
-      if (newSubmissions.length === 0) {
+      if (newSubmissions.length === 0 && mapPlayersSnapshot === null) {
         return;
       }
 
@@ -344,11 +356,18 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         newSubmissions,
         (organizationIds) =>
           self.createdPublications(lootId, organizationIds, socketNpcs),
+        mapPlayersSnapshot === null
+          ? undefined
+          : {
+              guildIds: submissions.map(({ guildId }) => guildId),
+              players: mapPlayersSnapshot,
+            },
       );
     });
   }
 
   private createNewLoot(options: {
+    mapPlayersSnapshot: MapPlayersSnapshot | null;
     npcData: { primary: CreateLootRequest["npcs"][number] };
     outcome: AcceptanceOutcome;
     primaryNpcType: NpcType;
@@ -365,6 +384,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
       );
       return yield* self.repository.createNewLoot(
         {
+          mapPlayersSnapshot: options.mapPlayersSnapshot,
           uniqueId: options.uniqueId,
           world: options.submission.world,
           source: options.submission.source,
@@ -475,7 +495,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
   ) {
     if (primaryNpcType !== NpcType.COLOSSUS) {
       return Effect.succeed({
-        share: {} as Record<string, never>,
+        share: {},
         source: LootShareSource.NONE,
       });
     }
@@ -483,7 +503,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
       Effect.map((ambiguous) => {
         if (ambiguous) {
           return {
-            share: {} as Record<string, never>,
+            share: {},
             source: LootShareSource.NONE,
           };
         }
@@ -494,7 +514,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         return share
           ? { share, source: LootShareSource.ITEM_OWNER }
           : {
-              share: {} as Record<string, never>,
+              share: {},
               source: LootShareSource.NONE,
             };
       }),
@@ -530,10 +550,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     return assigned.size === players.length ? share : null;
   }
 
-  private processNpcs(npcs: CreateLootRequest["npcs"]): {
-    primary: CreateLootRequest["npcs"][number];
-    mapped: ProcessedNpc[];
-  } {
+  private processNpcs(npcs: CreateLootRequest["npcs"]) {
     const sorted = [...npcs].sort((left, right) => right.wt - left.wt);
     const primary = sorted[0];
     if (!primary) {
@@ -545,7 +562,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         id: npc.id,
         name: npc.name,
         lvl: npc.lvl,
-        prof: npc.prof ? getProfByShortname(npc.prof) : "",
+        prof: getProfByShortname(npc.prof ?? "") ?? "",
         icon: npc.icon,
         wt: npc.wt,
         location: npc.location,
@@ -572,13 +589,17 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
   private getItemStats(item: CreateLootRequest["loots"][number]) {
     const parsedStats = this.parseItemStats(item.stat);
     const lvl = parsedStats["lvl"] ? Number(parsedStats["lvl"]) : 0;
-    const rarity = parsedStats["rarity"]?.toUpperCase() as ItemRarity;
+    const rawRarity = parsedStats["rarity"]?.toUpperCase();
+    const rarity =
+      rawRarity === undefined
+        ? undefined
+        : Schema.decodeUnknownSync(ItemRaritySchema)(rawRarity);
     const requiredProf = parsedStats["reqp"];
     const prof = requiredProf
       ? requiredProf
           .split("")
           .map((id) => getProfByShortname(id))
-          .filter(Boolean)
+          .filter((prof) => prof !== undefined)
       : Object.values(Profession);
     return { lvl, rarity, prof, type: getItemTypeByCl(item.cl) };
   }
@@ -639,20 +660,16 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     world: string,
   ) {
     return players.map((player) => {
-      const prof = getProfByShortname(player.prof);
+      const prof = getProfByShortname(player.prof) ?? null;
       const { accountId, characterId } = this.normalizeCharacterAndAccount(
         player.id,
         player.accountId,
       );
-      const snapshotHash = createHash("sha256")
-        .update(`${player.name}${player.prof}${player.icon}`)
-        .digest("hex");
       return {
         lvl: player.lvl,
         world,
         accountId,
         characterId,
-        snapshotHash,
         name: player.name,
         prof,
         icon: player.icon,
@@ -663,7 +680,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
   private normalizeCharacterAndAccount(
     id: string | number,
     accountId: string | number,
-  ): { characterId: number; accountId: number } {
+  ) {
     const account = String(accountId ?? "");
     const character = String(id ?? "");
     if (account && character.endsWith(account)) {
@@ -688,7 +705,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
       icon: npc.icon,
       wt: npc.wt,
       margonemType: npc.type,
-      prof: npc.prof ? getProfByShortname(npc.prof) : null,
+      prof: getProfByShortname(npc.prof ?? "") ?? null,
     }));
   }
 

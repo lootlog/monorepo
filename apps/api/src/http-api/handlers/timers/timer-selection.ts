@@ -1,5 +1,5 @@
 import { and, eq, gt, isNull, lte, or } from "drizzle-orm";
-import { isRecord } from "@lootlog/schema/records";
+import { timerNpcField } from "#src/timers/timer-projection";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventHeroNpcTable,
@@ -8,8 +8,6 @@ import {
 } from "#src/database/drizzle/schema";
 import { isLegacyNpcIdIdentifier } from "#src/timers/timer-key";
 
-export const timerNpcField = (npc: unknown, key: string) =>
-  isRecord(npc) ? npc[key] : undefined;
 type TimerDatabase = Pick<typeof ApiDatabase.Service, "select">;
 
 export const timerIdentifierCondition = (

@@ -6,7 +6,7 @@ import { patchOtherCharacterTooltips } from "@/lib/margonem-tooltips/patcher";
 import { isConcreteLootlogGuildId } from "@/lib/selected-lootlog-guild";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
 import { useSelectedLootlogGuildId } from "@/hooks/use-selected-lootlog-guild";
-import type { Other } from "@lootlog/margonem/others";
+import type { OtherHandle } from "@lootlog/margonem/others";
 
 export function useCharacterTooltipGameEvents(): void {
   const isShiftPressed = useCharacterTooltipCatchingGuildsStore(
@@ -33,7 +33,7 @@ export function useCharacterTooltipGameEvents(): void {
       if (!active) return;
 
       if (!event.other) return;
-      const changedOthers: Other[] = [];
+      const changedOthers: OtherHandle[] = [];
 
       for (const [id, entry] of Object.entries(event.other)) {
         if (!createsOther(entry)) continue;

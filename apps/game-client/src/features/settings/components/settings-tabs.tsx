@@ -21,10 +21,12 @@ import { TimersSettingsColors } from "@/features/settings/components/timers/time
 import { TimersSettingsGeneral } from "@/features/settings/components/timers/timers-settings-general";
 import {
   resolveSettingsPath,
-  type SettingsDomainValue,
   type SettingsSubsectionValue,
 } from "@/features/settings/constants/settings-tabs";
-import { SETTINGS_MANIFEST } from "@/features/settings/settings-manifest";
+import {
+  SETTINGS_MANIFEST,
+  type SettingsIconName,
+} from "@/features/settings/settings-manifest";
 import {
   searchSettings,
   type SettingsSearchItem,
@@ -48,7 +50,7 @@ import {
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
-const ICONS: Record<string, LucideIcon> = {
+const ICONS = {
   settings: Settings,
   server: Server,
   palette: Palette,
@@ -59,7 +61,7 @@ const ICONS: Record<string, LucideIcon> = {
   keyboard: Keyboard,
   activity: Activity,
   info: Info,
-};
+} satisfies Record<SettingsIconName, LucideIcon>;
 
 const COMPACT_WIDTH = 600;
 
@@ -176,10 +178,7 @@ export const SettingsTabs = () => {
   }, [compactPanelOpen]);
 
   const openSearchResult = (result: SettingsSearchItem) => {
-    setSettingsPath(
-      result.categoryId as SettingsDomainValue,
-      result.subsectionId as SettingsSubsectionValue,
-    );
+    setSettingsPath(result.categoryId, result.subsectionId);
     setCompactPanelOpen(false);
 
     window.setTimeout(() => {

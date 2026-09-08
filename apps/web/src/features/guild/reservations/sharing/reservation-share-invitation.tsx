@@ -101,8 +101,8 @@ export function ReservationShareInvitation({
         <PageHeader
           title={<>{t("reservations.sharing.loadingTitle")}</>}
           description={<>{t("reservations.sharing.loadingDescription")}</>}
-          status={<Spinner className="size-6" />}
-        ></PageHeader>
+          status=<Spinner className="size-6" />
+        />
       </div>
     );
   }
@@ -175,7 +175,7 @@ export function ReservationShareInvitation({
               size="lg"
               disabled={!targetGuildId}
               loading={acceptMutation.isPending}
-              icon={<Link2 className="size-4" aria-hidden="true" />}
+              icon=<Link2 className="size-4" aria-hidden="true" />
               onClick={() =>
                 targetGuildId &&
                 acceptMutation.mutate({

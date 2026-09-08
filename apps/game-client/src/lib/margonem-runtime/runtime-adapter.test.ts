@@ -187,27 +187,29 @@ describe("NI runtime adapter", () => {
 
 describe("SI runtime adapter", () => {
   it("normalizes legacy globals and defaults missing collections to empty", () => {
+    const legacyOther = {
+      account: 303,
+      icon: "other.gif",
+      id: 404,
+      lvl: 250,
+      nick: "Other",
+      prof: "m",
+    };
     vi.stubGlobal("Engine", undefined);
     vi.stubGlobal("hero", hero);
     vi.stubGlobal("map", map);
     vi.stubGlobal("g", {
       init: 5,
       npc: { [gameNpc.id]: gameNpc },
-      other: {
-        "404": {
-          account: 303,
-          icon: "other.gif",
-          id: 404,
-          lvl: 250,
-          nick: "Other",
-          prof: "m",
-        },
-      },
+      other: { "404": legacyOther },
       worldConfig: { getWorldName: () => "legacy-world" },
     });
     const adapter = new SiRuntimeAdapter();
 
     expect(adapter.getGameSnapshot().world).toBe("legacy-world");
+    expect(adapter.getOtherHandle("404")).toBe(legacyOther);
+    expect(adapter.getAllOtherHandles()["404"]).toBe(legacyOther);
+    expect("d" in legacyOther).toBe(false);
     expect(adapter.getAllNpcs()).toEqual([
       expect.objectContaining({ id: gameNpc.id }),
     ]);
@@ -238,6 +240,16 @@ describe("runtime adapter selection", () => {
     vi.stubGlobal("Engine", undefined);
     expect(createRuntimeAdapter()).toBeInstanceOf(SiRuntimeAdapter);
     expect(getMargonemInterface()).toBe("si");
+  });
+
+  it("rejects reads from unavailable runtimes with TypeError", () => {
+    vi.stubGlobal("Engine", undefined);
+    vi.stubGlobal("g", undefined);
+    vi.stubGlobal("hero", undefined);
+    vi.stubGlobal("map", undefined);
+    expect(() => new NiRuntimeAdapter().getAllNpcs()).toThrow(TypeError);
+    expect(() => new SiRuntimeAdapter().getAllNpcs()).toThrow(TypeError);
+    expect(() => new SiRuntimeAdapter().getGameSnapshot()).toThrow(TypeError);
   });
 
   it("reports an unavailable runtime as not ready", () => {

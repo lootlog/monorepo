@@ -1,13 +1,21 @@
+import { RealtimeStoreError } from "./realtime-errors.js";
+import { httpClientFromResponses } from "../../test/http-fixtures.js";
+import {
+  canReadPolicyNpc,
+  createAccessPolicySnapshot,
+} from "@lootlog/protocol/realtime/access-policy";
 import { describe, expect, test } from "bun:test";
 import { encode } from "@msgpack/msgpack";
 import { Permission } from "@lootlog/schema/permissions";
 import { Effect } from "effect";
 import { CommandHandler } from "./command-handler.js";
-import type { GuildStore } from "#src/guilds/guild-store";
-import type { MargonemProofVerifier } from "#src/auth/margonem-proof";
+import { canReadSourceEvent } from "./source-event-visibility.js";
+import {
+  decodeServerEvent,
+  type ServerEvent,
+} from "@lootlog/protocol/realtime";
+import { makeGuildStore, type GuildStore } from "#src/guilds/guild-store";
 import type { ActivityPublisher } from "#src/rabbit/activity-publisher";
-import type { AirTagService } from "#src/realtime/air-tag-service";
-import type { MapPingService } from "#src/realtime/map-ping-service";
 import type { PresenceStore } from "#src/realtime/presence-store";
 import type { RealtimeHub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
@@ -22,7 +30,7 @@ const guild = (
 
 class FakeGuildStore {
   guilds: UserGuildData[] = [guild()];
-  getUserGuilds(): Effect.Effect<UserGuildData[], unknown> {
+  getUserGuilds() {
     return Effect.succeed(this.guilds);
   }
   invalidate(): Effect.Effect<void> {
@@ -31,28 +39,43 @@ class FakeGuildStore {
 }
 
 class FakeHub {
+  readonly deliveryOrder: string[] = [];
   readonly responses: unknown[] = [];
   readonly events: unknown[] = [];
   readonly sockets: GatewaySocket[] = [];
   onPermissionRebalance(): void {}
-  publishPermissionRebalance(): Effect.Effect<void> {
+  subscribe(): void {
+    throw new Error("Unexpected subscribe");
+  }
+  unsubscribe(): void {
+    throw new Error("Unexpected unsubscribe");
+  }
+  publishPermissionRebalance(): Effect.Effect<void, unknown> {
     return Effect.void;
   }
-  sendResponse(_socket: GatewaySocket, response: unknown): boolean {
+  sendResponse(
+    _socket: GatewaySocket,
+    response: Parameters<RealtimeHub["sendResponse"]>[1],
+  ): boolean {
+    this.deliveryOrder.push("response");
     this.responses.push(response);
     return true;
   }
-  sendEvent(_socket: GatewaySocket, event: unknown): boolean {
+  sendEvent(
+    _socket: GatewaySocket,
+    event: Parameters<RealtimeHub["sendEvent"]>[1],
+  ): boolean {
+    this.deliveryOrder.push("event");
     this.events.push(event);
     return true;
   }
   replaceSubscriptions(
     socket: GatewaySocket,
-    scopes: ReadonlyArray<{ topic: string }>,
+    scopes: Parameters<RealtimeHub["replaceSubscriptions"]>[1],
   ): void {
     socket.data.subscriptions = new Map(
       scopes.map((scope, index) => [String(index), scope]),
-    ) as SessionData["subscriptions"];
+    );
   }
   getLocalSocketsForUser(userId: string): GatewaySocket[] {
     return this.sockets.filter((socket) => socket.data.userId === userId);
@@ -65,7 +88,7 @@ class FakeActivity {
     type: "CONNECT_EVENT" | "DISCONNECT_EVENT",
     _session: SessionData,
     ids?: ReadonlyArray<string>,
-  ): Effect.Effect<void> {
+  ): ReturnType<ActivityPublisher["publish"]> {
     return Effect.sync(() => this.calls.push({ type, ids })).pipe(
       Effect.asVoid,
     );
@@ -73,6 +96,10 @@ class FakeActivity {
 }
 
 class FakePresence {
+  heartbeat: PresenceStore["heartbeat"] = () =>
+    Effect.die("Unexpected heartbeat");
+  publish = () => Effect.die("Unexpected presence publish");
+  snapshot = () => Effect.die("Unexpected snapshot");
   readonly reconciled: GatewaySocket[] = [];
 
   reconcileAccess(socket: GatewaySocket): Effect.Effect<void> {
@@ -94,7 +121,7 @@ class FakePresence {
   }
 }
 
-const makeSocket = (): { socket: GatewaySocket; closes: number[] } => {
+const makeSocket = () => {
   const closes: number[] = [];
   const data: SessionData = {
     discordId: "discord-1",
@@ -111,27 +138,36 @@ const makeSocket = (): { socket: GatewaySocket; closes: number[] } => {
   return {
     socket: {
       data,
-      close: (code: number) => closes.push(code),
-    } as unknown as GatewaySocket,
+      close: (code: number) => {
+        closes.push(code);
+      },
+      send: () => 0,
+      getBufferedAmount: () => 0,
+    },
     closes,
   };
 };
 
-const setup = () => {
+const setup = (guildStore?: GuildStore) => {
   const guilds = new FakeGuildStore();
   const hub = new FakeHub();
   const activity = new FakeActivity();
   const presence = new FakePresence();
   const handler = new CommandHandler(
-    guilds as unknown as GuildStore,
+    guildStore ?? guilds,
     {
       verify: () => Effect.succeed({ valid: false, reason: "not supplied" }),
-    } as unknown as MargonemProofVerifier,
-    presence as unknown as PresenceStore,
-    hub as unknown as RealtimeHub,
-    activity as unknown as ActivityPublisher,
-    {} as MapPingService,
-    { clearSubscription: () => undefined } as unknown as AirTagService,
+    },
+    presence,
+    hub,
+    activity,
+    { send: () => Promise.reject(new Error("Unexpected map ping")) },
+    {
+      updateSubscription: () =>
+        Promise.reject(new Error("Unexpected air tag subscribe")),
+      publishObservations: () =>
+        Promise.reject(new Error("Unexpected air tag observation")),
+    },
   );
   return { handler, guilds, hub, activity, presence };
 };
@@ -218,6 +254,298 @@ describe("CommandHandler session lifecycle", () => {
     expect(activity.calls.map(({ type }) => type)).toEqual(["CONNECT_EVENT"]);
   });
 
+  test.each(["local", "remote"])(
+    "rebalances with the active socket on %s preserve refreshed shared permissions for reconnects",
+    async (activeInstance) => {
+      let cached: string | null = JSON.stringify({
+        guilds: [guild()],
+        cachedAt: Date.now(),
+      });
+      let requests = 0;
+      let invalidations = 0;
+      const store = makeGuildStore(
+        { apiUrl: "http://api.local" },
+        {
+          command: {
+            get: async () => cached,
+            set: async (_key: string, value: string) => {
+              cached = value;
+              return "OK";
+            },
+            del: async () => {
+              invalidations++;
+              cached = null;
+              return 1;
+            },
+          },
+        },
+        httpClientFromResponses(() =>
+          Effect.sync(() => {
+            requests++;
+            return Response.json([]);
+          }),
+        ),
+      );
+      const local = setup(store);
+      const remote = setup(store);
+      const target = makeSocket();
+      target.socket.data.joined = true;
+      target.socket.data.guilds = [guild()];
+      const active = activeInstance === "local" ? local : remote;
+      active.hub.sockets.push(target.socket);
+      let published = 0;
+      local.hub.publishPermissionRebalance = () =>
+        Effect.gen(function* () {
+          published++;
+          expect(requests).toBe(activeInstance === "local" ? 1 : 0);
+          yield* remote.handler.rebalanceUser("discord-1", "user-1");
+        });
+      await Effect.runPromise(
+        local.handler.rebalanceAcrossInstances("discord-1", "user-1"),
+      );
+      expect(published).toBe(1);
+      expect(invalidations).toBe(1);
+      expect(cached).not.toBeNull();
+      expect(requests).toBe(1);
+      expect(target.closes).toEqual([1008]);
+      expect(target.socket.data.guilds).toEqual([]);
+
+      // A later join must not recover the revoked grants from Redis.
+      const reconnect = makeSocket();
+      await Effect.runPromise(
+        local.handler.handle(
+          reconnect.socket,
+          JSON.stringify({
+            v: 1,
+            type: "session.join",
+            requestId: "reconnect",
+            data: {},
+          }),
+        ),
+      );
+      expect(reconnect.socket.data.joined).toBe(false);
+      expect(reconnect.socket.data.guilds).toEqual([]);
+      expect(requests).toBe(1);
+    },
+  );
+
+  test("does not fetch permissions for a different Discord identity on the same user", async () => {
+    const { handler, guilds, hub } = setup();
+    const target = makeSocket();
+    Object.assign(target.socket.data, { discordId: "other-discord" });
+    hub.sockets.push(target.socket);
+    guilds.getUserGuilds = () =>
+      Effect.die("unrelated identity must not load permissions");
+    await Effect.runPromise(handler.rebalanceUser("discord-1", "user-1"));
+    expect(hub.events).toEqual([]);
+  });
+
+  test("rebalances current sockets after a permissions request replaces a connection", async () => {
+    const { handler, guilds, hub } = setup();
+    const old = makeSocket();
+    const current = makeSocket();
+    old.socket.data.guilds = [guild()];
+    current.socket.data.guilds = [guild()];
+    hub.sockets.push(old.socket);
+    guilds.getUserGuilds = () =>
+      Effect.sync(() => {
+        hub.sockets.splice(0, 1, current.socket);
+        return [];
+      });
+    await Effect.runPromise(handler.rebalanceUser("discord-1", "user-1"));
+    expect(old.closes).toEqual([]);
+    expect(current.closes).toEqual([1008]);
+  });
+
+  test("repeated equivalent rebalances refresh server roles without emitting client invalidations", async () => {
+    const { handler, guilds, hub, presence } = setup();
+    const target = makeSocket();
+    target.socket.data.joined = true;
+    target.socket.data.guilds = [guild([Permission.LOOTLOG_TIMERS_READ])];
+    target.socket.data.subscriptions.set("custom", {
+      topic: "party.ready-room",
+    });
+    const subscriptions = target.socket.data.subscriptions;
+    hub.sockets.push(target.socket);
+    guilds.guilds = [
+      {
+        ...guild(),
+        roles: [
+          {
+            id: "replacement-1",
+            lvlRangeFrom: 0,
+            lvlRangeTo: 300,
+            permissions: [Permission.LOOTLOG_TIMERS_READ],
+          },
+          {
+            id: "replacement-2",
+            lvlRangeFrom: 200,
+            lvlRangeTo: 500,
+            permissions: [Permission.LOOTLOG_TIMERS_READ],
+          },
+        ],
+      },
+    ];
+    for (let index = 0; index < 4; index++) {
+      await Effect.runPromise(handler.rebalanceUser("discord-1", "user-1"));
+    }
+    expect(target.socket.data.guilds).toBe(guilds.guilds);
+    expect(target.socket.data.subscriptions).toBe(subscriptions);
+    expect(hub.events).toEqual([]);
+    expect(presence.reconciled).toEqual([]);
+  });
+
+  test("revoking one air-tag scope preserves authorized scopes in other organizations", async () => {
+    const { handler, guilds, hub } = setup();
+    const target = makeSocket();
+    target.socket.data.joined = true;
+    const one = guild();
+    const two = {
+      ...guild(),
+      guild: { id: "organization-2", ownerId: "owner" },
+    };
+    target.socket.data.guilds = [one, two];
+    const scope = (guildId: string) => ({
+      guildId,
+      world: "fobos",
+      mapId: 1,
+      subscription: {
+        topic: "map.air-tags" as const,
+        organizationId: guildId,
+        world: "fobos",
+        mapId: 1,
+      },
+    });
+    const retained = scope("organization-2");
+    target.socket.data.airTagScopes = [scope("organization-1"), retained];
+    target.socket.data.subscriptions = new Map(
+      target.socket.data.airTagScopes.map((entry) => [
+        entry.guildId,
+        entry.subscription,
+      ]),
+    );
+    hub.sockets.push(target.socket);
+    guilds.guilds = [guild([Permission.LOOTLOG_CHAT_READ]), two];
+    await Effect.runPromise(handler.rebalanceUser("discord-1", "user-1"));
+    expect(target.socket.data.airTagScopes).toEqual([retained]);
+    expect(
+      [...target.socket.data.subscriptions.values()].filter(
+        (entry) => entry.topic === "map.air-tags",
+      ),
+    ).toEqual([retained.subscription]);
+  });
+
+  test("reconnect snapshots retain a stable compact version until access changes", async () => {
+    const { handler, guilds, hub } = setup();
+    const target = makeSocket();
+    const join = Buffer.from(encode({ v: 1, type: "session.join", data: {} }));
+    await Effect.runPromise(handler.handle(target.socket, join));
+    await Effect.runPromise(handler.handle(target.socket, join));
+    const readPolicy = (index: number) => {
+      const event = hub.events[index];
+      const decoded = decodeServerEvent(event);
+      if (decoded.type !== "session.joined" || !decoded.data.accessPolicy)
+        throw new Error("Missing joined policy");
+      return decoded.data.accessPolicy;
+    };
+    const previous = readPolicy(0);
+    expect(previous.version).toMatch(/^[a-f0-9]{64}$/);
+    expect(readPolicy(1)).toEqual(previous);
+    guilds.guilds = [guild([Permission.LOOTLOG_CHAT_READ])];
+    await Effect.runPromise(handler.handle(target.socket, join));
+    expect(readPolicy(2).version).not.toBe(previous.version);
+  });
+
+  test.each([false, true])(
+    "a denied join sends an empty policy before rejecting, previously joined: %s",
+    async (previouslyJoined) => {
+      const { handler, guilds, hub, activity, presence } = setup();
+      const target = makeSocket();
+      if (previouslyJoined) {
+        target.socket.data.joined = true;
+        target.socket.data.guilds = [guild()];
+        target.socket.data.subscriptions.set("old-scope", {
+          topic: "organization.presence",
+          organizationId: "organization-1",
+        });
+        target.socket.data.airTagScopes = [
+          {
+            guildId: "organization-1",
+            world: "fobos",
+            mapId: 1,
+            subscription: {
+              topic: "map.air-tags",
+              organizationId: "organization-1",
+              world: "fobos",
+              mapId: 1,
+            },
+          },
+        ];
+        target.socket.data.presence = {
+          userId: "user-1",
+          sessionId: "connection-1",
+          organizationIds: ["organization-1"],
+          platform: "web-app",
+          status: "online",
+          confidence: "reported",
+          isAfk: false,
+          lastSeen: 1,
+        };
+      }
+      guilds.guilds = [];
+      await Effect.runPromise(
+        handler.handle(
+          target.socket,
+          Buffer.from(
+            encode({
+              v: 1,
+              type: "session.join",
+              requestId: "denied-join",
+              data: {},
+            }),
+          ),
+        ),
+      );
+      expect(hub.events).toHaveLength(1);
+      expect(hub.deliveryOrder).toEqual(["event", "response"]);
+      const event = decodeServerEvent(hub.events[0]);
+      expect(event).toMatchObject({
+        type: "permissions.updated",
+        data: {
+          organizationIds: [],
+          subscriptionScopes: [],
+          accessPolicy: { organizations: [] },
+        },
+      });
+      if (event.type !== "permissions.updated")
+        throw new Error("Missing policy event");
+      expect(event.data.accessPolicy?.version).toMatch(/^[a-f0-9]{64}$/);
+      expect(hub.responses).toEqual([
+        {
+          v: 1,
+          requestId: "denied-join",
+          status: "error",
+          error: {
+            code: "COMMAND_REJECTED",
+            message: "no authorized organizations",
+            retryable: false,
+          },
+        },
+      ]);
+      expect(target.socket.data.guilds).toEqual([]);
+      expect(target.socket.data.joined).toBe(false);
+      expect(target.socket.data.subscriptions.size).toBe(0);
+      expect(target.socket.data.airTagScopes).toEqual([]);
+      expect(target.socket.data.presence).toBeUndefined();
+      expect(presence.reconciled).toEqual([target.socket]);
+      expect(activity.calls).toEqual(
+        previouslyJoined
+          ? [{ type: "DISCONNECT_EVENT", ids: ["organization-1"] }]
+          : [],
+      );
+    },
+  );
+
   test("rebalances permissions and disconnects sessions with no organizations", async () => {
     const { handler, guilds, hub, activity, presence } = setup();
     const target = makeSocket();
@@ -243,6 +571,77 @@ describe("CommandHandler session lifecycle", () => {
     expect(presence.reconciled).toEqual([target.socket]);
     expect(target.socket.data.presence).toBeUndefined();
     expect(hub.events).toHaveLength(1);
+  });
+
+  test("applies revoked tier grants and narrower level ranges to connected sessions", async () => {
+    const { handler, guilds, hub } = setup();
+    const target = makeSocket();
+    target.socket.data.joined = true;
+    target.socket.data.guilds = [
+      guild([
+        Permission.LOOTLOG_TIMERS_READ,
+        Permission.LOOTLOG_TIMERS_HEROES_READ,
+        Permission.LOOTLOG_TIMERS_TITANS_READ,
+      ]),
+    ];
+    hub.sockets.push(target.socket);
+    const timer = (
+      type: "HERO" | "TITAN",
+      lvl: number,
+    ): typeof ServerEvent.Type => ({
+      v: 1,
+      type: "timer.created",
+      data: {
+        organizationId: "organization-1",
+        payload: { guildId: "organization-1", npc: { type, lvl } },
+      },
+    });
+    const titan = timer("TITAN", 250);
+    const lowLevelHero = timer("HERO", 105);
+    const allowedHero = timer("HERO", 250);
+    for (const event of [titan, lowLevelHero, allowedHero]) {
+      expect(canReadSourceEvent(target.socket.data, event)).toBe(true);
+    }
+
+    guilds.guilds = [
+      {
+        guild: { id: "organization-1", ownerId: "owner" },
+        roles: [
+          {
+            id: "role",
+            lvlRangeFrom: 200,
+            lvlRangeTo: 500,
+            permissions: [
+              Permission.LOOTLOG_TIMERS_READ,
+              Permission.LOOTLOG_TIMERS_HEROES_READ,
+            ],
+          },
+        ],
+      },
+    ];
+    await Effect.runPromise(handler.rebalanceUser("discord-1", "user-1"));
+
+    expect(hub.events).toHaveLength(1);
+    expect(hub.events[0]).toMatchObject({
+      type: "permissions.updated",
+      data: {
+        changes: [
+          {
+            organizationId: "organization-1",
+            areas: ["timers"],
+            restricted: true,
+            expanded: false,
+          },
+        ],
+      },
+    });
+    await Effect.runPromise(handler.rebalanceUser("discord-1", "user-1"));
+    expect(hub.events).toHaveLength(1);
+    expect(canReadSourceEvent(target.socket.data, titan)).toBe(false);
+    expect(canReadSourceEvent(target.socket.data, lowLevelHero)).toBe(false);
+    expect(canReadSourceEvent(target.socket.data, allowedHero)).toBe(true);
+    expect(target.socket.data.joined).toBe(true);
+    expect(target.closes).toEqual([]);
   });
 
   test("closes unknown MessagePack commands as malformed protocol frames", async () => {
@@ -311,18 +710,25 @@ describe("CommandHandler session lifecycle", () => {
   });
 
   test("does not expose dependency failures through command responses", async () => {
-    const { handler, guilds, hub } = setup();
-    guilds.getUserGuilds = () => Effect.fail(new Error("database secret"));
+    const { handler, presence, hub } = setup();
+    presence.heartbeat = () =>
+      Effect.fail(
+        new RealtimeStoreError({
+          operation: "presence.heartbeat",
+          cause: new Error("database secret"),
+        }),
+      );
     const target = makeSocket();
+    target.socket.data.joined = true;
     await Effect.runPromise(
       handler.handle(
         target.socket,
         Buffer.from(
           encode({
             v: 1,
-            type: "session.join",
+            type: "presence.heartbeat",
             requestId: "request-dependency",
-            data: {},
+            data: { sessionId: "connection-1" },
           }),
         ),
       ),
@@ -338,4 +744,72 @@ describe("CommandHandler session lifecycle", () => {
       },
     });
   });
+});
+
+test("client NPC policy decisions match gateway source filtering across roles and tiers", () => {
+  for (const viewer of ["member", "owner"]) {
+    for (const permissions of [
+      [],
+      [Permission.ADMIN],
+      [
+        Permission.LOOTLOG_TIMERS_READ,
+        Permission.LOOTLOG_CHAT_READ,
+        Permission.LOOTLOG_NOTIFICATIONS_READ,
+      ],
+      [
+        Permission.LOOTLOG_TIMERS_READ,
+        Permission.LOOTLOG_TIMERS_TITANS_READ,
+        Permission.LOOTLOG_CHAT_READ,
+        Permission.LOOTLOG_CHAT_HEROES_READ,
+      ],
+    ]) {
+      const target = makeSocket();
+      Object.assign(target.socket.data, { discordId: viewer });
+      target.socket.data.guilds = [
+        {
+          ...guild(permissions),
+          roles: [
+            { id: "role", lvlRangeFrom: 200, lvlRangeTo: 500, permissions },
+          ],
+        },
+      ];
+      const policy = createAccessPolicySnapshot(
+        target.socket.data.guilds,
+        viewer,
+      ).organizations[0];
+      if (!policy) throw new Error("Missing fixture policy");
+      for (const type of ["ELITE2", "HERO", "EVENT_HERO", "TITAN", "INVALID"]) {
+        for (const lvl of [100, 250, 600]) {
+          const npc = { type, lvl };
+          for (const feature of ["timers", "chat", "notifications"] as const) {
+            let event: typeof ServerEvent.Type;
+            if (feature === "timers")
+              event = {
+                v: 1,
+                type: "timer.created",
+                data: { organizationId: "organization-1", payload: { npc } },
+              };
+            else if (feature === "chat")
+              event = {
+                v: 1,
+                type: "chat.created",
+                data: {
+                  organizationId: "organization-1",
+                  payload: { type: "NPC", npc },
+                },
+              };
+            else
+              event = {
+                v: 1,
+                type: "notification.sent",
+                data: { organizationId: "organization-1", payload: { npc } },
+              };
+            expect(canReadPolicyNpc(policy, feature, npc)).toBe(
+              canReadSourceEvent(target.socket.data, event),
+            );
+          }
+        }
+      }
+    }
+  }
 });

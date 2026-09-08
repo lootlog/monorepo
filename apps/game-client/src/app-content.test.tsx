@@ -1,113 +1,77 @@
-import { render, screen } from "@testing-library/react";
-import { AppContent } from "@/app-content";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import { afterEach, expect, it, vi } from "vitest";
+import {
+  getUsersControllerGetUserGameAccountPreferencesQueryKey,
+  type UserGameAccountPreferencesResponseDtoOutput,
+} from "@lootlog/client/main";
+import { createNativeRuntime } from "@/test/native-runtime";
+import { createRealtimeTest } from "@/test/realtime-test";
+import {
+  createNotificationsSettings,
+  createDetectorSettings,
+} from "@/lib/game-account-preferences";
+import { useWindowsStore } from "@/store/windows.store";
+import { mapPingInteractionController } from "@/features/map-pings/map-ping-interaction-controller";
 
-const mapPingHotkeyHandlers = vi.hoisted(() => ({
-  onMapPingCancel: vi.fn(),
-  onMapPingEnd: vi.fn(),
-  onMapPingStart: vi.fn(),
-}));
-const useHotkeys = vi.hoisted(() => vi.fn());
-const useAirTags = vi.hoisted(() => vi.fn());
-const useSelectedLootlogGuildInitialization = vi.hoisted(() => vi.fn());
+vi.stubGlobal("Engine", createNativeRuntime());
+const { AppContent } = await import("./app-content");
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
 
-vi.mock("@/features/map-pings/use-map-pings", () => ({
-  useMapPings: () => mapPingHotkeyHandlers,
-}));
-vi.mock("@/features/air-tags/use-air-tags", () => ({ useAirTags }));
-vi.mock("@/hooks/use-hotkeys", () => ({ useHotkeys }));
-vi.mock("@/hooks/use-selected-lootlog-guild", () => ({
-  useSelectedLootlogGuildInitialization,
-}));
-vi.mock("@/features/map-pings/map-ping-wheel", () => ({
-  MapPingWheel: () => <div data-testid="map-ping-wheel" />,
-}));
-
-vi.mock("@/store/global.store", () => ({
-  useGlobalStore: (
-    selector: (state: { gameState: { gameInitialized: boolean } }) => unknown,
-  ) => selector({ gameState: { gameInitialized: true } }),
-}));
-vi.mock("@/hooks/use-timer-settings-sync", () => ({
-  useTimerSettingsSync: () => ({ ConflictDialog: null }),
-}));
-
-vi.mock("@/components/animation-effects-root-class", () => ({
-  AnimationEffectsRootClass: () => null,
-}));
-vi.mock("@lootlog/ui/components/sonner", () => ({ Toaster: () => null }));
-vi.mock(
-  "@/features/backend-preferences-warning/backend-preferences-warning",
-  () => ({ BackendPreferencesWarning: () => null }),
-);
-vi.mock(
-  "@/features/catching-whitelist-warning/catching-whitelist-warning",
-  () => ({ CatchingWhitelistWarning: () => null }),
-);
-vi.mock("@/features/chat/chat", () => ({ Chat: () => null }));
-vi.mock("@/features/command/command", () => ({
-  CommandWindow: () => null,
-}));
-vi.mock("@/features/notifications/notifications", () => ({
-  Notifications: () => null,
-}));
-vi.mock("@/features/npc-detector/npc-detector", () => ({
-  NpcDetector: () => null,
-}));
-vi.mock("@/features/online-players/online-players", () => ({
-  OnlinePlayers: () => null,
-}));
-vi.mock("@/features/party-finder/create-party-gathering", () => ({
-  CreatePartyGathering: () => null,
-}));
-vi.mock("@/features/party-finder/party-finder", () => ({
-  PartyFinder: () => null,
-}));
-vi.mock("@/features/quick-access/quick-access", () => ({
-  QuickAccess: () => <div data-testid="quick-access" />,
-}));
-vi.mock("@/features/settings/settings", () => ({ Settings: () => null }));
-vi.mock("@/features/timers/add-timer", () => ({ AddTimer: () => null }));
-vi.mock("@/features/timers/timers", () => ({ Timers: () => null }));
-
-vi.mock("@/hooks/game-events/use-game-event-handlers", () => ({
-  useGameEventHandlers: () => undefined,
-}));
-vi.mock("@/hooks/use-game-account-preferences-sync", () => ({
-  useGameAccountPreferencesSync: () => undefined,
-}));
-vi.mock("@/hooks/use-init", () => ({ useInit: () => undefined }));
-vi.mock("@/hooks/use-timer-settings-mutations-registry", () => ({
-  useTimerSettingsMutationsRegistry: () => undefined,
-}));
-vi.mock("@/features/party-finder/hooks/use-party-gathering-socket", () => ({
-  usePartyGatheringSocket: () => undefined,
-}));
-vi.mock("@/features/party-finder/hooks/use-party-ready-room-expiry", () => ({
-  usePartyReadyRoomExpiry: () => undefined,
-}));
-vi.mock("@/features/party-finder/hooks/use-party-ready-room-observer", () => ({
-  usePartyReadyRoomObserver: () => undefined,
-}));
-vi.mock("@/features/party-finder/hooks/use-party-ready-room-socket", () => ({
-  usePartyReadyRoomSocket: () => undefined,
-}));
-vi.mock("@/features/party-finder/hooks/use-party-ready-room-sync", () => ({
-  usePartyReadyRoomSync: () => undefined,
-}));
-
-describe("AppContent map ping integration", () => {
-  it("wires the map ping lifecycle into hotkeys and mounts the wheel", () => {
-    render(
-      <QueryClientProvider client={new QueryClient()}>
-        <AppContent />
-      </QueryClientProvider>,
-    );
-
-    expect(useHotkeys).toHaveBeenCalledWith(mapPingHotkeyHandlers);
-    expect(useAirTags).toHaveBeenCalledOnce();
-    expect(useSelectedLootlogGuildInitialization).toHaveBeenCalledOnce();
-    expect(screen.getByTestId("map-ping-wheel")).toBeInTheDocument();
-    expect(screen.getByTestId("quick-access")).toBeInTheDocument();
+it("opens the map ping wheel from the configured hotkey and cancels it on Escape", async () => {
+  const test = createRealtimeTest();
+  const native = createNativeRuntime();
+  vi.stubGlobal("Engine", {
+    ...native,
+    apiData: { CALL_DRAW_ADD_TO_RENDERER: "call_draw_add_to_renderer" },
+    map: { ...native.map, offset: [0, 0], size: { x: 100, y: 100 } },
   });
+  const preferences: UserGameAccountPreferencesResponseDtoOutput = {
+    accountId: "202",
+    notifications: createNotificationsSettings(),
+    detector: createDetectorSettings(),
+    pings: { enabled: true },
+    airTags: { enabled: false },
+    hasStoredNotifications: true,
+    hasStoredDetector: true,
+    hasStoredPings: true,
+    hasStoredAirTags: true,
+    hasStoredPreferences: true,
+  };
+  test.queryClient.setQueryData(
+    getUsersControllerGetUserGameAccountPreferencesQueryKey({
+      accountId: "202",
+    }),
+    preferences,
+  );
+  useWindowsStore.getState().setOpen("quick-access", true);
+  const canvas = document.createElement("canvas");
+  canvas.id = "GAME_CANVAS";
+  canvas.width = 640;
+  canvas.height = 640;
+  document.body.append(canvas);
+  vi.spyOn(canvas, "getBoundingClientRect").mockReturnValue(
+    new DOMRect(0, 0, 640, 640),
+  );
+  const view = render(<AppContent />, { wrapper: test.wrapper });
+  test.open();
+  await test.join();
+  fireEvent.mouseDown(canvas, { button: 1, clientX: 400, clientY: 272 });
+  await waitFor(() =>
+    expect(mapPingInteractionController.getSnapshot()).not.toBeNull(),
+  );
+  expect(screen.getByRole("status", { name: /ping/i })).toBeInTheDocument();
+  fireEvent.keyDown(window, { key: "Escape" });
+  expect(mapPingInteractionController.getSnapshot()).toBeNull();
+  expect(screen.queryByRole("status", { name: /ping/i })).toBeNull();
+  act(() => view.unmount());
+  canvas.remove();
 });

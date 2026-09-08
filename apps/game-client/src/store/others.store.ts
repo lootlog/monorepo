@@ -1,27 +1,8 @@
-import { normalizeRuntimeOtherData } from "@/lib/margonem-runtime/runtime-adapter";
 import { create } from "zustand";
 import type {
   RuntimeOther,
   RuntimeStatus,
 } from "@/lib/margonem-runtime/runtime.types";
-import {
-  replaceRuntimeOtherHandlesForCompatibility,
-  upsertRuntimeOtherHandleForCompatibility,
-} from "@/lib/margonem-runtime/runtime-other-handles";
-
-type RuntimeOtherInput =
-  | RuntimeOther
-  | Readonly<{
-      d: Readonly<{
-        account?: number | string;
-        icon?: string;
-        id?: number | string;
-        lvl?: number;
-        nick?: string;
-        prof?: string;
-      }>;
-    }>;
-
 type OthersById = Readonly<Record<string, RuntimeOther>>;
 
 type OthersBatch = {
@@ -39,13 +20,6 @@ interface OthersState {
   getOther: (id: string) => RuntimeOther | undefined;
   removeOther: (id: string) => void;
   replaceOthers: (othersById: OthersById, mapChanged?: boolean) => void;
-  setMany: (othersById: Readonly<Record<string, RuntimeOtherInput>>) => void;
-  upsertOther: (id: string, other: RuntimeOtherInput) => void;
-}
-
-function normalizeOther(other: RuntimeOtherInput): RuntimeOther {
-  if (!("d" in other)) return other;
-  return normalizeRuntimeOtherData(other.d);
 }
 
 function areRuntimeOthersEqual(
@@ -113,13 +87,13 @@ export const useOthersStore = create<OthersState>()((set, get) => ({
         getWritableOthersById()[id] = other;
       }
 
-      if (!writableOthersById && state.status === "ready") return state;
+      if (!writableOthersById) return state;
       return {
         othersById: Object.freeze(
           writableOthersById ?? { ...state.othersById },
         ),
         revision: state.revision + 1,
-        status: "ready",
+        status: state.status,
       };
     }),
   clearOthers: (mapChanged = false) =>
@@ -152,19 +126,4 @@ export const useOthersStore = create<OthersState>()((set, get) => ({
         status: "ready",
       };
     }),
-  setMany: (othersById) => {
-    replaceRuntimeOtherHandlesForCompatibility(othersById);
-    get().replaceOthers(
-      Object.fromEntries(
-        Object.entries(othersById).map(([id, other]) => [
-          id,
-          normalizeOther(other),
-        ]),
-      ),
-    );
-  },
-  upsertOther: (id, other) => {
-    upsertRuntimeOtherHandleForCompatibility(id, other);
-    get().applyBatch({ upserts: { [id]: normalizeOther(other) } });
-  },
 }));

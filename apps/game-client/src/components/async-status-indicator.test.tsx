@@ -22,7 +22,7 @@ describe("AsyncStatusIndicator", () => {
   });
 
   it("allows retrying a failed refresh", () => {
-    const onRetry = vi.fn();
+    const onRetry = vi.fn<() => void>();
 
     render(
       <AsyncStatusIndicator

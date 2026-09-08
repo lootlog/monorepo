@@ -56,9 +56,7 @@ const areNpcSnapshotsEqual = (
 
 const indexNpcs = (npcs: readonly RuntimeNpc[]): NpcsById =>
   Object.freeze(
-    Object.fromEntries(
-      npcs.map((npc) => [npc.id, createNpcSnapshot(npc)]),
-    ) as Record<number, NpcSnapshot>,
+    Object.fromEntries(npcs.map((npc) => [npc.id, createNpcSnapshot(npc)])),
   );
 
 export const useNpcsStore = create<NpcsState>()((set, get) => ({

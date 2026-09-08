@@ -59,10 +59,10 @@ const showBattleCreatedToast = (battleId: string) => {
 };
 
 const isWarriorDead = (warrior: BattleWarriorsWithAccountId[string]) => {
-  const legacyHpp = parseNumericHpValue((warrior as { hpp?: unknown }).hpp);
+  const legacyHpp = parseNumericHpValue(warrior.hpp);
   if (legacyHpp !== null) return legacyHpp <= 0;
 
-  const hpData = (warrior as { hp?: { hpp?: unknown; cur?: unknown } }).hp;
+  const hpData = warrior.hp;
   const nestedHpp = parseNumericHpValue(hpData?.hpp);
   if (nestedHpp !== null) return nestedHpp <= 0;
 

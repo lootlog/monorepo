@@ -29,9 +29,15 @@ export const TimersConnectionStatus: FC = () => {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div
+        <button
+          type="button"
+          aria-label={t(
+            connectedToServers
+              ? "connection.connectedToServers"
+              : "connection.notConnected",
+          )}
           className={cn(
-            "ll:size-3 ll:rounded-full ll:absolute ll:left-6 ll:cursor-pointer",
+            "ll:p-0 ll:border-0 ll:size-3 ll:rounded-full ll:absolute ll:left-6 ll:cursor-pointer",
             {
               "ll:bg-red-400": !connectedToServers,
               "ll:bg-green-400": connectedToServers,

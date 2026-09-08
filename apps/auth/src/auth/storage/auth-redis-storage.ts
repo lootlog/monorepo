@@ -19,7 +19,6 @@ export const createAuthRedisConnection = (config: AuthConfig["redis"]) =>
 export class AuthRedisStorage extends Context.Service<
   AuthRedisStorage,
   {
-    readonly client: RealtimeTicketRedis;
     readonly secondaryStorage: ReturnType<
       typeof createFailOpenSecondaryStorage
     >;
@@ -33,19 +32,14 @@ export class AuthRedisStorage extends Context.Service<
       const runPromise = yield* FiberSet.runtimePromise(fibers)<never>();
       const run = <A>(effect: Effect.Effect<A, Redis.RedisError>) =>
         runPromise(effect);
-      const logRedisWarning = (message: string, error: unknown) => {
+      const logRedisWarning = (message: string, cause: unknown) => {
         void runPromise(
           Effect.logWarning(message).pipe(
             Effect.annotateLogs({
-              error: error instanceof Error ? error.message : String(error),
+              error: cause instanceof Error ? cause.message : String(cause),
             }),
           ),
         );
-      };
-      const client: RealtimeTicketRedis = {
-        set: (key, value, mode, ttl, condition) =>
-          run(redis.send("SET", key, value, mode, String(ttl), condition)),
-        getdel: (key) => run(redis.send("GETDEL", key)),
       };
       const storage: SecondaryStorage = {
         get: (key) => run(redis.send("GET", `${AUTH_REDIS_KEY_PREFIX}${key}`)),
@@ -85,20 +79,9 @@ export class AuthRedisStorage extends Context.Service<
         },
       );
 
-      return AuthRedisStorage.of({ client, secondaryStorage });
+      return AuthRedisStorage.of({ secondaryStorage });
     }),
   );
-}
-
-interface RealtimeTicketRedis {
-  readonly set: (
-    key: string,
-    value: string,
-    mode: "EX",
-    ttl: number,
-    condition: "NX",
-  ) => Promise<unknown>;
-  readonly getdel: (key: string) => Promise<string | null>;
 }
 
 const INCREMENT_SCRIPT = `

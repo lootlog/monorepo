@@ -85,18 +85,14 @@ describe("useBattleHpTimelineSettingsStore", () => {
     state.setHeightMode("default");
     state.setLayerVisibility("combo", true);
 
-    const persisted = JSON.parse(
-      storage.getItem(SETTINGS_STORAGE_KEY) ?? "{}",
-    ) as {
-      state?: {
-        heightMode?: string;
-        isChartHidden?: boolean;
-        layers?: Record<string, boolean>;
-      };
-    };
-
-    expect(persisted.state?.heightMode).toBe("default");
-    expect(persisted.state?.isChartHidden).toBe(false);
-    expect(persisted.state?.layers?.combo).toBe(true);
+    expect(
+      JSON.parse(storage.getItem(SETTINGS_STORAGE_KEY) ?? "{}"),
+    ).toMatchObject({
+      state: {
+        heightMode: "default",
+        isChartHidden: false,
+        layers: { combo: true },
+      },
+    });
   });
 });

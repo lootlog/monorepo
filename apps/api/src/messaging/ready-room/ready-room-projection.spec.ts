@@ -1,4 +1,11 @@
 import { describe, expect, it } from "bun:test";
+import { Effect } from "effect";
+import { decodeDomainJson } from "#src/http-api/domain-json.schema";
+import {
+  PartyReadyRoomResponse,
+  PartyReadyRoomsResponse,
+  PartyReadyRoomUpdateResponse,
+} from "#src/contracts/party-ready-room/schemas";
 import {
   createReadyRoomClientUpdate,
   createReadyRoomProjection,
@@ -60,6 +67,40 @@ const aggregate: ReadyRoomAggregate = {
 };
 
 describe("Ready Room projections", () => {
+  for (const viewer of ["organizer", "shared"]) {
+    for (const optionalFields of [
+      {},
+      { description: "", minLvl: 1, maxLvl: 500 },
+    ]) {
+      it(`serializes HTTP snapshots and updates for ${viewer} with ${JSON.stringify(optionalFields)}`, async () => {
+        const current = { ...aggregate, ...optionalFields };
+        const projection = createReadyRoomProjection(current, viewer);
+        const decoded = await Effect.runPromise(
+          decodeDomainJson(PartyReadyRoomResponse, projection),
+        );
+        expect(decoded).toMatchObject(optionalFields);
+        if (!("description" in optionalFields)) {
+          expect(decoded).not.toHaveProperty("description");
+          expect(decoded).not.toHaveProperty("minLvl");
+          expect(decoded).not.toHaveProperty("maxLvl");
+        }
+        expect(
+          await Effect.runPromise(
+            decodeDomainJson(PartyReadyRoomsResponse, [projection]),
+          ),
+        ).toEqual([decoded]);
+        expect(
+          await Effect.runPromise(
+            decodeDomainJson(
+              PartyReadyRoomUpdateResponse,
+              createReadyRoomClientUpdate(current, viewer),
+            ),
+          ),
+        ).toEqual({ schemaVersion: 3, type: "UPSERT", projection: decoded });
+      });
+    }
+  }
+
   it("shows all participants to the organizer and every owned character to a participant", () => {
     expect(createReadyRoomProjection(aggregate, "organizer")).toMatchObject({
       schemaVersion: 3,

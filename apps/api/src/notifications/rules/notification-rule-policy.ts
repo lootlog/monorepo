@@ -3,10 +3,7 @@ import type {
   UpdateNotificationRuleRequest,
 } from "#src/contracts/notifications/schemas";
 import { Error as NotificationError } from "#src/notifications/error";
-import type {
-  JsonObject,
-  JsonValue,
-} from "#src/notifications/notification-database.types";
+import type { JsonObject, JsonValue } from "#src/database/json";
 import {
   NotificationOwnerType,
   NotificationScheduleAnchor,
@@ -34,7 +31,7 @@ type ExistingRule = {
   readonly triggerType: NotificationTriggerTypeValue;
   readonly world: string | null;
   readonly name: string | null;
-  readonly filters: unknown;
+  readonly filters: JsonValue;
   readonly contentTemplate: string | null;
   readonly scheduleStrategy: NotificationScheduleStrategyValue | null;
   readonly scheduleAnchor: NotificationScheduleAnchorValue | null;
@@ -62,7 +59,7 @@ const isScheduledMessage = (triggerType: NotificationTriggerTypeValue) =>
 
 const validateNpcSelection = (data: RuleInput) => {
   const npcIds = new Set<number>();
-  if (typeof data.npcId === "number") npcIds.add(data.npcId);
+  if (data.npcId !== undefined && data.npcId !== null) npcIds.add(data.npcId);
   for (const npcId of data.npcIds ?? []) npcIds.add(npcId);
   if (npcIds.size > MAX_NPCS_PER_RULE) {
     throw new InvalidRequestError({
@@ -82,7 +79,7 @@ const buildFilters = (data: RuleInput): JsonObject => {
 };
 
 const normalizeContentTemplate = (value?: string | null) => {
-  if (typeof value !== "string") return null;
+  if (value === undefined || value === null) return null;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
 };
@@ -106,14 +103,8 @@ const scheduleConfig = (
       scheduleOffsetMinutes: null,
     };
   }
-  const strategy =
-    (data.scheduleStrategy as NotificationScheduleStrategyValue | undefined) ??
-    existing?.scheduleStrategy ??
-    null;
-  const anchor =
-    (data.scheduleAnchor as NotificationScheduleAnchorValue | undefined) ??
-    existing?.scheduleAnchor ??
-    null;
+  const strategy = data.scheduleStrategy ?? existing?.scheduleStrategy ?? null;
+  const anchor = data.scheduleAnchor ?? existing?.scheduleAnchor ?? null;
   const offset =
     data.scheduleOffsetMinutes ?? existing?.scheduleOffsetMinutes ?? null;
   if (strategy !== NotificationScheduleStrategy.SPAWN_WINDOW_RELATIVE) {
@@ -215,9 +206,7 @@ const scheduledMessageFields = (
   }
   const intervalType = firstNonNullish(
     NotificationScheduleIntervalType.ONCE,
-    data.scheduleIntervalType as
-      | NotificationScheduleIntervalTypeValue
-      | undefined,
+    data.scheduleIntervalType,
     existing?.scheduleIntervalType,
   );
   const intervalValue = firstNonNullish<number | null>(
@@ -274,7 +263,7 @@ export const createNotificationRuleValues = (
   ownerId: string,
   data: CreateNotificationRuleRequest,
 ) => {
-  const triggerType = data.triggerType as NotificationTriggerTypeValue;
+  const triggerType = data.triggerType;
   const scheduled = isScheduledMessage(triggerType);
   if (!scheduled) validateNpcSelection(data);
   return {
@@ -298,9 +287,7 @@ export const updateNotificationRuleValues = (
   existing: ExistingRule,
   data: UpdateNotificationRuleRequest,
 ) => {
-  const triggerType =
-    (data.triggerType as NotificationTriggerTypeValue | undefined) ??
-    existing.triggerType;
+  const triggerType = data.triggerType ?? existing.triggerType;
   const scheduled = isScheduledMessage(triggerType);
   if (!scheduled) validateNpcSelection(data);
   const hasFilterUpdate =
@@ -309,7 +296,7 @@ export const updateNotificationRuleValues = (
     data.itemId !== undefined ||
     data.itemIds !== undefined;
   let world = existing.world;
-  let filters = existing.filters as JsonValue | null;
+  let filters = existing.filters;
   if (scheduled) {
     world = null;
     filters = null;

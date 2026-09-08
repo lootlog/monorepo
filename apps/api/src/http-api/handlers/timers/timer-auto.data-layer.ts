@@ -33,7 +33,7 @@ import {
   userCharactersLootlogSettingsTable,
 } from "#src/database/drizzle/schema";
 import { getSyntheticNpcId } from "#src/events/kills/get-synthetic-npc-id";
-import { getProfByShortname } from "#src/shared/margonem/profession";
+import { getProfByShortname } from "@lootlog/domain/profession";
 import {
   InvalidRequestError,
   ResourceConflictError,
@@ -55,6 +55,7 @@ import {
 import {
   CachedTimerProjectionSchema,
   mapTimerResponse,
+  type TimerPublishedEvent,
 } from "#src/timers/timer-projection";
 
 const DEDUP_TTL_SECONDS = 30;
@@ -88,13 +89,15 @@ export interface AutoTimerPorts {
   ) => Effect.Effect<unknown, unknown>;
   readonly get: (key: string) => Effect.Effect<string | null, unknown>;
   readonly invalidate: (pattern: string) => Effect.Effect<unknown, unknown>;
-  readonly publish: (
-    routingKey:
+  readonly publish: <
+    Key extends
       | typeof RabbitRoutingKey.GUILDS_TIMERS_DELETE
       | typeof RabbitRoutingKey.GUILDS_TIMERS_UPDATE
       | typeof RabbitRoutingKey.NOTIFICATIONS_TIMER_DELETED
       | typeof RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
-    payload: unknown,
+  >(
+    routingKey: Key,
+    payload: TimerPublishedEvent<Key>,
   ) => Effect.Effect<unknown, unknown>;
   readonly releaseDedup: (
     script: string,

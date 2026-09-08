@@ -50,13 +50,13 @@ const defaultDependencies: CoordinatorDependencies = {
     }),
 };
 
-function isRetryableRequestError(error: unknown): boolean {
-  if (!isApiError(error)) {
+function isRetryableRequestError(cause: unknown): boolean {
+  if (!isApiError(cause)) {
     return false;
   }
 
   return (
-    error.status === undefined || error.status === 429 || error.status >= 500
+    cause.status === undefined || cause.status === 429 || cause.status >= 500
   );
 }
 

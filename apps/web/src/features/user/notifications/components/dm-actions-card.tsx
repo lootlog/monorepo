@@ -19,8 +19,9 @@ import {
   useNotificationsUserControllerCreateUserTarget,
   useNotificationsUserControllerTriggerUserTargetTest,
   useNotificationsUserControllerUpdateUserTarget,
+  type NotificationTargetWithTestTriggerResponseDto,
 } from "@lootlog/client/main";
-import type { NotificationTargetWithTestTriggerResponseDto } from "@lootlog/client/main";
+
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Tooltip,
@@ -215,7 +216,7 @@ export const DmActionsCard = ({ dmTarget, onAddWatch }: DmActionsCardProps) => {
                         }
                         onClick={handleTriggerDmTest}
                         loading={triggerUserTargetTest.isPending}
-                        icon={<FlaskConical className="size-4" />}
+                        icon=<FlaskConical className="size-4" />
                       >
                         {t("settings.userNotifications.dm.test")}
                       </Button>
@@ -253,7 +254,7 @@ export const DmActionsCard = ({ dmTarget, onAddWatch }: DmActionsCardProps) => {
                       disabled={isDmActionPending}
                       onClick={handleDisableDm}
                       loading={isDisablePending}
-                      icon={<BellOff className="size-4" />}
+                      icon=<BellOff className="size-4" />
                     >
                       {t("settings.userNotifications.dm.deactivate")}
                     </Button>
@@ -270,7 +271,7 @@ export const DmActionsCard = ({ dmTarget, onAddWatch }: DmActionsCardProps) => {
               disabled={isDmActionPending}
               onClick={handleEnableDm}
               loading={isEnablePending}
-              icon={<BellRing className="size-4" />}
+              icon=<BellRing className="size-4" />
             >
               {t("settings.userNotifications.dm.configure")}
             </Button>

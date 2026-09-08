@@ -7,6 +7,11 @@ export const UserSettingsLayout: React.FC = () => {
   const { t } = useTranslation();
   const navElements = [
     {
+      id: "account",
+      label: t("settings.account.title"),
+      href: `${ROUTE_SEGMENTS.user.settings}${ROUTE_SEGMENTS.user.account}`,
+    },
+    {
       id: "servers",
       label: t("settings.servers.navigation"),
       href: `${ROUTE_SEGMENTS.user.settings}${ROUTE_SEGMENTS.user.servers}`,
@@ -15,11 +20,6 @@ export const UserSettingsLayout: React.FC = () => {
       id: "appearance",
       label: t("settings.appearance.title"),
       href: `${ROUTE_SEGMENTS.user.settings}${ROUTE_SEGMENTS.user.appearance}`,
-    },
-    {
-      id: "account",
-      label: t("settings.account.title"),
-      href: `${ROUTE_SEGMENTS.user.settings}${ROUTE_SEGMENTS.user.account}`,
     },
   ];
 

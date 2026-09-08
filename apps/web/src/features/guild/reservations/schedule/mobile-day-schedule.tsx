@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { addDays, format } from "date-fns";
 import {
@@ -6,6 +6,7 @@ import {
   motion,
   useMotionValue,
   useReducedMotion,
+  type MotionValue,
 } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -108,6 +109,11 @@ const getSelectedRange = (
 const isReservationTarget = (target: EventTarget | null): boolean =>
   target instanceof Element && target.closest(".reservation-card") !== null;
 
+const resetSwipePosition = (swipeX: MotionValue<number>) => {
+  swipeX.stop();
+  swipeX.set(0);
+};
+
 export function MobileDaySchedule({
   date,
   dayIndex,
@@ -161,71 +167,62 @@ export function MobileDaySchedule({
     }, 0);
   };
 
-  const resetSwipePosition = () => {
-    swipeX.stop();
-    swipeX.set(0);
-  };
+  const finishDaySwipe = useEffectEvent(
+    async ({ offsetX, velocityX }: { offsetX: number; velocityX: number }) => {
+      const surface = swipeSurfaceRef.current;
+      const width = surface?.getBoundingClientRect().width ?? 0;
+      const direction = getDaySwipeDirection({
+        offsetX,
+        velocityX,
+        width,
+      });
 
-  const finishDaySwipe = async ({
-    offsetX,
-    velocityX,
-  }: {
-    offsetX: number;
-    velocityX: number;
-  }) => {
-    const surface = swipeSurfaceRef.current;
-    const width = surface?.getBoundingClientRect().width ?? 0;
-    const direction = getDaySwipeDirection({
-      offsetX,
-      velocityX,
-      width,
-    });
+      if (swipeTransitioningRef.current) {
+        return;
+      }
 
-    if (swipeTransitioningRef.current) {
-      return;
-    }
+      if (direction === null) {
+        if (shouldReduceMotion) {
+          swipeX.set(0);
+          clearSuppressedClickAfterCurrentEvent();
+          return;
+        }
 
-    if (direction === null) {
+        swipeTransitioningRef.current = true;
+        try {
+          swipeX.stop();
+          await animate(swipeX, 0, SWIPE_RETURN_TRANSITION);
+        } finally {
+          swipeX.set(0);
+          swipeTransitioningRef.current = false;
+          suppressClickRef.current = false;
+        }
+        return;
+      }
+
       if (shouldReduceMotion) {
         swipeX.set(0);
+        onDaySwipe(direction);
         clearSuppressedClickAfterCurrentEvent();
         return;
       }
 
       swipeTransitioningRef.current = true;
+      const exitOffset = direction === 1 ? -width : width;
       try {
         swipeX.stop();
-        await animate(swipeX, 0, SWIPE_RETURN_TRANSITION);
+        await animate(swipeX, exitOffset, SWIPE_COMMIT_TRANSITION);
+        flushSync(() => {
+          onDaySwipe(direction);
+        });
+        swipeX.set(0);
       } finally {
         swipeX.set(0);
         swipeTransitioningRef.current = false;
         suppressClickRef.current = false;
       }
-      return;
-    }
-
-    if (shouldReduceMotion) {
-      swipeX.set(0);
-      onDaySwipe(direction);
-      clearSuppressedClickAfterCurrentEvent();
-      return;
-    }
-
-    swipeTransitioningRef.current = true;
-    const exitOffset = direction === 1 ? -width : width;
-    try {
-      swipeX.stop();
-      await animate(swipeX, exitOffset, SWIPE_COMMIT_TRANSITION);
-      flushSync(() => {
-        onDaySwipe(direction);
-      });
-      swipeX.set(0);
-    } finally {
-      swipeX.set(0);
-      swipeTransitioningRef.current = false;
-      suppressClickRef.current = false;
-    }
-  };
+    },
+  );
 
   useEffect(() => {
     const nowIndicator = nowRef.current;
@@ -308,7 +305,7 @@ export function MobileDaySchedule({
           return;
         }
         session.activated = true;
-        resetSwipePosition();
+        resetSwipePosition(swipeX);
         suppressClickRef.current = true;
         const nextSelection: DaySelection = {
           anchorMinutes: minutes,
@@ -385,7 +382,7 @@ export function MobileDaySchedule({
         return;
       }
       if (session.activated) {
-        resetSwipePosition();
+        resetSwipePosition(swipeX);
         event.preventDefault();
         const finishedSelection = selectionRef.current;
         selectionRef.current = null;
@@ -411,7 +408,7 @@ export function MobileDaySchedule({
       selectionRef.current = null;
       setSelection(null);
       if (!swipeTransitioningRef.current) {
-        resetSwipePosition();
+        resetSwipePosition(swipeX);
         suppressClickRef.current = false;
       }
     };
@@ -433,6 +430,7 @@ export function MobileDaySchedule({
     isDaySwipeEnabled,
     minuteStep,
     onRangeSelect,
+    swipeX,
   ]);
 
   const selectionStyle = (() => {
@@ -666,13 +664,16 @@ export function MobileDaySchedule({
                           ? () => onReservationCancel(segment.reservation.id)
                           : undefined
                       }
-                      cancelDisabled={cancellingReservationId != null}
+                      cancelDisabled={
+                        cancellingReservationId !== null &&
+                        cancellingReservationId !== undefined
+                      }
                       isCancelPending={
                         cancellingReservationId === segment.reservation.id
                       }
                       onContextMenuOpenChange={(open) => {
                         contextMenuOpenRef.current = open;
-                        if (open) resetSwipePosition();
+                        if (open) resetSwipePosition(swipeX);
                       }}
                       onContextMenuOutsidePress={(event) => {
                         const grid = gridRef.current;
@@ -680,7 +681,7 @@ export function MobileDaySchedule({
                         suppressClickRef.current = true;
                         touchSessionRef.current = null;
                         updateSelection(null);
-                        resetSwipePosition();
+                        resetSwipePosition(swipeX);
                       }}
                       className={cn(
                         "absolute z-10",

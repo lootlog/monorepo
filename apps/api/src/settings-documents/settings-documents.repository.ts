@@ -13,9 +13,8 @@ import {
   memberTable,
   userSettingDocumentTable,
 } from "../database/drizzle/schema.js";
-import { applySettingsPatch } from "./settings-resolver.js";
+import { applySettingsPatch, type JsonRecord } from "./settings-resolver.js";
 
-type JsonRecord = Record<string, unknown>;
 type SettingsOperation = PatchSettingsDocuments["operations"][number];
 type StoredSettingsDocument = typeof userSettingDocumentTable.$inferSelect;
 

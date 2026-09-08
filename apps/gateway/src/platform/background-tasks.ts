@@ -11,8 +11,8 @@ export const makeBackgroundTaskRunner =
   (label, task) =>
     run(
       task.pipe(
-        Effect.catch((cause) =>
-          Effect.logError("Gateway background task failed", cause).pipe(
+        Effect.catch((error) =>
+          Effect.logError("Gateway background task failed", error).pipe(
             Effect.annotateLogs({ task: label }),
           ),
         ),
@@ -25,8 +25,8 @@ export const unmanagedBackgroundTaskRunner: BackgroundTaskRunner = (
 ) => {
   runLogEffect(
     task.pipe(
-      Effect.catch((cause) =>
-        Effect.logError("Gateway background task failed", cause).pipe(
+      Effect.catch((error) =>
+        Effect.logError("Gateway background task failed", error).pipe(
           Effect.annotateLogs({ task: label }),
         ),
       ),

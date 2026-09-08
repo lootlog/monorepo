@@ -1,11 +1,15 @@
+import { isJsonObject, type JsonValue } from "#src/database/json";
 import { toLootVisibilityRoles } from "#src/loots/loot-visibility";
 import { and, eq, inArray } from "drizzle-orm";
-import { Effect } from "effect";
+import { Effect, Schema } from "effect";
 import {
   canViewLoot,
   type LootVisibilityNpc,
 } from "@lootlog/domain/loot-visibility";
-import type { NotificationFilters } from "@lootlog/schema/notifications";
+import {
+  NotificationFiltersSchema,
+  type NotificationFilters,
+} from "@lootlog/schema/notifications";
 import { Permission } from "@lootlog/schema/permissions";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
@@ -14,14 +18,13 @@ import {
   memberToRoleTable,
   roleTable,
 } from "#src/database/drizzle/schema";
-import type { JsonValue } from "#src/notifications/notification-database.types";
 
 type LootCreatedEvent = {
   readonly lootId: number;
   readonly world: string;
-  readonly guildIds: string[];
-  readonly itemIds: number[];
-  readonly itemNames: string[];
+  readonly guildIds: ReadonlyArray<string>;
+  readonly itemIds: ReadonlyArray<number>;
+  readonly itemNames: ReadonlyArray<string>;
 };
 
 export type NotificationMemberRoleInfo = {
@@ -35,14 +38,14 @@ export type NotificationMemberRoleInfo = {
   }>;
 };
 
+const decodeNotificationFilters = Schema.decodeUnknownSync(
+  NotificationFiltersSchema,
+  { onExcessProperty: "preserve" },
+);
 export const parseNotificationFilters = (
   filtersValue: JsonValue,
 ): NotificationFilters =>
-  !filtersValue ||
-  typeof filtersValue !== "object" ||
-  Array.isArray(filtersValue)
-    ? {}
-    : (filtersValue as unknown as NotificationFilters);
+  isJsonObject(filtersValue) ? decodeNotificationFilters(filtersValue) : {};
 
 export const notificationMatchingPolicy = {
   parseFilters: parseNotificationFilters,
@@ -70,7 +73,10 @@ export const notificationMatchingPolicy = {
     }
     return true;
   },
-  matchingLootGuildIds: (filtersValue: JsonValue, guildIds: string[]) => {
+  matchingLootGuildIds: (
+    filtersValue: JsonValue,
+    guildIds: ReadonlyArray<string>,
+  ) => {
     const filters = parseNotificationFilters(filtersValue);
     return filters.guildIds?.length
       ? guildIds.filter((guildId) => filters.guildIds.includes(guildId))
@@ -93,7 +99,7 @@ export const notificationMatchingPolicy = {
 export const makeNotificationMatching = (database: ApiDatabaseValue) => {
   const activeMemberships = Effect.fn(
     "notifications.matching.activeMemberships",
-  )(function* (ownerIds: string[], guildIds: string[]) {
+  )(function* (ownerIds: string[], guildIds: ReadonlyArray<string>) {
     const uniqueOwnerIds = [...new Set(ownerIds)];
     const uniqueGuildIds = [...new Set(guildIds)];
     const result = new Map<string, NotificationMemberRoleInfo[]>();

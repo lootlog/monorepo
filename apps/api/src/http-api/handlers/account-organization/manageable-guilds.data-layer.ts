@@ -1,4 +1,4 @@
-import type { APIGuild } from "discord-api-types/v10";
+import type { RESTAPIPartialCurrentUserGuild } from "discord-api-types/v10";
 import { Effect } from "effect";
 import { isDiscordAdministrator } from "#src/discord/is-discord-administrator";
 import {
@@ -13,7 +13,7 @@ import {
 export const makeManageableGuilds = (
   getDiscordGuilds: (
     identity: AuthenticatedIdentity,
-  ) => Effect.Effect<ReadonlyArray<APIGuild>, unknown>,
+  ) => Effect.Effect<ReadonlyArray<RESTAPIPartialCurrentUserGuild>, unknown>,
 ) => {
   const getManageableUserGuilds = Effect.fn("getManageableUserGuilds")(
     function* (identity: AuthenticatedIdentity) {
@@ -31,7 +31,6 @@ export const makeManageableGuilds = (
           id: guild.id,
           name: guild.name,
           icon: guild.icon,
-          ownerId: guild.owner_id,
         }));
     },
   );

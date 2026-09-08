@@ -4,7 +4,7 @@ import { and, eq, inArray } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import { notificationJobTable } from "#src/database/drizzle/schema";
-import type { JsonValue } from "#src/notifications/notification-database.types";
+import type { JsonValue } from "#src/database/json";
 import {
   NotificationJobKind,
   NotificationJobStatus,

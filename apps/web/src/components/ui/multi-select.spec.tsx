@@ -1,17 +1,11 @@
+import { initializeTestTranslations } from "@/lib/testing/i18n";
 // @vitest-environment happy-dom
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MultiSelect } from "./multi-select";
 
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string, values?: { label?: string }) =>
-      key === "common.removeOption"
-        ? `Usuń ${values?.label ?? ""}`.trim()
-        : key,
-  }),
-}));
+await initializeTestTranslations({ "common.removeOption": "Usuń {{label}}" });
 
 afterEach(() => {
   cleanup();
@@ -19,6 +13,23 @@ afterEach(() => {
 });
 
 describe("MultiSelect", () => {
+  it("keeps the last label for duplicate option values", () => {
+    render(
+      <MultiSelect
+        onClose={() => {}}
+        onValueChange={() => {}}
+        options={[
+          { value: "selected", label: "Previous label" },
+          { value: "selected", label: "Latest label" },
+        ]}
+        value={["selected"]}
+      />,
+    );
+
+    expect(screen.getByText("Latest label")).toBeTruthy();
+    expect(screen.queryByText("Previous label")).toBeNull();
+  });
+
   it("shows search failure instead of empty or stale results while preserving selected values", () => {
     render(
       <MultiSelect
@@ -133,6 +144,46 @@ describe("MultiSelect", () => {
     expect(screen.getByText("Freaky nikky")).toBeTruthy();
   });
 
+  it("uses the last label when remote options contain duplicate values", () => {
+    render(
+      <MultiSelect
+        onClose={() => {}}
+        onValueChange={() => {}}
+        value={["player-1"]}
+        options={[
+          { label: "Old name", value: "player-1" },
+          { label: "New name", value: "player-1" },
+        ]}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Usuń New name" })).toBeTruthy();
+  });
+
+  it("refreshes a selected label when the same remote option changes", () => {
+    const sharedProps = {
+      onClose: () => {},
+      onValueChange: () => {},
+      value: ["player-1"],
+    };
+    const { rerender } = render(
+      <MultiSelect
+        {...sharedProps}
+        options={[{ label: "Old name", value: "player-1" }]}
+      />,
+    );
+
+    rerender(
+      <MultiSelect
+        {...sharedProps}
+        options={[{ label: "New name", value: "player-1" }]}
+      />,
+    );
+
+    expect(screen.queryByText("Old name")).toBeNull();
+    expect(screen.getByRole("button", { name: "Usuń New name" })).toBeTruthy();
+  });
+
   it("updates controlled-search text immediately while the query value is debounced", () => {
     const onSearchChange = vi.fn();
 
@@ -152,9 +203,9 @@ describe("MultiSelect", () => {
     );
 
     fireEvent.click(screen.getByRole("combobox"));
-    const searchInput = screen.getByPlaceholderText(
-      "Szukaj...",
-    ) as HTMLInputElement;
+    const searchInput = screen.getByPlaceholderText("Szukaj...");
+    if (!(searchInput instanceof HTMLInputElement))
+      throw new Error("Missing search input");
 
     fireEvent.change(searchInput, { target: { value: "Quet" } });
 

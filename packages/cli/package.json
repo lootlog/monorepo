@@ -7,7 +7,7 @@
   "scripts": {
     "lint": "oxlint src",
     "typecheck": "tsc --noEmit",
-    "test": "bun test src/utils/env-generator.test.ts",
+    "test": "bun test",
     "env:generate": "bun src/commands/env/generate.ts",
     "events": "bun src/index.ts events",
     "events:publish": "bun src/index.ts events publish",
@@ -28,6 +28,7 @@
     "@lootlog/schema": "workspace:*",
     "amqplib": "^2.0.1",
     "drizzle-orm": "catalog:",
+    "effect": "catalog:",
     "node-html-parser": "^9.0.2",
     "pg": "^8.23.0",
     "random-words": "^2.0.1",

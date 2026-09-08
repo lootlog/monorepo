@@ -12,17 +12,7 @@ import {
 } from "@/config/api";
 import { useAuthRecoveryStore } from "@/store/auth-recovery.store";
 
-type ApiErrorData = {
-  requiresReauth?: boolean;
-};
-
-const requiresReauthentication = (error: ApiError<unknown>): boolean => {
-  if (typeof error.data !== "object" || error.data === null) {
-    return false;
-  }
-
-  return (error.data as ApiErrorData).requiresReauth === true;
-};
+import { requiresReauthentication } from "@/lib/api-reauthentication";
 
 export const handleWebApiError = (
   error: ApiError<unknown>,

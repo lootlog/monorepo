@@ -64,9 +64,7 @@ export const isCommandFailure = (error: unknown): error is CommandFailure =>
   error instanceof RealtimeStoreError ||
   error instanceof RealtimeDependencyError;
 
-export const commandFailureDetails = (
-  error: CommandFailure,
-): { readonly message: string; readonly retryable: boolean } => {
+export const commandFailureDetails = (error: CommandFailure) => {
   switch (error._tag) {
     case "SessionNotJoined":
       return { message: "session.join is required", retryable: false };

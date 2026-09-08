@@ -293,13 +293,11 @@ export const WatchableItemTile = ({
           className="w-full justify-start gap-2"
           closeOnClick={false}
           disabled={isCopyPending}
-          render={
-            <Button
-              variant="ghost"
-              loading={isCopyPending}
-              icon={<Copy className="h-4 w-4 text-muted-foreground" />}
-            />
-          }
+          render=<Button
+            variant="ghost"
+            loading={isCopyPending}
+            icon={<Copy className="h-4 w-4 text-muted-foreground" />}
+          />
           onClick={() => {
             void handleCopyItemId();
           }}
@@ -352,13 +350,11 @@ export const WatchableItemTile = ({
               className="w-full justify-start gap-2"
               closeOnClick={false}
               disabled={isRemovePending}
-              render={
-                <Button
-                  variant="ghost"
-                  loading={isRemovePending}
-                  icon={<BellOff className="h-4 w-4 text-muted-foreground" />}
-                />
-              }
+              render=<Button
+                variant="ghost"
+                loading={isRemovePending}
+                icon={<BellOff className="h-4 w-4 text-muted-foreground" />}
+              />
               onClick={() => {
                 void handleRemove();
               }}
@@ -389,13 +385,11 @@ export const WatchableItemTile = ({
               className="w-full justify-start gap-2"
               closeOnClick={false}
               disabled={isQuickAddPending || isAddingThisItem}
-              render={
-                <Button
-                  variant="ghost"
-                  loading={isAddingThisItem}
-                  icon={<Plus className="h-4 w-4 text-muted-foreground" />}
-                />
-              }
+              render=<Button
+                variant="ghost"
+                loading={isAddingThisItem}
+                icon={<Plus className="h-4 w-4 text-muted-foreground" />}
+              />
               onClick={() => {
                 void handleQuickAdd();
               }}

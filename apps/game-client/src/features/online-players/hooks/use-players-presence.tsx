@@ -2,6 +2,8 @@ import { GatewayEvent } from "@/config/gateway";
 import { useSocket } from "@/contexts/socket-context";
 import {
   applyPresenceUpdates,
+  canReadPresence,
+  filterPresenceByPolicy,
   getPresenceKey,
   normalizePresence,
   normalizePresenceResponse,
@@ -18,6 +20,7 @@ import {
   type Dispatch,
   type SetStateAction,
 } from "react";
+import type { PermissionsUpdatedPayload } from "@/lib/socket";
 import type { AsyncResourceState } from "@/types/async-resource-state";
 
 export type OnlinePlayersAccessState = "allowed" | "forbidden";
@@ -60,14 +63,28 @@ export const usePlayersPresence = (
   );
   const [requestVersion, setRequestVersion] = useState(0);
   const { joined, connected, socket } = useSocket();
-  const visiblePresenceResource =
+  const policy = socket?.getAccessPolicy?.();
+  const forbidden =
+    policy &&
+    !canReadPresence(
+      policy.organizations.find(
+        (organization) => organization.organizationId === selectedGuildId,
+      ),
+    );
+  let visiblePresenceResource =
     presenceResource.scopeKey === scopeKey
       ? presenceResource
       : createEmptyPresenceResource(scopeKey);
+  if (forbidden)
+    visiblePresenceResource = {
+      ...createEmptyPresenceResource(scopeKey),
+      accessState: "forbidden",
+      loaded: true,
+    };
   const setOnlinePlayers: Dispatch<SetStateAction<PlayerPresenceResponse>> = (
     update,
   ) => {
-    setPresenceResource((currentResource) => {
+    setPresenceResource(function applyOnlinePlayersUpdate(currentResource) {
       const scopedResource =
         currentResource.scopeKey === scopeKey
           ? currentResource
@@ -98,9 +115,15 @@ export const usePlayersPresence = (
   const worldRef = useRef(world);
   const visibleScopeRef = useRef({ guildId: selectedGuildId, world });
   const requestIdRef = useRef(0);
-  const presenceUpdateControllerRef = useRef({
+  const policyRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const presenceUpdateControllerRef = useRef<{
+    pendingUpdates: Map<string, PlayerPresence>;
+    frame: number | null;
+  }>({
     pendingUpdates: new Map<string, PlayerPresence>(),
-    frame: null as number | null,
+    frame: null,
   });
 
   useEffect(() => {
@@ -140,6 +163,17 @@ export const usePlayersPresence = (
       return;
     }
 
+    const policy = socket.getAccessPolicy?.();
+    if (
+      policy &&
+      !canReadPresence(
+        policy.organizations.find(
+          (organization) => organization.organizationId === selectedGuildId,
+        ),
+      )
+    ) {
+      return;
+    }
     const currentRequestId = ++requestIdRef.current;
     visibleScopeRef.current = { guildId: selectedGuildId, world };
 
@@ -149,10 +183,13 @@ export const usePlayersPresence = (
         if (requestIdRef.current !== currentRequestId) return;
 
         if (!data) {
-          setPresenceResource({
-            ...createEmptyPresenceResource(scopeKey),
+          setPresenceResource((current) => ({
+            ...(current.scopeKey === scopeKey
+              ? current
+              : createEmptyPresenceResource(scopeKey)),
+            loading: false,
             error: new Error("Online players response was empty"),
-          });
+          }));
           return;
         }
 
@@ -171,13 +208,16 @@ export const usePlayersPresence = (
           onlinePlayers: normalizePresenceResponse(data.players),
         });
       })
-      .catch((requestError: unknown) => {
+      .catch((cause: unknown) => {
         if (requestIdRef.current !== currentRequestId) return;
 
-        setPresenceResource({
-          ...createEmptyPresenceResource(scopeKey),
-          error: requestError,
-        });
+        setPresenceResource((current) => ({
+          ...(current.scopeKey === scopeKey
+            ? current
+            : createEmptyPresenceResource(scopeKey)),
+          loading: false,
+          error: cause,
+        }));
       });
   }, [
     joined,
@@ -197,27 +237,61 @@ export const usePlayersPresence = (
       data: PlayerPresenceUpdatePayload,
     ) => {
       const normalizedPresence = normalizePresence(data);
+      const snapshot = socket.getAccessPolicy?.();
+      const organization = snapshot?.organizations.find(
+        (entry) => entry.organizationId === selectedGuildIdRef.current,
+      );
+      const allowedPresence = snapshot
+        ? filterPresenceByPolicy(
+            { [normalizedPresence.discordId]: [normalizedPresence] },
+            organization,
+          )[normalizedPresence.discordId]?.[0]
+        : normalizedPresence;
+      if (!allowedPresence) {
+        updateOnlinePlayersForCurrentScope((previous) =>
+          filterPresenceByPolicy(previous, organization),
+        );
+        return;
+      }
 
       if (
         normalizedPresence.guildId !== selectedGuildIdRef.current ||
-        normalizedPresence.player?.world !== worldRef.current
+        (normalizedPresence.player?.world !== worldRef.current &&
+          !(
+            normalizedPresence.status === "offline" &&
+            normalizedPresence.sessionId &&
+            !normalizedPresence.player
+          ))
       )
         return;
 
-      const presenceKey = `${normalizedPresence.discordId}:${getPresenceKey(normalizedPresence)}`;
-      presenceUpdateController.pendingUpdates.set(
-        presenceKey,
-        normalizedPresence,
-      );
+      const updateKey =
+        normalizedPresence.status === "offline" && normalizedPresence.sessionId
+          ? `session:${normalizedPresence.sessionId}`
+          : getPresenceKey(normalizedPresence);
+      const presenceKey = `${normalizedPresence.discordId}:${updateKey}`;
+      // Keep coalesced updates in receive order relative to session removals.
+      presenceUpdateController.pendingUpdates.delete(presenceKey);
+      presenceUpdateController.pendingUpdates.set(presenceKey, allowedPresence);
       if (presenceUpdateController.frame !== null) return;
 
       presenceUpdateController.frame = window.requestAnimationFrame(() => {
         presenceUpdateController.frame = null;
         const updates = [...presenceUpdateController.pendingUpdates.values()];
         presenceUpdateController.pendingUpdates.clear();
-        updateOnlinePlayersForCurrentScope((previous) =>
-          applyPresenceUpdates(previous, updates),
-        );
+        updateOnlinePlayersForCurrentScope((previous) => {
+          const next = applyPresenceUpdates(previous, updates);
+          const currentPolicy = socket.getAccessPolicy?.();
+          return currentPolicy
+            ? filterPresenceByPolicy(
+                next,
+                currentPolicy.organizations.find(
+                  (entry) =>
+                    entry.organizationId === selectedGuildIdRef.current,
+                ),
+              )
+            : next;
+        });
       });
     };
 
@@ -254,15 +328,65 @@ export const usePlayersPresence = (
     });
     setRequestVersion((version) => version + 1);
   };
-  const handlePermissionsUpdated = useEffectEvent(retry);
+  const schedulePolicyRefresh = () => {
+    if (policyRefreshTimerRef.current !== null)
+      clearTimeout(policyRefreshTimerRef.current);
+    policyRefreshTimerRef.current = setTimeout(() => {
+      policyRefreshTimerRef.current = null;
+      retry();
+    }, 5_000);
+  };
+  const handlePermissionsUpdated = useEffectEvent(
+    (payload: PermissionsUpdatedPayload) => {
+      if (!payload.accessPolicy) {
+        requestIdRef.current += 1;
+        presenceUpdateControllerRef.current.pendingUpdates.clear();
+        setPresenceResource(createEmptyPresenceResource(scopeKey));
+        schedulePolicyRefresh();
+        return;
+      }
+      const policy = payload.accessPolicy.organizations.find(
+        (organization) => organization.organizationId === selectedGuildId,
+      );
+      const changes =
+        payload.changes?.filter(
+          (change) =>
+            change.organizationId === selectedGuildId &&
+            change.areas.includes("presence"),
+        ) ?? [];
+      if (policy && changes.length === 0) return;
+      if (!policy || changes.some((change) => change.restricted)) {
+        requestIdRef.current += 1;
+        presenceUpdateControllerRef.current.pendingUpdates.clear();
+        setPresenceResource((current) => ({
+          ...current,
+          accessState: canReadPresence(policy) ? "allowed" : "forbidden",
+          loaded: true,
+          loading: false,
+          onlinePlayers: filterPresenceByPolicy(current.onlinePlayers, policy),
+        }));
+      }
+      if (policyRefreshTimerRef.current !== null) {
+        clearTimeout(policyRefreshTimerRef.current);
+        policyRefreshTimerRef.current = null;
+      }
+      if (joined && connected && changes.some((change) => change.expanded)) {
+        schedulePolicyRefresh();
+      }
+    },
+  );
 
   useEffect(() => {
-    if (!socket || !connected || !joined) return;
+    if (!socket) return;
 
     socket.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
 
     return () => {
       socket.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
+      if (policyRefreshTimerRef.current !== null) {
+        clearTimeout(policyRefreshTimerRef.current);
+        policyRefreshTimerRef.current = null;
+      }
     };
   }, [socket, joined, connected, scopeKey]);
 

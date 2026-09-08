@@ -3,16 +3,24 @@ import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import * as p from "@clack/prompts";
 import { chalk } from "zx";
+import { Schema } from "effect";
 import { createRabbitMQClient } from "../../rabbitmq/client.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-interface EventFixture {
-  exchange: string;
-  routingKey: string;
-  payload: Record<string, unknown>;
-}
+const EventFixture = Schema.Struct({
+  exchange: Schema.String,
+  routingKey: Schema.String,
+  payload: Schema.Json,
+});
+type EventFixture = typeof EventFixture.Type;
+export const parseEventFixture = Schema.decodeUnknownSync(
+  Schema.fromJsonString(EventFixture),
+);
+const parsePayload = Schema.decodeUnknownSync(
+  Schema.fromJsonString(Schema.Json),
+);
 
 const loadFixtures = async (): Promise<Map<string, EventFixture>> => {
   const fixturesDir = path.join(__dirname, "../../events/fixtures");
@@ -25,7 +33,7 @@ const loadFixtures = async (): Promise<Map<string, EventFixture>> => {
     for (const file of jsonFiles) {
       const filePath = path.join(fixturesDir, file);
       const content = await fs.readFile(filePath, "utf-8");
-      const fixture = JSON.parse(content) as EventFixture;
+      const fixture = parseEventFixture(content);
       const name = file.replace(".json", "");
       fixtures.set(name, fixture);
     }
@@ -41,22 +49,16 @@ const loadFixtures = async (): Promise<Map<string, EventFixture>> => {
   return fixtures;
 };
 
-const parseCliArgs = (
-  args: string[],
-): {
+interface PublishCliArgs {
   event?: string;
   exchange?: string;
   routingKey?: string;
   payload?: string;
   continuous?: boolean;
-} => {
-  const parsed: {
-    event?: string;
-    exchange?: string;
-    routingKey?: string;
-    payload?: string;
-    continuous?: boolean;
-  } = {};
+}
+
+const parseCliArgs = (args: string[]): PublishCliArgs => {
+  const parsed: PublishCliArgs = {};
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -195,7 +197,7 @@ const publishInteractive = async (
         break;
       }
 
-      const fixture = currentFixtures.get(selectedEvent as string);
+      const fixture = currentFixtures.get(selectedEvent);
 
       if (!fixture) {
         p.outro(chalk.red("Event not found"));
@@ -265,10 +267,10 @@ const publishNonInteractive = async (
         payload: fixture.payload,
       });
     } else if (args.exchange && args.routingKey && args.payload) {
-      let payload: Record<string, unknown>;
+      let payload: typeof Schema.Json.Type;
 
       try {
-        payload = JSON.parse(args.payload);
+        payload = parsePayload(args.payload);
       } catch (error) {
         console.error(
           chalk.red(

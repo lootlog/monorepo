@@ -1,3 +1,5 @@
+import { installTestCanvas } from "@/test/canvas";
+import type { RuntimeDrawable } from "@/lib/margonem-runtime/adapters/renderer-runtime-adapter";
 import type { AirTagTarget } from "@lootlog/schema/air-tag";
 import { airTagReceiveController } from "./air-tag-receive-controller";
 import {
@@ -6,18 +8,6 @@ import {
   AirTagRenderer,
   getAirTagMarkerAlpha,
 } from "./air-tag-renderer";
-
-const createContext = () =>
-  ({
-    save: vi.fn(),
-    restore: vi.fn(),
-    beginPath: vi.fn(),
-    arc: vi.fn(),
-    fill: vi.fn(),
-    stroke: vi.fn(),
-    strokeText: vi.fn(),
-    fillText: vi.fn(),
-  }) as unknown as CanvasRenderingContext2D;
 
 const createTarget = (overrides: Partial<AirTagTarget> = {}): AirTagTarget => ({
   targetId: "neutral",
@@ -33,6 +23,7 @@ describe("AirTagRenderer", () => {
   afterEach(() => {
     airTagReceiveController.clear();
     vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
   it("keeps full alpha before fade and reaches zero at TTL", () => {
@@ -47,15 +38,15 @@ describe("AirTagRenderer", () => {
   });
 
   it("keeps the draw listener detached until a renderable target exists", () => {
-    const addCallbackToEvent = vi.fn();
-    const removeCallbackFromEvent = vi.fn();
+    const addCallbackToEvent = vi.fn<() => void>();
+    const removeCallbackFromEvent = vi.fn<() => void>();
     testRuntimeWindow.Engine = {
       apiData: { CALL_DRAW_ADD_TO_RENDERER: "draw" },
-    } as never;
+    };
     testRuntimeWindow.API = {
       addCallbackToEvent,
       removeCallbackFromEvent,
-    } as never;
+    };
     const renderer = new AirTagRenderer(() => 2_000);
 
     expect(renderer.register()).toBe(true);
@@ -86,14 +77,14 @@ describe("AirTagRenderer", () => {
   it("expires targets and detaches drawing even when no draw frame arrives", () => {
     vi.useFakeTimers();
     let now = 2_000;
-    const removeCallbackFromEvent = vi.fn();
+    const removeCallbackFromEvent = vi.fn<() => void>();
     testRuntimeWindow.Engine = {
       apiData: { CALL_DRAW_ADD_TO_RENDERER: "draw" },
-    } as never;
+    };
     testRuntimeWindow.API = {
-      addCallbackToEvent: vi.fn(),
+      addCallbackToEvent: vi.fn<() => void>(),
       removeCallbackFromEvent,
-    } as never;
+    };
     airTagReceiveController.beginSubscription("request", "aether", 42);
     airTagReceiveController.applySubscriptionAck({
       status: "accepted",
@@ -122,14 +113,20 @@ describe("AirTagRenderer", () => {
   });
 
   it("draws every target on the minimap and only CLAN_ENEMY on main canvas", () => {
-    const miniMapContext = createContext();
-    const mainMapContext = createContext();
-    const addDrawable = vi.fn();
+    const canvas = installTestCanvas();
+    const miniMapContext = canvas.create().context;
+    const mainMapContext = canvas.create().context;
+    vi.spyOn(miniMapContext, "arc");
+    vi.spyOn(mainMapContext, "arc");
+    vi.spyOn(mainMapContext, "fillText");
+    const addDrawable = vi.fn<(drawable: RuntimeDrawable) => void>();
     let drawFrame: (() => void) | undefined;
-    const addCallbackToEvent = vi.fn((_event: string, callback: () => void) => {
+    const addCallbackToEvent = vi.fn<
+      (_event: string, callback: () => void) => void
+    >((_event: string, callback: () => void) => {
       drawFrame = callback;
     });
-    const removeCallbackFromEvent = vi.fn();
+    const removeCallbackFromEvent = vi.fn<() => void>();
     testRuntimeWindow.Engine = {
       apiData: { CALL_DRAW_ADD_TO_RENDERER: "draw" },
       renderer: {
@@ -150,7 +147,7 @@ describe("AirTagRenderer", () => {
           }),
         },
       },
-    } as never;
+    };
     testRuntimeWindow.API = {
       addCallbackToEvent,
       removeCallbackFromEvent,
@@ -190,9 +187,8 @@ describe("AirTagRenderer", () => {
 
     expect(miniMapContext.arc).toHaveBeenCalledTimes(2);
     expect(addDrawable).toHaveBeenCalledOnce();
-    const drawable = addDrawable.mock.calls[0]?.[0] as {
-      draw: (context: CanvasRenderingContext2D) => void;
-    };
+    const drawable = addDrawable.mock.calls[0]?.[0];
+    if (!drawable) throw new Error("Expected drawable");
     drawable.draw(mainMapContext);
     expect(mainMapContext.arc).toHaveBeenCalledTimes(1);
     expect(mainMapContext.fillText).toHaveBeenCalledWith(

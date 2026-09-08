@@ -60,6 +60,9 @@
   "ranking": "Najczęściej bite potwory",
   "typeDistribution": "Bicia według typu",
   "date": "Data",
+  "view": "Widok danych",
+  "chart": "Wykres",
+  "table": "Tabela",
   "showTable": "Pokaż dane w tabeli",
   "allTypes": "Wszystkie typy",
   "days_one": "{{count}} dzień",
@@ -84,5 +87,11 @@
   "feedError": "Nie udało się odświeżyć zdarzeń.",
   "feedNew": "Nowe zdarzenia",
   "feedEmpty": "Brak nowych zdarzeń z ostatnich 24 godzin.",
-  "feedMoreItems": "+{{count}} kolejnych"
+  "feedMoreItems": "+{{count}} kolejnych",
+  "recentBattles": {
+    "title": "Ostatnie walki",
+    "showAll": "Pokaż wszystkie",
+    "empty": "Nie masz jeszcze zapisanych walk.",
+    "unknownOpponent": "Nieznany przeciwnik"
+  }
 }

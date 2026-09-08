@@ -1,8 +1,12 @@
 import { BunHttpServer } from "@effect/platform-bun";
-import { httpServerMetrics } from "@lootlog/instrumentation";
-import { Effect, Layer, Schema, SchemaIssue } from "effect";
+import {
+  httpServerMetrics,
+  httpServerRouteMetrics,
+} from "@lootlog/instrumentation";
+import { Cause, Effect, Layer, Option, Schema, SchemaIssue } from "effect";
 import {
   HttpRouter,
+  HttpMiddleware,
   HttpServer,
   HttpServerRequest,
   HttpServerError,
@@ -33,11 +37,11 @@ import {
 } from "#src/battles/internal-operations";
 import { BattlelogApi } from "../http-api/battlelog-api.js";
 import { BearerSecurityMiddleware } from "../http-api/contracts/battles/security.js";
-import {
-  type BattlesControllerGetBattleAnalyticsQuery,
-  type BattlesControllerGetCombatProfileQuery,
-  type BattlesControllerGetDashboardBattlesQuery,
-  type BattlesControllerGetPlayerVsPlayerBattlesQuery,
+import type {
+  BattlesControllerGetBattleAnalyticsQuery,
+  BattlesControllerGetCombatProfileQuery,
+  BattlesControllerGetDashboardBattlesQuery,
+  BattlesControllerGetPlayerVsPlayerBattlesQuery,
 } from "../http-api/contracts/battles/endpoints.schemas.js";
 import {
   ApplicationError,
@@ -65,39 +69,39 @@ const currentUserId = Effect.fn("Battlelog.currentUserId")(function* () {
   return userId;
 });
 
-const errorResponse = (error: unknown) => {
+const errorResponse = (cause: unknown) => {
   if (
-    HttpServerError.isHttpServerError(error) &&
-    error.reason._tag === "RequestParseError"
+    HttpServerError.isHttpServerError(cause) &&
+    cause.reason._tag === "RequestParseError"
   ) {
     return HttpServerResponse.jsonUnsafe(
       { error: "Bad Request", message: "Invalid JSON body", statusCode: 400 },
       { status: 400 },
     );
   }
-  if (Schema.isSchemaError(error)) {
+  if (Schema.isSchemaError(cause)) {
     return HttpServerResponse.jsonUnsafe(
       {
         error: "Bad Request",
-        message: SchemaIssue.makeFormatterStandardSchemaV1()(error.issue)
+        message: SchemaIssue.makeFormatterStandardSchemaV1()(cause.issue)
           .issues,
         statusCode: 400,
       },
       { status: 400 },
     );
   }
-  if (error instanceof ApplicationError) {
-    const status = applicationErrorStatus(error);
+  if (cause instanceof ApplicationError) {
+    const status = applicationErrorStatus(cause);
     return HttpServerResponse.jsonUnsafe(
       {
-        error: error.name.replace(/Exception$/, ""),
-        message: error.message,
+        error: cause.name.replace(/Exception$/, ""),
+        message: cause.message,
         statusCode: status,
       },
       { status },
     );
   }
-  logger.error("Unhandled request failure", error);
+  logger.error("Unhandled request failure", cause);
   return HttpServerResponse.jsonUnsafe(
     {
       error: "Internal Server Error",
@@ -418,7 +422,7 @@ const openApiFile = async (): Promise<Blob> => {
 const DocumentationRoutes = HttpRouter.use((router) =>
   Effect.gen(function* () {
     const yaml = yield* Effect.tryPromise(openApiFile);
-    yield* router.addAll([
+    const documentationRoutes = [
       HttpRouter.route(
         "GET",
         "/openapi.yaml",
@@ -437,7 +441,8 @@ const DocumentationRoutes = HttpRouter.use((router) =>
           { contentType: "text/html; charset=utf-8" },
         ),
       ),
-    ]);
+    ];
+    yield* router.addAll(documentationRoutes);
   }),
 );
 
@@ -448,27 +453,40 @@ export const BattlelogRoutes = Layer.merge(
   DocumentationRoutes,
 );
 
+export const battlelogHttpMiddleware = HttpMiddleware.make(
+  <E, R>(
+    effect: Effect.Effect<HttpServerResponse.HttpServerResponse, E, R>,
+  ): Effect.Effect<
+    HttpServerResponse.HttpServerResponse,
+    E,
+    R | HttpServerRequest.HttpServerRequest
+  > =>
+    httpServerMetrics(
+      Effect.tapCause(effect, (cause) =>
+        Effect.sync(() => {
+          const [, failure] = HttpServerError.causeResponseStripped(cause);
+          if (
+            Option.isSome(failure) &&
+            !Cause.hasInterruptsOnly(failure.value)
+          ) {
+            logger.error("Unhandled Battlelog HTTP failure", failure.value);
+          }
+        }),
+      ),
+    ),
+);
+
 export const BattlelogHttpServer = Layer.unwrap(
   Effect.map(BattlelogApplication, (application) =>
     HttpRouter.serve(
       BattlelogRoutes.pipe(
+        Layer.provide(httpServerRouteMetrics),
         HttpRouter.provideRequest(
           Layer.succeed(BattlelogApplication, application),
         ),
       ),
       {
-        middleware: (effect) =>
-          httpServerMetrics(
-            Effect.catchCause(effect, (cause) => {
-              logger.error("Unhandled Battlelog HTTP failure", cause);
-              return Effect.succeed(
-                HttpServerResponse.jsonUnsafe(
-                  { message: "Internal server error", statusCode: 500 },
-                  { status: 500 },
-                ),
-              );
-            }),
-          ),
+        middleware: battlelogHttpMiddleware,
       },
     ).pipe(
       Layer.provide(
@@ -483,7 +501,8 @@ export const makeBattlelogTestBoundary = (
 ) => {
   const boundary = HttpRouter.toWebHandler(
     BattlelogRoutes.pipe(
-      HttpRouter.provideRequest(
+      Layer.provide(httpServerRouteMetrics),
+      Layer.provideMerge(
         Layer.succeed(
           BattlelogApplication,
           BattlelogApplication.of({ operations: testOperations, port: 0 }),
@@ -491,10 +510,10 @@ export const makeBattlelogTestBoundary = (
       ),
       Layer.provide(HttpServer.layerServices),
     ),
-    { disableLogger: true },
+    { disableLogger: true, middleware: battlelogHttpMiddleware },
   );
   return {
     dispose: boundary.dispose,
-    handler: boundary.handler as (request: Request) => Promise<Response>,
+    handler: boundary.handler,
   };
 };

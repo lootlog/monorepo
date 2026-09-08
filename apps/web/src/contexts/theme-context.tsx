@@ -1,3 +1,4 @@
+import { resolveStoredTheme } from "@/themes/resolver";
 import {
   createContext,
   useEffect,
@@ -15,7 +16,6 @@ import {
 } from "@lootlog/client/main";
 import {
   applyThemeClassToRoot,
-  DEFAULT_THEME_ID,
   getRootResolvedTheme,
   resolveThemeClass,
   THEME_STORAGE_KEY,
@@ -59,10 +59,7 @@ export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
   });
 
   const [localTheme, setLocalTheme] = useState<ThemeId>(() => {
-    const savedTheme = localStorage.getItem(
-      THEME_STORAGE_KEY,
-    ) as ThemeId | null;
-    return savedTheme ?? DEFAULT_THEME_ID;
+    return resolveStoredTheme(localStorage.getItem(THEME_STORAGE_KEY));
   });
   const [hasThemeOverride, setHasThemeOverride] = useState(false);
   const [resolvedTheme, setResolvedTheme] = useState<ResolvedThemeId>(() =>
@@ -74,7 +71,7 @@ export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
 
   const theme =
     !isLoading && preferences?.theme && !hasThemeOverride
-      ? (preferences.theme as ThemeId)
+      ? resolveStoredTheme(preferences.theme)
       : localTheme;
 
   useEffect(() => {

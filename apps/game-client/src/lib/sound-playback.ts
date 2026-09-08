@@ -1,5 +1,5 @@
 import { queryClient } from "@/lib/query-client";
-import { DEFAULT_SOUND_URLS } from "@/features/settings/config/default-sounds";
+import { getDefaultSoundUrl } from "@/features/settings/config/default-sounds";
 import { getSoundSettingsControllerGetSettingsQueryKey } from "@lootlog/client/main";
 import {
   disposeSoundPlayback,
@@ -9,7 +9,6 @@ import type { UserSoundSettings } from "@lootlog/schema/sound-settings";
 import { useSettingsStore } from "@/store/settings.store";
 
 type SoundCategory = "notifications" | "detector" | "timers" | "pings";
-type ConfigurableSoundCategory = Exclude<SoundCategory, "pings">;
 
 export type SoundPlaybackProfile = {
   playbackRate?: number;
@@ -49,12 +48,10 @@ export function playSound(
   if (soundsMuted || masterVolume === 0 || categoryVolume === 0) return;
 
   const soundConfig =
-    category === "pings"
-      ? undefined
-      : settings[`${category as ConfigurableSoundCategory}Config`]?.[key];
+    category === "pings" ? undefined : settings[`${category}Config`]?.[key];
   const soundUrl =
     soundConfig?.soundUrl === "" || !soundConfig?.soundUrl
-      ? DEFAULT_SOUND_URLS[key]
+      ? getDefaultSoundUrl(key)
       : soundConfig.soundUrl;
 
   if (!soundUrl) return;

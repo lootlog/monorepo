@@ -83,13 +83,7 @@ export const makeEventCoordinationStore = (
 
   findActiveGaps(heroIds: string[]) {
     if (heroIds.length === 0) {
-      return Effect.succeed(
-        [] as Array<
-          typeof eventMapCoverageGapTable.$inferSelect & {
-            map: { mapId: number; mapName: string };
-          }
-        >,
-      );
+      return Effect.succeed([]);
     }
     return Effect.map(
       database

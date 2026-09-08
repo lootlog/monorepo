@@ -22,6 +22,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "format": "oxfmt src test",
     "test": "bun --conditions=development test --path-ignore-patterns=dist --path-ignore-patterns='**/*.integration.*' ./src ./test",
+    "perf:routing": "bun --conditions=development test/realtime-hub.bench.ts",
     "test:integration": "bun --conditions=development test test/realtime-redis.integration.test.ts",
     "test:debug": "bun --conditions=development test --inspect-brk --path-ignore-patterns=dist src/auth src/realtime src/rabbit test",
     "test:e2e": "bun --conditions=development test --path-ignore-patterns=dist --path-ignore-patterns='**/*.integration.*' ./test",
@@ -30,6 +31,7 @@
   },
   "dependencies": {
     "@effect/platform-bun": "catalog:",
+    "@lootlog/database": "workspace:*",
     "@lootlog/domain": "workspace:*",
     "@lootlog/instrumentation": "workspace:*",
     "@lootlog/messaging": "workspace:*",

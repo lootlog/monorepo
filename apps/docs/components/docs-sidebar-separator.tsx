@@ -17,10 +17,11 @@ export function DocsSidebarSeparator({ item }: SeparatorProps) {
     return <div className="docs-sidebar-section">{item.name}</div>;
   }
 
+  const style: SeparatorStyle = { "--chapter-color": chapter.color };
   return (
     <div
       className={`docs-sidebar-section docs-sidebar-section-${chapter.id}`}
-      style={{ "--chapter-color": chapter.color } as SeparatorStyle}
+      style={style}
     >
       <span className="docs-sidebar-section-bar" aria-hidden="true" />
       <span className="docs-sidebar-section-number">{chapter.number}</span>

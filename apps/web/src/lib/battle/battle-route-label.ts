@@ -1,29 +1,27 @@
+import { z } from "zod";
+import type { TOptions } from "i18next";
 import type { Battle } from "@/lib/api/battlelog-types";
 
-type Translate = (key: string, options?: Record<string, unknown>) => string;
+type Translate = (key: string, options?: TOptions) => string;
 
 export type BattleRouteLabelMatch = {
   loaderData?: unknown;
   params?: Record<string, string | undefined>;
 };
 
-type BattleRouteLoaderData = {
-  battle?: Battle;
-};
+const battleLabel = z.object({
+  id: z.string(),
+  type: z.string(),
+  warriors: z.array(z.object({ name: z.string(), team: z.number() })),
+});
+type BattleLabel = z.output<typeof battleLabel>;
+const battleRouteLoaderData = z.object({ battle: battleLabel.optional() });
 
 type BattleRouteLabelOptions = {
   currentBattle?: Battle;
 };
 
-function getBattleFromLoaderData(loaderData: unknown) {
-  if (!loaderData || typeof loaderData !== "object") {
-    return;
-  }
-
-  return (loaderData as BattleRouteLoaderData).battle;
-}
-
-function getOneVsOneBattleLabel(battle: Battle | undefined, t: Translate) {
+function getOneVsOneBattleLabel(battle: BattleLabel | undefined, t: Translate) {
   if (!battle || battle.type !== "1v1" || !Array.isArray(battle.warriors)) {
     return;
   }
@@ -62,7 +60,8 @@ function getRouteBattle(
     return;
   }
 
-  const loaderBattle = getBattleFromLoaderData(match?.loaderData);
+  const loaderBattle = battleRouteLoaderData.safeParse(match?.loaderData).data
+    ?.battle;
 
   if (loaderBattle?.id === battleId) {
     return loaderBattle;

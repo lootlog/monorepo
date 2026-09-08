@@ -32,7 +32,7 @@ Minimum supported versions are Chromium 116 and Firefox 140. Firefox uses the ex
 
 Configure the exact `chrome-extension://<id>` in the auth service's `TRUSTED_ORIGINS` and gateway's `ALLOWED_EXTENSION_ORIGINS` (comma-separated). Preserve existing values. Deploy the backend changes before loading this client. Do not use a wildcard for Chromium origins.
 
-Firefox assigns a UUID origin per installation. The gateway permits these origins only with an authenticated, single-use ticket bound to that origin; it rejects cookie-only Firefox extension upgrades. Ticket requests supply `x-lootlog-extension-origin` from the extension background because Firefox can omit HTTP `Origin`. A native origin takes precedence. Do not add `moz-extension://*` to Better Auth trusted origins.
+Firefox assigns a UUID origin per installation. Realtime now uses session cookies through Traefik forward auth; tickets are no longer available. Only explicitly configured extension origins are admitted. Do not configure wildcard extension origins. The first backend release after the rework supports Web and the userscript; extension cookie delivery and store release remain unverified. See [gateway authentication](../../gateway/README.md) before preparing an extension release.
 
 The toolbar action opens Lootlog. When authentication is unavailable, the overlay shows a centered draggable login window with a website link and session retry. Closing it hides it until the next game reload. Confirmed logout or account replacement disconnects the game client and clears its cached session data before another account starts. The userscript retains its existing authentication behavior.
 

@@ -362,18 +362,24 @@ export const canonicalRabbitEventSchemas = {
 export type CanonicalRabbitEventRoutingKey =
   keyof typeof canonicalRabbitEventSchemas;
 
+export type CanonicalRabbitEvent<
+  RoutingKey extends CanonicalRabbitEventRoutingKey,
+> = (typeof canonicalRabbitEventSchemas)[RoutingKey]["Encoded"];
+
 export const decodeRabbitEvent = <
   RoutingKey extends CanonicalRabbitEventRoutingKey,
 >(
   routingKey: RoutingKey,
   input: unknown,
-): unknown => {
+): CanonicalRabbitEvent<RoutingKey> => {
   const eventSchema = canonicalRabbitEventSchemas[routingKey];
   if (eventSchema === undefined) {
     throw new Error(`No RabbitMQ event schema for routing key: ${routingKey}`);
   }
   Schema.decodeUnknownSync(eventSchema)(input);
-  return input;
+  // SAFETY: the routing key's schema just validated its encoded input. Return
+  // that original input to preserve wire extension fields and object identity.
+  return input as CanonicalRabbitEvent<RoutingKey>;
 };
 
 export const decodeRabbitEventJson = <
@@ -381,7 +387,7 @@ export const decodeRabbitEventJson = <
 >(
   routingKey: RoutingKey,
   input: string,
-): unknown =>
+): CanonicalRabbitEvent<RoutingKey> =>
   decodeRabbitEvent(
     routingKey,
     Schema.decodeUnknownSync(Schema.fromJsonString(Schema.Unknown))(input),

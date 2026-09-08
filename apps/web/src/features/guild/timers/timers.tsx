@@ -1,5 +1,11 @@
+import {
+  findNpcType,
+  NPC_TYPE_NAMES,
+  NPC_TYPE_SORT_ORDER,
+} from "@/constants/npc";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { PageHeader } from "@/components/common/page-header";
+import { SectionCard } from "@/components/common/section-card/section-card";
+import { ViewModeToggle } from "@/components/ui/view-mode-toggle";
 import { useTimerExpiry } from "./use-timer-expiry";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -12,16 +18,11 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@lootlog/ui/components/empty";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@lootlog/ui/components/tooltip";
 import groupBy from "lodash/groupBy";
-import { Clock3, Globe2, Grid2X2, List, SearchX } from "lucide-react";
+import { Clock3, Globe2, SearchX } from "lucide-react";
 import { useState } from "react";
 import { SingleTimer } from "./single-timer";
-import { NPC_TYPE_NAMES, NPC_TYPE_SORT_ORDER } from "@/constants/npc";
+
 import { SearchInput } from "@/components/ui/search-input";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
@@ -53,9 +54,6 @@ const getTimerListState = <Timer extends { npc?: { name: string } | null }>(
       !hasFilteredTimers,
   };
 };
-
-const getViewModeVariant = (isActive: boolean) =>
-  isActive ? "default" : "ghost";
 
 const getTimerGroupClassName = (viewMode: "grid" | "list") =>
   viewMode === "grid"
@@ -105,12 +103,8 @@ export const Timers = () => {
   });
   const sorted = sortedByTime?.sort((a, b) => {
     return (
-      NPC_TYPE_SORT_ORDER.indexOf(
-        a.npc?.type as (typeof NPC_TYPE_SORT_ORDER)[number],
-      ) -
-      NPC_TYPE_SORT_ORDER.indexOf(
-        b.npc?.type as (typeof NPC_TYPE_SORT_ORDER)[number],
-      )
+      NPC_TYPE_SORT_ORDER.findIndex((type) => type === a.npc?.type) -
+      NPC_TYPE_SORT_ORDER.findIndex((type) => type === b.npc?.type)
     );
   });
 
@@ -118,16 +112,18 @@ export const Timers = () => {
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
+      <h1 className="sr-only">{t("layout.navigation.timers")}</h1>
       <div className="px-3 pt-3">
-        <PageHeader title={t("layout.navigation.timers")}>
-          <SectionCardContent>
+        <SectionCard className="rounded-xl">
+          <SectionCardContent className="p-2">
             <div className="flex items-center gap-2">
               <SearchInput
                 placeholder={t("timers.searchPlaceholder")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="h-9"
-                wrapperClassName="flex-1"
+                wrapperClassName="min-w-0 flex-1"
+                aria-label={t("timers.searchPlaceholder")}
               />
               {isMobile ? (
                 <WorldSwitcher />
@@ -136,45 +132,15 @@ export const Timers = () => {
                   <WorldSwitcher />
                 </div>
               )}
-              <div className="flex items-center gap-1">
-                <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <Button
-                        onClick={() => setViewMode("list")}
-                        variant={getViewModeVariant(viewMode === "list")}
-                        size="icon"
-                        className="h-8 w-8"
-                      >
-                        <List className="h-4 w-4" />
-                      </Button>
-                    }
-                  />
-                  <TooltipContent side="bottom">
-                    <p>{t("timers.view.list")}</p>
-                  </TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <Button
-                        onClick={() => setViewMode("grid")}
-                        variant={getViewModeVariant(viewMode === "grid")}
-                        size="icon"
-                        className="h-8 w-8"
-                      >
-                        <Grid2X2 className="h-4 w-4" />
-                      </Button>
-                    }
-                  />
-                  <TooltipContent side="bottom">
-                    <p>{t("timers.view.grid")}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
+              <ViewModeToggle
+                value={viewMode}
+                onChange={setViewMode}
+                listLabel={t("timers.view.list")}
+                gridLabel={t("timers.view.grid")}
+              />
             </div>
           </SectionCardContent>
-        </PageHeader>
+        </SectionCard>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col pt-3">
@@ -184,7 +150,7 @@ export const Timers = () => {
               <div className="mb-4 flex size-14 items-center justify-center rounded-xl border border-border bg-background">
                 <ThemeEmptyStateIcon
                   className="size-8 text-muted-foreground"
-                  fallback={<Globe2 className="size-8 text-primary" />}
+                  fallback=<Globe2 className="size-8 text-primary" />
                 />
               </div>
               <h2 className="text-base font-semibold text-foreground">
@@ -209,7 +175,7 @@ export const Timers = () => {
                   {showsNoSearchResults ? (
                     <SearchX />
                   ) : (
-                    <ThemeEmptyStateIcon fallback={<Clock3 />} />
+                    <ThemeEmptyStateIcon fallback=<Clock3 /> />
                   )}
                 </EmptyMedia>
                 <EmptyTitle>{t(emptyTranslationKeys.title)}</EmptyTitle>
@@ -244,11 +210,13 @@ export const Timers = () => {
               {!isPending && timers && hasFilteredTimers && (
                 <div className="flex flex-col gap-4">
                   {Object.keys(groups).map((key) => {
+                    const npcType = findNpcType(key);
                     return (
                       <div key={key}>
                         <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground px-1 mb-2">
-                          {NPC_TYPE_NAMES[key as keyof typeof NPC_TYPE_NAMES] ??
-                            t("timers.npcType.manual")}{" "}
+                          {npcType
+                            ? NPC_TYPE_NAMES[npcType]
+                            : t("timers.npcType.manual")}{" "}
                           ({groups[key]?.length})
                         </p>
                         <div className={getTimerGroupClassName(viewMode)}>

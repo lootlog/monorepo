@@ -1,3 +1,4 @@
+import { TableFilterToolbar } from "@/components/ui/table-filter-toolbar";
 import { useTranslation } from "react-i18next";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCard } from "@/components/common/section-card/section-card";
@@ -40,16 +41,28 @@ export const BattlePanelResultsSurface = ({
 
   return (
     <SectionCard className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden border-border bg-card p-0">
-      <SectionCardHeader
-        title={title ?? t("battlePanel.navigation.battles")}
-        actions={
-          <>
-            {toolbar}
+      {title ? (
+        <SectionCardHeader
+          title={title}
+          actions={
+            <>
+              {toolbar}
+              {toolbarEnd}
+            </>
+          }
+          className="shrink-0"
+        />
+      ) : (
+        (toolbar || toolbarEnd) && (
+          <TableFilterToolbar
+            role="group"
+            aria-label={t("battlePanel.filters.title")}
+          >
+            {toolbar && <div className="min-w-0 flex-1">{toolbar}</div>}
             {toolbarEnd}
-          </>
-        }
-        className="shrink-0"
-      />
+          </TableFilterToolbar>
+        )
+      )}
       {shouldShowChips && (
         <BattlePanelFilterChipList
           chips={chips}

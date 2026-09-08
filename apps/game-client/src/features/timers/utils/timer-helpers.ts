@@ -1,3 +1,4 @@
+import type { UserTimerSettings } from "@lootlog/schema/timer-settings";
 import type { Timer } from "@/api/timers.api";
 import type { GuildMember } from "@/types/guild-member";
 
@@ -66,7 +67,7 @@ export const calculateTimeLeft = (
 
 export const getTimerColorConfig = (
   npcName: string,
-  timersColors: Record<string, string>,
+  timersColors: UserTimerSettings["timersColors"],
   customColors: Record<
     string,
     { id: string; name: string; backgroundColor: string; borderColor: string }

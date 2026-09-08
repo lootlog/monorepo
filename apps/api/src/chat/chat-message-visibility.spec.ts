@@ -210,7 +210,7 @@ describe("canViewChatMessage", () => {
     ).toBe(false);
   });
 
-  it("returns true for event hero messages with heroes permission", () => {
+  it("returns true for hero messages with heroes permission", () => {
     const roles = [
       createRole(
         [Permission.LOOTLOG_CHAT_READ, Permission.LOOTLOG_CHAT_HEROES_READ],
@@ -232,7 +232,7 @@ describe("canViewChatMessage", () => {
             wt: 85,
             hpp: 100,
             icon: "npc.png",
-            type: "EVENT_HERO" as never,
+            type: 2,
           },
         }),
         roles,

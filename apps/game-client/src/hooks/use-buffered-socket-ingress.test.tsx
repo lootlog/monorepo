@@ -1,45 +1,59 @@
+import { RealtimeEventListeners } from "@lootlog/client/realtime/event-listeners";
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GatewayEvent } from "@/config/gateway";
 import { useBufferedSocketIngress } from "@/hooks/use-buffered-socket-ingress";
 
-type FakeSocket = {
-  on: (event: string, handler: (payload: unknown) => void) => void;
-  off: (event: string, handler: (payload: unknown) => void) => void;
+const listeners = new RealtimeEventListeners<GatewayEvent>();
+const socket = {
+  on: listeners.add.bind(listeners),
+  off: listeners.delete.bind(listeners),
 };
-
-const handlersByEvent = new Map<string, (payload: unknown) => void>();
-
-const socket: FakeSocket = {
-  on: vi.fn((event: string, handler: (payload: unknown) => void) => {
-    handlersByEvent.set(event, handler);
-  }),
-  off: vi.fn((event: string) => {
-    handlersByEvent.delete(event);
-  }),
-};
-
-const processPayloadBatch = vi.fn();
-const cancelPayload = vi.fn();
-
-const emit = (event: GatewayEvent, payload: unknown) => {
-  handlersByEvent.get(event)?.(payload);
-};
+const emit = listeners.emit.bind(listeners);
+const processPayloadBatch =
+  vi.fn<(payloads: readonly { notificationId: string }[]) => void>();
+const cancelPayload = vi.fn<(payload: { notificationId: string }) => void>();
 
 describe("useBufferedSocketIngress", () => {
   beforeEach(() => {
-    handlersByEvent.clear();
-    vi.mocked(socket.on).mockClear();
-    vi.mocked(socket.off).mockClear();
+    listeners.clear();
     processPayloadBatch.mockReset();
     cancelPayload.mockReset();
+  });
+
+  it("discards notifications buffered before a permission change", async () => {
+    const onProcessBatch =
+      vi.fn<(payloads: readonly { notificationId: string }[]) => void>();
+    renderHook(() =>
+      useBufferedSocketIngress({
+        socket,
+        connected: true,
+        accountId: "account-1",
+        isReady: true,
+        event: GatewayEvent.NOTIFICATION,
+        onProcessBatch,
+      }),
+    );
+    emit(GatewayEvent.NOTIFICATION, { notificationId: "hidden-titan" });
+    emit(GatewayEvent.PERMISSIONS_UPDATED, {});
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(onProcessBatch).not.toHaveBeenCalled();
+    emit(GatewayEvent.NOTIFICATION, { notificationId: "allowed" });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(onProcessBatch).toHaveBeenCalledWith([
+      { notificationId: "allowed" },
+    ]);
   });
 
   it("queues payloads until readiness and flushes them afterwards", () => {
     const { rerender } = renderHook(
       ({ isReady }) =>
         useBufferedSocketIngress({
-          socket: socket as never,
+          socket,
           connected: true,
           accountId: null,
           isReady,
@@ -65,10 +79,19 @@ describe("useBufferedSocketIngress", () => {
   });
 
   it("clears queued payloads after account change before readiness", () => {
-    const { rerender } = renderHook(
-      ({ accountId, isReady }) =>
+    const { rerender } = renderHook<
+      void,
+      { accountId: string | null; isReady: boolean }
+    >(
+      ({
+        accountId,
+        isReady,
+      }: {
+        accountId: string | null;
+        isReady: boolean;
+      }) =>
         useBufferedSocketIngress({
-          socket: socket as never,
+          socket,
           connected: true,
           accountId,
           isReady,
@@ -77,7 +100,7 @@ describe("useBufferedSocketIngress", () => {
         }),
       {
         initialProps: {
-          accountId: null as string | null,
+          accountId: null,
           isReady: false,
         },
       },
@@ -105,7 +128,7 @@ describe("useBufferedSocketIngress", () => {
     const { rerender } = renderHook(
       ({ isReady }) =>
         useBufferedSocketIngress({
-          socket: socket as never,
+          socket,
           connected: true,
           accountId: null,
           isReady,
@@ -141,7 +164,7 @@ describe("useBufferedSocketIngress", () => {
   it("applies cancel events immediately after readiness", () => {
     renderHook(() =>
       useBufferedSocketIngress({
-        socket: socket as never,
+        socket,
         connected: true,
         accountId: null,
         isReady: true,
@@ -168,7 +191,7 @@ describe("useBufferedSocketIngress", () => {
   it("batches ready payloads received during the same task", async () => {
     renderHook(() =>
       useBufferedSocketIngress({
-        socket: socket as never,
+        socket,
         connected: true,
         accountId: "account-1",
         isReady: true,
@@ -194,7 +217,7 @@ describe("useBufferedSocketIngress", () => {
   it("does not flush a ready batch after unmount", async () => {
     const { unmount } = renderHook(() =>
       useBufferedSocketIngress({
-        socket: socket as never,
+        socket,
         connected: true,
         accountId: "account-1",
         isReady: true,
@@ -213,7 +236,7 @@ describe("useBufferedSocketIngress", () => {
   it("flushes a queued payload before a following ready cancel", () => {
     renderHook(() =>
       useBufferedSocketIngress({
-        socket: socket as never,
+        socket,
         connected: true,
         accountId: "account-1",
         isReady: true,
@@ -247,7 +270,7 @@ describe("useBufferedSocketIngress", () => {
     const { rerender } = renderHook(
       ({ isReady }) =>
         useBufferedSocketIngress({
-          socket: socket as never,
+          socket,
           connected: true,
           accountId: null,
           isReady,
@@ -278,4 +301,32 @@ describe("useBufferedSocketIngress", () => {
       notificationId: "notification-99",
     });
   });
+});
+
+it("keeps unaffected queued notifications and rejects revoked data at flush", async () => {
+  let allowedGuilds = new Set(["a", "b"]);
+  const onProcessBatch =
+    vi.fn<(payloads: readonly { guildId: string }[]) => void>();
+  renderHook(() =>
+    useBufferedSocketIngress({
+      socket,
+      connected: true,
+      accountId: "account",
+      isReady: true,
+      event: GatewayEvent.NOTIFICATION,
+      isPayloadAllowed: (payload: { guildId: string }) =>
+        allowedGuilds.has(payload.guildId),
+      onProcessBatch,
+    }),
+  );
+  emit(GatewayEvent.NOTIFICATION, { guildId: "a" });
+  emit(GatewayEvent.NOTIFICATION, { guildId: "b" });
+  allowedGuilds = new Set(["b"]);
+  emit(GatewayEvent.PERMISSIONS_UPDATED, {
+    accessPolicy: { version: "new", organizations: [] },
+  });
+  await act(async () => {
+    await Promise.resolve();
+  });
+  expect(onProcessBatch).toHaveBeenCalledWith([{ guildId: "b" }]);
 });

@@ -1,3 +1,9 @@
+import type { DiscordNotificationAllowedMentions } from "@lootlog/schema/notifications";
+import {
+  isJsonObject,
+  type JsonObject,
+  type JsonValue,
+} from "#src/database/json";
 import {
   DEFAULT_TIMER_NOTIFICATION_TEMPLATE,
   DEFAULT_SCHEDULED_MESSAGE_TEMPLATE,
@@ -16,10 +22,6 @@ import {
   ruleTestWithoutWorld,
 } from "#src/notifications/content/notification-messages";
 import { formatDiscordRelativeTimestamp } from "#src/notifications/content/discord-timestamp";
-import type {
-  JsonObject,
-  JsonValue,
-} from "#src/notifications/notification-database.types";
 
 const DbNotificationScheduleAnchor = {
   MAX_SPAWN: "MAX_SPAWN",
@@ -251,15 +253,14 @@ class NotificationContent {
       return undefined;
     }
 
-    return {
-      ...(parse.length > 0 ? { parse } : {}),
-      ...(roleIds.length > 0 ? { roles: roleIds } : {}),
-      repliedUser: false,
-    } satisfies JsonObject;
+    const mentions: DiscordNotificationAllowedMentions = { repliedUser: false };
+    if (parse.length > 0) mentions.parse = parse;
+    if (roleIds.length > 0) mentions.roles = roleIds;
+    return mentions;
   }
 
   parseAllowedMentions(value: JsonValue | undefined) {
-    if (!value || typeof value !== "object" || Array.isArray(value)) {
+    if (!isJsonObject(value)) {
       return undefined;
     }
 
@@ -273,12 +274,12 @@ class NotificationContent {
       return undefined;
     }
 
-    return {
-      ...(parse && parse.length > 0 ? { parse } : {}),
-      ...(roles && roles.length > 0 ? { roles } : {}),
-      ...(users && users.length > 0 ? { users } : {}),
-      ...(repliedUser !== undefined ? { repliedUser } : {}),
-    };
+    const mentions: DiscordNotificationAllowedMentions = {};
+    if (parse && parse.length > 0) mentions.parse = parse;
+    if (roles && roles.length > 0) mentions.roles = roles;
+    if (users && users.length > 0) mentions.users = users;
+    if (repliedUser !== undefined) mentions.repliedUser = repliedUser;
+    return mentions;
   }
 
   formatNotificationDate(date: Date) {

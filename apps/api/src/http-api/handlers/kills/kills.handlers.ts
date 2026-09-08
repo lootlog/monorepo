@@ -1,3 +1,4 @@
+import { optionalPathString } from "#src/shared/http/handler-response";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { LootlogApi } from "../../lootlog-api.js";
 import {
@@ -23,7 +24,9 @@ export const KillsHandlers = HttpApiBuilder.group(
         toRecordsHttpResponse(createKill(payload)),
       )
       .handle("KillsControllerGetGuildKillStats", ({ params, query }) =>
-        toRecordsHttpResponse(getGuildKillStats(params.guildId, query)),
+        toRecordsHttpResponse(
+          getGuildKillStats(optionalPathString(params.guildId), query),
+        ),
       )
       .handle("KillsControllerGetUserKillAnalytics", ({ query }) =>
         toRecordsHttpResponse(getUserKillAnalytics(query)),
@@ -38,19 +41,31 @@ export const KillsHandlers = HttpApiBuilder.group(
         toRecordsHttpResponse(getUserNpcKills(query)),
       )
       .handle("KillsControllerGetGuildTopNpcs", ({ params, query }) =>
-        toRecordsHttpResponse(getGuildTopNpcs(params.guildId, query)),
+        toRecordsHttpResponse(
+          getGuildTopNpcs(optionalPathString(params.guildId), query),
+        ),
       )
       .handle("KillsControllerGetGuildTopKillersByType", ({ params, query }) =>
-        toRecordsHttpResponse(getGuildTopKillersByType(params.guildId, query)),
+        toRecordsHttpResponse(
+          getGuildTopKillersByType(optionalPathString(params.guildId), query),
+        ),
       )
       .handle("KillsControllerGetNpcKillers", ({ params, query }) =>
         toRecordsHttpResponse(
-          getNpcKillers(params.guildId, params.npcId, query),
+          getNpcKillers(
+            optionalPathString(params.guildId),
+            params.npcId,
+            query,
+          ),
         ),
       )
       .handle("KillsControllerGetMemberKills", ({ params, query }) =>
         toRecordsHttpResponse(
-          getMemberKills(params.guildId, params.memberId, query),
+          getMemberKills(
+            optionalPathString(params.guildId),
+            params.memberId,
+            query,
+          ),
         ),
       ),
 );

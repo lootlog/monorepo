@@ -30,6 +30,8 @@ const guildNamesByIdCache = new WeakMap<
   Record<string, string>
 >();
 
+// Legacy JSON response fields accept numeric strings; retain their historical
+// coercion and fallback rules before exposing normalized application settings.
 const getNumber = (value: unknown, fallback = 0) => {
   if (typeof value === "number") {
     return value;
@@ -113,18 +115,18 @@ export const normalizeTimerMember = (
 };
 
 export const normalizeTimerNpc = (npc: TimerResponseDto["npc"]): Npc => {
-  const data: Record<string, unknown> = isRecord(npc) ? npc : {};
+  const data = isRecord(npc) ? npc : undefined;
 
   return {
-    id: getNumber(data.id),
-    name: getString(data.name),
-    lvl: getNumber(data.lvl),
-    prof: getString(data.prof),
-    icon: getString(data.icon),
-    wt: getNumber(data.wt),
-    type: getString(data.type, "NPC") as Npc["type"],
-    location: typeof data.location === "string" ? data.location : undefined,
-    margonemType: getNumber(data.margonemType),
+    id: getNumber(data?.id),
+    name: getString(data?.name),
+    lvl: getNumber(data?.lvl),
+    prof: getString(data?.prof),
+    icon: getString(data?.icon),
+    wt: getNumber(data?.wt),
+    type: typeof data?.type === "string" ? data.type : "NPC",
+    location: typeof data?.location === "string" ? data.location : undefined,
+    margonemType: getNumber(data?.margonemType),
   };
 };
 

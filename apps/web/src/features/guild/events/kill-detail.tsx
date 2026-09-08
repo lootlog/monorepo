@@ -147,10 +147,7 @@ export const KillDetail = () => {
               participant.bonusBreakdown,
             )
               .map((bonus) => bonus.ruleId)
-              .filter(
-                (ruleId): ruleId is string =>
-                  typeof ruleId === "string" && ruleId.trim().length > 0,
-              );
+              .filter((ruleId): ruleId is string => ruleId.trim().length > 0);
             return [...evaluatedRuleIds, ...bonusBreakdownRuleIds];
           }),
       ),
@@ -160,16 +157,18 @@ export const KillDetail = () => {
     const respawnDurationSeconds = kill.respawnDurationSeconds;
     const windowDurationSeconds = kill.windowDurationSeconds;
     const respawnDurationText =
-      typeof respawnDurationSeconds === "number"
+      respawnDurationSeconds !== null && respawnDurationSeconds !== undefined
         ? formatDurationHuman(respawnDurationSeconds)
         : formatRespawnWindow(kill.minSpawnTimeAtKill, kill.killedAt);
     const windowDurationText =
-      typeof windowDurationSeconds === "number"
+      windowDurationSeconds !== null && windowDurationSeconds !== undefined
         ? formatDurationHuman(windowDurationSeconds)
         : formatRespawnWindow(kill.minSpawnTimeAtKill, kill.maxSpawnTimeAtKill);
     const hasDurations =
-      typeof windowDurationSeconds === "number" &&
-      typeof respawnDurationSeconds === "number";
+      windowDurationSeconds !== null &&
+      windowDurationSeconds !== undefined &&
+      respawnDurationSeconds !== null &&
+      respawnDurationSeconds !== undefined;
     const fasterThanMaxSeconds = hasDurations
       ? Math.max(0, windowDurationSeconds - respawnDurationSeconds)
       : null;
@@ -184,7 +183,9 @@ export const KillDetail = () => {
       respawnDurationText,
       windowDurationText,
       fasterThanMaxText:
-        typeof fasterThanMaxSeconds === "number" && fasterThanMaxSeconds > 0
+        fasterThanMaxSeconds !== null &&
+        fasterThanMaxSeconds !== undefined &&
+        fasterThanMaxSeconds > 0
           ? formatDurationHuman(fasterThanMaxSeconds)
           : null,
       respawnComparedToMaxPercentage,
@@ -207,7 +208,7 @@ export const KillDetail = () => {
       />
 
       <ScrollArea className="min-h-0 min-w-0 max-w-full flex-1">
-        <main className="flex w-full min-w-0 max-w-full flex-col gap-3 overflow-x-hidden px-3 py-3">
+        <div className="flex w-full min-w-0 max-w-full flex-col gap-3 overflow-x-hidden px-3 py-3">
           <KillDetailSummary
             kill={kill}
             eventConfig={eventConfig}
@@ -264,7 +265,7 @@ export const KillDetail = () => {
               />
             </aside>
           </div>
-        </main>
+        </div>
       </ScrollArea>
     </div>
   );

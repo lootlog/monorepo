@@ -5,45 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Timer } from "@/api/timers.api";
 import { queryKeys } from "@/features/public-api/query-keys";
 import { useTimersCache } from "./use-timers-cache";
-import {
-  fixtureValue,
-  nestedFixtureValue,
-  optionalFixtureValue,
-} from "@/test-utils/fixture-value";
-
-const createTimer = (overrides?: Partial<Timer>): Timer => ({
-  guildId: fixtureValue(overrides, "guildId", "guild-1"),
-  timerKey: fixtureValue(overrides, "timerKey", "timer-1"),
-  world: fixtureValue(overrides, "world", "pandora"),
-  npcId: fixtureValue(overrides, "npcId", 10),
-  minSpawnTime: fixtureValue(
-    overrides,
-    "minSpawnTime",
-    "2026-04-22T10:00:00.000Z",
-  ),
-  maxSpawnTime: fixtureValue(
-    overrides,
-    "maxSpawnTime",
-    "2026-04-22T10:05:00.000Z",
-  ),
-  updatedAt: fixtureValue(overrides, "updatedAt", "2026-04-22T09:59:00.000Z"),
-  wasReset: fixtureValue(overrides, "wasReset", false),
-  npc: {
-    id: nestedFixtureValue(overrides, "npc", "id", 10),
-    name: nestedFixtureValue(overrides, "npc", "name", "Tanroth"),
-    lvl: nestedFixtureValue(overrides, "npc", "lvl", 120),
-    prof: nestedFixtureValue(overrides, "npc", "prof", "W"),
-    icon: nestedFixtureValue(overrides, "npc", "icon", "icon.gif"),
-    wt: nestedFixtureValue(overrides, "npc", "wt", 10),
-    type: nestedFixtureValue(overrides, "npc", "type", "hero"),
-    margonemType: nestedFixtureValue(overrides, "npc", "margonemType", 4),
-    location: nestedFixtureValue(overrides, "npc", "location", "Ruins"),
-  } as never,
-  member: optionalFixtureValue(overrides, "member"),
-  members: optionalFixtureValue(overrides, "members"),
-  isCustomTime: fixtureValue(overrides, "isCustomTime", false),
-  isPending: fixtureValue(overrides, "isPending", false),
-});
+import { createTimerFixture as createTimer } from "@/features/timers/timer-fixtures";
 
 describe("useTimersCache", () => {
   let queryClient: QueryClient;
@@ -63,7 +25,7 @@ describe("useTimersCache", () => {
 
   it("keeps an unseen timer list fetchable after an incremental upsert", async () => {
     const fetchTimers = vi
-      .fn()
+      .fn<() => Promise<Timer[]>>()
       .mockResolvedValue([createTimer({ timerKey: "server-timer" })]);
     const { result } = renderHook(() => useTimersCache(), { wrapper });
 
@@ -81,7 +43,9 @@ describe("useTimersCache", () => {
 
   it("keeps an unseen timer list fetchable after an incremental removal", async () => {
     const serverTimers = [createTimer({ timerKey: "server-timer" })];
-    const fetchTimers = vi.fn().mockResolvedValue(serverTimers);
+    const fetchTimers = vi
+      .fn<() => Promise<Timer[]>>()
+      .mockResolvedValue(serverTimers);
     const { result } = renderHook(() => useTimersCache(), { wrapper });
 
     result.current.removeTimer({
@@ -156,9 +120,9 @@ describe("useTimersCache", () => {
     });
 
     expect(
-      (queryClient.getQueryData(queryKeys.timers("pandora")) as Timer[]).map(
-        (timer) => timer.timerKey,
-      ),
+      (
+        queryClient.getQueryData<Timer[]>(queryKeys.timers("pandora")) ?? []
+      ).map((timer) => timer.timerKey),
     ).toEqual(["timer-1", "timer-3"]);
   });
 

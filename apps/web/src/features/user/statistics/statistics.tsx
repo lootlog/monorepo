@@ -52,16 +52,9 @@ export function Statistics() {
           className="@container/page-heading [&>header>div:last-child]:basis-full @2xl/page-heading:[&>header>div:last-child]:basis-auto"
           icon={BarChart3}
           title={t("statistics.title")}
-          description={t("statistics.description")}
           actions={
             <div className="flex min-w-0 flex-wrap items-end gap-2">
               <div className="flex flex-col gap-1">
-                <label
-                  htmlFor="statistics-period"
-                  className="text-xs text-muted-foreground"
-                >
-                  {t("statistics.period")}
-                </label>
                 <Select
                   value={search.days}
                   items={STATISTICS_DAYS.map((days) => ({
@@ -72,7 +65,11 @@ export function Statistics() {
                     if (days !== null) update({ days });
                   }}
                 >
-                  <SelectTrigger id="statistics-period" size="lg">
+                  <SelectTrigger
+                    id="statistics-period"
+                    size="lg"
+                    aria-label={t("statistics.period")}
+                  >
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -87,9 +84,6 @@ export function Statistics() {
                 </Select>
               </div>
               <div className="space-y-1">
-                <span className="block text-xs text-muted-foreground">
-                  {t("statistics.world")}
-                </span>
                 <WorldSwitcher
                   value={search.world ?? null}
                   onValueChange={(world) =>

@@ -123,13 +123,11 @@ export const OpenRespawnWindowDialog = ({
                       {t("events.respawn.minSpawnTime")}
                     </FormLabel>
                     <FormControl
-                      render={
-                        <DateTimePicker
-                          value={field.value}
-                          onChange={field.onChange}
-                          className="w-full"
-                        />
-                      }
+                      render=<DateTimePicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        className="w-full"
+                      />
                     />
                     <FormMessage />
                   </FormItem>
@@ -145,13 +143,11 @@ export const OpenRespawnWindowDialog = ({
                       {t("events.respawn.maxSpawnTime")}
                     </FormLabel>
                     <FormControl
-                      render={
-                        <DateTimePicker
-                          value={field.value}
-                          onChange={field.onChange}
-                          className="w-full"
-                        />
-                      }
+                      render=<DateTimePicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        className="w-full"
+                      />
                     />
                     <FormMessage />
                   </FormItem>

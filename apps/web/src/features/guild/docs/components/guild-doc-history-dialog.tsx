@@ -1,5 +1,5 @@
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { FileClock } from "lucide-react";
 import { Badge } from "@lootlog/ui/components/badge";
 import {
@@ -16,8 +16,9 @@ import {
   getDocsControllerGetHistorySnapshotQueryKey,
   useDocsControllerGetHistory,
   useDocsControllerGetHistorySnapshot,
+  type GuildDocumentHistoryResponseDtoItemsItem,
 } from "@lootlog/client/main";
-import type { GuildDocumentHistoryResponseDtoItemsItem } from "@lootlog/client/main";
+
 import { GuildDocEditor } from "../editor/guild-doc-editor";
 import { normalizeGuildDocEditorContent } from "../editor/guild-doc-editor-content";
 import { formatGuildDocDateTime } from "../docs-date-format";
@@ -51,16 +52,13 @@ export const GuildDocHistoryDialog = ({
   );
   const historyItems = historyQuery.data?.items ?? [];
 
-  useEffect(() => {
-    if (!open) {
-      setSelectedHistoryId(null);
-      return;
-    }
+  const firstHistoryId = historyItems[0]?.id;
 
-    if (!selectedHistoryId && historyItems[0]) {
-      setSelectedHistoryId(historyItems[0].id);
-    }
-  }, [historyItems, open, selectedHistoryId]);
+  if (!open && selectedHistoryId !== null) {
+    setSelectedHistoryId(null);
+  } else if (open && !selectedHistoryId && firstHistoryId) {
+    setSelectedHistoryId(firstHistoryId);
+  }
 
   const snapshotQuery = useDocsControllerGetHistorySnapshot(
     {

@@ -3,10 +3,7 @@ import { and, eq, isNotNull } from "drizzle-orm";
 import { Effect, Layer, Schema } from "effect";
 import { Capability, createAccessPolicy } from "@lootlog/domain/access-policy";
 import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
-import {
-  RabbitRoutingKey,
-  type RabbitRoutingKeyName,
-} from "@lootlog/protocol/rabbit/topology";
+import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { CHAT_MESSAGE_LIMIT } from "@lootlog/schema/chat";
 import { Permission } from "@lootlog/schema/permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -19,12 +16,12 @@ import {
 import {
   canDeleteChatMessage,
   canEditChatMessage,
-} from "#src/chat/chat-message-permissions";
+} from "@lootlog/domain/chat-message-permissions";
 import { MessageType } from "#src/chat/chat-message";
 import type { ChatStoredMessage } from "#src/chat/chat-stored-message";
 import { SendChatMessageRequest } from "#src/contracts/chat/schemas";
 import type { ChatMessageViewer } from "#src/chat/chat-message-viewer";
-import { canViewChatMessage } from "#src/chat/chat-message-visibility";
+import { canViewerReadChatMessage } from "#src/chat/chat-message-visibility";
 import {
   PermissionDeniedError,
   ResourceNotFoundError,
@@ -59,10 +56,26 @@ export interface ChatRedis {
   readonly del: (key: string) => Effect.Effect<unknown, unknown>;
 }
 
+type ChatEventPayloads = {
+  [RabbitRoutingKey.GUILDS_SEND_MESSAGE]: ChatStoredMessage;
+  [RabbitRoutingKey.GUILDS_CLEAR_MESSAGES]: { readonly guildId: string };
+  [RabbitRoutingKey.GUILDS_DELETE_MESSAGE]: {
+    readonly guildId: string;
+    readonly messageId: string;
+    readonly routing: ReturnType<typeof routingFor>;
+  };
+  [RabbitRoutingKey.GUILDS_UPDATE_MESSAGE]: {
+    readonly guildId: string;
+    readonly messageId: string;
+    readonly message: string;
+    readonly routing: ReturnType<typeof routingFor>;
+  };
+};
+
 export interface ChatEvents {
-  readonly publish: (
-    routingKey: RabbitRoutingKeyName,
-    payload: unknown,
+  readonly publish: <Key extends keyof ChatEventPayloads>(
+    routingKey: Key,
+    payload: ChatEventPayloads[Key],
   ) => Effect.Effect<void, unknown>;
 }
 
@@ -231,13 +244,9 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) =>
             if (messages.length === 0) return [];
             const currentViewer = yield* viewer(discordId, guildId);
             if (!currentViewer) return [];
-            const visible = createAccessPolicy({
-              capabilities: currentViewer.permissions,
-            }).allows(Capability.ADMIN)
-              ? messages
-              : messages.filter((message) =>
-                  canViewChatMessage(message, currentViewer.roles),
-                );
+            const visible = messages.filter((message) =>
+              canViewerReadChatMessage(currentViewer, message),
+            );
             return visible.map((message) => ({
               ...message,
               canEdit: canEditChatMessage(currentViewer, message),
@@ -286,7 +295,11 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) =>
             }
             const message = parseStored(element);
             const currentViewer = yield* viewer(discordId, guildId);
-            if (!currentViewer || !canEditChatMessage(currentViewer, message)) {
+            if (
+              !currentViewer ||
+              !canViewerReadChatMessage(currentViewer, message) ||
+              !canEditChatMessage(currentViewer, message)
+            ) {
               return yield* Effect.fail(
                 new PermissionDeniedError("Not allowed to manage this message"),
               );
@@ -327,6 +340,7 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) =>
             const currentViewer = yield* viewer(discordId, guildId);
             if (
               !currentViewer ||
+              !canViewerReadChatMessage(currentViewer, message) ||
               !canDeleteChatMessage(currentViewer, message)
             ) {
               return yield* Effect.fail(

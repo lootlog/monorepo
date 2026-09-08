@@ -6,7 +6,7 @@ import { UserNavItem } from "@/components/layout/user-nav-item";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { Reorder, motion } from "framer-motion";
-import { useState, useEffect, useRef, type FC } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, type FC } from "react";
 import { GuildsSelectorSkeleton } from "@/components/layout/guilds-selector-skeleton";
 import { useGateway } from "@/hooks/utils/use-gateway";
 import { Separator } from "@lootlog/ui/components/separator";
@@ -35,7 +35,10 @@ export const GuildsSelector: FC = () => {
   const latestHiddenGuildIds = useRef(
     preferencesQuery.data?.hiddenGuildIds ?? [],
   );
-  latestHiddenGuildIds.current = preferencesQuery.data?.hiddenGuildIds ?? [];
+  useLayoutEffect(() => {
+    latestHiddenGuildIds.current = preferencesQuery.data?.hiddenGuildIds ?? [];
+  }, [preferencesQuery.data?.hiddenGuildIds]);
+  const { mutate: updatePreferences } = updateUserPreferences;
 
   const getOrderedGuilds = () => {
     if (!guilds?.length) {
@@ -48,17 +51,19 @@ export const GuildsSelector: FC = () => {
   const orderedGuildsKey = orderedGuilds.map((guild) => guild.id).join(":");
   const pendingOrderKey = pendingOrder?.join(":");
 
+  if (!isDragging && pendingOrder && orderedGuildsKey === pendingOrderKey) {
+    setPendingOrder(null);
+  }
+
   useEffect(() => {
     if (!isDragging && pendingOrder) {
       if (orderedGuildsKey !== pendingOrderKey) {
-        updateUserPreferences.mutate(
+        updatePreferences(
           { guildsOrder: pendingOrder },
           {
             onSettled: () => setPendingOrder(null),
           },
         );
-      } else {
-        setPendingOrder(null);
       }
     }
   }, [
@@ -66,7 +71,7 @@ export const GuildsSelector: FC = () => {
     orderedGuildsKey,
     pendingOrder,
     pendingOrderKey,
-    updateUserPreferences.mutate,
+    updatePreferences,
   ]);
 
   const handleReorder = (newGuilds: typeof guilds) => {
@@ -98,7 +103,7 @@ export const GuildsSelector: FC = () => {
         )
       : [...confirmedHiddenGuildIds, guildId];
 
-    updateUserPreferences.mutate(
+    updatePreferences(
       { hiddenGuildIds: nextHiddenGuildIds },
       {
         onSuccess: () => {
@@ -123,7 +128,7 @@ export const GuildsSelector: FC = () => {
                     );
                   }
 
-                  updateUserPreferences.mutate({
+                  updatePreferences({
                     hiddenGuildIds: undoHiddenGuildIds,
                   });
                 },
@@ -173,7 +178,7 @@ export const GuildsSelector: FC = () => {
             axis="y"
             values={guildList}
             onReorder={handleReorder}
-            className="flex flex-col gap-0.5 py-2"
+            className="flex flex-col gap-0.5 pt-1 pb-2"
             as="div"
           >
             {guildList.map((guild, index) => (

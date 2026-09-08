@@ -1,3 +1,4 @@
+import { installTestCanvas } from "@/test/canvas";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Other } from "@lootlog/margonem/others";
 import {
@@ -7,19 +8,10 @@ import {
 } from "./margonem-runtime/adapters/glow-runtime-adapter";
 import { testRuntimeWindow } from "@/test/test-runtime-window";
 
+let canvas: ReturnType<typeof installTestCanvas>;
 const originalWindowEngine = testRuntimeWindow.Engine;
 
-function getRuntimeDrawableList(): unknown[] {
-  return (
-    testRuntimeWindow.Engine as unknown as {
-      others: {
-        getDrawableList: () => unknown[];
-      };
-    }
-  ).others.getDrawableList();
-}
-
-function createOther(id: string): Other {
+function createOther(id: string) {
   return {
     d: {
       account: 1,
@@ -35,67 +27,93 @@ function createOther(id: string): Other {
     fw: 32,
     rx: 10,
     ry: 10,
-  } as unknown as Other;
+    update: (_dt: number) => {},
+  } satisfies Other & {
+    fh: number;
+    fw: number;
+    rx: number;
+    ry: number;
+    update: (dt: number) => void;
+  };
 }
 
+type TestOther = ReturnType<typeof createOther>;
+type NativeGlow = {
+  draw: (context: CanvasRenderingContext2D) => void;
+  master: TestOther;
+  update: () => void;
+  updateColor: () => void;
+};
+type NativeMark = { getColor: () => string; getTypeObject: () => string };
+type Drawable =
+  | "base"
+  | TestOther
+  | NativeGlow
+  | NativeMark
+  | { draw: (context: CanvasRenderingContext2D) => void };
+let runtime: ReturnType<typeof setRuntime>;
+const getRuntimeDrawableList = () => runtime.others.getDrawableList();
 function moveOther(
-  other: Other,
+  other: TestOther,
   position: { rx: number; ry: number; x: number; y: number },
 ): void {
-  const runtimeOther = other as Other & {
-    d: Other["d"] & { x?: number; y?: number };
-    rx?: number;
-    ry?: number;
-  };
-
-  runtimeOther.rx = position.rx;
-  runtimeOther.ry = position.ry;
-  runtimeOther.d.x = position.x;
-  runtimeOther.d.y = position.y;
+  other.rx = position.rx;
+  other.ry = position.ry;
+  other.d.x = position.x;
+  other.d.y = position.y;
 }
-
 function setOtherUpdate(
-  other: Other,
-  update: (this: Other, dt: number) => void,
+  other: TestOther,
+  update: (this: TestOther, dt: number) => void,
 ): void {
-  const runtimeOther = other as Other & {
-    update?: (this: Other, dt: number) => void;
-  };
-  runtimeOther.update = update;
+  other.update = update;
 }
 
-function setRuntime(drawables: unknown[] = ["base"]): ReturnType<typeof vi.fn> {
-  const getDrawableList = vi.fn(() => drawables);
+function setRuntime(drawables: Drawable[] = ["base"]) {
+  const getDrawableList = vi.fn<() => Drawable[]>(() => drawables);
 
+  const engine = {
+    imgLoader: {
+      onload: vi.fn<
+        (
+          path: string,
+          options: false,
+          beforeOnload: (image: HTMLImageElement) => void,
+          afterOnload: (image: HTMLImageElement) => void,
+        ) => void
+      >((_path, _options, beforeOnload, afterOnload) => {
+        const image = document.createElement("img");
+        const mask = canvas.create(36, 52);
+        mask.context.fillStyle = "white";
+        mask.context.fillRect(0, 0, 36, 52);
+        canvas.registerLoadedImage(image, mask.canvas);
+        beforeOnload(image);
+        afterOnload(image);
+      }),
+    },
+    map: {
+      offset: [0, 0],
+      water: {},
+    },
+    mapShift: {
+      getShift: () => [0, 0],
+    },
+    others: {
+      getDrawableList,
+    },
+  };
   Object.defineProperty(window, "Engine", {
     configurable: true,
-    value: {
-      imgLoader: {
-        onload: vi.fn((_path, _options, beforeOnload, afterOnload) => {
-          const image = document.createElement("img");
-          beforeOnload(image);
-          afterOnload(image);
-        }),
-      },
-      map: {
-        offset: [0, 0],
-        water: {},
-      },
-      mapShift: {
-        getShift: () => [0, 0],
-      },
-      others: {
-        getDrawableList,
-      },
-    },
+    value: engine,
   });
-
-  return getDrawableList;
+  runtime = engine;
+  return engine;
 }
 
 describe("lootlogOtherGlowManager", () => {
   beforeEach(() => {
     lootlogOtherGlowManager.cleanup();
+    canvas = installTestCanvas();
     setRuntime();
   });
 
@@ -135,10 +153,7 @@ describe("lootlogOtherGlowManager", () => {
     };
 
     expect(() =>
-      lootlogOtherGlowManager.setGlow(
-        flatOther as unknown as Other,
-        LOOTLOG_OTHER_GLOW_BLUE,
-      ),
+      lootlogOtherGlowManager.setGlow(flatOther, LOOTLOG_OTHER_GLOW_BLUE),
     ).not.toThrow();
     expect(lootlogOtherGlowManager.getGlowCount()).toBe(0);
   });
@@ -182,19 +197,17 @@ describe("lootlogOtherGlowManager", () => {
 
   it("updates managed glow position after runtime Other.update movement", () => {
     const other = createOther("617");
-    const originalUpdate = vi.fn(function (this: Other, dt: number) {
-      moveOther(this, { rx: 17 + dt, ry: 18 + dt, x: 17 + dt, y: 18 + dt });
-    });
+    const originalUpdate = vi.fn<(this: TestOther, dt: number) => void>(
+      function (this: TestOther, dt: number) {
+        moveOther(this, { rx: 17 + dt, ry: 18 + dt, x: 17 + dt, y: 18 + dt });
+      },
+    );
     setOtherUpdate(other, originalUpdate);
 
     lootlogOtherGlowManager.install();
     lootlogOtherGlowManager.setGlow(other, LOOTLOG_OTHER_GLOW_BLUE);
 
-    (
-      other as Other & {
-        update: (dt: number) => void;
-      }
-    ).update(2);
+    other.update(2);
 
     expect(originalUpdate).toHaveBeenCalledWith(2);
     expect(lootlogOtherGlowManager.getGlowPosition("617")).toEqual({
@@ -206,49 +219,29 @@ describe("lootlogOtherGlowManager", () => {
 
   it("restores runtime Other.update when managed glow is removed", () => {
     const other = createOther("617");
-    const originalUpdate = vi.fn();
+    const originalUpdate = vi.fn<(dt: number) => void>();
     setOtherUpdate(other, originalUpdate);
 
     lootlogOtherGlowManager.install();
     lootlogOtherGlowManager.setGlow(other, LOOTLOG_OTHER_GLOW_BLUE);
 
-    expect(
-      (
-        other as Other & {
-          update: (dt: number) => void;
-        }
-      ).update,
-    ).not.toBe(originalUpdate);
+    expect(other.update).not.toBe(originalUpdate);
 
     lootlogOtherGlowManager.removeGlow("617");
 
-    expect(
-      (
-        other as Other & {
-          update: (dt: number) => void;
-        }
-      ).update,
-    ).toBe(originalUpdate);
+    expect(other.update).toBe(originalUpdate);
   });
 
   it("draws managed glow using the latest runtime other position", () => {
     const other = createOther("617");
-    const drawImage = vi.fn();
-    const context = {
-      drawImage,
-      fillRect: vi.fn(),
-      fillStyle: "",
-      globalCompositeOperation: "",
-    } as unknown as CanvasRenderingContext2D;
-    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(
-      context,
-    );
+    const context = canvas.create().context;
+    const drawImage = vi.spyOn(context, "drawImage");
 
     lootlogOtherGlowManager.install();
     lootlogOtherGlowManager.setGlow(other, LOOTLOG_OTHER_GLOW_BLUE);
-    const glow = getRuntimeDrawableList()[1] as {
-      draw: (ctx: CanvasRenderingContext2D) => void;
-    };
+    const glow = getRuntimeDrawableList()[1];
+    if (!glow || glow === "base" || !("draw" in glow))
+      throw new Error("Expected glow drawable");
 
     drawImage.mockClear();
     moveOther(other, { rx: 20, ry: 21, x: 20, y: 21 });
@@ -262,19 +255,22 @@ describe("lootlogOtherGlowManager", () => {
       36,
       52,
     );
+    expect(Array.from(context.getImageData(640, 660, 1, 1).data)).toEqual([
+      62, 209, 222, 255,
+    ]);
   });
 
   it("suppresses native Margonem other glows while keeping other drawables and Lootlog glows", () => {
     const other = createOther("617");
     const nativeMaskGlow = {
-      draw: vi.fn(),
+      draw: vi.fn<(context: CanvasRenderingContext2D) => void>(),
       master: other,
-      update: vi.fn(),
-      updateColor: vi.fn(),
+      update: vi.fn<() => void>(),
+      updateColor: vi.fn<() => void>(),
     };
     const nativeColorMark = {
-      getColor: vi.fn(() => "green"),
-      getTypeObject: vi.fn(() => "OTHER_NAVIGATE"),
+      getColor: vi.fn<() => string>(() => "green"),
+      getTypeObject: vi.fn<() => string>(() => "OTHER_NAVIGATE"),
     };
     setRuntime([other, nativeMaskGlow, nativeColorMark]);
 

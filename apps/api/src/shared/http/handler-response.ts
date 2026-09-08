@@ -19,3 +19,7 @@ export const pathString = (value: unknown, name: string) =>
 
 export const emptyStatusResponse = (error: { readonly status: number }) =>
   Effect.succeed(HttpServerResponse.empty({ status: error.status }));
+
+/** Preserve missing or non-string legacy route parameters for authorization to reject. */
+export const optionalPathString = (value: unknown): string | undefined =>
+  typeof value === "string" ? value : undefined;

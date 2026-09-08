@@ -1,3 +1,4 @@
+import { MapPlayersSnapshot } from "./map-players-snapshot.js";
 import {
   LootItemResponse as LootItem,
   LootPlayerResponse as LootPlayer,
@@ -39,6 +40,7 @@ const LootRecord = Schema.Struct({
   location: Schema.String,
   items: Schema.Array(LootItem),
   players: Schema.Array(LootPlayer),
+  mapPlayersSnapshot: Schema.NullOr(MapPlayersSnapshot),
   npcs: Schema.Array(LootNpc),
   lootShare: LootShare,
   createdAt: DateTimeString,
@@ -133,6 +135,7 @@ export const LootDetailResponse = Schema.Union([
 export type CreateLootRequest = typeof CreateLootRequest.Type;
 
 export const CreateLootRequest = Schema.Struct({
+  mapPlayersSnapshot: Schema.optionalKey(MapPlayersSnapshot),
   loots: Schema.Array(
     Schema.Struct({
       hid: NonEmptyString,

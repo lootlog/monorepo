@@ -1,28 +1,65 @@
-import type { GameEvent } from "@lootlog/margonem/game-events";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { OtherEventProcessor } from "./other-event-processor";
+import { createAirTagTest } from "@/features/air-tags/air-tag-test";
+import { airTagRuntime } from "@/features/air-tags/air-tag-runtime";
+import { AIR_TAG_BATCH_INTERVAL_MS } from "@/features/air-tags/air-tag-observation-controller";
+import type { OtherCreate } from "@lootlog/margonem/game-events";
 
-const handleObservations = vi.hoisted(() => vi.fn());
-
-vi.mock("@/features/air-tags/air-tag-observation-controller", () => ({
-  airTagObservationController: { handle: handleObservations },
-}));
-
+const other: OtherCreate = {
+  action: "CREATE",
+  account: 10,
+  nick: "Target",
+  icon: "target.gif",
+  x: 10,
+  y: 20,
+  dir: 0,
+  stasis: 0,
+  stasis_incoming_seconds: 0,
+  rights: 0,
+  lvl: 300,
+  oplvl: 300,
+  prof: "w",
+  attr: 0,
+  is_blessed: 0,
+  relation: 1,
+};
 describe("OtherEventProcessor", () => {
+  let test: ReturnType<typeof createAirTagTest>;
   beforeEach(() => {
-    vi.clearAllMocks();
+    test = createAirTagTest();
+    airTagRuntime.configure({ connected: true, enabled: true, joined: true });
+    test.wire.frames.length = 0;
   });
-
-  it("forwards raw other events to the observation controller", () => {
-    const other = { "42": { id: 42, x: 10, y: 20 } };
-
-    new OtherEventProcessor().handle({ other } as unknown as GameEvent);
-
-    expect(handleObservations).toHaveBeenCalledWith(other);
+  afterEach(() => {
+    airTagRuntime.shutdown();
   });
-
-  it("ignores events without other data", () => {
+  it("batches a native other CREATE into the current map observation", async () => {
+    new OtherEventProcessor().handle({ other: { "42": other } });
+    await new Promise<void>((resolve) =>
+      setTimeout(resolve, AIR_TAG_BATCH_INTERVAL_MS + 10),
+    );
+    expect(test.wire.frames).toEqual([
+      expect.objectContaining({
+        type: "air-tag.observation",
+        data: {
+          expectedMapId: 12,
+          observations: [
+            expect.objectContaining({
+              targetId: "42",
+              nickname: "Target",
+              x: 10,
+              y: 20,
+            }),
+          ],
+        },
+      }),
+    ]);
+  });
+  it("ignores events without other data", async () => {
     new OtherEventProcessor().handle({});
-
-    expect(handleObservations).not.toHaveBeenCalled();
+    await new Promise<void>((resolve) =>
+      setTimeout(resolve, AIR_TAG_BATCH_INTERVAL_MS + 10),
+    );
+    expect(test.wire.frames).toEqual([]);
   });
 });

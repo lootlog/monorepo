@@ -1,6 +1,6 @@
-import type {
-  PartyReadyRoomClientUpdate,
-  PartyReadyRoomProjection,
+import {
+  decodePartyReadyRoomClientUpdate,
+  type PartyReadyRoomProjection,
 } from "@lootlog/schema/party-ready-room";
 import { useState } from "react";
 import { getCurrentReadyRoomCharacterIdentity } from "@/features/party-finder/ready-room-character-identity";
@@ -31,7 +31,7 @@ export const useReadyRoomWithdrawal = (
       { participantId: participant.participantId },
     )
       .then((update) => {
-        applyUpdate(update as unknown as PartyReadyRoomClientUpdate);
+        applyUpdate(decodePartyReadyRoomClientUpdate(update));
       })
       .finally(() => setIsWithdrawing(false));
   };

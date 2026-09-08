@@ -6,9 +6,13 @@
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { Schema } from "effect";
 import { isRecord } from "@lootlog/schema/records";
 import { NpcTypeEnum } from "@lootlog/schema/npc-type";
 import { getNpcTypeByWt } from "../src/npc-type";
+
+const isString = Schema.is(Schema.String);
+const isNumber = Schema.is(Schema.Number);
 
 const source = resolve(import.meta.dir, "../../cli/src/mocks/data/npcs.json");
 const target = resolve(import.meta.dir, "../src/group-fight-maps.ts");
@@ -21,9 +25,9 @@ const entries = new Map<string, Map<string, CatalogNpc>>();
 for (const npc of npcs) {
   if (
     !isRecord(npc) ||
-    typeof npc.name !== "string" ||
-    typeof npc.wt !== "number" ||
-    (npc.location !== undefined && typeof npc.location !== "string")
+    !isString(npc.name) ||
+    !isNumber(npc.wt) ||
+    (npc.location !== undefined && !isString(npc.location))
   ) {
     throw new Error("Invalid NPC catalog entry");
   }
@@ -70,9 +74,9 @@ const normalizedGroupFightMapNpcs = new Map(
 );
 
 export const getGroupFightMapNpcs = (mapName: string | null | undefined): readonly GroupFightMapNpc[] =>
-  typeof mapName === "string"
-    ? normalizedGroupFightMapNpcs.get(normalizeGroupFightName(mapName)) ?? []
-    : [];
+  mapName === null || mapName === undefined
+    ? []
+    : normalizedGroupFightMapNpcs.get(normalizeGroupFightName(mapName)) ?? [];
 
 export const isGroupFightMap = (mapName: string | null | undefined): boolean =>
   getGroupFightMapNpcs(mapName).length > 0;
@@ -99,4 +103,4 @@ export const isQualifyingGroupFightMap = (input: {
 `,
 );
 
-console.log(`Wrote ${sorted.length} maps to ${target}`);
+console.warn(`Wrote ${sorted.length} maps to ${target}`);

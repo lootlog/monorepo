@@ -1,15 +1,11 @@
-import type { PartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
+import { isObjectRecord } from "@lootlog/schema/records";
+import { decodePartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
 import { useEffect } from "react";
 import { partyReadyRoomControllerGet } from "@lootlog/client/main";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 
-function hasHttpStatus(error: unknown, status: number): boolean {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "status" in error &&
-    error.status === status
-  );
+function hasHttpStatus(cause: unknown, status: number): boolean {
+  return isObjectRecord(cause) && cause.status === status;
 }
 
 export function usePartyReadyRoomExpiry(): void {
@@ -38,18 +34,16 @@ export function usePartyReadyRoomExpiry(): void {
             notificationId: projection.notificationId,
           })
             .then((latestProjection) => {
-              mergeProjection(
-                latestProjection as unknown as PartyReadyRoomProjection,
-              );
+              mergeProjection(decodePartyReadyRoomProjection(latestProjection));
             })
-            .catch((error: unknown) => {
-              if (hasHttpStatus(error, 404)) {
+            .catch((cause: unknown) => {
+              if (hasHttpStatus(cause, 404)) {
                 removeProjection(projection.notificationId);
                 return;
               }
               console.warn(
                 "Failed to resynchronize expired party Ready Room",
-                error,
+                cause,
               );
             });
         }

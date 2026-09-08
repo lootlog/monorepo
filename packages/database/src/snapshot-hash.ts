@@ -1,5 +1,15 @@
 import { createHash } from "node:crypto";
 
+export function createPlayerSnapshotHash(
+  name: string,
+  profession: string | null | undefined,
+  icon: string,
+): string {
+  return createHash("sha256")
+    .update(`${name}${profession}${icon}`)
+    .digest("hex");
+}
+
 const SNAPSHOT_HASH_IGNORED_KEYS = new Set([
   "created",
   "gold",

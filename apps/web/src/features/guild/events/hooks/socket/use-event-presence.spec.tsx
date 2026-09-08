@@ -1,99 +1,127 @@
 // @vitest-environment happy-dom
+import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
+import { afterEach, expect, it, vi } from "vitest";
+import type { PresenceWithLocation } from "@lootlog/client/realtime";
+import { createTestGateway } from "@/lib/testing/gateway";
+import { useEventPresence } from "./use-event-presence";
 
-import { act, cleanup, renderHook } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { GatewayEvent } from "@/config/gateway";
-import { useEventPresence, type PlayerPresence } from "./use-event-presence";
-
-type SocketHandler = (payload: unknown) => void;
-type PresenceCallback = (response: {
-  status: "success";
-  players: Record<string, PlayerPresence[]>;
-}) => void;
-
-const mocks = vi.hoisted(() => {
-  const handlers = new Map<string, Set<SocketHandler>>();
-  const presenceCallbacks: PresenceCallback[] = [];
-
-  return {
-    handlers,
-    presenceCallbacks,
-    socket: {
-      emit: vi.fn((event: string, ...args: unknown[]) => {
-        if (event === "event-presence:fetch") {
-          presenceCallbacks.push(args[args.length - 1] as PresenceCallback);
-        }
-      }),
-      off: vi.fn((event: string, handler: SocketHandler) => {
-        handlers.get(event)?.delete(handler);
-      }),
-      on: vi.fn((event: string, handler: SocketHandler) => {
-        const eventHandlers = handlers.get(event) ?? new Set();
-        eventHandlers.add(handler);
-        handlers.set(event, eventHandlers);
-      }),
-      serverEmit: (event: string, payload: unknown) => {
-        handlers.get(event)?.forEach((handler) => handler(payload));
-      },
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
+it("keeps the last presence snapshot while permissions are rebalanced", async () => {
+  const gateway = createTestGateway();
+  const presence: PresenceWithLocation = {
+    userId: "user-1",
+    organizationIds: ["guild-1"],
+    sessionId: "session-1",
+    platform: "game",
+    status: "online",
+    confidence: "reported",
+    isAfk: false,
+    lastSeen: 1,
+    character: {
+      world: "tempest",
+      name: "Wild",
+      characterId: "character-1",
+      accountId: "account-1",
+      icon: "wild.png",
+      lvl: 300,
+      prof: "w",
     },
+    location: { mapId: 2354, map: "Sala Mroźnych Szeptów", x: 0, y: 0 },
   };
+  gateway.request
+    .mockResolvedValueOnce({
+      organizationId: "guild-1",
+      revision: 1,
+      presences: [presence],
+    })
+    .mockImplementationOnce(() => new Promise(() => undefined));
+  const { result } = renderHook(
+    () => useEventPresence({ guildId: "guild-1", world: "tempest" }),
+    { wrapper: gateway.wrapper },
+  );
+  await waitFor(() =>
+    expect(result.current.presenceData?.get("user-1")).toEqual([
+      expect.objectContaining({
+        name: "Wild",
+        lvl: "300",
+        mapId: 2354,
+        mapName: "Sala Mroźnych Szeptów",
+      }),
+    ]),
+  );
+  const previousPresence = result.current.presenceData;
+  expect(result.current.accessState).toBe("allowed");
+  act(() =>
+    gateway.deliver({
+      v: 1,
+      type: "permissions.updated",
+      data: { organizationIds: [], subscriptionScopes: [] },
+    }),
+  );
+  await waitFor(() => expect(gateway.request).toHaveBeenCalledTimes(2));
+  expect(result.current.presenceData).toBe(previousPresence);
+  expect(result.current.accessState).toBe("allowed");
 });
 
-vi.mock("@/hooks/utils/use-gateway", () => ({
-  useGateway: () => ({
-    connected: true,
-    joined: true,
-    socket: mocks.socket,
-  }),
-}));
-
-const player: PlayerPresence = {
-  world: "tempest",
-  name: "Wild",
-  characterId: "character-1",
-  accountId: "account-1",
-  icon: "wild.png",
-  lvl: "300",
-  prof: "w",
-  mapId: 2354,
-  mapName: "Sala Mroźnych Szeptów",
-  isAfk: false,
-  updatedAt: 1,
-  sessionId: "session-1",
-};
-
-describe("useEventPresence", () => {
-  beforeEach(() => {
-    mocks.handlers.clear();
-    mocks.presenceCallbacks.length = 0;
-    vi.clearAllMocks();
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  it("keeps the last presence snapshot while permissions are rebalanced", () => {
-    const { result } = renderHook(() =>
-      useEventPresence({ guildId: "guild-1", world: "tempest" }),
-    );
-
-    act(() => {
-      mocks.presenceCallbacks[0]!({
-        status: "success",
-        players: { "user-1": [player] },
-      });
+it.each([
+  { guildId: "guild-2", world: "tempest" },
+  { guildId: "guild-1", world: "other-world" },
+  { guildId: undefined, world: "tempest" },
+])(
+  "clears the previous snapshot when the scope changes to %j",
+  async (nextScope) => {
+    const gateway = createTestGateway();
+    gateway.request
+      .mockResolvedValueOnce({
+        organizationId: "guild-1",
+        revision: 1,
+        presences: [],
+      })
+      .mockImplementation(() => new Promise(() => undefined));
+    const initialProps: Parameters<typeof useEventPresence>[0] = {
+      guildId: "guild-1",
+      world: "tempest",
+    };
+    const { result, rerender } = renderHook(useEventPresence, {
+      initialProps,
+      wrapper: gateway.wrapper,
     });
+    await waitFor(() => expect(result.current.presenceData).toEqual(new Map()));
 
-    expect(result.current.presenceData?.get("user-1")).toEqual([player]);
+    rerender(nextScope);
+
+    expect(result.current.presenceData).toBeUndefined();
     expect(result.current.accessState).toBe("allowed");
+  },
+);
 
-    act(() => {
-      mocks.socket.serverEmit(GatewayEvent.PERMISSIONS_UPDATED, {});
+it("ignores an outstanding response after leaving the presence scope", async () => {
+  const gateway = createTestGateway();
+  const resolveResponse = vi.fn<() => void>();
+  const response = new Promise((resolve) => {
+    resolveResponse.mockImplementation(() => {
+      resolve({ organizationId: "guild-1", revision: 1, presences: [] });
     });
-
-    expect(result.current.presenceData?.get("user-1")).toEqual([player]);
-    expect(result.current.accessState).toBe("allowed");
-    expect(mocks.presenceCallbacks).toHaveLength(2);
   });
+  gateway.request.mockReturnValue(response);
+  const initialProps: Parameters<typeof useEventPresence>[0] = {
+    guildId: "guild-1",
+    world: "tempest",
+  };
+  const { result, rerender } = renderHook(useEventPresence, {
+    initialProps,
+    wrapper: gateway.wrapper,
+  });
+  await waitFor(() => expect(gateway.request).toHaveBeenCalledTimes(1));
+
+  rerender({ guildId: undefined, world: "tempest" });
+  await act(async () => {
+    resolveResponse();
+    await response;
+  });
+
+  expect(result.current.presenceData).toBeUndefined();
 });

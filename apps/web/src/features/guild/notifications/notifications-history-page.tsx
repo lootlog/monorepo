@@ -13,8 +13,8 @@ import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   getNotificationsGuildControllerGetGuildJobsQueryKey,
   useNotificationsGuildControllerGetGuildJobs,
+  type NotificationJobsResponseDto,
 } from "@lootlog/client/main";
-import type { NotificationJobsResponseDto } from "@lootlog/client/main";
 
 export const NotificationsHistoryPage = () => {
   const { t } = useTranslation();

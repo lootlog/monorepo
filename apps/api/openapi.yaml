@@ -544,7 +544,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/GuildResponseDto"
+                  $ref: "#/components/schemas/ManageableOrganizationResponse"
       description: Retrieve guilds where the authenticated user has Discord administrator permissions
       summary: Get manageable user guilds
   /guilds/{guildId}:
@@ -9516,7 +9516,7 @@ components:
         - guild
         - roles
       additionalProperties: false
-    GuildResponseDto:
+    ManageableOrganizationResponse:
       type: object
       properties:
         id:
@@ -9526,37 +9526,9 @@ components:
         icon:
           nullable: true
           type: string
-        vanityUrl:
-          nullable: true
-          type: string
-        ownerId:
-          type: string
-        publicStatsCardEnabled:
-          type: boolean
-        reservationMaxDurationMinutes:
-          type: number
-        reservationMinDurationMinutes:
-          type: number
-        reservationTimeGranularityMinutes:
-          type: number
-        reservationMaxAdvanceDays:
-          type: number
-        reservationActiveLimitPerSpot:
-          type: number
-        groupFightsEnabled:
-          type: boolean
-        groupFightsIncludeIncomplete:
-          type: boolean
       required:
         - id
         - name
-        - ownerId
-        - publicStatsCardEnabled
-        - reservationMaxDurationMinutes
-        - reservationMinDurationMinutes
-        - reservationTimeGranularityMinutes
-        - reservationMaxAdvanceDays
-        - reservationActiveLimitPerSpot
       additionalProperties: false
     GuildResponseDto_Output:
       type: object
@@ -11302,6 +11274,44 @@ components:
               - accountId
               - hpp
             additionalProperties: false
+        mapPlayersSnapshot:
+          nullable: true
+          type: array
+          items:
+            type: object
+            properties:
+              accountId:
+                type: integer
+                minimum: 1
+                maximum: 9007199254740991
+              characterId:
+                type: integer
+                minimum: 1
+                maximum: 9007199254740991
+              name:
+                type: string
+                minLength: 1
+              prof:
+                nullable: true
+                type: string
+                enum:
+                  - WARRIOR
+                  - PALADIN
+                  - HUNTER
+                  - MAGE
+                  - BLADE_DANCER
+                  - TRACKER
+              icon:
+                nullable: true
+                type: string
+            required:
+              - accountId
+              - characterId
+              - name
+              - prof
+              - icon
+            additionalProperties: false
+          minItems: 1
         npcs:
           type: array
           items:
@@ -11411,6 +11421,7 @@ components:
         - location
         - items
         - players
+        - mapPlayersSnapshot
         - npcs
         - lootShare
         - createdAt
@@ -11753,6 +11764,44 @@ components:
               - accountId
               - hpp
             additionalProperties: false
+        mapPlayersSnapshot:
+          nullable: true
+          type: array
+          items:
+            type: object
+            properties:
+              accountId:
+                type: integer
+                minimum: 1
+                maximum: 9007199254740991
+              characterId:
+                type: integer
+                minimum: 1
+                maximum: 9007199254740991
+              name:
+                type: string
+                minLength: 1
+              prof:
+                nullable: true
+                type: string
+                enum:
+                  - WARRIOR
+                  - PALADIN
+                  - HUNTER
+                  - MAGE
+                  - BLADE_DANCER
+                  - TRACKER
+              icon:
+                nullable: true
+                type: string
+            required:
+              - accountId
+              - characterId
+              - name
+              - prof
+              - icon
+            additionalProperties: false
+          minItems: 1
         npcs:
           type: array
           items:
@@ -11862,6 +11911,7 @@ components:
         - location
         - items
         - players
+        - mapPlayersSnapshot
         - npcs
         - lootShare
         - createdAt
@@ -11873,6 +11923,43 @@ components:
     CreateLootDto:
       type: object
       properties:
+        mapPlayersSnapshot:
+          type: array
+          items:
+            type: object
+            properties:
+              accountId:
+                type: integer
+                minimum: 1
+                maximum: 9007199254740991
+              characterId:
+                type: integer
+                minimum: 1
+                maximum: 9007199254740991
+              name:
+                type: string
+                minLength: 1
+              prof:
+                nullable: true
+                type: string
+                enum:
+                  - WARRIOR
+                  - PALADIN
+                  - HUNTER
+                  - MAGE
+                  - BLADE_DANCER
+                  - TRACKER
+              icon:
+                nullable: true
+                type: string
+            required:
+              - accountId
+              - characterId
+              - name
+              - prof
+              - icon
+            additionalProperties: false
+          minItems: 1
         loots:
           type: array
           items:
@@ -17621,6 +17708,7 @@ components:
           format: date-time
           pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
         endsAt:
+          nullable: true
           type: string
           format: date-time
           pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$

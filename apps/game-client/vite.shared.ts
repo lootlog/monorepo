@@ -3,11 +3,7 @@ import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
 import path from "node:path";
-import { readFileSync } from "node:fs";
-
-const gameClientPackage = JSON.parse(
-  readFileSync(new URL("./package.json", import.meta.url), "utf8"),
-) as { version: string };
+import gameClientPackage from "./package.json";
 
 export function gameClientViteConfig(mode: string): UserConfig {
   const env = loadEnv(mode, import.meta.dirname, "");

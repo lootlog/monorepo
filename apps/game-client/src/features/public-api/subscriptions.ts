@@ -1,3 +1,4 @@
+import { z } from "zod";
 import type { Query, QueryClient } from "@tanstack/react-query";
 import type { Timer } from "@/api";
 import type { GuildResponseDtoOutput } from "@lootlog/client/main";
@@ -16,11 +17,11 @@ export type PublicApiSubscriptionController = {
   teardown: () => void;
 };
 
+const queryWorldSchema = z.object({ world: z.string().optional() });
+
 function getQueryWorld(query: Query): string | undefined {
-  const params = query.queryKey[1];
-  return params && typeof params === "object"
-    ? (params as { world?: string }).world
-    : undefined;
+  const params = queryWorldSchema.safeParse(query.queryKey[1]);
+  return params.success ? params.data.world : undefined;
 }
 
 export function setupSubscriptions(
@@ -37,6 +38,8 @@ export function setupSubscriptions(
 
   const cacheTimerSnapshot = (query: Query) => {
     const world = getQueryWorld(query);
+    // SAFETY: this function only receives allTimers() cache matches; useTimers
+    // populates them through fetchTimers and useTimersCache writes the same Timer[].
     const mapped = mapTimers(query.state.data as Timer[] | undefined);
     if (!mapped || !world) {
       return;
@@ -96,6 +99,8 @@ export function setupSubscriptions(
       activeEvents.has("guilds:changed") &&
       key[0] === queryKeys.guilds()[0]
     ) {
+      // SAFETY: the matching generated guild query stores GuildResponseDtoOutput[];
+      // game-access-cache only filters/updates those existing guild records.
       const data = event.query.state.data as
         | GuildResponseDtoOutput[]
         | undefined;
@@ -112,6 +117,8 @@ export function setupSubscriptions(
       key[0] === queryKeys.timers()[0]
     ) {
       const world = getQueryWorld(event.query);
+      // SAFETY: the timer key check above selects fetchTimers/useTimersCache data.
+      // QueryCache erases this association while notifying subscribers.
       const mapped = mapTimers(event.query.state.data as Timer[] | undefined);
       if (!mapped || !world) {
         return;
@@ -205,7 +212,7 @@ export function setupSubscriptions(
           !prevState.gameState.gameInitialized &&
           state.gameState.gameInitialized
         ) {
-          emitter.emit("ready", undefined as never);
+          emitter.emit("ready", undefined);
         }
       });
     },

@@ -1,3 +1,4 @@
+import { seedRuntimeOthers } from "@/test/runtime-other-fixtures";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Other } from "@lootlog/margonem/others";
@@ -18,25 +19,19 @@ import { useOthersStore } from "@/store/others.store";
 import { useSettingsStore } from "@/store/settings.store";
 import { testRuntimeWindow } from "@/test/test-runtime-window";
 
-const mocks = vi.hoisted(() => ({
-  getPlayersCatchingGuilds: vi.fn(),
-}));
-
-vi.mock("@lootlog/client/main", async () => ({
-  ...(await vi.importActual("@lootlog/client/main")),
-  userLootlogConfigControllerGetPlayersCatchingGuilds:
-    mocks.getPlayersCatchingGuilds,
-}));
+import { createCatchingGuildsHttp } from "@/test/catching-guilds-http";
+let endpoint: ReturnType<typeof createCatchingGuildsHttp>;
 
 import { useCharacterTooltipCatchingGuilds } from "./use-character-tooltip-catching-guilds";
 import { useWhoIsHereLootlogHighlight } from "./use-who-is-here-lootlog-highlight";
 
 const originalWindowEngine = testRuntimeWindow.Engine;
-const originalWindowDollar = (window as Window & { $?: unknown }).$;
+const jqueryWindow: Window & { $?: unknown } = window;
+const originalWindowDollar = jqueryWindow.$;
 
 type WhoIsHereEntry = {
   $: {
-    find: ReturnType<typeof vi.fn>;
+    find: (selector: string) => Element | null;
   };
 };
 
@@ -53,10 +48,10 @@ function createOther(id = "617"): Other {
       y: 10,
     },
     createStrTip: () => `<div>Other ${id}</div>`,
-    tipUpdate: vi.fn(),
+    tipUpdate: vi.fn<() => void>(),
   };
 
-  return other as unknown as Other;
+  return other;
 }
 
 function appendWhoIsHereRow(characterId = "617"): HTMLElement {
@@ -120,11 +115,14 @@ function setSuccess(
     .setSuccess(target, guilds, Date.now());
 }
 
-function setRuntime(other: Other, createTipWrapper = vi.fn()): void {
+function setRuntime(
+  other: Other,
+  createTipWrapper = vi.fn<(container: Element | null, other: Other) => void>(),
+): void {
   const tipContainer = document.querySelector(".tip-container");
   const whoIsHereEntry: WhoIsHereEntry = {
     $: {
-      find: vi.fn(() => tipContainer),
+      find: vi.fn<(selector: string) => Element | null>(() => tipContainer),
     },
   };
 
@@ -137,13 +135,13 @@ function setRuntime(other: Other, createTipWrapper = vi.fn()): void {
         },
       },
       others: {
-        check: vi.fn(() => ({
+        check: vi.fn<() => { [x: number]: Other }>(() => ({
           [String(other.d.id)]: other,
         })),
       },
       whoIsHere: {
         createTipWrapper,
-        getWhoIsHereOther: vi.fn(() => whoIsHereEntry),
+        getWhoIsHereOther: vi.fn<() => WhoIsHereEntry>(() => whoIsHereEntry),
       },
     },
   });
@@ -175,8 +173,8 @@ function setSelectedGuild(): void {
 }
 
 function installMutationObserverMock() {
-  const disconnect = vi.fn();
-  const observe = vi.fn();
+  const disconnect = vi.fn<MutationObserver["disconnect"]>();
+  const observe = vi.fn<MutationObserver["observe"]>();
   let callback: MutationCallback | undefined;
 
   class MutationObserverMock {
@@ -205,7 +203,7 @@ function installMutationObserverMock() {
         disconnect,
         observe,
         takeRecords: () => [],
-      } as unknown as MutationObserver);
+      } satisfies MutationObserver);
     },
     observe,
   };
@@ -216,7 +214,7 @@ describe("useWhoIsHereLootlogHighlight", () => {
     document.head.innerHTML = "";
     document.body.innerHTML = "";
     characterTooltipTransforms.clear();
-    mocks.getPlayersCatchingGuilds.mockReset();
+    endpoint = createCatchingGuildsHttp();
     useCharacterTooltipCatchingGuildsStore.getState().clear();
     useGameStore.getState().clearGame();
     useOnlineCharacterOwnersStore.getState().clearOwners();
@@ -257,7 +255,7 @@ describe("useWhoIsHereLootlogHighlight", () => {
     const renderCountBeforeOtherUpdate = renderCount;
 
     act(() => {
-      useOthersStore.getState().setMany({ "617": createOther() });
+      seedRuntimeOthers({ "617": createOther() });
       setOnlineOwner();
     });
 
@@ -340,7 +338,7 @@ describe("useWhoIsHereLootlogHighlight", () => {
   it("refreshes mutated rows without rerendering the hook", () => {
     const row = appendWhoIsHereRow();
     const other = createOther();
-    useOthersStore.getState().setMany({ "617": other });
+    seedRuntimeOthers({ "617": other });
     setRuntime(other);
     setSelectedGuild();
     setOnlineOwner();
@@ -351,7 +349,7 @@ describe("useWhoIsHereLootlogHighlight", () => {
       callback(0);
       return 1;
     });
-    vi.stubGlobal("cancelAnimationFrame", vi.fn());
+    vi.stubGlobal("cancelAnimationFrame", vi.fn<typeof cancelAnimationFrame>());
     let renderCount = 0;
 
     const { unmount } = renderHook(() => {
@@ -375,7 +373,7 @@ describe("useWhoIsHereLootlogHighlight", () => {
   it("highlights a whoIsHere row blue when selected guild catches the player", async () => {
     const row = appendWhoIsHereRow();
     const other = createOther();
-    useOthersStore.getState().setMany({ "617": other });
+    seedRuntimeOthers({ "617": other });
     setRuntime(other);
     setSelectedGuild();
     setOnlineOwner();
@@ -405,7 +403,7 @@ describe("useWhoIsHereLootlogHighlight", () => {
   it("highlights a whoIsHere row red-orange when selected guild does not catch the player", async () => {
     const row = appendWhoIsHereRow();
     const other = createOther();
-    useOthersStore.getState().setMany({ "617": other });
+    seedRuntimeOthers({ "617": other });
     setRuntime(other);
     setSelectedGuild();
     setOnlineOwner();
@@ -427,7 +425,7 @@ describe("useWhoIsHereLootlogHighlight", () => {
   it("clears highlight when shift is released", async () => {
     const row = appendWhoIsHereRow();
     const other = createOther();
-    useOthersStore.getState().setMany({ "617": other });
+    seedRuntimeOthers({ "617": other });
     setRuntime(other);
     setSelectedGuild();
     setOnlineOwner();
@@ -455,7 +453,7 @@ describe("useWhoIsHereLootlogHighlight", () => {
   it("highlights loading, error, and unknown-owner rows fuchsia", async () => {
     const row = appendWhoIsHereRow();
     const other = createOther();
-    useOthersStore.getState().setMany({ "617": other });
+    seedRuntimeOthers({ "617": other });
     setRuntime(other);
     setSelectedGuild();
 
@@ -502,13 +500,13 @@ describe("useWhoIsHereLootlogHighlight", () => {
     const row = appendWhoIsHereRow();
     const other = createOther();
     let tooltipHtml = "";
-    const createTipWrapper = vi.fn(
-      (_tipContainer: unknown, tooltipOther: Other) => {
-        tooltipHtml = String(tooltipOther.createStrTip?.() ?? "");
-      },
-    );
+    const createTipWrapper = vi.fn<
+      (container: Element | null, other: Other) => void
+    >((_tipContainer, tooltipOther) => {
+      tooltipHtml = String(tooltipOther.createStrTip?.() ?? "");
+    });
     characterTooltipTransforms.register(appendCatchingGuildsTooltipSection);
-    useOthersStore.getState().setMany({ "617": other });
+    seedRuntimeOthers({ "617": other });
     setRuntime(other, createTipWrapper);
     setSelectedGuild();
     setOnlineOwner("617", false);
@@ -552,13 +550,13 @@ describe("useWhoIsHereLootlogHighlight", () => {
     const row = appendWhoIsHereRow();
     const other = createOther();
     let tooltipHtml = "";
-    const createTipWrapper = vi.fn(
-      (_tipContainer: unknown, tooltipOther: Other) => {
-        tooltipHtml = String(tooltipOther.createStrTip?.() ?? "");
-      },
-    );
+    const createTipWrapper = vi.fn<
+      (container: Element | null, other: Other) => void
+    >((_tipContainer, tooltipOther) => {
+      tooltipHtml = String(tooltipOther.createStrTip?.() ?? "");
+    });
     characterTooltipTransforms.register(appendCatchingGuildsTooltipSection);
-    useOthersStore.getState().setMany({ "617": other });
+    seedRuntimeOthers({ "617": other });
     setRuntime(other, createTipWrapper);
     setSelectedGuild();
     setOnlineOwner();
@@ -604,10 +602,10 @@ describe("useWhoIsHereLootlogHighlight", () => {
   it("fetches tooltip data when online owner becomes known after whoIsHere hover", async () => {
     const row = appendWhoIsHereRow();
     const other = createOther();
-    useOthersStore.getState().setMany({ "617": other });
+    seedRuntimeOthers({ "617": other });
     setRuntime(other);
     setSelectedGuild();
-    mocks.getPlayersCatchingGuilds.mockResolvedValue({
+    endpoint.mockResolvedValue({
       players: [
         {
           userId: "player-discord",
@@ -632,14 +630,14 @@ describe("useWhoIsHereLootlogHighlight", () => {
       );
     });
 
-    expect(mocks.getPlayersCatchingGuilds).not.toHaveBeenCalled();
+    expect(endpoint).not.toHaveBeenCalled();
 
     act(() => {
       setOnlineOwner();
     });
 
     await waitFor(() => {
-      expect(mocks.getPlayersCatchingGuilds).toHaveBeenCalledWith(
+      expect(endpoint).toHaveBeenCalledWith(
         {
           players: [
             {
@@ -657,7 +655,7 @@ describe("useWhoIsHereLootlogHighlight", () => {
   it("removes highlight styles and injected CSS on cleanup", async () => {
     const row = appendWhoIsHereRow();
     const other = createOther();
-    useOthersStore.getState().setMany({ "617": other });
+    seedRuntimeOthers({ "617": other });
     setRuntime(other);
     setSelectedGuild();
     setOnlineOwner();

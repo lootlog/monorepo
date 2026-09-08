@@ -1,3 +1,4 @@
+import type { GuildMemberChanged } from "@lootlog/protocol/rabbit/events";
 import { activeGuildMemberJoin } from "#src/members/member-access-query";
 import {
   pathString,
@@ -314,7 +315,7 @@ export class RolesData extends Context.Service<
     ) => DataEffect;
   }
 >()("@lootlog/api/http-api/roles/data") {
-  static layerDatabase(cache: RolesCache) {
+  static layerDatabase(cache: RolesCache, events: RolePolicyEvents) {
     return Layer.effect(
       RolesData,
       Effect.map(ApiDatabase, (database) => {
@@ -369,6 +370,8 @@ export class RolesData extends Context.Service<
                   return yield* Effect.fail(new PermissionDeniedError());
                 }
 
+                // Republish on repeated saves too: a previous attempt may have
+                // committed the policy before cache invalidation or delivery failed.
                 const updated = yield* database
                   .update(roleTable)
                   .set({
@@ -387,6 +390,35 @@ export class RolesData extends Context.Service<
                 yield* cache.deleteByPattern(
                   getPermissionsCachePattern(guildId),
                 );
+                const members = yield* database
+                  .select({
+                    discordId: memberTable.userId,
+                    userId: memberTable.globalUserId,
+                  })
+                  .from(memberTable)
+                  .innerJoin(
+                    memberToRoleTable,
+                    eq(memberToRoleTable.A, memberTable.id),
+                  )
+                  .where(
+                    and(
+                      eq(memberTable.guildId, guildId),
+                      eq(memberTable.active, true),
+                      eq(memberToRoleTable.B, roleId),
+                    ),
+                  );
+                yield* Effect.forEach(
+                  members,
+                  (member) =>
+                    member.userId
+                      ? events.memberPolicyChanged({
+                          guildId,
+                          discordId: member.discordId,
+                          userId: member.userId,
+                        })
+                      : Effect.void,
+                  { concurrency: 4, discard: true },
+                );
                 return updated[0] ?? null;
               }).pipe(
                 Effect.withSpan("roles.update.persistence", {
@@ -398,6 +430,12 @@ export class RolesData extends Context.Service<
       }),
     );
   }
+}
+
+export interface RolePolicyEvents {
+  readonly memberPolicyChanged: (
+    member: typeof GuildMemberChanged.Type,
+  ) => Effect.Effect<void, unknown>;
 }
 
 export interface RolesCache {
@@ -705,14 +743,14 @@ export const revokeReservationShare = Effect.fn("revokeReservationShare")(
   },
 );
 
-export const getGuildRolesFromPath = (guildId: unknown) =>
+export const getGuildRolesFromPath = (guildId: string | undefined) =>
   toDeclaredOrganizationWorkspaceError(
     Effect.flatMap(pathString(guildId, "guildId"), getGuildRoles),
     [403],
   );
 
 export const updateGuildRoleFromPath = (
-  guildId: unknown,
+  guildId: string | undefined,
   roleId: string,
   payload: UpdateRolePermissionsRequest,
 ) =>

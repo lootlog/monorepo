@@ -1,6 +1,9 @@
 import { TextLink } from "@lootlog/ui/components/text-link";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { PageHeader } from "@/components/common/page-header";
+import {
+  SectionCard,
+  SectionCard as Card,
+} from "@/components/common/section-card/section-card";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
@@ -18,7 +21,7 @@ import {
 } from "@lootlog/ui/components/alert-dialog";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
-import { SectionCard as Card } from "@/components/common/section-card/section-card";
+
 import {
   Empty,
   EmptyContent,
@@ -31,8 +34,9 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
   useDocsControllerDeleteDocument,
   useDocsControllerGetDocuments,
+  type GuildDocumentListResponseDtoItemsItem,
 } from "@lootlog/client/main";
-import type { GuildDocumentListResponseDtoItemsItem } from "@lootlog/client/main";
+
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import {
@@ -107,9 +111,10 @@ export const GuildDocsListPage = () => {
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
+      <h1 className="sr-only">{t("docs.list.title")}</h1>
       <div className="px-3 pt-3">
-        <PageHeader title={t("docs.list.title")}>
-          <SectionCardContent>
+        <SectionCard className="rounded-xl">
+          <SectionCardContent className="p-2">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <SearchInput
                 name="guild-doc-search"
@@ -173,7 +178,7 @@ export const GuildDocsListPage = () => {
               </div>
             </div>
           </SectionCardContent>
-        </PageHeader>
+        </SectionCard>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col pt-3">
@@ -250,12 +255,10 @@ export const GuildDocsListPage = () => {
                       <div className="min-w-0 space-y-1">
                         <TextLink
                           className="block truncate leading-tight text-sm"
-                          render={
-                            <Link
-                              to="/$guildId/docs/$docId"
-                              params={{ guildId, docId: document.id }}
-                            />
-                          }
+                          render=<Link
+                            to="/$guildId/docs/$docId"
+                            params={{ guildId, docId: document.id }}
+                          />
                         >
                           {document.title}
                         </TextLink>
@@ -346,7 +349,7 @@ export const GuildDocsListPage = () => {
               {t("common.cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
-              render={<Button loading={deleteDocument.isPending} />}
+              render=<Button loading={deleteDocument.isPending} />
               disabled={deleteDocument.isPending || !documentPendingTrash}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={(event) => {

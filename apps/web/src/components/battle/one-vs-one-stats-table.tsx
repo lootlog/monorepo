@@ -18,6 +18,7 @@ import { BattleStatsTableHeader } from "./battle-stats-table-header";
 import { useTranslation } from "react-i18next";
 import type {
   BattleStatDefinition,
+  BattleStatValue,
   BattleStatCategoryDefinition,
   StatsCustomizationConfig,
 } from "@/types/stats-customization.types";
@@ -57,17 +58,17 @@ type VisibleStatCategory = {
 };
 
 const formatValue = (
-  value: unknown,
-  formatter?: (value: unknown) => string,
+  value: BattleStatValue,
+  formatter?: (value: BattleStatValue) => string,
   booleanLabels?: { yes: string; no: string },
 ): string => {
   if (formatter) {
     return formatter(value);
   }
-  if (typeof value === "number") {
-    return value.toLocaleString("pl-PL");
+  if (Number.isFinite(value)) {
+    return Number(value).toLocaleString("pl-PL");
   }
-  if (typeof value === "boolean") {
+  if (value === true || value === false) {
     return value
       ? (booleanLabels?.yes ?? "true")
       : (booleanLabels?.no ?? "false");
@@ -150,9 +151,10 @@ const getVisibleStats = ({
           ? orderedStats.filter((stat) => {
               const userValue = user[stat.key];
               const opponentValue = opponent[stat.key];
-              const userNumber = typeof userValue === "number" ? userValue : 0;
-              const opponentNumber =
-                typeof opponentValue === "number" ? opponentValue : 0;
+              const userNumber = Number.isFinite(userValue) ? userValue : 0;
+              const opponentNumber = Number.isFinite(opponentValue)
+                ? opponentValue
+                : 0;
               return userNumber !== 0 || opponentNumber !== 0;
             })
           : orderedStats;
@@ -214,9 +216,6 @@ export function OneVsOneStatsTable({
   const { t } = useTranslation();
   const [internalHideZeros, setInternalHideZeros] = useState(true);
   const [statSearchQuery, setStatSearchQuery] = useState("");
-  const [activeStatSearchKey, setActiveStatSearchKey] = useState<string | null>(
-    null,
-  );
   const statsScrollViewportRef = useRef<HTMLDivElement>(null);
   const statSearchAnimationFrameRef = useRef<number | null>(null);
   const booleanLabels = {
@@ -262,6 +261,26 @@ export function OneVsOneStatsTable({
   const user = userWarrior;
   const opponent = opponentWarrior;
 
+  useEffect(() => {
+    const viewport = statsScrollViewportRef.current;
+    const header = viewport?.querySelector("thead");
+    if (!viewport || !header) return;
+
+    const updateHeaderHeight = () => {
+      viewport.style.setProperty(
+        "--scroll-fade-header-height",
+        `${header.getBoundingClientRect().height}px`,
+      );
+    };
+    updateHeaderHeight();
+    const observer = new ResizeObserver(updateHeaderHeight);
+    observer.observe(header);
+    return () => {
+      observer.disconnect();
+      viewport.style.removeProperty("--scroll-fade-header-height");
+    };
+  }, [user, opponent, compact]);
+
   const visibleStats = getVisibleStats({
     config,
     hideZeros,
@@ -271,7 +290,10 @@ export function OneVsOneStatsTable({
   });
 
   const scrollToStatSearchKey = (searchKey: string) => {
-    if (statSearchAnimationFrameRef.current != null) {
+    if (
+      statSearchAnimationFrameRef.current !== null &&
+      statSearchAnimationFrameRef.current !== undefined
+    ) {
       cancelAnimationFrame(statSearchAnimationFrameRef.current);
     }
 
@@ -306,7 +328,10 @@ export function OneVsOneStatsTable({
 
   useEffect(
     () => () => {
-      if (statSearchAnimationFrameRef.current == null) {
+      if (
+        statSearchAnimationFrameRef.current === null ||
+        statSearchAnimationFrameRef.current === undefined
+      ) {
         return;
       }
 
@@ -315,16 +340,20 @@ export function OneVsOneStatsTable({
     [],
   );
 
+  const activeStatSearchKey = getMatchingStatSearchKey(
+    statSearchQuery,
+    visibleStats,
+  );
+
   useEffect(() => {
-    const matchingKey = getMatchingStatSearchKey(statSearchQuery, visibleStats);
-    setActiveStatSearchKey(matchingKey);
+    const matchingKey = activeStatSearchKey;
 
     if (!matchingKey) {
       return;
     }
 
     scrollToStatSearchKey(matchingKey);
-  }, [statSearchQuery, visibleStats]);
+  }, [activeStatSearchKey, statSearchQuery, visibleStats]);
 
   if (!user || !opponent) {
     return (
@@ -345,16 +374,14 @@ export function OneVsOneStatsTable({
         <BattleStatsTableHeader
           title={headerTitle ?? t("battlePanel.single.statistics.title")}
           compact={compact}
-          leading={
-            <SearchInput
-              aria-label={t("battleUi.customization.searchStat")}
-              className={cn(compact ? "h-8 text-sm" : "h-9 text-sm")}
-              placeholder={t("battleUi.customization.searchStat")}
-              value={statSearchQuery}
-              wrapperClassName="w-full"
-              onChange={(event) => setStatSearchQuery(event.target.value)}
-            />
-          }
+          leading=<SearchInput
+            aria-label={t("battleUi.customization.searchStat")}
+            className={cn(compact ? "h-8 text-sm" : "h-9 text-sm")}
+            placeholder={t("battleUi.customization.searchStat")}
+            value={statSearchQuery}
+            wrapperClassName="w-full"
+            onChange={(event) => setStatSearchQuery(event.target.value)}
+          />
           actions={
             headerActions ?? (
               <>
@@ -428,7 +455,10 @@ export function OneVsOneStatsTable({
       )}
       <ScrollArea
         ref={statsScrollViewportRef}
-        className={cn("min-h-0 w-full max-w-screen", scrollClassName)}
+        className={cn(
+          "scroll-area-sticky-table min-h-0 w-full max-w-screen",
+          scrollClassName,
+        )}
       >
         <Table
           className={cn(compact && "text-[13px] leading-[1.35]")}
@@ -447,7 +477,7 @@ export function OneVsOneStatsTable({
             <TableRow className="border-b border-border/70">
               <TableHead
                 className={cn(
-                  "sticky left-0 top-0 z-20 border-r border-b border-border/70 bg-muted/80 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]",
+                  "sticky left-0 top-0 z-20 border-r border-b border-border/70 bg-muted shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]",
                   compact && "h-7 px-2 text-[13px]",
                 )}
               >

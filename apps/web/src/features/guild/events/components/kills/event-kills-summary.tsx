@@ -33,7 +33,7 @@ export const EventKillsSummary = ({
           <dd className="mt-0.5 min-h-5 text-base font-bold leading-5 tabular-nums">
             {isKillCountLoading ? (
               <Skeleton className="h-5 w-8" />
-            ) : typeof killCount === "number" ? (
+            ) : killCount !== null && killCount !== undefined ? (
               killCount
             ) : (
               <span

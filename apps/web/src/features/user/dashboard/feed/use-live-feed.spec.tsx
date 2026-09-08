@@ -1,45 +1,66 @@
+import { createTestGateway } from "@/lib/testing/gateway";
+import { configureApiClients } from "@lootlog/client/transport";
+import { getUsersControllerGetUserFeedQueryKey } from "@lootlog/client/main";
 // @vitest-environment happy-dom
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Storage as MemoryStorage } from "happy-dom";
 import type { ReactNode } from "react";
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, onTestFinished, vi } from "vitest";
 import { GatewayEvent } from "@/config/gateway";
 import { useLiveFeed } from "./use-live-feed";
 import { feedResponse, feedKill } from "./live-feed-test-data";
-const mocks = vi.hoisted(() => {
-  const handlers = new Map<string, Set<(item?: unknown) => void>>();
-  return {
-    request: vi.fn(),
-    handlers,
-    socket: {
-      on: (name: string, handler: (item?: unknown) => void) => {
-        const listeners = handlers.get(name) ?? new Set();
-        listeners.add(handler);
-        handlers.set(name, listeners);
+const mocks = {
+  request: vi.fn<() => Promise<ReturnType<typeof feedResponse>>>(),
+};
+let gateway: ReturnType<typeof createTestGateway>;
+function deliverLifecycleEvent(
+  event: GatewayEvent,
+  organizationIds = [feedKill.guild.id],
+) {
+  if (event === GatewayEvent.CONNECT) {
+    gateway.setConnectionState("ready");
+    return;
+  }
+  if (event === GatewayEvent.DISCONNECT) {
+    gateway.setConnectionState("disconnected");
+    return;
+  }
+  if (event === GatewayEvent.JOIN) {
+    gateway.deliver({
+      v: 1,
+      type: "session.joined",
+      data: {
+        connectionId: "connection-1",
+        organizationIds,
+        subscriptionScopes: [],
       },
-      off: (name: string, handler: (item?: unknown) => void) => {
-        handlers.get(name)?.delete(handler);
-      },
-      emit: (name: string, item?: unknown) =>
-        handlers.get(name)?.forEach((handler) => handler(item)),
-    },
-  };
-});
-vi.mock("@/hooks/utils/use-gateway", () => ({
-  useGateway: () => ({ socket: mocks.socket, connected: true }),
-}));
-vi.mock("@lootlog/client/main", () => ({
-  getUsersControllerGetUserFeedQueryKey: () => ["user-feed"],
-  getUsersControllerGetUserFeedQueryOptions: () => ({
-    queryKey: ["user-feed"],
-    queryFn: mocks.request,
-  }),
-}));
+    });
+    return;
+  }
+  if (event === GatewayEvent.PERMISSIONS_UPDATED) {
+    gateway.deliver({
+      v: 1,
+      type: "permissions.updated",
+      data: { organizationIds, subscriptionScopes: [] },
+    });
+    return;
+  }
+  throw new Error("Unexpected gateway lifecycle event");
+}
 beforeEach(() => {
   vi.useFakeTimers();
   vi.setSystemTime(new Date("2026-09-06T12:01:00Z"));
-  mocks.handlers.clear();
+  gateway = createTestGateway();
+  gateway.request.mockResolvedValue(undefined);
+  onTestFinished(
+    configureApiClients({
+      main: {
+        baseUrl: "https://api.test",
+        fetch: async () => Response.json(await mocks.request()),
+      },
+    }),
+  );
   mocks.request.mockReset();
   vi.stubGlobal("localStorage", new MemoryStorage());
 });
@@ -47,11 +68,16 @@ afterEach(() => {
   cleanup();
   vi.useRealTimers();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 function renderFeed() {
   const queryClient = new QueryClient();
+  onTestFinished(() => queryClient.clear());
+  const GatewayWrapper = gateway.wrapper;
   const wrapper = ({ children }: { children: ReactNode }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <GatewayWrapper>
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    </GatewayWrapper>
   );
   return { ...renderHook(() => useLiveFeed(), { wrapper }), queryClient };
 }
@@ -70,23 +96,27 @@ it("receives complete live entries without further HTTP requests and refetches o
   expect(result.current.state.items).toEqual(feedResponse().items);
   act(() => {
     for (let count = 2; count <= 20; count += 1) {
-      mocks.socket.emit(GatewayEvent.FEED_ENTRY, {
-        ...feedKill,
-        count,
-        version: count,
+      gateway.deliver({
+        v: 1,
+        type: "feed.entry",
+        data: {
+          ...feedKill,
+          count,
+          version: count,
+        },
       });
     }
   });
   await act(() => vi.advanceTimersByTimeAsync(5000));
   expect(mocks.request).toHaveBeenCalledTimes(1);
   expect(result.current.state.items).toEqual(feedResponse(20).items);
-  act(() => mocks.socket.emit(GatewayEvent.CONNECT));
+  act(() => deliverLifecycleEvent(GatewayEvent.CONNECT));
   await act(() => vi.advanceTimersByTimeAsync(0));
   expect(mocks.request).toHaveBeenCalledTimes(2);
   expect(result.current.state.items).toEqual(feedResponse().items);
   // A kill accepted while session.join is pending must appear in the post-join snapshot.
   mocks.request.mockResolvedValue(feedResponse(21));
-  act(() => mocks.socket.emit(GatewayEvent.JOIN));
+  act(() => deliverLifecycleEvent(GatewayEvent.JOIN));
   await act(() => vi.advanceTimersByTimeAsync(0));
   expect(mocks.request).toHaveBeenCalledTimes(3);
   expect(result.current.state.items).toEqual(feedResponse(21).items);
@@ -99,8 +129,9 @@ it.each([GatewayEvent.JOIN])(
       .mockRejectedValueOnce(new Error("network"));
     const { result } = renderFeed();
     await act(() => vi.advanceTimersByTimeAsync(0));
+    await act(() => vi.advanceTimersByTimeAsync(0));
     const original = result.current.state.items;
-    act(() => mocks.socket.emit(event));
+    act(() => deliverLifecycleEvent(event));
     expect(result.current.state.items).toBe(original);
     await act(() => vi.advanceTimersByTimeAsync(0));
     expect(result.current.state.items).toBe(original);
@@ -118,10 +149,12 @@ it("ignores a pre-permission response that arrives after access was revoked", as
     )
     .mockResolvedValueOnce({ ...feedResponse(), items: [] });
   const { result } = renderFeed();
-  act(() => mocks.socket.emit(GatewayEvent.PERMISSIONS_UPDATED));
+  await act(() => vi.advanceTimersByTimeAsync(0));
+  act(() => deliverLifecycleEvent(GatewayEvent.PERMISSIONS_UPDATED));
   await act(async () => {
+    await vi.advanceTimersByTimeAsync(0);
     finish(feedResponse());
-    await vi.advanceTimersByTimeAsync(1000);
+    await vi.advanceTimersByTimeAsync(5000);
   });
   expect(result.current.state.items).toEqual([]);
   expect(result.current.state.pending).toBeUndefined();
@@ -141,10 +174,14 @@ it("remembers pause across remounts while allowing the initial snapshot", async 
   await act(() => vi.advanceTimersByTimeAsync(0));
   expect(next.result.current.state.items).toEqual(feedResponse().items);
   act(() =>
-    mocks.socket.emit(GatewayEvent.FEED_ENTRY, {
-      ...feedKill,
-      count: 3,
-      version: 3,
+    gateway.deliver({
+      v: 1,
+      type: "feed.entry",
+      data: {
+        ...feedKill,
+        count: 3,
+        version: 3,
+      },
     }),
   );
   await act(() => vi.advanceTimersByTimeAsync(5000));
@@ -159,10 +196,14 @@ it("ignores live entries while paused and fetches a fresh snapshot immediately o
   await act(() => vi.advanceTimersByTimeAsync(0));
   act(() => result.current.setPaused(true));
   act(() =>
-    mocks.socket.emit(GatewayEvent.FEED_ENTRY, {
-      ...feedKill,
-      count: 3,
-      version: 3,
+    gateway.deliver({
+      v: 1,
+      type: "feed.entry",
+      data: {
+        ...feedKill,
+        count: 3,
+        version: 3,
+      },
     }),
   );
   await act(() => vi.advanceTimersByTimeAsync(5000));
@@ -183,10 +224,12 @@ it.each([GatewayEvent.JOIN])(
       .mockReturnValueOnce(response.promise);
     const { result } = renderFeed();
     await act(() => vi.advanceTimersByTimeAsync(0));
+    await act(() => vi.advanceTimersByTimeAsync(0));
     const original = result.current.state.items;
     act(() => result.current.setPaused(true));
-    act(() => mocks.socket.emit(event));
+    act(() => deliverLifecycleEvent(event));
     expect(result.current.state.items).toBe(original);
+    await act(() => vi.advanceTimersByTimeAsync(0));
     expect(mocks.request).toHaveBeenCalledTimes(2);
     await act(async () => {
       response.resolve({ ...feedResponse(), items: [] });
@@ -205,9 +248,10 @@ it("finishes mandatory access revalidation when the user pauses during the reque
     .mockReturnValueOnce(response.promise);
   const { result } = renderFeed();
   await act(() => vi.advanceTimersByTimeAsync(0));
-  act(() => mocks.socket.emit(GatewayEvent.PERMISSIONS_UPDATED));
+  act(() => deliverLifecycleEvent(GatewayEvent.PERMISSIONS_UPDATED));
   act(() => result.current.setPaused(true));
-  expect(result.current.state.items).toEqual([]);
+  expect(result.current.state.items).toEqual(feedResponse().items);
+  await act(() => vi.advanceTimersByTimeAsync(5000));
   await act(async () => {
     response.resolve({ ...feedResponse(), items: [] });
     await vi.advanceTimersByTimeAsync(0);
@@ -224,19 +268,29 @@ it("merges entries received while the initial HTTP snapshot is in flight", async
       }),
   );
   const { result } = renderFeed();
+  await act(() => vi.advanceTimersByTimeAsync(0));
   act(() => {
-    mocks.socket.emit(GatewayEvent.FEED_ENTRY, {
-      ...feedKill,
-      count: 3,
-      version: 3,
+    gateway.deliver({
+      v: 1,
+      type: "feed.entry",
+      data: {
+        ...feedKill,
+        count: 3,
+        version: 3,
+      },
     });
-    mocks.socket.emit(GatewayEvent.FEED_ENTRY, {
-      ...feedKill,
-      count: 2,
-      version: 2,
+    gateway.deliver({
+      v: 1,
+      type: "feed.entry",
+      data: {
+        ...feedKill,
+        count: 2,
+        version: 2,
+      },
     });
   });
   await act(async () => {
+    await vi.advanceTimersByTimeAsync(0);
     finish(feedResponse());
     await vi.advanceTimersByTimeAsync(0);
   });
@@ -255,8 +309,10 @@ it("ignores an in-flight HTTP snapshot after pause and refreshes on resume", asy
     )
     .mockResolvedValueOnce(feedResponse(4));
   const { result } = renderFeed();
+  await act(() => vi.advanceTimersByTimeAsync(0));
   act(() => result.current.setPaused(true));
   await act(async () => {
+    await vi.advanceTimersByTimeAsync(0);
     finish(feedResponse(3));
     await vi.advanceTimersByTimeAsync(0);
   });
@@ -279,9 +335,10 @@ it.each([GatewayEvent.PERMISSIONS_UPDATED])(
       .mockResolvedValueOnce(replacement);
     const { result } = renderFeed();
     await act(() => vi.advanceTimersByTimeAsync(0));
-    act(() => result.current.setAtTop(false));
-    act(() => mocks.socket.emit(event));
     await act(() => vi.advanceTimersByTimeAsync(0));
+    act(() => result.current.setAtTop(false));
+    act(() => deliverLifecycleEvent(event));
+    await act(() => vi.advanceTimersByTimeAsync(5000));
     expect(result.current.state.items).toEqual(replacement.items);
     expect(result.current.state.pending).toBeUndefined();
   },
@@ -298,15 +355,11 @@ it("keeps the initial HTTP snapshot visible while the first successful join refr
   const { result } = renderFeed();
   await act(() => vi.advanceTimersByTimeAsync(0));
   const original = result.current.state.items;
-  act(() =>
-    mocks.socket.emit(GatewayEvent.JOIN, {
-      status: "success",
-      guildIds: [feedKill.guild.id],
-    }),
-  );
+  act(() => deliverLifecycleEvent(GatewayEvent.JOIN));
   expect(result.current.state.items).toBe(original);
   expect(result.current.state.isFetching).toBe(true);
   await act(async () => {
+    await vi.advanceTimersByTimeAsync(0);
     finish(feedResponse(2));
     await vi.advanceTimersByTimeAsync(0);
   });
@@ -340,7 +393,7 @@ it("retains the snapshot throughout repeated joins and reconnect requests", asyn
     GatewayEvent.CONNECT,
     GatewayEvent.JOIN,
   ]) {
-    act(() => mocks.socket.emit(event, { status: "success" }));
+    act(() => deliverLifecycleEvent(event));
     expect(result.current.state.items).toBe(original);
   }
   expect(result.current.state.isFetching).toBe(true);
@@ -357,8 +410,8 @@ it("preserves live entries and their provenance across superseding refreshes", a
   await act(() => vi.advanceTimersByTimeAsync(0));
   act(() => result.current.refresh());
   const live = { ...feedKill, id: "new-live-kill", groupKey: "new-live-kill" };
-  act(() => mocks.socket.emit(GatewayEvent.FEED_ENTRY, live));
-  act(() => mocks.socket.emit(GatewayEvent.JOIN));
+  act(() => gateway.deliver({ v: 1, type: "feed.entry", data: live }));
+  act(() => deliverLifecycleEvent(GatewayEvent.JOIN));
   await act(async () => {
     first.resolve({ ...feedResponse(), items: [] });
     second.resolve(feedResponse());
@@ -379,14 +432,19 @@ it("does not restore pre-permission buffered entries after the authoritative sna
   await act(() => vi.advanceTimersByTimeAsync(0));
   act(() => result.current.refresh());
   act(() =>
-    mocks.socket.emit(GatewayEvent.FEED_ENTRY, {
-      ...feedKill,
-      version: 2,
-      count: 2,
+    gateway.deliver({
+      v: 1,
+      type: "feed.entry",
+      data: {
+        ...feedKill,
+        version: 2,
+        count: 2,
+      },
     }),
   );
-  act(() => mocks.socket.emit(GatewayEvent.PERMISSIONS_UPDATED));
-  expect(result.current.state.items).toEqual([]);
+  act(() => deliverLifecycleEvent(GatewayEvent.PERMISSIONS_UPDATED));
+  expect(result.current.state.items).toEqual(feedResponse().items);
+  await act(() => vi.advanceTimersByTimeAsync(5000));
   await act(async () => {
     first.resolve(feedResponse(2));
     second.resolve({ ...feedResponse(), items: [] });
@@ -396,7 +454,7 @@ it("does not restore pre-permission buffered entries after the authoritative sna
 });
 
 it.each([false, true])(
-  "purges displayed, pending and cached entries immediately on permissions change (paused: %s), even if revalidation fails",
+  "retains only the displayed snapshot until access revalidation fails (paused: %s)",
   async (paused) => {
     mocks.request
       .mockResolvedValueOnce(feedResponse())
@@ -405,21 +463,29 @@ it.each([false, true])(
     await act(() => vi.advanceTimersByTimeAsync(0));
     act(() => {
       result.current.setAtTop(false);
-      mocks.socket.emit(GatewayEvent.FEED_ENTRY, {
-        ...feedKill,
-        id: "pending",
+      gateway.deliver({
+        v: 1,
+        type: "feed.entry",
+        data: {
+          ...feedKill,
+          id: "pending",
+        },
       });
     });
     expect(result.current.state.pending).toBeDefined();
     act(() => result.current.setPaused(paused));
-    act(() => mocks.socket.emit(GatewayEvent.PERMISSIONS_UPDATED));
-    expect(result.current.state.items).toEqual([]);
+    act(() => deliverLifecycleEvent(GatewayEvent.PERMISSIONS_UPDATED));
+    expect(result.current.state.items).toEqual(feedResponse().items);
     expect(result.current.state.pending).toBeUndefined();
-    expect(queryClient.getQueryData(["user-feed"])).toBeUndefined();
-    await act(() => vi.advanceTimersByTimeAsync(0));
+    expect(
+      queryClient.getQueryData(getUsersControllerGetUserFeedQueryKey()),
+    ).toBeUndefined();
+    await act(() => vi.advanceTimersByTimeAsync(5000));
     expect(result.current.state.items).toEqual([]);
     expect(result.current.state.isError).toBe(true);
-    expect(queryClient.getQueryData(["user-feed"])).toBeUndefined();
+    expect(
+      queryClient.getQueryData(getUsersControllerGetUserFeedQueryKey()),
+    ).toBeUndefined();
   },
 );
 
@@ -435,11 +501,12 @@ it.each(["refresh", "reconnect"] as const)(
       .mockResolvedValueOnce(replacement);
     const { result } = renderFeed();
     await act(() => vi.advanceTimersByTimeAsync(0));
+    await act(() => vi.advanceTimersByTimeAsync(0));
     const original = result.current.state.items;
     act(() => result.current.setAtTop(false));
     act(() => {
       if (trigger === "refresh") result.current.refresh();
-      else mocks.socket.emit(GatewayEvent.CONNECT);
+      else deliverLifecycleEvent(GatewayEvent.CONNECT);
     });
     await act(() => vi.advanceTimersByTimeAsync(0));
     expect(result.current.state.items).toBe(original);
@@ -456,8 +523,139 @@ it("applies explicit join access revalidation while scrolled", async () => {
   const { result } = renderFeed();
   await act(() => vi.advanceTimersByTimeAsync(0));
   act(() => result.current.setAtTop(false));
-  act(() => mocks.socket.emit(GatewayEvent.JOIN));
+  act(() => deliverLifecycleEvent(GatewayEvent.JOIN));
   await act(() => vi.advanceTimersByTimeAsync(0));
   expect(result.current.state.items).toEqual([]);
   expect(result.current.state.pending).toBeUndefined();
+});
+
+it("keeps the snapshot through a rebalance burst and fetches five seconds after the last notification", async () => {
+  mocks.request.mockResolvedValue(feedResponse());
+  const { result } = renderFeed();
+  await act(() => vi.advanceTimersByTimeAsync(0));
+  for (let index = 0; index < 4; index += 1) {
+    act(() => deliverLifecycleEvent(GatewayEvent.PERMISSIONS_UPDATED));
+    expect(result.current.state.items).toEqual(feedResponse().items);
+    await act(() => vi.advanceTimersByTimeAsync(1000));
+    expect(result.current.state.items).toEqual(feedResponse().items);
+  }
+  await act(() => vi.advanceTimersByTimeAsync(3999));
+  expect(mocks.request).toHaveBeenCalledTimes(1);
+  await act(() => vi.advanceTimersByTimeAsync(1));
+  expect(mocks.request).toHaveBeenCalledTimes(2);
+  expect(result.current.state.items).toEqual(feedResponse().items);
+});
+
+it("cancels a scheduled rebalance refresh on unmount", async () => {
+  mocks.request.mockResolvedValue(feedResponse());
+  const { unmount } = renderFeed();
+  await act(() => vi.advanceTimersByTimeAsync(0));
+  act(() => deliverLifecycleEvent(GatewayEvent.PERMISSIONS_UPDATED));
+  unmount();
+  await act(() => vi.advanceTimersByTimeAsync(5000));
+  expect(mocks.request).toHaveBeenCalledTimes(1);
+});
+
+it("does not let joins or live entries bypass pending access revalidation", async () => {
+  mocks.request.mockResolvedValue(feedResponse());
+  const { result } = renderFeed();
+  await act(() => vi.advanceTimersByTimeAsync(0));
+  act(() => {
+    deliverLifecycleEvent(GatewayEvent.PERMISSIONS_UPDATED);
+    deliverLifecycleEvent(GatewayEvent.CONNECT);
+    deliverLifecycleEvent(GatewayEvent.JOIN);
+    gateway.deliver({ v: 1, type: "feed.entry", data: feedKill });
+  });
+  expect(result.current.state.items).toEqual(feedResponse().items);
+  expect(mocks.request).toHaveBeenCalledTimes(1);
+  await act(() => vi.advanceTimersByTimeAsync(5000));
+  expect(mocks.request).toHaveBeenCalledTimes(2);
+});
+
+it("does not replay buffered live entries when permission revalidation fails", async () => {
+  let fail: (error: Error) => void = () => undefined;
+  mocks.request.mockResolvedValueOnce(feedResponse()).mockImplementationOnce(
+    () =>
+      new Promise((_resolve, reject) => {
+        fail = reject;
+      }),
+  );
+  const { result } = renderFeed();
+  await act(() => vi.advanceTimersByTimeAsync(0));
+  act(() => deliverLifecycleEvent(GatewayEvent.PERMISSIONS_UPDATED));
+  await act(() => vi.advanceTimersByTimeAsync(5000));
+  act(() =>
+    gateway.deliver({
+      v: 1,
+      type: "feed.entry",
+      data: { ...feedKill, id: "buffered" },
+    }),
+  );
+  await act(async () => {
+    fail(new Error("offline"));
+    await vi.advanceTimersByTimeAsync(0);
+  });
+  expect(result.current.state.items).toEqual([]);
+  expect(result.current.state.pending).toBeUndefined();
+  expect(result.current.state.isError).toBe(true);
+});
+
+it("prunes revoked organizations immediately while retaining allowed rows during a stalled refresh", async () => {
+  const allowed = feedKill;
+  const revoked = {
+    ...feedKill,
+    id: "revoked",
+    guild: { ...feedKill.guild, id: "revoked" },
+  };
+  mocks.request
+    .mockResolvedValueOnce({ ...feedResponse(), items: [allowed, revoked] })
+    .mockImplementation(() => new Promise(() => {}));
+  const { result, queryClient } = renderFeed();
+  await act(() => vi.advanceTimersByTimeAsync(0));
+  const originalAllowed = result.current.state.items?.find(
+    (item) => item.guild.id === allowed.guild.id,
+  );
+  act(() => result.current.setAtTop(false));
+  act(() =>
+    gateway.deliver({
+      v: 1,
+      type: "feed.entry",
+      data: {
+        ...revoked,
+        id: "pending-revoked",
+      },
+    }),
+  );
+  act(() => deliverLifecycleEvent(GatewayEvent.PERMISSIONS_UPDATED));
+  expect(result.current.state.items).toEqual([allowed]);
+  expect(result.current.state.items?.[0]).toBe(originalAllowed);
+  expect(result.current.state.pending).toBeUndefined();
+  expect(
+    queryClient.getQueryData(getUsersControllerGetUserFeedQueryKey()),
+  ).toBeUndefined();
+  expect(mocks.request).toHaveBeenCalledTimes(1);
+  await act(() => vi.advanceTimersByTimeAsync(65000));
+  expect(result.current.state.items).toEqual([allowed]);
+  expect(mocks.request).toHaveBeenCalledTimes(2);
+});
+
+it("clears all visible data immediately when no organizations are authorized", async () => {
+  const late = deferredResponse();
+  mocks.request
+    .mockResolvedValueOnce(feedResponse())
+    .mockReturnValueOnce(late.promise)
+    .mockResolvedValueOnce({ ...feedResponse(), items: [] });
+  const { result } = renderFeed();
+  await act(() => vi.advanceTimersByTimeAsync(0));
+  await act(() => vi.advanceTimersByTimeAsync(0));
+  act(() => result.current.refresh());
+  act(() => deliverLifecycleEvent(GatewayEvent.PERMISSIONS_UPDATED, []));
+  expect(result.current.state.items).toEqual([]);
+  await act(async () => {
+    late.resolve(feedResponse());
+    await vi.advanceTimersByTimeAsync(0);
+  });
+  expect(result.current.state.items).toEqual([]);
+  await act(() => vi.advanceTimersByTimeAsync(5000));
+  expect(result.current.state.items).toEqual([]);
 });

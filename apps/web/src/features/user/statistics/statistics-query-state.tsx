@@ -11,17 +11,19 @@ type StatisticsQueryStateProps = {
     isError: boolean;
     isFetching: boolean;
     data: unknown;
-    refetch: () => unknown;
+    refetch: () => void;
   };
   children: ReactNode;
   loading?: ReactNode;
   centered?: boolean;
+  errorMessage?: string;
 };
 export function StatisticsQueryState({
   query,
   children,
   loading,
   centered = false,
+  errorMessage,
 }: StatisticsQueryStateProps) {
   const { t } = useTranslation();
   if (query.isPending)
@@ -58,7 +60,7 @@ export function StatisticsQueryState({
             </span>
           )}
           <p className={cn(centered && "text-muted-foreground")}>
-            {t("statistics.loadError")}
+            {errorMessage ?? t("statistics.loadError")}
           </p>
           {query.data !== undefined && <p>{t("statistics.stale")}</p>}
           <Button

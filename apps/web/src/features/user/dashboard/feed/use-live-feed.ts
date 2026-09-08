@@ -33,7 +33,9 @@ export function useLiveFeed() {
     let isPaused = getPaused();
     let fetching = false;
     let revalidatingAccess = false;
+    let permissionsChanged = false;
     let buffered: FeedItem[] = [];
+    let accessRefreshTimer: ReturnType<typeof setTimeout> | undefined;
     const queryKey = getUsersControllerGetUserFeedQueryKey();
     const cancel = () => {
       generation += 1;
@@ -41,6 +43,7 @@ export function useLiveFeed() {
       void queryClient.cancelQueries({ queryKey });
     };
     const refresh = async (revalidateAccess = false) => {
+      if (accessRefreshTimer !== undefined) return;
       revalidatingAccess ||= revalidateAccess;
       cancel();
       const requestedGeneration = generation;
@@ -62,24 +65,43 @@ export function useLiveFeed() {
         }
       } catch {
         if (!disposed && requestedGeneration === generation) {
+          if (permissionsChanged) dispatch({ type: "clear" });
           dispatch({ type: "failed" });
-          for (const item of buffered) dispatch({ type: "entry", item });
+          if (!permissionsChanged)
+            for (const item of buffered) dispatch({ type: "entry", item });
         }
       } finally {
         if (requestedGeneration === generation) {
           fetching = false;
           revalidatingAccess = false;
+          permissionsChanged = false;
           buffered = [];
         }
       }
     };
-    const handlePermissions = () => {
-      // Purge old-policy state and cache before starting access revalidation.
+    const handlePermissions = (payload?: {
+      guilds: ReadonlyArray<{ guild: { id: string } }>;
+    }) => {
+      // Remove revoked organizations immediately; keep the remaining rows mounted.
+      // Discard cached and pending data from the previous policy.
       cancel();
       queryClient.removeQueries({ queryKey });
-      dispatch({ type: "clear" });
+      dispatch({
+        type: "revalidate",
+        organizationIds: new Set(
+          payload?.guilds.map(({ guild }) => guild.id) ?? [],
+        ),
+      });
       buffered = [];
-      void refresh(true);
+      permissionsChanged = true;
+      revalidatingAccess = true;
+      clearTimeout(accessRefreshTimer);
+      // Permission notifications can arrive in bursts. Wait for them to
+      // settle before fetching the replacement snapshot.
+      accessRefreshTimer = setTimeout(() => {
+        accessRefreshTimer = undefined;
+        void refresh(true);
+      }, 5000);
     };
     const handleConnect = () => {
       // Revalidate in place: a transport reconnect does not revoke access.
@@ -91,6 +113,7 @@ export function useLiveFeed() {
     };
     const onEntry = (item: FeedItem) => {
       if (isPaused) return;
+      if (accessRefreshTimer !== undefined) return;
       if (fetching) buffered = mergeFeedItems(buffered, [item]);
       else dispatch({ type: "entry", item });
     };
@@ -112,6 +135,7 @@ export function useLiveFeed() {
     void refresh();
     return () => {
       disposed = true;
+      clearTimeout(accessRefreshTimer);
       cancel();
       controlsRef.current = undefined;
       socket.off(GatewayEvent.FEED_ENTRY, onEntry);

@@ -1,6 +1,19 @@
 {
   "plugins": ["react", "typescript", "unicorn", "vitest"],
   "ignorePatterns": [
+    ".agent/**",
+    ".agents/**",
+    ".claude/**",
+    ".codex/**",
+    ".continue/**",
+    ".cursor/**",
+    ".gemini/**",
+    ".opencode/**",
+    ".pi/**",
+    ".roo/**",
+    ".windsurf/**",
+    ".codegraph/**",
+    "tools/oxlint/anti-slop/**",
     "**/node_modules",
     "**/dist",
     "**/build",
@@ -9,6 +22,16 @@
     "**/*.tsbuildinfo",
     ".agents/skills/**/scripts/**",
     "packages/client/src/generated/**"
+  ],
+  "jsPlugins": [
+    {
+      "name": "anti-slop",
+      "specifier": "./tools/oxlint/anti-slop/index.ts"
+    },
+    {
+      "name": "anti-slop-effect",
+      "specifier": "./tools/oxlint/anti-slop/effect/index.ts"
+    }
   ],
   "env": {
     "browser": true,
@@ -22,6 +45,124 @@
   },
   "overrides": [
     {
+      "files": ["packages/protocol/src/rabbit/events.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["decodeRabbitEvent"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/protocol/src/rabbit/activity-signature.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["signActivityEvent"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/protocol/src/openapi/sanitize.ts"],
+      "rules": {
+        "anti-slop/no-unsafe-dictionary-type": [
+          "error",
+          {
+            "boundaryTypes": ["OpenApiDictionary"]
+          }
+        ],
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": [
+              "preserveLegacyQueryParameterSchemas",
+              "preserveLegacyArraySchemaKeyOrder",
+              "visitOpenApiDictionaries",
+              "stripTypedObjectAdditionalProperties",
+              "stripUnsupportedOpenApiKeywords",
+              "ensurePathParameters"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/schema/src/openapi-compatibility.ts"],
+      "rules": {
+        "anti-slop/no-unsafe-dictionary-type": [
+          "error",
+          {
+            "boundaryTypes": ["JsonObject"]
+          }
+        ],
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": [
+              "normalizeSchema",
+              "setOpenApiCompatibilityValue",
+              "preserveOpenApi30Contract"
+            ]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": [
+              "normalizeSchemaAnnotations",
+              "normalizeOperation"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/schema/src/stable-json.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["stableJsonStringify"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/activity/src/http/activity-http.ts"],
+      "rules": {
+        "react-hooks/rules-of-hooks": "off"
+      }
+    },
+    {
+      "files": [
+        "apps/web/src/features/guild/events/components/scoring/scoring-rules-editor.tsx"
+      ],
+      "rules": {
+        "anti-slop-effect/no-service-constructor-imports": [
+          "error",
+          {
+            "nonServiceImports": ["makeRuleId"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/instrumentation/src/observability.ts"],
+      "rules": {
+        "anti-slop-effect/no-service-constructor-imports": [
+          "error",
+          {
+            "nonServiceImports": ["makeJsonLogger"]
+          }
+        ]
+      }
+    },
+    {
       "files": ["apps/api/**/*.{ts,tsx}"],
       "rules": {
         "@typescript-eslint/consistent-type-imports": "off"
@@ -33,9 +174,11 @@
         "@typescript-eslint/consistent-type-imports": "off",
         "@typescript-eslint/no-explicit-any": "off",
         "@typescript-eslint/no-non-null-assertion": "off",
+        // Polling, pagination, migrations and rate-limited work are sequential.
         "no-await-in-loop": "off",
         "no-unused-vars": "off",
         "require-await": "off",
+        // Typed implementations infer signatures; assertion-only spies need no signature.
         "vitest/require-mock-type-parameters": "off",
         "unicorn/prefer-number-properties": "off",
         "unicorn/prefer-string-slice": "off"
@@ -60,12 +203,1306 @@
         "require-await": "off",
         "vitest/require-mock-type-parameters": "off"
       }
+    },
+    {
+      "files": ["packages/messaging/src/messaging.ts"],
+      "rules": {
+        "anti-slop/no-unsafe-dictionary-type": [
+          "error",
+          {
+            "boundaryTypes": ["AmqpHeaders"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/domain/src/npc-appearance.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": [
+              "normalizeAppearanceColor",
+              "normalizeNpcTypeColors"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/domain/src/chat-appearance.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": [
+              "normalizeNumber",
+              "normalizeBoolean",
+              "normalizeChatAppearanceSettings",
+              "mergeChatAppearanceSettings",
+              "getChatAppearancePreset"
+            ]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["normalizeNumber", "normalizeBoolean"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/domain/src/scoring.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": [
+              "toNumber",
+              "toClock",
+              "parseAction",
+              "parseCondition",
+              "parseRule",
+              "normalizeEventScoringMode",
+              "normalizeEventScoringRules"
+            ]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": [
+              "toNumber",
+              "toClock",
+              "parseCondition",
+              "parseRule",
+              "normalizeEventScoringRules"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/domain/src/settings-documents.ts"],
+      "rules": {
+        "anti-slop/no-unsafe-dictionary-type": [
+          "error",
+          {
+            "boundaryTypes": ["RawSettingsValues"]
+          }
+        ],
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["isValid"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/client/src/realtime/event-listeners.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["emit"]
+          }
+        ],
+        "anti-slop/no-unknown-returns": [
+          "error",
+          {
+            "boundaryFunctions": ["unwrapOrganizationEvent"]
+          }
+        ],
+        "anti-slop/no-reflect-apply": [
+          "error",
+          {
+            "boundaryFunctions": ["emit"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/client/src/realtime/realtime-client.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": [
+              "resolve",
+              "toBytes",
+              "getPresenceSessionId",
+              "handleMessage",
+              "decodeFrame"
+            ]
+          }
+        ],
+        "anti-slop/no-unknown-returns": [
+          "error",
+          {
+            "boundaryFunctions": [
+              "join",
+              "subscribeScope",
+              "unsubscribeScope",
+              "request",
+              "performJoin"
+            ]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["getPresenceSessionId", "decodeFrame"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/client/src/realtime/realtime-client.test.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["respondToLastRequest"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/client/src/transport.ts"],
+      "rules": {
+        "anti-slop/no-unsafe-dictionary-type": [
+          "error",
+          {
+            "boundaryTypes": ["RawQueryParameters"]
+          }
+        ],
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": [
+              "getApiMessageFromData",
+              "appendQueryValue",
+              "requestWithBody",
+              "createRequestBody",
+              "post",
+              "put",
+              "patch",
+              "getApiErrorStatus",
+              "getApiErrorMessage"
+            ]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": [
+              "getApiMessageFromData",
+              "getApiErrorStatus",
+              "getApiErrorStringField"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/client/scripts/openapi-transformer.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": [
+              "replaceSchemaRef",
+              "transformOpenApiDocument"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/client/scripts/check-openapi.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["assert"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/wiki/src/routes/items.tsx"],
+      "rules": {
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["validateSearch"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/wiki/src/routes/-search-route.utils.ts"],
+      "rules": {
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["validateBasicRouteSearch"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/ui/src/components/sidebar.tsx"],
+      "rules": {
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["setOpen", "SidebarMenuButton"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/ui/src/components/chart.tsx"],
+      "rules": {
+        "anti-slop/no-unsafe-dictionary-type": [
+          "error",
+          {
+            "boundaryTypes": ["ChartSourceRow"]
+          }
+        ],
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["getPayloadConfigFromPayload"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": [
+              "getPayloadConfigFromPayload",
+              "resolveIndicatorColor",
+              "resolveTooltipLabel"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/shared/application-logger.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": [
+              "log",
+              "info",
+              "warn",
+              "error",
+              "debug",
+              "verbose"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/shared/schema/encode-response.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["encodeUnknownResponse"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/shared/http/handler-response.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["pathString", "optionalPathString"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["pathString", "optionalPathString"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/http-api/domain-json.schema.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["decodeDomainJson"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/timers/timer-projection.ts"],
+      "rules": {
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["mapTimerNpc", "parseTimerNpc"]
+          }
+        ],
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": [
+              "mapTimerNpc",
+              "parseTimerNpc",
+              "timerNpcField"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/discord/discord-error.util.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": [
+              "extractHttpStatus",
+              "isDiscordNotFoundError",
+              "recordInvalidDiscordRequest",
+              "toDiscordRequestError",
+              "getInvalidDiscordRequestStatus"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "apps/api/src/http-api/handlers/account-organization/user-preferences.data-layer.ts"
+      ],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": [
+              "normalizeMutedPlayers",
+              "normalizeMutedNpcs",
+              "storedMutes",
+              "chatAppearance",
+              "storedGamePreferences",
+              "normalizeNotification",
+              "normalizeNotifications",
+              "normalizeDetectorType",
+              "normalizeRoutingRules",
+              "normalizeDetector",
+              "normalizePings",
+              "normalizeAirTags"
+            ]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": [
+              "normalizeMutedPlayers",
+              "normalizeMutedNpcs",
+              "storedMutes",
+              "chatAppearance",
+              "storedGamePreferences",
+              "normalizeNotification",
+              "normalizeNotifications",
+              "normalizeDetectorType",
+              "normalizeRoutingRules",
+              "normalizeDetector",
+              "normalizePings",
+              "normalizeAirTags"
+            ]
+          }
+        ],
+        "anti-slop/no-unsafe-dictionary-type": [
+          "error",
+          {
+            "boundaryTypes": ["StoredGamePreferences"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/shared/http/http-errors.ts"],
+      "rules": {
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["errorMessage"]
+          }
+        ],
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["applicationErrorStatusOrUndefined"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/timer-settings/timer-settings.service.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": [
+              "asRecord",
+              "asJsonValue",
+              "asJsonObject",
+              "asStringArray"
+            ]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": [
+              "asRecord",
+              "asJsonValue",
+              "asJsonObject",
+              "asStringArray"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/sound-settings/sound-settings.service.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["getVolume", "mergeSoundConfigMap"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["getVolume", "mergeSoundConfigMap"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/settings-documents/settings-resolver.ts"],
+      "rules": {
+        "anti-slop/no-unsafe-dictionary-type": [
+          "error",
+          {
+            "boundaryTypes": ["JsonRecord"]
+          }
+        ],
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["setPath"]
+          }
+        ],
+        "anti-slop/no-unknown-returns": [
+          "error",
+          {
+            "boundaryFunctions": ["getPath"]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "apps/api/src/http-api/handlers/party-ready-room/party-ready-room.handlers.ts"
+      ],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["decode"]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "apps/api/src/http-api/handlers/public-system/public-system.operations.ts"
+      ],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["decode"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/http-api/handlers/timers/timers.handlers.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["decode", "parsedLimit"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/http-api/handlers/internal/internal.handlers.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["decode"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/http-api/handlers/members/members.handlers.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["decode"]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "apps/api/src/http-api/handlers/lootlog-config/lootlog-config.handlers.ts"
+      ],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["decode"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["authorize"]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "apps/api/src/http-api/handlers/account-organization/account-organization.operations.ts"
+      ],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["decode"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/http-api/handlers/chat/chat.handlers.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["decode"]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "apps/api/src/http-api/handlers/user-lootlog-config/user-lootlog-config.handlers.ts"
+      ],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["decode"]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "apps/api/src/http-api/handlers/organization-workspace/organization-workspace.operations.ts"
+      ],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["decode"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/auth/auth.service.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": [
+              "mapFetchError",
+              "mapTokenError",
+              "getErrorMessage",
+              "getErrorResponse",
+              "isAccountNotFoundError",
+              "isClientError",
+              "isTokenError"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/redis/redis.service.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["stringify", "onError"]
+          }
+        ],
+        "anti-slop/no-unknown-returns": [
+          "error",
+          {
+            "boundaryFunctions": ["parse"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/http-api/handlers/records/records.data-layer.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["decode"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/http-api/handlers/docs/docs.handlers.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["decode", "execute"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/notifications/jobs/notification-job-dispatch.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["errorMessage"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["errorMessage", "parseDispatchPayload"]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "apps/api/src/http-api/handlers/timers/timer-list.data-layer.ts"
+      ],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["visibleExpiredKeys"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/http-api/handlers/records/records.operations.ts"],
+      "rules": {
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["requireGuild"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/openapi/generate-effect-openapi.ts"],
+      "rules": {
+        "anti-slop/no-unsafe-dictionary-type": [
+          "error",
+          {
+            "boundaryTypes": ["JsonObject"]
+          }
+        ],
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": [
+              "replaceReferences",
+              "normalizeNullableSchemas"
+            ]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["replaceReferences"]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "apps/api/src/events/coordination/event-coordination.service.ts"
+      ],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["extractNpcName"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["extractNpcName"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/notifications/notification-test-content.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["npcName"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["npcName"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/events/kills/event-kill.service.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["getPresenceByMapId"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["getPresenceByMapId"]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "apps/api/src/http-api/handlers/timers/timer-search.data-layer.ts"
+      ],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["parseNpc", "projectSearchTimer"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["parseNpc", "projectSearchTimer"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/shared/schema/json.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["BoundaryDecoder"]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "apps/api/src/http-api/handlers/account-organization/guild-discord-sync.data-layer.ts"
+      ],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["recordFailure", "discordSyncErrorMessage"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "boundaryFunctions": ["discordSyncErrorMessage"],
+            "allowInTypeGuards": true
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "apps/api/src/http-api/handlers/account-organization/current-user-guilds.data-layer.ts"
+      ],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["fallbackEligible"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/discord/discord-rate-limiter.service.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["isOptional"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "boundaryFunctions": ["isOptional"],
+            "allowInTypeGuards": true
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/members/member-discord-sync-status.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["getTransientMemberSyncStatus"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "boundaryFunctions": ["getApplicationErrorMessage"],
+            "allowInTypeGuards": true
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/members/member-refresh-scheduler.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["errorCode"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "boundaryFunctions": ["errorCode"],
+            "allowInTypeGuards": true
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/runtime/auth/organization-context.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["parseDate"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "boundaryFunctions": ["parseDate"],
+            "allowInTypeGuards": true
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "apps/api/src/http-api/handlers/settings/settings.operations.ts"
+      ],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["decode", "settingsDocumentsResponse"]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "apps/api/src/http-api/handlers/notifications/notifications.handlers.ts"
+      ],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["integerParameter"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "boundaryFunctions": ["authorized", "integerParameter"],
+            "allowInTypeGuards": true
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/http-api/handlers/events/events.handlers.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["stringParameter"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "boundaryFunctions": ["authorized", "stringParameter"],
+            "allowInTypeGuards": true
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/reservations/reservation-catalog.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["parseCard", "parseReservationCatalogPayload"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "boundaryFunctions": ["parseReservationCatalogPayload"],
+            "allowInTypeGuards": true
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "apps/api/src/settings-documents/settings-documents.repository.ts"
+      ],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["getPostgresErrorCode"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "boundaryFunctions": ["getPostgresErrorCode"],
+            "allowInTypeGuards": true
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "apps/api/src/notifications/content/notification-content.service.ts"
+      ],
+      "rules": {
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "boundaryFunctions": ["parseAllowedMentions"],
+            "allowInTypeGuards": true
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/http-api/application-error-response.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["applicationErrorResponse"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "boundaryFunctions": ["applicationErrorResponse"],
+            "allowInTypeGuards": true
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "apps/api/src/http-api/handlers/party-ready-room/ready-room.repository.ts"
+      ],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["parseCommit", "parseCreate"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "boundaryFunctions": ["parseCommit", "parseCreate"],
+            "allowInTypeGuards": true
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/events/respawn/event-timer-npc.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["extractEventTimerNpc"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["extractEventTimerNpc"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/events/catalog/events-catalog-read.ts"],
+      "rules": {
+        "anti-slop-effect/no-service-constructor-imports": [
+          "error",
+          {
+            "nonServiceImports": ["makeEventMapHydration"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/events/catalog/event-catalog-mutations.ts"],
+      "rules": {
+        "anti-slop-effect/no-service-constructor-imports": [
+          "error",
+          {
+            "nonServiceImports": ["makeEventMapHydration"]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "apps/api/src/http-api/handlers/party-ready-room/ready-room.data-layer.ts"
+      ],
+      "rules": {
+        "anti-slop-effect/no-service-constructor-imports": [
+          "error",
+          {
+            "nonServiceImports": ["makeReadyRoomRepository"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/kills/user-kill-queries.ts"],
+      "rules": {
+        "anti-slop-effect/no-service-constructor-imports": [
+          "error",
+          {
+            "nonServiceImports": ["makeUserKillAnalytics"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/group-fights/group-fight-queries.ts"],
+      "rules": {
+        "anti-slop-effect/no-service-constructor-imports": [
+          "error",
+          {
+            "nonServiceImports": [
+              "makeGroupFightMemberLinks",
+              "makeGroupFightRanking"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/events/wrapped/event-wrapped.service.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["countMapStats"]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "apps/api/src/loots/submission/loot-submission-acceptance.service.ts"
+      ],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["rabbit"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/api/src/kills/kill-stats-persistence.ts"],
+      "rules": {
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["npcConditions"]
+          }
+        ]
+      }
+    },
+    {
+      // Console output is the CLI and benchmark interface.
+      "files": ["packages/cli/**", "**/*.bench.ts"],
+      "rules": {
+        "no-console": "off"
+      }
+    },
+    {
+      // Context supplies a stable component; render does not create it.
+      "files": ["packages/ui/src/components/spinner.tsx"],
+      "rules": {
+        "react/static-components": "off"
+      }
+    },
+    {
+      "files": [
+        // Controlled date and router values synchronize editable drafts.
+        "packages/ui/src/components/date-time-picker.tsx",
+        "apps/wiki/src/routes/-use-basic-search-form.ts",
+        "apps/wiki/src/routes/items.tsx"
+      ],
+      "rules": {
+        "react/set-state-in-effect": "off"
+      }
+    },
+    {
+      // Async fakes preserve Promise contracts; fixtures use asserted indices.
+      "files": ["**/*.test.{ts,tsx}", "**/*.spec.{ts,tsx}"],
+      "rules": {
+        "require-await": "off",
+        "@typescript-eslint/no-non-null-assertion": "off"
+      }
     }
   ],
   "rules": {
+    "anti-slop/no-chained-type-assertions": "error",
+    "anti-slop/no-conditional-empty-object-spread": "error",
+    "anti-slop/no-known-value-widening": "error",
+    "anti-slop/no-module-mocking": "error",
+    "anti-slop/no-object-parameters": "error",
+    "anti-slop/no-reflect-apply": "error",
+    "anti-slop/no-reflect-get": "error",
+    "anti-slop/no-runtime-typeof": [
+      "error",
+      {
+        "allowInTypeGuards": true
+      }
+    ],
+    "anti-slop/no-unsafe-dictionary-type": "error",
+    "anti-slop/no-shape-in-symbol-names": "error",
+    "anti-slop/no-unknown-parameters": "error",
+    "anti-slop/no-unknown-returns": "error",
+    "anti-slop/no-unknown-type-aliases": "error",
+    "anti-slop/no-widen-then-assert": "error",
+    "anti-slop/require-safety-comment-for-type-assertion": "error",
+    "anti-slop-effect/no-service-constructor-imports": "error",
     "complexity": "error",
     "eqeqeq": "error",
-    "no-console": ["warn", { "allow": ["warn"] }],
+    "no-console": [
+      "warn",
+      {
+        "allow": ["warn", "error"]
+      }
+    ],
     "no-debugger": "error",
     "no-alert": "error",
     "no-var": "error",
@@ -80,8 +1517,8 @@
     "no-useless-concat": "warn",
     "no-useless-return": "warn",
     "require-await": "warn",
-    "no-await-in-loop": "warn",
-
+    // Polling, pagination, migrations and rate-limited work are sequential.
+    "no-await-in-loop": "off",
     "@typescript-eslint/no-explicit-any": "warn",
     "@typescript-eslint/no-unused-vars": [
       "warn",
@@ -101,7 +1538,6 @@
     "@typescript-eslint/ban-ts-comment": "warn",
     "@typescript-eslint/consistent-type-imports": "warn",
     "@typescript-eslint/no-import-type-side-effects": "warn",
-
     "react/react-in-jsx-scope": "off",
     "react/jsx-key": "error",
     "react/jsx-no-duplicate-props": "error",
@@ -113,11 +1549,22 @@
     "react/no-unknown-property": "error",
     "react/self-closing-comp": "warn",
     "react/jsx-boolean-value": "warn",
-    "react/jsx-curly-brace-presence": ["warn", "never"],
+    "react/jsx-curly-brace-presence": [
+      "warn",
+      {
+        "props": "never",
+        "children": "never",
+        "propElementValues": "ignore"
+      }
+    ],
     "react-hooks/rules-of-hooks": "error",
     "react-hooks/exhaustive-deps": "warn",
-
-    "unicorn/catch-error-name": "warn",
+    "unicorn/catch-error-name": [
+      "warn",
+      {
+        "ignore": ["cause"]
+      }
+    ],
     "unicorn/error-message": "error",
     "unicorn/no-array-for-each": "off",
     "unicorn/no-null": "off",
@@ -127,9 +1574,19 @@
     "unicorn/prefer-string-slice": "warn",
     "unicorn/prefer-ternary": "off",
     "unicorn/throw-new-error": "error",
-
     "vitest/no-disabled-tests": "warn",
     "vitest/no-focused-tests": "error",
-    "vitest/valid-expect": "error"
+    "vitest/valid-expect": "error",
+    // Typed implementations infer signatures; assertion-only spies need no signature.
+    "vitest/require-mock-type-parameters": "off",
+    // React Compiler safely skips unsupported RHF and TanStack APIs.
+    "react/incompatible-library": "off",
+    // Effect generators capture their owning service with self.
+    "@typescript-eslint/no-this-alias": [
+      "warn",
+      {
+        "allowedNames": ["self"]
+      }
+    ]
   }
 }

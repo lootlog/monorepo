@@ -1,3 +1,9 @@
+import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
+import { getProfByShortname } from "@lootlog/domain/profession";
+import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
+import type { MapPlayerSnapshot } from "@/api/loot.api";
+import { getItemRarity } from "@/utils/game/get-item-rarity";
+import { useOthersStore } from "@/store/others.store";
 import {
   createLootDebugContext,
   logLootCreateDebug,
@@ -12,7 +18,6 @@ import {
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import { createLoot } from "@/api";
 import { useBattleStore } from "@/store/game-store/battle.store";
-import { isEmpty } from "@/utils/object-utils";
 import { useLootStore } from "@/store/game-store/loot.store";
 import {
   useDialogStore,
@@ -37,7 +42,7 @@ export class LootEventProcessor {
     const debugContext = createLootDebugContext("fight");
     const battleStore = useBattleStore.getState();
     const lootStore = useLootStore.getState();
-    const game = ingress?.game ?? useGameStore.getState().game;
+    const game = useGameStore.getState().game ?? ingress?.game;
 
     logLootCreateDebug("event-detected", {
       ...debugContext,
@@ -45,7 +50,7 @@ export class LootEventProcessor {
       event,
     });
 
-    if (isEmpty(battleStore.battleWarriors)) {
+    if (Object.keys(battleStore.battleWarriors).length === 0) {
       logLootCreateDebug("skipped", {
         ...debugContext,
         reason: "missing-battle-warriors",
@@ -98,7 +103,7 @@ export class LootEventProcessor {
       ? npcContext.source
       : "fallback-lookup";
 
-    if (!npc || isEmpty(npc)) {
+    if (!npc || Object.keys(npc).length === 0) {
       logLootCreateDebug("skipped", {
         ...debugContext,
         eventNpcDelIds,
@@ -157,6 +162,7 @@ export class LootEventProcessor {
       npcs,
       loots,
       players: party,
+      ...this.captureMapPlayers(npcs, loots, game),
       accountId: hero.accountId,
       characterId: hero.characterId,
     };
@@ -182,6 +188,60 @@ export class LootEventProcessor {
         });
         console.warn("[LootEventProcessor] Failed to create loot:", error);
       });
+  }
+
+  private captureMapPlayers(
+    npcs: Npc[],
+    loots: ReturnType<typeof getLoot>,
+    game: RuntimeGameSnapshot,
+  ) {
+    if (!loots.some((item) => getItemRarity(item.stat ?? "") === "legendary"))
+      return {};
+    const primary = npcs.reduce<Npc | undefined>(
+      (current, npc) => (!current || npc.wt > current.wt ? npc : current),
+      undefined,
+    );
+    if (
+      !primary ||
+      getNpcTypeByWt(NpcType, primary.wt, primary.prof, primary.type) !==
+        NpcType.ELITE2
+    )
+      return {};
+
+    const others = useOthersStore.getState();
+    const currentGame = useGameStore.getState();
+    if (
+      others.status !== "ready" ||
+      currentGame.status !== "ready" ||
+      currentGame.game !== game ||
+      others.mapEpoch !== currentGame.mapEpoch
+    )
+      return {};
+
+    const mapPlayersSnapshot: MapPlayerSnapshot[] = [];
+    const seen = new Set<number>();
+    for (const character of [game.hero, ...Object.values(others.othersById)]) {
+      const accountId = Number(character.accountId);
+      const characterId = Number(character.characterId);
+      if (
+        !Number.isSafeInteger(accountId) ||
+        accountId <= 0 ||
+        !Number.isSafeInteger(characterId) ||
+        characterId <= 0 ||
+        !character.name.trim()
+      )
+        return {};
+      if (seen.has(characterId)) continue;
+      seen.add(characterId);
+      mapPlayersSnapshot.push({
+        accountId,
+        characterId,
+        name: character.name,
+        prof: getProfByShortname(character.profession) ?? null,
+        icon: character.icon || null,
+      });
+    }
+    return { mapPlayersSnapshot };
   }
 
   private createLootFromDialog(

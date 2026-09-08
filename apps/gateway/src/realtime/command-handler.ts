@@ -1,3 +1,8 @@
+import { createHash } from "node:crypto";
+import {
+  createAccessPolicySnapshot,
+  diffAccessPolicies,
+} from "@lootlog/protocol/realtime/access-policy";
 import { decode } from "@msgpack/msgpack";
 import {
   decodeClientCommand,
@@ -6,15 +11,15 @@ import {
   type ServerEvent,
   type SubscriptionScope,
 } from "@lootlog/protocol/realtime";
-import { Effect } from "effect";
+import { Effect, Function, Option, Schema } from "effect";
 import type { GuildStore } from "#src/guilds/guild-store";
 import type { MargonemProofVerifier } from "#src/auth/margonem-proof";
 import type { ActivityPublisher } from "#src/rabbit/activity-publisher";
 import type { AirTagService } from "#src/realtime/air-tag-service";
 import type { MapPingService } from "#src/realtime/map-ping-service";
 import type { PresenceStore } from "#src/realtime/presence-store";
-import type { RealtimeHub } from "#src/realtime/realtime-hub";
-import type { GatewaySocket } from "#src/realtime/session";
+import { getScopeKey, type RealtimeHub } from "#src/realtime/realtime-hub";
+import type { GatewaySocket, SessionData } from "#src/realtime/session";
 import {
   commandFailureDetails,
   GameCharacterRequired,
@@ -36,6 +41,19 @@ type Scope = typeof SubscriptionScope.Type;
 type Event = typeof ServerEvent.Type;
 type RealtimeResponse = typeof Response.Type;
 
+const sessionAccessPolicy = (
+  session: Pick<SessionData, "guilds" | "discordId">,
+) => {
+  const snapshot = createAccessPolicySnapshot(
+    session.guilds,
+    session.discordId,
+  );
+  return {
+    ...snapshot,
+    version: createHash("sha256").update(snapshot.version).digest("hex"),
+  };
+};
+
 const errorResponse = (
   requestId: string,
   code: string,
@@ -48,46 +66,50 @@ const errorResponse = (
   error: { code, message, retryable },
 });
 
-const invalidLegacyPayloadResponse = (
-  input: unknown,
-): RealtimeResponse | null => {
-  if (!input || typeof input !== "object") return null;
-  if (!("v" in input) || input.v !== 1) return null;
-  if (
-    !("requestId" in input) ||
-    typeof input.requestId !== "string" ||
-    input.requestId.length === 0
-  )
-    return null;
-  if (!("type" in input) || typeof input.type !== "string") return null;
-  if (input.type === "map-ping.send") {
-    return {
+const invalidLegacyPayloadResponse = Function.compose(
+  Schema.decodeUnknownOption(
+    Schema.Struct({
+      v: Schema.Literal(1),
+      requestId: Schema.NonEmptyString,
+      type: Schema.Literals(["map-ping.send", "air-tag.observation"]),
+    }),
+  ),
+  Option.match({
+    onNone: (): RealtimeResponse | null => null,
+    onSome: (input): RealtimeResponse => ({
       v: 1,
       requestId: input.requestId,
       status: "success",
       data: { status: "rejected", code: "invalid-payload" },
-    };
-  }
-  if (input.type === "air-tag.observation") {
-    return {
-      v: 1,
-      requestId: input.requestId,
-      status: "success",
-      data: { status: "rejected", code: "invalid-payload" },
-    };
-  }
-  return null;
-};
+    }),
+  }),
+);
 
 export class CommandHandler {
   constructor(
     private readonly guilds: GuildStore,
     private readonly proofVerifier: MargonemProofVerifier,
-    private readonly presence: PresenceStore,
-    private readonly hub: RealtimeHub,
-    private readonly activity: ActivityPublisher,
-    private readonly mapPings: MapPingService,
-    private readonly airTags: AirTagService,
+    private readonly presence: Pick<
+      PresenceStore,
+      "heartbeat" | "publish" | "snapshot" | "reconcileAccess"
+    >,
+    private readonly hub: Pick<
+      RealtimeHub,
+      | "onPermissionRebalance"
+      | "sendResponse"
+      | "sendEvent"
+      | "replaceSubscriptions"
+      | "getLocalSocketsForUser"
+      | "publishPermissionRebalance"
+      | "subscribe"
+      | "unsubscribe"
+    >,
+    private readonly activity: Pick<ActivityPublisher, "publish">,
+    private readonly mapPings: Pick<MapPingService, "send">,
+    private readonly airTags: Pick<
+      AirTagService,
+      "updateSubscription" | "publishObservations"
+    >,
   ) {
     this.hub.onPermissionRebalance((discordId, userId) =>
       this.rebalanceUser(discordId, userId),
@@ -97,7 +119,7 @@ export class CommandHandler {
   handle(socket: GatewaySocket, input: string | Buffer): Effect.Effect<void> {
     let decoded: unknown;
     if (socket.data.frameEncoding === "json") {
-      if (typeof input !== "string") {
+      if (Buffer.isBuffer(input)) {
         return Effect.sync(() =>
           socket.close(1003, "text JSON frames required"),
         );
@@ -110,7 +132,7 @@ export class CommandHandler {
         );
       }
     } else {
-      if (typeof input === "string") {
+      if (!Buffer.isBuffer(input)) {
         return Effect.sync(() =>
           socket.close(1003, "binary MessagePack frames required"),
         );
@@ -172,31 +194,57 @@ export class CommandHandler {
     discordId: string,
     userId: string,
   ): Effect.Effect<void, unknown> {
-    const { activity, airTags, guilds, hub, presence } = this;
+    const { activity, guilds, hub, presence } = this;
     return Effect.gen(function* () {
-      yield* guilds.invalidate({ discordId, userId });
+      if (
+        !hub
+          .getLocalSocketsForUser(userId)
+          .some((socket) => socket.data.discordId === discordId)
+      )
+        return;
       const updatedGuilds = yield* guilds.getUserGuilds({
         discordId,
         userId,
       });
       for (const socket of hub.getLocalSocketsForUser(userId)) {
         if (socket.data.discordId !== discordId) continue;
+        const previousPolicy = sessionAccessPolicy(socket.data);
+        const accessPolicy = sessionAccessPolicy({
+          guilds: updatedGuilds,
+          discordId,
+        });
+        const changes = diffAccessPolicies(previousPolicy, accessPolicy);
+        socket.data.guilds = updatedGuilds;
+        if (changes.length === 0) continue;
         const updatedIds = new Set(updatedGuilds.map(({ guild }) => guild.id));
-        const removedIds = socket.data.guilds
-          .map(({ guild }) => guild.id)
+        const removedIds = previousPolicy.organizations
+          .map(({ organizationId }) => organizationId)
           .filter((id) => !updatedIds.has(id));
         if (removedIds.length > 0) {
           yield* activity.publish("DISCONNECT_EVENT", socket.data, removedIds);
         }
-        socket.data.guilds = updatedGuilds;
         yield* presence.reconcileAccess(socket);
-        airTags.clearSubscription(socket);
+        socket.data.airTagScopes = socket.data.airTagScopes.filter((scope) =>
+          canSubscribe(socket.data, scope.subscription),
+        );
         const scopes = defaultScopes(socket.data);
+        const scopeKeys = new Set(scopes.map(getScopeKey));
+        for (const scope of socket.data.subscriptions.values()) {
+          if (
+            canSubscribe(socket.data, scope) &&
+            !scopeKeys.has(getScopeKey(scope))
+          ) {
+            scopes.push(scope);
+            scopeKeys.add(getScopeKey(scope));
+          }
+        }
         hub.replaceSubscriptions(socket, scopes);
         const event = {
           v: 1,
           type: "permissions.updated",
           data: {
+            accessPolicy,
+            changes,
             organizationIds: organizationIds(socket.data),
             subscriptionScopes: scopes,
           },
@@ -212,9 +260,12 @@ export class CommandHandler {
     discordId: string,
     userId: string,
   ): Effect.Effect<void, unknown> {
-    return this.rebalanceUser(discordId, userId).pipe(
-      Effect.andThen(this.hub.publishPermissionRebalance(discordId, userId)),
-    );
+    return this.guilds
+      .invalidate({ discordId, userId })
+      .pipe(
+        Effect.andThen(this.rebalanceUser(discordId, userId)),
+        Effect.andThen(this.hub.publishPermissionRebalance(discordId, userId)),
+      );
   }
 
   private dispatch(
@@ -318,7 +369,7 @@ export class CommandHandler {
     socket: GatewaySocket,
     data: Extract<Command, { type: "session.join" }>["data"],
   ): Effect.Effect<unknown, CommandFailure> {
-    const { activity, guilds, hub, proofVerifier } = this;
+    const { activity, guilds, hub, presence, proofVerifier } = this;
     return Effect.gen(function* () {
       const wasJoined = socket.data.joined;
       if (socket.data.platform === "game" && !data.character)
@@ -336,8 +387,45 @@ export class CommandHandler {
         if (verification.valid) socket.data.confidence = "verified";
       }
       const authorizedGuilds = yield* guilds.getUserGuilds(socket.data);
-      if (authorizedGuilds.length === 0)
+      if (authorizedGuilds.length === 0) {
+        const previousPolicy = sessionAccessPolicy(socket.data);
+        socket.data.guilds = [];
+        socket.data.joined = false;
+        socket.data.airTagScopes = [];
+        hub.replaceSubscriptions(socket, []);
+        const accessPolicy = sessionAccessPolicy(socket.data);
+        // A new connection may have no server baseline while the client retains old cached data.
+        hub.sendEvent(socket, {
+          v: 1,
+          type: "permissions.updated",
+          data: {
+            organizationIds: [],
+            subscriptionScopes: [],
+            accessPolicy,
+            changes: diffAccessPolicies(previousPolicy, accessPolicy),
+          },
+        });
+        if (wasJoined) {
+          yield* activity.publish(
+            "DISCONNECT_EVENT",
+            socket.data,
+            previousPolicy.organizations.map(
+              ({ organizationId }) => organizationId,
+            ),
+          );
+        }
+        yield* presence
+          .reconcileAccess(socket)
+          .pipe(
+            Effect.catch(() =>
+              Effect.logWarning(
+                "Presence reconciliation failed after organization access was removed",
+              ),
+            ),
+          );
+        socket.data.presence = undefined;
         return yield* Effect.fail(new NoAuthorizedOrganizations());
+      }
       socket.data.guilds = authorizedGuilds;
       socket.data.joined = true;
       const scopes = defaultScopes(socket.data);
@@ -347,6 +435,7 @@ export class CommandHandler {
         type: "session.joined",
         data: {
           connectionId: socket.data.connectionId,
+          accessPolicy: sessionAccessPolicy(socket.data),
           organizationIds: organizationIds(socket.data),
           subscriptionScopes: scopes,
         },

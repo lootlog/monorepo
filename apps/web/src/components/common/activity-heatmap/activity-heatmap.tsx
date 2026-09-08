@@ -1,3 +1,4 @@
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import upperFirst from "lodash/upperFirst";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -69,9 +70,7 @@ export function ActivityHeatmap({
   const describe = (day: ActivityDay) => {
     const date = fullDateFormatter.format(new Date(`${day.date}T12:00:00Z`));
     const value =
-      day.value === null && unknownDisplay === "distinct"
-        ? t("statistics.unknown")
-        : formatValue(day.value ?? 0);
+      day.value === null ? t("statistics.unknown") : formatValue(day.value);
     const details = [
       `${date}: ${value}${day.partial ? ` · ${t("statistics.partialDay")}` : ""}`,
     ];
@@ -94,9 +93,10 @@ export function ActivityHeatmap({
         fill ? "flex min-h-0 flex-1 flex-col gap-2" : "space-y-2",
       )}
     >
-      <div
+      <ScrollArea
         ref={scroller}
-        className={cn("overflow-x-auto pb-2", fill && "shrink-0")}
+        orientation="horizontal"
+        className={cn("min-w-0 pb-2", fill && "shrink-0")}
         role="group"
         aria-label={label}
       >
@@ -136,7 +136,7 @@ export function ActivityHeatmap({
               )}
               <Tooltip>
                 <TooltipTrigger
-                  render={<button type="button" />}
+                  render=<button type="button" />
                   ref={(element) => {
                     if (element) buttons.current.set(index, element);
                     else buttons.current.delete(index);
@@ -163,13 +163,13 @@ export function ActivityHeatmap({
                     showDetails ? () => setSelectedDate(day.date) : undefined
                   }
                   onKeyDown={(event) => {
-                    const moves: Record<string, number> = {
-                      ArrowRight: 7,
-                      ArrowLeft: -7,
-                      ArrowDown: 1,
-                      ArrowUp: -1,
-                    };
-                    let next = index + (moves[event.key] ?? 0);
+                    const moves = new Map([
+                      ["ArrowRight", 7],
+                      ["ArrowLeft", -7],
+                      ["ArrowDown", 1],
+                      ["ArrowUp", -1],
+                    ]);
+                    let next = index + (moves.get(event.key) ?? 0);
                     if (event.key === "Home") next = 0;
                     if (event.key === "End") next = days.length - 1;
                     if (next === index) return;
@@ -186,7 +186,7 @@ export function ActivityHeatmap({
             </div>
           ))}
         </div>
-      </div>
+      </ScrollArea>
       {showDetails && (
         <p
           className={cn(

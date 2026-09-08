@@ -10,15 +10,6 @@ await translations.init({
   resources: { pl: { translation: { reservations } } },
 });
 
-const apiError = (data: unknown) =>
-  new ApiError({
-    data,
-    message: "Unprocessable Entity",
-    method: "POST",
-    url: "/reservations",
-    status: 422,
-  });
-
 describe("reservation error messages", () => {
   it("shows the reason and limit from a rejected reservation request", async () => {
     const client = createApiClient("main", {
@@ -31,7 +22,7 @@ describe("reservation error messages", () => {
     });
     const error = await client
       .post("/reservations", {})
-      .catch((error: unknown) => error);
+      .catch((error) => error);
     expect(getReservationErrorMessage(error, translations.t)).toBe(
       "Osiągnięto limit aktywnych i przyszłych rezerwacji na tym expowisku (3). Anuluj istniejącą rezerwację lub poczekaj na jej zakończenie.",
     );
@@ -84,9 +75,18 @@ describe("reservation error messages", () => {
       "Osiągnięto limit aktywnych rezerwacji na tym expowisku.",
     ],
   ])("translates API reason %j", (data, expected) => {
-    expect(getReservationErrorMessage(apiError(data), translations.t)).toBe(
-      expected,
-    );
+    expect(
+      getReservationErrorMessage(
+        new ApiError({
+          data,
+          message: "Unprocessable Entity",
+          method: "POST",
+          url: "/reservations",
+          status: 422,
+        }),
+        translations.t,
+      ),
+    ).toBe(expected);
   });
 
   it.each([
@@ -94,8 +94,17 @@ describe("reservation error messages", () => {
     { code: "UNKNOWN", message: "private backend details" },
     new Error("network failure"),
   ])("keeps an actionable fallback for unknown failures", (error) => {
-    expect(getReservationErrorMessage(apiError(error), translations.t)).toBe(
-      reservations.errors.unknown,
-    );
+    expect(
+      getReservationErrorMessage(
+        new ApiError({
+          data: error,
+          message: "Unprocessable Entity",
+          method: "POST",
+          url: "/reservations",
+          status: 422,
+        }),
+        translations.t,
+      ),
+    ).toBe(reservations.errors.unknown);
   });
 });

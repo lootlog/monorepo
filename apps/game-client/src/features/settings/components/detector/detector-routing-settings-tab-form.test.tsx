@@ -1,39 +1,17 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render as renderUi, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { DetectorRoutingRule } from "@lootlog/schema/account-preferences";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { useUpdateUserGameAccountPreferences } from "@/hooks/api/use-user-account-preferences";
-import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
+import { beforeEach, describe, expect, it } from "vitest";
 import { DetectorRoutingSettingsTabForm } from "./detector-routing-settings-tab-form";
 import type { GuildIdentity } from "@/lib/api/generated-helpers";
-import * as UsersModule from "@lootlog/client/main";
-
-const mockMutate = vi.fn();
-
-vi.mock("@lootlog/client/main", async () => {
-  const actual = await vi.importActual<typeof UsersModule>(
-    "@lootlog/client/main",
-  );
-
-  return {
-    ...actual,
-    useUsersControllerGetCurrentUserAccessibleGuilds: vi.fn(),
-  };
-});
-
-vi.mock("@/hooks/api/use-user-account-preferences", () => ({
-  useUpdateUserGameAccountPreferences: vi.fn(),
-}));
-
-vi.mock("@/hooks/use-current-game-account-detector-settings", () => ({
-  useCurrentGameAccountDetectorSettings: vi.fn(),
-}));
-
-vi.mock("@/hooks/use-debounced-callback", () => ({
-  useDebouncedCallback: vi.fn((callback: (...args: unknown[]) => void) => {
-    return callback;
-  }),
-}));
+import { getUsersControllerGetUserGameAccountPreferencesQueryKey } from "@lootlog/client/main";
+import { createDetectorSettings } from "@/lib/game-account-preferences";
+import { createGameAccountPreferences } from "@/test/game-account-preferences-fixtures";
+import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
+import { setTestRuntimeGame } from "@/test/test-runtime-window";
+let harness: ReturnType<typeof createGuildPreferencesTest>;
+const render = () =>
+  renderUi(<DetectorRoutingSettingsTabForm />, { wrapper: harness.wrapper });
 
 const guilds: GuildIdentity[] = [
   {
@@ -85,38 +63,32 @@ const routingRules: DetectorRoutingRule[] = [
   },
 ];
 
-const createDetectorSettings = () => ({
-  routingRules: routingRules.map((rule) => ({
-    ...rule,
-    guildIds: [...rule.guildIds],
-  })),
-});
-
 describe("DetectorRoutingSettingsTabForm", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-
-    vi.mocked(
-      UsersModule.useUsersControllerGetCurrentUserAccessibleGuilds,
-    ).mockReturnValue({
-      data: guilds,
-    } as ReturnType<
-      typeof UsersModule.useUsersControllerGetCurrentUserAccessibleGuilds
-    >);
-    vi.mocked(useUpdateUserGameAccountPreferences).mockReturnValue({
-      mutate: mockMutate,
-    } as unknown as ReturnType<typeof useUpdateUserGameAccountPreferences>);
-    vi.mocked(useCurrentGameAccountDetectorSettings).mockReturnValue({
-      accountId: "account-1",
-      isFetched: true,
-      settings: createDetectorSettings(),
-    } as ReturnType<typeof useCurrentGameAccountDetectorSettings>);
+    harness = createGuildPreferencesTest();
+    setTestRuntimeGame({ hero: { accountId: "202" } });
+    harness.queryClient.setQueryData(harness.guildsKey, guilds);
+    const preferencesKey =
+      getUsersControllerGetUserGameAccountPreferencesQueryKey({
+        accountId: "202",
+      });
+    harness.queryClient.setQueryData(
+      preferencesKey,
+      createGameAccountPreferences("202", {
+        detector: { ...createDetectorSettings(), routingRules },
+      }),
+    );
+    harness.request.mockImplementation(() =>
+      Promise.resolve(
+        Response.json(harness.queryClient.getQueryData(preferencesKey)),
+      ),
+    );
   });
 
   it("renders collapsed rules with level summary and guild preview overflow", async () => {
     const user = userEvent.setup();
 
-    render(<DetectorRoutingSettingsTabForm />);
+    render();
 
     expect(
       screen.queryByText("Na jakie serwery wysyłać"),
@@ -136,7 +108,7 @@ describe("DetectorRoutingSettingsTabForm", () => {
   it("keeps multiple rules expanded at the same time", async () => {
     const user = userEvent.setup();
 
-    render(<DetectorRoutingSettingsTabForm />);
+    render();
 
     await user.click(screen.getByText("Bossy hero"));
     await user.click(screen.getByText("Reguła 2"));
@@ -150,7 +122,7 @@ describe("DetectorRoutingSettingsTabForm", () => {
   it("updates routing rule guilds through the dedicated tile grid", async () => {
     const user = userEvent.setup();
 
-    render(<DetectorRoutingSettingsTabForm />);
+    render();
 
     await user.click(screen.getByText("Bossy hero"));
     await user.click(
@@ -160,33 +132,35 @@ describe("DetectorRoutingSettingsTabForm", () => {
     );
 
     await waitFor(() => {
-      expect(mockMutate).toHaveBeenCalledWith({
-        detector: {
-          routingRules: [
-            {
-              id: "rule-1",
-              name: "Bossy hero",
-              minLevel: 20,
-              maxLevel: 80,
-              world: "Pandora",
-              guildIds: ["guild-1", "guild-2", "guild-4", "guild-5"],
-            },
-            {
-              id: "rule-2",
-              minLevel: 120,
-              maxLevel: 240,
-              guildIds: ["guild-2"],
-            },
-          ],
-        },
-      });
+      expect(harness.request.mock.calls[0]?.[1]?.body).toBe(
+        JSON.stringify({
+          detector: {
+            routingRules: [
+              {
+                id: "rule-1",
+                name: "Bossy hero",
+                minLevel: 20,
+                maxLevel: 80,
+                world: "Pandora",
+                guildIds: ["guild-1", "guild-2", "guild-4", "guild-5"],
+              },
+              {
+                id: "rule-2",
+                minLevel: 120,
+                maxLevel: 240,
+                guildIds: ["guild-2"],
+              },
+            ],
+          },
+        }),
+      );
     });
   });
 
   it("opens a newly added rule and removes another one without expanding the list", async () => {
     const user = userEvent.setup();
 
-    render(<DetectorRoutingSettingsTabForm />);
+    render();
 
     await user.click(screen.getByRole("button", { name: "Dodaj regułę" }));
 
@@ -204,7 +178,7 @@ describe("DetectorRoutingSettingsTabForm", () => {
   it("updates routing rule name with trimmed value and uses it as card title", async () => {
     const user = userEvent.setup();
 
-    render(<DetectorRoutingSettingsTabForm />);
+    render();
 
     await user.click(screen.getByText("Bossy hero"));
 
@@ -216,33 +190,41 @@ describe("DetectorRoutingSettingsTabForm", () => {
     expect(screen.getByText("Gordion hero")).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(mockMutate).toHaveBeenCalledWith({
-        detector: {
-          routingRules: [
-            {
-              id: "rule-1",
-              name: "Gordion hero",
-              minLevel: 20,
-              maxLevel: 80,
-              world: "Pandora",
-              guildIds: ["guild-1", "guild-2", "guild-3", "guild-4", "guild-5"],
-            },
-            {
-              id: "rule-2",
-              minLevel: 120,
-              maxLevel: 240,
-              guildIds: ["guild-2"],
-            },
-          ],
-        },
-      });
+      expect(harness.request.mock.calls[0]?.[1]?.body).toBe(
+        JSON.stringify({
+          detector: {
+            routingRules: [
+              {
+                id: "rule-1",
+                name: "Gordion hero",
+                minLevel: 20,
+                maxLevel: 80,
+                world: "Pandora",
+                guildIds: [
+                  "guild-1",
+                  "guild-2",
+                  "guild-3",
+                  "guild-4",
+                  "guild-5",
+                ],
+              },
+              {
+                id: "rule-2",
+                minLevel: 120,
+                maxLevel: 240,
+                guildIds: ["guild-2"],
+              },
+            ],
+          },
+        }),
+      );
     });
   });
 
   it("updates routing rule world with trimmed value", async () => {
     const user = userEvent.setup();
 
-    render(<DetectorRoutingSettingsTabForm />);
+    render();
 
     await user.click(screen.getByText("Bossy hero"));
 
@@ -252,26 +234,34 @@ describe("DetectorRoutingSettingsTabForm", () => {
     await user.tab();
 
     await waitFor(() => {
-      expect(mockMutate).toHaveBeenCalledWith({
-        detector: {
-          routingRules: [
-            {
-              id: "rule-1",
-              name: "Bossy hero",
-              minLevel: 20,
-              maxLevel: 80,
-              world: "fobos",
-              guildIds: ["guild-1", "guild-2", "guild-3", "guild-4", "guild-5"],
-            },
-            {
-              id: "rule-2",
-              minLevel: 120,
-              maxLevel: 240,
-              guildIds: ["guild-2"],
-            },
-          ],
-        },
-      });
+      expect(harness.request.mock.calls[0]?.[1]?.body).toBe(
+        JSON.stringify({
+          detector: {
+            routingRules: [
+              {
+                id: "rule-1",
+                name: "Bossy hero",
+                minLevel: 20,
+                maxLevel: 80,
+                world: "fobos",
+                guildIds: [
+                  "guild-1",
+                  "guild-2",
+                  "guild-3",
+                  "guild-4",
+                  "guild-5",
+                ],
+              },
+              {
+                id: "rule-2",
+                minLevel: 120,
+                maxLevel: 240,
+                guildIds: ["guild-2"],
+              },
+            ],
+          },
+        }),
+      );
     });
   });
 });

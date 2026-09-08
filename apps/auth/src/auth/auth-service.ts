@@ -5,6 +5,7 @@ import { createLocalJWKSet, jwtVerify, type JSONWebKeySet } from "jose";
 import {
   Context,
   DateTime,
+  Function,
   Effect,
   Layer,
   Option,
@@ -14,18 +15,10 @@ import {
 import { AppConfig } from "#src/config/env";
 import { AuthDatabase } from "#src/database/drizzle";
 import { authAccounts } from "#src/database/drizzle.schema";
-import { AuthRedisStorage } from "#src/auth/storage/auth-redis-storage";
 import {
   BetterAuthRuntime,
   type AppUserSession,
-  type LootlogAuth,
 } from "#src/auth/provider/better-auth";
-import {
-  consumeRealtimeTicket,
-  issueRealtimeTicket,
-  type RealtimeTicketRedis,
-} from "#src/auth/realtime/realtime-ticket";
-
 export interface VerifiedIdentity {
   readonly userId: string;
   readonly discordId: string;
@@ -50,10 +43,30 @@ export class HttpResponseError extends TaggedErrorClass<HttpResponseError>()(
   },
 ) {}
 
-type AccessTokenPayload = Awaited<
-  ReturnType<LootlogAuth["api"]["getAccessToken"]>
->;
-type DiscordAccessTokenPayload = AccessTokenPayload & { accessToken: string };
+type SessionIdentity = {
+  readonly user: Pick<AppUserSession["user"], "id" | "discordId">;
+};
+type AccessTokenPayload = {
+  readonly accessToken?: string;
+  readonly accessTokenExpiresAt?: string | number | Date;
+  readonly scopes?: string | ReadonlyArray<unknown>;
+} | null;
+
+export interface AuthProvider {
+  readonly api: {
+    readonly getSession: (input: {
+      headers: Headers;
+    }) => Promise<SessionIdentity | null>;
+    readonly getJwks: () => Promise<JSONWebKeySet>;
+    readonly getAccessToken: (input: {
+      body: { userId: string; accountId: string };
+    }) => Promise<AccessTokenPayload>;
+  };
+}
+
+type DiscordAccessTokenPayload = NonNullable<AccessTokenPayload> & {
+  accessToken: string;
+};
 
 const hasDiscordAccessToken = (
   token: AccessTokenPayload,
@@ -62,8 +75,12 @@ const hasDiscordAccessToken = (
   Predicate.isString(token.accessToken) &&
   token.accessToken.length > 0;
 
+type AuthFailureBody =
+  | { readonly message: string; readonly statusCode?: number }
+  | { readonly error: string; readonly requiresReauth?: boolean };
+
 const unauthorized = (
-  body: unknown = {
+  body: AuthFailureBody = {
     message: "Unauthorized",
     statusCode: 401,
   },
@@ -75,45 +92,38 @@ const reauthenticationRequired = () =>
     requiresReauth: true,
   });
 
-const internalServerError = (body: unknown) =>
+const internalServerError = (body: AuthFailureBody) =>
   new HttpResponseError({ status: 500, body });
 
-const parseExpiresAt = (input: unknown): Option.Option<DateTime.Utc> => {
-  if (
-    !Predicate.isString(input) &&
-    !Predicate.isNumber(input) &&
-    !(input instanceof Date)
-  ) {
-    return Option.none();
-  }
+const parseExpiresAt = Function.compose(
+  Schema.decodeUnknownOption(
+    Schema.Union([Schema.String, Schema.Number, Schema.Date]),
+  ),
+  Option.flatMap(DateTime.make),
+);
 
-  return DateTime.make(input);
-};
-
-export const normalizeScopes = (scopes: unknown): ReadonlyArray<string> => {
-  if (globalThis.Array.isArray(scopes)) {
+export const normalizeScopes = Function.compose(
+  Schema.decodeUnknownOption(
+    Schema.Union([Schema.String, Schema.Array(Schema.Unknown)]),
+  ),
+  (result): ReadonlyArray<string> => {
+    if (result._tag === "None") return [];
+    const scopes = result.value;
+    if (Predicate.isString(scopes)) return scopes.split(/\s+/).filter(Boolean);
     return scopes.filter(Predicate.isString);
-  }
-
-  if (Predicate.isString(scopes)) {
-    return scopes.split(/\s+/).filter(Boolean);
-  }
-
-  return [];
-};
+  },
+);
 
 export const createAuthService = ({
   auth,
   appUrl,
   findDiscordAccountId,
-  realtimeTicketRedis,
 }: {
-  readonly auth: LootlogAuth;
+  readonly auth: AuthProvider;
   readonly appUrl: string;
   readonly findDiscordAccountId: (
     request: AccessTokenRequest,
   ) => Effect.Effect<string | null, unknown>;
-  readonly realtimeTicketRedis: RealtimeTicketRedis;
 }) => {
   const getSession = Effect.fn("AuthService.getSession")((headers: Headers) =>
     Effect.tryPromise({
@@ -135,11 +145,10 @@ export const createAuthService = ({
 
       return yield* Effect.tryPromise({
         try: async () => {
-          const { payload } = await jwtVerify(
-            token,
-            createLocalJWKSet(jwks as JSONWebKeySet),
-            { issuer: appUrl, audience: appUrl },
-          );
+          const { payload } = await jwtVerify(token, createLocalJWKSet(jwks), {
+            issuer: appUrl,
+            audience: appUrl,
+          });
 
           if (
             !Predicate.isString(payload.sub) ||
@@ -160,7 +169,7 @@ export const createAuthService = ({
 
   const buildVerifiedIdentityFromRequest = Effect.fn(
     "AuthService.buildVerifiedIdentityFromRequest",
-  )(function* (session: AppUserSession | null, authorizationHeader?: string) {
+  )(function* (session: SessionIdentity | null, authorizationHeader?: string) {
     if (session) {
       return {
         userId: session.user.id,
@@ -187,30 +196,14 @@ export const createAuthService = ({
       authorizationHeader,
       authDiscordId,
       authUserId,
-      credentialPurpose,
-      websocketOrigin,
     }: {
       readonly headers: Headers;
       readonly authorizationHeader?: string;
       readonly authDiscordId?: string;
       readonly authUserId?: string;
-      readonly credentialPurpose?: string;
-      readonly websocketOrigin?: string;
     }) {
       if (authDiscordId || authUserId) {
         return yield* unauthorized();
-      }
-
-      if (credentialPurpose === "websocket-ticket") {
-        const ticket = authorizationHeader?.replace(/^Bearer\s+/i, "");
-        if (!ticket || !websocketOrigin) return yield* unauthorized();
-        const identity = yield* Effect.tryPromise({
-          try: () =>
-            consumeRealtimeTicket(realtimeTicketRedis, ticket, websocketOrigin),
-          catch: () => unauthorized(),
-        });
-        if (!identity) return yield* unauthorized();
-        return identity;
       }
 
       const session = yield* getSession(headers);
@@ -258,26 +251,6 @@ export const createAuthService = ({
       }
 
       return session;
-    },
-  );
-
-  const createRealtimeTicket = Effect.fn("AuthService.createRealtimeTicket")(
-    function* (headers: Headers, origin: string | undefined) {
-      if (!origin) return yield* unauthorized();
-      const session = yield* getRequiredSession(headers);
-      return yield* Effect.tryPromise({
-        try: () =>
-          issueRealtimeTicket(
-            realtimeTicketRedis,
-            { userId: session.user.id, discordId: session.user.discordId },
-            origin,
-          ),
-        catch: () =>
-          new HttpResponseError({
-            status: 503,
-            body: { message: "Realtime ticket service unavailable" },
-          }),
-      });
     },
   );
 
@@ -367,7 +340,7 @@ export const createAuthService = ({
 
         if (error instanceof APIError) {
           return yield* new HttpResponseError({
-            status: typeof error.status === "number" ? error.status : 400,
+            status: Schema.is(Schema.Number)(error.status) ? error.status : 400,
             body: { error: "ACCOUNT_NOT_FOUND" },
           });
         }
@@ -395,7 +368,6 @@ export const createAuthService = ({
 
   return {
     buildVerifiedIdentityFromRequest,
-    createRealtimeTicket,
     getCurrentUserScopes,
     getIdpTokenResponse,
     verifyRequestIdentity,
@@ -412,7 +384,6 @@ export class AuthService extends Context.Service<
       const auth = yield* BetterAuthRuntime;
       const config = yield* AppConfig;
       const database = yield* AuthDatabase;
-      const redis = yield* AuthRedisStorage;
 
       return AuthService.of(
         createAuthService({
@@ -431,7 +402,6 @@ export class AuthService extends Context.Service<
               )
               .limit(1)
               .pipe(Effect.map((rows) => rows[0]?.id ?? null)),
-          realtimeTicketRedis: redis.client,
         }),
       );
     }),

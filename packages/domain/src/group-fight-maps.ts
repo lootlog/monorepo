@@ -308,9 +308,9 @@ const normalizedGroupFightMapNpcs = new Map(
 export const getGroupFightMapNpcs = (
   mapName: string | null | undefined,
 ): readonly GroupFightMapNpc[] =>
-  typeof mapName === "string"
-    ? (normalizedGroupFightMapNpcs.get(normalizeGroupFightName(mapName)) ?? [])
-    : [];
+  mapName === null || mapName === undefined
+    ? []
+    : (normalizedGroupFightMapNpcs.get(normalizeGroupFightName(mapName)) ?? []);
 
 export const isGroupFightMap = (mapName: string | null | undefined): boolean =>
   getGroupFightMapNpcs(mapName).length > 0;

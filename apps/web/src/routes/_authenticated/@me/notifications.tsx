@@ -4,8 +4,9 @@ import { UserNotificationsPageSkeleton } from "@/features/user/notifications/not
 import {
   getNotificationsUserControllerGetUserTargetsQueryOptions,
   getNotificationsUserControllerGetWatchedItemsQueryOptions,
+  getGuildsControllerGetUserGuildsQueryOptions,
 } from "@lootlog/client/main";
-import { getGuildsControllerGetUserGuildsQueryOptions } from "@lootlog/client/main";
+
 import { withRouteLoaderCancellation } from "@/lib/router/route-errors";
 import { prefetchRouteQuery } from "@/lib/router/route-prefetch";
 

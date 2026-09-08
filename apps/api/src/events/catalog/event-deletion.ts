@@ -11,7 +11,7 @@ import type { ApplicationLogger as Logger } from "#src/shared/application-logger
 
 interface EventDeletionJob {
   readonly eventId: string;
-  readonly remove: () => Promise<unknown>;
+  readonly remove: () => Promise<void>;
 }
 
 export interface EventDeletionQueue {
@@ -27,9 +27,9 @@ export class EventDeletionError extends TaggedErrorClass<EventDeletionError>()(
 export const makeEventDeletion =
   (
     database: typeof ApiDatabase.Service,
-    redis: RedisService,
+    redis: Pick<RedisService, "deleteByPattern">,
     queue: EventDeletionQueue,
-    logger: Logger,
+    logger: Pick<Logger, "warn">,
   ) =>
   (guild: { id: string }, eventId: string) =>
     Effect.gen(function* () {

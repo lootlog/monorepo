@@ -10,7 +10,15 @@ import {
   makeDeadLetterQueue,
   makeRetryQueue,
 } from "@lootlog/protocol/rabbit/topology";
-import { Clock, Effect, Layer, Redacted, Schema, Schedule } from "effect";
+import {
+  Clock,
+  Effect,
+  Layer,
+  Option,
+  Redacted,
+  Schema,
+  Schedule,
+} from "effect";
 import { ActivityConfig } from "#src/config/activity-config";
 import { OnlineRepository } from "./online-repository.js";
 
@@ -59,8 +67,9 @@ export const OnlineConsumer = Layer.effectDiscard(
               !verifyActivityEventSignature({
                 payload,
                 secret: Redacted.value(config.signatureSecret),
-                signature:
-                  typeof signature === "string" ? signature : undefined,
+                signature: Schema.decodeUnknownOption(Schema.String)(
+                  signature,
+                ).pipe(Option.getOrUndefined),
               })
             )
               throw new Error("Invalid checkpoint signature");

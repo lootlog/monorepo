@@ -1,8 +1,6 @@
+import { cn } from "cn";
 import { Calendar } from "lucide-react";
-import {
-  FilterPopover,
-  type FilterPopoverOption,
-} from "@lootlog/ui/components/filter-popover";
+import { FilterPopover } from "@lootlog/ui/components/filter-popover";
 import type { Period } from "@/features/user/battle-panel/battle-panel-search";
 import { useTranslation } from "react-i18next";
 
@@ -43,22 +41,16 @@ export function PeriodSelector({
     (period) => !excludePeriods.includes(period.value),
   );
 
-  const options: FilterPopoverOption<Period>[] = availablePeriods.map(
-    (period) => ({
-      value: period.value,
-      label: period.label,
-    }),
-  );
-
   return (
     <FilterPopover
-      options={options}
+      icon={Calendar}
+      options={availablePeriods}
       value={value}
       onValueChange={onValueChange}
       placeholder={placeholder ?? t("common.filterLabels.period")}
-      icon={Calendar}
+      emptyMessage={t("common.noResults")}
       width={width}
-      triggerClassName={className}
+      triggerClassName={cn("h-10", className)}
       showSearch={false}
     />
   );

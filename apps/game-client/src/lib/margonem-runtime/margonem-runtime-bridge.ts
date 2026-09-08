@@ -13,17 +13,24 @@ import type {
 } from "./runtime.types";
 
 type RuntimeInterface = "ni" | "si";
-type RuntimeFunction = (this: unknown, ...args: unknown[]) => unknown;
-type RuntimeWindow = Window & {
-  Engine?: {
-    communication?: Record<string, unknown>;
-  };
-  _g?: RuntimeFunction;
-  successData?: RuntimeFunction;
+export type RuntimeFunction = (this: unknown, ...args: unknown[]) => unknown;
+type RuntimeFunctionContainer = {
+  parseJSON?: unknown;
+  successData?: unknown;
+  send?: unknown;
+  send2?: unknown;
 };
-type RuntimeFunctionContainer = Record<string, unknown>;
+type RuntimeFunctionProperty = keyof RuntimeFunctionContainer;
+type RuntimeWindow = Window & {
+  Engine?: { communication?: RuntimeFunctionContainer };
+  _g?: unknown;
+  successData?: unknown;
+};
 
-const getRuntimeWindow = () => window as RuntimeWindow;
+const getRuntimeWindow = (): RuntimeWindow => window;
+
+const isRuntimeFunction = (value: unknown): value is RuntimeFunction =>
+  typeof value === "function";
 
 type BridgeOptions = {
   adapter?: MargonemRuntimeAdapter;
@@ -59,7 +66,7 @@ export class MargonemRuntimeBridge {
   private readonly onObserverError?: (failure: RuntimeObserverFailure) => void;
   private readonly runtimeInterface?: RuntimeInterface;
   private inboundContainer: RuntimeFunctionContainer | null = null;
-  private inboundProperty: string | null = null;
+  private inboundProperty: RuntimeFunctionProperty | null = null;
   private originalInbound: RuntimeFunction | null = null;
   private originalOutgoing: RuntimeFunction | null = null;
   private wrappedInbound: RuntimeFunction | null = null;
@@ -67,7 +74,7 @@ export class MargonemRuntimeBridge {
   private fallbackOutgoingWrappers: Array<{
     container: RuntimeFunctionContainer;
     original: RuntimeFunction;
-    property: string;
+    property: RuntimeFunctionProperty;
     wrapper: RuntimeFunction;
   }> = [];
   private sequence = 0;
@@ -115,6 +122,7 @@ export class MargonemRuntimeBridge {
     const wrappedInbound: RuntimeFunction = function (...args) {
       initializeGame();
       const intent = captureIntent();
+      // Reflect calls the foreign callable even if an addon overrides its own apply property.
       const result = Reflect.apply(originalInbound, this, args);
       initializeGame();
       const envelope = createEnvelope(args[0], intent);
@@ -140,7 +148,7 @@ export class MargonemRuntimeBridge {
     this.gameInitCallbackExecuted = false;
   }
 
-  triggerManualEvent(event: GameEvent): boolean {
+  triggerManualEvent(event: unknown): boolean {
     if (!import.meta.env.DEV) return false;
     const envelope = this.createEnvelope(event, this.activeIntent);
     if (!envelope) return false;
@@ -190,7 +198,7 @@ export class MargonemRuntimeBridge {
   private installOutgoing(): boolean {
     let installed = false;
     const runtimeWindow = getRuntimeWindow();
-    if (typeof runtimeWindow._g === "function") {
+    if (isRuntimeFunction(runtimeWindow._g)) {
       const originalOutgoing = runtimeWindow._g;
       const observeIntent = this.observeIntent.bind(this);
       const wrappedOutgoing: RuntimeFunction = function (...args) {
@@ -206,15 +214,13 @@ export class MargonemRuntimeBridge {
       installed = runtimeWindow._g === wrappedOutgoing;
     }
 
-    const communication = runtimeWindow.Engine?.communication as unknown as
-      | RuntimeFunctionContainer
-      | undefined;
+    const communication = runtimeWindow.Engine?.communication;
     if (communication) {
       for (const property of ["send", "send2"] as const) {
         const original = communication[property];
-        if (typeof original !== "function") continue;
+        if (!isRuntimeFunction(original)) continue;
         const observeIntent = this.observeIntent.bind(this);
-        const originalFunction = original as RuntimeFunction;
+        const originalFunction = original;
         const wrapper: RuntimeFunction = function (...args) {
           observeIntent(args[0]);
 
@@ -279,11 +285,16 @@ export class MargonemRuntimeBridge {
     let event: GameEvent;
     if (typeof payload === "string") {
       try {
+        // SAFETY: native Communication successData/parseJSON supplies game packets.
+        // This is a source-contract view, not full validation: addon interference
+        // remains untrusted and downstream parsers discriminate the fields they read.
         event = JSON.parse(payload) as GameEvent;
       } catch {
         return null;
       }
     } else if (payload && typeof payload === "object") {
+      // SAFETY: preserve native packet identity under the same source-contract
+      // assumption above; field parsers must still handle untrusted addon values.
       event = payload as GameEvent;
     } else {
       return null;
@@ -365,30 +376,29 @@ export class MargonemRuntimeBridge {
   private resolveInbound(runtimeInterface: RuntimeInterface): {
     container: RuntimeFunctionContainer;
     original: RuntimeFunction;
-    property: string;
+    property: RuntimeFunctionProperty;
   } | null {
-    const runtimeWindow = window as RuntimeWindow;
+    const runtimeWindow = getRuntimeWindow();
     if (runtimeInterface === "ni") {
-      const communication = getRuntimeWindow().Engine
-        ?.communication as unknown as RuntimeFunctionContainer | undefined;
-      if (communication && typeof communication.parseJSON === "function") {
+      const communication = runtimeWindow.Engine?.communication;
+      if (communication && isRuntimeFunction(communication.parseJSON)) {
         return {
           container: communication,
-          original: communication.parseJSON as RuntimeFunction,
+          original: communication.parseJSON,
           property: "parseJSON",
         };
       }
-      if (communication && typeof communication.successData === "function") {
+      if (communication && isRuntimeFunction(communication.successData)) {
         return {
           container: communication,
-          original: communication.successData as RuntimeFunction,
+          original: communication.successData,
           property: "successData",
         };
       }
     }
-    if (typeof runtimeWindow.successData !== "function") return null;
+    if (!isRuntimeFunction(runtimeWindow.successData)) return null;
     return {
-      container: runtimeWindow as unknown as RuntimeFunctionContainer,
+      container: runtimeWindow,
       original: runtimeWindow.successData,
       property: "successData",
     };
@@ -454,9 +464,9 @@ export class MargonemRuntimeBridge {
 }
 
 function scheduleActiveRuntimeTeardown(): void {
-  const runtimeWindow = window as Window & {
+  const runtimeWindow: Window & {
     __lootlogGameClientRuntime?: { dispose: () => void };
-  };
+  } = window;
   const failedRuntime = runtimeWindow.__lootlogGameClientRuntime;
   if (!failedRuntime) return;
 

@@ -11,8 +11,8 @@ export const KillsPageSkeleton = () => {
     <ScrollArea className="h-full min-h-0">
       <div className="flex flex-col gap-4 px-3 py-3">
         <PageHeader
-          title={<Skeleton className="h-5 w-40" />}
-          description={<Skeleton className="h-3 w-48" />}
+          title=<Skeleton className="h-5 w-40" />
+          description=<Skeleton className="h-3 w-48" />
         >
           <div className="flex flex-wrap gap-2">
             <Skeleton className="h-9 w-40" />
@@ -23,7 +23,7 @@ export const KillsPageSkeleton = () => {
         </PageHeader>
 
         <SectionCard className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <SectionCardHeader title={<Skeleton className="h-4 w-32" />} />
+          <SectionCardHeader title=<Skeleton className="h-4 w-32" /> />
           <SectionCardContent className="flex min-h-0 flex-1 flex-col p-0">
             {Array.from({ length: 10 }).map((_, i) => (
               <div

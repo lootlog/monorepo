@@ -1,4 +1,4 @@
-import type { Other } from "@lootlog/margonem/others";
+import type { Other, OtherHandle } from "@lootlog/margonem/others";
 import { runtimeOtherHandles } from "@/lib/margonem-runtime/runtime-other-handles";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
 import { characterTooltipTransforms } from "./registry";
@@ -10,13 +10,10 @@ import {
 } from "@/lib/margonem-runtime/adapters/tooltip-runtime-adapter";
 
 type OriginalCreateStrTip = (...args: unknown[]) => string;
-type OriginalCanvasTipHide = (event: unknown) => unknown;
-type OriginalCanvasTipShow = (event: unknown, object: unknown) => unknown;
+type OriginalCanvasTipHide = NonNullable<RuntimeCanvasTip["hide"]>;
+type OriginalCanvasTipShow = NonNullable<RuntimeCanvasTip["show"]>;
 
-const patchedCreateStrTip = new WeakMap<
-  MargonemTooltipCharacter,
-  OriginalCreateStrTip
->();
+const patchedCreateStrTip = new WeakMap<object, OriginalCreateStrTip>();
 
 let cleanupCurrentInstallation: (() => void) | null = null;
 let originalCanvasTipHide: OriginalCanvasTipHide | null = null;
@@ -72,6 +69,8 @@ function refreshCharacterTooltip(character: MargonemTooltipCharacter): void {
 }
 
 function patchOtherPrototype(other: MargonemTooltipCharacter): boolean {
+  // SAFETY: Other inherits Character.prototype (Other.js); the callable check
+  // below gates patching. Only createStrTip is read or replaced on this prototype.
   const prototype = Object.getPrototypeOf(other) as
     | (MargonemTooltipCharacter & { createStrTip?: OriginalCreateStrTip })
     | null;
@@ -81,7 +80,7 @@ function patchOtherPrototype(other: MargonemTooltipCharacter): boolean {
   }
 
   const originalCreateStrTip = prototype.createStrTip;
-  const prototypeAsCharacter = prototype as MargonemTooltipCharacter;
+  const prototypeAsCharacter = prototype;
 
   if (patchedCreateStrTip.has(prototypeAsCharacter)) {
     return false;
@@ -109,17 +108,13 @@ function patchOtherPrototype(other: MargonemTooltipCharacter): boolean {
 
 function prunePatchedCharacters(): void {
   const hero = getRuntimeHeroTooltipOwner();
-  const currentOthers = Object.values(
-    runtimeOtherHandles.getAll(),
-  ) as MargonemTooltipCharacter[];
+  const currentOthers = Object.values(runtimeOtherHandles.getAll());
   const retainedCharacters = new Set<MargonemTooltipCharacter>(currentOthers);
   if (hero) {
     retainedCharacters.add(hero);
   }
   const retainedPrototypes = new Set(
-    currentOthers.map(
-      (other) => Object.getPrototypeOf(other) as MargonemTooltipCharacter,
-    ),
+    currentOthers.map((other) => Object.getPrototypeOf(other)),
   );
 
   for (const character of patchedCharacters) {
@@ -141,9 +136,7 @@ function hasOwnCreateStrTip(character: MargonemTooltipCharacter): boolean {
 }
 
 function isPrototypePatched(character: MargonemTooltipCharacter): boolean {
-  const prototype = Object.getPrototypeOf(
-    character,
-  ) as MargonemTooltipCharacter | null;
+  const prototype = Object.getPrototypeOf(character);
 
   return Boolean(prototype && patchedCreateStrTip.has(prototype));
 }
@@ -209,7 +202,7 @@ function patchCanvasTip(canvasTip: RuntimeCanvasTip): (() => void) | null {
   };
 }
 
-export function patchOtherCharacterTooltip(other: Other): void {
+export function patchOtherCharacterTooltip(other: OtherHandle): void {
   if (hasOwnCreateStrTip(other)) {
     if (patchCreateStrTip(other, "other")) {
       patchedCharacters.add(other);
@@ -241,7 +234,7 @@ export function refreshActiveOtherCanvasTooltip(): void {
   canvasTip.show(lastOtherCanvasTipEvent, activeOther);
 }
 
-export function patchOtherCharacterTooltips(others: Other[]): void {
+export function patchOtherCharacterTooltips(others: OtherHandle[]): void {
   prunePatchedCharacters();
   for (const other of others) {
     patchOtherCharacterTooltip(other);

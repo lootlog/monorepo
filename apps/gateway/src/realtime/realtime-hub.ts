@@ -1,16 +1,18 @@
+import type { LootVisibilityNpc } from "@lootlog/domain/loot-visibility";
 import {
-  canViewLoot,
-  type LootVisibilityNpc,
-} from "@lootlog/domain/loot-visibility";
-import { Permission } from "@lootlog/schema/permissions";
+  chatMessagePermissions,
+  withChatMessagePermissions,
+} from "#src/realtime/chat-message-envelope";
+import { canReadSourceEvent } from "#src/realtime/source-event-visibility";
 import {
   encodeRealtimeFrame,
   tryDecodeRealtimeFrame,
 } from "@lootlog/protocol/realtime/codec";
-import type {
-  Response as RealtimeResponse,
-  ServerEvent,
-  SubscriptionScope,
+import {
+  type Response as RealtimeResponse,
+  type ServerEvent,
+  isServerEventFrame,
+  type SubscriptionScope,
 } from "@lootlog/protocol/realtime";
 import { Effect, Schema } from "effect";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
@@ -44,8 +46,7 @@ const decodeConnectionRegistration = Schema.decodeUnknownSync(
 
 const toBase64 = (bytes: Uint8Array): string =>
   Buffer.from(bytes).toString("base64");
-const fromBase64 = (value: string): Uint8Array =>
-  new Uint8Array(Buffer.from(value, "base64"));
+const fromBase64 = (value: string): Uint8Array => Buffer.from(value, "base64");
 
 export const getScopeKey = (scope: Scope): string =>
   [
@@ -56,23 +57,50 @@ export const getScopeKey = (scope: Scope): string =>
     scope.mapId?.toString() ?? "",
   ].join("|");
 
-const scopeMatches = (subscription: Scope, published: Scope): boolean => {
-  if (subscription.topic !== published.topic) return false;
-  for (const field of [
-    "organizationId",
-    "eventId",
-    "world",
-    "mapId",
-  ] as const) {
-    const expected = subscription[field];
-    if (expected !== undefined && expected !== published[field]) return false;
+const getScopeAudienceKey = (scope: Scope): string =>
+  JSON.stringify([
+    scope.topic,
+    scope.organizationId,
+    scope.eventId,
+    scope.world,
+    scope.mapId,
+  ]);
+
+// Four optional fields produce at most 16 exact/wildcard subscription keys.
+const matchingScopeAudienceKeys = (scope: Scope): string[] => {
+  let keys: Array<Array<string | number | undefined>> = [[scope.topic]];
+  for (const value of [
+    scope.organizationId,
+    scope.eventId,
+    scope.world,
+    scope.mapId,
+  ]) {
+    keys = keys.flatMap((key) =>
+      value === undefined
+        ? [[...key, undefined]]
+        : [
+            [...key, undefined],
+            [...key, value],
+          ],
+    );
   }
-  return true;
+  return keys.map((key) => JSON.stringify(key));
+};
+
+type RealtimeFederationStore = Pick<
+  RedisGatewayStore,
+  "publish" | "subscribe"
+> & {
+  command: Pick<
+    RedisGatewayStore["command"],
+    "set" | "del" | "sadd" | "srem" | "expire" | "smembers" | "mget"
+  >;
 };
 
 export class RealtimeHub {
   private readonly logger = new Logger(RealtimeHub.name);
   private readonly sockets = new Map<string, GatewaySocket>();
+  private readonly audiences = new Map<string, Set<GatewaySocket>>();
   private readonly seenEventIds = new Set<string>();
   private readonly seenEventOrder: string[] = [];
   private readonly permissionRebalanceListeners = new Set<
@@ -81,8 +109,11 @@ export class RealtimeHub {
   readonly instanceId = crypto.randomUUID();
 
   constructor(
-    private readonly config: GatewayConfiguration,
-    private readonly redis: RedisGatewayStore,
+    private readonly config: Pick<
+      GatewayConfiguration,
+      "maxBackpressureBytes" | "maxBackpressureStrikes"
+    >,
+    private readonly redis: RealtimeFederationStore,
     private readonly runBackground: BackgroundTaskRunner = unmanagedBackgroundTaskRunner,
   ) {}
 
@@ -95,7 +126,14 @@ export class RealtimeHub {
   }
 
   register(socket: GatewaySocket): void {
+    const previous = this.sockets.get(socket.data.connectionId);
+    if (previous) {
+      for (const key of this.audienceKeys(previous.data))
+        this.removeAudience(key, previous);
+    }
     this.sockets.set(socket.data.connectionId, socket);
+    for (const key of this.audienceKeys(socket.data))
+      this.addAudience(key, socket);
     this.runBackground(
       "registry.register",
       Effect.tryPromise({
@@ -106,7 +144,10 @@ export class RealtimeHub {
   }
 
   unregister(socket: GatewaySocket): void {
+    if (this.sockets.get(socket.data.connectionId) !== socket) return;
     this.sockets.delete(socket.data.connectionId);
+    for (const key of this.audienceKeys(socket.data))
+      this.removeAudience(key, socket);
     this.runBackground(
       "registry.unregister",
       Effect.tryPromise({
@@ -126,17 +167,32 @@ export class RealtimeHub {
   }
 
   subscribe(socket: GatewaySocket, scope: Scope): void {
-    socket.data.subscriptions.set(getScopeKey(scope), scope);
+    const key = getScopeKey(scope);
+    const previous = socket.data.subscriptions.get(key);
+    if (previous) this.unsubscribe(socket, previous);
+    socket.data.subscriptions.set(key, scope);
+    if (this.sockets.get(socket.data.connectionId) === socket)
+      this.addAudience(getScopeAudienceKey(scope), socket);
   }
 
   unsubscribe(socket: GatewaySocket, scope: Scope): void {
-    socket.data.subscriptions.delete(getScopeKey(scope));
+    const key = getScopeKey(scope);
+    const removed = socket.data.subscriptions.get(key);
+    if (!removed) return;
+    socket.data.subscriptions.delete(key);
+    for (const subscription of socket.data.subscriptions.values()) {
+      if (getScopeAudienceKey(subscription) === getScopeAudienceKey(removed))
+        return;
+    }
+    this.removeAudience(getScopeAudienceKey(removed), socket);
   }
 
   replaceSubscriptions(
     socket: GatewaySocket,
     scopes: ReadonlyArray<Scope>,
   ): void {
+    for (const scope of socket.data.subscriptions.values())
+      this.removeAudience(getScopeAudienceKey(scope), socket);
     socket.data.subscriptions.clear();
     for (const scope of scopes) this.subscribe(socket, scope);
   }
@@ -202,7 +258,7 @@ export class RealtimeHub {
       readonly sourceNpcs?: ReadonlyArray<LootVisibilityNpc>;
     } = {},
   ): Promise<void> {
-    const message = this.createFederatedMessage({
+    const { message, bytes } = this.createFederatedMessage({
       id: publicationId
         ? JSON.stringify([getScopeKey(scope), event.type, publicationId])
         : undefined,
@@ -211,7 +267,7 @@ export class RealtimeHub {
       scope,
       frame: event,
     });
-    this.deliver(message);
+    this.deliver(message, bytes);
     // Retry federation even when this instance already delivered the publication.
     await this.redis.publish(message);
   }
@@ -227,24 +283,30 @@ export class RealtimeHub {
     } = {},
   ): Promise<void> {
     if (scopes.length === 0) return;
-    const message = this.createFederatedMessage({
+    const { message, bytes } = this.createFederatedMessage({
       scopes,
       frame: event,
       ...options,
     });
-    this.deliver(message);
+    this.deliver(message, bytes);
     await this.redis.publish(message);
   }
 
   async publishToUser(userId: string, event: Event): Promise<void> {
-    const message = this.createFederatedMessage({ userId, frame: event });
-    this.deliver(message);
+    const { message, bytes } = this.createFederatedMessage({
+      userId,
+      frame: event,
+    });
+    this.deliver(message, bytes);
     await this.redis.publish(message);
   }
 
   async publishToDiscord(discordId: string, event: Event): Promise<void> {
-    const message = this.createFederatedMessage({ discordId, frame: event });
-    this.deliver(message);
+    const { message, bytes } = this.createFederatedMessage({
+      discordId,
+      frame: event,
+    });
+    this.deliver(message, bytes);
     await this.redis.publish(message);
   }
 
@@ -296,8 +358,8 @@ export class RealtimeHub {
         frame: preciseEvent,
       }),
     ];
-    for (const message of messages) {
-      this.deliver(message);
+    for (const { message, bytes } of messages) {
+      this.deliver(message, bytes);
       await this.redis.publish(message);
     }
   }
@@ -307,9 +369,7 @@ export class RealtimeHub {
   }
 
   getLocalSocketsForUser(userId: string): ReadonlyArray<GatewaySocket> {
-    return [...this.sockets.values()].filter(
-      (socket) => socket.data.userId === userId,
-    );
+    return [...(this.audiences.get(JSON.stringify(["user", userId])) ?? [])];
   }
 
   private connectionKey(connectionId: string): string {
@@ -335,23 +395,27 @@ export class RealtimeHub {
     readonly organizationId?: string;
     readonly presenceAudience?: "basic" | "precise";
     readonly frame: Event;
-  }): FederatedRealtimeMessage {
+  }) {
+    const bytes = encodeRealtimeFrame(options.frame);
     return {
-      id: options.id ?? crypto.randomUUID(),
-      sourceInstanceId: this.instanceId,
-      sourceNpcs: options.sourceNpcs,
-      scopeKey: options.scopeKey,
-      scope: options.scope,
-      scopes: options.scopes,
-      userId: options.userId,
-      discordId: options.discordId,
-      excludeConnectionId: options.excludeConnectionId,
-      recipientPlatform: options.recipientPlatform,
-      recipientWorld: options.recipientWorld,
-      recipientMapId: options.recipientMapId,
-      organizationId: options.organizationId,
-      presenceAudience: options.presenceAudience,
-      frame: toBase64(encodeRealtimeFrame(options.frame)),
+      bytes,
+      message: {
+        id: options.id ?? crypto.randomUUID(),
+        sourceInstanceId: this.instanceId,
+        sourceNpcs: options.sourceNpcs,
+        scopeKey: options.scopeKey,
+        scope: options.scope,
+        scopes: options.scopes,
+        userId: options.userId,
+        discordId: options.discordId,
+        excludeConnectionId: options.excludeConnectionId,
+        recipientPlatform: options.recipientPlatform,
+        recipientWorld: options.recipientWorld,
+        recipientMapId: options.recipientMapId,
+        organizationId: options.organizationId,
+        presenceAudience: options.presenceAudience,
+        frame: toBase64(bytes),
+      },
     };
   }
 
@@ -370,10 +434,15 @@ export class RealtimeHub {
     this.deliver(message);
   }
 
-  private deliver(message: FederatedRealtimeMessage): void {
+  private deliver(
+    message: FederatedRealtimeMessage,
+    localBytes?: Uint8Array,
+  ): void {
     if (!this.remember(message.id)) return;
     if (!message.frame) return;
-    const decoded = tryDecodeRealtimeFrame(fromBase64(message.frame));
+    const decoded = tryDecodeRealtimeFrame(
+      localBytes ?? fromBase64(message.frame),
+    );
     if (decoded._tag === "Failure") {
       this.logger.warn(
         "Rejected malformed Redis federation frame",
@@ -381,34 +450,21 @@ export class RealtimeHub {
       );
       return;
     }
-    if (!("type" in decoded.success)) return;
-    const frame = decoded.success as Event;
+    if (!isServerEventFrame(decoded.success)) return;
+    const frame = decoded.success;
     let jsonFrame: string | undefined;
-    let binaryFrame: Uint8Array | undefined;
+    // Remote frames must be re-encoded after validation strips unknown fields.
+    let binaryFrame = localBytes;
+    const chatFrames = new Map<string, string | Uint8Array>();
 
-    for (const socket of this.sockets.values()) {
+    for (const socket of this.candidates(message)) {
       if (!this.matchesRecipient(socket, message)) continue;
-      const matchesUser =
-        message.userId !== undefined && socket.data.userId === message.userId;
-      const matchesDiscord =
-        message.discordId !== undefined &&
-        socket.data.discordId === message.discordId;
-      const matchesScope =
-        message.scope !== undefined &&
-        [...socket.data.subscriptions.values()].some((subscription) =>
-          scopeMatches(subscription, message.scope as Scope),
-        );
-      const matchesAnyScope =
-        message.scopes !== undefined &&
-        message.scopes.some((published) =>
-          [...socket.data.subscriptions.values()].some((subscription) =>
-            scopeMatches(subscription, published),
-          ),
-        );
-      if (!(matchesUser || matchesDiscord || matchesScope || matchesAnyScope))
-        continue;
       if (!this.matchesPresenceAudience(socket, message)) continue;
-      if (!this.canReadSourceEvent(socket.data, frame, message)) continue;
+      if (!canReadSourceEvent(socket.data, frame, message.sourceNpcs)) continue;
+      if (frame.type === "chat.created") {
+        this.send(socket, this.encodeChatEvent(socket.data, frame, chatFrames));
+        continue;
+      }
       const encoded =
         socket.data.frameEncoding === "json"
           ? (jsonFrame ??= JSON.stringify(frame))
@@ -417,61 +473,73 @@ export class RealtimeHub {
     }
   }
 
-  private canReadSourceEvent(
+  private encodeChatEvent(
     session: SessionData,
-    event: Event,
+    event: Extract<Event, { type: "chat.created" }>,
+    frames: Map<string, string | Uint8Array>,
+  ): string | Uint8Array {
+    const permissions = chatMessagePermissions(session, event);
+    const key = `${session.frameEncoding}:${permissions.canEdit}:${permissions.canDelete}`;
+    let encoded = frames.get(key);
+    if (encoded === undefined) {
+      const recipientFrame = withChatMessagePermissions(event, permissions);
+      encoded =
+        session.frameEncoding === "json"
+          ? JSON.stringify(recipientFrame)
+          : encodeRealtimeFrame(recipientFrame);
+      frames.set(key, encoded);
+    }
+    return encoded;
+  }
+
+  private audienceKeys(session: SessionData): string[] {
+    return [
+      JSON.stringify(["user", session.userId]),
+      JSON.stringify(["discord", session.discordId]),
+      ...Array.from(session.subscriptions.values(), getScopeAudienceKey),
+    ];
+  }
+
+  private addAudience(key: string, socket: GatewaySocket): void {
+    let audience = this.audiences.get(key);
+    if (!audience) {
+      audience = new Set();
+      this.audiences.set(key, audience);
+    }
+    audience.add(socket);
+  }
+
+  private removeAudience(key: string, socket: GatewaySocket): void {
+    const audience = this.audiences.get(key);
+    if (!audience) return;
+    audience.delete(socket);
+    if (audience.size === 0) this.audiences.delete(key);
+  }
+
+  private candidates(
     message: FederatedRealtimeMessage,
-  ): boolean {
-    if (
-      event.type !== "kills.changed" &&
-      event.type !== "loot.created" &&
-      event.type !== "feed.entry"
-    )
-      return true;
-    if (
-      (event.type === "kills.changed" || event.type === "feed.entry") &&
-      (session.platform !== "web-app" || !session.supportsFeed)
-    )
-      return false;
-    const guild = session.guilds.find(
-      (entry) =>
-        entry.guild.id ===
-        (event.type === "feed.entry"
-          ? event.data.guild.id
-          : event.data.guildId),
-    );
-    if (!guild) return false;
-    const permissions =
-      guild.guild.ownerId === session.discordId
-        ? [Permission.OWNER]
-        : guild.roles.flatMap((role) => role.permissions);
-    // Kill aggregates explicitly allow administrators; loot visibility only bypasses for owners.
-    if (
-      (event.type === "kills.changed" ||
-        (event.type === "feed.entry" && event.data.type === "kill")) &&
-      permissions.some(
-        (permission) =>
-          permission === Permission.ADMIN || permission === Permission.OWNER,
-      )
-    )
-      return true;
-    const npcs =
-      event.type !== "loot.created"
-        ? (message.sourceNpcs ?? [])
-        : event.data.npcs.map((npc) => ({
-            level: npc.lvl ?? null,
-            type: typeof npc.type === "string" ? npc.type : null,
-          }));
-    return canViewLoot({
-      permissions,
-      roles: guild.roles.map((role) => ({
-        id: role.id,
-        levelFrom: role.lvlRangeFrom,
-        levelTo: role.lvlRangeTo,
-        permissions: role.permissions,
-      })),
-      npcs,
+  ): Iterable<GatewaySocket> {
+    const keys: string[] = [];
+    if (message.userId !== undefined)
+      keys.push(JSON.stringify(["user", message.userId]));
+    if (message.discordId !== undefined)
+      keys.push(JSON.stringify(["discord", message.discordId]));
+    const scopes = message.scope ? [message.scope] : [];
+    if (message.scopes) scopes.push(...message.scopes);
+    for (const scope of scopes) {
+      keys.push(...matchingScopeAudienceKeys(scope));
+    }
+    const [first, ...others] = keys.flatMap((key) => {
+      const audience = this.audiences.get(key);
+      return audience ? [audience] : [];
     });
+    if (!first) return [];
+    if (others.length === 0) return [...first];
+    const candidates = new Set(first);
+    for (const audience of others) {
+      for (const socket of audience) candidates.add(socket);
+    }
+    return candidates;
   }
 
   private matchesRecipient(

@@ -1,5 +1,7 @@
-import { KillsControllerGetUserKillStatsNpcTypesItem } from "@lootlog/client/main";
-import type { KillsControllerGetUserKillStatsNpcTypesItem as NpcType } from "@lootlog/client/main";
+import {
+  KillsControllerGetUserKillStatsNpcTypesItem,
+  type KillsControllerGetUserKillStatsNpcTypesItem as NpcType,
+} from "@lootlog/client/main";
 
 export type { NpcType };
 
@@ -10,3 +12,8 @@ export const TRACKABLE_NPC_TYPES: NpcType[] = [
   KillsControllerGetUserKillStatsNpcTypesItem.ELITE3,
   KillsControllerGetUserKillStatsNpcTypesItem.ELITE2,
 ];
+
+export const findTrackableNpcType = (value: string) =>
+  Object.values(KillsControllerGetUserKillStatsNpcTypesItem).find(
+    (type) => type === value,
+  );

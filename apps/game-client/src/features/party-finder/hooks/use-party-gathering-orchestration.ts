@@ -7,12 +7,12 @@ import {
   usePartyReadyRoomControllerCreate,
 } from "@lootlog/client/main";
 
-import type { PartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
+import { decodePartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
 import {
   buildChatCharacterData,
   buildCurrentCharacterPayload,
 } from "@/lib/api/generated-helpers";
-import { isApiError } from "@lootlog/client/transport";
+import { getApiErrorStringField, isApiError } from "@lootlog/client/transport";
 import { useGameStore } from "@/store/game.store";
 import {
   selectOwnedReadyRoom,
@@ -54,21 +54,11 @@ type FinalizePartyGatheringOptions = {
   chatMessageOptions: SendChatMessageOptions;
 };
 
-const getActivePartyGatheringNotificationId = (error: unknown) => {
-  if (
-    !isApiError(error) ||
-    error.status !== 409 ||
-    typeof error.data !== "object" ||
-    error.data === null
-  ) {
-    return undefined;
-  }
-
-  const { code, notificationId } = error.data as Record<string, unknown>;
-  return code === "ACTIVE_GATHERING_EXISTS" &&
-    typeof notificationId === "string"
-    ? notificationId
-    : undefined;
+const getActivePartyGatheringNotificationId = (cause: unknown) => {
+  if (!isApiError(cause) || cause.status !== 409) return undefined;
+  const code = getApiErrorStringField(cause, "code");
+  const notificationId = getApiErrorStringField(cause, "notificationId");
+  return code === "ACTIVE_GATHERING_EXISTS" ? notificationId : undefined;
 };
 
 export const usePartyGatheringOrchestration = () => {
@@ -154,15 +144,17 @@ export const usePartyGatheringOrchestration = () => {
       } catch (error) {
         const notificationId = getActivePartyGatheringNotificationId(error);
         if (notificationId) {
-          const existingProjection = (await partyReadyRoomControllerGet({
-            notificationId,
-          })) as unknown as PartyReadyRoomProjection;
+          const existingProjection = decodePartyReadyRoomProjection(
+            await partyReadyRoomControllerGet({
+              notificationId,
+            }),
+          );
           mergeProjection(existingProjection);
           openPartyFinder(closeCreateWindow);
         }
         throw error;
       }
-      const projection = response as unknown as PartyReadyRoomProjection;
+      const projection = decodePartyReadyRoomProjection(response);
       mergeProjection(projection);
       const resolvedGuildIds = projection.guildIds;
 
@@ -214,9 +206,11 @@ export const usePartyGatheringOrchestration = () => {
         data: notificationPayload,
       });
       const resolvedGuildIds = response.guildIds ?? guildIds;
-      const projection = (await partyReadyRoomControllerGet({
-        notificationId: response.notificationId,
-      })) as unknown as PartyReadyRoomProjection;
+      const projection = decodePartyReadyRoomProjection(
+        await partyReadyRoomControllerGet({
+          notificationId: response.notificationId,
+        }),
+      );
       mergeProjection(projection);
 
       const chatMessageOptions = buildNpcChatMessagePayload({

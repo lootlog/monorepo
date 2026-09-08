@@ -111,16 +111,17 @@ export const EventRankingTable = ({
     comment?: string,
   ) => {
     try {
+      const data: Parameters<
+        typeof updateRankingPoints.mutateAsync
+      >[0]["data"] = { pointsDelta };
+      if (comment) data.comment = comment;
       await updateRankingPoints.mutateAsync({
         pathParams: {
           guildId: guildId ?? "",
           eventId: eventId ?? "",
           rankingId,
         },
-        data: {
-          pointsDelta,
-          ...(comment ? { comment } : {}),
-        },
+        data,
       });
       toast.success(t("events.points.editSuccess"));
     } catch (error) {
@@ -327,7 +328,7 @@ export const EventRankingTable = ({
           table={table}
           className="bg-secondary/25"
           rowClassName="border-border/80"
-          headClassName={(header) =>
+          getHeadClassName={(header) =>
             cn(
               "h-9 px-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground",
               header.column.id === "position" && "pl-4",
@@ -337,7 +338,7 @@ export const EventRankingTable = ({
         />
         <TanStackTableBody
           table={table}
-          rowClassName={(row) =>
+          getRowClassName={(row) =>
             cn(
               "group h-12 border-border/70 hover:bg-muted/20",
               row.index < 3 && "bg-primary/[0.025]",
@@ -345,7 +346,7 @@ export const EventRankingTable = ({
                 "bg-primary/10 hover:bg-primary/15",
             )
           }
-          cellClassName={(cell) =>
+          getCellClassName={(cell) =>
             cn(
               "h-12 overflow-hidden p-0! align-middle",
               getColumnClassName(cell.column.id, variant),

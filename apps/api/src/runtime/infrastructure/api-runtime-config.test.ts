@@ -15,7 +15,7 @@ const requiredEnvironment = {
   MAPS_API_URL: "https://maps.example.test/api",
 };
 
-const loadWith = (values: Record<string, unknown>) =>
+const loadWith = (values: Record<string, string | undefined>) =>
   apiRuntimeConfiguration.parse(ConfigProvider.fromUnknown(values));
 
 describe("apiRuntimeConfiguration", () => {

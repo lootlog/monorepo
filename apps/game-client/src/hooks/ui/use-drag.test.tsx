@@ -1,7 +1,24 @@
-import { act, renderHook } from "@testing-library/react";
-import type { PointerEvent as ReactPointerEvent, RefObject } from "react";
+import { act, renderHook, render, fireEvent } from "@testing-library/react";
+import type { PointerEventHandler, RefObject } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useDrag } from "./use-drag";
+
+const startDrag = (
+  handler: PointerEventHandler<HTMLElement>,
+  pointerId = 1,
+) => {
+  const { getByTestId } = render(
+    <div data-testid="drag-target" onPointerDown={handler} />,
+  );
+  fireEvent.pointerDown(getByTestId("drag-target"), {
+    button: 0,
+    clientX: 10,
+    clientY: 10,
+    isPrimary: true,
+    pointerId,
+    pointerType: "mouse",
+  });
+};
 
 describe("useDrag", () => {
   afterEach(() => {
@@ -12,9 +29,14 @@ describe("useDrag", () => {
     const documentAddEventListener = vi.spyOn(document, "addEventListener");
     const windowAddEventListener = vi.spyOn(window, "addEventListener");
     const element = document.createElement("div");
-    const ref = { current: element } as RefObject<HTMLDivElement | null>;
+    const ref: RefObject<HTMLDivElement | null> = { current: element };
 
-    renderHook(() => useDrag({ ref, onDragStop: vi.fn() }));
+    renderHook(() =>
+      useDrag({
+        ref,
+        onDragStop: vi.fn<(position: { x: number; y: number }) => void>(),
+      }),
+    );
 
     const documentEventNames = documentAddEventListener.mock.calls.map(
       ([eventName]) => eventName,
@@ -47,24 +69,16 @@ describe("useDrag", () => {
       y: 0,
       toJSON: () => ({}),
     });
-    const ref = { current: element } as RefObject<HTMLDivElement | null>;
+    const ref: RefObject<HTMLDivElement | null> = { current: element };
     const { result, unmount } = renderHook(() =>
-      useDrag({ ref, onDragStop: vi.fn() }),
+      useDrag({
+        ref,
+        onDragStop: vi.fn<(position: { x: number; y: number }) => void>(),
+      }),
     );
     documentAddEventListener.mockClear();
 
-    act(() => {
-      result.current.handlePointerDown({
-        button: 0,
-        clientX: 10,
-        clientY: 10,
-        isPrimary: true,
-        pointerId: 1,
-        pointerType: "mouse",
-        stopPropagation: vi.fn(),
-        target: element,
-      } as unknown as ReactPointerEvent<HTMLElement>);
-    });
+    startDrag(result.current.handlePointerDown, 1);
     expect(element.style.willChange).toBe("transform");
 
     expect(
@@ -99,22 +113,11 @@ describe("useDrag", () => {
       y: 0,
       toJSON: () => ({}),
     });
-    const ref = { current: element } as RefObject<HTMLDivElement | null>;
-    const onDragStop = vi.fn();
+    const ref: RefObject<HTMLDivElement | null> = { current: element };
+    const onDragStop = vi.fn<(position: { x: number; y: number }) => void>();
     const { result } = renderHook(() => useDrag({ ref, onDragStop }));
 
-    act(() => {
-      result.current.handlePointerDown({
-        button: 0,
-        clientX: 10,
-        clientY: 10,
-        isPrimary: true,
-        pointerId: 1,
-        pointerType: "mouse",
-        stopPropagation: vi.fn(),
-        target: element,
-      } as unknown as ReactPointerEvent<HTMLElement>);
-    });
+    startDrag(result.current.handlePointerDown, 1);
 
     act(() => {
       for (let index = 0; index < 20; index += 1) {
@@ -166,22 +169,11 @@ describe("useDrag", () => {
       y: 0,
       toJSON: () => ({}),
     });
-    const onDragStop = vi.fn();
-    const ref = { current: element } as RefObject<HTMLDivElement | null>;
+    const onDragStop = vi.fn<(position: { x: number; y: number }) => void>();
+    const ref: RefObject<HTMLDivElement | null> = { current: element };
     const { result } = renderHook(() => useDrag({ ref, onDragStop }));
 
-    act(() => {
-      result.current.handlePointerDown({
-        button: 0,
-        clientX: 10,
-        clientY: 10,
-        isPrimary: true,
-        pointerId: 7,
-        pointerType: "mouse",
-        stopPropagation: vi.fn(),
-        target: element,
-      } as unknown as ReactPointerEvent<HTMLElement>);
-    });
+    startDrag(result.current.handlePointerDown, 7);
 
     act(() => {
       document.dispatchEvent(

@@ -98,7 +98,7 @@ const createBattleWarriorRow = (
     legbonAnguishDamageTaken: 145,
     ph: 12,
     ...overrides,
-  }) as BattleWarrior;
+  }) satisfies BattleWarrior;
 
 describe("battle warrior stats", () => {
   it("builds the JSONB stats payload from warrior metrics", () => {
@@ -162,4 +162,13 @@ describe("battle warrior stats", () => {
     expect(warrior.ph).toBe(25);
     expect(warrior.damageDealt).toBe(777);
   });
+});
+
+it("falls back for malformed stored spell counts", () => {
+  const stats = buildBattleWarriorStats({
+    spellsUsedMap: { Fireball: "invalid" },
+  });
+  expect(stats.spellsUsedMap).toEqual({});
+  expect(stats.damageDealt).toBe(0);
+  expect(stats.isDead).toBe(false);
 });

@@ -339,34 +339,38 @@ export type BattleAnalysis = {
   matchmaking?: MatchmakingInfo;
 };
 
-const DAMAGE_DEALT_ACTIONS: Record<string, keyof Warrior> = {
-  "+dmgd": "distanceDamage",
-  "+dmg": "meleeDamage",
-  "+dmgo": "auxiliaryDamage",
-  "+dmga": "auxiliaryDamage",
-  "+dmgf": "fireDamage",
-  "+dmgc": "frostDamage",
-  "+dmgl": "lightningDamage",
-  "+thirdatt": "thirdAttDamage",
-};
+const DAMAGE_DEALT_ACTIONS = new Map<string, NumericWarriorStat>(
+  Object.entries({
+    "+dmgd": "distanceDamage",
+    "+dmg": "meleeDamage",
+    "+dmgo": "auxiliaryDamage",
+    "+dmga": "auxiliaryDamage",
+    "+dmgf": "fireDamage",
+    "+dmgc": "frostDamage",
+    "+dmgl": "lightningDamage",
+    "+thirdatt": "thirdAttDamage",
+  } satisfies Record<string, NumericWarriorStat>),
+);
 
-const DAMAGE_TAKEN_ACTIONS: Record<string, keyof Warrior> = {
-  "-dmgd": "distanceDamageTaken",
-  "-dmg": "meleeDamageTaken",
-  "-dmgo": "auxiliaryDamageTaken",
-  "-dmga": "auxiliaryDamageTaken",
-  "-dmgf": "fireDamageTaken",
-  "-dmgc": "frostDamageTaken",
-  "-dmgl": "lightningDamageTaken",
-  "-thirdatt": "thirdAttDamageTaken",
-};
+const DAMAGE_TAKEN_ACTIONS = new Map<string, NumericWarriorStat>(
+  Object.entries({
+    "-dmgd": "distanceDamageTaken",
+    "-dmg": "meleeDamageTaken",
+    "-dmgo": "auxiliaryDamageTaken",
+    "-dmga": "auxiliaryDamageTaken",
+    "-dmgf": "fireDamageTaken",
+    "-dmgc": "frostDamageTaken",
+    "-dmgl": "lightningDamageTaken",
+    "-thirdatt": "thirdAttDamageTaken",
+  } satisfies Record<string, NumericWarriorStat>),
+);
 
-const SPECIAL_DAMAGE_ACTIONS: Partial<
-  Record<string, { targetTakesDamage: boolean }>
-> = {
-  "+rage": { targetTakesDamage: true },
-  "+taken_dmg": { targetTakesDamage: true },
-};
+const SPECIAL_DAMAGE_ACTIONS = new Map<string, { targetTakesDamage: boolean }>(
+  Object.entries({
+    "+rage": { targetTakesDamage: true },
+    "+taken_dmg": { targetTakesDamage: true },
+  } satisfies Record<string, { targetTakesDamage: boolean }>),
+);
 
 const PASSIVE_DAMAGE_ACTIONS = new Set([
   "wound",
@@ -493,9 +497,9 @@ const DEBUFF_ACTIONS = new Set([
 const SYSTEM_ACTIONS = new Set(["txt", "shout"]);
 
 const DAMAGE_ACTIONS = new Set([
-  ...Object.keys(DAMAGE_DEALT_ACTIONS),
-  ...Object.keys(DAMAGE_TAKEN_ACTIONS),
-  ...Object.keys(SPECIAL_DAMAGE_ACTIONS),
+  ...DAMAGE_DEALT_ACTIONS.keys(),
+  ...DAMAGE_TAKEN_ACTIONS.keys(),
+  ...SPECIAL_DAMAGE_ACTIONS.keys(),
   ...PASSIVE_DAMAGE_ACTIONS,
 ]);
 const ABSORB_ACTIONS = new Set([
@@ -612,54 +616,56 @@ const addWarriorStat =
   };
 
 const addDamageTaken =
-  (stat: keyof Warrior): WarriorActionHandler =>
+  (stat: NumericWarriorStat): WarriorActionHandler =>
   ({ attacker, value }) => {
-    (attacker[stat] as number) += value;
+    attacker[stat] += value;
     attacker.damageTaken += value;
   };
 
-const ATTACKER_ACTION_HANDLERS: Record<string, WarriorActionHandler> = {
-  "+rage": addWarriorStat("attacker", "rageDamageDealt"),
-  "+taken_dmg": ({ attacker, defender, value }) => {
-    attacker.stigmaDamageDealt += value;
-    if (defender) defender.stigmaDamageTaken += value;
-  },
-  "+pierce": addWarriorStat("attacker", "armorPierces", 1),
-  "+crit": addWarriorStat("attacker", "criticalHits", 1),
-  heal: addWarriorStat("attacker", "passiveHealing"),
-  bandage: addWarriorStat("attacker", "activeHealing"),
-  heal_target: ({ defender, value }) => {
-    if (defender) defender.activeHealing += value;
-  },
-  "+acdmg": addWarriorStat("attacker", "reducedArmor"),
-  wound: addDamageTaken("woundDamageTaken"),
-  critwound: addDamageTaken("critWoundDamageTaken"),
-  anguish: addDamageTaken("legbonAnguishDamageTaken"),
-  poison: addDamageTaken("poisonDamageTaken"),
-  injure: addDamageTaken("injureDamageTaken"),
-  "+injure": ({ defender }) => {
-    if (defender) defender.injures++;
-  },
-  "+fastarrow": addWarriorStat("attacker", "fastArrows", 1),
-  fire: addDamageTaken("firePassiveDamageTaken"),
-  light: addDamageTaken("lightningPassiveDamageTaken"),
-  energy: ({ attacker, value }) => {
-    attacker.regeneratedEnergy -= value;
-  },
-  "en-regen": addWarriorStat("attacker", "regeneratedEnergy"),
-  "+energy": addWarriorStat("attacker", "regeneratedEnergy"),
-  "+engback": addWarriorStat("attacker", "regeneratedEnergy"),
-  "+legbon_curse": addWarriorStat("attacker", "legbonCurse", 1),
-  "+legbon_holytouch": addWarriorStat("attacker", "legbonHolytouch", 1),
-  legbon_holytouch_heal: addWarriorStat("attacker", "legbonHolytouchValue"),
-  "+legbon_verycrit": addWarriorStat("attacker", "legbonVerycrit", 1),
-  "+legbon_anguish": addWarriorStat("attacker", "legbonAnguish", 1),
-  legbon_lastheal: ({ attacker, defender, value }) => {
-    const healedWarrior = defender ?? attacker;
-    healedWarrior.legbonLastheal++;
-    healedWarrior.legbonLasthealValue += value;
-  },
-};
+const ATTACKER_ACTION_HANDLERS = new Map<string, WarriorActionHandler>(
+  Object.entries({
+    "+rage": addWarriorStat("attacker", "rageDamageDealt"),
+    "+taken_dmg": ({ attacker, defender, value }) => {
+      attacker.stigmaDamageDealt += value;
+      if (defender) defender.stigmaDamageTaken += value;
+    },
+    "+pierce": addWarriorStat("attacker", "armorPierces", 1),
+    "+crit": addWarriorStat("attacker", "criticalHits", 1),
+    heal: addWarriorStat("attacker", "passiveHealing"),
+    bandage: addWarriorStat("attacker", "activeHealing"),
+    heal_target: ({ defender, value }) => {
+      if (defender) defender.activeHealing += value;
+    },
+    "+acdmg": addWarriorStat("attacker", "reducedArmor"),
+    wound: addDamageTaken("woundDamageTaken"),
+    critwound: addDamageTaken("critWoundDamageTaken"),
+    anguish: addDamageTaken("legbonAnguishDamageTaken"),
+    poison: addDamageTaken("poisonDamageTaken"),
+    injure: addDamageTaken("injureDamageTaken"),
+    "+injure": ({ defender }) => {
+      if (defender) defender.injures++;
+    },
+    "+fastarrow": addWarriorStat("attacker", "fastArrows", 1),
+    fire: addDamageTaken("firePassiveDamageTaken"),
+    light: addDamageTaken("lightningPassiveDamageTaken"),
+    energy: ({ attacker, value }) => {
+      attacker.regeneratedEnergy -= value;
+    },
+    "en-regen": addWarriorStat("attacker", "regeneratedEnergy"),
+    "+energy": addWarriorStat("attacker", "regeneratedEnergy"),
+    "+engback": addWarriorStat("attacker", "regeneratedEnergy"),
+    "+legbon_curse": addWarriorStat("attacker", "legbonCurse", 1),
+    "+legbon_holytouch": addWarriorStat("attacker", "legbonHolytouch", 1),
+    legbon_holytouch_heal: addWarriorStat("attacker", "legbonHolytouchValue"),
+    "+legbon_verycrit": addWarriorStat("attacker", "legbonVerycrit", 1),
+    "+legbon_anguish": addWarriorStat("attacker", "legbonAnguish", 1),
+    legbon_lastheal: ({ attacker, defender, value }) => {
+      const healedWarrior = defender ?? attacker;
+      healedWarrior.legbonLastheal++;
+      healedWarrior.legbonLasthealValue += value;
+    },
+  } satisfies Record<string, WarriorActionHandler>),
+);
 
 const blockAttack: DefenderActionHandler = ({ attacker, defender, value }) => {
   defender.blocks++;
@@ -667,45 +673,47 @@ const blockAttack: DefenderActionHandler = ({ attacker, defender, value }) => {
   attacker.attacksBlocked++;
 };
 
-const DEFENDER_ACTION_HANDLERS: Record<string, DefenderActionHandler> = {
-  "-evade": ({ attacker, defender }) => {
-    defender.evasions++;
-    attacker.attacksEvaded++;
-  },
-  "-contra": addWarriorStat("defender", "counters", 1),
-  "-blok": blockAttack,
-  "-block": blockAttack,
-  "-parry": blockAttack,
-  "-arrowblock": blockAttack,
-  "-pierceb": blockAttack,
-  "-endest": addWarriorStat("defender", "destroyedEnergy"),
-  "-manadest": addWarriorStat("defender", "destroyedMana"),
-  "en-regen": addWarriorStat("defender", "regeneratedEnergy"),
-  mana: ({ attacker, value }) => {
-    attacker.regeneratedMana -= value;
-  },
-  stealmana: ({ attacker, defender, value }) => {
-    defender.destroyedMana += value;
-    attacker.regeneratedMana += value;
-  },
-  "-legbon_cleanse": addWarriorStat("defender", "legbonCleanse", 1),
-  "-legbon_glare": addWarriorStat("defender", "legbonGlare", 1),
-  "-legbon_critred": ({ defender, value }) => {
-    defender.legbonCritredValue = value;
-  },
-  "-legbon_facade": ({ defender, value }) => {
-    defender.legbonFacadeValue = value;
-  },
-  "+legbon_puncture": ({ attacker, value }) => {
-    attacker.legbonPunctureValue = value;
-  },
-  "+resdmg": ({ attacker, value }) => {
-    attacker.magicResistanceDestroyed += value;
-  },
-  "+actdmg": ({ attacker, value }) => {
-    attacker.reducedPoisonResistance += value;
-  },
-};
+const DEFENDER_ACTION_HANDLERS = new Map<string, DefenderActionHandler>(
+  Object.entries({
+    "-evade": ({ attacker, defender }) => {
+      defender.evasions++;
+      attacker.attacksEvaded++;
+    },
+    "-contra": addWarriorStat("defender", "counters", 1),
+    "-blok": blockAttack,
+    "-block": blockAttack,
+    "-parry": blockAttack,
+    "-arrowblock": blockAttack,
+    "-pierceb": blockAttack,
+    "-endest": addWarriorStat("defender", "destroyedEnergy"),
+    "-manadest": addWarriorStat("defender", "destroyedMana"),
+    "en-regen": addWarriorStat("defender", "regeneratedEnergy"),
+    mana: ({ attacker, value }) => {
+      attacker.regeneratedMana -= value;
+    },
+    stealmana: ({ attacker, defender, value }) => {
+      defender.destroyedMana += value;
+      attacker.regeneratedMana += value;
+    },
+    "-legbon_cleanse": addWarriorStat("defender", "legbonCleanse", 1),
+    "-legbon_glare": addWarriorStat("defender", "legbonGlare", 1),
+    "-legbon_critred": ({ defender, value }) => {
+      defender.legbonCritredValue = value;
+    },
+    "-legbon_facade": ({ defender, value }) => {
+      defender.legbonFacadeValue = value;
+    },
+    "+legbon_puncture": ({ attacker, value }) => {
+      attacker.legbonPunctureValue = value;
+    },
+    "+resdmg": ({ attacker, value }) => {
+      attacker.magicResistanceDestroyed += value;
+    },
+    "+actdmg": ({ attacker, value }) => {
+      attacker.reducedPoisonResistance += value;
+    },
+  } satisfies Record<string, DefenderActionHandler>),
+);
 
 const createEmptyTimelineStats = (): BattleTimelineWarriorDelta => ({
   damageDealt: 0,
@@ -746,11 +754,11 @@ export class BattleProcessor {
     string,
     { count: number; handled: boolean; category: BattleActionCategory }
   >();
-  private readonly battleOutcome = {
+  private readonly battleOutcome: BattleAnalysis["outcome"] = {
     winner: "",
     loser: "",
-    winningTeam: null as number | null,
-    losingTeam: null as number | null,
+    winningTeam: null,
+    losingTeam: null,
     hasFlee: false,
   };
   private battleType = "";
@@ -1016,8 +1024,8 @@ export class BattleProcessor {
       manaPressure: 0,
       flags: new Set<string>(),
       labels: new Set<string>(),
-      hasActualDamage: move.actions.some(
-        (action) => DAMAGE_TAKEN_ACTIONS[action.actionType],
+      hasActualDamage: move.actions.some((action) =>
+        DAMAGE_TAKEN_ACTIONS.get(action.actionType),
       ),
     };
 
@@ -1096,7 +1104,7 @@ export class BattleProcessor {
     context: TimelineActionContext,
     accumulator: TimelineActionAccumulator,
   ): boolean {
-    if (!DAMAGE_DEALT_ACTIONS[context.actionType]) return false;
+    if (!DAMAGE_DEALT_ACTIONS.get(context.actionType)) return false;
     if (!accumulator.hasActualDamage && context.actorId) {
       this.addTimelineDelta(
         accumulator.byWarrior,
@@ -1114,7 +1122,7 @@ export class BattleProcessor {
     context: TimelineActionContext,
     accumulator: TimelineActionAccumulator,
   ): boolean {
-    if (!DAMAGE_TAKEN_ACTIONS[context.actionType]) return false;
+    if (!DAMAGE_TAKEN_ACTIONS.get(context.actionType)) return false;
     if (context.actorId) {
       this.addTimelineDelta(
         accumulator.byWarrior,
@@ -1147,7 +1155,7 @@ export class BattleProcessor {
     context: TimelineActionContext,
     accumulator: TimelineActionAccumulator,
   ): boolean {
-    const action = SPECIAL_DAMAGE_ACTIONS[context.actionType];
+    const action = SPECIAL_DAMAGE_ACTIONS.get(context.actionType);
     if (!action) return false;
     if (context.actorId) {
       this.addTimelineDelta(
@@ -1511,6 +1519,8 @@ export class BattleProcessor {
       const cumulative =
         this.timelineCumulative.get(warriorId) ?? createEmptyTimelineStats();
 
+      // SAFETY: timeline deltas are created by createEmptyTimelineStats and only
+      // updated through addTimelineDelta, which accepts numeric delta keys.
       for (const [field, value] of Object.entries(delta) as Array<
         [keyof BattleTimelineWarriorDelta, number]
       >) {
@@ -1655,17 +1665,19 @@ export class BattleProcessor {
       if (!attacker) continue;
 
       const value = this.parseActionValue(param);
-      if (DAMAGE_DEALT_ACTIONS[actionType]) {
+      const damageDealtStat = DAMAGE_DEALT_ACTIONS.get(actionType);
+      if (damageDealtStat) {
         attacker.damageDealt += value;
-        (attacker[DAMAGE_DEALT_ACTIONS[actionType]] as number) += value;
+        attacker[damageDealtStat] += value;
         continue;
       }
 
-      if (DAMAGE_TAKEN_ACTIONS[actionType]) {
+      const damageTakenStat = DAMAGE_TAKEN_ACTIONS.get(actionType);
+      if (damageTakenStat) {
         attacker.damageDealtAfterDefensive += value;
         if (defender && move.defenderId) {
           defender.damageTaken += value;
-          (defender[DAMAGE_TAKEN_ACTIONS[actionType]] as number) += value;
+          defender[damageTakenStat] += value;
           defender.flatDamageTaken += value;
           defenderTakenDamage += value;
         }
@@ -1682,11 +1694,15 @@ export class BattleProcessor {
         attackerId: move.attackerId,
       });
       if (!handledSpecialAction) {
-        ATTACKER_ACTION_HANDLERS[actionType]?.({ attacker, defender, value });
+        ATTACKER_ACTION_HANDLERS.get(actionType)?.({
+          attacker,
+          defender,
+          value,
+        });
       }
 
       if (!defender) continue;
-      DEFENDER_ACTION_HANDLERS[actionType]?.({ attacker, defender, value });
+      DEFENDER_ACTION_HANDLERS.get(actionType)?.({ attacker, defender, value });
     }
 
     if (defender && move.defenderId && defenderTakenDamage > 0) {
@@ -2266,7 +2282,7 @@ export class BattleProcessor {
 
     for (const [id, warrior] of this.warriors.entries()) {
       const hp = this.lastHp.get(id);
-      const hpValue = typeof hp === "number" ? hp : 0;
+      const hpValue = hp ?? 0;
       addTeamMetric(metrics.hpSum, warrior.team, hpValue);
       addTeamMetric(metrics.alive, warrior.team, hpValue > 0 ? 1 : 0);
       addTeamMetric(metrics.dmgDealt, warrior.team, warrior.damageDealt);
@@ -2280,12 +2296,12 @@ export class BattleProcessor {
     winningTeam: number | null,
     losingTeam: number | null,
   ): OutcomeTeams {
-    if (winningTeam === null && losingTeam === null) {
-      return this.resolveOutcomeFromMetrics(this.collectTeamOutcomeMetrics());
-    }
     if (winningTeam === null) {
+      if (losingTeam === null) {
+        return this.resolveOutcomeFromMetrics(this.collectTeamOutcomeMetrics());
+      }
       return {
-        winningTeam: this.getDefaultOpposingTeam(losingTeam as number),
+        winningTeam: this.getDefaultOpposingTeam(losingTeam),
         losingTeam,
       };
     }

@@ -1,13 +1,16 @@
 import { GatewayEvent } from "@/config/gateway";
 import {
   applyPresenceUpdates,
+  canReadPresence,
+  filterPresenceByPolicy,
   normalizePresence,
   normalizePresenceResponse,
   requestServerPresence,
   type PlayerPresenceResponse,
   type PlayerPresenceUpdatePayload,
 } from "@/lib/online-players-presence";
-import { getSocket } from "@/lib/socket";
+import type { AccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
+import { getSocket, type PermissionsUpdatedPayload } from "@/lib/socket";
 import { useGlobalStore } from "@/store/global.store";
 import { mapOnlinePlayers } from "./mappers";
 import type {
@@ -18,16 +21,23 @@ import type {
 type Unsubscribe = () => void;
 
 type OnlinePlayersSocket = Parameters<typeof requestServerPresence>[0] & {
+  getAccessPolicy?: () => AccessPolicySnapshot | undefined;
   on(
     event: GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
     listener: (payload: PlayerPresenceUpdatePayload) => void,
   ): void;
-  on(event: GatewayEvent.PERMISSIONS_UPDATED, listener: () => void): void;
+  on(
+    event: GatewayEvent.PERMISSIONS_UPDATED,
+    listener: (payload: PermissionsUpdatedPayload) => void,
+  ): void;
   off(
     event: GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
     listener: (payload: PlayerPresenceUpdatePayload) => void,
   ): void;
-  off(event: GatewayEvent.PERMISSIONS_UPDATED, listener: () => void): void;
+  off(
+    event: GatewayEvent.PERMISSIONS_UPDATED,
+    listener: (payload: PermissionsUpdatedPayload) => void,
+  ): void;
 };
 
 type TrackedScope = {
@@ -36,6 +46,7 @@ type TrackedScope = {
   players?: PlayerPresenceResponse;
   resultJson: string;
   requestVersion: number;
+  forbidden?: boolean;
 };
 
 type OnlinePlayersControllerDependencies = {
@@ -73,6 +84,9 @@ export class PublicOnlinePlayersController {
   private readonly publish: (event: PublicOnlinePlayersChangedEvent) => void;
   private readonly scopes = new Map<string, TrackedScope>();
   private active = false;
+  private accessPolicy: AccessPolicySnapshot | undefined;
+  private readonly pendingPolicyScopes = new Set<string>();
+  private policyRefreshTimer: ReturnType<typeof setTimeout> | null = null;
   private unsubscribeSocketState: Unsubscribe | null = null;
 
   constructor(
@@ -106,6 +120,11 @@ export class PublicOnlinePlayersController {
 
     this.active = true;
     const socket = this.getSocket();
+    const policy = this.getCurrentAccessPolicy();
+    if (policy) {
+      for (const scope of this.scopes.values())
+        this.applyScopePolicy(scope, policy);
+    }
     socket.on(
       GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
       this.handlePresenceUpdate,
@@ -131,6 +150,9 @@ export class PublicOnlinePlayersController {
     if (!this.active) return;
 
     this.active = false;
+    if (this.policyRefreshTimer !== null) clearTimeout(this.policyRefreshTimer);
+    this.policyRefreshTimer = null;
+    this.pendingPolicyScopes.clear();
     const socket = this.getSocket();
     socket.off(
       GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
@@ -152,25 +174,114 @@ export class PublicOnlinePlayersController {
     const presence = normalizePresence(payload);
     const guildId = presence.guildId;
     const world = presence.player?.world;
-    if (!guildId || !world) return;
+    if (!guildId) return;
+    const scopes = world
+      ? [this.scopes.get(getScopeKey(guildId, world))]
+      : presence.status === "offline" && presence.sessionId
+        ? [...this.scopes.values()].filter((scope) => scope.guildId === guildId)
+        : [];
+    for (const scope of scopes) {
+      if (!scope?.players) continue;
+      const policy = this.getCurrentAccessPolicy();
+      const organization = policy?.organizations.find(
+        (entry) => entry.organizationId === guildId,
+      );
+      if (policy && !canReadPresence(organization)) {
+        this.applyScopePolicy(scope, policy);
+        continue;
+      }
+      const updated = applyPresenceUpdates(scope.players, [presence]);
+      const players = policy
+        ? filterPresenceByPolicy(updated, organization)
+        : updated;
+      if (players === scope.players) continue;
 
-    const scope = this.scopes.get(getScopeKey(guildId, world));
-    if (!scope?.players) return;
+      scope.requestVersion += 1;
+      scope.forbidden = false;
+      scope.players = players;
+      this.publishScopeIfChanged(scope, {
+        status: "success",
+        players: mapOnlinePlayers(players),
+      });
+    }
+  };
 
-    const players = applyPresenceUpdates(scope.players, [presence]);
-    if (players === scope.players) return;
+  private readonly handlePermissionsUpdated = (
+    payload: PermissionsUpdatedPayload,
+  ): void => {
+    if (!payload?.accessPolicy) {
+      this.accessPolicy = undefined;
+      for (const [key, scope] of this.scopes) {
+        this.pendingPolicyScopes.add(key);
+        scope.requestVersion += 1;
+        scope.players = {};
+        this.publishScopeIfChanged(scope, { status: "success", players: {} });
+      }
+      this.schedulePolicyRefresh();
+      return;
+    }
+    this.accessPolicy = payload.accessPolicy;
+    for (const [key, scope] of this.scopes) {
+      const policy = payload.accessPolicy.organizations.find(
+        (organization) => organization.organizationId === scope.guildId,
+      );
+      const changes =
+        payload.changes?.filter(
+          (change) =>
+            change.organizationId === scope.guildId &&
+            change.areas.includes("presence"),
+        ) ?? [];
+      if (policy && changes.length === 0) continue;
+      if (!policy || changes.some((change) => change.restricted)) {
+        this.applyScopePolicy(scope, payload.accessPolicy);
+      }
+      if (changes.some((change) => change.expanded))
+        this.pendingPolicyScopes.add(key);
+      else this.pendingPolicyScopes.delete(key);
+    }
+    this.schedulePolicyRefresh();
+  };
 
+  private getCurrentAccessPolicy(): AccessPolicySnapshot | undefined {
+    const socket = this.getSocket();
+    return socket.getAccessPolicy
+      ? socket.getAccessPolicy()
+      : this.accessPolicy;
+  }
+
+  private applyScopePolicy(
+    scope: TrackedScope,
+    snapshot: AccessPolicySnapshot,
+  ): void {
+    const policy = snapshot.organizations.find(
+      (organization) => organization.organizationId === scope.guildId,
+    );
+    const allowed = canReadPresence(policy);
+    if (allowed && (scope.players === undefined || scope.forbidden)) return;
     scope.requestVersion += 1;
-    scope.players = players;
-    this.publishScopeIfChanged(scope, {
-      status: "success",
-      players: mapOnlinePlayers(players),
-    });
-  };
+    scope.forbidden = !allowed;
+    scope.players = filterPresenceByPolicy(scope.players ?? {}, policy);
+    this.publishScopeIfChanged(
+      scope,
+      scope.forbidden
+        ? { status: "forbidden", code: "ONLINE_PLAYERS_ACCESS_DENIED" }
+        : { status: "success", players: mapOnlinePlayers(scope.players) },
+    );
+  }
 
-  private readonly handlePermissionsUpdated = (): void => {
-    void this.refreshTrackedScopes();
-  };
+  private schedulePolicyRefresh(): void {
+    if (this.policyRefreshTimer !== null) clearTimeout(this.policyRefreshTimer);
+    if (this.pendingPolicyScopes.size === 0) {
+      this.policyRefreshTimer = null;
+      return;
+    }
+    this.policyRefreshTimer = setTimeout(() => {
+      this.policyRefreshTimer = null;
+      const keys = new Set(this.pendingPolicyScopes);
+      this.pendingPolicyScopes.clear();
+      void this.refreshTrackedScopes(keys);
+    }, 5_000);
+  }
 
   private getOrCreateScope(guildId: string, world: string): TrackedScope {
     const key = getScopeKey(guildId, world);
@@ -191,6 +302,27 @@ export class PublicOnlinePlayersController {
     scope: TrackedScope,
     publishChanges: boolean,
   ): Promise<PublicOnlinePlayersResult> {
+    this.pendingPolicyScopes.delete(getScopeKey(scope.guildId, scope.world));
+    if (
+      this.pendingPolicyScopes.size === 0 &&
+      this.policyRefreshTimer !== null
+    ) {
+      clearTimeout(this.policyRefreshTimer);
+      this.policyRefreshTimer = null;
+    }
+    const policy = this.getCurrentAccessPolicy();
+    if (
+      policy &&
+      !canReadPresence(
+        policy.organizations.find(
+          (organization) => organization.organizationId === scope.guildId,
+        ),
+      )
+    ) {
+      scope.forbidden = true;
+      scope.players = {};
+      return { status: "forbidden", code: "ONLINE_PLAYERS_ACCESS_DENIED" };
+    }
     const requestVersion = ++scope.requestVersion;
     const response = await requestServerPresence(
       this.getSocket(),
@@ -202,27 +334,29 @@ export class PublicOnlinePlayersController {
       throw new Error("Online players response was empty");
     }
 
-    const result: PublicOnlinePlayersResult =
-      response.status === "forbidden"
-        ? { status: "forbidden", code: response.code }
-        : {
-            status: "success",
-            players: mapOnlinePlayers(
-              normalizePresenceResponse(response.players),
-            ),
-          };
-
-    if (
-      response.status !== "forbidden" &&
-      scope.requestVersion !== requestVersion
-    ) {
-      return result;
+    if (scope.requestVersion !== requestVersion) {
+      return scope.forbidden
+        ? { status: "forbidden", code: "ONLINE_PLAYERS_ACCESS_DENIED" }
+        : { status: "success", players: mapOnlinePlayers(scope.players ?? {}) };
     }
 
-    scope.players =
+    const currentPolicy = this.getCurrentAccessPolicy();
+    const organization = currentPolicy?.organizations.find(
+      (entry) => entry.organizationId === scope.guildId,
+    );
+    scope.forbidden =
+      response.status === "forbidden" ||
+      Boolean(currentPolicy && !canReadPresence(organization));
+    const received =
       response.status === "success"
         ? normalizePresenceResponse(response.players)
-        : undefined;
+        : {};
+    scope.players = currentPolicy
+      ? filterPresenceByPolicy(received, organization)
+      : received;
+    const result: PublicOnlinePlayersResult = scope.forbidden
+      ? { status: "forbidden", code: "ONLINE_PLAYERS_ACCESS_DENIED" }
+      : { status: "success", players: mapOnlinePlayers(scope.players) };
 
     if (publishChanges) {
       this.publishScopeIfChanged(scope, result);
@@ -244,12 +378,16 @@ export class PublicOnlinePlayersController {
     this.publish({ guildId: scope.guildId, world: scope.world, ...result });
   }
 
-  private async refreshTrackedScopes(): Promise<void> {
+  private async refreshTrackedScopes(
+    keys?: ReadonlySet<string>,
+  ): Promise<void> {
     const { connected, joined } = useGlobalStore.getState().socketState;
     if (!this.active || !connected || !joined) return;
 
     await Promise.allSettled(
-      [...this.scopes.values()].map((scope) => this.fetchScope(scope, true)),
+      [...this.scopes.entries()]
+        .filter(([key]) => !keys || keys.has(key))
+        .map(([, scope]) => this.fetchScope(scope, true)),
     );
   }
 }

@@ -1,22 +1,10 @@
+import type {
+  PlayerPresence,
+  PlayerPresenceResponse,
+} from "@/lib/gateway-client";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { useGateway } from "@/hooks/utils/use-gateway";
 import { GatewayEvent } from "@/config/gateway";
-
-export interface PlayerPresence {
-  world: string;
-  name: string;
-  characterId: string;
-  accountId: string;
-  icon: string;
-  lvl: string;
-  prof: string;
-  margonemAccountVerified?: boolean;
-  mapId?: number;
-  mapName?: string;
-  isAfk: boolean;
-  updatedAt: number;
-  sessionId: string;
-}
 
 interface PresenceUpdatePayload {
   guildId: string;
@@ -34,16 +22,6 @@ interface UseEventPresenceOptions {
 
 export type EventPresenceAccessState = "allowed" | "forbidden";
 
-type EventPresenceFetchPayload =
-  | {
-      status: "success";
-      players: Record<string, PlayerPresence[]>;
-    }
-  | {
-      status: "forbidden";
-      code: "ONLINE_PLAYERS_ACCESS_DENIED";
-    };
-
 export const useEventPresence = ({
   guildId,
   world,
@@ -56,6 +34,13 @@ export const useEventPresence = ({
     useState<EventPresenceAccessState>("allowed");
   const [refreshVersion, setRefreshVersion] = useState(0);
   const requestIdRef = useRef(0);
+  const [scope, setScope] = useState({ guildId, world });
+
+  if (scope.guildId !== guildId || scope.world !== world) {
+    setScope({ guildId, world });
+    setPresenceData(undefined);
+    setAccessState("allowed");
+  }
 
   const requestPresence = useEffectEvent(() => {
     if (!socket || !connected || !joined || !guildId || !world) return;
@@ -65,7 +50,7 @@ export const useEventPresence = ({
     socket.emit(
       GatewayEvent.EVENT_PRESENCE_FETCH,
       { guildId, world },
-      (response?: EventPresenceFetchPayload) => {
+      (response?: PlayerPresenceResponse) => {
         if (requestIdRef.current !== requestId || !response) return;
 
         if (response.status === "forbidden") {
@@ -151,14 +136,6 @@ export const useEventPresence = ({
   });
 
   useEffect(() => {
-    if (!guildId || !world) {
-      requestIdRef.current += 1;
-      setPresenceData(undefined);
-      setAccessState("allowed");
-    }
-  }, [guildId, world]);
-
-  useEffect(() => {
     if (!socket || !connected || !joined || !guildId || !world) {
       return;
     }
@@ -168,6 +145,7 @@ export const useEventPresence = ({
     socket.on(GatewayEvent.EVENT_PRESENCE_UPDATE, handleEventPresenceUpdate);
 
     return () => {
+      requestIdRef.current += 1;
       socket.off(GatewayEvent.EVENT_PRESENCE_UPDATE, handleEventPresenceUpdate);
     };
   }, [socket, connected, joined, guildId, world, refreshVersion]);

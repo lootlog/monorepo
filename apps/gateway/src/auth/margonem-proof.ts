@@ -57,10 +57,8 @@ export interface MargonemProofVerifier {
   ) => Effect.Effect<ProofVerification>;
 }
 
-const invalid = (
-  reason: string,
-): { readonly valid: false; readonly reason: string } => ({
-  valid: false,
+const invalid = (reason: string) => ({
+  valid: false as const,
   reason,
 });
 
@@ -94,7 +92,7 @@ const parseToken = (
 };
 
 export const makeMargonemProofVerifier = (
-  config: GatewayConfiguration,
+  config: Pick<GatewayConfiguration, "margonemSigningKeyUrl">,
   httpClient: HttpClientValue,
 ): MargonemProofVerifier => {
   let cachedKey: { readonly pem: string; readonly expiresAt: number } | null =

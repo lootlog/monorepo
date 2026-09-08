@@ -1,4 +1,4 @@
-import { Effect, Predicate } from "effect";
+import { Effect, Predicate, Schema } from "effect";
 import { resolveReservationSettings } from "@lootlog/domain/reservations";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
 import { getGuildCacheKey, GUILD_CACHE_TTL_SECONDS } from "#src/shared/cache";
@@ -13,13 +13,15 @@ interface GuildConfigurationCache {
   ) => Effect.Effect<void, unknown>;
 }
 
+const isBoolean = Schema.is(Schema.Boolean);
+
 export const decodeGuildConfigurationCache = (value: string) => {
   const guild = decodeJsonUnknown(value);
   if (
     !Predicate.isObject(guild) ||
     Array.isArray(guild) ||
-    typeof guild.groupFightsEnabled !== "boolean" ||
-    typeof guild.groupFightsIncludeIncomplete !== "boolean"
+    !isBoolean(guild.groupFightsEnabled) ||
+    !isBoolean(guild.groupFightsIncludeIncomplete)
   ) {
     throw new Error("Invalid or outdated guild cache");
   }

@@ -52,6 +52,8 @@
     "pg": "^8.23.0"
   },
   "devDependencies": {
+    "@effect/sql-pglite": "4.0.0-rc.112",
+    "@electric-sql/pglite": "^0.5.8",
     "@lootlog/typescript-config": "workspace:*",
     "@testcontainers/postgresql": "^12.1.0",
     "@types/bun": "catalog:",

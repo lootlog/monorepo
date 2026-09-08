@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+import { isObjectRecord } from "@lootlog/schema/records";
+import type { CSSPropertiesWithVariables } from "../types/css";
 import * as RechartsPrimitive from "recharts";
 
 import { cn } from "cn";
@@ -97,6 +99,9 @@ ${colorConfig
 
 const ChartTooltip = RechartsPrimitive.Tooltip;
 
+// Recharts retains arbitrary source-row fields for custom formatters and key lookup.
+type ChartSourceRow = Record<string, unknown>;
+
 type ChartPayloadItem = {
   dataKey?: string;
   name?: string;
@@ -104,7 +109,7 @@ type ChartPayloadItem = {
   type?: string;
   color?: string;
   fill?: string;
-  payload?: Record<string, unknown>;
+  payload?: ChartSourceRow;
 };
 
 const resolveTooltipItemKey = (
@@ -115,7 +120,14 @@ const resolveTooltipItemKey = (
 const resolveIndicatorColor = (
   color: string | undefined,
   item: ChartPayloadItem,
-): unknown => color || item.payload?.fill || item.color;
+): string | number | undefined => {
+  const fill = item.payload?.fill;
+  return (
+    color ||
+    (typeof fill === "string" || typeof fill === "number" ? fill : undefined) ||
+    item.color
+  );
+};
 
 function ChartTooltipContent({
   active,
@@ -144,7 +156,7 @@ function ChartTooltipContent({
     name: string,
     item: ChartPayloadItem,
     index: number,
-    payload: Record<string, unknown>,
+    payload: ChartSourceRow,
   ) => React.ReactNode;
   color?: string;
   hideLabel?: boolean;
@@ -156,7 +168,7 @@ function ChartTooltipContent({
 }) {
   const { config } = useChart();
 
-  const tooltipLabel = (() => {
+  const tooltipLabel = (function resolveTooltipLabel() {
     if (hideLabel || !payload?.length) {
       return null;
     }
@@ -166,7 +178,7 @@ function ChartTooltipContent({
     const itemConfig = getPayloadConfigFromPayload(config, item, key);
     const value =
       !labelKey && typeof label === "string"
-        ? config[label as keyof typeof config]?.label || label
+        ? config[label]?.label || label
         : itemConfig?.label;
 
     if (labelFormatter) {
@@ -205,6 +217,10 @@ function ChartTooltipContent({
             const key = resolveTooltipItemKey(nameKey, item);
             const itemConfig = getPayloadConfigFromPayload(config, item, key);
             const indicatorColor = resolveIndicatorColor(color, item);
+            const indicatorStyle: CSSPropertiesWithVariables = {
+              "--color-bg": indicatorColor,
+              "--color-border": indicatorColor,
+            };
 
             return (
               <div
@@ -239,12 +255,7 @@ function ChartTooltipContent({
                               "my-0.5": nestLabel && indicator === "dashed",
                             },
                           )}
-                          style={
-                            {
-                              "--color-bg": indicatorColor,
-                              "--color-border": indicatorColor,
-                            } as React.CSSProperties
-                          }
+                          style={indicatorStyle}
                         />
                       )
                     )}
@@ -341,37 +352,16 @@ function getPayloadConfigFromPayload(
   payload: unknown,
   key: string,
 ) {
-  if (typeof payload !== "object" || payload === null) {
-    return undefined;
-  }
-
-  const payloadPayload =
-    "payload" in payload &&
-    typeof payload.payload === "object" &&
-    payload.payload !== null
-      ? payload.payload
-      : undefined;
-
-  let configLabelKey: string = key;
-
-  if (
-    key in payload &&
-    typeof payload[key as keyof typeof payload] === "string"
-  ) {
-    configLabelKey = payload[key as keyof typeof payload] as string;
-  } else if (
-    payloadPayload &&
-    key in payloadPayload &&
-    typeof payloadPayload[key as keyof typeof payloadPayload] === "string"
-  ) {
-    configLabelKey = payloadPayload[
-      key as keyof typeof payloadPayload
-    ] as string;
-  }
-
-  return configLabelKey in config
-    ? config[configLabelKey]
-    : config[key as keyof typeof config];
+  if (!isObjectRecord(payload)) return undefined;
+  const nestedPayload = isObjectRecord(payload.payload)
+    ? payload.payload
+    : undefined;
+  const directKey = payload[key];
+  const nestedKey = nestedPayload?.[key];
+  let configLabelKey = key;
+  if (typeof directKey === "string") configLabelKey = directKey;
+  else if (typeof nestedKey === "string") configLabelKey = nestedKey;
+  return configLabelKey in config ? config[configLabelKey] : config[key];
 }
 
 export {

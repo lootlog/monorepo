@@ -1,52 +1,37 @@
-import type { QueryCacheNotifyEvent } from "@tanstack/react-query";
+import {
+  QueryClient,
+  QueryObserver,
+  type QueryCacheNotifyEvent,
+} from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
 import { shouldRefreshDocumentTitleFromQueryCacheEvent } from "./document-title-updater";
 
-const createQueryCacheEvent = (
-  type: QueryCacheNotifyEvent["type"],
-  queryKey: readonly unknown[],
-): QueryCacheNotifyEvent =>
-  ({
-    type,
-    query: {
-      queryKey,
-    },
-  }) as QueryCacheNotifyEvent;
-
 describe("shouldRefreshDocumentTitleFromQueryCacheEvent", () => {
-  it("refreshes title only when the watched query is updated", () => {
-    const queryKey = ["/battles/battle-1"] as const;
+  it("refreshes only for updates to the watched query and ignores observer events", () => {
+    const queryClient = new QueryClient();
+    const events: QueryCacheNotifyEvent[] = [];
+    const unsubscribe = queryClient
+      .getQueryCache()
+      .subscribe((event) => events.push(event));
+    const queryKey = ["/battles/battle-1"];
     const queryKeyHash = JSON.stringify(queryKey);
+    queryClient.setQueryData(queryKey, { id: "battle-1" });
+    queryClient.setQueryData(["/battles/battle-2"], { id: "battle-2" });
+    const observer = new QueryObserver(queryClient, {
+      queryKey,
+      enabled: false,
+    });
+    const unsubscribeObserver = observer.subscribe(() => {});
+    unsubscribeObserver();
+    unsubscribe();
 
-    expect(
-      shouldRefreshDocumentTitleFromQueryCacheEvent(
-        createQueryCacheEvent("updated", queryKey),
-        queryKeyHash,
-      ),
-    ).toBe(true);
-    expect(
-      shouldRefreshDocumentTitleFromQueryCacheEvent(
-        createQueryCacheEvent("updated", ["/battles/battle-2"]),
-        queryKeyHash,
-      ),
-    ).toBe(false);
-  });
-
-  it("ignores observer lifecycle events for the watched query", () => {
-    const queryKey = ["/battles/battle-1"] as const;
-    const queryKeyHash = JSON.stringify(queryKey);
-
-    expect(
-      shouldRefreshDocumentTitleFromQueryCacheEvent(
-        createQueryCacheEvent("observerAdded", queryKey),
-        queryKeyHash,
-      ),
-    ).toBe(false);
-    expect(
-      shouldRefreshDocumentTitleFromQueryCacheEvent(
-        createQueryCacheEvent("observerResultsUpdated", queryKey),
-        queryKeyHash,
-      ),
-    ).toBe(false);
+    expect(events.some((event) => event.type === "observerAdded")).toBe(true);
+    const refreshEvents = events.filter((event) =>
+      shouldRefreshDocumentTitleFromQueryCacheEvent(event, queryKeyHash),
+    );
+    expect(refreshEvents).toHaveLength(1);
+    expect(refreshEvents[0]?.query.queryKey).toEqual(queryKey);
+    expect(refreshEvents[0]?.type).toBe("updated");
+    queryClient.clear();
   });
 });

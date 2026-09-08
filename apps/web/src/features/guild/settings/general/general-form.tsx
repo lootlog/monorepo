@@ -28,11 +28,10 @@ import {
   invalidateGuildsControllerGetGuildById,
   useGuildsControllerGetGuildById,
   useGuildsControllerUpdateGuildConfig,
-} from "@lootlog/client/main";
-import {
   invalidateUsersControllerGetCurrentUserAccessibleGuilds,
   invalidateUsersControllerGetCurrentUserGuilds,
 } from "@lootlog/client/main";
+
 import {
   generalFormSchema,
   type GeneralFormValues,
@@ -115,7 +114,10 @@ export const GeneralForm = () => {
             ]);
           }
           toast.success(t("settings.general.toasts.updateSuccess"));
-          navigate({ to: `/${data.vanityUrl ?? data.id}/settings` as string });
+          navigate({
+            to: "/$guildId/settings",
+            params: { guildId: data.vanityUrl ?? data.id },
+          });
           form.reset({
             vanityUrl: data.vanityUrl ?? "",
             publicStatsCardEnabled: data.publicStatsCardEnabled,
@@ -139,7 +141,7 @@ export const GeneralForm = () => {
         onSubmit={form.handleSubmit(onSubmit)}
         className="w-full mx-auto pb-24"
       >
-        <div className="p-3">
+        <div className="px-3 pb-3">
           <SectionCard>
             <SectionCardHeader
               title={t("settings.general.vanityUrl.title")}
@@ -154,15 +156,13 @@ export const GeneralForm = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormControl
-                        render={
-                          <Input
-                            placeholder={t(
-                              "settings.general.vanityUrl.placeholder",
-                            )}
-                            className="h-9 max-w-xs"
-                            {...field}
-                          />
-                        }
+                        render=<Input
+                          placeholder={t(
+                            "settings.general.vanityUrl.placeholder",
+                          )}
+                          className="h-9 max-w-xs"
+                          {...field}
+                        />
                       />
                       <FormDescription className="text-xs mt-2">
                         {t("settings.general.vanityUrl.example")}{" "}

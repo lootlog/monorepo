@@ -1,9 +1,11 @@
-import { betterAuth } from "better-auth";
+import type { AuthProvider } from "#src/auth/auth-service";
+import { runLogEffect } from "@lootlog/instrumentation";
+import { betterAuth, type BetterAuthOptions } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin } from "better-auth/plugins/admin";
 import { bearer } from "better-auth/plugins/bearer";
 import { jwt } from "better-auth/plugins/jwt";
-import { Context, Effect, Layer } from "effect";
+import { Context, Effect, Layer, Schema } from "effect";
 import { AppConfig, reveal, type AuthConfig } from "#src/config/env";
 import { PostgresPool } from "@lootlog/database";
 import { drizzle } from "drizzle-orm/node-postgres";
@@ -18,6 +20,32 @@ export const DISCORD_AUTH_SCOPES = [
   "identify",
   "email",
 ] as const;
+
+const logBetterAuthEvent = (
+  level: Parameters<
+    NonNullable<NonNullable<BetterAuthOptions["logger"]>["log"]>
+  >[0],
+  message: unknown,
+) => {
+  const severity = {
+    debug: "Debug",
+    info: "Info",
+    warn: "Warn",
+    error: "Error",
+  } as const;
+  // Better Auth details may contain OAuth input or database query parameters.
+  runLogEffect(
+    Effect.logWithLevel(severity[level])(
+      Schema.is(Schema.String)(message) && message.trim() !== ""
+        ? message
+        : "Authentication event",
+      { context: "BetterAuth" },
+    ),
+  );
+};
+export const betterAuthLogger = {
+  log: logBetterAuthEvent,
+} satisfies BetterAuthOptions["logger"];
 
 export const createLootlogAuth = ({
   config,
@@ -36,8 +64,13 @@ export const createLootlogAuth = ({
     scopes: [...DISCORD_AUTH_SCOPES],
   });
 
+  const storageOptions: Pick<BetterAuthOptions, "secondaryStorage"> = {};
+  if (secondaryStorage !== undefined)
+    storageOptions.secondaryStorage = secondaryStorage;
+
   return betterAuth({
     appName: "@lootlog/auth",
+    logger: betterAuthLogger,
     baseURL: betterAuthBaseURL,
     database: drizzleAdapter(database, {
       provider: "pg",
@@ -54,7 +87,7 @@ export const createLootlogAuth = ({
         updateUserInfoOnLink: true,
       },
     },
-    ...(secondaryStorage === undefined ? {} : { secondaryStorage }),
+    ...storageOptions,
     ...discordAuthOptions,
     secret: reveal(config.authSecret),
     session: {
@@ -107,7 +140,10 @@ export type LootlogAuth = ReturnType<typeof createLootlogAuth>;
 
 export class BetterAuthRuntime extends Context.Service<
   BetterAuthRuntime,
-  LootlogAuth
+  AuthProvider &
+    Pick<LootlogAuth, "handler"> & {
+      readonly options: Pick<LootlogAuth["options"], "baseURL">;
+    }
 >()("@lootlog/auth/BetterAuthRuntime") {
   static readonly layer = Layer.effect(
     BetterAuthRuntime,

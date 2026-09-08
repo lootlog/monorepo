@@ -1,4 +1,4 @@
-import { isObjectRecord } from "@lootlog/schema/records";
+import { z } from "zod";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import {
@@ -41,32 +41,27 @@ const isBattleHpTimelineHeightMode = (
 ): value is BattleHpTimelineHeightMode =>
   value === "default" || value === "expanded";
 
-const parseStoredJson = (value: string | null) => {
-  if (!value) {
-    return;
-  }
-
-  try {
-    return JSON.parse(value) as unknown;
-  } catch {
-    return;
-  }
-};
+const storedLayers = z.record(
+  z.string(),
+  z.boolean().optional().catch(undefined),
+);
+const storedSettings = z.object({
+  heightMode: z.enum(["default", "expanded"]).optional().catch(undefined),
+  isChartHidden: z.boolean().optional().catch(undefined),
+  layers: storedLayers.optional().catch(undefined),
+});
 
 const readLegacyLayerConfig = () => {
-  if (typeof localStorage === "undefined") {
-    return;
-  }
-
-  const storedLayers = parseStoredJson(
-    localStorage.getItem(LEGACY_BATTLE_HP_TIMELINE_LAYERS_STORAGE_KEY),
+  if (typeof localStorage === "undefined") return;
+  const value = localStorage.getItem(
+    LEGACY_BATTLE_HP_TIMELINE_LAYERS_STORAGE_KEY,
   );
-
-  if (!isObjectRecord(storedLayers)) {
-    return;
+  if (!value) return;
+  try {
+    return storedLayers.safeParse(JSON.parse(value)).data;
+  } catch {
+    // Ignore malformed legacy preferences and use the defaults.
   }
-
-  return storedLayers as Partial<Record<string, boolean>>;
 };
 
 export const normalizeBattleHpTimelineSettingsState = (
@@ -77,7 +72,7 @@ export const normalizeBattleHpTimelineSettingsState = (
     ? state.heightMode
     : fallback.heightMode,
   isChartHidden:
-    typeof state?.isChartHidden === "boolean"
+    state?.isChartHidden === true || state?.isChartHidden === false
       ? state.isChartHidden
       : fallback.isChartHidden,
   layers: normalizeBattleHpTimelineLayerConfig(
@@ -135,9 +130,7 @@ export const useBattleHpTimelineSettingsStore =
         merge: (persistedState, currentState) => ({
           ...currentState,
           ...normalizeBattleHpTimelineSettingsState(
-            isObjectRecord(persistedState)
-              ? (persistedState as PartialBattleHpTimelineSettingsData)
-              : undefined,
+            storedSettings.safeParse(persistedState).data,
             currentState,
           ),
         }),

@@ -1,3 +1,4 @@
+import type { BoundaryDecoder } from "#src/shared/schema/json";
 import type { makeUserFeed } from "#src/feed/user-feed";
 import { Effect, Schema } from "effect";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
@@ -40,7 +41,7 @@ export interface RecordsServices {
   readonly lootAllocation: LootAllocationOperations;
 }
 
-const decode = <A>(decoder: (value: unknown) => A, value: unknown) =>
+const decode = <A>(decoder: BoundaryDecoder<A>, value: unknown) =>
   Effect.try({
     try: () => decoder(value),
     catch: (cause) => new RecordsDataError({ cause }),
@@ -58,18 +59,14 @@ const lootOperation = <A>(
   );
 
 const mutableNpcTypes = <
-  T extends { readonly npcTypes?: ReadonlyArray<unknown> },
+  Item,
+  T extends { readonly npcTypes?: ReadonlyArray<Item> },
 >(
   query: T,
-) =>
-  ({
-    ...query,
-    npcTypes: query.npcTypes ? [...query.npcTypes] : undefined,
-  }) as unknown as Omit<T, "npcTypes"> & {
-    npcTypes:
-      | (T["npcTypes"] extends ReadonlyArray<infer Item> ? Item[] : never)
-      | undefined;
-  };
+) => ({
+  ...query,
+  npcTypes: query.npcTypes ? [...query.npcTypes] : undefined,
+});
 
 const mutableLootQuery = <
   T extends {

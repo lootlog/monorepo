@@ -41,10 +41,12 @@ export const useEventMemberKillHistory = ({
   heroId,
   limit = 20,
 }: UseEventMemberKillHistoryOptions) => {
-  const baseParams = {
+  const baseParams: NonNullable<
+    Parameters<typeof eventsRankingControllerGetMemberKillHistory>[1]
+  > = {
     limit: String(limit),
-    ...(heroId ? { heroId } : {}),
   };
+  if (heroId) baseParams.heroId = heroId;
 
   return useCursorInfiniteQuery({
     queryKey: getEventsRankingControllerGetMemberKillHistoryQueryKey(
@@ -58,7 +60,7 @@ export const useEventMemberKillHistory = ({
           ...baseParams,
           cursor,
         },
-      ) as Promise<EventMemberKillHistoryResponse>,
+      ),
     enabled: !!guildId && !!eventId && !!memberId,
   });
 };

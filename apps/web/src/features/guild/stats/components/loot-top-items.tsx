@@ -5,7 +5,6 @@ import { SectionCardContent } from "@/components/common/section-card/section-car
 import { ItemImage } from "@lootlog/ui/components/item-image";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useTranslation } from "react-i18next";
-import type { ItemRarity } from "@/lib/loots/loot-types";
 import type { LootStatsResponseDtoOutputTopItemsItem } from "@lootlog/client/main";
 
 type LootTopItemsProps = {
@@ -58,7 +57,7 @@ export const LootTopItems: React.FC<LootTopItemsProps> = ({
         <div className="space-y-2">
           {data.map((item) => (
             <div key={item.itemId} className="flex items-center gap-3">
-              <ItemImage rarity={item.rarity as ItemRarity} icon={item.icon} />
+              <ItemImage rarity={item.rarity} icon={item.icon} />
               <span className="flex-1 truncate text-sm">{item.name}</span>
               <span className="text-muted-foreground tabular-nums text-sm">
                 {item.count}x

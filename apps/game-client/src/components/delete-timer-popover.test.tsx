@@ -1,147 +1,95 @@
-import type * as OriginalModule from "@/components/ui/popover";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { ReactNode } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { expect, it, onTestFinished, vi } from "vitest";
 import { Permission } from "@lootlog/schema/permissions";
-import type * as ReactQueryModule from "@tanstack/react-query";
-
-const mockUseQueries = vi.fn();
-
-let mockGuilds = [
-  { id: "guild-1", name: "Alpha", icon: null, ownerId: "owner-1" },
-  { id: "guild-2", name: "Beta", icon: null, ownerId: "owner-1" },
-];
-
-vi.mock("@tanstack/react-query", async () => {
-  const actual = await vi.importActual<typeof ReactQueryModule>(
-    "@tanstack/react-query",
-  );
-
-  return {
-    ...actual,
-    useQueries: (...args: unknown[]) => mockUseQueries(...args),
-  };
-});
-
-vi.mock("@lootlog/client/main", async () => ({
-  ...(await vi.importActual("@lootlog/client/main")),
-  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey: () => ["guilds"],
-  useUsersControllerGetCurrentUserAccessibleGuilds: () => ({
-    data: mockGuilds,
-  }),
-  getGuildsControllerGetGuildPermissionsQueryKey: ({
-    guildId,
-  }: {
-    guildId: string;
-  }) => ["permissions", guildId],
-  guildsControllerGetGuildPermissions: vi.fn(),
-}));
-
-vi.mock("@/components/ui/popover", async (importOriginal) => ({
-  ...(await importOriginal<typeof OriginalModule>()),
-  Popover: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  PopoverTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
-  PopoverContent: ({ children }: { children: ReactNode }) => (
-    <div>{children}</div>
-  ),
-}));
-
-vi.mock("@/components/ui/context-menu", () => ({
-  ContextMenuItem: ({
-    children,
-    onClick,
-    onSelect,
-  }: {
-    children: ReactNode;
-    onClick?: () => void;
-    onSelect?: (event: { preventDefault: () => void }) => void;
-  }) => (
-    <button
-      type="button"
-      onClick={() => {
-        onSelect?.({ preventDefault: vi.fn() });
-        onClick?.();
-      }}
-    >
-      {children}
-    </button>
-  ),
-}));
-
+import {
+  getGuildsControllerGetGuildPermissionsQueryKey,
+  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
+} from "@lootlog/client/main";
+import { createTimerHttpFixture } from "@/features/timers/timer-http-fixtures";
+import {
+  createTimerFixture,
+  createTimerGuildFixture,
+} from "@/features/timers/timer-fixtures";
+import {
+  ContextMenu,
+  ContextMenuTrigger,
+  ContextMenuContent,
+} from "./ui/context-menu";
 import { DeleteTimerPopover } from "./delete-timer-popover";
 
-const timer = {
-  mergedGuildIds: [
-    { guildId: "guild-1", npcId: 10, timerKey: "timer-1" },
-    { guildId: "guild-2", npcId: 10, timerKey: "timer-2" },
-  ],
-} as never;
-
-describe("DeleteTimerPopover", () => {
-  beforeEach(() => {
-    mockUseQueries.mockReset();
-    mockGuilds = [
-      { id: "guild-1", name: "Alpha", icon: null, ownerId: "owner-1" },
-      { id: "guild-2", name: "Beta", icon: null, ownerId: "owner-1" },
-    ];
+const setup = async (permissions: Permission[][] | null) => {
+  const fixture = createTimerHttpFixture(
+    () => new Promise<Response>(() => undefined),
+  );
+  onTestFinished(fixture.cleanup);
+  fixture.queryClient.setQueryData(
+    getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
+    [
+      createTimerGuildFixture(),
+      createTimerGuildFixture({ id: "guild-2", name: "Beta" }),
+    ],
+  );
+  permissions?.forEach((data, index) =>
+    fixture.queryClient.setQueryData(
+      getGuildsControllerGetGuildPermissionsQueryKey({
+        guildId: `guild-${index + 1}`,
+      }),
+      data,
+    ),
+  );
+  const onDeleteTimer = vi.fn<(guildId: string, timerKey: string) => void>();
+  const timer = {
+    ...createTimerFixture(),
+    minTimeLeft: 0,
+    maxTimeLeft: 0,
+    mergedGuildIds: [
+      { guildId: "guild-1", npcId: 10, timerKey: "timer-1" },
+      { guildId: "guild-2", npcId: 10, timerKey: "timer-2" },
+    ],
+  };
+  render(
+    <QueryClientProvider client={fixture.queryClient}>
+      <ContextMenu>
+        <ContextMenuTrigger>Timer</ContextMenuTrigger>
+        <ContextMenuContent>
+          <DeleteTimerPopover timer={timer} onDeleteTimer={onDeleteTimer} />
+        </ContextMenuContent>
+      </ContextMenu>
+    </QueryClientProvider>,
+  );
+  const user = userEvent.setup();
+  await user.pointer({
+    target: screen.getByText("Timer"),
+    keys: "[MouseRight]",
   });
-
-  it("returns nothing when no merged guild has delete permissions", () => {
-    mockUseQueries.mockReturnValue([{ data: [] }, { data: [] }]);
-
-    const { container } = render(
-      <DeleteTimerPopover timer={timer} onDeleteTimer={vi.fn()} />,
-    );
-
-    expect(container).toBeEmptyDOMElement();
-  });
-
-  it("shows a pending item while delete permissions load", () => {
-    mockUseQueries.mockReturnValue([
-      { data: undefined, isPending: true },
-      { data: undefined, isPending: true },
-    ]);
-
-    render(<DeleteTimerPopover timer={timer} onDeleteTimer={vi.fn()} />);
-
-    expect(screen.getByText("Sprawdzanie uprawnień...")).toBeVisible();
-    expect(screen.queryByText("Usuń timer")).not.toBeInTheDocument();
-  });
-
-  it("treats LOOTLOG_TIMERS_DELETE as sufficient permission for single-guild delete", async () => {
-    const user = userEvent.setup();
-    const onDeleteTimer = vi.fn();
-
-    mockUseQueries.mockReturnValue([
-      { data: [Permission.LOOTLOG_TIMERS_DELETE] },
-      { data: [] },
-    ]);
-
-    render(<DeleteTimerPopover timer={timer} onDeleteTimer={onDeleteTimer} />);
-
-    await user.click(screen.getByRole("button", { name: "Usuń timer" }));
-
-    expect(onDeleteTimer).toHaveBeenCalledWith("guild-1", "timer-1");
-  });
-
-  it("renders a guild chooser when multiple guilds can delete the timer", async () => {
-    const user = userEvent.setup();
-    const onDeleteTimer = vi.fn();
-
-    mockUseQueries.mockReturnValue([
-      { data: [Permission.ADMIN] },
-      { data: [Permission.OWNER] },
-    ]);
-
-    render(<DeleteTimerPopover timer={timer} onDeleteTimer={onDeleteTimer} />);
-
-    expect(
-      screen.getByText("Wybierz serwer do usunięcia timera:"),
-    ).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "Beta" }));
-
-    expect(onDeleteTimer).toHaveBeenCalledWith("guild-2", "timer-2");
-  });
+  return { user, onDeleteTimer };
+};
+it("hides deletion when neither organization permits it", async () => {
+  await setup([[], []]);
+  expect(screen.queryByText("Usuń timer")).not.toBeInTheDocument();
+});
+it("shows pending permissions without exposing deletion", async () => {
+  await setup(null);
+  expect(screen.getByText("Sprawdzanie uprawnień...")).toBeVisible();
+  expect(screen.queryByText("Usuń timer")).not.toBeInTheDocument();
+});
+it("accepts LOOTLOG_TIMERS_DELETE for a single organization", async () => {
+  const { user, onDeleteTimer } = await setup([
+    [Permission.LOOTLOG_TIMERS_DELETE],
+    [],
+  ]);
+  await user.click(screen.getByRole("menuitem", { name: "Usuń timer" }));
+  expect(onDeleteTimer).toHaveBeenCalledWith("guild-1", "timer-1");
+});
+it("keeps the organization chooser open until its target is selected", async () => {
+  const { user, onDeleteTimer } = await setup([
+    [Permission.ADMIN],
+    [Permission.OWNER],
+  ]);
+  await user.click(screen.getByRole("menuitem", { name: "Usuń timer" }));
+  expect(screen.getByText("Wybierz serwer do usunięcia timera:")).toBeVisible();
+  await user.click(screen.getByRole("button", { name: "Beta" }));
+  expect(onDeleteTimer).toHaveBeenCalledWith("guild-2", "timer-2");
 });

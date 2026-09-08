@@ -1,10 +1,14 @@
-import { createItemStatsHash } from "@lootlog/database/snapshot-hash";
+import {
+  createItemStatsHash,
+  createPlayerSnapshotHash,
+} from "@lootlog/database/snapshot-hash";
 import { buildTimerKey } from "@lootlog/api/timers/timer-key";
 import {
   guildTable,
   itemSnapshotTable,
   lootCommentTable,
   lootItemTable,
+  lootMapPlayerTable,
   lootNpcTable,
   lootPlayerTable,
   lootSubmissionTable,
@@ -36,7 +40,6 @@ import { fileURLToPath } from "node:url";
 import { and, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
-import { createHash } from "node:crypto";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -48,40 +51,40 @@ const mainPool = new pg.Pool({
 });
 const mainDatabase = drizzle({ client: mainPool });
 
-const ITEM_TYPES: Readonly<Record<number, string>> = {
-  1: "ONE_HAND_WEAPON",
-  2: "TWO_HAND_WEAPON",
-  3: "ONE_AND_HALF_HAND_WEAPON",
-  4: "DISTANCE_WEAPON",
-  5: "HELP_WEAPON",
-  6: "WAND_WEAPON",
-  7: "ORB_WEAPON",
-  8: "ARMOR",
-  9: "HELMET",
-  10: "BOOTS",
-  11: "GLOVES",
-  12: "RING",
-  13: "NECKLACE",
-  14: "SHIELD",
-  15: "NEUTRAL",
-  16: "CONSUME",
-  17: "GOLD",
-  18: "KEYS",
-  19: "QUEST",
-  20: "RENEWABLE",
-  21: "ARROWS",
-  22: "TALISMAN",
-  23: "BOOK",
-  24: "BAG",
-  25: "BLESS",
-  26: "UPGRADE",
-  27: "RECIPE",
-  28: "COINAGE",
-  29: "QUIVER",
-  30: "OUTFITS",
-  31: "PETS",
-  32: "TELEPORTS",
-};
+const ITEM_TYPES = new Map<number, string>([
+  [1, "ONE_HAND_WEAPON"],
+  [2, "TWO_HAND_WEAPON"],
+  [3, "ONE_AND_HALF_HAND_WEAPON"],
+  [4, "DISTANCE_WEAPON"],
+  [5, "HELP_WEAPON"],
+  [6, "WAND_WEAPON"],
+  [7, "ORB_WEAPON"],
+  [8, "ARMOR"],
+  [9, "HELMET"],
+  [10, "BOOTS"],
+  [11, "GLOVES"],
+  [12, "RING"],
+  [13, "NECKLACE"],
+  [14, "SHIELD"],
+  [15, "NEUTRAL"],
+  [16, "CONSUME"],
+  [17, "GOLD"],
+  [18, "KEYS"],
+  [19, "QUEST"],
+  [20, "RENEWABLE"],
+  [21, "ARROWS"],
+  [22, "TALISMAN"],
+  [23, "BOOK"],
+  [24, "BAG"],
+  [25, "BLESS"],
+  [26, "UPGRADE"],
+  [27, "RECIPE"],
+  [28, "COINAGE"],
+  [29, "QUIVER"],
+  [30, "OUTFITS"],
+  [31, "PETS"],
+  [32, "TELEPORTS"],
+]);
 
 // Use separate connection string for battlelog if provided
 const battlelogConnectionUri =
@@ -108,6 +111,7 @@ async function cleanDatabase() {
     await transaction.delete(lootItemTable);
     await transaction.delete(lootNpcTable);
     await transaction.delete(lootPlayerTable);
+    await transaction.delete(lootMapPlayerTable);
     await transaction.delete(organizationLootRecordTable);
     await transaction.delete(lootTable);
     await transaction.delete(itemSnapshotTable);
@@ -290,7 +294,7 @@ async function findOrCreateItemSnapshot(
       icon: item.icon,
       lvl: parsedStats["lvl"] ? Number(parsedStats["lvl"]) : 0,
       rarity: item.rarity,
-      itemType: ITEM_TYPES[item.cl],
+      itemType: ITEM_TYPES.get(item.cl),
       statRaw: item.stat,
       statsSnapshot: parsedStats,
     })
@@ -327,9 +331,11 @@ async function findOrCreatePlayerSnapshot(
 ) {
   const accountId = Number(player.accountId);
   const characterId = Number(player.characterId);
-  const snapshotHash = createHash("sha256")
-    .update(`${player.name}${player.prof}${player.icon}`)
-    .digest("hex");
+  const snapshotHash = createPlayerSnapshotHash(
+    player.name,
+    player.prof,
+    player.icon,
+  );
   const inserted = await transaction
     .insert(playerSnapshotTable)
     .values({
@@ -405,9 +411,9 @@ async function seedLoots(count: number, guilds: SeedGuild[]) {
       const insertedLoots = await transaction
         .insert(lootTable)
         .values({
-          uniqueId: `loot-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
+          uniqueId: `loot-${Date.now()}-${crypto.randomUUID()}`,
           world: loot.world,
-          source: loot.source as "LOOTBOX" | "DIALOG" | "FIGHT",
+          source: loot.source,
           location: loot.location,
           lootShare: loot.lootShare,
           updatedAt: new Date(),
@@ -597,6 +603,7 @@ async function seedTimers(guilds: SeedGuild[]) {
 
       if (!creatorMember || !randomNpc?.id) continue;
 
+      // SAFETY: Math.random() is in [0, 1), so this index is one of the three defined entries.
       const randomWorld = ["gordion", "classic", "katahha"][
         Math.floor(Math.random() * 3)
       ] as string;
@@ -764,7 +771,7 @@ async function seedBattles(count: number) {
   const battlesGenerator = new BattlesGenerator();
   await battlesGenerator.initialize();
 
-  const accountId = `account-${Math.random().toString(36).substring(2, 11)}`;
+  const accountId = `account-${crypto.randomUUID()}`;
   const characterId = `${Math.floor(Math.random() * 1000)}`;
 
   const battles = battlesGenerator.generateMultiple(
@@ -778,7 +785,7 @@ async function seedBattles(count: number) {
 
   for (const battlePayload of battles) {
     try {
-      const analysis = processor.processBattle(battlePayload as any);
+      const analysis = processor.processBattle(battlePayload);
 
       const totalPH = analysis.warriors.reduce(
         (sum, warrior) => sum + (warrior.ph || 0),

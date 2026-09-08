@@ -1,11 +1,9 @@
-export const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL as string;
+export const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL;
 export const resolveGatewaySocketPath = (environment: {
   readonly VITE_GATEWAY_SOCKET_PATH?: string;
 }) => environment.VITE_GATEWAY_SOCKET_PATH ?? "/ws";
 export const GATEWAY_SOCKET_PATH = resolveGatewaySocketPath({
-  VITE_GATEWAY_SOCKET_PATH: import.meta.env.VITE_GATEWAY_SOCKET_PATH as
-    | string
-    | undefined,
+  VITE_GATEWAY_SOCKET_PATH: import.meta.env.VITE_GATEWAY_SOCKET_PATH,
 });
 
 export enum GatewayEvent {
@@ -31,6 +29,7 @@ export enum GatewayEvent {
   RESERVATIONS_DELETE = "reservations-delete",
   RESERVATIONS_CHANGED = "reservations-changed",
   NOTIFICATION = "notifications-send",
+  NOTIFICATIONS_VOLUNTEER = "notifications-volunteer",
   MEMBERS_REFRESH_JOB_UPDATE = "members-refresh-job-update",
 
   // Event map presence

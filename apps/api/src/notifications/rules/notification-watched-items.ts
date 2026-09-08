@@ -23,7 +23,7 @@ import {
   WatchedItemSnapshotResponse,
 } from "#src/notifications/notification-response.schema";
 import { Error as NotificationError } from "#src/notifications/error";
-import type { JsonValue } from "#src/notifications/notification-database.types";
+
 import {
   NotificationOwnerType,
   NotificationTargetType,
@@ -79,7 +79,7 @@ export const makeNotificationWatchedItems = (
         const values = result.get(link.ruleId) ?? [];
         values.push({
           ...link,
-          target: { ...target, metadata: target.metadata as JsonValue | null },
+          target: { ...target, metadata: target.metadata },
         });
         result.set(link.ruleId, values);
       }
@@ -249,7 +249,7 @@ export const makeNotificationWatchedItems = (
           ),
         );
       }
-      return [...new Set(resolved as string[])].sort();
+      return [...new Set(resolved)].sort();
     },
   );
 
@@ -292,18 +292,10 @@ export const makeNotificationWatchedItems = (
       );
     }
     const existing = yield* findByScope(discordId, params.itemId, params.world);
-    const currentFilters =
-      existing?.notificationRule?.filters &&
-      typeof existing.notificationRule.filters === "object" &&
-      !Array.isArray(existing.notificationRule.filters)
-        ? existing.notificationRule.filters
-        : null;
+    const currentFilters = existing?.notificationRule?.filters ?? null;
     const guildIds = params.mergeGuilds
       ? [
-          ...new Set([
-            ...((currentFilters?.guildIds as string[] | undefined) ?? []),
-            ...params.guildIds,
-          ]),
+          ...new Set([...(currentFilters?.guildIds ?? []), ...params.guildIds]),
         ].sort()
       : [...params.guildIds];
     if (!existing) {

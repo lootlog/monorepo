@@ -21,7 +21,7 @@ import { Input } from "@lootlog/ui/components/input";
 
 import { toast } from "sonner";
 import { PERMISSION_CATEGORIES as PERMISSION_GROUPS } from "../constants/permission-categories";
-import type { Permission } from "@lootlog/schema/permissions";
+import { Permission } from "@lootlog/schema/permissions";
 import {
   Accordion,
   AccordionContent,
@@ -37,8 +37,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   invalidateRolesControllerGetGuildRoles,
   useRolesControllerUpdateGuildRole,
+  type RoleResponseDtoOutput as GuildRole,
 } from "@lootlog/client/main";
-import type { RoleResponseDtoOutput as GuildRole } from "@lootlog/client/main";
 
 // Flatten for form schema and submission
 const PERMISSIONS = PERMISSION_GROUPS.flatMap((group) => group.permissions);
@@ -69,13 +69,7 @@ const formSchema = z.object({
       if (num < 0) return DEFAULT_LVL_RANGE_FROM;
       return String(num);
     }),
-  ...PERMISSIONS.reduce(
-    (acc, p) => {
-      acc[p] = z.boolean();
-      return acc;
-    },
-    {} as Record<string, z.ZodTypeAny>,
-  ),
+  permissions: z.partialRecord(z.enum(Permission), z.boolean()),
 });
 
 type FormSchemaType = z.infer<typeof formSchema>;
@@ -96,12 +90,11 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
     defaultValues: {
       lvlRangeFrom: role.lvlRangeFrom?.toString() ?? DEFAULT_LVL_RANGE_FROM,
       lvlRangeTo: role.lvlRangeTo?.toString() ?? DEFAULT_LVL_RANGE_TO,
-      ...PERMISSIONS.reduce(
-        (acc, p) => ({
-          ...acc,
-          [p]: !!role.permissions.includes(p),
-        }),
-        {} as Record<Permission, boolean>,
+      permissions: Object.fromEntries(
+        PERMISSIONS.map((permission) => [
+          permission,
+          role.permissions.includes(permission),
+        ]),
       ),
     },
   });
@@ -110,12 +103,11 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
     form.reset({
       lvlRangeFrom: role.lvlRangeFrom?.toString() ?? DEFAULT_LVL_RANGE_FROM,
       lvlRangeTo: role.lvlRangeTo?.toString() ?? DEFAULT_LVL_RANGE_TO,
-      ...PERMISSIONS.reduce(
-        (acc, p) => ({
-          ...acc,
-          [p]: !!role.permissions.includes(p),
-        }),
-        {} as Record<Permission, boolean>,
+      permissions: Object.fromEntries(
+        PERMISSIONS.map((permission) => [
+          permission,
+          role.permissions.includes(permission),
+        ]),
       ),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -129,10 +121,7 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
         pathParams: { guildId: guildId ?? "", roleId: role.id },
         data: {
           permissions: PERMISSIONS.filter(
-            (p) =>
-              values[
-                p as unknown as keyof FormSchemaType
-              ] as unknown as boolean,
+            (permission) => values.permissions[permission],
           ),
           lvlRangeFrom: Number(values.lvlRangeFrom),
           lvlRangeTo: Number(values.lvlRangeTo),
@@ -150,12 +139,11 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
             lvlRangeFrom:
               response.lvlRangeFrom?.toString() ?? DEFAULT_LVL_RANGE_FROM,
             lvlRangeTo: response.lvlRangeTo?.toString() ?? DEFAULT_LVL_RANGE_TO,
-            ...PERMISSIONS.reduce(
-              (acc, p) => ({
-                ...acc,
-                [p]: response.permissions.includes(p),
-              }),
-              {} as Record<Permission, boolean>,
+            permissions: Object.fromEntries(
+              PERMISSIONS.map((permission) => [
+                permission,
+                response.permissions.includes(permission),
+              ]),
             ),
           });
         },
@@ -186,16 +174,14 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
                 render={({ field }) => (
                   <FormItem className="flex-1 max-w-[100px]">
                     <FormControl
-                      render={
-                        <Input
-                          placeholder={DEFAULT_LVL_RANGE_FROM}
-                          type="number"
-                          max={500}
-                          min={0}
-                          className="h-9"
-                          {...field}
-                        />
-                      }
+                      render=<Input
+                        placeholder={DEFAULT_LVL_RANGE_FROM}
+                        type="number"
+                        max={500}
+                        min={0}
+                        className="h-9"
+                        {...field}
+                      />
                     />
                     <FormMessage />
                   </FormItem>
@@ -208,16 +194,14 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
                 render={({ field }) => (
                   <FormItem className="flex-1 max-w-[100px]">
                     <FormControl
-                      render={
-                        <Input
-                          placeholder={DEFAULT_LVL_RANGE_TO}
-                          type="number"
-                          max={500}
-                          min={0}
-                          className="h-9"
-                          {...field}
-                        />
-                      }
+                      render=<Input
+                        placeholder={DEFAULT_LVL_RANGE_TO}
+                        type="number"
+                        max={500}
+                        min={0}
+                        className="h-9"
+                        {...field}
+                      />
                     />
                     <FormMessage />
                   </FormItem>
@@ -236,7 +220,7 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
             {PERMISSION_GROUPS.map((group) => {
               const IconComponent = group.icon;
               const enabledCount = group.permissions.filter((p) =>
-                form.watch(p as unknown as keyof FormSchemaType),
+                form.watch(`permissions.${p}`),
               ).length;
 
               return (
@@ -264,7 +248,7 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
                           <FormField
                             key={perm}
                             control={form.control}
-                            name={perm as unknown as keyof FormSchemaType}
+                            name={`permissions.${perm}`}
                             render={({ field }) => (
                               <FormItem
                                 className={cn(
@@ -274,12 +258,10 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
                                 )}
                               >
                                 <FormControl
-                                  render={
-                                    <Checkbox
-                                      checked={!!field.value}
-                                      onCheckedChange={field.onChange}
-                                    />
-                                  }
+                                  render=<Checkbox
+                                    checked={!!field.value}
+                                    onCheckedChange={field.onChange}
+                                  />
                                 />
                                 <div className="space-y-0.5 leading-none flex-1">
                                   <FormLabel className="text-sm font-medium cursor-pointer after:absolute after:inset-0">

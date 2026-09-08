@@ -1,12 +1,11 @@
-import { PageHeader } from "@/components/common/page-header";
-import { useEffect, type FC } from "react";
+import { useEffect, useEffectEvent, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearch } from "@tanstack/react-router";
-import { Palette } from "lucide-react";
 import { useTheme } from "@/hooks/context/use-theme";
 import { ThemeCard } from "@lootlog/ui/components/theme-card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { THEME_CATALOG, THEME_IDS, type ThemeId } from "@/themes";
+import { THEME_CATALOG } from "@/themes/catalog";
+import { isThemeId } from "@/themes/resolver";
 
 export const AppearanceSettings: FC = () => {
   const { theme, setTheme } = useTheme();
@@ -14,26 +13,20 @@ export const AppearanceSettings: FC = () => {
     from: "/_authenticated/@me/settings/appearance",
   });
 
-  useEffect(() => {
-    if (
-      themeParam &&
-      (THEME_IDS as readonly string[]).includes(themeParam) &&
-      themeParam !== theme
-    ) {
-      setTheme(themeParam as ThemeId);
+  const applyThemeParam = useEffectEvent(() => {
+    if (themeParam && isThemeId(themeParam) && themeParam !== theme) {
+      setTheme(themeParam);
     }
+  });
+  useEffect(() => {
+    applyThemeParam();
   }, [themeParam]);
   const { t } = useTranslation();
 
   return (
     <ScrollArea className="h-full">
       <div className="px-3 pb-3 flex flex-col gap-4">
-        <PageHeader
-          icon={Palette}
-          title={t("settings.appearance.title")}
-          description={t("settings.appearance.description")}
-        />
-
+        <h1 className="sr-only">{t("settings.appearance.title")}</h1>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {THEME_CATALOG.map((themeOption) => (
             <ThemeCard
@@ -46,7 +39,7 @@ export const AppearanceSettings: FC = () => {
               colors={themeOption.colors}
               backgroundImage={themeOption.backgroundImage}
               isActive={theme === themeOption.name}
-              onClick={() => setTheme(themeOption.name as typeof theme)}
+              onClick={() => setTheme(themeOption.name)}
             />
           ))}
         </div>

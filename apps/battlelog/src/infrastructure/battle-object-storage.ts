@@ -1,3 +1,4 @@
+import type { RawBattleData } from "#src/battles/battle-service";
 import {
   S3Client,
   PutObjectCommand,
@@ -42,7 +43,10 @@ export const makeBattleObjectStorage = (
   logger.log(`R2 client initialized for bucket: ${config.bucketName}`);
 
   const objectStorage = {
-    async uploadBattleData(battleId: string, data: unknown): Promise<void> {
+    async uploadBattleData(
+      battleId: string,
+      data: RawBattleData,
+    ): Promise<void> {
       try {
         const key = `battles/${battleId}.json`;
         const jsonString = JSON.stringify(data);

@@ -11,6 +11,16 @@ export function StatisticsOverview({
   data: UserKillAnalyticsResponseDtoOutput;
 }) {
   const { t } = useTranslation();
+  const dateFormatter = new Intl.DateTimeFormat("pl-PL", {
+    timeZone: data.meta.timezone,
+  });
+  const previousStart = new Date(data.meta.startDate);
+  previousStart.setUTCDate(previousStart.getUTCDate() - data.meta.days);
+  const ranges = {
+    current: `${dateFormatter.format(new Date(data.meta.startDate))} – ${dateFormatter.format(new Date(data.comparison.currentThrough))}`,
+    previous: `${dateFormatter.format(previousStart)} – ${dateFormatter.format(new Date(data.comparison.previousThrough))}`,
+    change: null,
+  };
   const metrics = {
     total: data.overview.totalKills,
     activeDays: data.overview.activeDays,
@@ -58,14 +68,17 @@ export function StatisticsOverview({
         />
         <SectionCardContent>
           <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {[
-              { key: "current", value: data.comparison.currentKills },
-              { key: "previous", value: data.comparison.previousKills },
-              { key: "change", value: data.comparison.deltaKills },
-            ].map(({ key, value }) => (
+            {(
+              [
+                { key: "current", value: data.comparison.currentKills },
+                { key: "previous", value: data.comparison.previousKills },
+                { key: "change", value: data.comparison.deltaKills },
+              ] satisfies Array<{ key: keyof typeof ranges; value: number }>
+            ).map(({ key, value }) => (
               <div key={key}>
                 <dt className="text-xs text-muted-foreground">
                   {t(`statistics.${key}`)}
+                  {ranges[key] && ` (${ranges[key]})`}
                 </dt>
                 <dd className="text-xl font-semibold tabular-nums">
                   {value.toLocaleString("pl-PL")}
@@ -83,11 +96,6 @@ export function StatisticsOverview({
               </dd>
             </div>
           </dl>
-          {data.comparison.partial && (
-            <p className="mt-3 text-xs text-muted-foreground">
-              {t("statistics.partial")}
-            </p>
-          )}
         </SectionCardContent>
       </SectionCard>
       <SectionCard>

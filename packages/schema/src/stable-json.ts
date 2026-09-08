@@ -1,6 +1,8 @@
+import { isRecord } from "./records.js";
+
 export const stableJsonStringify = (value: unknown): string =>
   JSON.stringify(value, (_key, entry) =>
-    entry && typeof entry === "object" && !Array.isArray(entry)
+    isRecord(entry)
       ? Object.fromEntries(
           Object.keys(entry)
             .sort()

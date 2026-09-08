@@ -33,18 +33,16 @@ export const PlayerTile: FC<PlayerTileProps> = ({
     <TooltipProvider key={id} delay={100}>
       <Tooltip>
         <TooltipTrigger
-          render={
-            <PlayerSpriteTile
-              icon={icon}
-              idx={idx}
-              color={color}
-              className={className}
-              cdnBaseUrl={cdnBaseUrl}
-              wrapperClassName="relative ring-0 outline-none"
-              tileClassName="bg-transparent transition-none hover:bg-transparent"
-              defaultBadgeColor="transparent"
-            />
-          }
+          render=<PlayerSpriteTile
+            icon={icon}
+            idx={idx}
+            color={color}
+            className={className}
+            cdnBaseUrl={cdnBaseUrl}
+            wrapperClassName="relative ring-0 outline-none"
+            tileClassName="bg-transparent transition-none hover:bg-transparent"
+            defaultBadgeColor="transparent"
+          />
         />
         <TooltipContent>
           <p>

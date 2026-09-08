@@ -4,11 +4,15 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { CalendarDays } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useListMyReservations } from "@lootlog/client/main";
-import type { MyReservationsResponseDtoItemsItem } from "@lootlog/client/main";
+import {
+  useListMyReservations,
+  type MyReservationsResponseDtoItemsItem,
+} from "@lootlog/client/main";
+
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { ROUTES } from "@/config/routes";
+import { StatisticsQueryState } from "@/features/user/statistics/statistics-query-state";
 import { EditMyReservationDialog } from "./edit-my-reservation-dialog";
 import { MyReservationListItem } from "./my-reservation-list-item";
 import { useCancelMyReservation } from "./use-cancel-my-reservation";
@@ -30,42 +34,54 @@ export function MyReservationsCard() {
         icon={CalendarDays}
         title={t("reservations.my.title")}
         actions={
-          <ChevronLink render={<Link to={ROUTES.user.reservations} />}>
+          <ChevronLink render=<Link to={ROUTES.user.reservations} />>
             {t("reservations.my.showAll")}
           </ChevronLink>
         }
       />
       <SectionCardContent className="flex flex-1 flex-col p-0">
-        {reservations.length ? (
-          <ul>
-            {reservations.map((reservation) => (
-              <MyReservationListItem
-                key={reservation.id}
-                reservation={reservation}
-                showEdit
-                showCancel
-                cancelDisabled={cancelMutation.isPending}
-                cancelPending={
-                  cancelMutation.isPending &&
-                  cancelMutation.variables?.pathParams.reservationId ===
-                    reservation.id
-                }
-                onEdit={() => setEditingReservation(reservation)}
-                onCancel={() =>
-                  cancelMutation.mutate({
-                    pathParams: { reservationId: reservation.id },
-                  })
-                }
-              />
-            ))}
-          </ul>
-        ) : (
-          <p className="flex flex-1 items-center justify-center px-4 py-8 text-center text-sm text-muted-foreground">
-            {query.isPending
-              ? t("common.loading")
-              : t("reservations.my.emptyUpcoming")}
-          </p>
-        )}
+        <StatisticsQueryState
+          query={query}
+          centered
+          errorMessage={t("reservations.loadError")}
+          loading={
+            <p
+              role="status"
+              className="flex flex-1 items-center justify-center px-4 py-8 text-center text-sm text-muted-foreground"
+            >
+              {t("common.loading")}
+            </p>
+          }
+        >
+          {reservations.length ? (
+            <ul>
+              {reservations.map((reservation) => (
+                <MyReservationListItem
+                  key={reservation.id}
+                  reservation={reservation}
+                  showEdit
+                  showCancel
+                  cancelDisabled={cancelMutation.isPending}
+                  cancelPending={
+                    cancelMutation.isPending &&
+                    cancelMutation.variables?.pathParams.reservationId ===
+                      reservation.id
+                  }
+                  onEdit={() => setEditingReservation(reservation)}
+                  onCancel={() =>
+                    cancelMutation.mutate({
+                      pathParams: { reservationId: reservation.id },
+                    })
+                  }
+                />
+              ))}
+            </ul>
+          ) : (
+            <p className="flex flex-1 items-center justify-center px-4 py-8 text-center text-sm text-muted-foreground">
+              {t("reservations.my.emptyUpcoming")}
+            </p>
+          )}
+        </StatisticsQueryState>
       </SectionCardContent>
       <EditMyReservationDialog
         reservation={editingReservation}

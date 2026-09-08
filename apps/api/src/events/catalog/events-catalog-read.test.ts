@@ -1,9 +1,11 @@
+import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
+import superjson from "superjson";
 import { describe, expect, it, mock } from "bun:test";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Effect } from "effect";
-import type { ApiDatabase } from "#src/database/drizzle/database";
-import type { RedisService } from "#src/redis/redis.service";
-import type { ApplicationLogger } from "#src/shared/application-logger";
+
+import type { RedisGetOrSetJsonBestEffortOptions } from "#src/redis/redis.service";
+
 import { makeEventsCatalogRead } from "#src/events/catalog/events-catalog-read";
 
 describe("event catalog read Effect module", () => {
@@ -27,29 +29,37 @@ describe("event catalog read Effect module", () => {
       active: true,
       heroNpcs: [],
     };
-    const getOrSetJsonEffect = mock(() => Effect.succeed(cachedEvent));
-    const redis = { getOrSetJsonEffect } as unknown as RedisService;
-    const database = new Proxy(
-      {},
-      {
-        get: () => () => Promise.reject(new Error("unexpected database call")),
+    const cacheRead = mock(() => undefined);
+    const redis = {
+      getOrSetJsonEffect<T, E>(
+        options: Omit<RedisGetOrSetJsonBestEffortOptions<T>, "factory"> & {
+          factory: Effect.Effect<T, E>;
+        },
+      ) {
+        cacheRead();
+        return Effect.succeed(
+          options.codec.parse(superjson.stringify(cachedEvent)),
+        );
       },
-    ) as typeof ApiDatabase.Service;
-    const logger = {
-      warn: mock(() => undefined),
-    } as unknown as ApplicationLogger;
+    };
+    const boundary = await createDatabaseBoundary();
+    try {
+      const logger = { warn: mock(() => undefined) };
 
-    const catalog = makeEventsCatalogRead(database, redis, logger);
-    const result = await Effect.runPromise(
-      catalog.getEvent(
-        { id: "guild-1" },
-        "event-1",
-        [],
-        createAccessPolicy({ capabilities: [] }),
-      ),
-    );
+      const catalog = makeEventsCatalogRead(boundary.database, redis, logger);
+      const result = await boundary.run(
+        catalog.getEvent(
+          { id: "guild-1" },
+          "event-1",
+          [],
+          createAccessPolicy({ capabilities: [] }),
+        ),
+      );
 
-    expect(result).toEqual(cachedEvent);
-    expect(getOrSetJsonEffect).toHaveBeenCalledTimes(1);
+      expect(result).toEqual(cachedEvent);
+      expect(cacheRead).toHaveBeenCalledTimes(1);
+    } finally {
+      await boundary.dispose();
+    }
   });
 });

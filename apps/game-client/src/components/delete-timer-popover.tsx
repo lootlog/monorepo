@@ -114,7 +114,6 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
         className="ll:w-64 ll:p-2"
         side="right"
         align="start"
-        initialFocus={false}
         finalFocus={false}
       >
         <div className="ll:flex ll:flex-col ll:gap-1">

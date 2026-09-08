@@ -1,19 +1,28 @@
 import { RabbitMessaging } from "@lootlog/messaging";
 import { BunHttpServer } from "@effect/platform-bun";
-import { httpServerMetrics } from "@lootlog/instrumentation";
+import {
+  httpServerMetrics,
+  httpServerRouteMetrics,
+} from "@lootlog/instrumentation";
 import {
   RabbitExchange,
   RabbitRoutingKey,
   type RabbitQueueDefinition,
 } from "@lootlog/protocol/rabbit/topology";
 import {
-  NotificationOwnerType,
-  NotificationProvider,
-  NotificationTargetType,
+  DiscordNotificationSendCommandSchema,
   type DiscordNotificationSendCommand,
 } from "@lootlog/schema/notifications";
 import { Client, IntentsBitField } from "discord.js";
-import { Context, Effect, FiberSet, Layer, Redacted } from "effect";
+import {
+  Context,
+  Effect,
+  FiberSet,
+  Layer,
+  Option,
+  Redacted,
+  Schema,
+} from "effect";
 import {
   HttpRouter,
   HttpServer,
@@ -40,36 +49,23 @@ const notificationQueue: RabbitQueueDefinition = {
   durable: true,
 };
 
-const isNotificationCommand = (
-  input: unknown,
-): input is DiscordNotificationSendCommand => {
-  if (typeof input !== "object" || input === null) return false;
-  const value = input as Record<string, unknown>;
-  const target = value.target as Record<string, unknown> | undefined;
-  return (
-    typeof value.notificationJobId === "string" &&
-    value.provider === NotificationProvider.DISCORD &&
-    (value.ownerType === NotificationOwnerType.GUILD ||
-      value.ownerType === NotificationOwnerType.USER) &&
-    typeof value.ownerId === "string" &&
-    typeof value.title === "string" &&
-    typeof value.message === "string" &&
-    typeof target?.targetId === "string" &&
-    typeof target.externalId === "string" &&
-    (target.targetType === NotificationTargetType.CHANNEL ||
-      target.targetType === NotificationTargetType.DM)
-  );
-};
+const decodeNotificationJson = Schema.decodeUnknownOption(
+  Schema.fromJsonString(Schema.JsonObject),
+);
+const decodeSendCommand = Schema.decodeUnknownOption(
+  DiscordNotificationSendCommandSchema,
+  { onExcessProperty: "preserve" },
+);
 
 export const decodeNotificationCommand = (
   content: Uint8Array,
 ): DiscordNotificationSendCommand | undefined => {
-  try {
-    const input: unknown = JSON.parse(new TextDecoder().decode(content));
-    return isNotificationCommand(input) ? input : undefined;
-  } catch {
-    return undefined;
-  }
+  const decoded = decodeNotificationJson(new TextDecoder().decode(content));
+  if (decoded._tag === "None") return undefined;
+  const input = { ...decoded.value };
+  // Non-string content historically falls back to title/message in the delivery adapter.
+  if (!Schema.is(Schema.String)(input.content)) delete input.content;
+  return Option.getOrUndefined(decodeSendCommand(input));
 };
 
 export interface BotServicesValue {
@@ -175,14 +171,14 @@ const BotHttpRoutes = HttpApiBuilder.layer(DiscordBotApi).pipe(
 export const makeBotHttpBoundary = (services: BotServicesValue) => {
   const boundary = HttpRouter.toWebHandler(
     BotHttpRoutes.pipe(
-      HttpRouter.provideRequest(Layer.succeed(BotServices, services)),
+      Layer.provideMerge(Layer.succeed(BotServices, services)),
       Layer.provide(HttpServer.layerServices),
     ),
     { disableLogger: true },
   );
   return {
     dispose: boundary.dispose,
-    handler: boundary.handler as (request: Request) => Promise<Response>,
+    handler: boundary.handler,
   };
 };
 
@@ -213,19 +209,22 @@ export const BotConsumer = Layer.effectDiscard(
 
 export const BotHttpServer = Layer.unwrap(
   Effect.map(BotConfig, ({ port }) =>
-    HttpRouter.serve(BotHttpRoutes, {
-      middleware: (effect) =>
-        httpServerMetrics(
-          Effect.catchCause(effect, () =>
-            Effect.succeed(
-              HttpServerResponse.jsonUnsafe(
-                { message: "Internal server error" },
-                { status: 500 },
+    HttpRouter.serve(
+      BotHttpRoutes.pipe(Layer.provide(httpServerRouteMetrics)),
+      {
+        middleware: (effect) =>
+          httpServerMetrics(
+            Effect.catchCause(effect, () =>
+              Effect.succeed(
+                HttpServerResponse.jsonUnsafe(
+                  { message: "Internal server error" },
+                  { status: 500 },
+                ),
               ),
             ),
           ),
-        ),
-    }).pipe(Layer.provide(BunHttpServer.layer({ hostname: "0.0.0.0", port }))),
+      },
+    ).pipe(Layer.provide(BunHttpServer.layer({ hostname: "0.0.0.0", port }))),
   ),
 );
 

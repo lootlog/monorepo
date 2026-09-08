@@ -87,21 +87,13 @@ export const OrganizationPermissionsResponse = Schema.Struct({
 export type ManageableOrganizationResponse =
   typeof ManageableOrganizationResponse.Type;
 
+// Discord installation candidates may not have an Organization yet.
+// The current-user guild list supplies no owner ID or Lootlog configuration.
 export const ManageableOrganizationResponse = Schema.Struct({
   id: Schema.String,
   name: Schema.String,
   icon: Schema.optionalKey(Schema.Union([Schema.String, Schema.Null])),
-  vanityUrl: Schema.optionalKey(Schema.Union([Schema.String, Schema.Null])),
-  ownerId: Schema.String,
-  publicStatsCardEnabled: Schema.Boolean,
-  reservationMaxDurationMinutes: FiniteNumber,
-  reservationMinDurationMinutes: FiniteNumber,
-  reservationTimeGranularityMinutes: FiniteNumber,
-  reservationMaxAdvanceDays: FiniteNumber,
-  reservationActiveLimitPerSpot: FiniteNumber,
-  groupFightsEnabled: Schema.optionalKey(Schema.Boolean),
-  groupFightsIncludeIncomplete: Schema.optionalKey(Schema.Boolean),
-}).annotate({ identifier: "GuildResponseDto" });
+}).annotate({ identifier: "ManageableOrganizationResponse" });
 
 export type UpdateOrganizationConfigRequest =
   typeof UpdateOrganizationConfigRequest.Type;

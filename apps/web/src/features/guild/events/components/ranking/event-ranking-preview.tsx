@@ -67,12 +67,10 @@ export const EventRankingPreview = ({
             {rankings.length > 0 ? (
               <ChevronLink
                 className="inline-flex h-8 shrink-0 items-center gap-1 text-xs"
-                render={
-                  <Link
-                    to="/$guildId/events/$eventId/ranking"
-                    params={{ guildId, eventId }}
-                  />
-                }
+                render=<Link
+                  to="/$guildId/events/$eventId/ranking"
+                  params={{ guildId, eventId }}
+                />
               >
                 {t("events.ranking.viewAll")}
               </ChevronLink>

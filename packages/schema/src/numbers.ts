@@ -1,15 +1,17 @@
-export const parseFiniteNumber = (value: unknown) => {
-  if (typeof value === "number" && Number.isFinite(value)) {
-    return value;
-  }
+import { flow, Option, Schema, SchemaGetter } from "effect";
 
-  if (typeof value === "string" && value.trim() !== "") {
-    const parsedValue = Number(value);
+const finiteNumberInput = Schema.Union([
+  Schema.Finite,
+  Schema.String.check(Schema.isPattern(/\S/)).pipe(
+    Schema.decodeTo(Schema.Finite, {
+      decode: SchemaGetter.transform(Number),
+      encode: SchemaGetter.transform(String),
+    }),
+  ),
+]);
 
-    if (Number.isFinite(parsedValue)) {
-      return parsedValue;
-    }
-  }
-
-  return null;
-};
+/** Decode finite numbers and nonblank numeric strings without coercing other inputs. */
+export const parseFiniteNumber = flow(
+  Schema.decodeUnknownOption(finiteNumberInput),
+  Option.getOrNull,
+);

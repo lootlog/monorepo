@@ -20,7 +20,7 @@ import {
   getSelectedWarriorsFromSearch,
   normalizeBattlePanelCharacterId,
   resetBattlePanelCursorPagination,
-  type HeadToHeadSortBy,
+  HEAD_TO_HEAD_SORT_BY_VALUES,
   type Period,
 } from "@/features/user/battle-panel/battle-panel-search";
 import { useBattlesControllerGetHeadToHead } from "@lootlog/client/battlelog";
@@ -34,6 +34,7 @@ import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { cn } from "cn";
 import { useNavigate } from "@tanstack/react-router";
 import {
+  functionalUpdate,
   type ColumnDef,
   type SortingState,
   useTable,
@@ -282,14 +283,14 @@ export function HeadToHeadPageVariant({
       sorting,
     },
     onSortingChange: (updater) => {
-      const nextSorting =
-        typeof updater === "function" ? updater(sorting) : updater;
+      const nextSorting = functionalUpdate(updater, sorting);
       const nextSort = nextSorting[0];
 
       void setQueryState({
         ...resetBattlePanelCursorPagination(),
         sortBy:
-          (nextSort?.id as HeadToHeadSortBy | undefined) ?? "totalBattles",
+          HEAD_TO_HEAD_SORT_BY_VALUES.find((value) => value === nextSort?.id) ??
+          "totalBattles",
         sortOrder: nextSort?.desc ? "desc" : "asc",
       });
     },

@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { configureApiClients } from "@lootlog/client/transport";
+import { beforeEach, describe, expect, it, vi, onTestFinished } from "vitest";
 import {
   createLoot,
   createNotification,
@@ -10,30 +11,16 @@ import { LOGS_STORAGE_KEY, useLogsStore } from "@/store/logs.store";
 import { LOOT_CREATE_DEBUG_PREFIX } from "@/lib/loot-create-debug";
 import { useSettingsStore } from "@/store/settings.store";
 
-const { mockPost, mockPatch, mockSendNotification, mockSendChatMessage } =
-  vi.hoisted(() => ({
-    mockPost: vi.fn(),
-    mockPatch: vi.fn(),
-    mockSendNotification: vi.fn(),
-    mockSendChatMessage: vi.fn(),
-  }));
-
-vi.mock("@lootlog/client/transport", () => ({
-  createApiClient: () => ({
-    post: mockPost,
-    patch: mockPatch,
-  }),
-}));
-
-vi.mock("@lootlog/client/main", async () => ({
-  ...(await vi.importActual("@lootlog/client/main")),
-  messagingControllerSendNotification: mockSendNotification,
-  chatControllerSendChatMessage: mockSendChatMessage,
-}));
+const http = vi.fn<typeof fetch>();
 
 describe("api.service logging", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    http.mockReset();
+    onTestFinished(
+      configureApiClients({
+        main: { baseUrl: "https://api.example.test", fetch: http },
+      }),
+    );
     window.localStorage.removeItem(LOGS_STORAGE_KEY);
     useLogsStore.getState().clearActions();
     useSettingsStore.getState().setLootDebugLoggingEnabled(false);
@@ -74,7 +61,7 @@ describe("api.service logging", () => {
         },
       ],
     };
-    mockPost.mockResolvedValueOnce(responseData);
+    http.mockResolvedValueOnce(Response.json(responseData));
 
     const response = await createLoot(payload, debugContext);
 
@@ -156,7 +143,9 @@ describe("api.service logging", () => {
       data: { message: "boom" },
     };
 
-    mockPost.mockRejectedValueOnce(apiError);
+    http.mockResolvedValueOnce(
+      Response.json(apiError.data, { status: apiError.status }),
+    );
 
     await expect(
       createLoot(
@@ -172,7 +161,7 @@ describe("api.service logging", () => {
         },
         debugContext,
       ),
-    ).rejects.toBe(apiError);
+    ).rejects.toMatchObject({ status: apiError.status, data: apiError.data });
 
     const [action] = useLogsStore.getState().actions;
 
@@ -186,7 +175,7 @@ describe("api.service logging", () => {
         status: "error",
         statusCode: 400,
         response: {
-          message: "Request failed",
+          message: "boom",
           data: { message: "boom" },
         },
       }),
@@ -202,7 +191,10 @@ describe("api.service logging", () => {
     expect(consoleLogSpy).toHaveBeenCalledWith(LOOT_CREATE_DEBUG_PREFIX, {
       ...debugContext,
       attempt: 1,
-      error: apiError,
+      error: expect.objectContaining({
+        status: apiError.status,
+        data: apiError.data,
+      }),
       stage: "http-error",
     });
   });
@@ -237,9 +229,11 @@ describe("api.service logging", () => {
       submittedGuilds: [],
       rejectedGuilds: [],
     };
-    mockPost
-      .mockRejectedValueOnce(retryableError)
-      .mockResolvedValueOnce(responseData);
+    http
+      .mockResolvedValueOnce(
+        Response.json(retryableError.data, { status: retryableError.status }),
+      )
+      .mockResolvedValueOnce(Response.json(responseData));
 
     try {
       const responsePromise = createLoot(payload, debugContext);
@@ -247,11 +241,14 @@ describe("api.service logging", () => {
       await vi.runAllTimersAsync();
 
       await expect(responsePromise).resolves.toEqual(responseData);
-      expect(mockPost).toHaveBeenCalledTimes(2);
+      expect(http).toHaveBeenCalledTimes(2);
       expect(consoleLogSpy).toHaveBeenCalledWith(LOOT_CREATE_DEBUG_PREFIX, {
         ...debugContext,
         attempt: 1,
-        error: retryableError,
+        error: expect.objectContaining({
+          status: retryableError.status,
+          data: retryableError.data,
+        }),
         stage: "http-error",
       });
       expect(consoleLogSpy).toHaveBeenCalledWith(LOOT_CREATE_DEBUG_PREFIX, {
@@ -279,11 +276,13 @@ describe("api.service logging", () => {
       status: 500,
       data: { message: "upstream failed" },
     };
-    mockPatch.mockRejectedValueOnce(apiError);
+    http.mockResolvedValueOnce(
+      Response.json(apiError.data, { status: apiError.status }),
+    );
 
     await expect(
       updateLoot({ id: 77, msg: "Podział łupów: Tester" }),
-    ).rejects.toBe(apiError);
+    ).rejects.toMatchObject({ status: apiError.status, data: apiError.data });
 
     expect(useLogsStore.getState().actions[0]).toMatchObject({
       actionType: "update_loot",
@@ -300,10 +299,12 @@ describe("api.service logging", () => {
   });
 
   it("logs createNotification action and returns created notification", async () => {
-    mockSendNotification.mockResolvedValueOnce({
-      notificationId: "notification-1",
-      guildIds: ["guild-1"],
-    });
+    http.mockResolvedValueOnce(
+      Response.json({
+        notificationId: "notification-1",
+        guildIds: ["guild-1"],
+      }),
+    );
 
     const response = await createNotification({
       world: "pandora",
@@ -337,13 +338,11 @@ describe("api.service logging", () => {
   });
 
   it("logs sendChatMessage partial success and returns message ids", async () => {
-    mockSendChatMessage
-      .mockResolvedValueOnce({ id: "message-1" })
-      .mockRejectedValueOnce({
-        message: "Guild request failed",
-        status: 500,
-        data: { message: "boom" },
-      });
+    http
+      .mockResolvedValueOnce(Response.json({ id: "message-1" }))
+      .mockResolvedValueOnce(
+        Response.json({ message: "boom" }, { status: 500 }),
+      );
 
     const results = await sendChatMessage({
       message: "hello",

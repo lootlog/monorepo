@@ -6,6 +6,11 @@ export type W = {
     lvl: number;
     prof: string;
     hpp: number;
+    hp?: {
+      cur?: unknown;
+      hpp?: number | string;
+      max?: unknown;
+    };
     icon: string;
     team: number;
     wt: number;

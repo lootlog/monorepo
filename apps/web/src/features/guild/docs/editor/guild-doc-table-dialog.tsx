@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import type { InsertTableCommandPayload } from "@lexical/table";
 import { Table2 } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
@@ -48,15 +48,15 @@ export const GuildDocTableDialog = ({
   const normalizedColumns = normalizeTableSize(columns);
   const canSubmit = rows.trim().length > 0 && columns.trim().length > 0;
 
-  useEffect(() => {
-    if (!open) {
-      return;
+  const [wasOpen, setWasOpen] = useState(open);
+  if (wasOpen !== open) {
+    setWasOpen(open);
+    if (open) {
+      setRows(String(DEFAULT_TABLE_SIZE));
+      setColumns(String(DEFAULT_TABLE_SIZE));
+      setIncludeHeaders(true);
     }
-
-    setRows(String(DEFAULT_TABLE_SIZE));
-    setColumns(String(DEFAULT_TABLE_SIZE));
-    setIncludeHeaders(true);
-  }, [open]);
+  }
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

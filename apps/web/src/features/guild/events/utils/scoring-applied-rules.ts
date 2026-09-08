@@ -73,7 +73,7 @@ function getMemberKillState(params: {
   participant: KillDetailParticipant;
   killTime: Date;
   respawnStartTime: Date;
-}): { memberLeaveTime: Date | null; memberPresentAtKill: boolean } {
+}) {
   let memberLeaveTime: Date | null = null;
   let memberPresentAtKill = false;
 
@@ -168,12 +168,14 @@ export function getAppliedRuleIdsForParticipant(params: {
       : null;
   const context: EvaluationContext = {
     trackingDurationPercentage:
-      typeof participant.trackingDurationPercentage === "number" &&
+      participant.trackingDurationPercentage !== null &&
+      participant.trackingDurationPercentage !== undefined &&
       Number.isFinite(participant.trackingDurationPercentage)
         ? participant.trackingDurationPercentage
         : null,
     trackingDurationSeconds:
-      typeof participant.trackingDurationSeconds === "number" &&
+      participant.trackingDurationSeconds !== null &&
+      participant.trackingDurationSeconds !== undefined &&
       Number.isFinite(participant.trackingDurationSeconds)
         ? participant.trackingDurationSeconds
         : null,

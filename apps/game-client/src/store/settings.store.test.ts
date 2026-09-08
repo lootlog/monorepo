@@ -36,12 +36,7 @@ describe("useSettingsStore", () => {
 
     const storedSettings = JSON.parse(
       localStorage.getItem(SETTINGS_STORAGE_KEY) ?? "{}",
-    ) as {
-      state?: {
-        masterVolume?: number;
-        soundsMuted?: boolean;
-      };
-    };
+    );
 
     expect(storedSettings.state).toMatchObject({
       masterVolume: 0.72,
@@ -81,11 +76,7 @@ describe("useSettingsStore", () => {
 
     const storedSettings = JSON.parse(
       localStorage.getItem(SETTINGS_STORAGE_KEY) ?? "{}",
-    ) as {
-      state?: {
-        lootDebugLoggingEnabled?: boolean;
-      };
-    };
+    );
 
     expect(storedSettings.state?.lootDebugLoggingEnabled).toBe(true);
   });
@@ -105,11 +96,7 @@ describe("useSettingsStore", () => {
 
     const storedSettings = JSON.parse(
       localStorage.getItem(SETTINGS_STORAGE_KEY) ?? "{}",
-    ) as {
-      state?: {
-        animationEffectsEnabled?: boolean;
-      };
-    };
+    );
 
     expect(storedSettings.state?.animationEffectsEnabled).toBe(false);
   });

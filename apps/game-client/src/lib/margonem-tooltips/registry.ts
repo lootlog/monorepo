@@ -28,7 +28,7 @@ export class CharacterTooltipTransformRegistry {
           currentHtml,
         });
 
-        if (typeof result === "string") {
+        if (result !== undefined && result !== null) {
           currentHtml = result;
         }
       } catch (error) {

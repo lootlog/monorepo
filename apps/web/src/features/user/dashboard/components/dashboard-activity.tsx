@@ -1,4 +1,5 @@
 import { DashboardActivitySkeleton } from "./dashboard-activity-skeleton";
+import { useLocalStorage } from "usehooks-ts";
 import { Activity } from "lucide-react";
 import { useState, type CSSProperties } from "react";
 import "./dashboard-activity.css";
@@ -18,7 +19,11 @@ import { StatisticsQueryState } from "@/features/user/statistics/statistics-quer
 
 export function DashboardActivity() {
   const { t } = useTranslation();
-  const [mode, setMode] = useState<"online" | "kills">("online");
+  const [storedMode, setMode] = useLocalStorage<string>(
+    "lootlog:dashboard:activity-mode",
+    "online",
+  );
+  const mode = storedMode === "kills" ? "kills" : "online";
   const [range] = useState(() => calendarRange(new Date(), 112));
   const calendarStyle: CSSProperties & { "--activity-weeks": number } = {
     containerType: "inline-size",
@@ -38,25 +43,23 @@ export function DashboardActivity() {
         className="shrink-0"
         icon={Activity}
         title={t("statistics.activity")}
-        actions={
-          <AnimatedToggleGroup
-            compact
-            label={t("statistics.activity")}
-            value={mode}
-            onValueChange={setMode}
-            options={[
-              { value: "online", label: t("statistics.online") },
-              { value: "kills", label: t("statistics.kills") },
-            ]}
-          />
-        }
+        actions=<AnimatedToggleGroup
+          size="default"
+          label={t("statistics.activity")}
+          value={mode}
+          onValueChange={setMode}
+          options={[
+            { value: "online", label: t("statistics.online") },
+            { value: "kills", label: t("statistics.kills") },
+          ]}
+        />
       />
       <SectionCardContent className="dashboard-activity-content flex min-h-0 flex-col overflow-y-auto">
         {mode === "online" ? (
           <StatisticsQueryState
             query={online}
             centered
-            loading={<DashboardActivitySkeleton />}
+            loading=<DashboardActivitySkeleton />
           >
             {online.data && (
               <>
@@ -96,7 +99,7 @@ export function DashboardActivity() {
           <StatisticsQueryState
             query={kills}
             centered
-            loading={<DashboardActivitySkeleton />}
+            loading=<DashboardActivitySkeleton />
           >
             {kills.data && (
               <ActivityHeatmap

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { Effect, FileSystem, Layer, Path, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
-import { Etag, HttpPlatform } from "effect/unstable/http";
+import { Etag, HttpPlatform, HttpRouter } from "effect/unstable/http";
 import { HttpApiTest } from "effect/unstable/httpapi";
 import { BearerSecurityMiddleware } from "../../contracts/shared.js";
 import { OrganizationSummary } from "#src/contracts/shared";
@@ -19,6 +19,8 @@ import {
   AccountOrganizationData,
   AccountOrganizationNotFound,
 } from "./account-organization.operations.js";
+
+import { makeManageableGuilds } from "./manageable-guilds.data-layer.js";
 
 const identity = { userId: "user-a", discordId: "discord-a" };
 
@@ -116,6 +118,62 @@ const provideServices = (
   );
 
 describe("Users and Guilds HttpApi handlers", () => {
+  it("returns Discord installation candidates without requiring existing Organization fields", async () => {
+    const getManageableUserGuilds = makeManageableGuilds(() =>
+      Effect.succeed([
+        {
+          id: "admin-guild",
+          name: "Admin guild",
+          icon: null,
+          banner: null,
+          owner: false,
+          permissions: "8",
+          features: [],
+        },
+        {
+          id: "member-guild",
+          name: "Member guild",
+          icon: null,
+          banner: null,
+          owner: false,
+          permissions: "0",
+          features: [],
+        },
+      ]),
+    );
+    const bearer = BearerSecurityMiddleware.of({
+      bearer: (httpEffect) =>
+        Effect.provideService(httpEffect, ForwardAuthIdentity, identity),
+    });
+    const services = provideServices(
+      makeAuthorization(),
+      makeData({ getManageableUserGuilds }),
+    );
+    const responseEffect = Effect.scoped(
+      Effect.gen(function* () {
+        const client = yield* HttpApiTest.groups(LootlogApi, ["guilds"]).pipe(
+          Effect.provide(
+            GuildsHandlers.pipe(HttpRouter.provideRequest(services)),
+          ),
+          Effect.provide(Layer.succeed(BearerSecurityMiddleware, bearer)),
+        );
+        return yield* client.guilds.GuildsControllerGetManageableUserGuilds();
+      }),
+    ).pipe(
+      Effect.provide(
+        provideServices(
+          makeAuthorization(),
+          makeData({ getManageableUserGuilds }),
+        ),
+      ),
+      Effect.provide(httpApiTestServices),
+    );
+    const response = await Effect.runPromise(responseEffect);
+    expect(response).toEqual([
+      { id: "admin-guild", name: "Admin guild", icon: null },
+    ]);
+  });
+
   it.each([
     new AccountOrganizationAccessDenied({ status: 403, code: "FORBIDDEN" }),
     new AccountOrganizationNotFound({ status: 404, code: "GUILD_NOT_FOUND" }),
@@ -132,7 +190,9 @@ describe("Users and Guilds HttpApi handlers", () => {
     const responsesEffect = Effect.scoped(
       Effect.gen(function* () {
         const client = yield* HttpApiTest.groups(LootlogApi, ["guilds"]).pipe(
-          Effect.provide(GuildsHandlers),
+          Effect.provide(
+            GuildsHandlers.pipe(HttpRouter.provideRequest(services)),
+          ),
           Effect.provide(Layer.succeed(BearerSecurityMiddleware, bearer)),
         );
 
@@ -148,12 +208,7 @@ describe("Users and Guilds HttpApi handlers", () => {
         ]);
       }),
     ).pipe(Effect.provide(services), Effect.provide(httpApiTestServices));
-    // HttpApiBuilder retains phantom handler requirements after their concrete
-    // layers are provided. These in-memory requests prove the wiring.
-    const runnableResponsesEffect = responsesEffect as unknown as Effect.Effect<
-      ReadonlyArray<{ readonly status: number }>,
-      unknown
-    >;
+    const runnableResponsesEffect = responsesEffect;
     const responses = await Effect.runPromise(runnableResponsesEffect);
 
     expect(responses.map(({ status }) => status)).toEqual([

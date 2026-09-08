@@ -23,8 +23,8 @@ import {
   invalidateMapTemplatesControllerGetTemplates,
   useMapTemplatesControllerDeleteTemplate,
   useMapTemplatesControllerGetTemplates,
+  type MapTemplateResponseDto,
 } from "@lootlog/client/main";
-import type { MapTemplateResponseDto } from "@lootlog/client/main";
 
 export const MapTemplatesSettings = () => {
   const { t } = useTranslation();

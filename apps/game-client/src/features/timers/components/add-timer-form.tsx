@@ -31,7 +31,7 @@ import {
 } from "@lootlog/client/main";
 
 import { AutocompleteSuggestions } from "@/components/ui/autocomplete-suggestions";
-import { NPC_NAMES } from "@/constants/margonem";
+import { getNpcTypeNames } from "@/constants/margonem";
 import { useTranslation } from "react-i18next";
 import { useVisibleLootlogGuilds } from "@/hooks/use-visible-lootlog-guilds";
 import { TimerFormFieldError } from "./timer-form-field-error";
@@ -49,7 +49,8 @@ const MANUAL_TIMER_NPC_TYPES = [
   CreateManualTimerDtoType.HERO,
   CreateManualTimerDtoType.TITAN,
 ] as const satisfies readonly NonNullable<CreateManualTimerDto["type"]>[];
-const manualTimerNpcTypeSet = new Set<string>(MANUAL_TIMER_NPC_TYPES);
+const resolveManualTimerNpcType = (value: string) =>
+  MANUAL_TIMER_NPC_TYPES.find((npcType) => npcType === value) ?? "";
 const MANUAL_TIMER_NPC_TYPE_TRANSLATION_KEYS = {
   [CreateManualTimerDtoType.ELITE2]: "elite2",
   [CreateManualTimerDtoType.ELITE3]: "elite3",
@@ -59,7 +60,7 @@ const MANUAL_TIMER_NPC_TYPE_TRANSLATION_KEYS = {
 
 type TimerFormTranslation = (
   key: string,
-  options?: Record<string, unknown>,
+  options?: { min?: number; max?: number },
 ) => string;
 
 type TimerFormValidationData = {
@@ -450,12 +451,7 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
     setValue("minDuration", formatSecondsToHHMMSS(minSeconds));
     setValue("maxDuration", formatSecondsToHHMMSS(maxSeconds));
     setValue("lvl", String(npc.lvl));
-    setValue(
-      "type",
-      manualTimerNpcTypeSet.has(npc.type)
-        ? (npc.type as NonNullable<CreateManualTimerDto["type"]>)
-        : "",
-    );
+    setValue("type", resolveManualTimerNpcType(npc.type));
     setSelectedNpc(npc);
     setSearchQuery("");
     setShowSuggestions(false);
@@ -622,7 +618,8 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
                 keyExtractor={(npc) => npc.npcId}
                 renderItem={(npc, _index, isSelected) => {
                   const longname =
-                    NPC_NAMES[npc.type]?.longname ?? t("addForm.mobFallback");
+                    getNpcTypeNames(npc.type)?.longname ??
+                    t("addForm.mobFallback");
                   const npcDetails =
                     npc.lvl > 0 && npc.prof
                       ? ` ${npc.lvl}${npc.prof.charAt(0).toLowerCase()}`
@@ -690,12 +687,7 @@ export const AddTimerForm: React.FC<AddTimerFormProps> = ({
                 <Select
                   value={selectedNpcType}
                   onValueChange={(value) => {
-                    setValue(
-                      "type",
-                      value === EMPTY_NPC_TYPE_VALUE
-                        ? ""
-                        : (value as NonNullable<CreateManualTimerDto["type"]>),
-                    );
+                    setValue("type", resolveManualTimerNpcType(value));
                   }}
                   disabled={isPending}
                 >

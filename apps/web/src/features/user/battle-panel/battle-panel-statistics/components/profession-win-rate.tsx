@@ -84,8 +84,9 @@ export function ProfessionWinRateChart({
                   content=<ChartTooltipContent
                     indicator="line"
                     labelFormatter={(value, payload) => {
-                      const item = payload[0]
-                        ?.payload as unknown as ProfessionWinRate;
+                      const item = chartData.find(
+                        (entry) => entry === payload[0]?.payload,
+                      );
                       return t(
                         "battlePanel.statistics.professionWinRate.tooltipBattles",
                         {

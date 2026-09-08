@@ -49,9 +49,9 @@ export const RoleSettingsDetailSkeleton = () => {
         {Array.from({ length: 4 }).map((_, index) => (
           <SectionCard key={index} className="overflow-hidden">
             <SectionCardHeader
-              title={<Skeleton className="h-16 w-full rounded-none" />}
+              title=<Skeleton className="h-16 w-full rounded-none" />
             />
-            <SectionCardContent className="flex flex-col gap-3"></SectionCardContent>
+            <SectionCardContent className="flex flex-col gap-3" />
           </SectionCard>
         ))}
       </div>

@@ -38,7 +38,7 @@ export const useGameAccountPreferencesSyncStatus =
       },
       select: (mutation) => ({
         status: mutation.state.status,
-        error: mutation.state.error as Error | null,
+        error: mutation.state.error,
         submittedAt: mutation.state.submittedAt,
       }),
     });

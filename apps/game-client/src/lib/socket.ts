@@ -1,13 +1,29 @@
 import {
+  isMapPingAcknowledgement,
+  isAirTagSubscriptionAcknowledgement,
+  isAirTagObservationAcknowledgement,
+  isPresenceFetchResult,
+} from "@lootlog/protocol/realtime/codec";
+import type {
+  AirTagSubscriptionCommand,
+  AirTagObservationCommand,
+  AirTagSubscriptionAck,
+  AirTagObservationAck,
+  MapPingCommand,
+  MapPingAckSchema,
+} from "@lootlog/protocol/realtime";
+import type { PlayerPresenceAckPayload } from "@/lib/online-players-presence";
+import {
   RealtimeEventListeners,
   unwrapOrganizationEvent,
 } from "@lootlog/client/realtime/event-listeners";
 import { GatewayEvent } from "@/config/gateway";
 import { useGameStore } from "@/store/game.store";
-import type {
-  BasicPresence,
-  PresenceWithLocation,
-  ServerEvent,
+import {
+  RealtimeRequestError,
+  type BasicPresence,
+  type PresenceWithLocation,
+  type ServerEvent,
 } from "@lootlog/client/realtime";
 import {
   requestMargonemAccountProof,
@@ -15,11 +31,21 @@ import {
 } from "@/lib/margonem-account-proof";
 import { getGameClientPlatform } from "@/lib/game-client-platform";
 
+import {
+  createAccessPolicySnapshot,
+  diffAccessPolicies,
+  isAccessPolicySnapshot,
+  type AccessPolicySnapshot,
+  type AccessPolicyChange,
+} from "@lootlog/protocol/realtime/access-policy";
+
 type Listener = (...arguments_: never[]) => void;
 
 export type PermissionsUpdatedPayload = {
   guilds?: { guild: { id: string } }[];
   featureRooms?: string[];
+  accessPolicy?: AccessPolicySnapshot;
+  changes?: readonly AccessPolicyChange[];
 };
 
 export interface GameSessionJoinData {
@@ -40,6 +66,7 @@ export interface GameSessionJoinData {
 interface JoinResult {
   readonly connectionId: string;
   readonly organizationIds: string[];
+  readonly accessPolicy?: AccessPolicySnapshot;
 }
 
 const isJoinResult = (value: unknown): value is JoinResult =>
@@ -50,14 +77,19 @@ const isJoinResult = (value: unknown): value is JoinResult =>
     typeof value.connectionId === "string" &&
     "organizationIds" in value &&
     Array.isArray(value.organizationIds) &&
-    value.organizationIds.every((id) => typeof id === "string"),
+    value.organizationIds.every(
+      (id: unknown): id is string => typeof id === "string",
+    ) &&
+    (!("accessPolicy" in value) ||
+      value.accessPolicy === undefined ||
+      isAccessPolicySnapshot(value.accessPolicy)),
   );
 
-const toLegacyPresence = (guildId: string, presence: BasicPresence) => {
-  const location =
-    "location" in presence
-      ? (presence as PresenceWithLocation).location
-      : undefined;
+const toLegacyPresence = (
+  guildId: string,
+  presence: BasicPresence | PresenceWithLocation,
+) => {
+  const location = "location" in presence ? presence.location : undefined;
   return {
     discordId: presence.discordId ?? presence.userId,
     guildId,
@@ -88,6 +120,7 @@ const legacyEventNames: Partial<Record<ServerEvent["type"], GatewayEvent>> = {
   "timer.created": GatewayEvent.TIMERS_CREATE,
   "timer.deleted": GatewayEvent.TIMERS_DELETE,
   "notification.sent": GatewayEvent.NOTIFICATION,
+  "notification.volunteer": GatewayEvent.NOTIFICATIONS_VOLUNTEER,
   "member-refresh.updated": GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE,
   "party-gathering.updated": GatewayEvent.PARTY_GATHERING_SEND,
   "party-gathering.cancelled": GatewayEvent.PARTY_GATHERING_CANCEL,
@@ -99,6 +132,38 @@ const legacyEventNames: Partial<Record<ServerEvent["type"], GatewayEvent>> = {
   "event.ranking-updated": GatewayEvent.EVENT_RANKING_UPDATE,
 };
 
+type SocketCommandPayloads = {
+  [GatewayEvent.PLAYER_PRESENCE_UPDATE]: {
+    readonly isAfk?: boolean;
+    readonly mapId?: number;
+    readonly mapName?: string;
+  };
+  [GatewayEvent.ONLINE_PLAYERS_PRESENCE_FETCH]: {
+    readonly guildId: string;
+    readonly world?: string;
+  };
+  [GatewayEvent.MAP_PING_SEND]: typeof MapPingCommand.fields.data.Type;
+  [GatewayEvent.AIR_TAG_SUBSCRIPTION]: typeof AirTagSubscriptionCommand.fields.data.Type;
+  [GatewayEvent.AIR_TAG_OBSERVATION]: typeof AirTagObservationCommand.fields.data.Type;
+};
+type SocketCommandResponses = {
+  [GatewayEvent.ONLINE_PLAYERS_PRESENCE_FETCH]: PlayerPresenceAckPayload;
+  [GatewayEvent.MAP_PING_SEND]: typeof MapPingAckSchema.Type;
+  [GatewayEvent.AIR_TAG_SUBSCRIPTION]: typeof AirTagSubscriptionAck.Type;
+  [GatewayEvent.AIR_TAG_OBSERVATION]: typeof AirTagObservationAck.Type;
+};
+type SocketPayload<Event extends GatewayEvent> =
+  Event extends keyof SocketCommandPayloads
+    ? SocketCommandPayloads[Event]
+    : undefined;
+type SocketResponse<Event extends GatewayEvent> =
+  Event extends keyof SocketCommandResponses
+    ? SocketCommandResponses[Event]
+    : undefined;
+type SocketRequest = {
+  [Event in GatewayEvent]: [event: Event, payload?: SocketPayload<Event>];
+}[GatewayEvent];
+
 export class AppSocket {
   private readonly realtime = getGameClientPlatform().createRealtime();
   private readonly listeners = new RealtimeEventListeners<GatewayEvent>();
@@ -107,6 +172,7 @@ export class AppSocket {
   private disposed = false;
   private joinedOrganizationIds: string[] = [];
   private lastIsAfk = false;
+  private currentAccessPolicy: AccessPolicySnapshot | undefined;
   private wasConnected = false;
   private lastJoinData: GameSessionJoinData | null = null;
   id: string | undefined;
@@ -132,6 +198,10 @@ export class AppSocket {
 
   get connected(): boolean {
     return this.wasConnected;
+  }
+
+  getAccessPolicy(): AccessPolicySnapshot | undefined {
+    return this.currentAccessPolicy;
   }
 
   connect(): void {
@@ -177,6 +247,9 @@ export class AppSocket {
     data: GameSessionJoinData,
     margonemAccountProof?: MargonemAccountProof,
   ): Promise<JoinResult> {
+    if (this.lastJoinData && this.lastJoinData.accountId !== data.accountId) {
+      this.currentAccessPolicy = undefined;
+    }
     this.lastJoinData = data;
     const response = await this.realtime.join({
       world: data.world,
@@ -196,6 +269,7 @@ export class AppSocket {
       throw new Error("Invalid session.join response");
     this.id = response.connectionId;
     this.joinedOrganizationIds = [...response.organizationIds];
+    if (response.accessPolicy) this.applyAccessPolicy(response.accessPolicy);
     if (margonemAccountProof) {
       this.dispatchJoin(response);
       return response;
@@ -213,28 +287,28 @@ export class AppSocket {
     return this.join(data, proof);
   }
 
-  emit<Response = unknown>(
-    event: GatewayEvent,
-    payload?: unknown,
-    acknowledgement?: (response: Response) => void,
+  emit<Event extends GatewayEvent>(
+    event: Event,
+    payload?: SocketPayload<Event>,
+    acknowledgement?: (response: SocketResponse<Event>) => void,
   ): this {
     if (event === GatewayEvent.PLAYER_PRESENCE_UPDATE) {
-      const update = payload as { isAfk?: boolean } | undefined;
-      if (update?.isAfk !== undefined) this.lastIsAfk = update.isAfk;
+      if (payload && "isAfk" in payload && payload.isAfk !== undefined)
+        this.lastIsAfk = payload.isAfk;
       void this.publishPresence();
       return this;
     }
     void this.requestLegacy(event, payload)
-      .then((response) => acknowledgement?.(response as Response))
+      .then((response) => acknowledgement?.(response))
       .catch(() => undefined);
     return this;
   }
 
-  emitWithAck<Response = unknown>(
-    event: GatewayEvent,
-    payload?: unknown,
-  ): Promise<Response | undefined> {
-    return this.requestLegacy(event, payload) as Promise<Response | undefined>;
+  emitWithAck<Event extends GatewayEvent>(
+    event: Event,
+    payload?: SocketPayload<Event>,
+  ): Promise<SocketResponse<Event>> {
+    return this.requestLegacy(event, payload);
   }
 
   timeout(timeoutMs: number) {
@@ -249,23 +323,26 @@ export class AppSocket {
         ),
       ]);
     return {
-      emit: <Response = unknown>(
-        event: GatewayEvent,
-        payload: unknown,
-        acknowledgement: (error: Error | null, response?: Response) => void,
+      emit: <Event extends GatewayEvent>(
+        event: Event,
+        payload: SocketPayload<Event>,
+        acknowledgement: (
+          error: Error | null,
+          response?: SocketResponse<Event>,
+        ) => void,
       ) => {
         void withTimeout(this.requestLegacy(event, payload))
-          .then((response) => acknowledgement(null, response as Response))
+          .then((response) => acknowledgement(null, response))
           .catch((error) =>
             acknowledgement(
               error instanceof Error ? error : new Error(String(error)),
             ),
           );
       },
-      emitWithAck: <Response = unknown>(
-        event: GatewayEvent,
-        payload: unknown,
-      ) => withTimeout(this.requestLegacy(event, payload)) as Promise<Response>,
+      emitWithAck: <Event extends GatewayEvent>(
+        event: Event,
+        payload: SocketPayload<Event>,
+      ) => withTimeout(this.requestLegacy(event, payload)),
     };
   }
 
@@ -273,73 +350,105 @@ export class AppSocket {
     const game = useGameStore.getState().game;
     if (!game) return;
     // Presence publication opt-out is temporarily disabled; keep stored preferences intact.
-    await this.realtime.request("presence.publish", {
-      organizationIds: this.joinedOrganizationIds,
-      isAfk: this.lastIsAfk,
-      character: {
-        world: game.world,
-        name: game.hero.name,
-        lvl: game.hero.level,
-        icon: game.hero.icon,
-        characterId: game.hero.characterId,
-        accountId: game.hero.accountId,
-        prof: game.hero.profession,
-        clan: game.hero.clan,
-      },
-      location: {
-        mapId: game.map.id,
-        map: game.map.name,
-        x: game.hero.x,
-        y: game.hero.y,
-      },
-      clientObservedAt: Date.now(),
-    });
+    try {
+      await this.realtime.request("presence.publish", {
+        organizationIds: this.joinedOrganizationIds,
+        isAfk: this.lastIsAfk,
+        character: {
+          world: game.world,
+          name: game.hero.name,
+          lvl: game.hero.level,
+          icon: game.hero.icon,
+          characterId: game.hero.characterId,
+          accountId: game.hero.accountId,
+          prof: game.hero.profession,
+          clan: game.hero.clan,
+        },
+        location: {
+          mapId: game.map.id,
+          map: game.map.name,
+          x: game.hero.x,
+          y: game.hero.y,
+        },
+        clientObservedAt: Date.now(),
+      });
+    } catch {
+      // Presence is best effort; the next publication carries the current state.
+      if (import.meta.env.DEV)
+        console.warn("[Gateway] Failed to publish presence");
+    }
   }
 
-  private async requestLegacy(
-    event: GatewayEvent,
-    payload: unknown,
-  ): Promise<unknown> {
-    if (event === GatewayEvent.ONLINE_PLAYERS_PRESENCE_FETCH) {
-      const data = payload as { guildId: string; world?: string };
-      try {
-        const response = (await this.realtime.request("presence.fetch", {
-          organizationId: data.guildId,
-          world: data.world,
-        })) as { presences?: BasicPresence[] };
-        const players: Record<string, unknown[]> = {};
-        for (const presence of response.presences ?? []) {
-          if (presence.platform !== "game") continue;
-          (players[presence.discordId ?? presence.userId] ??= []).push(
-            toLegacyPresence(data.guildId, presence),
-          );
-        }
-        return { status: "success", players };
-      } catch {
-        return { status: "forbidden", code: "ONLINE_PLAYERS_ACCESS_DENIED" };
+  private async fetchPresence(
+    data: SocketCommandPayloads[GatewayEvent.ONLINE_PLAYERS_PRESENCE_FETCH],
+  ): Promise<PlayerPresenceAckPayload> {
+    try {
+      const response = await this.realtime.request("presence.fetch", {
+        organizationId: data.guildId,
+        world: data.world,
+      });
+      if (!isPresenceFetchResult(response))
+        throw new Error("Invalid presence.fetch response");
+      const players: Record<string, ReturnType<typeof toLegacyPresence>[]> = {};
+      for (const presence of response.presences ?? []) {
+        if (presence.platform !== "game") continue;
+        (players[presence.discordId ?? presence.userId] ??= []).push(
+          toLegacyPresence(data.guildId, presence),
+        );
       }
+      return { status: "success", players };
+    } catch (cause) {
+      // Gateway command-handler maps OrganizationAccessDenied to this exact wire response.
+      // Transport failures must remain failures so presence callers can retry them.
+      if (
+        cause instanceof RealtimeRequestError &&
+        cause.code === "COMMAND_REJECTED" &&
+        cause.message === "organization access denied"
+      )
+        return { status: "forbidden", code: "ONLINE_PLAYERS_ACCESS_DENIED" };
+      throw cause;
+    }
+  }
+
+  private requestLegacy<Event extends GatewayEvent>(
+    event: Event,
+    payload?: SocketPayload<Event>,
+  ): Promise<SocketResponse<Event>>;
+  private async requestLegacy(
+    ...[event, payload]: SocketRequest
+  ): Promise<SocketResponse<GatewayEvent>> {
+    if (event === GatewayEvent.ONLINE_PLAYERS_PRESENCE_FETCH) {
+      if (!payload) throw new Error("Missing presence.fetch payload");
+      return this.fetchPresence(payload);
     }
     if (event === GatewayEvent.MAP_PING_SEND) {
-      return this.realtime.request("map-ping.send", payload as never);
+      if (!payload) throw new Error("Missing map-ping.send payload");
+      const response = await this.realtime.request("map-ping.send", payload);
+      if (!isMapPingAcknowledgement(response))
+        throw new Error("Invalid map-ping.send response");
+      return response;
     }
     if (event === GatewayEvent.AIR_TAG_SUBSCRIPTION) {
-      const data = payload as {
-        requestId: string;
-        enabled: boolean;
-        expectedMapId?: number;
-      };
-      return this.realtime.request("air-tag.subscription", {
+      if (!payload) throw new Error("Missing air-tag.subscription payload");
+      const data = payload;
+      const response = await this.realtime.request("air-tag.subscription", {
         requestId: data.requestId,
         enabled: data.enabled,
         expectedMapId: data.expectedMapId,
       });
+      if (!isAirTagSubscriptionAcknowledgement(response))
+        throw new Error("Invalid air-tag.subscription response");
+      return response;
     }
     if (event === GatewayEvent.AIR_TAG_OBSERVATION) {
-      const data = payload as {
-        expectedMapId: number;
-        observations: unknown[];
-      };
-      return this.realtime.request("air-tag.observation", data as never);
+      if (!payload) throw new Error("Missing air-tag.observation payload");
+      const response = await this.realtime.request(
+        "air-tag.observation",
+        payload,
+      );
+      if (!isAirTagObservationAcknowledgement(response))
+        throw new Error("Invalid air-tag.observation response");
+      return response;
     }
     return undefined;
   }
@@ -348,15 +457,28 @@ export class AppSocket {
     if (event.type === "session.joined") {
       this.id = event.data.connectionId;
       this.joinedOrganizationIds = [...event.data.organizationIds];
+      if (event.data.accessPolicy)
+        this.applyAccessPolicy(event.data.accessPolicy);
       return;
     }
     if (event.type === "permissions.updated") {
+      const addedOrganization = event.data.organizationIds.some(
+        (id) => !this.joinedOrganizationIds.includes(id),
+      );
       this.joinedOrganizationIds = [...event.data.organizationIds];
-      this.listeners.emit(GatewayEvent.PERMISSIONS_UPDATED, {
-        guilds: event.data.organizationIds.map((id) => ({ guild: { id } })),
-        featureRooms: event.data.subscriptionScopes.map((scope) => scope.topic),
-      });
-      void this.publishPresence();
+      if (event.data.accessPolicy) {
+        this.applyAccessPolicy(event.data.accessPolicy);
+        if (addedOrganization) void this.publishPresence();
+      } else {
+        this.currentAccessPolicy = undefined;
+        this.listeners.emit(GatewayEvent.PERMISSIONS_UPDATED, {
+          guilds: event.data.organizationIds.map((id) => ({ guild: { id } })),
+          featureRooms: event.data.subscriptionScopes.map(
+            (scope) => scope.topic,
+          ),
+        });
+        void this.publishPresence();
+      }
       return;
     }
     if (event.type === "presence.snapshot") {
@@ -396,7 +518,30 @@ export class AppSocket {
     }
   }
 
+  private applyAccessPolicy(policy: AccessPolicySnapshot): void {
+    const previous = this.currentAccessPolicy;
+    if (previous?.version === policy.version) return;
+    const changes = diffAccessPolicies(
+      previous ?? createAccessPolicySnapshot([], ""),
+      policy,
+    );
+    this.currentAccessPolicy = policy;
+    this.listeners.emit(GatewayEvent.PERMISSIONS_UPDATED, {
+      guilds: policy.organizations.map(({ organizationId }) => ({
+        guild: { id: organizationId },
+      })),
+      accessPolicy: policy,
+      changes,
+    } satisfies PermissionsUpdatedPayload);
+  }
+
   private dispatchJoin(result: JoinResult): void {
+    if (!result.accessPolicy) {
+      this.currentAccessPolicy = undefined;
+      this.listeners.emit(GatewayEvent.PERMISSIONS_UPDATED, {
+        guilds: result.organizationIds.map((id) => ({ guild: { id } })),
+      } satisfies PermissionsUpdatedPayload);
+    }
     this.listeners.emit(GatewayEvent.JOIN, {
       status: "success",
       guildsCount: result.organizationIds.length,

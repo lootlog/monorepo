@@ -1,118 +1,46 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { RuntimeStateProjection } from "@/lib/margonem-runtime/runtime-state-projection";
+import { parseRuntimeFacts } from "@/lib/margonem-runtime/runtime-event-parser";
+import { afterEach, beforeEach, expect, it, onTestFinished, vi } from "vitest";
+import { waitFor } from "@testing-library/react";
+import { configureApiClients } from "@lootlog/client/transport";
 import { useBattleStore } from "@/store/game-store/battle.store";
 import { useDialogStore } from "@/store/game-store/dialog.store";
 import { useLootStore } from "@/store/game-store/loot.store";
-import { LOOT_CREATE_DEBUG_PREFIX } from "@/lib/loot-create-debug";
-import { useSettingsStore } from "@/store/settings.store";
-import { LootEventProcessor } from "./loot-event-processor";
-import type { GameEvent } from "@lootlog/margonem/game-events";
-import type * as ApiModule from "@/api";
 import { useGameStore } from "@/store/game.store";
+import { useOthersStore } from "@/store/others.store";
 import { useNpcsStore } from "@/store/npcs.store";
+import { useSettingsStore } from "@/store/settings.store";
+import { setTestRuntimeGame } from "@/test/test-runtime-window";
+import { LOOT_CREATE_DEBUG_PREFIX } from "@/lib/loot-create-debug";
+import { LootEventProcessor } from "./loot-event-processor";
+import { createBattleWarrior } from "./battle-test-fixtures";
+import type { GameEvent, LootEvent } from "@lootlog/margonem/game-events";
 
-const { mockCreateLoot, mockGetLoot, mockGetBattleParticipants, mockGame } =
-  vi.hoisted(() => ({
-    mockCreateLoot: vi.fn(),
-    mockGetLoot: vi.fn(),
-    mockGetBattleParticipants: vi.fn(),
-    mockGame: {
-      hero: {
-        id: 101,
-        account: 202,
-        nick: "Tester",
-        lvl: 230,
-        prof: "w",
-        img: "hero.gif",
-        warrior_stats: {
-          hp: 500,
-          maxhp: 1000,
-        },
-      },
-      map: {
-        name: "Ithan",
-      },
-      getWorldName: vi.fn(() => "pandora"),
-      getNpc: vi.fn(),
+const createLootEvent = (
+  source: LootEvent["source"],
+  rarity = "legendary",
+  id = 1,
+): GameEvent => ({
+  f: {},
+  item: {
+    [id]: {
+      tpl: id,
+      hid: `hid-${id}`,
+      icon: "loot.gif",
+      name: "Legendarny miecz",
+      pr: 1,
+      prc: "1",
+      st: 0,
+      stat: `rarity=${rarity}`,
+      own: 101,
+      cl: 1,
+      loc: "l",
     },
-  }));
-
-vi.mock("@/api", async (importOriginal) => {
-  const originalModule = await importOriginal<typeof ApiModule>();
-
-  return {
-    ...originalModule,
-    createLoot: (...args: unknown[]) => mockCreateLoot(...args),
-  };
+  },
+  loot: { source, states: { [id]: 1 } },
 });
-
-vi.mock("@/utils/game/get-loots", () => ({
-  getLoot: (...args: unknown[]) => mockGetLoot(...args),
-}));
-
-vi.mock("@/utils/game/get-battle-participants", () => ({
-  getBattleParticipants: (...args: unknown[]) =>
-    mockGetBattleParticipants(...args),
-}));
-
-vi.mock("@/lib/game", () => ({
-  Game: mockGame,
-}));
-
-const createBattleWarrior = () => ({
-  id: 1,
-  originalId: 1,
-  name: "Tester",
-  icon: "hero.gif",
-  hpp: 100,
-  prof: "w",
-  lvl: 230,
-  wt: 0,
-  type: 0,
-  team: 1,
-});
-
-const createBattleLootEvent = (): GameEvent =>
-  ({
-    f: {},
-    item: {
-      "1": {
-        tpl: 1,
-      },
-    },
-    loot: {
-      source: "fight",
-      states: {},
-    },
-  }) as unknown as GameEvent;
-
-const createDialogLootEvent = (npcIds?: number[]): GameEvent =>
-  ({
-    item: {
-      "1": {
-        tpl: 1,
-      },
-    },
-    loot: {
-      source: "dialog",
-      states: {},
-    },
-    npcs_del: npcIds?.map((id) => ({ id })),
-  }) as unknown as GameEvent;
-
-const createGameNpc = (id: number, nick: string) => ({
-  id,
-  tpl: id,
-  x: 1,
-  y: 1,
-  icon: "npc.gif",
-  nick,
-  prof: "m",
-  type: 3,
-  wt: 90,
-  lvl: 240,
-});
-
-const createRuntimeNpc = (id: number, name: string) => ({
+const createBattleLootEvent = () => createLootEvent("fight");
+const createRuntimeNpc = (id = 501, name = "Kliknięty NPC") => ({
   id,
   templateId: id,
   x: 1,
@@ -124,710 +52,414 @@ const createRuntimeNpc = (id: number, name: string) => ({
   weight: 90,
   level: 240,
 });
-
 const setDialogNpcContext = (
   npcId: number,
   npc: ReturnType<typeof createRuntimeNpc> | null = null,
-) => {
-  const npcContext = {
-    npcId,
-    npc,
-    source: "talk-request" as const,
+) =>
+  useDialogStore
+    .getState()
+    .setNpcContext({ npcId, npc, source: "talk-request" });
+const createFixture = () => {
+  const processor = new LootEventProcessor();
+  const requests: Request[] = [];
+  let status = 200;
+  const fetch: typeof globalThis.fetch = (input, init) => {
+    requests.push(new Request(input, init));
+    return Promise.resolve(
+      Response.json(
+        { id: 999, submittedGuilds: [], rejectedGuilds: [] },
+        { status },
+      ),
+    );
   };
-  useDialogStore.getState().setNpcContext(npcContext);
-  return npcContext;
+  onTestFinished(
+    configureApiClients({
+      main: { baseUrl: "https://api.example.test", fetch },
+    }),
+  );
+  return {
+    processor,
+    requests,
+    payload: async (index = 0) => {
+      await waitFor(() => expect(requests.length).toBeGreaterThan(index));
+      return requests[index].json();
+    },
+    fail: () => {
+      status = 400;
+    },
+    succeed: () => {
+      status = 200;
+    },
+  };
 };
-
-describe("LootEventProcessor", () => {
-  let processor: LootEventProcessor;
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    processor = new LootEventProcessor();
-    useBattleStore.setState({
-      events: [],
-      battleState: "idle",
-      lastBattleHash: "",
-      lastKillHash: "",
-      battleWarriors: {},
-    });
-    useLootStore.setState({
-      lastLootId: 44,
-    });
-    useDialogStore.getState().clearNpcContext();
-    useNpcsStore.getState().clearNpcs();
-    useGameStore.getState().replaceGame({
-      hero: {
-        accountId: "202",
-        characterId: "101",
-        currentHp: 500,
-        icon: "hero.gif",
-        level: 230,
-        maxHp: 1000,
-        name: "Tester",
-        profession: "w",
-        x: 1,
-        y: 2,
-      },
-      interface: "ni",
-      map: { id: 1, name: "Ithan", visibility: 30 },
-      world: "pandora",
-    });
-    useSettingsStore.getState().setLootDebugLoggingEnabled(false);
-  });
-
-  it("ignores battle loot when item is missing or source is not fight", () => {
-    processor.handleLootFromBattle({});
-    processor.handleLootFromBattle(createDialogLootEvent());
-
-    expect(mockCreateLoot).not.toHaveBeenCalled();
-    expect(useLootStore.getState().lastLootId).toBe(44);
-  });
-
-  it("ignores battle loot when there are no tracked battle warriors", () => {
-    const consoleLogSpy = vi
-      .spyOn(console, "log")
-      .mockImplementation(() => undefined);
-    vi.spyOn(crypto, "randomUUID").mockReturnValue(
-      "00000000-0000-4000-8000-000000000002",
-    );
-    useSettingsStore.getState().setLootDebugLoggingEnabled(true);
-
-    processor.handleLootFromBattle(createBattleLootEvent());
-
-    expect(mockCreateLoot).not.toHaveBeenCalled();
-    expect(useLootStore.getState().lastLootId).toBe(44);
-    expect(consoleLogSpy).toHaveBeenCalledWith(LOOT_CREATE_DEBUG_PREFIX, {
-      attemptId: "00000000-0000-4000-8000-000000000002",
-      reason: "missing-battle-warriors",
-      source: "fight",
-      stage: "skipped",
-    });
-  });
-
-  it("creates loot from battle and stores returned loot id", async () => {
-    const consoleLogSpy = vi
-      .spyOn(console, "log")
-      .mockImplementation(() => undefined);
-    vi.spyOn(crypto, "randomUUID").mockReturnValue(
-      "00000000-0000-4000-8000-000000000001",
-    );
-    useSettingsStore.getState().setLootDebugLoggingEnabled(true);
-    useBattleStore.setState({
-      battleWarriors: {
-        "1": createBattleWarrior(),
-      },
-    });
-    mockGetLoot.mockReturnValue([
-      {
-        id: 1,
-        name: "Legendarny miecz",
-      },
-    ]);
-    mockGetBattleParticipants.mockReturnValue({
-      npcs: [{ id: 501, name: "Boss" }],
-      party: [{ id: 101, name: "Tester" }],
-    });
-    mockCreateLoot.mockResolvedValue({
-      id: 999,
-    });
-
-    const event = createBattleLootEvent();
-    const expectedPayload = {
-      world: "pandora",
-      source: "FIGHT",
-      location: "Ithan",
-      npcs: [{ id: 501, name: "Boss" }],
-      loots: [{ id: 1, name: "Legendarny miecz" }],
-      players: [{ id: 101, name: "Tester" }],
-      accountId: "202",
-      characterId: "101",
-    };
-
-    processor.handleLootFromBattle(event);
-
-    expect(useLootStore.getState().lastLootId).toBeNull();
-
-    await Promise.resolve();
-    await Promise.resolve();
-
-    expect(mockGetBattleParticipants).toHaveBeenCalledWith(
-      useBattleStore.getState().battleWarriors,
-      useGameStore.getState().game,
-    );
-    expect(mockCreateLoot).toHaveBeenCalledWith(expectedPayload, {
-      attemptId: "00000000-0000-4000-8000-000000000001",
-      source: "fight",
-    });
-    expect(useLootStore.getState().lastLootId).toBe(999);
-    expect(consoleLogSpy).toHaveBeenCalledWith(LOOT_CREATE_DEBUG_PREFIX, {
-      attemptId: "00000000-0000-4000-8000-000000000001",
-      battleWarriors: useBattleStore.getState().battleWarriors,
-      event,
-      source: "fight",
-      stage: "event-detected",
-    });
-    expect(consoleLogSpy).toHaveBeenCalledWith(LOOT_CREATE_DEBUG_PREFIX, {
-      attemptId: "00000000-0000-4000-8000-000000000001",
-      payload: expectedPayload,
-      source: "fight",
-      stage: "request-prepared",
-    });
-    expect(consoleLogSpy).toHaveBeenCalledWith(LOOT_CREATE_DEBUG_PREFIX, {
-      attemptId: "00000000-0000-4000-8000-000000000001",
-      lastLootId: 999,
-      response: { id: 999 },
-      source: "fight",
-      stage: "completed",
-    });
-  });
-
-  it("submits different battle loot effects that share an event id", () => {
-    useBattleStore.setState({
-      battleWarriors: {
-        "1": createBattleWarrior(),
-      },
-    });
-    mockGetLoot
-      .mockReturnValueOnce([{ id: 1, name: "Legendarny miecz" }])
-      .mockReturnValueOnce([{ id: 2, name: "Legendarny łuk" }]);
-    mockGetBattleParticipants.mockReturnValue({
-      npcs: [{ id: 501, name: "Boss" }],
-      party: [{ id: 101, name: "Tester" }],
-    });
-    mockCreateLoot.mockResolvedValue({ id: 999 });
-    const event = { ...createBattleLootEvent(), ev: 77 };
-
-    processor.handleLootFromBattle(event);
-    processor.handleLootFromBattle(event);
-
-    expect(mockCreateLoot).toHaveBeenCalledTimes(2);
-  });
-
-  it("stops battle loot creation when parsed loot list is empty", () => {
-    const consoleLogSpy = vi
-      .spyOn(console, "log")
-      .mockImplementation(() => undefined);
-    vi.spyOn(crypto, "randomUUID").mockReturnValue(
-      "00000000-0000-4000-8000-000000000003",
-    );
-    useSettingsStore.getState().setLootDebugLoggingEnabled(true);
-    useBattleStore.setState({
-      battleWarriors: {
-        "1": createBattleWarrior(),
-      },
-    });
-    mockGetLoot.mockReturnValue([]);
-
-    processor.handleLootFromBattle(createBattleLootEvent());
-
-    expect(mockCreateLoot).not.toHaveBeenCalled();
-    expect(useLootStore.getState().lastLootId).toBeNull();
-    expect(consoleLogSpy).toHaveBeenCalledWith(LOOT_CREATE_DEBUG_PREFIX, {
-      attemptId: "00000000-0000-4000-8000-000000000003",
-      reason: "empty-parsed-loots",
-      source: "fight",
-      stage: "skipped",
-    });
-  });
-
-  it("logs when battle fight data is missing", () => {
-    const consoleLogSpy = vi
-      .spyOn(console, "log")
-      .mockImplementation(() => undefined);
-    vi.spyOn(crypto, "randomUUID").mockReturnValue(
-      "00000000-0000-4000-8000-000000000004",
-    );
-    useSettingsStore.getState().setLootDebugLoggingEnabled(true);
-    useBattleStore.setState({
-      battleWarriors: {
-        "1": createBattleWarrior(),
-      },
-    });
-    const event = createBattleLootEvent();
-    delete event.f;
-
-    processor.handleLootFromBattle(event);
-
-    expect(mockCreateLoot).not.toHaveBeenCalled();
-    expect(consoleLogSpy).toHaveBeenCalledWith(LOOT_CREATE_DEBUG_PREFIX, {
-      attemptId: "00000000-0000-4000-8000-000000000004",
-      reason: "missing-fight-data",
-      source: "fight",
-      stage: "skipped",
-    });
-  });
-
-  it("logs warning and permits retry when battle loot request fails", async () => {
-    const consoleWarnSpy = vi
-      .spyOn(console, "warn")
-      .mockImplementation(() => undefined);
-    const consoleLogSpy = vi
-      .spyOn(console, "log")
-      .mockImplementation(() => undefined);
-    vi.spyOn(crypto, "randomUUID").mockReturnValue(
-      "00000000-0000-4000-8000-000000000005",
-    );
-    useSettingsStore.getState().setLootDebugLoggingEnabled(true);
-
-    useBattleStore.setState({
-      battleWarriors: {
-        "1": createBattleWarrior(),
-      },
-    });
-    mockGetLoot.mockReturnValue([{ id: 1 }]);
-    mockGetBattleParticipants.mockReturnValue({
-      npcs: [{ id: 501 }],
-      party: [{ id: 101 }],
-    });
-    mockCreateLoot.mockRejectedValue(new Error("battle failed"));
-
-    const event = createBattleLootEvent();
-    processor.handleLootFromBattle(event);
-
-    await Promise.resolve();
-    await Promise.resolve();
-
-    mockCreateLoot.mockResolvedValue({ id: 999 });
-    processor.handleLootFromBattle(event);
-
-    expect(consoleWarnSpy).toHaveBeenCalledWith(
-      "[LootEventProcessor] Failed to create loot:",
-      expect.any(Error),
-    );
-    expect(consoleLogSpy).toHaveBeenCalledWith(LOOT_CREATE_DEBUG_PREFIX, {
-      attemptId: "00000000-0000-4000-8000-000000000005",
-      error: expect.any(Error),
-      source: "fight",
-      stage: "failed",
-    });
-    expect(mockCreateLoot).toHaveBeenCalledTimes(2);
-  });
-
-  it("ignores dialog loot without tracked npc", () => {
-    const consoleLogSpy = vi
-      .spyOn(console, "log")
-      .mockImplementation(() => undefined);
-    vi.spyOn(crypto, "randomUUID").mockReturnValue(
-      "00000000-0000-4000-8000-000000000007",
-    );
-    useSettingsStore.getState().setLootDebugLoggingEnabled(true);
-
-    processor.handleDialogLoot(createDialogLootEvent());
-
-    expect(mockCreateLoot).not.toHaveBeenCalled();
-    expect(useLootStore.getState().lastLootId).toBe(44);
-    expect(consoleLogSpy).toHaveBeenCalledWith(LOOT_CREATE_DEBUG_PREFIX, {
-      attemptId: "00000000-0000-4000-8000-000000000007",
-      eventNpcDelIds: [],
-      reason: "missing-dialog-npc-context",
-      source: "dialog",
-      stage: "skipped",
-    });
-  });
-
-  it("creates dialog loot using the tracked npc context", async () => {
-    const consoleLogSpy = vi
-      .spyOn(console, "log")
-      .mockImplementation(() => undefined);
-    vi.spyOn(crypto, "randomUUID").mockReturnValue(
-      "00000000-0000-4000-8000-000000000006",
-    );
-    useSettingsStore.getState().setLootDebugLoggingEnabled(true);
-    const npcContext = setDialogNpcContext(501);
-    mockGetLoot.mockReturnValue([{ id: 7, name: "Łup" }]);
-    mockGame.getNpc.mockReturnValue(createGameNpc(501, "Mokra bestia"));
-    useNpcsStore
-      .getState()
-      .replaceNpcs([createRuntimeNpc(501, "Mokra bestia")]);
-    mockCreateLoot.mockResolvedValue({
-      id: 321,
-    });
-
-    const event = createDialogLootEvent([501]);
-    const expectedPayload = {
-      world: "pandora",
-      source: "DIALOG",
-      location: "Ithan",
-      loots: [{ id: 7, name: "Łup" }],
-      npcs: [
-        {
-          icon: "npc.gif",
-          id: 501,
-          name: "Mokra bestia",
-          prof: "m",
-          hpp: 0,
-          type: 3,
-          wt: 90,
-          lvl: 240,
-          location: "Ithan",
-        },
-      ],
-      players: [
-        {
-          id: 101,
+beforeEach(() => {
+  useBattleStore.setState({
+    battleWarriors: {
+      "101": {
+        ...createBattleWarrior(101, {
           name: "Tester",
-          icon: "hero.gif",
-          prof: "w",
-          hpp: 50,
+          originalId: 101,
           lvl: 230,
-          accountId: 202,
-        },
-      ],
+        }),
+        accountId: 202,
+      },
+      "-501": createBattleWarrior(-501, {
+        originalId: 501,
+        wt: 20,
+        name: "Boss",
+      }),
+    },
+  });
+  useLootStore.setState({ lastLootId: 44 });
+  useDialogStore.getState().clearNpcContext();
+  useNpcsStore.getState().clearNpcs();
+  useOthersStore.getState().clearOthers();
+  setTestRuntimeGame({
+    world: "pandora",
+    hero: {
       accountId: "202",
       characterId: "101",
-    };
-
-    processor.handleDialogLoot(event);
-
-    expect(useLootStore.getState().lastLootId).toBeNull();
-
-    await Promise.resolve();
-    await Promise.resolve();
-
-    expect(mockCreateLoot).toHaveBeenCalledWith(expectedPayload, {
-      attemptId: "00000000-0000-4000-8000-000000000006",
-      source: "dialog",
-    });
-    expect(consoleLogSpy).toHaveBeenCalledWith(LOOT_CREATE_DEBUG_PREFIX, {
-      attemptId: "00000000-0000-4000-8000-000000000006",
-      dialogNpcContext: npcContext,
-      event,
-      eventNpcDelIds: [501],
-      source: "dialog",
-      stage: "event-detected",
-    });
-    expect(consoleLogSpy).toHaveBeenCalledWith(LOOT_CREATE_DEBUG_PREFIX, {
-      attemptId: "00000000-0000-4000-8000-000000000006",
-      eventNpcDelIds: [501],
-      payload: expectedPayload,
-      resolutionSource: "fallback-lookup",
-      source: "dialog",
-      stage: "request-prepared",
-    });
-    expect(consoleLogSpy).toHaveBeenCalledWith(LOOT_CREATE_DEBUG_PREFIX, {
-      attemptId: "00000000-0000-4000-8000-000000000006",
-      lastLootId: 321,
-      response: { id: 321 },
-      source: "dialog",
-      stage: "completed",
-    });
-    expect(useLootStore.getState().lastLootId).toBe(321);
+      name: "Tester",
+      level: 230,
+      profession: "w",
+      icon: "hero.gif",
+      currentHp: 500,
+      maxHp: 1000,
+    },
+    map: { id: 1, name: "Ithan", visibility: 30 },
   });
-
-  it("uses the configured level for a known mine npc", async () => {
-    setDialogNpcContext(279097, {
-      ...createRuntimeNpc(279097, "Zamrożony czarodziej"),
-      level: 0,
-    });
-    mockGetLoot.mockReturnValue([
-      { id: 7, name: "Fiolka magicznego pyłu", stat: "lvl=1;rarity=unique" },
-    ]);
-    mockCreateLoot.mockResolvedValue({ id: 321 });
-
-    processor.handleDialogLoot(createDialogLootEvent([279097]));
-
-    await Promise.resolve();
-    await Promise.resolve();
-
-    expect(mockCreateLoot).toHaveBeenCalledTimes(1);
-    expect(mockCreateLoot).toHaveBeenCalledWith(
-      expect.objectContaining({
-        npcs: [
-          expect.objectContaining({
-            id: 279097,
-            lvl: 300,
-            name: "Zamrożony czarodziej",
-          }),
-        ],
-      }),
-      expect.any(Object),
-    );
+  useSettingsStore.getState().setLootDebugLoggingEnabled(false);
+});
+afterEach(() => vi.restoreAllMocks());
+it("captures map characters and the hero once for a legendary elite II loot", async () => {
+  const fixture = createFixture();
+  useOthersStore.getState().replaceOthers({
+    "303": {
+      accountId: "404",
+      characterId: "303",
+      name: "Other",
+      profession: "m",
+      icon: "other.gif",
+      level: 123,
+    },
+    "101": {
+      accountId: "202",
+      characterId: "101",
+      name: "Tester",
+      profession: "w",
+      icon: "hero.gif",
+      level: 230,
+    },
   });
-
-  it("preserves level zero for an unknown dialog npc", async () => {
-    setDialogNpcContext(501, {
-      ...createRuntimeNpc(501, "Nieznany dialog"),
-      level: 0,
-    });
-    mockGetLoot.mockReturnValue([
-      { id: 7, name: "Nagroda", stat: "lvl=300;rarity=unique" },
-    ]);
-    mockCreateLoot.mockResolvedValue({ id: 321 });
-
-    processor.handleDialogLoot(createDialogLootEvent([501]));
-
-    await Promise.resolve();
-    await Promise.resolve();
-
-    expect(mockCreateLoot).toHaveBeenCalledTimes(1);
-    expect(mockCreateLoot).toHaveBeenCalledWith(
-      expect.objectContaining({
-        npcs: [
-          expect.objectContaining({
-            id: 501,
-            lvl: 0,
-            name: "Nieznany dialog",
-          }),
-        ],
-      }),
-      expect.any(Object),
-    );
-  });
-
-  it("attributes dialog loot to the talked npc instead of unrelated npcs_del entries", async () => {
-    setDialogNpcContext(501);
-    mockGetLoot.mockReturnValue([{ id: 7, name: "Łup" }]);
-    mockGame.getNpc.mockImplementation((npcId: number) =>
-      createGameNpc(npcId, npcId === 501 ? "Kliknięty NPC" : "Obcy NPC"),
-    );
-    useNpcsStore
-      .getState()
-      .replaceNpcs([createRuntimeNpc(501, "Kliknięty NPC")]);
-    mockCreateLoot.mockResolvedValue({ id: 321 });
-
-    processor.handleDialogLoot(createDialogLootEvent([502, 503]));
-
-    await Promise.resolve();
-    await Promise.resolve();
-
-    expect(mockCreateLoot).toHaveBeenCalledWith(
-      expect.objectContaining({
-        npcs: [
-          expect.objectContaining({
-            id: 501,
-            name: "Kliknięty NPC",
-          }),
-        ],
-      }),
-      expect.any(Object),
-    );
-  });
-
-  it("creates dialog loot from the snapshot captured before the npc disappears", async () => {
-    useDialogStore.getState().setNpcContext({
-      npcId: 501,
-      npc: createRuntimeNpc(501, "Kliknięty NPC"),
-      source: "talk-request",
-    });
-    mockGetLoot.mockReturnValue([{ id: 7, name: "Łup" }]);
-    mockGame.getNpc.mockReturnValue(undefined);
-    mockCreateLoot.mockResolvedValue({ id: 321 });
-
-    processor.handleDialogLoot(createDialogLootEvent([502, 503]));
-
-    await Promise.resolve();
-    await Promise.resolve();
-
-    expect(mockCreateLoot).toHaveBeenCalledWith(
-      expect.objectContaining({
-        npcs: [expect.objectContaining({ id: 501, name: "Kliknięty NPC" })],
-      }),
-      expect.any(Object),
-    );
-  });
-
-  it("uses the pre-event ingress NPC after projection removes it from the store", async () => {
-    setDialogNpcContext(501);
-    const ingressNpc = createRuntimeNpc(501, "Kliknięty NPC");
-    const game = useGameStore.getState().game;
-    expect(game).not.toBeNull();
-    mockGetLoot.mockReturnValue([{ id: 7, name: "Łup" }]);
-    mockCreateLoot.mockResolvedValue({ id: 321 });
-
-    processor.handleDialogLoot(createDialogLootEvent([501]), {
-      game,
-      intent: null,
-      npcsById: { 501: ingressNpc },
-      othersById: {},
-    });
-
-    await Promise.resolve();
-    await Promise.resolve();
-
-    expect(useNpcsStore.getState().getNpc(501)).toBeUndefined();
-    expect(mockCreateLoot).toHaveBeenCalledWith(
-      expect.objectContaining({
-        npcs: [expect.objectContaining({ id: 501, name: "Kliknięty NPC" })],
-      }),
-      expect.any(Object),
-    );
-  });
-
-  it("falls back to the canonical npc store when the context has no snapshot", async () => {
-    setDialogNpcContext(777);
-    mockGetLoot.mockReturnValue([{ id: 7 }]);
-    mockGame.getNpc.mockImplementation((npcId: number) => {
-      if (npcId === 777) {
-        return {
-          ...createGameNpc(777, "Strażnik"),
-          prof: "h",
-          type: 2,
-          wt: 30,
-          lvl: 120,
-        };
-      }
-
-      return undefined;
-    });
-    mockCreateLoot.mockResolvedValue({
-      id: 123,
-    });
-    useNpcsStore.getState().replaceNpcs([
+  fixture.processor.handleLootFromBattle(createBattleLootEvent());
+  useOthersStore.getState().clearOthers();
+  expect(await fixture.payload()).toMatchObject({
+    mapPlayersSnapshot: [
       {
-        ...createRuntimeNpc(777, "Strażnik"),
-        profession: "h",
-        type: 2,
-        weight: 30,
-        level: 120,
+        accountId: 202,
+        characterId: 101,
+        name: "Tester",
+        prof: "WARRIOR",
+        icon: "hero.gif",
       },
-    ]);
-
-    processor.handleDialogLoot(createDialogLootEvent());
-
-    await Promise.resolve();
-    await Promise.resolve();
-
-    expect(mockGame.getNpc).not.toHaveBeenCalled();
-    expect(mockCreateLoot).toHaveBeenCalledTimes(1);
+      {
+        accountId: 404,
+        characterId: 303,
+        name: "Other",
+        prof: "MAGE",
+        icon: "other.gif",
+      },
+    ],
   });
-
-  it("does not create dialog loot when npc lookup returns empty data", () => {
-    const consoleLogSpy = vi
-      .spyOn(console, "log")
-      .mockImplementation(() => undefined);
-    vi.spyOn(crypto, "randomUUID").mockReturnValue(
-      "00000000-0000-4000-8000-000000000008",
+});
+it.each([
+  ["heroic", 20],
+  ["legendary", 80],
+  ["legendary", 100],
+])("omits map characters for rarity %s and weight %s", async (rarity, wt) => {
+  const fixture = createFixture();
+  useOthersStore.getState().replaceOthers({});
+  useBattleStore.setState({
+    battleWarriors: {
+      ...useBattleStore.getState().battleWarriors,
+      "-502": createBattleWarrior(-502, { wt }),
+    },
+  });
+  fixture.processor.handleLootFromBattle(createLootEvent("fight", rarity));
+  expect(await fixture.payload()).not.toHaveProperty("mapPlayersSnapshot");
+});
+it.each(["invalid player", "different map epoch", "uninitialized list"])(
+  "omits an inconsistent map snapshot: %s",
+  async (reason) => {
+    const fixture = createFixture();
+    if (reason !== "uninitialized list")
+      useOthersStore.getState().replaceOthers({
+        "303": {
+          accountId: reason === "invalid player" ? "" : "404",
+          characterId: "303",
+          name: "Other",
+          profession: "m",
+          icon: "other.gif",
+          level: 123,
+        },
+      });
+    const mapEpoch = useOthersStore.getState().mapEpoch;
+    if (reason === "different map epoch")
+      useOthersStore.setState({ mapEpoch: mapEpoch + 1 });
+    fixture.processor.handleLootFromBattle(createBattleLootEvent());
+    useOthersStore.setState({ mapEpoch });
+    expect(await fixture.payload()).not.toHaveProperty("mapPlayersSnapshot");
+  },
+);
+it("ignores absent items and the wrong source", () => {
+  const fixture = createFixture();
+  fixture.processor.handleLootFromBattle({});
+  fixture.processor.handleLootFromBattle(createLootEvent("dialog"));
+  fixture.processor.handleDialogLoot(createBattleLootEvent());
+  expect(fixture.requests).toHaveLength(0);
+  expect(useLootStore.getState().lastLootId).toBe(44);
+});
+it.each([
+  "missing-battle-warriors",
+  "missing-fight-data",
+  "empty-parsed-loots",
+])("reports why battle loot was skipped: %s", (reason) => {
+  const fixture = createFixture();
+  const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+  useSettingsStore.getState().setLootDebugLoggingEnabled(true);
+  const event = createBattleLootEvent();
+  if (reason === "missing-battle-warriors")
+    useBattleStore.setState({ battleWarriors: {} });
+  if (reason === "missing-fight-data") delete event.f;
+  if (reason === "empty-parsed-loots") event.item = {};
+  fixture.processor.handleLootFromBattle(event);
+  expect(fixture.requests).toHaveLength(0);
+  expect(log).toHaveBeenCalledWith(
+    LOOT_CREATE_DEBUG_PREFIX,
+    expect.objectContaining({ source: "fight", stage: "skipped", reason }),
+  );
+  expect(useLootStore.getState().lastLootId).toBe(
+    reason === "missing-battle-warriors" ? 44 : null,
+  );
+});
+it("sends parsed battle participants and loot then stores the accepted id", async () => {
+  const fixture = createFixture();
+  const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+  useSettingsStore.getState().setLootDebugLoggingEnabled(true);
+  fixture.processor.handleLootFromBattle(createBattleLootEvent());
+  expect(useLootStore.getState().lastLootId).toBeNull();
+  expect(await fixture.payload()).toMatchObject({
+    world: "pandora",
+    source: "FIGHT",
+    location: "Ithan",
+    accountId: "202",
+    characterId: "101",
+    npcs: [{ id: 501, name: "Boss" }],
+    players: [{ id: 101, name: "Tester" }],
+    loots: [{ id: 1, name: "Legendarny miecz", stat: "rarity=legendary" }],
+  });
+  await waitFor(() => expect(useLootStore.getState().lastLootId).toBe(999));
+  expect(log).toHaveBeenCalledWith(
+    LOOT_CREATE_DEBUG_PREFIX,
+    expect.objectContaining({
+      source: "fight",
+      stage: "completed",
+      lastLootId: 999,
+    }),
+  );
+});
+it("submits different loot effects that share an event id", async () => {
+  const fixture = createFixture();
+  fixture.processor.handleLootFromBattle({
+    ...createLootEvent("fight", "legendary", 1),
+    ev: 77,
+  });
+  fixture.processor.handleLootFromBattle({
+    ...createLootEvent("fight", "legendary", 2),
+    ev: 77,
+  });
+  expect(await fixture.payload(0)).toMatchObject({ loots: [{ id: 1 }] });
+  expect(await fixture.payload(1)).toMatchObject({ loots: [{ id: 2 }] });
+  expect(fixture.requests).toHaveLength(2);
+});
+it("ignores dialog loot without a tracked NPC", () => {
+  const fixture = createFixture();
+  fixture.processor.handleDialogLoot(createLootEvent("dialog"));
+  expect(fixture.requests).toHaveLength(0);
+  expect(useLootStore.getState().lastLootId).toBe(44);
+});
+it.each(["context snapshot", "ingress snapshot", "canonical store"])(
+  "attributes dialog loot through %s after unrelated NPC deletion",
+  async (source) => {
+    const fixture = createFixture();
+    const npc = createRuntimeNpc();
+    setDialogNpcContext(501, source === "context snapshot" ? npc : null);
+    if (source === "canonical store")
+      useNpcsStore.getState().replaceNpcs([npc]);
+    fixture.processor.handleDialogLoot(
+      { ...createLootEvent("dialog"), npcs_del: [{ id: 502 }, { id: 503 }] },
+      {
+        game: useGameStore.getState().game,
+        intent: null,
+        npcsById: source === "ingress snapshot" ? { 501: npc } : {},
+        othersById: {},
+      },
     );
-    useSettingsStore.getState().setLootDebugLoggingEnabled(true);
-    setDialogNpcContext(777);
-    mockGetLoot.mockReturnValue([{ id: 7 }]);
-    mockGame.getNpc.mockReturnValue(undefined);
-
-    processor.handleDialogLoot(createDialogLootEvent());
-
-    expect(mockCreateLoot).not.toHaveBeenCalled();
     expect(useLootStore.getState().lastLootId).toBeNull();
-    expect(consoleLogSpy).toHaveBeenCalledWith(LOOT_CREATE_DEBUG_PREFIX, {
-      attemptId: "00000000-0000-4000-8000-000000000008",
-      eventNpcDelIds: [],
-      npcId: 777,
+    expect(await fixture.payload()).toMatchObject({
+      source: "DIALOG",
+      npcs: [{ id: 501, name: "Kliknięty NPC", hpp: 0, location: "Ithan" }],
+      players: [{ id: 101, name: "Tester", hpp: 50, accountId: 202 }],
+    });
+    await waitFor(() => expect(useLootStore.getState().lastLootId).toBe(999));
+  },
+);
+it.each([
+  { id: 279097, lvl: 300, name: "Zamrożony czarodziej" },
+  { id: 501, lvl: 0, name: "Nieznany dialog" },
+])(
+  "resolves level zero for dialog NPC $id to $lvl",
+  async ({ id, lvl, name }) => {
+    const fixture = createFixture();
+    setDialogNpcContext(id, { ...createRuntimeNpc(id, name), level: 0 });
+    fixture.processor.handleDialogLoot(createLootEvent("dialog", "unique"));
+    expect(await fixture.payload()).toMatchObject({
+      npcs: [{ id, lvl, name }],
+    });
+  },
+);
+it("reports missing dialog snapshot with the event's deleted NPC ids", () => {
+  const fixture = createFixture();
+  setDialogNpcContext(501);
+  const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+  useSettingsStore.getState().setLootDebugLoggingEnabled(true);
+  fixture.processor.handleDialogLoot({
+    ...createLootEvent("dialog"),
+    npcs_del: [{ id: 501 }],
+  });
+  expect(fixture.requests).toHaveLength(0);
+  expect(useLootStore.getState().lastLootId).toBeNull();
+  expect(log).toHaveBeenCalledWith(
+    LOOT_CREATE_DEBUG_PREFIX,
+    expect.objectContaining({
+      source: "dialog",
+      stage: "skipped",
       reason: "missing-dialog-npc-snapshot",
-      resolutionSource: "fallback-lookup",
-      source: "dialog",
-      stage: "skipped",
-    });
-  });
-
-  it("logs event npc ids when the tracked npc snapshot cannot be resolved", () => {
-    const consoleLogSpy = vi
-      .spyOn(console, "log")
-      .mockImplementation(() => undefined);
-    vi.spyOn(crypto, "randomUUID").mockReturnValue(
-      "00000000-0000-4000-8000-000000000009",
-    );
-    useSettingsStore.getState().setLootDebugLoggingEnabled(true);
-    setDialogNpcContext(501);
-    mockGetLoot.mockReturnValue([{ id: 7 }]);
-    mockGame.getNpc.mockReturnValue(undefined);
-
-    processor.handleDialogLoot(createDialogLootEvent([501]));
-
-    expect(mockCreateLoot).not.toHaveBeenCalled();
-    expect(consoleLogSpy).toHaveBeenCalledWith(LOOT_CREATE_DEBUG_PREFIX, {
-      attemptId: "00000000-0000-4000-8000-000000000009",
-      eventNpcDelIds: [501],
       npcId: 501,
-      reason: "missing-dialog-npc-snapshot",
-      resolutionSource: "fallback-lookup",
-      source: "dialog",
-      stage: "skipped",
-    });
-  });
-
-  it("logs when parsed dialog loot is empty", () => {
-    const consoleLogSpy = vi
-      .spyOn(console, "log")
-      .mockImplementation(() => undefined);
-    vi.spyOn(crypto, "randomUUID").mockReturnValue(
-      "00000000-0000-4000-8000-000000000010",
-    );
-    useSettingsStore.getState().setLootDebugLoggingEnabled(true);
-    setDialogNpcContext(501, createRuntimeNpc(501, "Mokra bestia"));
-    mockGetLoot.mockReturnValue([]);
-
-    processor.handleDialogLoot(createDialogLootEvent([501]));
-
-    expect(mockCreateLoot).not.toHaveBeenCalled();
-    expect(consoleLogSpy).toHaveBeenCalledWith(LOOT_CREATE_DEBUG_PREFIX, {
-      attemptId: "00000000-0000-4000-8000-000000000010",
       eventNpcDelIds: [501],
-      npcId: 501,
-      reason: "empty-parsed-loots",
-      resolutionSource: "talk-request",
-      source: "dialog",
-      stage: "skipped",
-    });
+      resolutionSource: "fallback-lookup",
+    }),
+  );
+});
+it("retains dialog context through empty loot and consumes it after one valid loot", async () => {
+  const fixture = createFixture();
+  setDialogNpcContext(501, createRuntimeNpc());
+  fixture.processor.handleDialogLoot({
+    ...createLootEvent("dialog"),
+    item: {},
   });
-
-  it("keeps the npc context through empty loot and consumes it after one valid loot", async () => {
-    setDialogNpcContext(501, createRuntimeNpc(501, "Mokra bestia"));
-    mockGetLoot.mockReturnValueOnce([]).mockReturnValue([{ id: 7 }]);
-    mockCreateLoot.mockResolvedValue({ id: 321 });
-
-    processor.handleDialogLoot(createDialogLootEvent([502]));
-    expect(useDialogStore.getState().npcContext?.npcId).toBe(501);
-
-    processor.handleDialogLoot(createDialogLootEvent([503]));
-    processor.handleDialogLoot(createDialogLootEvent([504]));
-
-    await Promise.resolve();
-    await Promise.resolve();
-
-    expect(mockCreateLoot).toHaveBeenCalledTimes(1);
-    expect(useDialogStore.getState().npcContext).toBeNull();
-  });
-
-  it("logs warning when dialog loot request fails", async () => {
-    const consoleWarnSpy = vi
-      .spyOn(console, "warn")
-      .mockImplementation(() => undefined);
-    const consoleLogSpy = vi
-      .spyOn(console, "log")
-      .mockImplementation(() => undefined);
-    vi.spyOn(crypto, "randomUUID").mockReturnValue(
-      "00000000-0000-4000-8000-000000000011",
-    );
+  expect(useDialogStore.getState().npcContext?.npcId).toBe(501);
+  fixture.processor.handleDialogLoot(createLootEvent("dialog"));
+  fixture.processor.handleDialogLoot(createLootEvent("dialog"));
+  await fixture.payload();
+  expect(fixture.requests).toHaveLength(1);
+  expect(useDialogStore.getState().npcContext).toBeNull();
+});
+it.each(["fight", "dialog"] as const)(
+  "logs actual HTTP rejection for %s loot",
+  async (source) => {
+    const fixture = createFixture();
+    fixture.fail();
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
     useSettingsStore.getState().setLootDebugLoggingEnabled(true);
-
-    setDialogNpcContext(501);
-    mockGetLoot.mockReturnValue([{ id: 7 }]);
-    mockGame.getNpc.mockReturnValue(createGameNpc(501, "Mokra bestia"));
-    useNpcsStore
-      .getState()
-      .replaceNpcs([createRuntimeNpc(501, "Mokra bestia")]);
-    mockCreateLoot.mockRejectedValue(new Error("dialog failed"));
-
-    processor.handleDialogLoot(createDialogLootEvent([501]));
-
-    await Promise.resolve();
-    await Promise.resolve();
-
-    expect(consoleWarnSpy).toHaveBeenCalledWith(
-      "[LootEventProcessor] Failed to create dialog loot:",
-      expect.any(Error),
+    setDialogNpcContext(501, createRuntimeNpc());
+    const event = createLootEvent(source);
+    if (source === "fight") fixture.processor.handleLootFromBattle(event);
+    else fixture.processor.handleDialogLoot(event);
+    await waitFor(() =>
+      expect(warn).toHaveBeenCalledWith(
+        source === "fight"
+          ? "[LootEventProcessor] Failed to create loot:"
+          : "[LootEventProcessor] Failed to create dialog loot:",
+        expect.any(Error),
+      ),
     );
-    expect(consoleLogSpy).toHaveBeenCalledWith(LOOT_CREATE_DEBUG_PREFIX, {
-      attemptId: "00000000-0000-4000-8000-000000000011",
-      error: expect.any(Error),
-      source: "dialog",
-      stage: "failed",
-    });
+    expect(log).toHaveBeenCalledWith(
+      LOOT_CREATE_DEBUG_PREFIX,
+      expect.objectContaining({
+        source,
+        stage: "failed",
+        error: expect.any(Error),
+      }),
+    );
+    fixture.succeed();
+    setDialogNpcContext(501, createRuntimeNpc());
+    if (source === "fight") {
+      fixture.processor.handleLootFromBattle(event);
+    } else {
+      fixture.processor.handleDialogLoot(event);
+    }
+    await fixture.payload(1);
+    await waitFor(() => expect(useLootStore.getState().lastLootId).toBe(999));
+  },
+);
+it("uses same-event map, hero and membership updates and freezes them before the next event", async () => {
+  const fixture = createFixture();
+  useOthersStore.getState().replaceOthers({});
+  const projection = new RuntimeStateProjection();
+  const event = {
+    ...createBattleLootEvent(),
+    town: {
+      id: 2,
+      name: "New map",
+      visibility: 30,
+      mainid: 2,
+      bg: "",
+      file: "",
+      mode: 0,
+      pvp: 0,
+      water: "",
+      x: 0,
+      y: 0,
+    },
+    h: { nick: "Updated hero" },
+    other: {
+      "303": {
+        action: "CREATE",
+        account: 404,
+        nick: "Arriving",
+        prof: "m",
+        icon: "other.gif",
+        lvl: 123,
+        attr: 0,
+        relation: 0,
+        x: 0,
+        y: 0,
+        dir: 0,
+        stasis: 0,
+        stasis_incoming_seconds: 0,
+        rights: 0,
+        oplvl: 0,
+        is_blessed: 0,
+      },
+    },
+  } satisfies GameEvent;
+  const envelope = projection.captureIngress({
+    raw: event,
+    facts: parseRuntimeFacts(event),
+    observedAt: 1,
+    sequence: 1,
+    ingress: { game: null, intent: null, npcsById: {}, othersById: {} },
   });
-
-  it("does not clear tracked id when dialog source is not used", () => {
-    processor.handleDialogLoot(createBattleLootEvent());
-
-    expect(useLootStore.getState().lastLootId).toBe(44);
+  projection.apply(envelope);
+  fixture.processor.handleLootFromBattle(event, envelope.ingress);
+  useOthersStore.getState().removeOther("303");
+  expect(await fixture.payload()).toMatchObject({
+    location: "New map",
+    mapPlayersSnapshot: [
+      { characterId: 101, name: "Updated hero" },
+      { characterId: 303, name: "Arriving" },
+    ],
   });
 });

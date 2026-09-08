@@ -18,10 +18,10 @@ export interface KillQueryCache {
   ) => Effect.Effect<S["Type"], unknown>;
 }
 
-export const buildKillQueryCacheKey = (
+export const buildKillQueryCacheKey = <Params extends object>(
   scope: string,
   ownerId: string,
-  params: Record<string, unknown>,
+  params: Params,
 ) =>
   `kill-stats:${scope}:${ownerId}:${Buffer.from(stableJsonStringify(params)).toString("base64url")}`;
 
@@ -47,7 +47,8 @@ export const visibilityFilter = (
   accessPolicy: AccessPolicy,
   roles: ReadonlyArray<KillQueryRole>,
 ): KillStatsFilter => {
-  if (accessPolicy.allows(Capability.ADMIN) || roles.length === 0) return {};
+  if (accessPolicy.allows(Capability.ADMIN)) return {};
+  if (roles.length === 0) return { npcType: { in: [] } };
 
   return {
     OR: roles.map((role) => ({
@@ -76,6 +77,7 @@ export const visibilityCacheScope = (
   accessPolicy.allows(Capability.ADMIN)
     ? { administrativeUser: true }
     : {
+        visibilityVersion: 2,
         administrativeUser: false,
         roles: roles
           .map((role) => ({

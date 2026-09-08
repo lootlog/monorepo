@@ -6,7 +6,7 @@ import { TimersEmptyState } from "./timers-empty-state";
 describe("TimersEmptyState", () => {
   it("shows a dedicated message and reset action for active filters", async () => {
     const user = userEvent.setup();
-    const onResetFilters = vi.fn();
+    const onResetFilters = vi.fn<() => void>();
     render(
       <TimersEmptyState areFiltersActive onResetFilters={onResetFilters} />,
     );
@@ -19,7 +19,10 @@ describe("TimersEmptyState", () => {
 
   it("shows the generic empty message when no filters are active", () => {
     render(
-      <TimersEmptyState areFiltersActive={false} onResetFilters={vi.fn()} />,
+      <TimersEmptyState
+        areFiltersActive={false}
+        onResetFilters={vi.fn<() => void>()}
+      />,
     );
 
     expect(screen.getByText("Brak timerów")).toBeVisible();

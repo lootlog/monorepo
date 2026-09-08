@@ -19,7 +19,6 @@ import {
   watchedItemDroppedMessage,
 } from "#src/notifications/content/notification-messages";
 import { NotificationJobKind } from "#src/notifications/notification-enums";
-import type { JsonValue } from "#src/notifications/notification-database.types";
 
 export interface TimerDeletedEvent {
   readonly guildId: string;
@@ -54,12 +53,7 @@ export const makeNotificationsEvents = (options: {
       yield* Effect.forEach(
         rules,
         (rule) => {
-          if (
-            !options.matching.matchesTimerRule(
-              rule.filters as JsonValue,
-              event.npcId,
-            )
-          ) {
+          if (!options.matching.matchesTimerRule(rule.filters, event.npcId)) {
             return Effect.void;
           }
           return options.rebuild.rebuildTimer(rule.id, event).pipe(
@@ -132,15 +126,12 @@ export const makeNotificationsEvents = (options: {
             const rule = watchedItem.notificationRule;
             if (
               !rule ||
-              !options.matching.matchesLootRule(
-                rule.filters as JsonValue,
-                event,
-              )
+              !options.matching.matchesLootRule(rule.filters, event)
             ) {
               return;
             }
             const matchingGuildIds = options.matching.matchingLootGuildIds(
-              rule.filters as JsonValue,
+              rule.filters,
               event.guildIds,
             );
             const ownerMemberships = memberships.get(rule.ownerId) ?? [];

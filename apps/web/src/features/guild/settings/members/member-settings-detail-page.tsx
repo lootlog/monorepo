@@ -8,16 +8,19 @@ import {
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, UserRoundX } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { Permission } from "@lootlog/schema/permissions";
 import { getColorFromRole } from "@/utils/get-color-from-role";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
-import { useGuildsControllerGetGuildById } from "@lootlog/client/main";
-import { useMembersControllerGetGuildMembers } from "@lootlog/client/main";
-import type { MemberResponseDto as GuildMember } from "@lootlog/client/main";
+import {
+  useGuildsControllerGetGuildById,
+  useMembersControllerGetGuildMembers,
+  type MemberResponseDto as GuildMember,
+} from "@lootlog/client/main";
+
 import { memberActivityStatsQueryOptions } from "@/features/guild/settings/members/member-activity-stats-api";
 import { mapMemberActivityStatsByDiscordIdAndSource } from "@/features/guild/settings/members/member-activity-stats.utils";
 import { isMemberOnlineInGame } from "@/features/guild/settings/members/member-game-presence.utils";
@@ -64,9 +67,11 @@ const MemberSettingsDetailPageContent = () => {
     accessPolicy?.allows(Permission.OWNER),
   );
 
-  useEffect(() => {
+  const [previousMemberId, setPreviousMemberId] = useState(memberId);
+  if (previousMemberId !== memberId) {
+    setPreviousMemberId(memberId);
     setUpdatedMember(null);
-  }, [memberId]);
+  }
 
   const handleBack = () => {
     navigate({

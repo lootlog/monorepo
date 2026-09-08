@@ -22,7 +22,7 @@ import { cn } from "cn";
 import type { EventHeroNpc, EventTimer } from "../../types/api";
 import { HeroTimerDisplay } from "./hero-timer-display";
 import { HeroWindowStatusBadge } from "./hero-window-status-badge";
-import { coreTableFeatures } from "@/lib/tanstack-table-features";
+import type { coreTableFeatures } from "@/lib/tanstack-table-features";
 
 type EventHeroStats = {
   npcId: number | null;
@@ -81,12 +81,10 @@ export const createEventHeroesTableColumns = ({
         return (
           <TextLink
             className="flex min-w-0 items-center gap-2.5 py-0.5 text-sm"
-            render={
-              <Link
-                to="/$guildId/events/$eventId/heroes/$heroId"
-                params={{ guildId, eventId, heroId: hero.id }}
-              />
-            }
+            render=<Link
+              to="/$guildId/events/$eventId/heroes/$heroId"
+              params={{ guildId, eventId, heroId: hero.id }}
+            />
           >
             <div
               className={cn(

@@ -1,37 +1,78 @@
 import { describe, expect, it } from "bun:test";
-import * as PgClient from "@effect/sql-pg/PgClient";
-import { makeWithDefaults } from "drizzle-orm/effect-postgres";
-import { Effect } from "effect";
+import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
+import {
+  createGuildFixture,
+  createMemberFixture,
+} from "../../../test/organization-fixtures.js";
+import {
+  guildTable,
+  memberTable,
+  timerTable,
+} from "#src/database/drizzle/schema";
 import { makeEventTimerStore } from "./event-timer.store.js";
 
 describe("event timer name lookup", () => {
   it.each([
     { names: ["Anielska zabójczyni"] },
     { names: ["Anielska zabójczyni", "O'Connor, {hero}"] },
-  ])("binds hero names as individual text values (%j)", async ({ names }) => {
-    const statements: { sql: string; params: unknown[] }[] = [];
-    const client = {
-      unsafe: (sql: string, params: unknown[]) => ({
-        values: Effect.sync(() => {
-          statements.push({ sql, params });
-          return [];
-        }),
-      }),
-    } as unknown as PgClient.PgClient;
-    const result = await Effect.runPromise(
-      Effect.gen(function* () {
-        const database = yield* makeWithDefaults();
-        return yield* makeEventTimerStore(database).findEventHeroTimersByNames(
-          "guild-a",
-          "Aldous",
-          [...names],
+  ])(
+    "matches literal hero names and isolates Organization and world (%j)",
+    async ({ names }) => {
+      const boundary = await createDatabaseBoundary();
+      try {
+        const database = boundary.database;
+        await boundary.run(
+          database
+            .insert(guildTable)
+            .values([
+              createGuildFixture({ id: "guild-a" }),
+              createGuildFixture({ id: "guild-b" }),
+            ]),
         );
-      }).pipe(Effect.provideService(PgClient.PgClient, client)),
-    );
-    expect(result).toEqual([]);
-    expect(statements).toHaveLength(1);
-    expect(statements[0]?.params).toEqual(["guild-a", "Aldous", ...names]);
-    expect(statements[0]?.sql).toContain("->>'name' in (");
-    expect(statements[0]?.sql).not.toContain("::text[]");
-  });
+        await boundary.run(
+          database
+            .insert(memberTable)
+            .values(createMemberFixture({ guildId: "guild-a" })),
+        );
+        const timer = (
+          name: string,
+          index: number,
+          guildId = "guild-a",
+          world = "Aldous",
+        ) => ({
+          guildId,
+          world,
+          timerKey: `hero-${index}`,
+          npcId: index,
+          createdById: 1,
+          npc: { name },
+          minSpawnTime: new Date(0),
+          maxSpawnTime: new Date(1000),
+          updatedAt: new Date(0),
+        });
+        await boundary.run(
+          database
+            .insert(timerTable)
+            .values([
+              ...names.map((name, index) => timer(name, index)),
+              timer("Unrelated", 50),
+              timer(names[0], 51, "guild-b"),
+              timer(names[0], 52, "guild-a", "Other"),
+            ]),
+        );
+        const result = await boundary.run(
+          makeEventTimerStore(database).findEventHeroTimersByNames(
+            "guild-a",
+            "Aldous",
+            [...names],
+          ),
+        );
+        expect(result.map((row) => row.timerKey).sort()).toEqual(
+          names.map((_, index) => `hero-${index}`).sort(),
+        );
+      } finally {
+        await boundary.dispose();
+      }
+    },
+  );
 });

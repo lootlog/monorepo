@@ -1,4 +1,8 @@
-import { REALTIME_FEED_CAPABILITY } from "@lootlog/protocol/realtime";
+import { decodePresenceSnapshot } from "@lootlog/protocol/realtime/codec";
+import {
+  REALTIME_FEED_CAPABILITY,
+  REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
+} from "@lootlog/protocol/realtime";
 import {
   RealtimeEventListeners,
   unwrapOrganizationEvent,
@@ -8,7 +12,6 @@ import {
   GATEWAY_URL,
   GatewayEvent,
 } from "@/config/gateway";
-import { authControllerIssueRealtimeTicket } from "@lootlog/client/auth";
 import {
   REALTIME_SUBPROTOCOL,
   REALTIME_JSON_SUBPROTOCOL,
@@ -20,12 +23,9 @@ import {
 
 type Listener = (...arguments_: never[]) => void;
 
-const toLegacyPlayer = (presence: BasicPresence) => {
+const toLegacyPlayer = (presence: BasicPresence | PresenceWithLocation) => {
   if (!presence.character) return undefined;
-  const location =
-    "location" in presence
-      ? (presence as PresenceWithLocation).location
-      : undefined;
+  const location = "location" in presence ? presence.location : undefined;
   return {
     ...presence.character,
     lvl: String(presence.character.lvl),
@@ -38,17 +38,58 @@ const toLegacyPlayer = (presence: BasicPresence) => {
   };
 };
 
-const groupPresence = (
-  presences: ReadonlyArray<BasicPresence>,
+export interface PlayerPresence {
+  world: string;
+  name: string;
+  characterId: string;
+  accountId: string;
+  icon: string;
+  lvl: string;
+  prof: string;
+  margonemAccountVerified?: boolean;
+  mapId?: number;
+  mapName?: string;
+  isAfk: boolean;
+  updatedAt: number;
+  sessionId: string;
+}
+type ForbiddenPresence = {
+  status: "forbidden";
+  code: "ONLINE_PLAYERS_ACCESS_DENIED";
+};
+export type PlayerPresenceResponse =
+  | { status: "success"; players: Record<string, PlayerPresence[]> }
+  | ForbiddenPresence;
+export type WebPresenceResponse =
+  | { status: "success"; sessions: Record<string, { sessionId: string }[]> }
+  | ForbiddenPresence;
+type PresenceRequest = { guildId?: string; world?: string };
+type EmitArguments =
+  | [event: GatewayEvent.JOIN, payload?: PresenceRequest]
+  | [
+      event:
+        | GatewayEvent.EVENT_PRESENCE_FETCH
+        | GatewayEvent.ONLINE_PLAYERS_PRESENCE_FETCH,
+      payload?: PresenceRequest,
+      acknowledgement?: (response?: PlayerPresenceResponse) => void,
+    ]
+  | [
+      event: GatewayEvent.MEMBER_WEB_PRESENCE_FETCH,
+      payload?: PresenceRequest,
+      acknowledgement?: (response?: WebPresenceResponse) => void,
+    ];
+
+const groupPresence = <TValue>(
+  presences: ReadonlyArray<BasicPresence | PresenceWithLocation>,
   platform: "game" | "web-app",
-): Record<string, unknown[]> => {
-  const grouped: Record<string, unknown[]> = {};
+  toValue: (
+    presence: BasicPresence | PresenceWithLocation,
+  ) => TValue | undefined,
+) => {
+  const grouped: Record<string, TValue[]> = {};
   for (const presence of presences) {
     if (presence.platform !== platform) continue;
-    const value =
-      platform === "game"
-        ? toLegacyPlayer(presence)
-        : { sessionId: presence.sessionId };
+    const value = toValue(presence);
     if (!value) continue;
     (grouped[presence.discordId ?? presence.userId] ??= []).push(value);
   }
@@ -67,6 +108,7 @@ const serverEventNames: Partial<Record<ServerEvent["type"], GatewayEvent>> = {
   "reservation.deleted": GatewayEvent.RESERVATIONS_DELETE,
   "reservation.changed": GatewayEvent.RESERVATIONS_CHANGED,
   "notification.sent": GatewayEvent.NOTIFICATION,
+  "notification.volunteer": GatewayEvent.NOTIFICATIONS_VOLUNTEER,
   "member-refresh.updated": GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE,
   "event.map-status-updated": GatewayEvent.EVENT_MAP_STATUS_UPDATE,
   "event.hero-killed": GatewayEvent.EVENT_HERO_KILLED,
@@ -84,10 +126,9 @@ export class GatewayClient {
     protocols: [
       this.readable ? REALTIME_JSON_SUBPROTOCOL : REALTIME_SUBPROTOCOL,
       REALTIME_FEED_CAPABILITY,
+      REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
     ],
     frameEncoding: this.readable ? "json" : "messagepack",
-    ticketProvider: async () =>
-      (await authControllerIssueRealtimeTicket()).ticket,
   });
   private readonly listeners = new RealtimeEventListeners<GatewayEvent>();
   private wasConnected = false;
@@ -131,51 +172,39 @@ export class GatewayClient {
     this.listeners.clear();
   }
 
-  emit<Response = unknown>(
-    event: GatewayEvent,
-    payload?: unknown,
-    acknowledgement?: (response?: Response) => void,
-  ): this {
+  emit(...[event, payload, acknowledgement]: EmitArguments): this {
     if (event === GatewayEvent.JOIN) {
       void this.realtime.join({}).catch(() => undefined);
       return this;
     }
-    if (
-      event === GatewayEvent.EVENT_PRESENCE_FETCH ||
-      event === GatewayEvent.ONLINE_PLAYERS_PRESENCE_FETCH ||
-      event === GatewayEvent.MEMBER_WEB_PRESENCE_FETCH
-    ) {
-      const request = payload as
-        | { guildId?: string; world?: string }
-        | undefined;
-      if (!request?.guildId) return this;
-      void this.realtime
-        .request("presence.fetch", {
-          organizationId: request.guildId,
-          world: request.world,
-        })
-        .then((response) => {
-          const snapshot = response as { presences?: BasicPresence[] };
-          const presences = snapshot.presences ?? [];
-          if (event === GatewayEvent.MEMBER_WEB_PRESENCE_FETCH) {
-            acknowledgement?.({
-              status: "success",
-              sessions: groupPresence(presences, "web-app"),
-            } as Response);
-          } else {
-            acknowledgement?.({
-              status: "success",
-              players: groupPresence(presences, "game"),
-            } as Response);
-          }
-        })
-        .catch(() =>
+    if (!payload?.guildId) return this;
+    void this.realtime
+      .request("presence.fetch", {
+        organizationId: payload.guildId,
+        world: payload.world,
+      })
+      .then((response) => {
+        const { presences } = decodePresenceSnapshot(response);
+        if (event === GatewayEvent.MEMBER_WEB_PRESENCE_FETCH) {
           acknowledgement?.({
-            status: "forbidden",
-            code: "ONLINE_PLAYERS_ACCESS_DENIED",
-          } as Response),
-        );
-    }
+            status: "success",
+            sessions: groupPresence(presences, "web-app", (presence) => ({
+              sessionId: presence.sessionId,
+            })),
+          });
+        } else {
+          acknowledgement?.({
+            status: "success",
+            players: groupPresence(presences, "game", toLegacyPlayer),
+          });
+        }
+      })
+      .catch(() =>
+        acknowledgement?.({
+          status: "forbidden",
+          code: "ONLINE_PLAYERS_ACCESS_DENIED",
+        }),
+      );
     return this;
   }
 
@@ -242,7 +271,7 @@ export class GatewayClient {
 
   private dispatchPresence(
     guildId: string,
-    presence: BasicPresence,
+    presence: BasicPresence | PresenceWithLocation,
     disconnected: boolean,
   ): void {
     const base = {

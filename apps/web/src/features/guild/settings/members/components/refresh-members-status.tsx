@@ -107,11 +107,12 @@ export const RefreshMembersStatus = ({
     return (
       <Button
         size="sm"
-        variant="secondary"
+        className="h-9 text-xs"
+        variant="default"
         onClick={onRefresh}
         disabled={!countdown.isExpired}
         loading={isPending}
-        icon={<RefreshCw className="size-4" />}
+        icon=<RefreshCw className="size-4" />
       >
         <span className="mr-1 font-medium">
           {t("settings.members.refreshError")}
@@ -125,11 +126,12 @@ export const RefreshMembersStatus = ({
   return (
     <Button
       size="sm"
-      variant="outline"
+      className="h-9 text-xs"
+      variant="default"
       onClick={onRefresh}
       disabled={!countdown.isExpired}
       loading={isPending}
-      icon={<RefreshCw className="size-4" />}
+      icon=<RefreshCw className="size-4" />
     >
       {t("settings.members.refreshAll")}
     </Button>

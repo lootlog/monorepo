@@ -1,9 +1,8 @@
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { PageHeader } from "@/components/common/page-header";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
-import { LogOut, Trash2, UserCog } from "lucide-react";
+import { LogOut, Trash2 } from "lucide-react";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -27,22 +26,10 @@ export const AccountSettings: FC = () => {
 
     const deleteUserResponse = await authClient.deleteUser();
 
-    if (
-      typeof deleteUserResponse === "object" &&
-      deleteUserResponse !== null &&
-      "error" in deleteUserResponse &&
-      deleteUserResponse.error
-    ) {
-      const error = deleteUserResponse.error;
-      const errorMessage =
-        typeof error === "object" &&
-        error !== null &&
-        "message" in error &&
-        typeof error.message === "string"
-          ? error.message
-          : "Failed to delete auth account";
-
-      throw new Error(errorMessage);
+    if (deleteUserResponse.error) {
+      throw new Error(
+        deleteUserResponse.error.message ?? "Failed to delete auth account",
+      );
     }
 
     queryClient.clear();
@@ -52,12 +39,7 @@ export const AccountSettings: FC = () => {
   return (
     <ScrollArea className="h-full">
       <div className="px-3 pb-3 flex flex-col gap-4">
-        <PageHeader
-          icon={UserCog}
-          title={t("settings.account.title")}
-          description={t("settings.account.description")}
-        />
-
+        <h1 className="sr-only">{t("settings.account.title")}</h1>
         <SectionCard>
           <SectionCardHeader
             icon={LogOut}
@@ -70,7 +52,7 @@ export const AccountSettings: FC = () => {
               size="sm"
               className="w-full justify-center sm:w-auto"
               loading={isLoggingOut}
-              icon={<LogOut className="size-3.5" />}
+              icon=<LogOut className="size-3.5" />
               onClick={logout}
             >
               {t("settings.account.session.logout")}

@@ -1,32 +1,10 @@
-import { Schema } from "effect";
+import { Function, Schema } from "effect";
 import {
   ActivitySource,
   ActivityType,
   type ActivitySource as ActivitySourceValue,
   type ActivityType as ActivityTypeValue,
 } from "#src/database/schema";
-
-export interface ActorSnapshotInput {
-  readonly accountId?: number;
-  readonly characterId?: number;
-  readonly name?: string;
-  readonly clanName?: string;
-  readonly clanId?: number;
-  readonly icon?: string;
-  readonly lvl?: number;
-  readonly prof?: string;
-}
-export interface CreateActivity {
-  readonly userId: string;
-  readonly guildId: string;
-  readonly discordId: string;
-  readonly type: ActivityTypeValue;
-  readonly source: ActivitySourceValue;
-  readonly world?: string;
-  readonly details?: Record<string, unknown>;
-  readonly actorSnapshot?: ActorSnapshotInput;
-  readonly idempotencyKey: string;
-}
 
 const ActorSnapshot = Schema.Struct({
   accountId: Schema.optional(Schema.Number),
@@ -49,6 +27,8 @@ const BaseActivity = Schema.Struct({
   actorSnapshot: Schema.optional(ActorSnapshot),
   idempotencyKey: Schema.NonEmptyString,
 });
+export type ActorSnapshotInput = typeof ActorSnapshot.Type;
+export type CreateActivity = typeof BaseActivity.Type;
 const decodeBase = Schema.decodeUnknownSync(BaseActivity);
 const requiredGameFields = [
   "accountId",
@@ -60,13 +40,11 @@ const requiredGameFields = [
   "prof",
 ] as const;
 
-export const decodeCreateActivity = (input: unknown): CreateActivity => {
-  const value = decodeBase(input) as CreateActivity;
+export const decodeCreateActivity = Function.compose(decodeBase, (value) => {
   if (
     (value.type === ActivityType.CONNECT_EVENT ||
       value.type === ActivityType.DISCONNECT_EVENT) &&
-    (typeof value.details?.sessionId !== "string" ||
-      value.details.sessionId.length === 0)
+    !Schema.is(Schema.NonEmptyString)(value.details?.sessionId)
   )
     throw new Error("details.sessionId is required for session activity");
   if (
@@ -78,7 +56,7 @@ export const decodeCreateActivity = (input: unknown): CreateActivity => {
   )
     throw new Error("actorSnapshot is missing required fields for GAME source");
   return value;
-};
+});
 
 export const GuildMemberRemoved = Schema.Struct({
   discordId: Schema.NonEmptyString,
@@ -117,17 +95,19 @@ export const parseActivityQuery = (url: URL): QueryActivities => {
     throw new Error("Invalid limit");
   const types = list(url, "type");
   const sources = list(url, "source");
-  if (
-    types?.some(
-      (value) =>
-        !Object.values(ActivityType).includes(value as ActivityTypeValue),
-    ) ||
-    sources?.some(
-      (value) =>
-        !Object.values(ActivitySource).includes(value as ActivitySourceValue),
-    )
-  )
+  const type = Schema.decodeUnknownOption(
+    Schema.UndefinedOr(
+      Schema.Array(Schema.Literals(Object.values(ActivityType))),
+    ),
+  )(types);
+  const source = Schema.decodeUnknownOption(
+    Schema.UndefinedOr(
+      Schema.Array(Schema.Literals(Object.values(ActivitySource))),
+    ),
+  )(sources);
+  if (type._tag === "None" || source._tag === "None") {
     throw new Error("Invalid activity filter");
+  }
   const startDate = url.searchParams.get("startDate") ?? undefined;
   const endDate = url.searchParams.get("endDate") ?? undefined;
   if (
@@ -136,8 +116,8 @@ export const parseActivityQuery = (url: URL): QueryActivities => {
   )
     throw new Error("Invalid date filter");
   return {
-    type: types as ActivityTypeValue[] | undefined,
-    source: sources as ActivitySourceValue[] | undefined,
+    type: type.value ? [...type.value] : undefined,
+    source: source.value ? [...source.value] : undefined,
     playerName: url.searchParams.get("playerName") ?? undefined,
     clanName: url.searchParams.get("clanName") ?? undefined,
     world: url.searchParams.get("world") ?? undefined,

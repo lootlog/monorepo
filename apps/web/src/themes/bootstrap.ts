@@ -1,14 +1,13 @@
-import { DEFAULT_THEME_ID, THEME_STORAGE_KEY, type ThemeId } from "./catalog";
+import { THEME_STORAGE_KEY } from "./catalog";
 import {
   applyThemeClassToRoot,
+  resolveStoredTheme,
   getRootResolvedTheme,
   resolveThemeClass,
 } from "./resolver";
 
 const root = document.documentElement;
-const theme =
-  (localStorage.getItem(THEME_STORAGE_KEY) as ThemeId | null) ??
-  DEFAULT_THEME_ID;
+const theme = resolveStoredTheme(localStorage.getItem(THEME_STORAGE_KEY));
 const resolvedTheme = resolveThemeClass(theme, getRootResolvedTheme(root));
 
 applyThemeClassToRoot({

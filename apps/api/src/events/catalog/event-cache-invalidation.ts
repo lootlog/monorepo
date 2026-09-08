@@ -3,8 +3,8 @@ import type { RedisService } from "#src/redis/redis.service";
 import type { ApplicationLogger } from "#src/shared/application-logger";
 
 export const invalidateEventCachePatterns = (
-  redis: RedisService,
-  logger: ApplicationLogger,
+  redis: Pick<RedisService, "deleteByPattern">,
+  logger: Pick<ApplicationLogger, "warn">,
   patterns: string[],
   message: string,
 ) =>

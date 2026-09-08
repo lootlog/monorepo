@@ -1,5 +1,8 @@
 import { BunHttpServer } from "@effect/platform-bun";
-import { httpServerMetrics } from "@lootlog/instrumentation";
+import {
+  httpServerMetrics,
+  httpServerRouteMetrics,
+} from "@lootlog/instrumentation";
 import { Effect, Layer } from "effect";
 import {
   HttpRouter,
@@ -7,17 +10,14 @@ import {
   HttpServerResponse,
 } from "effect/unstable/http";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
-import {
-  BetterAuthRuntime,
-  type LootlogAuth,
-} from "#src/auth/provider/better-auth";
+import { BetterAuthRuntime } from "#src/auth/provider/better-auth";
 import { BETTER_AUTH_INTERNAL_PATH } from "#src/auth/provider/better-auth-url";
 import { AppConfig } from "#src/config/env";
 import { AuthApi } from "#src/http-api/auth-api";
 import { normalizeBetterAuthRequest } from "./application.js";
 import { AuthHandlers } from "./auth-handlers.js";
 
-const makeBetterAuthHandler = (auth: LootlogAuth) =>
+const makeBetterAuthHandler = (auth: typeof BetterAuthRuntime.Service) =>
   Effect.fn("BetterAuth.rawHandler")(
     function* (request: HttpServerRequest.HttpServerRequest) {
       const webRequest = yield* HttpServerRequest.toWeb(request);
@@ -72,8 +72,8 @@ export const AuthRoutes = Layer.merge(
 
 export const AuthHttpServer = Layer.unwrap(
   Effect.map(AppConfig, ({ port }) =>
-    HttpRouter.serve(AuthRoutes, { middleware: httpServerMetrics }).pipe(
-      Layer.provide(BunHttpServer.layer({ hostname: "0.0.0.0", port })),
-    ),
+    HttpRouter.serve(AuthRoutes.pipe(Layer.provide(httpServerRouteMetrics)), {
+      middleware: httpServerMetrics,
+    }).pipe(Layer.provide(BunHttpServer.layer({ hostname: "0.0.0.0", port }))),
   ),
 ).pipe(Layer.provide(AppConfig.layer));

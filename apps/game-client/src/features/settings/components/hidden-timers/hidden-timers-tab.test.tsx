@@ -1,34 +1,23 @@
-import { render, screen } from "@testing-library/react";
+import { render as renderUi, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { useTimersStore } from "@/store/timers.store";
 import { HiddenTimersTab } from "./hidden-timers-tab";
-import * as UsersModule from "@lootlog/client/main";
-
-const hiddenTimersSpy = vi.fn();
-
-vi.mock("@lootlog/client/main", async () => {
-  const actual = await vi.importActual<typeof UsersModule>(
-    "@lootlog/client/main",
-  );
-
-  return {
-    ...actual,
-    useUsersControllerGetCurrentUserAccessibleGuilds: vi.fn(),
-  };
-});
-
-vi.mock("./hidden-timers", () => ({
-  HiddenTimers: ({ guildId }: { guildId?: string }) => {
-    hiddenTimersSpy(guildId);
-
-    return <div>HiddenTimers guildId: {guildId ?? "none"}</div>;
-  },
-}));
+import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
+let harness: ReturnType<typeof createGuildPreferencesTest>;
+const render = () =>
+  renderUi(<HiddenTimersTab />, { wrapper: harness.wrapper });
 
 describe("HiddenTimersTab", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    harness = createGuildPreferencesTest();
+    useTimersStore.setState({
+      hiddenTimers: {
+        "guild-1": ["Alpha hidden boss"],
+        "guild-2": ["Beta hidden boss"],
+        global: ["Global hidden boss"],
+      },
+    });
     useTimersStore.setState((state) => ({
       ...state,
       generalConfig: {
@@ -41,23 +30,9 @@ describe("HiddenTimersTab", () => {
   it("auto-selects the first guild and lets the user switch the scope", async () => {
     const user = userEvent.setup();
 
-    vi.mocked(
-      UsersModule.useUsersControllerGetCurrentUserAccessibleGuilds,
-    ).mockReturnValue({
-      data: [
-        { id: "guild-1", name: "Alpha", icon: null, ownerId: "owner-1" },
-        { id: "guild-2", name: "Beta", icon: null, ownerId: "owner-1" },
-      ],
-      isFetched: true,
-    } as ReturnType<
-      typeof UsersModule.useUsersControllerGetCurrentUserAccessibleGuilds
-    >);
+    render();
 
-    render(<HiddenTimersTab />);
-
-    expect(
-      screen.getByText("HiddenTimers guildId: guild-1"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Alpha hidden boss")).toBeInTheDocument();
 
     await user.click(
       screen.getByRole("button", {
@@ -65,20 +40,10 @@ describe("HiddenTimersTab", () => {
       }),
     );
 
-    expect(
-      screen.getByText("HiddenTimers guildId: guild-2"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Beta hidden boss")).toBeInTheDocument();
   });
 
   it("hides the selector when grouping is enabled", () => {
-    vi.mocked(
-      UsersModule.useUsersControllerGetCurrentUserAccessibleGuilds,
-    ).mockReturnValue({
-      data: [{ id: "guild-1", name: "Alpha", icon: null, ownerId: "owner-1" }],
-      isFetched: true,
-    } as ReturnType<
-      typeof UsersModule.useUsersControllerGetCurrentUserAccessibleGuilds
-    >);
     useTimersStore.setState((state) => ({
       ...state,
       generalConfig: {
@@ -87,13 +52,14 @@ describe("HiddenTimersTab", () => {
       },
     }));
 
-    render(<HiddenTimersTab />);
+    render();
 
     expect(
       screen.queryByRole("button", {
         name: "Wybierz gildię Alpha: Wyłączone",
       }),
     ).not.toBeInTheDocument();
-    expect(hiddenTimersSpy).toHaveBeenLastCalledWith("");
+    expect(screen.getByText("Global hidden boss")).toBeInTheDocument();
+    expect(screen.queryByText("Alpha hidden boss")).not.toBeInTheDocument();
   });
 });

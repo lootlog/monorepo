@@ -95,7 +95,7 @@ export const EventHeroesTable = ({
             table={table}
             className="bg-secondary/25"
             rowClassName="border-border/80"
-            headClassName={(header) =>
+            getHeadClassName={(header) =>
               cn(
                 "h-9 px-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground",
                 getColumnClassName(header.column.id),
@@ -105,7 +105,7 @@ export const EventHeroesTable = ({
           <TanStackTableBody
             table={table}
             rowClassName="group h-14 border-border/70 hover:bg-muted/20"
-            cellClassName={(cell) =>
+            getCellClassName={(cell) =>
               cn(
                 "h-14 overflow-hidden p-2 align-middle",
                 getColumnClassName(cell.column.id),

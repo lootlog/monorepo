@@ -1,11 +1,14 @@
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { PageHeader } from "@/components/common/page-header";
+import {
+  SectionCard,
+  SectionCard as Card,
+} from "@/components/common/section-card/section-card";
 import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useParams, Link } from "@tanstack/react-router";
-import { SectionCard as Card } from "@/components/common/section-card/section-card";
+
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
@@ -37,8 +40,9 @@ import {
   getListEventsQueryKey,
   useDeleteEvent,
   useListEvents,
+  type EventListItemResponseDto,
 } from "@lootlog/client/main";
-import type { EventListItemResponseDto } from "@lootlog/client/main";
+
 import type { Event } from "./types/api";
 import { cn } from "cn";
 import {
@@ -142,6 +146,7 @@ export const Events = () => {
 
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4 max-h-full overflow-y-auto [justify-content:safe_center]">
+        <h1 className="sr-only">{t("events.title")}</h1>
         {isForbidden ? (
           <>
             <ShieldX className="w-12 h-12 text-destructive" />
@@ -159,9 +164,10 @@ export const Events = () => {
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
+      <h1 className="sr-only">{t("events.title")}</h1>
       <div className="px-3 pt-3">
-        <PageHeader title={t("layout.navigation.events")}>
-          <SectionCardContent>
+        <SectionCard className="rounded-xl">
+          <SectionCardContent className="p-2">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <SearchInput
                 value={searchValue}
@@ -181,7 +187,7 @@ export const Events = () => {
               </Button>
             </div>
           </SectionCardContent>
-        </PageHeader>
+        </SectionCard>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col pt-3">

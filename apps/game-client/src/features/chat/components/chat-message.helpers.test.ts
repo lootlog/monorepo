@@ -1,51 +1,12 @@
-import { describe, expect, it, vi } from "vitest";
-import {
-  type ChatMessage as ChatMessageType,
-  MessageType,
-} from "@/api/chat.api";
+import { describe, expect, it } from "vitest";
+import { MessageType } from "@/api/chat.api";
+import { createChatMessage } from "../chat-test-fixtures";
 import {
   getChatNpcLocation,
   getChatNpcTextColor,
   getChatMessageBody,
   isChatMessageYesterdayOrOlder,
 } from "./chat-message.helpers";
-
-vi.mock("@/features/npc-detector/components/npc-list-item", () => ({
-  NPCS_WITH_LOCATION: ["hero"],
-}));
-
-vi.mock("@/api/npcs.api", () => ({
-  NpcType: {
-    HERO: "hero",
-  },
-}));
-
-vi.mock("@lootlog/domain/npc-type", async (importOriginal) => ({
-  ...(await importOriginal()),
-  getNpcTypeByWt: () => "HERO",
-}));
-
-const makeChatMessage = (
-  overrides?: Partial<ChatMessageType>,
-): ChatMessageType => ({
-  id: "message-1",
-  guildId: "guild-1",
-  message: "hello",
-  senderId: "user-1",
-  timestamp: "2026-01-01T10:00:00.000Z",
-  type: MessageType.NORMAL,
-  characterData: {
-    nick: "Hero",
-    id: 1,
-    acc: 1,
-    lvl: 100,
-    prof: "w",
-    icon: "hero.png",
-  },
-  canEdit: false,
-  canDelete: false,
-  ...overrides,
-});
 
 describe("chat-message helpers", () => {
   it("detects whether the message is from yesterday or earlier", () => {
@@ -103,7 +64,7 @@ describe("chat-message helpers", () => {
   it("builds the notification body text", () => {
     expect(
       getChatMessageBody(
-        makeChatMessage({
+        createChatMessage({
           type: MessageType.NOTIFICATION,
           message: "Ping",
         }),

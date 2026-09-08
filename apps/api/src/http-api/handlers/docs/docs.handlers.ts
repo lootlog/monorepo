@@ -1,3 +1,4 @@
+import type { BoundaryDecoder } from "#src/shared/schema/json";
 import { emptyStatusResponse } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
@@ -289,7 +290,7 @@ const authorize = (endpoint: DocsEndpointIdentifier, guildId: string) =>
     authorization.requireGuild({ guildId, ...requirementFor(endpoint) }),
   );
 
-const decode = <A>(decoder: (value: unknown) => A, value: unknown) =>
+const decode = <A>(decoder: BoundaryDecoder<A>, value: unknown) =>
   Effect.try({
     try: () => decoder(value),
     catch: (cause) => new DocsDataError({ cause }),
@@ -302,7 +303,7 @@ const execute = <A>(
     data: DocsData["Service"],
     caller: AuthorizedDocsCaller,
   ) => DocsEffect<unknown>,
-  decoder: (value: unknown) => A,
+  decoder: BoundaryDecoder<A>,
 ) =>
   Effect.gen(function* () {
     const caller = yield* authorize(endpoint, guildId);

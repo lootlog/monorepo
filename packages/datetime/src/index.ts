@@ -65,10 +65,7 @@ export function getLocalDate(date: Date, timeZone: string): LocalDate {
   };
 }
 
-export function getLocalTime(
-  date: Date,
-  timeZone: string,
-): { hour: number; minute: number } {
+export function getLocalTime(date: Date, timeZone: string) {
   const parts = getTimeFormatter(timeZone).formatToParts(date);
 
   return {
@@ -136,7 +133,7 @@ export function addDays(localDate: LocalDate, days: number): LocalDate {
   };
 }
 
-function parseWindowClock(clock: string): { hour: number; minute: number } {
+function parseWindowClock(clock: string) {
   const [hourValue, minuteValue] = clock.split(":");
   const hour = Number.parseInt(hourValue ?? "0", 10);
   const minute = Number.parseInt(minuteValue ?? "0", 10);

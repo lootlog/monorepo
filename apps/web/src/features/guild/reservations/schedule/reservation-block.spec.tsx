@@ -1,3 +1,4 @@
+import { initializeTestTranslations } from "@/lib/testing/i18n";
 // @vitest-environment happy-dom
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
@@ -5,12 +6,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { ReservationBlock } from "./reservation-block";
 import type { ReservationSegment } from "./types";
 
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string, options?: Record<string, unknown>) =>
-      `${key}:${String(options?.name ?? options?.organization ?? "")}`,
-  }),
-}));
+await initializeTestTranslations({
+  "reservations.schedule.block.open":
+    "reservations.schedule.block.open:{{name}}",
+  "reservations.schedule.block.partner":
+    "reservations.schedule.block.partner:{{organization}}",
+  "reservations.details.title": "reservations.details.title:",
+  "reservations.details.cancel": "reservations.details.cancel:",
+});
 
 afterEach(cleanup);
 

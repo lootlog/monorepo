@@ -27,8 +27,7 @@ export const TimerSettingsConflictDialog: FC<
 
   const formatDate = (date: Date | number | undefined) => {
     if (!date) return t("common:states.unknown");
-    const d = typeof date === "number" ? new Date(date) : date;
-    return d.toLocaleString();
+    return new Date(date).toLocaleString();
   };
 
   return (

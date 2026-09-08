@@ -9,21 +9,35 @@ export type RolePermissionData = {
   lvlRangeTo: number;
 };
 
-const TIMER_PERMISSION = {
-  base: "LOOTLOG_TIMERS_READ",
-  titans: "LOOTLOG_TIMERS_TITANS_READ",
-  heroes: "LOOTLOG_TIMERS_HEROES_READ",
+export const NPC_FEATURE_PERMISSIONS = {
+  timers: {
+    base: "LOOTLOG_TIMERS_READ",
+    titans: "LOOTLOG_TIMERS_TITANS_READ",
+    heroes: "LOOTLOG_TIMERS_HEROES_READ",
+  },
+  chat: {
+    base: "LOOTLOG_CHAT_READ",
+    titans: "LOOTLOG_CHAT_TITANS_READ",
+    heroes: "LOOTLOG_CHAT_HEROES_READ",
+  },
+  notifications: {
+    base: "LOOTLOG_NOTIFICATIONS_READ",
+    titans: "LOOTLOG_NOTIFICATIONS_TITANS_READ",
+    heroes: "LOOTLOG_NOTIFICATIONS_HEROES_READ",
+  },
 } as const;
+
+const TIMER_PERMISSION = NPC_FEATURE_PERMISSIONS.timers;
 
 type TimerPermissionTier = keyof typeof TIMER_PERMISSION;
 
-const TIMER_PERMISSION_TIER_BY_NPC_TYPE: Partial<
-  Record<string, TimerPermissionTier>
-> = {
-  TITAN: "titans",
-  HERO: "heroes",
-  EVENT_HERO: "heroes",
-};
+const TIMER_PERMISSION_TIER_BY_NPC_TYPE = new Map(
+  Object.entries({
+    TITAN: "titans",
+    HERO: "heroes",
+    EVENT_HERO: "heroes",
+  } satisfies Record<string, TimerPermissionTier>),
+);
 
 const isNpcLevelWithinRoleRange = (
   role: RolePermissionData,
@@ -42,7 +56,7 @@ export const hasRolePermissionInLevelRange = (
   );
 
 const getRequiredTimerPermission = (npcType: string): string =>
-  TIMER_PERMISSION[TIMER_PERMISSION_TIER_BY_NPC_TYPE[npcType] ?? "base"];
+  TIMER_PERMISSION[TIMER_PERMISSION_TIER_BY_NPC_TYPE.get(npcType) ?? "base"];
 
 export const canViewNpcTimer = (
   npc: NpcPermissionData | null,

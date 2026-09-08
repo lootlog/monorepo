@@ -102,6 +102,8 @@ including credentials and manually configured values.
 databases, RabbitMQ, Redis, Meilisearch, and Traefik. It is not a supported
 production deployment.
 
+See [gateway authentication and rollout](apps/gateway/README.md) for the realtime proxy boundary and userscript verification.
+
 ## Common commands
 
 ```bash

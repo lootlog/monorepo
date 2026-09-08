@@ -31,21 +31,19 @@ import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   getLootsControllerResolveLootItemByHidQueryKey,
   useLootsControllerResolveLootItemByHid,
+  type LootsControllerResolveLootItemByHidParams,
 } from "@lootlog/client/main";
 import {
   getItemsControllerGetItemsQueryKey,
   useItemsControllerGetItems,
-} from "@lootlog/client/search";
-import {
   getNpcsControllerGetNpcsQueryKey,
   useNpcsControllerGetNpcs,
-} from "@lootlog/client/search";
-import {
   getPlayersControllerGetPlayersQueryKey,
   usePlayersControllerGetPlayers,
 } from "@lootlog/client/search";
+
 import { ItemRarity } from "@/lib/loots/loot-types";
-import type { LootsControllerResolveLootItemByHidParams } from "@lootlog/client/main";
+
 import { formatItemHid, parseItemHid } from "@/lib/utils/hid-detection";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
 import { useTranslation } from "react-i18next";
@@ -135,17 +133,11 @@ const getFilterSectionState = (filters: LootFilters) => {
   const playerActiveFilterCount =
     Number(filters.players.length > 0) +
     Number(Boolean(filters.playerLevelMin || filters.playerLevelMax));
-  const initiallyOpenSections: string[] = [];
-  if (npcActiveFilterCount > 0) initiallyOpenSections.push("npc");
-  if (itemActiveFilterCount > 0) initiallyOpenSections.push("item");
-  if (playerActiveFilterCount > 0) initiallyOpenSections.push("player");
-  if (initiallyOpenSections.length === 0) initiallyOpenSections.push("npc");
 
   return {
     npcActiveFilterCount,
     itemActiveFilterCount,
     playerActiveFilterCount,
-    initiallyOpenSections,
   };
 };
 
@@ -352,7 +344,6 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
     npcActiveFilterCount,
     itemActiveFilterCount,
     playerActiveFilterCount,
-    initiallyOpenSections,
   } = getFilterSectionState(filters);
 
   const isQuickFilterApplied = (filter: SavedFilter["filters"]) =>
@@ -427,7 +418,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                     {canSaveCurrentFilter && (
                       <Button
                         onClick={() => setIsDialogOpen(true)}
-                        variant="ghost"
+                        variant="default"
                         size="sm"
                         className="h-7 px-2 text-xs"
                       >
@@ -485,7 +476,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                   </div>
                 </div>
 
-                <Accordion multiple defaultValue={initiallyOpenSections}>
+                <Accordion multiple defaultValue={["npc", "item", "player"]}>
                   <AccordionItem
                     value="npc"
                     className="border-b border-border/70 px-3 sm:px-4"

@@ -23,8 +23,20 @@ const UserWorldsResponseSchema = Schema.Struct({
 });
 type UserWorldsResponse = typeof UserWorldsResponseSchema.Type;
 
+type BattleMetadataDatabase = Pick<
+  DrizzleDatabase,
+  "select" | "selectDistinctOn" | "insert"
+> & {
+  query: {
+    userCharacters: Pick<
+      DrizzleDatabase["query"]["userCharacters"],
+      "findMany"
+    >;
+  };
+};
+
 export const makeBattleMetadata = (
-  drizzle: DrizzleDatabase,
+  drizzle: BattleMetadataDatabase,
   redisService: RedisStore,
 ) => {
   const logger = new Logger("BattleMetadata");

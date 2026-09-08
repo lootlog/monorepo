@@ -14,7 +14,7 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { cn } from "cn";
 import i18n from "@/i18n/config";
-import { sortingTableFeatures } from "@/lib/tanstack-table-features";
+import type { sortingTableFeatures } from "@/lib/tanstack-table-features";
 
 export const headToHeadBaseColumns: ColumnDef<
   typeof sortingTableFeatures,

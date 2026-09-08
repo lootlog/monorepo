@@ -100,11 +100,8 @@ export const NpcsTable = ({ guildId, isMobile, npcs }: NpcsTableProps) => {
         <col />
         <col className="w-16" />
       </colgroup>
-      <TableHeader
-        className="sticky top-0 z-10 bg-sidebar/95  [&_tr]:!border-b-0"
-        style={{ boxShadow: "inset 0 -1px 0 var(--border)" }}
-      >
-        <TableRow className="h-10 border-b-0 hover:bg-transparent">
+      <TableHeader className="sticky top-0 z-10 bg-background">
+        <TableRow className="border-b-1! border-border">
           <TableHead>{t("settings.npcs.table.npc")}</TableHead>
           <TableHead>{t("settings.npcs.table.rarities")}</TableHead>
           <TableHead className="text-right">
@@ -126,12 +123,15 @@ export const NpcsTable = ({ guildId, isMobile, npcs }: NpcsTableProps) => {
               role="link"
               tabIndex={0}
               className={cn(
-                "relative h-16 cursor-pointer border-b border-border/70 transition-colors hover:bg-muted/35",
+                "relative h-14 cursor-pointer border-b border-border transition-colors hover:bg-accent/35",
                 isLastNpc && "border-b-0",
               )}
               onClickCapture={(event) => {
-                const target = event.target as HTMLElement;
-                if (target.closest("button,a,[data-npc-row-action]")) {
+                const target = event.target;
+                if (
+                  target instanceof Element &&
+                  target.closest("button,a,[data-npc-row-action]")
+                ) {
                   return;
                 }
 
@@ -149,12 +149,10 @@ export const NpcsTable = ({ guildId, isMobile, npcs }: NpcsTableProps) => {
               <TableCell className="min-w-0 overflow-hidden">
                 <TextLink
                   className="block truncate text-sm"
-                  render={
-                    <Link
-                      to="/$guildId/settings/npcs/$npcId"
-                      params={npcRouteParams}
-                    />
-                  }
+                  render=<Link
+                    to="/$guildId/settings/npcs/$npcId"
+                    params={npcRouteParams}
+                  />
                 >
                   {t(`npcType.${npc.npcType}`)}
                 </TextLink>
@@ -215,7 +213,7 @@ export const NpcsTable = ({ guildId, isMobile, npcs }: NpcsTableProps) => {
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="size-8"
+                        className="size-7 md:size-8"
                         aria-label={t("settings.npcs.actions.more")}
                       >
                         <MoreHorizontal className="size-4" />

@@ -153,13 +153,11 @@ export function ReservationBlock({
             <ContextMenuItem
               className="w-full justify-start gap-2 text-destructive focus:bg-destructive/10 focus:text-destructive"
               closeOnClick={false}
-              render={
-                <Button
-                  variant="ghost"
-                  loading={isCancelPending}
-                  icon={<Trash2 className="size-4" />}
-                />
-              }
+              render=<Button
+                variant="ghost"
+                loading={isCancelPending}
+                icon={<Trash2 className="size-4" />}
+              />
               disabled={isCancelPending || cancelDisabled}
               onClick={onCancel}
             >

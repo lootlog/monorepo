@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import type { CSSPropertiesWithVariables } from "../types/css";
 import { useRender } from "@base-ui/react/use-render";
 import { cva, type VariantProps } from "class-variance-authority";
 import { PanelLeftIcon } from "lucide-react";
@@ -89,6 +90,8 @@ function SidebarProvider({
     return isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open);
   };
 
+  const toggleSidebarFromShortcut = React.useEffectEvent(toggleSidebar);
+
   // Adds a keyboard shortcut to toggle the sidebar.
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -97,13 +100,13 @@ function SidebarProvider({
         (event.metaKey || event.ctrlKey)
       ) {
         event.preventDefault();
-        toggleSidebar();
+        toggleSidebarFromShortcut();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [toggleSidebar]);
+  }, []);
 
   // We add a state so that we can do data-state="expanded" or "collapsed".
   // This makes it easier to style the sidebar with Tailwind classes.
@@ -119,18 +122,17 @@ function SidebarProvider({
     toggleSidebar,
   };
 
+  const wrapperStyle: CSSPropertiesWithVariables = {
+    "--sidebar-width": SIDEBAR_WIDTH,
+    "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
+    ...style,
+  };
   return (
     <SidebarContext.Provider value={contextValue}>
       <TooltipProvider delay={0}>
         <div
           data-slot="sidebar-wrapper"
-          style={
-            {
-              "--sidebar-width": SIDEBAR_WIDTH,
-              "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
-              ...style,
-            } as React.CSSProperties
-          }
+          style={wrapperStyle}
           className={cn(
             "group/sidebar-wrapper has-data-[variant=inset]:bg-transparent flex min-h-svh w-full",
             className,
@@ -174,6 +176,9 @@ function Sidebar({
   }
 
   if (isMobile) {
+    const mobileStyle: CSSPropertiesWithVariables = {
+      "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
+    };
     return (
       <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
         <SheetContent
@@ -182,11 +187,7 @@ function Sidebar({
           data-slot="sidebar"
           data-mobile="true"
           className="bg-transparent text-sidebar-foreground w-(--sidebar-width) p-0 [&>button]:hidden"
-          style={
-            {
-              "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
-            } as React.CSSProperties
-          }
+          style={mobileStyle}
           side={side}
         >
           <SheetHeader className="sr-only">
@@ -607,6 +608,9 @@ function SidebarMenuSkeleton({
     () => `${Math.floor(Math.random() * 40) + 50}%`,
   );
 
+  const skeletonStyle: CSSPropertiesWithVariables = {
+    "--skeleton-width": width,
+  };
   return (
     <div
       data-slot="sidebar-menu-skeleton"
@@ -623,11 +627,7 @@ function SidebarMenuSkeleton({
       <Skeleton
         className="h-4 max-w-(--skeleton-width) flex-1"
         data-sidebar="menu-skeleton-text"
-        style={
-          {
-            "--skeleton-width": width,
-          } as React.CSSProperties
-        }
+        style={skeletonStyle}
       />
     </div>
   );

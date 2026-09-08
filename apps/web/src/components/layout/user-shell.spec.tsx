@@ -60,21 +60,21 @@ const renderAccountPage = async () => {
     getParentRoute: () => settings,
     path: "/",
     component: () => (
-      <main>
+      <div>
         <h1>Settings overview</h1>
-      </main>
+      </div>
     ),
   });
   const account = createRoute({
     getParentRoute: () => settings,
     path: "account",
     component: () => (
-      <main>
+      <div>
         <UserHeaderActionsPortal>
           <button>Page action</button>
         </UserHeaderActionsPortal>
         <h1>Account content</h1>
-      </main>
+      </div>
     ),
   });
   const router = createRouter({

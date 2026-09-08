@@ -14,8 +14,10 @@ import {
 import { Link, useLocation } from "@tanstack/react-router";
 import { ThemeCircularFrame, useThemeMeta } from "@/themes";
 import type { MouseEvent } from "react";
+import { useTranslation } from "react-i18next";
 
 export const UserNavItem = () => {
+  const { t } = useTranslation();
   const { data } = useSession();
   const { pathname } = useLocation();
   const { isRukiaTheme } = useThemeMeta();
@@ -29,11 +31,11 @@ export const UserNavItem = () => {
   const avatarElement = (
     <Avatar
       className={cn(
-        "size-11 transition-all duration-200 rounded-lg hover:rounded-lg hover:scale-105",
-        isActive && !isRukiaTheme && "border-[3px] border-primary",
+        "size-11 rounded-xl after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit] after:ring-2 after:ring-inset after:ring-primary after:opacity-0 after:transition-opacity after:duration-200 motion-reduce:after:transition-none",
+        isActive && !isRukiaTheme && "after:opacity-100",
       )}
     >
-      <AvatarImage src={data?.user.image ?? ""} alt={data?.user.image ?? ""} />
+      <AvatarImage src={data?.user.image ?? ""} alt="" />
       <AvatarFallback className="rounded-none">
         {data?.user?.name[0] || ""}
       </AvatarFallback>
@@ -45,11 +47,9 @@ export const UserNavItem = () => {
       <TooltipTrigger
         render={
           <div className="relative h-10 flex items-center justify-center">
-            {isActive && !isRukiaTheme && (
-              <div className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full bg-primary shadow-[0_0_6px_var(--primary)/0.4]" />
-            )}
             <Link
               to={ROUTES.user.dashboard}
+              aria-label={t("common.routeErrors.actions.goToDashboard")}
               className="block"
               onClick={handleClick}
             >

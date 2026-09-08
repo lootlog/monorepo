@@ -1,3 +1,4 @@
+import { isRecord, isObjectRecord } from "@lootlog/schema/records";
 import { activeGuildMemberJoin } from "#src/members/member-access-query";
 import {
   and,
@@ -47,17 +48,12 @@ const visibleExpiredKeys = (
   overrides: unknown,
   world: string | undefined,
 ): ReadonlyArray<string> => {
-  if (!world || !overrides || typeof overrides !== "object") return [];
-  const alwaysVisible = (overrides as Record<string, unknown>)
-    .alwaysVisibleExpiredTimers;
-  if (
-    !alwaysVisible ||
-    typeof alwaysVisible !== "object" ||
-    Array.isArray(alwaysVisible)
-  ) {
+  if (!world || !isObjectRecord(overrides)) return [];
+  const alwaysVisible = overrides.alwaysVisibleExpiredTimers;
+  if (!isRecord(alwaysVisible)) {
     return [];
   }
-  const configured = (alwaysVisible as Record<string, unknown>)[world];
+  const configured = alwaysVisible[world];
   return Array.isArray(configured)
     ? configured.filter((key): key is string => typeof key === "string")
     : [];
@@ -198,6 +194,7 @@ export const makeAllTimerList = (database: typeof ApiDatabase.Service) => {
             eq(guildTable.ownerId, identity.discordId),
             arrayOverlaps(roleTable.permissions, [
               Permission.LOOTLOG_TIMERS_READ,
+              Permission.ADMIN,
             ]),
           ),
         ),
@@ -239,15 +236,21 @@ export const makeAllTimerList = (database: typeof ApiDatabase.Service) => {
       world,
       selectedKeys,
     );
-    const ownerGuilds = new Set(
+    const administrativeGuilds = new Set(
       guildRows
-        .filter(({ guild }) => guild.ownerId === identity.discordId)
+        .filter(
+          ({ guild }) =>
+            guild.ownerId === identity.discordId ||
+            rolesByGuild
+              .get(guild.id)
+              ?.some((role) => role.permissions.includes(Permission.ADMIN)),
+        )
         .map(({ guild }) => guild.id),
     );
     return timers
       .filter(
         (timer) =>
-          ownerGuilds.has(timer.guildId) ||
+          administrativeGuilds.has(timer.guildId) ||
           canViewNpcTimer(
             parseTimerNpc(timer.npc),
             rolesByGuild.get(timer.guildId) ?? [],

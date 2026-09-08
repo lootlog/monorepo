@@ -45,7 +45,10 @@ export const ItemStack: FC<Props> = ({
     if (!isExpanded) return;
 
     const handleClickOutside = (e: PointerEvent) => {
-      if (stackRef.current && !stackRef.current.contains(e.target as Node)) {
+      if (
+        stackRef.current &&
+        (!(e.target instanceof Node) || !stackRef.current.contains(e.target))
+      ) {
         setIsExpanded(false);
       }
     };
@@ -61,11 +64,10 @@ export const ItemStack: FC<Props> = ({
     return renderItem(items[0]);
   }
 
-  if (items.length === 1) {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  if (items.length === 1 && items[0]) {
     return (
       <WatchableItemTile
-        item={items[0]!}
+        item={items[0]}
         watchContext={watchContext}
         selectedItemNames={selectedItemNames}
       />

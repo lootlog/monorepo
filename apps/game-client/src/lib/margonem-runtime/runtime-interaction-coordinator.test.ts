@@ -25,7 +25,7 @@ describe("RuntimeInteractionCoordinator", () => {
 
   it("projects talk intents into the dialog context and clears them on cleanup", () => {
     let intentHandler: RuntimeIntentHandler | undefined;
-    const unsubscribe = vi.fn();
+    const unsubscribe = vi.fn<() => void>();
     vi.spyOn(margonemRuntimeBridge, "subscribeIntent").mockImplementation(
       (handler) => {
         intentHandler = handler;
@@ -54,7 +54,7 @@ describe("RuntimeInteractionCoordinator", () => {
     vi.spyOn(margonemRuntimeBridge, "subscribeIntent").mockImplementation(
       (handler) => {
         intentHandler = handler;
-        return vi.fn();
+        return vi.fn<() => void>();
       },
     );
     const coordinator = new RuntimeInteractionCoordinator();
@@ -75,7 +75,7 @@ describe("RuntimeInteractionCoordinator", () => {
     vi.spyOn(margonemRuntimeBridge, "subscribeIntent").mockImplementation(
       (handler) => {
         intentHandler = handler;
-        return vi.fn();
+        return vi.fn<() => void>();
       },
     );
     const coordinator = new RuntimeInteractionCoordinator();

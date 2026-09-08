@@ -1,3 +1,4 @@
+import { AccessPolicySnapshot, AccessPolicyChange } from "./access-policy.js";
 import { UserFeedItem } from "../feed.js";
 import { NonEmptyString, NonNegativeInt } from "@lootlog/schema/primitives";
 import {
@@ -20,6 +21,8 @@ import {
 export const REALTIME_PROTOCOL_VERSION = 1;
 // Offered alongside v1 by clients that understand feed events; never selected as the wire protocol.
 export const REALTIME_FEED_CAPABILITY = "lootlog.feed.v1";
+export const REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY =
+  "lootlog.notification-volunteer.v1";
 export const REALTIME_SUBPROTOCOL = "lootlog.realtime.v1";
 export const REALTIME_JSON_SUBPROTOCOL = "lootlog.realtime.json.v1";
 export const PRESENCE_HEARTBEAT_INTERVAL_MS = 25_000;
@@ -114,7 +117,8 @@ export const PresenceSnapshot = Schema.Struct({
   organizationId: NonEmptyString,
   world: Schema.optional(NonEmptyString),
   revision: Revision,
-  presences: Schema.Array(Schema.Union([BasicPresence, PresenceWithLocation])),
+  // Match the richer shape first so the basic schema does not strip location.
+  presences: Schema.Array(Schema.Union([PresenceWithLocation, BasicPresence])),
 });
 
 export const PresenceDelta = Schema.Struct({
@@ -124,7 +128,7 @@ export const PresenceDelta = Schema.Struct({
     Schema.Union([
       Schema.Struct({
         action: Schema.Literal("upsert"),
-        presence: Schema.Union([BasicPresence, PresenceWithLocation]),
+        presence: Schema.Union([PresenceWithLocation, BasicPresence]),
       }),
       Schema.Struct({
         action: Schema.Literal("remove"),
@@ -295,13 +299,16 @@ export const ServerEvent = Schema.Union([
       connectionId: NonEmptyString,
       organizationIds: Schema.Array(NonEmptyString),
       subscriptionScopes: Schema.Array(SubscriptionScope),
+      accessPolicy: Schema.optional(AccessPolicySnapshot),
     }),
   ),
   serverEvent(
     "permissions.updated",
     Schema.Struct({
+      changes: Schema.optional(Schema.Array(AccessPolicyChange)),
       organizationIds: Schema.Array(NonEmptyString),
       subscriptionScopes: Schema.Array(SubscriptionScope),
+      accessPolicy: Schema.optional(AccessPolicySnapshot),
     }),
   ),
   serverEvent("presence.snapshot", PresenceSnapshot),
@@ -331,6 +338,16 @@ export const ServerEvent = Schema.Union([
   serverEvent("event.ranking-updated", OrganizationEvent),
   serverEvent("event.respawn-window-opened", OrganizationEvent),
   serverEvent("event.respawn-window-closed", OrganizationEvent),
+  serverEvent(
+    "notification.volunteer",
+    Schema.Struct({
+      notificationId: NonEmptyString,
+      volunteer: Schema.StructWithRest(
+        Schema.Struct({ discordId: NonEmptyString, world: NonEmptyString }),
+        [Schema.Record(Schema.String, Schema.Unknown)],
+      ),
+    }),
+  ),
 ]);
 export type ServerEvent = typeof ServerEvent.Type;
 
@@ -345,3 +362,11 @@ export const decodeClientCommand = Schema.decodeUnknownSync(ClientCommand);
 export const decodeResponse = Schema.decodeUnknownSync(Response);
 export const decodeServerEvent = Schema.decodeUnknownSync(ServerEvent);
 export const decodeRealtimeFrame = Schema.decodeUnknownSync(RealtimeFrame);
+
+// Discriminate an already decoded frame without parsing its payload a second time.
+const serverEventTypes = new Set<string>(
+  ServerEvent.members.map((member) => member.fields.type.literal),
+);
+export const isServerEventFrame = (
+  frame: RealtimeFrame,
+): frame is ServerEvent => "type" in frame && serverEventTypes.has(frame.type);

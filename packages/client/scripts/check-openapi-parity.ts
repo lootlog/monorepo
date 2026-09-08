@@ -1,3 +1,10 @@
+import {
+  decodeOpenApiDocument,
+  isJsonArray,
+  isJsonObject,
+  type OpenApiDocument,
+  type JsonValue,
+} from "./openapi-document.js";
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -15,7 +22,6 @@ const HTTP_METHODS = new Set([
   "put",
   "trace",
 ]);
-const REALTIME_TICKET_OPERATION = "POST /auth/realtime-ticket";
 const GUILD_METADATA_ERROR_OPERATIONS = new Set([
   "GET /guilds/{guildId}",
   "GET /guilds/{guildId}/permissions",
@@ -408,22 +414,6 @@ const BATTLELOG_INVALID_REQUEST_SCHEMA: JsonValue = {
   },
   required: ["error", "message", "statusCode"],
 };
-const TICKET_VERIFY_HEADERS = new Set([
-  "x-lootlog-credential-purpose",
-  "x-lootlog-websocket-origin",
-]);
-
-type JsonValue =
-  | boolean
-  | number
-  | string
-  | null
-  | JsonValue[]
-  | { [key: string]: JsonValue };
-
-type OpenApiDocument = {
-  paths?: Record<string, Record<string, JsonValue>>;
-};
 
 const repositoryRoot = resolve(
   dirname(fileURLToPath(import.meta.url)),
@@ -449,16 +439,18 @@ const readBaseline = (service: string): OpenApiDocument => {
       `Unable to read baseline OpenAPI for ${service}: ${result.stderr.trim()}`,
     );
   }
-  return parse(result.stdout) as OpenApiDocument;
+  return decodeOpenApiDocument(parse(result.stdout));
 };
 
 const readCurrent = (service: string): OpenApiDocument =>
-  parse(
-    readFileSync(
-      resolve(repositoryRoot, `apps/${service}/openapi.yaml`),
-      "utf8",
+  decodeOpenApiDocument(
+    parse(
+      readFileSync(
+        resolve(repositoryRoot, `apps/${service}/openapi.yaml`),
+        "utf8",
+      ),
     ),
-  ) as OpenApiDocument;
+  );
 
 const operations = (document: OpenApiDocument): Map<string, JsonValue> => {
   const result = new Map<string, JsonValue>();
@@ -472,8 +464,8 @@ const operations = (document: OpenApiDocument): Map<string, JsonValue> => {
   return result;
 };
 
-const removeAddedPermissions = (value: JsonValue): JsonValue => {
-  if (Array.isArray(value)) {
+const removePresencePermission = (value: JsonValue): JsonValue => {
+  if (isJsonArray(value)) {
     return value
       .filter(
         (item) =>
@@ -481,79 +473,58 @@ const removeAddedPermissions = (value: JsonValue): JsonValue => {
           item !== "LOOTLOG_GROUP_FIGHTS_READ" &&
           item !== "LOOTLOG_GROUP_FIGHTS_WRITE",
       )
-      .map(removeAddedPermissions);
+      .map(removePresencePermission);
   }
-  if (value !== null && typeof value === "object") {
+  if (isJsonObject(value)) {
     return Object.fromEntries(
       Object.entries(value).map(([key, item]) => [
         key,
-        removeAddedPermissions(item),
+        removePresencePermission(item),
       ]),
     );
   }
   return value;
 };
 
-const removeTicketVerifyHeaders = (value: JsonValue): JsonValue => {
-  if (value === null || Array.isArray(value) || typeof value !== "object") {
-    return value;
-  }
-  const operation = structuredClone(value);
-  const parameters = operation["parameters"];
-  if (Array.isArray(parameters)) {
-    operation["parameters"] = parameters.filter((parameter) => {
-      if (
-        parameter === null ||
-        Array.isArray(parameter) ||
-        typeof parameter !== "object"
-      ) {
-        return true;
-      }
-      const name = parameter["name"];
-      return typeof name !== "string" || !TICKET_VERIFY_HEADERS.has(name);
-    });
-  }
-  return operation;
-};
-
 const removeResponseStatus = (value: JsonValue, status: string): JsonValue => {
-  if (value === null || Array.isArray(value) || typeof value !== "object") {
+  if (!isJsonObject(value)) {
     return value;
   }
   const operation = structuredClone(value);
   const responses = operation["responses"];
-  if (
-    responses !== null &&
-    !Array.isArray(responses) &&
-    typeof responses === "object"
-  ) {
-    delete responses[status];
+  if (isJsonObject(responses)) {
+    return {
+      ...operation,
+      responses: Object.fromEntries(
+        Object.entries(responses).filter(([key]) => key !== status),
+      ),
+    };
   }
   return operation;
 };
 
 export const normalizeOpenApiRepresentation = (value: JsonValue): JsonValue => {
-  if (Array.isArray(value)) {
+  if (isJsonArray(value)) {
     const normalized = value.map(normalizeOpenApiRepresentation);
     if (
       normalized.every(
-        (item) =>
+        (item): item is { in: string; name: string } =>
           item !== null &&
-          !Array.isArray(item) &&
+          !isJsonArray(item) &&
           typeof item === "object" &&
           typeof item["name"] === "string" &&
           typeof item["in"] === "string",
       )
     ) {
       return normalized.sort((left, right) => {
-        const leftKey = `${(left as { in: string }).in}:${(left as { name: string }).name}`;
-        const rightKey = `${(right as { in: string }).in}:${(right as { name: string }).name}`;
+        const leftKey = `${left.in}:${left.name}`;
+        const rightKey = `${right.in}:${right.name}`;
         return leftKey.localeCompare(rightKey);
       });
     }
     return normalized;
   }
-  if (value === null || typeof value !== "object") return value;
+  if (!isJsonObject(value)) return value;
 
   return Object.fromEntries(
     Object.entries(value)
@@ -564,7 +535,7 @@ export const normalizeOpenApiRepresentation = (value: JsonValue): JsonValue => {
       .sort(([left], [right]) => left.localeCompare(right))
       .map(([key, item]) => [
         key,
-        key === "enum" && Array.isArray(item)
+        key === "enum" && isJsonArray(item)
           ? item
               .map(normalizeOpenApiRepresentation)
               .sort((left, right) =>
@@ -579,18 +550,10 @@ const assertOrganizationNotFoundResponse = (
   operation: JsonValue,
   operationKey: string,
 ): void => {
-  const responses =
-    operation !== null &&
-    typeof operation === "object" &&
-    !Array.isArray(operation)
-      ? operation["responses"]
-      : undefined;
-  if (
-    responses === null ||
-    typeof responses !== "object" ||
-    Array.isArray(responses) ||
-    responses["404"] === undefined
-  ) {
+  const responses = isJsonObject(operation)
+    ? operation["responses"]
+    : undefined;
+  if (!isJsonObject(responses) || responses["404"] === undefined) {
     throw new Error(`${operationKey} must declare a 404 response`);
   }
 };
@@ -602,18 +565,10 @@ const assertErrorResponse = (
   schemaName = "OrganizationWorkspaceErrorResponse",
   schema: JsonValue = { $ref: `#/components/schemas/${schemaName}` },
 ): void => {
-  const responses =
-    operation !== null &&
-    typeof operation === "object" &&
-    !Array.isArray(operation)
-      ? operation["responses"]
-      : undefined;
-  const response =
-    responses !== null &&
-    typeof responses === "object" &&
-    !Array.isArray(responses)
-      ? responses[status]
-      : undefined;
+  const responses = isJsonObject(operation)
+    ? operation["responses"]
+    : undefined;
+  const response = isJsonObject(responses) ? responses[status] : undefined;
   const expected = {
     content: {
       "application/json": {
@@ -648,18 +603,13 @@ const normalizeErrorResponseMigrations = (
         );
         normalized = removeResponseStatus(normalized, status);
       }
-      if (
-        normalized !== null &&
-        typeof normalized === "object" &&
-        !Array.isArray(normalized)
-      ) {
+      if (isJsonObject(normalized)) {
         const responses = normalized["responses"];
-        if (
-          responses !== null &&
-          typeof responses === "object" &&
-          !Array.isArray(responses)
-        ) {
-          for (const status of migration.restore) responses[status] = {};
+        if (isJsonObject(responses)) {
+          const restoredResponses = { ...responses };
+          for (const status of migration.restore)
+            restoredResponses[status] = {};
+          normalized = { ...normalized, responses: restoredResponses };
         }
       }
     }
@@ -694,13 +644,79 @@ const normalizeErrorResponseMigrations = (
   return normalized;
 };
 
+// Discord's current-user guild summaries have no persisted Organization settings.
+// Verified by account-organization.operations.test.ts through the real HTTP encoder.
+const MANAGEABLE_ORGANIZATION_SCHEMA: JsonValue = {
+  type: "object",
+  properties: {
+    id: { type: "string" },
+    name: { type: "string" },
+    icon: { nullable: true, type: "string" },
+  },
+  required: ["id", "name"],
+  additionalProperties: false,
+};
+
+const normalizeManageableOrganizationResponse = (
+  operation: JsonValue,
+  schemas?: Record<string, JsonValue>,
+): JsonValue => {
+  if (
+    !schemas?.["ManageableOrganizationResponse"] ||
+    JSON.stringify(
+      normalizeOpenApiRepresentation(schemas["ManageableOrganizationResponse"]),
+    ) !==
+      JSON.stringify(
+        normalizeOpenApiRepresentation(MANAGEABLE_ORGANIZATION_SCHEMA),
+      )
+  ) {
+    throw new Error("ManageableOrganizationResponse contract changed");
+  }
+  assertErrorResponse(
+    operation,
+    "GET /guilds/@me/manageable",
+    "200",
+    "ManageableOrganizationResponse",
+    {
+      type: "array",
+      items: { $ref: "#/components/schemas/ManageableOrganizationResponse" },
+    },
+  );
+  if (isJsonObject(operation)) {
+    const responses = operation["responses"];
+    if (isJsonObject(responses)) {
+      operation = {
+        ...operation,
+        responses: {
+          ...responses,
+          "200": {
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: { $ref: "#/components/schemas/GuildResponseDto" },
+                },
+              },
+            },
+          },
+        },
+      };
+    }
+  }
+  return operation;
+};
+
 export const normalizeAllowedChanges = (
   service: string,
   operationKey: string,
   operation: JsonValue,
+  schemas?: Record<string, JsonValue>,
 ): JsonValue => {
   let normalized = operation;
-  if (service === "api") normalized = removeAddedPermissions(normalized);
+  if (service === "api" && operationKey === "GET /guilds/@me/manageable") {
+    normalized = normalizeManageableOrganizationResponse(normalized, schemas);
+  }
+  if (service === "api") normalized = removePresencePermission(normalized);
   normalized = normalizeErrorResponseMigrations(
     service,
     operationKey,
@@ -735,15 +751,10 @@ export const normalizeAllowedChanges = (
       normalized = removeResponseStatus(normalized, status);
     }
   }
-  if (service === "auth" && operationKey === "GET /auth/verify") {
-    normalized = removeTicketVerifyHeaders(normalized);
-  }
 
   if (
-    normalized !== null &&
-    !Array.isArray(normalized) &&
-    typeof normalized === "object" &&
-    Array.isArray(normalized["security"]) &&
+    isJsonObject(normalized) &&
+    isJsonArray(normalized["security"]) &&
     normalized["security"].length === 0
   ) {
     const { security: _security, ...withoutEmptySecurity } = normalized;
@@ -764,24 +775,22 @@ const differencePaths = (
     right === undefined ||
     left === null ||
     right === null ||
-    typeof left !== "object" ||
-    typeof right !== "object" ||
-    Array.isArray(left) !== Array.isArray(right)
+    (!isJsonObject(left) && !isJsonArray(left)) ||
+    (!isJsonObject(right) && !isJsonArray(right)) ||
+    isJsonArray(left) !== isJsonArray(right)
   ) {
     return [`${path}: ${JSON.stringify(left)} -> ${JSON.stringify(right)}`];
   }
 
-  const leftEntries = Array.isArray(left)
-    ? left.entries()
-    : Object.entries(left);
+  const leftEntries = isJsonArray(left) ? left.entries() : Object.entries(left);
   const rightKeys = new Set(
-    Array.isArray(right) ? [...right.keys()].map(String) : Object.keys(right),
+    isJsonArray(right) ? [...right.keys()].map(String) : Object.keys(right),
   );
   const differences: string[] = [];
   for (const [key, leftValue] of leftEntries) {
     const stringKey = String(key);
     rightKeys.delete(stringKey);
-    const rightValue = Array.isArray(right)
+    const rightValue = isJsonArray(right)
       ? right[Number(key)]
       : right[stringKey];
     differences.push(
@@ -792,295 +801,272 @@ const differencePaths = (
     ...[...rightKeys].map(
       (key) =>
         `${path}.${key}: undefined -> ${JSON.stringify(
-          Array.isArray(right) ? right[Number(key)] : right[key],
+          isJsonArray(right) ? right[Number(key)] : right[key],
         )}`,
     ),
   );
   return differences;
 };
 
-const assertTicketOperation = (operation: JsonValue | undefined): void => {
-  if (
-    operation === undefined ||
-    operation === null ||
-    Array.isArray(operation) ||
-    typeof operation !== "object"
-  ) {
-    throw new Error(`Missing ${REALTIME_TICKET_OPERATION}`);
-  }
-  if (operation["operationId"] !== "AuthController_issueRealtimeTicket") {
-    throw new Error("Realtime ticket operationId changed");
-  }
-  const responses = operation["responses"];
-  if (
-    responses === null ||
-    Array.isArray(responses) ||
-    typeof responses !== "object" ||
-    responses["201"] === undefined
-  ) {
-    throw new Error("Realtime ticket endpoint must retain its 201 response");
-  }
-};
-
 // Intentional private additions verified against real persistence and authorization tests:
 // activity/src/online/online-repository.integration.test.ts;
 // api/test/kill-analytics.integration.test.ts, user-feed.integration.test.ts and records.operations.test.ts.
 // Group fights: api/test/group-fights.integration.test.ts and http-boundary.e2e-spec.ts.
-const PERSONAL_ANALYTICS_ADDITIONS: Record<
+const PERSONAL_ANALYTICS_ADDITIONS = new Map<
   string,
-  Record<string, JsonValue>
-> = {
-  activity: {
-    "GET /users/@me/activity/online": {
-      operationId: "UsersActivityController_getOnline",
-      parameters: ["from", "to"].map((name) => ({
-        name,
-        in: "query",
-        required: true,
-        schema: { type: "string" },
-      })),
-      security: [{ bearer: [] }],
-      responses: {
-        "200": {
-          content: {
-            "application/json": {
-              schema: { $ref: "#/components/schemas/UserOnlineResponseDto" },
+  Partial<Record<string, JsonValue>>
+>(
+  Object.entries({
+    activity: {
+      "GET /users/@me/activity/online": {
+        operationId: "UsersActivityController_getOnline",
+        parameters: ["from", "to"].map((name) => ({
+          name,
+          in: "query",
+          required: true,
+          schema: { type: "string" },
+        })),
+        security: [{ bearer: [] }],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/UserOnlineResponseDto" },
+              },
             },
           },
-        },
-        "401": {
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                properties: {
-                  message: { type: "string" },
-                  statusCode: { type: "number", enum: [401] },
+          "401": {
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    statusCode: { type: "number", enum: [401] },
+                  },
+                  required: ["message", "statusCode"],
                 },
-                required: ["message", "statusCode"],
               },
             },
           },
         },
       },
     },
-  },
-  api: {
-    "POST /group-fights": {
-      operationId: "GroupFightsController_createGroupFight",
-      parameters: [],
-      security: [{ bearer: [] }],
-      requestBody: {
-        required: true,
-        content: {
-          "application/json": {
-            schema: { $ref: "#/components/schemas/CreateGroupFightDto" },
-          },
-        },
-      },
-      responses: {
-        "201": {
+    api: {
+      "POST /group-fights": {
+        operationId: "GroupFightsController_createGroupFight",
+        parameters: [],
+        security: [{ bearer: [] }],
+        requestBody: {
+          required: true,
           content: {
             "application/json": {
-              schema: {
-                $ref: "#/components/schemas/CreateGroupFightResponseDto_Output",
+              schema: { $ref: "#/components/schemas/CreateGroupFightDto" },
+            },
+          },
+        },
+        responses: {
+          "201": {
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/CreateGroupFightResponseDto_Output",
+                },
+              },
+            },
+          },
+          "400": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/HttpErrorResponse" },
               },
             },
           },
         },
-        "400": {
-          content: {
-            "application/json": {
-              schema: { $ref: "#/components/schemas/HttpErrorResponse" },
-            },
-          },
-        },
       },
-    },
-    ...Object.fromEntries(
-      [
+      ...Object.fromEntries(
         [
-          "/ranking",
-          "getGuildGroupFightRanking",
-          "GuildGroupFightRankingResponseDto_Output",
-        ],
-        ["", "getGuildGroupFights", "GuildGroupFightsResponseDto_Output"],
-        [
-          "/{fightId}",
-          "getGuildGroupFight",
-          "GroupFightDetailResponseDto_Output",
-        ],
-      ].map(([suffix, method, response]): [string, JsonValue] => [
-        `GET /guilds/{guildId}/group-fights${suffix}`,
-        {
-          operationId: `GroupFightsController_${method}`,
-          security: [{ bearer: [] }],
-          parameters: [
-            {
-              name: "guildId",
-              in: "path",
-              required: true,
-              schema: { type: "string", minLength: 1 },
-            },
-            ...(suffix === "/{fightId}"
-              ? [
-                  {
-                    name: "fightId",
-                    in: "path",
-                    required: true,
-                    schema: { type: "string", minLength: 1 },
-                  },
-                ]
-              : [
-                  {
-                    name: "world",
-                    in: "query",
-                    required: false,
-                    schema: { type: "string" },
-                  },
-                  {
-                    name: "period",
-                    in: "query",
-                    required: false,
-                    schema: { $ref: "#/components/schemas/GroupFightPeriod" },
-                  },
-                  {
-                    name: "npcType",
-                    in: "query",
-                    required: false,
-                    schema: {
-                      type: "string",
-                      enum: ["ELITE2", "TITAN"],
+          [
+            "/ranking",
+            "getGuildGroupFightRanking",
+            "GuildGroupFightRankingResponseDto_Output",
+          ],
+          ["", "getGuildGroupFights", "GuildGroupFightsResponseDto_Output"],
+          [
+            "/{fightId}",
+            "getGuildGroupFight",
+            "GroupFightDetailResponseDto_Output",
+          ],
+        ].map(([suffix, method, response]): [string, JsonValue] => [
+          `GET /guilds/{guildId}/group-fights${suffix}`,
+          {
+            operationId: `GroupFightsController_${method}`,
+            security: [{ bearer: [] }],
+            parameters: [
+              {
+                name: "guildId",
+                in: "path",
+                required: true,
+                schema: { type: "string", minLength: 1 },
+              },
+              ...(suffix === "/{fightId}"
+                ? [
+                    {
+                      name: "fightId",
+                      in: "path",
+                      required: true,
+                      schema: { type: "string", minLength: 1 },
                     },
-                  },
-                  {
-                    name: "mapId",
+                  ]
+                : [
+                    {
+                      name: "world",
+                      in: "query",
+                      required: false,
+                      schema: { type: "string" },
+                    },
+                    {
+                      name: "period",
+                      in: "query",
+                      required: false,
+                      schema: { $ref: "#/components/schemas/GroupFightPeriod" },
+                    },
+                    {
+                      name: "npcType",
+                      in: "query",
+                      required: false,
+                      schema: {
+                        type: "string",
+                        enum: ["ELITE2", "TITAN"],
+                      },
+                    },
+                    {
+                      name: "mapId",
+                      in: "query",
+                      required: false,
+                      schema: {
+                        type: "string",
+                        pattern: "^[+-]?\\d*\\.?\\d+(?:[Ee][+-]?\\d+)?$",
+                      },
+                    },
+                  ]),
+              ...(suffix === ""
+                ? ["cursor", "limit"].map((name) => ({
+                    name,
                     in: "query",
                     required: false,
                     schema: {
                       type: "string",
                       pattern: "^[+-]?\\d*\\.?\\d+(?:[Ee][+-]?\\d+)?$",
                     },
+                  }))
+                : []),
+            ],
+            responses: {
+              "200": {
+                content: {
+                  "application/json": {
+                    schema: { $ref: `#/components/schemas/${response}` },
                   },
-                ]),
-            ...(suffix === ""
-              ? ["cursor", "limit"].map((name) => ({
-                  name,
-                  in: "query",
-                  required: false,
-                  schema: {
-                    type: "string",
-                    pattern: "^[+-]?\\d*\\.?\\d+(?:[Ee][+-]?\\d+)?$",
-                  },
-                }))
-              : []),
-          ],
-          responses: {
-            "200": {
-              content: {
-                "application/json": {
-                  schema: { $ref: `#/components/schemas/${response}` },
                 },
               },
-            },
-            ...Object.fromEntries(
-              ["403", "404"].map((status) => [
-                status,
-                {
-                  content: {
-                    "application/json": {
-                      schema: {
-                        $ref: "#/components/schemas/HttpErrorResponse",
+              ...Object.fromEntries(
+                ["403", "404"].map((status) => [
+                  status,
+                  {
+                    content: {
+                      "application/json": {
+                        schema: {
+                          $ref: "#/components/schemas/HttpErrorResponse",
+                        },
                       },
                     },
                   },
-                },
-              ]),
-            ),
+                ]),
+              ),
+            },
           },
-        },
-      ]),
-    ),
-    "GET /users/@me/feed": {
-      operationId: "UsersController_getUserFeed",
-      parameters: [],
-      security: [{ bearer: [] }],
-      responses: {
-        "200": {
-          content: {
-            "application/json": {
-              schema: {
-                $ref: "#/components/schemas/UserFeedResponseDto_Output",
+        ]),
+      ),
+      "GET /users/@me/feed": {
+        operationId: "UsersController_getUserFeed",
+        parameters: [],
+        security: [{ bearer: [] }],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/UserFeedResponseDto_Output",
+                },
               },
             },
           },
         },
       },
-    },
-    ...Object.fromEntries(
-      (
-        [
+      ...Object.fromEntries(
+        (
           [
-            "analytics",
-            "KillsController_getUserKillAnalytics",
-            "UserKillAnalyticsResponseDto_Output",
-          ],
-          [
-            "activity",
-            "KillsController_getUserKillActivity",
-            "UserKillActivityResponseDto_Output",
-          ],
-        ] as const
-      ).map(([path, operationId, response]): [string, JsonValue] => [
-        `GET /users/@me/stats/kills/${path}`,
-        {
-          operationId,
-          parameters: [
-            ...(path === "analytics"
-              ? [
-                  {
-                    name: "days",
-                    in: "query",
-                    required: false,
-                    schema: { type: "string", enum: ["7", "30", "90", "365"] },
+            [
+              "analytics",
+              "KillsController_getUserKillAnalytics",
+              "UserKillAnalyticsResponseDto_Output",
+            ],
+            [
+              "activity",
+              "KillsController_getUserKillActivity",
+              "UserKillActivityResponseDto_Output",
+            ],
+          ] as const
+        ).map(([path, operationId, response]): [string, JsonValue] => [
+          `GET /users/@me/stats/kills/${path}`,
+          {
+            operationId,
+            parameters: [
+              ...(path === "analytics"
+                ? [
+                    {
+                      name: "days",
+                      in: "query",
+                      required: false,
+                      schema: {
+                        type: "string",
+                        enum: ["7", "30", "90", "365"],
+                      },
+                    },
+                  ]
+                : []),
+              {
+                name: "world",
+                in: "query",
+                required: false,
+                schema: { type: "string", minLength: 1, maxLength: 100 },
+              },
+            ],
+            security: [{ bearer: [] }],
+            responses: {
+              "200": {
+                content: {
+                  "application/json": {
+                    schema: { $ref: `#/components/schemas/${response}` },
                   },
-                ]
-              : []),
-            {
-              name: "world",
-              in: "query",
-              required: false,
-              schema: { type: "string", minLength: 1, maxLength: 100 },
-            },
-          ],
-          security: [{ bearer: [] }],
-          responses: {
-            "200": {
-              content: {
-                "application/json": {
-                  schema: { $ref: `#/components/schemas/${response}` },
                 },
               },
             },
           },
-        },
-      ]),
-    ),
-  },
-};
+        ]),
+      ),
+    },
+  } satisfies Record<string, Record<string, JsonValue>>),
+);
 
 export const assertVerifiedPersonalAddition = (
   service: string,
   operationKey: string,
   operation: JsonValue | undefined,
 ): void => {
-  const expected = PERSONAL_ANALYTICS_ADDITIONS[service]?.[operationKey];
-  if (
-    !expected ||
-    !operation ||
-    typeof operation !== "object" ||
-    Array.isArray(operation)
-  ) {
+  const expected = PERSONAL_ANALYTICS_ADDITIONS.get(service)?.[operationKey];
+  if (!expected || !isJsonObject(operation)) {
     throw new Error(
       `Unverified personal API addition: ${service} ${operationKey}`,
     );
@@ -1100,14 +1086,14 @@ if (import.meta.main) {
   const changedOperations: string[] = [];
   for (const service of services) {
     const baseline = operations(readBaseline(service.baseline));
-    const current = operations(readCurrent(service.current));
+    const currentDocument = readCurrent(service.current);
+    const current = operations(currentDocument);
 
     const additions = [...current.keys()].filter((key) => !baseline.has(key));
     const removals = [...baseline.keys()].filter((key) => !current.has(key));
-    const expectedAdditions =
-      service.current === "auth"
-        ? [REALTIME_TICKET_OPERATION]
-        : Object.keys(PERSONAL_ANALYTICS_ADDITIONS[service.current] ?? {});
+    const expectedAdditions = Object.keys(
+      PERSONAL_ANALYTICS_ADDITIONS.get(service.current) ?? {},
+    );
     if (
       additions.length !== expectedAdditions.length ||
       additions.some((key) => !expectedAdditions.includes(key))
@@ -1117,8 +1103,7 @@ if (import.meta.main) {
       );
     }
     for (const key of additions) {
-      if (service.current !== "auth")
-        assertVerifiedPersonalAddition(service.current, key, current.get(key));
+      assertVerifiedPersonalAddition(service.current, key, current.get(key));
     }
     if (removals.length > 0) {
       throw new Error(
@@ -1133,6 +1118,7 @@ if (import.meta.main) {
         service.current,
         key,
         currentOperation,
+        currentDocument.components?.schemas,
       );
       const normalizedBaseline =
         normalizeOpenApiRepresentation(baselineOperation);
@@ -1146,10 +1132,6 @@ if (import.meta.main) {
         );
       }
     }
-
-    if (service.current === "auth") {
-      assertTicketOperation(current.get(REALTIME_TICKET_OPERATION));
-    }
   }
 
   if (changedOperations.length > 0) {
@@ -1159,6 +1141,6 @@ if (import.meta.main) {
   }
 
   process.stdout.write(
-    "OpenAPI parity passed: 243 baseline operations plus verified realtime ticket and private analytics additions\n",
+    "OpenAPI parity passed: 243 baseline operations plus verified private analytics additions\n",
   );
 }

@@ -1,5 +1,7 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type {
+  CanonicalRabbitEvent,
+  CanonicalRabbitEventRoutingKey,
   GuildCreated,
   GuildDeleted,
   GuildRoleChanged,
@@ -18,14 +20,15 @@ import {
   type DiscordGuildSyncStateUpdatedEvent,
 } from "@lootlog/schema/notifications";
 import { Clock, Effect, Schema } from "effect";
-import { ChannelType, DiscordAPIError, PermissionsBitField } from "discord.js";
-import type {
-  Client,
-  Collection,
-  Guild,
-  GuildBasedChannel,
-  GuildMember,
-  Role,
+import {
+  ChannelType,
+  DiscordAPIError,
+  PermissionsBitField,
+  type Client,
+  type Guild,
+  type GuildBasedChannel,
+  type GuildMember,
+  type Role,
 } from "discord.js";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { AppLogger } from "#src/logger";
@@ -42,11 +45,10 @@ type ChannelPermissionsState = {
   missingPermissions: string[];
 };
 
-type SyncableGuildChannel = GuildBasedChannel & {
-  name: string;
-  parentId: string | null;
-  rawPosition: number;
-};
+type SyncableGuildChannel = Extract<
+  GuildBasedChannel,
+  { type: ChannelType.GuildText | ChannelType.GuildAnnouncement }
+>;
 
 type GuildSyncContext = {
   botMember: GuildMember;
@@ -208,25 +210,16 @@ const channelSnapshot = (
   };
 };
 
-const isGuildNotFoundError = (error: unknown) =>
-  error instanceof DiscordAPIError &&
-  [10_004, 50_001].includes(Number(error.code));
-
-const unwrapSdkFailure = (error: unknown) =>
-  error &&
-  typeof error === "object" &&
-  "_tag" in error &&
-  error._tag === "DiscordSdkReadFailure" &&
-  "cause" in error
-    ? error.cause
-    : error;
+const isGuildNotFoundError = (cause: unknown) =>
+  cause instanceof DiscordAPIError &&
+  [10_004, 50_001].includes(Number(cause.code));
 
 export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
   const logger = new AppLogger("DiscordSync");
 
-  const publish = (
-    routingKey: Parameters<RabbitPublisher["publish"]>[1],
-    payload: unknown,
+  const publish = <Key extends CanonicalRabbitEventRoutingKey>(
+    routingKey: Key,
+    payload: CanonicalRabbitEvent<Key>,
   ) =>
     publisher.publish(DEFAULT_EXCHANGE_NAME, routingKey, payload).pipe(
       Effect.mapError((cause) => failure(`publish:${routingKey}`, cause)),
@@ -246,7 +239,7 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
     ).pipe(
       Effect.map((guild): ResolveGuildResult => ({ kind: "found", guild })),
       Effect.catch((error) => {
-        const cause = unwrapSdkFailure(error);
+        const cause = error.cause;
         return Effect.succeed(
           isGuildNotFoundError(cause)
             ? {
@@ -272,9 +265,9 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
         (yield* discordSdkRead("fetchBotMember", () =>
           guild.members.fetchMe(),
         ));
-      const fetchedChannels = (yield* discordSdkRead("fetchGuildChannels", () =>
+      const fetchedChannels = yield* discordSdkRead("fetchGuildChannels", () =>
         guild.channels.fetch(undefined, { force: true }),
-      )) as unknown as Collection<string, GuildBasedChannel | null>;
+      );
       const channels = Array.from(fetchedChannels.values()).filter(
         (channel): channel is SyncableGuildChannel =>
           channel !== null &&

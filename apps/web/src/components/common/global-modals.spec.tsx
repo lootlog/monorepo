@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -11,24 +12,18 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { configureApiClients } from "@lootlog/client/transport";
 import { afterEach, expect, it, vi } from "vitest";
 import { GlobalContextProvider } from "@/contexts/global-context";
-import { useGlobalContext } from "@/hooks/context/use-global-context";
+import { GuildNavCreate } from "@/components/layout/guild-nav-create";
+import { InstallButton } from "@/components/layout/install-button";
 import i18n from "@/i18n/config";
 import { GlobalModals } from "./global-modals";
 
-const ModalControls = () => {
-  const { createGuildModal, installAddonModal } = useGlobalContext();
-  return (
-    <>
-      <button onClick={() => createGuildModal.dispatch({ type: "OPEN" })}>
-        Create
-      </button>
-      <button onClick={() => installAddonModal.dispatch({ type: "OPEN" })}>
-        Install
-      </button>
-      <GlobalModals />
-    </>
-  );
-};
+const ModalControls = () => (
+  <>
+    <GuildNavCreate />
+    <InstallButton />
+    <GlobalModals />
+  </>
+);
 
 afterEach(() => {
   cleanup();
@@ -37,7 +32,9 @@ afterEach(() => {
 
 it("opens deferred modals, restores focus and preserves create form state after closing", async () => {
   vi.stubEnv("VITE_ADDON_INSTALL_URL", "https://lootlog.test/addon.user.js");
-  const fetchGuilds = vi.fn(async () => Response.json([]));
+  const fetchGuilds = vi.fn<typeof fetch>(() =>
+    Promise.resolve(Response.json([])),
+  );
   const restore = configureApiClients({
     main: { baseUrl: "https://lootlog.test", fetch: fetchGuilds },
   });
@@ -56,9 +53,14 @@ it("opens deferred modals, restores focus and preserves create form state after 
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(fetchGuilds).not.toHaveBeenCalled();
 
-    const create = screen.getByRole("button", { name: "Create" });
+    const create = screen.getByRole("button", {
+      name: i18n.t("ui.tooltips.createLootlog"),
+    });
     create.focus();
-    fireEvent.click(create);
+    await act(async () => {
+      fireEvent.click(create);
+      await vi.dynamicImportSettled();
+    });
     const dialog = await screen.findByRole(
       "dialog",
       { name: i18n.t("ui.modals.createLootlog.title") },
@@ -83,10 +85,15 @@ it("opens deferred modals, restores focus and preserves create form state after 
     fireEvent.click(within(reopened).getByRole("button", { name: "Close" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
 
-    const install = screen.getByRole("button", { name: "Install" });
-    for (let opening = 0; opening < 2; opening++) {
+    const install = screen.getByRole("button", {
+      name: i18n.t("ui.tooltips.installAddon"),
+    });
+    const openAndCloseInstaller = async () => {
       install.focus();
-      fireEvent.click(install);
+      await act(async () => {
+        fireEvent.click(install);
+        await vi.dynamicImportSettled();
+      });
       const installer = await screen.findByRole(
         "dialog",
         { name: i18n.t("ui.modals.installAddon.title") },
@@ -102,7 +109,9 @@ it("opens deferred modals, restores focus and preserves create form state after 
       fireEvent.click(within(installer).getByRole("button", { name: "Close" }));
       await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
       await waitFor(() => expect(document.activeElement).toBe(install));
-    }
+    };
+    await openAndCloseInstaller();
+    await openAndCloseInstaller();
   } finally {
     cleanup();
     client.clear();

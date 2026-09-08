@@ -291,10 +291,10 @@ describe("activity signing environment generation", () => {
       );
       await assert.rejects(
         generate(["--skip-existing"], root),
-        (error: unknown) => {
-          assert.ok(error instanceof Error);
-          assert.match(error.message, /ACTIVITY_EVENT_SIGNATURE_SECRET/);
-          assert.doesNotMatch(error.message, /root-secret|gateway-secret/);
+        (cause: unknown) => {
+          assert.ok(cause instanceof Error);
+          assert.match(cause.message, /ACTIVITY_EVENT_SIGNATURE_SECRET/);
+          assert.doesNotMatch(cause.message, /root-secret|gateway-secret/);
           return true;
         },
       );

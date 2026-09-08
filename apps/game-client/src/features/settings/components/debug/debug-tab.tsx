@@ -1,3 +1,4 @@
+import { runtimeOtherHandles } from "@/lib/margonem-runtime/runtime-other-handles";
 import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
 import { SettingsPanel } from "@/components/settings/settings-panel";
 import { SettingsSection } from "@/components/settings/settings-section";
@@ -7,6 +8,8 @@ import { margonemRuntimeBridge } from "@/lib/margonem-runtime/margonem-runtime-b
 import { getRuntimeZoomFactor } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
 import { useOthersStore } from "@/store/others.store";
+import { useGameStore } from "@/store/game.store";
+import { createDebugLegendaryLootEvent } from "./debug-legendary-loot-event";
 import { usePartyStore } from "@/store/party.store";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import { useState, type FC } from "react";
@@ -66,7 +69,7 @@ type DetectorNpcConfig = {
   prof: string;
 };
 
-const DETECTOR_NPC_PRESETS: Record<string, DetectorNpcConfig> = {
+const DETECTOR_NPC_PRESETS = {
   titan: {
     npcId: 123,
     name: "Debug Tytan",
@@ -99,7 +102,7 @@ const DETECTOR_NPC_PRESETS: Record<string, DetectorNpcConfig> = {
     lvl: 120,
     prof: "w",
   },
-};
+} satisfies Record<string, DetectorNpcConfig>;
 
 const createDetectorEvent = (preset: DetectorNpcConfig): GameEvent => {
   const uniqueId = Date.now();
@@ -167,7 +170,7 @@ const createPartyLeaveEvent = (): GameEvent => ({
   },
 });
 
-const EVENT_TEMPLATES: Record<string, { event: GameEvent }> = {
+const EVENT_TEMPLATES = {
   npcSpawn: {
     event: {
       ...createBaseEvent(),
@@ -271,24 +274,18 @@ const EVENT_TEMPLATES: Record<string, { event: GameEvent }> = {
       },
     },
   },
-};
+} satisfies Record<string, { event: GameEvent }>;
+
+// SAFETY: This private literal defines every own enumerable template key; it is never mutated.
+const eventTemplateKeys = Object.keys(
+  EVENT_TEMPLATES,
+) as (keyof typeof EVENT_TEMPLATES)[];
 
 type LogEntry = {
   id: string;
   timestamp: Date;
   eventType: string;
   success: boolean;
-};
-
-type DebugOther = {
-  canvasObjectType?: string;
-  d?: {
-    account?: number | string;
-    id?: number | string;
-    nick?: string;
-    x?: number;
-    y?: number;
-  };
 };
 
 export const DebugTab: FC = () => {
@@ -308,6 +305,7 @@ export const DebugTab: FC = () => {
   );
   const [jsonError, setJsonError] = useState<string | null>(null);
   const [eventLog, setEventLog] = useState<LogEntry[]>([]);
+  const game = useGameStore((s) => s.game);
   const partyMembers = usePartyStore((s) => s.members);
   const othersById = useOthersStore((s) => s.othersById);
   const tooltipActiveOther = useCharacterTooltipCatchingGuildsStore(
@@ -325,16 +323,20 @@ export const DebugTab: FC = () => {
   const zoomFactor = getRuntimeZoomFactor();
   const tooltipActiveOtherData = tooltipActiveOther?.d;
   const debugOthers = Object.entries(othersById).map(([storeId, other]) => {
-    const debugOther = other as DebugOther;
+    const handle = runtimeOtherHandles.get(storeId);
+    const data = handle && "d" in handle ? handle.d : undefined;
 
     return {
-      account: debugOther.d?.account,
-      canvasObjectType: debugOther.canvasObjectType,
-      id: debugOther.d?.id,
-      nick: debugOther.d?.nick,
+      account: other.accountId,
+      canvasObjectType:
+        handle && "canvasObjectType" in handle
+          ? handle.canvasObjectType
+          : undefined,
+      id: other.characterId,
+      nick: other.name,
       storeId,
-      x: debugOther.d?.x,
-      y: debugOther.d?.y,
+      x: data?.x,
+      y: data?.y,
     };
   });
 
@@ -357,7 +359,7 @@ export const DebugTab: FC = () => {
 
   const triggerFromJson = () => {
     try {
-      const event = JSON.parse(rawJson) as GameEvent;
+      const event: unknown = JSON.parse(rawJson);
       setJsonError(null);
       const success = margonemRuntimeBridge.triggerManualEvent(event);
       addLogEntry(t("settings.debug.events.customJson"), success);
@@ -370,7 +372,7 @@ export const DebugTab: FC = () => {
     }
   };
 
-  const loadTemplate = (templateKey: string) => {
+  const loadTemplate = (templateKey: keyof typeof EVENT_TEMPLATES) => {
     const template = EVENT_TEMPLATES[templateKey];
     if (template) {
       setRawJson(JSON.stringify(template.event, null, 2));
@@ -386,20 +388,30 @@ export const DebugTab: FC = () => {
     >
       <SettingsSection title={t("settings.debug.eventTemplatesTitle")}>
         <div className="ll:flex ll:flex-wrap ll:gap-1">
-          {Object.entries(EVENT_TEMPLATES).map(([key, { event }]) => (
+          {eventTemplateKeys.map((key) => (
             <Button
               key={key}
               onClick={() =>
-                triggerEvent(
-                  event,
-                  eventLabels[key as keyof typeof eventLabels],
-                )
+                triggerEvent(EVENT_TEMPLATES[key].event, eventLabels[key])
               }
               className="ll:px-2"
             >
-              {eventLabels[key as keyof typeof eventLabels]}
+              {eventLabels[key]}
             </Button>
           ))}
+          <Button
+            disabled={!game}
+            onClick={() => {
+              if (!game) return;
+              triggerEvent(
+                createDebugLegendaryLootEvent(game),
+                t("settings.debug.events.lootLegendary"),
+              );
+            }}
+            className="ll:px-2"
+          >
+            {t("settings.debug.events.lootLegendary")}
+          </Button>
           <Button
             onClick={() =>
               triggerEvent(
@@ -498,14 +510,14 @@ export const DebugTab: FC = () => {
 
       <SettingsSection title={t("settings.debug.rawJsonTitle")}>
         <div className="ll:flex ll:flex-wrap ll:gap-1 ll:mb-2">
-          {Object.keys(EVENT_TEMPLATES).map((key) => (
+          {eventTemplateKeys.map((key) => (
             <Button
               key={key}
               onClick={() => loadTemplate(key)}
               className="ll:px-2 ll:text-[10px] ll:h-4"
             >
               {t("settings.debug.loadTemplate", {
-                label: eventLabels[key as keyof typeof eventLabels],
+                label: eventLabels[key],
               })}
             </Button>
           ))}

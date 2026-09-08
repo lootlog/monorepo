@@ -1,3 +1,4 @@
+import { createTimerFixture, createTimerMemberFixture } from "./timer-fixtures";
 import type { Timer } from "@/api/timers.api";
 import { NpcType } from "@/api/npcs.api";
 import { describe, expect, it } from "vitest";
@@ -5,28 +6,13 @@ import { projectTimerList } from "./timer-list-projection";
 
 type ProjectionInput = Parameters<typeof projectTimerList>[0];
 
-const createTimer = (overrides: Partial<Timer> = {}): Timer => ({
-  guildId: "guild-1",
-  timerKey: "timer-1",
-  world: "pandora",
-  npcId: 10,
-  minSpawnTime: "2099-04-22T10:00:00.000Z",
-  maxSpawnTime: "2099-04-22T10:05:00.000Z",
-  updatedAt: "2099-04-22T09:59:00.000Z",
-  wasReset: false,
-  npc: {
-    id: 10,
-    name: "Tanroth",
-    lvl: 120,
-    prof: "W",
-    icon: "icon.gif",
-    wt: 10,
-    type: NpcType.HERO,
-    margonemType: 4,
-    location: "Ruins",
-  } as never,
-  ...overrides,
-});
+const createTimer = (overrides: Partial<Timer> = {}) =>
+  createTimerFixture({
+    minSpawnTime: "2099-04-22T10:00:00.000Z",
+    maxSpawnTime: "2099-04-22T10:05:00.000Z",
+    updatedAt: "2099-04-22T09:59:00.000Z",
+    ...overrides,
+  });
 
 const createProjectionInput = (
   overrides: Partial<ProjectionInput> = {},
@@ -67,8 +53,15 @@ const createProjectionInput = (
 
 describe("projectTimerList", () => {
   it("returns render-ready ungrouped Timer state through one interface", () => {
-    const member = { id: 77, name: "Alderaan" };
-    const actorCharacter = { id: "character-77", name: "Alderaan" };
+    const member = createTimerMemberFixture({ id: 77, name: "Alderaan" });
+    const actorCharacter: NonNullable<Timer["actorCharacter"]> = {
+      characterId: 77,
+      accountId: 1,
+      name: "Alderaan",
+      prof: null,
+      icon: null,
+      lvl: null,
+    };
     const result = projectTimerList(
       createProjectionInput({
         filters: {
@@ -99,8 +92,8 @@ describe("projectTimerList", () => {
         timers: [
           createTimer(),
           createTimer({
-            actorCharacter: actorCharacter as never,
-            member: member as never,
+            actorCharacter: actorCharacter,
+            member: member,
             updatedAt: "2099-04-22T09:59:01.000Z",
           }),
         ],
@@ -130,21 +123,25 @@ describe("projectTimerList", () => {
   });
 
   it("groups shared Timers while keeping manual Timers separate by world", () => {
-    const alice = { id: 1, name: "Alice" };
-    const bob = { id: 2, name: "Bob" };
+    const alice = createTimerMemberFixture({ id: 1, name: "Alice" });
+    const bob = createTimerMemberFixture({
+      id: 2,
+      name: "Bob",
+      guildId: "guild-2",
+    });
     const result = projectTimerList(
       createProjectionInput({
         context: { guildId: "guild-1", isGrouping: true },
         timers: [
           createTimer({
             guildId: "guild-1",
-            member: alice as never,
+            member: alice,
             maxSpawnTime: "2099-04-22T10:05:00.000Z",
             timerKey: "tanroth",
           }),
           createTimer({
             guildId: "guild-2",
-            member: bob as never,
+            member: bob,
             maxSpawnTime: "2099-04-22T10:10:00.000Z",
             timerKey: "tanroth",
           }),

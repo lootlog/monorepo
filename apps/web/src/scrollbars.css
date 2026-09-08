@@ -6,6 +6,24 @@
   display: none;
 }
 
+[data-slot="scroll-area-viewport"]:has(.battle-panel-battles-table),
+.scroll-area-sticky-table > [data-slot="scroll-area-viewport"] {
+  /* Default to h-10; tables with wrapping headers provide their measured height. */
+  --battle-table-header-height: var(
+    --scroll-fade-header-height,
+    calc(var(--spacing) * 10)
+  );
+  --scroll-fade-mask: linear-gradient(
+    to bottom,
+    #000 0,
+    #000 var(--battle-table-header-height),
+    transparent var(--battle-table-header-height),
+    #000 calc(var(--battle-table-header-height) + var(--scroll-fade-t, 0px)),
+    #000 calc(100% - var(--scroll-fade-b, 0px)),
+    transparent 100%
+  );
+}
+
 [data-slot="scroll-area-scrollbar"] {
   background: transparent;
 }

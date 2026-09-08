@@ -7,7 +7,10 @@ import { Button } from "@lootlog/ui/components/button";
 import { Card, CardContent, CardHeader } from "@lootlog/ui/components/card";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { Input } from "@lootlog/ui/components/input";
-import { ItemRarity } from "@lootlog/ui/components/item-image";
+import {
+  ItemRarity,
+  resolveItemRarity,
+} from "@lootlog/ui/components/item-image";
 import { ItemTile } from "@lootlog/ui/components/item-tile";
 import { Label } from "@lootlog/ui/components/label";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -99,7 +102,7 @@ const sortOptions = [
 ] as const;
 
 const isSortOption = (value: string): value is (typeof sortOptions)[number] =>
-  sortOptions.includes(value as (typeof sortOptions)[number]);
+  sortOptions.some((option) => option === value);
 
 const normalizeLevelValue = (value: string) => {
   const normalizedValue = value.trim();
@@ -117,7 +120,17 @@ const normalizeLevelValue = (value: string) => {
   return Math.max(0, Math.floor(level));
 };
 
-function validateSearch(search: Record<string, unknown>): ItemsRouteSearch {
+function validateSearch(search: {
+  advancedFilter?: unknown;
+  maxLevel?: unknown;
+  minLevel?: unknown;
+  professions?: unknown;
+  query?: unknown;
+  rarities?: unknown;
+  sort?: unknown;
+  types?: unknown;
+  world?: unknown;
+}): ItemsRouteSearch {
   return {
     advancedFilter:
       typeof search.advancedFilter === "string" ? search.advancedFilter : "",
@@ -347,7 +360,19 @@ function ItemsRoute() {
       worldValue,
     });
 
-    if (isSameSearchState(nextSearch, search)) {
+    if (
+      isSameSearchState(nextSearch, {
+        advancedFilter: search.advancedFilter,
+        maxLevel: search.maxLevel,
+        minLevel: search.minLevel,
+        professions: search.professions,
+        query: search.query,
+        rarities: search.rarities,
+        sort: search.sort,
+        types: search.types,
+        world: search.world,
+      })
+    ) {
       return;
     }
 
@@ -520,12 +545,10 @@ function ItemsRoute() {
                   onValueChange={(value) => {
                     if (value !== null) setSortValue(value);
                   }}
-                  items={[
-                    ...sortOptions.map((sortOption) => ({
-                      value: sortOption,
-                      label: <>{t(`filters.sortOptions.${sortOption}`)}</>,
-                    })),
-                  ]}
+                  items={sortOptions.map((sortOption) => ({
+                    value: sortOption,
+                    label: <>{t(`filters.sortOptions.${sortOption}`)}</>,
+                  }))}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue />
@@ -662,10 +685,7 @@ function ItemsRoute() {
                     item={{
                       icon: item.icon,
                       name: item.name,
-                      rarity:
-                        item.rarity && item.rarity in ItemRarity
-                          ? (item.rarity as ItemRarity)
-                          : ItemRarity.COMMON,
+                      rarity: resolveItemRarity(item.rarity),
                       stat: item.stat,
                       type: item.type,
                     }}

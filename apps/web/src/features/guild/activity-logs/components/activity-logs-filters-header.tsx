@@ -103,6 +103,6 @@ export const ActivityLogsFiltersHeader = ({
           {isMobile && <WorldSwitcher />}
         </>
       }
-    ></PageHeader>
+    />
   );
 };

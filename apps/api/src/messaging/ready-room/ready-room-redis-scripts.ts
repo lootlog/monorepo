@@ -1,3 +1,18 @@
+// Every mutation increments revision. Compare that token atomically rather than
+// JSON bytes: schema decoding can reorder fields without changing the state.
+const ASSERT_READY_ROOM_REVISION_SCRIPT = `
+local currentAggregate = redis.call("get", KEYS[1])
+if not currentAggregate then
+  return { "MISSING" }
+end
+
+local current = cjson.decode(currentAggregate)
+local expected = cjson.decode(ARGV[1])
+if current.notificationId ~= expected.notificationId or current.revision ~= expected.revision then
+  return { "CONFLICT" }
+end
+`;
+
 export const CREATE_READY_ROOM_SCRIPT = `
 local organizerRoomId = redis.call("get", KEYS[2])
 if organizerRoomId then
@@ -27,14 +42,7 @@ return { "CREATED" }
 `;
 
 export const JOIN_READY_ROOM_SCRIPT = `
-local currentAggregate = redis.call("get", KEYS[1])
-if not currentAggregate then
-  return { "MISSING" }
-end
-
-if currentAggregate ~= ARGV[1] then
-  return { "CONFLICT" }
-end
+${ASSERT_READY_ROOM_REVISION_SCRIPT}
 
 local characterRoomId = redis.call("get", KEYS[3])
 if characterRoomId and characterRoomId ~= ARGV[3] then
@@ -56,28 +64,14 @@ return { "COMMITTED" }
 `;
 
 export const COMMIT_READY_ROOM_SCRIPT = `
-local currentAggregate = redis.call("get", KEYS[1])
-if not currentAggregate then
-  return { "MISSING" }
-end
-
-if currentAggregate ~= ARGV[1] then
-  return { "CONFLICT" }
-end
+${ASSERT_READY_ROOM_REVISION_SCRIPT}
 
 redis.call("set", KEYS[1], ARGV[2], "EX", ARGV[3])
 return { "COMMITTED" }
 `;
 
 export const EXIT_READY_ROOM_PARTICIPANT_SCRIPT = `
-local currentAggregate = redis.call("get", KEYS[1])
-if not currentAggregate then
-  return { "MISSING" }
-end
-
-if currentAggregate ~= ARGV[1] then
-  return { "CONFLICT" }
-end
+${ASSERT_READY_ROOM_REVISION_SCRIPT}
 
 redis.call("set", KEYS[1], ARGV[2], "EX", ARGV[4])
 if ARGV[5] == "0" then
@@ -93,14 +87,7 @@ return { "COMMITTED" }
 `;
 
 export const TERMINATE_READY_ROOM_SCRIPT = `
-local currentAggregate = redis.call("get", KEYS[1])
-if not currentAggregate then
-  return { "MISSING" }
-end
-
-if currentAggregate ~= ARGV[1] then
-  return { "CONFLICT" }
-end
+${ASSERT_READY_ROOM_REVISION_SCRIPT}
 
 redis.call("set", KEYS[1], ARGV[2], "EX", ARGV[4])
 

@@ -34,37 +34,29 @@ const CACHE_PREFIX = "event-read:v2";
 const CACHE_TTL_SECONDS = 10;
 
 type Role = typeof roleTable.$inferSelect;
-type JsonValue =
-  | string
-  | number
-  | boolean
-  | null
-  | JsonValue[]
-  | { [key: string]: JsonValue };
-
 export class EventCatalogReadError extends TaggedErrorClass<EventCatalogReadError>()(
   "EventCatalogReadError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}
 
-const cacheKey = (
+const cacheKey = <Params extends object>(
   guildId: string,
   eventSegment: string,
   scope: string,
-  params: Record<string, unknown> = {},
+  params?: Params,
 ) =>
   [
     CACHE_PREFIX,
     guildId,
     eventSegment,
     scope,
-    Buffer.from(stableJsonStringify(params)).toString("base64url"),
+    Buffer.from(stableJsonStringify(params ?? {})).toString("base64url"),
   ].join(":");
 
 export const makeEventsCatalogRead = (
   database: typeof ApiDatabase.Service,
-  redis: RedisService,
-  logger: Logger,
+  redis: Pick<RedisService, "getOrSetJsonEffect">,
+  logger: Pick<Logger, "warn">,
 ) => {
   const query = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
     effect.pipe(
@@ -81,10 +73,7 @@ export const makeEventsCatalogRead = (
     schema: S,
     load: Effect.Effect<S["Type"], unknown>,
   ) => {
-    const codec = makeJsonCodec(Schema.toType(schema), {
-      stringify: (value) => superjson.stringify(value),
-      parse: (text): unknown => superjson.parse(text),
-    });
+    const codec = makeJsonCodec(Schema.toType(schema), superjson);
     return redis.getOrSetJsonEffect({
       key,
       codec,
@@ -154,9 +143,7 @@ export const makeEventsCatalogRead = (
     ).pipe(
       Effect.map((rows) => {
         const event = rows[0];
-        return event
-          ? { ...event, scoringRules: event.scoringRules as JsonValue | null }
-          : null;
+        return event ? { ...event, scoringRules: event.scoringRules } : null;
       }),
     );
 
@@ -219,7 +206,7 @@ export const makeEventsCatalogRead = (
       );
       return {
         ...event,
-        scoringRules: event.scoringRules as JsonValue | null,
+        scoringRules: event.scoringRules,
         heroNpcs,
       };
     });
@@ -276,7 +263,7 @@ export const makeEventsCatalogRead = (
               attachComputedEventActive(
                 {
                   ...event,
-                  scoringRules: event.scoringRules as JsonValue | null,
+                  scoringRules: event.scoringRules,
                   heroNpcs: heroes.filter(
                     ({ eventId }) => eventId === event.id,
                   ),

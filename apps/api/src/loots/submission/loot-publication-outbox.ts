@@ -100,7 +100,10 @@ export const makeLootPublicationDispatcher = (
                   payload.data.guildId,
                   { lootId: payload.data.lootId },
                 );
-                data = { ...payload.data, ...(feedEntry ? { feedEntry } : {}) };
+                const publishedData = feedEntry
+                  ? { ...payload.data, feedEntry }
+                  : { ...payload.data };
+                data = publishedData;
               }
               yield* rabbit.publish({
                 exchange: "default",

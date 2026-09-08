@@ -1,3 +1,4 @@
+import { getShortnameByProf } from "@lootlog/domain/profession";
 import { and, eq, gte, ilike, lt, lte, or, sql, type SQL } from "drizzle-orm";
 import { lootTable } from "#src/database/drizzle/schema";
 
@@ -107,20 +108,12 @@ const relationConditions = (
     : undefined,
 ];
 
-const professionShortname: Record<string, string> = {
-  WARRIOR: "w",
-  PALADIN: "p",
-  HUNTER: "h",
-  MAGE: "m",
-  BLADE_DANCER: "b",
-  TRACKER: "t",
-};
 const professionCondition = (
   professions: ReadonlyArray<string> | undefined,
 ) => {
   if (!professions?.length) return undefined;
   const shortnames = professions.flatMap((profession) => {
-    const shortname = professionShortname[profession];
+    const shortname = getShortnameByProf(profession);
     return shortname ? [shortname] : [];
   });
   if (shortnames.length === 0) return undefined;

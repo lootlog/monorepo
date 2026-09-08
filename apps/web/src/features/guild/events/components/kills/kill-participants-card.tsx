@@ -62,6 +62,10 @@ export const KillParticipantsCard = ({
     if (!killId) return;
 
     try {
+      const data: Parameters<typeof updateKillPoint.mutateAsync>[0]["data"] = {
+        pointsDelta,
+      };
+      if (comment) data.comment = comment;
       await updateKillPoint.mutateAsync({
         pathParams: {
           guildId: guildId ?? "",
@@ -69,10 +73,7 @@ export const KillParticipantsCard = ({
           killId,
           killPointId,
         },
-        data: {
-          pointsDelta,
-          ...(comment ? { comment } : {}),
-        },
+        data,
       });
       toast.success(t("events.points.editSuccess"));
     } catch (error) {

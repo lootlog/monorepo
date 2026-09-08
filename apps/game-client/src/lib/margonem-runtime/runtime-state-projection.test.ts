@@ -47,15 +47,19 @@ const npc = Object.freeze({
 
 function createAdapter() {
   return {
-    getAllNpcs: vi.fn(() => [npc]),
-    getAllOtherHandles: vi.fn(() => ({})),
-    getAllOthers: vi.fn(() => ({})),
-    getGameSnapshot: vi.fn(() => game),
-    getNpc: vi.fn(),
-    getOther: vi.fn(),
-    getOtherHandle: vi.fn(),
-    getParty: vi.fn(() => []),
-    getStateSnapshot: vi.fn(() => ({
+    getAllNpcs: vi.fn<MargonemRuntimeAdapter["getAllNpcs"]>(() => [npc]),
+    getAllOtherHandles: vi.fn<MargonemRuntimeAdapter["getAllOtherHandles"]>(
+      () => ({}),
+    ),
+    getAllOthers: vi.fn<MargonemRuntimeAdapter["getAllOthers"]>(() => ({})),
+    getGameSnapshot: vi.fn<MargonemRuntimeAdapter["getGameSnapshot"]>(
+      () => game,
+    ),
+    getNpc: vi.fn<MargonemRuntimeAdapter["getNpc"]>(),
+    getOther: vi.fn<MargonemRuntimeAdapter["getOther"]>(),
+    getOtherHandle: vi.fn<MargonemRuntimeAdapter["getOtherHandle"]>(),
+    getParty: vi.fn<MargonemRuntimeAdapter["getParty"]>(() => []),
+    getStateSnapshot: vi.fn<MargonemRuntimeAdapter["getStateSnapshot"]>(() => ({
       friends: [],
       game,
       npcs: [npc],
@@ -63,7 +67,7 @@ function createAdapter() {
       party: [],
     })),
     interface: "ni" as const,
-    isReady: vi.fn(() => true),
+    isReady: vi.fn<() => boolean>(() => true),
   } satisfies MargonemRuntimeAdapter;
 }
 
@@ -99,8 +103,47 @@ describe("RuntimeStateProjection", () => {
 
     projection.apply(
       createEnvelope({
-        h: { warrior_stats: { hp: 40, maxhp: 120 }, x: 8, y: 9 },
-      } as unknown as GameEvent),
+        h: {
+          warrior_stats: {
+            hp: 40,
+            maxhp: 120,
+            st: 0,
+            ag: 0,
+            it: 0,
+            sa: 0,
+            crit: 0,
+            ac: 0,
+            resfire: 0,
+            resfrost: 0,
+            reslight: 0,
+            act: 0,
+            attack: { physicalMainHand: { min: 0, max: 0, average: 0 } },
+            evade: [],
+            heal: 0,
+            acdmg: 0,
+            slow: 0,
+            fatigs: {
+              energy: { power: 0, chance: 0 },
+              mana: { power: 0, chance: 0 },
+            },
+            blok: 0,
+            critval: 0,
+            energy: 0,
+            lowevade: 0,
+            energygain: 0,
+            wound0: 0,
+            wound1: 0,
+            legbon_verycrit: 0,
+            legbon_holytouch: [],
+            legbon_curse: 0,
+            legbon_glare: 0,
+            legbon_lastheal: [],
+            legbon_critred: 0,
+          },
+          x: 8,
+          y: 9,
+        },
+      } satisfies GameEvent),
     );
     projection.apply(
       createEnvelope({
@@ -189,6 +232,7 @@ describe("RuntimeStateProjection", () => {
         npc_tpls: [
           {
             elasticLevelFactor: 0,
+            resp_rand: 0,
             id: 702,
             level: 250,
             nick: "Elastic npc",
@@ -198,7 +242,7 @@ describe("RuntimeStateProjection", () => {
           },
         ],
         npcs: [{ icon: { id: 92 }, id: 503, tpl: 702, x: 4, y: 5 }],
-      } as unknown as GameEvent),
+      } satisfies GameEvent),
     );
 
     expect(useNpcsStore.getState().getNpc(503)?.level).toBe(300);
@@ -206,8 +250,17 @@ describe("RuntimeStateProjection", () => {
 
   it("publishes identity only for CREATE and ignores movement packets", () => {
     const adapter = createAdapter();
-    const handle = { d: { account: 22, id: 11 } };
-    adapter.getOtherHandle.mockReturnValue(handle as never);
+    const handle = {
+      d: {
+        account: 22,
+        id: "11",
+        icon: "other.gif",
+        nick: "Other",
+        prof: "w",
+        lvl: 50,
+      },
+    };
+    adapter.getOtherHandle.mockReturnValue(handle);
     const projection = new RuntimeStateProjection({ adapter });
     projection.bootstrap();
 
@@ -250,6 +303,61 @@ describe("RuntimeStateProjection", () => {
     });
     expect(adapter.getOther).not.toHaveBeenCalled();
     expect(adapter.getOtherHandle).toHaveBeenCalledOnce();
+  });
+
+  it("replaces membership on map changes, applies deletions and rebuilds after cleanup", () => {
+    const adapter = createAdapter();
+    const projection = new RuntimeStateProjection({ adapter });
+    projection.bootstrap();
+    useOthersStore.getState().replaceOthers({
+      "11": {
+        accountId: "22",
+        characterId: "11",
+        name: "Previous map",
+        icon: "a.gif",
+        profession: "w",
+        level: 30,
+      },
+    });
+    projection.apply(
+      createEnvelope({
+        town: {
+          id: 12,
+          mainid: 12,
+          bg: "",
+          file: "",
+          mode: 0,
+          name: "Empty map",
+          pvp: 0,
+          visibility: 30,
+          water: "",
+          x: 0,
+          y: 0,
+        },
+      }),
+    );
+    expect(useOthersStore.getState().othersById).toEqual({});
+    expect(useOthersStore.getState().status).toBe("ready");
+    expect(useOthersStore.getState().mapEpoch).toBe(
+      useGameStore.getState().mapEpoch,
+    );
+    useOthersStore.getState().replaceOthers({
+      "33": {
+        accountId: "44",
+        characterId: "33",
+        name: "Departing",
+        icon: "b.gif",
+        profession: "m",
+        level: 30,
+      },
+    });
+    projection.apply(createEnvelope({ other: { "33": { del: 1 } } }));
+    expect(useOthersStore.getState().othersById).toEqual({});
+    projection.cleanup();
+    expect(useOthersStore.getState().status).toBe("uninitialized");
+    expect(projection.bootstrap()).toBe(true);
+    expect(useOthersStore.getState().status).toBe("ready");
+    expect(useOthersStore.getState().othersById).toEqual({});
   });
 
   it("captures pre-event state from Lootlog stores before applying deletion", () => {

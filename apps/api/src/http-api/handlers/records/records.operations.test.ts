@@ -1,3 +1,4 @@
+import { createGuildFixture } from "../../../../test/organization-fixtures.js";
 import { describe, expect, it } from "bun:test";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
@@ -9,7 +10,6 @@ import type {
 import type {
   LootCommentResponse,
   CreateLootCommentRequest,
-  LootDetailResponse,
 } from "#src/contracts/loots/schemas";
 
 import {
@@ -38,7 +38,7 @@ const caller: AuthenticatedCaller = {
 
 const guildCaller: AuthorizedGuildCaller = {
   ...caller,
-  guild: { id: "guild-a" } as AuthorizedGuildCaller["guild"],
+  guild: createGuildFixture({ id: "guild-a" }),
   accessPolicy: createAccessPolicy({
     capabilities: [
       Permission.LOOTLOG_ACCESS,
@@ -99,12 +99,14 @@ const services = (
 describe("Kills and Loots HttpApi handlers", () => {
   it("records a kill only after authenticating and preserves the caller identity", async () => {
     const payload = {
-      npc: { id: 123, name: "Mushita", lvl: 100, type: "HERO" },
+      npc: { id: 123, name: "Mushita", lvl: 100, wt: 80 },
+      accountId: "account-1",
+      characterId: "character-1",
       world: "tempest",
-    } as unknown as CreateKillRequest;
+    } satisfies CreateKillRequest;
     const created = {
-      id: "kill-1",
-    } as unknown as CreateKillResponse;
+      updated: 1,
+    } satisfies CreateKillResponse;
     const calls: Array<{
       receivedCaller: AuthenticatedCaller;
       receivedPayload: CreateKillRequest;
@@ -141,7 +143,46 @@ describe("Kills and Loots HttpApi handlers", () => {
 
     const error = await Effect.runPromise(
       Effect.flip(
-        createLoot({} as never).pipe(
+        createLoot({
+          world: "tempest",
+          source: "FIGHT",
+          location: "Map",
+          accountId: "1",
+          characterId: "2",
+          loots: [
+            {
+              hid: "item",
+              name: "Item",
+              icon: "item.png",
+              pr: 1,
+              prc: "1",
+              stat: "lvl=1",
+              id: 1,
+              cl: 1,
+            },
+          ],
+          npcs: [
+            {
+              id: 1,
+              name: "Hero",
+              location: "Map",
+              lvl: 100,
+              wt: 80,
+              icon: "hero.png",
+              type: 2,
+            },
+          ],
+          players: [
+            {
+              id: 2,
+              accountId: 1,
+              name: "Player",
+              lvl: 100,
+              prof: "w",
+              icon: "player.png",
+            },
+          ],
+        }).pipe(
           Effect.provide(
             services(
               makeAuthorization({ requireCaller: Effect.fail(denied) }),
@@ -246,7 +287,7 @@ describe("Kills and Loots HttpApi handlers", () => {
             services(
               makeAuthorization(),
               makeData({
-                fetchLoot: () => Effect.succeed(null as LootDetailResponse),
+                fetchLoot: () => Effect.succeed(null),
               }),
             ),
           ),
@@ -261,10 +302,16 @@ describe("Kills and Loots HttpApi handlers", () => {
   it("checks write permission before creating a comment", async () => {
     const payload = {
       content: "gg",
-    } as unknown as CreateLootCommentRequest;
+    } satisfies CreateLootCommentRequest;
     const created = {
-      id: "comment-1",
-    } as unknown as LootCommentResponse;
+      id: 1,
+      lootId: 42,
+      guildId: "guild-a",
+      content: "gg",
+      member: { name: "Member", userId: "user-1" },
+      createdAt: "2026-09-01T00:00:00.000Z",
+      updatedAt: "2026-09-01T00:00:00.000Z",
+    } satisfies LootCommentResponse;
     const authorizationCalls: string[] = [];
 
     const result = await Effect.runPromise(

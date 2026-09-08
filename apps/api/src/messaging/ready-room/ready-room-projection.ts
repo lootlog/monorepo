@@ -10,10 +10,9 @@ import type { ReadyRoomAggregate } from "#src/messaging/ready-room/ready-room.ty
 function cloneCharacter(
   character: PartyReadyRoomCharacter,
 ): PartyReadyRoomCharacter {
-  return {
-    ...character,
-    ...(character.clan ? { clan: { ...character.clan } } : {}),
-  };
+  const cloned = { ...character };
+  if (character.clan) cloned.clan = { ...character.clan };
+  return cloned;
 }
 
 function cloneParticipant(
@@ -28,22 +27,24 @@ function cloneParticipant(
 function createProjectionBase(
   aggregate: ReadyRoomAggregate,
 ): PartyReadyRoomProjectionBase {
-  return {
+  const projection: PartyReadyRoomProjectionBase = {
     schemaVersion: 3,
     notificationId: aggregate.notificationId,
     organizerDiscordId: aggregate.organizerDiscordId,
     organizerCharacter: cloneCharacter(aggregate.organizerCharacter),
     guildIds: [...aggregate.guildIds],
     world: aggregate.world,
-    description: aggregate.description,
-    minLvl: aggregate.minLvl,
-    maxLvl: aggregate.maxLvl,
     status: "ACTIVE",
     revision: aggregate.revision,
     createdAt: aggregate.createdAt,
     updatedAt: aggregate.updatedAt,
     expiresAt: aggregate.expiresAt,
   };
+  if (aggregate.description !== undefined)
+    projection.description = aggregate.description;
+  if (aggregate.minLvl !== undefined) projection.minLvl = aggregate.minLvl;
+  if (aggregate.maxLvl !== undefined) projection.maxLvl = aggregate.maxLvl;
+  return projection;
 }
 
 export function getReadyRoomActiveRecipientDiscordIds(

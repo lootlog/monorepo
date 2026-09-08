@@ -1,3 +1,5 @@
+import type { DetectorRoutingRule } from "@lootlog/schema/account-preferences";
+import { TimerResponse } from "#src/contracts/timers/schemas";
 import {
   afterAll,
   beforeAll,
@@ -12,7 +14,7 @@ import {
 } from "@lootlog/messaging";
 import { Permission } from "@lootlog/schema/permissions";
 import { BunRedis, BunHttpServer } from "@effect/platform-bun";
-import { Effect, Layer, ManagedRuntime } from "effect";
+import { Effect, Layer, ManagedRuntime, Schema } from "effect";
 import { FetchHttpClient, HttpRouter } from "effect/unstable/http";
 import { Redis } from "effect/unstable/persistence";
 import { getFreshCompleteUserGuildsHandoffKey } from "#src/discord/discord-cache.util";
@@ -437,14 +439,14 @@ describe("API HTTP boundary", () => {
       guildIds: [authorizedGuildId],
       ...labels,
     };
-    const expectedRule = {
+    const expectedRule: DetectorRoutingRule = {
       id: rule.id,
       minLevel: 0,
       maxLevel: 500,
       guildIds: [authorizedGuildId],
-      ...(labels.name?.trim() ? { name: labels.name.trim() } : {}),
-      ...(labels.world?.trim() ? { world: labels.world.trim() } : {}),
     };
+    if (labels.name?.trim()) expectedRule.name = labels.name.trim();
+    if (labels.world?.trim()) expectedRule.world = labels.world.trim();
     const updated = await request(path, {
       method: "PATCH",
       body: JSON.stringify({ detector: { routingRules: [rule] } }),
@@ -568,12 +570,27 @@ describe("API HTTP boundary", () => {
   });
 
   it("creates, reads and deletes a timer through the real router and database", async () => {
+    const actorCharacter = {
+      accountId: "123",
+      characterId: "456",
+      name: "Timer reporter",
+      prof: "w",
+      icon: "reporter.gif",
+      lvl: 80,
+    };
+    const expectedActor = {
+      ...actorCharacter,
+      accountId: 123,
+      characterId: 456,
+      prof: "WARRIOR",
+    };
     const createdResponse = await request(
       `/guilds/${authorizedGuildId}/timers/manual`,
       {
         method: "POST",
         body: JSON.stringify({
           name: "Test boss",
+          actorCharacter,
           minSeconds: 60,
           maxSeconds: 120,
           world,
@@ -587,16 +604,14 @@ describe("API HTTP boundary", () => {
         status: 201,
       },
     );
-    const created = JSON.parse(createdBody) as {
-      timerKey: string;
-      guildId: string;
-      world: string;
-      npc: { name: string };
-    };
+    const created = Schema.decodeUnknownSync(Schema.toEncoded(TimerResponse))(
+      JSON.parse(createdBody),
+    );
     expect(created).toMatchObject({
       guildId: authorizedGuildId,
       world,
       npc: { name: "Test boss" },
+      actorCharacter: expectedActor,
     });
     expect(await countTimers()).toBe(1);
 
@@ -605,7 +620,10 @@ describe("API HTTP boundary", () => {
     );
     expect(listedResponse.status).toBe(200);
     expect(await listedResponse.json()).toEqual([
-      expect.objectContaining({ timerKey: created.timerKey }),
+      expect.objectContaining({
+        timerKey: created.timerKey,
+        actorCharacter: expectedActor,
+      }),
     ]);
 
     const deletedResponse = await request(

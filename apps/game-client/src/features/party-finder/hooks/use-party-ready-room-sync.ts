@@ -1,4 +1,7 @@
-import type { PartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
+import {
+  decodePartyReadyRoomProjection,
+  type PartyReadyRoomProjection,
+} from "@lootlog/schema/party-ready-room";
 import { useEffect } from "react";
 import { partyReadyRoomControllerList } from "@lootlog/client/main";
 import { useGlobalStore } from "@/store/global.store";
@@ -30,14 +33,19 @@ export function usePartyReadyRoomSync(): void {
     void partyReadyRoomControllerList()
       .then((projections) => {
         if (!cancelled) {
-          applyAuthoritativeSync(
-            projections as unknown as PartyReadyRoomProjection[],
-            baseline,
-          );
+          const currentProjections: PartyReadyRoomProjection[] = [];
+          for (const projection of projections) {
+            if (projection.schemaVersion === 3) {
+              currentProjections.push(
+                decodePartyReadyRoomProjection(projection),
+              );
+            }
+          }
+          applyAuthoritativeSync(currentProjections, baseline);
         }
       })
-      .catch((error: unknown) => {
-        console.warn("Failed to synchronize party Ready Rooms", error);
+      .catch((cause: unknown) => {
+        console.warn("Failed to synchronize party Ready Rooms", cause);
       });
 
     return () => {

@@ -23,6 +23,9 @@ type NpcsListProps = {
   npcTypeColors?: NpcTypeColors;
 };
 
+const supportsElementAnimation = (element: HTMLElement) =>
+  typeof element.animate === "function";
+
 const NPC_ROW_HEIGHT_PX = 50;
 const NPC_ROW_GAP_PX = 4;
 const NPC_LIST_PADDING_TOP_PX = 4;
@@ -261,7 +264,7 @@ export const NpcsList: FC<NpcsListProps> = ({
         const rowElement = listContent.querySelector<HTMLElement>(
           `[data-ll-npc-row-id="${npc.id}"]`,
         );
-        if (!rowElement || typeof rowElement.animate !== "function") {
+        if (!rowElement || !supportsElementAnimation(rowElement)) {
           return;
         }
 

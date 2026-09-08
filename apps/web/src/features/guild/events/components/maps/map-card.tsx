@@ -12,7 +12,7 @@ import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { PlayerTile } from "@/components/tiles";
 import { useAssignmentCountdown } from "../../hooks/utils/use-assignment-countdown";
 import type { EventMap } from "../../types/api";
-import type { PlayerPresence } from "../../hooks/socket/use-event-presence";
+import type { PlayerPresence } from "@/lib/gateway-client";
 import {
   isWindowActive,
   type WindowStatus,
@@ -353,10 +353,10 @@ export const MapCard = ({
                     className="size-9 text-destructive hover:bg-destructive/10 hover:text-destructive"
                     loading={pendingAction === "unassign"}
                     disabled={isActionDisabled}
-                    icon={<X className="size-4" />}
+                    icon=<X className="size-4" />
                     onClick={() => void runAssignment("unassign")}
                     aria-label={t("events.maps.unassignSelf")}
-                  ></Button>
+                  />
                 }
               />
               <TooltipContent>{t("events.maps.unassignSelf")}</TooltipContent>
@@ -371,11 +371,11 @@ export const MapCard = ({
                       size="icon"
                       className="size-9"
                       loading={pendingAction === "assign"}
-                      icon={<UserPlus className="size-4" />}
+                      icon=<UserPlus className="size-4" />
                       onClick={() => void runAssignment("assign")}
                       disabled={isAssignDisabled}
                       aria-label={t("events.maps.assignSelf")}
-                    ></Button>
+                    />
                   </span>
                 }
               />

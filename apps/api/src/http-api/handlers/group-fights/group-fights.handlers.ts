@@ -79,14 +79,12 @@ export const GroupFightsHandlers = HttpApiBuilder.group(
                 payload.characterId,
               ),
             );
-            const result: {
-              submittedGuilds: Array<
-                CreateGroupFightResponse["submittedGuilds"][number]
-              >;
-              rejectedGuilds: Array<
-                CreateGroupFightResponse["rejectedGuilds"][number]
-              >;
-            } = { submittedGuilds: [], rejectedGuilds: [] };
+            const submittedGuilds: Array<
+              CreateGroupFightResponse["submittedGuilds"][number]
+            > = [];
+            const rejectedGuilds: Array<
+              CreateGroupFightResponse["rejectedGuilds"][number]
+            > = [];
             for (const guildId of targets) {
               const authorized = yield* authorization
                 .requireGuild({
@@ -103,14 +101,14 @@ export const GroupFightsHandlers = HttpApiBuilder.group(
                 !authorized ||
                 !authorized.accessPolicy.allows(Permission.LOOTLOG_ACCESS)
               ) {
-                result.rejectedGuilds.push({
+                rejectedGuilds.push({
                   guildId,
                   reason: "MISSING_MEMBER",
                 });
                 continue;
               }
               if (!authorized.guild.groupFightsEnabled) {
-                result.rejectedGuilds.push({
+                rejectedGuilds.push({
                   guildId,
                   reason: "GROUP_FIGHTS_DISABLED",
                 });
@@ -124,19 +122,19 @@ export const GroupFightsHandlers = HttpApiBuilder.group(
                   ),
                 )
               ) {
-                result.rejectedGuilds.push({
+                rejectedGuilds.push({
                   guildId,
                   reason: "INCOMPLETE_TEAMS",
                 });
                 continue;
               }
-              result.submittedGuilds.push(
+              submittedGuilds.push(
                 yield* persistence(
                   data.create(authorized.guild.id, caller.userId, payload),
                 ),
               );
             }
-            return result;
+            return { submittedGuilds, rejectedGuilds };
           }),
         ),
       )

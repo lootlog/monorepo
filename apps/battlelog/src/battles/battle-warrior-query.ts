@@ -3,7 +3,7 @@ import type { DrizzleDatabase } from "#src/database/database";
 import { battleWarriors, battles } from "#src/database/schema";
 
 export const makeWarriorExists =
-  (drizzle: DrizzleDatabase) =>
+  (drizzle: Pick<DrizzleDatabase, "select">) =>
   (battlesRef: typeof battles, ...conditions: (SQL | undefined)[]) =>
     exists(
       drizzle

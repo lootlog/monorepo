@@ -3,7 +3,7 @@ import type { Game } from "@lootlog/margonem/game";
 import type { GameHero } from "@lootlog/margonem/hero";
 import type { GameMap } from "@lootlog/margonem/map";
 import type { GameNpc } from "@lootlog/margonem/npcs";
-import type { Other } from "@lootlog/margonem/others";
+import type { OtherHandle } from "@lootlog/margonem/others";
 import type {
   RuntimeGameSnapshot,
   RuntimeInterface,
@@ -17,22 +17,34 @@ export type MargonemInterface = RuntimeInterface;
 
 type RuntimeAdapterWindow = Window & {
   Engine?: Engine;
-  g: Game;
-  hero: GameHero;
-  map: GameMap;
+  g?: Game;
+  hero?: GameHero;
+  map?: GameMap;
 };
 
-const getRuntimeWindow = () => window as unknown as RuntimeAdapterWindow;
+const getRuntimeWindow = (): RuntimeAdapterWindow => window;
+
+function requireRuntimeEngine(): Engine {
+  const engine = getRuntimeWindow().Engine;
+  if (!engine) throw new TypeError("Margonem Engine is not initialized");
+  return engine;
+}
+
+function requireLegacyGame(): Game {
+  const game = getRuntimeWindow().g;
+  if (!game) throw new TypeError("Margonem legacy game is not initialized");
+  return game;
+}
 
 export interface MargonemRuntimeAdapter {
   readonly interface: MargonemInterface;
   getAllNpcs(): readonly RuntimeNpc[];
   getAllOthers(): Readonly<Record<string, RuntimeOther>>;
-  getAllOtherHandles(): Readonly<Record<string, Other>>;
+  getAllOtherHandles(): Readonly<Record<string, OtherHandle>>;
   getGameSnapshot(): RuntimeGameSnapshot;
   getNpc(id: number): RuntimeNpc | undefined;
   getOther(id: string): RuntimeOther | undefined;
-  getOtherHandle(id: string): Other | undefined;
+  getOtherHandle(id: string): OtherHandle | undefined;
   getParty(): readonly RuntimePartyMember[];
   getStateSnapshot(): RuntimeStateSnapshot;
   isReady(): boolean;
@@ -97,8 +109,8 @@ abstract class BaseRuntimeAdapter implements MargonemRuntimeAdapter {
   };
   protected abstract getRawNpcs(): readonly GameNpc[];
   protected abstract getRawNpc(id: number): GameNpc | undefined;
-  protected abstract getRawOthers(): Record<string, RuntimeOtherWrapper>;
-  protected abstract getRawOther(id: string): RuntimeOtherWrapper | undefined;
+  protected abstract getRawOthers(): Record<string, OtherHandle>;
+  protected abstract getRawOther(id: string): OtherHandle | undefined;
   protected abstract getRawParty(): readonly RuntimePartyMember[];
 
   getGameSnapshot(): RuntimeGameSnapshot {
@@ -153,10 +165,8 @@ abstract class BaseRuntimeAdapter implements MargonemRuntimeAdapter {
     return Object.freeze(normalized);
   }
 
-  getAllOtherHandles(): Readonly<Record<string, Other>> {
-    return Object.freeze({ ...this.getRawOthers() }) as Readonly<
-      Record<string, Other>
-    >;
+  getAllOtherHandles(): Readonly<Record<string, OtherHandle>> {
+    return Object.freeze({ ...this.getRawOthers() });
   }
 
   getOther(id: string): RuntimeOther | undefined {
@@ -164,8 +174,8 @@ abstract class BaseRuntimeAdapter implements MargonemRuntimeAdapter {
     return raw ? (normalizeOther(raw) ?? undefined) : undefined;
   }
 
-  getOtherHandle(id: string): Other | undefined {
-    return this.getRawOther(id) as Other | undefined;
+  getOtherHandle(id: string): OtherHandle | undefined {
+    return this.getRawOther(id);
   }
 
   getParty(): readonly RuntimePartyMember[] {
@@ -185,29 +195,11 @@ abstract class BaseRuntimeAdapter implements MargonemRuntimeAdapter {
   abstract isReady(): boolean;
 }
 
-type NiEngine = Engine & {
-  communication?: { parseJSON?: (...args: unknown[]) => unknown };
-  party?: {
-    getMembers?: () => Map<
-      number,
-      {
-        accountId: number;
-        hp: [number, number];
-        icon: string;
-        id: number;
-        leader: boolean;
-        nick: string;
-        profession: string | null;
-      }
-    >;
-  };
-};
-
 export class NiRuntimeAdapter extends BaseRuntimeAdapter {
   readonly interface = "ni" as const;
 
   protected getRawGame() {
-    const engine = getRuntimeWindow().Engine as NiEngine;
+    const engine = requireRuntimeEngine();
     return {
       hero: engine.hero.d,
       map: engine.map.d,
@@ -216,33 +208,24 @@ export class NiRuntimeAdapter extends BaseRuntimeAdapter {
   }
 
   protected getRawNpcs(): readonly GameNpc[] {
-    const engine = getRuntimeWindow().Engine as NiEngine;
+    const engine = requireRuntimeEngine();
     return Object.values(engine.npcs.check()).map((npc) => npc.d);
   }
 
   protected getRawNpc(id: number): GameNpc | undefined {
-    return (getRuntimeWindow().Engine as NiEngine).npcs.getById(id)?.d;
+    return requireRuntimeEngine().npcs.getById(id)?.d;
   }
 
-  protected getRawOthers(): Record<string, RuntimeOtherWrapper> {
-    return (getRuntimeWindow().Engine as NiEngine).others.check() as Record<
-      string,
-      RuntimeOtherWrapper
-    >;
+  protected getRawOthers(): Record<string, OtherHandle> {
+    return requireRuntimeEngine().others.check();
   }
 
-  protected getRawOther(id: string): RuntimeOtherWrapper | undefined {
-    const others = (getRuntimeWindow().Engine as NiEngine)
-      .others as Engine["others"] & {
-      getById: (otherId: number) => unknown;
-    };
-    return others.getById(Number(id)) as RuntimeOtherWrapper | undefined;
+  protected getRawOther(id: string): OtherHandle | undefined {
+    return requireRuntimeEngine().others.getById(Number(id));
   }
 
   protected getRawParty(): readonly RuntimePartyMember[] {
-    const members = (
-      getRuntimeWindow().Engine as NiEngine
-    ).party?.getMembers?.();
+    const members = requireRuntimeEngine().party?.getMembers?.();
     if (!members) return [];
     return [...members.values()].map((member) =>
       Object.freeze({
@@ -270,33 +253,28 @@ export class SiRuntimeAdapter extends BaseRuntimeAdapter {
   readonly interface = "si" as const;
 
   protected getRawGame() {
-    const runtimeWindow = getRuntimeWindow();
-    return {
-      hero: runtimeWindow.hero,
-      map: runtimeWindow.map,
-      world: runtimeWindow.g.worldConfig.getWorldName(),
-    };
+    const { hero, map } = getRuntimeWindow();
+    if (!hero || !map)
+      throw new TypeError(
+        "Margonem legacy character and map are not initialized",
+      );
+    return { hero, map, world: requireLegacyGame().worldConfig.getWorldName() };
   }
 
   protected getRawNpcs(): readonly GameNpc[] {
-    return Object.values(getRuntimeWindow().g.npc ?? {});
+    return Object.values(requireLegacyGame().npc ?? {});
   }
 
   protected getRawNpc(id: number): GameNpc | undefined {
-    return getRuntimeWindow().g.npc?.[id];
+    return requireLegacyGame().npc?.[id];
   }
 
-  protected getRawOthers(): Record<string, RuntimeOtherWrapper> {
-    return (getRuntimeWindow().g.other ?? {}) as Record<
-      string,
-      RuntimeOtherWrapper
-    >;
+  protected getRawOthers(): Record<string, OtherHandle> {
+    return requireLegacyGame().other ?? {};
   }
 
-  protected getRawOther(id: string): RuntimeOtherWrapper | undefined {
-    return (getRuntimeWindow().g.other?.[id] ?? undefined) as
-      | RuntimeOtherWrapper
-      | undefined;
+  protected getRawOther(id: string): OtherHandle | undefined {
+    return requireLegacyGame().other?.[id] ?? undefined;
   }
 
   protected getRawParty(): readonly RuntimePartyMember[] {

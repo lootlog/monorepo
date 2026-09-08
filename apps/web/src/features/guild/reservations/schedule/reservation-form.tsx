@@ -4,7 +4,7 @@ import {
   toReminderOffset,
   type ReminderValue,
 } from "@/features/guild/reservations/schedule/reservation-form-fields";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import type { ReservationSettings } from "@lootlog/domain/reservations";
@@ -45,10 +45,18 @@ export function ReservationForm({
   const [comment, setComment] = useState("");
   const [reminder, setReminder] = useState<ReminderValue>("none");
 
-  useEffect(() => {
+  const [previousRange, setPreviousRange] = useState({
+    initialStartsAt,
+    initialEndsAt,
+  });
+  if (
+    previousRange.initialStartsAt !== initialStartsAt ||
+    previousRange.initialEndsAt !== initialEndsAt
+  ) {
+    setPreviousRange({ initialStartsAt, initialEndsAt });
     setStartsAt(initialStartsAt);
     setEndsAt(initialEndsAt);
-  }, [initialEndsAt, initialStartsAt]);
+  }
 
   const createMutation = useCreateReservation({
     mutation: {

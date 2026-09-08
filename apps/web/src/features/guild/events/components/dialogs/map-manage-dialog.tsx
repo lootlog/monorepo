@@ -49,11 +49,12 @@ import {
   useEventsAssignmentControllerDeleteMap,
   useEventsAssignmentControllerReorderLocations,
   useEventsAssignmentControllerUpdateLocation,
+  useMapTemplatesControllerGetTemplates,
+  useMapsControllerGetMaps,
+  type GameMapResponseDtoOutput,
+  type MapTemplateResponseDto,
 } from "@lootlog/client/main";
-import { useMapTemplatesControllerGetTemplates } from "@lootlog/client/main";
-import { useMapsControllerGetMaps } from "@lootlog/client/main";
-import type { GameMapResponseDtoOutput } from "@lootlog/client/main";
-import type { MapTemplateResponseDto } from "@lootlog/client/main";
+
 import type { LocationData } from "./map-manage-dialog.types";
 import { invalidateEventMapStructureQueries } from "../../hooks/mutations/invalidate-event-queries";
 import { LocationItem } from "./location-item";
@@ -223,8 +224,8 @@ export const MapManageDialog = ({
           });
         }
       })
-      .catch((error: unknown) => {
-        if (getApiErrorStatus(error) === 400) {
+      .catch((cause: unknown) => {
+        if (getApiErrorStatus(cause) === 400) {
           toast.error(t("events.maps.errors.duplicate"));
         } else {
           toast.error(t("events.maps.errors.addFailed"));
@@ -317,8 +318,8 @@ export const MapManageDialog = ({
       });
       setNewLocationName("");
       toast.success(t("events.locations.createSuccess"));
-    } catch (error) {
-      if (getApiErrorStatus(error) === 400) {
+    } catch (cause) {
+      if (getApiErrorStatus(cause) === 400) {
         toast.error(t("events.locations.errors.duplicateName"));
       } else {
         toast.error(t("events.locations.errors.createFailed"));
@@ -340,8 +341,8 @@ export const MapManageDialog = ({
       });
       setEditingLocation(null);
       toast.success(t("events.locations.updateSuccess"));
-    } catch (error) {
-      if (getApiErrorStatus(error) === 400) {
+    } catch (cause) {
+      if (getApiErrorStatus(cause) === 400) {
         toast.error(t("events.locations.errors.duplicateName"));
       } else {
         toast.error(t("events.locations.errors.updateFailed"));
@@ -429,7 +430,7 @@ export const MapManageDialog = ({
                   className="h-8 gap-1.5"
                   onClick={handleCreateLocation}
                   loading={createLocation.isPending}
-                  icon={<FolderPlus className="size-3" />}
+                  icon=<FolderPlus className="size-3" />
                   disabled={!newLocationName.trim()}
                 >
                   {t("events.locations.create")}
@@ -554,12 +555,10 @@ export const MapManageDialog = ({
                   <TextLink
                     target="_blank"
                     className="inline-flex items-center gap-1 text-xs"
-                    render={
-                      <Link
-                        to="/$guildId/settings/map-templates"
-                        params={{ guildId }}
-                      />
-                    }
+                    render=<Link
+                      to="/$guildId/settings/map-templates"
+                      params={{ guildId }}
+                    />
                   >
                     <Settings className="size-3" />
                     {t("events.maps.manageTemplates")}
@@ -636,12 +635,10 @@ export const MapManageDialog = ({
                   <TextLink
                     target="_blank"
                     className="inline-flex items-center gap-1.5 text-xs"
-                    render={
-                      <Link
-                        to="/$guildId/settings/map-templates"
-                        params={{ guildId }}
-                      />
-                    }
+                    render=<Link
+                      to="/$guildId/settings/map-templates"
+                      params={{ guildId }}
+                    />
                   >
                     <Plus className="size-3" />
                     {t("events.maps.createTemplates")}

@@ -1,19 +1,21 @@
-import type { EventListItemResponseDto } from "@lootlog/client/main";
-import type { EventMapsResponseDtoOutput } from "@lootlog/client/main";
-import type { EventMapsResponseDtoOutputHeroNpcsItemMapsItemAssignedMembersItemRolesItem } from "@lootlog/client/main";
-import type { EventTimerResponseDto } from "@lootlog/client/main";
-import type { EventOverviewResponseDtoHeroNpcsItem } from "@lootlog/client/main";
-import type { EventRankingEntryResponseDto } from "@lootlog/client/main";
-import type { EventWrappedApiResponseDtoOutput } from "@lootlog/client/main";
-import type { EventWrappedApiResponseDtoOutputCoverageBestHeroCoverage } from "@lootlog/client/main";
-import type { EventWrappedApiResponseDtoOutputHeroesItem } from "@lootlog/client/main";
-import type { EventWrappedApiResponseDtoOutputLootHeroBreakdownItem } from "@lootlog/client/main";
-import type { EventWrappedApiResponseDtoOutputOverviewRarityTotals } from "@lootlog/client/main";
-import type { HeroRespawnConfigResponseDto } from "@lootlog/client/main";
-import type { HeroRespawnConfigResponseDtoWindowStatus } from "@lootlog/client/main";
-import type { KillTimelineMapResponseDto } from "@lootlog/client/main";
-import type { KillTimelineMapResponseDtoAssignmentsItem } from "@lootlog/client/main";
-import type { KillTimelineMapResponseDtoGapsItem } from "@lootlog/client/main";
+import type {
+  EventListItemResponseDto,
+  EventMapsResponseDtoOutput,
+  EventMapsResponseDtoOutputHeroNpcsItemMapsItemAssignedMembersItemRolesItem,
+  EventTimerResponseDto,
+  EventOverviewResponseDtoHeroNpcsItem,
+  EventRankingEntryResponseDto,
+  EventWrappedApiResponseDtoOutput,
+  EventWrappedApiResponseDtoOutputCoverageBestHeroCoverage,
+  EventWrappedApiResponseDtoOutputHeroesItem,
+  EventWrappedApiResponseDtoOutputLootHeroBreakdownItem,
+  EventWrappedApiResponseDtoOutputOverviewRarityTotals,
+  HeroRespawnConfigResponseDto,
+  HeroRespawnConfigResponseDtoWindowStatus,
+  KillTimelineMapResponseDto,
+  KillTimelineMapResponseDtoAssignmentsItem,
+  KillTimelineMapResponseDtoGapsItem,
+} from "@lootlog/client/main";
 
 export type MemberRole =
   EventMapsResponseDtoOutputHeroNpcsItemMapsItemAssignedMembersItemRolesItem;

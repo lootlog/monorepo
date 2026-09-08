@@ -116,6 +116,7 @@ export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
     reset(nextFormValues);
   }, [currentCategorySettings, getValues, reset]);
 
+  // SAFETY: Initialization and every reset supply all five boolean fields, and fields are never unregistered.
   const watchedData = useWatch({ control }) as FormData;
 
   useEffect(() => {

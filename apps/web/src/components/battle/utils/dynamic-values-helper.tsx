@@ -1,25 +1,11 @@
 import type { ReactNode } from "react";
-import { roundValue } from "./value-utils";
-
-const generateDynamicValues = (
-  value: string,
-  prefix: string = "v",
-): Record<string, string> => {
-  const values = value.split(",");
-  const dynamicValues: Record<string, string> = {};
-
-  values.forEach((val, index) => {
-    dynamicValues[`${prefix}${index}`] = roundValue(val.trim());
-  });
-
-  return dynamicValues;
-};
+import { getDynamicBattleValues } from "./battle-action-values";
 
 const generateDynamicComponents = (
   value: string,
   prefix: string = "v",
   component: ReactNode = <span className="font-semibold" />,
-): Record<string, ReactNode> => {
+) => {
   const values = value.split(",");
   const dynamicComponents: Record<string, ReactNode> = {};
 
@@ -35,7 +21,7 @@ export const generateDynamicValuesAndComponents = (
   prefix: string = "v",
   component: ReactNode = <span className="font-semibold" />,
 ) => ({
-  values: generateDynamicValues(value, prefix),
+  values: getDynamicBattleValues(value, prefix),
   components: generateDynamicComponents(value, prefix, component),
 });
 

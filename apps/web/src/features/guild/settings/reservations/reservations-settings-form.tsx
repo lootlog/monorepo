@@ -37,12 +37,12 @@ import {
   getGuildsControllerGetGuildByIdQueryKey,
   invalidateGuildsControllerGetGuildById,
   useGuildsControllerUpdateGuildConfig,
+  type GuildResponseDtoOutput,
 } from "@lootlog/client/main";
 import {
   reservationsSettingsFormSchema,
   type ReservationsSettingsFormValues,
 } from "./reservations-form.schema";
-import type { GuildResponseDtoOutput } from "@lootlog/client/main";
 
 type ReservationsSettingsFormProps = {
   guild: GuildResponseDtoOutput;
@@ -64,7 +64,16 @@ export const ReservationsSettingsForm = ({
   });
 
   useEffect(() => {
-    form.reset(resolveReservationSettings(guild));
+    form.reset(
+      resolveReservationSettings({
+        reservationActiveLimitPerSpot: guild.reservationActiveLimitPerSpot,
+        reservationMaxAdvanceDays: guild.reservationMaxAdvanceDays,
+        reservationMaxDurationMinutes: guild.reservationMaxDurationMinutes,
+        reservationMinDurationMinutes: guild.reservationMinDurationMinutes,
+        reservationTimeGranularityMinutes:
+          guild.reservationTimeGranularityMinutes,
+      }),
+    );
   }, [
     form,
     guild.reservationActiveLimitPerSpot,
@@ -127,18 +136,16 @@ export const ReservationsSettingsForm = ({
                         {t("settings.reservations.fields.minDuration.label")}
                       </FormLabel>
                       <FormControl
-                        render={
-                          <Input
-                            type="number"
-                            min={5}
-                            max={240}
-                            step={5}
-                            {...field}
-                            onChange={(event) =>
-                              field.onChange(event.target.valueAsNumber)
-                            }
-                          />
-                        }
+                        render=<Input
+                          type="number"
+                          min={5}
+                          max={240}
+                          step={5}
+                          {...field}
+                          onChange={(event) =>
+                            field.onChange(event.target.valueAsNumber)
+                          }
+                        />
                       />
                       <FormDescription>
                         {t(
@@ -159,18 +166,16 @@ export const ReservationsSettingsForm = ({
                         {t("settings.reservations.fields.maxDuration.label")}
                       </FormLabel>
                       <FormControl
-                        render={
-                          <Input
-                            type="number"
-                            min={30}
-                            max={720}
-                            step={5}
-                            {...field}
-                            onChange={(event) =>
-                              field.onChange(event.target.valueAsNumber)
-                            }
-                          />
-                        }
+                        render=<Input
+                          type="number"
+                          min={30}
+                          max={720}
+                          step={5}
+                          {...field}
+                          onChange={(event) =>
+                            field.onChange(event.target.valueAsNumber)
+                          }
+                        />
                       />
                       <FormDescription>
                         {t(
@@ -249,18 +254,16 @@ export const ReservationsSettingsForm = ({
                         {t("settings.reservations.fields.maxAdvance.label")}
                       </FormLabel>
                       <FormControl
-                        render={
-                          <Input
-                            type="number"
-                            min={1}
-                            max={30}
-                            step={1}
-                            {...field}
-                            onChange={(event) =>
-                              field.onChange(event.target.valueAsNumber)
-                            }
-                          />
-                        }
+                        render=<Input
+                          type="number"
+                          min={1}
+                          max={30}
+                          step={1}
+                          {...field}
+                          onChange={(event) =>
+                            field.onChange(event.target.valueAsNumber)
+                          }
+                        />
                       />
                       <FormDescription>
                         {t(
@@ -291,18 +294,16 @@ export const ReservationsSettingsForm = ({
                         {t("settings.reservations.fields.activeLimit.label")}
                       </FormLabel>
                       <FormControl
-                        render={
-                          <Input
-                            type="number"
-                            min={1}
-                            max={10}
-                            step={1}
-                            {...field}
-                            onChange={(event) =>
-                              field.onChange(event.target.valueAsNumber)
-                            }
-                          />
-                        }
+                        render=<Input
+                          type="number"
+                          min={1}
+                          max={10}
+                          step={1}
+                          {...field}
+                          onChange={(event) =>
+                            field.onChange(event.target.valueAsNumber)
+                          }
+                        />
                       />
                       <FormDescription>
                         {t(

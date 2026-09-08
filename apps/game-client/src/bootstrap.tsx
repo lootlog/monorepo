@@ -83,7 +83,7 @@ export function bootstrapGameClient(
   const installation = platform ? "extension" : "userscript";
   migrateRetiredLocalStorage();
 
-  const runtimeWindow = window as RuntimeWindow;
+  const runtimeWindow: RuntimeWindow = window;
   const activeRuntime = runtimeWindow.__lootlogGameClientRuntime;
 
   if (

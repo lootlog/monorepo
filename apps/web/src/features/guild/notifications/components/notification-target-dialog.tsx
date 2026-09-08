@@ -40,10 +40,10 @@ import {
   useNotificationsGuildControllerCreateGuildTarget,
   useNotificationsGuildControllerGetAvailableGuildTargets,
   useNotificationsGuildControllerUpdateGuildTarget,
+  type NotificationTargetResponseDto,
 } from "@lootlog/client/main";
 import { invalidateGuildNotificationQueries } from "../notifications-api";
 import { NotificationTargetType } from "@lootlog/schema/notifications";
-import type { NotificationTargetResponseDto } from "@lootlog/client/main";
 
 const targetFormSchema = (t: (key: string) => string, isCreateMode: boolean) =>
   z
@@ -322,14 +322,12 @@ export const NotificationTargetDialog = ({
                     {t("settings.notifications.fields.displayName")}
                   </FormLabel>
                   <FormControl
-                    render={
-                      <Input
-                        {...field}
-                        placeholder={t(
-                          "settings.notifications.placeholders.displayName",
-                        )}
-                      />
-                    }
+                    render=<Input
+                      {...field}
+                      placeholder={t(
+                        "settings.notifications.placeholders.displayName",
+                      )}
+                    />
                   />
                   <FormMessage />
                 </FormItem>
@@ -352,12 +350,10 @@ export const NotificationTargetDialog = ({
                         </p>
                       </div>
                       <FormControl
-                        render={
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        }
+                        render=<Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
                       />
                     </div>
                     {!field.value && target?.active ? (

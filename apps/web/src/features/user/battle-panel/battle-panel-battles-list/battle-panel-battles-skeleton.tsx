@@ -27,14 +27,14 @@ export const BattlePanelBattlesSkeleton = () => {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden bg-background">
       <div className="px-3 pt-3">
-        <PageHeader title={<Skeleton className="h-5 w-40" />} />
+        <PageHeader title=<Skeleton className="h-5 w-40" /> />
       </div>
       <div className="flex flex-1 overflow-hidden">
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden p-3">
           <SectionCard className="flex h-full min-h-0 flex-1 flex-col gap-0 overflow-hidden border-border bg-card p-0">
             <SectionCardHeader
-              title={<Skeleton className="h-4 w-28" />}
-              actions={<Skeleton className="h-9 w-48" />}
+              title=<Skeleton className="h-4 w-28" />
+              actions=<Skeleton className="h-9 w-48" />
             />
 
             <div className="min-h-0 flex-1 overflow-hidden">

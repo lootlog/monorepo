@@ -1,4 +1,10 @@
 import { GatewayEvent } from "@/config/gateway";
+import { resolveNpcType } from "@lootlog/domain/npc-routing";
+import type { PermissionsUpdatedPayload } from "@/lib/socket";
+import {
+  applyChatAccessPolicy,
+  retainChatAccessPolicy,
+} from "../chat-access-policy";
 import type { ChatMessage } from "@/api/chat.api";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
@@ -56,6 +62,9 @@ export const useChatMessagesListener = (
   const sessionDiscordIdRef = useRef(sessionData?.user?.discordId);
   const onRemoteMessageRef = useRef(options?.onRemoteMessage);
   const wasJoinedRef = useRef(joined);
+  const permissionGenerationRef = useRef(0);
+  const guildPermissionGenerationsRef = useRef(new Map<string, number>());
+  useEffect(() => retainChatAccessPolicy(queryClient), [queryClient]);
   const accountCacheIdentity = `${sessionData?.user?.discordId ?? ""}\u0000${runtimeAccountId}`;
   const previousAccountCacheIdentityRef = useRef(accountCacheIdentity);
   useEffect(
@@ -81,12 +90,12 @@ export const useChatMessagesListener = (
   ]);
 
   useEffect(() => {
-    if (joined && !wasJoinedRef.current) {
+    if (joined && !wasJoinedRef.current && !socket?.getAccessPolicy?.()) {
       void invalidateChatMessagesQueries(queryClient);
     }
 
     wasJoinedRef.current = joined;
-  }, [joined, queryClient]);
+  }, [joined, queryClient, socket]);
 
   useEffect(() => {
     if (previousAccountCacheIdentityRef.current !== accountCacheIdentity) {
@@ -104,6 +113,38 @@ export const useChatMessagesListener = (
     chatCacheBatcher.discardOutsideGuilds(joinedGuilds);
     removeChatMessagesQueriesOutsideGuilds(queryClient, joinedGuilds);
   }, [chatCacheBatcher, joined, joinedGuilds, queryClient]);
+
+  useEffect(() => {
+    const discardAllPending = () => {
+      permissionGenerationRef.current += 1;
+      chatCacheBatcher.discardAll();
+    };
+    const handlePermissionsUpdated = (data: PermissionsUpdatedPayload) => {
+      if (!data.accessPolicy) {
+        discardAllPending();
+        return;
+      }
+      const guildIds = (data.changes ?? [])
+        .filter((change) => change.restricted && change.areas.includes("chat"))
+        .map((change) => change.organizationId);
+      for (const guildId of guildIds) {
+        guildPermissionGenerationsRef.current.set(
+          guildId,
+          (guildPermissionGenerationsRef.current.get(guildId) ?? 0) + 1,
+        );
+      }
+      chatCacheBatcher.discardGuilds(guildIds);
+      applyChatAccessPolicy(queryClient, data.accessPolicy);
+    };
+    socket?.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
+    socket?.on(GatewayEvent.DISCONNECT, discardAllPending);
+    const currentPolicy = socket?.getAccessPolicy?.();
+    if (currentPolicy) applyChatAccessPolicy(queryClient, currentPolicy);
+    return () => {
+      socket?.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
+      socket?.off(GatewayEvent.DISCONNECT, discardAllPending);
+    };
+  }, [chatCacheBatcher, queryClient, socket]);
 
   const handlerRef = useRef<
     (data: ChatMessage, afterFlush?: () => void) => void
@@ -143,6 +184,9 @@ export const useChatMessagesListener = (
       }
     };
     mentionNotificationRef.current = async (data) => {
+      const permissionGeneration = permissionGenerationRef.current;
+      const guildGeneration =
+        guildPermissionGenerationsRef.current.get(data.guildId) ?? 0;
       try {
         if (!data.message || !hasChatMentionToken(data.message)) return;
         if (
@@ -152,6 +196,21 @@ export const useChatMessagesListener = (
           return;
         }
 
+        let sourceNpc: { type: string; lvl: number } | undefined;
+        if (
+          data.type === "NPC" ||
+          (data.type === "PARTY_GATHERING" && data.npc)
+        ) {
+          const type = resolveNpcType(data.npc);
+          if (
+            !type ||
+            !data.npc ||
+            !Number.isFinite(data.npc.lvl) ||
+            data.npc.lvl < 0
+          )
+            return;
+          sourceNpc = { type, lvl: data.npc.lvl };
+        }
         const currentMember = await queryClient.fetchQuery({
           queryKey: getMembersControllerGetMeQueryKey({
             guildId: data.guildId,
@@ -159,6 +218,12 @@ export const useChatMessagesListener = (
           queryFn: () => membersControllerGetMe({ guildId: data.guildId }),
           staleTime: 5 * 60 * 1000,
         });
+        if (
+          permissionGeneration !== permissionGenerationRef.current ||
+          guildGeneration !==
+            (guildPermissionGenerationsRef.current.get(data.guildId) ?? 0)
+        )
+          return;
         const currentUserNames = getCurrentUserMentionNames({
           currentCharacterNick: runtimeIdentityRef.current.heroName,
           currentMember,
@@ -178,6 +243,7 @@ export const useChatMessagesListener = (
           {
             notification: {
               type: "chat-mention",
+              sourceNpc: sourceNpc ?? null,
               notificationId: getChatMentionNotificationId({
                 guildId: data.guildId,
                 messageId: data.id,

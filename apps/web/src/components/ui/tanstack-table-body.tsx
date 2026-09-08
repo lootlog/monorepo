@@ -8,19 +8,19 @@ import {
 import type { ComponentProps, ReactNode } from "react";
 import { TableBody, TableCell, TableRow } from "@lootlog/ui/components/table";
 import { cn } from "cn";
-import { coreTableFeatures } from "@/lib/tanstack-table-features";
+import type { coreTableFeatures } from "@/lib/tanstack-table-features";
 
 type TableRowProps = ComponentProps<typeof TableRow>;
 
 type TanStackTableBodyProps<TData extends RowData> = {
   table: TanStackTable<typeof coreTableFeatures, TData>;
   rowHeaderColumnId?: string;
-  rowClassName?:
-    | string
-    | ((row: Row<typeof coreTableFeatures, TData>) => string);
-  cellClassName?:
-    | string
-    | ((cell: Cell<typeof coreTableFeatures, TData, unknown>) => string);
+  rowClassName?: string;
+  getRowClassName?: (row: Row<typeof coreTableFeatures, TData>) => string;
+  cellClassName?: string;
+  getCellClassName?: (
+    cell: Cell<typeof coreTableFeatures, TData, unknown>,
+  ) => string;
   getRowProps?: (row: Row<typeof coreTableFeatures, TData>) => TableRowProps;
   renderCellContent?: (
     cell: Cell<typeof coreTableFeatures, TData, unknown>,
@@ -32,7 +32,9 @@ export const TanStackTableBody = <TData extends RowData>({
   table,
   rowHeaderColumnId,
   rowClassName,
+  getRowClassName,
   cellClassName,
+  getCellClassName,
   getRowProps,
   renderCellContent,
 }: TanStackTableBodyProps<TData>) => {
@@ -40,8 +42,7 @@ export const TanStackTableBody = <TData extends RowData>({
     <TableBody>
       {table.getRowModel().rows.map((row) => {
         const rowProps = getRowProps?.(row);
-        const resolvedRowClassName =
-          typeof rowClassName === "function" ? rowClassName(row) : rowClassName;
+        const resolvedRowClassName = getRowClassName?.(row) ?? rowClassName;
 
         return (
           <TableRow
@@ -51,9 +52,7 @@ export const TanStackTableBody = <TData extends RowData>({
           >
             {row.getVisibleCells().map((cell) => {
               const resolvedCellClassName =
-                typeof cellClassName === "function"
-                  ? cellClassName(cell)
-                  : cellClassName;
+                getCellClassName?.(cell) ?? cellClassName;
               const content = flexRender(
                 cell.column.columnDef.cell,
                 cell.getContext(),

@@ -1,3 +1,4 @@
+import { Schema } from "effect";
 import type { BetterAuthOptions } from "better-auth";
 import { APIError } from "better-auth/api";
 
@@ -44,7 +45,7 @@ export const createDiscordAuthOptions = ({
         if (
           source.method !== "oauth" ||
           source.oauth?.providerId !== "discord" ||
-          typeof providerProfileId !== "string" ||
+          !Schema.is(Schema.String)(providerProfileId) ||
           user.discordId !== providerProfileId
         ) {
           return {

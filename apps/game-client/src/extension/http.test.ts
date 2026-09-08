@@ -47,7 +47,6 @@ describe("extension HTTP boundary", () => {
     [`${API_URL}.evil/timers`, "GET"],
     [`${API_URL}/users/@me`, "DELETE"],
     [`${AUTH_API_URL}/idp/get-access-token`, "POST"],
-    [`${AUTH_API_URL}/auth/realtime-ticket`, "POST"],
     [`${AUTH_API_URL}/idp/get-session`, "POST"],
     [`${API_URL}/guilds/a%2fb/members`, "GET"],
     [`${API_URL}/timers#fragment`, "GET"],
@@ -58,7 +57,7 @@ describe("extension HTTP boundary", () => {
       const fetcher = vi.fn<typeof fetch>();
       await expect(
         executeExtensionHttp(request(url, method), signal(), fetcher),
-      ).rejects.toThrow();
+      ).rejects.toThrow("Extension HTTP operation is not allowed");
       expect(fetcher).not.toHaveBeenCalled();
     },
   );
@@ -137,7 +136,7 @@ describe("extension HTTP boundary", () => {
   });
 
   it("bounds streamed responses even without content-length", async () => {
-    const cancel = vi.fn();
+    const cancel = vi.fn<() => void>();
     const body = new ReadableStream<Uint8Array>({
       start(controller) {
         controller.enqueue(new Uint8Array(MAX_EXTENSION_HTTP_BYTES + 1));
@@ -153,11 +152,11 @@ describe("extension HTTP boundary", () => {
 
   it("does not fetch after cancellation", async () => {
     const controller = new AbortController();
-    controller.abort();
+    controller.abort(new Error("cancelled HTTP request"));
     const fetcher = vi.fn<typeof fetch>();
     await expect(
       executeExtensionHttp(request(), controller.signal, fetcher),
-    ).rejects.toThrow();
+    ).rejects.toThrow("cancelled HTTP request");
     expect(fetcher).not.toHaveBeenCalled();
   });
 });

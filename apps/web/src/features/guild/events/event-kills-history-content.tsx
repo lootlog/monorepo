@@ -10,8 +10,9 @@ import {
   getShowEventOverviewQueryKey,
   useEventsRankingControllerGetEventHeroStats,
   useShowEventOverview,
+  type EventHeroStatsResponseDto,
 } from "@lootlog/client/main";
-import type { EventHeroStatsResponseDto } from "@lootlog/client/main";
+
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { HeroKillsFilter } from "@/features/guild/events/components/shared/hero-kills-filter";
 import { EventKillsSummary } from "./components/kills/event-kills-summary";

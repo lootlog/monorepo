@@ -1,5 +1,6 @@
 import {
   decodeRealtimeFrame,
+  isServerEventFrame,
   PRESENCE_HEARTBEAT_INTERVAL_MS,
   REALTIME_PROTOCOL_VERSION,
   type ClientCommand,
@@ -32,7 +33,7 @@ export interface RealtimeWebSocket {
     type: "open" | "close" | "error" | "message",
     listener: (event: { readonly data?: unknown }) => void,
   ): void;
-  send(data: string | Uint8Array): void;
+  send(data: string | Uint8Array<ArrayBuffer>): void;
   close(code?: number, reason?: string): void;
 }
 
@@ -45,7 +46,6 @@ export interface RealtimeClientOptions {
   readonly url: string;
   readonly path?: string;
   readonly protocols?: ReadonlyArray<string>;
-  readonly ticketProvider?: () => Promise<string | undefined>;
   readonly frameEncoding?: "json" | "messagepack";
   readonly requestTimeoutMs?: number;
   readonly reconnectBaseDelayMs?: number;
@@ -88,20 +88,7 @@ const normalizeUrl = (baseUrl: string, path: string): string => {
 };
 
 const nativeWebSocketFactory: RealtimeWebSocketFactory = (url, protocols) =>
-  new WebSocket(url, protocols) as RealtimeWebSocket;
-
-const TICKET_PROTOCOL_PREFIX = "lootlog.ticket.v1.";
-
-const encodeTicketProtocol = (ticket: string): string => {
-  const bytes = new TextEncoder().encode(ticket);
-  let binary = "";
-  for (const byte of bytes) binary += String.fromCharCode(byte);
-  const encoded = btoa(binary)
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
-  return `${TICKET_PROTOCOL_PREFIX}${encoded}`;
-};
+  new WebSocket(url, protocols);
 
 const WEBSOCKET_OPEN = 1;
 
@@ -134,7 +121,6 @@ export class RealtimeClient {
   private readonly reconnectMaxDelayMs: number;
   private readonly random: () => number;
   private readonly webSocketFactory: RealtimeWebSocketFactory;
-  private readonly ticketProvider?: () => Promise<string | undefined>;
   private readonly frameEncoding: "json" | "messagepack";
   private readonly eventListeners = new Set<(event: ServerEvent) => void>();
   private readonly stateListeners = new Set<
@@ -152,7 +138,6 @@ export class RealtimeClient {
   private manuallyClosed = false;
   private messageChain = Promise.resolve();
   private rejoinHandler: (() => Promise<void>) | null = null;
-  private openGeneration = 0;
 
   constructor(options: RealtimeClientOptions) {
     this.url = normalizeUrl(options.url, options.path ?? "/ws");
@@ -162,7 +147,6 @@ export class RealtimeClient {
     this.reconnectMaxDelayMs = options.reconnectMaxDelayMs ?? 30_000;
     this.random = options.random ?? Math.random;
     this.webSocketFactory = options.webSocketFactory ?? nativeWebSocketFactory;
-    this.ticketProvider = options.ticketProvider;
     this.frameEncoding = options.frameEncoding ?? "messagepack";
   }
 
@@ -183,7 +167,6 @@ export class RealtimeClient {
 
   disconnect(): void {
     this.manuallyClosed = true;
-    this.openGeneration += 1;
     this.clearReconnect();
     this.clearHeartbeat();
     this.rejectPending(new Error("Realtime client disconnected"));
@@ -247,6 +230,7 @@ export class RealtimeClient {
       }, this.requestTimeoutMs);
       this.pending.set(requestId, { type, resolve, reject, timeout });
       try {
+        // SAFETY: the command discriminator and payload are coupled by CommandData<Type>.
         activeSocket.send(
           this.encodeFrame({
             v: REALTIME_PROTOCOL_VERSION,
@@ -266,6 +250,7 @@ export class RealtimeClient {
   send<Type extends CommandType>(type: Type, data: CommandData<Type>): void {
     const activeSocket = this.socket;
     if (!activeSocket || activeSocket.readyState !== WEBSOCKET_OPEN) return;
+    // SAFETY: the command discriminator and payload are coupled by CommandData<Type>.
     activeSocket.send(
       this.encodeFrame({
         v: REALTIME_PROTOCOL_VERSION,
@@ -277,27 +262,8 @@ export class RealtimeClient {
 
   private open(state: "connecting" | "reconnecting"): void {
     this.setState(state);
-    const generation = ++this.openGeneration;
-    if (!this.ticketProvider) {
-      this.openSocket(generation, this.protocols);
-      return;
-    }
-    void this.ticketProvider()
-      .then((ticket) => {
-        const protocols = ticket
-          ? [...(this.protocols ?? []), encodeTicketProtocol(ticket)]
-          : this.protocols;
-        this.openSocket(generation, protocols);
-      })
-      .catch(() => {
-        if (generation !== this.openGeneration || this.manuallyClosed) return;
-        this.scheduleReconnect();
-      });
-  }
-
-  private openSocket(generation: number, protocols?: string[]): void {
-    if (generation !== this.openGeneration || this.manuallyClosed) return;
-    const socket = this.webSocketFactory(this.url, protocols);
+    if (this.manuallyClosed) return;
+    const socket = this.webSocketFactory(this.url, this.protocols);
     socket.binaryType = "arraybuffer";
     this.socket = socket;
     socket.addEventListener("open", () => {
@@ -372,12 +338,11 @@ export class RealtimeClient {
       }
       return;
     }
-    if (!("type" in frame) || frame.type === "session.join") return;
-    const event = frame as ServerEvent;
-    for (const listener of this.eventListeners) listener(event);
+    if (!isServerEventFrame(frame)) return;
+    for (const listener of this.eventListeners) listener(frame);
   }
 
-  private encodeFrame(frame: ClientCommand): string | Uint8Array {
+  private encodeFrame(frame: ClientCommand): string | Uint8Array<ArrayBuffer> {
     return this.frameEncoding === "json"
       ? JSON.stringify(frame)
       : encodeRealtimeFrame(frame);

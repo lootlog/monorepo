@@ -41,65 +41,67 @@ const ENCODED_NUMBER_PATTERN = "^[+-]?\\d*\\.?\\d+(?:[Ee][+-]?\\d+)?$";
 
 type JsonObject = Record<string, unknown>;
 
-const integerSchema = (minimum: number, maximum: number): JsonObject => ({
+const integerSchema = (minimum: number, maximum: number) => ({
   type: "integer",
   minimum,
   maximum,
 });
 
-const queryParameterSchemas: Readonly<Record<string, JsonObject>> = {
-  "TimersController_searchNpcsWithTimerData:limit": {
-    type: "number",
-    minimum: 1,
-    maximum: 50,
-    default: 10,
-  },
-  "LootsController_fetchLootsByGuildId:limit": integerSchema(1, 100),
-  "LootsController_fetchLootsByGuildId:cursor": integerSchema(
-    Number.MIN_SAFE_INTEGER,
-    Number.MAX_SAFE_INTEGER,
-  ),
-  "LootsController_fetchLootsByGuildId:npcLevelMin": integerSchema(0, 500),
-  "LootsController_fetchLootsByGuildId:npcLevelMax": integerSchema(0, 500),
-  "LootsController_fetchLootsByGuildId:itemLevelMin": integerSchema(0, 500),
-  "LootsController_fetchLootsByGuildId:itemLevelMax": integerSchema(0, 500),
-  "LootsController_fetchLootsByGuildId:playerLevelMin": integerSchema(0, 500),
-  "LootsController_fetchLootsByGuildId:playerLevelMax": integerSchema(0, 500),
-  "LootsController_countLootsByGuildId:limit": integerSchema(1, 100),
-  "LootsController_countLootsByGuildId:cursor": integerSchema(
-    Number.MIN_SAFE_INTEGER,
-    Number.MAX_SAFE_INTEGER,
-  ),
-  "LootsController_countLootsByGuildId:npcLevelMin": integerSchema(0, 500),
-  "LootsController_countLootsByGuildId:npcLevelMax": integerSchema(0, 500),
-  "LootsController_countLootsByGuildId:itemLevelMin": integerSchema(0, 500),
-  "LootsController_countLootsByGuildId:itemLevelMax": integerSchema(0, 500),
-  "LootsController_countLootsByGuildId:playerLevelMin": integerSchema(0, 500),
-  "LootsController_countLootsByGuildId:playerLevelMax": integerSchema(0, 500),
-  "KillsController_getGuildKillStats:minLvl": integerSchema(0, 500),
-  "KillsController_getGuildKillStats:maxLvl": integerSchema(0, 500),
-  "KillsController_getUserKillStats:topNpcsLimit": integerSchema(
-    1,
-    Number.MAX_SAFE_INTEGER,
-  ),
-  "KillsController_getUserNpcKills:cursor": integerSchema(
-    0,
-    Number.MAX_SAFE_INTEGER,
-  ),
-  "KillsController_getUserNpcKills:limit": integerSchema(1, 100),
-  "KillsController_getUserNpcKills:minLvl": integerSchema(0, 500),
-  "KillsController_getUserNpcKills:maxLvl": integerSchema(0, 500),
-  "KillsController_getGuildTopNpcs:limit": { type: "number" },
-  "KillsController_getGuildTopKillersByType:limit": { type: "number" },
-  "KillsController_getNpcKillers:limit": integerSchema(1, 100),
-  "KillsController_getMemberKills:minLvl": integerSchema(0, 500),
-  "KillsController_getMemberKills:maxLvl": integerSchema(0, 500),
-  "KillsController_getMemberKills:limit": integerSchema(1, 100),
-  "KillsController_getMemberKills:cursor": integerSchema(
-    0,
-    Number.MAX_SAFE_INTEGER,
-  ),
-};
+const queryParameterSchemas = new Map<string, JsonObject>(
+  Object.entries({
+    "TimersController_searchNpcsWithTimerData:limit": {
+      type: "number",
+      minimum: 1,
+      maximum: 50,
+      default: 10,
+    },
+    "LootsController_fetchLootsByGuildId:limit": integerSchema(1, 100),
+    "LootsController_fetchLootsByGuildId:cursor": integerSchema(
+      Number.MIN_SAFE_INTEGER,
+      Number.MAX_SAFE_INTEGER,
+    ),
+    "LootsController_fetchLootsByGuildId:npcLevelMin": integerSchema(0, 500),
+    "LootsController_fetchLootsByGuildId:npcLevelMax": integerSchema(0, 500),
+    "LootsController_fetchLootsByGuildId:itemLevelMin": integerSchema(0, 500),
+    "LootsController_fetchLootsByGuildId:itemLevelMax": integerSchema(0, 500),
+    "LootsController_fetchLootsByGuildId:playerLevelMin": integerSchema(0, 500),
+    "LootsController_fetchLootsByGuildId:playerLevelMax": integerSchema(0, 500),
+    "LootsController_countLootsByGuildId:limit": integerSchema(1, 100),
+    "LootsController_countLootsByGuildId:cursor": integerSchema(
+      Number.MIN_SAFE_INTEGER,
+      Number.MAX_SAFE_INTEGER,
+    ),
+    "LootsController_countLootsByGuildId:npcLevelMin": integerSchema(0, 500),
+    "LootsController_countLootsByGuildId:npcLevelMax": integerSchema(0, 500),
+    "LootsController_countLootsByGuildId:itemLevelMin": integerSchema(0, 500),
+    "LootsController_countLootsByGuildId:itemLevelMax": integerSchema(0, 500),
+    "LootsController_countLootsByGuildId:playerLevelMin": integerSchema(0, 500),
+    "LootsController_countLootsByGuildId:playerLevelMax": integerSchema(0, 500),
+    "KillsController_getGuildKillStats:minLvl": integerSchema(0, 500),
+    "KillsController_getGuildKillStats:maxLvl": integerSchema(0, 500),
+    "KillsController_getUserKillStats:topNpcsLimit": integerSchema(
+      1,
+      Number.MAX_SAFE_INTEGER,
+    ),
+    "KillsController_getUserNpcKills:cursor": integerSchema(
+      0,
+      Number.MAX_SAFE_INTEGER,
+    ),
+    "KillsController_getUserNpcKills:limit": integerSchema(1, 100),
+    "KillsController_getUserNpcKills:minLvl": integerSchema(0, 500),
+    "KillsController_getUserNpcKills:maxLvl": integerSchema(0, 500),
+    "KillsController_getGuildTopNpcs:limit": { type: "number" },
+    "KillsController_getGuildTopKillersByType:limit": { type: "number" },
+    "KillsController_getNpcKillers:limit": integerSchema(1, 100),
+    "KillsController_getMemberKills:minLvl": integerSchema(0, 500),
+    "KillsController_getMemberKills:maxLvl": integerSchema(0, 500),
+    "KillsController_getMemberKills:limit": integerSchema(1, 100),
+    "KillsController_getMemberKills:cursor": integerSchema(
+      0,
+      Number.MAX_SAFE_INTEGER,
+    ),
+  }),
+);
 
 const replaceReferences = (
   value: unknown,
@@ -133,7 +135,7 @@ const normalizeNullableSchemas = (value: unknown): void => {
 
 const normalizeJsonComponents = (document: {
   components: { schemas: Record<string, JsonObject> };
-  paths: Record<string, unknown>;
+  paths: OpenApi.OpenAPISpec["paths"];
 }): void => {
   for (const name of NULLABLE_JSON_SCHEMA_NAMES) {
     const reference = `#/components/schemas/${name}`;
@@ -152,7 +154,7 @@ const normalizeJsonComponents = (document: {
 
 const target = new URL("../../openapi.yaml", import.meta.url);
 const temporary = new URL("../../openapi.yaml.tmp", import.meta.url);
-const document = OpenApi.fromApi(LootlogApi);
+const document = { ...OpenApi.fromApi(LootlogApi), openapi: "3.0.0" };
 
 const duplicateSchemaReferences = new Map<string, string>();
 for (const [name, schema] of Object.entries(document.components.schemas)) {
@@ -180,7 +182,7 @@ for (const path of Object.values(document.paths)) {
     const operationId = operation.operationId;
     for (const parameter of operation.parameters ?? []) {
       if ("$ref" in parameter || parameter.schema === undefined) continue;
-      const schema = parameter.schema as JsonObject;
+      const schema = parameter.schema;
       if (
         parameter.in === "query" &&
         schema["type"] === "string" &&
@@ -198,8 +200,9 @@ for (const path of Object.values(document.paths)) {
         continue;
       }
       if (parameter.in !== "query" || operationId === undefined) continue;
-      const replacement =
-        queryParameterSchemas[`${operationId}:${parameter.name}`];
+      const replacement = queryParameterSchemas.get(
+        `${operationId}:${parameter.name}`,
+      );
       if (replacement !== undefined) parameter.schema = replacement;
     }
   }
@@ -249,7 +252,6 @@ const compatibilitySchemas = {
 } as const;
 
 normalizeNullableSchemas(document);
-(document as { openapi: string }).openapi = "3.0.0";
 normalizeJsonComponents(document);
 Object.assign(document.components.schemas, compatibilitySchemas);
 

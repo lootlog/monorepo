@@ -7,12 +7,14 @@
   "exports": {
     "./access-policy": "./src/access-policy.ts",
     "./air-tag": "./src/air-tag.ts",
+    "./chat-message-permissions": "./src/chat-message-permissions.ts",
     "./chat-appearance": "./src/chat-appearance.ts",
     "./loot-visibility": "./src/loot-visibility.ts",
     "./npc-appearance": "./src/npc-appearance.ts",
     "./npc-permissions": "./src/npc-permissions.ts",
     "./npc-routing": "./src/npc-routing.ts",
     "./npc-type": "./src/npc-type.ts",
+    "./profession": "./src/profession.ts",
     "./reservations": "./src/reservations.ts",
     "./scoring": "./src/scoring.ts",
     "./settings-documents": "./src/settings-documents.ts",
@@ -29,7 +31,8 @@
   },
   "dependencies": {
     "@lootlog/datetime": "workspace:*",
-    "@lootlog/schema": "workspace:*"
+    "@lootlog/schema": "workspace:*",
+    "effect": "catalog:"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",

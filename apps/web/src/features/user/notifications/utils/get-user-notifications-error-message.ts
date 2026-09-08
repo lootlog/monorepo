@@ -1,16 +1,14 @@
+import type { TOptions } from "i18next";
 import { getApiErrorMessage } from "@lootlog/client/transport";
 import { USER_WATCHED_ITEMS_LIMIT } from "@/features/user/notifications/constants/user-watched-items-limit";
 
-type TranslateFunction = (
-  key: string,
-  options?: Record<string, unknown>,
-) => string;
+type TranslateFunction = (key: string, options?: TOptions) => string;
 
 export const getUserNotificationsErrorMessage = (
-  error: unknown,
+  cause: unknown,
   t: TranslateFunction,
 ) => {
-  const apiMessage = getApiErrorMessage(error);
+  const apiMessage = getApiErrorMessage(cause);
 
   if (apiMessage === "ACTIVE_DISCORD_DM_TARGET_REQUIRED") {
     return t("settings.userNotifications.validation.dmRequired");

@@ -6,6 +6,7 @@ import {
   Effect,
   Fiber,
   ManagedRuntime,
+  Metric,
   Queue,
   Redacted,
   Schedule,
@@ -18,15 +19,41 @@ import {
 } from "testcontainers";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 import { RedisGatewayStore } from "#src/platform/redis-store";
+import { GatewayMetrics } from "#src/realtime/gateway-metrics";
+import { PRESENCE_EXPIRY_MS } from "@lootlog/protocol/realtime";
 import { OnlineHistory } from "#src/realtime/online-history";
 import type { UserOnlineEventV1 } from "@lootlog/protocol/rabbit/events";
 import { AirTagService } from "#src/realtime/air-tag-service";
 import { MapPingService } from "#src/realtime/map-ping-service";
 import { RealtimeHub } from "#src/realtime/realtime-hub";
-import type { GatewaySocket, SessionData } from "#src/realtime/session";
+import type { SessionData } from "#src/realtime/session";
 
 let dragonfly: StartedTestContainer;
 let redisPort: number;
+
+const makeConfiguration = () =>
+  ({
+    environment: "test",
+    port: 0,
+    serviceName: "gateway",
+    serviceNamespace: "test",
+    apiUrl: "http://localhost",
+    margonemSigningKeyUrl: "http://localhost/key",
+    rabbitmqUri: Redacted.make("unused"),
+    activityEventSignatureSecret: Redacted.make("test"),
+    websocketPath: "/ws",
+    allowedWebOrigins: new Set<string>(),
+    allowedExtensionOrigins: new Set<string>(),
+    redis: {
+      host: dragonfly.getHost(),
+      port: redisPort,
+      username: "",
+      password: Redacted.make(""),
+      keyPrefix: "lootlog-realtime-integration:test",
+    },
+    maxBackpressureBytes: 1_048_576,
+    maxBackpressureStrikes: 3,
+  }) satisfies GatewayConfiguration;
 
 const guilds = ["organization-1", "organization-2"].map((id) => ({
   guild: { id, ownerId: "owner" },
@@ -83,7 +110,7 @@ const makeSocket = (connectionId: string) => {
       return bytes.byteLength;
     },
     close: () => undefined,
-  } as unknown as GatewaySocket;
+  };
   return { socket, frames };
 };
 
@@ -116,6 +143,115 @@ describe("realtime Dragonfly integration", () => {
 
   afterAll(async () => {
     await dragonfly?.stop();
+  });
+
+  test("gateway metrics deduplicate Discord accounts across characters and replicas and expire abandoned replicas", async () => {
+    const runtime = ManagedRuntime.make(
+      BunRedis.layer({ url: `redis://${dragonfly.getHost()}:${redisPort}` }),
+    );
+    try {
+      const redis = await runtime.runPromise(Redis.Redis);
+      const store = new RedisGatewayStore(
+        redis,
+        {
+          host: dragonfly.getHost(),
+          port: redisPort,
+          username: "",
+          password: "",
+          keyPrefix: `metrics-test:${crypto.randomUUID()}`,
+        },
+        (effect) => runtime.runPromise(effect),
+        () => {},
+      );
+      let now = Date.now();
+      const first = makeSocket("metrics-first").socket;
+      const duplicate = makeSocket("metrics-duplicate").socket;
+      Object.assign(duplicate, {
+        data: {
+          ...duplicate.data,
+          discordId: first.data.discordId,
+          userId: first.data.userId,
+        },
+      });
+      const second = makeSocket("metrics-second").socket;
+      const web = makeSocket("metrics-web").socket;
+      const webSession = { ...web.data, platform: "web-app" as const };
+      Object.assign(web, { data: webSession });
+      now = Date.now();
+      const firstHub = new RealtimeHub(makeConfiguration(), store);
+      const secondHub = new RealtimeHub(makeConfiguration(), store);
+      firstHub.register(first);
+      firstHub.register(web);
+      secondHub.register(duplicate);
+      secondHub.register(second);
+      const replicaA = new GatewayMetrics(store.command, firstHub, () => now);
+      const replicaB = new GatewayMetrics(store.command, secondHub, () => now);
+      await Effect.runPromise(replicaA.sample());
+      expect(await Effect.runPromise(replicaB.sample())).toEqual({
+        connections: 4,
+        gameSessions: 3,
+        uniquePlayers: 2,
+      });
+      firstHub.unregister(first);
+      expect(await Effect.runPromise(replicaA.sample())).toEqual({
+        connections: 3,
+        gameSessions: 2,
+        uniquePlayers: 2,
+      });
+      // Simulate an abandoned replica using Redis time, without waiting for the lease.
+      await store.command.eval(
+        `
+        local value = cjson.decode(redis.call('HGET', KEYS[1], ARGV[1]))
+        value.at = value.at - 30000
+        redis.call('HSET', KEYS[1], ARGV[1], cjson.encode(value))
+        return 1
+      `,
+        1,
+        "realtime:metrics:instances:v2",
+        secondHub.instanceId,
+      );
+      expect(await Effect.runPromise(replicaA.sample())).toEqual({
+        connections: 1,
+        gameSessions: 0,
+        uniquePlayers: 0,
+      });
+      expect(await Effect.runPromise(replicaB.sample())).toEqual({
+        connections: 3,
+        gameSessions: 2,
+        uniquePlayers: 2,
+      });
+      now += PRESENCE_EXPIRY_MS;
+      expect(await Effect.runPromise(replicaB.sample())).toEqual({
+        connections: 3,
+        gameSessions: 0,
+        uniquePlayers: 0,
+      });
+      const observed = Metric.gauge(
+        "lootlog_gateway_cluster_observed_at_seconds",
+        { attributes: { unit: "s" } },
+      );
+      const lastSuccess = Effect.runSync(Metric.value(observed)).value;
+      await store.command.del("realtime:metrics:instances:v2");
+      await store.command.set(
+        "realtime:metrics:instances:v2",
+        "invalid Redis type",
+      );
+      now += 10_000;
+      const result = await Effect.runPromise(Effect.exit(replicaB.sample()));
+      expect(result._tag).toBe("Failure");
+      expect(Effect.runSync(Metric.value(observed)).value).toBe(lastSuccess);
+      expect(
+        Effect.runSync(
+          Metric.value(
+            Metric.gauge("lootlog_gateway_cluster_connections", {
+              attributes: { unit: "" },
+            }),
+          ),
+        ).value,
+      ).toBe(3);
+    } finally {
+      await runtime.dispose();
+    }
   });
 
   test("online history survives publisher restart without counting gaps or web sessions", async () => {
@@ -256,6 +392,177 @@ describe("realtime Dragonfly integration", () => {
     }
   });
 
+  test("online history drains a bounded backlog and preserves updates during delivery", async () => {
+    const runtime = ManagedRuntime.make(
+      BunRedis.layer({ url: `redis://${dragonfly.getHost()}:${redisPort}` }),
+    );
+    try {
+      const redis = await runtime.runPromise(Redis.Redis);
+      const store = new RedisGatewayStore(
+        redis,
+        {
+          host: dragonfly.getHost(),
+          port: redisPort,
+          username: "",
+          password: "",
+          keyPrefix: `online-backlog:${crypto.randomUUID()}`,
+        },
+        (effect) => runtime.runPromise(effect),
+        () => {},
+      );
+      const start = Date.parse("2026-09-06T10:00:00Z");
+      let now = start;
+      const sessions = Array.from({ length: 1250 }, (_, index) => {
+        const session = makeSession(`backlog-${index}`);
+        session.character = session.presence?.character;
+        return session;
+      });
+      const messages: UserOnlineEventV1[] = [];
+      let updatedSession: SessionData | undefined;
+      let fail = false;
+      const history = new OnlineHistory(
+        store.command,
+        (event) =>
+          Effect.gen(function* () {
+            if (fail && event.type === "checkpoint")
+              return yield* Effect.fail(new Error("Rabbit unavailable"));
+            messages.push(event);
+            if (event.type === "checkpoint" && !updatedSession) {
+              updatedSession = sessions.find(
+                (session) => session.connectionId === event.sessionId,
+              );
+              if (!updatedSession) throw new Error("Missing session");
+              yield* history.observe(updatedSession, start + 55_000);
+            }
+          }),
+        () => now,
+      );
+      for (const session of sessions) {
+        await Effect.runPromise(history.observe(session, start));
+        await Effect.runPromise(history.observe(session, start + 50_000));
+      }
+      const checkpoints = () =>
+        messages.filter((event) => event.type === "checkpoint");
+      const pending = () =>
+        store.command.eval<number>(
+          "return redis.call('HLEN', KEYS[1])",
+          1,
+          "online-history:pending",
+        );
+      now = start + 60_000;
+      await Effect.runPromise(history.flush());
+      expect(checkpoints()).toHaveLength(1000);
+      expect(new Set(checkpoints().map((event) => event.sessionId)).size).toBe(
+        1000,
+      );
+      expect(await pending()).toBe(251);
+      expect(
+        messages.filter((event) => event.type === "collector"),
+      ).toHaveLength(1);
+      fail = true;
+      await expect(Effect.runPromise(history.flush())).rejects.toThrow(
+        "Rabbit unavailable",
+      );
+      expect(await pending()).toBe(251);
+      fail = false;
+      now += 60_000;
+      await Effect.runPromise(history.flush());
+      expect(checkpoints()).toHaveLength(1251);
+      expect(new Set(checkpoints().map((event) => event.sessionId)).size).toBe(
+        1250,
+      );
+      expect(await pending()).toBe(0);
+      const updated = checkpoints().filter(
+        (event) => event.sessionId === updatedSession?.connectionId,
+      );
+      expect(updated.map((event) => event.endedAt)).toEqual([
+        new Date(start + 50_000).toISOString(),
+        new Date(start + 55_000).toISOString(),
+      ]);
+      expect(updated[0]?.segmentId).toBe(updated[1]?.segmentId);
+    } finally {
+      await runtime.dispose();
+    }
+  }, 30_000);
+
+  test.each([3000, 5000])(
+    "online history refreshes batch leases and bounds slow drains (%i ms)",
+    async (delay) => {
+      const runtime = ManagedRuntime.make(
+        BunRedis.layer({ url: `redis://${dragonfly.getHost()}:${redisPort}` }),
+      );
+      try {
+        const redis = await runtime.runPromise(Redis.Redis);
+        const store = new RedisGatewayStore(
+          redis,
+          {
+            host: dragonfly.getHost(),
+            port: redisPort,
+            username: "",
+            password: "",
+            keyPrefix: `online-slow:${crypto.randomUUID()}`,
+          },
+          (effect) => runtime.runPromise(effect),
+          () => {},
+        );
+        const start = Date.parse("2026-09-06T10:00:00Z");
+        let now = start;
+        const messages: UserOnlineEventV1[] = [];
+        let fail = delay === 3000;
+        let attempts = 0;
+        const history = new OnlineHistory(
+          store.command,
+          (event) =>
+            Effect.suspend(() => {
+              if (event.type === "checkpoint") {
+                attempts++;
+                if (attempts === 1) now += delay;
+                if (fail && attempts === 101)
+                  return Effect.fail(new Error("Rabbit unavailable"));
+              }
+              messages.push(event);
+              return Effect.void;
+            }),
+          () => now,
+        );
+        for (let index = 0; index < 250; index++) {
+          const session = makeSession(`slow-${index}`);
+          session.character = session.presence?.character;
+          await Effect.runPromise(history.observe(session, start));
+          await Effect.runPromise(history.observe(session, start + 50_000));
+        }
+        const checkpoints = () =>
+          messages.filter((event) => event.type === "checkpoint");
+        now = start + 60_000;
+        if (fail)
+          await expect(Effect.runPromise(history.flush())).rejects.toThrow(
+            "Rabbit unavailable",
+          );
+        else await Effect.runPromise(history.flush());
+        expect(checkpoints()).toHaveLength(100);
+        expect(
+          messages.filter((event) => event.type === "collector").at(-1)
+            ?.observedAt,
+        ).toBe(new Date(now).toISOString());
+        fail = false;
+        now = start + 120_000;
+        await Effect.runPromise(history.flush());
+        // The second claimed batch retains its complete 60-second lease, measured
+        // from its own claim at 63 seconds, while unclaimed work can be drained.
+        expect(checkpoints()).toHaveLength(delay === 3000 ? 150 : 250);
+        now = start + 123_000;
+        await Effect.runPromise(history.flush());
+        expect(checkpoints()).toHaveLength(250);
+        expect(
+          new Set(checkpoints().map((event) => event.sessionId)).size,
+        ).toBe(250);
+      } finally {
+        await runtime.dispose();
+      }
+    },
+    30_000,
+  );
+
   test("closing a subscription scope releases Redis without a shutdown defect", async () => {
     const channel = `shutdown:${crypto.randomUUID()}`;
     await Effect.runPromise(
@@ -364,29 +671,7 @@ describe("realtime Dragonfly integration", () => {
   });
 
   test("Dragonfly federates two Gateway instances and preserves map/air contracts", async () => {
-    const configuration = {
-      environment: "test",
-      port: 0,
-      serviceName: "gateway",
-      serviceNamespace: "test",
-      apiUrl: "http://localhost",
-      authUrl: "http://localhost",
-      margonemSigningKeyUrl: "http://localhost/key",
-      rabbitmqUri: Redacted.make("unused"),
-      activityEventSignatureSecret: Redacted.make("test"),
-      websocketPath: "/ws",
-      allowedWebOrigins: new Set<string>(),
-      allowedExtensionOrigins: new Set<string>(),
-      redis: {
-        host: dragonfly.getHost(),
-        port: redisPort,
-        username: "",
-        password: Redacted.make(""),
-        keyPrefix: "lootlog-realtime-integration:test",
-      },
-      maxBackpressureBytes: 1_048_576,
-      maxBackpressureStrikes: 3,
-    } satisfies GatewayConfiguration;
+    const configuration = makeConfiguration();
     const firstRuntime = ManagedRuntime.make(
       BunRedis.layer({ url: `redis://127.0.0.1:${redisPort}` }),
     );
@@ -474,6 +759,113 @@ describe("realtime Dragonfly integration", () => {
         type: "kills.changed",
         data: { guildId: "organization-1" },
       });
+
+      const timerTargets = [firstHub, secondHub].flatMap((hub, index) =>
+        [false, true].map((allowed) => {
+          const target = makeSocket(`timer-${index}-${allowed}`);
+          target.socket.data.guilds = [
+            {
+              guild: { id: "organization-1", ownerId: "owner" },
+              roles: [
+                {
+                  id: "timer-role",
+                  lvlRangeFrom: 200,
+                  lvlRangeTo: 500,
+                  permissions: allowed
+                    ? [
+                        Permission.LOOTLOG_TIMERS_READ,
+                        Permission.LOOTLOG_TIMERS_TITANS_READ,
+                      ]
+                    : [Permission.LOOTLOG_TIMERS_READ],
+                },
+                {
+                  id: "empty",
+                  lvlRangeFrom: 0,
+                  lvlRangeTo: 500,
+                  permissions: [],
+                },
+              ],
+            },
+          ];
+          hub.register(target.socket);
+          hub.subscribe(target.socket, {
+            topic: "organization.timers",
+            organizationId: "organization-1",
+          });
+          return { ...target, allowed };
+        }),
+      );
+      await firstHub.publishToScope(
+        { topic: "organization.timers", organizationId: "organization-1" },
+        {
+          v: 1,
+          type: "timer.created",
+          data: {
+            organizationId: "organization-1",
+            payload: {
+              guildId: "organization-1",
+              npc: { type: "TITAN", lvl: 250 },
+            },
+          },
+        },
+      );
+      await firstHub.publishToScope(
+        { topic: "organization.timers", organizationId: "organization-1" },
+        {
+          v: 1,
+          type: "timer.deleted",
+          data: {
+            organizationId: "organization-1",
+            payload: {
+              guildId: "organization-1",
+              routing: { tier: "titans", npcLevel: 250 },
+            },
+          },
+        },
+      );
+      await waitFor(() =>
+        timerTargets
+          .filter((target) => target.allowed)
+          .every((target) => target.frames.length === 2),
+      );
+      for (const target of timerTargets.filter((target) => !target.allowed))
+        expect(target.frames).toHaveLength(0);
+      // Even full tier grants do not authorize an out-of-range timer.
+      await firstHub.publishToScope(
+        { topic: "organization.timers", organizationId: "organization-1" },
+        {
+          v: 1,
+          type: "timer.created",
+          data: {
+            organizationId: "organization-1",
+            payload: {
+              guildId: "organization-1",
+              npc: { type: "TITAN", lvl: 105 },
+            },
+          },
+        },
+      );
+      await firstHub.publishToScope(
+        { topic: "organization.timers", organizationId: "organization-1" },
+        {
+          v: 1,
+          type: "timer.created",
+          data: {
+            organizationId: "organization-1",
+            payload: {
+              guildId: "organization-1",
+              npc: { type: "TITAN", lvl: 500 },
+            },
+          },
+        },
+      );
+      await waitFor(() =>
+        timerTargets
+          .filter((target) => target.allowed)
+          .every((target) => target.frames.length === 3),
+      );
+      for (const target of timerTargets.filter((target) => !target.allowed))
+        expect(target.frames).toHaveLength(0);
 
       for (const organizationId of ["organization-1", "organization-2"]) {
         secondHub.subscribe(recipient.socket, {

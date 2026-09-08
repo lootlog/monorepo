@@ -1,8 +1,11 @@
-import type { GatewayEvent } from "@/config/gateway";
-import type { AppSocket } from "@/lib/socket";
+import { GatewayEvent } from "@/config/gateway";
+import type { AppSocket, PermissionsUpdatedPayload } from "@/lib/socket";
 import { useEffect, useRef } from "react";
 
-type SocketWithListeners = Pick<AppSocket, "on" | "off">;
+type SocketWithListeners = {
+  on: (...args: Parameters<AppSocket["on"]>) => void;
+  off: (...args: Parameters<AppSocket["off"]>) => void;
+};
 
 type BufferedSocketIngressBaseOptions<TPayload> = {
   socket: SocketWithListeners | null;
@@ -12,6 +15,7 @@ type BufferedSocketIngressBaseOptions<TPayload> = {
   event: GatewayEvent;
   onProcessBatch: (payloads: readonly TPayload[]) => void;
   maxPendingItems?: number;
+  isPayloadAllowed?: (payload: TPayload) => boolean;
 };
 
 type BufferedSocketIngressWithoutCancel = {
@@ -48,8 +52,10 @@ export const useBufferedSocketIngress = <TPayload, TCancelPayload = never>({
   event,
   onProcessBatch,
   maxPendingItems = DEFAULT_MAX_PENDING_ITEMS,
+  isPayloadAllowed,
   ...cancelOptions
 }: UseBufferedSocketIngressOptions<TPayload, TCancelPayload>) => {
+  const isPayloadAllowedRef = useRef(isPayloadAllowed);
   const isReadyRef = useRef(isReady);
   const onProcessBatchRef = useRef(onProcessBatch);
   const onCancelRef = useRef(cancelOptions.onCancel);
@@ -68,11 +74,16 @@ export const useBufferedSocketIngress = <TPayload, TCancelPayload = never>({
 
   useEffect(() => {
     isReadyRef.current = isReady;
+    isPayloadAllowedRef.current = isPayloadAllowed;
     onProcessBatchRef.current = onProcessBatch;
     onCancelRef.current = cancelOptions.onCancel;
     getPayloadIdRef.current = cancelOptions.getPayloadId;
     getCancelIdRef.current = cancelOptions.getCancelId;
-    processPayloadsRef.current = (payloads) => {
+    processPayloadsRef.current = (input) => {
+      const payloads = input.filter(
+        (payload) => isPayloadAllowedRef.current?.(payload) ?? true,
+      );
+      if (payloads.length === 0) return;
       const getPayloadId = getPayloadIdRef.current;
 
       if (!getPayloadId) {
@@ -119,6 +130,25 @@ export const useBufferedSocketIngress = <TPayload, TCancelPayload = never>({
   }, [accountId]);
 
   useEffect(() => {
+    const handlePermissionsUpdated = (data?: PermissionsUpdatedPayload) => {
+      if (data?.accessPolicy && isPayloadAllowedRef.current) {
+        pendingItemsRef.current = pendingItemsRef.current.filter(
+          isPayloadAllowedRef.current,
+        );
+        return;
+      }
+      pendingItemsRef.current = [];
+      pendingCancelIdsRef.current.clear();
+    };
+    socket?.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
+    socket?.on(GatewayEvent.DISCONNECT, handlePermissionsUpdated);
+    return () => {
+      socket?.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
+      socket?.off(GatewayEvent.DISCONNECT, handlePermissionsUpdated);
+    };
+  }, [socket]);
+
+  useEffect(() => {
     if (!socket || !connected) {
       return;
     }
@@ -148,10 +178,10 @@ export const useBufferedSocketIngress = <TPayload, TCancelPayload = never>({
       });
     };
 
-    socket.on(event as never, handleEvent as never);
+    socket.on(event, handleEvent);
 
     return () => {
-      socket.off(event as never, handleEvent as never);
+      socket.off(event, handleEvent);
       if (listenerGenerationRef.current === listenerGeneration) {
         listenerGenerationRef.current += 1;
         flushScheduledRef.current = false;
@@ -209,13 +239,10 @@ export const useBufferedSocketIngress = <TPayload, TCancelPayload = never>({
       onCancelRef.current?.(payload);
     };
 
-    socket.on(cancelOptions.cancelEvent as never, handleCancelEvent as never);
+    socket.on(cancelOptions.cancelEvent, handleCancelEvent);
 
     return () => {
-      socket.off(
-        cancelOptions.cancelEvent as never,
-        handleCancelEvent as never,
-      );
+      socket.off(cancelOptions.cancelEvent, handleCancelEvent);
     };
   }, [
     cancelOptions.cancelEvent,
