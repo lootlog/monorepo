@@ -1,9 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  useGroupFightsControllerGetGuildGroupFightRanking,
-  useGroupFightsControllerGetGuildGroupFights,
-} from "@lootlog/client/main";
+import { useGroupFightsControllerGetGuildGroupFightRanking } from "@lootlog/client/main";
 import type { GroupFightPeriod } from "@lootlog/schema/group-fights";
 import { Button } from "@lootlog/ui/components/button";
 import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
@@ -20,10 +17,9 @@ import {
   EmptyDescription,
 } from "@lootlog/ui/components/empty";
 import { Field, FieldGroup, FieldLabel } from "@lootlog/ui/components/field";
-import { PageHeader } from "@/components/common/page-header";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { GroupFightPeriodSelect } from "./group-fight-period-select";
-import { GroupFightMaps } from "./group-fight-maps";
+import { GroupFightNpcs } from "./group-fight-npcs";
 import {
   Tabs,
   TabsList,
@@ -31,104 +27,86 @@ import {
   TabsContent,
 } from "@lootlog/ui/components/tabs";
 import { GroupFightRanking } from "./group-fight-ranking";
-import { GroupFightHistoryCard } from "./group-fight-history-card";
 import { GroupFightSummary } from "./group-fight-summary";
-
-const PAGE_SIZE = 20;
 
 export function GroupFightsContent({ guildId }: { guildId: string }) {
   const { t } = useTranslation();
   const [world, setWorld] = useState<string | null>(null);
   const [period, setPeriod] = useState<GroupFightPeriod>("today");
   const [npcType, setNpcType] = useState<"all" | "ELITE2" | "TITAN">("all");
-  const [selectedMap, setSelectedMap] = useState<{
-    id: number;
-    name: string;
-  } | null>(null);
-  const [cursor, setCursor] = useState(0);
+  const [selectedNpcName, setSelectedNpcName] = useState<string | null>(null);
   const filters = {
     world: world ?? undefined,
     period,
     npcType: npcType === "all" ? undefined : npcType,
-    mapId: selectedMap ? String(selectedMap.id) : undefined,
+    npcName: selectedNpcName ?? undefined,
   };
   const ranking = useGroupFightsControllerGetGuildGroupFightRanking(
     { guildId },
     filters,
   );
-  const history = useGroupFightsControllerGetGuildGroupFights(
-    { guildId },
-    { ...filters, cursor: String(cursor), limit: String(PAGE_SIZE) },
-  );
   const summary = ranking.data?.summary;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-3">
-      <PageHeader
-        title={t("groupFights.title")}
-        description={t("groupFights.description")}
-      />
-      <FieldGroup className="flex flex-row flex-wrap gap-3">
-        <Field className="w-auto">
-          <FieldLabel>{t("groupFights.world")}</FieldLabel>
-          <WorldSwitcher
-            value={world}
-            showAllOption
-            onValueChange={(value) => {
-              setWorld(value);
-              setSelectedMap(null);
-              setCursor(0);
-            }}
-          />
-        </Field>
-        <Field className="w-auto">
-          <FieldLabel>{t("groupFights.period")}</FieldLabel>
-          <GroupFightPeriodSelect
-            value={period}
-            onValueChange={(value) => {
-              setPeriod(value);
-              setSelectedMap(null);
-              setCursor(0);
-            }}
-          />
-        </Field>
-      </FieldGroup>
-      <p className="text-sm text-muted-foreground">
-        {t("groupFights.calendarNote")}
-      </p>
       <Tabs
         value={npcType}
         onValueChange={(value) => {
           if (value === "all" || value === "ELITE2" || value === "TITAN") {
             setNpcType(value);
-            setSelectedMap(null);
-            setCursor(0);
+            setSelectedNpcName(null);
           }
         }}
+        className="flex flex-col gap-4"
       >
-        <TabsList aria-label={t("groupFights.mapTypes")}>
-          {(["all", "ELITE2", "TITAN"] as const).map((type) => (
-            <TabsTrigger key={type} value={type}>
-              {t(`groupFights.mapType.${type}`)}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        <FieldGroup className="flex flex-row flex-wrap items-end gap-3">
+          <Field className="w-auto">
+            <FieldLabel>{t("groupFights.world")}</FieldLabel>
+            <WorldSwitcher
+              value={world}
+              showAllOption
+              onValueChange={(value) => {
+                setWorld(value);
+                setSelectedNpcName(null);
+              }}
+            />
+          </Field>
+          <Field className="w-auto">
+            <FieldLabel>{t("groupFights.period")}</FieldLabel>
+            <GroupFightPeriodSelect
+              value={period}
+              onValueChange={(value) => {
+                setPeriod(value);
+                setSelectedNpcName(null);
+              }}
+            />
+          </Field>
+          <Field className="w-auto">
+            <FieldLabel>{t("groupFights.mapTypes")}</FieldLabel>
+            <TabsList aria-label={t("groupFights.mapTypes")}>
+              {(["all", "ELITE2", "TITAN"] as const).map((type) => (
+                <TabsTrigger key={type} value={type}>
+                  {t(`groupFights.mapType.${type}`)}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Field>
+        </FieldGroup>
         <TabsContent value={npcType} className="flex flex-col gap-4">
-          {selectedMap ? (
+          {selectedNpcName ? (
             <div className="flex flex-wrap items-center gap-3">
-              <p>{t("groupFights.selectedMap", { name: selectedMap.name })}</p>
+              <p>{t("groupFights.selectedNpc", { name: selectedNpcName })}</p>
               <Button
                 variant="outline"
                 onClick={() => {
-                  setSelectedMap(null);
-                  setCursor(0);
+                  setSelectedNpcName(null);
                 }}
               >
-                {t("groupFights.clearMap")}
+                {t("groupFights.clearNpc")}
               </Button>
             </div>
           ) : null}
-          {ranking.isError || history.isError ? (
+          {ranking.isError ? (
             <Alert variant="destructive">
               <AlertDescription className="flex flex-wrap items-center gap-3">
                 {t("groupFights.error")}
@@ -136,7 +114,6 @@ export function GroupFightsContent({ guildId }: { guildId: string }) {
                   variant="outline"
                   onClick={() => {
                     void ranking.refetch();
-                    void history.refetch();
                   }}
                 >
                   {t("groupFights.retry")}
@@ -144,19 +121,23 @@ export function GroupFightsContent({ guildId }: { guildId: string }) {
               </AlertDescription>
             </Alert>
           ) : null}
-          {ranking.isPending || history.isPending ? (
+          {ranking.isPending ? (
             <p role="status">{t("groupFights.loading")}</p>
           ) : null}
           {summary && !ranking.isError ? (
             <GroupFightSummary summary={summary} />
           ) : null}
           {ranking.data && !ranking.isError ? (
-            <GroupFightMaps
-              maps={ranking.data.maps}
-              selectedMapId={selectedMap?.id}
-              onSelect={(map) => {
-                setSelectedMap({ id: map.mapId, name: map.mapName });
-                setCursor(0);
+            <GroupFightNpcs
+              guildId={guildId}
+              filters={filters}
+              npcs={ranking.data.npcs}
+              selectedNpcName={selectedNpcName ?? undefined}
+              onSelect={(npc) => {
+                setSelectedNpcName(npc.name);
+              }}
+              onClear={() => {
+                setSelectedNpcName(null);
               }}
             />
           ) : null}
@@ -182,16 +163,6 @@ export function GroupFightsContent({ guildId }: { guildId: string }) {
                 )}
               </CardContent>
             </Card>
-          ) : null}
-          {history.data && !history.isError ? (
-            <GroupFightHistoryCard
-              guildId={guildId}
-              history={history.data}
-              cursor={cursor}
-              pageSize={PAGE_SIZE}
-              isFetching={history.isFetching}
-              onCursorChange={setCursor}
-            />
           ) : null}
         </TabsContent>
       </Tabs>

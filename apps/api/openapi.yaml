@@ -7280,11 +7280,11 @@ paths:
               - ELITE2
               - TITAN
           required: false
-        - name: mapId
+        - name: npcName
           in: query
           schema:
             type: string
-            pattern: ^[+-]?\d*\.?\d+(?:[Ee][+-]?\d+)?$
+            maxLength: 255
           required: false
       security:
         - bearer: []
@@ -7339,11 +7339,17 @@ paths:
               - ELITE2
               - TITAN
           required: false
-        - name: mapId
+        - name: npcName
           in: query
           schema:
             type: string
-            pattern: ^[+-]?\d*\.?\d+(?:[Ee][+-]?\d+)?$
+            maxLength: 255
+          required: false
+        - name: day
+          in: query
+          schema:
+            type: string
+            pattern: ^\d{4}-\d{2}-\d{2}$
           required: false
         - name: cursor
           in: query
@@ -21567,6 +21573,13 @@ components:
                   type: integer
                   minimum: -9007199254740991
                   maximum: 9007199254740991
+                lvl:
+                  type: integer
+                  minimum: -9007199254740991
+                  maximum: 9007199254740991
+                icon:
+                  type: string
+                  maxLength: 255
               required:
                 - id
                 - name
@@ -21668,24 +21681,29 @@ components:
     GuildGroupFightRankingResponseDto_Output:
       type: object
       properties:
-        maps:
+        npcs:
           type: array
           items:
             type: object
             properties:
-              mapId:
-                type: number
-              mapName:
+              name:
                 type: string
               npcType:
                 type: string
                 enum:
                   - ELITE2
                   - TITAN
-              npcNames:
-                type: array
-                items:
-                  type: string
+              lvl:
+                nullable: true
+                type: number
+              icon:
+                nullable: true
+                type: string
+              mapId:
+                nullable: true
+                type: number
+              mapName:
+                type: string
               totalFights:
                 type: number
               wins:
@@ -21694,17 +21712,22 @@ components:
                 type: number
               draws:
                 type: number
+              flees:
+                type: number
               totalDurationSeconds:
                 type: number
             required:
+              - name
+              - npcType
+              - lvl
+              - icon
               - mapId
               - mapName
-              - npcType
-              - npcNames
               - totalFights
               - wins
               - losses
               - draws
+              - flees
               - totalDurationSeconds
             additionalProperties: false
         summary:
@@ -21718,6 +21741,8 @@ components:
               type: number
             draws:
               type: number
+            flees:
+              type: number
             fullTeamFights:
               type: number
             totalDurationSeconds:
@@ -21727,6 +21752,7 @@ components:
             - wins
             - losses
             - draws
+            - flees
             - fullTeamFights
             - totalDurationSeconds
           additionalProperties: false
@@ -21738,6 +21764,8 @@ components:
               memberId:
                 type: number
               memberUserId:
+                type: string
+              memberDiscordId:
                 type: string
               memberName:
                 type: string
@@ -21809,6 +21837,7 @@ components:
             required:
               - memberId
               - memberUserId
+              - memberDiscordId
               - memberName
               - memberAvatar
               - fights
@@ -21822,7 +21851,7 @@ components:
               - characters
             additionalProperties: false
       required:
-        - maps
+        - npcs
         - summary
         - ranking
       additionalProperties: false
@@ -21876,6 +21905,28 @@ components:
           type: array
           items:
             type: string
+        roster:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              lvl:
+                type: number
+              prof:
+                type: string
+              team:
+                $ref: "#/components/schemas/GroupFightTeam"
+              fled:
+                type: boolean
+            required:
+              - name
+              - lvl
+              - prof
+              - team
+              - fled
+            additionalProperties: false
       required:
         - id
         - world
@@ -21893,6 +21944,7 @@ components:
         - hasFlee
         - memberCount
         - battleIds
+        - roster
       additionalProperties: false
     GuildGroupFightsResponseDto_Output:
       type: object
@@ -21959,6 +22011,8 @@ components:
               type: number
             memberUserId:
               type: string
+            memberDiscordId:
+              type: string
             memberName:
               type: string
             memberAvatar:
@@ -21967,6 +22021,7 @@ components:
           required:
             - memberId
             - memberUserId
+            - memberDiscordId
             - memberName
             - memberAvatar
           additionalProperties: false

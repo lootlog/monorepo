@@ -140,7 +140,16 @@ export const makeGroupFightQueries = (database: typeof ApiDatabase.Service) => {
       .where(groupFightQueryFilter(guildId, query));
     const total = aggregate?.total ?? 0;
     return {
-      fights: fights.map(({ participants: _participants, ...fight }) => fight),
+      fights: fights.map(({ participants, ...fight }) => ({
+        ...fight,
+        roster: participants.map(({ name, lvl, prof, team, fled }) => ({
+          name,
+          lvl,
+          prof,
+          team,
+          fled,
+        })),
+      })),
       pagination: { total, cursor, limit, hasNext: cursor + limit < total },
     };
   });

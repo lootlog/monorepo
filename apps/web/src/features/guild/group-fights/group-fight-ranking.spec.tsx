@@ -1,5 +1,11 @@
 // @vitest-environment happy-dom
-import { cleanup, render, screen, within } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { afterEach, expect, it } from "vitest";
 import { createInstance } from "i18next";
 import { I18nextProvider } from "react-i18next";
@@ -21,6 +27,7 @@ it("shows the member total alongside separate character results and participatio
           {
             memberId: 1,
             memberUserId: "user-1",
+            memberDiscordId: "480017826476720129",
             memberName: "Member",
             memberAvatar: null,
             fights: 3,
@@ -71,10 +78,14 @@ it("shows the member total alongside separate character results and participatio
   ).toBe(0);
   const row = screen.getByRole("row", { name: /Member/ });
   expect(within(row).getByRole("cell", { name: "66,7%" })).toBeDefined();
-  const characters = within(row).getAllByRole("listitem");
+  expect(within(row).getByRole("cell", { name: "1m 30s" })).toBeDefined();
+  expect(screen.queryAllByRole("listitem")).toHaveLength(0);
+
+  fireEvent.click(screen.getByRole("button", { name: /Rozbicie na postacie/ }));
+  const characters = screen.getAllByRole("listitem");
   expect(characters[0]?.textContent).toContain("Warrior (100w, classic)");
-  expect(characters[0]?.textContent).toContain("Czas: 60 s");
+  expect(characters[0]?.textContent).toContain("Czas: 1m");
   expect(characters[1]?.textContent).toContain("Ucieczki: 1");
   expect(characters[1]?.textContent).toContain("Porażki: 1");
-  expect(characters[1]?.textContent).toContain("Czas: 30 s");
+  expect(characters[1]?.textContent).toContain("Czas: 30s");
 });

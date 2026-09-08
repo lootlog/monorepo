@@ -9132,6 +9132,13 @@ export type CreateGroupFightDtoQualificationNpc = {
      * @maximum 9007199254740991
      */
   wt: number;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  lvl?: number;
+  /** @maxLength 255 */
+  icon?: string;
 };
 
 export type CreateGroupFightDtoQualification = {
@@ -9222,23 +9229,29 @@ export const GroupFightPeriod = {
   '90d': '90d',
 } as const;
 
-export type GuildGroupFightRankingResponseDtoOutputMapsItemNpcType = typeof GuildGroupFightRankingResponseDtoOutputMapsItemNpcType[keyof typeof GuildGroupFightRankingResponseDtoOutputMapsItemNpcType];
+export type GuildGroupFightRankingResponseDtoOutputNpcsItemNpcType = typeof GuildGroupFightRankingResponseDtoOutputNpcsItemNpcType[keyof typeof GuildGroupFightRankingResponseDtoOutputNpcsItemNpcType];
 
 
-export const GuildGroupFightRankingResponseDtoOutputMapsItemNpcType = {
+export const GuildGroupFightRankingResponseDtoOutputNpcsItemNpcType = {
   ELITE2: 'ELITE2',
   TITAN: 'TITAN',
 } as const;
 
-export type GuildGroupFightRankingResponseDtoOutputMapsItem = {
-  mapId: number;
+export type GuildGroupFightRankingResponseDtoOutputNpcsItem = {
+  name: string;
+  npcType: GuildGroupFightRankingResponseDtoOutputNpcsItemNpcType;
+  /** @nullable */
+  lvl: number | null;
+  /** @nullable */
+  icon: string | null;
+  /** @nullable */
+  mapId: number | null;
   mapName: string;
-  npcType: GuildGroupFightRankingResponseDtoOutputMapsItemNpcType;
-  npcNames: string[];
   totalFights: number;
   wins: number;
   losses: number;
   draws: number;
+  flees: number;
   totalDurationSeconds: number;
 };
 
@@ -9247,6 +9260,7 @@ export type GuildGroupFightRankingResponseDtoOutputSummary = {
   wins: number;
   losses: number;
   draws: number;
+  flees: number;
   fullTeamFights: number;
   totalDurationSeconds: number;
 };
@@ -9269,6 +9283,7 @@ export type GuildGroupFightRankingResponseDtoOutputRankingItemCharactersItem = {
 export type GuildGroupFightRankingResponseDtoOutputRankingItem = {
   memberId: number;
   memberUserId: string;
+  memberDiscordId: string;
   memberName: string;
   /** @nullable */
   memberAvatar: string | null;
@@ -9288,7 +9303,7 @@ export type GuildGroupFightRankingResponseDtoOutputRankingItem = {
 };
 
 export interface GuildGroupFightRankingResponseDtoOutput {
-  maps: GuildGroupFightRankingResponseDtoOutputMapsItem[];
+  npcs: GuildGroupFightRankingResponseDtoOutputNpcsItem[];
   summary: GuildGroupFightRankingResponseDtoOutputSummary;
   ranking: GuildGroupFightRankingResponseDtoOutputRankingItem[];
 }
@@ -9310,6 +9325,14 @@ export const GroupFightSummaryResponseDtoOutputResult = {
   DRAW: 'DRAW',
 } as const;
 
+export type GroupFightSummaryResponseDtoOutputRosterItem = {
+  name: string;
+  lvl: number;
+  prof: string;
+  team: GroupFightTeam;
+  fled: boolean;
+};
+
 export interface GroupFightSummaryResponseDtoOutput {
   id: number;
   world: string;
@@ -9330,6 +9353,7 @@ export interface GroupFightSummaryResponseDtoOutput {
   hasFlee: boolean;
   memberCount: number;
   battleIds: string[];
+  roster: GroupFightSummaryResponseDtoOutputRosterItem[];
 }
 
 export type GuildGroupFightsResponseDtoOutputPagination = {
@@ -9360,6 +9384,7 @@ export const GroupFightParticipantResponseDtoOutputResult = {
 export type GroupFightParticipantResponseDtoOutputMember = {
   memberId: number;
   memberUserId: string;
+  memberDiscordId: string;
   memberName: string;
   /** @nullable */
   memberAvatar: string | null;
@@ -11156,9 +11181,9 @@ world?: string;
 period?: GroupFightPeriod;
 npcType?: GroupFightsControllerGetGuildGroupFightRankingNpcType;
 /**
- * @pattern ^[+-]?\d*\.?\d+(?:[Ee][+-]?\d+)?$
+ * @maxLength 255
  */
-mapId?: string;
+npcName?: string;
 };
 
 export type GroupFightsControllerGetGuildGroupFightRankingNpcType = typeof GroupFightsControllerGetGuildGroupFightRankingNpcType[keyof typeof GroupFightsControllerGetGuildGroupFightRankingNpcType];
@@ -11177,9 +11202,13 @@ world?: string;
 period?: GroupFightPeriod;
 npcType?: GroupFightsControllerGetGuildGroupFightsNpcType;
 /**
- * @pattern ^[+-]?\d*\.?\d+(?:[Ee][+-]?\d+)?$
+ * @maxLength 255
  */
-mapId?: string;
+npcName?: string;
+/**
+ * @pattern ^\d{4}-\d{2}-\d{2}$
+ */
+day?: string;
 /**
  * @pattern ^[+-]?\d*\.?\d+(?:[Ee][+-]?\d+)?$
  */

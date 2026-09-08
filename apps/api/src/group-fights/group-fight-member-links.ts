@@ -81,7 +81,7 @@ export const groupFightAttributionsSql = (
   ), unique_claims as (
     select fight_id, character_id, min(member_id) as member_id from candidates group by fight_id, character_id having count(distinct member_id)=1
   )
-  select u.fight_id, u.character_id, m.id as member_id, m."globalUserId" as user_id, m.name, m.avatar
+  select u.fight_id, u.character_id, m.id as member_id, m."globalUserId" as user_id, m."userId" as discord_id, m.name, m.avatar
   from unique_claims u join members m on m.id=u.member_id
 `;
 
@@ -112,6 +112,7 @@ export const makeGroupFightMemberLinks = (
             character_id: Schema.String,
             member_id: Schema.Number,
             user_id: Schema.String,
+            discord_id: Schema.String,
             name: Schema.String,
             avatar: Schema.NullOr(Schema.String),
           }),
@@ -122,6 +123,7 @@ export const makeGroupFightMemberLinks = (
       links.set(`${row.fight_id}:${row.character_id}`, {
         memberId: row.member_id,
         memberUserId: row.user_id,
+        memberDiscordId: row.discord_id,
         memberName: row.name,
         memberAvatar: row.avatar,
       });

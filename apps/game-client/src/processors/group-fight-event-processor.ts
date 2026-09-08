@@ -182,6 +182,8 @@ export class GroupFightEventProcessor {
                 id: observedNpc.id,
                 name: observedNpc.name,
                 wt: observedNpc.weight,
+                lvl: observedNpc.level,
+                icon: observedNpc.icon,
               },
             }
           : { source: "NPC_OBSERVED" };

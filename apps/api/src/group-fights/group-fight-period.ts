@@ -12,6 +12,28 @@ const PERIOD_HOURS = {
 const TIME_ZONE = "Europe/Warsaw";
 
 /** Calendar filters follow Polish local days, with Monday starting the week. */
+/** A single Polish calendar day, given as YYYY-MM-DD. */
+export const getGroupFightDayRange = (
+  day: string | undefined,
+): { from: Date; to: Date } | undefined => {
+  if (!day) return undefined;
+  const [year, month, dayOfMonth] = day.split("-").map(Number);
+  if (
+    year === undefined ||
+    month === undefined ||
+    dayOfMonth === undefined ||
+    !Number.isInteger(year) ||
+    !Number.isInteger(month) ||
+    !Number.isInteger(dayOfMonth)
+  )
+    return undefined;
+  const localDay = { year, month, day: dayOfMonth };
+  return {
+    from: toUtcDateFromLocal(localDay, 0, 0, TIME_ZONE),
+    to: toUtcDateFromLocal(addDays(localDay, 1), 0, 0, TIME_ZONE),
+  };
+};
+
 export const getGroupFightPeriodStart = (
   period: GroupFightPeriod | undefined,
   now = new Date(),

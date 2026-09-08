@@ -941,15 +941,25 @@ const PERSONAL_ANALYTICS_ADDITIONS = new Map<
                       },
                     },
                     {
-                      name: "mapId",
+                      name: "npcName",
+                      in: "query",
+                      required: false,
+                      schema: { type: "string", maxLength: 255 },
+                    },
+                  ]),
+              ...(suffix === ""
+                ? [
+                    {
+                      name: "day",
                       in: "query",
                       required: false,
                       schema: {
                         type: "string",
-                        pattern: "^[+-]?\\d*\\.?\\d+(?:[Ee][+-]?\\d+)?$",
+                        pattern: "^\\d{4}-\\d{2}-\\d{2}$",
                       },
                     },
-                  ]),
+                  ]
+                : []),
               ...(suffix === ""
                 ? ["cursor", "limit"].map((name) => ({
                     name,
@@ -1076,6 +1086,14 @@ export const assertVerifiedPersonalAddition = (
     JSON.stringify(normalizeOpenApiRepresentation(contract)) !==
     JSON.stringify(normalizeOpenApiRepresentation(expected))
   ) {
+    console.error(
+      "ACTUAL:",
+      JSON.stringify(normalizeOpenApiRepresentation(contract)),
+    );
+    console.error(
+      "EXPECTED:",
+      JSON.stringify(normalizeOpenApiRepresentation(expected)),
+    );
     throw new Error(
       `Verified personal API contract changed: ${service} ${operationKey}`,
     );

@@ -20,13 +20,20 @@ const target = resolve(import.meta.dir, "../src/group-fight-maps.ts");
 const npcs: unknown = JSON.parse(readFileSync(source, "utf8"));
 if (!Array.isArray(npcs)) throw new Error("Expected an NPC catalog array");
 
-type CatalogNpc = { name: string; npcType: "ELITE2" | "TITAN" };
+type CatalogNpc = {
+  name: string;
+  npcType: "ELITE2" | "TITAN";
+  lvl: number;
+  icon: string;
+};
 const entries = new Map<string, Map<string, CatalogNpc>>();
 for (const npc of npcs) {
   if (
     !isRecord(npc) ||
     !isString(npc.name) ||
     !isNumber(npc.wt) ||
+    !isNumber(npc.lvl) ||
+    !isString(npc.icon) ||
     (npc.location !== undefined && !isString(npc.location))
   ) {
     throw new Error("Invalid NPC catalog entry");
@@ -39,7 +46,12 @@ for (const npc of npcs) {
     continue;
   const location = npc.location.replace(/\s+/g, " ").trim();
   const names = entries.get(location) ?? new Map<string, CatalogNpc>();
-  names.set(`${npcType}:${npc.name}`, { name: npc.name, npcType });
+  names.set(`${npcType}:${npc.name}`, {
+    name: npc.name,
+    npcType,
+    lvl: npc.lvl,
+    icon: npc.icon,
+  });
   entries.set(location, names);
 }
 
@@ -60,7 +72,12 @@ import { normalizeGroupFightName } from "./group-fights.js";
 import { getNpcTypeByWt } from "./npc-type.js";
 import { NpcTypeEnum } from "@lootlog/schema/npc-type";
 
-export type GroupFightMapNpc = Readonly<{ name: string; npcType: "ELITE2" | "TITAN" }>;
+export type GroupFightMapNpc = Readonly<{
+  name: string;
+  npcType: "ELITE2" | "TITAN";
+  lvl: number;
+  icon: string;
+}>;
 
 const catalog: ReadonlyArray<readonly [string, readonly GroupFightMapNpc[]]> = [
 ${lines.join("\n")}

@@ -84,6 +84,8 @@ export const CreateGroupFightRequest = Schema.Struct({
         id: SafeInteger,
         name: boundedString(255),
         wt: SafeInteger,
+        lvl: Schema.optionalKey(SafeInteger),
+        icon: Schema.optionalKey(boundedString(255)),
       }),
     ),
   }),
@@ -199,12 +201,13 @@ export const GuildGroupFightRankingQuery = Schema.Struct({
   world: Schema.optionalKey(Schema.String),
   period: Schema.optionalKey(GroupFightPeriod),
   npcType: Schema.optionalKey(Schema.Literals(["ELITE2", "TITAN"])),
-  mapId: Schema.optionalKey(SafeInteger),
+  npcName: Schema.optionalKey(boundedString(255)),
 });
 
 const GroupFightMemberReference = Schema.Struct({
   memberId: FiniteNumber,
   memberUserId: Schema.String,
+  memberDiscordId: Schema.String,
   memberName: Schema.String,
   memberAvatar: Schema.Union([Schema.String, Schema.Null]),
 });
@@ -213,16 +216,19 @@ export type GuildGroupFightRankingResponse =
   typeof GuildGroupFightRankingResponse.Type;
 
 export const GuildGroupFightRankingResponse = Schema.Struct({
-  maps: Schema.Array(
+  npcs: Schema.Array(
     Schema.Struct({
-      mapId: FiniteNumber,
-      mapName: Schema.String,
+      name: Schema.String,
       npcType: Schema.Literals(["ELITE2", "TITAN"]),
-      npcNames: Schema.Array(Schema.String),
+      lvl: Schema.Union([FiniteNumber, Schema.Null]),
+      icon: Schema.Union([Schema.String, Schema.Null]),
+      mapId: Schema.Union([FiniteNumber, Schema.Null]),
+      mapName: Schema.String,
       totalFights: FiniteNumber,
       wins: FiniteNumber,
       losses: FiniteNumber,
       draws: FiniteNumber,
+      flees: FiniteNumber,
       totalDurationSeconds: FiniteNumber,
     }),
   ),
@@ -231,6 +237,7 @@ export const GuildGroupFightRankingResponse = Schema.Struct({
     wins: FiniteNumber,
     losses: FiniteNumber,
     draws: FiniteNumber,
+    flees: FiniteNumber,
     fullTeamFights: FiniteNumber,
     totalDurationSeconds: FiniteNumber,
   }),
@@ -269,6 +276,14 @@ export type GuildGroupFightsQuery = typeof GuildGroupFightsQuery.Type;
 
 export const GuildGroupFightsQuery = Schema.Struct({
   ...GuildGroupFightRankingQuery.fields,
+  /** Polish calendar day as YYYY-MM-DD. */
+  day: Schema.optionalKey(
+    Schema.String.check(
+      Schema.isPattern(/^\d{4}-\d{2}-\d{2}$/).annotate({
+        expected: "a YYYY-MM-DD date",
+      }),
+    ),
+  ),
   cursor: Schema.optionalKey(NonNegativeSafeInteger),
   limit: Schema.optionalKey(PageSize),
 });
@@ -294,9 +309,19 @@ const GroupFightSummaryFields = {
 
 export type GroupFightSummaryResponse = typeof GroupFightSummaryResponse.Type;
 
-export const GroupFightSummaryResponse = Schema.Struct(
-  GroupFightSummaryFields,
-).annotate({ identifier: "GroupFightSummaryResponseDto_Output" });
+export const GroupFightSummaryResponse = Schema.Struct({
+  ...GroupFightSummaryFields,
+  /** Compact line-up for list views; full participants live on the detail. */
+  roster: Schema.Array(
+    Schema.Struct({
+      name: Schema.String,
+      lvl: FiniteNumber,
+      prof: Schema.String,
+      team: GroupFightTeam,
+      fled: Schema.Boolean,
+    }),
+  ),
+}).annotate({ identifier: "GroupFightSummaryResponseDto_Output" });
 
 export type GuildGroupFightsResponse = typeof GuildGroupFightsResponse.Type;
 

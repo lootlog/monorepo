@@ -117,7 +117,7 @@ describe("group fights durable records", () => {
     const ranking = await runtime.runPromise(
       queries.ranking(guildId, user, {}),
     );
-    expect(ranking.maps).toEqual(
+    expect(ranking.npcs).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           mapId: 1,
@@ -127,7 +127,7 @@ describe("group fights durable records", () => {
         expect.objectContaining({
           mapId: 2,
           npcType: "TITAN",
-          npcNames: ["Observed titan"],
+          name: "Observed titan",
           totalFights: 1,
         }),
       ]),

@@ -86,7 +86,12 @@ export const makeGroupFightCreation =
               npc.name === observedNpc.name && npc.npcType === observedNpcType,
           )
         ) {
-          mapNpcs.push({ name: observedNpc.name, npcType: observedNpcType });
+          mapNpcs.push({
+            name: observedNpc.name,
+            npcType: observedNpcType,
+            lvl: observedNpc.lvl ?? 0,
+            icon: observedNpc.icon ?? "",
+          });
         }
         if (!fight) {
           [fight] = yield* transaction

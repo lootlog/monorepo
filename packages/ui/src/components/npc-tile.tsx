@@ -18,6 +18,7 @@ export type NpcTileNpc = {
 
 type NpcTileProps = {
   className?: string;
+  imageClassName?: string;
   levelLabel?: (level: number) => string;
   npc: NpcTileNpc;
   renderTooltip?: (npc: NpcTileNpc) => ReactNode;
@@ -25,6 +26,7 @@ type NpcTileProps = {
 
 export const NpcTile: FC<NpcTileProps> = ({
   className = "",
+  imageClassName = "",
   levelLabel = (level) => `lvl ${level}`,
   npc,
   renderTooltip,
@@ -53,7 +55,10 @@ export const NpcTile: FC<NpcTileProps> = ({
   const npcImage = (
     <img
       alt={name ?? ""}
-      className="relative max-h-10 max-w-8 cursor-pointer rounded-lg"
+      className={cn(
+        "relative max-h-10 max-w-8 cursor-pointer rounded-lg",
+        imageClassName,
+      )}
       src={npcIconSource}
     />
   );
