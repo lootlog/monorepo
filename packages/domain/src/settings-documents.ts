@@ -260,6 +260,11 @@ export const SETTINGS_CATALOG = {
       airTags: field({}, accountScopes, isRecord),
       catching: field({}, characterScopes, isRecord),
       battlePanel: field({}, characterScopes, isRecord),
+      groupFights: field(
+        { enabled: false },
+        characterScopes,
+        (value) => isRecord(value) && typeof value.enabled === "boolean",
+      ),
       lootlog: field({}, characterScopes, isRecord),
     },
   },

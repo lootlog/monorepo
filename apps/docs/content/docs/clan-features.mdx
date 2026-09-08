@@ -26,6 +26,34 @@ porównywać dane o tej samej skali.
   title="Klan · Statystyki killi"
 />
 
+## Ustawki
+
+Zakładka **Ustawki** pokazuje historię walk grupowych PvP oraz ranking członków
+organizacji i ich postaci. Możesz filtrować dane według świata i okresu oraz
+sprawdzić uczestników, wynik i czas konkretnej walki.
+
+Zbierane są walki bez NPC, z co najmniej dwoma graczami po każdej stronie,
+na czerwonych mapach z katalogu elit II i tytanów. Dodatek może też rozpoznać
+taką mapę po obecnym na niej NPC. Walka 10 na 1 nie jest ustawką; 10 na 2 jest.
+Administrator może ograniczyć nowe zapisy do dokładnie 10 na 10 — wtedy 9 na 10
+nie zostanie zapisane. Liczy się skład zaobserwowany w całej walce.
+
+Ranking przypisuje postacie aktywnym członkom z dostępem do organizacji,
+na podstawie ich zgłoszeń albo konfiguracji zbierania dla danego konta i postaci.
+Nieznane lub niejednoznaczne przypisanie nie tworzy wpisu w rankingu.
+Ucieczka jest porażką uczestnika. Jeżeli log nie wskazuje zwycięzcy i tylko jedna
+drużyna użyła ucieczki, druga otrzymuje zwycięstwo. Bez rozstrzygającego sygnału
+walka jest remisem. Ucieczki są dodatkowo pokazane osobno.
+
+Czas uczestnika obejmuje okres od jego pierwszego zaobserwowania w walce do
+jej końca. Może być krótszy od rzeczywistego udziału, jeśli obserwator dołączył
+później. Powtórne zgłoszenia tego samego zakończenia są scalane w organizacji.
+Stare walki z panelu walk nie są automatycznie dodawane: nie zawierają informacji
+potrzebnych do kwalifikacji mapy.
+
+Do przeglądania potrzebujesz `LOOTLOG_GROUP_FIGHTS_READ`, a do zapisywania
+`LOOTLOG_GROUP_FIGHTS_WRITE`. Włączenie zbierania opisują [Ustawienia](/docs/settings).
+
 ## Rezerwacje map
 
 Rezerwacje pomagają ograniczyć nakładanie się polowań na tych samych mapach.

@@ -47,6 +47,8 @@ const OrganizationCapability = Schema.Literals([
   "LOOTLOG_EVENTS_WRITE",
   "LOOTLOG_DOCS_READ",
   "LOOTLOG_DOCS_WRITE",
+  "LOOTLOG_GROUP_FIGHTS_READ",
+  "LOOTLOG_GROUP_FIGHTS_WRITE",
 ]);
 
 export type UserOrganizationSummary = typeof UserOrganizationSummary.Type;
@@ -63,6 +65,8 @@ export const UserOrganizationSummary = Schema.Struct({
   reservationTimeGranularityMinutes: Schema.optionalKey(FiniteNumber),
   reservationMaxAdvanceDays: Schema.optionalKey(FiniteNumber),
   reservationActiveLimitPerSpot: Schema.optionalKey(FiniteNumber),
+  groupFightsEnabled: Schema.optionalKey(Schema.Boolean),
+  groupFightsIncludeIncomplete: Schema.optionalKey(Schema.Boolean),
 }).annotate({ identifier: "UserGuildListResponseDto_Output" });
 
 export type OrganizationPermissionsResponse =
@@ -95,6 +99,8 @@ export const ManageableOrganizationResponse = Schema.Struct({
   reservationTimeGranularityMinutes: FiniteNumber,
   reservationMaxAdvanceDays: FiniteNumber,
   reservationActiveLimitPerSpot: FiniteNumber,
+  groupFightsEnabled: Schema.optionalKey(Schema.Boolean),
+  groupFightsIncludeIncomplete: Schema.optionalKey(Schema.Boolean),
 }).annotate({ identifier: "GuildResponseDto" });
 
 export type UpdateOrganizationConfigRequest =
@@ -103,6 +109,8 @@ export type UpdateOrganizationConfigRequest =
 export const UpdateOrganizationConfigRequest = Schema.Struct({
   vanityUrl: Schema.optionalKey(Schema.Union([NonEmptyString, Schema.Null])),
   publicStatsCardEnabled: Schema.optionalKey(Schema.Boolean),
+  groupFightsEnabled: Schema.optionalKey(Schema.Boolean),
+  groupFightsIncludeIncomplete: Schema.optionalKey(Schema.Boolean),
   reservationMaxDurationMinutes: Schema.optionalKey(
     Schema.Number.check(Schema.isInt().annotate({ expected: "an integer" }))
       .check(

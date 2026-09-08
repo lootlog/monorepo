@@ -28,14 +28,18 @@ const memoryCache = () => {
 describe("guild configuration cache", () => {
   it("evicts malformed JSON and array entries so callers can load authoritative data", async () => {
     await Promise.all(
-      ["{broken", "[]", "null"].map(async (invalid) => {
-        const cache = memoryCache();
-        cache.values.set(getGuildCacheKey("guild"), invalid);
-        expect(
-          await Effect.runPromise(readGuildConfigurationCache(cache, "guild")),
-        ).toBeNull();
-        expect(cache.deleted).toEqual([getGuildCacheKey("guild")]);
-      }),
+      ["{broken", "[]", "null", JSON.stringify({ id: "guild" })].map(
+        async (invalid) => {
+          const cache = memoryCache();
+          cache.values.set(getGuildCacheKey("guild"), invalid);
+          expect(
+            await Effect.runPromise(
+              readGuildConfigurationCache(cache, "guild"),
+            ),
+          ).toBeNull();
+          expect(cache.deleted).toEqual([getGuildCacheKey("guild")]);
+        },
+      ),
     );
   });
 
@@ -46,6 +50,8 @@ describe("guild configuration cache", () => {
       vanityUrl: "vanity",
       name: "Group",
       active: true,
+      groupFightsEnabled: true,
+      groupFightsIncludeIncomplete: true,
     };
     await Effect.runPromise(
       writeGuildConfigurationCache(cache, guild, "unbounded"),

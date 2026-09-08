@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 export type PermissionCategory = {
-  name: string;
+  groupKey: string;
   icon: LucideIcon;
   color: string;
   bgColor: string;
@@ -23,21 +23,31 @@ export type PermissionCategory = {
 
 export const PERMISSION_CATEGORIES: PermissionCategory[] = [
   {
-    name: "Dostęp",
+    groupKey: "groupFights",
+    icon: Trophy,
+    color: "text-foreground",
+    bgColor: "bg-muted",
+    permissions: [
+      Permission.LOOTLOG_GROUP_FIGHTS_READ,
+      Permission.LOOTLOG_GROUP_FIGHTS_WRITE,
+    ],
+  },
+  {
+    groupKey: "access",
     icon: KeyRound,
     color: "text-emerald-500",
     bgColor: "bg-emerald-500/20",
     permissions: [Permission.LOOTLOG_ACCESS],
   },
   {
-    name: "Administracja",
+    groupKey: "admin",
     icon: Shield,
     color: "text-red-500",
     bgColor: "bg-red-500/20",
     permissions: [Permission.ADMIN, Permission.LOOTLOG_MANAGE],
   },
   {
-    name: "Łupy",
+    groupKey: "loots",
     icon: Package,
     color: "text-amber-500",
     bgColor: "bg-amber-500/20",
@@ -50,7 +60,7 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
     ],
   },
   {
-    name: "Timery",
+    groupKey: "timers",
     icon: Clock,
     color: "text-blue-500",
     bgColor: "bg-blue-500/20",
@@ -64,7 +74,7 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
     ],
   },
   {
-    name: "Rezerwacje",
+    groupKey: "reservations",
     icon: CalendarCheck,
     color: "text-purple-500",
     bgColor: "bg-purple-500/20",
@@ -74,14 +84,14 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
     ],
   },
   {
-    name: "Dokumenty",
+    groupKey: "docs",
     icon: FileText,
     color: "text-indigo-500",
     bgColor: "bg-indigo-500/20",
     permissions: [Permission.LOOTLOG_DOCS_READ, Permission.LOOTLOG_DOCS_WRITE],
   },
   {
-    name: "Członkowie",
+    groupKey: "members",
     icon: Users,
     color: "text-cyan-500",
     bgColor: "bg-cyan-500/20",
@@ -91,7 +101,7 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
     ],
   },
   {
-    name: "Czat",
+    groupKey: "chat",
     icon: MessageCircle,
     color: "text-green-500",
     bgColor: "bg-green-500/20",
@@ -103,7 +113,7 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
     ],
   },
   {
-    name: "Powiadomienia",
+    groupKey: "notifications",
     icon: Bell,
     color: "text-orange-500",
     bgColor: "bg-orange-500/20",
@@ -115,7 +125,7 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
     ],
   },
   {
-    name: "Eventy",
+    groupKey: "events",
     icon: Trophy,
     color: "text-fuchsia-500",
     bgColor: "bg-fuchsia-500/20",

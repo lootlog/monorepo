@@ -34,6 +34,7 @@ function areGameSnapshotsEqual(
     current.interface === incoming.interface &&
     current.world === incoming.world &&
     current.map.id === incoming.map.id &&
+    current.map.pvp === incoming.map.pvp &&
     current.map.name === incoming.map.name &&
     current.map.visibility === incoming.map.visibility &&
     current.hero.accountId === incoming.hero.accountId &&

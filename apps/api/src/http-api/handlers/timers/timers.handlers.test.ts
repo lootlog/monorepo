@@ -33,6 +33,8 @@ const guild = {
   vanityUrl: null,
   notificationRuleLimit: 20,
   publicStatsCardEnabled: false,
+  groupFightsEnabled: true,
+  groupFightsIncludeIncomplete: true,
   reservationMaxDurationMinutes: 180,
   reservationMinDurationMinutes: 30,
   reservationTimeGranularityMinutes: 15,

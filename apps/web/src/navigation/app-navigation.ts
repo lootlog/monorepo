@@ -30,6 +30,7 @@ export type AppNavigationItemId =
   | "organization-docs"
   | "organization-events"
   | "organization-stats"
+  | "organization-group-fights"
   | "organization-activity"
   | "organization-notifications"
   | "organization-settings";
@@ -261,6 +262,13 @@ function buildOrganizationSidebarRegistry(
       path: ROUTES.guild.stats(organizationId),
       visible: (accessPolicy) =>
         accessPolicy?.allows(Capability.LOOTLOG_LOOTS_READ) ?? false,
+    },
+    {
+      id: "organization-group-fights",
+      labelKey: "groupFights.title",
+      path: ROUTES.guild.groupFights(organizationId),
+      visible: (accessPolicy) =>
+        accessPolicy?.allows(Capability.LOOTLOG_GROUP_FIGHTS_READ) ?? false,
     },
     {
       id: "organization-activity",
@@ -738,6 +746,7 @@ function buildRoutes(guildId: string) {
   return {
     base: ROUTES.guild.base(guildId),
     timers: ROUTES.guild.timers(guildId),
+    groupFights: ROUTES.guild.groupFights(guildId),
     reservations: ROUTES.guild.reservations.base(guildId),
     docs: ROUTES.guild.docs.base(guildId),
     stats: ROUTES.guild.stats(guildId),
@@ -786,6 +795,11 @@ function resolveSimpleRoute(
     label: string;
     backPath: string;
   }> = [
+    {
+      path: routes.groupFights,
+      label: t("groupFights.title"),
+      backPath: routes.base,
+    },
     {
       path: routes.timers,
       label: t("common.breadcrumbs.timers"),

@@ -1,4 +1,6 @@
 {
+  "LOOTLOG_GROUP_FIGHTS_READ": "Przeglądanie ustawek",
+  "LOOTLOG_GROUP_FIGHTS_WRITE": "Zapisywanie ustawek",
   "OWNER": "Właściciel",
   "ADMIN": "Administrator",
   "LOOTLOG_MANAGE": "Moderator",
@@ -33,6 +35,8 @@
   "LOOTLOG_EVENTS_MANAGE": "Zarządzanie eventami",
 
   "descriptions": {
+    "LOOTLOG_GROUP_FIGHTS_READ": "Dostęp do rankingu i historii walk grupowych organizacji",
+    "LOOTLOG_GROUP_FIGHTS_WRITE": "Pozwala zapisywać walki grupowe z dodatku",
     "ADMIN": "Pozwala zarządzać całym lootlogiem np. nadawanie uprawnień",
     "LOOTLOG_MANAGE": "Pozwala zarządzać lootlogiem np. usuwanie lub edycja lootów",
     "LOOTLOG_ACCESS": "Dostęp do aplikacji - podstawowa permisja, która pozwala na dostęp do danego lootloga",
@@ -67,6 +71,10 @@
   },
 
   "groups": {
+    "groupFights": {
+      "name": "Ustawki",
+      "description": "Ranking i zbieranie walk grupowych PvP"
+    },
     "access": {
       "name": "Dostęp",
       "description": "Podstawowe uprawnienie wymagane do korzystania z aplikacji"

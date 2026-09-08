@@ -306,6 +306,17 @@ export const SETTINGS_MANIFEST: SettingsDomainManifestItem[] = [
           },
         ],
       },
+      {
+        id: "group-fights",
+        labelKey: "settings.groupFights.title",
+        controls: [
+          {
+            id: "group-fights-enabled",
+            labelKey: "settings.groupFights.enabled",
+            settingKeys: ["gameData.groupFights"],
+          },
+        ],
+      },
     ],
   },
   {

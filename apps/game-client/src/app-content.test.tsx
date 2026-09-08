@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { AppContent } from "@/app-content";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const mapPingHotkeyHandlers = vi.hoisted(() => ({
   onMapPingCancel: vi.fn(),
@@ -97,7 +98,11 @@ vi.mock("@/features/party-finder/hooks/use-party-ready-room-sync", () => ({
 
 describe("AppContent map ping integration", () => {
   it("wires the map ping lifecycle into hotkeys and mounts the wheel", () => {
-    render(<AppContent />);
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <AppContent />
+      </QueryClientProvider>,
+    );
 
     expect(useHotkeys).toHaveBeenCalledWith(mapPingHotkeyHandlers);
     expect(useAirTags).toHaveBeenCalledOnce();

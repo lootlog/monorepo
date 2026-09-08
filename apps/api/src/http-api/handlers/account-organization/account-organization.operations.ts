@@ -188,6 +188,12 @@ const buildGuildConfigurationUpdate = (
   ...(payload.publicStatsCardEnabled === undefined
     ? {}
     : { publicStatsCardEnabled: payload.publicStatsCardEnabled }),
+  ...(payload.groupFightsEnabled === undefined
+    ? {}
+    : { groupFightsEnabled: payload.groupFightsEnabled }),
+  ...(payload.groupFightsIncludeIncomplete === undefined
+    ? {}
+    : { groupFightsIncludeIncomplete: payload.groupFightsIncludeIncomplete }),
   ...(payload.reservationMaxDurationMinutes === undefined
     ? {}
     : {

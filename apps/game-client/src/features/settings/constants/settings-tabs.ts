@@ -41,6 +41,7 @@ export type SettingsSubsectionValue =
   | "catching"
   | "detector"
   | "battle-panel"
+  | "group-fights"
   | "notification-rules"
   | "notification-mutes"
   | "sounds"

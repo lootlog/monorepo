@@ -20,6 +20,7 @@ export type RuntimeNpc = Readonly<{
 }>;
 
 export type RuntimeMap = Readonly<{
+  pvp?: number;
   id: number;
   name: string;
   visibility: number;

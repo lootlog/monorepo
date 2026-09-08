@@ -36,6 +36,8 @@ import {
   roleTable,
   timerTable,
   userGameAccountSettingsTable,
+  userCharactersLootlogSettingsTable,
+  groupFightTable,
 } from "../src/database/drizzle/schema.js";
 
 const caller = {
@@ -190,6 +192,104 @@ describe("API HTTP boundary", () => {
     await redisRuntime.dispose();
     await databaseRuntime.dispose();
     await boundary.dispose();
+  });
+
+  it("records group fights once and protects history and rankings with Organization capabilities", async () => {
+    await databaseRuntime.runPromise(
+      database
+        .insert(userCharactersLootlogSettingsTable)
+        .values({
+          userId: caller.discordId,
+          accountId: "group-fight-account",
+          characterId: "1",
+          catchingGuildIds: [authorizedGuildId, forbiddenGuildId],
+          updatedAt: new Date(),
+        })
+        .onConflictDoNothing(),
+    );
+    const payload = {
+      world,
+      accountId: "group-fight-account",
+      characterId: "1",
+      submissionKey: crypto.randomUUID(),
+      map: { id: 1, pvp: 2, name: "Sala Tronowa" },
+      qualification: { source: "CATALOG" },
+      startedAt: "2026-09-06T10:00:00.000Z",
+      endedAt: "2026-09-06T10:00:30.000Z",
+      myTeam: 1,
+      winningTeam: 1,
+      participants: [1, 2, 3, 4].map((id) => ({
+        characterId: String(id),
+        accountId: id === 1 ? "group-fight-account" : null,
+        name: `Player${id}`,
+        lvl: 100,
+        prof: "w",
+        icon: "",
+        team: id <= 2 ? 1 : 2,
+        joinedAt: "2026-09-06T10:00:00.000Z",
+        fled: false,
+      })),
+    };
+    for (let retry = 0; retry < 2; retry++) {
+      const response = await request("/group-fights", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      expect(response.status).toBe(201);
+      expect(await response.json()).toMatchObject({
+        submittedGuilds: [
+          { guildId: authorizedGuildId, deduplicated: retry > 0 },
+        ],
+        rejectedGuilds: [
+          { guildId: forbiddenGuildId, reason: "MISSING_MEMBER" },
+        ],
+      });
+    }
+    const records = await databaseRuntime.runPromise(
+      database.select().from(groupFightTable),
+    );
+    expect(records).toHaveLength(1);
+    const fight = records[0];
+    if (!fight) throw new Error("Missing accepted group fight");
+    const ranking = await request(
+      `/guilds/${authorizedGuildId}/group-fights/ranking`,
+    );
+    expect(ranking.status).toBe(200);
+    expect(await ranking.json()).toMatchObject({
+      summary: { totalFights: 1 },
+      ranking: [{ fights: 1, wins: 1, totalSeconds: 30 }],
+    });
+    const history = await request(`/guilds/${authorizedGuildId}/group-fights`);
+    expect(history.status).toBe(200);
+    expect(await history.json()).toMatchObject({ fights: [{ id: fight.id }] });
+    const detail = await request(
+      `/guilds/${authorizedGuildId}/group-fights/${fight.id}`,
+    );
+    expect(detail.status).toBe(200);
+    expect(await detail.json()).toMatchObject({
+      participants: [
+        { characterId: "1" },
+        { characterId: "2" },
+        { characterId: "3" },
+        { characterId: "4" },
+      ],
+    });
+    for (const suffix of ["", "/ranking", `/${fight.id}`]) {
+      expect(
+        (await request(`/guilds/${forbiddenGuildId}/group-fights${suffix}`))
+          .status,
+      ).toBe(403);
+    }
+    const invalid = await request("/group-fights", {
+      method: "POST",
+      body: JSON.stringify({ ...payload, map: { ...payload.map, pvp: 1 } }),
+    });
+    expect(invalid.status).toBe(400);
+    expect(
+      await databaseRuntime.runPromise(
+        database.select({ count: count() }).from(groupFightTable),
+      ),
+    ).toEqual([{ count: 1 }]);
   });
 
   it("resolves notification senders from member summaries using Discord IDs", async () => {

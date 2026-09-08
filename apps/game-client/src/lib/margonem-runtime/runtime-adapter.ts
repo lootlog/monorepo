@@ -126,6 +126,7 @@ abstract class BaseRuntimeAdapter implements MargonemRuntimeAdapter {
       }),
       interface: this.interface,
       map: Object.freeze({
+        pvp: map.pvp,
         id: map.id,
         name: map.name,
         visibility: map.visibility,

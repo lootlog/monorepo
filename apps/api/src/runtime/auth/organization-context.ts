@@ -1,6 +1,6 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, eq, or } from "drizzle-orm";
-import { Context, Effect, Layer, Predicate, Schema } from "effect";
+import { Context, Effect, Layer, Schema } from "effect";
 import { resolveCapabilities } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import type { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
@@ -17,6 +17,7 @@ import {
 import { MembersData } from "#src/http-api/handlers/members/members.handlers";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
+import { decodeGuildConfigurationCache } from "#src/guilds/guild-configuration-cache";
 
 type GuildRecord = typeof guildTable.$inferSelect;
 
@@ -115,9 +116,7 @@ export class OrganizationContextLookup extends Context.Service<
               .pipe(Effect.catch(() => Effect.succeed(null)));
             if (cached) {
               const parsed = yield* Effect.try(() => {
-                const decoded = decodeJsonUnknown(cached);
-                if (!Predicate.isObject(decoded) || Array.isArray(decoded))
-                  throw new Error("Invalid guild cache");
+                const decoded = decodeGuildConfigurationCache(cached);
                 return decoded as GuildRecord;
               }).pipe(Effect.option);
               if (parsed._tag === "Some") return parsed.value;
@@ -182,7 +181,7 @@ export class OrganizationContextLookup extends Context.Service<
                   cached,
                   config.environment,
                 );
-                if (context) return context;
+                if (context) return { ...context, guild };
                 yield* cache.del(permissionsKey).pipe(Effect.ignore);
               }
 

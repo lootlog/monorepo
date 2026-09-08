@@ -3,6 +3,7 @@ import { Clock, Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   memberTable,
+  groupFightSubmissionTable,
   memberToRoleTable,
   npcKillStatsTable,
   userCharactersLootlogSettingsTable,
@@ -86,6 +87,9 @@ const deletePersistedAccount = (
       yield* transaction
         .delete(userSettingsTable)
         .where(eq(userSettingsTable.userId, identity.userId));
+      yield* transaction
+        .delete(groupFightSubmissionTable)
+        .where(eq(groupFightSubmissionTable.userId, identity.userId));
       yield* transaction
         .delete(userSettingDocumentTable)
         .where(eq(userSettingDocumentTable.userId, identity.userId));

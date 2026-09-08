@@ -221,6 +221,9 @@ test.each([
   ["api", "/users/@me/stats/kills/analytics"],
   ["api", "/users/@me/stats/kills/activity"],
   ["api", "/users/@me/feed"],
+  ["api", "/guilds/{guildId}/group-fights"],
+  ["api", "/guilds/{guildId}/group-fights/ranking"],
+  ["api", "/guilds/{guildId}/group-fights/{fightId}"],
 ] as const)(
   "verified private addition %s %s pins authentication, filters and response",
   (service, path) => {
@@ -274,3 +277,28 @@ test.each([
     ).toThrow("Unverified");
   },
 );
+
+test("group fight ingestion pins its authenticated request and acceptance status", () => {
+  const document = parse(
+    readFileSync(
+      new URL("../../../apps/api/openapi.yaml", import.meta.url),
+      "utf8",
+    ),
+  );
+  const operation = document.paths["/group-fights"].post;
+  expect(() =>
+    assertVerifiedPersonalAddition("api", "POST /group-fights", operation),
+  ).not.toThrow();
+  for (const mutation of [
+    { security: [] },
+    { requestBody: {} },
+    { responses: { "200": operation.responses["201"] } },
+  ]) {
+    expect(() =>
+      assertVerifiedPersonalAddition("api", "POST /group-fights", {
+        ...operation,
+        ...mutation,
+      }),
+    ).toThrow("contract changed");
+  }
+});

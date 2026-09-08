@@ -4,6 +4,7 @@ import {
   type RuntimeEventPipeline,
 } from "@/lib/margonem-runtime/runtime-event-pipeline";
 import { BattleEventProcessor } from "@/processors/battle-event-processor";
+import { GroupFightEventProcessor } from "@/processors/group-fight-event-processor";
 import { LootEventProcessor } from "@/processors/loot-event-processor";
 import { ChatEventProcessor } from "@/processors/chat-event-processor";
 import { DialogProcessor } from "@/processors/dialog-processor";
@@ -37,6 +38,7 @@ function runSafe(name: string, handler: () => unknown): void {
 
 export class EventDispatcher {
   private battle = new BattleEventProcessor();
+  private groupFight = new GroupFightEventProcessor();
   private loot = new LootEventProcessor();
   private chat = new ChatEventProcessor();
   private dialog = new DialogProcessor();
@@ -79,6 +81,7 @@ export class EventDispatcher {
     }
 
     if (fact.kind === "battle") {
+      runSafe("group-fight", () => this.groupFight.handle(event, ingress));
       runSafe("battle", () => this.battle.handle(event, ingress));
     }
 

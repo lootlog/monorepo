@@ -38,6 +38,7 @@ import {
   type GeneralFormValues,
 } from "./general-form.schema";
 import { StatsCardSettingsCard } from "./stats-card-settings-card";
+import { GroupFightsSettingsCard } from "./group-fights-settings-card";
 
 const RESTRICTED_NAMES = ["@me"];
 
@@ -57,6 +58,8 @@ export const GeneralForm = () => {
     defaultValues: {
       vanityUrl: guild?.vanityUrl ?? "",
       publicStatsCardEnabled: guild?.publicStatsCardEnabled ?? false,
+      groupFightsEnabled: guild?.groupFightsEnabled ?? true,
+      groupFightsIncludeIncomplete: guild?.groupFightsIncludeIncomplete ?? true,
     },
   });
 
@@ -65,10 +68,17 @@ export const GeneralForm = () => {
       form.reset({
         vanityUrl: guild.vanityUrl ?? "",
         publicStatsCardEnabled: guild.publicStatsCardEnabled,
+        groupFightsEnabled: guild.groupFightsEnabled,
+        groupFightsIncludeIncomplete: guild.groupFightsIncludeIncomplete,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [guild?.vanityUrl, guild?.publicStatsCardEnabled]);
+  }, [
+    guild?.vanityUrl,
+    guild?.publicStatsCardEnabled,
+    guild?.groupFightsEnabled,
+    guild?.groupFightsIncludeIncomplete,
+  ]);
 
   function onSubmit(values: GeneralFormValues) {
     if (isPending) return;
@@ -84,6 +94,8 @@ export const GeneralForm = () => {
         data: {
           vanityUrl: values.vanityUrl.length > 0 ? values.vanityUrl : null,
           publicStatsCardEnabled: values.publicStatsCardEnabled,
+          groupFightsEnabled: values.groupFightsEnabled,
+          groupFightsIncludeIncomplete: values.groupFightsIncludeIncomplete,
         },
       },
       {
@@ -106,6 +118,8 @@ export const GeneralForm = () => {
           form.reset({
             vanityUrl: data.vanityUrl ?? "",
             publicStatsCardEnabled: data.publicStatsCardEnabled,
+            groupFightsEnabled: data.groupFightsEnabled,
+            groupFightsIncludeIncomplete: data.groupFightsIncludeIncomplete,
           });
         },
         onError: (error) => {
@@ -172,6 +186,9 @@ export const GeneralForm = () => {
           </div>
         )}
 
+        <div className="p-3 pt-0">
+          <GroupFightsSettingsCard form={form} />
+        </div>
         <UnsavedChangesBar
           isDirty={form.formState.isDirty}
           isSubmitting={isPending}

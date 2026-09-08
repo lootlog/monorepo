@@ -10,6 +10,7 @@ import {
   Logs,
   Settings,
   Trophy,
+  Swords,
 } from "lucide-react";
 import type { FC, ReactNode } from "react";
 import { SidebarNav } from "./sidebar-nav/sidebar-nav";
@@ -32,6 +33,7 @@ const organizationNavigationIcons: Partial<
   "organization-reservations": <CalendarClock className="mr-1 h-4 w-4" />,
   "organization-docs": <FileText className="mr-1 h-4 w-4" />,
   "organization-stats": <BarChart4 className="mr-1 h-4 w-4" />,
+  "organization-group-fights": <Swords className="mr-1 size-4" />,
   "organization-activity": <Logs className="mr-1 h-4 w-4" />,
   "organization-notifications": <BellRing className="mr-1 h-4 w-4" />,
   "organization-settings": <Settings className="mr-1 h-4 w-4" />,

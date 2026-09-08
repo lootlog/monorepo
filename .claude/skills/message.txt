@@ -1,0 +1,861 @@
+{
+    "battleId": "l0ndt1aoin4norwwqunwk1jj",
+    "timestamp": "2026-09-06T09:57:07.903Z",
+    "rawData": {
+        "accountId": "1049401",
+        "characterId": "1483733",
+        "world": "classic",
+        "events": [
+            {
+                "attackerId": "1489098",
+                "defenderId": "1491861",
+                "attackerHpPercentage": 100,
+                "defenderHpPercentage": 100,
+                "actions": [
+                    {
+                        "actionType": "tspell",
+                        "param": "Podwójny strzał"
+                    },
+                    {
+                        "actionType": "skillId",
+                        "param": "97"
+                    }
+                ]
+            },
+            {
+                "attackerId": "1489098",
+                "defenderId": "1491861",
+                "attackerHpPercentage": 100,
+                "defenderHpPercentage": 88.53,
+                "actions": [
+                    {
+                        "actionType": "+pierce",
+                        "param": ""
+                    },
+                    {
+                        "actionType": "+dmgd",
+                        "param": "2356"
+                    },
+                    {
+                        "actionType": "+acdmg",
+                        "param": "34"
+                    },
+                    {
+                        "actionType": "-dmgd",
+                        "param": "2356"
+                    }
+                ]
+            },
+            {
+                "attackerId": "1489098",
+                "defenderId": "1491861",
+                "attackerHpPercentage": 100,
+                "defenderHpPercentage": 80.89,
+                "actions": [
+                    {
+                        "actionType": "+dmgd",
+                        "param": "2449"
+                    },
+                    {
+                        "actionType": "+acdmg",
+                        "param": "34"
+                    },
+                    {
+                        "actionType": "-dmgd",
+                        "param": "1569"
+                    }
+                ]
+            },
+            {
+                "attackerId": "1486365",
+                "defenderId": "1491861",
+                "attackerHpPercentage": 100,
+                "defenderHpPercentage": 80.89,
+                "actions": [
+                    {
+                        "actionType": "tspell",
+                        "param": "Podwójny strzał"
+                    },
+                    {
+                        "actionType": "skillId",
+                        "param": "97"
+                    }
+                ]
+            },
+            {
+                "attackerId": "1486365",
+                "defenderId": "1491861",
+                "attackerHpPercentage": 100,
+                "defenderHpPercentage": 73.41,
+                "actions": [
+                    {
+                        "actionType": "+dmgd",
+                        "param": "2294"
+                    },
+                    {
+                        "actionType": "+legbon_curse",
+                        "param": ""
+                    },
+                    {
+                        "actionType": "+acdmg",
+                        "param": "26"
+                    },
+                    {
+                        "actionType": "+legbon_puncture",
+                        "param": "12"
+                    },
+                    {
+                        "actionType": "-dmgd",
+                        "param": "1536"
+                    }
+                ]
+            },
+            {
+                "attackerId": "1486365",
+                "defenderId": "1491861",
+                "attackerHpPercentage": 100,
+                "defenderHpPercentage": 62.88,
+                "actions": [
+                    {
+                        "actionType": "+pierce",
+                        "param": ""
+                    },
+                    {
+                        "actionType": "+dmgd",
+                        "param": "2163"
+                    },
+                    {
+                        "actionType": "+acdmg",
+                        "param": "26"
+                    },
+                    {
+                        "actionType": "-dmgd",
+                        "param": "2163"
+                    }
+                ]
+            },
+            {
+                "attackerId": "1490123",
+                "defenderId": "1491861",
+                "attackerHpPercentage": 100,
+                "defenderHpPercentage": 62.88,
+                "actions": [
+                    {
+                        "actionType": "tspell",
+                        "param": "Błyskawiczny strzał"
+                    },
+                    {
+                        "actionType": "skillId",
+                        "param": "85"
+                    }
+                ]
+            },
+            {
+                "attackerId": "1490123",
+                "defenderId": "1491861",
+                "attackerHpPercentage": 100,
+                "defenderHpPercentage": 49.48,
+                "actions": [
+                    {
+                        "actionType": "+dmgd",
+                        "param": "3574"
+                    },
+                    {
+                        "actionType": "-legbon_glare",
+                        "param": ""
+                    },
+                    {
+                        "actionType": "+acdmg",
+                        "param": "37"
+                    },
+                    {
+                        "actionType": "-dmgd",
+                        "param": "2752"
+                    }
+                ]
+            },
+            {
+                "attackerId": "1486539",
+                "defenderId": "1491861",
+                "attackerHpPercentage": 100,
+                "defenderHpPercentage": 49.48,
+                "actions": [
+                    {
+                        "actionType": "tspell",
+                        "param": "Podwójny strzał"
+                    },
+                    {
+                        "actionType": "skillId",
+                        "param": "97"
+                    }
+                ]
+            },
+            {
+                "attackerId": "1486539",
+                "defenderId": "1491861",
+                "attackerHpPercentage": 100,
+                "defenderHpPercentage": 41.92,
+                "actions": [
+                    {
+                        "actionType": "+fastarrow",
+                        "param": ""
+                    },
+                    {
+                        "actionType": "+dmgd",
+                        "param": "2324"
+                    },
+                    {
+                        "actionType": "+acdmg",
+                        "param": "23"
+                    },
+                    {
+                        "actionType": "-dmgd",
+                        "param": "1552"
+                    }
+                ]
+            },
+            {
+                "attackerId": "1486539",
+                "defenderId": "1491861",
+                "attackerHpPercentage": 100,
+                "defenderHpPercentage": 41.92,
+                "actions": [
+                    {
+                        "actionType": "+dmgd",
+                        "param": "2444"
+                    },
+                    {
+                        "actionType": "-evade",
+                        "param": ""
+                    },
+                    {
+                        "actionType": "-dmgd",
+                        "param": "0"
+                    }
+                ]
+            },
+            {
+                "attackerId": "1475956",
+                "defenderId": "1475956",
+                "attackerHpPercentage": 100,
+                "defenderHpPercentage": 100,
+                "actions": [
+                    {
+                        "actionType": "tspell",
+                        "param": "Podwójny dech"
+                    },
+                    {
+                        "actionType": "skillId",
+                        "param": "89"
+                    },
+                    {
+                        "actionType": "aura-sa_per",
+                        "param": "20"
+                    }
+                ]
+            },
+            {
+                "attackerId": "1488403",
+                "defenderId": "1488403",
+                "attackerHpPercentage": 100,
+                "defenderHpPercentage": 100,
+                "actions": [
+                    {
+                        "actionType": "tspell",
+                        "param": "Podwójny dech"
+                    },
+                    {
+                        "actionType": "skillId",
+                        "param": "89"
+                    },
+                    {
+                        "actionType": "aura-sa_per",
+                        "param": "20"
+                    }
+                ]
+            },
+            {
+                "attackerId": "1489135",
+                "defenderId": "1491861",
+                "attackerHpPercentage": 100,
+                "defenderHpPercentage": 41.92,
+                "actions": [
+                    {
+                        "actionType": "tspell",
+                        "param": "Podwójne trafienie"
+                    },
+                    {
+                        "actionType": "skillId",
+                        "param": "239"
+                    }
+                ]
+            },
+            {
+                "attackerId": "1489135",
+                "defenderId": "1491861",
+                "attackerHpPercentage": 100,
+                "defenderHpPercentage": 10.95,
+                "actions": [
+                    {
+                        "actionType": "+crit",
+                        "param": ""
+                    },
+                    {
+                        "actionType": "+legbon_verycrit",
+                        "param": ""
+                    },
+                    {
+                        "actionType": "+dmgd",
+                        "param": "4280"
+                    },
+                    {
+                        "actionType": "+dmgl",
+                        "param": "3366"
+                    },
+                    {
+                        "actionType": "+acdmg",
+                        "param": "52"
+                    },
+                    {
+                        "actionType": "+resdmg",
+                        "param": "1"
+                    },
+                    {
+                        "actionType": "-dmgd",
+                        "param": "3527"
+                    },
+                    {
+                        "actionType": "-dmgl",
+                        "param": "2834"
+                    }
+                ]
+            },
+            {
+                "attackerId": "1489135",
+                "defenderId": "1491861",
+                "attackerHpPercentage": 100,
+                "defenderHpPercentage": 2.67,
+                "actions": [
+                    {
+                        "actionType": "+dmgd",
+                        "param": "1462"
+                    },
+                    {
+                        "actionType": "+dmgl",
+                        "param": "1255"
+                    },
+                    {
+                        "actionType": "-legbon_glare",
+                        "param": ""
+                    },
+                    {
+                        "actionType": "+acdmg",
+                        "param": "52"
+                    },
+                    {
+                        "actionType": "+resdmg",
+                        "param": "1"
+                    },
+                    {
+                        "actionType": "-dmgd",
+                        "param": "821"
+                    },
+                    {
+                        "actionType": "-dmgl",
+                        "param": "879"
+                    }
+                ]
+            },
+            {
+                "attackerId": "1486539",
+                "defenderId": "1491861",
+                "attackerHpPercentage": 100,
+                "defenderHpPercentage": 0,
+                "actions": [
+                    {
+                        "actionType": "+dmgd",
+                        "param": "3203"
+                    },
+                    {
+                        "actionType": "+acdmg",
+                        "param": "23"
+                    },
+                    {
+                        "actionType": "-dmgd",
+                        "param": "2537"
+                    }
+                ]
+            },
+            {
+                "attackerId": "1483733",
+                "defenderId": "1449044",
+                "attackerHpPercentage": 100,
+                "defenderHpPercentage": 100,
+                "actions": [
+                    {
+                        "actionType": "tspell",
+                        "param": "Kula ognia"
+                    },
+                    {
+                        "actionType": "skillId",
+                        "param": "21"
+                    }
+                ]
+            },
+            {
+                "attackerId": "1483733",
+                "defenderId": "1449044",
+                "attackerHpPercentage": 100,
+                "defenderHpPercentage": 81.23,
+                "actions": [
+                    {
+                        "actionType": "+dmgf",
+                        "param": "5673"
+                    },
+                    {
+                        "actionType": "+acdmg",
+                        "param": "11"
+                    },
+                    {
+                        "actionType": "+resdmg",
+                        "param": "1"
+                    },
+                    {
+                        "actionType": "-manadest",
+                        "param": "15"
+                    },
+                    {
+                        "actionType": "-absorbm",
+                        "param": "810"
+                    },
+                    {
+                        "actionType": "+legbon_puncture",
+                        "param": "12"
+                    },
+                    {
+                        "actionType": "-legbon_facade",
+                        "param": "13"
+                    },
+                    {
+                        "actionType": "-dmgf",
+                        "param": "3869"
+                    }
+                ]
+            },
+            {
+                "attackerId": "1489101",
+                "defenderId": "1449044",
+                "attackerHpPercentage": 100,
+                "defenderHpPercentage": 81.23,
+                "actions": [
+                    {
+                        "actionType": "tspell",
+                        "param": "Kula ognia"
+                    },
+                    {
+                        "actionType": "skillId",
+                        "param": "21"
+                    }
+                ]
+            },
+            {
+                "attackerId": "1489101",
+                "defenderId": "1449044",
+                "attackerHpPercentage": 100,
+                "defenderHpPercentage": 61.95,
+                "actions": [
+                    {
+                        "actionType": "+dmgf",
+                        "param": "4991"
+                    },
+                    {
+                        "actionType": "+resdmg",
+                        "param": "2"
+                    },
+                    {
+                        "actionType": "-absorbm",
+                        "param": "98"
+                    },
+                    {
+                        "actionType": "+legbon_puncture",
+                        "param": "12"
+                    },
+                    {
+                        "actionType": "-dmgf",
+                        "param": "3973"
+                    }
+                ]
+            },
+            {
+                "attackerId": "1468818",
+                "defenderId": "1468818",
+                "attackerHpPercentage": 100,
+                "defenderHpPercentage": 100,
+                "actions": [
+                    {
+                        "actionType": "tspell",
+                        "param": "Podwójny dech"
+                    },
+                    {
+                        "actionType": "skillId",
+                        "param": "89"
+                    },
+                    {
+                        "actionType": "aura-sa_per",
+                        "param": "20"
+                    }
+                ]
+            },
+            {
+                "attackerId": "1489292",
+                "defenderId": "1489292",
+                "attackerHpPercentage": 100,
+                "defenderHpPercentage": 100,
+                "actions": [
+                    {
+                        "actionType": "tspell",
+                        "param": "Podwójny dech"
+                    },
+                    {
+                        "actionType": "skillId",
+                        "param": "89"
+                    },
+                    {
+                        "actionType": "aura-sa_per",
+                        "param": "20"
+                    }
+                ]
+            },
+            {
+                "attackerId": "1449044",
+                "defenderId": null,
+                "attackerHpPercentage": 69.72,
+                "defenderHpPercentage": null,
+                "actions": [
+                    {
+                        "actionType": "heal",
+                        "param": "1601"
+                    }
+                ]
+            },
+            {
+                "attackerId": "1449044",
+                "defenderId": null,
+                "attackerHpPercentage": 66.13,
+                "defenderHpPercentage": null,
+                "actions": [
+                    {
+                        "actionType": "fire",
+                        "param": "740,8"
+                    }
+                ]
+            },
+            {
+                "attackerId": null,
+                "defenderId": null,
+                "attackerHpPercentage": null,
+                "defenderHpPercentage": null,
+                "actions": [
+                    {
+                        "actionType": "winner",
+                        "param": "?"
+                    }
+                ]
+            },
+            {
+                "attackerId": "1485905",
+                "defenderId": null,
+                "attackerHpPercentage": 100,
+                "defenderHpPercentage": null,
+                "actions": [
+                    {
+                        "actionType": "flee",
+                        "param": ""
+                    }
+                ]
+            }
+        ],
+        "sourceEvents": [
+            {
+                "f": {
+                    "init": "1",
+                    "auto": "0",
+                    "w": {
+                        "1245511": {
+                            "originalId": 1245511,
+                            "name": "Vei Tun",
+                            "lvl": 114,
+                            "prof": "w",
+                            "icon": "/kuf/kuf_mleg-magog.gif",
+                            "team": 2
+                        },
+                        "1389699": {
+                            "originalId": 1389699,
+                            "name": "Fabio Centrao",
+                            "lvl": 114,
+                            "prof": "m",
+                            "icon": "/vip/9198371.gif",
+                            "team": 2
+                        },
+                        "1449044": {
+                            "originalId": 1449044,
+                            "name": "Gaonhur",
+                            "lvl": 114,
+                            "prof": "t",
+                            "icon": "/kuf/her_xxix_wanderer_m3.gif",
+                            "team": 2
+                        },
+                        "1468208": {
+                            "originalId": 1468208,
+                            "name": "Centaszi",
+                            "lvl": 114,
+                            "prof": "p",
+                            "icon": "/eve/g22-pomocnicy-k.gif",
+                            "team": 2
+                        },
+                        "1468312": {
+                            "originalId": 1468312,
+                            "name": "Baghed",
+                            "lvl": 114,
+                            "prof": "m",
+                            "icon": "/kuf/her_xxxiii_nymph_cold_m1.gif",
+                            "team": 2
+                        },
+                        "1468818": {
+                            "originalId": 1468818,
+                            "name": "Highlander Se Ti",
+                            "lvl": 114,
+                            "prof": "t",
+                            "icon": "/kuf/leg_xxv_shadow_m4.gif",
+                            "team": 2
+                        },
+                        "1475956": {
+                            "originalId": 1475956,
+                            "name": "Seyhan",
+                            "lvl": 114,
+                            "prof": "t",
+                            "icon": "/vip/3101558.gif",
+                            "team": 1
+                        },
+                        "1483733": {
+                            "originalId": 1483733,
+                            "name": "Zabalsamowany Szymuś",
+                            "lvl": 114,
+                            "prof": "m",
+                            "icon": "/paid/her_debo_u.gif",
+                            "team": 1
+                        },
+                        "1485905": {
+                            "originalId": 1485905,
+                            "name": "Joachim Kątownik",
+                            "lvl": 114,
+                            "prof": "w",
+                            "icon": "/eve/h24-kociol.gif",
+                            "team": 1
+                        },
+                        "1486365": {
+                            "originalId": 1486365,
+                            "name": "Fuf",
+                            "lvl": 114,
+                            "prof": "h",
+                            "icon": "/eve/maj-nosacz1.gif",
+                            "team": 1
+                        },
+                        "1486539": {
+                            "originalId": 1486539,
+                            "name": "Tepepatcu",
+                            "lvl": 114,
+                            "prof": "h",
+                            "icon": "/eve/kup25-demony-k2.gif",
+                            "team": 1
+                        },
+                        "1488403": {
+                            "originalId": 1488403,
+                            "name": "przeckuj",
+                            "lvl": 114,
+                            "prof": "t",
+                            "icon": "/eve/g25-wedrowiec.gif",
+                            "team": 1
+                        },
+                        "1489098": {
+                            "originalId": 1489098,
+                            "name": "Lafferty na kagańcu",
+                            "lvl": 114,
+                            "prof": "h",
+                            "icon": "/paid/heros-ksiaz-m.gif",
+                            "team": 1
+                        },
+                        "1489101": {
+                            "originalId": 1489101,
+                            "name": "Nieudacznik w Porsche",
+                            "lvl": 114,
+                            "prof": "m",
+                            "icon": "/eve/g25-kurczaki-m.gif",
+                            "team": 1
+                        },
+                        "1489135": {
+                            "originalId": 1489135,
+                            "name": "Exportowy Towar",
+                            "lvl": 114,
+                            "prof": "t",
+                            "icon": "/paid/ll26-m3.gif",
+                            "team": 1
+                        },
+                        "1489292": {
+                            "originalId": 1489292,
+                            "name": "Rebella",
+                            "lvl": 114,
+                            "prof": "t",
+                            "icon": "/eve/w26-bardy-k.gif",
+                            "team": 2
+                        },
+                        "1490123": {
+                            "originalId": 1490123,
+                            "name": "Juicy Line",
+                            "lvl": 114,
+                            "prof": "h",
+                            "icon": "/eve/g22-miko-out-low-m.gif",
+                            "team": 1
+                        },
+                        "1491861": {
+                            "originalId": 1491861,
+                            "name": "Pimpuśsible",
+                            "lvl": 114,
+                            "prof": "h",
+                            "icon": "/paid/bf24-low-m.gif",
+                            "team": 2
+                        },
+                        "1492620": {
+                            "originalId": 1492620,
+                            "name": "Mateusz Żmijewski",
+                            "lvl": 114,
+                            "prof": "w",
+                            "icon": "/clan/classic_20202m.gif",
+                            "team": 2
+                        }
+                    }
+                },
+                "ev": 1788688584.904508
+            },
+            {
+                "f": {
+                    "m": [
+                        "1489098=100.00;1491861=100.00;tspell=Podwójny strzał;skillId=97",
+                        "1489098=100.00;1491861=88.53;+pierce;+dmgd=2356;+acdmg=34;-dmgd=2356",
+                        "1489098=100.00;1491861=80.89;+dmgd=2449;+acdmg=34;-dmgd=1569"
+                    ]
+                },
+                "ev": 1788688588.659803
+            },
+            {
+                "f": {
+                    "m": [
+                        "1486365=100.00;1491861=80.89;tspell=Podwójny strzał;skillId=97",
+                        "1486365=100.00;1491861=73.41;+dmgd=2294;+legbon_curse;+acdmg=26;+legbon_puncture=12;-dmgd=1536",
+                        "1486365=100.00;1491861=62.88;+pierce;+dmgd=2163;+acdmg=26;-dmgd=2163"
+                    ]
+                },
+                "ev": 1788688591.284481
+            },
+            {
+                "f": {
+                    "m": [
+                        "1490123=100.00;1491861=62.88;tspell=Błyskawiczny strzał;skillId=85",
+                        "1490123=100.00;1491861=49.48;+dmgd=3574;-legbon_glare;+acdmg=37;-dmgd=2752"
+                    ]
+                },
+                "ev": 1788688592.752178
+            },
+            {
+                "f": {
+                    "m": [
+                        "1486539=100.00;1491861=49.48;tspell=Podwójny strzał;skillId=97",
+                        "1486539=100.00;1491861=41.92;+fastarrow;+dmgd=2324;+acdmg=23;-dmgd=1552",
+                        "1486539=100.00;1491861=41.92;+dmgd=2444;-evade;-dmgd=0"
+                    ]
+                },
+                "ev": 1788688594.084369
+            },
+            {
+                "f": {
+                    "m": [
+                        "1475956=100.00;1475956=100.00;tspell=Podwójny dech;skillId=89;aura-sa_per=20"
+                    ]
+                },
+                "ev": 1788688595.938488
+            },
+            {
+                "f": {
+                    "m": [
+                        "1488403=100.00;1488403=100.00;tspell=Podwójny dech;skillId=89;aura-sa_per=20"
+                    ]
+                },
+                "ev": 1788688596.478077
+            },
+            {
+                "f": {
+                    "m": [
+                        "1489135=100.00;1491861=41.92;tspell=Podwójne trafienie;skillId=239",
+                        "1489135=100.00;1491861=10.95;+crit;+legbon_verycrit;+dmgd=4280;+dmgl=3366;+acdmg=52;+resdmg=1;-dmgd=3527;-dmgl=2834",
+                        "1489135=100.00;1491861=2.67;+dmgd=1462;+dmgl=1255;-legbon_glare;+acdmg=52;+resdmg=1;-dmgd=821;-dmgl=879"
+                    ]
+                },
+                "ev": 1788688597.006666
+            },
+            {
+                "f": {
+                    "m": [
+                        "1486539=100.00;1491861=0.00;+dmgd=3203;+acdmg=23;-dmgd=2537"
+                    ]
+                },
+                "ev": 1788688598.28541
+            },
+            {
+                "f": {
+                    "m": [
+                        "1483733=100.00;1449044=100.00;tspell=Kula ognia;skillId=21",
+                        "1483733=100.00;1449044=81.23;+dmgf=5673;+acdmg=11;+resdmg=1;-manadest=15;-absorbm=810;+legbon_puncture=12;-legbon_facade=13;-dmgf=3869"
+                    ]
+                },
+                "ev": 1788688600.692886
+            },
+            {
+                "f": {
+                    "m": [
+                        "1489101=100.00;1449044=81.23;tspell=Kula ognia;skillId=21",
+                        "1489101=100.00;1449044=61.95;+dmgf=4991;+resdmg=2;-absorbm=98;+legbon_puncture=12;-dmgf=3973"
+                    ]
+                },
+                "ev": 1788688603.940481
+            },
+            {
+                "f": {
+                    "m": [
+                        "1468818=100.00;1468818=100.00;tspell=Podwójny dech;skillId=89;aura-sa_per=20"
+                    ]
+                },
+                "ev": 1788688608.735284
+            },
+            {
+                "f": {
+                    "m": [
+                        "1489292=100.00;1489292=100.00;tspell=Podwójny dech;skillId=89;aura-sa_per=20",
+                        "1449044=69.72;0;heal=1601",
+                        "1449044=66.13;0;fire=740,8"
+                    ]
+                },
+                "ev": 1788688613.134636
+            },
+            {
+                "f": {
+                    "m": [
+                        "0;0;winner=?",
+                        "1485905=100.00;0;flee"
+                    ],
+                    "endBattle": 1
+                },
+                "ev": 1788688627.434798
+            }
+        ]
+    }
+}

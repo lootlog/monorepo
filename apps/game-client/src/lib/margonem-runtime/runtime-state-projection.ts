@@ -97,6 +97,7 @@ function resolveMap(
 ): RuntimeGameSnapshot["map"] {
   return town
     ? Object.freeze({
+        pvp: town.pvp,
         id: town.id,
         name: town.name,
         visibility: town.visibility,

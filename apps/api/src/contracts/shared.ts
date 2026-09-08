@@ -21,6 +21,8 @@ export const OrganizationSummary = Schema.Struct({
   reservationTimeGranularityMinutes: FiniteNumber,
   reservationMaxAdvanceDays: FiniteNumber,
   reservationActiveLimitPerSpot: FiniteNumber,
+  groupFightsEnabled: Schema.Boolean,
+  groupFightsIncludeIncomplete: Schema.Boolean,
 }).annotate({ identifier: "GuildResponseDto_Output" });
 
 export type SuccessResponse = typeof SuccessResponse.Type;

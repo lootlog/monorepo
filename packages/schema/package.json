@@ -32,7 +32,8 @@
     "./user-preferences": "./src/user-preferences.ts",
     "./records": "./src/records.ts",
     "./http-scalars": "./src/http-scalars.ts",
-    "./numbers": "./src/numbers.ts"
+    "./numbers": "./src/numbers.ts",
+    "./group-fights": "./src/group-fights.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",

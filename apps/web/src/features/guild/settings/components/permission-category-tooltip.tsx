@@ -42,7 +42,9 @@ export const PermissionCategoryTooltip = ({
       />
       <TooltipContent side={side} className="max-w-xs">
         <div className="space-y-1">
-          <p className="font-semibold text-sm">{category.name}</p>
+          <p className="font-semibold text-sm">
+            {t(`permissions.groups.${category.groupKey}.name`)}
+          </p>
           <ul className="text-xs space-y-0.5">
             {activePermissions.map((permission) => (
               <li key={permission} className="flex items-start gap-1.5">

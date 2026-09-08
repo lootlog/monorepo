@@ -55,6 +55,7 @@ const mainRoutes: ReadonlyArray<readonly [string, RegExp]> = [
     /^\/messaging\/party-gathering\/[^/]+\/(applications\/me|participants)$/,
   ],
   ["POST", /^\/(loots|kills)$/],
+  ["POST", /^\/group-fights$/],
   ["PATCH", /^\/loots\/\d+$/],
 ];
 

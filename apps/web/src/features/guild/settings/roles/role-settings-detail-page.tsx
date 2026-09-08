@@ -114,7 +114,7 @@ export const RoleSettingsDetailPage = () => {
 
                     return (
                       <PermissionCategoryTooltip
-                        key={category.name}
+                        key={category.groupKey}
                         category={category}
                         activePermissions={activePermissions}
                         side="bottom"

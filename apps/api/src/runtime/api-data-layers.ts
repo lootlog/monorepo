@@ -18,6 +18,7 @@ import {
   accountOrganizationOperationsLive,
 } from "#src/runtime/features/organizations";
 import { Layer } from "effect";
+import { GroupFightsData } from "#src/http-api/handlers/group-fights/group-fights.handlers";
 import { ApiDatabaseLive } from "#src/database/drizzle/database";
 import { DocsData } from "#src/http-api/handlers/docs/docs.handlers";
 import { LootlogConfigData } from "#src/http-api/handlers/lootlog-config/lootlog-config.handlers";
@@ -51,6 +52,7 @@ import { MyReservationsData } from "#src/http-api/handlers/organization-workspac
 import { timersData } from "#src/runtime/features/timers";
 
 const coreDataLayers = Layer.mergeAll(
+  GroupFightsData.layerDatabase,
   MapTemplatesData.layerDatabase,
   LootlogConfigData.layerDatabase,
   SettingsData.layerDatabase,

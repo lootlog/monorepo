@@ -23,6 +23,7 @@ import { EventsGroup } from "./contracts/events/api.js";
 import { MapsGroup } from "./contracts/maps/api.js";
 import { MapTemplatesGroup } from "./contracts/map-templates/api.js";
 import { KillsGroup } from "./contracts/kills/api.js";
+import { GroupFightsGroup } from "./contracts/group-fights/api.js";
 import { GuildStatsCardGroup } from "./contracts/guild-stats-card/api.js";
 import { PublicGuildStatsCardGroup } from "./contracts/public-guild-stats-card/api.js";
 import { DocsGroup } from "./contracts/docs/api.js";
@@ -56,6 +57,7 @@ export class LootlogApi extends HttpApi.make("LootlogApi")
     MapsGroup,
     MapTemplatesGroup,
     KillsGroup,
+    GroupFightsGroup,
     GuildStatsCardGroup,
     PublicGuildStatsCardGroup,
     DocsGroup,

@@ -472,17 +472,22 @@ const operations = (document: OpenApiDocument): Map<string, JsonValue> => {
   return result;
 };
 
-const removePresencePermission = (value: JsonValue): JsonValue => {
+const removeAddedPermissions = (value: JsonValue): JsonValue => {
   if (Array.isArray(value)) {
     return value
-      .filter((item) => item !== "LOOTLOG_PRESENCE_LOCATION_READ")
-      .map(removePresencePermission);
+      .filter(
+        (item) =>
+          item !== "LOOTLOG_PRESENCE_LOCATION_READ" &&
+          item !== "LOOTLOG_GROUP_FIGHTS_READ" &&
+          item !== "LOOTLOG_GROUP_FIGHTS_WRITE",
+      )
+      .map(removeAddedPermissions);
   }
   if (value !== null && typeof value === "object") {
     return Object.fromEntries(
       Object.entries(value).map(([key, item]) => [
         key,
-        removePresencePermission(item),
+        removeAddedPermissions(item),
       ]),
     );
   }
@@ -695,7 +700,7 @@ export const normalizeAllowedChanges = (
   operation: JsonValue,
 ): JsonValue => {
   let normalized = operation;
-  if (service === "api") normalized = removePresencePermission(normalized);
+  if (service === "api") normalized = removeAddedPermissions(normalized);
   normalized = normalizeErrorResponseMigrations(
     service,
     operationKey,
@@ -820,6 +825,7 @@ const assertTicketOperation = (operation: JsonValue | undefined): void => {
 // Intentional private additions verified against real persistence and authorization tests:
 // activity/src/online/online-repository.integration.test.ts;
 // api/test/kill-analytics.integration.test.ts, user-feed.integration.test.ts and records.operations.test.ts.
+// Group fights: api/test/group-fights.integration.test.ts and http-boundary.e2e-spec.ts.
 const PERSONAL_ANALYTICS_ADDITIONS: Record<
   string,
   Record<string, JsonValue>
@@ -860,6 +866,123 @@ const PERSONAL_ANALYTICS_ADDITIONS: Record<
     },
   },
   api: {
+    "POST /group-fights": {
+      operationId: "GroupFightsController_createGroupFight",
+      parameters: [],
+      security: [{ bearer: [] }],
+      requestBody: {
+        required: true,
+        content: {
+          "application/json": {
+            schema: { $ref: "#/components/schemas/CreateGroupFightDto" },
+          },
+        },
+      },
+      responses: {
+        "201": {
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/CreateGroupFightResponseDto_Output",
+              },
+            },
+          },
+        },
+        "400": {
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/HttpErrorResponse" },
+            },
+          },
+        },
+      },
+    },
+    ...Object.fromEntries(
+      [
+        [
+          "/ranking",
+          "getGuildGroupFightRanking",
+          "GuildGroupFightRankingResponseDto_Output",
+        ],
+        ["", "getGuildGroupFights", "GuildGroupFightsResponseDto_Output"],
+        [
+          "/{fightId}",
+          "getGuildGroupFight",
+          "GroupFightDetailResponseDto_Output",
+        ],
+      ].map(([suffix, method, response]): [string, JsonValue] => [
+        `GET /guilds/{guildId}/group-fights${suffix}`,
+        {
+          operationId: `GroupFightsController_${method}`,
+          security: [{ bearer: [] }],
+          parameters: [
+            {
+              name: "guildId",
+              in: "path",
+              required: true,
+              schema: { type: "string", minLength: 1 },
+            },
+            ...(suffix === "/{fightId}"
+              ? [
+                  {
+                    name: "fightId",
+                    in: "path",
+                    required: true,
+                    schema: { type: "string", minLength: 1 },
+                  },
+                ]
+              : [
+                  {
+                    name: "world",
+                    in: "query",
+                    required: false,
+                    schema: { type: "string" },
+                  },
+                  {
+                    name: "period",
+                    in: "query",
+                    required: false,
+                    schema: { $ref: "#/components/schemas/GroupFightPeriod" },
+                  },
+                ]),
+            ...(suffix === ""
+              ? ["cursor", "limit"].map((name) => ({
+                  name,
+                  in: "query",
+                  required: false,
+                  schema: {
+                    type: "string",
+                    pattern: "^[+-]?\\d*\\.?\\d+(?:[Ee][+-]?\\d+)?$",
+                  },
+                }))
+              : []),
+          ],
+          responses: {
+            "200": {
+              content: {
+                "application/json": {
+                  schema: { $ref: `#/components/schemas/${response}` },
+                },
+              },
+            },
+            ...Object.fromEntries(
+              ["403", "404"].map((status) => [
+                status,
+                {
+                  content: {
+                    "application/json": {
+                      schema: {
+                        $ref: "#/components/schemas/HttpErrorResponse",
+                      },
+                    },
+                  },
+                },
+              ]),
+            ),
+          },
+        },
+      ]),
+    ),
     "GET /users/@me/feed": {
       operationId: "UsersController_getUserFeed",
       parameters: [],

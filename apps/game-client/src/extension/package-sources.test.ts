@@ -59,7 +59,7 @@ async function repository() {
   await symlink(
     path.resolve(import.meta.dirname, "../../node_modules"),
     path.join(client, "node_modules"),
-    "dir",
+    process.platform === "win32" ? "junction" : "dir",
   );
   const archive = path.join(
     client,

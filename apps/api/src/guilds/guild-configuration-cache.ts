@@ -13,6 +13,19 @@ interface GuildConfigurationCache {
   ) => Effect.Effect<void, unknown>;
 }
 
+export const decodeGuildConfigurationCache = (value: string) => {
+  const guild = decodeJsonUnknown(value);
+  if (
+    !Predicate.isObject(guild) ||
+    Array.isArray(guild) ||
+    typeof guild.groupFightsEnabled !== "boolean" ||
+    typeof guild.groupFightsIncludeIncomplete !== "boolean"
+  ) {
+    throw new Error("Invalid or outdated guild cache");
+  }
+  return { ...guild, ...resolveReservationSettings(guild) };
+};
+
 export const readGuildConfigurationCache = Effect.fnUntraced(function* (
   cache: GuildConfigurationCache,
   idOrVanityUrl: string,
@@ -21,10 +34,7 @@ export const readGuildConfigurationCache = Effect.fnUntraced(function* (
   const cached = yield* cache.get(key);
   if (!cached) return null;
   try {
-    const guild = decodeJsonUnknown(cached);
-    if (!Predicate.isObject(guild) || Array.isArray(guild))
-      throw new Error("Invalid guild cache");
-    return { ...guild, ...resolveReservationSettings(guild) };
+    return decodeGuildConfigurationCache(cached);
   } catch {
     yield* cache.del(key);
     return null;

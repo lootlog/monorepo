@@ -1,6 +1,7 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BattlePanelSettingsTab } from "@/features/settings/components/battle-panel/battle-panel-settings-tab";
+import { GroupFightsSettingsTab } from "@/features/settings/components/group-fights/group-fights-settings-tab";
 import { CatchingSettings } from "@/features/settings/components/catching/catching-settings";
 import { ChatAppearanceSettingsForm } from "@/features/settings/components/chat/chat-appearance-settings";
 import { DebugTab } from "@/features/settings/components/debug/debug-tab";
@@ -86,6 +87,8 @@ const getSettingsContent = (subsection: SettingsSubsectionValue): ReactNode => {
       return <DetectorSettingsTab />;
     case "battle-panel":
       return <BattlePanelSettingsTab />;
+    case "group-fights":
+      return <GroupFightsSettingsTab />;
     case "notification-rules":
       return <NotificationsSettingsTab />;
     case "notification-mutes":

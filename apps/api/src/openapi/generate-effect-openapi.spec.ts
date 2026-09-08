@@ -22,7 +22,7 @@ it("exports current source contracts without depending on compiled output", asyn
     await symlink(
       path.join(appDirectory, "node_modules"),
       path.join(fixture, "node_modules"),
-      "dir",
+      process.platform === "win32" ? "junction" : "dir",
     );
     const generate = async () => {
       const child = Bun.spawn([process.execPath, "run", "openapi:generate"], {

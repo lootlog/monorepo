@@ -53,6 +53,8 @@ const guild = {
   vanityUrl: null,
   ownerId: "discord-owner",
   publicStatsCardEnabled: false,
+  groupFightsEnabled: true,
+  groupFightsIncludeIncomplete: true,
   reservationMaxDurationMinutes: 120,
   reservationMinDurationMinutes: 15,
   reservationTimeGranularityMinutes: 15,
@@ -233,6 +235,8 @@ describe("Users and Guilds HttpApi handlers", () => {
     const response = await Effect.runPromise(
       updateGuildConfiguration("guild-alias", {
         publicStatsCardEnabled: false,
+        groupFightsEnabled: true,
+        groupFightsIncludeIncomplete: true,
       }).pipe(Effect.provide(layer)),
     );
 
