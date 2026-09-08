@@ -1,4 +1,5 @@
 import { BunHttpServer } from "@effect/platform-bun";
+import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
 import {
   httpServerMetrics,
   httpServerRouteMetrics,
@@ -41,6 +42,7 @@ export const LootlogApiRoutes = HttpApiBuilder.layer(LootlogApi, {
 }).pipe(
   Layer.provide(LootlogApiHandlers),
   Layer.provide(ForwardAuthMiddlewareLive),
+  Layer.provide(apiKeyEndpointPolicyLayer("main")),
 );
 
 /** Complete in-process router used by both the Bun server and HTTP integration tests. */

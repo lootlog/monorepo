@@ -1,4 +1,5 @@
 import { Effect, Layer } from "effect";
+import { readApiKeyAccess } from "@lootlog/schema/api-key-policy";
 import { HttpServerRequest, HttpServerResponse } from "effect/unstable/http";
 import { BearerSecurityMiddleware } from "#src/http-api/contracts/shared";
 import {
@@ -16,8 +17,11 @@ export const readForwardAuthIdentity = (
   const discordId = headers[DISCORD_ID_HEADER]?.trim();
 
   if (!userId || !discordId) return undefined;
-
-  return { userId, discordId };
+  const apiKey = readApiKeyAccess(headers);
+  if (apiKey === null) return undefined;
+  return apiKey === undefined
+    ? { userId, discordId }
+    : { userId, discordId, apiKey };
 };
 
 export const forwardAuthMiddleware = BearerSecurityMiddleware.of({

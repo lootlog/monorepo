@@ -6,7 +6,7 @@ import { useGlobalStore } from "@/store/global.store";
 import type { Emitter } from "./emitter";
 import { groupTimersByGuild, mapGuilds, mapTimers } from "./mappers";
 import { queryKeys } from "./query-keys";
-import type { ApiEventMap, ApiEventName } from "./types";
+import type { ApiEventMap, ApiEventName } from "@lootlog/game-client-api";
 import type { PublicOnlinePlayersController } from "./online-players-controller";
 
 type Unsubscribe = () => void;

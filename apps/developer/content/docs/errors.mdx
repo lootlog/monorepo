@@ -1,0 +1,17 @@
+---
+title: Błędy i limity
+description: Rozróżniaj brak dostępu, limit żądań i niedostępność usługi.
+---
+
+| Status | Działanie integracji                                                                         |
+| ------ | -------------------------------------------------------------------------------------------- |
+| `400`  | Popraw dane według schematu operacji                                                         |
+| `401`  | Sprawdź sekret, ważność i środowisko; nie ponawiaj automatycznie                             |
+| `403`  | Sprawdź zakres klucza i aktualne uprawnienia użytkownika                                     |
+| `404`  | Zasób nie istnieje lub nie jest widoczny; nie traktuj tego jako potwierdzenia jego istnienia |
+| `429`  | Zaczekaj zgodnie z `Retry-After`, zanim ponowisz żądanie                                     |
+| `5xx`  | Usługa jest niedostępna; pokaż stan błędu i ostrożnie ponów odczyt                           |
+
+Limit początkowy wynosi 120 żądań na minutę na klucz. Nadal obowiązują limity konkretnych operacji. Nie obchodź ich przez tworzenie kolejnych kluczy.
+
+Nie zamieniaj błędu pobierania danych na pustą listę. Zachowaj ostatni odczyt jako nieaktualny albo pokaż brak danych. Dla zapisów utrata odpowiedzi nie dowodzi, że operacja się nie powiodła.

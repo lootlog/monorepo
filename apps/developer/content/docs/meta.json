@@ -1,0 +1,13 @@
+{
+  "title": "Lootlog Developers",
+  "pages": [
+    "index",
+    "game-client",
+    "http",
+    "keys",
+    "realtime",
+    "sdk",
+    "errors",
+    "changelog"
+  ]
+}

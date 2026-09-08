@@ -16,7 +16,7 @@ import { mapOnlinePlayers } from "./mappers";
 import type {
   PublicOnlinePlayersChangedEvent,
   PublicOnlinePlayersResult,
-} from "./types";
+} from "@lootlog/game-client-api";
 
 type Unsubscribe = () => void;
 

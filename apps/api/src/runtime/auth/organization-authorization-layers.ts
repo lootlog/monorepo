@@ -1,5 +1,6 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Effect, Layer } from "effect";
+import { apiKeyAllowsOrganization } from "@lootlog/schema/api-key-policy";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import type { Permission as PermissionValue } from "@lootlog/schema/permissions";
 import {
@@ -102,6 +103,7 @@ const resolveAccess = (
 
     if (
       context === null ||
+      !apiKeyAllowsOrganization(identity.apiKey, context.guildId) ||
       !hasPermissions(context.permissions, requirements)
     ) {
       return yield* new OrganizationForbidden();

@@ -1,0 +1,25 @@
+---
+title: Twórz z Lootlogiem
+description: Dwie ścieżki integracji — dodatek działający w grze i aplikacja korzystająca z serwerowego API.
+---
+
+## Dodatek do Margonem
+
+Piszesz userscript? Zainstalowany Lootlog udostępnia `window.lootlogGameClientApi` w kontekście strony gry. Korzystasz z danych i połączenia gracza, bez klucza API, npm i SDK.
+
+[Przejdź do API game-clienta](/docs/game-client).
+
+## Integracja serwerowa
+
+Bot, skrypt lub własna aplikacja serwerowa korzysta z HTTP i WebSocket. Utwórz osobisty klucz dla wybranych Organizacji. Jego uprawnienia nigdy nie przekraczają Twoich aktualnych uprawnień.
+
+[Zacznij od HTTP](/docs/http), [utwórz klucz](/keys) lub [przeglądaj referencję Scalar](/reference).
+
+## Środowiska
+
+| Portal                     | Usługi                                                                                                     |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `dev-developer.lootlog.pl` | `dev-api`, `dev-auth`, `dev-gateway`, `dev-activity`, `dev-battlelog`, `dev-search` w domenie `lootlog.pl` |
+| `developer.lootlog.pl`     | Te same hosty bez przedrostka `dev-`                                                                       |
+
+Klucze twórz osobno w każdym środowisku. Najpierw przetestuj integrację na dev. Nie umieszczaj klucza serwerowego w userscripcie, kodzie frontendowym ani publicznym repozytorium.

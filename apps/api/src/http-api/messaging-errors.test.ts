@@ -1,3 +1,4 @@
+import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { afterAll, expect, it } from "bun:test";
@@ -109,6 +110,7 @@ const boundary = HttpRouter.toWebHandler(
     ),
     HttpRouter.provideRequest(services),
     Layer.provide(BunHttpServer.layerHttpServices),
+    Layer.provide(apiKeyEndpointPolicyLayer("main")),
   ),
   { disableLogger: true },
 );

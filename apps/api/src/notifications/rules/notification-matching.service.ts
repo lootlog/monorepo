@@ -96,54 +96,60 @@ export const notificationMatchingPolicy = {
     }),
 };
 
-export const makeNotificationMatching = (database: ApiDatabaseValue) => {
-  const activeMemberships = Effect.fn(
-    "notifications.matching.activeMemberships",
-  )(function* (ownerIds: string[], guildIds: ReadonlyArray<string>) {
-    const uniqueOwnerIds = [...new Set(ownerIds)];
-    const uniqueGuildIds = [...new Set(guildIds)];
-    const result = new Map<string, NotificationMemberRoleInfo[]>();
-    if (uniqueOwnerIds.length === 0 || uniqueGuildIds.length === 0)
-      return result;
-    const memberships = yield* database
-      .select({ member: memberTable, guildOwnerId: guildTable.ownerId })
-      .from(memberTable)
-      .innerJoin(guildTable, eq(memberTable.guildId, guildTable.id))
-      .where(
-        and(
-          inArray(memberTable.userId, uniqueOwnerIds),
-          inArray(memberTable.guildId, uniqueGuildIds),
-          eq(memberTable.active, true),
-        ),
-      );
-    const memberIds = memberships.map(({ member }) => member.id);
-    const roleRows =
-      memberIds.length === 0
-        ? []
-        : yield* database
-            .select({ memberId: memberToRoleTable.A, role: roleTable })
-            .from(memberToRoleTable)
-            .innerJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
-            .where(inArray(memberToRoleTable.A, memberIds));
-    for (const { member, guildOwnerId } of memberships) {
-      const values = result.get(member.userId) ?? [];
-      values.push({
-        guildId: member.guildId,
-        isGuildOwner: guildOwnerId === member.userId,
-        roles: roleRows
-          .filter(({ memberId }) => memberId === member.id)
-          .map(({ role }) => ({
-            id: role.id,
-            permissions: role.permissions,
-            lvlRangeFrom: role.lvlRangeFrom,
-            lvlRangeTo: role.lvlRangeTo,
-          })),
-      });
-      result.set(member.userId, values);
-    }
-    return result;
-  });
-  return { ...notificationMatchingPolicy, activeMemberships };
-};
+export const selectNotificationMemberships = Effect.fn(
+  "notifications.matching.activeMemberships",
+)(function* (
+  database: ApiDatabaseValue,
+  ownerIds: string[],
+  guildIds: ReadonlyArray<string>,
+) {
+  const uniqueOwnerIds = [...new Set(ownerIds)];
+  const uniqueGuildIds = [...new Set(guildIds)];
+  const result = new Map<string, NotificationMemberRoleInfo[]>();
+  if (uniqueOwnerIds.length === 0 || uniqueGuildIds.length === 0) return result;
+  const memberships = yield* database
+    .select({ member: memberTable, guildOwnerId: guildTable.ownerId })
+    .from(memberTable)
+    .innerJoin(guildTable, eq(memberTable.guildId, guildTable.id))
+    .where(
+      and(
+        inArray(memberTable.userId, uniqueOwnerIds),
+        inArray(memberTable.guildId, uniqueGuildIds),
+        eq(memberTable.active, true),
+      ),
+    );
+  const memberIds = memberships.map(({ member }) => member.id);
+  const roleRows =
+    memberIds.length === 0
+      ? []
+      : yield* database
+          .select({ memberId: memberToRoleTable.A, role: roleTable })
+          .from(memberToRoleTable)
+          .innerJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
+          .where(inArray(memberToRoleTable.A, memberIds));
+  for (const { member, guildOwnerId } of memberships) {
+    const values = result.get(member.userId) ?? [];
+    values.push({
+      guildId: member.guildId,
+      isGuildOwner: guildOwnerId === member.userId,
+      roles: roleRows
+        .filter(({ memberId }) => memberId === member.id)
+        .map(({ role }) => ({
+          id: role.id,
+          permissions: role.permissions,
+          lvlRangeFrom: role.lvlRangeFrom,
+          lvlRangeTo: role.lvlRangeTo,
+        })),
+    });
+    result.set(member.userId, values);
+  }
+  return result;
+});
+
+export const makeNotificationMatching = (database: ApiDatabaseValue) => ({
+  ...notificationMatchingPolicy,
+  activeMemberships: (ownerIds: string[], guildIds: ReadonlyArray<string>) =>
+    selectNotificationMemberships(database, ownerIds, guildIds),
+});
 
 export type NotificationMatching = ReturnType<typeof makeNotificationMatching>;

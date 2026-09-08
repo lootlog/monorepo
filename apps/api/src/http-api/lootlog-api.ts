@@ -1,5 +1,6 @@
 /** Authoritative composition root for the Lootlog HTTP contract. */
 import { HttpApi, OpenApi } from "effect/unstable/httpapi";
+import { ApiKeyEndpointPolicy } from "@lootlog/schema/api-key-http";
 import { UsersGroup } from "./contracts/users/api.js";
 import { MembersGroup } from "./contracts/members/api.js";
 import { GuildsGroup } from "./contracts/guilds/api.js";
@@ -59,4 +60,5 @@ export class LootlogApi extends HttpApi.make("LootlogApi")
     GuildStatsCardGroup,
     PublicGuildStatsCardGroup,
     DocsGroup,
-  ) {}
+  )
+  .middleware(ApiKeyEndpointPolicy) {}

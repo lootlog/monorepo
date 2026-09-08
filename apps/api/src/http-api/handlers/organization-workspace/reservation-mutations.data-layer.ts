@@ -1,10 +1,10 @@
 import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import { visibleReservationGuildIds } from "#src/reservations/reservation-visibility-query";
-import { activeGuildMemberJoin } from "#src/members/member-access-query";
+import { apiKeyOrganizationFilter } from "#src/runtime/auth/organization-scope";
+import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { randomUUID } from "node:crypto";
 import {
   and,
-  arrayOverlaps,
   count,
   desc,
   eq,
@@ -17,19 +17,17 @@ import {
 } from "drizzle-orm";
 import { Clock, Effect, Layer } from "effect";
 import { resolveReservationSettings } from "@lootlog/domain/reservations";
-import { Permission } from "@lootlog/schema/permissions";
+
 import type { ReservationChangedEventV2 } from "@lootlog/schema/reservation-events";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   guildTable,
   memberTable,
-  memberToRoleTable,
   notificationJobTable,
   notificationRuleTable,
   notificationRuleTargetTable,
   notificationTargetTable,
   reservationTable,
-  roleTable,
 } from "#src/database/drizzle/schema";
 import { NotificationJobKind } from "#src/notifications/notification-enums";
 import { formatDiscordRelativeTimestamp } from "#src/notifications/content/discord-timestamp";
@@ -101,22 +99,9 @@ const accessibleGuildIds = (
   database: typeof ApiDatabase.Service,
   discordId: string,
 ) =>
-  database
-    .selectDistinct({ id: guildTable.id })
-    .from(guildTable)
-    .leftJoin(memberTable, activeGuildMemberJoin(discordId))
-    .leftJoin(memberToRoleTable, eq(memberToRoleTable.A, memberTable.id))
-    .leftJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
-    .where(
-      and(
-        eq(guildTable.active, true),
-        or(
-          eq(guildTable.ownerId, discordId),
-          arrayOverlaps(roleTable.permissions, [Permission.LOOTLOG_ACCESS]),
-        ),
-      ),
-    )
-    .pipe(Effect.map((guilds) => guilds.map(({ id }) => id)));
+  selectAccessibleGuilds(database, discordId).pipe(
+    Effect.map((rows) => rows.map(({ guild }) => guild.id)),
+  );
 
 const findReservationWithGuild = (
   database: typeof ApiDatabase.Service,
@@ -455,17 +440,23 @@ export const makeReservationMutationsDataLayer = (
           .pipe(Effect.map((rows) => rows[0] ?? null));
 
       const findVisible = (reservationId: number, guildIds: string[]) =>
-        database
-          .select()
-          .from(reservationTable)
-          .where(
-            and(
-              eq(reservationTable.id, reservationId),
-              inArray(reservationTable.guildId, guildIds),
-            ),
-          )
-          .limit(1)
-          .pipe(Effect.map((rows) => rows[0] ?? null));
+        Effect.gen(function* () {
+          const keyScope = yield* apiKeyOrganizationFilter(
+            reservationTable.guildId,
+          );
+          return yield* database
+            .select()
+            .from(reservationTable)
+            .where(
+              and(
+                keyScope,
+                eq(reservationTable.id, reservationId),
+                inArray(reservationTable.guildId, guildIds),
+              ),
+            )
+            .limit(1)
+            .pipe(Effect.map((rows) => rows[0] ?? null));
+        });
 
       const findOwned = (options: {
         readonly reservationId: number;

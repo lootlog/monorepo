@@ -1,3 +1,4 @@
+import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { describe, expect, it, vi } from "bun:test";
 import { Effect } from "effect";
 import type { SettingsDocumentsRepositoryService } from "./settings-documents.repository.js";
@@ -16,6 +17,56 @@ const createRepository = () => ({
 });
 
 describe("settings documents Effect module", () => {
+  it("rejects out-of-key guild scopes before reading or writing any settings", async () => {
+    const repository = createRepository();
+    const service = makeSettingsDocuments(repository);
+    const identity = {
+      userId: "user-1",
+      discordId: "discord-1",
+      apiKey: {
+        keyId: "key-1",
+        organizationIds: ["1"],
+        mode: "read-write" as const,
+        personalData: true,
+        expiresAt: null,
+      },
+    };
+    await expect(
+      Effect.runPromise(
+        service
+          .getPreferences("user-1", {
+            domains: ["timers"],
+            guildId: "2",
+          })
+          .pipe(Effect.provideService(ForwardAuthIdentity, identity)),
+      ),
+    ).rejects.toThrow("outside the API key scope");
+    await expect(
+      Effect.runPromise(
+        service
+          .patchPreferences("user-1", {
+            operations: [
+              {
+                domain: "timers",
+                scope: { type: "USER", id: "user-1" },
+                set: { showTimers: false },
+                unset: [],
+              },
+              {
+                domain: "timers",
+                scope: { type: "GUILD", id: "2" },
+                set: {},
+                unset: [],
+              },
+            ],
+          })
+          .pipe(Effect.provideService(ForwardAuthIdentity, identity)),
+      ),
+    ).rejects.toThrow("outside the API key scope");
+    expect(repository.findDocuments).not.toHaveBeenCalled();
+    expect(repository.applyOperations).not.toHaveBeenCalled();
+  });
+
   it("allows guild settings for an active member linked to the user", async () => {
     const repository = createRepository();
     const service = makeSettingsDocuments(repository);

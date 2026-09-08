@@ -259,6 +259,18 @@ export type HealthzControllerCheck200 = {
   details?: HealthzControllerCheck200Details;
 };
 
+export type HealthzControllerCheck401 = {
+  message: string;
+};
+
+export type HealthzControllerCheck403 = {
+  message: string;
+};
+
+export type HealthzControllerCheck429 = {
+  message: string;
+};
+
 /**
  * @nullable
  */
@@ -327,6 +339,18 @@ export const ActivitiesControllerFindByGuildSourceItem = {
   WEB_APP: 'WEB_APP',
 } as const;
 
+export type ActivitiesControllerFindByGuild401 = {
+  message: string;
+};
+
+export type ActivitiesControllerFindByGuild403 = {
+  message: string;
+};
+
+export type ActivitiesControllerFindByGuild429 = {
+  message: string;
+};
+
 export type ActivitiesControllerFindByGuild503StatusCode = typeof ActivitiesControllerFindByGuild503StatusCode[keyof typeof ActivitiesControllerFindByGuild503StatusCode];
 
 
@@ -352,6 +376,18 @@ search?: string;
  * @maximum 50
  */
 limit?: number;
+};
+
+export type ActivitiesControllerSuggestActorNames401 = {
+  message: string;
+};
+
+export type ActivitiesControllerSuggestActorNames403 = {
+  message: string;
+};
+
+export type ActivitiesControllerSuggestActorNames429 = {
+  message: string;
 };
 
 export type ActivitiesControllerSuggestActorNames503StatusCode = typeof ActivitiesControllerSuggestActorNames503StatusCode[keyof typeof ActivitiesControllerSuggestActorNames503StatusCode];
@@ -381,6 +417,18 @@ search?: string;
 limit?: number;
 };
 
+export type ActivitiesControllerSuggestWorlds401 = {
+  message: string;
+};
+
+export type ActivitiesControllerSuggestWorlds403 = {
+  message: string;
+};
+
+export type ActivitiesControllerSuggestWorlds429 = {
+  message: string;
+};
+
 export type ActivitiesControllerSuggestWorlds503StatusCode = typeof ActivitiesControllerSuggestWorlds503StatusCode[keyof typeof ActivitiesControllerSuggestWorlds503StatusCode];
 
 
@@ -406,6 +454,18 @@ search?: string;
  * @maximum 50
  */
 limit?: number;
+};
+
+export type ActivitiesControllerSuggestClanNames401 = {
+  message: string;
+};
+
+export type ActivitiesControllerSuggestClanNames403 = {
+  message: string;
+};
+
+export type ActivitiesControllerSuggestClanNames429 = {
+  message: string;
 };
 
 export type ActivitiesControllerSuggestClanNames503StatusCode = typeof ActivitiesControllerSuggestClanNames503StatusCode[keyof typeof ActivitiesControllerSuggestClanNames503StatusCode];
@@ -462,6 +522,18 @@ export const ActivitiesControllerFindByUserSourceItem = {
   WEB_APP: 'WEB_APP',
 } as const;
 
+export type ActivitiesControllerFindByUser401 = {
+  message: string;
+};
+
+export type ActivitiesControllerFindByUser403 = {
+  message: string;
+};
+
+export type ActivitiesControllerFindByUser429 = {
+  message: string;
+};
+
 export type ActivitiesControllerFindByUser503StatusCode = typeof ActivitiesControllerFindByUser503StatusCode[keyof typeof ActivitiesControllerFindByUser503StatusCode];
 
 
@@ -477,6 +549,18 @@ export type ActivitiesControllerFindByUser503 = {
 export type ActivitiesControllerGetMemberActivityStatsPathParameters = {
  guildId: string,
  }
+export type ActivitiesControllerGetMemberActivityStats401 = {
+  message: string;
+};
+
+export type ActivitiesControllerGetMemberActivityStats403 = {
+  message: string;
+};
+
+export type ActivitiesControllerGetMemberActivityStats429 = {
+  message: string;
+};
+
 export type ActivitiesControllerGetMemberActivityStats503StatusCode = typeof ActivitiesControllerGetMemberActivityStats503StatusCode[keyof typeof ActivitiesControllerGetMemberActivityStats503StatusCode];
 
 
@@ -493,6 +577,18 @@ export type ActivitiesControllerFindOnePathParameters = {
  guildId: string,
     id: string,
  }
+export type ActivitiesControllerFindOne401 = {
+  message: string;
+};
+
+export type ActivitiesControllerFindOne403 = {
+  message: string;
+};
+
+export type ActivitiesControllerFindOne429 = {
+  message: string;
+};
+
 export type ActivitiesControllerFindOne503StatusCode = typeof ActivitiesControllerFindOne503StatusCode[keyof typeof ActivitiesControllerFindOne503StatusCode];
 
 
@@ -509,6 +605,18 @@ export type ActivitiesControllerDeleteActivityPathParameters = {
  guildId: string,
     id: string,
  }
+export type ActivitiesControllerDeleteActivity401 = {
+  message: string;
+};
+
+export type ActivitiesControllerDeleteActivity403 = {
+  message: string;
+};
+
+export type ActivitiesControllerDeleteActivity429 = {
+  message: string;
+};
+
 export type ActivitiesControllerDeleteActivity503StatusCode = typeof ActivitiesControllerDeleteActivity503StatusCode[keyof typeof ActivitiesControllerDeleteActivity503StatusCode];
 
 
@@ -526,16 +634,19 @@ from: string;
 to: string;
 };
 
-export type UsersActivityControllerGetOnline401StatusCode = typeof UsersActivityControllerGetOnline401StatusCode[keyof typeof UsersActivityControllerGetOnline401StatusCode];
-
-
-export const UsersActivityControllerGetOnline401StatusCode = {
-  NUMBER_401: 401,
-} as const;
-
 export type UsersActivityControllerGetOnline401 = {
   message: string;
-  statusCode: UsersActivityControllerGetOnline401StatusCode;
+  statusCode: 401;
+} | {
+  message: string;
+};
+
+export type UsersActivityControllerGetOnline403 = {
+  message: string;
+};
+
+export type UsersActivityControllerGetOnline429 = {
+  message: string;
 };
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -591,7 +702,7 @@ export const getHealthzControllerCheckQueryKey = () => {
     }
 
 
-export const getHealthzControllerCheckQueryOptions = <TData = Awaited<ReturnType<typeof healthzControllerCheck>>, TError = ErrorType<HealthzControllerCheck503>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthzControllerCheck>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
+export const getHealthzControllerCheckQueryOptions = <TData = Awaited<ReturnType<typeof healthzControllerCheck>>, TError = ErrorType<HealthzControllerCheck401 | HealthzControllerCheck403 | HealthzControllerCheck429 | HealthzControllerCheck503>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthzControllerCheck>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -610,10 +721,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type HealthzControllerCheckQueryResult = NonNullable<Awaited<ReturnType<typeof healthzControllerCheck>>>
-export type HealthzControllerCheckQueryError = ErrorType<HealthzControllerCheck503>
+export type HealthzControllerCheckQueryError = ErrorType<HealthzControllerCheck401 | HealthzControllerCheck403 | HealthzControllerCheck429 | HealthzControllerCheck503>
 
 
-export function useHealthzControllerCheck<TData = Awaited<ReturnType<typeof healthzControllerCheck>>, TError = ErrorType<HealthzControllerCheck503>>(
+export function useHealthzControllerCheck<TData = Awaited<ReturnType<typeof healthzControllerCheck>>, TError = ErrorType<HealthzControllerCheck401 | HealthzControllerCheck403 | HealthzControllerCheck429 | HealthzControllerCheck503>>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthzControllerCheck>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof healthzControllerCheck>>,
@@ -623,7 +734,7 @@ export function useHealthzControllerCheck<TData = Awaited<ReturnType<typeof heal
       >, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useHealthzControllerCheck<TData = Awaited<ReturnType<typeof healthzControllerCheck>>, TError = ErrorType<HealthzControllerCheck503>>(
+export function useHealthzControllerCheck<TData = Awaited<ReturnType<typeof healthzControllerCheck>>, TError = ErrorType<HealthzControllerCheck401 | HealthzControllerCheck403 | HealthzControllerCheck429 | HealthzControllerCheck503>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthzControllerCheck>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof healthzControllerCheck>>,
@@ -633,7 +744,7 @@ export function useHealthzControllerCheck<TData = Awaited<ReturnType<typeof heal
       >, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useHealthzControllerCheck<TData = Awaited<ReturnType<typeof healthzControllerCheck>>, TError = ErrorType<HealthzControllerCheck503>>(
+export function useHealthzControllerCheck<TData = Awaited<ReturnType<typeof healthzControllerCheck>>, TError = ErrorType<HealthzControllerCheck401 | HealthzControllerCheck403 | HealthzControllerCheck429 | HealthzControllerCheck503>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthzControllerCheck>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -641,7 +752,7 @@ export function useHealthzControllerCheck<TData = Awaited<ReturnType<typeof heal
  * @summary Health check
  */
 
-export function useHealthzControllerCheck<TData = Awaited<ReturnType<typeof healthzControllerCheck>>, TError = ErrorType<HealthzControllerCheck503>>(
+export function useHealthzControllerCheck<TData = Awaited<ReturnType<typeof healthzControllerCheck>>, TError = ErrorType<HealthzControllerCheck401 | HealthzControllerCheck403 | HealthzControllerCheck429 | HealthzControllerCheck503>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthzControllerCheck>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -656,7 +767,7 @@ export function useHealthzControllerCheck<TData = Awaited<ReturnType<typeof heal
 /**
  * @summary Health check
  */
-export const prefetchHealthzControllerCheckQuery = async <TData = Awaited<ReturnType<typeof healthzControllerCheck>>, TError = ErrorType<HealthzControllerCheck503>>(
+export const prefetchHealthzControllerCheckQuery = async <TData = Awaited<ReturnType<typeof healthzControllerCheck>>, TError = ErrorType<HealthzControllerCheck401 | HealthzControllerCheck403 | HealthzControllerCheck429 | HealthzControllerCheck503>>(
  queryClient: QueryClient,  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthzControllerCheck>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
 
   ): Promise<QueryClient> => {
@@ -752,7 +863,7 @@ export const getActivitiesControllerFindByGuildQueryKey = ({ guildId }: Activiti
     }
 
 
-export const getActivitiesControllerFindByGuildQueryOptions = <TData = Awaited<ReturnType<typeof activitiesControllerFindByGuild>>, TError = ErrorType<ActivitiesControllerFindByGuild503>>({ guildId }: ActivitiesControllerFindByGuildPathParameters,
+export const getActivitiesControllerFindByGuildQueryOptions = <TData = Awaited<ReturnType<typeof activitiesControllerFindByGuild>>, TError = ErrorType<ActivitiesControllerFindByGuild401 | ActivitiesControllerFindByGuild403 | ActivitiesControllerFindByGuild429 | ActivitiesControllerFindByGuild503>>({ guildId }: ActivitiesControllerFindByGuildPathParameters,
     params?: ActivitiesControllerFindByGuildParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindByGuild>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
 ) => {
 
@@ -772,10 +883,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ActivitiesControllerFindByGuildQueryResult = NonNullable<Awaited<ReturnType<typeof activitiesControllerFindByGuild>>>
-export type ActivitiesControllerFindByGuildQueryError = ErrorType<ActivitiesControllerFindByGuild503>
+export type ActivitiesControllerFindByGuildQueryError = ErrorType<ActivitiesControllerFindByGuild401 | ActivitiesControllerFindByGuild403 | ActivitiesControllerFindByGuild429 | ActivitiesControllerFindByGuild503>
 
 
-export function useActivitiesControllerFindByGuild<TData = Awaited<ReturnType<typeof activitiesControllerFindByGuild>>, TError = ErrorType<ActivitiesControllerFindByGuild503>>(
+export function useActivitiesControllerFindByGuild<TData = Awaited<ReturnType<typeof activitiesControllerFindByGuild>>, TError = ErrorType<ActivitiesControllerFindByGuild401 | ActivitiesControllerFindByGuild403 | ActivitiesControllerFindByGuild429 | ActivitiesControllerFindByGuild503>>(
  pathParams: ActivitiesControllerFindByGuildPathParameters,
     params: undefined |  ActivitiesControllerFindByGuildParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindByGuild>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -786,7 +897,7 @@ export function useActivitiesControllerFindByGuild<TData = Awaited<ReturnType<ty
       >, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useActivitiesControllerFindByGuild<TData = Awaited<ReturnType<typeof activitiesControllerFindByGuild>>, TError = ErrorType<ActivitiesControllerFindByGuild503>>(
+export function useActivitiesControllerFindByGuild<TData = Awaited<ReturnType<typeof activitiesControllerFindByGuild>>, TError = ErrorType<ActivitiesControllerFindByGuild401 | ActivitiesControllerFindByGuild403 | ActivitiesControllerFindByGuild429 | ActivitiesControllerFindByGuild503>>(
  pathParams: ActivitiesControllerFindByGuildPathParameters,
     params?: ActivitiesControllerFindByGuildParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindByGuild>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -797,7 +908,7 @@ export function useActivitiesControllerFindByGuild<TData = Awaited<ReturnType<ty
       >, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useActivitiesControllerFindByGuild<TData = Awaited<ReturnType<typeof activitiesControllerFindByGuild>>, TError = ErrorType<ActivitiesControllerFindByGuild503>>(
+export function useActivitiesControllerFindByGuild<TData = Awaited<ReturnType<typeof activitiesControllerFindByGuild>>, TError = ErrorType<ActivitiesControllerFindByGuild401 | ActivitiesControllerFindByGuild403 | ActivitiesControllerFindByGuild429 | ActivitiesControllerFindByGuild503>>(
  pathParams: ActivitiesControllerFindByGuildPathParameters,
     params?: ActivitiesControllerFindByGuildParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindByGuild>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
@@ -806,7 +917,7 @@ export function useActivitiesControllerFindByGuild<TData = Awaited<ReturnType<ty
  * @summary Get activities for a specific guild
  */
 
-export function useActivitiesControllerFindByGuild<TData = Awaited<ReturnType<typeof activitiesControllerFindByGuild>>, TError = ErrorType<ActivitiesControllerFindByGuild503>>(
+export function useActivitiesControllerFindByGuild<TData = Awaited<ReturnType<typeof activitiesControllerFindByGuild>>, TError = ErrorType<ActivitiesControllerFindByGuild401 | ActivitiesControllerFindByGuild403 | ActivitiesControllerFindByGuild429 | ActivitiesControllerFindByGuild503>>(
  { guildId }: ActivitiesControllerFindByGuildPathParameters,
     params?: ActivitiesControllerFindByGuildParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindByGuild>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
@@ -822,7 +933,7 @@ export function useActivitiesControllerFindByGuild<TData = Awaited<ReturnType<ty
 /**
  * @summary Get activities for a specific guild
  */
-export const prefetchActivitiesControllerFindByGuildQuery = async <TData = Awaited<ReturnType<typeof activitiesControllerFindByGuild>>, TError = ErrorType<ActivitiesControllerFindByGuild503>>(
+export const prefetchActivitiesControllerFindByGuildQuery = async <TData = Awaited<ReturnType<typeof activitiesControllerFindByGuild>>, TError = ErrorType<ActivitiesControllerFindByGuild401 | ActivitiesControllerFindByGuild403 | ActivitiesControllerFindByGuild429 | ActivitiesControllerFindByGuild503>>(
  queryClient: QueryClient, { guildId }: ActivitiesControllerFindByGuildPathParameters,
     params?: ActivitiesControllerFindByGuildParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindByGuild>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
 
@@ -914,7 +1025,7 @@ export const getActivitiesControllerSuggestActorNamesQueryKey = ({ guildId }: Ac
     }
 
 
-export const getActivitiesControllerSuggestActorNamesQueryOptions = <TData = Awaited<ReturnType<typeof activitiesControllerSuggestActorNames>>, TError = ErrorType<ActivitiesControllerSuggestActorNames503>>({ guildId }: ActivitiesControllerSuggestActorNamesPathParameters,
+export const getActivitiesControllerSuggestActorNamesQueryOptions = <TData = Awaited<ReturnType<typeof activitiesControllerSuggestActorNames>>, TError = ErrorType<ActivitiesControllerSuggestActorNames401 | ActivitiesControllerSuggestActorNames403 | ActivitiesControllerSuggestActorNames429 | ActivitiesControllerSuggestActorNames503>>({ guildId }: ActivitiesControllerSuggestActorNamesPathParameters,
     params?: ActivitiesControllerSuggestActorNamesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerSuggestActorNames>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
 ) => {
 
@@ -934,10 +1045,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ActivitiesControllerSuggestActorNamesQueryResult = NonNullable<Awaited<ReturnType<typeof activitiesControllerSuggestActorNames>>>
-export type ActivitiesControllerSuggestActorNamesQueryError = ErrorType<ActivitiesControllerSuggestActorNames503>
+export type ActivitiesControllerSuggestActorNamesQueryError = ErrorType<ActivitiesControllerSuggestActorNames401 | ActivitiesControllerSuggestActorNames403 | ActivitiesControllerSuggestActorNames429 | ActivitiesControllerSuggestActorNames503>
 
 
-export function useActivitiesControllerSuggestActorNames<TData = Awaited<ReturnType<typeof activitiesControllerSuggestActorNames>>, TError = ErrorType<ActivitiesControllerSuggestActorNames503>>(
+export function useActivitiesControllerSuggestActorNames<TData = Awaited<ReturnType<typeof activitiesControllerSuggestActorNames>>, TError = ErrorType<ActivitiesControllerSuggestActorNames401 | ActivitiesControllerSuggestActorNames403 | ActivitiesControllerSuggestActorNames429 | ActivitiesControllerSuggestActorNames503>>(
  pathParams: ActivitiesControllerSuggestActorNamesPathParameters,
     params: undefined |  ActivitiesControllerSuggestActorNamesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerSuggestActorNames>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -948,7 +1059,7 @@ export function useActivitiesControllerSuggestActorNames<TData = Awaited<ReturnT
       >, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useActivitiesControllerSuggestActorNames<TData = Awaited<ReturnType<typeof activitiesControllerSuggestActorNames>>, TError = ErrorType<ActivitiesControllerSuggestActorNames503>>(
+export function useActivitiesControllerSuggestActorNames<TData = Awaited<ReturnType<typeof activitiesControllerSuggestActorNames>>, TError = ErrorType<ActivitiesControllerSuggestActorNames401 | ActivitiesControllerSuggestActorNames403 | ActivitiesControllerSuggestActorNames429 | ActivitiesControllerSuggestActorNames503>>(
  pathParams: ActivitiesControllerSuggestActorNamesPathParameters,
     params?: ActivitiesControllerSuggestActorNamesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerSuggestActorNames>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -959,7 +1070,7 @@ export function useActivitiesControllerSuggestActorNames<TData = Awaited<ReturnT
       >, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useActivitiesControllerSuggestActorNames<TData = Awaited<ReturnType<typeof activitiesControllerSuggestActorNames>>, TError = ErrorType<ActivitiesControllerSuggestActorNames503>>(
+export function useActivitiesControllerSuggestActorNames<TData = Awaited<ReturnType<typeof activitiesControllerSuggestActorNames>>, TError = ErrorType<ActivitiesControllerSuggestActorNames401 | ActivitiesControllerSuggestActorNames403 | ActivitiesControllerSuggestActorNames429 | ActivitiesControllerSuggestActorNames503>>(
  pathParams: ActivitiesControllerSuggestActorNamesPathParameters,
     params?: ActivitiesControllerSuggestActorNamesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerSuggestActorNames>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
@@ -968,7 +1079,7 @@ export function useActivitiesControllerSuggestActorNames<TData = Awaited<ReturnT
  * @summary Get actor name suggestions for a guild
  */
 
-export function useActivitiesControllerSuggestActorNames<TData = Awaited<ReturnType<typeof activitiesControllerSuggestActorNames>>, TError = ErrorType<ActivitiesControllerSuggestActorNames503>>(
+export function useActivitiesControllerSuggestActorNames<TData = Awaited<ReturnType<typeof activitiesControllerSuggestActorNames>>, TError = ErrorType<ActivitiesControllerSuggestActorNames401 | ActivitiesControllerSuggestActorNames403 | ActivitiesControllerSuggestActorNames429 | ActivitiesControllerSuggestActorNames503>>(
  { guildId }: ActivitiesControllerSuggestActorNamesPathParameters,
     params?: ActivitiesControllerSuggestActorNamesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerSuggestActorNames>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
@@ -984,7 +1095,7 @@ export function useActivitiesControllerSuggestActorNames<TData = Awaited<ReturnT
 /**
  * @summary Get actor name suggestions for a guild
  */
-export const prefetchActivitiesControllerSuggestActorNamesQuery = async <TData = Awaited<ReturnType<typeof activitiesControllerSuggestActorNames>>, TError = ErrorType<ActivitiesControllerSuggestActorNames503>>(
+export const prefetchActivitiesControllerSuggestActorNamesQuery = async <TData = Awaited<ReturnType<typeof activitiesControllerSuggestActorNames>>, TError = ErrorType<ActivitiesControllerSuggestActorNames401 | ActivitiesControllerSuggestActorNames403 | ActivitiesControllerSuggestActorNames429 | ActivitiesControllerSuggestActorNames503>>(
  queryClient: QueryClient, { guildId }: ActivitiesControllerSuggestActorNamesPathParameters,
     params?: ActivitiesControllerSuggestActorNamesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerSuggestActorNames>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
 
@@ -1076,7 +1187,7 @@ export const getActivitiesControllerSuggestWorldsQueryKey = ({ guildId }: Activi
     }
 
 
-export const getActivitiesControllerSuggestWorldsQueryOptions = <TData = Awaited<ReturnType<typeof activitiesControllerSuggestWorlds>>, TError = ErrorType<ActivitiesControllerSuggestWorlds503>>({ guildId }: ActivitiesControllerSuggestWorldsPathParameters,
+export const getActivitiesControllerSuggestWorldsQueryOptions = <TData = Awaited<ReturnType<typeof activitiesControllerSuggestWorlds>>, TError = ErrorType<ActivitiesControllerSuggestWorlds401 | ActivitiesControllerSuggestWorlds403 | ActivitiesControllerSuggestWorlds429 | ActivitiesControllerSuggestWorlds503>>({ guildId }: ActivitiesControllerSuggestWorldsPathParameters,
     params?: ActivitiesControllerSuggestWorldsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerSuggestWorlds>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
 ) => {
 
@@ -1096,10 +1207,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ActivitiesControllerSuggestWorldsQueryResult = NonNullable<Awaited<ReturnType<typeof activitiesControllerSuggestWorlds>>>
-export type ActivitiesControllerSuggestWorldsQueryError = ErrorType<ActivitiesControllerSuggestWorlds503>
+export type ActivitiesControllerSuggestWorldsQueryError = ErrorType<ActivitiesControllerSuggestWorlds401 | ActivitiesControllerSuggestWorlds403 | ActivitiesControllerSuggestWorlds429 | ActivitiesControllerSuggestWorlds503>
 
 
-export function useActivitiesControllerSuggestWorlds<TData = Awaited<ReturnType<typeof activitiesControllerSuggestWorlds>>, TError = ErrorType<ActivitiesControllerSuggestWorlds503>>(
+export function useActivitiesControllerSuggestWorlds<TData = Awaited<ReturnType<typeof activitiesControllerSuggestWorlds>>, TError = ErrorType<ActivitiesControllerSuggestWorlds401 | ActivitiesControllerSuggestWorlds403 | ActivitiesControllerSuggestWorlds429 | ActivitiesControllerSuggestWorlds503>>(
  pathParams: ActivitiesControllerSuggestWorldsPathParameters,
     params: undefined |  ActivitiesControllerSuggestWorldsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerSuggestWorlds>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -1110,7 +1221,7 @@ export function useActivitiesControllerSuggestWorlds<TData = Awaited<ReturnType<
       >, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useActivitiesControllerSuggestWorlds<TData = Awaited<ReturnType<typeof activitiesControllerSuggestWorlds>>, TError = ErrorType<ActivitiesControllerSuggestWorlds503>>(
+export function useActivitiesControllerSuggestWorlds<TData = Awaited<ReturnType<typeof activitiesControllerSuggestWorlds>>, TError = ErrorType<ActivitiesControllerSuggestWorlds401 | ActivitiesControllerSuggestWorlds403 | ActivitiesControllerSuggestWorlds429 | ActivitiesControllerSuggestWorlds503>>(
  pathParams: ActivitiesControllerSuggestWorldsPathParameters,
     params?: ActivitiesControllerSuggestWorldsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerSuggestWorlds>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -1121,7 +1232,7 @@ export function useActivitiesControllerSuggestWorlds<TData = Awaited<ReturnType<
       >, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useActivitiesControllerSuggestWorlds<TData = Awaited<ReturnType<typeof activitiesControllerSuggestWorlds>>, TError = ErrorType<ActivitiesControllerSuggestWorlds503>>(
+export function useActivitiesControllerSuggestWorlds<TData = Awaited<ReturnType<typeof activitiesControllerSuggestWorlds>>, TError = ErrorType<ActivitiesControllerSuggestWorlds401 | ActivitiesControllerSuggestWorlds403 | ActivitiesControllerSuggestWorlds429 | ActivitiesControllerSuggestWorlds503>>(
  pathParams: ActivitiesControllerSuggestWorldsPathParameters,
     params?: ActivitiesControllerSuggestWorldsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerSuggestWorlds>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
@@ -1130,7 +1241,7 @@ export function useActivitiesControllerSuggestWorlds<TData = Awaited<ReturnType<
  * @summary Get world suggestions for a guild
  */
 
-export function useActivitiesControllerSuggestWorlds<TData = Awaited<ReturnType<typeof activitiesControllerSuggestWorlds>>, TError = ErrorType<ActivitiesControllerSuggestWorlds503>>(
+export function useActivitiesControllerSuggestWorlds<TData = Awaited<ReturnType<typeof activitiesControllerSuggestWorlds>>, TError = ErrorType<ActivitiesControllerSuggestWorlds401 | ActivitiesControllerSuggestWorlds403 | ActivitiesControllerSuggestWorlds429 | ActivitiesControllerSuggestWorlds503>>(
  { guildId }: ActivitiesControllerSuggestWorldsPathParameters,
     params?: ActivitiesControllerSuggestWorldsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerSuggestWorlds>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
@@ -1146,7 +1257,7 @@ export function useActivitiesControllerSuggestWorlds<TData = Awaited<ReturnType<
 /**
  * @summary Get world suggestions for a guild
  */
-export const prefetchActivitiesControllerSuggestWorldsQuery = async <TData = Awaited<ReturnType<typeof activitiesControllerSuggestWorlds>>, TError = ErrorType<ActivitiesControllerSuggestWorlds503>>(
+export const prefetchActivitiesControllerSuggestWorldsQuery = async <TData = Awaited<ReturnType<typeof activitiesControllerSuggestWorlds>>, TError = ErrorType<ActivitiesControllerSuggestWorlds401 | ActivitiesControllerSuggestWorlds403 | ActivitiesControllerSuggestWorlds429 | ActivitiesControllerSuggestWorlds503>>(
  queryClient: QueryClient, { guildId }: ActivitiesControllerSuggestWorldsPathParameters,
     params?: ActivitiesControllerSuggestWorldsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerSuggestWorlds>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
 
@@ -1238,7 +1349,7 @@ export const getActivitiesControllerSuggestClanNamesQueryKey = ({ guildId }: Act
     }
 
 
-export const getActivitiesControllerSuggestClanNamesQueryOptions = <TData = Awaited<ReturnType<typeof activitiesControllerSuggestClanNames>>, TError = ErrorType<ActivitiesControllerSuggestClanNames503>>({ guildId }: ActivitiesControllerSuggestClanNamesPathParameters,
+export const getActivitiesControllerSuggestClanNamesQueryOptions = <TData = Awaited<ReturnType<typeof activitiesControllerSuggestClanNames>>, TError = ErrorType<ActivitiesControllerSuggestClanNames401 | ActivitiesControllerSuggestClanNames403 | ActivitiesControllerSuggestClanNames429 | ActivitiesControllerSuggestClanNames503>>({ guildId }: ActivitiesControllerSuggestClanNamesPathParameters,
     params?: ActivitiesControllerSuggestClanNamesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerSuggestClanNames>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
 ) => {
 
@@ -1258,10 +1369,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ActivitiesControllerSuggestClanNamesQueryResult = NonNullable<Awaited<ReturnType<typeof activitiesControllerSuggestClanNames>>>
-export type ActivitiesControllerSuggestClanNamesQueryError = ErrorType<ActivitiesControllerSuggestClanNames503>
+export type ActivitiesControllerSuggestClanNamesQueryError = ErrorType<ActivitiesControllerSuggestClanNames401 | ActivitiesControllerSuggestClanNames403 | ActivitiesControllerSuggestClanNames429 | ActivitiesControllerSuggestClanNames503>
 
 
-export function useActivitiesControllerSuggestClanNames<TData = Awaited<ReturnType<typeof activitiesControllerSuggestClanNames>>, TError = ErrorType<ActivitiesControllerSuggestClanNames503>>(
+export function useActivitiesControllerSuggestClanNames<TData = Awaited<ReturnType<typeof activitiesControllerSuggestClanNames>>, TError = ErrorType<ActivitiesControllerSuggestClanNames401 | ActivitiesControllerSuggestClanNames403 | ActivitiesControllerSuggestClanNames429 | ActivitiesControllerSuggestClanNames503>>(
  pathParams: ActivitiesControllerSuggestClanNamesPathParameters,
     params: undefined |  ActivitiesControllerSuggestClanNamesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerSuggestClanNames>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -1272,7 +1383,7 @@ export function useActivitiesControllerSuggestClanNames<TData = Awaited<ReturnTy
       >, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useActivitiesControllerSuggestClanNames<TData = Awaited<ReturnType<typeof activitiesControllerSuggestClanNames>>, TError = ErrorType<ActivitiesControllerSuggestClanNames503>>(
+export function useActivitiesControllerSuggestClanNames<TData = Awaited<ReturnType<typeof activitiesControllerSuggestClanNames>>, TError = ErrorType<ActivitiesControllerSuggestClanNames401 | ActivitiesControllerSuggestClanNames403 | ActivitiesControllerSuggestClanNames429 | ActivitiesControllerSuggestClanNames503>>(
  pathParams: ActivitiesControllerSuggestClanNamesPathParameters,
     params?: ActivitiesControllerSuggestClanNamesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerSuggestClanNames>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -1283,7 +1394,7 @@ export function useActivitiesControllerSuggestClanNames<TData = Awaited<ReturnTy
       >, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useActivitiesControllerSuggestClanNames<TData = Awaited<ReturnType<typeof activitiesControllerSuggestClanNames>>, TError = ErrorType<ActivitiesControllerSuggestClanNames503>>(
+export function useActivitiesControllerSuggestClanNames<TData = Awaited<ReturnType<typeof activitiesControllerSuggestClanNames>>, TError = ErrorType<ActivitiesControllerSuggestClanNames401 | ActivitiesControllerSuggestClanNames403 | ActivitiesControllerSuggestClanNames429 | ActivitiesControllerSuggestClanNames503>>(
  pathParams: ActivitiesControllerSuggestClanNamesPathParameters,
     params?: ActivitiesControllerSuggestClanNamesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerSuggestClanNames>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
@@ -1292,7 +1403,7 @@ export function useActivitiesControllerSuggestClanNames<TData = Awaited<ReturnTy
  * @summary Get clan name suggestions for a guild
  */
 
-export function useActivitiesControllerSuggestClanNames<TData = Awaited<ReturnType<typeof activitiesControllerSuggestClanNames>>, TError = ErrorType<ActivitiesControllerSuggestClanNames503>>(
+export function useActivitiesControllerSuggestClanNames<TData = Awaited<ReturnType<typeof activitiesControllerSuggestClanNames>>, TError = ErrorType<ActivitiesControllerSuggestClanNames401 | ActivitiesControllerSuggestClanNames403 | ActivitiesControllerSuggestClanNames429 | ActivitiesControllerSuggestClanNames503>>(
  { guildId }: ActivitiesControllerSuggestClanNamesPathParameters,
     params?: ActivitiesControllerSuggestClanNamesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerSuggestClanNames>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
@@ -1308,7 +1419,7 @@ export function useActivitiesControllerSuggestClanNames<TData = Awaited<ReturnTy
 /**
  * @summary Get clan name suggestions for a guild
  */
-export const prefetchActivitiesControllerSuggestClanNamesQuery = async <TData = Awaited<ReturnType<typeof activitiesControllerSuggestClanNames>>, TError = ErrorType<ActivitiesControllerSuggestClanNames503>>(
+export const prefetchActivitiesControllerSuggestClanNamesQuery = async <TData = Awaited<ReturnType<typeof activitiesControllerSuggestClanNames>>, TError = ErrorType<ActivitiesControllerSuggestClanNames401 | ActivitiesControllerSuggestClanNames403 | ActivitiesControllerSuggestClanNames429 | ActivitiesControllerSuggestClanNames503>>(
  queryClient: QueryClient, { guildId }: ActivitiesControllerSuggestClanNamesPathParameters,
     params?: ActivitiesControllerSuggestClanNamesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerSuggestClanNames>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
 
@@ -1408,7 +1519,7 @@ export const getActivitiesControllerFindByUserQueryKey = ({ guildId, userId }: A
     }
 
 
-export const getActivitiesControllerFindByUserQueryOptions = <TData = Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError = ErrorType<ActivitiesControllerFindByUser503>>({ guildId, userId }: ActivitiesControllerFindByUserPathParameters,
+export const getActivitiesControllerFindByUserQueryOptions = <TData = Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError = ErrorType<ActivitiesControllerFindByUser401 | ActivitiesControllerFindByUser403 | ActivitiesControllerFindByUser429 | ActivitiesControllerFindByUser503>>({ guildId, userId }: ActivitiesControllerFindByUserPathParameters,
     params?: ActivitiesControllerFindByUserParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
 ) => {
 
@@ -1428,10 +1539,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ActivitiesControllerFindByUserQueryResult = NonNullable<Awaited<ReturnType<typeof activitiesControllerFindByUser>>>
-export type ActivitiesControllerFindByUserQueryError = ErrorType<ActivitiesControllerFindByUser503>
+export type ActivitiesControllerFindByUserQueryError = ErrorType<ActivitiesControllerFindByUser401 | ActivitiesControllerFindByUser403 | ActivitiesControllerFindByUser429 | ActivitiesControllerFindByUser503>
 
 
-export function useActivitiesControllerFindByUser<TData = Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError = ErrorType<ActivitiesControllerFindByUser503>>(
+export function useActivitiesControllerFindByUser<TData = Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError = ErrorType<ActivitiesControllerFindByUser401 | ActivitiesControllerFindByUser403 | ActivitiesControllerFindByUser429 | ActivitiesControllerFindByUser503>>(
  pathParams: ActivitiesControllerFindByUserPathParameters,
     params: undefined |  ActivitiesControllerFindByUserParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -1442,7 +1553,7 @@ export function useActivitiesControllerFindByUser<TData = Awaited<ReturnType<typ
       >, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useActivitiesControllerFindByUser<TData = Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError = ErrorType<ActivitiesControllerFindByUser503>>(
+export function useActivitiesControllerFindByUser<TData = Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError = ErrorType<ActivitiesControllerFindByUser401 | ActivitiesControllerFindByUser403 | ActivitiesControllerFindByUser429 | ActivitiesControllerFindByUser503>>(
  pathParams: ActivitiesControllerFindByUserPathParameters,
     params?: ActivitiesControllerFindByUserParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -1453,7 +1564,7 @@ export function useActivitiesControllerFindByUser<TData = Awaited<ReturnType<typ
       >, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useActivitiesControllerFindByUser<TData = Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError = ErrorType<ActivitiesControllerFindByUser503>>(
+export function useActivitiesControllerFindByUser<TData = Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError = ErrorType<ActivitiesControllerFindByUser401 | ActivitiesControllerFindByUser403 | ActivitiesControllerFindByUser429 | ActivitiesControllerFindByUser503>>(
  pathParams: ActivitiesControllerFindByUserPathParameters,
     params?: ActivitiesControllerFindByUserParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
@@ -1462,7 +1573,7 @@ export function useActivitiesControllerFindByUser<TData = Awaited<ReturnType<typ
  * @summary Get activities for a specific user in a guild
  */
 
-export function useActivitiesControllerFindByUser<TData = Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError = ErrorType<ActivitiesControllerFindByUser503>>(
+export function useActivitiesControllerFindByUser<TData = Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError = ErrorType<ActivitiesControllerFindByUser401 | ActivitiesControllerFindByUser403 | ActivitiesControllerFindByUser429 | ActivitiesControllerFindByUser503>>(
  { guildId, userId }: ActivitiesControllerFindByUserPathParameters,
     params?: ActivitiesControllerFindByUserParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
@@ -1478,7 +1589,7 @@ export function useActivitiesControllerFindByUser<TData = Awaited<ReturnType<typ
 /**
  * @summary Get activities for a specific user in a guild
  */
-export const prefetchActivitiesControllerFindByUserQuery = async <TData = Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError = ErrorType<ActivitiesControllerFindByUser503>>(
+export const prefetchActivitiesControllerFindByUserQuery = async <TData = Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError = ErrorType<ActivitiesControllerFindByUser401 | ActivitiesControllerFindByUser403 | ActivitiesControllerFindByUser429 | ActivitiesControllerFindByUser503>>(
  queryClient: QueryClient, { guildId, userId }: ActivitiesControllerFindByUserPathParameters,
     params?: ActivitiesControllerFindByUserParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindByUser>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
 
@@ -1560,7 +1671,7 @@ export const getActivitiesControllerGetMemberActivityStatsQueryKey = ({ guildId 
     }
 
 
-export const getActivitiesControllerGetMemberActivityStatsQueryOptions = <TData = Awaited<ReturnType<typeof activitiesControllerGetMemberActivityStats>>, TError = ErrorType<ActivitiesControllerGetMemberActivityStats503>>({ guildId }: ActivitiesControllerGetMemberActivityStatsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerGetMemberActivityStats>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
+export const getActivitiesControllerGetMemberActivityStatsQueryOptions = <TData = Awaited<ReturnType<typeof activitiesControllerGetMemberActivityStats>>, TError = ErrorType<ActivitiesControllerGetMemberActivityStats401 | ActivitiesControllerGetMemberActivityStats403 | ActivitiesControllerGetMemberActivityStats429 | ActivitiesControllerGetMemberActivityStats503>>({ guildId }: ActivitiesControllerGetMemberActivityStatsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerGetMemberActivityStats>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -1579,10 +1690,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ActivitiesControllerGetMemberActivityStatsQueryResult = NonNullable<Awaited<ReturnType<typeof activitiesControllerGetMemberActivityStats>>>
-export type ActivitiesControllerGetMemberActivityStatsQueryError = ErrorType<ActivitiesControllerGetMemberActivityStats503>
+export type ActivitiesControllerGetMemberActivityStatsQueryError = ErrorType<ActivitiesControllerGetMemberActivityStats401 | ActivitiesControllerGetMemberActivityStats403 | ActivitiesControllerGetMemberActivityStats429 | ActivitiesControllerGetMemberActivityStats503>
 
 
-export function useActivitiesControllerGetMemberActivityStats<TData = Awaited<ReturnType<typeof activitiesControllerGetMemberActivityStats>>, TError = ErrorType<ActivitiesControllerGetMemberActivityStats503>>(
+export function useActivitiesControllerGetMemberActivityStats<TData = Awaited<ReturnType<typeof activitiesControllerGetMemberActivityStats>>, TError = ErrorType<ActivitiesControllerGetMemberActivityStats401 | ActivitiesControllerGetMemberActivityStats403 | ActivitiesControllerGetMemberActivityStats429 | ActivitiesControllerGetMemberActivityStats503>>(
  pathParams: ActivitiesControllerGetMemberActivityStatsPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerGetMemberActivityStats>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof activitiesControllerGetMemberActivityStats>>,
@@ -1592,7 +1703,7 @@ export function useActivitiesControllerGetMemberActivityStats<TData = Awaited<Re
       >, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useActivitiesControllerGetMemberActivityStats<TData = Awaited<ReturnType<typeof activitiesControllerGetMemberActivityStats>>, TError = ErrorType<ActivitiesControllerGetMemberActivityStats503>>(
+export function useActivitiesControllerGetMemberActivityStats<TData = Awaited<ReturnType<typeof activitiesControllerGetMemberActivityStats>>, TError = ErrorType<ActivitiesControllerGetMemberActivityStats401 | ActivitiesControllerGetMemberActivityStats403 | ActivitiesControllerGetMemberActivityStats429 | ActivitiesControllerGetMemberActivityStats503>>(
  pathParams: ActivitiesControllerGetMemberActivityStatsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerGetMemberActivityStats>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof activitiesControllerGetMemberActivityStats>>,
@@ -1602,7 +1713,7 @@ export function useActivitiesControllerGetMemberActivityStats<TData = Awaited<Re
       >, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useActivitiesControllerGetMemberActivityStats<TData = Awaited<ReturnType<typeof activitiesControllerGetMemberActivityStats>>, TError = ErrorType<ActivitiesControllerGetMemberActivityStats503>>(
+export function useActivitiesControllerGetMemberActivityStats<TData = Awaited<ReturnType<typeof activitiesControllerGetMemberActivityStats>>, TError = ErrorType<ActivitiesControllerGetMemberActivityStats401 | ActivitiesControllerGetMemberActivityStats403 | ActivitiesControllerGetMemberActivityStats429 | ActivitiesControllerGetMemberActivityStats503>>(
  pathParams: ActivitiesControllerGetMemberActivityStatsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerGetMemberActivityStats>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -1610,7 +1721,7 @@ export function useActivitiesControllerGetMemberActivityStats<TData = Awaited<Re
  * @summary Get activity stats for guild members by source
  */
 
-export function useActivitiesControllerGetMemberActivityStats<TData = Awaited<ReturnType<typeof activitiesControllerGetMemberActivityStats>>, TError = ErrorType<ActivitiesControllerGetMemberActivityStats503>>(
+export function useActivitiesControllerGetMemberActivityStats<TData = Awaited<ReturnType<typeof activitiesControllerGetMemberActivityStats>>, TError = ErrorType<ActivitiesControllerGetMemberActivityStats401 | ActivitiesControllerGetMemberActivityStats403 | ActivitiesControllerGetMemberActivityStats429 | ActivitiesControllerGetMemberActivityStats503>>(
  { guildId }: ActivitiesControllerGetMemberActivityStatsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerGetMemberActivityStats>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -1625,7 +1736,7 @@ export function useActivitiesControllerGetMemberActivityStats<TData = Awaited<Re
 /**
  * @summary Get activity stats for guild members by source
  */
-export const prefetchActivitiesControllerGetMemberActivityStatsQuery = async <TData = Awaited<ReturnType<typeof activitiesControllerGetMemberActivityStats>>, TError = ErrorType<ActivitiesControllerGetMemberActivityStats503>>(
+export const prefetchActivitiesControllerGetMemberActivityStatsQuery = async <TData = Awaited<ReturnType<typeof activitiesControllerGetMemberActivityStats>>, TError = ErrorType<ActivitiesControllerGetMemberActivityStats401 | ActivitiesControllerGetMemberActivityStats403 | ActivitiesControllerGetMemberActivityStats429 | ActivitiesControllerGetMemberActivityStats503>>(
  queryClient: QueryClient, { guildId }: ActivitiesControllerGetMemberActivityStatsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerGetMemberActivityStats>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
 
   ): Promise<QueryClient> => {
@@ -1703,7 +1814,7 @@ export const getActivitiesControllerFindOneQueryKey = ({ guildId, id }: Activiti
     }
 
 
-export const getActivitiesControllerFindOneQueryOptions = <TData = Awaited<ReturnType<typeof activitiesControllerFindOne>>, TError = ErrorType<void | ActivitiesControllerFindOne503>>({ guildId, id }: ActivitiesControllerFindOnePathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindOne>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
+export const getActivitiesControllerFindOneQueryOptions = <TData = Awaited<ReturnType<typeof activitiesControllerFindOne>>, TError = ErrorType<ActivitiesControllerFindOne401 | ActivitiesControllerFindOne403 | void | ActivitiesControllerFindOne429 | ActivitiesControllerFindOne503>>({ guildId, id }: ActivitiesControllerFindOnePathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindOne>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -1722,10 +1833,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ActivitiesControllerFindOneQueryResult = NonNullable<Awaited<ReturnType<typeof activitiesControllerFindOne>>>
-export type ActivitiesControllerFindOneQueryError = ErrorType<void | ActivitiesControllerFindOne503>
+export type ActivitiesControllerFindOneQueryError = ErrorType<ActivitiesControllerFindOne401 | ActivitiesControllerFindOne403 | void | ActivitiesControllerFindOne429 | ActivitiesControllerFindOne503>
 
 
-export function useActivitiesControllerFindOne<TData = Awaited<ReturnType<typeof activitiesControllerFindOne>>, TError = ErrorType<void | ActivitiesControllerFindOne503>>(
+export function useActivitiesControllerFindOne<TData = Awaited<ReturnType<typeof activitiesControllerFindOne>>, TError = ErrorType<ActivitiesControllerFindOne401 | ActivitiesControllerFindOne403 | void | ActivitiesControllerFindOne429 | ActivitiesControllerFindOne503>>(
  pathParams: ActivitiesControllerFindOnePathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindOne>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof activitiesControllerFindOne>>,
@@ -1735,7 +1846,7 @@ export function useActivitiesControllerFindOne<TData = Awaited<ReturnType<typeof
       >, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useActivitiesControllerFindOne<TData = Awaited<ReturnType<typeof activitiesControllerFindOne>>, TError = ErrorType<void | ActivitiesControllerFindOne503>>(
+export function useActivitiesControllerFindOne<TData = Awaited<ReturnType<typeof activitiesControllerFindOne>>, TError = ErrorType<ActivitiesControllerFindOne401 | ActivitiesControllerFindOne403 | void | ActivitiesControllerFindOne429 | ActivitiesControllerFindOne503>>(
  pathParams: ActivitiesControllerFindOnePathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindOne>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof activitiesControllerFindOne>>,
@@ -1745,7 +1856,7 @@ export function useActivitiesControllerFindOne<TData = Awaited<ReturnType<typeof
       >, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useActivitiesControllerFindOne<TData = Awaited<ReturnType<typeof activitiesControllerFindOne>>, TError = ErrorType<void | ActivitiesControllerFindOne503>>(
+export function useActivitiesControllerFindOne<TData = Awaited<ReturnType<typeof activitiesControllerFindOne>>, TError = ErrorType<ActivitiesControllerFindOne401 | ActivitiesControllerFindOne403 | void | ActivitiesControllerFindOne429 | ActivitiesControllerFindOne503>>(
  pathParams: ActivitiesControllerFindOnePathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindOne>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -1753,7 +1864,7 @@ export function useActivitiesControllerFindOne<TData = Awaited<ReturnType<typeof
  * @summary Get a single activity by ID
  */
 
-export function useActivitiesControllerFindOne<TData = Awaited<ReturnType<typeof activitiesControllerFindOne>>, TError = ErrorType<void | ActivitiesControllerFindOne503>>(
+export function useActivitiesControllerFindOne<TData = Awaited<ReturnType<typeof activitiesControllerFindOne>>, TError = ErrorType<ActivitiesControllerFindOne401 | ActivitiesControllerFindOne403 | void | ActivitiesControllerFindOne429 | ActivitiesControllerFindOne503>>(
  { guildId, id }: ActivitiesControllerFindOnePathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindOne>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -1768,7 +1879,7 @@ export function useActivitiesControllerFindOne<TData = Awaited<ReturnType<typeof
 /**
  * @summary Get a single activity by ID
  */
-export const prefetchActivitiesControllerFindOneQuery = async <TData = Awaited<ReturnType<typeof activitiesControllerFindOne>>, TError = ErrorType<void | ActivitiesControllerFindOne503>>(
+export const prefetchActivitiesControllerFindOneQuery = async <TData = Awaited<ReturnType<typeof activitiesControllerFindOne>>, TError = ErrorType<ActivitiesControllerFindOne401 | ActivitiesControllerFindOne403 | void | ActivitiesControllerFindOne429 | ActivitiesControllerFindOne503>>(
  queryClient: QueryClient, { guildId, id }: ActivitiesControllerFindOnePathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof activitiesControllerFindOne>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
 
   ): Promise<QueryClient> => {
@@ -1839,7 +1950,7 @@ export const activitiesControllerDeleteActivity = async ({ guildId, id }: Activi
 
 
 
-export const getActivitiesControllerDeleteActivityMutationOptions = <TError = ErrorType<void | ActivitiesControllerDeleteActivity503>,
+export const getActivitiesControllerDeleteActivityMutationOptions = <TError = ErrorType<ActivitiesControllerDeleteActivity401 | ActivitiesControllerDeleteActivity403 | void | ActivitiesControllerDeleteActivity429 | ActivitiesControllerDeleteActivity503>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof activitiesControllerDeleteActivity>>, TError,ActivitiesControllerDeleteActivityMutationVariables, TContext>, request?: SecondParameter<typeof activityFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof activitiesControllerDeleteActivity>>, TError,ActivitiesControllerDeleteActivityMutationVariables, TContext> => {
 
@@ -1868,13 +1979,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type ActivitiesControllerDeleteActivityMutationResult = NonNullable<Awaited<ReturnType<typeof activitiesControllerDeleteActivity>>>
 
-    export type ActivitiesControllerDeleteActivityMutationError = ErrorType<void | ActivitiesControllerDeleteActivity503>
+    export type ActivitiesControllerDeleteActivityMutationError = ErrorType<ActivitiesControllerDeleteActivity401 | ActivitiesControllerDeleteActivity403 | void | ActivitiesControllerDeleteActivity429 | ActivitiesControllerDeleteActivity503>
     export type ActivitiesControllerDeleteActivityMutationVariables = {pathParams: ActivitiesControllerDeleteActivityPathParameters}
 
     /**
  * @summary Delete a specific activity by ID
  */
-export const useActivitiesControllerDeleteActivity = <TError = ErrorType<void | ActivitiesControllerDeleteActivity503>,
+export const useActivitiesControllerDeleteActivity = <TError = ErrorType<ActivitiesControllerDeleteActivity401 | ActivitiesControllerDeleteActivity403 | void | ActivitiesControllerDeleteActivity429 | ActivitiesControllerDeleteActivity503>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof activitiesControllerDeleteActivity>>, TError,ActivitiesControllerDeleteActivityMutationVariables, TContext>, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof activitiesControllerDeleteActivity>>,
@@ -1926,7 +2037,7 @@ export const getUsersActivityControllerGetOnlineQueryKey = (params?: UsersActivi
     }
 
 
-export const getUsersActivityControllerGetOnlineQueryOptions = <TData = Awaited<ReturnType<typeof usersActivityControllerGetOnline>>, TError = ErrorType<UsersActivityControllerGetOnline401>>(params: UsersActivityControllerGetOnlineParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersActivityControllerGetOnline>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
+export const getUsersActivityControllerGetOnlineQueryOptions = <TData = Awaited<ReturnType<typeof usersActivityControllerGetOnline>>, TError = ErrorType<UsersActivityControllerGetOnline401 | UsersActivityControllerGetOnline403 | UsersActivityControllerGetOnline429>>(params: UsersActivityControllerGetOnlineParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersActivityControllerGetOnline>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -1945,10 +2056,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type UsersActivityControllerGetOnlineQueryResult = NonNullable<Awaited<ReturnType<typeof usersActivityControllerGetOnline>>>
-export type UsersActivityControllerGetOnlineQueryError = ErrorType<UsersActivityControllerGetOnline401>
+export type UsersActivityControllerGetOnlineQueryError = ErrorType<UsersActivityControllerGetOnline401 | UsersActivityControllerGetOnline403 | UsersActivityControllerGetOnline429>
 
 
-export function useUsersActivityControllerGetOnline<TData = Awaited<ReturnType<typeof usersActivityControllerGetOnline>>, TError = ErrorType<UsersActivityControllerGetOnline401>>(
+export function useUsersActivityControllerGetOnline<TData = Awaited<ReturnType<typeof usersActivityControllerGetOnline>>, TError = ErrorType<UsersActivityControllerGetOnline401 | UsersActivityControllerGetOnline403 | UsersActivityControllerGetOnline429>>(
  params: UsersActivityControllerGetOnlineParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersActivityControllerGetOnline>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof usersActivityControllerGetOnline>>,
@@ -1958,7 +2069,7 @@ export function useUsersActivityControllerGetOnline<TData = Awaited<ReturnType<t
       >, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useUsersActivityControllerGetOnline<TData = Awaited<ReturnType<typeof usersActivityControllerGetOnline>>, TError = ErrorType<UsersActivityControllerGetOnline401>>(
+export function useUsersActivityControllerGetOnline<TData = Awaited<ReturnType<typeof usersActivityControllerGetOnline>>, TError = ErrorType<UsersActivityControllerGetOnline401 | UsersActivityControllerGetOnline403 | UsersActivityControllerGetOnline429>>(
  params: UsersActivityControllerGetOnlineParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersActivityControllerGetOnline>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof usersActivityControllerGetOnline>>,
@@ -1968,7 +2079,7 @@ export function useUsersActivityControllerGetOnline<TData = Awaited<ReturnType<t
       >, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useUsersActivityControllerGetOnline<TData = Awaited<ReturnType<typeof usersActivityControllerGetOnline>>, TError = ErrorType<UsersActivityControllerGetOnline401>>(
+export function useUsersActivityControllerGetOnline<TData = Awaited<ReturnType<typeof usersActivityControllerGetOnline>>, TError = ErrorType<UsersActivityControllerGetOnline401 | UsersActivityControllerGetOnline403 | UsersActivityControllerGetOnline429>>(
  params: UsersActivityControllerGetOnlineParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersActivityControllerGetOnline>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -1976,7 +2087,7 @@ export function useUsersActivityControllerGetOnline<TData = Awaited<ReturnType<t
  * @summary Get the signed-in user's confirmed game online time by Warsaw calendar day
  */
 
-export function useUsersActivityControllerGetOnline<TData = Awaited<ReturnType<typeof usersActivityControllerGetOnline>>, TError = ErrorType<UsersActivityControllerGetOnline401>>(
+export function useUsersActivityControllerGetOnline<TData = Awaited<ReturnType<typeof usersActivityControllerGetOnline>>, TError = ErrorType<UsersActivityControllerGetOnline401 | UsersActivityControllerGetOnline403 | UsersActivityControllerGetOnline429>>(
  params: UsersActivityControllerGetOnlineParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersActivityControllerGetOnline>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -1991,7 +2102,7 @@ export function useUsersActivityControllerGetOnline<TData = Awaited<ReturnType<t
 /**
  * @summary Get the signed-in user's confirmed game online time by Warsaw calendar day
  */
-export const prefetchUsersActivityControllerGetOnlineQuery = async <TData = Awaited<ReturnType<typeof usersActivityControllerGetOnline>>, TError = ErrorType<UsersActivityControllerGetOnline401>>(
+export const prefetchUsersActivityControllerGetOnlineQuery = async <TData = Awaited<ReturnType<typeof usersActivityControllerGetOnline>>, TError = ErrorType<UsersActivityControllerGetOnline401 | UsersActivityControllerGetOnline403 | UsersActivityControllerGetOnline429>>(
  queryClient: QueryClient, params: UsersActivityControllerGetOnlineParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersActivityControllerGetOnline>>, TError, TData>>, request?: SecondParameter<typeof activityFetch>}
 
   ): Promise<QueryClient> => {

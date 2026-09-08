@@ -1,5 +1,11 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { and, asc, eq, gte, isNull, ne, sql } from "drizzle-orm";
+import { and, asc, eq, gte, isNull, ne, inArray, sql } from "drizzle-orm";
+import { selectAccessibleGuilds } from "#src/members/member-access-query";
+import {
+  requestApiKeyAccess,
+  requestScopedIdentity,
+} from "#src/runtime/auth/forward-auth-identity";
+import { Permission } from "@lootlog/schema/permissions";
 import { Effect, Schema } from "effect";
 import { LootShareSourceEnum as LootShareSource } from "@lootlog/schema/loot";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -46,6 +52,21 @@ export class LootAllocationPersistenceError extends TaggedErrorClass<LootAllocat
 export const makeLootAllocationPersistence = (
   database: typeof ApiDatabase.Service,
 ) => {
+  const keyAllocationScope = Effect.gen(function* () {
+    if (!(yield* requestApiKeyAccess)) return undefined;
+    const identity = yield* requestScopedIdentity;
+    const guilds = yield* selectAccessibleGuilds(database, identity.discordId, [
+      Permission.LOOTLOG_LOOTS_WRITE,
+    ]);
+    const ids = guilds.map(({ guild }) => guild.id);
+    if (ids.length === 0) return sql`false`;
+    // Allocation is shared by every organization record; never partially authorize a global update.
+    return sql`NOT EXISTS (
+      SELECT 1 FROM ${organizationLootRecordTable}
+      WHERE ${organizationLootRecordTable.lootId} = ${lootTable.id}
+        AND NOT (${inArray(organizationLootRecordTable.guildId, ids)})
+    )`;
+  });
   const protect = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
     effect.pipe(
       Effect.mapError(
@@ -60,12 +81,14 @@ export const makeLootAllocationPersistence = (
     protect(
       "loot-allocation.find-authorized",
       Effect.gen(function* () {
+        const keyScope = yield* keyAllocationScope;
         const [loot] = yield* database
           .select()
           .from(lootTable)
           .where(
             and(
               eq(lootTable.id, options.lootId),
+              keyScope,
               authorizedSubmissionExists(options),
             ),
           )
@@ -140,60 +163,68 @@ export const makeLootAllocationPersistence = (
   ) =>
     protect(
       "loot-allocation.compare-and-set",
-      database
-        .update(lootTable)
-        .set({
-          lootShare: options.lootShare,
-          lootShareSource: LootShareSource.CHAT_MESSAGE,
-          updatedAt: new Date(),
-        })
-        .where(
-          and(
-            eq(lootTable.id, options.lootId),
-            ne(lootTable.lootShareSource, LootShareSource.CHAT_MESSAGE),
-            authorizedSubmissionExists(options),
-          ),
-        )
-        .returning({ id: lootTable.id })
-        .pipe(Effect.map((rows) => rows.length > 0)),
+      Effect.gen(function* () {
+        const keyScope = yield* keyAllocationScope;
+        return yield* database
+          .update(lootTable)
+          .set({
+            lootShare: options.lootShare,
+            lootShareSource: LootShareSource.CHAT_MESSAGE,
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(lootTable.id, options.lootId),
+              keyScope,
+              ne(lootTable.lootShareSource, LootShareSource.CHAT_MESSAGE),
+              authorizedSubmissionExists(options),
+            ),
+          )
+          .returning({ id: lootTable.id })
+          .pipe(Effect.map((rows) => rows.length > 0));
+      }),
     );
 
   const findAuthorizedAllocationState = (options: AuthorizedLootOptions) =>
     protect(
       "loot-allocation.find-state",
-      database
-        .select({
-          lootShare: lootTable.lootShare,
-          lootShareSource: lootTable.lootShareSource,
-        })
-        .from(lootTable)
-        .innerJoin(
-          organizationLootRecordTable,
-          eq(organizationLootRecordTable.lootId, lootTable.id),
-        )
-        .innerJoin(
-          lootSubmissionTable,
-          eq(
-            lootSubmissionTable.organizationLootRecordId,
-            organizationLootRecordTable.id,
-          ),
-        )
-        .innerJoin(
-          memberTable,
-          eq(memberTable.id, lootSubmissionTable.memberId),
-        )
-        .where(
-          and(
-            eq(lootTable.id, options.lootId),
-            eq(memberTable.globalUserId, options.actorUserId),
-            gte(
-              lootSubmissionTable.createdAt,
-              databaseSubmissionCutoff(options.submissionCutoff),
+      Effect.gen(function* () {
+        const keyScope = yield* keyAllocationScope;
+        return yield* database
+          .select({
+            lootShare: lootTable.lootShare,
+            lootShareSource: lootTable.lootShareSource,
+          })
+          .from(lootTable)
+          .innerJoin(
+            organizationLootRecordTable,
+            eq(organizationLootRecordTable.lootId, lootTable.id),
+          )
+          .innerJoin(
+            lootSubmissionTable,
+            eq(
+              lootSubmissionTable.organizationLootRecordId,
+              organizationLootRecordTable.id,
             ),
-          ),
-        )
-        .limit(1)
-        .pipe(Effect.map((rows) => rows[0] ?? null)),
+          )
+          .innerJoin(
+            memberTable,
+            eq(memberTable.id, lootSubmissionTable.memberId),
+          )
+          .where(
+            and(
+              eq(lootTable.id, options.lootId),
+              keyScope,
+              eq(memberTable.globalUserId, options.actorUserId),
+              gte(
+                lootSubmissionTable.createdAt,
+                databaseSubmissionCutoff(options.submissionCutoff),
+              ),
+            ),
+          )
+          .limit(1)
+          .pipe(Effect.map((rows) => rows[0] ?? null));
+      }),
     );
 
   return {

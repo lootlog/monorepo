@@ -5,11 +5,14 @@ import type {
   PresenceCharacter,
   SubscriptionScope,
 } from "@lootlog/protocol/realtime";
+import type { ApiKeyAccess } from "@lootlog/schema/api-key-access";
 import type { UserGuildData } from "#src/guilds/guild";
 
 export interface AuthenticatedIdentity {
   readonly discordId: string;
   readonly userId: string;
+  apiKeyAccess?: ApiKeyAccess;
+  apiKeyLeaseExpiresAt?: number;
 }
 
 export interface AirTagScope {
@@ -47,3 +50,13 @@ export type GatewaySocket = Pick<
   Bun.ServerWebSocket<SessionData>,
   "data" | "send" | "close" | "getBufferedAmount"
 >;
+
+export const hasValidApiKeyLease = (
+  session: AuthenticatedIdentity,
+  now = Date.now(),
+): boolean =>
+  session.apiKeyAccess === undefined ||
+  (session.apiKeyLeaseExpiresAt !== undefined &&
+    session.apiKeyLeaseExpiresAt > now &&
+    (session.apiKeyAccess.expiresAt === null ||
+      Date.parse(session.apiKeyAccess.expiresAt) > now));

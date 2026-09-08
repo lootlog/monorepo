@@ -19,7 +19,11 @@ import type { AirTagService } from "#src/realtime/air-tag-service";
 import type { MapPingService } from "#src/realtime/map-ping-service";
 import type { PresenceStore } from "#src/realtime/presence-store";
 import { getScopeKey, type RealtimeHub } from "#src/realtime/realtime-hub";
-import type { GatewaySocket, SessionData } from "#src/realtime/session";
+import {
+  hasValidApiKeyLease,
+  type GatewaySocket,
+  type SessionData,
+} from "#src/realtime/session";
 import {
   commandFailureDetails,
   GameCharacterRequired,
@@ -40,6 +44,16 @@ type Command = typeof ClientCommand.Type;
 type Scope = typeof SubscriptionScope.Type;
 type Event = typeof ServerEvent.Type;
 type RealtimeResponse = typeof Response.Type;
+
+const scopedGuilds = (
+  session: SessionData,
+  guilds: SessionData["guilds"],
+): SessionData["guilds"] => {
+  const access = session.apiKeyAccess;
+  return access
+    ? guilds.filter(({ guild }) => access.organizationIds.includes(guild.id))
+    : guilds;
+};
 
 const sessionAccessPolicy = (
   session: Pick<SessionData, "guilds" | "discordId">,
@@ -117,6 +131,10 @@ export class CommandHandler {
   }
 
   handle(socket: GatewaySocket, input: string | Buffer): Effect.Effect<void> {
+    if (!hasValidApiKeyLease(socket.data))
+      return Effect.sync(() =>
+        socket.close(1008, "API key authorization expired"),
+      );
     let decoded: unknown;
     if (socket.data.frameEncoding === "json") {
       if (Buffer.isBuffer(input)) {
@@ -208,22 +226,23 @@ export class CommandHandler {
       });
       for (const socket of hub.getLocalSocketsForUser(userId)) {
         if (socket.data.discordId !== discordId) continue;
+        const allowedGuilds = scopedGuilds(socket.data, updatedGuilds);
         const previousPolicy = sessionAccessPolicy(socket.data);
         const accessPolicy = sessionAccessPolicy({
-          guilds: updatedGuilds,
+          guilds: allowedGuilds,
           discordId,
         });
         const changes = diffAccessPolicies(previousPolicy, accessPolicy);
-        socket.data.guilds = updatedGuilds;
+        socket.data.guilds = allowedGuilds;
         if (changes.length === 0) continue;
-        const updatedIds = new Set(updatedGuilds.map(({ guild }) => guild.id));
+        const updatedIds = new Set(allowedGuilds.map(({ guild }) => guild.id));
         const removedIds = previousPolicy.organizations
           .map(({ organizationId }) => organizationId)
           .filter((id) => !updatedIds.has(id));
-        if (removedIds.length > 0) {
+        if (removedIds.length > 0 && !socket.data.apiKeyAccess) {
           yield* activity.publish("DISCONNECT_EVENT", socket.data, removedIds);
         }
-        yield* presence.reconcileAccess(socket);
+        if (!socket.data.apiKeyAccess) yield* presence.reconcileAccess(socket);
         socket.data.airTagScopes = socket.data.airTagScopes.filter((scope) =>
           canSubscribe(socket.data, scope.subscription),
         );
@@ -250,8 +269,10 @@ export class CommandHandler {
           },
         } satisfies Event;
         hub.sendEvent(socket, event);
-        if (updatedGuilds.length === 0)
+        if (allowedGuilds.length === 0) {
+          if (socket.data.apiKeyAccess) socket.data.apiKeyLeaseExpiresAt = 0;
           socket.close(1008, "organization access removed");
+        }
       }
     });
   }
@@ -272,6 +293,18 @@ export class CommandHandler {
     socket: GatewaySocket,
     command: Command,
   ): Effect.Effect<unknown, CommandFailure> {
+    if (!hasValidApiKeyLease(socket.data))
+      return Effect.fail(new OrganizationAccessDenied());
+    if (
+      socket.data.apiKeyAccess &&
+      ![
+        "session.join",
+        "presence.fetch",
+        "subscription.subscribe",
+        "subscription.unsubscribe",
+      ].includes(command.type)
+    )
+      return Effect.fail(new OrganizationAccessDenied());
     const fromPromise = <A>(evaluate: () => Promise<A>) =>
       Effect.tryPromise({
         try: evaluate,
@@ -374,6 +407,11 @@ export class CommandHandler {
       const wasJoined = socket.data.joined;
       if (socket.data.platform === "game" && !data.character)
         return yield* Effect.fail(new GameCharacterRequired());
+      if (
+        socket.data.apiKeyAccess &&
+        (data.character || data.margonemAccountProof)
+      )
+        return yield* Effect.fail(new OrganizationAccessDenied());
       socket.data.character = data.character;
       socket.data.confidence = "reported";
       if (data.character) {
@@ -386,7 +424,8 @@ export class CommandHandler {
         });
         if (verification.valid) socket.data.confidence = "verified";
       }
-      const authorizedGuilds = yield* guilds.getUserGuilds(socket.data);
+      const userGuilds = yield* guilds.getUserGuilds(socket.data);
+      const authorizedGuilds = scopedGuilds(socket.data, userGuilds);
       if (authorizedGuilds.length === 0) {
         const previousPolicy = sessionAccessPolicy(socket.data);
         socket.data.guilds = [];
@@ -405,7 +444,7 @@ export class CommandHandler {
             changes: diffAccessPolicies(previousPolicy, accessPolicy),
           },
         });
-        if (wasJoined) {
+        if (wasJoined && !socket.data.apiKeyAccess) {
           yield* activity.publish(
             "DISCONNECT_EVENT",
             socket.data,
@@ -441,7 +480,8 @@ export class CommandHandler {
         },
       } satisfies Event;
       hub.sendEvent(socket, event);
-      if (!wasJoined) yield* activity.publish("CONNECT_EVENT", socket.data);
+      if (!wasJoined && !socket.data.apiKeyAccess)
+        yield* activity.publish("CONNECT_EVENT", socket.data);
       return event.data;
     }).pipe(
       Effect.mapError((cause) =>

@@ -1,3 +1,5 @@
+import { ApiKeyService } from "#src/auth/api-key-service";
+import type { ApiKeyAccess } from "@lootlog/schema/api-key-access";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { APIError } from "better-auth/api";
 import { and, eq } from "drizzle-orm";
@@ -20,6 +22,7 @@ import {
   type AppUserSession,
 } from "#src/auth/provider/better-auth";
 export interface VerifiedIdentity {
+  readonly apiKeyAccess?: ApiKeyAccess;
   readonly userId: string;
   readonly discordId: string;
 }
@@ -118,7 +121,11 @@ export const createAuthService = ({
   auth,
   appUrl,
   findDiscordAccountId,
+  verifyApiKey,
 }: {
+  readonly verifyApiKey?: (
+    key: string,
+  ) => Effect.Effect<VerifiedIdentity, HttpResponseError>;
   readonly auth: AuthProvider;
   readonly appUrl: string;
   readonly findDiscordAccountId: (
@@ -206,6 +213,11 @@ export const createAuthService = ({
         return yield* unauthorized();
       }
 
+      if (headers.has("x-api-key")) {
+        const key = headers.get("x-api-key")?.trim();
+        if (!key || !verifyApiKey) return yield* unauthorized();
+        return yield* verifyApiKey(key);
+      }
       const session = yield* getSession(headers);
       const verifiedIdentity = yield* buildVerifiedIdentityFromRequest(
         session,
@@ -216,7 +228,8 @@ export const createAuthService = ({
         return yield* unauthorized();
       }
 
-      return verifiedIdentity;
+      const identity: VerifiedIdentity = verifiedIdentity;
+      return identity;
     },
   );
 
@@ -382,12 +395,14 @@ export class AuthService extends Context.Service<
     AuthService,
     Effect.gen(function* () {
       const auth = yield* BetterAuthRuntime;
+      const apiKeys = yield* ApiKeyService;
       const config = yield* AppConfig;
       const database = yield* AuthDatabase;
 
       return AuthService.of(
         createAuthService({
           auth,
+          verifyApiKey: apiKeys.verify,
           appUrl: config.appUrl,
           findDiscordAccountId: (request) =>
             database

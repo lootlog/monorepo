@@ -18,6 +18,7 @@ import { Context, Effect, FiberSet, Layer, Option, Redacted } from "effect";
 import { Headers, HttpClient, HttpTraceContext } from "effect/unstable/http";
 import { Redis } from "effect/unstable/persistence";
 import { makeGatewayAuth, type GatewayAuth } from "#src/auth/auth-service";
+import { ApiKeyLeases } from "#src/auth/api-key-leases";
 import { makeMargonemProofVerifier } from "#src/auth/margonem-proof";
 import {
   GatewayConfig,
@@ -124,8 +125,9 @@ export class GatewayApplication extends Context.Service<
       const activity = new ActivityPublisher(messaging, config);
       const mapPings = new MapPingService(redis, hub);
       const airTags = new AirTagService(redis, hub);
+      const guilds = makeGuildStore(config, redis, httpClient);
       const commands = new CommandHandler(
-        makeGuildStore(config, redis, httpClient),
+        guilds,
         makeMargonemProofVerifier(config, httpClient),
         presence,
         hub,
@@ -133,6 +135,17 @@ export class GatewayApplication extends Context.Service<
         mapPings,
         airTags,
       );
+      yield* new ApiKeyLeases(
+        config,
+        httpClient,
+        () => hub.getLocalSockets(),
+        (discordId, userId) =>
+          guilds
+            .invalidate({ discordId, userId })
+            .pipe(Effect.andThen(commands.rebalanceUser(discordId, userId))),
+      )
+        .run()
+        .pipe(Effect.forkScoped);
       const rabbit = new RabbitBridge(
         messaging,
         hub,
@@ -191,9 +204,15 @@ export const GatewayApplicationLive =
   );
 
 const hasCredentialQuery = (url: URL): boolean =>
-  ["token", "ticket", "authorization", "access_token"].some((key) =>
-    url.searchParams.has(key),
-  );
+  [
+    "token",
+    "ticket",
+    "authorization",
+    "access_token",
+    "api_key",
+    "apiKey",
+    "x-api-key",
+  ].some((key) => url.searchParams.has(key));
 
 interface UpgradeServer {
   readonly upgrade: (
@@ -267,10 +286,13 @@ export const createGatewayFetch =
         );
       }
       const origin = request.headers.get("origin");
-      if (!application.auth.isAllowedOrigin(origin)) {
+      const identity = application.auth.readIdentity(request);
+      if (
+        !(origin === null && identity?.apiKeyAccess) &&
+        !application.auth.isAllowedOrigin(origin)
+      ) {
         return complete(new Response("Origin not allowed", { status: 403 }));
       }
-      const identity = application.auth.readIdentity(request);
       if (!identity)
         return complete(new Response("Unauthorized", { status: 401 }));
 
@@ -281,16 +303,24 @@ export const createGatewayFetch =
           ?.split(",")
           .map((protocol) => protocol.trim()) ?? [];
       const frameEncoding =
-        application.config.environment === "local" ? "json" : undefined;
+        application.config.environment === "local" ||
+        (identity.apiKeyAccess &&
+          offeredProtocols.includes(REALTIME_JSON_SUBPROTOCOL))
+          ? "json"
+          : undefined;
       const upgraded = activeServer.upgrade(request, {
         data: {
           ...identity,
           connectionId,
           supportsFeed: offeredProtocols.includes(REALTIME_FEED_CAPABILITY),
-          supportsNotificationVolunteer: offeredProtocols.includes(
-            REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
-          ),
-          platform: application.auth.getPlatform(origin ?? ""),
+          supportsNotificationVolunteer:
+            !identity.apiKeyAccess &&
+            offeredProtocols.includes(
+              REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
+            ),
+          platform: identity.apiKeyAccess
+            ? "web-app"
+            : application.auth.getPlatform(origin ?? ""),
           userAgent: request.headers.get("user-agent") ?? undefined,
           frameEncoding,
           joined: false,
@@ -376,6 +406,7 @@ export const GatewayServer = Layer.effectDiscard(
             },
             close(socket) {
               application.hub.unregister(socket);
+              if (socket.data.apiKeyAccess) return;
               application.runBackground(
                 "websocket.disconnect-activity",
                 application.activity.publish("DISCONNECT_EVENT", socket.data),

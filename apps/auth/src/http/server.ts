@@ -1,3 +1,4 @@
+import { ApiKeyHandlers } from "./api-key-handlers.js";
 import { BunHttpServer } from "@effect/platform-bun";
 import {
   httpServerMetrics,
@@ -21,6 +22,8 @@ const makeBetterAuthHandler = (auth: typeof BetterAuthRuntime.Service) =>
   Effect.fn("BetterAuth.rawHandler")(
     function* (request: HttpServerRequest.HttpServerRequest) {
       const webRequest = yield* HttpServerRequest.toWeb(request);
+      if (new URL(webRequest.url).pathname.includes("/api-key/"))
+        return HttpServerResponse.empty({ status: 404 });
       const response = yield* Effect.tryPromise({
         try: () =>
           auth.handler(
@@ -65,7 +68,7 @@ const BetterAuthRawRoutes = HttpRouter.use((router) =>
 
 export const AuthRoutes = Layer.merge(
   HttpApiBuilder.layer(AuthApi, { openapiPath: "/openapi.json" }).pipe(
-    Layer.provide(AuthHandlers),
+    Layer.provide(Layer.merge(AuthHandlers, ApiKeyHandlers)),
   ),
   BetterAuthRawRoutes,
 );

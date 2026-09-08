@@ -1,20 +1,15 @@
+import { requestApiKeyAccess } from "#src/runtime/auth/forward-auth-identity";
 import { emptyStatusResponse } from "#src/shared/http/handler-response";
-import { activeGuildMemberJoin } from "#src/members/member-access-query";
+import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Clock, Context, Effect, Layer, Schema } from "effect";
 
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { decodeDomainJson } from "../../domain-json.schema.js";
-import { and, arrayOverlaps, desc, eq, or } from "drizzle-orm";
+import { and, arrayOverlaps, desc, eq, or, sql } from "drizzle-orm";
 import { Permission } from "@lootlog/schema/permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import {
-  guildTable,
-  memberTable,
-  memberToRoleTable,
-  roleTable,
-  userCharactersLootlogSettingsTable,
-} from "#src/database/drizzle/schema";
+import { userCharactersLootlogSettingsTable } from "#src/database/drizzle/schema";
 import { getUserLootlogConfigCachePattern } from "#src/shared/cache";
 import { LootlogApi } from "../../lootlog-api.js";
 import {
@@ -92,34 +87,21 @@ export class UserLootlogConfigData extends Context.Service<
         const cacheWrite = <Value>(key: string, value: Value) =>
           cache.setJson(key, value, CACHE_TTL_SECONDS).pipe(Effect.ignore);
         const findGuilds = (discordId: string, permission: Permission) =>
-          database
-            .selectDistinct({ id: guildTable.id, name: guildTable.name })
-            .from(guildTable)
-            .leftJoin(memberTable, activeGuildMemberJoin(discordId))
-            .leftJoin(
-              memberToRoleTable,
-              eq(memberToRoleTable.A, memberTable.id),
-            )
-            .leftJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
-            .where(
-              and(
-                eq(guildTable.active, true),
-                or(
-                  eq(guildTable.ownerId, discordId),
-                  arrayOverlaps(roleTable.permissions, [permission]),
-                ),
-              ),
-            );
+          selectAccessibleGuilds(database, discordId, [permission]).pipe(
+            Effect.map((rows) =>
+              rows.map(({ guild }) => ({ id: guild.id, name: guild.name })),
+            ),
+          );
 
         return UserLootlogConfigData.of({
           getAccount: (discordId, accountId) =>
             operation(
               Effect.gen(function* () {
                 const cacheKey = `user-lootlog-config:${discordId}:account:${accountId}`;
-                const cached = yield* cacheRead(
-                  cacheKey,
-                  AccountLootlogConfigResponse,
-                );
+                const keyAccess = yield* requestApiKeyAccess;
+                const cached = keyAccess
+                  ? null
+                  : yield* cacheRead(cacheKey, AccountLootlogConfigResponse);
                 if (cached !== null) return cached;
 
                 const [configs, guilds] = yield* Effect.all(
@@ -158,7 +140,7 @@ export class UserLootlogConfigData extends Context.Service<
                     },
                   ]),
                 );
-                yield* cacheWrite(cacheKey, result);
+                if (!keyAccess) yield* cacheWrite(cacheKey, result);
                 return result;
               }),
             ),
@@ -173,6 +155,20 @@ export class UserLootlogConfigData extends Context.Service<
                 const catchingGuildIds = [
                   ...new Set(payload.catchingGuildIds),
                 ].filter((id) => writableGuildIds.has(id));
+                const keyAccess = yield* requestApiKeyAccess;
+                const allowedIds = sql`ARRAY[${sql.join(
+                  [...writableGuildIds].map((id) => sql`${id}`),
+                  sql`, `,
+                )}]::text[]`;
+                const selectedIds = sql`ARRAY[${sql.join(
+                  catchingGuildIds.map((id) => sql`${id}`),
+                  sql`, `,
+                )}]::text[]`;
+                const updatedCatchingGuildIds = keyAccess
+                  ? sql<
+                      string[]
+                    >`ARRAY(SELECT id FROM unnest(${userCharactersLootlogSettingsTable.catchingGuildIds}) AS id WHERE NOT (id = ANY(${allowedIds}))) || ${selectedIds}`
+                  : catchingGuildIds;
                 const now = new Date(yield* Clock.currentTimeMillis);
                 const rows = yield* database
                   .insert(userCharactersLootlogSettingsTable)
@@ -190,7 +186,10 @@ export class UserLootlogConfigData extends Context.Service<
                       userCharactersLootlogSettingsTable.accountId,
                       userCharactersLootlogSettingsTable.characterId,
                     ],
-                    set: { catchingGuildIds, updatedAt: now },
+                    set: {
+                      catchingGuildIds: updatedCatchingGuildIds,
+                      updatedAt: now,
+                    },
                   })
                   .returning();
                 const config = rows[0];
@@ -204,7 +203,14 @@ export class UserLootlogConfigData extends Context.Service<
                 yield* cache
                   .deleteByPattern(getUserLootlogConfigCachePattern(discordId))
                   .pipe(Effect.ignore);
-                return config;
+                return keyAccess
+                  ? {
+                      ...config,
+                      catchingGuildIds: config.catchingGuildIds.filter((id) =>
+                        writableGuildIds.has(id),
+                      ),
+                    }
+                  : config;
               }).pipe(
                 Effect.withSpan("user-lootlog-config.upsert.persistence", {
                   attributes: { adapter: "ApiDatabase", retryCount: 0 },

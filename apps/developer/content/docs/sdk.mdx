@@ -1,0 +1,33 @@
+---
+title: SDK TypeScript
+description: Klient HTTP i narzędzia realtime dla aplikacji serwerowych.
+---
+
+## HTTP
+
+Pakiet `@lootlog/sdk` zawiera JavaScript i deklaracje TypeScript, bez zależności od Reacta. Nazwy operacji oraz typy są generowane z tego samego OpenAPI, które widzisz w Scalar. Pakiet jest przygotowany do publikacji; przed publikacją korzystaj z niego w workspace lub ze spakowanego archiwum.
+
+```ts
+import { configureLootlogApi } from "@lootlog/sdk";
+import { usersControllerGetCurrentUserGuilds } from "@lootlog/sdk/main";
+
+const apiKey = process.env.LOOTLOG_API_KEY;
+if (!apiKey) throw new Error("Missing LOOTLOG_API_KEY");
+const cleanup = configureLootlogApi({ apiKey, environment: "development" });
+try {
+  const organizations = await usersControllerGetCurrentUserGuilds();
+  console.log(organizations);
+} finally {
+  cleanup();
+}
+```
+
+Importy usług: `@lootlog/sdk/main`, `@lootlog/sdk/activity`, `@lootlog/sdk/battlelog` i `@lootlog/sdk/search`. Przekazuj `AbortSignal` w opcjach żądania, aby anulować odczyt. SDK nie ponawia automatycznie zapisów.
+
+## Realtime
+
+`@lootlog/sdk/realtime` udostępnia `RealtimeClient`. Użyj serwerowej fabryki `webSocketFactory`, która dołącza nagłówek `X-Api-Key`, i adresu gateway odpowiedniego środowiska. Nie umieszczaj klucza w URL. [Gotowy przykład dla Bun](/docs/realtime#przykład-w-bun) pokazuje konfigurację nagłówka, sesji i subskrypcji.
+
+## Userscripty
+
+Userscript nie potrzebuje tego SDK. Wywołuje bezpośrednio `window.lootlogGameClientApi`. Opcjonalny `@lootlog/game-client-api` dostarcza wyłącznie typy do edytora.

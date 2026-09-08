@@ -1,0 +1,31 @@
+{
+  "name": "@lootlog/game-client-api",
+  "version": "0.1.0",
+  "license": "MIT",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint src *.ts --deny-warnings",
+    "test": "bun run typecheck",
+    "prepack": "bun run build"
+  },
+  "devDependencies": {
+    "@lootlog/schema": "workspace:*",
+    "@lootlog/typescript-config": "workspace:*",
+    "@types/bun": "catalog:",
+    "@types/node": "catalog:",
+    "tsup": "^8.5.0",
+    "typescript": "npm:typescript@5.9.3"
+  }
+}

@@ -1,4 +1,5 @@
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
+import { apiKeyCacheSuffix } from "#src/runtime/auth/organization-scope";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
@@ -90,7 +91,7 @@ export const makeAccessibleGuilds = (
   const operation = Effect.fn("getCurrentUserAccessibleGuilds")(function* (
     identity: AuthenticatedIdentity,
   ) {
-    const cacheKey = `user:${identity.userId}:discord:${identity.discordId}:accessible-guilds`;
+    const cacheKey = `user:${identity.userId}:discord:${identity.discordId}:accessible-guilds${yield* apiKeyCacheSuffix}`;
     const cached = yield* ports.getCached(cacheKey);
     if (cached !== null) {
       yield* queue(

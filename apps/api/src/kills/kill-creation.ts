@@ -1,7 +1,8 @@
-import { activeGuildMemberJoin } from "#src/members/member-access-query";
+import { requestApiKeyAccess } from "#src/runtime/auth/forward-auth-identity";
+import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
-import { and, arrayOverlaps, desc, eq, isNotNull, or, sql } from "drizzle-orm";
+import { and, desc, eq, isNotNull, or, sql } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
@@ -11,12 +12,9 @@ import {
   guildKillSummaryBucketTable,
   guildKillActivityTable,
   guildKillSummaryTable,
-  guildTable,
   memberTable,
-  memberToRoleTable,
   npcKillStatsBucketTable,
   npcKillStatsTable,
-  roleTable,
   userCharactersLootlogSettingsTable,
   userKillStatsBucketTable,
   userKillStatsTable,
@@ -26,6 +24,7 @@ import { getStableNpcId } from "#src/shared/margonem/stable-npc-id";
 import type { CreateKillRequest } from "#src/contracts/kills/schemas";
 import {
   buildGuildKillDedupKey,
+  buildMemberKillDedupKey,
   buildUserKillDedupKey,
 } from "./kill-dedup-key.js";
 import { getKillStatsBucketStart } from "./kill-stats-period.js";
@@ -327,23 +326,27 @@ export const makeKillCreation = (
       world: data.world,
       npcId,
     });
-    const isNew = yield* cache
-      .setNx(userDedupKey, "1", DEDUP_TTL_SECONDS)
-      .pipe(
-        Effect.mapError(
-          (cause) =>
-            new KillCreationError({ operation: "kills.dedup.user", cause }),
-        ),
+    const apiKey = yield* requestApiKeyAccess;
+    let personalUpdated = false;
+    if (!apiKey || apiKey.personalData) {
+      personalUpdated = yield* protect(
+        "kills.dedup.user",
+        cache.setNx(userDedupKey, "1", DEDUP_TTL_SECONDS),
       );
-    if (!isNew) return { deduplicated: true, updated: 0 };
-
-    yield* incrementUser(input, periodStart).pipe(
-      Effect.catch((error) =>
-        Effect.sync(() => {
-          logger.error({ message: "Failed to upsert user kill stats", error });
-        }),
-      ),
-    );
+      if (personalUpdated) {
+        yield* incrementUser(input, periodStart).pipe(
+          Effect.catch((error) =>
+            Effect.sync(() => {
+              logger.error({
+                message: "Failed to upsert user kill stats",
+                error,
+              });
+            }),
+          ),
+        );
+        yield* invalidate(`${STATS_CACHE_PREFIX}:user-*:${discordId}:*`);
+      }
+    }
 
     const [configs, writableGuildRows] = yield* protect(
       "kills.create.scope",
@@ -370,37 +373,24 @@ export const makeKillCreation = (
             )
             .orderBy(desc(userCharactersLootlogSettingsTable.createdAt))
             .limit(1),
-          database
-            .selectDistinct({ id: guildTable.id })
-            .from(guildTable)
-            .leftJoin(memberTable, activeGuildMemberJoin(discordId))
-            .leftJoin(
-              memberToRoleTable,
-              eq(memberToRoleTable.A, memberTable.id),
-            )
-            .leftJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
-            .where(
-              and(
-                eq(guildTable.active, true),
-                or(
-                  eq(guildTable.ownerId, discordId),
-                  arrayOverlaps(roleTable.permissions, [
-                    Permission.LOOTLOG_LOOTS_WRITE,
-                  ]),
-                ),
-              ),
-            ),
+          selectAccessibleGuilds(database, discordId, [
+            Permission.LOOTLOG_LOOTS_WRITE,
+          ]).pipe(
+            Effect.map((rows) => rows.map(({ guild }) => ({ id: guild.id }))),
+          ),
         ],
         { concurrency: "unbounded" },
       ),
     );
 
-    yield* invalidate(`${STATS_CACHE_PREFIX}:user-*:${discordId}:*`);
     const writableGuildIds = new Set(writableGuildRows.map(({ id }) => id));
     const guildIds = (configs[0]?.catchingGuildIds ?? []).filter((guildId) =>
       writableGuildIds.has(guildId),
     );
-    if (guildIds.length === 0) return { updated: 0 };
+    if (guildIds.length === 0)
+      return personalUpdated
+        ? { updated: 0 }
+        : { deduplicated: true, updated: 0 };
 
     const members = yield* protect(
       "kills.create.members",
@@ -427,6 +417,18 @@ export const makeKillCreation = (
         if (!member) return Effect.succeed({ guildId, updated: false });
         const memberInput = { ...input, guildId, memberId: member.id };
         return Effect.gen(function* () {
+          const newMemberKill = yield* protect(
+            "kills.dedup.member",
+            cache.setNx(
+              buildMemberKillDedupKey(guildId, member.id, {
+                world: data.world,
+                npcId,
+              }),
+              "1",
+              DEDUP_TTL_SECONDS,
+            ),
+          );
+          if (!newMemberKill) return { guildId, updated: false };
           yield* incrementMember(memberInput, periodStart);
           const first = yield* cache
             .setNx(
@@ -472,6 +474,9 @@ export const makeKillCreation = (
         ),
       { concurrency: "unbounded", discard: true },
     );
-    return { updated: results.filter(({ updated }) => updated).length };
+    const updated = results.filter(({ updated }) => updated).length;
+    return !personalUpdated && updated === 0
+      ? { deduplicated: true, updated: 0 }
+      : { updated };
   });
 };

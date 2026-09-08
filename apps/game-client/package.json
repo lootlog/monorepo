@@ -38,6 +38,7 @@
     "@lootlog/client": "workspace:*",
     "@lootlog/datetime": "workspace:*",
     "@lootlog/domain": "workspace:*",
+    "@lootlog/game-client-api": "workspace:*",
     "@lootlog/margonem": "workspace:*",
     "@lootlog/protocol": "workspace:*",
     "@lootlog/schema": "workspace:*",
