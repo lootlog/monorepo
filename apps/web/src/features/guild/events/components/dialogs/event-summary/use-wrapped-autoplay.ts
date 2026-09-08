@@ -20,7 +20,9 @@ export const useWrappedAutoplay = ({
   const [isInteractionPaused, setIsInteractionPaused] = useState(false);
   const elapsedMillisecondsRef = useRef(0);
   const onAdvanceRef = useRef(onAdvance);
-  onAdvanceRef.current = onAdvance;
+  useEffect(() => {
+    onAdvanceRef.current = onAdvance;
+  }, [onAdvance]);
 
   useEffect(() => {
     elapsedMillisecondsRef.current = 0;

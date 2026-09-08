@@ -1,4 +1,4 @@
-import { startTransition, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
@@ -39,7 +39,7 @@ export const EventSummaryDialog = ({
   const { t } = useTranslation();
   const prefersReducedMotion = Boolean(useReducedMotion());
   const stageRef = useRef<HTMLElement>(null);
-  const previousIndexRef = useRef(0);
+  const [previousIndex, setPreviousIndex] = useState(0);
   const [currentSlideId, setCurrentSlideId] = useState("opening");
   const [direction, setDirection] = useState<1 | -1>(1);
   const { data, isLoading, isFetching, error, refetch } = useShowEventWrapped(
@@ -61,7 +61,7 @@ export const EventSummaryDialog = ({
     const activeIndex =
       matchingIndex >= 0
         ? matchingIndex
-        : Math.min(previousIndexRef.current, Math.max(slides.length - 1, 0));
+        : Math.min(previousIndex, Math.max(slides.length - 1, 0));
     const activeSlide = slides[activeIndex];
     return {
       deck,
@@ -74,24 +74,23 @@ export const EventSummaryDialog = ({
   const { deck, slides, activeIndex, activeSlide, isFinalSlide } =
     resolveSlideState();
 
-  useEffect(() => {
-    if (!open) {
-      return;
+  const [wasOpen, setWasOpen] = useState(open);
+  const synchronizeSlide = () => {
+    if (wasOpen !== open) {
+      setWasOpen(open);
+      if (open) {
+        setPreviousIndex(0);
+        setDirection(1);
+        setCurrentSlideId("opening");
+      }
+    } else {
+      if (previousIndex !== activeIndex) setPreviousIndex(activeIndex);
+      if (activeSlide && activeSlide.id !== currentSlideId) {
+        setCurrentSlideId(activeSlide.id);
+      }
     }
-
-    previousIndexRef.current = 0;
-    startTransition(() => {
-      setDirection(1);
-      setCurrentSlideId("opening");
-    });
-  }, [open]);
-
-  useEffect(() => {
-    previousIndexRef.current = activeIndex;
-    if (activeSlide && activeSlide.id !== currentSlideId) {
-      setCurrentSlideId(activeSlide.id);
-    }
-  }, [activeIndex, activeSlide, currentSlideId]);
+  };
+  synchronizeSlide();
 
   const advanceAutomatically = () => {
     if (!activeSlide || activeIndex >= slides.length - 1) {

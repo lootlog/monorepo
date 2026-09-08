@@ -64,7 +64,16 @@ export const ReservationsSettingsForm = ({
   });
 
   useEffect(() => {
-    form.reset(resolveReservationSettings(guild));
+    form.reset(
+      resolveReservationSettings({
+        reservationActiveLimitPerSpot: guild.reservationActiveLimitPerSpot,
+        reservationMaxAdvanceDays: guild.reservationMaxAdvanceDays,
+        reservationMaxDurationMinutes: guild.reservationMaxDurationMinutes,
+        reservationMinDurationMinutes: guild.reservationMinDurationMinutes,
+        reservationTimeGranularityMinutes:
+          guild.reservationTimeGranularityMinutes,
+      }),
+    );
   }, [
     form,
     guild.reservationActiveLimitPerSpot,

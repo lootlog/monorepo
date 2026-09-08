@@ -3,5 +3,14 @@
   "rules": {
     "complexity": "error",
     "@typescript-eslint/consistent-type-imports": "off"
-  }
+  },
+  "overrides": [
+    {
+      // requestJson accepts GET or POST; only POST callers supply a body.
+      "files": ["src/battles/submission/battle-creation.test.ts"],
+      "rules": {
+        "unicorn/no-invalid-fetch-options": "off"
+      }
+    }
+  ]
 }

@@ -8,7 +8,7 @@ import {
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, UserRoundX } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { Permission } from "@lootlog/schema/permissions";
@@ -67,9 +67,11 @@ const MemberSettingsDetailPageContent = () => {
     accessPolicy?.allows(Permission.OWNER),
   );
 
-  useEffect(() => {
+  const [previousMemberId, setPreviousMemberId] = useState(memberId);
+  if (previousMemberId !== memberId) {
+    setPreviousMemberId(memberId);
     setUpdatedMember(null);
-  }, [memberId]);
+  }
 
   const handleBack = () => {
     navigate({
