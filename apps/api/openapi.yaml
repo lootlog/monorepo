@@ -21504,7 +21504,7 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/GroupFightParticipantDto"
-          minItems: 4
+          minItems: 3
           maxItems: 20
         battleId:
           nullable: true

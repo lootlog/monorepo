@@ -248,7 +248,7 @@ export const guildTable = pgTable(
     documentLimit: integer("documentLimit").default(50).notNull(),
     groupFightsEnabled: boolean("groupFightsEnabled").default(true).notNull(),
     groupFightsIncludeIncomplete: boolean("groupFightsIncludeIncomplete")
-      .default(true)
+      .default(false)
       .notNull(),
     createdAt: timestamp("createdAt", { mode: "date", precision: 3 })
       .defaultNow()

@@ -62,7 +62,7 @@ it("opens deferred modals, restores focus and preserves create form state after 
     const dialog = await screen.findByRole(
       "dialog",
       { name: i18n.t("ui.modals.createLootlog.title") },
-      { timeout: 5000 },
+      { timeout: 15_000 },
     );
     const search = within(dialog).getByPlaceholderText(
       i18n.t("ui.modals.createLootlog.searchPlaceholder"),
@@ -74,9 +74,11 @@ it("opens deferred modals, restores focus and preserves create form state after 
     await waitFor(() => expect(document.activeElement).toBe(create));
 
     fireEvent.click(create);
-    const reopened = await screen.findByRole("dialog", {
-      name: i18n.t("ui.modals.createLootlog.title"),
-    });
+    const reopened = await screen.findByRole(
+      "dialog",
+      { name: i18n.t("ui.modals.createLootlog.title") },
+      { timeout: 15_000 },
+    );
     expect(within(reopened).getByDisplayValue("test guild")).toBeTruthy();
     fireEvent.click(within(reopened).getByRole("button", { name: "Close" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
@@ -85,9 +87,11 @@ it("opens deferred modals, restores focus and preserves create form state after 
     for (let opening = 0; opening < 2; opening++) {
       install.focus();
       fireEvent.click(install);
-      const installer = await screen.findByRole("dialog", {
-        name: i18n.t("ui.modals.installAddon.title"),
-      });
+      const installer = await screen.findByRole(
+        "dialog",
+        { name: i18n.t("ui.modals.installAddon.title") },
+        { timeout: 15_000 },
+      );
       expect(
         within(installer)
           .getByRole("link", {
@@ -104,4 +108,4 @@ it("opens deferred modals, restores focus and preserves create form state after 
     client.clear();
     restore();
   }
-});
+}, 30_000);

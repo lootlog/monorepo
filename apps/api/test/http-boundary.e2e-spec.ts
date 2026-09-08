@@ -218,17 +218,19 @@ describe("API HTTP boundary", () => {
       endedAt: "2026-09-06T10:00:30.000Z",
       myTeam: 1,
       winningTeam: 1,
-      participants: [1, 2, 3, 4].map((id) => ({
-        characterId: String(id),
-        accountId: id === 1 ? "group-fight-account" : null,
-        name: `Player${id}`,
-        lvl: 100,
-        prof: "w",
-        icon: "",
-        team: id <= 2 ? 1 : 2,
-        joinedAt: "2026-09-06T10:00:00.000Z",
-        fled: false,
-      })),
+      participants: Array.from({ length: 16 }, (_, index) => index + 1).map(
+        (id) => ({
+          characterId: String(id),
+          accountId: id === 1 ? "group-fight-account" : null,
+          name: `Player${id}`,
+          lvl: 100,
+          prof: "w",
+          icon: "",
+          team: id <= 8 ? 1 : 2,
+          joinedAt: "2026-09-06T10:00:00.000Z",
+          fled: false,
+        }),
+      ),
     };
     for (let retry = 0; retry < 2; retry++) {
       const response = await request("/group-fights", {
@@ -267,12 +269,12 @@ describe("API HTTP boundary", () => {
     );
     expect(detail.status).toBe(200);
     expect(await detail.json()).toMatchObject({
-      participants: [
-        { characterId: "1" },
-        { characterId: "2" },
-        { characterId: "3" },
-        { characterId: "4" },
-      ],
+      participants: expect.arrayContaining([
+        expect.objectContaining({ characterId: "1" }),
+        expect.objectContaining({ characterId: "2" }),
+        expect.objectContaining({ characterId: "3" }),
+        expect.objectContaining({ characterId: "4" }),
+      ]),
     });
     for (const suffix of ["", "/ranking", `/${fight.id}`]) {
       expect(
@@ -291,6 +293,97 @@ describe("API HTTP boundary", () => {
       ),
     ).toEqual([{ count: 1 }]);
   });
+
+  it.each([
+    [false, 8, 8, true],
+    [false, 10, 9, true],
+    [false, 10, 7, false],
+    [false, 10, 1, false],
+    [true, 10, 1, true],
+    [true, 2, 1, true],
+  ])(
+    "persists according to collection policy %s for %sv%s",
+    async (includeIncomplete, teamOne, teamTwo, accepted) => {
+      const configuration = await request(
+        `/guilds/${authorizedGuildId}/config`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({
+            groupFightsIncludeIncomplete: includeIncomplete,
+          }),
+        },
+      );
+      expect(configuration.status).toBe(200);
+      const forbidden = await request(`/guilds/${forbiddenGuildId}/config`, {
+        method: "PATCH",
+        body: JSON.stringify({ groupFightsIncludeIncomplete: true }),
+      });
+      expect(forbidden.status).toBe(403);
+      await databaseRuntime.runPromise(
+        database.insert(userCharactersLootlogSettingsTable).values({
+          userId: caller.discordId,
+          accountId: "policy-account",
+          characterId: "1",
+          catchingGuildIds: [authorizedGuildId],
+          updatedAt: new Date(),
+        }),
+      );
+      const endedAt = new Date().toISOString();
+      const startedAt = new Date(Date.now() - 30_000).toISOString();
+      const response = await request("/group-fights", {
+        method: "POST",
+        body: JSON.stringify({
+          world,
+          accountId: "policy-account",
+          characterId: "1",
+          submissionKey: crypto.randomUUID(),
+          map: { id: 1, pvp: 2, name: "Sala Tronowa" },
+          qualification: { source: "CATALOG" },
+          startedAt,
+          endedAt,
+          myTeam: 1,
+          winningTeam: 1,
+          participants: Array.from(
+            { length: teamOne + teamTwo },
+            (_, index) => ({
+              characterId: String(index + 1),
+              accountId: index === 0 ? "policy-account" : null,
+              name: `Player${index + 1}`,
+              lvl: 100,
+              prof: "w",
+              icon: "",
+              team: index < teamOne ? 1 : 2,
+              joinedAt: startedAt,
+              fled: false,
+            }),
+          ),
+        }),
+      });
+      expect(response.status).toBe(201);
+      expect(await response.json()).toMatchObject(
+        accepted
+          ? {
+              submittedGuilds: [{ guildId: authorizedGuildId }],
+              rejectedGuilds: [],
+            }
+          : {
+              submittedGuilds: [],
+              rejectedGuilds: [
+                { guildId: authorizedGuildId, reason: "INCOMPLETE_TEAMS" },
+              ],
+            },
+      );
+      const records = await databaseRuntime.runPromise(
+        database.select().from(groupFightTable),
+      );
+      expect(records).toHaveLength(accepted ? 1 : 0);
+      if (accepted)
+        expect(records[0]).toMatchObject({
+          teamOneSize: teamOne,
+          teamTwoSize: teamTwo,
+        });
+    },
+  );
 
   it("resolves notification senders from member summaries using Discord IDs", async () => {
     const notification = await request("/messaging", {

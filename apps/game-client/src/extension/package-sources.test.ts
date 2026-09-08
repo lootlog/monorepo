@@ -6,10 +6,8 @@ import {
   mkdtemp,
   readFile,
   rm,
-  symlink,
   writeFile,
 } from "node:fs/promises";
-import { tmpdir } from "node:os";
 import path from "node:path";
 
 const directories: string[] = [];
@@ -22,7 +20,10 @@ afterEach(async () => {
 });
 
 async function repository() {
-  const root = await mkdtemp(path.join(tmpdir(), "lootlog-source-archive-"));
+  const appDirectory = path.resolve(import.meta.dirname, "../..");
+  const tempRoot = path.join(appDirectory, ".tmp");
+  await mkdir(tempRoot, { recursive: true });
+  const root = await mkdtemp(path.join(tempRoot, "lootlog-source-archive-"));
   directories.push(root);
   const client = path.join(root, "apps/game-client");
   await mkdir(path.join(client, "extension"), { recursive: true });
@@ -55,11 +56,6 @@ async function repository() {
       "fixture",
     ],
     { cwd: root },
-  );
-  await symlink(
-    path.resolve(import.meta.dirname, "../../node_modules"),
-    path.join(client, "node_modules"),
-    process.platform === "win32" ? "junction" : "dir",
   );
   const archive = path.join(
     client,

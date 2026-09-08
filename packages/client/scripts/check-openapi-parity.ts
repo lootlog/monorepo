@@ -944,6 +944,24 @@ const PERSONAL_ANALYTICS_ADDITIONS: Record<
                     required: false,
                     schema: { $ref: "#/components/schemas/GroupFightPeriod" },
                   },
+                  {
+                    name: "npcType",
+                    in: "query",
+                    required: false,
+                    schema: {
+                      type: "string",
+                      enum: ["ELITE2", "TITAN"],
+                    },
+                  },
+                  {
+                    name: "mapId",
+                    in: "query",
+                    required: false,
+                    schema: {
+                      type: "string",
+                      pattern: "^[+-]?\\d*\\.?\\d+(?:[Ee][+-]?\\d+)?$",
+                    },
+                  },
                 ]),
             ...(suffix === ""
               ? ["cursor", "limit"].map((name) => ({

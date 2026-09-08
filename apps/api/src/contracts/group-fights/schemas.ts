@@ -93,8 +93,8 @@ export const CreateGroupFightRequest = Schema.Struct({
   winningTeam: Schema.Union([GroupFightTeam, Schema.Null]),
   participants: Schema.Array(GroupFightParticipantInput)
     .check(
-      Schema.isMinLength(4).annotate({
-        expected: "a value with a length of at least 4",
+      Schema.isMinLength(3).annotate({
+        expected: "a value with a length of at least 3",
       }),
     )
     .check(
@@ -119,7 +119,7 @@ export const CreateGroupFightRequest = Schema.Struct({
   .check(
     Schema.makeFilter((data) => {
       if (!isGroupFightComposition(countGroupFightTeamSizes(data.participants)))
-        return "Each team must have between two and ten players";
+        return "Each team must have one to ten players and at least one team must have two";
       if (data.participants.some((p) => !/^[1-9]\d*$/.test(p.characterId)))
         return "Only player characters may participate";
       if (

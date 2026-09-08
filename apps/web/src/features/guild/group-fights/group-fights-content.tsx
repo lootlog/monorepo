@@ -31,7 +31,8 @@ import {
   TabsContent,
 } from "@lootlog/ui/components/tabs";
 import { GroupFightRanking } from "./group-fight-ranking";
-import { GroupFightHistory } from "./group-fight-history";
+import { GroupFightHistoryCard } from "./group-fight-history-card";
+import { GroupFightSummary } from "./group-fight-summary";
 
 const PAGE_SIZE = 20;
 
@@ -147,31 +148,7 @@ export function GroupFightsContent({ guildId }: { guildId: string }) {
             <p role="status">{t("groupFights.loading")}</p>
           ) : null}
           {summary && !ranking.isError ? (
-            <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-              {(
-                [
-                  "totalFights",
-                  "wins",
-                  "losses",
-                  "draws",
-                  "fullTeamFights",
-                  "totalDurationSeconds",
-                ] as const
-              ).map((key) => (
-                <div key={key} className="rounded-lg border p-3">
-                  <dt className="text-sm text-muted-foreground">
-                    {t(
-                      `groupFights.${key === "totalFights" ? "fights" : key === "totalDurationSeconds" ? "duration" : key}`,
-                    )}
-                  </dt>
-                  <dd className="text-xl font-semibold">
-                    {key === "totalDurationSeconds"
-                      ? t("groupFights.seconds", { count: summary[key] })
-                      : summary[key]}
-                  </dd>
-                </div>
-              ))}
-            </dl>
+            <GroupFightSummary summary={summary} />
           ) : null}
           {ranking.data && !ranking.isError ? (
             <GroupFightMaps
@@ -207,53 +184,14 @@ export function GroupFightsContent({ guildId }: { guildId: string }) {
             </Card>
           ) : null}
           {history.data && !history.isError ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>{t("groupFights.recent")}</CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-col gap-3">
-                {history.data.fights.length ? (
-                  <GroupFightHistory
-                    guildId={guildId}
-                    fights={history.data.fights}
-                  />
-                ) : (
-                  <Empty>
-                    <EmptyHeader>
-                      <EmptyDescription>
-                        {t("groupFights.empty")}
-                      </EmptyDescription>
-                    </EmptyHeader>
-                  </Empty>
-                )}
-                <nav
-                  aria-label={t("groupFights.recent")}
-                  className="flex flex-wrap items-center justify-between gap-2"
-                >
-                  <Button
-                    variant="outline"
-                    disabled={cursor === 0 || history.isFetching}
-                    onClick={() => setCursor(Math.max(0, cursor - PAGE_SIZE))}
-                  >
-                    {t("groupFights.previous")}
-                  </Button>
-                  <span>
-                    {t("groupFights.page", {
-                      page: Math.floor(cursor / PAGE_SIZE) + 1,
-                    })}
-                  </span>
-                  <Button
-                    variant="outline"
-                    disabled={
-                      !history.data.pagination.hasNext || history.isFetching
-                    }
-                    onClick={() => setCursor(cursor + PAGE_SIZE)}
-                  >
-                    {t("groupFights.next")}
-                  </Button>
-                </nav>
-              </CardContent>
-            </Card>
+            <GroupFightHistoryCard
+              guildId={guildId}
+              history={history.data}
+              cursor={cursor}
+              pageSize={PAGE_SIZE}
+              isFetching={history.isFetching}
+              onCursorChange={setCursor}
+            />
           ) : null}
         </TabsContent>
       </Tabs>

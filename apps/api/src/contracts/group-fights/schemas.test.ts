@@ -29,7 +29,34 @@ const payload = {
 describe("group fight ingress contract", () => {
   it("accepts pure 2v2 on a catalog red map", () =>
     expect(decode(payload).participants).toHaveLength(4));
-  it("rejects NPCs, duplicate characters, missing submitter and 3v1", () => {
+  it.each([
+    [2, 1],
+    [10, 1],
+    [1, 10],
+    [8, 8],
+    [10, 9],
+  ])("accepts %sv%s for organization-level filtering", (teamOne, teamTwo) => {
+    const participants = Array.from(
+      { length: teamOne + teamTwo },
+      (_, index) => ({
+        ...payload.participants[0],
+        characterId: String(index + 1),
+        team: index < teamOne ? 1 : 2,
+      }),
+    );
+    expect(decode({ ...payload, participants }).participants).toHaveLength(
+      teamOne + teamTwo,
+    );
+  });
+  it("rejects 1v1", () => {
+    expect(() =>
+      decode({
+        ...payload,
+        participants: [payload.participants[0], payload.participants[2]],
+      }),
+    ).toThrow();
+  });
+  it("rejects NPCs, duplicate characters, missing submitter and empty teams", () => {
     for (const participants of [
       payload.participants.map((p, i) =>
         i === 3 ? { ...p, characterId: "-4" } : p,
@@ -39,7 +66,7 @@ describe("group fight ingress contract", () => {
         ...p,
         characterId: `${p.characterId}0`,
       })),
-      payload.participants.map((p, i) => ({ ...p, team: i < 3 ? 1 : 2 })),
+      payload.participants.map((p) => ({ ...p, team: 1 })),
     ])
       expect(() => decode({ ...payload, participants })).toThrow();
   });

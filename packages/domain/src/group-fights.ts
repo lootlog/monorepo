@@ -60,7 +60,7 @@ export const resolveGroupFightCollectionMode = (
   includeIncomplete: boolean,
 ): GroupFightCollectionMode => (includeIncomplete ? "ALL" : "FULL_TEAMS");
 
-/** A group fight has between two and ten players on each side. */
+/** A group fight has one to ten players per side and at least one group. */
 export const isGroupFightComposition = (
   sizes: GroupFightTeamSizes,
 ): boolean => {
@@ -69,14 +69,15 @@ export const isGroupFightComposition = (
   return (
     Number.isInteger(sizes.teamOne) &&
     Number.isInteger(sizes.teamTwo) &&
-    smaller >= GROUP_FIGHT_MIN_TEAM_SIZE &&
+    smaller >= 1 &&
+    larger >= 2 &&
     larger <= GROUP_FIGHT_FULL_TEAM_SIZE
   );
 };
 
 /**
- * FULL_TEAMS keeps exactly 10v10. ALL keeps every qualifying group fight,
- * including 2v2 and 10v2.
+ * FULL_TEAMS keeps at least 8v8. ALL keeps every qualifying group fight,
+ * including 2v1 and 10v1.
  */
 export const isQualifyingGroupFightComposition = (
   sizes: GroupFightTeamSizes,
@@ -87,8 +88,7 @@ export const isQualifyingGroupFightComposition = (
   const larger = Math.max(sizes.teamOne, sizes.teamTwo);
   const smaller = Math.min(sizes.teamOne, sizes.teamTwo);
   return (
-    larger === GROUP_FIGHT_FULL_TEAM_SIZE &&
-    smaller === GROUP_FIGHT_FULL_TEAM_SIZE
+    larger >= GROUP_FIGHT_MIN_TEAM_SIZE && smaller >= GROUP_FIGHT_MIN_TEAM_SIZE
   );
 };
 

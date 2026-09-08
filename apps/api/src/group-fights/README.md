@@ -2,8 +2,11 @@
 
 The API owns Organization group fight records. Apply the group-fights database
 migration before deploying the API, then deploy the generated clients, Web and
-Game client. Existing Organization settings default to accepting all qualifying
-2v2 through 10v10 fights. Members must opt in per character and receive the new
+Game client. New Organization settings default to accepting qualifying fights
+with at least eight players on each team, including 8v8 and 10v9. The
+OWNER/ADMIN include-incomplete option accepts uneven group fights such as
+10v1, excluding 1v1. Existing explicitly configured values are preserved.
+Members must opt in per character and receive the new
 read/write capabilities. Existing cache entries without the settings are evicted.
 
 A transaction stores the fight, merged participants and authenticated submission.

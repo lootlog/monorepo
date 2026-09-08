@@ -3,7 +3,7 @@
     "title": "Ustawki",
     "description": "Ranking walk grupowych PvP na czerwonych mapach elit II i tytanów.",
     "enabled": "Zbieraj ustawki na tej postaci",
-    "collectionDescription": "Wysyłaj walki od 2 na 2 graczy do organizacji wybranych w ustawieniach zbierania. Działa niezależnie od panelu walk. Organizacja może ograniczyć zbieranie do dokładnie 10 na 10.",
+    "collectionDescription": "Wysyłaj walki grupowe do organizacji wybranych w ustawieniach zbierania. Działa niezależnie od panelu walk. Administrator lub właściciel organizacji wybiera przyjmowane składy: domyślnie co najmniej 8 na 8, opcjonalnie także nierówne walki, np. 10 na 1.",
     "saveError": "Nie udało się zapisać ustawienia ustawek.",
     "loadError": "Nie udało się pobrać ustawień. Zbieranie ustawek jest wstrzymane."
   },

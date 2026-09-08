@@ -2,8 +2,8 @@ import { Schema } from "effect";
 
 /** Margonem caps a battle team at ten players. */
 export const GROUP_FIGHT_FULL_TEAM_SIZE = 10;
-/** Each side must have at least two players. */
-export const GROUP_FIGHT_MIN_TEAM_SIZE = 2;
+/** Default collection requires at least eight players on each side. */
+export const GROUP_FIGHT_MIN_TEAM_SIZE = 8;
 
 export const GROUP_FIGHT_COLLECTION_MODES = ["FULL_TEAMS", "ALL"] as const;
 export type GroupFightCollectionMode =

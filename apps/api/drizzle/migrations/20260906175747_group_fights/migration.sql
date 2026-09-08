@@ -56,7 +56,7 @@ CREATE TABLE "GroupFight" (
 );
 --> statement-breakpoint
 ALTER TABLE "Guild" ADD COLUMN "groupFightsEnabled" boolean DEFAULT true NOT NULL;--> statement-breakpoint
-ALTER TABLE "Guild" ADD COLUMN "groupFightsIncludeIncomplete" boolean DEFAULT true NOT NULL;--> statement-breakpoint
+ALTER TABLE "Guild" ADD COLUMN "groupFightsIncludeIncomplete" boolean DEFAULT false NOT NULL;--> statement-breakpoint
 CREATE UNIQUE INDEX "GroupFightParticipant_groupFightId_characterId_key" ON "GroupFightParticipant" ("groupFightId","characterId");--> statement-breakpoint
 CREATE INDEX "GroupFightParticipant_accountId_characterId_idx" ON "GroupFightParticipant" ("accountId","characterId");--> statement-breakpoint
 CREATE INDEX "GroupFightParticipant_characterId_idx" ON "GroupFightParticipant" ("characterId");--> statement-breakpoint

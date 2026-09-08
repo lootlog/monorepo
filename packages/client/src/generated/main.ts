@@ -9063,7 +9063,7 @@ export interface CreateGroupFightDto {
   myTeam: GroupFightTeam;
   winningTeam: GroupFightTeam | null;
   /**
-     * @minItems 4
+     * @minItems 3
      * @maxItems 20
      */
   participants: GroupFightParticipantDto[];

@@ -59,7 +59,8 @@ export const GeneralForm = () => {
       vanityUrl: guild?.vanityUrl ?? "",
       publicStatsCardEnabled: guild?.publicStatsCardEnabled ?? false,
       groupFightsEnabled: guild?.groupFightsEnabled ?? true,
-      groupFightsIncludeIncomplete: guild?.groupFightsIncludeIncomplete ?? true,
+      groupFightsIncludeIncomplete:
+        guild?.groupFightsIncludeIncomplete ?? false,
     },
   });
 

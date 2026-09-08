@@ -27,51 +27,53 @@ describe("group fight composition", () => {
     });
   });
 
-  it("requires at least two players on each side", () => {
-    expect(isGroupFightComposition({ teamOne: 1, teamTwo: 1 })).toBe(false);
-    expect(isGroupFightComposition({ teamOne: 2, teamTwo: 1 })).toBe(false);
-    expect(isGroupFightComposition({ teamOne: 10, teamTwo: 1 })).toBe(false);
-    expect(isGroupFightComposition({ teamOne: 10, teamTwo: 2 })).toBe(true);
-    expect(isGroupFightComposition({ teamOne: 2, teamTwo: 2 })).toBe(true);
-    expect(isGroupFightComposition({ teamOne: 2.5, teamTwo: 2 })).toBe(false);
-    expect(isGroupFightComposition({ teamOne: 10, teamTwo: 0 })).toBe(false);
-    expect(isGroupFightComposition({ teamOne: 11, teamTwo: 5 })).toBe(false);
+  it.each([
+    [2, 1, true],
+    [1, 2, true],
+    [10, 1, true],
+    [1, 10, true],
+    [1, 1, false],
+    [10, 0, false],
+    [11, 5, false],
+    [2.5, 2, false],
+  ])("validates %sv%s composition", (teamOne, teamTwo, expected) => {
+    expect(isGroupFightComposition({ teamOne, teamTwo })).toBe(expected);
   });
 
-  it("keeps only full-team fights in the default mode", () => {
-    expect(
-      isQualifyingGroupFightComposition({ teamOne: 10, teamTwo: 10 }),
-    ).toBe(true);
-    expect(isQualifyingGroupFightComposition({ teamOne: 9, teamTwo: 10 })).toBe(
-      false,
-    );
-    expect(isQualifyingGroupFightComposition({ teamOne: 10, teamTwo: 8 })).toBe(
-      false,
-    );
-    expect(isQualifyingGroupFightComposition({ teamOne: 10, teamTwo: 7 })).toBe(
-      false,
-    );
-    expect(isQualifyingGroupFightComposition({ teamOne: 9, teamTwo: 9 })).toBe(
-      false,
-    );
-    expect(isQualifyingGroupFightComposition({ teamOne: 10, teamTwo: 1 })).toBe(
-      false,
+  it.each([
+    [8, 8, true],
+    [10, 9, true],
+    [9, 10, true],
+    [10, 8, true],
+    [8, 10, true],
+    [10, 10, true],
+    [9, 9, true],
+    [8, 7, false],
+    [10, 7, false],
+    [7, 10, false],
+    [10, 1, false],
+    [11, 8, false],
+  ])("applies the default threshold to %sv%s", (teamOne, teamTwo, expected) => {
+    expect(isQualifyingGroupFightComposition({ teamOne, teamTwo })).toBe(
+      expected,
     );
   });
 
-  it("keeps every group fight when incomplete fights are enabled", () => {
-    expect(
-      isQualifyingGroupFightComposition({ teamOne: 5, teamTwo: 5 }, "ALL"),
-    ).toBe(true);
-    expect(
-      isQualifyingGroupFightComposition({ teamOne: 10, teamTwo: 1 }, "ALL"),
-    ).toBe(false);
-    expect(
-      isQualifyingGroupFightComposition({ teamOne: 10, teamTwo: 2 }, "ALL"),
-    ).toBe(true);
-    expect(
-      isQualifyingGroupFightComposition({ teamOne: 1, teamTwo: 1 }, "ALL"),
-    ).toBe(false);
+  it.each([
+    [2, 1, true],
+    [1, 2, true],
+    [10, 1, true],
+    [1, 10, true],
+    [2, 2, true],
+    [8, 8, true],
+    [10, 10, true],
+    [1, 1, false],
+    [0, 10, false],
+    [10, 11, false],
+  ])("applies ALL mode to %sv%s", (teamOne, teamTwo, expected) => {
+    expect(isQualifyingGroupFightComposition({ teamOne, teamTwo }, "ALL")).toBe(
+      expected,
+    );
   });
 
   it("maps the organization toggle to a mode", () => {

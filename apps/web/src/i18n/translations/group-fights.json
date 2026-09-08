@@ -17,6 +17,27 @@
   "page": "Strona {{page}}",
   "world": "Świat",
   "period": "Okres",
+  "periods": {
+    "today": "Dzisiaj",
+    "week": "Bieżący tydzień",
+    "month": "Bieżący miesiąc",
+    "24h": "Ostatnie 24 godziny",
+    "7d": "Ostatnie 7 dni",
+    "30d": "Ostatnie 30 dni",
+    "90d": "Ostatnie 90 dni",
+    "all": "Cała historia"
+  },
+  "calendarNote": "Dzień, tydzień i miesiąc liczone są według czasu polskiego. Tydzień zaczyna się w poniedziałek.",
+  "mapTypes": "Rodzaj mapy",
+  "mapType": {
+    "all": "Wszystkie mapy",
+    "ELITE2": "Elity II",
+    "TITAN": "Tytani"
+  },
+  "mapsTitle": "Walki według map",
+  "selectedMap": "Wybrana mapa: {{name}}",
+  "selectMap": "Pokaż walki na mapie {{name}}",
+  "clearMap": "Wszystkie mapy",
   "member": "Członek",
   "characters": "Postacie",
   "character": "Postać",
@@ -43,6 +64,6 @@
   },
   "enabled": "Zbieraj ustawki",
   "enabledDescription": "Dodatek zapisuje nowe walki grupowe PvP na mapach ustawek. Wyłączenie zatrzymuje zbieranie, zachowując historię.",
-  "includeIncomplete": "Uwzględniaj niepełne składy",
-  "includeIncompleteDescription": "Włączone: co najmniej 2 graczy po każdej stronie. Wyłączone: tylko dokładnie 10 na 10. Zmiana dotyczy nowych walk."
+  "includeIncomplete": "Zapisuj wszystkie walki grupowe",
+  "includeIncompleteDescription": "Domyślnie: co najmniej 8 graczy po każdej stronie, np. 8 na 8 lub 10 na 9. Włączone: także nierówne składy, np. 10 na 1; bez pojedynków 1 na 1. Ustawienie zmienia administrator lub właściciel organizacji i dotyczy ono nowych walk."
 }

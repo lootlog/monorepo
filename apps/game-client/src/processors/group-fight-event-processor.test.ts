@@ -119,7 +119,39 @@ describe("group fight capture", () => {
       expect(post).not.toHaveBeenCalled();
     },
   );
-  it("rejects PvE and 10v1 fights", () => {
+  it.each([
+    [2, 1],
+    [10, 1],
+    [1, 10],
+    [8, 8],
+    [10, 9],
+  ])(
+    "submits %sv%s for the organization's collection policy",
+    async (teamOne, teamTwo) => {
+      const processor = new GroupFightEventProcessor();
+      const warriors = Object.fromEntries(
+        Array.from({ length: teamOne + teamTwo }, (_, index) => [
+          String(index + 1),
+          warrior(index + 1, index < teamOne ? 1 : 2),
+        ]),
+      );
+      processor.handle(event({ init: "1", w: warriors }));
+      processor.handle(event({ endBattle: 1 }, start + 30));
+      await vi.waitFor(() => expect(post).toHaveBeenCalledOnce());
+      expect(post).toHaveBeenCalledWith(
+        "/group-fights",
+        expect.objectContaining({
+          participants: expect.arrayContaining([
+            expect.objectContaining({
+              characterId: String(teamOne + teamTwo),
+              team: 2,
+            }),
+          ]),
+        }),
+      );
+    },
+  );
+  it("rejects PvE and 1v1 fights", () => {
     for (const warriors of [
       {
         "1": warrior(1, 1),
@@ -128,9 +160,9 @@ describe("group fight capture", () => {
         "-4": warrior(-4, 2),
       },
       Object.fromEntries(
-        Array.from({ length: 11 }, (_, index) => [
+        Array.from({ length: 2 }, (_, index) => [
           String(index + 1),
-          warrior(index + 1, index < 10 ? 1 : 2),
+          warrior(index + 1, index < 1 ? 1 : 2),
         ]),
       ),
     ]) {
