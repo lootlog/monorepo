@@ -566,6 +566,55 @@ describe("MobileDaySchedule", () => {
     expect(onReservationSelect).not.toHaveBeenCalled();
   });
 
+  it("uses the latest day-change callback after rerendering the same day", () => {
+    setReducedMotion(true);
+    const {
+      container,
+      grid,
+      rerender,
+      date,
+      onDaySwipe,
+      onRangeSelect,
+      onReservationSelect,
+    } = renderSchedule();
+    const swipeSurface = container.querySelector(
+      '[data-slot="mobile-day-swipe-surface"]',
+    );
+    if (!(swipeSurface instanceof HTMLDivElement)) {
+      throw new Error("Missing swipe surface");
+    }
+    vi.spyOn(swipeSurface, "getBoundingClientRect").mockReturnValue(
+      new DOMRect(0, 0, 360, 800),
+    );
+    const nextOnDaySwipe = vi.fn<(direction: -1 | 1) => void>();
+    rerender(
+      <MobileDaySchedule
+        date={date}
+        dayIndex={3}
+        segments={[]}
+        defaultDurationMinutes={60}
+        minuteStep={15}
+        onRangeSelect={onRangeSelect}
+        onReservationSelect={onReservationSelect}
+        onDaySwipe={nextOnDaySwipe}
+      />,
+    );
+
+    fireEvent.touchStart(grid, {
+      touches: [{ clientX: 200, clientY: 400, identifier: 11 }],
+    });
+    fireEvent.touchMove(grid, {
+      touches: [{ clientX: 280, clientY: 402, identifier: 11 }],
+    });
+    fireEvent.touchEnd(grid, {
+      changedTouches: [{ clientX: 280, clientY: 402, identifier: 11 }],
+      touches: [],
+    });
+
+    expect(nextOnDaySwipe).toHaveBeenCalledWith(-1);
+    expect(onDaySwipe).not.toHaveBeenCalled();
+  });
+
   it("changes the day without animation when reduced motion is enabled", async () => {
     setReducedMotion(true);
     const { container, grid, onDaySwipe } = renderSchedule();

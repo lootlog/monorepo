@@ -428,9 +428,9 @@ export function MobileDaySchedule({
     date,
     defaultDurationMinutes,
     isDaySwipeEnabled,
-    swipeX,
     minuteStep,
     onRangeSelect,
+    swipeX,
   ]);
 
   const selectionStyle = (() => {
