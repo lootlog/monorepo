@@ -181,6 +181,8 @@ const getFirstVisibleRow = () => {
     .find((row) => row.getBoundingClientRect().bottom > 1);
 };
 
+// Forty real messages overflow the viewport even at compact density.
+// chat.helpers.test.ts covers the 500-message history limit and eviction.
 describe("ChatMessageList", () => {
   beforeEach(() => {
     setTestRuntimeGame();
@@ -281,12 +283,12 @@ describe("ChatMessageList", () => {
     vi.unstubAllGlobals();
   });
 
-  it("renders the complete bounded history and initially anchors to the bottom", () => {
-    renderMessageList(createRenderables(500));
+  it("renders every supplied history message and initially anchors to the bottom", () => {
+    renderMessageList(createRenderables(40));
 
-    expect(screen.getAllByRole("listitem")).toHaveLength(500);
+    expect(screen.getAllByRole("listitem")).toHaveLength(40);
     expect(getMessage("message-0")).toBeInTheDocument();
-    expect(getMessage("message-499")).toBeInTheDocument();
+    expect(getMessage("message-39")).toBeInTheDocument();
     const viewport = getViewport();
     expect(viewport.scrollTop).toBe(
       viewport.scrollHeight - viewport.clientHeight,
@@ -295,11 +297,11 @@ describe("ChatMessageList", () => {
 
   it("anchors exactly to the physical bottom after switching guilds", () => {
     const { rerender } = render(
-      createMessageListElement(createRenderables(80), "guild-1", "guild-1"),
+      createMessageListElement(createRenderables(30), "guild-1", "guild-1"),
     );
 
     rerender(
-      createMessageListElement(createRenderables(120), "guild-2", "guild-2"),
+      createMessageListElement(createRenderables(40), "guild-2", "guild-2"),
     );
 
     const viewport = getViewport();
@@ -314,7 +316,7 @@ describe("ChatMessageList", () => {
     );
 
     rerender(
-      createMessageListElement(createRenderables(120), "guild-2", "guild-2"),
+      createMessageListElement(createRenderables(40), "guild-2", "guild-2"),
     );
 
     const viewport = getViewport();
@@ -352,7 +354,7 @@ describe("ChatMessageList", () => {
   });
 
   it("does not issue scroll commands while settled content stays idle", () => {
-    renderMessageList(createRenderables(120));
+    renderMessageList(createRenderables(40));
     const viewport = getViewport();
     scrollRequests.length = 0;
     const initialMetrics = {
@@ -375,7 +377,7 @@ describe("ChatMessageList", () => {
   });
 
   it("stays at the physical bottom when content resizes", () => {
-    renderMessageList(createRenderables(120));
+    renderMessageList(createRenderables(40));
     const viewport = getViewport();
     rowHeightScale = 1.25;
 
@@ -388,7 +390,7 @@ describe("ChatMessageList", () => {
   });
 
   it("does not snap a small explicit upward scroll to the bottom when content resizes", () => {
-    renderMessageList(createRenderables(120));
+    renderMessageList(createRenderables(40));
     const viewport = getViewport();
     const userScrollTop = viewport.scrollHeight - viewport.clientHeight - 3;
 
@@ -408,7 +410,7 @@ describe("ChatMessageList", () => {
   });
 
   it("reflows appearance at the bottom without starting a scroll animation", () => {
-    const renderables = createRenderables(120);
+    const renderables = createRenderables(40);
     const readableAppearance: ChatAppearanceSettings = {
       npcLayout: "tile",
       fontScalePercent: 100,
@@ -452,11 +454,11 @@ describe("ChatMessageList", () => {
     expect(viewport.scrollTop).toBe(
       viewport.scrollHeight - viewport.clientHeight,
     );
-    expect(screen.getAllByRole("listitem")).toHaveLength(120);
+    expect(screen.getAllByRole("listitem")).toHaveLength(40);
   });
 
   it("preserves the first visible row and offset during appearance reflow", () => {
-    const renderables = createRenderables(120);
+    const renderables = createRenderables(40);
     const readableAppearance: ChatAppearanceSettings = {
       npcLayout: "tile",
       fontScalePercent: 100,
@@ -509,7 +511,7 @@ describe("ChatMessageList", () => {
   });
 
   it("preserves history when content above the anchor changes height", () => {
-    renderMessageList(createRenderables(120));
+    renderMessageList(createRenderables(40));
     const viewport = getViewport();
     fireEvent.wheel(viewport, { deltaY: -500 });
     viewport.scrollTop = 1_000;
@@ -548,7 +550,7 @@ describe("ChatMessageList", () => {
   ])(
     "renders new messages without moving after %s input moves beyond 72 px",
     (_inputMethod, registerIntent) => {
-      const initialRenderables = createRenderables(120);
+      const initialRenderables = createRenderables(40);
       const { rerender } = renderMessageList(initialRenderables);
       const viewport = getViewport();
       const historyScrollTop =
@@ -559,16 +561,16 @@ describe("ChatMessageList", () => {
       fireEvent.scroll(viewport);
       scrollRequests.length = 0;
 
-      rerender(createMessageListElement(createRenderables(121)));
+      rerender(createMessageListElement(createRenderables(41)));
 
       expect(viewport.scrollTop).toBe(historyScrollTop);
-      expect(getMessage("message-120")).toBeInTheDocument();
+      expect(getMessage("message-40")).toBeInTheDocument();
       expect(scrollRequests).toHaveLength(0);
     },
   );
 
   it("renders new messages without moving after explicit upward movement inside the 72 px bottom zone", () => {
-    const initialRenderables = createRenderables(120);
+    const initialRenderables = createRenderables(40);
     const { rerender } = renderMessageList(initialRenderables);
     const viewport = getViewport();
     const historyScrollTop = viewport.scrollHeight - viewport.clientHeight - 72;
@@ -577,14 +579,14 @@ describe("ChatMessageList", () => {
     viewport.scrollTop = historyScrollTop;
     fireEvent.scroll(viewport);
 
-    rerender(createMessageListElement(createRenderables(121)));
+    rerender(createMessageListElement(createRenderables(41)));
 
-    expect(getMessage("message-120")).toBeInTheDocument();
+    expect(getMessage("message-40")).toBeInTheDocument();
     expect(viewport.scrollTop).toBe(historyScrollTop);
   });
 
   it("shows updates to an existing party gathering while reading history", () => {
-    const initialRenderables = createRenderables(120);
+    const initialRenderables = createRenderables(40);
     const initialGathering = initialRenderables[0];
     if (!initialGathering || initialGathering.kind !== "message") {
       throw new Error("Expected the first renderable to be a message");
@@ -634,17 +636,17 @@ describe("ChatMessageList", () => {
   });
 
   it("preserves the anchor while bounded history replaces its oldest entry", () => {
-    const initialRenderables = createRenderables(500);
+    const initialRenderables = createRenderables(40);
     const { rerender } = renderMessageList(initialRenderables);
     const viewport = getViewport();
     fireEvent.wheel(viewport, { deltaY: -500 });
-    viewport.scrollTop = 5_000;
+    viewport.scrollTop = 500;
     fireEvent.scroll(viewport);
     const anchoredKey = getFirstVisibleRow()?.dataset.chatRowKey;
     const anchoredOffset = getFirstVisibleRow()?.getBoundingClientRect().top;
     expect(anchoredKey).toBeDefined();
 
-    rerender(createMessageListElement(createRenderables(501).slice(1)));
+    rerender(createMessageListElement(createRenderables(41).slice(1)));
     triggerMessageListResize();
     flushAnimationFrames(2);
 
@@ -657,17 +659,17 @@ describe("ChatMessageList", () => {
     expect(
       document.querySelector('[data-chat-message-id="message-0"]'),
     ).not.toBeInTheDocument();
-    expect(getMessage("message-500")).toBeInTheDocument();
+    expect(getMessage("message-40")).toBeInTheDocument();
   });
 
   it("follows consecutive messages at the bottom without smooth animation", () => {
-    const initialRenderables = createRenderables(100);
+    const initialRenderables = createRenderables(40);
     const { rerender } = renderMessageList(initialRenderables);
     const viewport = getViewport();
     scrollRequests.length = 0;
 
-    rerender(createMessageListElement(createRenderables(101)));
-    rerender(createMessageListElement(createRenderables(102)));
+    rerender(createMessageListElement(createRenderables(41)));
+    rerender(createMessageListElement(createRenderables(42)));
 
     expect(scrollRequests.some(({ behavior }) => behavior === "smooth")).toBe(
       false,
@@ -678,7 +680,7 @@ describe("ChatMessageList", () => {
   });
 
   it("returns to the bottom after sending a message from history", () => {
-    const renderables = createRenderables(300);
+    const renderables = createRenderables(40);
     const { rerender } = render(
       createMessageListElement(renderables, "guild-1", "guild-1", undefined, 0),
     );
@@ -701,7 +703,7 @@ describe("ChatMessageList", () => {
   });
 
   it("uses one animated controller jump for a replied message", () => {
-    renderMessageList(createRenderables(300));
+    renderMessageList(createRenderables(40));
     scrollRequests.length = 0;
 
     act(() => dispatchChatScrollToMessage("message-0"));
