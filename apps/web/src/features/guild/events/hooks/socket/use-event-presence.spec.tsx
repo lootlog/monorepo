@@ -65,3 +65,63 @@ it("keeps the last presence snapshot while permissions are rebalanced", async ()
   expect(result.current.presenceData).toBe(previousPresence);
   expect(result.current.accessState).toBe("allowed");
 });
+
+it.each([
+  { guildId: "guild-2", world: "tempest" },
+  { guildId: "guild-1", world: "other-world" },
+  { guildId: undefined, world: "tempest" },
+])(
+  "clears the previous snapshot when the scope changes to %j",
+  async (nextScope) => {
+    const gateway = createTestGateway();
+    gateway.request
+      .mockResolvedValueOnce({
+        organizationId: "guild-1",
+        revision: 1,
+        presences: [],
+      })
+      .mockImplementation(() => new Promise(() => undefined));
+    const initialProps: Parameters<typeof useEventPresence>[0] = {
+      guildId: "guild-1",
+      world: "tempest",
+    };
+    const { result, rerender } = renderHook(useEventPresence, {
+      initialProps,
+      wrapper: gateway.wrapper,
+    });
+    await waitFor(() => expect(result.current.presenceData).toEqual(new Map()));
+
+    rerender(nextScope);
+
+    expect(result.current.presenceData).toBeUndefined();
+    expect(result.current.accessState).toBe("allowed");
+  },
+);
+
+it("ignores an outstanding response after leaving the presence scope", async () => {
+  const gateway = createTestGateway();
+  const resolveResponse = vi.fn<() => void>();
+  const response = new Promise((resolve) => {
+    resolveResponse.mockImplementation(() => {
+      resolve({ organizationId: "guild-1", revision: 1, presences: [] });
+    });
+  });
+  gateway.request.mockReturnValue(response);
+  const initialProps: Parameters<typeof useEventPresence>[0] = {
+    guildId: "guild-1",
+    world: "tempest",
+  };
+  const { result, rerender } = renderHook(useEventPresence, {
+    initialProps,
+    wrapper: gateway.wrapper,
+  });
+  await waitFor(() => expect(gateway.request).toHaveBeenCalledTimes(1));
+
+  rerender({ guildId: undefined, world: "tempest" });
+  await act(async () => {
+    resolveResponse();
+    await response;
+  });
+
+  expect(result.current.presenceData).toBeUndefined();
+});

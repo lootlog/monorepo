@@ -34,6 +34,13 @@ export const useEventPresence = ({
     useState<EventPresenceAccessState>("allowed");
   const [refreshVersion, setRefreshVersion] = useState(0);
   const requestIdRef = useRef(0);
+  const [scope, setScope] = useState({ guildId, world });
+
+  if (scope.guildId !== guildId || scope.world !== world) {
+    setScope({ guildId, world });
+    setPresenceData(undefined);
+    setAccessState("allowed");
+  }
 
   const requestPresence = useEffectEvent(() => {
     if (!socket || !connected || !joined || !guildId || !world) return;
@@ -129,14 +136,6 @@ export const useEventPresence = ({
   });
 
   useEffect(() => {
-    if (!guildId || !world) {
-      requestIdRef.current += 1;
-      setPresenceData(undefined);
-      setAccessState("allowed");
-    }
-  }, [guildId, world]);
-
-  useEffect(() => {
     if (!socket || !connected || !joined || !guildId || !world) {
       return;
     }
@@ -146,6 +145,7 @@ export const useEventPresence = ({
     socket.on(GatewayEvent.EVENT_PRESENCE_UPDATE, handleEventPresenceUpdate);
 
     return () => {
+      requestIdRef.current += 1;
       socket.off(GatewayEvent.EVENT_PRESENCE_UPDATE, handleEventPresenceUpdate);
     };
   }, [socket, connected, joined, guildId, world, refreshVersion]);
