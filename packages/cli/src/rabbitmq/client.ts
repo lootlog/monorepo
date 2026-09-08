@@ -72,7 +72,7 @@ class RabbitMQClient {
       if (this.connection) {
         await this.connection.close();
       }
-    } catch (error) {
+    } catch {
       console.warn(
         chalk.yellow(`Warning: Failed to close RabbitMQ connection gracefully`),
       );

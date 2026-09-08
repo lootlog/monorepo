@@ -6,7 +6,7 @@ import { UserNavItem } from "@/components/layout/user-nav-item";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { Reorder, motion } from "framer-motion";
-import { useState, useEffect, useRef, type FC } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, type FC } from "react";
 import { GuildsSelectorSkeleton } from "@/components/layout/guilds-selector-skeleton";
 import { useGateway } from "@/hooks/utils/use-gateway";
 import { Separator } from "@lootlog/ui/components/separator";
@@ -35,7 +35,9 @@ export const GuildsSelector: FC = () => {
   const latestHiddenGuildIds = useRef(
     preferencesQuery.data?.hiddenGuildIds ?? [],
   );
-  latestHiddenGuildIds.current = preferencesQuery.data?.hiddenGuildIds ?? [];
+  useLayoutEffect(() => {
+    latestHiddenGuildIds.current = preferencesQuery.data?.hiddenGuildIds ?? [];
+  }, [preferencesQuery.data?.hiddenGuildIds]);
 
   const getOrderedGuilds = () => {
     if (!guilds?.length) {

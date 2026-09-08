@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { addDays, format } from "date-fns";
 import {
@@ -166,66 +166,62 @@ export function MobileDaySchedule({
     swipeX.set(0);
   };
 
-  const finishDaySwipe = async ({
-    offsetX,
-    velocityX,
-  }: {
-    offsetX: number;
-    velocityX: number;
-  }) => {
-    const surface = swipeSurfaceRef.current;
-    const width = surface?.getBoundingClientRect().width ?? 0;
-    const direction = getDaySwipeDirection({
-      offsetX,
-      velocityX,
-      width,
-    });
+  const finishDaySwipe = useEffectEvent(
+    async ({ offsetX, velocityX }: { offsetX: number; velocityX: number }) => {
+      const surface = swipeSurfaceRef.current;
+      const width = surface?.getBoundingClientRect().width ?? 0;
+      const direction = getDaySwipeDirection({
+        offsetX,
+        velocityX,
+        width,
+      });
 
-    if (swipeTransitioningRef.current) {
-      return;
-    }
+      if (swipeTransitioningRef.current) {
+        return;
+      }
 
-    if (direction === null) {
+      if (direction === null) {
+        if (shouldReduceMotion) {
+          swipeX.set(0);
+          clearSuppressedClickAfterCurrentEvent();
+          return;
+        }
+
+        swipeTransitioningRef.current = true;
+        try {
+          swipeX.stop();
+          await animate(swipeX, 0, SWIPE_RETURN_TRANSITION);
+        } finally {
+          swipeX.set(0);
+          swipeTransitioningRef.current = false;
+          suppressClickRef.current = false;
+        }
+        return;
+      }
+
       if (shouldReduceMotion) {
         swipeX.set(0);
+        onDaySwipe(direction);
         clearSuppressedClickAfterCurrentEvent();
         return;
       }
 
       swipeTransitioningRef.current = true;
+      const exitOffset = direction === 1 ? -width : width;
       try {
         swipeX.stop();
-        await animate(swipeX, 0, SWIPE_RETURN_TRANSITION);
+        await animate(swipeX, exitOffset, SWIPE_COMMIT_TRANSITION);
+        flushSync(() => {
+          onDaySwipe(direction);
+        });
+        swipeX.set(0);
       } finally {
         swipeX.set(0);
         swipeTransitioningRef.current = false;
         suppressClickRef.current = false;
       }
-      return;
-    }
-
-    if (shouldReduceMotion) {
-      swipeX.set(0);
-      onDaySwipe(direction);
-      clearSuppressedClickAfterCurrentEvent();
-      return;
-    }
-
-    swipeTransitioningRef.current = true;
-    const exitOffset = direction === 1 ? -width : width;
-    try {
-      swipeX.stop();
-      await animate(swipeX, exitOffset, SWIPE_COMMIT_TRANSITION);
-      flushSync(() => {
-        onDaySwipe(direction);
-      });
-      swipeX.set(0);
-    } finally {
-      swipeX.set(0);
-      swipeTransitioningRef.current = false;
-      suppressClickRef.current = false;
-    }
-  };
+    },
+  );
 
   useEffect(() => {
     const nowIndicator = nowRef.current;
@@ -248,6 +244,8 @@ export function MobileDaySchedule({
     },
     [swipeX],
   );
+
+  const resetTouchSwipePosition = useEffectEvent(resetSwipePosition);
 
   useEffect(() => {
     const grid = gridRef.current;
@@ -308,7 +306,7 @@ export function MobileDaySchedule({
           return;
         }
         session.activated = true;
-        resetSwipePosition();
+        resetTouchSwipePosition();
         suppressClickRef.current = true;
         const nextSelection: DaySelection = {
           anchorMinutes: minutes,
@@ -385,7 +383,7 @@ export function MobileDaySchedule({
         return;
       }
       if (session.activated) {
-        resetSwipePosition();
+        resetTouchSwipePosition();
         event.preventDefault();
         const finishedSelection = selectionRef.current;
         selectionRef.current = null;
@@ -411,7 +409,7 @@ export function MobileDaySchedule({
       selectionRef.current = null;
       setSelection(null);
       if (!swipeTransitioningRef.current) {
-        resetSwipePosition();
+        resetTouchSwipePosition();
         suppressClickRef.current = false;
       }
     };
@@ -433,6 +431,7 @@ export function MobileDaySchedule({
     isDaySwipeEnabled,
     minuteStep,
     onRangeSelect,
+    swipeX,
   ]);
 
   const selectionStyle = (() => {

@@ -39,8 +39,8 @@ export const EventSummaryDialog = ({
   const { t } = useTranslation();
   const prefersReducedMotion = Boolean(useReducedMotion());
   const stageRef = useRef<HTMLElement>(null);
-  const previousIndexRef = useRef(0);
-  const [currentSlideId, setCurrentSlideId] = useState("opening");
+  const [selection, setSelection] = useState({ id: "opening", index: 0 });
+  const currentSlideId = selection.id;
   const [direction, setDirection] = useState<1 | -1>(1);
   const { data, isLoading, isFetching, error, refetch } = useShowEventWrapped(
     { guildId, eventId },
@@ -61,7 +61,7 @@ export const EventSummaryDialog = ({
     const activeIndex =
       matchingIndex >= 0
         ? matchingIndex
-        : Math.min(previousIndexRef.current, Math.max(slides.length - 1, 0));
+        : Math.min(selection.index, Math.max(slides.length - 1, 0));
     const activeSlide = slides[activeIndex];
     return {
       deck,
@@ -79,19 +79,18 @@ export const EventSummaryDialog = ({
       return;
     }
 
-    previousIndexRef.current = 0;
     startTransition(() => {
       setDirection(1);
-      setCurrentSlideId("opening");
+      setSelection({ id: "opening", index: 0 });
     });
   }, [open]);
 
-  useEffect(() => {
-    previousIndexRef.current = activeIndex;
-    if (activeSlide && activeSlide.id !== currentSlideId) {
-      setCurrentSlideId(activeSlide.id);
-    }
-  }, [activeIndex, activeSlide, currentSlideId]);
+  if (
+    activeSlide &&
+    (activeSlide.id !== selection.id || activeIndex !== selection.index)
+  ) {
+    setSelection({ id: activeSlide.id, index: activeIndex });
+  }
 
   const advanceAutomatically = () => {
     if (!activeSlide || activeIndex >= slides.length - 1) {
@@ -99,7 +98,10 @@ export const EventSummaryDialog = ({
     }
 
     setDirection(1);
-    setCurrentSlideId(slides[activeIndex + 1]?.id ?? activeSlide.id);
+    setSelection({
+      id: slides[activeIndex + 1]?.id ?? activeSlide.id,
+      index: activeIndex + 1,
+    });
   };
 
   const autoplay = useWrappedAutoplay({
@@ -122,7 +124,7 @@ export const EventSummaryDialog = ({
 
     setDirection(index > activeIndex ? 1 : -1);
     autoplay.reset();
-    setCurrentSlideId(nextSlide.id);
+    setSelection({ id: nextSlide.id, index });
   };
 
   useEffect(() => {
@@ -162,14 +164,16 @@ export const EventSummaryDialog = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   });
 
-  let activeSlideLabel = "";
-  if (activeSlide?.kind === "fact") {
-    activeSlideLabel = t(`events.summaryDialog.facts.${activeSlide.id}.label`);
-  } else if (activeSlide) {
-    activeSlideLabel = t(
-      `events.summaryDialog.${activeSlide.kind}ProgressLabel`,
-    );
-  }
+  const getActiveSlideLabel = () => {
+    if (activeSlide?.kind === "fact") {
+      return t(`events.summaryDialog.facts.${activeSlide.id}.label`);
+    }
+    if (activeSlide) {
+      return t(`events.summaryDialog.${activeSlide.kind}ProgressLabel`);
+    }
+    return "";
+  };
+  const activeSlideLabel = getActiveSlideLabel();
 
   const renderStage = () => {
     if (isLoading) {
