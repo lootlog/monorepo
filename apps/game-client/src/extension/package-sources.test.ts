@@ -10,6 +10,14 @@ import {
 } from "node:fs/promises";
 import path from "node:path";
 
+/**
+ * Git hooks export GIT_DIR and GIT_INDEX_FILE, so a fixture repository created
+ * while a commit runs would target the outer repository and block on its index.
+ */
+const fixtureEnv: NodeJS.ProcessEnv = Object.fromEntries(
+  Object.entries(process.env).filter(([key]) => !key.startsWith("GIT_")),
+);
+
 const directories: string[] = [];
 afterEach(async () => {
   await Promise.all(
@@ -39,8 +47,8 @@ async function repository() {
     path.join(root, ".gitignore"),
     "node_modules\n.output/\n.env\n",
   );
-  execFileSync("git", ["init", "--quiet"], { cwd: root });
-  execFileSync("git", ["add", "."], { cwd: root });
+  execFileSync("git", ["init", "--quiet"], { cwd: root, env: fixtureEnv });
+  execFileSync("git", ["add", "."], { cwd: root, env: fixtureEnv });
   execFileSync(
     "git",
     [
@@ -55,7 +63,7 @@ async function repository() {
       "-m",
       "fixture",
     ],
-    { cwd: root },
+    { cwd: root, env: fixtureEnv },
   );
   const archive = path.join(
     client,
@@ -65,6 +73,7 @@ async function repository() {
     spawnSync("bun", [path.join(client, "extension/package-sources.ts")], {
       cwd: client,
       encoding: "utf8",
+      env: fixtureEnv,
     });
   return { root, client, archive, run };
 }
@@ -94,7 +103,10 @@ it.each(["untracked", "modified", "staged"])(
       state === "untracked" ? "" : await readFile(target, "utf8");
     await writeFile(target, existing + "\n// PRIVATE_FIXTURE_VALUE\n");
     if (state === "staged")
-      execFileSync("git", ["add", "."], { cwd: fixture.root });
+      execFileSync("git", ["add", "."], {
+        cwd: fixture.root,
+        env: fixtureEnv,
+      });
     const result = fixture.run();
     expect(result.status).not.toBe(0);
     expect(result.stderr).toContain(
