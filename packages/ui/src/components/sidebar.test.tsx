@@ -17,6 +17,21 @@ afterEach(() => {
 });
 
 describe("mobile sidebar", () => {
+  it("toggles the current sidebar state with the keyboard shortcut", async () => {
+    render(
+      <SidebarProvider>
+        <Sidebar>
+          <span>Sidebar content</span>
+        </Sidebar>
+      </SidebarProvider>,
+    );
+
+    fireEvent.keyDown(window, { key: "b", ctrlKey: true });
+    expect(await screen.findByRole("dialog")).toBeVisible();
+    fireEvent.keyDown(window, { key: "b", ctrlKey: true });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+
   it("preserves hidden content while disconnecting its effects", async () => {
     const onEffectConnect = vi.fn<() => void>();
     const onEffectDisconnect = vi.fn<() => void>();

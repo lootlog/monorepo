@@ -64,11 +64,10 @@ export const ItemStack: FC<Props> = ({
     return renderItem(items[0]);
   }
 
-  if (items.length === 1) {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  if (items.length === 1 && items[0]) {
     return (
       <WatchableItemTile
-        item={items[0]!}
+        item={items[0]}
         watchContext={watchContext}
         selectedItemNames={selectedItemNames}
       />

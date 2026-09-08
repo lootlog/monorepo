@@ -102,7 +102,15 @@ export const GuildDocEditorPage = () => {
     setEditorSeed((seed) => seed + 1);
   };
 
-  useEffect(resetDraft, [document?.id, document?.version]);
+  const [previousDocument, setPreviousDocument] =
+    useState<typeof document>(undefined);
+  if (
+    previousDocument?.id !== document?.id ||
+    previousDocument?.version !== document?.version
+  ) {
+    setPreviousDocument(document);
+    resetDraft();
+  }
 
   useEffect(() => {
     if (!isDirty) {

@@ -118,7 +118,7 @@ describe("battleAnalyticsDomain", () => {
     });
 
     expect(
-      service.getBattleResultForUserWarrior(battle, battle.warriors[0]!),
+      service.getBattleResultForUserWarrior(battle, battle.warriors[0]),
     ).toBe("flee");
   });
 });

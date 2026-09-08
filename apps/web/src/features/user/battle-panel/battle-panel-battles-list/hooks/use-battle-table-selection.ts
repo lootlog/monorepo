@@ -1,5 +1,5 @@
 import type { Battle } from "@/lib/api/battlelog-types";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { getBattleTableSelectionState } from "../utils/battle-table-selection-state";
 
 type UseBattleTableSelectionParams = {
@@ -33,9 +33,12 @@ export const useBattleTableSelection = ({
     selectionLimit,
   });
 
-  useEffect(() => {
+  const [previousBattleIds, setPreviousBattleIds] =
+    useState(battleIdsFingerprint);
+  if (previousBattleIds !== battleIdsFingerprint) {
+    setPreviousBattleIds(battleIdsFingerprint);
     setSelectedBattleIds(new Set());
-  }, [battleIdsFingerprint]);
+  }
 
   const handleSelectionChange = (battleId: string, checked: boolean) => {
     if (

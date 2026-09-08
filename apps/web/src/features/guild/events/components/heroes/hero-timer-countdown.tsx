@@ -53,7 +53,7 @@ const HeroTimerCountdownContent = ({ timer }: { timer: EventTimer }) => {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [timer.maxSpawnTime, timer.minSpawnTime]);
+  }, [timer]);
 
   if (countdownState.phase === "expired") {
     return (
