@@ -52,14 +52,9 @@ describe("withRouteLoaderCancellation", () => {
 
 describe("rethrowNotFoundOrError", () => {
   it("turns 404 API errors into route not found errors", () => {
-    try {
-      rethrowNotFoundOrError({ status: 404 });
-    } catch (error) {
-      expect(error).toMatchObject({ isNotFound: true });
-      return;
-    }
-
-    throw new Error("Expected rethrowNotFoundOrError to throw");
+    expect(() => rethrowNotFoundOrError({ status: 404 })).toThrow(
+      expect.objectContaining({ isNotFound: true }),
+    );
   });
 
   it("rethrows non-404 errors", () => {

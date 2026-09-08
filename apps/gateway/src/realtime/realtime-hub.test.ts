@@ -9,10 +9,7 @@ import type {
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Effect } from "effect";
 import { decode, encode } from "@msgpack/msgpack";
-import type {
-  FederatedRealtimeMessage,
-  RedisGatewayStore,
-} from "#src/platform/redis-store";
+import type { FederatedRealtimeMessage } from "#src/platform/redis-store";
 import { getScopeKey, RealtimeHub } from "./realtime-hub.js";
 import { RabbitBridge } from "#src/rabbit/rabbit-bridge";
 import type { SessionData } from "./session.js";

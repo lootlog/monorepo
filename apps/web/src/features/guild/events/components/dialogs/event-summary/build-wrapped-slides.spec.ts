@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { assert, describe, expect, it } from "vitest";
 import type { EventWrapped } from "../../../types/api";
 import { buildWrappedDeck } from "./build-wrapped-slides";
 import { buildWrappedQualityModel } from "./wrapped-data-quality";
@@ -100,10 +100,7 @@ describe("event wrapped deck", () => {
   it("builds at most ten unique slides from verified facts", () => {
     const deck = buildWrappedDeck(buildWrappedQualityModel(createWrapped()));
 
-    expect(deck.mode).toBe("presentation");
-    if (deck.mode !== "presentation") {
-      return;
-    }
+    assert(deck.mode === "presentation");
 
     expect(deck.slides).toHaveLength(10);
     expect(new Set(deck.slides.map((slide) => slide.id)).size).toBe(
@@ -114,10 +111,7 @@ describe("event wrapped deck", () => {
   it("keeps the hero spotlight and only one primary leader in a full deck", () => {
     const deck = buildWrappedDeck(buildWrappedQualityModel(createWrapped()));
 
-    expect(deck.mode).toBe("presentation");
-    if (deck.mode !== "presentation") {
-      return;
-    }
+    assert(deck.mode === "presentation");
 
     const slideIds = deck.slides.map((slide) => slide.id);
     expect(slideIds).toContain("dominant-hero");
@@ -134,14 +128,11 @@ describe("event wrapped deck", () => {
     expect(quality.killSourceConsistent).toBe(false);
     expect(quality.leaders.topHunter).toBeNull();
     expect(quality.dominantHero).toBeNull();
-    if (deck.mode === "presentation") {
-      expect(deck.slides.some((slide) => slide.id === "top-hunter")).toBe(
-        false,
-      );
-      expect(deck.slides.some((slide) => slide.id === "dominant-hero")).toBe(
-        false,
-      );
-    }
+    assert(deck.mode === "presentation");
+    expect(deck.slides.some((slide) => slide.id === "top-hunter")).toBe(false);
+    expect(deck.slides.some((slide) => slide.id === "dominant-hero")).toBe(
+      false,
+    );
   });
 
   it("suppresses tied leaders", () => {

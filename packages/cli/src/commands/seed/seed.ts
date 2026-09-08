@@ -771,7 +771,7 @@ async function seedBattles(count: number) {
   const battlesGenerator = new BattlesGenerator();
   await battlesGenerator.initialize();
 
-  const accountId = `account-${Math.random().toString(36).substring(2, 11)}`;
+  const accountId = `account-${Math.random().toString(36).slice(2, 11)}`;
   const characterId = `${Math.floor(Math.random() * 1000)}`;
 
   const battles = battlesGenerator.generateMultiple(

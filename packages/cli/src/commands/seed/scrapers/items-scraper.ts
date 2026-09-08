@@ -95,7 +95,7 @@ export async function scrapeItems(
       console.log(`⏭️  Items file already exists at ${fullPath}`);
       console.log("💡 Use --force flag to re-scrape");
 
-      const fs = await import("fs/promises");
+      const fs = await import("node:fs/promises");
       const existingData = await fs.readFile(fullPath, "utf-8");
       return JSON.parse(existingData);
     }

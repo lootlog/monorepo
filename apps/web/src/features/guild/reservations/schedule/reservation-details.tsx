@@ -1,5 +1,5 @@
 import { invalidateReservationQueries } from "./invalidate-reservation-queries";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { format, isSameDay } from "date-fns";
 import { pl } from "date-fns/locale";
 import { Bell, CalendarClock, MessageSquareText, Trash2 } from "lucide-react";
@@ -77,9 +77,9 @@ export function ReservationDetails({
     },
   });
 
-  useEffect(() => {
-    if (reservation) setLastReservation(reservation);
-  }, [reservation]);
+  if (reservation && reservation !== lastReservation) {
+    setLastReservation(reservation);
+  }
 
   if (!displayedReservation) {
     return isMobile ? (
