@@ -7,10 +7,20 @@ import {
   unusedBattleAnalytics,
   unusedDeleteQueue,
 } from "../../../test/battle-fixtures.js";
-import { afterEach, describe, expect, it, mock, spyOn } from "bun:test";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  mock,
+  spyOn,
+} from "bun:test";
 import { Effect, ManagedRuntime, Schema } from "effect";
 import { BattleResponseSchemas } from "#src/battles/catalog/battle-response";
-import { setTimeout as sleep } from "node:timers/promises";
+import { battles } from "#src/database/schema";
 import { Logger } from "#src/infrastructure/logger";
 import type { JsonCodec } from "#src/infrastructure/redis-store";
 import { makeBattlelogOperations } from "#src/battles/battlelog-operations";
@@ -109,18 +119,15 @@ const authHeaders = {
   "x-auth-user-id": "user-1",
 };
 
-const createDatabaseBoundary = async ({
+// Compile PostgreSQL WASM and apply migrations once, outside individual test budgets.
+const databaseRuntime = ManagedRuntime.make(PgliteClient.layer({}));
+const databaseEffect = makeWithDefaults({ relations });
+let sharedDatabase: Effect.Success<typeof databaseEffect>;
+
+const createDatabaseBoundary = ({
   beforeTransaction,
 }: { beforeTransaction?: () => Promise<void> } = {}) => {
-  const runtime = ManagedRuntime.make(PgliteClient.layer({}));
-  const database = await runtime.runPromise(makeWithDefaults({ relations }));
-  await runtime.runPromise(
-    migrate(database, {
-      migrationsFolder: fileURLToPath(
-        new URL("../../../drizzle", import.meta.url),
-      ),
-    }),
-  );
+  const database = sharedDatabase;
   let transactionCount = 0;
   type Transaction = Parameters<Parameters<typeof database.transaction>[0]>[0];
   const transaction = <A, E, R>(
@@ -142,18 +149,21 @@ const createDatabaseBoundary = async ({
       },
     },
     getStoredBattles: () =>
-      runtime.runPromise(
+      databaseRuntime.runPromise(
         database.query.battles.findMany({ with: { warriors: true } }),
       ),
     getTransactionCount: () => transactionCount,
-    dispose: () => runtime.dispose(),
   };
 };
 
 const createRedisBoundary = ({
   now = Date.now,
+  onRenew = () => {},
+  onContention = () => {},
 }: {
   now?: () => number;
+  onRenew?: () => void;
+  onContention?: () => void;
 } = {}) => {
   const values = new Map<string, { expiresAt: number | null; value: string }>();
   const locks = new Map<string, { expiresAt: number | null; token: string }>();
@@ -174,6 +184,7 @@ const createRedisBoundary = ({
         ) {
           if (ttlSeconds !== undefined) {
             lock.expiresAt = now() + Number(ttlSeconds) * 1_000;
+            onRenew();
             return 1;
           }
           locks.delete(key);
@@ -204,6 +215,7 @@ const createRedisBoundary = ({
         existingLock &&
         (existingLock.expiresAt === null || existingLock.expiresAt > now())
       ) {
+        onContention();
         return false;
       }
       locks.set(key, {
@@ -222,16 +234,18 @@ const createRedisBoundary = ({
   };
 };
 
-const createTestApplication = async ({
+const createTestApplication = ({
   beforeTransaction,
   redis = createRedisBoundary(),
-  waitTimeoutMs = 30,
+  waitTimeoutMs = 10_000,
+  lockTtlSeconds = 30,
 }: {
   beforeTransaction?: () => Promise<void>;
   redis?: ReturnType<typeof createRedisBoundary>;
   waitTimeoutMs?: number;
+  lockTtlSeconds?: number;
 } = {}) => {
-  const database = await createDatabaseBoundary({ beforeTransaction });
+  const database = createDatabaseBoundary({ beforeTransaction });
   const drizzle = database.service.db;
   const redisService = redis;
   const analyticsService = {
@@ -258,7 +272,7 @@ const createTestApplication = async ({
     {
       cacheTtlSeconds: 10,
       lockRefreshIntervalMs: 10,
-      lockTtlSeconds: 0.03,
+      lockTtlSeconds,
       waitIntervalMs: 1,
       waitTimeoutMs,
     },
@@ -269,13 +283,6 @@ const createTestApplication = async ({
   );
   const app: TestApplication = {
     ...boundary,
-    dispose: async () => {
-      try {
-        await boundary.dispose();
-      } finally {
-        await database.dispose();
-      }
-    },
     battles: battlesService,
   };
   return { app, database };
@@ -283,6 +290,25 @@ const createTestApplication = async ({
 
 describe("battle creation deduplication", () => {
   let app: TestApplication;
+
+  beforeAll(async () => {
+    sharedDatabase = await databaseRuntime.runPromise(databaseEffect);
+    await databaseRuntime.runPromise(
+      migrate(sharedDatabase, {
+        migrationsFolder: fileURLToPath(
+          new URL("../../../drizzle", import.meta.url),
+        ),
+      }),
+    );
+  }, 60_000);
+
+  beforeEach(async () => {
+    await databaseRuntime.runPromise(sharedDatabase.delete(battles));
+  });
+
+  afterAll(async () => {
+    await databaseRuntime.dispose();
+  });
 
   afterEach(async () => {
     try {
@@ -293,9 +319,7 @@ describe("battle creation deduplication", () => {
   });
 
   it("stores one canonical battle for duplicated incremental and compact payloads", async () => {
-    const testApplication = await createTestApplication({
-      waitTimeoutMs: 1_000,
-    });
+    const testApplication = createTestApplication();
     app = testApplication.app;
 
     const [firstResponse, secondResponse] = await Promise.all([
@@ -326,7 +350,7 @@ describe("battle creation deduplication", () => {
   });
 
   it("preserves the incremental duration when a compact replay arrives first", async () => {
-    const testApplication = await createTestApplication();
+    const testApplication = createTestApplication();
     app = testApplication.app;
 
     const compactResponse = await postBattle(app.handler, {
@@ -349,7 +373,15 @@ describe("battle creation deduplication", () => {
 
   it("keeps equivalent creation single-flight after the initial lock TTL", async () => {
     let currentTime = 0;
-    const redis = createRedisBoundary({ now: () => currentTime });
+    const renewed = Promise.withResolvers<void>();
+    const contended = Promise.withResolvers<void>();
+    const redis = createRedisBoundary({
+      now: () => currentTime,
+      onRenew: () => {
+        if (currentTime === 10) renewed.resolve();
+      },
+      onContention: contended.resolve,
+    });
     let releaseTransaction!: () => void;
     const transactionGate = new Promise<void>((resolve) => {
       releaseTransaction = resolve;
@@ -358,8 +390,9 @@ describe("battle creation deduplication", () => {
     const transactionStarted = new Promise<void>((resolve) => {
       markTransactionStarted = resolve;
     });
-    const testApplication = await createTestApplication({
+    const testApplication = createTestApplication({
       redis,
+      lockTtlSeconds: 0.03,
       beforeTransaction: async () => {
         markTransactionStarted();
         await transactionGate;
@@ -380,9 +413,7 @@ describe("battle creation deduplication", () => {
 
     await transactionStarted;
     currentTime = 10;
-    while (redis.eval.mock.calls.length === 0) {
-      await sleep(1);
-    }
+    await renewed.promise;
     currentTime = 31;
 
     const secondCreation = Effect.runPromise(
@@ -395,12 +426,11 @@ describe("battle creation deduplication", () => {
         userId: "user-1",
       }),
     );
-    await sleep(0);
+    await contended.promise;
     const transactionCallsDuringContention =
       testApplication.database.getTransactionCount();
 
     releaseTransaction();
-    await sleep(1);
     const [firstResult, secondResult] = await Promise.all([
       firstCreation,
       secondCreation,
@@ -423,8 +453,12 @@ describe("battle creation deduplication", () => {
       markTransactionStarted = resolve;
     });
     const redis = createRedisBoundary();
-    redis.eval.mockResolvedValue(0);
-    const testApplication = await createTestApplication({
+    const renewalFailed = Promise.withResolvers<void>();
+    redis.eval.mockImplementation(() => {
+      renewalFailed.resolve();
+      return Promise.resolve(0);
+    });
+    const testApplication = createTestApplication({
       beforeTransaction: async () => {
         markTransactionStarted();
         await transactionGate;
@@ -453,11 +487,10 @@ describe("battle creation deduplication", () => {
       });
 
     await transactionStarted;
-    await sleep(10);
+    await renewalFailed.promise;
     const settledBeforeTransactionFinished = creationSettled;
 
     releaseTransaction();
-    await sleep(0);
 
     await expect(creationOutcome).resolves.toBe("rejected");
     expect(settledBeforeTransactionFinished).toBe(false);
@@ -465,7 +498,7 @@ describe("battle creation deduplication", () => {
   });
 
   it("preserves separate battle events that do not have event ids", async () => {
-    const testApplication = await createTestApplication();
+    const testApplication = createTestApplication();
     app = testApplication.app;
 
     const response = await postBattle(app.handler, {
@@ -500,7 +533,7 @@ describe("battle creation deduplication", () => {
   });
 
   it("preserves distinct battle events that share an event id", async () => {
-    const testApplication = await createTestApplication();
+    const testApplication = createTestApplication();
     app = testApplication.app;
 
     const response = await postBattle(app.handler, {
@@ -540,7 +573,7 @@ describe("battle creation deduplication", () => {
     const dateNow = spyOn(Date, "now").mockReturnValue(
       Date.parse("2026-07-26T18:52:57.000Z"),
     );
-    const testApplication = await createTestApplication();
+    const testApplication = createTestApplication();
     app = testApplication.app;
 
     const firstResponse = await postBattle(app.handler, {
@@ -564,7 +597,7 @@ describe("battle creation deduplication", () => {
     spyOn(Logger.prototype, "error").mockImplementation(() => undefined);
     const redis = createRedisBoundary();
     redis.readCachedJson.mockRejectedValue(new Error("Redis unavailable"));
-    const testApplication = await createTestApplication({ redis });
+    const testApplication = createTestApplication({ redis });
     app = testApplication.app;
 
     await requestJson(app.handler, "POST", "/battles", Schema.Unknown, 503, {
@@ -581,7 +614,10 @@ describe("battle creation deduplication", () => {
     const redis = createRedisBoundary();
     redis.readCachedJson.mockResolvedValue(null);
     redis.setNX.mockResolvedValue(false);
-    const testApplication = await createTestApplication({ redis });
+    const testApplication = createTestApplication({
+      redis,
+      waitTimeoutMs: 30,
+    });
     app = testApplication.app;
 
     await requestJson(app.handler, "POST", "/battles", Schema.Unknown, 503, {
