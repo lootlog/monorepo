@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { GripVertical, ChevronDown, Trash2 } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
@@ -40,9 +40,11 @@ export const CategoryItem = ({
   const categoryLabel = category.name ?? defaultCategoryLabel ?? category.id;
   const [localName, setLocalName] = useState(categoryLabel);
 
-  useEffect(() => {
+  const [previousLabel, setPreviousLabel] = useState(categoryLabel);
+  if (previousLabel !== categoryLabel) {
+    setPreviousLabel(categoryLabel);
     setLocalName(categoryLabel);
-  }, [categoryLabel]);
+  }
 
   const handleNameBlur = () => {
     const nextName = localName.trim();

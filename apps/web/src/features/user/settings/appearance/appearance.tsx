@@ -1,4 +1,4 @@
-import { useEffect, type FC } from "react";
+import { useEffect, useEffectEvent, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearch } from "@tanstack/react-router";
 import { useTheme } from "@/hooks/context/use-theme";
@@ -13,10 +13,13 @@ export const AppearanceSettings: FC = () => {
     from: "/_authenticated/@me/settings/appearance",
   });
 
-  useEffect(() => {
+  const applyThemeParam = useEffectEvent(() => {
     if (themeParam && isThemeId(themeParam) && themeParam !== theme) {
       setTheme(themeParam);
     }
+  });
+  useEffect(() => {
+    applyThemeParam();
   }, [themeParam]);
   const { t } = useTranslation();
 
