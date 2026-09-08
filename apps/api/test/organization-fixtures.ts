@@ -14,6 +14,8 @@ export const createGuildFixture = (overrides: Partial<Guild> = {}): Guild => ({
   vanityUrl: null,
   notificationRuleLimit: 20,
   publicStatsCardEnabled: false,
+  groupFightsEnabled: true,
+  groupFightsIncludeIncomplete: false,
   reservationMaxDurationMinutes: 180,
   reservationMinDurationMinutes: 30,
   reservationTimeGranularityMinutes: 15,

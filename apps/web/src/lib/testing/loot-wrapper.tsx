@@ -32,6 +32,8 @@ export async function createLootTestWrapper() {
     name: "Guild",
     ownerId: "owner",
     publicStatsCardEnabled: false,
+    groupFightsEnabled: true,
+    groupFightsIncludeIncomplete: false,
     reservationMaxDurationMinutes: 120,
     reservationMinDurationMinutes: 5,
     reservationTimeGranularityMinutes: 5,

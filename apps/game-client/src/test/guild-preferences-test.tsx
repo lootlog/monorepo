@@ -22,6 +22,8 @@ export const createTestGuild = (
   vanityUrl: null,
   ownerId: "owner",
   publicStatsCardEnabled: false,
+  groupFightsEnabled: true,
+  groupFightsIncludeIncomplete: false,
   reservationMaxDurationMinutes: 240,
   reservationMinDurationMinutes: 15,
   reservationTimeGranularityMinutes: 15,

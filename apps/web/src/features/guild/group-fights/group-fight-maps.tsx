@@ -44,7 +44,7 @@ export function GroupFightMaps({
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {maps.map((map) => (
-            <Card key={map.mapId}>
+            <Card key={`${map.mapId}:${map.npcType}`}>
               <CardHeader>
                 <CardTitle>{map.mapName}</CardTitle>
                 <CardDescription>

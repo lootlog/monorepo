@@ -42,8 +42,10 @@ type Capture = {
 };
 
 function eventTime(event: GameEvent): string | null {
-  if (!Number.isFinite(event.ev) || event.ev <= 0) return null;
-  const date = new Date(event.ev * 1000);
+  const seconds = event.ev;
+  if (seconds === undefined || !Number.isFinite(seconds) || seconds <= 0)
+    return null;
+  const date = new Date(seconds * 1000);
   return Number.isFinite(date.getTime()) ? date.toISOString() : null;
 }
 
