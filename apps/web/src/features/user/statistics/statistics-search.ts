@@ -1,3 +1,4 @@
+import { z } from "zod";
 export const STATISTICS_TABS = [
   "overview",
   "activity",
@@ -13,16 +14,15 @@ export type StatisticsSearch = {
   world?: string;
 };
 
-export function parseStatisticsSearch(
-  search: Record<string, unknown>,
-): StatisticsSearch {
-  const tab =
-    STATISTICS_TABS.find((value) => value === search.tab) ?? "overview";
-  const days =
-    STATISTICS_DAYS.find((value) => value === Number(search.days)) ?? 30;
-  const world =
-    typeof search.world === "string"
-      ? search.world.trim().slice(0, 100) || undefined
-      : undefined;
-  return { tab, days, world };
-}
+export const parseStatisticsSearch = z.object({
+  tab: z.enum(STATISTICS_TABS).catch("overview"),
+  days: z.coerce
+    .number()
+    .transform((days) => STATISTICS_DAYS.find((value) => value === days) ?? 30)
+    .catch(30),
+  world: z
+    .string()
+    .transform((world) => world.trim().slice(0, 100) || undefined)
+    .optional()
+    .catch(undefined),
+}).parse;

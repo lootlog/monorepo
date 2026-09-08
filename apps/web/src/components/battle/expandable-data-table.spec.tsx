@@ -1,25 +1,21 @@
 // @vitest-environment happy-dom
 
+import { createBattleWarrior } from "@/lib/testing/battle";
+import type { BattleWarrior } from "@/lib/api/battlelog-types";
+import { initializeTestTranslations } from "@/lib/testing/i18n";
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ExpandableDataTable } from "./expandable-data-table";
-import { sortedTableFeatures } from "@/lib/tanstack-table-features";
+import type { sortedTableFeatures } from "@/lib/tanstack-table-features";
 
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
-}));
-
-vi.mock("./damage-breakdown", () => ({
-  DamageBreakdown: () => <div>expanded-damage</div>,
-}));
+await initializeTestTranslations();
 
 afterEach(cleanup);
 
 describe("ExpandableDataTable", () => {
   it("uses the shared expanded-detail table state for animated rows", () => {
-    type TestRow = { id: string };
-    const columns: ColumnDef<typeof sortedTableFeatures, TestRow>[] = [
+    const columns: ColumnDef<typeof sortedTableFeatures, BattleWarrior>[] = [
       {
         accessorKey: "id",
         header: "ID",
@@ -29,12 +25,15 @@ describe("ExpandableDataTable", () => {
     render(
       <ExpandableDataTable
         columns={columns}
-        data={[{ id: "warrior-1" }]}
+        data={[createBattleWarrior({ id: "warrior-1", damageTaken: 100 })]}
         expandedRows={new Map([["warrior-1", "damage"]])}
       />,
     );
 
-    const detailRow = screen.getByText("expanded-damage").closest("tr");
+    const detailRow = screen
+      .getByText("battleUi.breakdowns.damageTaken.all")
+      .closest("tr")
+      ?.parentElement?.closest("tr");
 
     expect(detailRow?.getAttribute("data-state")).toBe("expanded-detail");
     expect(detailRow?.className).not.toContain("bg-secondary");

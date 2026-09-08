@@ -25,7 +25,7 @@ type InvitationResult = { targets: PartyReadyRoomInvitationTarget[] };
 type PendingInvitation = {
   intent: InvitationIntent;
   promise: Promise<InvitationResult>;
-  reject: (reason?: unknown) => void;
+  reject: (cause?: unknown) => void;
   resolve: (result: InvitationResult) => void;
 };
 
@@ -194,7 +194,7 @@ async function executeInvitationIntent(
       console.warn("Failed to invite a Ready Room participant", error);
     }
   }
-  return response as { targets: PartyReadyRoomInvitationTarget[] };
+  return response;
 }
 
 function invitationIntentsMatch(
@@ -228,7 +228,7 @@ function mergeInvitationIntents(
 
 function createPendingInvitation(intent: InvitationIntent): PendingInvitation {
   let resolve!: (result: InvitationResult) => void;
-  let reject!: (reason?: unknown) => void;
+  let reject!: (cause?: unknown) => void;
   const promise = new Promise<InvitationResult>(
     (promiseResolve, promiseReject) => {
       resolve = promiseResolve;

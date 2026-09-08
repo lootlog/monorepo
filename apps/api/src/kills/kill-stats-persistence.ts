@@ -191,7 +191,7 @@ export const makeKillStatsPersistence = (
     memberIds: ReadonlyArray<number>,
   ): Effect.Effect<ReadonlyArray<MemberSummary>, KillStatsPersistenceError> =>
     memberIds.length === 0
-      ? Effect.succeed([] as ReadonlyArray<MemberSummary>)
+      ? Effect.succeed([])
       : protect(
           "kills.stats.members",
           database

@@ -109,10 +109,21 @@ const adapter = <A, E>(
     }),
   );
 
+type BattleDeduplicationStore = Pick<
+  RedisStore,
+  "getJson" | "setJson" | "setNX"
+> & {
+  eval(...args: Parameters<RedisStore["eval"]>): Promise<number>;
+};
+
+type BattlesDatabase = Parameters<typeof makeBattleDeletion>[0] & {
+  query: { battles: Pick<DrizzleDatabase["query"]["battles"], "findFirst"> };
+};
+
 export const makeBattles = (
-  drizzle: DrizzleDatabase,
+  drizzle: BattlesDatabase,
   r2Service: BattleObjectStorage,
-  redisService: RedisStore,
+  redisService: BattleDeduplicationStore,
   paginationService: BattlePagination,
   battleAnalyticsService: BattleAnalytics,
   battleListFilterService: BattleListFilter,
@@ -305,7 +316,7 @@ export const makeBattles = (
         ).pipe(
           Effect.andThen(
             battlesModule.requireBattleDeduplicationRedis(() =>
-              redisService.eval<number>(
+              redisService.eval(
                 EXTEND_BATTLE_DEDUPLICATION_LOCK_SCRIPT,
                 [lockKey],
                 [lockToken, deduplicationTiming.lockTtlSeconds],
@@ -377,7 +388,7 @@ export const makeBattles = (
 
     releaseBattleDeduplicationLock(lockKey: string, lockToken: string) {
       return adapter("Battles_releaseDeduplicationLock", () =>
-        redisService.eval<number>(
+        redisService.eval(
           RELEASE_BATTLE_DEDUPLICATION_LOCK_SCRIPT,
           [lockKey],
           [lockToken],
@@ -651,7 +662,7 @@ export const makeBattles = (
     ): BattleTimelineResponseInput["warriors"] {
       return battle.warriors.map((warrior) => ({
         ...warrior,
-        spellsUsedMap: warrior.spellsUsedMap as Record<string, number>,
+        spellsUsedMap: warrior.spellsUsedMap,
       }));
     },
 

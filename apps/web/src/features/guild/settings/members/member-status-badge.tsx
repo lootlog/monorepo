@@ -8,18 +8,13 @@ import {
   ShieldAlert,
   ShieldCheck,
   UserMinus,
-  type LucideIcon,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 export const MemberStatusBadge = ({ member }: { member: GuildMember }) => {
   const { t } = useTranslation();
   const syncPresentation = getMemberDiscordSyncPresentation(member);
-  let copy: {
-    label: string;
-    className: string;
-    icon: LucideIcon;
-  } = {
+  let copy = {
     label: t("settings.members.statusAccessOk"),
     className: "border-emerald-500/25 bg-emerald-500/10 text-emerald-500",
     icon: ShieldCheck,

@@ -4,8 +4,11 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { CalendarDays } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useListMyReservations } from "@lootlog/client/main";
-import type { MyReservationsResponseDtoItemsItem } from "@lootlog/client/main";
+import {
+  useListMyReservations,
+  type MyReservationsResponseDtoItemsItem,
+} from "@lootlog/client/main";
+
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { ROUTES } from "@/config/routes";
@@ -31,7 +34,7 @@ export function MyReservationsCard() {
         icon={CalendarDays}
         title={t("reservations.my.title")}
         actions={
-          <ChevronLink render={<Link to={ROUTES.user.reservations} />}>
+          <ChevronLink render=<Link to={ROUTES.user.reservations} />>
             {t("reservations.my.showAll")}
           </ChevronLink>
         }

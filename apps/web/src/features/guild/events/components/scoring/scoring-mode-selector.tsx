@@ -46,7 +46,7 @@ export const ScoringModeSelector = ({
   return (
     <RadioGroup
       value={value}
-      onValueChange={(nextValue) => onChange(nextValue as EventScoringMode)}
+      onValueChange={(nextValue) => onChange(nextValue)}
       className="grid grid-cols-1 gap-3 sm:grid-cols-2"
     >
       {modes.map((mode) => {

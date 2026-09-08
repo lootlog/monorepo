@@ -1,3 +1,4 @@
+import type { TOptions } from "i18next";
 import { normalizeBonusBreakdown } from "./normalize-bonus-breakdown";
 
 export const getScoringBreakdown = ({
@@ -46,7 +47,7 @@ export const getScoringItems = ({
   bonusPoints: number;
   capReduction: number;
   manualAdjustmentPoints: number;
-  t: (key: string, options?: Record<string, unknown>) => string;
+  t: (key: string, options?: TOptions) => string;
   formatPoints: (value: number) => string;
 }) => {
   const items = [

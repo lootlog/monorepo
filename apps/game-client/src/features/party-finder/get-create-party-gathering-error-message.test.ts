@@ -3,7 +3,10 @@ import { ApiError } from "@lootlog/client/transport";
 import { ActivePartyGatheringError } from "./active-party-gathering-error";
 import { getCreatePartyGatheringErrorMessage } from "./get-create-party-gathering-error-message";
 
-const createApiError = (status?: number, data?: unknown) =>
+const createApiError = (
+  status?: number,
+  data?: { message?: string; code?: string },
+) =>
   new ApiError({
     status,
     data,

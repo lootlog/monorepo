@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 
+import { initializeTestTranslations } from "@/lib/testing/i18n";
 import {
   act,
   cleanup,
@@ -11,23 +12,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { EventMap } from "../../types/api";
 import { MapCard, STATUS_STYLES } from "./map-card";
 
-const { getDiscordAvatarUrlSpy } = vi.hoisted(() => ({
-  getDiscordAvatarUrlSpy: vi.fn(() => "https://example.com/avatar.png"),
-}));
-
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
-vi.mock("@/components/tiles", () => ({
-  PlayerTile: () => null,
-}));
-
-vi.mock("@/utils/get-avatar-url", () => ({
-  getDiscordAvatarUrl: getDiscordAvatarUrlSpy,
-}));
+await initializeTestTranslations();
 
 const createMap = (assignedToCurrentMember: boolean): EventMap => ({
   id: "map-1",
@@ -107,7 +92,6 @@ describe("MapCard interactions", () => {
   afterEach(() => {
     cleanup();
     vi.useRealTimers();
-    getDiscordAvatarUrlSpy.mockClear();
   });
 
   it("assigns the current member by double-clicking the map row", () => {
@@ -181,13 +165,14 @@ describe("MapCard interactions", () => {
     expect(identityRow?.textContent).toContain("00:00:00");
   });
 
-  it("updates the timer without rerendering the complete map row", () => {
+  it("updates the timer while retaining the assigned member row", () => {
     vi.useFakeTimers();
     renderMapCard({ assignedToCurrentMember: true });
-    const avatarRenderCount = getDiscordAvatarUrlSpy.mock.calls.length;
+    const member = screen.getByText("Wild");
 
     act(() => vi.advanceTimersByTime(2_000));
 
-    expect(getDiscordAvatarUrlSpy).toHaveBeenCalledTimes(avatarRenderCount);
+    expect(screen.getByText("Wild")).toBe(member);
+    expect(screen.getByText("00:00:02")).toBeTruthy();
   });
 });

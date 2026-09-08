@@ -5,19 +5,19 @@ import {
   getChatControllerGetChatMessagesQueryKey,
 } from "@lootlog/client/main";
 
+import { createChatMessage } from "./chat-test-fixtures";
 import { upsertChatMessage } from "./chat.helpers";
 import { updateChatMessagesCache } from "./chat-query-cache.helpers";
 
 const guildId = "guild-1";
 const queryKey = getChatControllerGetChatMessagesQueryKey({ guildId });
-const socketMessage = {
+const socketMessage = createChatMessage({
   id: "socket-message",
   guildId,
   senderId: "sender-1",
   message: "Socket message",
   timestamp: "2026-07-20T10:00:00.000Z",
-  characterData: { nick: "Sender" },
-} as ChatMessage;
+});
 
 describe("chat query cache", () => {
   it("keeps an unseen guild history fetchable after a socket update", async () => {
@@ -25,7 +25,9 @@ describe("chat query cache", () => {
     const serverHistory = [
       { ...socketMessage, id: "history-message", message: "History message" },
     ];
-    const fetchHistory = vi.fn().mockResolvedValue(serverHistory);
+    const fetchHistory = vi
+      .fn<() => Promise<ChatMessage[]>>()
+      .mockResolvedValue(serverHistory);
 
     updateChatMessagesCache({
       guildId,

@@ -29,25 +29,29 @@ export type LegacySettingsTabValue =
 
 export type SettingsTabValue = SettingsDomainValue | LegacySettingsTabValue;
 
+export const SETTINGS_SUBSECTION_VALUES = [
+  "behavior",
+  "visibility",
+  "chat",
+  "npc-colors",
+  "timer-appearance",
+  "timer-colors",
+  "timer-behavior",
+  "hidden-timers",
+  "catching",
+  "detector",
+  "battle-panel",
+  "notification-rules",
+  "notification-mutes",
+  "sounds",
+  "hotkeys",
+  "logs",
+  "debug",
+  "build",
+] as const;
+
 export type SettingsSubsectionValue =
-  | "behavior"
-  | "visibility"
-  | "chat"
-  | "npc-colors"
-  | "timer-appearance"
-  | "timer-colors"
-  | "timer-behavior"
-  | "hidden-timers"
-  | "catching"
-  | "detector"
-  | "battle-panel"
-  | "notification-rules"
-  | "notification-mutes"
-  | "sounds"
-  | "hotkeys"
-  | "logs"
-  | "debug"
-  | "build";
+  (typeof SETTINGS_SUBSECTION_VALUES)[number];
 
 export interface SettingsPath {
   domain: SettingsDomainValue;

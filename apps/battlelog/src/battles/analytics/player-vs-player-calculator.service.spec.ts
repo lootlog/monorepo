@@ -1,3 +1,4 @@
+import { createBattleFixture } from "../../../test/battle-fixtures.js";
 import { describe, expect, it } from "bun:test";
 import type { InflatedBattleWithWarriors } from "./battle-analytics.types.js";
 import { playerVsPlayerCalculator } from "./player-vs-player-calculator.service.js";
@@ -15,7 +16,7 @@ function createBattle({
   opponentLevel = 85,
   type = "1v1",
 }: TestBattleInput): InflatedBattleWithWarriors {
-  return {
+  return createBattleFixture({
     id,
     type,
     duration: 120,
@@ -61,7 +62,7 @@ function createBattle({
         critWoundDamageTaken: 12,
       },
     ],
-  } as InflatedBattleWithWarriors;
+  });
 }
 
 describe("player-vs-player calculator", () => {

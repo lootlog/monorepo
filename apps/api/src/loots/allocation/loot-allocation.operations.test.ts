@@ -1,17 +1,10 @@
+import { applicationLogger as logger } from "#src/shared/application-logger";
 import { Effect } from "effect";
 import { describe, expect, it } from "bun:test";
-import type { ApplicationLogger } from "#src/shared/application-logger";
-import type { LootAllocationPersistence } from "#src/loots/allocation/loot-allocation-persistence";
 import {
   LootAllocationOperationError,
   makeLootAllocationOperations,
 } from "#src/loots/allocation/loot-allocation.operations";
-
-const logger = {
-  error: () => undefined,
-  log: () => undefined,
-  warn: () => undefined,
-} as unknown as ApplicationLogger;
 
 describe("loot allocation Effect module", () => {
   it("rejects an unauthorized allocation before cache or RabbitMQ", async () => {
@@ -19,7 +12,11 @@ describe("loot allocation Effect module", () => {
     const operations = makeLootAllocationOperations({
       persistence: {
         findAuthorizedLoot: () => Effect.succeed(null),
-      } as unknown as LootAllocationPersistence,
+        compareAndSetChatAllocation: () =>
+          Effect.die("Unexpected allocation write"),
+        findAuthorizedAllocationState: () =>
+          Effect.die("Unexpected allocation state read"),
+      },
       cache: {
         deleteByPattern: () => {
           externalCalls += 1;

@@ -122,25 +122,23 @@ export const makeCurrentUserGuilds = (
     identity: AuthenticatedIdentity,
   ) {
     const discordGuilds = yield* ports.freshDiscordGuilds(identity).pipe(
+      Effect.map((guilds) => ({ kind: "discord" as const, guilds })),
       Effect.catch((error) =>
         fallbackEligible(error)
           ? ports.accessibleFallback(identity).pipe(
-              Effect.map((guilds) =>
-                guilds.map((guild) => ({
+              Effect.map((guilds) => ({
+                kind: "fallback" as const,
+                guilds: guilds.map((guild) => ({
                   ...guild,
                   isAccessDataStale: true,
                 })),
-              ),
+              })),
             )
           : Effect.fail(error),
       ),
     );
-    const firstGuild = discordGuilds[0];
-    if (!firstGuild || !("permissions" in firstGuild)) {
-      return discordGuilds as ReadonlyArray<GuildSummary>;
-    }
-    const apiGuilds =
-      discordGuilds as ReadonlyArray<RESTAPIPartialCurrentUserGuild>;
+    if (discordGuilds.kind === "fallback") return discordGuilds.guilds;
+    const apiGuilds = discordGuilds.guilds;
     const discordGuildIds = apiGuilds.map(({ id }) => id);
     yield* ports.deactivateMissing({
       ...identity,

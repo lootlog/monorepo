@@ -1,3 +1,8 @@
+import { isObjectRecord } from "@lootlog/schema/records";
+import { z } from "zod";
+
+const ErrorTextSchema = z.string().trim().min(1);
+
 type ErrorBoundaryDetails = {
   name: string;
   message: string;
@@ -14,65 +19,41 @@ type ErrorBoundaryTranslations = {
   missingStack: string;
 };
 
-function getObjectProperty(
-  value: unknown,
+function getErrorProperty(
+  cause: unknown,
   key: "name" | "message" | "stack",
 ): string | undefined {
-  if (!value || typeof value !== "object") {
-    return undefined;
-  }
-
-  const propertyValue = Reflect.get(value, key);
-
-  if (typeof propertyValue !== "string") {
-    return undefined;
-  }
-
-  const trimmedValue = propertyValue.trim();
-
-  if (trimmedValue.length === 0) {
-    return undefined;
-  }
-
-  return trimmedValue;
+  if (!isObjectRecord(cause)) return undefined;
+  const parsed = ErrorTextSchema.safeParse(cause[key]);
+  return parsed.success ? parsed.data : undefined;
 }
 
 function stringifyUnknownError(
-  error: unknown,
+  cause: unknown,
   fallbackMessage: string,
 ): string {
-  if (typeof error === "string") {
-    const trimmedError = error.trim();
-    return trimmedError.length > 0 ? trimmedError : fallbackMessage;
-  }
-
-  if (!error || typeof error !== "object") {
-    return fallbackMessage;
-  }
+  const parsed = ErrorTextSchema.safeParse(cause);
+  if (parsed.success) return parsed.data;
+  if (!isObjectRecord(cause)) return fallbackMessage;
 
   try {
-    const serializedError = JSON.stringify(error, null, 2);
-
-    if (serializedError) {
-      return serializedError;
-    }
+    const serializedError = JSON.stringify(cause, null, 2);
+    if (serializedError) return serializedError;
   } catch {
     return fallbackMessage;
   }
-
   return fallbackMessage;
 }
 
 export function getErrorBoundaryDetails(
-  error: unknown,
+  cause: unknown,
   translations: ErrorBoundaryTranslations,
 ): ErrorBoundaryDetails {
-  const name =
-    getObjectProperty(error, "name") ?? translations.unknownErrorName;
+  const name = getErrorProperty(cause, "name") ?? translations.unknownErrorName;
   const message =
-    getObjectProperty(error, "message") ??
-    stringifyUnknownError(error, translations.unknownErrorMessage);
-  const stack = getObjectProperty(error, "stack") ?? translations.missingStack;
+    getErrorProperty(cause, "message") ??
+    stringifyUnknownError(cause, translations.unknownErrorMessage);
+  const stack = getErrorProperty(cause, "stack") ?? translations.missingStack;
   const clipboardText = [
     `${translations.errorNameLabel}: ${name}`,
     `${translations.errorMessageLabel}: ${message}`,

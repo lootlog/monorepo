@@ -1,5 +1,5 @@
 // Extension endpoints are explicit build inputs, independent of userscript .env files.
-export function buildProfile(mode: string): Record<string, string> {
+export function buildProfile(mode: string) {
   if (!["production", "production-local", "development"].includes(mode))
     throw new Error(`Unsupported extension build mode: ${mode}`);
   const local = mode !== "production";

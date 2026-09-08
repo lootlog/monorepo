@@ -3,26 +3,17 @@ import { SignIn } from "@/features/signin/signin";
 import { sessionQueryOptions } from "@/hooks/auth/use-session-query";
 import { SigninPageSkeleton } from "@/features/signin/signin-page-skeleton";
 
-const validateSigninSearch = (
-  search: Record<string, unknown>,
-): { error?: string; redirect?: string } => {
-  const validatedSearch: { error?: string; redirect?: string } = {};
+import { z } from "zod";
 
-  if (typeof search.redirect === "string") {
-    validatedSearch.redirect = search.redirect;
-  }
-
-  if (typeof search.error === "string") {
-    validatedSearch.error = search.error;
-  }
-
-  return validatedSearch;
-};
+const signinSearch = z.object({
+  error: z.string().optional().catch(undefined),
+  redirect: z.string().optional().catch(undefined),
+});
 
 export const Route = createFileRoute("/signin")({
   component: SignIn,
   pendingComponent: SigninPageSkeleton,
-  validateSearch: validateSigninSearch,
+  validateSearch: signinSearch.parse,
   beforeLoad: async ({ context, search }) => {
     const session = await context.queryClient.fetchQuery(sessionQueryOptions);
 

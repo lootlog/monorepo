@@ -1,3 +1,9 @@
+import {
+  createChatCharacter,
+  createChatMember,
+  createChatMessage,
+  createChatRole,
+} from "./chat-test-fixtures";
 import { describe, expect, it } from "vitest";
 import {
   buildChatMentionContext,
@@ -105,18 +111,18 @@ describe("chat mentions helpers", () => {
   });
 
   it("builds current user aliases and role names without duplicates", () => {
-    const currentMember = {
+    const currentMember = createChatMember({
       name: "Hero",
-      roles: [{ name: "Raid Team" }, { name: "Raid Team" }],
-    };
+      roles: [createChatRole(), createChatRole()],
+    });
 
     expect(
       getCurrentUserMentionNames({
         currentCharacterNick: "Hero",
-        currentMember: currentMember as never,
+        currentMember: currentMember,
       }),
     ).toEqual(["Hero"]);
-    expect(getCurrentUserMentionRoleNames(currentMember as never)).toEqual([
+    expect(getCurrentUserMentionRoleNames(currentMember)).toEqual([
       "Raid Team",
     ]);
   });
@@ -125,10 +131,10 @@ describe("chat mentions helpers", () => {
     expect(
       buildChatMentionContext({
         currentCharacterNick: "Hero",
-        currentMember: {
+        currentMember: createChatMember({
           name: "Hero",
-          roles: [{ name: "Raid Team" }],
-        } as never,
+          roles: [createChatRole()],
+        }),
         members: [
           {
             id: 1,
@@ -138,12 +144,10 @@ describe("chat mentions helpers", () => {
           },
         ],
         messages: [
-          {
-            characterData: {
-              nick: "Scout",
-            },
-          },
-        ] as never,
+          createChatMessage({
+            characterData: createChatCharacter({ nick: "Scout" }),
+          }),
+        ],
         roles: [
           {
             id: "role-1",

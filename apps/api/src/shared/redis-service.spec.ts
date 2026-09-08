@@ -3,8 +3,10 @@ import { makeJsonCodec, RedisService } from "#src/redis/redis.service";
 import { Effect, Queue, Schema } from "effect";
 import { Redis } from "effect/unstable/persistence";
 
+type RedisReply = string | number | null | ReadonlyArray<RedisReply>;
+
 type RedisCommandMock = ReturnType<
-  typeof vi.fn<(...args: unknown[]) => Promise<unknown>>
+  typeof vi.fn<(...args: string[]) => Promise<RedisReply>>
 >;
 
 type RedisClientMock = {
@@ -19,30 +21,35 @@ type RedisClientMock = {
 const createRedisService = (client: RedisClientMock) => {
   const redis = Redis.Redis.of({
     send: <A>(command: string, ...args: ReadonlyArray<string>) =>
-      Effect.promise(
-        () =>
-          client[command.toLowerCase() as keyof RedisClientMock](
-            ...args,
-          ) as Promise<A>,
-      ),
+      Effect.promise(async () => {
+        const key = Schema.decodeUnknownSync(
+          Schema.Literals(["scan", "del", "get", "set", "eval", "keys"]),
+        )(command.toLowerCase());
+        const reply = await client[key](...args);
+        // SAFETY: This is the Redis driver's generic transport seam. Each scenario
+        // supplies the protocol reply for the checked command used by RedisService;
+        // the transport cannot validate an arbitrary caller-selected A.
+        return reply as A;
+      }),
     subscribe: () => Queue.unbounded(),
     eval:
       (script) =>
       (...parameters) =>
-        Effect.promise(
-          () =>
-            client.eval(
-              script.lua,
-              String(script.numberOfKeys(...parameters)),
-              ...parameters,
-            ) as Promise<unknown>,
+        Effect.promise(() =>
+          client.eval(
+            script.lua,
+            String(script.numberOfKeys(...parameters)),
+            ...Schema.decodeUnknownSync(Schema.Array(Schema.String))(
+              parameters,
+            ),
+          ),
         ),
   });
   return new RedisService(redis, { prefix: "lootlog" }, Effect.runPromise);
 };
 
 const redisCommandMock = (): RedisCommandMock =>
-  vi.fn<(...args: unknown[]) => Promise<unknown>>();
+  vi.fn<(...args: string[]) => Promise<RedisReply>>();
 
 const createRedisClient = (): RedisClientMock => ({
   scan: redisCommandMock(),
@@ -203,7 +210,7 @@ describe("RedisService", () => {
     const factory = vi
       .fn<() => Promise<{ fresh: boolean }>>()
       .mockResolvedValue({ fresh: true });
-    const onError = vi.fn<(error: unknown) => void>();
+    const onError = vi.fn<(cause: unknown) => void>();
 
     const result = await service.getOrSetJsonBestEffort({
       key: "cache:key",
@@ -228,7 +235,7 @@ describe("RedisService", () => {
     const factory = vi
       .fn<() => Promise<{ fresh: boolean }>>()
       .mockRejectedValue(factoryError);
-    const onError = vi.fn<(error: unknown) => void>();
+    const onError = vi.fn<(cause: unknown) => void>();
 
     await expect(
       service.getOrSetJsonBestEffort({

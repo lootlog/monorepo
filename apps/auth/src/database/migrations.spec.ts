@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
-import type { PgClient } from "@effect/sql-pg";
 import { Effect } from "effect";
 import {
+  type AuthMigrationClient,
   AUTH_SCHEMA_FINGERPRINT,
   AUTH_SCHEMA_FINGERPRINT_IMPORTED_V1_6,
   AUTH_SCHEMA_FINGERPRINT_V1_6,
@@ -13,7 +13,10 @@ import {
   planAuthMigration,
 } from "./migrations.js";
 
-type RecordedQuery = { readonly sql: string; readonly values?: unknown[] };
+type RecordedQuery = {
+  readonly sql: string;
+  readonly values?: ReadonlyArray<unknown>;
+};
 
 const makePool = ({
   fingerprint = AUTH_SCHEMA_FINGERPRINT,
@@ -31,51 +34,58 @@ const makePool = ({
   readonly counts?: Readonly<Record<string, number>>;
 } = {}) => {
   const queries: Array<RecordedQuery> = [];
-  const pool = {
-    unsafe(sql: string, values?: unknown[]) {
-      queries.push({ sql, values });
+  const execute = (sql: string, values?: ReadonlyArray<unknown>) => {
+    queries.push({ sql, values });
 
-      if (sql.includes("to_regclass")) {
-        return Effect.succeed([
-          { relation: trackedHashes ? "drizzle.__drizzle_migrations" : null },
-        ]);
-      }
+    if (sql.includes("to_regclass")) {
+      return Effect.succeed([
+        { relation: trackedHashes ? "drizzle.__drizzle_migrations" : null },
+      ]);
+    }
 
-      if (
-        sql.includes("SELECT hash") &&
-        sql.includes("FROM drizzle.__drizzle_migrations")
-      ) {
-        return Effect.succeed((trackedHashes ?? []).map((hash) => ({ hash })));
-      }
+    if (
+      sql.includes("SELECT hash") &&
+      sql.includes("FROM drizzle.__drizzle_migrations")
+    ) {
+      return Effect.succeed((trackedHashes ?? []).map((hash) => ({ hash })));
+    }
 
-      if (sql.includes("FROM drizzle.__drizzle_migrations")) {
-        return Effect.succeed([{ count: String(trackedHashes?.length ?? 0) }]);
-      }
+    if (sql.includes("FROM drizzle.__drizzle_migrations")) {
+      return Effect.succeed([{ count: String(trackedHashes?.length ?? 0) }]);
+    }
 
-      if (sql.includes("FROM information_schema.tables")) {
-        return Effect.succeed([{ count: String(existingAuthTableCount) }]);
-      }
+    if (sql.includes("FROM information_schema.tables")) {
+      return Effect.succeed([{ count: String(existingAuthTableCount) }]);
+    }
 
-      if (sql.includes("FROM information_schema.columns")) {
-        return Effect.succeed(fingerprint);
-      }
+    if (sql.includes("FROM information_schema.columns")) {
+      return Effect.succeed(fingerprint);
+    }
 
-      if (sql.includes("FROM pg_catalog.pg_index")) {
-        return Effect.succeed(indexes);
-      }
+    if (sql.includes("FROM pg_catalog.pg_index")) {
+      return Effect.succeed(indexes);
+    }
 
-      if (sql.includes("FROM pg_catalog.pg_constraint")) {
-        return Effect.succeed(foreignKeys);
-      }
+    if (sql.includes("FROM pg_catalog.pg_constraint")) {
+      return Effect.succeed(foreignKeys);
+    }
 
-      const matchingCount = Object.entries(counts).find(([fragment]) =>
-        sql.includes(fragment),
-      )?.[1];
-      return Effect.succeed(
-        sql.includes("COUNT(*)") ? [{ count: String(matchingCount ?? 0) }] : [],
-      );
-    },
-  } as unknown as PgClient.PgClient;
+    const matchingCount = Object.entries(counts).find(([fragment]) =>
+      sql.includes(fragment),
+    )?.[1];
+    return Effect.succeed(
+      sql.includes("COUNT(*)") ? [{ count: String(matchingCount ?? 0) }] : [],
+    );
+  };
+  const pool: AuthMigrationClient = {
+    unsafe: <A extends object>(sql: string, values?: ReadonlyArray<unknown>) =>
+      execute(sql, values).pipe(
+        Effect.map((rows) => {
+          // SAFETY: The SQL fixture dispatcher above supplies the protocol rows for each migration query; its generic row type is selected by the migration caller, as with the real SQL client.
+          return rows as ReadonlyArray<A>;
+        }),
+      ),
+  };
 
   return { pool, queries };
 };

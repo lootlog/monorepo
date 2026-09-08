@@ -8,7 +8,7 @@ import {
   mapMemberGamePresenceByDiscordId,
 } from "./member-game-presence.utils";
 import { mapMemberWebPresenceByDiscordId } from "./member-web-presence.utils";
-import type { PlayerPresence } from "@/features/guild/events/hooks/socket/use-event-presence";
+import type { PlayerPresence } from "@/lib/gateway-client";
 
 const buildPresence = (overrides: Partial<PlayerPresence>): PlayerPresence => ({
   world: "alpha",

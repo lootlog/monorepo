@@ -13,7 +13,7 @@ describe("character actions", () => {
   });
 
   it("uses game commands for party and friend invites", () => {
-    const gameCommandSpy = vi.fn();
+    const gameCommandSpy = vi.fn<(command: string) => void>();
     testRuntimeWindow._g = gameCommandSpy;
 
     inviteCharacterToParty(10);
@@ -26,8 +26,8 @@ describe("character actions", () => {
   });
 
   it("opens game equipment and profile windows", () => {
-    const showEquipmentSpy = vi.fn();
-    const showProfileSpy = vi.fn();
+    const showEquipmentSpy = vi.fn<typeof showCharacterEquipment>();
+    const showProfileSpy = vi.fn<typeof showCharacterProfile>();
     testRuntimeWindow.Engine = {
       showEqManager: {
         update: showEquipmentSpy,
@@ -35,7 +35,7 @@ describe("character actions", () => {
       iframeWindowManager: {
         newPlayerProfile: showProfileSpy,
       },
-    } as never;
+    };
 
     showCharacterEquipment({
       id: 10,

@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import type { EventMap } from "../../types/api";
 import { getMapStatus, STATUS_STYLES } from "./map-card";
 
-const assignedMap = {
+const assignedMap: EventMap = {
+  locationId: "location-1",
   id: "map-1",
   mapId: 2354,
   mapName: "Sala Mroźnych Szeptów",
@@ -14,7 +15,7 @@ const assignedMap = {
       avatar: null,
     },
   ],
-} as EventMap;
+};
 
 describe("map card status", () => {
   it("shows an assigned map without present players as orange", () => {
@@ -32,7 +33,7 @@ describe("map card status", () => {
   });
 
   it("makes an unassigned map visually distinct with a destructive background", () => {
-    const unassignedMap = { ...assignedMap, assignedMembers: [] } as EventMap;
+    const unassignedMap = { ...assignedMap, assignedMembers: [] };
     const status = getMapStatus(unassignedMap, new Map());
 
     expect(status).toBe("UNASSIGNED");

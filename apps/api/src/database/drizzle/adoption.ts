@@ -13,7 +13,7 @@ export interface SqlTransactionClient {
   query(
     statement: string,
     values?: ReadonlyArray<unknown>,
-  ): Promise<{ readonly rows: ReadonlyArray<Record<string, unknown>> }>;
+  ): Promise<{ readonly rows: ReadonlyArray<unknown> }>;
 }
 
 export type AdoptionResult =
@@ -63,7 +63,7 @@ export class ApiDatabaseAdoptionError extends Error {
   }
 }
 
-const hashCatalog = (catalog: unknown) =>
+const hashCatalog = <Catalog>(catalog: Catalog) =>
   createHash("sha256").update(JSON.stringify(catalog)).digest("hex");
 
 const loadActualCatalog = async (client: SqlTransactionClient) => {

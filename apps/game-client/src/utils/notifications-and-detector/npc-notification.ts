@@ -47,20 +47,6 @@ const buildNotificationNpcPayload = (npc: GameNpcWithLocation) => ({
   type: npc.type,
 });
 
-const buildChatNpcPayload = (npc: GameNpcWithLocation) => ({
-  x: npc.x,
-  y: npc.y,
-  icon: npc.icon,
-  id: npc.id,
-  name: npc.nick,
-  lvl: npc.lvl,
-  prof: npc.prof,
-  type: npc.type,
-  hpp: 0,
-  location: npc.location,
-  wt: npc.wt,
-});
-
 export const resolveNpcNotificationRouting = ({
   routingRules,
   npcLevel,
@@ -91,12 +77,16 @@ export function buildNpcNotificationPayload({
     : undefined;
   if (isGatheringParty && !character) return null;
 
-  return {
+  const payload: CreateNotificationOptions = {
     npc: buildNotificationNpcPayload(npc),
     world,
     guildIds,
-    ...(isGatheringParty ? { isGatheringParty, character } : {}),
   };
+  if (isGatheringParty) {
+    payload.isGatheringParty = isGatheringParty;
+    payload.character = character;
+  }
+  return payload;
 }
 
 export const buildNpcChatMessagePayload = ({
@@ -109,12 +99,13 @@ export const buildNpcChatMessagePayload = ({
   const characterData = buildChatCharacterData();
   if (!characterData) return null;
 
-  return {
+  const payload: SendChatMessageOptions = {
     message,
     guildIds,
     type: messageType,
     characterData,
-    npc: buildChatNpcPayload(npc),
-    ...(partyGathering ? { partyGathering } : {}),
+    npc: buildNotificationNpcPayload(npc),
   };
+  if (partyGathering) payload.partyGathering = partyGathering;
+  return payload;
 };

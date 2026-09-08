@@ -196,4 +196,13 @@ export const makeEventSummaryStore = (database: ApiDatabaseValue) => ({
   },
 });
 
-export type EventSummaryStore = ReturnType<typeof makeEventSummaryStore>;
+type EventSummaryQueries = ReturnType<typeof makeEventSummaryStore>;
+export type EventSummaryStore = {
+  readonly [Method in keyof EventSummaryQueries]: (
+    ...args: Parameters<EventSummaryQueries[Method]>
+  ) => Effect.Effect<
+    Effect.Success<ReturnType<EventSummaryQueries[Method]>>,
+    Effect.Error<ReturnType<EventSummaryQueries[Method]>>,
+    Effect.Services<ReturnType<EventSummaryQueries[Method]>>
+  >;
+};

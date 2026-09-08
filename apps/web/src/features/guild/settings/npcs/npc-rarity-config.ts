@@ -1,12 +1,7 @@
 import type { LootlogConfigNpcResponseDtoOutputAllowedRaritiesItem as LootlogConfigNpcAllowedRarity } from "@lootlog/client/main";
 import { Crown, Sparkles, Swords, type LucideIcon } from "lucide-react";
 
-export const NPC_RARITY_CONFIG: {
-  key: LootlogConfigNpcAllowedRarity;
-  color: string;
-  bgColor: string;
-  icon: LucideIcon;
-}[] = [
+export const NPC_RARITY_CONFIG = [
   {
     key: "LEGENDARY",
     color: "text-amber-700",
@@ -25,4 +20,9 @@ export const NPC_RARITY_CONFIG: {
     bgColor: "bg-amber-300/10",
     icon: Sparkles,
   },
-];
+] satisfies {
+  key: LootlogConfigNpcAllowedRarity;
+  color: string;
+  bgColor: string;
+  icon: LucideIcon;
+}[];

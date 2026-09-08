@@ -39,8 +39,7 @@ export function RatingGrowthChart({ data, isLoading }: RatingGrowthChartProps) {
         t("battlePanel.statistics.ratingGrowth.tooltipDate", { date })
       }
       tooltipValue={(value, payload) => {
-        const ratingDelta =
-          typeof payload.ratingDelta === "number" ? payload.ratingDelta : 0;
+        const ratingDelta = payload.ratingDelta;
 
         return t("battlePanel.statistics.ratingGrowth.tooltipValue", {
           value,

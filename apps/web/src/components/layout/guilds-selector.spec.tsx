@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-
+import { initializeTestTranslations } from "@/lib/testing/i18n";
 import {
   act,
   cleanup,
@@ -8,269 +8,278 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from "react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+  onTestFinished,
+} from "vitest";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  getUsersControllerGetCurrentUserGuildsQueryKey,
+  getUsersControllerGetUserPreferencesQueryKey,
+  type UserCurrentGuildResponseDtoOutput,
+  type UserPreferencesResponseDtoOutput,
+} from "@lootlog/client/main";
+import { configureApiClients } from "@lootlog/client/transport";
+import { Toaster, toast } from "sonner";
+import { z } from "zod";
+import { createUserPreferences } from "@/lib/testing/preferences";
+import { createOrganizationTestWrapper } from "@/lib/testing/router";
+import { createTestGateway } from "@/lib/testing/gateway";
+import { GlobalContextProvider } from "@/contexts/global-context";
+import { ThemeContext } from "@/contexts/theme-context";
+import { sessionQueryOptions } from "@/hooks/auth/use-session-query";
 import { GuildsSelector } from "./guilds-selector";
 
-type TestGuild = {
-  id: string;
-  name: string;
-  icon: null;
-};
+await initializeTestTranslations();
+const guilds: UserCurrentGuildResponseDtoOutput[] = ["Alpha", "Beta"].map(
+  (name, index) => ({
+    id: `guild-${index + 1}`,
+    name,
+    icon: null,
+    ownerId: "owner",
+    publicStatsCardEnabled: false,
+    hasLootlogAccess: true,
+    isAccessDataStale: false,
+  }),
+);
+const preferencesKey = getUsersControllerGetUserPreferencesQueryKey();
+const guildsKey = getUsersControllerGetCurrentUserGuildsQueryKey();
+let preferences: UserPreferencesResponseDtoOutput;
+let requests: Request[];
+let rejectReads: boolean;
+let writeResponse: (() => Promise<Response>) | undefined;
+let client: QueryClient;
 
-const mocks = vi.hoisted(() => ({
-  guildsQuery: {
-    data: [] as TestGuild[] | undefined,
-    isError: false,
-    isLoading: false,
-    refetch: vi.fn(),
-  },
-  preferencesQuery: {
-    data: {
-      guildsOrder: [] as string[],
-      hiddenGuildIds: [] as string[],
-    },
-    isError: false,
-    isLoading: false,
-    refetch: vi.fn(),
-  },
-  mutate: vi.fn(),
-  toastSuccess: vi.fn(),
-}));
-
-vi.mock("@lootlog/client/main", async () => ({
-  ...(await vi.importActual("@lootlog/client/main")),
-  useUsersControllerGetCurrentUserGuilds: () => mocks.guildsQuery,
-}));
-
-vi.mock("@/hooks/api/user/use-user-preferences", () => ({
-  useUserPreferences: () => mocks.preferencesQuery,
-  useUpdateUserPreferences: () => ({ mutate: mocks.mutate }),
-}));
-
-vi.mock("@/hooks/context/use-guild-id", () => ({
-  useGuildId: () => undefined,
-}));
-
-vi.mock("@/hooks/utils/use-gateway", () => ({
-  useGateway: () => ({ lootUnreadCounts: {} }),
-}));
-
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
-}));
-
-vi.mock("sonner", () => ({
-  toast: {
-    error: vi.fn(),
-    success: mocks.toastSuccess,
-  },
-}));
-
-vi.mock("@lootlog/ui/components/scroll-area", () => ({
-  ScrollArea: ({ children, ...props }: HTMLAttributes<HTMLDivElement>) => (
-    <div {...props}>{children}</div>
-  ),
-}));
-
-vi.mock("@lootlog/ui/components/separator", () => ({
-  Separator: (props: HTMLAttributes<HTMLHRElement>) => <hr {...props} />,
-}));
-
-vi.mock("@lootlog/ui/components/button", () => ({
-  Button: ({
-    children,
-    size: _size,
-    variant: _variant,
-    ...props
-  }: ButtonHTMLAttributes<HTMLButtonElement> & {
-    size?: string;
-    variant?: string;
-  }) => <button {...props}>{children}</button>,
-}));
-
-vi.mock("@/components/layout/guild-nav-item", () => ({
-  GuildNavItem: ({
-    guild,
-    onToggleHidden,
-  }: {
-    guild: TestGuild;
-    onToggleHidden: () => void;
-  }) => <button onClick={onToggleHidden}>{guild.name}</button>,
-}));
-
-vi.mock("@/components/layout/guild-nav-create", () => ({
-  GuildNavCreate: () => null,
-}));
-
-vi.mock("@/components/layout/install-button", () => ({
-  InstallButton: () => null,
-}));
-
-vi.mock("@/components/layout/user-nav-item", () => ({
-  UserNavItem: () => null,
-}));
-
-vi.mock("@/components/layout/guilds-selector-skeleton", () => ({
-  GuildsSelectorSkeleton: () => <span>loading</span>,
-}));
-
-vi.mock("framer-motion", () => ({
-  Reorder: {
-    Group: ({
-      children,
-      values,
-      onReorder,
-    }: {
-      children: ReactNode;
-      values: TestGuild[];
-      onReorder: (guilds: TestGuild[]) => void;
-    }) => (
-      <div>
-        <button
-          aria-label="Reorder guilds"
-          onClick={() => onReorder([...values].reverse())}
-        />
-        {children}
-      </div>
-    ),
-    Item: ({
-      children,
-      onDragStart,
-      onDragEnd,
-      value,
-    }: {
-      children: ReactNode;
-      onDragStart: () => void;
-      onDragEnd: () => void;
-      value: TestGuild;
-    }) => (
-      <div>
-        <button
-          aria-label={`Drag ${value.name}`}
-          onPointerDown={onDragStart}
-          onPointerUp={onDragEnd}
-        />
-        {children}
-      </div>
-    ),
-  },
-  motion: {
-    div: ({ children, ...props }: HTMLAttributes<HTMLDivElement>) => (
-      <div {...props}>{children}</div>
-    ),
-  },
-}));
+beforeEach(() => {
+  preferences = createUserPreferences();
+  requests = [];
+  rejectReads = false;
+  writeResponse = undefined;
+  client = new QueryClient({
+    defaultOptions: { queries: { staleTime: Infinity, retry: false } },
+  });
+  onTestFinished(() => client.clear());
+  client.setQueryData(guildsKey, guilds);
+  client.setQueryData(sessionQueryOptions.queryKey, {
+    data: null,
+    error: null,
+  });
+  onTestFinished(
+    configureApiClients({
+      main: {
+        baseUrl: "https://api.test",
+        fetch: async (input, init) => {
+          const request = new Request(input, init);
+          if (request.method === "PATCH") {
+            requests.push(request.clone());
+            if (writeResponse) return writeResponse();
+            const update = z
+              .object({
+                hiddenGuildIds: z.array(z.string()).optional(),
+                guildsOrder: z.array(z.string()).optional(),
+              })
+              .parse(await request.json());
+            preferences = { ...preferences, ...update };
+            return Response.json(preferences);
+          }
+          if (rejectReads) return Response.json({}, { status: 503 });
+          return Response.json(
+            new URL(request.url).pathname.endsWith("/preferences")
+              ? preferences
+              : guilds,
+          );
+        },
+      },
+    }),
+  );
+});
+afterEach(async () => {
+  await waitFor(() => {
+    if (client.isMutating() || client.isFetching())
+      throw new Error("HTTP operations still pending");
+  });
+  await act(() => {
+    toast.dismiss();
+  });
+  await waitFor(() => {
+    if (document.querySelector("[data-sonner-toast]"))
+      throw new Error("Toast exit animation still pending");
+  });
+  cleanup();
+  vi.restoreAllMocks();
+});
+async function renderSelector() {
+  client.setQueryData(preferencesKey, preferences);
+  const RouterWrapper = await createOrganizationTestWrapper("/@me");
+  const GatewayWrapper = createTestGateway().wrapper;
+  return render(
+    <RouterWrapper>
+      <GatewayWrapper>
+        <QueryClientProvider client={client}>
+          <GlobalContextProvider>
+            <ThemeContext.Provider
+              value={{
+                theme: "default",
+                resolvedTheme: "default",
+                setTheme: () => {},
+                isLoading: false,
+              }}
+            >
+              <GuildsSelector />
+              <Toaster />
+            </ThemeContext.Provider>
+          </GlobalContextProvider>
+        </QueryClientProvider>
+      </GatewayWrapper>
+    </RouterWrapper>,
+  );
+}
+function guildLink(id: string) {
+  const link = document.querySelector<HTMLAnchorElement>(`a[href="/${id}"]`);
+  if (!link) throw new Error(`Missing organization ${id}`);
+  return link;
+}
+async function toggleVisibility(id: string, hidden: boolean) {
+  fireEvent.contextMenu(guildLink(id));
+  fireEvent.click(
+    await screen.findByRole("menuitem", {
+      name: hidden
+        ? "settings.servers.showInGameClient"
+        : "settings.servers.hideInGameClient",
+    }),
+  );
+  await waitFor(() => expect(requests).toHaveLength(1));
+}
+function dispatchPointer(
+  target: HTMLElement | Window,
+  type: "pointerdown" | "pointermove" | "pointerup",
+  y: number,
+) {
+  const event = new PointerEvent(type, {
+    bubbles: true,
+    pointerId: 1,
+    isPrimary: true,
+    pointerType: "mouse",
+    button: 0,
+    buttons: type === "pointerup" ? 0 : 1,
+    clientX: 20,
+    clientY: y,
+  });
+  // happy-dom omits page coordinates consumed by the browser drag engine.
+  Object.defineProperties(event, { pageX: { value: 20 }, pageY: { value: y } });
+  fireEvent(target, event);
+}
+const nextFrame = () =>
+  act(
+    () =>
+      new Promise<void>((resolve) => requestAnimationFrame(() => resolve())),
+  );
 
 describe("GuildsSelector", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mocks.guildsQuery.data = [
-      { id: "guild-1", name: "Alpha", icon: null },
-      { id: "guild-2", name: "Beta", icon: null },
-    ];
-    mocks.guildsQuery.isError = false;
-    mocks.guildsQuery.isLoading = false;
-    mocks.preferencesQuery.data = {
-      guildsOrder: [],
-      hiddenGuildIds: [],
-    };
-    mocks.preferencesQuery.isError = false;
-    mocks.preferencesQuery.isLoading = false;
-    mocks.mutate.mockImplementation(
-      (
-        _payload: unknown,
-        options?: {
-          onSuccess?: () => void;
-        },
-      ) => options?.onSuccess?.(),
+  it("keeps cached guilds visible after a background refetch error", async () => {
+    await renderSelector();
+    rejectReads = true;
+    await act(() =>
+      Promise.all([
+        client.refetchQueries({ queryKey: guildsKey }),
+        client.refetchQueries({ queryKey: preferencesKey }),
+      ]),
     );
+    expect(client.getQueryState(guildsKey)?.status).toBe("error");
+    expect(client.getQueryState(preferencesKey)?.status).toBe("error");
+    expect(guildLink("guild-1").textContent).toContain("A");
+    expect(guildLink("guild-2").textContent).toContain("B");
   });
-
-  afterEach(cleanup);
-
-  it("keeps cached guilds visible after a background refetch error", () => {
-    mocks.guildsQuery.isError = true;
-    mocks.preferencesQuery.isError = true;
-
-    render(<GuildsSelector />);
-
-    expect(screen.getByRole("button", { name: "Alpha" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Beta" })).toBeTruthy();
-  });
-
   it("does not retry a rejected guild order automatically", async () => {
-    const { rerender } = render(<GuildsSelector />);
-
-    fireEvent.pointerDown(screen.getByRole("button", { name: "Drag Alpha" }));
-    fireEvent.click(screen.getByRole("button", { name: "Reorder guilds" }));
-    fireEvent.pointerUp(screen.getByRole("button", { name: "Drag Alpha" }));
-
-    await waitFor(() => expect(mocks.mutate).toHaveBeenCalledTimes(1));
-
-    mocks.preferencesQuery.data = {
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+      function (this: HTMLElement) {
+        const link = this.querySelector(
+          'a[href="/guild-1"],a[href="/guild-2"]',
+        );
+        const top = link?.getAttribute("href") === "/guild-2" ? 60 : 0;
+        return new DOMRect(0, top, 60, 50);
+      },
+    );
+    let rejectWrite = (_error: Error) => {};
+    writeResponse = () =>
+      new Promise<Response>((_resolve, reject) => {
+        rejectWrite = reject;
+      });
+    await renderSelector();
+    await nextFrame();
+    const item = guildLink("guild-1").closest("li");
+    if (!item) throw new Error("Missing reorder item");
+    dispatchPointer(item, "pointerdown", 20);
+    dispatchPointer(window, "pointermove", 40);
+    await nextFrame();
+    dispatchPointer(window, "pointermove", 140);
+    await nextFrame();
+    dispatchPointer(window, "pointerup", 140);
+    await waitFor(() => expect(requests).toHaveLength(1));
+    expect(await requests[0]?.json()).toEqual({
       guildsOrder: ["guild-2", "guild-1"],
-      hiddenGuildIds: [],
-    };
-    rerender(<GuildsSelector />);
-
-    const mutationOptions = mocks.mutate.mock.calls[0]?.[1] as
-      | { onSettled?: () => void }
-      | undefined;
-    act(() => mutationOptions?.onSettled?.());
-
-    mocks.preferencesQuery.data = {
-      guildsOrder: [],
-      hiddenGuildIds: [],
-    };
-    rerender(<GuildsSelector />);
-
-    await act(async () => {
-      await Promise.resolve();
     });
-    expect(mocks.mutate).toHaveBeenCalledTimes(1);
-  });
-
-  it("undoes only the visibility change represented by the toast", () => {
-    const { rerender } = render(<GuildsSelector />);
-
-    fireEvent.click(screen.getByRole("button", { name: "Alpha" }));
-
-    const toastOptions = mocks.toastSuccess.mock.calls[0]?.[1] as {
-      action: { onClick: () => void };
-    };
-    mocks.preferencesQuery.data = {
+    await act(() => {
+      rejectWrite(new Error("Rejected order"));
+    });
+    await waitFor(() => expect(client.isMutating()).toBe(0));
+    await nextFrame();
+    expect(requests).toHaveLength(1);
+    expect(client.getQueryData(preferencesKey)).toMatchObject({
       guildsOrder: [],
-      hiddenGuildIds: ["guild-1", "guild-2"],
-    };
-    rerender(<GuildsSelector />);
-    toastOptions.action.onClick();
-
-    expect(mocks.mutate).toHaveBeenLastCalledWith({
-      hiddenGuildIds: ["guild-2"],
     });
   });
-
-  it("restores only the shown guild when undoing a show action", () => {
-    mocks.preferencesQuery.data = {
-      guildsOrder: [],
-      hiddenGuildIds: ["guild-1"],
-    };
-    const { rerender } = render(<GuildsSelector />);
-
-    fireEvent.click(screen.getByRole("button", { name: "Alpha" }));
-
-    const toastOptions = mocks.toastSuccess.mock.calls[0]?.[1] as {
-      action: { onClick: () => void };
-    };
-    mocks.preferencesQuery.data = {
-      guildsOrder: [],
-      hiddenGuildIds: ["guild-2"],
-    };
-    rerender(<GuildsSelector />);
-    toastOptions.action.onClick();
-
-    expect(mocks.mutate).toHaveBeenLastCalledWith({
+  it("undoes only the visibility change represented by the toast", async () => {
+    await renderSelector();
+    await toggleVisibility("guild-1", false);
+    const undo = await screen.findByRole("button", {
+      name: "common.actions.undo",
+    });
+    await waitFor(() => {
+      expect(client.isMutating()).toBe(0);
+      expect(client.isFetching()).toBe(0);
+    });
+    preferences = { ...preferences, hiddenGuildIds: ["guild-1", "guild-2"] };
+    await act(() => {
+      client.setQueryData(preferencesKey, preferences);
+    });
+    await waitFor(() =>
+      expect(
+        guildLink("guild-2").querySelector(".lucide-eye-off"),
+      ).not.toBeNull(),
+    );
+    fireEvent.click(undo);
+    await waitFor(() => expect(requests).toHaveLength(2));
+    expect(await requests[1]?.json()).toEqual({ hiddenGuildIds: ["guild-2"] });
+  });
+  it("restores only the shown guild when undoing a show action", async () => {
+    preferences = { ...preferences, hiddenGuildIds: ["guild-1"] };
+    await renderSelector();
+    await toggleVisibility("guild-1", true);
+    const undo = await screen.findByRole("button", {
+      name: "common.actions.undo",
+    });
+    await waitFor(() => {
+      expect(client.isMutating()).toBe(0);
+      expect(client.isFetching()).toBe(0);
+    });
+    preferences = { ...preferences, hiddenGuildIds: ["guild-2"] };
+    await act(() => {
+      client.setQueryData(preferencesKey, preferences);
+    });
+    await waitFor(() =>
+      expect(
+        guildLink("guild-2").querySelector(".lucide-eye-off"),
+      ).not.toBeNull(),
+    );
+    fireEvent.click(undo);
+    await waitFor(() => expect(requests).toHaveLength(2));
+    expect(await requests[1]?.json()).toEqual({
       hiddenGuildIds: ["guild-2", "guild-1"],
     });
   });

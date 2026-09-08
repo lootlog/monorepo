@@ -259,19 +259,19 @@ export function createPageTransport(
         url.protocol === "https:"
       )
         return globalThis.fetch(input, init);
+      const httpRequest: Extract<
+        ExtensionRequest,
+        { type: "http" }
+      >["request"] = {
+        url: nativeRequest.url,
+        method: nativeRequest.method,
+        headers: Object.fromEntries(nativeRequest.headers.entries()),
+      };
+      if (nativeRequest.method !== "GET" && nativeRequest.method !== "HEAD") {
+        httpRequest.body = await nativeRequest.text();
+      }
       const data = await request(
-        {
-          type: "http",
-          request: {
-            url: nativeRequest.url,
-            method: nativeRequest.method,
-            headers: Object.fromEntries(nativeRequest.headers.entries()),
-            ...(nativeRequest.method === "GET" ||
-            nativeRequest.method === "HEAD"
-              ? {}
-              : { body: await nativeRequest.text() }),
-          },
-        },
+        { type: "http", request: httpRequest },
         nativeRequest.signal,
       );
       const response = HttpResponseSchema.parse(data);

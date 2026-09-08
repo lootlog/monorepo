@@ -1,12 +1,8 @@
+import { NotificationTriggerType } from "@lootlog/schema/notifications";
 import { describe, expect, it } from "bun:test";
-import type {
-  CreateNotificationRuleRequest,
-  UpdateNotificationRuleRequest,
-} from "#src/contracts/notifications/schemas";
 import {
   NotificationOwnerType,
   NotificationScheduleIntervalType,
-  NotificationTriggerType,
 } from "#src/notifications/notification-enums";
 import {
   createNotificationRuleValues,
@@ -22,7 +18,7 @@ describe("notification rule policy", () => {
         triggerType: NotificationTriggerType.SCHEDULED_MESSAGE,
         scheduledAt: "2026-09-02T12:00:00.000Z",
         targetIds: [1],
-      } as CreateNotificationRuleRequest,
+      },
     );
 
     expect(values.guildId).toBe("guild-1");
@@ -37,7 +33,7 @@ describe("notification rule policy", () => {
         scheduleIntervalType: NotificationScheduleIntervalType.DAILY,
         scheduleTimeOfDay: "12:00",
         targetIds: [1],
-      } as CreateNotificationRuleRequest),
+      }),
     ).toThrow();
   });
 
@@ -63,7 +59,7 @@ describe("notification rule policy", () => {
         enabled: true,
         dedupeWindowSeconds: 0,
       },
-      { enabled: false } as UpdateNotificationRuleRequest,
+      { enabled: false },
     );
 
     expect(values).toMatchObject({

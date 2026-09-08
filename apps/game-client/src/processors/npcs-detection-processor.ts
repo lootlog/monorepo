@@ -7,18 +7,18 @@ import {
 import { useWindowsStore } from "@/store/windows.store";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import type { RuntimeNpc } from "@/lib/margonem-runtime/runtime.types";
-import type { NpcTpl } from "@lootlog/margonem/npc-tpl-manager";
 import { useNpcsStore } from "@/store/npcs.store";
 import { useGameStore } from "@/store/game.store";
 import { NpcType } from "@/api/npcs.api";
 import { getNpcIconFromEvent } from "@/utils/game/events/get-npc-icon-from-event";
 import { getNpcTplFromEvent } from "@/utils/game/events/get-npc-tpl-from-event";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
-import type {
-  DetectorNpcType,
-  DetectorSettings,
-  DetectorTypeSettings,
-  UserGameAccountPreferences,
+import {
+  isDetectorNpcType,
+  type DetectorNpcType,
+  type DetectorSettings,
+  type DetectorTypeSettings,
+  type UserGameAccountPreferences,
 } from "@lootlog/schema/account-preferences";
 import { sendChatMessage, createNotification, MessageType } from "@/api";
 import {
@@ -211,7 +211,7 @@ export class NpcsDetectionProcessor {
         const tpl =
           getNpcTplFromEvent(event, npc.tpl) ??
           (runtimeNpc
-            ? ({
+            ? {
                 icon: runtimeNpc.icon,
                 id: runtimeNpc.templateId,
                 lvl: runtimeNpc.level,
@@ -219,16 +219,12 @@ export class NpcsDetectionProcessor {
                 prof: runtimeNpc.profession,
                 type: runtimeNpc.type,
                 wt: runtimeNpc.weight,
-              } as NpcTpl)
+              }
             : undefined);
         if (!tpl) return acc;
 
-        const npcType = getNpcTypeByWt(
-          NpcType,
-          tpl.wt,
-          tpl.prof,
-          tpl.type,
-        ) as DetectorNpcType;
+        const npcType = getNpcTypeByWt(NpcType, tpl.wt, tpl.prof, tpl.type);
+        if (!isDetectorNpcType(npcType)) return acc;
 
         const processedSettings = this.processNpcSettings(
           npc,
@@ -288,7 +284,8 @@ export class NpcsDetectionProcessor {
           npc.weight,
           npc.profession,
           npc.type,
-        ) as DetectorNpcType;
+        );
+        if (!isDetectorNpcType(npcType)) return acc;
 
         const processedSettings = this.processGameNpcSettings(
           npc,

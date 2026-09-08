@@ -17,7 +17,11 @@ const operationWith = (
     Layer.provide(
       Layer.succeed(
         FetchHttpClient.Fetch,
-        fetchImplementation as typeof globalThis.fetch,
+        Object.assign(fetchImplementation, {
+          preconnect: () => {
+            throw new Error("Unexpected preconnect");
+          },
+        }),
       ),
     ),
   );
@@ -25,7 +29,7 @@ const operationWith = (
     const httpClient = yield* HttpClient.HttpClient;
     return yield* makeMapsOperation({
       httpClient,
-      redis: redis as RedisService,
+      redis,
       url: new URL("https://maps.internal/maps"),
     });
   }).pipe(Effect.provide(fetchLayer));

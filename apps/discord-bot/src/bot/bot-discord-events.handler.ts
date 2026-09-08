@@ -1,8 +1,8 @@
-import { Events, type Client, type GuildBasedChannel } from "discord.js";
+import { Events, type Client } from "discord.js";
 import { Effect } from "effect";
 import type { DiscordSync } from "#src/bot/discord-sync.service";
 
-type RunEvent = (event: Effect.Effect<void>) => unknown;
+type RunEvent = (event: Effect.Effect<void>) => void;
 
 const runEvent = (run: RunEvent, event: Effect.Effect<void, unknown>) =>
   run(
@@ -50,10 +50,7 @@ export const registerDiscordEventHandlers = (
   );
   client.on(Events.ChannelCreate, (channel) => {
     if ("guild" in channel && channel.guild)
-      void runEvent(
-        run,
-        sync.handleChannelCreate(channel as GuildBasedChannel),
-      );
+      void runEvent(run, sync.handleChannelCreate(channel));
   });
   client.on(Events.ChannelUpdate, (oldChannel, newChannel) => {
     if (
@@ -62,19 +59,10 @@ export const registerDiscordEventHandlers = (
       "guild" in newChannel &&
       newChannel.guild
     )
-      void runEvent(
-        run,
-        sync.handleChannelUpdate(
-          oldChannel as GuildBasedChannel,
-          newChannel as GuildBasedChannel,
-        ),
-      );
+      void runEvent(run, sync.handleChannelUpdate(oldChannel, newChannel));
   });
   client.on(Events.ChannelDelete, (channel) => {
     if ("guild" in channel && channel.guild)
-      void runEvent(
-        run,
-        sync.handleChannelDelete(channel as GuildBasedChannel),
-      );
+      void runEvent(run, sync.handleChannelDelete(channel));
   });
 };

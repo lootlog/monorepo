@@ -83,16 +83,14 @@ export function DashboardKillSummary() {
         actions={
           <>
             <ChevronLink
-              render={
-                <Link
-                  to="/@me/statistics"
-                  search={{
-                    tab: "overview",
-                    days: period === "7d" ? 7 : 30,
-                    world: world ?? undefined,
-                  }}
-                />
-              }
+              render=<Link
+                to="/@me/statistics"
+                search={{
+                  tab: "overview",
+                  days: period === "7d" ? 7 : 30,
+                  world: world ?? undefined,
+                }}
+              />
             >
               {t("statistics.title")}
             </ChevronLink>

@@ -2,7 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { Clock, Effect } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import { notificationTargetTable } from "#src/database/drizzle/schema";
-import type { JsonValue } from "#src/notifications/notification-database.types";
+
 import type { NotificationOwnerType } from "#src/notifications/notification-enums";
 import type { UpdateNotificationTargetRequest } from "#src/contracts/notifications/schemas";
 
@@ -10,7 +10,7 @@ export const mapNotificationTarget = (
   target: typeof notificationTargetTable.$inferSelect,
 ) => ({
   ...target,
-  metadata: target.metadata as JsonValue | null,
+  metadata: target.metadata,
 });
 
 export const updateNotificationTarget = Effect.fnUntraced(function* (

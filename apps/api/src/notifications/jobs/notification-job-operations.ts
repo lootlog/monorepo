@@ -13,7 +13,7 @@ import {
   NotificationJobPayloadSnapshotResponse,
 } from "#src/notifications/notification-response.schema";
 import { Error as NotificationError } from "#src/notifications/error";
-import type { JsonValue } from "#src/notifications/notification-database.types";
+
 import { NOTIFICATIONS_HISTORY_RESPONSE_LIMIT } from "#src/notifications/jobs/history";
 import {
   NotificationJobStatus,
@@ -79,7 +79,7 @@ export const makeNotificationJobOperations = (
           ...job,
           payloadSnapshot: Schema.decodeUnknownSync(
             NotificationJobPayloadSnapshotResponse,
-          )(job.payloadSnapshot as JsonValue | null),
+          )(job.payloadSnapshot),
           rule: {
             ...rule,
             filters:
@@ -91,7 +91,7 @@ export const makeNotificationJobOperations = (
           },
           target: {
             ...target,
-            metadata: target.metadata as JsonValue | null,
+            metadata: target.metadata,
           },
         })),
       ),
@@ -134,7 +134,7 @@ export const makeNotificationJobOperations = (
         new ResourceNotFoundError(NotificationError.NOTIFICATION_JOB_NOT_FOUND),
       );
     }
-    if (!cancelableStatuses.includes(job.status as never)) {
+    if (!cancelableStatuses.some((status) => status === job.status)) {
       return yield* Effect.fail(
         new InvalidRequestError(
           NotificationError.ONLY_PENDING_NOTIFICATION_JOBS_CAN_BE_CANCELED,

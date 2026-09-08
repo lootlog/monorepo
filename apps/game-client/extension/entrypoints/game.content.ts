@@ -41,9 +41,9 @@ export default defineContentScript({
         transport.dispose();
         return;
       }
-      const runtimeWindow = window as Window & {
+      const runtimeWindow: Window & {
         __lootlogGameClientRuntime?: GameClientRuntime;
-      };
+      } = window;
       runtimeWindow.__lootlogGameClientRuntime?.dispose();
       runtime = bootstrapGameClient(transport);
       if (disposed) {

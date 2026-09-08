@@ -35,13 +35,11 @@ export const MatchingLootsSection = ({
           <>
             <ChevronLink
               className="inline-flex h-8 shrink-0 items-center gap-1 text-xs"
-              render={
-                <Link
-                  to="/$guildId"
-                  params={{ guildId }}
-                  search={{ npcs: npcName }}
-                />
-              }
+              render=<Link
+                to="/$guildId"
+                params={{ guildId }}
+                search={{ npcs: npcName }}
+              />
             >
               {t("events.loots.showAll")}
             </ChevronLink>

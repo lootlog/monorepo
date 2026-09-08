@@ -4,12 +4,8 @@ import { useOthersStore } from "@/store/others.store";
 import type { BattleWarriorsWithAccountId } from "@/store/game-store/battle.store";
 import type { W } from "@lootlog/margonem/game-events";
 
-type ModernBattleHp = {
-  cur?: unknown;
-  hpp?: unknown;
-  max?: unknown;
-};
-
+// Margonem passes raw hp fields through OneWarrior.updateWarrior without normalization.
+// Preserve numeric primitives verbatim; only parsed strings require finite results.
 export const parseNumericHpValue = (value: unknown) => {
   if (typeof value === "number") return value;
   if (typeof value === "string") {
@@ -21,10 +17,10 @@ export const parseNumericHpValue = (value: unknown) => {
 };
 
 const getModernHpPercentage = (
-  warrior: W[string],
+  warrior: Partial<W[string]>,
   currentWarrior?: BattleWarriorsWithAccountId[string],
 ) => {
-  const hp = (warrior as W[string] & { hp?: ModernBattleHp }).hp;
+  const hp = warrior.hp;
   if (!hp) return undefined;
 
   const hpPercentage = parseNumericHpValue(hp.hpp);
@@ -33,11 +29,7 @@ const getModernHpPercentage = (
   const currentHp = parseNumericHpValue(hp.cur);
   if (currentHp !== null && currentHp <= 0) return 0;
 
-  const currentHpData = (
-    currentWarrior as
-      | (BattleWarriorsWithAccountId[string] & { hp?: ModernBattleHp })
-      | undefined
-  )?.hp;
+  const currentHpData = currentWarrior?.hp;
   const maxHp = parseNumericHpValue(hp.max ?? currentHpData?.max);
   if (currentHp !== null && maxHp !== null && maxHp > 0) {
     return (currentHp / maxHp) * 100;
@@ -46,14 +38,16 @@ const getModernHpPercentage = (
   return undefined;
 };
 
+// Battle.js forwards each changed warrior to OneWarrior.updateWarrior, which
+// updates only supplied keys. This merger accepts those patches against current participants.
 export const mergeBattleWarriorPatches = (
-  warriors: W,
+  warriors: Readonly<Record<string, Partial<W[string]>>>,
   currentWarriors: BattleWarriorsWithAccountId,
   ingress?: RuntimeIngressSnapshot,
 ) => {
-  const mergedWarriors = {
+  const mergedWarriors: BattleWarriorsWithAccountId = {
     ...currentWarriors,
-  } as BattleWarriorsWithAccountId;
+  };
   const game = ingress?.game ?? useGameStore.getState().game;
 
   Object.entries(warriors).forEach(([key, warrior]) => {
@@ -75,9 +69,11 @@ export const mergeBattleWarriorPatches = (
     mergedWarriors[key] = {
       ...currentWarrior,
       ...warrior,
-      ...(modernHpPercentage === undefined ? {} : { hpp: modernHpPercentage }),
       accountId,
     };
+    if (modernHpPercentage !== undefined) {
+      mergedWarriors[key].hpp = modernHpPercentage;
+    }
   });
 
   return mergedWarriors;

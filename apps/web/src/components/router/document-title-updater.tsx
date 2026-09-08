@@ -32,7 +32,7 @@ function getGuildIdFromMatches(
     const match = matches[index];
     const guildId = match?.params.guildId;
 
-    if (typeof guildId === "string") {
+    if (guildId !== undefined) {
       return guildId;
     }
   }
@@ -45,7 +45,7 @@ function getBattleIdFromMatches(
     const match = matches[index];
     const battleId = match?.params.battleId;
 
-    if (typeof battleId === "string") {
+    if (battleId !== undefined) {
       return battleId;
     }
   }

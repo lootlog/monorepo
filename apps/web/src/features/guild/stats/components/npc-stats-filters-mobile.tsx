@@ -13,7 +13,7 @@ import {
 } from "@lootlog/ui/components/select";
 import { MobileFiltersDrawer } from "@/components/filters/mobile-filters-drawer";
 import type { NpcType } from "@lootlog/client/main";
-import { type KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
+import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
 import { TRACKABLE_NPC_TYPES } from "../constants";
 
 type NpcStatsFiltersMobileProps = {

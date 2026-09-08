@@ -3,11 +3,11 @@ import {
   RabbitRoutingKey,
   makeQueue as queue,
 } from "@lootlog/protocol/rabbit/topology";
-import { Effect, Layer, Redacted } from "effect";
+import { Effect, Layer, Redacted, Schema } from "effect";
 import { SearchConfig } from "#src/config/search-config";
-import { decodeIndexItemsPayload } from "#src/items/index-items-command";
-import { decodeIndexNpcsPayload } from "#src/npcs/index-npcs-command";
-import { decodeIndexPlayersPayload } from "#src/players/index-players-command";
+import { IndexItemsPayload } from "#src/items/index-items-command";
+import { IndexNpcsPayload } from "#src/npcs/index-npcs-command";
+import { IndexPlayersPayload } from "#src/players/index-players-command";
 import { SearchHttpServer } from "#src/http-api/search-http";
 import { SearchOperations } from "#src/http-api/search-operations";
 import { effectLogger } from "#src/shared/logger";
@@ -18,15 +18,13 @@ export const searchQueues = [
   queue("search-players-index", RabbitRoutingKey.SEARCH_PLAYERS_INDEX),
 ] as const;
 
-const decodeJson = (content: Uint8Array): unknown =>
-  JSON.parse(new TextDecoder().decode(content));
 export const SearchConsumers = Layer.effectDiscard(
   Effect.gen(function* () {
     const rabbit = yield* RabbitMessaging;
     const search = yield* SearchOperations;
     const consume = <A>(
       queueName: string,
-      decode: (input: unknown) => ReadonlyArray<A>,
+      schema: Schema.Codec<ReadonlyArray<A>>,
       index: (items: ReadonlyArray<A>) => Effect.Effect<void, unknown>,
     ) =>
       rabbit.consume(
@@ -38,12 +36,13 @@ export const SearchConsumers = Layer.effectDiscard(
         (delivery) => {
           let items: ReadonlyArray<A>;
           try {
-            items = decode(decodeJson(delivery.content));
-          } catch (error) {
-            effectLogger.error(
-              `Validation error in ${queueName} handler`,
-              error,
+            items = Schema.decodeUnknownSync(Schema.fromJsonString(schema))(
+              new TextDecoder().decode(delivery.content),
             );
+          } catch (error) {
+            effectLogger.error(`Validation error in ${queueName} handler`, {
+              error,
+            });
             return Effect.void;
           }
           return index(items).pipe(
@@ -53,16 +52,14 @@ export const SearchConsumers = Layer.effectDiscard(
           );
         },
       );
-    yield* consume("search.items.index", decodeIndexItemsPayload, (items) =>
+    yield* consume("search.items.index", IndexItemsPayload, (items) =>
       search.indexItems({ items: [...items] }),
     );
-    yield* consume("search-npcs-index", decodeIndexNpcsPayload, (npcs) =>
+    yield* consume("search-npcs-index", IndexNpcsPayload, (npcs) =>
       search.indexNpcs({ npcs: [...npcs] }),
     );
-    yield* consume(
-      "search-players-index",
-      decodeIndexPlayersPayload,
-      (players) => search.indexPlayers({ players: [...players] }),
+    yield* consume("search-players-index", IndexPlayersPayload, (players) =>
+      search.indexPlayers({ players: [...players] }),
     );
   }),
 );

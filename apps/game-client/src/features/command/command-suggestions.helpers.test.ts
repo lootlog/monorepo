@@ -1,4 +1,4 @@
-import type { TFunction } from "i18next";
+import { createInstance } from "i18next";
 import { describe, expect, it } from "vitest";
 import {
   type CommandSuggestion,
@@ -8,7 +8,9 @@ import {
   isCommandSuggestionsInput,
 } from "./command-suggestions.helpers";
 
-const translateCommand = ((key: string) => key) as TFunction<"command">;
+const translations = createInstance();
+await translations.init({ lng: "pl", resources: {}, initAsync: false });
+const translateCommand = translations.getFixedT("pl", "command");
 
 describe("command-suggestions.helpers", () => {
   it("opens suggestions only for slash-prefixed input", () => {
@@ -66,7 +68,8 @@ describe("command-suggestions.helpers", () => {
     expect(
       filterCommandSuggestions({
         inputValue: "/g",
-        suggestions: "broken" as unknown as CommandSuggestion[],
+        // @ts-expect-error Intentionally malformed runtime input exercises the non-array fallback.
+        suggestions: "broken",
       }),
     ).toEqual([]);
   });

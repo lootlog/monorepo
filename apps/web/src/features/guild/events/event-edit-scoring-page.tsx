@@ -17,21 +17,21 @@ import {
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,
   type EventScoringMode,
   type EventScoringRules,
-} from "@lootlog/domain/scoring";
-import {
   normalizeEventScoringMode,
   normalizeEventScoringRules,
 } from "@lootlog/domain/scoring";
+
 import { getApiErrorMessage } from "@lootlog/client/transport";
 import { ScoringRulesEditor } from "./components/scoring/scoring-rules-editor";
 import { ScoringModeSelector } from "./components/scoring/scoring-mode-selector";
-import type { EventOverviewResponseDto } from "@lootlog/client/main";
 import {
+  type EventOverviewResponseDto,
   getShowEventOverviewQueryKey,
   useRecalculateEventPoints,
   useShowEventOverview,
   useUpdateEvent,
 } from "@lootlog/client/main";
+
 import { invalidateEventDetailQueries } from "./hooks/mutations/invalidate-event-queries";
 import { invalidateKillQueries } from "./hooks/mutations/invalidate-kill-queries";
 
@@ -159,16 +159,14 @@ const EventEditScoringForm = ({
         : normalizeEventScoringRules(DEFAULT_ADVANCED_EVENT_SCORING_RULES);
 
     try {
+      const request: Parameters<typeof updateEvent.mutateAsync>[0]["data"] = {
+        scoringMode: normalizedMode,
+      };
+      if (normalizedMode === "ADVANCED")
+        request.scoringRules = normalizedScoringRules;
       await updateEvent.mutateAsync({
         pathParams: routeParams,
-        data: {
-          scoringMode: normalizedMode,
-          ...(normalizedMode === "ADVANCED"
-            ? {
-                scoringRules: normalizedScoringRules,
-              }
-            : {}),
-        },
+        data: request,
       });
       form.reset({
         scoringMode: normalizedMode,
@@ -204,7 +202,7 @@ const EventEditScoringForm = ({
             size="sm"
             onClick={handleRecalculate}
             loading={recalculatePoints.isPending}
-            icon={<RefreshCcw className="size-3.5" />}
+            icon=<RefreshCcw className="size-3.5" />
             title={t("events.scoring.recalculateHint")}
           >
             {t("events.scoring.recalculateButton")}
@@ -244,9 +242,10 @@ const EventEditScoringForm = ({
                   {t("events.scoring.title")}
                 </Label>
                 <ScoringRulesEditor
-                  control={form.control}
-                  register={form.register}
-                  setValue={form.setValue}
+                  value={form.watch("scoringRules")}
+                  onChange={(value) =>
+                    form.setValue("scoringRules", value, { shouldDirty: true })
+                  }
                 />
               </div>
             </SectionCardContent>

@@ -5,11 +5,13 @@ import { env } from "./commands/env/index.js";
 import { events } from "./commands/events/index.js";
 import { seedCommand } from "./commands/seed/index.js";
 
-const COMMANDS = {
-  env,
-  events,
-  seed: seedCommand,
-} as const;
+const COMMANDS = new Map(
+  Object.entries({
+    env,
+    events,
+    seed: seedCommand,
+  }),
+);
 
 const CLI_VERSION = "1.0.0";
 
@@ -62,7 +64,11 @@ const main = async (): Promise<void> => {
     return;
   }
 
-  const commandHandler = COMMANDS[command as keyof typeof COMMANDS];
+  if (!command) {
+    displayMainHelp();
+    return;
+  }
+  const commandHandler = COMMANDS.get(command);
 
   if (!commandHandler) {
     console.error(chalk.red(`\n❌ Unknown command: ${command}\n`));

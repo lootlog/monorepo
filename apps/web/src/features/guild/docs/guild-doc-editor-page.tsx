@@ -1,6 +1,9 @@
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { SectionCard } from "@/components/common/section-card/section-card";
+import {
+  SectionCard,
+  SectionCard as Card,
+} from "@/components/common/section-card/section-card";
 import { PageHeader } from "@/components/common/page-header";
 import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate, useParams } from "@tanstack/react-router";
@@ -19,7 +22,7 @@ import {
 } from "@lootlog/ui/components/alert-dialog";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
-import { SectionCard as Card } from "@/components/common/section-card/section-card";
+
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -364,7 +367,7 @@ export const GuildDocEditorPage = () => {
                 {t("common.cancel")}
               </AlertDialogCancel>
               <AlertDialogAction
-                render={<Button loading={deleteDocument.isPending} />}
+                render=<Button loading={deleteDocument.isPending} />
                 disabled={deleteDocument.isPending}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 onClick={(event) => {

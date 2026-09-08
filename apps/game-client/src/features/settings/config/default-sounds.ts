@@ -1,4 +1,4 @@
-export const DEFAULT_SOUND_URLS: Record<string, string> = {
+export const DEFAULT_SOUND_URLS = {
   message: "https://gordion.margonem.pl/sounds/new_mail.mp3",
   ELITE2: "https://cronus.margonem.com/sounds/elite2_here.mp3",
   HERO: "https://cronus.margonem.com/sounds/heroes_here.mp3",
@@ -8,3 +8,11 @@ export const DEFAULT_SOUND_URLS: Record<string, string> = {
   timerReady: "https://gordion.margonem.pl/sounds/new_mail.mp3",
   mapPing: "https://gordion.margonem.pl/sounds/new_mail.mp3",
 };
+
+const isDefaultSoundKey = (
+  key: string,
+): key is keyof typeof DEFAULT_SOUND_URLS =>
+  Object.hasOwn(DEFAULT_SOUND_URLS, key);
+
+export const getDefaultSoundUrl = (key: string): string | undefined =>
+  isDefaultSoundKey(key) ? DEFAULT_SOUND_URLS[key] : undefined;

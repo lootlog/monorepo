@@ -1,3 +1,7 @@
+import {
+  createGuildFixture,
+  createMemberFixture,
+} from "../../../../test/organization-fixtures.js";
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
@@ -86,21 +90,27 @@ describe("internal guild HttpApi handlers", () => {
 
   it("builds the established owner and member permission projection from repositories", async () => {
     const cached: unknown[] = [];
-    const persistence = {
+    const persistence: InternalGuildsPersistence = {
       findActiveGuild: () => Effect.succeed(null),
       findGuildsForPermissions: () =>
         Effect.succeed([
-          { id: "guild-owner", ownerId: "discord-a" },
-          { id: "guild-member", ownerId: "discord-owner" },
+          createGuildFixture({ id: "guild-owner", ownerId: "discord-a" }),
+          createGuildFixture({ id: "guild-member", ownerId: "discord-owner" }),
         ]),
       findMembersWithRoles: () =>
         Effect.succeed([
           {
-            guildId: "guild-member",
+            ...createMemberFixture({ guildId: "guild-member" }),
             active: true,
             roles: [
               {
                 id: "role-a",
+                guildId: "guild-member",
+                name: "Role",
+                color: null,
+                position: null,
+                createdAt: new Date(0),
+                updatedAt: new Date(0),
                 lvlRangeFrom: 1,
                 lvlRangeTo: 300,
                 permissions: [Permission.LOOTLOG_ACCESS],
@@ -108,12 +118,12 @@ describe("internal guild HttpApi handlers", () => {
             ],
           },
         ]),
-    } as unknown as InternalGuildsPersistence;
+    };
     const cache = {
       get: () => Effect.succeed(null),
       getJson: () => Effect.succeed(null),
       set: () => Effect.void,
-      setJson: (_key: string, value: unknown) =>
+      setJson: (_key, value) =>
         Effect.sync(() => {
           cached.push(value);
         }),
@@ -131,7 +141,7 @@ describe("internal guild HttpApi handlers", () => {
 
   it("preserves cached guild defaults without touching the database", async () => {
     let databaseRead = false;
-    const persistence = {
+    const persistence: InternalGuildsPersistence = {
       findActiveGuild: () =>
         Effect.sync(() => {
           databaseRead = true;
@@ -139,7 +149,7 @@ describe("internal guild HttpApi handlers", () => {
         }),
       findGuildsForPermissions: () => Effect.succeed([]),
       findMembersWithRoles: () => Effect.succeed([]),
-    } as unknown as InternalGuildsPersistence;
+    };
     const cache = {
       get: () =>
         Effect.succeed(

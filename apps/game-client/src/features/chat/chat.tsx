@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { useState } from "react";
 import { useChatMessagesListener } from "@/features/chat/hooks/use-chat-messages";
 import { useLocalStorage } from "@/hooks/use-local-storage";
@@ -14,6 +15,8 @@ import {
   type ChatUnreadCountByGuildId,
 } from "./chat-unread.helpers";
 
+const selectedGuildSchema = z.string();
+
 const chatSelectedGuildKey = (accountId: string, characterId: string) =>
   storageKey(`ll:chat:selected-guild:${accountId}:${characterId}`);
 
@@ -25,9 +28,10 @@ export const Chat = () => {
   );
   const accountId = useGameStore((state) => state.game?.hero.accountId ?? "");
   const gameInterface = useGameStore((state) => state.game?.interface);
-  const [selectedGuildId, setSelectedGuildId] = useLocalStorage(
+  const [selectedGuildId = "", setSelectedGuildId] = useLocalStorage(
     chatSelectedGuildKey(accountId, characterId),
     "",
+    selectedGuildSchema,
   );
   const [unreadCountByGuildId, setUnreadCountByGuildId] =
     useState<ChatUnreadCountByGuildId>({});
@@ -56,9 +60,7 @@ export const Chat = () => {
     },
   });
 
-  const handleSelectedGuildChange: typeof setSelectedGuildId = (update) => {
-    const nextGuildId =
-      typeof update === "function" ? update(selectedGuildId) : update;
+  const handleSelectedGuildChange = (nextGuildId: string) => {
     setSelectedGuildId(nextGuildId);
     if (!nextGuildId) return;
 

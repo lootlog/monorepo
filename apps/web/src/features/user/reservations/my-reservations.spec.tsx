@@ -1,66 +1,54 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { configureApiClients } from "@lootlog/client/transport";
+import { waitFor, cleanup, render, screen } from "@testing-library/react";
 // @vitest-environment happy-dom
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { initializeTestTranslations } from "@/lib/testing/i18n";
+
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MyReservations } from "./my-reservations";
 
-const mocks = vi.hoisted(() => ({
-  invalidateQueries: vi.fn(),
-  useListMyReservations: vi.fn(() => ({
-    data: { items: [] },
-    isFetching: false,
-    isPending: false,
-  })),
-}));
-
-vi.mock("@tanstack/react-query", () => ({
-  useQueryClient: () => ({ invalidateQueries: mocks.invalidateQueries }),
-}));
-
-vi.mock("@lootlog/client/main", async () => ({
-  ...(await vi.importActual("@lootlog/client/main")),
-  getListMyReservationsQueryKey: () => ["my-reservations"],
-  useDeleteMyReservation: () => ({ isPending: false, mutate: vi.fn() }),
-  useListMyReservations: mocks.useListMyReservations,
-}));
-
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string) => {
-      const translations: Record<string, string> = {
-        "reservations.my.title": "Moje zapisy",
-        "reservations.my.description": "Opis",
-        "reservations.my.tabsLabel": "Zakres rezerwacji",
-        "reservations.my.upcoming": "Nadchodzące",
-        "reservations.my.history": "Historia 30 dni",
-        "reservations.my.emptyUpcoming": "Brak nadchodzących rezerwacji",
-        "reservations.my.emptyDescription": "Brak wpisów",
-      };
-
-      return translations[key] ?? key;
-    },
-  }),
-}));
-
-vi.mock("./my-reservation-list-item", () => ({
-  MyReservationListItem: () => <li>Rezerwacja</li>,
-}));
+await initializeTestTranslations({
+  "reservations.my.title": "Moje zapisy",
+  "reservations.my.description": "Opis",
+  "reservations.my.tabsLabel": "Zakres rezerwacji",
+  "reservations.my.upcoming": "Nadchodzące",
+  "reservations.my.history": "Historia 30 dni",
+  "reservations.my.emptyUpcoming": "Brak nadchodzących rezerwacji",
+  "reservations.my.emptyDescription": "Brak wpisów",
+});
 
 describe("MyReservations", () => {
   afterEach(() => {
     cleanup();
-    vi.clearAllMocks();
+    vi.unstubAllGlobals();
   });
 
-  it("names the page and requests the complete selected list", () => {
-    render(<MyReservations />);
+  it("names the page and requests the complete selected list", async () => {
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false, gcTime: 0 } },
+    });
+    const restore = configureApiClients({
+      main: { baseUrl: "https://api.test" },
+    });
+    const requests: URL[] = [];
+    vi.stubGlobal("fetch", async (input: string | URL | Request) => {
+      requests.push(new URL(input instanceof Request ? input.url : input));
+      return Response.json({ items: [] });
+    });
+    render(
+      <QueryClientProvider client={client}>
+        <MyReservations />
+      </QueryClientProvider>,
+    );
+    await screen.findByText("Brak nadchodzących rezerwacji");
+    restore();
 
     expect(
       screen.getByRole("heading", { level: 1, name: "Moje zapisy" }),
     ).toBeTruthy();
-    expect(mocks.useListMyReservations).toHaveBeenCalledWith({
-      status: "upcoming",
-    });
+    await waitFor(() => expect(requests).toHaveLength(1));
+    expect(requests[0]?.searchParams.get("status")).toBe("upcoming");
     expect(screen.queryByRole("button", { name: "Poprzednia" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Następna" })).toBeNull();
   });

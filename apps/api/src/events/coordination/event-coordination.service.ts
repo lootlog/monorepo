@@ -1,3 +1,4 @@
+import { isRecord } from "@lootlog/schema/records";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import { Clock, Effect } from "effect";
 import type { eventMapCoverageGapTable } from "#src/database/drizzle/schema";
@@ -252,11 +253,11 @@ function findHeroTimer(
 }
 
 function extractNpcName(npc: unknown): string {
-  if (!npc || typeof npc !== "object" || Array.isArray(npc)) {
+  if (!isRecord(npc)) {
     return "";
   }
 
-  const name = (npc as Record<string, unknown>).name;
+  const name = npc.name;
   return typeof name === "string" ? name : "";
 }
 

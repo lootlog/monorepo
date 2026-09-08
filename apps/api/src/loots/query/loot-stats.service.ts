@@ -67,7 +67,10 @@ export class LootStatsService {
 
   constructor(
     private readonly query: LootStatsQuery,
-    private readonly redis: RedisService,
+    private readonly redis: Pick<
+      RedisService,
+      "getOrSetJsonEffect" | "deleteByPattern"
+    >,
   ) {}
 
   invalidateCache(guildIds: string[]) {
@@ -115,7 +118,7 @@ export class LootStatsService {
     const dateFrom = this.getDateFromPeriod(period);
     const npcTypeFilter = npcTypes?.length
       ? npcTypes.filter((type): type is NpcType =>
-          Object.values(NpcType).includes(type as NpcType),
+          Object.values(NpcType).some((npcType) => npcType === type),
         )
       : undefined;
 

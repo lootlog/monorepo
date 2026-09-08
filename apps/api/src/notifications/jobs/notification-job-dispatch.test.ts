@@ -1,36 +1,31 @@
+import {
+  createNotificationJobFixture,
+  createNotificationRuleFixture,
+  createNotificationTargetFixture,
+} from "../../../test/notification-fixtures.js";
 import { describe, expect, it } from "bun:test";
 import { Effect } from "effect";
 import {
   makeNotificationJobDispatch,
   type NotificationDispatchJob,
+  type NotificationDispatchStore,
 } from "#src/notifications/jobs/notification-job-dispatch";
-import {
-  NotificationJobStatus,
-  NotificationOwnerType,
-  NotificationTargetType,
-} from "#src/notifications/notification-enums";
+import { NotificationJobStatus } from "#src/notifications/notification-enums";
 
-const job = (active: boolean): NotificationDispatchJob =>
-  ({
-    id: "job-1",
-    ownerType: NotificationOwnerType.USER,
-    ownerId: "user-1",
+const job = (active: boolean): NotificationDispatchJob => ({
+  ...createNotificationJobFixture({
     attemptCount: 2,
     payloadSnapshot: { title: "title", message: "message" },
-    rule: { guildId: null },
-    target: {
-      id: 4,
-      externalId: "user-1",
-      targetType: NotificationTargetType.DM,
-      active,
-      canSend: true,
-      metadata: null,
-    },
-  }) as unknown as NotificationDispatchJob;
+    targetId: 4,
+  }),
+  rule: createNotificationRuleFixture(),
+  target: createNotificationTargetFixture({ id: 4, active }),
+});
 
 describe("notification job dispatch", () => {
   it("blocks an inactive target before claim and publish", async () => {
-    const updates: Array<Record<string, unknown>> = [];
+    const updates: Array<Parameters<NotificationDispatchStore["update"]>[1]> =
+      [];
     let claimed = false;
     let published = false;
     const dispatch = makeNotificationJobDispatch(
@@ -71,7 +66,8 @@ describe("notification job dispatch", () => {
   });
 
   it("returns a claimed job to pending and enqueues the established retry", async () => {
-    const updates: Array<Record<string, unknown>> = [];
+    const updates: Array<Parameters<NotificationDispatchStore["update"]>[1]> =
+      [];
     const enqueued: Array<[string, number]> = [];
     const dispatch = makeNotificationJobDispatch(
       {

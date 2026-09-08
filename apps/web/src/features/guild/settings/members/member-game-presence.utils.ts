@@ -1,4 +1,4 @@
-import type { PlayerPresence } from "@/features/guild/events/hooks/socket/use-event-presence";
+import type { PlayerPresence } from "@/lib/gateway-client";
 import {
   isMemberOnlineOnWeb,
   type MemberWebPresenceByDiscordId,

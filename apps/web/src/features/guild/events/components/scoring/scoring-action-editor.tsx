@@ -14,15 +14,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@lootlog/ui/components/select";
-import {
-  EVENT_SCORING_ACTION_TYPES,
-  type EventScoringRules,
-} from "@lootlog/domain/scoring";
+import { EVENT_SCORING_ACTION_TYPES } from "@lootlog/domain/scoring";
 import { getScoringActionTypeLabel } from "../../utils/scoring-rule-labels";
 
-type ScoringRulesFormValues = {
-  scoringRules: EventScoringRules;
-};
+import type { ScoringRulesFormValues } from "./scoring-rules-editor";
 
 interface ScoringActionEditorProps {
   control: Control<ScoringRulesFormValues>;
@@ -57,12 +52,10 @@ export const ScoringActionEditor = ({
             <Select
               value={field.value}
               onValueChange={field.onChange}
-              items={[
-                ...EVENT_SCORING_ACTION_TYPES.map((actionTypeOption) => ({
-                  value: actionTypeOption,
-                  label: <>{getScoringActionTypeLabel(actionTypeOption, t)}</>,
-                })),
-              ]}
+              items={EVENT_SCORING_ACTION_TYPES.map((actionTypeOption) => ({
+                value: actionTypeOption,
+                label: <>{getScoringActionTypeLabel(actionTypeOption, t)}</>,
+              }))}
             >
               <SelectTrigger size="sm" className="h-8 text-[12px]">
                 <SelectValue />

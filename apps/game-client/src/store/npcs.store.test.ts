@@ -43,7 +43,7 @@ describe("useNpcsStore", () => {
     const npc = createNpc(501, "Pierwszy");
     useNpcsStore.getState().replaceNpcs([npc]);
     const initialState = useNpcsStore.getState();
-    const listener = vi.fn();
+    const listener = vi.fn<Parameters<typeof useNpcsStore.subscribe>[0]>();
     const unsubscribe = useNpcsStore.subscribe(listener);
 
     useNpcsStore.getState().applyNpcBatch({

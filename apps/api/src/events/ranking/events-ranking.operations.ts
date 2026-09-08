@@ -19,12 +19,21 @@ import type { EventPointEdits } from "#src/events/kills/event-point-edits";
 import type { EventHeroSummary } from "#src/events/kills/event-hero-summary";
 
 export const makeEventsRanking = (
-  rankingRead: EventRankingRead,
-  kills: EventKills,
-  catalogRead: EventsCatalogRead,
+  rankingRead: Pick<EventRankingRead, "getEditHistories" | "getRanking">,
+  kills: Pick<
+    EventKills,
+    | "getEventKillHistory"
+    | "getHeroKillHistory"
+    | "getKillDetail"
+    | "getMemberKillHistory"
+  >,
+  catalogRead: Pick<EventsCatalogRead, "getEventOverview">,
   eventAccess: EventAccess,
-  participation: EventParticipation,
-  pointEdits: EventPointEdits,
+  participation: Pick<
+    EventParticipation,
+    "acknowledgeExpired" | "confirm" | "getPending"
+  >,
+  pointEdits: Pick<EventPointEdits, "updateKillPoint" | "updateRanking">,
   heroSummary: EventHeroSummary,
 ) => ({
   getPendingParticipationConfirmations(
@@ -130,18 +139,17 @@ export const makeEventsRanking = (
     roles: Role[] = [],
     accessPolicy: AccessPolicy,
   ) {
-    return heroSummary.getTimers(guildData, eventId, world).pipe(
-      Effect.map((timers) =>
-        timers.filter((timer) => {
-          const npc = timer.npc as { lvl?: number } | null;
-          return eventAccess.isHeroVisible(
-            { npcLvl: npc?.lvl ?? null },
-            roles,
-            accessPolicy,
-          );
-        }),
-      ),
-    );
+    return heroSummary
+      .getTimers(guildData, eventId, world)
+      .pipe(
+        Effect.map((timers) =>
+          timers.flatMap(({ npcLvl, ...timer }) =>
+            eventAccess.isHeroVisible({ npcLvl }, roles, accessPolicy)
+              ? [timer]
+              : [],
+          ),
+        ),
+      );
   },
 
   getEventHeroStats(

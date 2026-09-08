@@ -2,7 +2,7 @@ import { useWindowsStore, type WindowId } from "@/store/windows.store";
 import {
   HOTKEY_ACTIONS,
   useHotkeysStore,
-  type HotkeyAction,
+  type HotkeyActionConfig,
   type HotkeyBinding,
 } from "@/store/hotkeys.store";
 import { useEffect, useRef } from "react";
@@ -23,14 +23,14 @@ type UseHotkeysOptions = {
   onMapPingStart?: (event: HotkeyEvent) => boolean;
 };
 
-const ACTION_TO_WINDOW: Partial<Record<HotkeyAction, WindowId>> = {
-  "toggle-command": "command",
-  "toggle-chat": "chat",
-  "toggle-settings": "settings",
-  "toggle-timers": "timers",
-  "toggle-online-players": "online-players",
-  "toggle-quick-access": "quick-access",
-};
+const ACTION_TO_WINDOW = new Map<string, WindowId>([
+  ["toggle-command", "command"],
+  ["toggle-chat", "chat"],
+  ["toggle-settings", "settings"],
+  ["toggle-timers", "timers"],
+  ["toggle-online-players", "online-players"],
+  ["toggle-quick-access", "quick-access"],
+]);
 
 const matchesBinding = (event: HotkeyEvent, binding: HotkeyBinding) => {
   const modifiersMatch =
@@ -62,7 +62,7 @@ const isEditableElementActive = () => {
   );
 };
 
-const hotkeyScopes = new Map(
+const hotkeyScopes = new Map<string, HotkeyActionConfig["scope"]>(
   HOTKEY_ACTIONS.map(({ action, scope }) => [action, scope]),
 );
 
@@ -115,21 +115,20 @@ export const useHotkeys = ({
           continue;
         }
 
-        const hotkeyAction = action as HotkeyAction;
-        const windowId = ACTION_TO_WINDOW[hotkeyAction];
+        const windowId = ACTION_TO_WINDOW.get(action);
         if (windowId) {
           toggleOpen(windowId, true);
           return true;
         }
 
-        if (hotkeyAction === "invite-all" && canEnqueueReadyRoomInvitations()) {
-          void enqueueReadyRoomInvitations().catch((error: unknown) => {
-            console.warn("Failed to resolve party invitations", error);
+        if (action === "invite-all" && canEnqueueReadyRoomInvitations()) {
+          void enqueueReadyRoomInvitations().catch((cause: unknown) => {
+            console.warn("Failed to resolve party invitations", cause);
           });
           return true;
         }
 
-        if (hotkeyAction === "map-ping") {
+        if (action === "map-ping") {
           if (event instanceof KeyboardEvent && event.repeat) {
             return activeMapPingIdentityRef.current !== null;
           }
@@ -182,8 +181,8 @@ export const useHotkeys = ({
         ([action, binding]) =>
           binding.type === "mouse" &&
           matchesBinding(event, binding) &&
-          (hotkeyScopes.get(action as HotkeyAction) === "global" ||
-            hotkeyScopes.get(action as HotkeyAction) === "map-surface"),
+          (hotkeyScopes.get(action) === "global" ||
+            hotkeyScopes.get(action) === "map-surface"),
       );
       if (
         !matchingAction ||

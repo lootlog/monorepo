@@ -11,7 +11,7 @@ type StatisticsQueryStateProps = {
     isError: boolean;
     isFetching: boolean;
     data: unknown;
-    refetch: () => unknown;
+    refetch: () => void;
   };
   children: ReactNode;
   loading?: ReactNode;

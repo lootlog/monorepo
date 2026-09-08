@@ -211,13 +211,13 @@ const getWindowHorizontalChromeWidth = (
 
 const getNumericStyleValue = (
   styles: CSSStyleDeclaration,
-  propertyName: keyof CSSStyleDeclaration,
+  propertyName:
+    | "paddingTop"
+    | "paddingBottom"
+    | "borderTopWidth"
+    | "borderBottomWidth",
 ) => {
   const rawValue = styles[propertyName];
-
-  if (typeof rawValue !== "string") {
-    return 0;
-  }
 
   const parsedValue = Number.parseFloat(rawValue);
 
@@ -758,9 +758,9 @@ export const DraggableWindowFrame: FC<DraggableWindowFrameProps> = (props) => {
     e.stopPropagation();
   }, []);
 
-  const onPointerDown = (event: React.PointerEvent) => {
+  const onPointerDown = (event: React.PointerEvent<HTMLElement>) => {
     cancelWindowResizeSession();
-    handlePointerDown(event as React.PointerEvent<HTMLElement>);
+    handlePointerDown(event);
   };
 
   const onPointerDownCapture = () => {

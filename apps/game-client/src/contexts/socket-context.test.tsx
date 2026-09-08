@@ -1,49 +1,13 @@
 import { act, render, waitFor } from "@testing-library/react";
-import { GatewayEvent } from "@/config/gateway";
-import { useGameStore } from "@/store/game.store";
+import { describe, expect, it } from "vitest";
 import { useGlobalStore } from "@/store/global.store";
-import { SocketProvider } from "./socket-context";
-
-const { mockSocket, mockSocketHandlers } = vi.hoisted(() => {
-  const socketHandlers = {} as Record<string, (data: unknown) => void>;
-
-  return {
-    mockSocketHandlers: socketHandlers,
-    mockSocket: {
-      auth: {},
-      connected: true,
-      id: "socket-1",
-      connect: vi.fn(),
-      disconnect: vi.fn(),
-      emit: vi.fn(),
-      join: vi.fn().mockResolvedValue({
-        connectionId: "connection-1",
-        organizationIds: ["guild-1"],
-      }),
-      off: vi.fn((event: string) => {
-        delete socketHandlers[event];
-      }),
-      offAny: vi.fn(),
-      on: vi.fn((event: string, handler: (data: unknown) => void) => {
-        socketHandlers[event] = handler;
-      }),
-      onAny: vi.fn(),
-    },
-  };
-});
-
-vi.mock("@/lib/socket", () => ({
-  getSocket: () => mockSocket,
-}));
+import { setTestRuntimeGame } from "@/test/test-runtime-window";
+import { createRealtimeTest } from "@/test/realtime-test";
 
 const expectedJoinData = {
   accountId: "20",
   characterId: "10",
-  clan: {
-    id: 30,
-    name: "Lootlog",
-    rank: 4,
-  },
+  clan: { id: 30, name: "Lootlog", rank: 4 },
   icon: "hero-icon",
   lvl: 100,
   name: "Hero",
@@ -51,173 +15,113 @@ const expectedJoinData = {
   world: "alpha",
 };
 
+const setup = () => {
+  const test = createRealtimeTest();
+  setTestRuntimeGame({
+    hero: {
+      accountId: "20",
+      characterId: "10",
+      clan: expectedJoinData.clan,
+      icon: "hero-icon",
+      level: 100,
+      name: "Hero",
+      profession: "w",
+    },
+    world: "alpha",
+  });
+  render(<div />, { wrapper: test.wrapper });
+  test.open();
+  return test;
+};
+
 describe("SocketProvider", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockSocket.auth = {};
-    mockSocket.connected = true;
-    mockSocket.id = "socket-1";
-    for (const eventName of Object.keys(mockSocketHandlers)) {
-      delete mockSocketHandlers[eventName];
-    }
-    useGlobalStore.setState({
-      gameState: { gameInitialized: true },
-      socketState: { connected: false, joined: false, joinedGuilds: [] },
-    });
-    useGameStore.getState().replaceGame({
-      hero: {
-        accountId: "20",
-        characterId: "10",
-        clan: {
-          id: 30,
-          name: "Lootlog",
-          rank: 4,
-        },
-        currentHp: 100,
-        icon: "hero-icon",
-        level: 100,
-        maxHp: 100,
-        name: "Hero",
-        profession: "w",
-        x: 1,
-        y: 2,
-      },
-      interface: "ni",
-      map: {
-        id: 100,
-        name: "Karka-han",
-        visibility: 0,
-      },
+  it("waits for game readiness and joins without publishing precise location in the session", async () => {
+    const test = setup();
+    expect(
+      test.wire.frames.some(
+        (frame) => "type" in frame && frame.type === "session.join",
+      ),
+    ).toBe(false);
+    act(() =>
+      useGlobalStore.setState({ gameState: { gameInitialized: true } }),
+    );
+    await waitFor(() =>
+      expect(
+        test.wire.frames.some(
+          (frame) => "type" in frame && frame.type === "session.join",
+        ),
+      ).toBe(true),
+    );
+    const command = test.wire.frames.find(
+      (frame) => "type" in frame && frame.type === "session.join",
+    );
+    if (
+      !command ||
+      !("requestId" in command) ||
+      !("data" in command) ||
+      !command.requestId
+    )
+      throw new Error("Missing session join command");
+    expect(command.data).toEqual({
       world: "alpha",
+      character: expectedJoinData,
     });
-  });
-
-  it("joins through the realtime client after the game is ready", async () => {
-    render(
-      <SocketProvider>
-        <div />
-      </SocketProvider>,
-    );
-
-    await waitFor(() => {
-      expect(mockSocket.join).toHaveBeenCalledWith(expectedJoinData);
-    });
-  });
-
-  it("does not include precise location in the session join command", async () => {
-    render(
-      <SocketProvider>
-        <div />
-      </SocketProvider>,
-    );
-
-    await waitFor(() => {
-      expect(mockSocket.join).toHaveBeenCalledWith(expectedJoinData);
-      expect(mockSocket.join.mock.calls[0]?.[0]).not.toHaveProperty("location");
-    });
-  });
-
-  it("synchronizes joined guilds when permissions are updated", async () => {
-    render(
-      <SocketProvider>
-        <div />
-      </SocketProvider>,
-    );
-
-    act(() => {
-      mockSocketHandlers[GatewayEvent.PERMISSIONS_UPDATED]?.({
-        guilds: [{ guild: { id: "guild-1" } }, { guild: { id: "guild-2" } }],
-        featureRooms: ["timers:base"],
-      });
-    });
-
-    await waitFor(() => {
-      expect(useGlobalStore.getState().socketState.joinedGuilds).toEqual([
-        "guild-1",
-        "guild-2",
-      ]);
-    });
-  });
-
-  it("clears joined guilds when permissions update payload has no guilds", async () => {
-    vi.spyOn(console, "warn").mockImplementation(() => undefined);
-
-    render(
-      <SocketProvider>
-        <div />
-      </SocketProvider>,
-    );
-
-    act(() => {
-      mockSocketHandlers[GatewayEvent.JOIN]?.({
+    expect(command.data).not.toHaveProperty("location");
+    const requestId = command.requestId;
+    await act(() =>
+      test.wire.receive({
+        v: 1,
+        requestId,
         status: "success",
-        guildIds: ["guild-1"],
-      });
-    });
-
-    await waitFor(() => {
-      expect(useGlobalStore.getState().socketState).toMatchObject({
-        joined: true,
-        joinedGuilds: ["guild-1"],
-      });
-    });
-
-    act(() => {
-      mockSocketHandlers[GatewayEvent.PERMISSIONS_UPDATED]?.({
-        featureRooms: ["timers:base"],
-      });
-    });
-
-    await waitFor(() => {
-      expect(useGlobalStore.getState().socketState).toMatchObject({
-        joined: false,
-        joinedGuilds: [],
-      });
-    });
+        data: { connectionId: "connection-1", organizationIds: ["guild-1"] },
+      }),
+    );
+    await waitFor(() =>
+      expect(useGlobalStore.getState().socketState.joined).toBe(true),
+    );
   });
 
-  it("clears joined state after disconnect", async () => {
-    render(
-      <SocketProvider>
-        <div />
-      </SocketProvider>,
-    );
-
-    act(() => {
-      mockSocketHandlers[GatewayEvent.JOIN]?.({
-        status: "success",
-        guildIds: ["guild-1"],
-      });
+  it("synchronizes joined organizations after permission updates", async () => {
+    const test = setup();
+    await test.join();
+    await test.receive({
+      v: 1,
+      type: "permissions.updated",
+      data: { organizationIds: ["guild-1", "guild-2"], subscriptionScopes: [] },
     });
-
-    await waitFor(() => {
-      expect(useGlobalStore.getState().socketState).toMatchObject({
-        connected: true,
-        joined: true,
-        joinedGuilds: ["guild-1"],
-      });
-    });
-
-    act(() => {
-      mockSocketHandlers[GatewayEvent.DISCONNECT]?.(undefined);
-    });
-
-    await waitFor(() => {
-      expect(useGlobalStore.getState().socketState).toEqual({
-        connected: false,
-        joined: false,
-        joinedGuilds: [],
-      });
-    });
+    expect(useGlobalStore.getState().socketState.joinedGuilds).toEqual([
+      "guild-1",
+      "guild-2",
+    ]);
   });
 
-  it("does not register a development catch-all listener", () => {
-    render(
-      <SocketProvider>
-        <div />
-      </SocketProvider>,
-    );
+  it("removes every organization when membership is revoked", async () => {
+    const test = setup();
+    await test.join();
+    expect(useGlobalStore.getState().socketState.joinedGuilds).toEqual([
+      "guild-1",
+    ]);
+    await test.receive({
+      v: 1,
+      type: "permissions.updated",
+      data: { organizationIds: [], subscriptionScopes: [] },
+    });
+    expect(useGlobalStore.getState().socketState.joinedGuilds).toEqual([]);
+  });
 
-    expect(mockSocket.onAny).not.toHaveBeenCalled();
+  it("clears joined state after the transport disconnects", async () => {
+    const test = setup();
+    await test.join();
+    expect(useGlobalStore.getState().socketState).toMatchObject({
+      connected: true,
+      joined: true,
+      joinedGuilds: ["guild-1"],
+    });
+    act(() => test.wire.close());
+    expect(useGlobalStore.getState().socketState).toEqual({
+      connected: false,
+      joined: false,
+      joinedGuilds: [],
+    });
   });
 });

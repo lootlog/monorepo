@@ -1,27 +1,22 @@
+import { createOrganizationTestWrapper } from "@/lib/testing/router";
 // @vitest-environment happy-dom
 
-import type { ReactNode } from "react";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { initializeTestTranslations } from "@/lib/testing/i18n";
+import type { ReactElement } from "react";
+import {
+  cleanup,
+  fireEvent,
+  render as renderElement,
+  screen,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { KillDetailParticipant } from "../../hooks/queries/use-kill-detail";
 import { KillParticipantRow } from "./kill-participant-row";
 
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string) => key,
-  }),
-}));
+await initializeTestTranslations();
 
-vi.mock("@tanstack/react-router", () => ({
-  Link: ({ children }: { children: ReactNode }) => (
-    <a href="/member">{children}</a>
-  ),
-}));
-
-vi.mock("../dialogs/manual-points-edit-dialog", () => ({
-  ManualPointsEditDialog: ({ open }: { open: boolean }) =>
-    open ? <div>edit-dialog</div> : null,
-}));
+const wrapper = await createOrganizationTestWrapper();
+const render = (element: ReactElement) => renderElement(element, { wrapper });
 
 afterEach(cleanup);
 
@@ -188,7 +183,7 @@ describe("KillParticipantRow", () => {
     );
     fireEvent.click(screen.getByLabelText("events.points.edit"));
 
-    expect(screen.getByText("edit-dialog")).toBeTruthy();
+    expect(screen.getByRole("dialog")).toBeTruthy();
   });
 });
 

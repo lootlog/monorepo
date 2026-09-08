@@ -6,7 +6,7 @@ import {
   makeRetryQueue,
   type RabbitQueueDefinition,
 } from "@lootlog/protocol/rabbit/topology";
-import { Effect, Layer, Redacted, Result } from "effect";
+import { Effect, Layer, Option, Redacted, Result, Schema } from "effect";
 import { ActivityRepository } from "./activity-repository.js";
 import {
   decodeCreateActivity,
@@ -64,24 +64,29 @@ export const activityQueues = [
 const decodeJson = (delivery: RabbitDelivery) =>
   Result.try({
     try: () =>
-      JSON.parse(new TextDecoder().decode(delivery.content)) as unknown,
+      Schema.decodeUnknownSync(Schema.fromJsonString(Schema.Json))(
+        new TextDecoder().decode(delivery.content),
+      ),
     catch: (cause) => cause,
   });
 const retryCount = (delivery: RabbitDelivery): number => {
   const death = delivery.properties.headers?.["x-death"];
   if (!Array.isArray(death) || death.length === 0) return 0;
-  const count = death[0]?.count;
-  return typeof count === "number" ? count : 0;
+  const entry = Schema.decodeUnknownOption(
+    Schema.Struct({ count: Schema.Number }),
+  )(death[0]);
+  return Option.getOrElse(
+    Option.map(entry, ({ count }) => count),
+    () => 0,
+  );
 };
 const header = (delivery: RabbitDelivery, name: string): string | undefined => {
   const value = delivery.properties.headers?.[name];
-  return Array.isArray(value)
-    ? typeof value[0] === "string"
-      ? value[0]
-      : undefined
-    : typeof value === "string"
-      ? value
-      : undefined;
+  return Option.getOrUndefined(
+    Schema.decodeUnknownOption(Schema.String)(
+      Array.isArray(value) ? value[0] : value,
+    ),
+  );
 };
 
 export const ActivityConsumers = Layer.effectDiscard(
@@ -94,7 +99,11 @@ export const ActivityConsumers = Layer.effectDiscard(
       routingKey:
         | typeof RabbitRoutingKey.ACTIVITY_LOG_CREATE_DLQ
         | typeof RabbitRoutingKey.GUILDS_MEMBERS_REMOVE_DLQ,
-      errorHeaders: Record<string, unknown>,
+      errorHeaders: {
+        "x-signature-error"?: string;
+        "x-validation-error"?: string;
+        "x-error-type"?: "permanent";
+      },
     ) =>
       rabbit
         .publish({

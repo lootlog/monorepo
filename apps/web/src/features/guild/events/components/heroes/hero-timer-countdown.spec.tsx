@@ -1,22 +1,19 @@
 // @vitest-environment happy-dom
 
+import { initializeTestTranslations } from "@/lib/testing/i18n";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { EventTimer } from "../../types/api";
 import { HeroTimerCountdown } from "./hero-timer-countdown";
 
-const translations: Record<string, string> = {
+const translations = {
   "events.heroes.countdownUntilSpawnWindow": "Do początku okna respawnu",
   "events.heroes.countdownUntilSpawnWindowEnd": "Do końca okna respawnu",
   "events.respawn.maxSpawnTime": "Maksymalny czas spawnu",
   "events.respawn.minSpawnTime": "Minimalny czas spawnu",
 };
 
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string) => translations[key] ?? key,
-  }),
-}));
+await initializeTestTranslations(translations);
 
 const timer: EventTimer = {
   npcId: 123,

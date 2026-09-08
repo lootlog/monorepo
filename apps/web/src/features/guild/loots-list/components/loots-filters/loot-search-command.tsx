@@ -5,22 +5,27 @@ import {
   CommandItem,
   CommandList,
 } from "@lootlog/ui/components/command";
-import { ItemImage } from "@lootlog/ui/components/item-image";
+import {
+  ItemImage,
+  resolveItemRarity,
+} from "@lootlog/ui/components/item-image";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useDebounceValue } from "usehooks-ts";
 import { useGuildContext } from "@/hooks/context/use-guild-context";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   getLootsControllerFetchLootsByGuildIdQueryKey,
   lootsControllerFetchLootsByGuildId,
+  type LootsControllerFetchLootsByGuildIdParams,
 } from "@lootlog/client/main";
-import type { LootsControllerFetchLootsByGuildIdParams } from "@lootlog/client/main";
+
 import {
   getAllControllerSearchAllQueryKey,
   useAllControllerSearchAll,
+  type NpcHitDtoOutput,
 } from "@lootlog/client/search";
-import type { NpcHitDtoOutput } from "@lootlog/client/search";
+
 import { ItemRarity } from "@/lib/loots/loot-types";
 import { parseItemHid } from "@/lib/utils/hid-detection";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
@@ -37,7 +42,6 @@ import {
   PackageSearch,
   SearchX,
 } from "lucide-react";
-import type { ReactNode } from "react";
 
 export type LootSearchCommandProps = {
   open: boolean;
@@ -511,9 +515,7 @@ export const LootSearchCommand = ({
                     >
                       <ItemImage
                         icon={item.icon}
-                        rarity={
-                          (item.rarity as ItemRarity) ?? ItemRarity.COMMON
-                        }
+                        rarity={resolveItemRarity(item.rarity)}
                       />
                       <div className="min-w-0 flex-1">
                         <div className="truncate font-semibold">
@@ -526,7 +528,7 @@ export const LootSearchCommand = ({
                               getRarityStyle(item.rarity),
                             )}
                           >
-                            {ITEM_RARITY_NAMES[item.rarity] ?? item.rarity}
+                            {ITEM_RARITY_NAMES.get(item.rarity) ?? item.rarity}
                           </div>
                         )}
                       </div>

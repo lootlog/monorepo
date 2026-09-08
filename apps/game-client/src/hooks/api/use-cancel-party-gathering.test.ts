@@ -1,34 +1,14 @@
+import { configureApiClients } from "@lootlog/client/transport";
+import { useWindowsStore } from "@/store/windows.store";
 import { renderHook, waitFor } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, onTestFinished } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createElement, type ReactNode } from "react";
 import { useCancelPartyGathering } from "./use-cancel-party-gathering";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 import { getChatControllerGetChatMessagesQueryKey } from "@lootlog/client/main";
 
-const mockCancelPartyGathering = vi.fn();
-const mockSetOpen = vi.fn();
-
-type MockWindowsStoreState = {
-  setOpen: typeof mockSetOpen;
-};
-
-vi.mock("@lootlog/client/main", async () => ({
-  ...(await vi.importActual("@lootlog/client/main")),
-  partyReadyRoomControllerCancel: (...args: unknown[]) =>
-    mockCancelPartyGathering(...args),
-}));
-
-vi.mock("@/store/windows.store", () => ({
-  useWindowsStore: (selector: (state: MockWindowsStoreState) => unknown) =>
-    selector({ setOpen: mockSetOpen }),
-}));
-
-vi.stubGlobal("message", vi.fn());
-
-vi.mock("@/lib/game", () => ({
-  Game: { hero: { nick: "TestPlayer" } },
-}));
+const requests: Request[] = [];
 
 function createWrapper(
   queryClient = new QueryClient({
@@ -41,7 +21,25 @@ function createWrapper(
 
 describe("useCancelPartyGathering", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    requests.length = 0;
+    useWindowsStore.getState().setOpen("party-finder", true);
+    const restore = configureApiClients({
+      main: {
+        baseUrl: "https://api.example.test",
+        fetch: (input, init) => {
+          requests.push(new Request(input, init));
+          return Promise.resolve(
+            Response.json({
+              schemaVersion: 3,
+              type: "REMOVE",
+              notificationId: "notif-123",
+              revision: 2,
+            }),
+          );
+        },
+      },
+    });
+    onTestFinished(restore);
     usePartyFinderStore.getState().clearReadyRooms();
     usePartyFinderStore.getState().mergeProjection({
       schemaVersion: 3,
@@ -69,13 +67,6 @@ describe("useCancelPartyGathering", () => {
   });
 
   it("cancels with the current revision and removes the local projection", async () => {
-    mockCancelPartyGathering.mockResolvedValue({
-      schemaVersion: 3,
-      type: "REMOVE",
-      notificationId: "notif-123",
-      revision: 2,
-    });
-
     const { result } = renderHook(() => useCancelPartyGathering(), {
       wrapper: createWrapper(),
     });
@@ -84,26 +75,19 @@ describe("useCancelPartyGathering", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(mockCancelPartyGathering).toHaveBeenCalledWith(
-      { notificationId: "notif-123" },
-      { expectedRevision: 1 },
-    );
+    expect(requests).toHaveLength(1);
+    expect(requests[0]?.url).toContain("notif-123");
+    expect(await requests[0]?.json()).toEqual({ expectedRevision: 1 });
     expect(usePartyFinderStore.getState()).toMatchObject({
       projections: {},
       roomVersions: {
         "notif-123": { revision: 2, presence: "REMOVED" },
       },
     });
-    expect(mockSetOpen).toHaveBeenCalledWith("party-finder", false);
+    expect(useWindowsStore.getState()["party-finder"].open).toBe(false);
   });
 
   it("invalidates affected chat histories after cancellation", async () => {
-    mockCancelPartyGathering.mockResolvedValue({
-      schemaVersion: 3,
-      type: "REMOVE",
-      notificationId: "notif-123",
-      revision: 2,
-    });
     const queryClient = new QueryClient({
       defaultOptions: { mutations: { retry: false } },
     });

@@ -25,7 +25,7 @@ type VisibilityFilter = "all" | "visible" | "hidden";
 
 const getServerVisibilityViewState = (
   isLoading: boolean,
-  loadError: unknown,
+  loadError: Error | null,
   guildCount: number,
 ) => ({
   showEmpty: !isLoading && !loadError && guildCount === 0,
@@ -117,7 +117,7 @@ export const ServerVisibilitySettings = () => {
                 size="sm"
                 variant="outline"
                 loading={guildsQuery.isFetching || preferencesQuery.isFetching}
-                icon={<RotateCcw className="size-3.5" />}
+                icon=<RotateCcw className="size-3.5" />
                 onClick={() => {
                   void guildsQuery.refetch();
                   void preferencesQuery.refetch();
@@ -159,7 +159,7 @@ export const ServerVisibilitySettings = () => {
                     size="sm"
                     variant="outline"
                     className="shrink-0"
-                    icon={<Eye className="size-3.5" />}
+                    icon=<Eye className="size-3.5" />
                     disabled={hiddenCount === 0 || updatePreferences.isPending}
                     loading={isShowingAll}
                     onClick={() => {

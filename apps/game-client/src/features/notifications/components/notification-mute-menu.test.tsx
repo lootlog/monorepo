@@ -1,10 +1,11 @@
+import type { NotificationMutesPatch } from "@lootlog/schema/user-preferences";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NotificationMuteMenu } from "@/features/notifications/components/notification-mute-menu";
 import type { StoredNotification } from "@/store/notifications.store";
 
-const mockUpdateMutes = vi.fn();
+const mockUpdateMutes = vi.fn<(patch: NotificationMutesPatch) => void>();
 
 const notification: StoredNotification = {
   notificationId: "notif-1",

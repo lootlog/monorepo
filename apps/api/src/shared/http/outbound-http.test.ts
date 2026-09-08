@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "bun:test";
 import { Effect, Fiber } from "effect";
-import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
+import { httpClientFromResponses } from "../../../test/http-fixtures.js";
 import { outboundHttpRequest } from "./outbound-http.js";
 
 const request = {
@@ -12,11 +12,7 @@ const request = {
   url: "https://example.test/value",
 };
 
-const response = (body: Uint8Array) => ({
-  status: 200,
-  headers: {},
-  arrayBuffer: Effect.succeed(body.buffer),
-});
+const response = (body: Uint8Array<ArrayBuffer>) => new Response(body);
 
 describe("outboundHttpRequest", () => {
   it("retries idempotent transport failures", async () => {
@@ -30,7 +26,7 @@ describe("outboundHttpRequest", () => {
 
     await expect(
       Effect.runPromise(
-        outboundHttpRequest({ get } as unknown as HttpClientValue, request),
+        outboundHttpRequest(httpClientFromResponses(get), request),
       ),
     ).resolves.toMatchObject({ status: 200 });
     expect(get).toHaveBeenCalledTimes(2);
@@ -41,7 +37,7 @@ describe("outboundHttpRequest", () => {
 
     await expect(
       Effect.runPromise(
-        outboundHttpRequest({ post } as unknown as HttpClientValue, {
+        outboundHttpRequest(httpClientFromResponses(post), {
           ...request,
           body: "{}",
           method: "POST",
@@ -59,7 +55,7 @@ describe("outboundHttpRequest", () => {
 
     await expect(
       Effect.runPromise(
-        outboundHttpRequest({ get } as unknown as HttpClientValue, request),
+        outboundHttpRequest(httpClientFromResponses(get), request),
       ),
     ).rejects.toBeDefined();
     expect(get).toHaveBeenCalledTimes(1);
@@ -77,7 +73,7 @@ describe("outboundHttpRequest", () => {
       ),
     );
     const fiber = Effect.runFork(
-      outboundHttpRequest({ get } as unknown as HttpClientValue, request),
+      outboundHttpRequest(httpClientFromResponses(get), request),
     );
     while (get.mock.calls.length === 0) await Promise.resolve();
 

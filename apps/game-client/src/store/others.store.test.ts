@@ -1,3 +1,4 @@
+import { normalizeRuntimeOtherData } from "@/lib/margonem-runtime/runtime-adapter";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { RuntimeOther } from "@/lib/margonem-runtime/runtime.types";
 import { useOthersStore } from "./others.store";
@@ -24,9 +25,8 @@ describe("useOthersStore", () => {
     expect(useOthersStore.getState().status).toBe("ready");
   });
 
-  it("keeps compatibility defaults for incomplete wrapped character data", () => {
-    useOthersStore.getState().upsertOther("legacy", { d: {} });
-    const other = useOthersStore.getState().getOther("legacy");
+  it("keeps normalization defaults for incomplete character data", () => {
+    const other = normalizeRuntimeOtherData({});
     expect(other).toEqual({
       accountId: "",
       characterId: "",
@@ -42,17 +42,17 @@ describe("useOthersStore", () => {
     const first = createOther("first");
     const second = createOther("second");
 
-    useOthersStore.getState().upsertOther("1", first);
+    useOthersStore.getState().applyBatch({ upserts: { "1": first } });
     expect(useOthersStore.getState().getOther("1")).toBe(first);
 
-    useOthersStore.getState().upsertOther("1", second);
+    useOthersStore.getState().applyBatch({ upserts: { "1": second } });
     expect(useOthersStore.getState().getOther("1")).toBe(second);
   });
 
   it("removes other characters by id", () => {
     const other = createOther("other");
 
-    useOthersStore.getState().upsertOther("1", other);
+    useOthersStore.getState().applyBatch({ upserts: { "1": other } });
     useOthersStore.getState().removeOther("1");
 
     expect(useOthersStore.getState().getOther("1")).toBeUndefined();
@@ -62,7 +62,7 @@ describe("useOthersStore", () => {
     const first = createOther("first");
     const second = createOther("second");
 
-    useOthersStore.getState().setMany({ 1: first, 2: second });
+    useOthersStore.getState().replaceOthers({ 1: first, 2: second });
     expect(useOthersStore.getState().othersById).toEqual({
       1: first,
       2: second,
@@ -75,10 +75,10 @@ describe("useOthersStore", () => {
   it("does not replace state when upserting the same runtime object", () => {
     const other = createOther("other");
 
-    useOthersStore.getState().upsertOther("1", other);
+    useOthersStore.getState().applyBatch({ upserts: { "1": other } });
     const firstState = useOthersStore.getState().othersById;
 
-    useOthersStore.getState().upsertOther("1", other);
+    useOthersStore.getState().applyBatch({ upserts: { "1": other } });
 
     expect(useOthersStore.getState().othersById).toBe(firstState);
   });
@@ -87,10 +87,12 @@ describe("useOthersStore", () => {
     const first = createOther("other");
     const semanticallyEqual = createOther("other");
 
-    useOthersStore.getState().upsertOther("1", first);
+    useOthersStore.getState().applyBatch({ upserts: { "1": first } });
     const firstState = useOthersStore.getState().othersById;
 
-    useOthersStore.getState().upsertOther("1", semanticallyEqual);
+    useOthersStore
+      .getState()
+      .applyBatch({ upserts: { "1": semanticallyEqual } });
 
     expect(useOthersStore.getState().othersById).toBe(firstState);
     expect(useOthersStore.getState().getOther("1")).toBe(first);
@@ -101,7 +103,7 @@ describe("useOthersStore", () => {
     useOthersStore.getState().replaceOthers({ 1: first });
     const othersById = useOthersStore.getState().othersById;
     const revision = useOthersStore.getState().revision;
-    const publish = vi.fn();
+    const publish = vi.fn<Parameters<typeof useOthersStore.subscribe>[0]>();
     const unsubscribe = useOthersStore.subscribe(publish);
 
     useOthersStore.getState().replaceOthers({ 1: createOther("other") });
@@ -117,8 +119,8 @@ describe("useOthersStore", () => {
     const removed = createOther("removed");
     const updated = createOther("updated");
     const added = createOther("added");
-    useOthersStore.getState().setMany({ removed, updated });
-    const publish = vi.fn();
+    useOthersStore.getState().replaceOthers({ removed, updated });
+    const publish = vi.fn<Parameters<typeof useOthersStore.subscribe>[0]>();
     const unsubscribe = useOthersStore.subscribe(publish);
 
     useOthersStore.getState().applyBatch({
@@ -133,7 +135,7 @@ describe("useOthersStore", () => {
 
   it("keeps an entity that is removed and upserted in the same batch", () => {
     const other = createOther("other");
-    useOthersStore.getState().setMany({ 1: other });
+    useOthersStore.getState().replaceOthers({ 1: other });
 
     useOthersStore.getState().applyBatch({
       removeIds: ["1"],

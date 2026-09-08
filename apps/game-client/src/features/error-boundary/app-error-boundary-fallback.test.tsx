@@ -10,7 +10,7 @@ import {
   APP_ERROR_WINDOW_WIDTH,
 } from "./error-boundary.constants";
 
-const mockClipboardWriteText = vi.fn();
+const mockClipboardWriteText = vi.fn<Clipboard["writeText"]>();
 
 function ThrowError(): never {
   throw new Error("Boom failure");
@@ -68,7 +68,10 @@ describe("AppErrorBoundaryFallback", () => {
     error.stack = "RenderError: Exploded view\n    at Crash";
 
     render(
-      <AppErrorBoundaryFallback error={error} resetErrorBoundary={vi.fn()} />,
+      <AppErrorBoundaryFallback
+        error={error}
+        resetErrorBoundary={vi.fn<() => void>()}
+      />,
     );
 
     const windowElement = document.querySelector(
@@ -93,7 +96,10 @@ describe("AppErrorBoundaryFallback", () => {
     error.stack = "CopyError: Copy this failure\n    at Copy";
 
     render(
-      <AppErrorBoundaryFallback error={error} resetErrorBoundary={vi.fn()} />,
+      <AppErrorBoundaryFallback
+        error={error}
+        resetErrorBoundary={vi.fn<() => void>()}
+      />,
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Kopiuj błąd" }));
@@ -118,7 +124,10 @@ describe("AppErrorBoundaryFallback", () => {
     const error = new Error("Close me");
 
     render(
-      <AppErrorBoundaryFallback error={error} resetErrorBoundary={vi.fn()} />,
+      <AppErrorBoundaryFallback
+        error={error}
+        resetErrorBoundary={vi.fn<() => void>()}
+      />,
     );
 
     await user.click(screen.getByRole("button", { name: "Zamknij" }));

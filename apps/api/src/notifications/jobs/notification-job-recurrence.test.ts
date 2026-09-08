@@ -1,29 +1,16 @@
+import { createNotificationRuleFixture } from "../../../test/notification-fixtures.js";
 import { describe, expect, it } from "bun:test";
 import { Effect } from "effect";
 import {
   makeNotificationJobRecurrence,
   type NotificationRecurringRule,
 } from "#src/notifications/jobs/notification-job-recurrence";
-import {
-  NotificationJobStatus,
-  NotificationOwnerType,
-  NotificationScheduleIntervalType,
-} from "#src/notifications/notification-enums";
+import { NotificationJobStatus } from "#src/notifications/notification-enums";
 
-const recurringRule = {
-  id: 7,
-  ownerType: NotificationOwnerType.USER,
-  ownerId: "user-1",
-  enabled: true,
-  scheduledAt: new Date("2026-09-02T12:00:00.000Z"),
-  scheduleIntervalType: NotificationScheduleIntervalType.DAILY,
-  scheduleIntervalValue: 1,
-  scheduleWeekday: null,
-  scheduleTimeOfDay: "12:00",
-  scheduleTimezone: "Europe/Warsaw",
-  scheduledUntil: null,
+const recurringRule: NotificationRecurringRule = {
+  ...createNotificationRuleFixture(),
   targets: [],
-} as unknown as NotificationRecurringRule;
+};
 
 describe("notification job recurrence", () => {
   it("does not advance while the current cycle still has pending work", async () => {

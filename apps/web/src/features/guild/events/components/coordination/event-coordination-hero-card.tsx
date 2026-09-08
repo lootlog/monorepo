@@ -138,7 +138,7 @@ export const EventCoordinationHeroCard = ({
                 className="shrink-0"
                 loading={isAssigning}
                 disabled={!isAssignmentEnabled}
-                icon={<UserPlus className="size-3.5" />}
+                icon=<UserPlus className="size-3.5" />
                 onClick={() => onSelfAssign(targetGap.mapId, hero)}
               >
                 {!isAssignmentEnabled && assignmentCountdownTime
@@ -155,7 +155,7 @@ export const EventCoordinationHeroCard = ({
                 variant="destructive"
                 className="shrink-0"
                 loading={isClosing}
-                icon={<X className="size-3.5" />}
+                icon=<X className="size-3.5" />
                 onClick={() => onCloseWindow(hero)}
               >
                 {t("events.coordination.actions.close_window")}

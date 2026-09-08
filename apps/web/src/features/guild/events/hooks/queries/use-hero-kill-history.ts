@@ -1,9 +1,11 @@
-import type { EventKillHistoryResponseDto } from "@lootlog/client/main";
-import type { EventKillHistoryResponseDtoDataItem } from "@lootlog/client/main";
-import type { EventKillHistoryResponseDtoDataItemHeroNpc } from "@lootlog/client/main";
-import type { EventKillHistoryResponseDtoDataItemPointsItem } from "@lootlog/client/main";
-import type { EventKillHistoryResponseDtoDataItemPointsItemMapDataItem } from "@lootlog/client/main";
-import type { EventKillHistoryResponseDtoDataItemPointsItemMember } from "@lootlog/client/main";
+import type {
+  EventKillHistoryResponseDto,
+  EventKillHistoryResponseDtoDataItem,
+  EventKillHistoryResponseDtoDataItemHeroNpc,
+  EventKillHistoryResponseDtoDataItemPointsItem,
+  EventKillHistoryResponseDtoDataItemPointsItemMapDataItem,
+  EventKillHistoryResponseDtoDataItemPointsItemMember,
+} from "@lootlog/client/main";
 
 export type KillParticipantMember =
   EventKillHistoryResponseDtoDataItemPointsItemMember;

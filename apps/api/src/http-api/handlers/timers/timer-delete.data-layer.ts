@@ -1,11 +1,14 @@
 import {
+  timerNpcField,
+  type TimerPublishedEvent,
+} from "#src/timers/timer-projection";
+import {
   findTimerMatches,
   findActiveTimerEventHeroes,
-  timerNpcField,
   timerIdentifierCondition,
 } from "./timer-selection.js";
 import { and, desc, eq, inArray } from "drizzle-orm";
-import { Clock, Effect } from "effect";
+import { Clock, Effect, Schema } from "effect";
 import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -31,11 +34,13 @@ import {
 
 export interface DeleteTimerPorts {
   readonly invalidate: (pattern: string) => Effect.Effect<unknown, unknown>;
-  readonly publish: (
-    routingKey:
+  readonly publish: <
+    Key extends
       | typeof RabbitRoutingKey.GUILDS_TIMERS_DELETE
       | typeof RabbitRoutingKey.NOTIFICATIONS_TIMER_DELETED,
-    payload: unknown,
+  >(
+    routingKey: Key,
+    payload: TimerPublishedEvent<Key>,
   ) => Effect.Effect<unknown, unknown>;
 }
 
@@ -187,15 +192,8 @@ export const makeDeleteTimer = (
       world,
       guildId: access.guild.id,
       routing: {
-        tier: getNpcRoutingTier(
-          resolved.npc as {
-            readonly lvl?: number;
-            readonly prof?: string;
-            readonly type?: number | string;
-            readonly wt?: number | string;
-          },
-        ),
-        npcLevel: typeof npcLevel === "number" ? npcLevel : undefined,
+        tier: getNpcRoutingTier(resolved.npc),
+        npcLevel: Schema.is(Schema.Number)(npcLevel) ? npcLevel : undefined,
       },
     };
     yield* ports.invalidate(`timer:list:${access.guild.id}:*`);

@@ -5,40 +5,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { StoredNotification } from "@/store/notifications.store";
 import { SingleNotification } from "./single-notification";
 
-vi.mock("@/components/character-tile", () => ({
-  CharacterTile: () => <div />,
-}));
-
-vi.mock("@/components/npc-tile", () => ({
-  NpcTile: () => <div />,
-}));
-
-vi.mock("@/features/notifications/components/notification-mute-menu", () => ({
-  NotificationMuteMenu: () => <div />,
-}));
-
-vi.mock(
-  "@/features/notifications/components/single-notification-message",
-  () => ({ SingleNotificationMessage: () => <div>Message</div> }),
-);
-
-vi.mock("@/features/notifications/components/single-notification-npc", () => ({
-  SingleNotificationNpc: () => <div />,
-}));
-
-vi.mock(
-  "@/features/notifications/components/single-notification-party-gathering",
-  () => ({ SingleNotificationPartyGathering: () => <div /> }),
-);
-
-vi.mock("@/hooks/discord/use-member-color", () => ({
-  useMemberColor: () => "ffffff",
-}));
-
-vi.mock("@/lib/game", () => ({
-  Game: { hero: { lvl: 100 } },
-}));
-
 const notification: StoredNotification = {
   createdAt: "2026-07-20T05:00:00.000Z",
   discordId: "discord-1",
@@ -63,8 +29,11 @@ const categorySettings: NotificationSettings = {
 
 const mutes: NotificationMutes = { npcs: [], players: [] };
 const noop = () => undefined;
-const animationCancel = vi.fn();
-const animate = vi.fn(() => ({
+const animationCancel = vi.fn<() => void>();
+type TestAnimation = { cancel: () => void; onfinish: null };
+const animate = vi.fn<
+  (frames: Keyframe[], options: KeyframeAnimationOptions) => TestAnimation
+>(() => ({
   cancel: animationCancel,
   onfinish: null,
 }));

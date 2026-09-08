@@ -231,7 +231,9 @@ const handleGatewayHttpRequest = (request: Request): Promise<Response> => {
 
 export const createGatewayFetch =
   (
-    application: GatewayApplicationService,
+    application: Pick<GatewayApplicationService, "auth" | "runPromise"> & {
+      config: Pick<GatewayConfiguration, "websocketPath" | "environment">;
+    },
     httpHandler = handleGatewayHttpRequest,
   ) =>
   async (
@@ -308,6 +310,11 @@ export const createGatewayFetch =
     };
     try {
       if (url.pathname === "/healthz") return await handle();
+      const baseRequestAttributes = { "http.request.method": request.method };
+      const requestAttributes =
+        route === undefined
+          ? baseRequestAttributes
+          : { ...baseRequestAttributes, "http.route": route };
       const result = await application.runPromise(
         Effect.tryPromise({ try: handle, catch: (cause) => cause }).pipe(
           Effect.onExit(() =>
@@ -318,10 +325,7 @@ export const createGatewayFetch =
             parent: Option.getOrUndefined(
               HttpTraceContext.fromHeaders(Headers.fromInput(request.headers)),
             ),
-            attributes: {
-              "http.request.method": request.method,
-              ...(route === undefined ? {} : { "http.route": route }),
-            },
+            attributes: requestAttributes,
           }),
           Effect.match({
             onSuccess: (value) => ({ ok: true as const, value }),

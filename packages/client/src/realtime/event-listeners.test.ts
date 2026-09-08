@@ -3,8 +3,8 @@ import { RealtimeEventListeners } from "./event-listeners.js";
 
 test("listeners retain set ordering, duplicate suppression, removal and synchronous failures", () => {
   const events = new RealtimeEventListeners<"changed">();
-  const received: unknown[] = [];
-  const listener = (value: unknown) => received.push(value);
+  const received: (number | undefined)[] = [];
+  const listener = (value?: number) => received.push(value);
   events.add("changed", listener);
   events.add("changed", listener);
   events.emit("changed", 42);

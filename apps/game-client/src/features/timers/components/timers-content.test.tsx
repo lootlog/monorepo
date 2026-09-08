@@ -1,262 +1,151 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
-import type { TimerWithTimeLeft } from "../utils/timers-utils";
-
-const footerSpy = vi.fn();
-const gridSpy = vi.fn();
-const emptyStateSpy = vi.fn();
-
-vi.mock("@/components/guild-switcher", () => ({
-  GuildSwitcher: () => <div>GuildSwitcher</div>,
-}));
-
-vi.mock("@/components/world-selector", () => ({
-  WorldSelector: () => <div>WorldSelector</div>,
-}));
-
-vi.mock("./timers-filters", () => ({
-  TimersFilters: ({ filtersKey }: { filtersKey: string }) => (
-    <div>TimersFilters:{filtersKey}</div>
-  ),
-}));
-
-vi.mock("./timers-grid", () => ({
-  TimersGrid: (props: unknown) => {
-    gridSpy(props);
-    return <div>TimersGrid</div>;
-  },
-}));
-
-vi.mock("./timers-empty-state", () => ({
-  TimersEmptyState: (props: unknown) => {
-    emptyStateSpy(props);
-    return <div>TimersEmptyState</div>;
-  },
-}));
-
-vi.mock("./timers-footer", () => ({
-  TimersFooter: (props: unknown) => {
-    footerSpy(props);
-    return <button type="button">TimersFooter</button>;
-  },
-}));
-
+import { QueryClientProvider } from "@tanstack/react-query";
+import {
+  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
+  getGuildsControllerGetWorldsByGuildIdQueryKey,
+  getGuildsControllerGetGuildPermissionsQueryKey,
+} from "@lootlog/client/main";
+import type { ComponentProps } from "react";
+import { afterEach, beforeEach, expect, it, onTestFinished, vi } from "vitest";
+import { useTimersStore } from "@/store/timers.store";
+import { useSettingsStore } from "@/store/settings.store";
+import { useGameStore } from "@/store/game.store";
+import { setTestRuntimeGame } from "@/test/test-runtime-window";
+import { createTimerFixture, createTimerGuildFixture } from "../timer-fixtures";
+import { createTimerHttpFixture } from "../timer-http-fixtures";
 import { TimersContent } from "./timers-content";
 
-const timer = {
-  guildId: "guild-1",
-  timerKey: "timer-1",
-  world: "pandora",
-  npcId: 10,
-  minSpawnTime: "2099-04-22T10:00:00.000Z",
-  maxSpawnTime: "2099-04-22T10:05:00.000Z",
-  updatedAt: "2099-04-22T09:59:00.000Z",
-  wasReset: false,
-  npc: {
-    id: 10,
-    name: "Tanroth",
-    lvl: 120,
-    prof: "W",
-    icon: "icon.gif",
-    wt: 10,
-    type: "hero",
-    margonemType: 4,
-    location: "Ruins",
-  } as never,
-  minTimeLeft: 60_000,
-  maxTimeLeft: 120_000,
-} satisfies TimerWithTimeLeft;
-
-describe("TimersContent", () => {
-  afterEach(() => {
-    vi.useRealTimers();
+beforeEach(() => {
+  useTimersStore.setState(useTimersStore.getInitialState(), true);
+  setTestRuntimeGame({
+    hero: { accountId: "200", characterId: "101" },
+    world: "pandora",
   });
-
-  it("shows timer placeholders instead of the empty state during initial loading", () => {
-    vi.useFakeTimers();
-
-    render(
-      <TimersContent
-        sortedTimers={[]}
-        settingsKey="guild-1"
-        hiddenTimers={[]}
-        areFiltersActive={false}
-        colorStatistics={[]}
-        isGrouping={false}
-        allowWorldSelection={false}
-        timerFiltersEnabled={false}
-        isUnderBag={false}
-        initialLoading
-        minColumnWidth={180}
-        onAddTimer={vi.fn()}
-        onResetFilters={vi.fn()}
-      />,
-    );
-
-    expect(screen.queryByText("TimersEmptyState")).not.toBeInTheDocument();
-
-    act(() => vi.advanceTimersByTime(200));
-
-    expect(screen.getByRole("status").querySelector("svg")).toHaveClass(
-      "ll:animate-spin",
-    );
-    expect(screen.queryByText("TimersEmptyState")).not.toBeInTheDocument();
+  useSettingsStore.setState({
+    guildIdByCharId: { "101": "guild-1" },
+    worldByGuildId: { "guild-1": "pandora" },
   });
-
-  it("shows a retry action when the initial timer request fails", async () => {
-    const user = userEvent.setup();
-    const onRetry = vi.fn();
-
-    render(
-      <TimersContent
-        sortedTimers={[]}
-        settingsKey="guild-1"
-        hiddenTimers={[]}
-        areFiltersActive={false}
-        colorStatistics={[]}
-        error={new Error("network")}
-        isGrouping={false}
-        allowWorldSelection={false}
-        timerFiltersEnabled={false}
-        isUnderBag={false}
-        minColumnWidth={180}
-        onAddTimer={vi.fn()}
-        onResetFilters={vi.fn()}
-        onRetry={onRetry}
-      />,
-    );
-
-    await user.click(screen.getByRole("button", { name: "Spróbuj ponownie" }));
-
-    expect(onRetry).toHaveBeenCalledOnce();
-    expect(screen.queryByText("TimersEmptyState")).not.toBeInTheDocument();
-  });
-
-  it("renders selectors, filters, grid, and footer when the content is populated", async () => {
-    const user = userEvent.setup();
-    const onAddTimer = vi.fn();
-
-    render(
-      <TimersContent
-        sortedTimers={[timer]}
-        settingsKey="guild-1"
-        hiddenTimers={["Mushita"]}
-        areFiltersActive
-        colorStatistics={[{ color: "red", total: 1, active: 1, name: "Red" }]}
-        guildId="guild-1"
-        isGrouping={false}
-        allowWorldSelection
-        timerFiltersEnabled
-        isUnderBag={false}
-        minColumnWidth={180}
-        onAddTimer={onAddTimer}
-        onResetFilters={vi.fn()}
-        world="pandora"
-      />,
-    );
-
-    expect(screen.getByText("GuildSwitcher")).toBeInTheDocument();
-    expect(screen.getByText("WorldSelector")).toBeInTheDocument();
-    expect(screen.getByText("TimersFilters:guild-1")).toBeInTheDocument();
-    expect(screen.getByText("TimersGrid")).toBeInTheDocument();
-    expect(gridSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        hiddenTimers: ["Mushita"],
-        minColumnWidth: 180,
-      }),
-    );
-
-    await user.click(screen.getByRole("button", { name: "TimersFooter" }));
-    expect(footerSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        guildId: "guild-1",
-        isGrouping: false,
-        onAddTimer,
-        world: "pandora",
-      }),
-    );
-
-    const scrollContainer = screen.getByTestId("timers-scroll-container");
-    const scrollViewport = scrollContainer.querySelector(
-      "[data-ll-scroll-area-viewport]",
-    );
-
-    expect(scrollContainer).toHaveClass(
-      "ll:min-h-0",
-      "ll:h-full",
-      "ll:overflow-hidden",
-    );
-    expect(scrollViewport).toHaveStyle({
-      overflowX: "hidden",
-      overflowY: "scroll",
-    });
-  });
-
-  it("keeps timer content draggable with the scrollbar hidden", () => {
-    const onPointerDown = vi.fn();
-
-    render(
+});
+afterEach(() => {
+  vi.useRealTimers();
+  useGameStore.getState().clearGame();
+});
+const mountContent = (
+  overrides: Partial<ComponentProps<typeof TimersContent>> = {},
+) => {
+  const fixture = createTimerHttpFixture((request) =>
+    Response.json(
+      new URL(request.url).pathname.endsWith("/worlds")
+        ? ["pandora", "gefion"]
+        : [],
+    ),
+  );
+  fixture.queryClient.setQueryData(
+    getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
+    [
+      createTimerGuildFixture(),
+      createTimerGuildFixture({ id: "guild-2", name: "Beta" }),
+    ],
+  );
+  fixture.queryClient.setQueryData(
+    getGuildsControllerGetWorldsByGuildIdQueryKey({ guildId: "guild-1" }),
+    ["pandora", "gefion"],
+  );
+  fixture.queryClient.setQueryData(
+    getGuildsControllerGetGuildPermissionsQueryKey({ guildId: "guild-1" }),
+    [],
+  );
+  const onAddTimer = vi.fn<() => void>();
+  const onRetry = vi.fn<() => void>();
+  const onResetFilters = vi.fn<() => void>();
+  const onPointerDown = vi.fn<() => void>();
+  const view = render(
+    <QueryClientProvider client={fixture.queryClient}>
       <div onPointerDown={onPointerDown}>
         <TimersContent
-          sortedTimers={[timer]}
+          sortedTimers={[]}
           settingsKey="guild-1"
           hiddenTimers={[]}
           areFiltersActive={false}
           colorStatistics={[]}
+          guildId="guild-1"
           isGrouping={false}
-          allowWorldSelection={false}
-          timerFiltersEnabled={false}
+          allowWorldSelection
+          timerFiltersEnabled
           isUnderBag={false}
           minColumnWidth={180}
-          onAddTimer={vi.fn()}
-          onResetFilters={vi.fn()}
+          world="pandora"
+          onAddTimer={onAddTimer}
+          onResetFilters={onResetFilters}
+          onRetry={onRetry}
+          {...overrides}
         />
-      </div>,
-    );
-
-    const scrollContainer = screen.getByTestId("timers-scroll-container");
-    const timerContent = screen.getByText("TimersGrid");
-
-    fireEvent.pointerDown(scrollContainer);
-    expect(onPointerDown).toHaveBeenCalledOnce();
-
-    fireEvent.pointerDown(timerContent);
-    expect(onPointerDown).toHaveBeenCalledTimes(2);
+      </div>
+    </QueryClientProvider>,
+  );
+  onTestFinished(() => {
+    view.unmount();
+    fixture.cleanup();
   });
-
-  it("renders the empty state and suppresses footer/filters when compact or empty", () => {
-    render(
-      <TimersContent
-        sortedTimers={[]}
-        settingsKey="guild-1"
-        hiddenTimers={[]}
-        areFiltersActive={false}
-        colorStatistics={[]}
-        guildId="guild-1"
-        isGrouping
-        allowWorldSelection={false}
-        timerFiltersEnabled={false}
-        isUnderBag
-        minColumnWidth={120}
-        onAddTimer={vi.fn()}
-        onResetFilters={vi.fn()}
-        world="pandora"
-        compactView
-      />,
-    );
-
-    expect(screen.queryByText("GuildSwitcher")).not.toBeInTheDocument();
-    expect(screen.queryByText("WorldSelector")).not.toBeInTheDocument();
-    expect(screen.queryByText("TimersFilters:guild-1")).not.toBeInTheDocument();
-    expect(screen.getByText("TimersEmptyState")).toBeInTheDocument();
-    expect(emptyStateSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        areFiltersActive: false,
-      }),
-    );
-    expect(
-      screen.queryByRole("button", { name: "TimersFooter" }),
-    ).not.toBeInTheDocument();
+  return { onAddTimer, onRetry, onResetFilters, onPointerDown };
+};
+it("shows delayed loading feedback without falsely presenting an empty timer list", () => {
+  vi.useFakeTimers();
+  mountContent({ initialLoading: true });
+  expect(screen.queryByText("Brak timerów")).not.toBeInTheDocument();
+  act(() => vi.advanceTimersByTime(200));
+  expect(screen.getByRole("status").querySelector("svg")).toHaveClass(
+    "ll:animate-spin",
+  );
+  expect(screen.queryByText("Brak timerów")).not.toBeInTheDocument();
+});
+it("lets users retry an initial request failure", async () => {
+  const user = userEvent.setup();
+  const { onRetry } = mountContent({ error: new Error("network") });
+  expect(screen.getByText("Nie udało się załadować timerów")).toBeVisible();
+  await user.click(screen.getByRole("button", { name: "Spróbuj ponownie" }));
+  expect(onRetry).toHaveBeenCalledOnce();
+  expect(screen.queryByText("Brak timerów")).not.toBeInTheDocument();
+});
+it("renders real controls and timer tiles while retaining scroll and window drag behavior", async () => {
+  const user = userEvent.setup();
+  const timer = {
+    ...createTimerFixture(),
+    minTimeLeft: 60_000,
+    maxTimeLeft: 120_000,
+  };
+  const { onAddTimer, onPointerDown } = mountContent({ sortedTimers: [timer] });
+  expect(screen.getByPlaceholderText("Szukaj...")).toBeVisible();
+  expect(screen.getByRole("combobox")).toHaveTextContent(/pandora/i);
+  const label = screen.getByText(/\[H\] Tanroth/);
+  expect(label).toBeVisible();
+  const scrollContainer = screen.getByTestId("timers-scroll-container");
+  expect(scrollContainer).toHaveClass(
+    "ll:min-h-0",
+    "ll:h-full",
+    "ll:overflow-hidden",
+  );
+  expect(
+    scrollContainer.querySelector("[data-ll-scroll-area-viewport]"),
+  ).toHaveStyle({ overflowX: "hidden", overflowY: "scroll" });
+  fireEvent.pointerDown(scrollContainer);
+  fireEvent.pointerDown(label);
+  expect(onPointerDown).toHaveBeenCalledTimes(2);
+  await user.click(screen.getByRole("button", { name: "+" }));
+  expect(onAddTimer).toHaveBeenCalledOnce();
+});
+it("offers filter recovery in compact mode without the regular toolbar or footer", async () => {
+  const user = userEvent.setup();
+  const { onResetFilters } = mountContent({
+    compactView: true,
+    areFiltersActive: true,
+    isUnderBag: true,
   });
+  expect(screen.getByText("Brak pasujących timerów")).toBeVisible();
+  expect(screen.queryByPlaceholderText("Szukaj...")).not.toBeInTheDocument();
+  expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "+" })).not.toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "Pokaż wszystkie" }));
+  expect(onResetFilters).toHaveBeenCalledOnce();
 });

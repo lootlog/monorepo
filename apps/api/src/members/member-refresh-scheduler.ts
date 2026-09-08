@@ -109,12 +109,12 @@ export const makeMemberRefreshScheduler = (
     if ((job.opts.priority ?? nextData.priority) > nextData.priority) {
       try {
         await job.changePriority({ priority: nextData.priority });
-      } catch (cause) {
+      } catch (error) {
         logger.log({
           level: "debug",
           message: "Failed to reprioritize member refresh job",
           jobId: job.id,
-          error: cause,
+          error: error,
         });
       }
     }
@@ -122,15 +122,15 @@ export const makeMemberRefreshScheduler = (
     try {
       if (delay === 0) await job.promote();
       else await job.changeDelay(delay);
-    } catch (cause) {
-      if (errorCode(cause) === -3 && (await job.getState()) !== "delayed") {
+    } catch (error) {
+      if (errorCode(error) === -3 && (await job.getState()) !== "delayed") {
         return;
       }
       logger.log({
         level: "debug",
         message: "Failed to reschedule delayed member refresh job",
         jobId: job.id,
-        error: cause,
+        error: error,
       });
     }
   };
@@ -159,12 +159,12 @@ export const makeMemberRefreshScheduler = (
         await add(id, data, delay);
         return;
       }
-      const state = (await existing.getState()) as MemberRefreshJobState;
+      const state = await existing.getState();
       if (["completed", "failed", "unknown"].includes(state)) {
         try {
           await existing.remove();
-        } catch (cause) {
-          if (errorCode(cause) !== -1) throw cause;
+        } catch (error) {
+          if (errorCode(error) !== -1) throw error;
         }
         await add(id, data, delay);
         return;

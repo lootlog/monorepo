@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Permission } from "@lootlog/schema/permissions";
 import { cn } from "cn";
 import type { EventMap, EventMapLocation } from "../../types/api";
-import type { PlayerPresence } from "../../hooks/socket/use-event-presence";
+import type { PlayerPresence } from "@/lib/gateway-client";
 import {
   isWindowActive,
   type WindowStatus,

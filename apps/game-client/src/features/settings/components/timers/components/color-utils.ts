@@ -1,7 +1,9 @@
-export const TAILWIND_TO_HEX: Record<
-  string,
-  { border: string; background: string }
-> = {
+import {
+  isTimerColor,
+  type TIMERS_COLORS,
+} from "@/features/timers/constants/timer-colors";
+
+const TAILWIND_TO_HEX = {
   red: { border: "#ef4444", background: "#ef444433" },
   orange: { border: "#f97316", background: "#f9731633" },
   yellow: { border: "#eab308", background: "#eab30833" },
@@ -14,7 +16,13 @@ export const TAILWIND_TO_HEX: Record<
   purple: { border: "#9333ea", background: "#9333ea33" },
   pink: { border: "#ec4899", background: "#ec489933" },
   white: { border: "#9ca3af", background: "#9ca3af33" },
-};
+} satisfies Record<
+  keyof typeof TIMERS_COLORS,
+  { border: string; background: string }
+>;
+
+export const getTimerColorHex = (color: string) =>
+  isTimerColor(color) ? TAILWIND_TO_HEX[color] : undefined;
 
 export const stripAlphaChannel = (color: string): string => {
   const hex = color.replace("#", "");

@@ -1,3 +1,5 @@
+import { z } from "zod";
+import type { TOptions } from "i18next";
 import { Capability, type AccessPolicy } from "@lootlog/domain/access-policy";
 import i18n from "@/i18n/config";
 import { ROUTES } from "@/config/routes";
@@ -58,21 +60,35 @@ type ResolveAppNavigationOptions = {
   accessPolicy?: AccessPolicy;
 };
 
-type OrganizationRouteLoaderData = {
-  guild?: { name?: string };
-};
-
-type EventRouteLoaderData = {
-  event?: {
-    name?: string;
-    heroNpcs?: Array<{ id: number | string; npcName: string }>;
-  };
-  rankings?: Array<{ memberId: number; member?: { name?: string } }>;
-};
-
-type DocumentRouteLoaderData = {
-  document?: { title?: string };
-};
+const organizationRouteLoaderData = z.object({
+  guild: z.object({ name: z.string().optional() }).optional(),
+});
+const eventRouteLoaderData = z.object({
+  event: z
+    .object({
+      name: z.string().optional(),
+      heroNpcs: z
+        .array(
+          z.object({
+            id: z.union([z.number(), z.string()]),
+            npcName: z.string(),
+          }),
+        )
+        .optional(),
+    })
+    .optional(),
+  rankings: z
+    .array(
+      z.object({
+        memberId: z.number(),
+        member: z.object({ name: z.string().optional() }).optional(),
+      }),
+    )
+    .optional(),
+});
+const documentRouteLoaderData = z.object({
+  document: z.object({ title: z.string().optional() }).optional(),
+});
 
 type RegistryItem = {
   id: AppNavigationItemId;
@@ -83,7 +99,7 @@ type RegistryItem = {
 
 const alwaysVisible = () => true;
 
-function t(key: string, options?: Record<string, unknown>) {
+function t(key: string, options?: TOptions) {
   return i18n.t(key, options);
 }
 
@@ -319,18 +335,16 @@ type GetNavigationInfoArgs = {
   settingsNpcName?: string;
   npcKillersData?: { npc?: { npcName?: string } | null };
   memberKillsData?: { member?: { memberName?: string } | null };
-  t: (key: string, options?: Record<string, unknown>) => string;
+  t: (key: string, options?: TOptions) => string;
 };
 
 function navigationInfo(
   breadcrumbs: Breadcrumb[],
   parentPath: string | null,
 ): NavigationInfo {
-  return {
-    breadcrumbs,
-    showBack: parentPath !== null,
-    ...(parentPath === null ? {} : { backPath: parentPath }),
-  };
+  const info: NavigationInfo = { breadcrumbs, showBack: parentPath !== null };
+  if (parentPath !== null) info.backPath = parentPath;
+  return info;
 }
 
 function resolveUserNavigationInfo(
@@ -578,16 +592,17 @@ function createMissingOrganizationNavigation(): AppNavigation {
 }
 
 function getOrganizationLoaderContext(matches: readonly AppNavigationMatch[]) {
-  const organization = getMatchByRouteId(matches, "/_authenticated/$guildId")
-    ?.loaderData as OrganizationRouteLoaderData | undefined;
-  const event = getMatchByRouteId(
-    matches,
-    "/_authenticated/$guildId/events_/$eventId_",
-  )?.loaderData as EventRouteLoaderData | undefined;
-  const document = getMatchByRouteId(
-    matches,
-    "/_authenticated/$guildId/docs/$docId",
-  )?.loaderData as DocumentRouteLoaderData | undefined;
+  const organization = organizationRouteLoaderData.safeParse(
+    getMatchByRouteId(matches, "/_authenticated/$guildId")?.loaderData,
+  ).data;
+  const event = eventRouteLoaderData.safeParse(
+    getMatchByRouteId(matches, "/_authenticated/$guildId/events_/$eventId_")
+      ?.loaderData,
+  ).data;
+  const document = documentRouteLoaderData.safeParse(
+    getMatchByRouteId(matches, "/_authenticated/$guildId/docs/$docId")
+      ?.loaderData,
+  ).data;
 
   return { organization, event, document };
 }

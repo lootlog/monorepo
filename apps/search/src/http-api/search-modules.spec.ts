@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { Effect } from "effect";
-import { Meilisearch } from "meilisearch";
+import { Meilisearch, type SearchParams } from "meilisearch";
 import { makeItemsModule } from "#src/items/items.service";
 import { configureMeilisearchIndexes } from "#src/meilisearch/meilisearch-indexes.service";
 import { makeNpcsModule } from "#src/npcs/npcs.service";
@@ -21,9 +21,9 @@ const makeClient = (index: (name: string) => object): Meilisearch => {
 
 describe("Search Effect modules", () => {
   test("builds bounded player and NPC filters", async () => {
-    const searches: Array<{ term: string; options: unknown }> = [];
+    const searches: Array<{ term: string; options: SearchParams }> = [];
     const client = makeClient(() => ({
-      search: (term: string, options: unknown) => {
+      search: (term: string, options: SearchParams) => {
         searches.push({ term, options });
         return Promise.resolve({ hits: [] });
       },
@@ -64,7 +64,13 @@ describe("Search Effect modules", () => {
   test("generates stable player and NPC document ids", async () => {
     const indexed: unknown[] = [];
     const client = makeClient(() => ({
-      addDocuments: (documents: unknown) => {
+      addDocuments: (
+        documents: ReadonlyArray<{
+          id: string | number;
+          name: string;
+          uid: string;
+        }>,
+      ) => {
         indexed.push(documents);
         return {
           waitTask: () => Promise.resolve({ uid: 1, status: "succeeded" }),
@@ -195,7 +201,13 @@ describe("Search Effect modules", () => {
     const client = makeClient(() => ({
       getDocuments: () =>
         Promise.resolve({ results: [{ uid: "42", worlds: ["jaruna"] }] }),
-      addDocuments: (documents: unknown) => {
+      addDocuments: (
+        documents: ReadonlyArray<{
+          id: string | number;
+          name: string;
+          uid: string;
+        }>,
+      ) => {
         indexedDocuments = documents;
         return {
           waitTask: () => Promise.resolve({ uid: 1, status: "succeeded" }),
@@ -259,7 +271,7 @@ describe("Search Effect modules", () => {
         value: () => ({
           updateDistinctAttribute: () => task,
           updateFilterableAttributes: () => task,
-          updateSearchableAttributes: (fields: unknown) => {
+          updateSearchableAttributes: (fields: string[]) => {
             searchable.push(fields);
             return task;
           },

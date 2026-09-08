@@ -52,12 +52,10 @@ export function MyReservationListItem({
       >
         <Tooltip>
           <TooltipTrigger
-            render={
-              <span
-                className="shrink-0 rounded-xl"
-                aria-label={reservation.sourceOrganization.name}
-              />
-            }
+            render=<span
+              className="shrink-0 rounded-xl"
+              aria-label={reservation.sourceOrganization.name}
+            />
           >
             <Avatar className="size-9 rounded-xl" aria-hidden>
               <AvatarImage src={organizationIconUrl ?? undefined} alt="" />

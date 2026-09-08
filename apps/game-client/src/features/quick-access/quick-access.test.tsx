@@ -1,29 +1,11 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import type { PartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { QuickAccessButtonProps } from "@/features/quick-access/components/quick-access-button";
+import { beforeEach, describe, expect, it } from "vitest";
+import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { QuickAccess } from "./quick-access";
-
-vi.mock("@/features/quick-access/components/quick-access-button", () => ({
-  QuickAccessButton: ({ id, title }: QuickAccessButtonProps) => (
-    <button
-      onClick={() => {
-        if (id !== "lootlog-app") {
-          useWindowsStore.getState().toggleOpen(id);
-        }
-      }}
-      type="button"
-    >
-      {title}
-    </button>
-  ),
-}));
-
-vi.mock("@/features/quick-access/components/guild-list-popover", () => ({
-  GuildListPopover: () => <button type="button">Guild list</button>,
-}));
 
 const activeReadyRoom: PartyReadyRoomProjection = {
   schemaVersion: 3,
@@ -63,10 +45,15 @@ describe("QuickAccess", () => {
   });
 
   it("renders when quick access is open", () => {
-    render(<QuickAccess />);
+    const fixture = createGuildPreferencesTest();
+    render(
+      <QueryClientProvider client={fixture.queryClient}>
+        <QuickAccess />
+      </QueryClientProvider>,
+    );
 
     expect(screen.getByText("Lootlog")).toBeInTheDocument();
-    expect(screen.getByText("Timery")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Timery" })).toBeInTheDocument();
     expect(
       document.querySelector("[data-ll-window-resize-handle]"),
     ).toBeInTheDocument();
@@ -93,7 +80,12 @@ describe("QuickAccess", () => {
       },
     }));
 
-    render(<QuickAccess />);
+    const fixture = createGuildPreferencesTest();
+    render(
+      <QueryClientProvider client={fixture.queryClient}>
+        <QuickAccess />
+      </QueryClientProvider>,
+    );
 
     expect(screen.queryByText("Lootlog")).not.toBeInTheDocument();
   });
@@ -102,7 +94,12 @@ describe("QuickAccess", () => {
     useWindowsStore
       .getState()
       .setSize("quick-access", { width: 340, height: 84 });
-    const { rerender } = render(<QuickAccess />);
+    const fixture = createGuildPreferencesTest();
+    const { rerender } = render(
+      <QueryClientProvider client={fixture.queryClient}>
+        <QuickAccess />
+      </QueryClientProvider>,
+    );
     const quickAccessWindow = document.querySelector<HTMLElement>(
       '[data-ll-draggable-window="quick-access"]',
     );
@@ -110,12 +107,20 @@ describe("QuickAccess", () => {
     expect(quickAccessWindow?.style.width).toBe("340px");
     expect(quickAccessWindow?.style.height).toBe("84px");
 
-    usePartyFinderStore.setState({
-      projections: { [activeReadyRoom.notificationId]: activeReadyRoom },
-    });
-    rerender(<QuickAccess />);
+    act(() =>
+      usePartyFinderStore.setState({
+        projections: { [activeReadyRoom.notificationId]: activeReadyRoom },
+      }),
+    );
+    rerender(
+      <QueryClientProvider client={fixture.queryClient}>
+        <QuickAccess />
+      </QueryClientProvider>,
+    );
 
-    expect(screen.getByText("Aktywne zbieranie grupy")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Aktywne zbieranie grupy" }),
+    ).toBeInTheDocument();
     expect(quickAccessWindow?.style.width).toBe("340px");
     expect(quickAccessWindow?.style.height).toBe("84px");
   });

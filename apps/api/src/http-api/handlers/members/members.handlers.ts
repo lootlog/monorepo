@@ -1,3 +1,4 @@
+import type { MemberWithRoles } from "#src/members/member.types";
 import {
   pathString,
   emptyStatusResponse,
@@ -71,7 +72,7 @@ export class MembersData extends Context.Service<
       identity: MembersIdentity,
       guildId: string,
       refresh: boolean,
-    ) => DataEffect;
+    ) => Effect.Effect<MemberWithRoles | null, MembersOperationError>;
     readonly refreshMember: (guildId: string, discordId: string) => DataEffect;
     readonly deactivateMember: (
       guildId: string,

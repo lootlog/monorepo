@@ -1,30 +1,32 @@
 import { act, render } from "@testing-library/react";
 import { QueryObserver } from "@tanstack/react-query";
-import { GatewayEvent } from "@/config/gateway";
+import { RealtimeClient } from "@lootlog/client/realtime";
+import { configureGameClientPlatform } from "@/lib/game-client-platform";
+import { disposeSocket } from "@/lib/socket";
+import { RealtimeWire } from "@/test/realtime-wire";
 import { SocketProvider } from "@/contexts/socket-context";
 import { queryClient } from "@/lib/query-client";
 import { useGlobalStore } from "@/store/global.store";
 import type { ChatMessage } from "@/api/chat.api";
 
-const { handlers, socket } = vi.hoisted(() => {
-  const handlers = new Map<string, (data: unknown) => void>();
-  return {
-    handlers,
-    socket: {
-      connected: false,
-      getAccessPolicy: () => undefined,
-      connect: vi.fn(),
-      disconnect: vi.fn(),
-      emit: vi.fn(),
-      on: (event: string, listener: (data: unknown) => void) =>
-        handlers.set(event, listener),
-      off: (event: string) => handlers.delete(event),
-    },
-  };
+let restorePlatform: () => void;
+let wire: RealtimeWire;
+beforeEach(() => {
+  disposeSocket();
+  wire = new RealtimeWire();
+  const realtime = new RealtimeClient({
+    url: "https://gateway.example.test",
+    webSocketFactory: () => wire,
+  });
+  restorePlatform = configureGameClientPlatform({
+    fetch: globalThis.fetch,
+    createRealtime: () => realtime,
+  });
 });
-vi.mock("@/lib/socket", () => ({ getSocket: () => socket }));
 
 afterEach(() => {
+  disposeSocket();
+  restorePlatform();
   queryClient.clear();
   vi.useRealTimers();
 });
@@ -54,7 +56,7 @@ it("purges and coalesces legacy chat refresh in the provider even without a moun
   };
   queryClient.setQueryData(key, [row]);
   queryClient.setQueryData(otherKey, [{ ...row, guildId: "b" }]);
-  const fetch = vi.fn().mockResolvedValue([]);
+  const fetch = vi.fn<() => Promise<ChatMessage[]>>().mockResolvedValue([]);
   const observer = new QueryObserver(queryClient, {
     queryKey: key,
     queryFn: fetch,
@@ -66,11 +68,15 @@ it("purges and coalesces legacy chat refresh in the provider even without a moun
       <div />
     </SocketProvider>,
   );
-  act(() => {
+  act(() => wire.open());
+  await act(async () => {
     for (let index = 0; index < 10; index++)
-      handlers.get(GatewayEvent.PERMISSIONS_UPDATED)?.({
-        guilds: [{ guild: { id: "a" } }, { guild: { id: "b" } }],
+      wire.receive({
+        v: 1,
+        type: "permissions.updated",
+        data: { organizationIds: ["a", "b"], subscriptionScopes: [] },
       });
+    await vi.advanceTimersByTimeAsync(0);
   });
   expect(queryClient.getQueryData(key)).toEqual([]);
   expect(queryClient.getQueryData(otherKey)).toEqual([]);

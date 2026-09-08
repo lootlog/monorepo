@@ -1,3 +1,4 @@
+import { createMemberFixture } from "../../../../test/organization-fixtures.js";
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
@@ -22,6 +23,7 @@ const access = {
 };
 
 const member = {
+  ...createMemberFixture(),
   id: 1,
   userId: "discord-member",
   guildId: "guild-a",

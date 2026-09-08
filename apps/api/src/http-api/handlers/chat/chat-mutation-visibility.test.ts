@@ -1,8 +1,18 @@
-import { describe, expect, it } from "bun:test";
+import { createDatabaseBoundary } from "../../../../test/database-fixtures.js";
+import {
+  createGuildFixture,
+  createMemberFixture,
+} from "../../../../test/organization-fixtures.js";
+import { afterEach, describe, expect, it } from "bun:test";
 import { Effect } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import type { roleTable } from "#src/database/drizzle/schema";
+import {
+  guildTable,
+  memberTable,
+  memberToRoleTable,
+  roleTable,
+} from "#src/database/drizzle/schema";
 import { PermissionDeniedError } from "#src/shared/http/http-errors";
 import { ChatOperationError } from "./chat.handlers.js";
 import { makeChatOperations, type ChatRedis } from "./chat.data-layer.js";
@@ -34,6 +44,12 @@ const message = {
   },
 };
 
+const boundaries: Array<Awaited<ReturnType<typeof createDatabaseBoundary>>> =
+  [];
+afterEach(async () => {
+  await Promise.all(boundaries.splice(0).map((boundary) => boundary.dispose()));
+});
+
 const setup = async (permissions: Permission[], levelFrom = 200) => {
   const roles: Array<typeof roleTable.$inferSelect> = [
     {
@@ -49,25 +65,37 @@ const setup = async (permissions: Permission[], levelFrom = 200) => {
       updatedAt: new Date(0),
     },
   ];
-  // PostgreSQL is the external boundary; keep the real chat operations, Redis
-  // mutations, visibility policy and emitted facts under test.
-  const query = (rows: unknown[]) => {
-    const result = Object.assign(Effect.succeed(rows), {
-      from: () => result,
-      where: () => result,
-      innerJoin: () => result,
-      limit: () => result,
-    });
-    return result;
-  };
-  const database = {
-    select: (selection?: unknown) =>
-      query(
-        selection
-          ? roles.map((role) => ({ role }))
-          : [{ id: "organization", ownerId: "owner", active: true }],
-      ),
-  } as unknown as typeof ApiDatabase.Service;
+  const boundary = await createDatabaseBoundary();
+  boundaries.push(boundary);
+  const database = boundary.database;
+  await boundary.run(
+    database
+      .insert(guildTable)
+      .values(createGuildFixture({ id: "organization", ownerId: "owner" })),
+  );
+  await boundary.run(
+    database.insert(memberTable).values([
+      createMemberFixture({
+        id: 1,
+        guildId: "organization",
+        userId: "author",
+        globalUserId: "author-user",
+      }),
+      createMemberFixture({
+        id: 2,
+        guildId: "organization",
+        userId: "administrator",
+        globalUserId: "admin-user",
+      }),
+    ]),
+  );
+  await boundary.run(database.insert(roleTable).values(roles));
+  await boundary.run(
+    database.insert(memberToRoleTable).values([
+      { A: 1, B: "role" },
+      { A: 2, B: "role" },
+    ]),
+  );
   const records = [JSON.stringify(message)];
   const published: unknown[] = [];
   const redis: ChatRedis = {

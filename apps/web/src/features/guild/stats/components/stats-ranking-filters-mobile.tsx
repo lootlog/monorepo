@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { TrendingUp } from "lucide-react";
 import { Label } from "@lootlog/ui/components/label";
 import { MobileFiltersDrawer } from "@/components/filters/mobile-filters-drawer";
-import { type KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
+import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
 import { LevelFilters } from "./level-filters";
 
 type StatsRankingFiltersMobileProps = {
@@ -50,7 +50,7 @@ export const StatsRankingFiltersMobile = ({
             onMinLvlChange={onMinLvlChange}
             onMaxLvlChange={onMaxLvlChange}
             inputClassName="min-w-0 flex-1"
-            separator={<TrendingUp className="h-4 w-4 text-muted-foreground" />}
+            separator=<TrendingUp className="h-4 w-4 text-muted-foreground" />
           />
         </div>
       </div>

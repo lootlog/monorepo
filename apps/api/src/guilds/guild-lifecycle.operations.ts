@@ -290,6 +290,13 @@ export const makeGuildLifecycle = (
         )
       : false;
     const now = new Date(yield* Clock.currentTimeMillis);
+    const roleUpdate: Partial<typeof roleTable.$inferInsert> = {
+      name: data.name,
+      color: data.color,
+      position: data.position,
+      updatedAt: now,
+    };
+    if (existingAdmin !== data.admin) roleUpdate.permissions = permissions;
     yield* operation(
       "guildLifecycle.role.upsert.write",
       database
@@ -306,13 +313,7 @@ export const makeGuildLifecycle = (
         })
         .onConflictDoUpdate({
           target: roleTable.id,
-          set: {
-            name: data.name,
-            color: data.color,
-            position: data.position,
-            ...(existingAdmin === data.admin ? {} : { permissions }),
-            updatedAt: now,
-          },
+          set: roleUpdate,
         }),
     );
     yield* ports.clearCachePattern(getPermissionsCachePattern(data.guildId));

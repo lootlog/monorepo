@@ -15,7 +15,7 @@ import { Effect, Exit, Layer, ManagedRuntime, Redacted } from "effect";
 import { Redis } from "effect/unstable/persistence";
 import { readdir } from "node:fs/promises";
 import pg from "pg";
-import { makeDrizzleDatabase } from "#src/database/database";
+import { drizzleDatabaseEffect } from "#src/database/database";
 import { makeRedisStore } from "#src/infrastructure/redis-store";
 import { makeBattles } from "#src/battles/battles.service";
 import { makeBattleAnalyticsCache } from "#src/battles/analytics/battle-analytics-cache.service";
@@ -81,7 +81,7 @@ let services: Awaited<ReturnType<typeof createServices>>;
 const createServices = () =>
   runtime.runPromise(
     Effect.gen(function* () {
-      const database = yield* makeDrizzleDatabase;
+      const database = yield* drizzleDatabaseEffect;
       const redisApi = yield* Redis.Redis;
       const redis = makeRedisStore(
         redisApi,

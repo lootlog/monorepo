@@ -1,10 +1,12 @@
-export type NotificationType =
-  | "ELITE2"
-  | "HERO"
-  | "COLOSSUS"
-  | "TITAN"
-  | "message"
-  | "party-gathering";
+export const NOTIFICATION_TYPES = [
+  "ELITE2",
+  "HERO",
+  "COLOSSUS",
+  "TITAN",
+  "message",
+  "party-gathering",
+] as const;
+export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 
 export type DetectorNpcType = "ELITE2" | "HERO" | "COLOSSUS" | "TITAN";
 export const DETECTOR_NPC_TYPES = [
@@ -13,6 +15,9 @@ export const DETECTOR_NPC_TYPES = [
   "COLOSSUS",
   "TITAN",
 ] as const satisfies readonly DetectorNpcType[];
+
+export const isDetectorNpcType = (value: string): value is DetectorNpcType =>
+  DETECTOR_NPC_TYPES.some((type) => type === value);
 
 export interface NotificationSettings {
   show: boolean;
@@ -183,3 +188,8 @@ export const defaultDetectorSettings: DetectorSettings = {
     notifySound: false,
   },
 };
+
+export const getDetectorNpcSettings = (
+  settings: DetectorSettings,
+  npcType: string,
+) => (isDetectorNpcType(npcType) ? settings[npcType] : undefined);

@@ -60,3 +60,10 @@ export const TIMERS_COLORS = {
     border: "ll:border-gray-400",
   },
 };
+
+export const isTimerColor = (
+  color: string,
+): color is keyof typeof TIMERS_COLORS => Object.hasOwn(TIMERS_COLORS, color);
+
+export const getTimerColor = (color: string) =>
+  isTimerColor(color) ? TIMERS_COLORS[color] : undefined;

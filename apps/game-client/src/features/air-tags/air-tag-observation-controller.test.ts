@@ -1,3 +1,4 @@
+import type { AirTagObservationBatch } from "@lootlog/schema/air-tag";
 import type { Other, OtherCreate } from "@lootlog/margonem/game-events";
 import {
   AIR_TAG_BATCH_INTERVAL_MS,
@@ -36,8 +37,8 @@ describe("AirTagObservationController", () => {
     vi.useFakeTimers();
     testRuntimeWindow.Engine = {
       hero: { d: { id: 999 } },
-      others: { check: vi.fn(() => ({})) },
-    } as never;
+      others: { check: vi.fn<() => Record<string, never>>(() => ({})) },
+    };
   });
 
   afterEach(() => {
@@ -45,7 +46,7 @@ describe("AirTagObservationController", () => {
   });
 
   it("batches CREATE and significant movement but ignores small movement", () => {
-    const publisher = vi.fn();
+    const publisher = vi.fn<(batch: AirTagObservationBatch) => void>();
     const controller = new AirTagObservationController();
     controller.configure({
       enabled: true,
@@ -82,7 +83,7 @@ describe("AirTagObservationController", () => {
   });
 
   it("publishes a stationary target heartbeat before the server TTL", () => {
-    const publisher = vi.fn();
+    const publisher = vi.fn<(batch: AirTagObservationBatch) => void>();
     const controller = new AirTagObservationController();
     controller.configure({
       enabled: true,
@@ -107,7 +108,7 @@ describe("AirTagObservationController", () => {
   });
 
   it("stops heartbeats after del and cancels pending data on map change", () => {
-    const publisher = vi.fn();
+    const publisher = vi.fn<(batch: AirTagObservationBatch) => void>();
     const controller = new AirTagObservationController();
     controller.configure({
       enabled: true,
@@ -127,7 +128,7 @@ describe("AirTagObservationController", () => {
   });
 
   it("sends at most 50 observations per batch", () => {
-    const publisher = vi.fn();
+    const publisher = vi.fn<(batch: AirTagObservationBatch) => void>();
     const controller = new AirTagObservationController();
     controller.configure({
       enabled: true,
@@ -148,7 +149,7 @@ describe("AirTagObservationController", () => {
   });
 
   it("retains at most 100 local targets for the active scope", () => {
-    const publisher = vi.fn();
+    const publisher = vi.fn<(batch: AirTagObservationBatch) => void>();
     const controller = new AirTagObservationController();
     controller.configure({
       enabled: true,
@@ -172,7 +173,7 @@ describe("AirTagObservationController", () => {
   });
 
   it("does not observe while disabled or disconnected", () => {
-    const publisher = vi.fn();
+    const publisher = vi.fn<(batch: AirTagObservationBatch) => void>();
     const controller = new AirTagObservationController();
     controller.configure({
       enabled: false,

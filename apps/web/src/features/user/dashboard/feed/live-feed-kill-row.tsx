@@ -39,12 +39,10 @@ export const LiveFeedKillRow = ({ item, now, organizations }: Props) => {
           <TextLink
             className="min-w-0 break-words text-sm font-bold text-foreground"
             aria-label={t("statistics.feedKill", { name: item.npc.name })}
-            render={
-              <Link
-                to="/$guildId/stats/npcs/$npcId"
-                params={{ guildId, npcId: String(item.npc.id) }}
-              />
-            }
+            render=<Link
+              to="/$guildId/stats/npcs/$npcId"
+              params={{ guildId, npcId: String(item.npc.id) }}
+            />
           >
             {item.npc.name}
             {item.npc.lvl !== null && (

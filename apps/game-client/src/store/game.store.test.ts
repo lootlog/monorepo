@@ -33,7 +33,7 @@ describe("useGameStore", () => {
     useGameStore.getState().replaceGame(createGame());
     const game = useGameStore.getState().game;
     const revision = useGameStore.getState().revision;
-    const publish = vi.fn();
+    const publish = vi.fn<Parameters<typeof useGameStore.subscribe>[0]>();
     const unsubscribe = useGameStore.subscribe(publish);
 
     useGameStore.getState().replaceGame(createGame());
@@ -46,7 +46,7 @@ describe("useGameStore", () => {
 
   it("keeps publishing coordinate changes for reconnect snapshots", () => {
     useGameStore.getState().replaceGame(createGame());
-    const publish = vi.fn();
+    const publish = vi.fn<Parameters<typeof useGameStore.subscribe>[0]>();
     const unsubscribe = useGameStore.subscribe(publish);
 
     useGameStore.getState().replaceGame(createGame({ hero: { x: 11, y: 21 } }));
@@ -62,7 +62,7 @@ describe("useGameStore", () => {
     useGameStore.getState().replaceGame(createGame());
     const game = useGameStore.getState().game;
     const mapEpoch = useGameStore.getState().mapEpoch;
-    const publish = vi.fn();
+    const publish = vi.fn<Parameters<typeof useGameStore.subscribe>[0]>();
     const unsubscribe = useGameStore.subscribe(publish);
 
     useGameStore.getState().replaceGame(createGame(), true);

@@ -38,7 +38,8 @@ export const KillDetailSummary = ({
 }: KillDetailSummaryProps) => {
   const { t } = useTranslation();
   const overdueDurationText =
-    typeof kill.resolvedAfterMaxSpawnTimeMs === "number" &&
+    kill.resolvedAfterMaxSpawnTimeMs !== null &&
+    kill.resolvedAfterMaxSpawnTimeMs !== undefined &&
     kill.resolvedAfterMaxSpawnTimeMs > 0
       ? formatDurationHuman(Math.round(kill.resolvedAfterMaxSpawnTimeMs / 1000))
       : null;
@@ -224,7 +225,8 @@ export const KillDetailSummary = ({
             <p>
               {t("events.killDetail.respawnMaxLabel")}: {formattedMaxSpawn}
             </p>
-            {typeof respawnComparedToMaxPercentage === "number" ? (
+            {respawnComparedToMaxPercentage !== null &&
+            respawnComparedToMaxPercentage !== undefined ? (
               <p>
                 {t("events.killDetail.respawnComparedToMax", {
                   percentage: respawnComparedToMaxPercentage,

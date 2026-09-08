@@ -1,200 +1,129 @@
-import type { ReactNode } from "react";
-import { renderToStaticMarkup } from "react-dom/server";
+// @vitest-environment happy-dom
+import { initializeTestTranslations } from "@/lib/testing/i18n";
+import { act, cleanup, render } from "@testing-library/react";
 import { Permission } from "@lootlog/schema/permissions";
-import { createAccessPolicy } from "@lootlog/domain/access-policy";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+  onTestFinished,
+} from "vitest";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  createMemoryHistory,
+  createRootRoute,
+  createRoute,
+  createRouter,
+  RouterProvider,
+} from "@tanstack/react-router";
+import { configureApiClients } from "@lootlog/client/transport";
+import {
+  getGuildsControllerGetGuildPermissionsQueryKey,
+  type EventCoordinationResponseDto,
+} from "@lootlog/client/main";
 import { EventCoordinationPage } from "./event-coordination-page";
-import type { EventCoordinationResponseDto } from "@lootlog/client/main";
 
-const mocks = vi.hoisted(() => ({
-  closeRespawnWindow: vi.fn(),
-  getCoordination: vi.fn(),
-  selfAssignMember: vi.fn(),
-  useGuildPermissions: vi.fn(),
-  useParams: vi.fn(),
-}));
-
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string, values?: Record<string, unknown>) => {
-      if (!values) {
-        return key;
-      }
-
-      return `${key} ${Object.values(values).join(" ")}`;
-    },
-  }),
-}));
-
-vi.mock("@tanstack/react-query", () => ({
-  useQueryClient: () => ({}),
-}));
-
-vi.mock("@tanstack/react-router", async () => {
-  const React = await import("react");
-
-  return {
-    Link: ({ children }: { children: ReactNode }) =>
-      React.createElement("a", { href: "#" }, children),
-    useParams: mocks.useParams,
-  };
+await initializeTestTranslations({});
+beforeEach(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2026-06-19T12:00:00.000Z"));
+});
+afterEach(() => {
+  cleanup();
+  vi.useRealTimers();
 });
 
-vi.mock("sonner", () => ({
-  toast: {
-    error: vi.fn(),
-    success: vi.fn(),
-  },
-}));
-
-vi.mock("@/components/tiles", () => ({
-  NpcTile: ({ npc }: { npc: { name: string } }) => (
-    <div data-testid="npc-tile">{npc.name}</div>
-  ),
-}));
-
-vi.mock("@/hooks/api/use-guild-permissions", () => ({
-  useGuildPermissions: mocks.useGuildPermissions,
-}));
-
-vi.mock("@lootlog/client/main", async () => ({
-  ...(await vi.importActual("@lootlog/client/main")),
-  getEventsMonitoringControllerGetCoordinationQueryKey: ({
-    guildId,
-    eventId,
-  }: {
-    guildId: string;
-    eventId: string;
-  }) => ["events", guildId, eventId, "coordination"],
-  invalidateEventsMonitoringControllerGetCoordination: vi.fn(),
-  useEventsAssignmentControllerSelfAssignMember: mocks.selfAssignMember,
-  useEventsMonitoringControllerCloseRespawnWindow: mocks.closeRespawnWindow,
-  useEventsMonitoringControllerGetCoordination: mocks.getCoordination,
-}));
-
-vi.mock("./components/dialogs/event-action-dialog", () => ({
-  EventActionDialog: () => null,
-}));
+async function renderPage(
+  data: EventCoordinationResponseDto | "loading" | "forbidden",
+  capabilities: Permission[] = [],
+) {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false, staleTime: Infinity } },
+  });
+  onTestFinished(() => client.clear());
+  client.setQueryData(
+    getGuildsControllerGetGuildPermissionsQueryKey({ guildId: "guild-1" }),
+    capabilities,
+  );
+  onTestFinished(
+    configureApiClients({
+      main: {
+        baseUrl: "https://api.test",
+        fetch: () =>
+          data === "loading"
+            ? new Promise<Response>(() => {})
+            : Promise.resolve(
+                data === "forbidden"
+                  ? Response.json({}, { status: 403 })
+                  : Response.json(data),
+              ),
+      },
+    }),
+  );
+  const root = createRootRoute();
+  const route = createRoute({
+    getParentRoute: () => root,
+    path: "/$guildId/events/$eventId/coordination",
+    component: EventCoordinationPage,
+  });
+  const router = createRouter({
+    routeTree: root.addChildren([route]),
+    history: createMemoryHistory({
+      initialEntries: ["/guild-1/events/event-1/coordination"],
+    }),
+  });
+  await router.load();
+  const { container } = render(
+    <QueryClientProvider client={client}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>,
+  );
+  await act(() => vi.advanceTimersByTimeAsync(0));
+  return container.innerHTML;
+}
 
 describe("EventCoordinationPage", () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-06-19T12:00:00.000Z"));
-    vi.clearAllMocks();
-    mocks.useParams.mockReturnValue({
-      eventId: "event-1",
-      guildId: "guild-1",
-    });
-    mocks.useGuildPermissions.mockReturnValue({
-      data: createAccessPolicy({ capabilities: [] }),
-    });
-    mocks.selfAssignMember.mockReturnValue({
-      isPending: false,
-      mutateAsync: vi.fn(),
-    });
-    mocks.closeRespawnWindow.mockReturnValue({
-      isPending: false,
-      mutateAsync: vi.fn(),
-    });
+  it("renders the loading state", async () => {
+    expect(await renderPage("loading")).toContain("animate-spin");
   });
-
-  afterEach(() => {
-    vi.useRealTimers();
+  it("renders the empty state", async () => {
+    expect(await renderPage(createCoordination([]))).toContain(
+      "events.coordination.empty",
+    );
   });
-
-  it("renders the loading state", () => {
-    mocks.getCoordination.mockReturnValue({
-      data: undefined,
-      error: null,
-      isPending: true,
-      refetch: vi.fn(),
-    });
-
-    const html = renderPage();
-
-    expect(html).toContain("animate-spin");
-  });
-
-  it("renders the empty state", () => {
-    mocks.getCoordination.mockReturnValue({
-      data: createCoordination([]),
-      error: null,
-      isPending: false,
-      refetch: vi.fn(),
-    });
-
-    const html = renderPage();
-
-    expect(html).toContain("events.coordination.empty");
-  });
-
-  it("renders the forbidden error state", () => {
-    mocks.getCoordination.mockReturnValue({
-      data: undefined,
-      error: { status: 403 },
-      isPending: false,
-      refetch: vi.fn(),
-    });
-
-    const html = renderPage();
-
+  it("renders the forbidden error state", async () => {
+    const html = await renderPage("forbidden");
     expect(html).toContain("events.coordination.error");
     expect(html).toContain("common.routeErrors.actions.retry");
   });
-
-  it("renders the normal state with coordinator actions", () => {
-    mocks.useGuildPermissions.mockReturnValue({
-      data: createAccessPolicy({
-        capabilities: [
-          Permission.LOOTLOG_EVENTS_WRITE,
-          Permission.LOOTLOG_EVENTS_MANAGE,
-        ],
-      }),
-    });
-    mocks.getCoordination.mockReturnValue({
-      data: createCoordination([createHero()]),
-      error: null,
-      isPending: false,
-      refetch: vi.fn(),
-    });
-
-    const html = renderPage();
-
+  it("renders the normal state with coordinator actions", async () => {
+    const html = await renderPage(createCoordination([createHero()]), [
+      Permission.LOOTLOG_EVENTS_WRITE,
+      Permission.LOOTLOG_EVENTS_MANAGE,
+    ]);
     expect(html).toContain("events.coordination.title");
     expect(html).toContain("Przykladowy Heros");
     expect(html).toContain("events.coordination.actions.openMaps");
     expect(html).toContain("events.coordination.actions.selfAssign");
     expect(html).toContain("events.coordination.actions.close_window");
   });
-
-  it("disables self assignment and shows a countdown before the assignment window", () => {
-    mocks.useGuildPermissions.mockReturnValue({
-      data: createAccessPolicy({
-        capabilities: [Permission.LOOTLOG_EVENTS_WRITE],
-      }),
-    });
-    mocks.getCoordination.mockReturnValue({
-      data: createCoordination([
+  it("disables self assignment and shows a countdown before the assignment window", async () => {
+    const html = await renderPage(
+      createCoordination([
         createHero({
           maxSpawnTime: "2026-06-19T13:30:00.000Z",
           minSpawnTime: "2026-06-19T13:00:00.000Z",
         }),
       ]),
-      error: null,
-      isPending: false,
-      refetch: vi.fn(),
-    });
-
-    const html = renderPage();
-
+      [Permission.LOOTLOG_EVENTS_WRITE],
+    );
     expect(html).toContain('disabled=""');
     expect(html).toContain("events.maps.assignmentDisabledWithTime");
   });
 });
-
-function renderPage() {
-  return renderToStaticMarkup(<EventCoordinationPage />);
-}
 
 function createCoordination(
   heroes: EventCoordinationResponseDto["heroes"],

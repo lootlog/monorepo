@@ -4,7 +4,7 @@ type LegacyUiRuntimeWindow = Window & {
   message?: (message: string) => void;
 };
 
-const getRuntimeWindow = () => window as LegacyUiRuntimeWindow;
+const getRuntimeWindow = (): LegacyUiRuntimeWindow => window;
 
 export const getRuntimeCookie = (name: string): string | undefined => {
   return getRuntimeWindow().getCookie?.(name);

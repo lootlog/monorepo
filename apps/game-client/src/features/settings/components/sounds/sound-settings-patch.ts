@@ -1,8 +1,6 @@
 import type { UpdateSoundSettingsDto } from "@lootlog/client/main";
-import type { NpcTypeSoundConfig } from "@lootlog/schema/sound-settings";
 
 type SoundConfigKey = "notificationsConfig" | "detectorConfig" | "timersConfig";
-type SoundConfigPatch = Record<string, Partial<NpcTypeSoundConfig> | undefined>;
 
 const SOUND_CONFIG_KEYS: SoundConfigKey[] = [
   "notificationsConfig",
@@ -15,29 +13,22 @@ export const mergeSoundSettingsPatches = (
   incoming: UpdateSoundSettingsDto,
 ): UpdateSoundSettingsDto => {
   const merged: UpdateSoundSettingsDto = { ...current, ...incoming };
-  const mergedConfigs = merged as unknown as Record<
-    SoundConfigKey,
-    SoundConfigPatch | undefined
-  >;
 
   for (const configKey of SOUND_CONFIG_KEYS) {
-    const currentConfig = current[configKey] as SoundConfigPatch | undefined;
-    const incomingConfig = incoming[configKey] as SoundConfigPatch | undefined;
+    const currentConfig = current[configKey];
+    const incomingConfig = incoming[configKey];
     if (!currentConfig && !incomingConfig) {
       continue;
     }
 
-    const nextConfig: SoundConfigPatch = {
-      ...currentConfig,
-      ...incomingConfig,
-    };
+    const entries = new Map(Object.entries(currentConfig ?? {}));
     for (const [key, partialConfig] of Object.entries(incomingConfig ?? {})) {
-      nextConfig[key] = {
-        ...currentConfig?.[key],
+      entries.set(key, {
+        ...entries.get(key),
         ...partialConfig,
-      };
+      });
     }
-    mergedConfigs[configKey] = nextConfig;
+    merged[configKey] = Object.fromEntries(entries);
   }
 
   return merged;

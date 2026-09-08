@@ -1,10 +1,11 @@
 import amqp from "amqplib";
+import type { Schema } from "effect";
 import { chalk } from "zx";
 
 interface PublishOptions {
   exchange: string;
   routingKey: string;
-  payload: Record<string, unknown>;
+  payload: typeof Schema.Json.Type;
   exchangeType?: "topic" | "direct" | "fanout";
 }
 

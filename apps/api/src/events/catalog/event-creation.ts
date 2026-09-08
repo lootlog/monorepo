@@ -24,7 +24,11 @@ export class EventCreationError extends TaggedErrorClass<EventCreationError>()(
 ) {}
 
 export const makeEventCreation =
-  (database: typeof ApiDatabase.Service, redis: RedisService, logger: Logger) =>
+  (
+    database: Pick<typeof ApiDatabase.Service, "transaction">,
+    redis: Pick<RedisService, "deleteByPattern">,
+    logger: Pick<Logger, "warn">,
+  ) =>
   (data: CreateEventRequest, guild: { id: string }) => {
     const normalized = Effect.try({
       try: () => {

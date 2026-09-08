@@ -1,26 +1,18 @@
+import { createOrganizationTestWrapper } from "@/lib/testing/router";
+import { ImmediateIntersectionObserver } from "@/lib/testing/intersection-observer";
 // @vitest-environment happy-dom
 
+import { initializeTestTranslations } from "@/lib/testing/i18n";
 import type { ReactNode } from "react";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { EventMemberKill } from "../../hooks/queries/use-event-member-kill-history";
 import { MemberKillsList } from "./member-kills-list";
 
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string) => key,
-  }),
-}));
+await initializeTestTranslations();
 
-vi.mock("@tanstack/react-router", () => ({
-  Link: ({ children }: { children: ReactNode }) => (
-    <a href="/kill">{children}</a>
-  ),
-}));
-
-vi.mock("@/components/tiles", () => ({
-  NpcTile: ({ npc }: { npc: { name: string } }) => <span>{npc.name}</span>,
-}));
+const wrapper = await createOrganizationTestWrapper();
+const renderList = (ui: ReactNode) => render(ui, { wrapper });
 
 afterEach(() => {
   cleanup();
@@ -39,7 +31,7 @@ describe("MemberKillsList", () => {
       resetKey: "all",
       scrollElement: document.createElement("div"),
     };
-    const { rerender } = render(
+    const { rerender } = renderList(
       <MemberKillsList {...commonProps} isLoading hasError={false} />,
     );
 
@@ -65,7 +57,7 @@ describe("MemberKillsList", () => {
       resetKey: "all",
       scrollElement: document.createElement("div"),
     };
-    const { rerender } = render(
+    const { rerender } = renderList(
       <MemberKillsList {...commonProps} allKills={[]} isLoading />,
     );
 
@@ -95,27 +87,9 @@ describe("MemberKillsList", () => {
   it("loads the next page when the table loader approaches the viewport", async () => {
     const fetchNextPage = vi.fn();
 
-    vi.stubGlobal(
-      "IntersectionObserver",
-      class IntersectionObserverMock {
-        private readonly callback: IntersectionObserverCallback;
+    vi.stubGlobal("IntersectionObserver", ImmediateIntersectionObserver);
 
-        constructor(callback: IntersectionObserverCallback) {
-          this.callback = callback;
-        }
-
-        observe = () => {
-          this.callback(
-            [{ isIntersecting: true } as IntersectionObserverEntry],
-            this as unknown as IntersectionObserver,
-          );
-        };
-
-        disconnect = vi.fn();
-      },
-    );
-
-    render(
+    renderList(
       <MemberKillsList
         allKills={[createKill()]}
         eventId="event-1"

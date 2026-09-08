@@ -1,5 +1,8 @@
 import { BattleCharacterOption } from "./battle-character-option";
-import { createBattleFilterHandlers } from "@/features/user/battle-panel/battle-panel-battles-list/utils/battle-filter-handlers";
+import {
+  createBattleFilterHandlers,
+  type BattleFilters,
+} from "@/features/user/battle-panel/battle-panel-battles-list/utils/battle-filter-handlers";
 import { useId, useState } from "react";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Button } from "@lootlog/ui/components/button";
@@ -35,7 +38,7 @@ import {
   CommandInput,
   CommandList,
 } from "@lootlog/ui/components/command";
-import type { BattleFilters } from "@/features/user/battle-panel/battle-panel-battles-list/utils/battle-filter-handlers";
+
 import { useTranslation } from "react-i18next";
 
 type FiltersSidebarProps = {

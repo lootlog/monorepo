@@ -1,38 +1,18 @@
+import { createOrganizationTestWrapper } from "@/lib/testing/router";
+import { ImmediateIntersectionObserver } from "@/lib/testing/intersection-observer";
 // @vitest-environment happy-dom
 
+import { initializeTestTranslations } from "@/lib/testing/i18n";
 import type { ReactNode } from "react";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { HeroKill } from "../../hooks/queries/use-hero-kill-history";
+import { createHeroKill as createKill } from "@/lib/testing/event-kill";
 import { EventKillsTable } from "./event-kills-table";
 
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string) => key,
-  }),
-}));
+await initializeTestTranslations();
 
-vi.mock("@tanstack/react-router", () => ({
-  Link: ({
-    children,
-    params,
-    ...props
-  }: {
-    children: ReactNode;
-    params: Record<string, string>;
-  }) => (
-    <a
-      href={`/${params.guildId}/events/${params.eventId}/heroes/${params.heroId}/kills/${params.killId}`}
-      {...props}
-    >
-      {children}
-    </a>
-  ),
-}));
-
-vi.mock("@/components/tiles", () => ({
-  NpcTile: ({ npc }: { npc: { name: string } }) => <span>{npc.name}</span>,
-}));
+const wrapper = await createOrganizationTestWrapper();
+const renderTable = (ui: ReactNode) => render(ui, { wrapper });
 
 afterEach(() => {
   cleanup();
@@ -53,7 +33,7 @@ describe("EventKillsTable", () => {
   };
 
   it("shows stable loading, error, and empty states", () => {
-    const { rerender } = render(
+    const { rerender } = renderTable(
       <EventKillsTable {...defaultProps} kills={[]} isLoading />,
     );
 
@@ -76,7 +56,7 @@ describe("EventKillsTable", () => {
   });
 
   it("renders responsive columns, kill data, and detail links", () => {
-    render(<EventKillsTable {...defaultProps} kills={[createKill()]} />);
+    renderTable(<EventKillsTable {...defaultProps} kills={[createKill()]} />);
 
     expect(screen.getByRole("table").getAttribute("class")).toContain(
       "table-auto xl:table-fixed",
@@ -117,7 +97,7 @@ describe("EventKillsTable", () => {
   });
 
   it("shows the manual-close label instead of a respawn duration", () => {
-    render(
+    renderTable(
       <EventKillsTable
         {...defaultProps}
         kills={[createKill({ isManualClose: true })]}
@@ -131,27 +111,9 @@ describe("EventKillsTable", () => {
   it("loads the next page when the sentinel approaches the viewport", async () => {
     const fetchNextPage = vi.fn();
 
-    vi.stubGlobal(
-      "IntersectionObserver",
-      class IntersectionObserverMock {
-        private readonly callback: IntersectionObserverCallback;
+    vi.stubGlobal("IntersectionObserver", ImmediateIntersectionObserver);
 
-        constructor(callback: IntersectionObserverCallback) {
-          this.callback = callback;
-        }
-
-        observe = () => {
-          this.callback(
-            [{ isIntersecting: true } as IntersectionObserverEntry],
-            this as unknown as IntersectionObserver,
-          );
-        };
-
-        disconnect = vi.fn();
-      },
-    );
-
-    render(
+    renderTable(
       <EventKillsTable
         {...defaultProps}
         kills={[createKill()]}
@@ -170,7 +132,7 @@ describe("EventKillsTable", () => {
     const observer = vi.fn();
     vi.stubGlobal("IntersectionObserver", observer);
 
-    render(
+    renderTable(
       <EventKillsTable
         variant="preview"
         eventId="event-1"
@@ -191,7 +153,7 @@ describe("EventKillsTable", () => {
     const observer = vi.fn();
     vi.stubGlobal("IntersectionObserver", observer);
 
-    render(
+    renderTable(
       <EventKillsTable
         {...defaultProps}
         kills={[createKill()]}
@@ -208,7 +170,7 @@ describe("EventKillsTable", () => {
   it("resets the scroll position after the hero filter changes", () => {
     const scrollElement = document.createElement("div");
     scrollElement.scrollTo = vi.fn();
-    const { rerender } = render(
+    const { rerender } = renderTable(
       <EventKillsTable
         {...defaultProps}
         kills={[createKill()]}
@@ -228,26 +190,3 @@ describe("EventKillsTable", () => {
     expect(scrollElement.scrollTo).toHaveBeenLastCalledWith(0, 0);
   });
 });
-
-function createKill({
-  isManualClose = false,
-}: {
-  isManualClose?: boolean;
-} = {}): HeroKill {
-  return {
-    heroNpc: {
-      id: "hero-1",
-      npcIcon: "zorin.gif",
-      npcId: 123,
-      npcLvl: 100,
-      npcName: "Zorin",
-    },
-    heroNpcId: "hero-1",
-    id: "kill-1",
-    isManualClose,
-    killedAt: "2026-07-31T01:15:00.000Z",
-    maxSpawnTimeAtKill: "2026-07-31T02:00:00.000Z",
-    minSpawnTimeAtKill: "2026-07-31T01:00:00.000Z",
-    points: [{ id: "point-1" }, { id: "point-2" }] as HeroKill["points"],
-  };
-}

@@ -187,15 +187,13 @@ export function BattleHpTimelinePlot({
           allowEscapeViewBox={{ x: true, y: true }}
           cursor={false}
           wrapperStyle={{ zIndex: 30 }}
-          content={
-            <BattleHpTimelineTooltipContent
-              chartRootRef={chartRootRef}
-              team1Color={team1Color}
-              team1Label={team1Label}
-              team2Color={team2Color}
-              team2Label={team2Label}
-            />
-          }
+          content=<BattleHpTimelineTooltipContent
+            chartRootRef={chartRootRef}
+            team1Color={team1Color}
+            team1Label={team1Label}
+            team2Color={team2Color}
+            team2Label={team2Label}
+          />
         />
         {selectedTurn !== null ? (
           <ReferenceLine
@@ -209,30 +207,32 @@ export function BattleHpTimelinePlot({
           type="monotone"
           stroke="var(--color-team1)"
           strokeWidth={2}
-          dot={<BattleHpTimelinePoint onTurnSelect={onTurnSelect} />}
-          activeDot={
-            <BattleHpTimelinePoint visible onTurnSelect={onTurnSelect} />
-          }
+          dot=<BattleHpTimelinePoint onTurnSelect={onTurnSelect} />
+          activeDot=<BattleHpTimelinePoint
+            visible
+            onTurnSelect={onTurnSelect}
+          />
         />
         <Line
           dataKey="team2"
           type="monotone"
           stroke="var(--color-team2)"
           strokeWidth={2}
-          dot={<BattleHpTimelinePoint onTurnSelect={onTurnSelect} />}
-          activeDot={
-            <BattleHpTimelinePoint visible onTurnSelect={onTurnSelect} />
-          }
+          dot=<BattleHpTimelinePoint onTurnSelect={onTurnSelect} />
+          activeDot=<BattleHpTimelinePoint
+            visible
+            onTurnSelect={onTurnSelect}
+          />
         />
         {legendaryMarkerGroups.map((group) => (
           <ReferenceDot
             key={group.key}
             ifOverflow="visible"
             r={0}
-            shape={(shapeProps) => (
+            shape={(markerCoordinates) => (
               <BattleHpTimelineLegendaryMarker
-                cx={shapeProps.cx}
-                cy={shapeProps.cy}
+                cx={markerCoordinates.cx}
+                cy={markerCoordinates.cy}
                 group={group}
                 label={getLegendaryMarkerLabel(group)}
                 onTurnSelect={onTurnSelect}
@@ -247,10 +247,10 @@ export function BattleHpTimelinePlot({
             key={group.key}
             ifOverflow="visible"
             r={0}
-            shape={(shapeProps) => (
+            shape={(markerCoordinates) => (
               <BattleHpTimelineEventMarker
-                cx={shapeProps.cx}
-                cy={shapeProps.cy}
+                cx={markerCoordinates.cx}
+                cy={markerCoordinates.cy}
                 group={group}
                 label={getEventMarkerLabel(group)}
                 onTurnSelect={onTurnSelect}

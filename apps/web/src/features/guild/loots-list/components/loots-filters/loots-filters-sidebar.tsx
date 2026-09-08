@@ -31,21 +31,19 @@ import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   getLootsControllerResolveLootItemByHidQueryKey,
   useLootsControllerResolveLootItemByHid,
+  type LootsControllerResolveLootItemByHidParams,
 } from "@lootlog/client/main";
 import {
   getItemsControllerGetItemsQueryKey,
   useItemsControllerGetItems,
-} from "@lootlog/client/search";
-import {
   getNpcsControllerGetNpcsQueryKey,
   useNpcsControllerGetNpcs,
-} from "@lootlog/client/search";
-import {
   getPlayersControllerGetPlayersQueryKey,
   usePlayersControllerGetPlayers,
 } from "@lootlog/client/search";
+
 import { ItemRarity } from "@/lib/loots/loot-types";
-import type { LootsControllerResolveLootItemByHidParams } from "@lootlog/client/main";
+
 import { formatItemHid, parseItemHid } from "@/lib/utils/hid-detection";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
 import { useTranslation } from "react-i18next";

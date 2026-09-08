@@ -158,11 +158,10 @@ const createRecencyIndex = () => {
 const getNpcWorldLookupKey = (
   notification: PresentableNotification | StoredNotification,
 ) => {
-  const regularNotification = notification as NotificationWithServers;
-  const npcId = regularNotification.npc?.id;
+  const npcId = "npc" in notification ? notification.npc?.id : undefined;
   return JSON.stringify([
-    regularNotification.world,
-    typeof npcId,
+    notification.world,
+    npcId === undefined ? "undefined" : "number",
     npcId ?? null,
   ]);
 };
@@ -209,7 +208,7 @@ const upsertNotificationBatch = (
     if (
       itemId === undefined &&
       !isPartyGatheringNotification(notification) &&
-      !(notification as NotificationWithServers).message
+      !("message" in notification && notification.message)
     ) {
       itemId = npcWorldIndex.getNewestItemId(
         getNpcWorldLookupKey(notification),
@@ -378,11 +377,11 @@ export const useNotificationsStore = create<NotificationsState>()(
             return true;
           }
 
-          const regularNotification = notification as NotificationWithServers;
+          const npc = "npc" in notification ? notification.npc : undefined;
           const shouldRemove =
-            regularNotification.npc?.id !== undefined &&
-            npcIdSet.has(regularNotification.npc.id) &&
-            (world ? regularNotification.world === world : true);
+            npc?.id !== undefined &&
+            npcIdSet.has(npc.id) &&
+            (world ? notification.world === world : true);
 
           if (shouldRemove) {
             if (!removedAnyNotification) {

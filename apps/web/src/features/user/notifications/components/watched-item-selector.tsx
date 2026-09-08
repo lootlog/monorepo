@@ -16,9 +16,11 @@ import {
   PopoverTrigger,
 } from "@lootlog/ui/components/popover";
 import { Spinner } from "@lootlog/ui/components/spinner";
-import { ItemImage } from "@lootlog/ui/components/item-image";
+import {
+  ItemImage,
+  resolveItemRarity,
+} from "@lootlog/ui/components/item-image";
 import type { SearchItemsResponseDtoOutputHitsItem } from "@lootlog/client/search";
-import { ItemRarity } from "@/lib/loots/loot-types";
 import { cn } from "cn";
 
 type GameItem = SearchItemsResponseDtoOutputHitsItem;
@@ -28,7 +30,7 @@ type WatchedItemSelectorProps = {
   loading: boolean;
   items: GameItem[];
   searchValue: string;
-  selectedItem: GameItem | null;
+  selectedItem: Pick<GameItem, "id" | "name" | "icon" | "rarity"> | null;
   placeholder: string;
   searchPlaceholder: string;
   emptyMessage: string;
@@ -103,10 +105,7 @@ export const WatchedItemSelector = ({
               {selectedItem ? (
                 <ItemImage
                   icon={selectedItem.icon}
-                  rarity={
-                    (selectedItem.rarity as ItemRarity | null) ??
-                    ItemRarity.COMMON
-                  }
+                  rarity={resolveItemRarity(selectedItem.rarity)}
                 />
               ) : (
                 <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -183,9 +182,7 @@ export const WatchedItemSelector = ({
                   />
                   <ItemImage
                     icon={item.icon}
-                    rarity={
-                      (item.rarity as ItemRarity | null) ?? ItemRarity.COMMON
-                    }
+                    rarity={resolveItemRarity(item.rarity)}
                   />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{item.name}</p>

@@ -11,7 +11,7 @@ import {
   notificationTargetTable,
   timerTable,
 } from "#src/database/drizzle/schema";
-import type { JsonValue } from "#src/notifications/notification-database.types";
+import type { JsonValue } from "#src/database/json";
 import type {
   NotificationJobStatus,
   NotificationOwnerType,
@@ -58,13 +58,13 @@ const mapJob = (
   job: typeof notificationJobTable.$inferSelect,
 ): NotificationStoredJob => ({
   ...job,
-  payloadSnapshot: job.payloadSnapshot as JsonValue,
+  payloadSnapshot: job.payloadSnapshot,
 });
 const mapRule = (
   rule: typeof notificationRuleTable.$inferSelect,
 ): NotificationStoredRule => ({
   ...rule,
-  filters: rule.filters as JsonValue | null,
+  filters: rule.filters,
 });
 
 export const makeNotificationJobStore = (database: ApiDatabaseValue) => {

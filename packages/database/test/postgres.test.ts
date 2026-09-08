@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { createServer, type Socket } from "node:net";
+import { createServer, type AddressInfo, type Socket } from "node:net";
 import { ManagedRuntime } from "effect";
 import { makePostgresLayer, PostgresPool } from "../src/postgres.js";
 
@@ -29,9 +29,9 @@ test("closes a stalled connection after startup times out", async () => {
     socket.on("close", () => sockets.delete(socket));
   });
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
-  const address = server.address();
-  if (!address || typeof address === "string")
-    throw new Error("Missing test server port");
+  // SAFETY: the awaited listener binds an IPv4 TCP port, so address is neither
+  // a Unix socket path nor null (the server has not been closed).
+  const address = server.address() as AddressInfo;
   const runtime = ManagedRuntime.make(
     makePostgresLayer({
       host: "127.0.0.1",

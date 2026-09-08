@@ -125,12 +125,12 @@ export class OnlineHistory {
       ),
     ).pipe(
       Effect.asVoid,
-      Effect.catch((cause) =>
+      Effect.catch((error) =>
         Effect.sync(() => {
           this.degradedUntil = this.now() + 180_000;
         }).pipe(
           Effect.andThen(
-            Effect.logError("Online history observation failed", cause),
+            Effect.logError("Online history observation failed", error),
           ),
         ),
       ),
@@ -154,7 +154,7 @@ export class OnlineHistory {
             userId: item.userId,
             sessionId: item.sessionId,
             segmentId: item.segmentId,
-            ...(item.world ? { world: item.world } : {}),
+            world: item.world || undefined,
             startedAt: new Date(item.started).toISOString(),
             endedAt: new Date(item.ended).toISOString(),
             observedAt: new Date(item.ended).toISOString(),
@@ -198,7 +198,7 @@ export class OnlineHistory {
         this.lastHealthAt = now;
       }
     }).pipe(
-      Effect.catch((cause) =>
+      Effect.catch((error) =>
         Effect.gen({ self: this }, function* () {
           const now = this.now();
           this.degradedUntil = now + 180_000;
@@ -224,7 +224,7 @@ export class OnlineHistory {
               ),
             );
           }
-          return yield* Effect.fail(cause);
+          return yield* Effect.fail(error);
         }),
       ),
     );
@@ -232,8 +232,8 @@ export class OnlineHistory {
 
   run() {
     return this.flush().pipe(
-      Effect.catch((cause) =>
-        Effect.logError("Online history delivery failed; retrying", cause),
+      Effect.catch((error) =>
+        Effect.logError("Online history delivery failed; retrying", error),
       ),
       Effect.repeat(Schedule.spaced(FLUSH_INTERVAL_MS)),
     );

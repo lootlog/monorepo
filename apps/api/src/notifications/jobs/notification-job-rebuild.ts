@@ -1,3 +1,4 @@
+import { isRecord } from "@lootlog/schema/records";
 import { scheduleNotificationOccurrence } from "./notification-scheduled-occurrence.js";
 import { Clock, Effect } from "effect";
 import type {
@@ -13,7 +14,7 @@ import {
   NotificationScheduleStrategy,
   NotificationTriggerType,
 } from "#src/notifications/notification-enums";
-import type { JsonValue } from "#src/notifications/notification-database.types";
+import type { JsonValue } from "#src/database/json";
 
 export interface TimerUpdatedEvent {
   readonly guildId: string;
@@ -199,12 +200,7 @@ export const makeNotificationJobRebuild = (
       timers,
       (timer) => {
         if (!matchesTimerRule(rule.filters, timer.npcId)) return Effect.void;
-        const npc =
-          timer.npc &&
-          typeof timer.npc === "object" &&
-          !Array.isArray(timer.npc)
-            ? (timer.npc as { readonly name?: string })
-            : null;
+        const npc = isRecord(timer.npc) ? timer.npc : null;
         return rebuildTimer(rule.id, { ...timer, npc });
       },
       { concurrency: "unbounded", discard: true },

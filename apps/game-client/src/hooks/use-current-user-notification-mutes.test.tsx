@@ -1,77 +1,58 @@
-import { renderHook } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { renderHook, waitFor } from "@testing-library/react";
+import { expect, it } from "vitest";
 import { defaultNotificationMutes } from "@lootlog/schema/user-preferences";
-import { useCurrentUserNotificationMutes } from "@/hooks/use-current-user-notification-mutes";
-
-const mockUseUserPreferences = vi.fn();
-
-vi.mock("@/hooks/api/use-user-preferences", () => ({
-  useUserPreferences: (...args: unknown[]) => mockUseUserPreferences(...args),
-}));
-
-vi.mock("@/store/global.store", () => ({
-  useGlobalStore: (
-    selector: (state: { gameState: { gameInitialized: boolean } }) => boolean,
-  ) =>
-    selector({
-      gameState: {
-        gameInitialized: true,
-      },
-    }),
-}));
-
-describe("useCurrentUserNotificationMutes", () => {
-  beforeEach(() => {
-    mockUseUserPreferences.mockReset();
+import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
+import { useGlobalStore } from "@/store/global.store";
+import { useCurrentUserNotificationMutes } from "./use-current-user-notification-mutes";
+const setup = () => {
+  useGlobalStore.setState({
+    gameState: {
+      ...useGlobalStore.getState().gameState,
+      gameInitialized: true,
+    },
   });
-
-  it("returns default mutes while preferences are unavailable", () => {
-    mockUseUserPreferences.mockReturnValue({
-      data: undefined,
-      isFetched: false,
-      isLoading: true,
-    });
-
-    const { result } = renderHook(() => useCurrentUserNotificationMutes());
-
-    expect(mockUseUserPreferences).toHaveBeenCalledWith(true);
-    expect(result.current.isReady).toBe(false);
-    expect(result.current.mutes).toEqual(defaultNotificationMutes);
+  return createGuildPreferencesTest();
+};
+it("returns default mutes while preferences are unavailable", () => {
+  const fixture = setup();
+  fixture.queryClient.removeQueries({ queryKey: fixture.preferencesKey });
+  fixture.request.mockImplementation(
+    () => new Promise<Response>(() => undefined),
+  );
+  const { result } = renderHook(() => useCurrentUserNotificationMutes(), {
+    wrapper: fixture.wrapper,
   });
-
-  it("marks the hook as ready once the query is fetched", () => {
-    mockUseUserPreferences.mockReturnValue({
-      data: undefined,
-      isFetched: true,
-      isLoading: false,
-    });
-
-    const { result } = renderHook(() => useCurrentUserNotificationMutes());
-
-    expect(result.current.isReady).toBe(true);
-    expect(result.current.mutes).toEqual(defaultNotificationMutes);
+  expect(result.current.isReady).toBe(false);
+  expect(result.current.mutes).toEqual(defaultNotificationMutes);
+});
+it("marks the hook ready after the request completes", async () => {
+  const fixture = setup();
+  fixture.queryClient.removeQueries({ queryKey: fixture.preferencesKey });
+  fixture.request.mockImplementation(() =>
+    Promise.resolve(Response.json({ message: "unavailable" }, { status: 400 })),
+  );
+  const { result } = renderHook(() => useCurrentUserNotificationMutes(), {
+    wrapper: fixture.wrapper,
   });
-
-  it("keeps the effective mutes reference stable while query data is unchanged", () => {
-    const preferences = {
-      mutes: {
-        players: [{ discordId: "discord-1", guildId: "guild-1" }],
-        npcs: [],
-      },
-    };
-    mockUseUserPreferences.mockReturnValue({
-      data: preferences,
-      isFetched: true,
-      isLoading: false,
-    });
-
-    const { result, rerender } = renderHook(() =>
-      useCurrentUserNotificationMutes(),
-    );
-    const firstMutes = result.current.mutes;
-
-    rerender();
-
-    expect(result.current.mutes).toBe(firstMutes);
+  await waitFor(() => expect(result.current.isReady).toBe(true));
+  expect(result.current.mutes).toEqual(defaultNotificationMutes);
+});
+it("keeps effective mutes stable while query data is unchanged", () => {
+  const fixture = setup();
+  fixture.setPreferences({
+    mutes: {
+      players: [{ discordId: "discord-1", displayName: "Tester" }],
+      npcs: [],
+    },
   });
+  const { result, rerender } = renderHook(
+    () => useCurrentUserNotificationMutes(),
+    { wrapper: fixture.wrapper },
+  );
+  const first = result.current.mutes;
+  rerender();
+  expect(result.current.mutes).toBe(first);
+  expect(first.players).toEqual([
+    { discordId: "discord-1", displayName: "Tester" },
+  ]);
 });

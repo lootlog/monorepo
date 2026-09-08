@@ -43,4 +43,7 @@ export interface SessionData extends AuthenticatedIdentity {
   backpressureStrikes: number;
 }
 
-export type GatewaySocket = Bun.ServerWebSocket<SessionData>;
+export type GatewaySocket = Pick<
+  Bun.ServerWebSocket<SessionData>,
+  "data" | "send" | "close" | "getBufferedAmount"
+>;

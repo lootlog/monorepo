@@ -1,3 +1,4 @@
+import type { TOptions } from "i18next";
 import type { Period } from "@/features/user/battle-panel/battle-panel-search";
 import type { BattleFilters } from "@/features/user/battle-panel/battle-panel-battles-list/utils/battle-filter-handlers";
 import {
@@ -23,7 +24,7 @@ export type BattlePanelActiveFilterLabel = {
   label: string;
 };
 
-type Translate = (key: string, options?: Record<string, unknown>) => string;
+type Translate = (key: string, options?: TOptions) => string;
 
 type BattleListChipLabelInput = {
   filters: BattleFilters;

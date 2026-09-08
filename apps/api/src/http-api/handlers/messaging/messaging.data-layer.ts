@@ -1,13 +1,11 @@
+import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import { activeGuildMemberJoin } from "#src/members/member-access-query";
 import { randomUUID } from "node:crypto";
 import { v4 as uuid } from "uuid";
 import { and, arrayOverlaps, eq, or } from "drizzle-orm";
 import { Clock, Effect, Layer, Schema } from "effect";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
-import {
-  RabbitRoutingKey,
-  type RabbitRoutingKeyName,
-} from "@lootlog/protocol/rabbit/topology";
+import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { Permission } from "@lootlog/schema/permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -77,17 +75,21 @@ export interface MessagingRedis {
     value: string,
     ttl: number,
   ) => Effect.Effect<unknown, unknown>;
-  readonly eval: <A>(
+  readonly eval: (
     script: string,
     keys: ReadonlyArray<string>,
     arguments_: ReadonlyArray<string | number>,
-  ) => Effect.Effect<A, unknown>;
+  ) => Effect.Effect<unknown, unknown>;
 }
 
 export interface MessagingEvents {
-  readonly publish: (
-    routingKey: RabbitRoutingKeyName,
-    payload: unknown,
+  readonly publish: <
+    Key extends
+      | typeof RabbitRoutingKey.GUILDS_NOTIFICATIONS_SEND
+      | typeof RabbitRoutingKey.GUILDS_NOTIFICATIONS_VOLUNTEER,
+  >(
+    routingKey: Key,
+    payload: CanonicalRabbitEvent<Key>,
   ) => Effect.Effect<void, unknown>;
 }
 
@@ -112,7 +114,7 @@ export const consumeNotificationRateLimit = (
   userId: string,
 ): Effect.Effect<NotificationRateLimitOutcome, DependencyUnavailableError> =>
   redis
-    .eval<unknown>(
+    .eval(
       RATE_LIMIT_SCRIPT,
       [buildNotificationRateLimitKey(userId)],
       [

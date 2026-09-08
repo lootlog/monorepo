@@ -11,25 +11,35 @@ const integer = (maximum = Number.MAX_SAFE_INTEGER) => ({
   schema: { type: "integer", minimum: 1, maximum },
 });
 const boolean = { schema: { type: "boolean" } };
-const parameterSchemas: Record<string, Record<string, unknown>> = {
-  "BattlesController_getDashboardBattles:size": {
-    schema: { type: "number", minimum: 1, maximum: 100, default: 20 },
-  },
-  "BattlesController_getDashboardBattles:minLevel": {
-    schema: { type: "number", minimum: 1, maximum: 1000 },
-  },
-  "BattlesController_getDashboardBattles:maxLevel": {
-    schema: { type: "number", minimum: 1, maximum: 1000 },
-  },
-  "BattlesController_getDashboardBattles:includeTotal": boolean,
-  "BattlesController_getDashboardBattles:public": boolean,
-  "BattlesController_getDashboardBattles:ph": boolean,
-  "BattlesController_getDashboardBattles:matchmaking": boolean,
-  "BattlesController_getBattleAnalytics:minLevel": integer(),
-  "BattlesController_getBattleAnalytics:maxLevel": integer(),
-  "BattlesController_getBattleAnalytics:ph": boolean,
-  "BattlesController_getBattleAnalytics:matchmaking": boolean,
+type ParameterPatch = {
+  schema: {
+    type: string;
+    minimum?: number;
+    maximum?: number;
+    default?: number;
+  };
 };
+const parameterSchemas = new Map<string, ParameterPatch>(
+  Object.entries({
+    "BattlesController_getDashboardBattles:size": {
+      schema: { type: "number", minimum: 1, maximum: 100, default: 20 },
+    },
+    "BattlesController_getDashboardBattles:minLevel": {
+      schema: { type: "number", minimum: 1, maximum: 1000 },
+    },
+    "BattlesController_getDashboardBattles:maxLevel": {
+      schema: { type: "number", minimum: 1, maximum: 1000 },
+    },
+    "BattlesController_getDashboardBattles:includeTotal": boolean,
+    "BattlesController_getDashboardBattles:public": boolean,
+    "BattlesController_getDashboardBattles:ph": boolean,
+    "BattlesController_getDashboardBattles:matchmaking": boolean,
+    "BattlesController_getBattleAnalytics:minLevel": integer(),
+    "BattlesController_getBattleAnalytics:maxLevel": integer(),
+    "BattlesController_getBattleAnalytics:ph": boolean,
+    "BattlesController_getBattleAnalytics:matchmaking": boolean,
+  }),
+);
 const statisticOperations = [
   "BattlesController_getCombatProfile",
   "BattlesController_getProfessionWinRate",
@@ -43,15 +53,15 @@ const statisticOperations = [
 ] as const;
 for (const operationId of statisticOperations) {
   for (const name of ["minLevel", "maxLevel", "size", "minBattles"] as const) {
-    parameterSchemas[`${operationId}:${name}`] = integer();
+    parameterSchemas.set(`${operationId}:${name}`, integer());
   }
   for (const name of ["includeTotal", "ph", "matchmaking"] as const) {
-    parameterSchemas[`${operationId}:${name}`] = boolean;
+    parameterSchemas.set(`${operationId}:${name}`, boolean);
   }
 }
-const responseDescriptions: Record<string, string> = {
-  "HealthzController_healthCheck:200": "API is healthy",
-};
+const responseDescriptions = new Map<string, string>([
+  ["HealthzController_healthCheck:200", "API is healthy"],
+]);
 for (const operationId of [
   "BattlesController_getBattleTimeline",
   "BattlesController_getBattle",
@@ -59,16 +69,20 @@ for (const operationId of [
   "BattlesController_deleteBattle",
   "BattlesController_getBattleRawData",
 ] as const) {
-  responseDescriptions[`${operationId}:404`] = "Battle not found";
+  responseDescriptions.set(`${operationId}:404`, "Battle not found");
 }
 for (const operationId of [
   "PublicBattlesController_getPublicBattle",
   "PublicBattlesController_getPublicBattleRaw",
   "PublicBattlesController_getPublicBattleTimeline",
 ] as const) {
-  responseDescriptions[`${operationId}:404`] = "Public battle not found";
+  responseDescriptions.set(`${operationId}:404`, "Public battle not found");
 }
-preserveOpenApi30Contract(document, parameterSchemas, responseDescriptions);
+preserveOpenApi30Contract(
+  document,
+  Object.fromEntries(parameterSchemas),
+  Object.fromEntries(responseDescriptions),
+);
 setOpenApiCompatibilityValue(
   document,
   [
@@ -100,12 +114,8 @@ const HTTP_METHODS = [
 for (const [path, pathItem] of Object.entries(document.paths)) {
   document.paths[path] = Object.fromEntries(
     Object.entries(pathItem).sort(([left], [right]) => {
-      const leftIndex = HTTP_METHODS.indexOf(
-        left as (typeof HTTP_METHODS)[number],
-      );
-      const rightIndex = HTTP_METHODS.indexOf(
-        right as (typeof HTTP_METHODS)[number],
-      );
+      const leftIndex = HTTP_METHODS.findIndex((method) => method === left);
+      const rightIndex = HTTP_METHODS.findIndex((method) => method === right);
 
       if (leftIndex === -1 || rightIndex === -1) {
         return left.localeCompare(right);

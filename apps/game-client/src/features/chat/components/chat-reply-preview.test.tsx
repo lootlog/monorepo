@@ -13,7 +13,7 @@ describe("ChatReplyPreview", () => {
             "A very long reply snippet that should stay inside the preview card without stretching it",
           type: MessageType.NORMAL,
         }}
-        onClear={vi.fn()}
+        onClear={vi.fn<() => void>()}
       />,
     );
 
@@ -34,8 +34,8 @@ describe("ChatReplyPreview", () => {
   });
 
   it("does not bubble the clear button click", () => {
-    const onClick = vi.fn();
-    const onClear = vi.fn();
+    const onClick = vi.fn<() => void>();
+    const onClear = vi.fn<() => void>();
 
     render(
       <ChatReplyPreview

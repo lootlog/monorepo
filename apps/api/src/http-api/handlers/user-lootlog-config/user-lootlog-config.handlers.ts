@@ -49,9 +49,9 @@ export interface UserLootlogConfigCache {
     key: string,
     schema: S,
   ) => Effect.Effect<S["Type"] | null, unknown>;
-  readonly setJson: (
+  readonly setJson: <Value>(
     key: string,
-    value: unknown,
+    value: Value,
     ttl: number,
   ) => Effect.Effect<void, unknown>;
   readonly deleteByPattern: (pattern: string) => Effect.Effect<void, unknown>;
@@ -89,7 +89,7 @@ export class UserLootlogConfigData extends Context.Service<
           cache
             .getJson(key, schema)
             .pipe(Effect.catch(() => Effect.succeed(null)));
-        const cacheWrite = (key: string, value: unknown) =>
+        const cacheWrite = <Value>(key: string, value: Value) =>
           cache.setJson(key, value, CACHE_TTL_SECONDS).pipe(Effect.ignore);
         const findGuilds = (discordId: string, permission: Permission) =>
           database

@@ -1,7 +1,6 @@
 import {
   findTimerMatches,
   findActiveTimerEventHeroes,
-  timerNpcField,
 } from "./timer-selection.js";
 import { upsertActorCharacter } from "./timer-actor-snapshot.js";
 
@@ -26,15 +25,21 @@ import { TimerHistoryAction } from "#src/timers/timers.types";
 import type { ResetTimerRequest } from "#src/contracts/timers/schemas";
 import type { TimersGuildAccess } from "./timers.handlers.js";
 import { TimersMemberNotFound, toTimersDataFailure } from "./timer-errors.js";
-import { mapTimerResponse } from "#src/timers/timer-projection";
+import {
+  mapTimerResponse,
+  timerNpcField,
+  type TimerPublishedEvent,
+} from "#src/timers/timer-projection";
 
 export interface ResetTimerPorts {
   readonly invalidate: (pattern: string) => Effect.Effect<unknown, unknown>;
-  readonly publish: (
-    routingKey:
+  readonly publish: <
+    Key extends
       | typeof RabbitRoutingKey.GUILDS_TIMERS_UPDATE
       | typeof RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
-    payload: unknown,
+  >(
+    routingKey: Key,
+    payload: TimerPublishedEvent<Key>,
   ) => Effect.Effect<unknown, unknown>;
   readonly withLock: <A, E>(
     key: string,

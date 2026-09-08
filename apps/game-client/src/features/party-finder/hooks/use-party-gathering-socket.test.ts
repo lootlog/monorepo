@@ -1,299 +1,146 @@
-import { renderHook } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { GatewayEvent } from "@/config/gateway";
+import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
+import { act, renderHook, waitFor } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+import {
+  getUsersControllerGetUserGameAccountPreferencesQueryKey,
+  getUsersControllerGetUserPreferencesQueryKey,
+  type UserGameAccountPreferencesResponseDtoOutput,
+  type UserPreferencesResponseDtoOutput,
+} from "@lootlog/client/main";
+import { createRealtimeTest } from "@/test/realtime-test";
+import {
+  createNotificationsSettings,
+  createDetectorSettings,
+} from "@/lib/game-account-preferences";
+import { useGameStore } from "@/store/game.store";
+import { useNotificationsStore } from "@/store/notifications.store";
+import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { usePartyGatheringSocket } from "./use-party-gathering-socket";
 
-const mockOn = vi.fn();
-const mockOff = vi.fn();
-const mockPresentNotifications = vi.fn();
-const mockRemoveNotification = vi.fn();
-
-let notificationSettingsState: {
-  accountId: string | null;
-  isReady: boolean;
-  settings: {
-    "party-gathering": {
-      show: boolean;
-      ignoreOtherWorlds: boolean;
-      guildIds: string[];
-      sound: boolean;
-    };
-  };
-};
-
-let notificationMutesState: {
-  isReady: boolean;
-  mutes: {
-    players: [];
-    npcs: [];
-  };
-};
-
-vi.mock("@/contexts/socket-context", () => ({
-  useSocket: () => ({
-    socket: {
-      on: mockOn,
-      off: mockOff,
-    },
-    connected: true,
-  }),
-}));
-
-vi.mock("@/hooks/auth/use-session", () => ({
-  useSession: () => ({
-    data: {
-      user: {
-        discordId: "self-discord-id",
-      },
-    },
-  }),
-}));
-
-vi.mock("@/hooks/use-current-game-account-notification-settings", () => ({
-  useCurrentGameAccountNotificationSettings: () => notificationSettingsState,
-}));
-
-vi.mock("@/hooks/use-current-user-notification-mutes", () => ({
-  useCurrentUserNotificationMutes: () => notificationMutesState,
-}));
-
-vi.mock("@/features/notifications/hooks/use-notification-presenter", () => ({
-  useNotificationPresenter: () => ({
-    presentNotifications: mockPresentNotifications,
-  }),
-}));
-
-vi.mock("@/store/notifications.store", () => ({
-  useNotificationsStore: (
-    selector: (state: {
-      removeNotification: typeof mockRemoveNotification;
-    }) => unknown,
-  ) =>
-    selector({
-      removeNotification: mockRemoveNotification,
-    }),
-}));
-
-vi.mock("@/lib/game", () => ({
-  Game: {
-    hero: {},
-    getWorldName: () => "pandora",
-  },
-}));
-
-describe("usePartyGatheringSocket", () => {
-  beforeEach(() => {
-    mockOn.mockReset();
-    mockOff.mockReset();
-    mockPresentNotifications.mockReset();
-    mockRemoveNotification.mockReset();
-
-    notificationSettingsState = {
-      accountId: null,
-      isReady: false,
-      settings: {
-        "party-gathering": {
-          show: true,
-          ignoreOtherWorlds: false,
-          guildIds: ["guild-1"],
-          sound: false,
-        },
-      },
-    };
-    notificationMutesState = {
-      isReady: false,
-      mutes: {
-        players: [],
-        npcs: [],
-      },
-    };
-  });
-
-  it("keeps queued party gathering notifications across startup account detection", () => {
-    const { rerender } = renderHook(() => usePartyGatheringSocket());
-    const sendHandler = mockOn.mock.calls.find(
-      ([eventName]) => eventName === GatewayEvent.PARTY_GATHERING_SEND,
-    )?.[1] as (data: {
-      notificationId: string;
-      guildId: string;
-      discordId: string;
-      world: string;
-      createdAt: string;
-      character: {
-        nick: string;
-        lvl: number;
-        prof: string;
-        characterId: string;
-        accountId: string;
-        icon: string;
-      };
-      description?: string;
-      minLvl?: number;
-      maxLvl?: number;
-    }) => void;
-
-    sendHandler({
-      notificationId: "notification-1",
+const notification = (index: number) => ({
+  v: 1 as const,
+  type: "party-gathering.updated" as const,
+  data: {
+    organizationId: "guild-1",
+    payload: {
+      notificationId: `notification-${index}`,
       guildId: "guild-1",
-      discordId: "other-discord-id",
+      discordId: `discord-${index}`,
       world: "pandora",
       createdAt: "2026-04-17T10:00:00.000Z",
       character: {
-        nick: "Hero",
+        nick: `Hero ${index}`,
         lvl: 100,
         prof: "w",
-        characterId: "10",
-        accountId: "20",
+        characterId: `${index}`,
+        accountId: `${index}`,
         icon: "hero.gif",
       },
+    },
+  },
+});
+const prepare = () => {
+  const test = createRealtimeTest();
+  useGameStore.setState({ game: null });
+  const settings = createNotificationsSettings(["guild-1"]);
+  settings["party-gathering"].sound = false;
+  const preferences: UserGameAccountPreferencesResponseDtoOutput = {
+    accountId: "202",
+    notifications: settings,
+    detector: createDetectorSettings(),
+    pings: { enabled: true },
+    airTags: { enabled: true },
+    hasStoredNotifications: true,
+    hasStoredDetector: true,
+    hasStoredPings: true,
+    hasStoredAirTags: true,
+    hasStoredPreferences: true,
+  };
+  const ready = async (mutedDiscordIds: string[] = []) => {
+    await act(() => {
+      setTestRuntimeGame({ hero: { accountId: "202" } });
+      test.queryClient.setQueryData(
+        getUsersControllerGetUserGameAccountPreferencesQueryKey({
+          accountId: "202",
+        }),
+        preferences,
+      );
+      test.queryClient.setQueryData<UserPreferencesResponseDtoOutput>(
+        getUsersControllerGetUserPreferencesQueryKey(),
+        {
+          userId: "user",
+          guildsOrder: [],
+          hiddenGuildIds: [],
+          theme: "dark",
+          chatAppearance: CHAT_APPEARANCE_READABLE_PRESET,
+          mutes: {
+            players: mutedDiscordIds.map((discordId) => ({
+              discordId,
+              displayName: discordId,
+            })),
+            npcs: [],
+          },
+        },
+      );
     });
+  };
+  return { ...test, ready };
+};
 
-    notificationSettingsState = {
-      ...notificationSettingsState,
-      accountId: "202",
-    };
-    rerender();
-
-    notificationSettingsState = {
-      ...notificationSettingsState,
-      isReady: true,
-    };
-    notificationMutesState = {
-      ...notificationMutesState,
-      isReady: true,
-    };
-    rerender();
-
-    expect(mockPresentNotifications).toHaveBeenCalledWith([
-      {
-        notification: expect.objectContaining({
+describe("usePartyGatheringSocket", () => {
+  it("keeps queued notifications across startup account detection", async () => {
+    const test = prepare();
+    renderHook(() => usePartyGatheringSocket(), { wrapper: test.wrapper });
+    test.open();
+    await test.receive(notification(1));
+    act(() => setTestRuntimeGame({ hero: { accountId: "202" } }));
+    expect(useNotificationsStore.getState().notifications).toHaveLength(0);
+    await test.ready();
+    await waitFor(() =>
+      expect(useNotificationsStore.getState().notifications).toEqual([
+        expect.objectContaining({
           notificationId: "notification-1",
           servers: ["guild-1"],
           type: "party-gathering",
         }),
-      },
-    ]);
+      ]),
+    );
   });
-
-  it("caps queued party gathering notifications before readiness", () => {
-    const { rerender } = renderHook(() => usePartyGatheringSocket());
-    const sendHandler = mockOn.mock.calls.find(
-      ([eventName]) => eventName === GatewayEvent.PARTY_GATHERING_SEND,
-    )?.[1] as (data: {
-      notificationId: string;
-      guildId: string;
-      discordId: string;
-      world: string;
-      createdAt: string;
-      character: {
-        nick: string;
-        lvl: number;
-        prof: string;
-        characterId: string;
-        accountId: string;
-        icon: string;
-      };
-    }) => void;
-
-    for (let index = 0; index < 105; index += 1) {
-      sendHandler({
-        notificationId: `notification-${index}`,
-        guildId: "guild-1",
-        discordId: `discord-${index}`,
-        world: "pandora",
-        createdAt: "2026-04-17T10:00:00.000Z",
-        character: {
-          nick: `Hero ${index}`,
-          lvl: 100,
-          prof: "w",
-          characterId: `${index}`,
-          accountId: `${index}`,
-          icon: "hero.gif",
-        },
-      });
-    }
-
-    notificationSettingsState = {
-      ...notificationSettingsState,
-      accountId: "202",
-      isReady: true,
-    };
-    notificationMutesState = {
-      ...notificationMutesState,
-      isReady: true,
-    };
-
-    rerender();
-
-    expect(mockPresentNotifications).toHaveBeenCalledTimes(1);
-    const presentedBatch = mockPresentNotifications.mock.calls[0]?.[0];
-    expect(presentedBatch).toHaveLength(100);
-    expect(presentedBatch).not.toContainEqual({
-      notification: expect.objectContaining({
-        notificationId: "notification-0",
-      }),
-    });
-    expect(presentedBatch).toContainEqual({
-      notification: expect.objectContaining({
-        notificationId: "notification-104",
-      }),
-    });
+  it("caps queued notifications before readiness", async () => {
+    const test = prepare();
+    renderHook(() => usePartyGatheringSocket(), { wrapper: test.wrapper });
+    test.open();
+    await test.receive(
+      ...Array.from({ length: 105 }, (_, index) => notification(index)),
+    );
+    // Hide the newest 55 after ingress so the presentation store's independent
+    // 50-item cap cannot mask whether ingress dropped the oldest five.
+    await test.ready(
+      Array.from({ length: 55 }, (_, index) => `discord-${index + 50}`),
+    );
+    await waitFor(() =>
+      expect(useNotificationsStore.getState().notifications).toHaveLength(45),
+    );
+    expect(useNotificationsStore.getState().notifications).not.toContainEqual(
+      expect.objectContaining({ notificationId: "notification-0" }),
+    );
+    expect(useNotificationsStore.getState().notifications).toContainEqual(
+      expect.objectContaining({ notificationId: "notification-49" }),
+    );
   });
-
-  it("drops queued party gathering notifications that were cancelled before readiness", () => {
-    const { rerender } = renderHook(() => usePartyGatheringSocket());
-    const sendHandler = mockOn.mock.calls.find(
-      ([eventName]) => eventName === GatewayEvent.PARTY_GATHERING_SEND,
-    )?.[1] as (data: {
-      notificationId: string;
-      guildId: string;
-      discordId: string;
-      world: string;
-      createdAt: string;
-      character: {
-        nick: string;
-        lvl: number;
-        prof: string;
-        characterId: string;
-        accountId: string;
-        icon: string;
-      };
-    }) => void;
-    const cancelHandler = mockOn.mock.calls.find(
-      ([eventName]) => eventName === GatewayEvent.PARTY_GATHERING_CANCEL,
-    )?.[1] as (data: { notificationId: string }) => void;
-
-    sendHandler({
-      notificationId: "notification-1",
-      guildId: "guild-1",
-      discordId: "other-discord-id",
-      world: "pandora",
-      createdAt: "2026-04-17T10:00:00.000Z",
-      character: {
-        nick: "Hero",
-        lvl: 100,
-        prof: "w",
-        characterId: "10",
-        accountId: "20",
-        icon: "hero.gif",
+  it("drops queued notifications cancelled before readiness", async () => {
+    const test = prepare();
+    renderHook(() => usePartyGatheringSocket(), { wrapper: test.wrapper });
+    test.open();
+    await test.receive(notification(1), {
+      v: 1,
+      type: "party-gathering.cancelled",
+      data: {
+        organizationId: "guild-1",
+        payload: { notificationId: "notification-1" },
       },
     });
-    cancelHandler({
-      notificationId: "notification-1",
-    });
-
-    notificationSettingsState = {
-      ...notificationSettingsState,
-      accountId: "202",
-      isReady: true,
-    };
-    notificationMutesState = {
-      ...notificationMutesState,
-      isReady: true,
-    };
-    rerender();
-
-    expect(mockPresentNotifications).not.toHaveBeenCalled();
-    expect(mockRemoveNotification).not.toHaveBeenCalled();
+    await test.ready();
+    expect(useNotificationsStore.getState().notifications).toHaveLength(0);
   });
 });

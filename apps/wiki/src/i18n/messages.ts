@@ -1,3 +1,4 @@
+import { createTranslationLookup } from "@lootlog/ui/i18n/translation-lookup";
 const messages = {
   meta: {
     title: "Lootlog Wiki",
@@ -174,23 +175,12 @@ const messages = {
   },
 } as const;
 
+const translations = createTranslationLookup(messages);
+
 function resolveMessage(path: string): string {
-  const value = path.split(".").reduce<unknown>((currentValue, segment) => {
-    if (
-      currentValue &&
-      typeof currentValue === "object" &&
-      segment in currentValue
-    ) {
-      return (currentValue as Record<string, unknown>)[segment];
-    }
-
-    return undefined;
-  }, messages);
-
-  if (typeof value !== "string") {
+  const value = translations.get(path);
+  if (value === undefined)
     throw new Error(`Missing translation for key: ${path}`);
-  }
-
   return value;
 }
 

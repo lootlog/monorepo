@@ -1,107 +1,86 @@
 // @vitest-environment happy-dom
-
-import { act, renderHook, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { GatewayEvent } from "@/config/gateway";
+import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
+import { afterEach, expect, it, vi } from "vitest";
+import type { BasicPresence } from "@lootlog/client/realtime";
+import { createTestGateway } from "@/lib/testing/gateway";
 import { isMemberOnlineOnWeb } from "./member-web-presence.utils";
 import { useMemberWebPresence } from "./use-member-web-presence";
 
-const mockUseGateway = vi.fn();
+const presence: BasicPresence = {
+  userId: "user-1",
+  discordId: "discord-1",
+  organizationIds: ["guild-1"],
+  sessionId: "session-1",
+  platform: "web-app",
+  status: "online",
+  confidence: "reported",
+  isAfk: false,
+  lastSeen: 1,
+};
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 
-vi.mock("@/hooks/utils/use-gateway", () => ({
-  useGateway: () => mockUseGateway(),
-}));
+it("fetches initial web presence from the gateway", async () => {
+  const gateway = createTestGateway();
+  gateway.request.mockResolvedValue({
+    organizationId: "guild-1",
+    revision: 1,
+    presences: [presence],
+  });
+  const { result } = renderHook(() => useMemberWebPresence("guild-1"), {
+    wrapper: gateway.wrapper,
+  });
+  await waitFor(() =>
+    expect(isMemberOnlineOnWeb(result.current, "discord-1")).toBe(true),
+  );
+  expect(gateway.request).toHaveBeenCalledWith("presence.fetch", {
+    organizationId: "guild-1",
+    world: undefined,
+  });
+});
 
-describe("useMemberWebPresence", () => {
-  const eventHandlers: Record<string, (data: unknown) => void> = {};
-  const emitSpy = vi.fn();
-  const mockSocket = {
-    emit(
-      event: string,
-      payload: { guildId: string },
-      callback?: (response: unknown) => void,
-    ) {
-      emitSpy(event, payload, callback);
-    },
-    on: vi.fn((event: string, handler: (data: unknown) => void) => {
-      eventHandlers[event] = handler;
+it("applies online and offline web presence updates", async () => {
+  const gateway = createTestGateway();
+  gateway.request.mockResolvedValue({
+    organizationId: "guild-1",
+    revision: 1,
+    presences: [],
+  });
+  const { result } = renderHook(() => useMemberWebPresence("guild-1"), {
+    wrapper: gateway.wrapper,
+  });
+  await waitFor(() => expect(result.current?.size).toBe(0));
+  act(() =>
+    gateway.deliver({
+      v: 1,
+      type: "presence.delta",
+      data: {
+        organizationId: "guild-1",
+        revision: 2,
+        changes: [{ action: "upsert", presence }],
+      },
     }),
-    off: vi.fn((event: string) => {
-      delete eventHandlers[event];
+  );
+  expect(isMemberOnlineOnWeb(result.current, "discord-1")).toBe(true);
+  act(() =>
+    gateway.deliver({
+      v: 1,
+      type: "presence.delta",
+      data: {
+        organizationId: "guild-1",
+        revision: 3,
+        changes: [
+          {
+            action: "remove",
+            userId: "user-1",
+            discordId: "discord-1",
+            sessionId: "session-1",
+          },
+        ],
+      },
     }),
-  };
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-
-    for (const eventName of Object.keys(eventHandlers)) {
-      delete eventHandlers[eventName];
-    }
-
-    mockUseGateway.mockReturnValue({
-      socket: mockSocket,
-      connected: true,
-      joined: true,
-    });
-  });
-
-  it("fetches initial web presence from the gateway", async () => {
-    emitSpy.mockImplementation((_, __, callback) => {
-      callback?.({
-        status: "success",
-        sessions: {
-          "discord-1": [{ sessionId: "session-1" }],
-        },
-      });
-    });
-
-    const { result } = renderHook(() => useMemberWebPresence("guild-1"));
-
-    await waitFor(() => {
-      expect(isMemberOnlineOnWeb(result.current, "discord-1")).toBe(true);
-    });
-
-    expect(emitSpy).toHaveBeenCalledWith(
-      GatewayEvent.MEMBER_WEB_PRESENCE_FETCH,
-      { guildId: "guild-1" },
-      expect.any(Function),
-    );
-  });
-
-  it("applies online and offline web presence updates", async () => {
-    emitSpy.mockImplementation((_, __, callback) => {
-      callback?.({
-        status: "success",
-        sessions: {},
-      });
-    });
-
-    const { result } = renderHook(() => useMemberWebPresence("guild-1"));
-
-    await waitFor(() => {
-      expect(result.current?.size).toBe(0);
-    });
-
-    act(() => {
-      eventHandlers[GatewayEvent.MEMBER_WEB_PRESENCE_UPDATE]?.({
-        guildId: "guild-1",
-        discordId: "discord-1",
-        sessionId: "session-1",
-        status: "online",
-      });
-    });
-
-    expect(isMemberOnlineOnWeb(result.current, "discord-1")).toBe(true);
-
-    act(() => {
-      eventHandlers[GatewayEvent.MEMBER_WEB_PRESENCE_UPDATE]?.({
-        guildId: "guild-1",
-        discordId: "discord-1",
-        sessionId: "session-1",
-        status: "offline",
-      });
-    });
-
-    expect(isMemberOnlineOnWeb(result.current, "discord-1")).toBe(false);
-  });
+  );
+  expect(isMemberOnlineOnWeb(result.current, "discord-1")).toBe(false);
 });

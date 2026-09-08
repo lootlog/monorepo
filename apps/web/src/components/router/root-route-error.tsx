@@ -36,7 +36,7 @@ export const RootRouteError = ({ error, reset }: ErrorComponentProps) => {
       <RouteErrorState
         status={normalizedStatus}
         description={getRouteErrorMessage(error)}
-        primaryAction={<RouteRetryButton onRetry={handleRetry} />}
+        primaryAction=<RouteRetryButton onRetry={handleRetry} />
         secondaryAction={
           <Button variant="outline" onClick={handleNavigate}>
             {actionLabel}

@@ -95,8 +95,12 @@ type AnalyticsFetchOptions = {
   whereMode?: "analytics" | "combat-profile";
 };
 
+type BattleAnalyticsDatabase = {
+  query: { battles: Pick<DrizzleDatabase["query"]["battles"], "findMany"> };
+};
+
 export const makeBattleAnalytics = (
-  drizzle: DrizzleDatabase,
+  drizzle: BattleAnalyticsDatabase,
   cache: BattleAnalyticsCache,
   queryModule: BattleAnalyticsQuery,
 ) => {
@@ -517,7 +521,7 @@ export const makeBattleAnalytics = (
   const getFilteredAnalyticsBattles = (options: AnalyticsFetchOptions) =>
     Effect.gen(function* () {
       const dateRange = queryModule.getDateRangeFilter(options.query);
-      const fetchedBattles = yield* drizzle.query.battles.findMany({
+      const fetchQuery = {
         where: {
           RAW: (table: typeof battles) =>
             options.whereMode === "combat-profile"
@@ -543,8 +547,15 @@ export const makeBattleAnalytics = (
         },
         columns: { statistics: false },
         with: { warriors: true },
-        ...(options.orderBy ? { orderBy: options.orderBy } : {}),
-      });
+      } satisfies NonNullable<
+        Parameters<typeof drizzle.query.battles.findMany>[0]
+      >;
+      const orderedQuery: typeof fetchQuery & {
+        orderBy?: AnalyticsBattleOrderBy;
+      } = fetchQuery;
+      if (options.orderBy) orderedQuery.orderBy = options.orderBy;
+      const fetchedBattles =
+        yield* drizzle.query.battles.findMany(orderedQuery);
 
       const inflatedBattles = domain.inflateBattleRows(fetchedBattles);
 

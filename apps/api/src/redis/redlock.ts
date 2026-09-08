@@ -9,13 +9,13 @@ interface RedlockOptions {
   automaticExtensionThreshold?: number;
 }
 
-const DEFAULT_OPTIONS: RedlockOptions = {
+const DEFAULT_OPTIONS = {
   driftFactor: 0.01,
   retryCount: 3,
   retryDelay: 100,
   retryJitter: 50,
   automaticExtensionThreshold: 500,
-};
+} satisfies Required<RedlockOptions>;
 
 const ACQUIRE_SCRIPT = `
 for _, key in ipairs(KEYS) do
@@ -80,7 +80,7 @@ class RedisLockManager {
     this.options = {
       ...DEFAULT_OPTIONS,
       ...options,
-    } as Required<RedlockOptions>;
+    };
   }
 
   async acquire(
@@ -102,8 +102,8 @@ class RedisLockManager {
         if (acquired === resources.length) {
           return new RedisLock(this.redis, resources, value);
         }
-      } catch (cause) {
-        lastCause = cause;
+      } catch (error) {
+        lastCause = error;
       }
 
       if (attempt < settings.retryCount) {
@@ -135,8 +135,8 @@ class RedisLockManager {
           }),
           (activeLock) =>
             Effect.tryPromise(() => activeLock.release()).pipe(
-              Effect.catch((cause) =>
-                Effect.logWarning("Failed to release Redis lock", cause),
+              Effect.catch((error) =>
+                Effect.logWarning("Failed to release Redis lock", error),
               ),
             ),
         );

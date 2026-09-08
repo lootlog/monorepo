@@ -1,3 +1,4 @@
+import { Option, Schema } from "effect";
 import type { BattleWarrior } from "#src/database/schema";
 import {
   BATTLE_WARRIOR_STATS_KEYS,
@@ -11,7 +12,9 @@ const BOOLEAN_STATS_KEYS = new Set<BattleWarriorStatsKey>([
   "fled",
 ]);
 
-type BattleWarriorStatsSource = Partial<Record<BattleWarriorStatsKey, unknown>>;
+type BattleWarriorStatsSource = Partial<
+  Pick<BattleWarrior, BattleWarriorStatsKey>
+>;
 type BattleWarriorStatsFallback = (
   key: BattleWarriorStatsKey,
 ) => BattleWarriorStats[BattleWarriorStatsKey];
@@ -34,34 +37,26 @@ function getDefaultStatValue(key: BattleWarriorStatsKey) {
   return 0;
 }
 
-function normalizeStatValue(
-  key: BattleWarriorStatsKey,
-  value: unknown,
-  fallback: BattleWarriorStats[BattleWarriorStatsKey],
-): BattleWarriorStats[BattleWarriorStatsKey] {
-  if (key === "spellsUsedMap") {
-    return value && typeof value === "object" && !Array.isArray(value)
-      ? (value as Record<string, number>)
-      : fallback;
-  }
-
-  if (BOOLEAN_STATS_KEYS.has(key)) {
-    return typeof value === "boolean" ? value : fallback;
-  }
-
-  return typeof value === "number" ? value : fallback;
-}
+const decodeSpells = Schema.decodeUnknownOption(
+  Schema.Record(Schema.String, Schema.Number),
+);
+const decodeBoolean = Schema.decodeUnknownOption(Schema.Boolean);
+const decodeNumber = Schema.decodeUnknownOption(Schema.Number);
 
 function normalizeBattleWarriorStats(
   source: BattleWarriorStatsSource,
   getFallback: BattleWarriorStatsFallback,
 ): BattleWarriorStats {
-  return BATTLE_WARRIOR_STATS_KEYS.reduce<
-    Partial<Record<BattleWarriorStatsKey, unknown>>
-  >((stats, key) => {
-    stats[key] = normalizeStatValue(key, source[key], getFallback(key));
-    return stats;
-  }, {}) as BattleWarriorStats;
+  const entries = BATTLE_WARRIOR_STATS_KEYS.map((key) => {
+    const fallback = () => getFallback(key);
+    if (key === "spellsUsedMap")
+      return [key, Option.getOrElse(decodeSpells(source[key]), fallback)];
+    if (BOOLEAN_STATS_KEYS.has(key))
+      return [key, Option.getOrElse(decodeBoolean(source[key]), fallback)];
+    return [key, Option.getOrElse(decodeNumber(source[key]), fallback)];
+  });
+  // SAFETY: Every key in the stats type is enumerated once; key-specific schemas validate values, and both private fallback callers supply the corresponding stat's default or legacy value. Object.fromEntries loses that key/value correlation.
+  return Object.fromEntries(entries) as BattleWarriorStats;
 }
 
 export function buildBattleWarriorStats(
@@ -72,18 +67,13 @@ export function buildBattleWarriorStats(
 
 function mergeBattleWarriorStats(
   legacyStats: BattleWarriorStats,
-  storedStats: unknown,
+  storedStats: BattleWarrior["stats"],
 ): BattleWarriorStats {
-  if (!storedStats || typeof storedStats !== "object") {
+  if (!Schema.is(Schema.Record(Schema.String, Schema.Unknown))(storedStats)) {
     return legacyStats;
   }
 
-  const storedStatsRecord = storedStats as Partial<BattleWarriorStats>;
-
-  return normalizeBattleWarriorStats(
-    storedStatsRecord,
-    (key) => legacyStats[key],
-  );
+  return normalizeBattleWarriorStats(storedStats, (key) => legacyStats[key]);
 }
 
 export function inflateBattleWarrior(
@@ -94,9 +84,7 @@ export function inflateBattleWarrior(
     statsVersion: _statsVersion,
     ...warriorWithoutStorageFields
   } = warrior;
-  const legacyStats = buildBattleWarriorStats(
-    warriorWithoutStorageFields as BattleWarriorStatsSource,
-  );
+  const legacyStats = buildBattleWarriorStats(warriorWithoutStorageFields);
 
   return {
     ...warriorWithoutStorageFields,
@@ -110,7 +98,7 @@ export function inflateBattleWarriorsInBattle<
   return {
     ...battle,
     warriors: battle.warriors.map(inflateBattleWarrior),
-  } as TBattle & { warriors: InflatedBattleWarrior[] };
+  };
 }
 
 export function inflateBattleWarriorsInBattles<

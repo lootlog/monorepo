@@ -27,7 +27,7 @@ import { useWindowsStore } from "@/store/windows.store";
 import type { NotificationMutesPatch } from "@lootlog/schema/user-preferences";
 import type { NotificationsSettings } from "@lootlog/schema/account-preferences";
 import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
-import type { PartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
+import { decodePartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
 import { type FC, useEffect, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 
@@ -163,9 +163,8 @@ export const NotificationsList: FC<NotificationsListProps> = ({
       },
       {
         onSuccess: (projection) => {
-          mergeReadyRoomProjection(
-            projection as unknown as PartyReadyRoomProjection,
-          );
+          if (projection.schemaVersion !== 3) return;
+          mergeReadyRoomProjection(decodePartyReadyRoomProjection(projection));
           setOpen("notifications", false);
           setOpen("party-finder", true);
           clearNotifications();

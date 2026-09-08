@@ -21,10 +21,18 @@ export const NPC_TYPE_SORT_ORDER = [
   NpcType.ELITE,
 ];
 
-export const ITEM_RARITY_NAMES: Record<string, string> = {
-  LEGENDARY: "Legendarny",
-  HEROIC: "Heroiczny",
-  UNIQUE: "Unikatowy",
-  UPGRADED: "Ulepszony",
-  COMMON: "Zwykły",
+export const ITEM_RARITY_NAMES = new Map([
+  ["LEGENDARY", "Legendarny"],
+  ["HEROIC", "Heroiczny"],
+  ["UNIQUE", "Unikatowy"],
+  ["UPGRADED", "Ulepszony"],
+  ["COMMON", "Zwykły"],
+]);
+
+export const findNpcType = (value: string | null) =>
+  Object.values(NpcType).find((type) => type === value);
+
+export const getNpcTypeName = (value: string) => {
+  const type = findNpcType(value);
+  return type ? NPC_TYPE_NAMES[type] : value;
 };

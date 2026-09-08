@@ -14,13 +14,13 @@ import {
 const MAX_PENDING_EVENTS = 1_000;
 const MAX_PENDING_FACTS = 10_000;
 
-type ScheduledWork = unknown;
+type ScheduledWork = ReturnType<typeof setTimeout> | number;
 
 type Dependencies = {
   bridge: Pick<MargonemRuntimeBridge, "subscribeApplied">;
   cancel: (work: ScheduledWork) => void;
   onOverflow?: () => void;
-  onProcessingError?: (error: unknown) => void;
+  onProcessingError?: (cause: unknown) => void;
   projection: Pick<RuntimeStateProjection, "apply" | "captureIngress">;
   schedule: (callback: () => void) => ScheduledWork;
 };
@@ -29,7 +29,7 @@ const defaultSchedule = (callback: () => void): ScheduledWork =>
   setTimeout(callback, 0);
 
 const defaultCancel = (work: ScheduledWork): void => {
-  clearTimeout(work as ReturnType<typeof setTimeout>);
+  clearTimeout(work);
 };
 
 export class RuntimeEventPipeline {
@@ -195,9 +195,9 @@ export class RuntimeEventPipeline {
     return this.queue.length - this.queueHead;
   }
 
-  private reportProcessingError(error: unknown): void {
+  private reportProcessingError(cause: unknown): void {
     try {
-      this.onProcessingError?.(error);
+      this.onProcessingError?.(cause);
     } catch {
       // Diagnostics must never interrupt the runtime event queue.
     }
@@ -207,9 +207,9 @@ export class RuntimeEventPipeline {
 export const runtimeEventPipeline = new RuntimeEventPipeline({
   onOverflow: () => {
     setTimeout(() => {
-      const runtimeWindow = window as Window & {
+      const runtimeWindow: Window & {
         __lootlogGameClientRuntime?: { dispose: () => void };
-      };
+      } = window;
       runtimeWindow.__lootlogGameClientRuntime?.dispose();
     }, 0);
   },

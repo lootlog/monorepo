@@ -22,7 +22,7 @@ describe("log actions retry", () => {
 
   it("retries network errors and logs each attempt in one action", async () => {
     const execute = vi
-      .fn()
+      .fn<() => Promise<{ status: number; data: { ok: boolean } }>>()
       .mockRejectedValueOnce(new Error("net::ERR_CONNECTION_CLOSED"))
       .mockResolvedValueOnce({
         status: 201,
@@ -111,7 +111,7 @@ describe("log actions retry", () => {
 
   it("retries transient HTTP statuses", async () => {
     const execute = vi
-      .fn()
+      .fn<() => Promise<{ status: number; data: { battleId: string } }>>()
       .mockRejectedValueOnce({
         message: "Bad gateway",
         status: 502,
@@ -139,7 +139,7 @@ describe("log actions retry", () => {
   });
 
   it("does not retry validation or auth failures", async () => {
-    const execute = vi.fn().mockRejectedValueOnce({
+    const execute = vi.fn<() => Promise<never>>().mockRejectedValueOnce({
       message: "Bad request",
       status: 400,
       data: { message: "invalid payload" },
@@ -190,7 +190,11 @@ describe("log value retention", () => {
   });
 
   it("serializes cyclic and oversized values into a bounded diagnostic", () => {
-    const payload: Record<string, unknown> = {
+    type CyclicPayload = {
+      events: Array<{ index: number; message: string }>;
+      self?: CyclicPayload;
+    };
+    const payload: CyclicPayload = {
       events: Array.from({ length: 1_100 }, (_, index) => ({
         index,
         message: "x".repeat(20_000),

@@ -1,4 +1,3 @@
-import type { W } from "@lootlog/margonem/game-events";
 import { describe, expect, it } from "vitest";
 import type { BattleWarriorsWithAccountId } from "@/store/game-store/battle.store";
 import {
@@ -34,7 +33,7 @@ describe("mergeBattleWarriorPatches", () => {
     const patches = {
       "101": { hpp: 75 },
       "-501": { hpp: 0 },
-    } as unknown as W;
+    } satisfies Parameters<typeof mergeBattleWarriorPatches>[0];
 
     const mergedWarriors = mergeBattleWarriorPatches(patches, currentWarriors);
 

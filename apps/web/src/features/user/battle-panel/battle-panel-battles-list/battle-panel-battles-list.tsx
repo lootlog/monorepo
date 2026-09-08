@@ -1,6 +1,7 @@
 import {
   toggleBattleSearchWarrior,
   createBattleFilterHandlers,
+  type BattleFilters,
 } from "@/features/user/battle-panel/battle-panel-battles-list/utils/battle-filter-handlers";
 import { BattlesList } from "@/features/user/battle-panel/battle-panel-battles-list/components/battles-list";
 import { FiltersSidebar } from "@/features/user/battle-panel/battle-panel-battles-list/components/filters-sidebar";
@@ -12,7 +13,7 @@ import {
 } from "@/features/user/battle-panel/components/battle-panel-active-filter-helpers";
 import { MobileFiltersDrawer } from "@/components/filters/mobile-filters-drawer";
 import { useQueryStates } from "nuqs";
-import type { BattleFilters } from "@/features/user/battle-panel/battle-panel-battles-list/utils/battle-filter-handlers";
+
 import {
   battlePanelBattlesSearchParsers,
   getBattlePanelCursorPaginationForCursor,

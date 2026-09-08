@@ -1,5 +1,7 @@
 import {
   CAT_THEME_VARIANTS,
+  DEFAULT_THEME_ID,
+  THEME_IDS,
   DEFAULT_CAT_THEME_VARIANT,
   THEME_CLASS_IDS,
   type CatThemeVariant,
@@ -8,14 +10,12 @@ import {
   type ThemeId,
 } from "./catalog";
 
-const CAT_THEME_VARIANT_SET = new Set<CatThemeVariant>(CAT_THEME_VARIANTS);
-
 const isResolvedCatTheme = (
   theme: ResolvedThemeId | null | undefined,
 ): theme is CatThemeVariant =>
   theme !== null &&
   theme !== undefined &&
-  CAT_THEME_VARIANT_SET.has(theme as CatThemeVariant);
+  CAT_THEME_VARIANTS.some((variant) => variant === theme);
 
 export const isCatTheme = (
   theme: ThemeId | ResolvedThemeId | null | undefined,
@@ -98,3 +98,10 @@ export const getThemeGreetingSuffix = (
   if (isRiasTheme(theme)) return "♔";
   return "👋";
 };
+
+export const isThemeId = (value: string): value is ThemeId =>
+  THEME_IDS.some((theme) => theme === value);
+
+export const resolveStoredTheme = (
+  value: string | null | undefined,
+): ThemeId => (value && isThemeId(value) ? value : DEFAULT_THEME_ID);

@@ -161,26 +161,26 @@ export type OutcomeActionType = (typeof OUTCOME_ACTION_TYPES)[number];
 export const isSystemAction = (
   actionType: string,
 ): actionType is SystemActionType =>
-  SYSTEM_ACTION_TYPES.includes(actionType as SystemActionType);
+  SYSTEM_ACTION_TYPES.some((candidate) => candidate === actionType);
 
 const isSpellAction = (actionType: string): actionType is SpellActionType =>
-  SPELL_ACTION_TYPES.includes(actionType as SpellActionType);
+  SPELL_ACTION_TYPES.some((candidate) => candidate === actionType);
 
 export const isBuffAction = (
   actionType: string,
 ): actionType is BuffActionType =>
-  BUFF_ACTION_TYPES.includes(actionType as BuffActionType);
+  BUFF_ACTION_TYPES.some((candidate) => candidate === actionType);
 
 const isPassiveAction = (actionType: string): actionType is PassiveActionType =>
-  PASSIVE_ACTION_TYPES.includes(actionType as PassiveActionType);
+  PASSIVE_ACTION_TYPES.some((candidate) => candidate === actionType);
 
 const isAttackAction = (actionType: string): actionType is AttackActionType =>
-  ATTACK_ACTION_TYPES.includes(actionType as AttackActionType);
+  ATTACK_ACTION_TYPES.some((candidate) => candidate === actionType);
 
 export const isOutcomeAction = (
   actionType: string,
 ): actionType is OutcomeActionType =>
-  OUTCOME_ACTION_TYPES.includes(actionType as OutcomeActionType);
+  OUTCOME_ACTION_TYPES.some((candidate) => candidate === actionType);
 
 export const isSpellActionInContext = (
   actionType: string,

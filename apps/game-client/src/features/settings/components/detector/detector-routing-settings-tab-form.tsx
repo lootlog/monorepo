@@ -57,7 +57,7 @@ const createEmptyRoutingRule = (): DetectorRoutingRule => ({
 });
 
 const normalizeRoutingRuleText = (name?: string) => {
-  if (typeof name !== "string") {
+  if (name === undefined) {
     return undefined;
   }
 
@@ -210,7 +210,7 @@ export const DetectorRoutingSettingsTabForm: FC = () => {
     reset(nextFormValues);
   }, [currentRoutingRules, getValues, reset]);
 
-  const watchedData = useWatch({ control }) as FormData;
+  const watchedData = useWatch({ control });
   const routingRules = watchedData.routingRules ?? [];
   const availableRuleIds = new Set(routingRules.map((rule) => rule.id));
   const visibleOpenRuleIds = new Set(
@@ -226,7 +226,7 @@ export const DetectorRoutingSettingsTabForm: FC = () => {
 
     const nextRoutingRules = normalizeRoutingRules(
       getValues().routingRules ?? [],
-      JSON.parse(availableGuildIdsJson) as string[],
+      availableGuildIds,
     );
 
     if (areRoutingRulesEqual(nextRoutingRules, currentRoutingRules)) {

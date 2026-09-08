@@ -86,7 +86,7 @@ const EventActionDialogSimple = ({
             {t("common.cancel")}
           </AlertDialogCancel>
           <AlertDialogAction
-            render={<Button loading={isPending} />}
+            render=<Button loading={isPending} />
             onClick={(e) => {
               e.preventBaseUIHandler();
               void handleConfirm();
@@ -180,7 +180,7 @@ const EventActionDialogWithConfirmation = ({
             {t("common.cancel")}
           </AlertDialogCancel>
           <AlertDialogAction
-            render={<Button loading={isPending} />}
+            render=<Button loading={isPending} />
             disabled={isPending || !isConfirmationValid}
             className={
               isDestructive

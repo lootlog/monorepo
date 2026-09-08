@@ -4,7 +4,7 @@ import {
 } from "@lootlog/domain/chat-message-permissions";
 import { Permission } from "@lootlog/schema/permissions";
 import type { ServerEvent } from "@lootlog/protocol/realtime";
-import { Predicate } from "effect";
+import { Option, Schema } from "effect";
 import type { SessionData } from "#src/realtime/session";
 
 type ChatEvent = Extract<typeof ServerEvent.Type, { type: "chat.created" }>;
@@ -19,11 +19,12 @@ export const chatMessagePermissions = (
   const permissions = guild?.roles.flatMap((role) => role.permissions) ?? [];
   if (guild?.guild.ownerId === session.discordId)
     permissions.push(Permission.OWNER);
-  const payload = event.data.payload;
-  if (!Predicate.isObject(payload) || typeof payload.senderId !== "string")
-    return { canEdit: false, canDelete: false };
+  const payload = Schema.decodeUnknownOption(
+    Schema.Struct({ senderId: Schema.String }),
+  )(event.data.payload);
+  if (Option.isNone(payload)) return { canEdit: false, canDelete: false };
   const viewer = { discordId: session.discordId, permissions };
-  const message = { senderId: payload.senderId };
+  const message = { senderId: payload.value.senderId };
   return {
     canEdit: canEditChatMessage(viewer, message),
     canDelete: canDeleteChatMessage(viewer, message),
@@ -38,8 +39,15 @@ export const withChatMessagePermissions = (
   data: {
     ...event.data,
     payload: {
-      ...(Predicate.isObject(event.data.payload) ? event.data.payload : {}),
-      ...permissions,
+      ...Option.match(
+        Schema.decodeUnknownOption(
+          Schema.Record(Schema.String, Schema.Unknown),
+        )(event.data.payload),
+        {
+          onNone: () => permissions,
+          onSome: (payload) => ({ ...payload, ...permissions }),
+        },
+      ),
     },
   },
 });

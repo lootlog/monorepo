@@ -1,9 +1,9 @@
 // @vitest-environment happy-dom
 import { createElement, type ReactNode } from "react";
 import { cleanup, renderHook, waitFor } from "@testing-library/react";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { useBattlesControllerGetCombatProfile } from "@lootlog/client/battlelog";
-import { QueryClient } from "@tanstack/react-query";
+
 import {
   createMemoryHistory,
   createRootRouteWithContext,
@@ -12,7 +12,7 @@ import {
 } from "@tanstack/react-router";
 import { configureApiClients } from "@lootlog/client/transport";
 import { afterEach, expect, it, vi } from "vitest";
-import { Route } from "../../../routes/_authenticated/@me/battle-panel/statistics";
+import { loadBattlePanelStatistics } from "./battle-panel-route-loader";
 import type { RouterContext } from "@/App";
 
 const makeRouter = (queryClient: QueryClient) => {
@@ -23,19 +23,7 @@ const makeRouter = (queryClient: QueryClient) => {
     validateSearch: (search) => ({
       characterId: String(search.characterId ?? ""),
     }),
-    loader: (context) => {
-      const loader = Route.options.loader;
-      if (typeof loader !== "function")
-        throw new Error("Expected statistics loader");
-      // The isolated router supplies every context field consumed by this loader.
-      const isolatedLoader = loader as (input: {
-        abortController: AbortController;
-        context: { queryClient: QueryClient };
-        location: { searchStr: string };
-        preload: boolean;
-      }) => Promise<unknown>;
-      return isolatedLoader(context);
-    },
+    loader: loadBattlePanelStatistics,
   });
   return createRouter({
     routeTree: root.addChildren([route]),

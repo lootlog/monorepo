@@ -1,48 +1,36 @@
+import { RouterProvider } from "@tanstack/react-router";
+import { createOrganizationTestRouter } from "@/lib/testing/router";
 // @vitest-environment happy-dom
 
+import { initializeTestTranslations } from "@/lib/testing/i18n";
 import {
   cleanup,
   fireEvent,
   render,
   screen,
   within,
+  waitFor,
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_RESERVATION_SETTINGS } from "@lootlog/domain/reservations";
 import { ScheduleHeader } from "./schedule-header";
 
-const navigate = vi.fn<(options: { to: string }) => void>();
-
-vi.mock("@tanstack/react-router", () => ({
-  useNavigate: () => navigate,
-}));
-
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string) => {
-      const translations: Record<string, string> = {
-        "reservations.schedule.header.actions": "Akcje kalendarza rezerwacji",
-        "reservations.schedule.header.addReservation": "Dodaj rezerwację",
-        "reservations.schedule.header.findNearestSlot":
-          "Znajdź najbliższy wolny termin",
-        "reservations.schedule.header.findingNearestSlot":
-          "Szukanie wolnego terminu",
-        "reservations.schedule.header.info": "Zasady rezerwacji",
-        "reservations.schedule.header.settings": "Ustawienia rezerwacji",
-        "reservations.schedule.header.today": "Dzisiaj",
-      };
-
-      return translations[key] ?? key;
-    },
-  }),
-}));
+await initializeTestTranslations({
+  "reservations.schedule.header.actions": "Akcje kalendarza rezerwacji",
+  "reservations.schedule.header.addReservation": "Dodaj rezerwację",
+  "reservations.schedule.header.findNearestSlot":
+    "Znajdź najbliższy wolny termin",
+  "reservations.schedule.header.findingNearestSlot": "Szukanie wolnego terminu",
+  "reservations.schedule.header.info": "Zasady rezerwacji",
+  "reservations.schedule.header.settings": "Ustawienia rezerwacji",
+  "reservations.schedule.header.today": "Dzisiaj",
+});
 
 afterEach(() => {
   cleanup();
-  navigate.mockReset();
 });
 
-const renderHeader = ({
+const renderHeader = async ({
   canManageReservationSettings = true,
   isCompact,
   isFindingNearestFreeSlot = false,
@@ -55,7 +43,7 @@ const renderHeader = ({
   const onFindNearestFreeSlot = vi.fn<() => void>();
   const onToday = vi.fn<() => void>();
 
-  const result = render(
+  const router = createOrganizationTestRouter(
     <ScheduleHeader
       spotName="Driady"
       date={new Date(2026, 7, 26)}
@@ -72,23 +60,36 @@ const renderHeader = ({
     />,
   );
 
-  return { ...result, onAddReservation, onFindNearestFreeSlot, onToday };
+  await router.load();
+  const result = render(<RouterProvider router={router} />);
+  return {
+    ...result,
+    router,
+    onAddReservation,
+    onFindNearestFreeSlot,
+    onToday,
+  };
 };
 
 describe("ScheduleHeader", () => {
   it.each([true, false])(
     "names the calendar with one page heading (compact: %s)",
-    (isCompact) => {
-      renderHeader({ isCompact });
+    async (isCompact) => {
+      await renderHeader({ isCompact });
       expect(
         screen.getByRole("heading", { level: 1, name: "Driady" }),
       ).toBeTruthy();
       expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     },
   );
-  it("moves every compact action into a rounded floating toolbar", () => {
-    const { container, onAddReservation, onFindNearestFreeSlot, onToday } =
-      renderHeader({ isCompact: true });
+  it("moves every compact action into a rounded floating toolbar", async () => {
+    const {
+      container,
+      router,
+      onAddReservation,
+      onFindNearestFreeSlot,
+      onToday,
+    } = await renderHeader({ isCompact: true });
     const header = container.querySelector("header");
     const toolbar = screen.getByRole("toolbar", {
       name: "Akcje kalendarza rezerwacji",
@@ -136,14 +137,16 @@ describe("ScheduleHeader", () => {
     fireEvent.click(addAction);
     expect(onToday).toHaveBeenCalledOnce();
     expect(onFindNearestFreeSlot).toHaveBeenCalledOnce();
-    expect(navigate).toHaveBeenCalledWith({
-      to: "/guild/settings/reservations",
-    });
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe(
+        "/guild/settings/reservations",
+      ),
+    );
     expect(onAddReservation).toHaveBeenCalledOnce();
   });
 
-  it("keeps the toolbar in the header for the wide layout", () => {
-    const { container } = renderHeader({ isCompact: false });
+  it("keeps the toolbar in the header for the wide layout", async () => {
+    const { container } = await renderHeader({ isCompact: false });
     const header = container.querySelector("header");
     const toolbar = screen.getByRole("toolbar", {
       name: "Akcje kalendarza rezerwacji",
@@ -158,8 +161,8 @@ describe("ScheduleHeader", () => {
     ).toBeNull();
   });
 
-  it("announces date changes without changing the navigation controls", () => {
-    const { container } = renderHeader({ isCompact: true });
+  it("announces date changes without changing the navigation controls", async () => {
+    const { container } = await renderHeader({ isCompact: true });
     const dateLabel = container.querySelector("header p");
 
     expect(dateLabel?.getAttribute("aria-live")).toBe("polite");
@@ -175,8 +178,8 @@ describe("ScheduleHeader", () => {
     ).not.toBeNull();
   });
 
-  it("centers compact date navigation across the full header width", () => {
-    const { container } = renderHeader({ isCompact: true });
+  it("centers compact date navigation across the full header width", async () => {
+    const { container } = await renderHeader({ isCompact: true });
     const dateNavigation = container.querySelector(
       '[data-slot="schedule-date-navigation"]',
     );
@@ -189,8 +192,8 @@ describe("ScheduleHeader", () => {
     expect(dateNavigation?.className).not.toContain("w-48");
   });
 
-  it("omits settings from the compact dock without management access", () => {
-    renderHeader({
+  it("omits settings from the compact dock without management access", async () => {
+    await renderHeader({
       canManageReservationSettings: false,
       isCompact: true,
     });
@@ -206,8 +209,8 @@ describe("ScheduleHeader", () => {
     expect(within(toolbar).getAllByRole("button")).toHaveLength(4);
   });
 
-  it("disables the nearest-slot action while searching", () => {
-    renderHeader({ isCompact: true, isFindingNearestFreeSlot: true });
+  it("disables the nearest-slot action while searching", async () => {
+    await renderHeader({ isCompact: true, isFindingNearestFreeSlot: true });
 
     const action = screen.getByRole("button", {
       name: "Znajdź najbliższy wolny termin",

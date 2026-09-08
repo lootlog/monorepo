@@ -25,8 +25,8 @@ export const QuickAccessButton: FC<QuickAccessButtonProps> = ({
   const handleClick = () => {
     if (href) {
       window.open(href, "_blank");
-    } else {
-      toggleOpen(id as WindowId);
+    } else if (id !== "lootlog-app") {
+      toggleOpen(id);
     }
   };
 
@@ -36,6 +36,7 @@ export const QuickAccessButton: FC<QuickAccessButtonProps> = ({
         <Button
           className="ll:quick-access-button ll-custom-cursor-pointer ll:h-6"
           onClick={handleClick}
+          aria-label={title}
         >
           {icon}
         </Button>

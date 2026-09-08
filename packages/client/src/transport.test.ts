@@ -6,6 +6,7 @@ import {
   createApiClient,
   executeApiRequest,
   getApiErrorMessage,
+  getApiErrorStringField,
   getApiErrorStatus,
   isApiError,
 } from "./transport";
@@ -352,5 +353,34 @@ describe("API client transport", () => {
     expect(getApiErrorMessage(error)).toBe("Invalid request");
     expect(getApiErrorStatus({ statusCode: 409 })).toBe(409);
     expect(getApiErrorMessage(new Error("Fallback"))).toBe("Fallback");
+  });
+});
+
+describe("raw API error string fields", () => {
+  it("preserves message whitespace and empty machine codes", () => {
+    const cause = new ApiError({
+      message: "fallback",
+      method: "POST",
+      url: "/rooms",
+      data: { message: "  exact text  ", code: "", notificationId: "room-1" },
+    });
+    expect(getApiErrorStringField(cause, "message")).toBe("  exact text  ");
+    expect(getApiErrorStringField(cause, "code")).toBe("");
+    expect(getApiErrorStringField(cause, "notificationId")).toBe("room-1");
+  });
+
+  it("keeps raw field extraction distinct from display-message normalization", () => {
+    const cause = new ApiError({
+      message: "fallback",
+      method: "POST",
+      url: "/rooms",
+      data: { message: ["  first message  "], notificationId: 123 },
+    });
+    expect(getApiErrorStringField(cause, "message")).toBeUndefined();
+    expect(getApiErrorStringField(cause, "notificationId")).toBeUndefined();
+    expect(getApiErrorMessage(cause)).toBe("first message");
+    expect(
+      getApiErrorStringField({ data: { code: "FORBIDDEN" } }, "code"),
+    ).toBeUndefined();
   });
 });

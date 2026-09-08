@@ -4,9 +4,12 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useState } from "react";
 import { CalendarX2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useListMyReservations } from "@lootlog/client/main";
-import type { ListMyReservationsStatus } from "@lootlog/client/main";
-import type { MyReservationsResponseDtoItemsItem } from "@lootlog/client/main";
+import {
+  useListMyReservations,
+  type ListMyReservationsStatus,
+  type MyReservationsResponseDtoItemsItem,
+} from "@lootlog/client/main";
+
 import { SectionCard } from "@/components/common/section-card/section-card";
 import {
   Empty,
@@ -35,12 +38,7 @@ export function MyReservations() {
           title={t("reservations.my.title")}
           description={t("reservations.my.description")}
         />
-        <Tabs
-          value={status}
-          onValueChange={(value) =>
-            setStatus(value as ListMyReservationsStatus)
-          }
-        >
+        <Tabs value={status} onValueChange={(value) => setStatus(value)}>
           <TabsList aria-label={t("reservations.my.tabsLabel")}>
             <TabsTrigger value="upcoming">
               {t("reservations.my.upcoming")}

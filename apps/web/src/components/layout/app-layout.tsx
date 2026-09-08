@@ -44,6 +44,10 @@ export const AppLayout = () => {
     <GuildSidebarNavPlaceholder />
   );
 
+  const sidebarStyle:
+    | (CSSProperties & { "--sidebar-width": string })
+    | undefined = isStandaloneRoute ? { "--sidebar-width": "4rem" } : undefined;
+
   return (
     <div
       className="flex h-dvh w-full flex-col overflow-hidden bg-background text-foreground"
@@ -60,11 +64,7 @@ export const AppLayout = () => {
       </Suspense>
       <SidebarProvider
         className="min-h-0 flex-1 overflow-hidden"
-        style={
-          isStandaloneRoute
-            ? ({ "--sidebar-width": "4rem" } as CSSProperties)
-            : undefined
-        }
+        style={sidebarStyle}
       >
         <AppSidebar
           compact={isStandaloneRoute}

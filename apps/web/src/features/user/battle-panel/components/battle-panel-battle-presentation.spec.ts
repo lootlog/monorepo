@@ -1,3 +1,7 @@
+import {
+  createBattleWarrior as buildBattleWarrior,
+  createBattle as buildBattle,
+} from "@/lib/testing/battle";
 import type {
   Battle,
   BattleWarrior,
@@ -21,14 +25,14 @@ const createWarrior = ({
   originalId: string;
   team: number;
 }): BattleWarrior =>
-  ({
+  buildBattleWarrior({
     name,
     originalId,
     team,
-  }) as BattleWarrior;
+  });
 
 const createBattle = (overrides: Partial<Battle> = {}): Battle =>
-  ({
+  buildBattle({
     characterId: "user-warrior",
     hasFlee: false,
     winningTeam: 2,
@@ -50,36 +54,35 @@ const createBattle = (overrides: Partial<Battle> = {}): Battle =>
       }),
     ],
     ...overrides,
-  }) as Battle;
+  });
 
 const createPlayerVsPlayerBattle = (
   overrides: Partial<PlayerVsPlayerBattle> = {},
-): PlayerVsPlayerBattle =>
-  ({
-    battleId: "battle-id",
-    createdAt: "2026-01-01T12:00:00Z",
-    duration: 15,
-    winner: "User",
-    loser: "Opponent",
-    hasFlee: false,
-    matchmaking: false,
-    ratingDelta: 12,
-    userRating: 1000,
-    opponentRating: 990,
-    userWarrior: {
-      name: "User",
-      lvl: 100,
-      prof: "w",
-      icon: "user.gif",
-    },
-    opponentWarrior: {
-      name: "Opponent",
-      lvl: 101,
-      prof: "m",
-      icon: "opponent.gif",
-    },
-    ...overrides,
-  }) as PlayerVsPlayerBattle;
+): PlayerVsPlayerBattle => ({
+  battleId: "battle-id",
+  createdAt: "2026-01-01T12:00:00Z",
+  duration: 15,
+  winner: "User",
+  loser: "Opponent",
+  hasFlee: false,
+  matchmaking: false,
+  ratingDelta: 12,
+  userRating: 1000,
+  opponentRating: 990,
+  userWarrior: buildBattleWarrior({
+    name: "User",
+    lvl: 100,
+    prof: "w",
+    icon: "user.gif",
+  }),
+  opponentWarrior: buildBattleWarrior({
+    name: "Opponent",
+    lvl: 101,
+    prof: "m",
+    icon: "opponent.gif",
+  }),
+  ...overrides,
+});
 
 describe("battle panel battle presentation", () => {
   it("orders teams from the user warrior perspective", () => {

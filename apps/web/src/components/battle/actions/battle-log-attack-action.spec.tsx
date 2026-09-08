@@ -1,8 +1,6 @@
+import { createBattleWarrior as buildBattleWarrior } from "@/lib/testing/battle";
 import battleTranslations from "@/i18n/translations/battle.json";
-import type {
-  BattleWarrior,
-  RawBattleParsedEvent,
-} from "@/lib/api/battlelog-types";
+import type { RawBattleParsedEvent } from "@/lib/api/battlelog-types";
 import { renderToStaticMarkup } from "react-dom/server";
 import i18next from "i18next";
 import { I18nextProvider } from "react-i18next";
@@ -32,22 +30,22 @@ const createTestI18n = () => {
 const renderAttackActions = (
   actions: { type: string; value: string }[],
 ): string => {
-  const attacker = {
+  const attacker = buildBattleWarrior({
     originalId: "38798",
     name: "zpwrama",
     lvl: 309,
     prof: "w",
     icon: "/kuf/uni_xxxiv_ork_m2.gif",
     team: 1,
-  } as BattleWarrior;
-  const defender = {
+  });
+  const defender = buildBattleWarrior({
     originalId: "617",
     name: "Demodras",
     lvl: 306,
     prof: "b",
     icon: "/paid/her_atka_k.gif",
     team: 2,
-  } as BattleWarrior;
+  });
   const event: RawBattleParsedEvent = {
     attackerId: "38798",
     defenderId: "617",

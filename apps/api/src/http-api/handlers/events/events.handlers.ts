@@ -1,5 +1,8 @@
 import { operationIdentifiers } from "../../operation-identifiers.js";
-import { statusCodeResponse } from "#src/shared/http/handler-response";
+import {
+  optionalPathString,
+  statusCodeResponse,
+} from "#src/shared/http/handler-response";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import {
   Permission,
@@ -125,9 +128,7 @@ const timers = {
   mode: "all",
 } as const;
 
-const operationIds = operationIdentifiers(
-  LootlogApi.groups.events.endpoints,
-) as Record<EventEndpointIdentifier, string>;
+const operationIds = operationIdentifiers(LootlogApi.groups.events.endpoints);
 
 const operationFailure = (cause: unknown): EventsHttpFailure => {
   if (cause instanceof EventTimersError) return operationFailure(cause.cause);
@@ -164,9 +165,6 @@ const stringParameter = (value: unknown, key: string) =>
         }),
       );
 
-const optionalString = (value: unknown) =>
-  typeof value === "string" ? value : undefined;
-
 const toHttpResponse = <A, R>(effect: Effect.Effect<A, EventsHttpFailure, R>) =>
   Effect.catchTags(effect, {
     ApplicationError: applicationErrorResponse,
@@ -186,7 +184,7 @@ export const EventsHandlers = HttpApiBuilder.group(
     const authorized = <A>(
       endpoint: EventEndpointIdentifier,
       requirement: Omit<EventAuthorizationRequirement, "guildId">,
-      guildId: unknown,
+      guildId: string | undefined,
       run: (caller: AuthorizedEventCaller) => Effect.Effect<A, unknown>,
     ) => {
       const caller =
@@ -200,13 +198,16 @@ export const EventsHandlers = HttpApiBuilder.group(
             );
       return toHttpResponse(
         Effect.flatMap(caller, (value) => operation(endpoint, run(value))),
-      ) as Effect.Effect<never, never>;
+      );
     };
 
     const event = <A>(
       endpoint: EventEndpointIdentifier,
       requirement: Omit<EventAuthorizationRequirement, "guildId">,
-      params: { readonly guildId: unknown; readonly eventId: unknown },
+      params: {
+        readonly guildId: string | undefined;
+        readonly eventId: unknown;
+      },
       run: (
         caller: AuthorizedEventCaller,
         eventId: string,
@@ -225,8 +226,8 @@ export const EventsHandlers = HttpApiBuilder.group(
             .getEvents(
               caller.guild,
               caller.accessPolicy,
-              optionalString(query.world),
-              optionalString(query.activeOnly),
+              optionalPathString(query.world),
+              optionalPathString(query.activeOnly),
               [...caller.roles],
             )
             .pipe(
@@ -324,7 +325,7 @@ export const EventsHandlers = HttpApiBuilder.group(
                 mapId,
                 payload,
               ),
-            ),
+            ).pipe(Effect.asVoid),
         ),
       EventsAssignmentControllerUnassignMember: ({ params, query }) =>
         event(
@@ -337,9 +338,9 @@ export const EventsHandlers = HttpApiBuilder.group(
                 caller.guild,
                 eventId,
                 mapId,
-                optionalString(query.memberId),
+                optionalPathString(query.memberId),
               ),
-            ),
+            ).pipe(Effect.asVoid),
         ),
       EventsAssignmentControllerSelfAssignMember: ({ params }) =>
         event(
@@ -356,7 +357,7 @@ export const EventsHandlers = HttpApiBuilder.group(
                 [...caller.roles],
                 caller.accessPolicy,
               ),
-            ),
+            ).pipe(Effect.asVoid),
         ),
       EventsAssignmentControllerSelfUnassignMember: ({ params }) =>
         event(
@@ -373,7 +374,7 @@ export const EventsHandlers = HttpApiBuilder.group(
                 [...caller.roles],
                 caller.accessPolicy,
               ),
-            ),
+            ).pipe(Effect.asVoid),
         ),
       EventsAssignmentControllerAddHero: ({ params, payload }) =>
         event(
@@ -381,7 +382,9 @@ export const EventsHandlers = HttpApiBuilder.group(
           manage,
           params,
           (caller, eventId) =>
-            operations.assignment.addHero(caller.guild, eventId, payload),
+            operations.assignment
+              .addHero(caller.guild, eventId, payload)
+              .pipe(Effect.asVoid),
         ),
       EventsAssignmentControllerDeleteHero: ({ params }) =>
         event(
@@ -391,7 +394,7 @@ export const EventsHandlers = HttpApiBuilder.group(
           (caller, eventId) =>
             Effect.flatMap(stringParameter(params.heroId, "heroId"), (heroId) =>
               operations.assignment.deleteHero(caller.guild, eventId, heroId),
-            ),
+            ).pipe(Effect.asVoid),
         ),
       EventsAssignmentControllerUpdateHero: ({ params, payload }) =>
         event(
@@ -406,7 +409,7 @@ export const EventsHandlers = HttpApiBuilder.group(
                 heroId,
                 payload,
               ),
-            ),
+            ).pipe(Effect.asVoid),
         ),
       EventsAssignmentControllerAddMap: ({ params, payload }) =>
         event(
@@ -438,7 +441,7 @@ export const EventsHandlers = HttpApiBuilder.group(
                   mapId,
                 ),
               ),
-            ),
+            ).pipe(Effect.asVoid),
         ),
       EventsAssignmentControllerGetLocations: ({ params }) =>
         event(
@@ -454,7 +457,7 @@ export const EventsHandlers = HttpApiBuilder.group(
                 [...caller.roles],
                 caller.accessPolicy,
               ),
-            ),
+            ).pipe(Effect.asVoid),
         ),
       EventsAssignmentControllerCreateLocation: ({ params, payload }) =>
         event(
@@ -469,7 +472,7 @@ export const EventsHandlers = HttpApiBuilder.group(
                 heroId,
                 payload,
               ),
-            ),
+            ).pipe(Effect.asVoid),
         ),
       EventsAssignmentControllerDeleteLocation: ({ params }) =>
         event(
@@ -488,7 +491,7 @@ export const EventsHandlers = HttpApiBuilder.group(
                     locationId,
                   ),
               ),
-            ),
+            ).pipe(Effect.asVoid),
         ),
       EventsAssignmentControllerUpdateLocation: ({ params, payload }) =>
         event(
@@ -508,7 +511,7 @@ export const EventsHandlers = HttpApiBuilder.group(
                     payload,
                   ),
               ),
-            ),
+            ).pipe(Effect.asVoid),
         ),
       EventsAssignmentControllerReorderLocations: ({ params, payload }) =>
         event(
@@ -523,7 +526,7 @@ export const EventsHandlers = HttpApiBuilder.group(
                 heroId,
                 payload,
               ),
-            ),
+            ).pipe(Effect.asVoid),
         ),
       EventsAssignmentControllerAssignMapToLocation: ({ params, payload }) =>
         event(
@@ -541,7 +544,7 @@ export const EventsHandlers = HttpApiBuilder.group(
                   payload,
                 ),
               ),
-            ),
+            ).pipe(Effect.asVoid),
         ),
       listPendingParticipationConfirmations: ({ params }) =>
         event(
@@ -615,7 +618,7 @@ export const EventsHandlers = HttpApiBuilder.group(
                 payload,
                 caller.userId,
               ),
-          ),
+          ).pipe(Effect.asVoid),
         ),
       listEventHeroTimers: ({ params, query }) =>
         event("listEventHeroTimers", timers, params, (caller, eventId) =>
@@ -623,7 +626,7 @@ export const EventsHandlers = HttpApiBuilder.group(
             .getEventHeroTimers(
               caller.guild,
               eventId,
-              optionalString(query.world) ?? "",
+              optionalPathString(query.world) ?? "",
               [...caller.roles],
               caller.accessPolicy,
             )
@@ -665,9 +668,9 @@ export const EventsHandlers = HttpApiBuilder.group(
                 caller.guild,
                 eventId,
                 caller.accessPolicy,
-                optionalString(query.limit),
-                optionalString(query.cursor),
-                optionalString(query.heroId),
+                optionalPathString(query.limit),
+                optionalPathString(query.cursor),
+                optionalPathString(query.heroId),
                 [...caller.roles],
               )
               .pipe(
@@ -691,9 +694,9 @@ export const EventsHandlers = HttpApiBuilder.group(
                     eventId,
                     memberId,
                     caller.accessPolicy,
-                    optionalString(query.limit),
-                    optionalString(query.cursor),
-                    optionalString(query.heroId),
+                    optionalPathString(query.limit),
+                    optionalPathString(query.cursor),
+                    optionalPathString(query.heroId),
                     [...caller.roles],
                   )
                   .pipe(
@@ -719,8 +722,8 @@ export const EventsHandlers = HttpApiBuilder.group(
                   eventId,
                   heroId,
                   caller.accessPolicy,
-                  optionalString(query.limit),
-                  optionalString(query.cursor),
+                  optionalPathString(query.limit),
+                  optionalPathString(query.cursor),
                   [...caller.roles],
                 )
                 .pipe(
@@ -776,7 +779,7 @@ export const EventsHandlers = HttpApiBuilder.group(
                     caller.userId,
                   ),
               ),
-            ),
+            ).pipe(Effect.asVoid),
         ),
       EventsMonitoringControllerGetCoordination: ({ params }) =>
         event(
@@ -960,7 +963,7 @@ export const EventsHandlers = HttpApiBuilder.group(
                 heroId,
                 payload,
               ),
-            ),
+            ).pipe(Effect.asVoid),
         ),
       EventsMonitoringControllerOpenRespawnWindow: ({ params, payload }) =>
         event(
@@ -975,7 +978,7 @@ export const EventsHandlers = HttpApiBuilder.group(
                 heroId,
                 payload,
               ),
-            ),
+            ).pipe(Effect.asVoid),
         ),
       listPinnedEvents: ({ params }) =>
         authorized("listPinnedEvents", read, params.guildId, (caller) =>
@@ -1001,7 +1004,9 @@ export const EventsHandlers = HttpApiBuilder.group(
         ),
       unpinEvent: ({ params }) =>
         event("unpinEvent", read, params, (caller, eventId) =>
-          operations.pins.unpinEvent(caller.userId, caller.guild, eventId),
+          operations.pins
+            .unpinEvent(caller.userId, caller.guild, eventId)
+            .pipe(Effect.asVoid),
         ),
     });
   }),

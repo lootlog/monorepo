@@ -40,17 +40,17 @@ type SettingsGuildSelectionGridProps =
   | SettingsGuildSelectionGridMultipleProps
   | SettingsGuildSelectionGridSingleProps;
 
-export const SettingsGuildSelectionGrid: FC<
-  SettingsGuildSelectionGridProps
-> = ({
-  className,
-  disabled = false,
-  emptyStateLabel,
-  guilds,
-  selectionMode = "multiple",
-  variant = "default",
-  ...selectionProps
-}) => {
+export const SettingsGuildSelectionGrid: FC<SettingsGuildSelectionGridProps> = (
+  props,
+) => {
+  const {
+    className,
+    disabled = false,
+    emptyStateLabel,
+    guilds,
+    selectionMode = "multiple",
+    variant = "default",
+  } = props;
   const { t } = useTranslation("common");
   if (!guilds || guilds.length === 0) {
     return <SettingsEmptyState>{emptyStateLabel}</SettingsEmptyState>;
@@ -58,15 +58,14 @@ export const SettingsGuildSelectionGrid: FC<
 
   const selectedGuildIds: string[] =
     selectionMode === "single"
-      ? selectionProps.selectedGuildId
-        ? [selectionProps.selectedGuildId]
+      ? props.selectedGuildId
+        ? [props.selectedGuildId]
         : []
-      : (selectionProps.selectedGuildIds ?? []);
+      : (props.selectedGuildIds ?? []);
 
   const handleSelect = (guildId: string) => {
-    if (selectionMode === "single") {
-      const { onSelect, selectedGuildId } =
-        selectionProps as SettingsGuildSelectionGridSingleProps;
+    if (props.selectionMode === "single") {
+      const { onSelect, selectedGuildId } = props;
 
       if (selectedGuildId === guildId) {
         return;
@@ -76,8 +75,7 @@ export const SettingsGuildSelectionGrid: FC<
       return;
     }
 
-    const { onToggle } =
-      selectionProps as SettingsGuildSelectionGridMultipleProps;
+    const { onToggle } = props;
     onToggle(guildId);
   };
 

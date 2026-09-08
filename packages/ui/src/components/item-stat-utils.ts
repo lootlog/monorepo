@@ -81,23 +81,25 @@ const ITEM_CLASS_KEYS = [
   "teleport",
 ] as const;
 
-const LEGENDARY_BONUS_VALUES: Readonly<Record<string, number>> = {
-  anguish: 8,
-  cleanse: 12,
-  critred: 25,
-  curse: 9,
-  dmgred: 16,
-  facade: 13,
-  frenzy: 2,
-  glare: 9,
-  holytouch: 7,
-  lastheal: 18,
-  puncture: 12,
-  pushback: 8,
-  resgain: 16,
-  retaliation: 16,
-  verycrit: 17,
-};
+const LEGENDARY_BONUS_VALUES = new Map(
+  Object.entries({
+    anguish: 8,
+    cleanse: 12,
+    critred: 25,
+    curse: 9,
+    dmgred: 16,
+    facade: 13,
+    frenzy: 2,
+    glare: 9,
+    holytouch: 7,
+    lastheal: 18,
+    puncture: 12,
+    pushback: 8,
+    resgain: 16,
+    retaliation: 16,
+    verycrit: 17,
+  }),
+);
 
 const TECHNICAL_STAT_KEYS = new Set([
   "animation",
@@ -125,7 +127,7 @@ const TECHNICAL_STAT_KEYS = new Set([
   "szablon",
 ]);
 
-function isString(value: unknown): value is string {
+function isString(value: ItemDisplayValue["value"]): value is string {
   return typeof value === "string";
 }
 
@@ -298,12 +300,14 @@ const formatProfessionRequirement: StatValueFormatter = (key, value) => ({
 
 const formatTargetClass: StatValueFormatter = (key, value) => {
   const rawValue = toStringValue(value);
-  const aliases: Readonly<Record<string, string[]>> = {
-    EQUIPPABLE: ["allEquippable"],
-    HANDHELD: ["allHandheld"],
-    WEAPONS: ["allWeapons"],
-  };
-  const aliasValues = aliases[rawValue];
+  const aliases = new Map(
+    Object.entries({
+      EQUIPPABLE: ["allEquippable"],
+      HANDHELD: ["allHandheld"],
+      WEAPONS: ["allWeapons"],
+    }),
+  );
+  const aliasValues = aliases.get(rawValue);
   if (aliasValues) {
     return { key, translateKey: "itemStats.class", value: aliasValues };
   }
@@ -323,7 +327,7 @@ const formatRarityRequirement: StatValueFormatter = (key, value) => ({
 
 const formatLegendaryBonus: StatValueFormatter = (_key, value) => {
   const bonusName = toStringValue(value).split(",")[0] ?? "";
-  const bonusValue = LEGENDARY_BONUS_VALUES[bonusName];
+  const bonusValue = LEGENDARY_BONUS_VALUES.get(bonusName);
   return bonusValue === undefined
     ? { key: "legbon.not-supported", value: bonusName }
     : { key: `legbon.${bonusName}`, value: bonusValue };
@@ -629,73 +633,75 @@ const formatResManaEnergyDestroy: StatValueFormatter = (key, value) => {
   return { key, value: [rawValue, energyValue.toString()] };
 };
 
-const STAT_VALUE_FORMATTERS: Readonly<Record<string, StatValueFormatter>> = {
-  act: formatSignedStat,
-  action: formatAction,
-  afterheal: formatListStat,
-  afterheal2: formatListStat,
-  amount: formatAmount,
-  artisanbon: formatSignedStat,
-  bag: formatBag,
-  binds: formatBindingMetadata,
-  bonus: formatNestedBonus,
-  btype: formatBtype,
-  cansplit: formatCanSplit,
-  custom_teleport: formatCustomTeleport,
-  dmg: formatRangeStat,
-  dmgmul: formatSignedStat,
-  dmgmulabsolute: formatSignedStat,
-  combo_multiplier: formatSignedStat,
-  dmgmulfire: formatSignedStat,
-  dmgmulfrost: formatSignedStat,
-  dmgmullight: formatSignedStat,
-  dmgmulphysical: formatSignedStat,
-  dmgmulpoison: formatSignedStat,
-  dmgmulwound: formatSignedStat,
-  enfatig: formatListStat,
-  enhancement_refund: formatEnhancementRefund,
-  etiquette: formatEtiquette,
-  expaddlvl: formatExperienceLevelBonus,
-  expire_date: (key, value) => ({
-    key,
-    value: formatUnixDate(toStringValue(value)),
-  }),
-  expire_duration: formatDuration,
-  expires: formatExpiry,
-  frost: formatScaledListStat,
-  legbon: formatLegendaryBonus,
-  leczy: formatHealingStat,
-  light: formatRangeStat,
-  loot: formatLoot,
-  manafatig: formatListStat,
-  noauction: formatBindingMetadata,
-  nodepoclan: formatBindingMetadata,
-  npc_expbon: formatSignedVariantStat,
-  opis: formatDescription,
-  outfit: formatOutfit,
-  perheal: formatSignedVariantStat,
-  pet: formatPet,
-  poison: formatScaledListStat,
-  pumpkin_weight: formatPumpkinWeight,
-  quest_expbon: formatSignedVariantStat,
-  reqp: formatProfessionRequirement,
-  resfire: formatSignedStat,
-  resfrost: formatSignedStat,
-  reslight: formatSignedStat,
-  resmanaendest: formatResManaEnergyDestroy,
-  sa: formatScaledStat,
-  slow: formatScaledStat,
-  socket_content: formatSocketContent,
-  socket_fleeting_legbon: formatLegendaryBonus,
-  socket_injection_legbon: formatLegendaryBonus,
-  soulbound: formatBindingMetadata,
-  target_class: formatTargetClass,
-  target_rarity: formatRarityRequirement,
-  teleport: formatTeleport,
-  timelimit: formatTimelimit,
-  wanted_change: formatSignedVariantStat,
-  wound: formatListStat,
-};
+const STAT_VALUE_FORMATTERS = new Map(
+  Object.entries({
+    act: formatSignedStat,
+    action: formatAction,
+    afterheal: formatListStat,
+    afterheal2: formatListStat,
+    amount: formatAmount,
+    artisanbon: formatSignedStat,
+    bag: formatBag,
+    binds: formatBindingMetadata,
+    bonus: formatNestedBonus,
+    btype: formatBtype,
+    cansplit: formatCanSplit,
+    custom_teleport: formatCustomTeleport,
+    dmg: formatRangeStat,
+    dmgmul: formatSignedStat,
+    dmgmulabsolute: formatSignedStat,
+    combo_multiplier: formatSignedStat,
+    dmgmulfire: formatSignedStat,
+    dmgmulfrost: formatSignedStat,
+    dmgmullight: formatSignedStat,
+    dmgmulphysical: formatSignedStat,
+    dmgmulpoison: formatSignedStat,
+    dmgmulwound: formatSignedStat,
+    enfatig: formatListStat,
+    enhancement_refund: formatEnhancementRefund,
+    etiquette: formatEtiquette,
+    expaddlvl: formatExperienceLevelBonus,
+    expire_date: (key, value) => ({
+      key,
+      value: formatUnixDate(toStringValue(value)),
+    }),
+    expire_duration: formatDuration,
+    expires: formatExpiry,
+    frost: formatScaledListStat,
+    legbon: formatLegendaryBonus,
+    leczy: formatHealingStat,
+    light: formatRangeStat,
+    loot: formatLoot,
+    manafatig: formatListStat,
+    noauction: formatBindingMetadata,
+    nodepoclan: formatBindingMetadata,
+    npc_expbon: formatSignedVariantStat,
+    opis: formatDescription,
+    outfit: formatOutfit,
+    perheal: formatSignedVariantStat,
+    pet: formatPet,
+    poison: formatScaledListStat,
+    pumpkin_weight: formatPumpkinWeight,
+    quest_expbon: formatSignedVariantStat,
+    reqp: formatProfessionRequirement,
+    resfire: formatSignedStat,
+    resfrost: formatSignedStat,
+    reslight: formatSignedStat,
+    resmanaendest: formatResManaEnergyDestroy,
+    sa: formatScaledStat,
+    slow: formatScaledStat,
+    socket_content: formatSocketContent,
+    socket_fleeting_legbon: formatLegendaryBonus,
+    socket_injection_legbon: formatLegendaryBonus,
+    soulbound: formatBindingMetadata,
+    target_class: formatTargetClass,
+    target_rarity: formatRarityRequirement,
+    teleport: formatTeleport,
+    timelimit: formatTimelimit,
+    wanted_change: formatSignedVariantStat,
+    wound: formatListStat,
+  } satisfies Record<string, StatValueFormatter>),
+);
 
 const STAT_SECTIONS = [
   {
@@ -923,7 +929,7 @@ function createStatDefinitions(): ReadonlyMap<string, StatDefinition> {
       if (!definitions.has(key)) {
         definitions.set(key, {
           block: getSemanticBlock(key, section.block),
-          formatter: STAT_VALUE_FORMATTERS[key] ?? formatDefaultStat,
+          formatter: STAT_VALUE_FORMATTERS.get(key) ?? formatDefaultStat,
           order,
           sectionIndex: section.sectionIndex,
         });
@@ -1038,14 +1044,18 @@ export function formatNumericText(rawValue: string): string {
     : rawValue;
 }
 
+type ItemStatTemplateValues = Partial<
+  Record<"value" | `value${number}`, string | number | boolean>
+>;
+
 export function getItemStatTemplateValues(
   displayValue: ItemDisplayValue,
   translate: (key: string, fallback: string) => string,
-): Record<string, string | number | boolean | undefined> {
+): ItemStatTemplateValues {
   const { value, translateKey } = displayValue;
   if (!Array.isArray(value)) {
     return {
-      value: typeof value === "string" ? formatNumericText(value) : value,
+      value: isString(value) ? formatNumericText(value) : value,
     };
   }
   if (translateKey) {
@@ -1061,4 +1071,11 @@ export function getItemStatTemplateValues(
       formatNumericText(entry),
     ]),
   );
+}
+
+export function formatItemDisplayValue(
+  value: ItemDisplayValue["value"],
+): string {
+  if (Array.isArray(value)) return value.join(",\u00A0");
+  return isString(value) ? formatNumericText(value) : String(value ?? "");
 }

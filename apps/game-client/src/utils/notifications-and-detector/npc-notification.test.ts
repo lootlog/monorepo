@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { MessageType } from "@/api/chat.api";
 import type { GameNpcWithLocation } from "@/store/npc-detector.store";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
@@ -9,28 +9,6 @@ import {
 } from "./npc-notification";
 
 beforeEach(() => setTestRuntimeGame());
-
-const { mockGame } = vi.hoisted(() => ({
-  mockGame: {
-    hero: {
-      id: 101,
-      account: 202,
-      nick: "Tester",
-      lvl: 230,
-      prof: "w",
-      img: "hero.gif",
-      clan: {
-        id: "clan-1",
-        name: "Lootlog",
-      },
-    },
-    getWorldName: vi.fn(() => "pandora"),
-  },
-}));
-
-vi.mock("@/lib/game", () => ({
-  Game: mockGame,
-}));
 
 const npc: GameNpcWithLocation = {
   id: 500,
@@ -48,11 +26,6 @@ const npc: GameNpcWithLocation = {
 };
 
 describe("npc notification helpers", () => {
-  beforeEach(() => {
-    mockGame.getWorldName.mockReset();
-    mockGame.getWorldName.mockReturnValue("pandora");
-  });
-
   it("resolves guild ids using the current world", () => {
     const routing = resolveNpcNotificationRouting({
       routingRules: [

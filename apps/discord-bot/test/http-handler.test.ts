@@ -1,5 +1,6 @@
+import { DiscordGuildSyncStatus } from "@lootlog/schema/notifications";
 import { describe, expect, mock, test } from "bun:test";
-import type { Client } from "discord.js";
+import { Client } from "discord.js";
 import { Effect } from "effect";
 import {
   makeBotHttpBoundary,
@@ -8,7 +9,7 @@ import {
 
 const syncState = (guildId: string) => ({
   guildId,
-  status: "SYNCED" as const,
+  status: DiscordGuildSyncStatus.SYNCED,
   hasRequiredPermissions: true,
   requiredPermissions: [],
   grantedPermissions: [],
@@ -22,9 +23,32 @@ const syncState = (guildId: string) => ({
 });
 
 const services = (): BotServicesValue => ({
-  client: {} as Client,
-  delivery: {} as BotServicesValue["delivery"],
+  client: new Client({ intents: [] }),
+  delivery: {
+    sendNotification: () =>
+      Effect.die(new Error("Unexpected notification send in HTTP test")),
+  },
   sync: {
+    handleClientReady: () =>
+      Effect.die(new Error("Unexpected Discord event in HTTP test")),
+    handleGuildCreate: () =>
+      Effect.die(new Error("Unexpected Discord event in HTTP test")),
+    handleGuildUpdate: () =>
+      Effect.die(new Error("Unexpected Discord event in HTTP test")),
+    handleGuildDelete: () =>
+      Effect.die(new Error("Unexpected Discord event in HTTP test")),
+    handleGuildRoleCreate: () =>
+      Effect.die(new Error("Unexpected Discord event in HTTP test")),
+    handleGuildRoleUpdate: () =>
+      Effect.die(new Error("Unexpected Discord event in HTTP test")),
+    handleGuildRoleDelete: () =>
+      Effect.die(new Error("Unexpected Discord event in HTTP test")),
+    handleChannelCreate: () =>
+      Effect.die(new Error("Unexpected Discord event in HTTP test")),
+    handleChannelUpdate: () =>
+      Effect.die(new Error("Unexpected Discord event in HTTP test")),
+    handleChannelDelete: () =>
+      Effect.die(new Error("Unexpected Discord event in HTTP test")),
     getGuildChannels: mock((guildId: string) =>
       Effect.succeed({
         guildId,
@@ -42,7 +66,7 @@ const services = (): BotServicesValue => ({
     getGuildSyncStatus: mock((guildId: string) =>
       Effect.succeed(syncState(guildId)),
     ),
-  } as unknown as BotServicesValue["sync"],
+  },
 });
 
 describe("Discord bot HTTP contract", () => {

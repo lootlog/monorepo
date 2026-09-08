@@ -199,20 +199,12 @@ export const makeEventWrapped = (
           { concurrency: "unbounded" },
         );
 
-      const members = aggregateMembers(
-        rankings as RankingRow[],
-        assignments as AssignmentRow[],
-        kills,
-        {
-          eventWindowStart,
-          eventWindowEnd,
-        },
-      );
+      const members = aggregateMembers(rankings, assignments, kills, {
+        eventWindowStart,
+        eventWindowEnd,
+      });
       const heroLoots = aggregateHeroLoots(loots, heroByName);
-      const coverage = aggregateCoverage(
-        windowSummaries as SummaryRow[],
-        event.heroNpcs,
-      );
+      const coverage = aggregateCoverage(windowSummaries, event.heroNpcs);
       const avgMapsPerSpawnWindow = calculateAverageMapsPerSpawnWindow(
         kills,
         assignments,
@@ -415,7 +407,7 @@ export const makeEventWrapped = (
     createdAtMax: string;
   }) {
     if (params.heroNames.length === 0) {
-      return Effect.succeed([] as LootQueryResult[]);
+      return Effect.succeed([]);
     }
 
     const accessPolicy = createAccessPolicy({

@@ -1,3 +1,4 @@
+import type { CustomTimerColor } from "@lootlog/schema/timer-settings";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -6,7 +7,7 @@ import {
 } from "@/components/ui/popover";
 import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
 import { getDefaultColorName } from "@/features/timers/utils/get-default-color-name";
-import { useTimersStore, type CustomTimerColor } from "@/store/timers.store";
+import { useTimersStore } from "@/store/timers.store";
 import { Plus } from "lucide-react";
 import { useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
@@ -15,7 +16,7 @@ import {
   alphaToHex,
   hexToAlpha,
   stripAlphaChannel,
-  TAILWIND_TO_HEX,
+  getTimerColorHex,
   type ColorEditData,
 } from "./components/color-utils";
 import { HiddenColorsList } from "./components/hidden-colors-list";
@@ -47,7 +48,7 @@ const getTimerColorEditData = (
     }
   }
 
-  const defaults = TAILWIND_TO_HEX[selection.id] ?? {
+  const defaults = getTimerColorHex(selection.id) ?? {
     border: "#3B82F6",
     background: "#3B82F633",
   };

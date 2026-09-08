@@ -42,11 +42,7 @@ const withGuildMembersSummaryDefaults = <TData, TError>(
     gcTime: GUILD_MEMBERS_SUMMARY_GC_TIME,
     staleTime: GUILD_MEMBERS_SUMMARY_STALE_TIME,
     ...options?.query,
-  } as UseQueryOptions<
-    MembersControllerGetGuildMembersSummaryQueryResult,
-    TError,
-    TData
-  >,
+  },
 });
 
 export const getGuildMembersSummaryQueryOptions = <

@@ -1,0 +1,16 @@
+{
+  "extends": ["../../.oxlintrc.json"],
+  "overrides": [
+    {
+      "files": ["src/auth/provider/better-auth.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["logBetterAuthEvent"]
+          }
+        ]
+      }
+    }
+  ]
+}

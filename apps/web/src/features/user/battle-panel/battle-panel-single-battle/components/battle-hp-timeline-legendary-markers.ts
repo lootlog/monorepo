@@ -61,81 +61,123 @@ type BuildLegendaryBonusMarkerGroupsOptions = {
   includeChartHidden?: boolean;
 };
 
-export const LEGENDARY_BONUS_MARKER_DEFINITIONS: Record<
+export const LEGENDARY_BONUS_MARKER_DEFINITIONS = new Map<
   string,
   LegendaryBonusMarkerDefinition
-> = {
-  "+legbon_anguish": {
-    type: "anguish",
-    labelKey: "battlePanel.single.chart.legendary.anguish",
-    color: BATTLE_HEX_COLORS.legendary.anguish,
-  },
-  "+legbon_curse": {
-    type: "curse",
-    labelKey: "battlePanel.single.chart.legendary.curse",
-    color: BATTLE_HEX_COLORS.legendary.curse,
-  },
-  "+legbon_frenzy_main": {
-    type: "frenzy",
-    labelKey: "battlePanel.single.chart.legendary.frenzy",
-    color: BATTLE_HEX_COLORS.legendary.frenzy,
-  },
-  "+legbon_frenzy_off": {
-    type: "frenzy",
-    labelKey: "battlePanel.single.chart.legendary.frenzy",
-    color: BATTLE_HEX_COLORS.legendary.frenzy,
-  },
-  "+legbon_holytouch": {
-    type: "holyTouch",
-    labelKey: "battlePanel.single.chart.legendary.holyTouch",
-    color: BATTLE_HEX_COLORS.legendary.holyTouch,
-  },
-  "+legbon_puncture": {
-    type: "puncture",
-    labelKey: "battlePanel.single.chart.legendary.puncture",
-    color: BATTLE_HEX_COLORS.legendary.puncture,
-  },
-  "+legbon_verycrit": {
-    type: "veryCrit",
-    labelKey: "battlePanel.single.chart.legendary.veryCrit",
-    color: BATTLE_HEX_COLORS.legendary.veryCrit,
-  },
-  "-legbon_cleanse": {
-    type: "cleanse",
-    labelKey: "battlePanel.single.chart.legendary.cleanse",
-    color: BATTLE_HEX_COLORS.legendary.cleanse,
-  },
-  "-legbon_critred": {
-    type: "critShield",
-    labelKey: "battlePanel.single.chart.legendary.critShield",
-    color: BATTLE_HEX_COLORS.legendary.critShield,
-  },
-  "-legbon_facade": {
-    type: "facade",
-    labelKey: "battlePanel.single.chart.legendary.facade",
-    color: BATTLE_HEX_COLORS.legendary.facade,
-  },
-  "-legbon_glare": {
-    type: "glare",
-    labelKey: "battlePanel.single.chart.legendary.glare",
-    color: BATTLE_HEX_COLORS.legendary.glare,
-  },
-  "-legbon_retaliation": {
-    type: "retaliation",
-    labelKey: "battlePanel.single.chart.legendary.retaliation",
-    color: BATTLE_HEX_COLORS.legendary.retaliation,
-  },
-  legbon_holytouch_heal: {
-    type: "holyTouch",
-    labelKey: "battlePanel.single.chart.legendary.holyTouch",
-    color: BATTLE_HEX_COLORS.legendary.holyTouch,
-  },
-  legbon_lastheal: {
-    type: "lastHeal",
-    labelKey: "battlePanel.single.chart.legendary.lastHeal",
-    color: BATTLE_HEX_COLORS.legendary.lastHeal,
-  },
-};
+>([
+  [
+    "+legbon_anguish",
+    {
+      type: "anguish",
+      labelKey: "battlePanel.single.chart.legendary.anguish",
+      color: BATTLE_HEX_COLORS.legendary.anguish,
+    },
+  ],
+  [
+    "+legbon_curse",
+    {
+      type: "curse",
+      labelKey: "battlePanel.single.chart.legendary.curse",
+      color: BATTLE_HEX_COLORS.legendary.curse,
+    },
+  ],
+  [
+    "+legbon_frenzy_main",
+    {
+      type: "frenzy",
+      labelKey: "battlePanel.single.chart.legendary.frenzy",
+      color: BATTLE_HEX_COLORS.legendary.frenzy,
+    },
+  ],
+  [
+    "+legbon_frenzy_off",
+    {
+      type: "frenzy",
+      labelKey: "battlePanel.single.chart.legendary.frenzy",
+      color: BATTLE_HEX_COLORS.legendary.frenzy,
+    },
+  ],
+  [
+    "+legbon_holytouch",
+    {
+      type: "holyTouch",
+      labelKey: "battlePanel.single.chart.legendary.holyTouch",
+      color: BATTLE_HEX_COLORS.legendary.holyTouch,
+    },
+  ],
+  [
+    "+legbon_puncture",
+    {
+      type: "puncture",
+      labelKey: "battlePanel.single.chart.legendary.puncture",
+      color: BATTLE_HEX_COLORS.legendary.puncture,
+    },
+  ],
+  [
+    "+legbon_verycrit",
+    {
+      type: "veryCrit",
+      labelKey: "battlePanel.single.chart.legendary.veryCrit",
+      color: BATTLE_HEX_COLORS.legendary.veryCrit,
+    },
+  ],
+  [
+    "-legbon_cleanse",
+    {
+      type: "cleanse",
+      labelKey: "battlePanel.single.chart.legendary.cleanse",
+      color: BATTLE_HEX_COLORS.legendary.cleanse,
+    },
+  ],
+  [
+    "-legbon_critred",
+    {
+      type: "critShield",
+      labelKey: "battlePanel.single.chart.legendary.critShield",
+      color: BATTLE_HEX_COLORS.legendary.critShield,
+    },
+  ],
+  [
+    "-legbon_facade",
+    {
+      type: "facade",
+      labelKey: "battlePanel.single.chart.legendary.facade",
+      color: BATTLE_HEX_COLORS.legendary.facade,
+    },
+  ],
+  [
+    "-legbon_glare",
+    {
+      type: "glare",
+      labelKey: "battlePanel.single.chart.legendary.glare",
+      color: BATTLE_HEX_COLORS.legendary.glare,
+    },
+  ],
+  [
+    "-legbon_retaliation",
+    {
+      type: "retaliation",
+      labelKey: "battlePanel.single.chart.legendary.retaliation",
+      color: BATTLE_HEX_COLORS.legendary.retaliation,
+    },
+  ],
+  [
+    "legbon_holytouch_heal",
+    {
+      type: "holyTouch",
+      labelKey: "battlePanel.single.chart.legendary.holyTouch",
+      color: BATTLE_HEX_COLORS.legendary.holyTouch,
+    },
+  ],
+  [
+    "legbon_lastheal",
+    {
+      type: "lastHeal",
+      labelKey: "battlePanel.single.chart.legendary.lastHeal",
+      color: BATTLE_HEX_COLORS.legendary.lastHeal,
+    },
+  ],
+]);
 
 const FALLBACK_LEGENDARY_BONUS_MARKER: LegendaryBonusMarkerDefinition = {
   type: "legendary",
@@ -156,7 +198,7 @@ const DEFENDER_TEAM_LEGENDARY_BONUS_ACTIONS = new Set([
 ]);
 
 export const getLegendaryBonusMarkerDefinition = (actionType: string) =>
-  LEGENDARY_BONUS_MARKER_DEFINITIONS[actionType] ??
+  LEGENDARY_BONUS_MARKER_DEFINITIONS.get(actionType) ??
   FALLBACK_LEGENDARY_BONUS_MARKER;
 
 export const isLegendaryBonusTimelineAction = (

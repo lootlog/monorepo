@@ -41,7 +41,7 @@ export function PhGrowthChart({ data, isLoading }: PhGrowthChartProps) {
       tooltipValue={(value, payload) =>
         t("battlePanel.statistics.phGrowth.tooltipValue", {
           value,
-          ph: typeof payload.ph === "number" ? payload.ph : 0,
+          ph: payload.ph,
         })
       }
     />

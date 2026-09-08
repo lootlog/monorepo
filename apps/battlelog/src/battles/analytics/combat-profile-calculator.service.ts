@@ -238,10 +238,8 @@ export const combatProfileCalculator = (() => {
       string,
       { spell: string; skillId: number | null; casts: number }
     >,
-    spellsUsedMapInput: unknown,
+    spellsUsedMap: Record<string, number>,
   ): void {
-    const spellsUsedMap = spellsUsedMapInput as Record<string, number>;
-
     for (const [spell, casts] of Object.entries(spellsUsedMap)) {
       const skillId = Number.parseInt(spell, 10);
       const current = spellUsage.get(spell) ?? {

@@ -1,22 +1,30 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { GatewayEvent } from "@/config/gateway";
+import { RealtimeClient } from "@lootlog/client/realtime";
+import { configureGameClientPlatform } from "@/lib/game-client-platform";
+import { disposeSocket, getSocket } from "@/lib/socket";
+import { RealtimeWire } from "@/test/realtime-wire";
 import { useGlobalStore } from "@/store/global.store";
 import { useGameStore } from "@/store/game.store";
 import { AfkProcessor } from "./afk-processor";
 
-const mockEmit = vi.fn();
-
-vi.mock("@/lib/socket", () => ({
-  getSocket: () => ({
-    emit: mockEmit,
-  }),
-}));
-
 describe("AfkProcessor", () => {
   let processor: AfkProcessor;
+  let wire: RealtimeWire;
+  let restorePlatform: () => void;
 
-  beforeEach(() => {
-    vi.clearAllMocks();
+  beforeEach(async () => {
+    disposeSocket();
+    wire = new RealtimeWire();
+    const realtime = new RealtimeClient({
+      url: "https://gateway.example.test",
+      webSocketFactory: () => wire,
+    });
+    restorePlatform = configureGameClientPlatform({
+      fetch: globalThis.fetch,
+      createRealtime: () => realtime,
+    });
+    getSocket().connect();
+    wire.open();
     processor = new AfkProcessor();
     useGlobalStore.setState({
       socketState: {
@@ -42,16 +50,24 @@ describe("AfkProcessor", () => {
       map: { id: 77, name: "Ithan", visibility: 30 },
       world: "pandora",
     });
+    wire.receive({
+      v: 1,
+      type: "permissions.updated",
+      data: { organizationIds: ["guild-1"], subscriptionScopes: [] },
+    });
+    await vi.waitUntil(() => wire.frames.length === 1);
+    wire.frames.length = 0;
   });
 
   afterEach(() => {
-    vi.clearAllMocks();
+    disposeSocket();
+    restorePlatform();
   });
 
   it("ignores events without stasis", () => {
     processor.handle({});
 
-    expect(mockEmit).not.toHaveBeenCalled();
+    expect(wire.frames).toEqual([]);
   });
 
   it("emits player presence update when afk state changes and socket is ready", () => {
@@ -65,11 +81,15 @@ describe("AfkProcessor", () => {
 
     processor.handle({ h: { stasis: 1 } });
 
-    expect(mockEmit).toHaveBeenCalledWith(GatewayEvent.PLAYER_PRESENCE_UPDATE, {
-      isAfk: true,
-      mapId: 77,
-      mapName: "Ithan",
-    });
+    expect(wire.frames).toMatchObject([
+      {
+        type: "presence.publish",
+        data: {
+          isAfk: true,
+          location: { mapId: 77, map: "Ithan" },
+        },
+      },
+    ]);
   });
 
   it("does not emit when stasis value repeats", () => {
@@ -84,7 +104,7 @@ describe("AfkProcessor", () => {
     processor.handle({ h: { stasis: 1 } });
     processor.handle({ h: { stasis: 1 } });
 
-    expect(mockEmit).toHaveBeenCalledTimes(1);
+    expect(wire.frames).toHaveLength(1);
   });
 
   it("does not emit when socket is disconnected or no guilds are joined", () => {
@@ -100,6 +120,6 @@ describe("AfkProcessor", () => {
 
     processor.handle({ h: { stasis: 0 } });
 
-    expect(mockEmit).not.toHaveBeenCalled();
+    expect(wire.frames).toEqual([]);
   });
 });

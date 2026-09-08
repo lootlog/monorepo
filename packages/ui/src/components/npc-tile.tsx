@@ -33,7 +33,8 @@ export const NpcTile: FC<NpcTileProps> = ({
   const sharedTooltip = useSharedTooltip();
   const tileClassName = cn("relative w-fit", className);
   const isAbsoluteIconUrl =
-    typeof icon === "string" &&
+    icon !== undefined &&
+    icon !== null &&
     (icon.startsWith("http://") ||
       icon.startsWith("https://") ||
       icon.startsWith("//"));

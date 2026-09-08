@@ -1,52 +1,39 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import {
+  createTimerFixture,
+  createTimerMemberFixture,
+} from "../timer-fixtures";
 import type { Timer } from "@/api/timers.api";
 import { TimerTooltip } from "./timer-tooltip";
 
-const createTimer = (overrides?: Partial<Timer>): Timer => ({
-  guildId: "guild-1",
-  timerKey: "timer-1",
-  world: "pandora",
-  npcId: 10,
-  minSpawnTime: new Date(2026, 3, 22, 12).toISOString(),
-  maxSpawnTime: new Date(2026, 3, 22, 12, 5).toISOString(),
-  updatedAt: new Date(2026, 3, 22, 11, 59).toISOString(),
-  wasReset: overrides?.wasReset ?? true,
-  npc: {
-    id: 10,
-    name: "Tanroth",
-    lvl: 120,
-    prof: "W",
-    icon: "icon.gif",
-    wt: 10,
-    type: "hero",
-    margonemType: 4,
-    location: "Ruins",
-  } as never,
-  members: [
-    {
-      id: "member-1",
-      name: "Tester",
-      guildId: "guild-1",
-    } as never,
-    {
-      id: "member-2",
-      name: "Scout",
-      guildId: "guild-2",
-    } as never,
-  ],
-  actorCharactersByMemberId: {
-    "member-1": {
-      name: "Hero One",
-      lvl: 300,
-      prof: "BLADE_DANCER",
-      icon: "hero.gif",
-      characterId: 1,
-      accountId: 2,
+const createTimer = (overrides: Partial<Timer> = {}) =>
+  createTimerFixture({
+    minSpawnTime: new Date(2026, 3, 22, 12).toISOString(),
+    maxSpawnTime: new Date(2026, 3, 22, 12, 5).toISOString(),
+    updatedAt: new Date(2026, 3, 22, 11, 59).toISOString(),
+    wasReset: true,
+    members: [
+      createTimerMemberFixture(),
+      createTimerMemberFixture({
+        id: 2,
+        userId: "user-2",
+        name: "Scout",
+        guildId: "guild-2",
+      }),
+    ],
+    actorCharactersByMemberId: {
+      "1": {
+        name: "Hero One",
+        lvl: 300,
+        prof: "BLADE_DANCER",
+        icon: "hero.gif",
+        characterId: 1,
+        accountId: 2,
+      },
     },
-  },
-  ...overrides,
-});
+    ...overrides,
+  });
 
 describe("TimerTooltip", () => {
   it("renders timer metadata, members with guild names, and spawn windows", () => {

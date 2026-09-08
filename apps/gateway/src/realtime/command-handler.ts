@@ -11,7 +11,7 @@ import {
   type ServerEvent,
   type SubscriptionScope,
 } from "@lootlog/protocol/realtime";
-import { Effect } from "effect";
+import { Effect, Function, Option, Schema } from "effect";
 import type { GuildStore } from "#src/guilds/guild-store";
 import type { MargonemProofVerifier } from "#src/auth/margonem-proof";
 import type { ActivityPublisher } from "#src/rabbit/activity-publisher";
@@ -66,46 +66,50 @@ const errorResponse = (
   error: { code, message, retryable },
 });
 
-const invalidLegacyPayloadResponse = (
-  input: unknown,
-): RealtimeResponse | null => {
-  if (!input || typeof input !== "object") return null;
-  if (!("v" in input) || input.v !== 1) return null;
-  if (
-    !("requestId" in input) ||
-    typeof input.requestId !== "string" ||
-    input.requestId.length === 0
-  )
-    return null;
-  if (!("type" in input) || typeof input.type !== "string") return null;
-  if (input.type === "map-ping.send") {
-    return {
+const invalidLegacyPayloadResponse = Function.compose(
+  Schema.decodeUnknownOption(
+    Schema.Struct({
+      v: Schema.Literal(1),
+      requestId: Schema.NonEmptyString,
+      type: Schema.Literals(["map-ping.send", "air-tag.observation"]),
+    }),
+  ),
+  Option.match({
+    onNone: (): RealtimeResponse | null => null,
+    onSome: (input): RealtimeResponse => ({
       v: 1,
       requestId: input.requestId,
       status: "success",
       data: { status: "rejected", code: "invalid-payload" },
-    };
-  }
-  if (input.type === "air-tag.observation") {
-    return {
-      v: 1,
-      requestId: input.requestId,
-      status: "success",
-      data: { status: "rejected", code: "invalid-payload" },
-    };
-  }
-  return null;
-};
+    }),
+  }),
+);
 
 export class CommandHandler {
   constructor(
     private readonly guilds: GuildStore,
     private readonly proofVerifier: MargonemProofVerifier,
-    private readonly presence: PresenceStore,
-    private readonly hub: RealtimeHub,
-    private readonly activity: ActivityPublisher,
-    private readonly mapPings: MapPingService,
-    private readonly airTags: AirTagService,
+    private readonly presence: Pick<
+      PresenceStore,
+      "heartbeat" | "publish" | "snapshot" | "reconcileAccess"
+    >,
+    private readonly hub: Pick<
+      RealtimeHub,
+      | "onPermissionRebalance"
+      | "sendResponse"
+      | "sendEvent"
+      | "replaceSubscriptions"
+      | "getLocalSocketsForUser"
+      | "publishPermissionRebalance"
+      | "subscribe"
+      | "unsubscribe"
+    >,
+    private readonly activity: Pick<ActivityPublisher, "publish">,
+    private readonly mapPings: Pick<MapPingService, "send">,
+    private readonly airTags: Pick<
+      AirTagService,
+      "updateSubscription" | "publishObservations"
+    >,
   ) {
     this.hub.onPermissionRebalance((discordId, userId) =>
       this.rebalanceUser(discordId, userId),
@@ -115,7 +119,7 @@ export class CommandHandler {
   handle(socket: GatewaySocket, input: string | Buffer): Effect.Effect<void> {
     let decoded: unknown;
     if (socket.data.frameEncoding === "json") {
-      if (typeof input !== "string") {
+      if (Buffer.isBuffer(input)) {
         return Effect.sync(() =>
           socket.close(1003, "text JSON frames required"),
         );
@@ -128,7 +132,7 @@ export class CommandHandler {
         );
       }
     } else {
-      if (typeof input === "string") {
+      if (!Buffer.isBuffer(input)) {
         return Effect.sync(() =>
           socket.close(1003, "binary MessagePack frames required"),
         );

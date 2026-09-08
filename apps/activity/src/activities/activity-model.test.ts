@@ -60,3 +60,22 @@ describe("activity wire schemas", () => {
     ).toThrow("Invalid limit");
   });
 });
+
+it.each(["type=UNKNOWN", "source=UNKNOWN"])(
+  "rejects unknown activity filter %s",
+  (query) => {
+    expect(() =>
+      parseActivityQuery(new URL(`https://activity/activity-logs?${query}`)),
+    ).toThrow("Invalid activity filter");
+  },
+);
+
+it("preserves multiple valid activity filters", () => {
+  const query = parseActivityQuery(
+    new URL(
+      "https://activity/activity-logs?type=CONNECT_EVENT,DISCONNECT_EVENT&source=GAME&source=WEB_APP",
+    ),
+  );
+  expect(query.type).toEqual(["CONNECT_EVENT", "DISCONNECT_EVENT"]);
+  expect(query.source).toEqual(["GAME", "WEB_APP"]);
+});

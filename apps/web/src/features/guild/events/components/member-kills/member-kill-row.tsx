@@ -69,17 +69,15 @@ export const MemberKillRow = ({
                   monsterName: kill.heroNpc.npcName,
                 })}
                 className="inline-flex max-w-full min-w-0 items-center text-sm"
-                render={
-                  <Link
-                    to="/$guildId/events/$eventId/heroes/$heroId/kills/$killId"
-                    params={{
-                      guildId,
-                      eventId,
-                      heroId: kill.heroNpcId,
-                      killId: kill.id,
-                    }}
-                  />
-                }
+                render=<Link
+                  to="/$guildId/events/$eventId/heroes/$heroId/kills/$killId"
+                  params={{
+                    guildId,
+                    eventId,
+                    heroId: kill.heroNpcId,
+                    killId: kill.id,
+                  }}
+                />
               >
                 <span className="truncate font-semibold">
                   {kill.heroNpc.npcName}

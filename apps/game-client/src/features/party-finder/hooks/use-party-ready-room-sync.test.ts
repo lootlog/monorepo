@@ -1,16 +1,12 @@
+import { configureApiClients } from "@lootlog/client/transport";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import type { PartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { usePartyReadyRoomSync } from "@/features/party-finder/hooks/use-party-ready-room-sync";
 import { useGlobalStore } from "@/store/global.store";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 
-const listReadyRooms = vi.fn<() => Promise<unknown[]>>();
-
-vi.mock("@lootlog/client/main", async () => ({
-  ...(await vi.importActual("@lootlog/client/main")),
-  partyReadyRoomControllerList: () => listReadyRooms(),
-}));
+const listReadyRooms = vi.fn<() => Promise<PartyReadyRoomProjection[]>>();
 
 function createProjection(revision: number): PartyReadyRoomProjection {
   return {
@@ -37,17 +33,18 @@ function createProjection(revision: number): PartyReadyRoomProjection {
   };
 }
 
-function createDeferred<T>() {
-  let resolve!: (value: T) => void;
-  const promise = new Promise<T>((resolvePromise) => {
-    resolve = resolvePromise;
-  });
-  return { promise, resolve };
-}
-
+let restoreClient = () => {};
+afterEach(() => {
+  restoreClient();
+  vi.unstubAllGlobals();
+});
 describe("usePartyReadyRoomSync", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    restoreClient = configureApiClients({
+      main: { baseUrl: "https://api.test" },
+    });
+    vi.stubGlobal("fetch", async () => Response.json(await listReadyRooms()));
     usePartyFinderStore.getState().clearReadyRooms();
     useGlobalStore.getState().setSocketState({ connected: true, joined: true });
   });
@@ -67,7 +64,7 @@ describe("usePartyReadyRoomSync", () => {
 
   it("preserves a newer socket projection received during a delayed list request", async () => {
     usePartyFinderStore.getState().mergeProjection(createProjection(2));
-    const listResponse = createDeferred<unknown[]>();
+    const listResponse = Promise.withResolvers<PartyReadyRoomProjection[]>();
     listReadyRooms.mockImplementation(() => listResponse.promise);
     renderHook(() => usePartyReadyRoomSync());
 

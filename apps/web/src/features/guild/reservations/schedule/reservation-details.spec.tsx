@@ -1,58 +1,34 @@
+import { createOrganizationTestWrapper } from "@/lib/testing/router";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { getUsersControllerGetCurrentUserGuildsQueryKey } from "@lootlog/client/main";
 // @vitest-environment happy-dom
 
+import { initializeTestTranslations } from "@/lib/testing/i18n";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import type { PropsWithChildren } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+
+import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { ReservationDetails } from "./reservation-details";
 import type { NormalizedReservation } from "./normalize-reservation";
 
-vi.mock("@tanstack/react-query", () => ({
-  useQueryClient: () => ({ invalidateQueries: vi.fn() }),
-}));
+await initializeTestTranslations();
 
-vi.mock("@lootlog/client/main", async () => ({
-  ...(await vi.importActual("@lootlog/client/main")),
-  getListReservationSpotsQueryKey: () => [],
-  getListSpotReservationsQueryKey: () => [],
-  useDeleteReservation: () => ({ isPending: false, mutate: vi.fn() }),
-}));
-
-vi.mock("@lootlog/ui/hooks/use-mobile", () => ({
-  useIsMobile: () => true,
-}));
-
-vi.mock("@lootlog/ui/components/drawer", () => ({
-  Drawer: ({ children, open }: PropsWithChildren<{ open: boolean }>) => (
-    <div data-testid="drawer-root" data-open={String(open)}>
-      {children}
-    </div>
-  ),
-  DrawerContent: ({ children }: PropsWithChildren) => <div>{children}</div>,
-  DrawerDescription: ({ children }: PropsWithChildren) => <p>{children}</p>,
-  DrawerHeader: ({ children }: PropsWithChildren) => <div>{children}</div>,
-  DrawerTitle: ({ children }: PropsWithChildren) => <h2>{children}</h2>,
-}));
-
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
-}));
-
-vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
-
-vi.mock("@/components/reservation-organization-badge", () => ({
-  ReservationOrganizationBadge: ({ name }: { name: string }) => (
-    <span>{name}</span>
-  ),
-}));
-
-vi.mock(
-  "@/features/user/reservations/use-reservation-organization-icon",
-  () => ({
-    useReservationOrganizationIcon: () => null,
-  }),
+const RouterWrapper = await createOrganizationTestWrapper();
+const client = new QueryClient({
+  defaultOptions: {
+    queries: { staleTime: Infinity, retry: false, gcTime: Infinity },
+  },
+});
+client.setQueryData(getUsersControllerGetCurrentUserGuildsQueryKey(), []);
+const wrapper = ({ children }: React.PropsWithChildren) => (
+  <RouterWrapper>
+    <QueryClientProvider client={client}>{children}</QueryClientProvider>
+  </RouterWrapper>
 );
-
-afterEach(cleanup);
+beforeEach(() => vi.stubGlobal("innerWidth", 390));
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 const reservation: NormalizedReservation = {
   id: 1,
@@ -82,7 +58,7 @@ const reservation: NormalizedReservation = {
 };
 
 describe("ReservationDetails", () => {
-  it("keeps the mobile drawer mounted while its open state changes", () => {
+  it("opens reservation details after starting closed and can reopen them", async () => {
     const props = {
       guildId: "guild-id",
       spotId: "driady",
@@ -90,15 +66,17 @@ describe("ReservationDetails", () => {
     };
     const { rerender } = render(
       <ReservationDetails {...props} reservation={null} />,
+      { wrapper },
     );
-
-    const closedDrawer = screen.getByTestId("drawer-root");
-    expect(closedDrawer.getAttribute("data-open")).toBe("false");
-
+    expect(screen.queryByRole("dialog")).toBeNull();
     rerender(<ReservationDetails {...props} reservation={reservation} />);
-
-    expect(screen.getByTestId("drawer-root")).toBe(closedDrawer);
-    expect(closedDrawer.getAttribute("data-open")).toBe("true");
+    expect(await screen.findByRole("dialog")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "common.cancel" }));
+    expect(props.onOpenChange).toHaveBeenCalledWith(false);
+    rerender(<ReservationDetails {...props} reservation={null} />);
+    rerender(<ReservationDetails {...props} reservation={reservation} />);
+    expect(await screen.findByRole("dialog")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "common.cancel" })).toBeTruthy();
   });
 
   it("always renders a bordered footer with a dismiss action", () => {
@@ -110,6 +88,7 @@ describe("ReservationDetails", () => {
         reservation={{ ...reservation, canCancel: false }}
         onOpenChange={onOpenChange}
       />,
+      { wrapper },
     );
 
     const dismissButton = screen.getByRole("button", {

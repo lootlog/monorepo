@@ -12,6 +12,7 @@ import { getUsersControllerGetUserGameAccountPreferencesQueryKey } from "@lootlo
 const UPDATE_USER_GAME_ACCOUNT_PREFERENCES_MUTATION_KEY_PREFIX =
   "update-user-game-account-preferences";
 
+// SAFETY: The schema-owned default literal contains exactly the six NotificationType keys.
 const notificationSettingTypes = Object.keys(
   defaultNotificationsSettings,
 ) as Array<keyof NotificationsSettings>;
@@ -39,39 +40,46 @@ export const getUpdateUserGameAccountPreferencesMutationKey = (
 const cloneNotificationsSettings = (
   settings: NotificationsSettings,
 ): NotificationsSettings => {
-  return notificationSettingTypes.reduce((acc, notificationType) => {
-    acc[notificationType] = {
-      ...settings[notificationType],
-      guildIds: [...settings[notificationType].guildIds],
-    };
+  return notificationSettingTypes.reduce(
+    (acc, notificationType) => {
+      acc[notificationType] = {
+        ...settings[notificationType],
+        guildIds: [...settings[notificationType].guildIds],
+      };
 
-    return acc;
-  }, {} as NotificationsSettings);
+      return acc;
+    },
+    { ...settings },
+  );
 };
 
 export const createNotificationsSettings = (guildIds: string[] = []) => {
   const settings = cloneNotificationsSettings(defaultNotificationsSettings);
 
-  return notificationSettingTypes.reduce((acc, notificationType) => {
-    acc[notificationType] = {
-      ...settings[notificationType],
-      guildIds: [...guildIds],
-    };
+  return notificationSettingTypes.reduce(
+    (acc, notificationType) => {
+      acc[notificationType] = {
+        ...settings[notificationType],
+        guildIds: [...guildIds],
+      };
 
-    return acc;
-  }, {} as NotificationsSettings);
+      return acc;
+    },
+    { ...settings },
+  );
 };
 
 export const cloneDetectorSettings = (
   settings: DetectorSettings,
 ): DetectorSettings => {
   const clonedSettings = {
+    ...settings,
     routingRules: settings.routingRules.map((rule) => ({
       ...rule,
       world: rule.world,
       guildIds: [...rule.guildIds],
     })),
-  } as DetectorSettings;
+  };
 
   DETECTOR_NPC_TYPES.forEach((npcType) => {
     clonedSettings[npcType] = {

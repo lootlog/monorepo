@@ -87,7 +87,8 @@ function getRowOther(
   if (!characterId) return null;
 
   if (!othersById[characterId]) return null;
-  return runtimeOtherHandles.get(characterId) ?? null;
+  const handle = runtimeOtherHandles.get(characterId);
+  return handle && "d" in handle ? handle : null;
 }
 
 function refreshWhoIsHereTooltip(row: HTMLElement, other: Other): void {

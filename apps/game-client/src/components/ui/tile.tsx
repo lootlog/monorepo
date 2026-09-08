@@ -1,11 +1,11 @@
-import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
+import { getTimerColor } from "@/features/timers/constants/timer-colors";
 import { cn } from "cn";
 import { type FC, useState } from "react";
 
 type TileProps = {
   children?: React.ReactNode;
   id?: string;
-  color?: keyof typeof TIMERS_COLORS | string;
+  color?: string;
   customBorderColor?: string;
   customBackgroundColor?: string;
   className?: string;
@@ -43,14 +43,9 @@ export const Tile: FC<TileProps> = ({
   onDoubleClick,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
-  const isDefaultColor = color && color in TIMERS_COLORS;
-
-  const borderColor = isDefaultColor
-    ? TIMERS_COLORS[color as keyof typeof TIMERS_COLORS]?.border
-    : undefined;
-  const bgColor = isDefaultColor
-    ? TIMERS_COLORS[color as keyof typeof TIMERS_COLORS]?.bg
-    : undefined;
+  const defaultColor = color ? getTimerColor(color) : undefined;
+  const borderColor = defaultColor?.border;
+  const bgColor = defaultColor?.bg;
 
   const customStyles: React.CSSProperties = {};
 

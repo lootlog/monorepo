@@ -1,12 +1,12 @@
+import {
+  unusedBattles,
+  unusedBattleAnalytics,
+  unusedDeleteQueue,
+  createBattleFixture,
+} from "../../test/battle-fixtures.js";
 import { describe, expect, it, mock } from "bun:test";
 import { Effect } from "effect";
-import type { Queue } from "bullmq";
 import { makeBattlelogOperations } from "./battlelog-operations.js";
-import type { DeleteUserBattlesJobData } from "#src/battles/deletion/delete-user-battles.processor";
-import type { Battles } from "#src/battles/battles.service";
-import type { BattleAnalytics } from "#src/battles/analytics/battle-analytics.service";
-
-const queue = {} as Queue<DeleteUserBattlesJobData>;
 
 describe("Battlelog operations", () => {
   it("forwards timeline requests with the authenticated user", async () => {
@@ -18,9 +18,9 @@ describe("Battlelog operations", () => {
     };
     const getBattleTimeline = mock(() => Effect.succeed(timeline));
     const operations = makeBattlelogOperations(
-      { getBattleTimeline } as unknown as Battles,
-      {} as BattleAnalytics,
-      queue,
+      { ...unusedBattles, getBattleTimeline },
+      unusedBattleAnalytics,
+      unusedDeleteQueue,
     );
 
     await expect(
@@ -34,18 +34,12 @@ describe("Battlelog operations", () => {
   it("requires ownership before updating battle visibility", async () => {
     const assertBattleOwner = mock(() => Effect.void);
     const updateBattle = mock(() =>
-      Effect.succeed({
-        id: "battle-1",
-        createdAt: new Date("2026-01-01T00:00:00.000Z"),
-        updatedAt: new Date("2026-01-01T00:00:00.000Z"),
-        warriors: [],
-        statistics: {},
-      }),
+      Effect.succeed({ ...createBattleFixture(), warriors: [] }),
     );
     const operations = makeBattlelogOperations(
-      { assertBattleOwner, updateBattle } as unknown as Battles,
-      {} as BattleAnalytics,
-      queue,
+      { ...unusedBattles, assertBattleOwner, updateBattle },
+      unusedBattleAnalytics,
+      unusedDeleteQueue,
     );
 
     await Effect.runPromise(

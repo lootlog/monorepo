@@ -1,9 +1,7 @@
+import { configureApiClients } from "@lootlog/client/transport";
 import { act, renderHook, waitFor } from "@testing-library/react";
-import type {
-  PartyReadyRoomOrganizerProjection,
-  PartyReadyRoomParticipant,
-} from "@lootlog/schema/party-ready-room";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { PartyReadyRoomInvitationTarget } from "@lootlog/schema/party-ready-room";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useReadyRoomInvitations } from "@/features/party-finder/hooks/use-ready-room-invitations";
 import {
   READY_ROOM_INVITATION_PARTICIPANT_CAP,
@@ -14,78 +12,23 @@ import { useGlobalStore } from "@/store/global.store";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 
+type InvitationResponse = { targets: PartyReadyRoomInvitationTarget[] };
 const resolveInvitationTargets =
-  vi.fn<(...args: unknown[]) => Promise<unknown>>();
-const inviteCharacterToParty = vi.fn();
+  vi.fn<(request: Request) => Promise<InvitationResponse>>();
+const inviteCharacterToParty = vi.fn<(command: string) => void>();
+let restoreClient = () => {};
+afterEach(() => {
+  restoreClient();
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
 
-vi.mock("@lootlog/client/main", async () => ({
-  ...(await vi.importActual("@lootlog/client/main")),
-  partyReadyRoomControllerResolveInvitationTargets: (...args: unknown[]) =>
-    resolveInvitationTargets(...args),
-}));
-
-vi.mock(
-  "@/lib/margonem-runtime/adapters/character-action-runtime-adapter",
-  () => ({
-    inviteCharacterToParty: (characterId: string) =>
-      inviteCharacterToParty(characterId),
-  }),
-);
-
-function createParticipant(
-  participantId: string,
-  characterId: string,
-): PartyReadyRoomParticipant {
-  return {
-    participantId,
-    discordId: `discord-${participantId}`,
-    character: {
-      accountId: `account-${participantId}`,
-      characterId,
-      icon: "participant.gif",
-      lvl: 190,
-      nick: participantId,
-      prof: "m",
-    },
-    partyPresence: "OUTSIDE",
-    createdAt: "2026-07-13T10:00:00.000Z",
-    updatedAt: "2026-07-13T10:00:00.000Z",
-  };
-}
+import {
+  createReadyRoomParticipant as createParticipant,
+  readyRoomOrganizerFixture as projection,
+} from "@/test/ready-room-fixtures";
 
 const participant = createParticipant("participant-1", "participant-character");
-
-const projection = {
-  schemaVersion: 3,
-  notificationId: "room-1",
-  organizerDiscordId: "organizer",
-  guildIds: ["guild-1"],
-  world: "Fobos",
-  status: "ACTIVE",
-  revision: 3,
-  createdAt: "2026-07-13T10:00:00.000Z",
-  updatedAt: "2026-07-13T10:00:00.000Z",
-  expiresAt: "2999-07-13T10:30:00.000Z",
-  viewer: "ORGANIZER",
-  organizerCharacter: {
-    accountId: "organizer-account",
-    characterId: "organizer-character",
-    icon: "character.gif",
-    lvl: 200,
-    nick: "Organizer",
-    prof: "w",
-  },
-  participants: { "participant-1": participant },
-  ownedParticipantIds: [],
-} satisfies PartyReadyRoomOrganizerProjection;
-
-function createDeferred<T>() {
-  let resolve!: (value: T) => void;
-  const promise = new Promise<T>((resolvePromise) => {
-    resolve = resolvePromise;
-  });
-  return { promise, resolve };
-}
 
 describe("useReadyRoomInvitations", () => {
   beforeEach(() => {
@@ -95,7 +38,16 @@ describe("useReadyRoomInvitations", () => {
         characterId: "organizer-character",
       },
     });
-    vi.clearAllMocks();
+    vi.resetAllMocks();
+    restoreClient = configureApiClients({
+      main: { baseUrl: "https://api.test" },
+    });
+    vi.stubGlobal(
+      "fetch",
+      async (input: string | URL | Request, init?: RequestInit) =>
+        Response.json(await resolveInvitationTargets(new Request(input, init))),
+    );
+    vi.stubGlobal("_g", inviteCharacterToParty);
     resetReadyRoomInvitationCoordinatorForTests();
     usePartyFinderStore.getState().clearReadyRooms();
     usePartyFinderStore.getState().mergeProjection(projection);
@@ -116,19 +68,19 @@ describe("useReadyRoomInvitations", () => {
 
     await act(() => result.current.inviteParticipants(["participant-1"]));
 
-    expect(resolveInvitationTargets).toHaveBeenCalledWith(
-      { notificationId: "room-1" },
-      { participantIds: ["participant-1"] },
-      { signal: expect.any(AbortSignal) },
-    );
+    const request = resolveInvitationTargets.mock.calls[0]?.[0];
+    expect(request?.url).toContain("room-1");
+    expect(await request?.json()).toEqual({
+      participantIds: ["participant-1"],
+    });
     expect(inviteCharacterToParty).toHaveBeenCalledOnce();
     expect(inviteCharacterToParty).toHaveBeenCalledWith(
-      "participant-character",
+      "party&a=inv&id=participant-character",
     );
   });
 
   it("serializes rapid explicit clicks while preserving every intent", async () => {
-    const firstResolution = createDeferred<unknown>();
+    const firstResolution = Promise.withResolvers<InvitationResponse>();
     const response = {
       targets: [
         {
@@ -142,12 +94,8 @@ describe("useReadyRoomInvitations", () => {
       .mockResolvedValueOnce(response);
     const { result } = renderHook(() => useReadyRoomInvitations());
 
-    let firstIntent!: Promise<unknown>;
-    let secondIntent!: Promise<unknown>;
-    act(() => {
-      firstIntent = result.current.inviteParticipants();
-      secondIntent = result.current.inviteParticipants();
-    });
+    const firstIntent = result.current.inviteParticipants();
+    const secondIntent = result.current.inviteParticipants();
 
     await waitFor(() =>
       expect(resolveInvitationTargets).toHaveBeenCalledOnce(),
@@ -160,13 +108,13 @@ describe("useReadyRoomInvitations", () => {
     await act(() => secondIntent);
 
     expect(inviteCharacterToParty.mock.calls).toEqual([
-      ["participant-character"],
-      ["participant-character"],
+      ["party&a=inv&id=participant-character"],
+      ["party&a=inv&id=participant-character"],
     ]);
   });
 
   it("coalesces an arbitrary number of queued clicks into one pending promise", async () => {
-    const firstResolution = createDeferred<unknown>();
+    const firstResolution = Promise.withResolvers<InvitationResponse>();
     const response = {
       targets: [
         {
@@ -205,7 +153,7 @@ describe("useReadyRoomInvitations", () => {
   });
 
   it("skips a queued participant who enters the party before execution", async () => {
-    const firstResolution = createDeferred<unknown>();
+    const firstResolution = Promise.withResolvers<InvitationResponse>();
     resolveInvitationTargets.mockImplementationOnce(
       () => firstResolution.promise,
     );
@@ -257,17 +205,15 @@ describe("useReadyRoomInvitations", () => {
       resolveInvitationTargets.mockReturnValue(new Promise(() => undefined));
       const { result } = renderHook(() => useReadyRoomInvitations());
       const invitation = result.current.inviteParticipants();
-      const rejection = expect(invitation).rejects.toThrow(
-        "Ready Room invitation request timed out",
+      await Promise.all([
+        expect(invitation).rejects.toThrow(
+          "Ready Room invitation request timed out",
+        ),
+        vi.advanceTimersByTimeAsync(READY_ROOM_INVITATION_TIMEOUT_MS),
+      ]);
+      expect(resolveInvitationTargets.mock.calls[0]?.[0].signal.aborted).toBe(
+        true,
       );
-
-      await vi.advanceTimersByTimeAsync(READY_ROOM_INVITATION_TIMEOUT_MS);
-      await rejection;
-
-      const requestOptions = resolveInvitationTargets.mock.calls[0]?.[2] as
-        | { signal?: AbortSignal }
-        | undefined;
-      expect(requestOptions?.signal?.aborted).toBe(true);
     } finally {
       vi.useRealTimers();
     }
@@ -296,12 +242,13 @@ describe("useReadyRoomInvitations", () => {
 
     await act(() => result.current.inviteParticipants());
 
-    const request = resolveInvitationTargets.mock.calls[0]?.[1] as
-      | { participantIds?: string[] }
-      | undefined;
-    expect(request?.participantIds).toHaveLength(
-      READY_ROOM_INVITATION_PARTICIPANT_CAP,
-    );
+    const request = resolveInvitationTargets.mock.calls[0]?.[0];
+    expect(await request?.json()).toEqual({
+      participantIds: Object.keys(participants).slice(
+        0,
+        READY_ROOM_INVITATION_PARTICIPANT_CAP,
+      ),
+    });
   });
 
   it("continues with later targets when one game helper call fails", async () => {
@@ -338,8 +285,8 @@ describe("useReadyRoomInvitations", () => {
     await act(() => result.current.inviteParticipants());
 
     expect(inviteCharacterToParty.mock.calls).toEqual([
-      ["participant-character"],
-      ["second-character"],
+      ["party&a=inv&id=participant-character"],
+      ["party&a=inv&id=second-character"],
     ]);
   });
 });

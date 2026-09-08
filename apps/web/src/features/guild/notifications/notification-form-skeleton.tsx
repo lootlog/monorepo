@@ -22,7 +22,7 @@ export const NotificationFormSkeleton = () => (
     </div>
     <div className="hidden lg:block">
       <SectionCard>
-        <SectionCardHeader title={<Skeleton className="mb-3 h-5 w-24" />} />
+        <SectionCardHeader title=<Skeleton className="mb-3 h-5 w-24" /> />
         <SectionCardContent className="flex flex-col gap-3">
           <Skeleton className="h-40 w-full rounded-lg" />
         </SectionCardContent>

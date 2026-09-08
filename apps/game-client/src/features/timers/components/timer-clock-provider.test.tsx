@@ -23,7 +23,7 @@ describe("TimerClockProvider", () => {
   it.each([1, 20, 100])(
     "updates %i timer labels without rerendering the static parent",
     (timerCount) => {
-      const parentRenderSpy = vi.fn();
+      const parentRenderSpy = vi.fn<() => void>();
       const setIntervalSpy = vi.spyOn(globalThis, "setInterval");
 
       const StaticTimerGrid = () => {

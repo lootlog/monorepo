@@ -198,7 +198,7 @@ export const EventSummaryDialog = ({
             variant="outline"
             className="mt-6"
             loading={isFetching}
-            icon={<RotateCcw className="size-4" />}
+            icon=<RotateCcw className="size-4" />
             onClick={() => void refetch()}
           >
             {t("events.summaryDialog.retry")}

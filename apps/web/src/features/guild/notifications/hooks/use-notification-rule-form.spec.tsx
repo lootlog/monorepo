@@ -1,5 +1,7 @@
+import { createOrganizationTestWrapper } from "@/lib/testing/router";
 // @vitest-environment happy-dom
 
+import { initializeTestTranslations } from "@/lib/testing/i18n";
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { configureApiClients } from "@lootlog/client/transport";
@@ -7,16 +9,7 @@ import { getNpcsControllerGetNpcsQueryKey } from "@lootlog/client/search";
 import { afterEach, expect, it, vi } from "vitest";
 import { useNotificationRuleForm } from "./use-notification-rule-form";
 
-vi.mock("react-i18next", () => {
-  const t = (key: string) => key;
-  return { useTranslation: () => ({ t }) };
-});
-vi.mock("@tanstack/react-router", () => ({
-  useNavigate: () => vi.fn(),
-  useParams: () => ({ guildId: "test-org" }),
-  useSearch: () => ({}),
-}));
-
+await initializeTestTranslations();
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
@@ -51,10 +44,13 @@ it("lets a recovered NPC search replace a failed selected-label lookup", async (
     }),
   );
 
+  const RouterWrapper = await createOrganizationTestWrapper("/test-org");
   try {
     const { result } = renderHook(useNotificationRuleForm, {
       wrapper: ({ children }) => (
-        <QueryClientProvider client={client}>{children}</QueryClientProvider>
+        <RouterWrapper>
+          <QueryClientProvider client={client}>{children}</QueryClientProvider>
+        </RouterWrapper>
       ),
     });
     await waitFor(() => expect(result.current.isLoading).toBe(false));

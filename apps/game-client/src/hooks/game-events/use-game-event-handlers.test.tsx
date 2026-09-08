@@ -1,103 +1,67 @@
-import { renderHook } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-const mockRegister = vi.fn();
-const mockHandleInitialEvents = vi.fn();
-const mockCleanup = vi.fn();
-const mockEventDispatcherConstructor = vi.fn();
-
-let gameInitialized = false;
-
-vi.mock("@/store/global.store", () => ({
-  useGlobalStore: (
-    selector: (state: { gameState: { gameInitialized: boolean } }) => boolean,
-  ) =>
-    selector({
-      gameState: {
-        gameInitialized,
-      },
-    }),
-}));
-
-vi.mock("@/lib/event-dispatcher", () => ({
-  EventDispatcher: function MockEventDispatcher() {
-    mockEventDispatcherConstructor();
-
-    return {
-      register: mockRegister,
-      handleInitialEvents: mockHandleInitialEvents,
-      cleanup: mockCleanup,
-    };
-  },
-}));
-
-vi.mock("./use-character-tooltip-catching-guilds", () => ({
-  useCharacterTooltipCatchingGuilds: vi.fn(),
-}));
-
-vi.mock("./use-other-catching-guild-glow", () => ({
-  useOtherCatchingGuildGlow: vi.fn(),
-}));
-
-vi.mock("./use-online-character-owners", () => ({
-  useOnlineCharacterOwners: vi.fn(),
-}));
-
-vi.mock("./use-who-is-here-lootlog-highlight", () => ({
-  useWhoIsHereLootlogHighlight: vi.fn(),
-}));
-
+import { createRealtimeTest } from "@/test/realtime-test";
+import { EventDispatcher } from "@/lib/event-dispatcher";
+import { useGlobalStore } from "@/store/global.store";
 import { useGameEventHandlers } from "./use-game-event-handlers";
 
+let test: ReturnType<typeof createRealtimeTest>;
+const register = vi.spyOn(EventDispatcher.prototype, "register");
+const initialEvents = vi.spyOn(
+  EventDispatcher.prototype,
+  "handleInitialEvents",
+);
+const cleanup = vi.spyOn(EventDispatcher.prototype, "cleanup");
+
+beforeEach(() => {
+  test = createRealtimeTest();
+  register.mockClear();
+  initialEvents.mockClear();
+  cleanup.mockClear();
+});
+
 describe("useGameEventHandlers", () => {
-  beforeEach(() => {
-    gameInitialized = false;
-    mockRegister.mockReset();
-    mockHandleInitialEvents.mockReset();
-    mockCleanup.mockReset();
-    mockEventDispatcherConstructor.mockReset();
-  });
-
-  it("creates and registers the dispatcher only once", () => {
-    const { rerender } = renderHook(() => useGameEventHandlers());
-
+  it("registers its real dispatcher once across rerenders", () => {
+    const { rerender } = renderHook(() => useGameEventHandlers(), {
+      wrapper: test.wrapper,
+    });
     rerender();
-
-    expect(mockEventDispatcherConstructor).toHaveBeenCalledTimes(1);
-    expect(mockRegister).toHaveBeenCalledTimes(1);
-    expect(mockHandleInitialEvents).not.toHaveBeenCalled();
+    expect(register).toHaveBeenCalledOnce();
+    expect(initialEvents).not.toHaveBeenCalled();
   });
 
-  it("runs initial event handling after the game becomes initialized", () => {
-    const { rerender } = renderHook(() => useGameEventHandlers());
-
-    gameInitialized = true;
+  it("handles initial events once after the game becomes ready", () => {
+    const { rerender } = renderHook(() => useGameEventHandlers(), {
+      wrapper: test.wrapper,
+    });
+    act(() =>
+      useGlobalStore.getState().setGameState({ gameInitialized: true }),
+    );
     rerender();
-
-    expect(mockHandleInitialEvents).toHaveBeenCalledTimes(1);
+    expect(initialEvents).toHaveBeenCalledOnce();
   });
 
-  it("cleans up the dispatcher on unmount", () => {
-    const { unmount } = renderHook(() => useGameEventHandlers());
-
+  it("releases the dispatcher on unmount", () => {
+    const { unmount } = renderHook(() => useGameEventHandlers(), {
+      wrapper: test.wrapper,
+    });
     unmount();
-
-    expect(mockCleanup).toHaveBeenCalledTimes(1);
+    expect(cleanup).toHaveBeenCalledOnce();
   });
 
-  it("shares one dispatcher when the client is mounted more than once", () => {
-    gameInitialized = true;
-    const firstClient = renderHook(() => useGameEventHandlers());
-    const secondClient = renderHook(() => useGameEventHandlers());
-
-    expect(mockEventDispatcherConstructor).toHaveBeenCalledTimes(1);
-    expect(mockRegister).toHaveBeenCalledTimes(1);
-    expect(mockHandleInitialEvents).toHaveBeenCalledTimes(1);
-
-    firstClient.unmount();
-    expect(mockCleanup).not.toHaveBeenCalled();
-
-    secondClient.unmount();
-    expect(mockCleanup).toHaveBeenCalledTimes(1);
+  it("retains the shared dispatcher until the last client unmounts", () => {
+    useGlobalStore.getState().setGameState({ gameInitialized: true });
+    const first = renderHook(() => useGameEventHandlers(), {
+      wrapper: test.wrapper,
+    });
+    const second = renderHook(() => useGameEventHandlers(), {
+      wrapper: test.wrapper,
+    });
+    expect(register).toHaveBeenCalledOnce();
+    expect(initialEvents).toHaveBeenCalledOnce();
+    first.unmount();
+    expect(cleanup).not.toHaveBeenCalled();
+    second.unmount();
+    expect(cleanup).toHaveBeenCalledOnce();
   });
 });

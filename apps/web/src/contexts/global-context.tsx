@@ -73,7 +73,7 @@ export const GlobalContextProvider: React.FC<Props> = ({ children }) => {
   );
 };
 
-export const GlobalContext = createContext<GlobalContextProviderValue>(
-  {} as GlobalContextProviderValue,
-);
+export const GlobalContext = createContext<
+  GlobalContextProviderValue | undefined
+>(undefined);
 GlobalContext.displayName = "GlobalContext";

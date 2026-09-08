@@ -1,254 +1,115 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { createElement, type ReactNode } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { expect, it } from "vitest";
 import {
   createDetectorSettings,
   createNotificationsSettings,
 } from "@/lib/game-account-preferences";
-import { useGameAccountPreferencesSync } from "@/hooks/use-game-account-preferences-sync";
-import * as UsersApi from "@lootlog/client/main";
+import {
+  createAccountPreferences,
+  createAccountPreferencesTest,
+} from "@/test/account-preferences-test";
+import { npcsDetectionProcessor } from "@/processors/npcs-detection-processor";
+import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import { useGameStore } from "@/store/game.store";
-
-const mockUseAccessibleGuilds = vi.fn();
-const mockUseUserGameAccountPreferences = vi.fn();
-const mockUseUpdateUserGameAccountPreferences = vi.fn();
-const mockFlushPending = vi.fn();
-const mockMutate = vi.fn();
-const { mockGetAccountId } = vi.hoisted(() => ({
-  mockGetAccountId: vi.fn((): string | null => "202"),
-}));
-
-vi.mock("@lootlog/client/main", async () => {
-  const actual = await vi.importActual<typeof UsersApi>("@lootlog/client/main");
-
-  return {
-    ...actual,
-    useUsersControllerGetCurrentUserAccessibleGuilds: () =>
-      mockUseAccessibleGuilds(),
-  };
+import { setTestRuntimeGame } from "@/test/test-runtime-window";
+import { useGameAccountPreferencesSync } from "./use-game-account-preferences-sync";
+const queueNpc = () =>
+  npcsDetectionProcessor.handle({
+    npcs: [{ id: 500, tpl: 900, x: 12, y: 18, icon: { id: 44 } }],
+    npc_tpls: [
+      {
+        id: 900,
+        nick: "Tanroth",
+        prof: "w",
+        type: 2,
+        warrior_type: 85,
+        level: 120,
+        resp_rand: 10,
+      },
+    ],
+    icons: [{ id: 44, icon: "npc.gif" }],
+  });
+it("stores defaults for accessible organizations when server settings are missing", async () => {
+  const fixture = createAccountPreferencesTest();
+  fixture.queryClient.setQueryData(
+    fixture.queryKey,
+    createAccountPreferences(),
+  );
+  renderHook(() => useGameAccountPreferencesSync(), {
+    wrapper: fixture.wrapper,
+  });
+  await waitFor(() =>
+    expect(
+      fixture.requests.filter((request) => request.method !== "GET"),
+    ).toHaveLength(1),
+  );
+  expect(
+    await fixture.requests
+      .filter((request) => request.method !== "GET")[0]
+      .json(),
+  ).toEqual({
+    notifications: createNotificationsSettings(["guild-1", "guild-2"]),
+    detector: createDetectorSettings(),
+  });
+  expect(fixture.queryClient.getQueryData(fixture.queryKey)).toMatchObject({
+    accountId: "202",
+    notifications: createNotificationsSettings(["guild-1", "guild-2"]),
+    hasStoredNotifications: true,
+    hasStoredDetector: true,
+    hasStoredPreferences: true,
+  });
 });
-
-vi.mock("@/hooks/api/use-user-account-preferences", () => ({
-  useUserGameAccountPreferences: (...args: unknown[]) =>
-    mockUseUserGameAccountPreferences(...args),
-  useUpdateUserGameAccountPreferences: (...args: unknown[]) =>
-    mockUseUpdateUserGameAccountPreferences(...args),
-}));
-
-vi.mock("@/lib/game", () => ({
-  Game: {
-    hero: {
-      account: 202,
-    },
-    getAccountId: () => mockGetAccountId(),
-  },
-}));
-
-vi.mock("@/processors/npcs-detection-processor", () => ({
-  npcsDetectionProcessor: {
-    flushPending: (...args: unknown[]) => mockFlushPending(...args),
-  },
-}));
-
-vi.mock("@/store/global.store", () => ({
-  useGlobalStore: (
-    selector: (state: { gameState: { gameInitialized: boolean } }) => boolean,
-  ) =>
-    selector({
-      gameState: {
-        gameInitialized: true,
-      },
-    }),
-}));
-
-describe("useGameAccountPreferencesSync", () => {
-  let queryClient: QueryClient;
-
-  beforeEach(() => {
-    queryClient = new QueryClient({
-      defaultOptions: {
-        queries: {
-          retry: false,
-        },
-      },
-    });
-
-    mockUseAccessibleGuilds.mockReset();
-    mockUseAccessibleGuilds.mockReturnValue({
-      data: [{ id: "guild-1" }, { id: "guild-2" }],
-      isFetched: true,
-      isFetching: false,
-      isLoading: false,
-    });
-    mockUseUserGameAccountPreferences.mockReset();
-    mockUseUpdateUserGameAccountPreferences.mockReset();
-    mockUseUpdateUserGameAccountPreferences.mockReturnValue({
-      mutate: mockMutate,
-    });
-    mockMutate.mockReset();
-    mockFlushPending.mockReset();
-    mockGetAccountId.mockReset();
-    mockGetAccountId.mockReturnValue("202");
-    useGameStore.getState().replaceGame({
-      hero: {
-        accountId: "202",
-        characterId: "101",
-        currentHp: 1,
-        icon: "hero.gif",
-        level: 300,
-        maxHp: 1,
-        name: "Hero",
-        profession: "w",
-        x: 1,
-        y: 2,
-      },
-      interface: "ni",
-      map: { id: 1, name: "Map", visibility: 30 },
-      world: "pandora",
-    });
+it("waits for organization membership before storing defaults", () => {
+  const fixture = createAccountPreferencesTest(
+    () => new Promise<Response>(() => undefined),
+  );
+  fixture.queryClient.removeQueries({ queryKey: fixture.guildsKey });
+  const preferences = createAccountPreferences();
+  fixture.queryClient.setQueryData(fixture.queryKey, preferences);
+  renderHook(() => useGameAccountPreferencesSync(), {
+    wrapper: fixture.wrapper,
   });
-
-  const wrapper = ({ children }: { children: ReactNode }) =>
-    createElement(QueryClientProvider, { client: queryClient }, children);
-
-  it("seeds backend defaults when account settings are missing on the server", async () => {
-    mockUseUserGameAccountPreferences.mockReturnValue({
-      data: {
-        accountId: "202",
-        notifications: createNotificationsSettings(),
-        detector: createDetectorSettings(),
-        hasStoredNotifications: false,
-        hasStoredDetector: false,
-        hasStoredPreferences: false,
-      },
-      isLoading: false,
-      isFetching: false,
-      isFetched: true,
-    });
-
-    renderHook(() => useGameAccountPreferencesSync(), {
-      wrapper,
-    });
-
-    await waitFor(() => {
-      expect(mockMutate).toHaveBeenCalledWith(
-        {
-          notifications: createNotificationsSettings(["guild-1", "guild-2"]),
-          detector: createDetectorSettings(),
-        },
-        expect.objectContaining({
-          onError: expect.any(Function),
-        }),
-      );
-    });
-
-    expect(
-      queryClient.getQueryData(
-        UsersApi.getUsersControllerGetUserGameAccountPreferencesQueryKey({
-          accountId: "202",
-        }),
-      ),
-    ).toEqual({
-      accountId: "202",
-      notifications: createNotificationsSettings(["guild-1", "guild-2"]),
-      detector: createDetectorSettings(),
-      hasStoredNotifications: true,
-      hasStoredDetector: true,
-      hasStoredPreferences: true,
-    });
+  expect(
+    fixture.requests.filter((request) => request.method !== "GET"),
+  ).toHaveLength(0);
+  expect(fixture.queryClient.getQueryData(fixture.queryKey)).toEqual(
+    preferences,
+  );
+});
+it("flushes queued NPC detection once the preference request fails", async () => {
+  const pending = Promise.withResolvers<Response>();
+  const fixture = createAccountPreferencesTest(() => pending.promise);
+  queueNpc();
+  expect(useNpcDetectorStore.getState().npcs).toHaveLength(0);
+  renderHook(() => useGameAccountPreferencesSync(), {
+    wrapper: fixture.wrapper,
   });
-
-  it("does not seed defaults before guild membership finishes loading", () => {
-    mockUseAccessibleGuilds.mockReturnValue({
-      data: [],
-      isFetched: false,
-      isFetching: true,
-      isLoading: true,
-    });
-    mockUseUserGameAccountPreferences.mockReturnValue({
-      data: {
-        accountId: "202",
-        notifications: createNotificationsSettings(),
-        detector: createDetectorSettings(),
-        hasStoredNotifications: false,
-        hasStoredDetector: false,
-        hasStoredPreferences: false,
-      },
-      isLoading: false,
-      isFetching: false,
-      isFetched: true,
-    });
-
-    renderHook(() => useGameAccountPreferencesSync(), {
-      wrapper,
-    });
-
-    expect(mockMutate).not.toHaveBeenCalled();
-    expect(
-      queryClient.getQueryData(
-        UsersApi.getUsersControllerGetUserGameAccountPreferencesQueryKey({
-          accountId: "202",
-        }),
-      ),
-    ).toBeUndefined();
+  await act(async () => {
+    pending.resolve(Response.json({ message: "unavailable" }, { status: 503 }));
+    await pending.promise;
   });
-
-  it("flushes queued detector events once the preferences query reaches a terminal state", async () => {
-    mockUseUserGameAccountPreferences.mockReturnValue({
-      data: undefined,
-      isLoading: false,
-      isFetching: false,
-      isFetched: true,
-    });
-
-    renderHook(() => useGameAccountPreferencesSync(), {
-      wrapper,
-    });
-
-    await waitFor(() => {
-      expect(mockFlushPending).toHaveBeenCalledWith("202");
-    });
+  await waitFor(() =>
+    expect(useNpcDetectorStore.getState().npcs.map((npc) => npc.id)).toContain(
+      500,
+    ),
+  );
+});
+it("fetches and flushes queued detection after runtime account identity becomes available", async () => {
+  const fixture = createAccountPreferencesTest(() =>
+    Response.json({ message: "unavailable" }, { status: 503 }),
+  );
+  queueNpc();
+  useGameStore.getState().clearGame();
+  renderHook(() => useGameAccountPreferencesSync(), {
+    wrapper: fixture.wrapper,
   });
-
-  it("reacts when the runtime domain publishes the account identity", () => {
-    useGameStore.getState().clearGame();
-    mockUseUserGameAccountPreferences.mockImplementation(
-      (accountId: string | null) => ({
-        data: undefined,
-        isLoading: false,
-        isFetching: false,
-        isFetched: accountId === "202",
-      }),
-    );
-
-    const { rerender } = renderHook(() => useGameAccountPreferencesSync(), {
-      wrapper,
-    });
-
-    expect(mockFlushPending).not.toHaveBeenCalled();
-
-    act(() => {
-      useGameStore.getState().replaceGame({
-        hero: {
-          accountId: "202",
-          characterId: "101",
-          currentHp: 1,
-          icon: "hero.gif",
-          level: 300,
-          maxHp: 1,
-          name: "Hero",
-          profession: "w",
-          x: 1,
-          y: 2,
-        },
-        interface: "ni",
-        map: { id: 1, name: "Map", visibility: 30 },
-        world: "pandora",
-      });
-    });
-    rerender();
-
-    expect(mockFlushPending).toHaveBeenCalledWith("202");
-  });
+  expect(fixture.requests).toHaveLength(0);
+  expect(useNpcDetectorStore.getState().npcs).toHaveLength(0);
+  act(() => setTestRuntimeGame());
+  await waitFor(() =>
+    expect(useNpcDetectorStore.getState().npcs.map((npc) => npc.id)).toContain(
+      500,
+    ),
+  );
+  expect(fixture.requests).toHaveLength(1);
 });

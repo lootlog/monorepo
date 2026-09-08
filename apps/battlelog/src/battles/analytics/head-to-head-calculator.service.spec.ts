@@ -1,3 +1,4 @@
+import { createBattleFixture } from "../../../test/battle-fixtures.js";
 import { describe, expect, it } from "bun:test";
 import type { InflatedBattleWithWarriors } from "./battle-analytics.types.js";
 import { headToHeadCalculator } from "./head-to-head-calculator.service.js";
@@ -23,7 +24,7 @@ function createBattle({
 }: TestBattleInput): InflatedBattleWithWarriors {
   const opponentTeam = userTeam === 1 ? 2 : 1;
 
-  return {
+  return createBattleFixture({
     id,
     type: "1v1",
     winningTeam,
@@ -63,7 +64,7 @@ function createBattle({
         critWoundDamageTaken: 0,
       },
     ],
-  } as InflatedBattleWithWarriors;
+  });
 }
 
 describe("head-to-head calculator", () => {

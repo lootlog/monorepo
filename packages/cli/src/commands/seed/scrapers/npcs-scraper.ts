@@ -20,14 +20,16 @@ const BASE_URL =
   SCRAPER_CONFIG.margoworld.baseUrl + SCRAPER_CONFIG.margoworld.npcsPath;
 const URL_MATCH = SCRAPER_CONFIG.margoworld.imageUrlMatch;
 
-const NPC_TYPE_WT_MAP: Record<string, number> = {
-  tytan: 100,
-  kolos: 90,
-  heros: 80,
-  "elita III": 30,
-  "elita II": 20,
-  elita: 10,
-};
+const NPC_TYPE_WT_MAP = new Map<string, number>(
+  Object.entries({
+    tytan: 100,
+    kolos: 90,
+    heros: 80,
+    "elita III": 30,
+    "elita II": 20,
+    elita: 10,
+  } satisfies Record<string, number>),
+);
 
 function getRandomProfession(): string {
   const { professions } = SCRAPER_CONFIG;
@@ -35,7 +37,7 @@ function getRandomProfession(): string {
 }
 
 function getWtByType(type: string): number {
-  return NPC_TYPE_WT_MAP[type] ?? 0;
+  return NPC_TYPE_WT_MAP.get(type) ?? 0;
 }
 
 function getNpcLevelFromMeta(meta: string): number {

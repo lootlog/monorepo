@@ -45,8 +45,8 @@ const areOnlinePlayerFiltersActive = (
       DEFAULT_ONLINE_PLAYERS_FILTERS.selectedProfession,
   ].some(Boolean);
 
-const hasRefreshError = (hasLoaded: boolean, error: unknown): boolean =>
-  hasLoaded && Boolean(error);
+const hasRefreshError = (hasLoaded: boolean, cause: unknown): boolean =>
+  hasLoaded && Boolean(cause);
 
 export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
   viewMode,

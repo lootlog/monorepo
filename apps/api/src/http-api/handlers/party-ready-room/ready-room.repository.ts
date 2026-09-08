@@ -37,11 +37,11 @@ export interface ReadyRoomRedis {
     key: string,
     schema: S,
   ) => Effect.Effect<S["Type"] | null, unknown>;
-  readonly eval: <A>(
+  readonly eval: (
     script: string,
     keys: ReadonlyArray<string>,
     arguments_: ReadonlyArray<string | number>,
-  ) => Effect.Effect<A, unknown>;
+  ) => Effect.Effect<unknown, unknown>;
 }
 
 export interface ReadyRoomEffectRepository {
@@ -104,10 +104,13 @@ const parseCreate = (
     throw new Error("Invalid Ready Room create result from Redis");
   }
   if (result[0] === "CREATED") return { status: "created", aggregate };
-  if (result[0] === "ACTIVE_ROOM_EXISTS" && typeof result[1] === "string") {
+  if (
+    result[0] === "ACTIVE_ROOM_EXISTS" &&
+    Schema.is(Schema.String)(result[1])
+  ) {
     return { status: "active-room-exists", notificationId: result[1] };
   }
-  if (result[0] === "JOINED_ELSEWHERE" && typeof result[1] === "string") {
+  if (result[0] === "JOINED_ELSEWHERE" && Schema.is(Schema.String)(result[1])) {
     return { status: "joined-elsewhere", notificationId: result[1] };
   }
   if (result[0] === "ROOM_EXISTS") return { status: "room-exists" };
@@ -124,7 +127,7 @@ export const makeReadyRoomRepository = (
     get,
     findForUser: (discordId) =>
       redis
-        .eval<unknown>(
+        .eval(
           FIND_READY_ROOM_IDS_SCRIPT,
           [organizerKey(discordId), userKey(discordId)],
           [clock()],
@@ -133,13 +136,13 @@ export const makeReadyRoomRepository = (
           Effect.flatMap((result) => {
             if (
               !Array.isArray(result) ||
-              !result.every((id) => typeof id === "string")
+              !result.every((id): id is string => typeof id === "string")
             ) {
               return Effect.fail(
                 new Error("Invalid Ready Room index result from Redis"),
               );
             }
-            const ids = [...new Set(result as string[])];
+            const ids = [...new Set(result)];
             return Effect.all(ids.map(get)).pipe(
               Effect.tap((aggregates) => {
                 const missing = ids.filter((_, index) => !aggregates[index]);
@@ -167,7 +170,7 @@ export const makeReadyRoomRepository = (
         return Effect.fail(new Error("Ready Room must expire in the future"));
       }
       return redis
-        .eval<unknown>(
+        .eval(
           CREATE_READY_ROOM_SCRIPT,
           [
             roomKey(aggregate.notificationId),
@@ -197,7 +200,7 @@ export const makeReadyRoomRepository = (
       const ttl = remainingTtl(next, clock);
       if (ttl <= 0) return Effect.succeed({ status: "missing" as const });
       return redis
-        .eval<unknown>(
+        .eval(
           COMMIT_READY_ROOM_SCRIPT,
           [roomKey(next.notificationId)],
           [JSON.stringify(expected), JSON.stringify(next), ttl],
@@ -217,7 +220,7 @@ export const makeReadyRoomRepository = (
       const participant = next.participants[participantId];
       if (!participant) return Effect.succeed({ status: "conflict" as const });
       return redis
-        .eval<unknown>(
+        .eval(
           JOIN_READY_ROOM_SCRIPT,
           [
             roomKey(next.notificationId),
@@ -239,7 +242,7 @@ export const makeReadyRoomRepository = (
               if (
                 Array.isArray(result) &&
                 result[0] === "JOINED_ELSEWHERE" &&
-                typeof result[1] === "string"
+                Schema.is(Schema.String)(result[1])
               ) {
                 return Effect.succeed<JoinReadyRoomResult>({
                   status: "joined-elsewhere" as const,
@@ -263,7 +266,7 @@ export const makeReadyRoomRepository = (
         (candidate) => candidate.discordId === participant.discordId,
       );
       return redis
-        .eval<unknown>(
+        .eval(
           EXIT_READY_ROOM_PARTICIPANT_SCRIPT,
           [
             roomKey(next.notificationId),
@@ -299,7 +302,7 @@ export const makeReadyRoomRepository = (
         ],
       );
       return redis
-        .eval<unknown>(
+        .eval(
           TERMINATE_READY_ROOM_SCRIPT,
           [
             roomKey(next.notificationId),

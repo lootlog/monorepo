@@ -21,9 +21,15 @@ import { useQueryClient } from "@tanstack/react-query";
 import { getApiErrorMessage } from "@lootlog/client/transport";
 import { ROUTES } from "@/config/routes";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { CreateNotificationRuleDtoScheduleIntervalType as NotificationScheduleIntervalType } from "@lootlog/client/main";
-import { CreateNotificationRuleDtoTriggerType as NotificationTriggerType } from "@lootlog/client/main";
-import type { GuildNotificationRulesResponseDto } from "@lootlog/client/main";
+import {
+  CreateNotificationRuleDtoScheduleIntervalType as NotificationScheduleIntervalType,
+  CreateNotificationRuleDtoTriggerType as NotificationTriggerType,
+  type GuildNotificationRulesResponseDto,
+  useNotificationsGuildControllerDeleteGuildRule,
+  useNotificationsGuildControllerRebuildGuildRuleJobs,
+  useNotificationsGuildControllerTriggerGuildRuleTest,
+} from "@lootlog/client/main";
+
 import {
   getGuildNotificationRuleNpcCount,
   getGuildNotificationRuleScheduleTranslationKey,
@@ -38,11 +44,6 @@ import {
   removeGuildNotificationRuleFromCache,
   type GuildNotificationCacheSnapshot,
 } from "../notifications-api";
-import {
-  useNotificationsGuildControllerDeleteGuildRule,
-  useNotificationsGuildControllerRebuildGuildRuleJobs,
-  useNotificationsGuildControllerTriggerGuildRuleTest,
-} from "@lootlog/client/main";
 
 type NotificationRuleCardProps = {
   rule: GuildNotificationRulesResponseDto["items"][number];
@@ -389,27 +390,25 @@ export const NotificationRuleCard = ({
           </Tooltip>
           <Tooltip>
             <TooltipTrigger
-              render={
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="outline"
-                  aria-label={t("settings.notifications.actions.edit")}
-                  disabled={isActionDisabled}
+              render=<Button
+                type="button"
+                size="icon"
+                variant="outline"
+                aria-label={t("settings.notifications.actions.edit")}
+                disabled={isActionDisabled}
 
-                  render={
-                    <Link
-                      to={ROUTES.guild.notifications.rule(
-                        guildId ?? "",
-                        String(rule.id),
-                      )}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Link>
-                  }
-                  nativeButton={false}
-                />
-              }
+                render={
+                  <Link
+                    to={ROUTES.guild.notifications.rule(
+                      guildId ?? "",
+                      String(rule.id),
+                    )}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Link>
+                }
+                nativeButton={false}
+              />
             />
             <TooltipContent>
               {t("settings.notifications.actions.edit")}

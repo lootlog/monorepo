@@ -1,5 +1,10 @@
+import { createOrganizationTestWrapper } from "@/lib/testing/router";
+import { NuqsTestingAdapter } from "nuqs/adapters/testing";
+import { Storage as MemoryStorage } from "happy-dom";
+import { GuildContextProvider } from "@/contexts/guild.context";
 // @vitest-environment happy-dom
 
+import { initializeTestTranslations } from "@/lib/testing/i18n";
 import {
   cleanup,
   fireEvent,
@@ -14,19 +19,7 @@ import { MotionGlobalConfig } from "framer-motion";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { LootSearchCommand } from "./loot-search-command";
 
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
-}));
-vi.mock("@/hooks/context/use-guild-context", () => ({
-  useGuildContext: () => ({ world: "test-world" }),
-}));
-vi.mock("@/hooks/context/use-guild-id", () => ({
-  useGuildId: () => "test-org",
-}));
-vi.mock("@/hooks/use-loots-filters", () => ({
-  useLootsFilters: () => ({ setFilters: vi.fn() }),
-}));
-
+await initializeTestTranslations();
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
@@ -36,6 +29,13 @@ describe("LootSearchCommand search failures", () => {
   it.each([false, true])(
     "shows a service outage instead of no results (cached results: %s)",
     async (withCachedResults) => {
+      const RouterWrapper = await createOrganizationTestWrapper("/test-org");
+      const storage = new MemoryStorage();
+      storage.setItem(
+        "lootlog:guild:test-org:world",
+        JSON.stringify("test-world"),
+      );
+      vi.stubGlobal("localStorage", storage);
       const client = new QueryClient({
         defaultOptions: { queries: { retry: false, gcTime: 0 } },
       });
@@ -74,9 +74,15 @@ describe("LootSearchCommand search failures", () => {
       try {
         MotionGlobalConfig.skipAnimations = true;
         render(
-          <QueryClientProvider client={client}>
-            <LootSearchCommand open onOpenChange={() => {}} />
-          </QueryClientProvider>,
+          <RouterWrapper>
+            <NuqsTestingAdapter>
+              <GuildContextProvider>
+                <QueryClientProvider client={client}>
+                  <LootSearchCommand open onOpenChange={() => {}} />
+                </QueryClientProvider>
+              </GuildContextProvider>
+            </NuqsTestingAdapter>
+          </RouterWrapper>,
         );
         fireEvent.change(
           screen.getByPlaceholderText("loots.searchCommand.placeholder"),

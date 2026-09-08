@@ -1,7 +1,7 @@
 import { Badge } from "@lootlog/ui/components/badge";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import type { UserNpcKillsResponseDtoOutputNpcsItem } from "@lootlog/client/main";
-import { NPC_TYPE_NAMES } from "@/constants/npc";
+import { getNpcTypeName } from "@/constants/npc";
 import { useTranslation } from "react-i18next";
 
 type KillsMobileListProps = {
@@ -45,10 +45,7 @@ export const KillsMobileList = ({ npcs, startRank }: KillsMobileListProps) => {
                 </Badge>
                 <Badge variant="secondary" className="max-w-full truncate">
                   {t(`npcType.${npc.npcType}`, {
-                    defaultValue:
-                      NPC_TYPE_NAMES[
-                        npc.npcType as keyof typeof NPC_TYPE_NAMES
-                      ] ?? npc.npcType,
+                    defaultValue: getNpcTypeName(npc.npcType),
                   })}
                 </Badge>
               </div>

@@ -1,68 +1,40 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { MessageType } from "@/api/chat.api";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createChatMessage } from "../chat-test-fixtures";
 import { updateChatMessagesCache } from "@/features/chat/chat-query-cache.helpers";
 import { upsertChatMessage } from "@/features/chat/chat.helpers";
-import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/client/main";
+import {
+  type ChatMessageResponseDtoOutput as ChatMessageType,
+  getChatControllerGetChatMessagesQueryKey,
+} from "@lootlog/client/main";
+import { configureApiClients } from "@lootlog/client/transport";
+
 import { useChatGuildData } from "./use-chat-guild-data";
 
-const mocks = vi.hoisted(() => ({
-  getChatMessages: vi.fn(),
-}));
-
-vi.mock("@lootlog/client/main", async () => ({
-  ...(await vi.importActual("@lootlog/client/main")),
-  chatControllerGetChatMessages: (...arguments_: unknown[]) =>
-    mocks.getChatMessages(...arguments_),
-  getChatControllerGetChatMessagesQueryKey: ({
-    guildId,
-  }: {
-    guildId: string;
-  }) => [`/guilds/${guildId}/chat-messages`] as const,
-  getMembersControllerGetMeQueryKey: ({ guildId }: { guildId: string }) => [
-    "current-member",
-    guildId,
-  ],
-  membersControllerGetMe: vi.fn(),
-  getRolesControllerGetGuildRolesQueryKey: ({
-    guildId,
-  }: {
-    guildId: string;
-  }) => ["guild-roles", guildId],
-  rolesControllerGetGuildRoles: vi.fn(),
-}));
-
-vi.mock("@/hooks/api/guild-members-summary-query", () => ({
-  getGuildMembersSummaryQueryOptions: ({ guildId }: { guildId: string }) => ({
-    queryKey: ["guild-members", guildId],
-    queryFn: () => Promise.resolve([]),
-  }),
-}));
-
-const createMessage = (
-  id: string,
-  timestamp: string,
-  message = id,
-): ChatMessageType => ({
-  id,
-  guildId: "guild-1",
-  message,
-  senderId: "user-1",
-  timestamp,
-  type: MessageType.NORMAL,
-  characterData: {
-    nick: "Hero",
-    id: 1,
-    acc: 1,
-    lvl: 100,
-    prof: "w",
-    icon: "hero.png",
-  },
-  canEdit: false,
-  canDelete: false,
+const historyRequests = vi.fn<(guildId: string) => Promise<Response>>();
+let restoreApi: () => void;
+beforeEach(() => {
+  restoreApi = configureApiClients({
+    main: {
+      baseUrl: "https://api.example.test",
+      fetch: async (input) => {
+        const url = new URL(
+          input instanceof Request ? input.url : String(input),
+        );
+        if (url.pathname.endsWith("/chat-messages")) {
+          return await historyRequests(url.pathname.split("/")[2] ?? "");
+        }
+        if (url.pathname.endsWith("/members/summary")) return Response.json([]);
+        throw new Error(`Unexpected HTTP request: ${url.pathname}`);
+      },
+    },
+  });
 });
+
+const createMessage = (id: string, timestamp: string, message = id) =>
+  createChatMessage({ id, timestamp, message, senderId: "user-1" });
 
 describe("useChatGuildData", () => {
   const queryClients: QueryClient[] = [];
@@ -72,7 +44,8 @@ describe("useChatGuildData", () => {
       queryClient.clear();
     }
     queryClients.length = 0;
-    mocks.getChatMessages.mockReset();
+    historyRequests.mockReset();
+    restoreApi();
   });
 
   it("merges a socket message received during the initial history request", async () => {
@@ -81,10 +54,10 @@ describe("useChatGuildData", () => {
     });
     queryClients.push(queryClient);
     let resolveRequest: (messages: ChatMessageType[]) => void = () => undefined;
-    mocks.getChatMessages.mockReturnValue(
+    historyRequests.mockReturnValue(
       new Promise<ChatMessageType[]>((resolve) => {
         resolveRequest = resolve;
-      }),
+      }).then((messages) => Response.json(messages)),
     );
     const wrapper = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
@@ -100,7 +73,7 @@ describe("useChatGuildData", () => {
     );
 
     await waitFor(() => {
-      expect(mocks.getChatMessages).toHaveBeenCalledTimes(1);
+      expect(historyRequests).toHaveBeenCalledTimes(1);
     });
     const socketMessage = createMessage(
       "message-2",
@@ -129,7 +102,9 @@ describe("useChatGuildData", () => {
       defaultOptions: { queries: { retry: false } },
     });
     queryClients.push(queryClient);
-    const chatQueryKey = ["/guilds/guild-1/chat-messages"] as const;
+    const chatQueryKey = getChatControllerGetChatMessagesQueryKey({
+      guildId: "guild-1",
+    });
     const initialMessage = createMessage(
       "message-1",
       "2026-01-01T10:01:00.000Z",
@@ -137,10 +112,10 @@ describe("useChatGuildData", () => {
     );
     queryClient.setQueryData(chatQueryKey, [initialMessage], { updatedAt: 1 });
     let resolveRequest: (messages: ChatMessageType[]) => void = () => undefined;
-    mocks.getChatMessages.mockReturnValue(
+    historyRequests.mockReturnValue(
       new Promise<ChatMessageType[]>((resolve) => {
         resolveRequest = resolve;
-      }),
+      }).then((messages) => Response.json(messages)),
     );
 
     const wrapper = ({ children }: { children: ReactNode }) => (
@@ -157,7 +132,7 @@ describe("useChatGuildData", () => {
     );
 
     await waitFor(() => {
-      expect(mocks.getChatMessages).toHaveBeenCalledTimes(1);
+      expect(historyRequests).toHaveBeenCalledTimes(1);
     });
     const socketUpdate = createMessage(
       "message-1",
@@ -196,17 +171,17 @@ describe("useChatGuildData", () => {
       defaultOptions: { queries: { retry: false } },
     });
     queryClients.push(queryClient);
-    mocks.getChatMessages.mockImplementation(
-      ({ guildId }: { guildId: string }) => {
-        if (guildId === "guild-2") {
-          return Promise.reject(new Error("guild-2 failed"));
-        }
+    historyRequests.mockImplementation((guildId) => {
+      if (guildId === "guild-2") {
+        return Promise.resolve(
+          Response.json({ message: "guild-2 failed" }, { status: 503 }),
+        );
+      }
 
-        return Promise.resolve([
-          createMessage("message-1", "2026-01-01T10:01:00.000Z"),
-        ]);
-      },
-    );
+      return Promise.resolve(
+        Response.json([createMessage("message-1", "2026-01-01T10:01:00.000Z")]),
+      );
+    });
     const wrapper = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
@@ -237,7 +212,7 @@ describe("useChatGuildData", () => {
       defaultOptions: { queries: { retry: false } },
     });
     queryClients.push(queryClient);
-    mocks.getChatMessages.mockRejectedValue(new Error("network"));
+    historyRequests.mockRejectedValue(new Error("network"));
     const wrapper = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );

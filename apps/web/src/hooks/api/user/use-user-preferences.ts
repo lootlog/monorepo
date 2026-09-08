@@ -3,9 +3,9 @@ import {
   getUsersControllerGetUserPreferencesQueryKey,
   useUsersControllerGetUserPreferences,
   usersControllerUpdateUserPreferences,
+  type UpdateUserPreferencesDto,
+  type UserPreferencesResponseDtoOutput,
 } from "@lootlog/client/main";
-import type { UpdateUserPreferencesDto } from "@lootlog/client/main";
-import type { UserPreferencesResponseDtoOutput } from "@lootlog/client/main";
 
 export const useUserPreferences = () =>
   useUsersControllerGetUserPreferences({

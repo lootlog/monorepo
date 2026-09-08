@@ -1,3 +1,4 @@
+import { z } from "zod";
 import type { Query, QueryClient } from "@tanstack/react-query";
 import {
   getEventsMonitoringControllerGetActiveGapForMapQueryKey,
@@ -9,10 +10,10 @@ const getEventHeroPathPrefix = (guildId: string, eventId: string) =>
   `/guilds/${guildId}/events/${eventId}/heroes/`;
 
 const isHeroGapQuery = (query: Query, guildId: string, eventId: string) => {
-  const [path] = query.queryKey;
+  const path = z.string().safeParse(query.queryKey[0]).data;
 
   return (
-    typeof path === "string" &&
+    path !== undefined &&
     path.startsWith(getEventHeroPathPrefix(guildId, eventId)) &&
     (path.endsWith("/active-gaps") || path.endsWith("/coverage-gaps"))
   );

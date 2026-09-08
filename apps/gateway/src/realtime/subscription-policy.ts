@@ -8,19 +8,19 @@ import type { SessionData } from "#src/realtime/session";
 type Topic = typeof RealtimeLogicalTopic.Type;
 type Scope = typeof SubscriptionScope.Type;
 
-const TOPIC_PERMISSION: Partial<Record<Topic, Permission>> = {
-  "organization.activity": Permission.LOOTLOG_ACCESS,
-  "organization.chat": Permission.LOOTLOG_CHAT_READ,
-  "organization.loots": Permission.LOOTLOG_LOOTS_READ,
-  "organization.members": Permission.ADMIN,
-  "organization.notifications": Permission.LOOTLOG_NOTIFICATIONS_READ,
-  "organization.presence": Permission.LOOTLOG_ONLINE_PLAYERS_READ,
-  "organization.reservations": Permission.LOOTLOG_RESERVATIONS_READ,
-  "organization.timers": Permission.LOOTLOG_TIMERS_READ,
-  "event.coordination": Permission.LOOTLOG_EVENTS_READ,
-  "map.air-tags": Permission.LOOTLOG_ONLINE_PLAYERS_READ,
-  "map.pings": Permission.LOOTLOG_ONLINE_PLAYERS_READ,
-};
+const TOPIC_PERMISSION = new Map<Topic, Permission>([
+  ["organization.activity", Permission.LOOTLOG_ACCESS],
+  ["organization.chat", Permission.LOOTLOG_CHAT_READ],
+  ["organization.loots", Permission.LOOTLOG_LOOTS_READ],
+  ["organization.members", Permission.ADMIN],
+  ["organization.notifications", Permission.LOOTLOG_NOTIFICATIONS_READ],
+  ["organization.presence", Permission.LOOTLOG_ONLINE_PLAYERS_READ],
+  ["organization.reservations", Permission.LOOTLOG_RESERVATIONS_READ],
+  ["organization.timers", Permission.LOOTLOG_TIMERS_READ],
+  ["event.coordination", Permission.LOOTLOG_EVENTS_READ],
+  ["map.air-tags", Permission.LOOTLOG_ONLINE_PLAYERS_READ],
+  ["map.pings", Permission.LOOTLOG_ONLINE_PLAYERS_READ],
+]);
 
 const hasPermission = (
   session: SessionData,
@@ -45,7 +45,7 @@ export const canSubscribe = (session: SessionData, scope: Scope): boolean => {
   if (!session.joined) return false;
   const organizationId = scope.organizationId;
   if (!organizationId) return scope.topic === "party.ready-room";
-  const permission = TOPIC_PERMISSION[scope.topic];
+  const permission = TOPIC_PERMISSION.get(scope.topic);
   if (!permission)
     return hasPermission(session, organizationId, Permission.LOOTLOG_ACCESS);
   return hasPermission(session, organizationId, permission);
@@ -67,7 +67,7 @@ export const organizationIds = (session: SessionData): string[] =>
 export const defaultScopes = (session: SessionData): Scope[] => {
   const scopes: Scope[] = [];
   for (const organizationId of organizationIds(session)) {
-    for (const topic of Object.keys(TOPIC_PERMISSION) as Topic[]) {
+    for (const topic of TOPIC_PERMISSION.keys()) {
       if (topic === "map.air-tags") continue;
       const scope = { topic, organizationId } satisfies Scope;
       if (canSubscribe(session, scope)) scopes.push(scope);

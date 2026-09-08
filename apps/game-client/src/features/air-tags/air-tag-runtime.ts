@@ -1,10 +1,10 @@
+import type { AirTagSubscriptionAck } from "@lootlog/protocol/realtime";
 import { GatewayEvent } from "@/config/gateway";
 import { useGameStore } from "@/store/game.store";
 import { canReadPresence } from "@/lib/online-players-presence";
 import { getSocket, type PermissionsUpdatedPayload } from "@/lib/socket";
 import type {
   AirTagObservationBatch,
-  AirTagSubscriptionAck,
   AirTagSubscriptionPayload,
   AirTagUpdateEvent,
 } from "@lootlog/schema/air-tag";
@@ -215,7 +215,9 @@ export class AirTagRuntime {
 
   private emitSubscription(
     payload: AirTagSubscriptionPayload,
-    acknowledgement: (response: AirTagSubscriptionAck) => void = () => {},
+    acknowledgement: (
+      response: typeof AirTagSubscriptionAck.Type,
+    ) => void = () => {},
   ): void {
     getSocket().emit(
       GatewayEvent.AIR_TAG_SUBSCRIPTION,
@@ -234,8 +236,7 @@ export class AirTagRuntime {
 
   private getCurrentMap(): { id: number; name: string } | null {
     const map = useGameStore.getState().game?.map;
-    if (!Number.isInteger(map?.id) || typeof map?.name !== "string")
-      return null;
+    if (!map || !Number.isInteger(map.id)) return null;
 
     return { id: map.id, name: map.name };
   }

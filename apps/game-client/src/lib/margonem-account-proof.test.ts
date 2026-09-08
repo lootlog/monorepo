@@ -4,15 +4,6 @@ import {
   requestMargonemAccountProof,
 } from "./margonem-account-proof";
 
-function createJsonResponse(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-}
-
 describe("margonem-account-proof", () => {
   it("creates per-socket, per-account tokens with a fresh nonce", () => {
     const tokenA = createMargonemAccountProofToken({
@@ -51,20 +42,24 @@ describe("margonem-account-proof", () => {
   });
 
   it("requests Margonem proof with POST form data and credentials", async () => {
-    const fetchFn = vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
-      const body = init?.body as URLSearchParams;
-      const token = body.get("token") ?? "";
+    const fetchFn = vi.fn<typeof fetch>(
+      (_input: RequestInfo | URL, init?: RequestInit) => {
+        const body = init?.body;
+        if (!(body instanceof URLSearchParams))
+          throw new Error("Expected form body");
+        const token = body.get("token") ?? "";
 
-      return Promise.resolve(
-        createJsonResponse({
-          user_id: "20",
-          token,
-          ts: 1_700_000_000,
-          validatedString: `20+${token}+1700000000`,
-          signatureBase64: "signature",
-        }),
-      );
-    });
+        return Promise.resolve(
+          Response.json({
+            user_id: "20",
+            token,
+            ts: 1_700_000_000,
+            validatedString: `20+${token}+1700000000`,
+            signatureBase64: "signature",
+          }),
+        );
+      },
+    );
 
     await expect(
       requestMargonemAccountProof({
@@ -72,7 +67,7 @@ describe("margonem-account-proof", () => {
         accountId: "20",
         characterId: "10",
         clanId: 15191,
-        fetchFn: fetchFn as unknown as typeof fetch,
+        fetchFn,
       }),
     ).resolves.toEqual({
       userId: "20",
@@ -99,20 +94,24 @@ describe("margonem-account-proof", () => {
   });
 
   it("rejects proof for a different Margonem account", async () => {
-    const fetchFn = vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
-      const body = init?.body as URLSearchParams;
-      const token = body.get("token") ?? "";
+    const fetchFn = vi.fn<typeof fetch>(
+      (_input: RequestInfo | URL, init?: RequestInit) => {
+        const body = init?.body;
+        if (!(body instanceof URLSearchParams))
+          throw new Error("Expected form body");
+        const token = body.get("token") ?? "";
 
-      return Promise.resolve(
-        createJsonResponse({
-          user_id: "21",
-          token,
-          ts: 1_700_000_000,
-          validatedString: `21+${token}+1700000000`,
-          signatureBase64: "signature",
-        }),
-      );
-    });
+        return Promise.resolve(
+          Response.json({
+            user_id: "21",
+            token,
+            ts: 1_700_000_000,
+            validatedString: `21+${token}+1700000000`,
+            signatureBase64: "signature",
+          }),
+        );
+      },
+    );
 
     await expect(
       requestMargonemAccountProof({
@@ -120,15 +119,15 @@ describe("margonem-account-proof", () => {
         accountId: "20",
         characterId: "10",
         clanId: 15191,
-        fetchFn: fetchFn as unknown as typeof fetch,
+        fetchFn,
       }),
     ).rejects.toThrow("Margonem account proof does not match current account");
   });
 
   it("rejects proof for a different request token", async () => {
-    const fetchFn = vi.fn(() =>
+    const fetchFn = vi.fn<typeof fetch>(() =>
       Promise.resolve(
-        createJsonResponse({
+        Response.json({
           user_id: "20",
           token:
             "lootlog:socket-1:20:02000000000000000a0000000000003b57ffffffffffffffffffffffffffffffff",
@@ -146,7 +145,7 @@ describe("margonem-account-proof", () => {
         accountId: "20",
         characterId: "10",
         clanId: 15191,
-        fetchFn: fetchFn as unknown as typeof fetch,
+        fetchFn,
       }),
     ).rejects.toThrow("Margonem account proof does not match current account");
   });

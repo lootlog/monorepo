@@ -1,3 +1,10 @@
+import {
+  decodeOpenApiDocument,
+  isJsonArray,
+  isJsonObject,
+  type OpenApiDocument,
+  type JsonValue,
+} from "./openapi-document.js";
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -407,18 +414,6 @@ const BATTLELOG_INVALID_REQUEST_SCHEMA: JsonValue = {
   },
   required: ["error", "message", "statusCode"],
 };
-type JsonValue =
-  | boolean
-  | number
-  | string
-  | null
-  | JsonValue[]
-  | { [key: string]: JsonValue };
-
-type OpenApiDocument = {
-  components?: { schemas?: Record<string, JsonValue> };
-  paths?: Record<string, Record<string, JsonValue>>;
-};
 
 const repositoryRoot = resolve(
   dirname(fileURLToPath(import.meta.url)),
@@ -444,16 +439,18 @@ const readBaseline = (service: string): OpenApiDocument => {
       `Unable to read baseline OpenAPI for ${service}: ${result.stderr.trim()}`,
     );
   }
-  return parse(result.stdout) as OpenApiDocument;
+  return decodeOpenApiDocument(parse(result.stdout));
 };
 
 const readCurrent = (service: string): OpenApiDocument =>
-  parse(
-    readFileSync(
-      resolve(repositoryRoot, `apps/${service}/openapi.yaml`),
-      "utf8",
+  decodeOpenApiDocument(
+    parse(
+      readFileSync(
+        resolve(repositoryRoot, `apps/${service}/openapi.yaml`),
+        "utf8",
+      ),
     ),
-  ) as OpenApiDocument;
+  );
 
 const operations = (document: OpenApiDocument): Map<string, JsonValue> => {
   const result = new Map<string, JsonValue>();
@@ -468,12 +465,12 @@ const operations = (document: OpenApiDocument): Map<string, JsonValue> => {
 };
 
 const removePresencePermission = (value: JsonValue): JsonValue => {
-  if (Array.isArray(value)) {
+  if (isJsonArray(value)) {
     return value
       .filter((item) => item !== "LOOTLOG_PRESENCE_LOCATION_READ")
       .map(removePresencePermission);
   }
-  if (value !== null && typeof value === "object") {
+  if (isJsonObject(value)) {
     return Object.fromEntries(
       Object.entries(value).map(([key, item]) => [
         key,
@@ -485,43 +482,44 @@ const removePresencePermission = (value: JsonValue): JsonValue => {
 };
 
 const removeResponseStatus = (value: JsonValue, status: string): JsonValue => {
-  if (value === null || Array.isArray(value) || typeof value !== "object") {
+  if (!isJsonObject(value)) {
     return value;
   }
   const operation = structuredClone(value);
   const responses = operation["responses"];
-  if (
-    responses !== null &&
-    !Array.isArray(responses) &&
-    typeof responses === "object"
-  ) {
-    delete responses[status];
+  if (isJsonObject(responses)) {
+    return {
+      ...operation,
+      responses: Object.fromEntries(
+        Object.entries(responses).filter(([key]) => key !== status),
+      ),
+    };
   }
   return operation;
 };
 
 export const normalizeOpenApiRepresentation = (value: JsonValue): JsonValue => {
-  if (Array.isArray(value)) {
+  if (isJsonArray(value)) {
     const normalized = value.map(normalizeOpenApiRepresentation);
     if (
       normalized.every(
-        (item) =>
+        (item): item is { in: string; name: string } =>
           item !== null &&
-          !Array.isArray(item) &&
+          !isJsonArray(item) &&
           typeof item === "object" &&
           typeof item["name"] === "string" &&
           typeof item["in"] === "string",
       )
     ) {
       return normalized.sort((left, right) => {
-        const leftKey = `${(left as { in: string }).in}:${(left as { name: string }).name}`;
-        const rightKey = `${(right as { in: string }).in}:${(right as { name: string }).name}`;
+        const leftKey = `${left.in}:${left.name}`;
+        const rightKey = `${right.in}:${right.name}`;
         return leftKey.localeCompare(rightKey);
       });
     }
     return normalized;
   }
-  if (value === null || typeof value !== "object") return value;
+  if (!isJsonObject(value)) return value;
 
   return Object.fromEntries(
     Object.entries(value)
@@ -532,7 +530,7 @@ export const normalizeOpenApiRepresentation = (value: JsonValue): JsonValue => {
       .sort(([left], [right]) => left.localeCompare(right))
       .map(([key, item]) => [
         key,
-        key === "enum" && Array.isArray(item)
+        key === "enum" && isJsonArray(item)
           ? item
               .map(normalizeOpenApiRepresentation)
               .sort((left, right) =>
@@ -547,18 +545,10 @@ const assertOrganizationNotFoundResponse = (
   operation: JsonValue,
   operationKey: string,
 ): void => {
-  const responses =
-    operation !== null &&
-    typeof operation === "object" &&
-    !Array.isArray(operation)
-      ? operation["responses"]
-      : undefined;
-  if (
-    responses === null ||
-    typeof responses !== "object" ||
-    Array.isArray(responses) ||
-    responses["404"] === undefined
-  ) {
+  const responses = isJsonObject(operation)
+    ? operation["responses"]
+    : undefined;
+  if (!isJsonObject(responses) || responses["404"] === undefined) {
     throw new Error(`${operationKey} must declare a 404 response`);
   }
 };
@@ -570,18 +560,10 @@ const assertErrorResponse = (
   schemaName = "OrganizationWorkspaceErrorResponse",
   schema: JsonValue = { $ref: `#/components/schemas/${schemaName}` },
 ): void => {
-  const responses =
-    operation !== null &&
-    typeof operation === "object" &&
-    !Array.isArray(operation)
-      ? operation["responses"]
-      : undefined;
-  const response =
-    responses !== null &&
-    typeof responses === "object" &&
-    !Array.isArray(responses)
-      ? responses[status]
-      : undefined;
+  const responses = isJsonObject(operation)
+    ? operation["responses"]
+    : undefined;
+  const response = isJsonObject(responses) ? responses[status] : undefined;
   const expected = {
     content: {
       "application/json": {
@@ -616,18 +598,13 @@ const normalizeErrorResponseMigrations = (
         );
         normalized = removeResponseStatus(normalized, status);
       }
-      if (
-        normalized !== null &&
-        typeof normalized === "object" &&
-        !Array.isArray(normalized)
-      ) {
+      if (isJsonObject(normalized)) {
         const responses = normalized["responses"];
-        if (
-          responses !== null &&
-          typeof responses === "object" &&
-          !Array.isArray(responses)
-        ) {
-          for (const status of migration.restore) responses[status] = {};
+        if (isJsonObject(responses)) {
+          const restoredResponses = { ...responses };
+          for (const status of migration.restore)
+            restoredResponses[status] = {};
+          normalized = { ...normalized, responses: restoredResponses };
         }
       }
     }
@@ -700,17 +677,9 @@ const normalizeManageableOrganizationResponse = (
       items: { $ref: "#/components/schemas/ManageableOrganizationResponse" },
     },
   );
-  if (
-    operation !== null &&
-    typeof operation === "object" &&
-    !Array.isArray(operation)
-  ) {
+  if (isJsonObject(operation)) {
     const responses = operation["responses"];
-    if (
-      responses !== null &&
-      typeof responses === "object" &&
-      !Array.isArray(responses)
-    ) {
+    if (isJsonObject(responses)) {
       operation = {
         ...operation,
         responses: {
@@ -779,10 +748,8 @@ export const normalizeAllowedChanges = (
   }
 
   if (
-    normalized !== null &&
-    !Array.isArray(normalized) &&
-    typeof normalized === "object" &&
-    Array.isArray(normalized["security"]) &&
+    isJsonObject(normalized) &&
+    isJsonArray(normalized["security"]) &&
     normalized["security"].length === 0
   ) {
     const { security: _security, ...withoutEmptySecurity } = normalized;
@@ -803,24 +770,22 @@ const differencePaths = (
     right === undefined ||
     left === null ||
     right === null ||
-    typeof left !== "object" ||
-    typeof right !== "object" ||
-    Array.isArray(left) !== Array.isArray(right)
+    (!isJsonObject(left) && !isJsonArray(left)) ||
+    (!isJsonObject(right) && !isJsonArray(right)) ||
+    isJsonArray(left) !== isJsonArray(right)
   ) {
     return [`${path}: ${JSON.stringify(left)} -> ${JSON.stringify(right)}`];
   }
 
-  const leftEntries = Array.isArray(left)
-    ? left.entries()
-    : Object.entries(left);
+  const leftEntries = isJsonArray(left) ? left.entries() : Object.entries(left);
   const rightKeys = new Set(
-    Array.isArray(right) ? [...right.keys()].map(String) : Object.keys(right),
+    isJsonArray(right) ? [...right.keys()].map(String) : Object.keys(right),
   );
   const differences: string[] = [];
   for (const [key, leftValue] of leftEntries) {
     const stringKey = String(key);
     rightKeys.delete(stringKey);
-    const rightValue = Array.isArray(right)
+    const rightValue = isJsonArray(right)
       ? right[Number(key)]
       : right[stringKey];
     differences.push(
@@ -831,7 +796,7 @@ const differencePaths = (
     ...[...rightKeys].map(
       (key) =>
         `${path}.${key}: undefined -> ${JSON.stringify(
-          Array.isArray(right) ? right[Number(key)] : right[key],
+          isJsonArray(right) ? right[Number(key)] : right[key],
         )}`,
     ),
   );
@@ -841,126 +806,126 @@ const differencePaths = (
 // Intentional private additions verified against real persistence and authorization tests:
 // activity/src/online/online-repository.integration.test.ts;
 // api/test/kill-analytics.integration.test.ts, user-feed.integration.test.ts and records.operations.test.ts.
-const PERSONAL_ANALYTICS_ADDITIONS: Record<
+const PERSONAL_ANALYTICS_ADDITIONS = new Map<
   string,
-  Record<string, JsonValue>
-> = {
-  activity: {
-    "GET /users/@me/activity/online": {
-      operationId: "UsersActivityController_getOnline",
-      parameters: ["from", "to"].map((name) => ({
-        name,
-        in: "query",
-        required: true,
-        schema: { type: "string" },
-      })),
-      security: [{ bearer: [] }],
-      responses: {
-        "200": {
-          content: {
-            "application/json": {
-              schema: { $ref: "#/components/schemas/UserOnlineResponseDto" },
-            },
-          },
-        },
-        "401": {
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                properties: {
-                  message: { type: "string" },
-                  statusCode: { type: "number", enum: [401] },
-                },
-                required: ["message", "statusCode"],
+  Partial<Record<string, JsonValue>>
+>(
+  Object.entries({
+    activity: {
+      "GET /users/@me/activity/online": {
+        operationId: "UsersActivityController_getOnline",
+        parameters: ["from", "to"].map((name) => ({
+          name,
+          in: "query",
+          required: true,
+          schema: { type: "string" },
+        })),
+        security: [{ bearer: [] }],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/UserOnlineResponseDto" },
               },
             },
           },
-        },
-      },
-    },
-  },
-  api: {
-    "GET /users/@me/feed": {
-      operationId: "UsersController_getUserFeed",
-      parameters: [],
-      security: [{ bearer: [] }],
-      responses: {
-        "200": {
-          content: {
-            "application/json": {
-              schema: {
-                $ref: "#/components/schemas/UserFeedResponseDto_Output",
-              },
-            },
-          },
-        },
-      },
-    },
-    ...Object.fromEntries(
-      (
-        [
-          [
-            "analytics",
-            "KillsController_getUserKillAnalytics",
-            "UserKillAnalyticsResponseDto_Output",
-          ],
-          [
-            "activity",
-            "KillsController_getUserKillActivity",
-            "UserKillActivityResponseDto_Output",
-          ],
-        ] as const
-      ).map(([path, operationId, response]): [string, JsonValue] => [
-        `GET /users/@me/stats/kills/${path}`,
-        {
-          operationId,
-          parameters: [
-            ...(path === "analytics"
-              ? [
-                  {
-                    name: "days",
-                    in: "query",
-                    required: false,
-                    schema: { type: "string", enum: ["7", "30", "90", "365"] },
+          "401": {
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    statusCode: { type: "number", enum: [401] },
                   },
-                ]
-              : []),
-            {
-              name: "world",
-              in: "query",
-              required: false,
-              schema: { type: "string", minLength: 1, maxLength: 100 },
-            },
-          ],
-          security: [{ bearer: [] }],
-          responses: {
-            "200": {
-              content: {
-                "application/json": {
-                  schema: { $ref: `#/components/schemas/${response}` },
+                  required: ["message", "statusCode"],
                 },
               },
             },
           },
         },
-      ]),
-    ),
-  },
-};
+      },
+    },
+    api: {
+      "GET /users/@me/feed": {
+        operationId: "UsersController_getUserFeed",
+        parameters: [],
+        security: [{ bearer: [] }],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/UserFeedResponseDto_Output",
+                },
+              },
+            },
+          },
+        },
+      },
+      ...Object.fromEntries(
+        (
+          [
+            [
+              "analytics",
+              "KillsController_getUserKillAnalytics",
+              "UserKillAnalyticsResponseDto_Output",
+            ],
+            [
+              "activity",
+              "KillsController_getUserKillActivity",
+              "UserKillActivityResponseDto_Output",
+            ],
+          ] as const
+        ).map(([path, operationId, response]): [string, JsonValue] => [
+          `GET /users/@me/stats/kills/${path}`,
+          {
+            operationId,
+            parameters: [
+              ...(path === "analytics"
+                ? [
+                    {
+                      name: "days",
+                      in: "query",
+                      required: false,
+                      schema: {
+                        type: "string",
+                        enum: ["7", "30", "90", "365"],
+                      },
+                    },
+                  ]
+                : []),
+              {
+                name: "world",
+                in: "query",
+                required: false,
+                schema: { type: "string", minLength: 1, maxLength: 100 },
+              },
+            ],
+            security: [{ bearer: [] }],
+            responses: {
+              "200": {
+                content: {
+                  "application/json": {
+                    schema: { $ref: `#/components/schemas/${response}` },
+                  },
+                },
+              },
+            },
+          },
+        ]),
+      ),
+    },
+  } satisfies Record<string, Record<string, JsonValue>>),
+);
 
 export const assertVerifiedPersonalAddition = (
   service: string,
   operationKey: string,
   operation: JsonValue | undefined,
 ): void => {
-  const expected = PERSONAL_ANALYTICS_ADDITIONS[service]?.[operationKey];
-  if (
-    !expected ||
-    !operation ||
-    typeof operation !== "object" ||
-    Array.isArray(operation)
-  ) {
+  const expected = PERSONAL_ANALYTICS_ADDITIONS.get(service)?.[operationKey];
+  if (!expected || !isJsonObject(operation)) {
     throw new Error(
       `Unverified personal API addition: ${service} ${operationKey}`,
     );
@@ -986,7 +951,7 @@ if (import.meta.main) {
     const additions = [...current.keys()].filter((key) => !baseline.has(key));
     const removals = [...baseline.keys()].filter((key) => !current.has(key));
     const expectedAdditions = Object.keys(
-      PERSONAL_ANALYTICS_ADDITIONS[service.current] ?? {},
+      PERSONAL_ANALYTICS_ADDITIONS.get(service.current) ?? {},
     );
     if (
       additions.length !== expectedAdditions.length ||

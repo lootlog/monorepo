@@ -1,47 +1,82 @@
-import { act, renderHook } from "@testing-library/react";
-import type { PartyReadyRoomClientUpdate } from "@lootlog/schema/party-ready-room";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { GatewayEvent } from "@/config/gateway";
-import { usePartyReadyRoomSocket } from "@/features/party-finder/hooks/use-party-ready-room-socket";
+import { act, render } from "@testing-library/react";
+import { createElement } from "react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { RealtimeClient } from "@lootlog/client/realtime";
+import { SocketProvider } from "@/contexts/socket-context";
+import { configureGameClientPlatform } from "@/lib/game-client-platform";
+import { disposeSocket } from "@/lib/socket";
+import { RealtimeWire } from "@/test/realtime-wire";
+import { usePartyFinderStore } from "@/store/party-finder.store";
+import { usePartyReadyRoomSocket } from "./use-party-ready-room-socket";
 
-const on = vi.fn();
-const off = vi.fn();
-const applyUpdate = vi.fn();
-
-vi.mock("@/contexts/socket-context", () => ({
-  useSocket: () => ({ socket: { on, off }, connected: true }),
-}));
-
-vi.mock("@/store/party-finder.store", () => ({
-  usePartyFinderStore: (
-    selector: (state: { applyUpdate: typeof applyUpdate }) => unknown,
-  ) => selector({ applyUpdate }),
-}));
+function ReadyRoomListener() {
+  usePartyReadyRoomSocket();
+  return null;
+}
 
 describe("usePartyReadyRoomSocket", () => {
+  let wire: RealtimeWire;
+  let realtime: RealtimeClient;
+  let restorePlatform: () => void;
+
   beforeEach(() => {
-    vi.clearAllMocks();
+    disposeSocket();
+    usePartyFinderStore.setState(usePartyFinderStore.getInitialState(), true);
+    wire = new RealtimeWire();
+    realtime = new RealtimeClient({
+      url: "https://gateway.example.test",
+      webSocketFactory: () => wire,
+    });
+    restorePlatform = configureGameClientPlatform({
+      fetch: globalThis.fetch,
+      createRealtime: () => realtime,
+    });
   });
 
-  it("applies personalized gateway updates and unsubscribes", () => {
-    const { unmount } = renderHook(() => usePartyReadyRoomSocket());
-    const handler = on.mock.calls.find(
-      ([event]) => event === GatewayEvent.PARTY_READY_ROOM_UPDATE,
-    )?.[1] as ((update: PartyReadyRoomClientUpdate) => void) | undefined;
-    const update: PartyReadyRoomClientUpdate = {
-      schemaVersion: 3,
-      type: "REMOVE",
-      notificationId: "room-1",
-      revision: 4,
-    };
+  afterEach(() => {
+    disposeSocket();
+    restorePlatform();
+    usePartyFinderStore.setState(usePartyFinderStore.getInitialState(), true);
+  });
 
-    act(() => handler?.(update));
-
-    expect(applyUpdate).toHaveBeenCalledWith(update);
-    unmount();
-    expect(off).toHaveBeenCalledWith(
-      GatewayEvent.PARTY_READY_ROOM_UPDATE,
-      handler,
+  it("applies personalized gateway updates and stops applying them after unmount", async () => {
+    const view = render(
+      createElement(SocketProvider, null, createElement(ReadyRoomListener)),
     );
+    act(() => wire.open());
+    const update = (revision: number) => {
+      wire.receive({
+        v: 1,
+        type: "party-ready-room.updated",
+        data: {
+          organizationId: "guild-1",
+          payload: {
+            schemaVersion: 3,
+            type: "REMOVE",
+            notificationId: "room-1",
+            revision,
+          },
+        },
+      });
+    };
+    act(() => update(4));
+    await vi.waitFor(() => {
+      expect(
+        usePartyFinderStore.getState().roomVersions["room-1"]?.revision,
+      ).toBe(4);
+    });
+
+    view.rerender(createElement(SocketProvider, null));
+    const received = Promise.withResolvers<void>();
+    const stopObserving = realtime.subscribe(() => received.resolve());
+    await act(async () => {
+      update(5);
+      await received.promise;
+    });
+    stopObserving();
+    expect(
+      usePartyFinderStore.getState().roomVersions["room-1"]?.revision,
+    ).toBe(4);
+    view.unmount();
   });
 });

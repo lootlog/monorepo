@@ -1,3 +1,4 @@
+import { isRecord } from "@lootlog/schema/records";
 import { randomUUID } from "node:crypto";
 import { Effect } from "effect";
 import {
@@ -15,7 +16,7 @@ import {
   type NotificationTargetType,
   type NotificationTriggerType as NotificationTriggerTypeValue,
 } from "#src/notifications/notification-enums";
-import type { JsonValue } from "#src/notifications/notification-database.types";
+import type { JsonValue } from "#src/database/json";
 
 export interface NotificationTestContentInput {
   readonly notificationRule: {
@@ -37,8 +38,8 @@ export interface NotificationTestContentInput {
 }
 
 const npcName = (npc: unknown) => {
-  if (!npc || typeof npc !== "object" || Array.isArray(npc)) return null;
-  const name = (npc as Record<string, unknown>).name;
+  if (!isRecord(npc)) return null;
+  const name = npc.name;
   return typeof name === "string" ? name : null;
 };
 

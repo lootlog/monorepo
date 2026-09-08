@@ -1,6 +1,7 @@
 import {
   RealtimeClient,
   type RealtimeWebSocket,
+  type ServerEvent,
 } from "@lootlog/client/realtime";
 import {
   decodeRealtimeFrame,
@@ -37,7 +38,7 @@ it.each(["success", "legacy", "policy", "player"])(
   async (mode) => {
     const rejectPublication = mode !== "success";
     const listeners = new Map<string, (event: { data?: unknown }) => void>();
-    const send = vi.fn((bytes: string | Uint8Array) => {
+    const send = vi.fn<RealtimeWebSocket["send"]>((bytes) => {
       if (!(bytes instanceof Uint8Array))
         throw new Error("Expected binary frame");
       const frame = decodeRealtimeFrame(bytes);
@@ -123,9 +124,9 @@ it.each(["success", "legacy", "policy", "player"])(
           data: {
             organizationIds: ["organization-1"],
             subscriptionScopes: [],
-            ...(mode === "policy"
-              ? {
-                  accessPolicy: createAccessPolicySnapshot(
+            accessPolicy:
+              mode === "policy"
+                ? createAccessPolicySnapshot(
                     [
                       {
                         guild: { id: "organization-1", ownerId: "owner" },
@@ -133,9 +134,8 @@ it.each(["success", "legacy", "policy", "player"])(
                       },
                     ],
                     "user",
-                  ),
-                }
-              : {}),
+                  )
+                : undefined,
           },
         }),
       });
@@ -150,8 +150,10 @@ it.each(["success", "legacy", "policy", "player"])(
       if (mode === "player") {
         const { GatewayEvent } = await import("@/config/gateway");
         activeFacade.emit(GatewayEvent.PLAYER_PRESENCE_UPDATE, { isAfk: true });
-        await vi.waitFor(() => expect(send).toHaveBeenCalledTimes(2));
       }
+      await vi.waitFor(() =>
+        expect(send).toHaveBeenCalledTimes(mode === "player" ? 2 : 1),
+      );
     } finally {
       disposeSocket();
       restorePlatform();
@@ -179,7 +181,12 @@ it("dispatches private volunteer frames to the legacy volunteer listener", async
   const { GatewayEvent } = await import("@/config/gateway");
   disposeSocket();
   const socket = getSocket();
-  const received = vi.fn();
+  const received =
+    vi.fn<
+      (
+        data: Extract<ServerEvent, { type: "notification.volunteer" }>["data"],
+      ) => void
+    >();
   try {
     socket.on(GatewayEvent.NOTIFICATIONS_VOLUNTEER, received);
     socket.connect();
@@ -228,8 +235,10 @@ describe("access policy synchronization", () => {
     let denyJoin = false;
     const listeners = new Map<string, (event: { data?: unknown }) => void>();
     const received: string[] = [];
-    const policies = vi.fn(() => received.push("policy"));
-    const send = vi.fn((bytes: string | Uint8Array) => {
+    const policies = vi.fn<() => void>(() => {
+      received.push("policy");
+    });
+    const send = vi.fn<RealtimeWebSocket["send"]>((bytes) => {
       if (!(bytes instanceof Uint8Array))
         throw new Error("Expected binary frame");
       const frame = decodeRealtimeFrame(bytes);
@@ -273,7 +282,7 @@ describe("access policy synchronization", () => {
             data: {
               connectionId: "connection",
               organizationIds: ["organization-1"],
-              ...(includePolicy ? { accessPolicy: policy } : {}),
+              accessPolicy: includePolicy ? policy : undefined,
             },
           }),
         }),

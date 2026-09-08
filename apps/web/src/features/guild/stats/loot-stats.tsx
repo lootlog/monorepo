@@ -12,7 +12,7 @@ import {
   getLootsControllerGetLootStatsQueryKey,
   useLootsControllerGetLootStats,
 } from "@lootlog/client/main";
-import type { LootsControllerGetLootStatsPeriod } from "@lootlog/client/main";
+
 import { useLootStatsSettings } from "./hooks/use-loot-stats-settings";
 import { LootOverviewCards } from "./components/loot-overview-cards";
 import { LootTimelineChart } from "./components/loot-timeline-chart";
@@ -84,9 +84,7 @@ export const LootStats: React.FC = () => {
                 <div className="hidden md:flex items-center gap-2 flex-wrap gap-y-4">
                   <PeriodSelector
                     value={settings.period}
-                    onValueChange={(value) =>
-                      setPeriod(value as LootsControllerGetLootStatsPeriod)
-                    }
+                    onValueChange={(value) => setPeriod(value)}
                     width="w-[180px]"
                     className="h-9"
                   />

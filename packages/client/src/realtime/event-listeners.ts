@@ -3,7 +3,6 @@ import type { ServerEvent } from "@lootlog/protocol/realtime";
 type Listener = (...arguments_: never[]) => void;
 
 export const unwrapOrganizationEvent = (event: ServerEvent): unknown => {
-  if (!event.data || typeof event.data !== "object") return event.data;
   return "payload" in event.data ? event.data.payload : event.data;
 };
 
@@ -30,7 +29,7 @@ export class RealtimeEventListeners<Event extends string> {
 
   emit(event: Event, payload?: unknown): void {
     for (const listener of this.listeners.get(event) ?? []) {
-      (listener as (value?: unknown) => void)(payload);
+      Reflect.apply(listener, undefined, [payload]);
     }
   }
 }

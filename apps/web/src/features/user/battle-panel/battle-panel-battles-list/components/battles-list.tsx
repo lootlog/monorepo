@@ -93,7 +93,7 @@ export const BattlesList = ({
     if (enableScrollToTop && containerRef.current) {
       const scrollViewport = containerRef.current.closest(
         '[data-slot="scroll-area-viewport"]',
-      ) as HTMLElement | null;
+      );
 
       if (scrollViewport) {
         scrollViewport.scrollTo({

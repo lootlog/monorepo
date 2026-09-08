@@ -1,3 +1,4 @@
+import { isObjectRecord } from "@lootlog/schema/records";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { storageKey } from "@/lib/storage-key";
@@ -170,18 +171,21 @@ export const HOTKEY_ACTIONS: HotkeyActionConfig[] = [
 ];
 
 const getDefaultBindings = (): Record<HotkeyAction, HotkeyBinding> => {
-  const bindings = {} as Record<HotkeyAction, HotkeyBinding>;
+  const bindings: Partial<Record<HotkeyAction, HotkeyBinding>> = {};
   for (const config of HOTKEY_ACTIONS) {
     bindings[config.action] = { ...config.defaultBinding };
   }
-  return bindings;
+  // SAFETY: HOTKEY_ACTIONS enumerates all eight HotkeyAction values, copied by the loop above.
+  return bindings as Record<HotkeyAction, HotkeyBinding>;
 };
 
-export const migrateHotkeysState = (
-  persisted: unknown,
-): { bindings: Record<string, HotkeyBinding> } => {
-  const state = persisted as { bindings?: Record<string, unknown> };
-  const persistedBindings = state.bindings ?? {};
+export const migrateHotkeysState = (persisted: unknown) => {
+  if (!isObjectRecord(persisted))
+    throw new TypeError("Invalid persisted hotkey state");
+  const state = persisted;
+  const persistedBindings = isObjectRecord(state.bindings)
+    ? state.bindings
+    : {};
   const bindings: Record<string, HotkeyBinding> = {};
 
   for (const [action, binding] of Object.entries(persistedBindings)) {
@@ -199,18 +203,17 @@ export const migrateHotkeysState = (
     }
   }
 
-  return { ...state, bindings };
+  // SAFETY: The defaults loop adds every missing HotkeyAction after validating stored bindings.
+  const completeBindings = bindings as Record<HotkeyAction, HotkeyBinding>;
+  return { ...state, bindings: completeBindings };
 };
 
 const migrateBinding = (binding: unknown): HotkeyBinding | null => {
-  if (!binding || typeof binding !== "object") {
+  if (!isObjectRecord(binding)) {
     return null;
   }
 
-  const candidate = binding as Partial<HotkeyBinding> & {
-    key?: unknown;
-    button?: unknown;
-  };
+  const candidate = binding;
   const modifiers = {
     shift: candidate.shift === true,
     ctrl: candidate.ctrl === true,
@@ -239,7 +242,7 @@ interface HotkeysState {
 }
 
 export const useHotkeysStore = create<HotkeysState>()(
-  persist(
+  persist<HotkeysState, [], [], Pick<HotkeysState, "bindings">>(
     (set, get) => ({
       bindings: getDefaultBindings(),
       setBinding: (action, binding) => {
@@ -273,8 +276,7 @@ export const useHotkeysStore = create<HotkeysState>()(
       partialize: (state) => ({ bindings: state.bindings }),
       storage: createJSONStorage(() => localStorage),
       version: 4,
-      migrate: (persisted) =>
-        migrateHotkeysState(persisted) as unknown as HotkeysState,
+      migrate: migrateHotkeysState,
     },
   ),
 );

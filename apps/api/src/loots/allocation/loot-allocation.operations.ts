@@ -1,3 +1,7 @@
+import type {
+  RabbitExchangeName,
+  RabbitRoutingKeyName,
+} from "@lootlog/protocol/rabbit/topology";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { createHash } from "node:crypto";
 import { Clock, Effect, Schema } from "effect";
@@ -35,8 +39,8 @@ export interface LootAllocationCache {
 }
 export interface LootAllocationPublisher {
   readonly publish: (
-    exchange: string,
-    routingKey: string,
+    exchange: RabbitExchangeName,
+    routingKey: RabbitRoutingKeyName,
     event: GuildLootShareUpdatedEventV2,
   ) => Effect.Effect<void, unknown>;
 }
@@ -46,7 +50,7 @@ export class LootAllocationOperationError extends TaggedErrorClass<LootAllocatio
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}
 
-const parseChatAllocation = (message: string): Record<string, string[]> => {
+const parseChatAllocation = (message: string) => {
   const allocation: Record<string, string[]> = {};
   let match: RegExpExecArray | null;
   while ((match = LOOT_SHARE_MSG_REGEX.exec(message)) !== null) {
@@ -118,9 +122,9 @@ export const makeLootAllocationOperations = (options: {
       }),
     );
 
-  const assertMatching = (
+  const assertMatching = <Persisted>(
     lootId: number,
-    persisted: unknown,
+    persisted: Persisted,
     submitted: LootShare,
   ) => {
     const persistedValue = stableJsonStringify(persisted);

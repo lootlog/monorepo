@@ -1,3 +1,4 @@
+import { createBattleFixture } from "../../../test/battle-fixtures.js";
 import { describe, expect, it } from "bun:test";
 import type { InflatedBattleWithWarriors } from "./battle-analytics.types.js";
 import { battleAnalyticsDomain } from "./battle-analytics-domain.service.js";
@@ -25,7 +26,7 @@ function createBattle({
   hasFlee = false,
   warriors,
 }: TestBattleInput): InflatedBattleWithWarriors {
-  return {
+  return createBattleFixture({
     id,
     type,
     winningTeam,
@@ -40,7 +41,7 @@ function createBattle({
       team: warrior.team,
       ph: 0,
     })),
-  } as InflatedBattleWithWarriors;
+  });
 }
 
 describe("battleAnalyticsDomain", () => {

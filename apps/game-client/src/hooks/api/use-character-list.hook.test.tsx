@@ -13,7 +13,7 @@ describe("useCharacterList", () => {
   beforeEach(() => {
     useGameStore.getState().clearGame();
     window.localStorage.clear();
-    testRuntimeWindow.getCookie = vi.fn(() => "hs3-token");
+    testRuntimeWindow.getCookie = vi.fn<() => string>(() => "hs3-token");
     vi.stubGlobal(
       "fetch",
       vi.fn(() =>

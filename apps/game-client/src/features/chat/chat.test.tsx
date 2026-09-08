@@ -1,101 +1,40 @@
-import { render } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { render, waitFor } from "@testing-library/react";
+import { describe, expect, it, onTestFinished } from "vitest";
+import { getChatControllerGetChatMessagesQueryKey } from "@lootlog/client/main";
+import { useWindowsStore } from "@/store/windows.store";
+import { useChatStore } from "@/store/chat.store";
+import { createRealtimeTest } from "@/test/realtime-test";
+import { createChatMessage } from "./chat-test-fixtures";
 import { Chat } from "./chat";
 
-const mocks = vi.hoisted(() => ({
-  chatOpen: false,
-  integratedMode: false,
-  useAccessibleGuilds: vi.fn(() => ({ data: [] })),
-  useChatGuildData: vi.fn(() => ({
-    membersByGuildId: {},
-    mentionContextsByGuildId: {},
-    messagesByGuildId: {},
-  })),
-  useChatMessagesListener: vi.fn(),
-}));
-
-vi.mock("@/features/chat/hooks/use-chat-messages", () => ({
-  useChatMessagesListener: (...arguments_: unknown[]) =>
-    mocks.useChatMessagesListener(arguments_),
-}));
-
-vi.mock("@/features/chat/hooks/use-chat-guild-data", () => ({
-  useChatGuildData: () => mocks.useChatGuildData(),
-}));
-
-vi.mock("@lootlog/client/main", async () => ({
-  ...(await vi.importActual("@lootlog/client/main")),
-  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey: () => ["guilds"],
-  useUsersControllerGetCurrentUserAccessibleGuilds: () =>
-    mocks.useAccessibleGuilds(),
-}));
-
-vi.mock("@/hooks/use-local-storage", async () => {
-  const { useState } = await import("react");
-
-  return {
-    useLocalStorage: (_key: string, initialValue: string) =>
-      useState(initialValue),
-  };
-});
-
-vi.mock("@/store/windows.store", () => ({
-  useWindowsStore: (
-    selector: (state: {
-      chat: { open: boolean };
-      setOpen: () => void;
-    }) => unknown,
-  ) =>
-    selector({
-      chat: { open: mocks.chatOpen },
-      setOpen: vi.fn(),
-    }),
-}));
-
-vi.mock("@/store/chat.store", () => ({
-  useChatStore: (selector: (state: Record<string, unknown>) => unknown) =>
-    selector({
-      isIntegratedMode: mocks.integratedMode,
-      isChatInputEnabled: true,
-      setChatInputEnabled: vi.fn(),
-      toggleChatInputEnabled: vi.fn(),
-      chatFilter: "all",
-      setChatFilter: vi.fn(),
-      filtersVisible: false,
-      toggleFiltersVisible: vi.fn(),
-      setReplyDraft: vi.fn(),
-    }),
-}));
-
-vi.mock("@/lib/game", () => ({
-  Game: {
-    hero: { account: 1, id: 2, nick: "Hero" },
-    interface: "si",
-  },
-}));
-
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
-}));
-
 describe("Chat", () => {
-  beforeEach(() => {
-    mocks.chatOpen = false;
-    mocks.integratedMode = false;
-    mocks.useAccessibleGuilds.mockClear();
-    mocks.useChatGuildData.mockClear();
-    mocks.useChatMessagesListener.mockClear();
-  });
-
-  it("keeps socket ingress active without querying or rendering a closed chat", () => {
-    const { container } = render(<Chat />);
-
-    expect(mocks.useChatMessagesListener).toHaveBeenCalledOnce();
-    expect(mocks.useChatMessagesListener).toHaveBeenCalledWith([
-      expect.objectContaining({ prefetchMembers: false }),
-    ]);
-    expect(mocks.useAccessibleGuilds).not.toHaveBeenCalled();
-    expect(mocks.useChatGuildData).not.toHaveBeenCalled();
+  it("keeps socket ingress active without loading history or rendering a closed chat", async () => {
+    const harness = createRealtimeTest();
+    useWindowsStore.getState().setOpen("chat", false);
+    useChatStore.setState({ isIntegratedMode: false });
+    onTestFinished(() => {
+      useChatStore.setState(useChatStore.getInitialState(), true);
+    });
+    const key = getChatControllerGetChatMessagesQueryKey({
+      guildId: "guild-1",
+    });
+    harness.queryClient.setQueryData(key, []);
+    const { container } = render(<Chat />, { wrapper: harness.wrapper });
+    harness.open();
+    const message = createChatMessage();
+    await harness.receive({
+      v: 1,
+      type: "chat.created",
+      data: { organizationId: "guild-1", payload: message },
+    });
+    await waitFor(() =>
+      expect(harness.queryClient.getQueryData(key)).toEqual([message]),
+    );
+    expect(
+      harness.requests.filter(
+        (path) => !path.endsWith("/get-session") && path !== "/sound-settings",
+      ),
+    ).toEqual([]);
     expect(container).toBeEmptyDOMElement();
   });
 });

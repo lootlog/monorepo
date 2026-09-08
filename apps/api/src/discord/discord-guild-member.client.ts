@@ -221,7 +221,9 @@ export class DiscordGuildMemberClient {
         response.headers,
       );
 
-      const member = (await parseResponse(response)) as APIGuildMember;
+      const member = await parseResponse(response);
+      if (!isApiGuildMember(member))
+        throw new TypeError("Invalid Discord guild member response");
       this.logger.log({
         level: "info",
         message: "Discord API returned member data",

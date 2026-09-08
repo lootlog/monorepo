@@ -21,7 +21,7 @@ export function BattleHpTimelineMarkerGroup({
   label,
   onTurnSelect,
 }: BattleHpTimelineMarkerGroupProps) {
-  if (typeof cx !== "number" || typeof cy !== "number") {
+  if (cx === undefined || cy === undefined) {
     return null;
   }
 

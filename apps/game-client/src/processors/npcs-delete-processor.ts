@@ -75,8 +75,7 @@ export class NpcsDeleteProcessor {
 
       const context = getTimerContext();
       if (!context) return;
-      const elite2Name =
-        SpecialE2[context.mapId as keyof typeof SpecialE2] || data.name;
+      const elite2Name = SpecialE2.get(String(context.mapId)) || data.name;
       const npcType = getNpcTypeByWt(
         NpcType,
         data.weight,

@@ -4,7 +4,7 @@ import {
   usePartyReadyRoomControllerApply,
 } from "@lootlog/client/main";
 
-import type { PartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
+import { decodePartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 
 import { CharacterTile } from "@/components/character-tile";
@@ -200,7 +200,8 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = (props) => {
       },
       {
         onSuccess: (projection) => {
-          mergeProjection(projection as unknown as PartyReadyRoomProjection);
+          if (projection.schemaVersion !== 3) return;
+          mergeProjection(decodePartyReadyRoomProjection(projection));
         },
       },
     );

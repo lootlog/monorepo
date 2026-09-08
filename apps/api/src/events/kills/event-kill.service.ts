@@ -1,3 +1,6 @@
+import { extractEventTimerNpc } from "#src/events/respawn/event-timer-npc";
+import type { JsonValue } from "#src/database/json";
+
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import { Logger } from "#src/shared/application-logger";
 import { Clock, Effect, Schema } from "effect";
@@ -10,7 +13,6 @@ import {
 import type { Queue } from "bullmq";
 import type {
   eventHeroNpcTable,
-  eventMapCoverageGapTable,
   eventTable,
 } from "#src/database/drizzle/schema";
 import { RedisService } from "#src/redis/redis.service";
@@ -46,25 +48,10 @@ import type { EventKillStore } from "#src/events/kills/event-kill.repository";
 
 type Event = typeof eventTable.$inferSelect;
 type EventHeroNpc = typeof eventHeroNpcTable.$inferSelect;
-type CoverageGapType = typeof eventMapCoverageGapTable.$inferSelect.gapType;
 
 const EVENT_KILL_LOCK_TTL_SECONDS = 30;
 const EVENT_KILL_DEDUP_TTL_SECONDS = 120;
 const EVENT_KILL_RECENT_DEDUP_TTL_SECONDS = 30;
-
-interface GapTimelineEntry {
-  mapId: string;
-  mapName: string;
-  gapType: CoverageGapType;
-  startedAt: Date;
-  endedAt: Date | null;
-  durationSeconds: number;
-}
-
-interface EventTimerNpc {
-  name: string;
-  icon: string | null;
-}
 
 type MapPresenceEntry = {
   mapId: string;
@@ -149,17 +136,6 @@ export const makeEventKills = (
         npc: extractEventTimerNpc(timer.npc),
       }));
     }).pipe(Effect.withSpan("events.kills.heroTimers"));
-  }
-
-  function extractEventTimerNpc(npcData: unknown): EventTimerNpc {
-    if (!npcData || typeof npcData !== "object") {
-      return { name: "", icon: null };
-    }
-    const npc = npcData as { name?: unknown; icon?: unknown };
-    return {
-      name: typeof npc.name === "string" ? npc.name : "",
-      icon: typeof npc.icon === "string" ? npc.icon : null,
-    };
   }
 
   function createMapNameLookup(
@@ -536,7 +512,7 @@ export const makeEventKills = (
               yield* recordHeroKill(
                 guildId,
                 eventHero,
-                event as Event,
+                event,
                 timerData,
                 isManualClose,
               );
@@ -681,7 +657,7 @@ export const makeEventKills = (
               timeOnMapSeconds: number;
               afkPercentage: number;
               wasPresent: boolean;
-              bonusBreakdown: unknown;
+              bonusBreakdown: JsonValue;
               mapPresenceData: Array<{
                 mapId: string;
                 mapName: string;
@@ -899,9 +875,7 @@ export const makeEventKills = (
   }
 
   function resolveKillScoringConfig(event: Event, killedAt: Date) {
-    const scoringMode = normalizeEventScoringMode(
-      (event as { scoringMode?: unknown }).scoringMode,
-    );
+    const scoringMode = normalizeEventScoringMode(event.scoringMode);
     const scoringRules =
       scoringMode === "ADVANCED"
         ? normalizeEventScoringRules(event.scoringRules)
@@ -926,7 +900,7 @@ export const makeEventKills = (
     assignments: MemberAssignmentHistoryEntry[];
     killedAt: Date;
     trackingWindowStartTime: Date;
-  }): { memberPresentAtKill: boolean; memberLeaveTime: Date | null } {
+  }) {
     let memberPresentAtKill = false;
     let memberLeaveTime: Date | null = null;
 
@@ -1252,9 +1226,7 @@ export const makeEventKills = (
         ...new Set(
           normalizedPoints
             .filter((point) => {
-              const storedMapPresence = point.mapPresenceData as
-                | MapPresenceEntry[]
-                | null;
+              const storedMapPresence = point.mapPresenceData;
               return !(storedMapPresence && storedMapPresence.length > 0);
             })
             .map((point) => point.memberId),
@@ -1281,9 +1253,7 @@ export const makeEventKills = (
 
       const pointsWithMapData = normalizedPoints.map((point) => {
         const pointAssignments = assignmentsByMember.get(point.memberId) ?? [];
-        const storedMapPresence = point.mapPresenceData as
-          | MapPresenceEntry[]
-          | null;
+        const storedMapPresence = point.mapPresenceData;
 
         let presenceByMapId: Map<
           string,
@@ -1365,7 +1335,7 @@ export const makeEventKills = (
         ),
       );
       const scoringMode = normalizeEventScoringMode(
-        (kill.heroNpc.event as { scoringMode?: unknown }).scoringMode,
+        kill.heroNpc.event.scoringMode,
       );
       const scoringRules =
         scoringMode === "ADVANCED"
@@ -1581,11 +1551,7 @@ export const makeEventKills = (
         continue;
       }
 
-      const parsedEntry = entry as {
-        mapId?: unknown;
-        presenceTimeSeconds?: unknown;
-        afkTimeSeconds?: unknown;
-      };
+      const parsedEntry = entry;
       if (
         typeof parsedEntry.mapId !== "string" ||
         parsedEntry.mapId.length < 1
@@ -1644,8 +1610,7 @@ export const makeEventKills = (
 
       const summary = yield* repository.findWindowSummary(killId);
 
-      const summaryGaps =
-        (summary?.gapsTimeline as unknown as GapTimelineEntry[] | null) ?? [];
+      const summaryGaps = summary?.gapsTimeline ?? [];
       const scoringWindowStartTime =
         summary?.windowOpenedAt ?? kill.minSpawnTimeAtKill;
 

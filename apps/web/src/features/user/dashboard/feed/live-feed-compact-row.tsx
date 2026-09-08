@@ -40,13 +40,11 @@ export function LiveFeedCompactRow({
           <TextLink
             className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted"
             aria-label={t("statistics.feedLoot")}
-            render={
-              <Link
-                to="/$guildId"
-                params={{ guildId }}
-                search={{ lootId: item.lootId }}
-              />
-            }
+            render=<Link
+              to="/$guildId"
+              params={{ guildId }}
+              search={{ lootId: item.lootId }}
+            />
           >
             <Package className="size-4" aria-hidden />
           </TextLink>
@@ -64,13 +62,11 @@ export function LiveFeedCompactRow({
               <TextLink
                 className="min-w-0 break-words text-sm"
                 aria-label={`${t("statistics.feedLoot")} · ${item.npc.name}`}
-                render={
-                  <Link
-                    to="/$guildId"
-                    params={{ guildId }}
-                    search={{ lootId: item.lootId }}
-                  />
-                }
+                render=<Link
+                  to="/$guildId"
+                  params={{ guildId }}
+                  search={{ lootId: item.lootId }}
+                />
               >
                 {item.npc.name}
               </TextLink>

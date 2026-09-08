@@ -24,6 +24,8 @@ afterEach(() => vi.restoreAllMocks());
 describe("gateway presence identity", () => {
   it("keys fetched web and game presence by Discord identity", async () => {
     vi.spyOn(RealtimeClient.prototype, "request").mockResolvedValue({
+      organizationId: "organization-1",
+      revision: 1,
       presences: [
         presence,
         {

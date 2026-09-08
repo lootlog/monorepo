@@ -50,7 +50,7 @@ const normalizeNpcType = (type: LootNpc["type"]): LootNpcType =>
 const isSpecialNpcType = (
   type: LootNpcType,
 ): type is (typeof SPECIAL_NPC_TYPES)[number] =>
-  SPECIAL_NPC_TYPES.includes(type as (typeof SPECIAL_NPC_TYPES)[number]);
+  SPECIAL_NPC_TYPES.some((specialType) => specialType === type);
 
 export const LootNpcs: FC<LootNpcsProps> = ({
   npcs,

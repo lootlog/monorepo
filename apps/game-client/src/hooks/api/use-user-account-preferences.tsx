@@ -76,6 +76,7 @@ export const useUpdateUserGameAccountPreferences = (
       const nextNotifications = payload.notifications
         ? Object.entries(payload.notifications).reduce(
             (acc, [notificationType, patch]) => {
+              // SAFETY: The generated mutation payload has only the six NotificationType keys.
               const typedNotificationType =
                 notificationType as NotificationType;
 
@@ -88,7 +89,7 @@ export const useUpdateUserGameAccountPreferences = (
             },
             {
               ...previousData.notifications,
-            } as UserGameAccountPreferencesResponseDtoOutput["notifications"],
+            },
           )
         : previousData.notifications;
       const nextDetector = payload.detector
