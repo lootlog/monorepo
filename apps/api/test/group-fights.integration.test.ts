@@ -22,6 +22,9 @@ describe("group fights durable records", () => {
   const organization = randomUUID();
   const otherOrganization = randomUUID();
   const user = randomUUID();
+  const startTime = Date.now() - 120_000;
+  const startedAt = new Date(startTime).toISOString();
+  const endedAt = new Date(startTime + 30_000).toISOString();
   const payload = Schema.decodeUnknownSync(CreateGroupFightRequest)({
     world: "classic",
     accountId: "10",
@@ -29,8 +32,8 @@ describe("group fights durable records", () => {
     submissionKey: randomUUID(),
     map: { id: 1, pvp: 2, name: "Sala Tronowa" },
     qualification: { source: "CATALOG" },
-    startedAt: "2026-09-06T10:00:00.000Z",
-    endedAt: "2026-09-06T10:00:30.000Z",
+    startedAt,
+    endedAt,
     myTeam: 1,
     winningTeam: 1,
     participants: [1, 2, 3, 4].map((id) => ({
@@ -41,7 +44,7 @@ describe("group fights durable records", () => {
       prof: "w",
       icon: "",
       team: id <= 2 ? 1 : 2,
-      joinedAt: "2026-09-06T10:00:00.000Z",
+      joinedAt: startedAt,
       fled: false,
     })),
   });
@@ -69,6 +72,67 @@ describe("group fights durable records", () => {
     );
   });
   afterAll(() => runtime.dispose());
+  it("persists catalog and observed NPC classifications for map and NPC filters", async () => {
+    const guildId = randomUUID();
+    await runtime.runPromise(
+      database.insert(guildTable).values({
+        id: guildId,
+        ownerId: user,
+        name: "Map classifications",
+        updatedAt: new Date(),
+      }),
+    );
+    const create = makeGroupFightCreation(database);
+    const queries = makeGroupFightQueries(database);
+    const catalogFight = await runtime.runPromise(
+      create(guildId, user, {
+        ...payload,
+        submissionKey: randomUUID(),
+        map: { id: 1, pvp: 2, name: "Arachnitopia p.6" },
+      }),
+    );
+    const observedFight = await runtime.runPromise(
+      create(guildId, user, {
+        ...payload,
+        submissionKey: randomUUID(),
+        map: { id: 2, pvp: 2, name: "Uncatalogued map" },
+        qualification: {
+          source: "NPC_OBSERVED",
+          npc: { id: -123, name: "Observed titan", wt: 100 },
+        },
+      }),
+    );
+    const catalog = await runtime.runPromise(
+      queries.list(guildId, user, { npcType: "ELITE2" }),
+    );
+    expect(catalog.fights.map((fight) => fight.id)).toEqual([
+      catalogFight.groupFightId,
+    ]);
+    const observed = await runtime.runPromise(
+      queries.list(guildId, user, { npcType: "TITAN" }),
+    );
+    expect(observed.fights.map((fight) => fight.id)).toEqual([
+      observedFight.groupFightId,
+    ]);
+    const ranking = await runtime.runPromise(
+      queries.ranking(guildId, user, {}),
+    );
+    expect(ranking.maps).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          mapId: 1,
+          npcType: "ELITE2",
+          totalFights: 1,
+        }),
+        expect.objectContaining({
+          mapId: 2,
+          npcType: "TITAN",
+          npcNames: ["Observed titan"],
+          totalFights: 1,
+        }),
+      ]),
+    );
+  });
   it("attributes configured characters only to current authorized members and excludes conflicting claims", async () => {
     const guildId = randomUUID();
     const internalId = randomUUID();
@@ -193,11 +257,11 @@ describe("group fights durable records", () => {
       create(organization, user, {
         ...payload,
         submissionKey: randomUUID(),
-        startedAt: "2026-09-06T10:00:40.000Z",
-        endedAt: "2026-09-06T10:01:00.000Z",
+        startedAt: new Date(startTime + 40_000).toISOString(),
+        endedAt: new Date(startTime + 60_000).toISOString(),
         participants: payload.participants.map((p) => ({
           ...p,
-          joinedAt: "2026-09-06T10:00:40.000Z",
+          joinedAt: new Date(startTime + 40_000).toISOString(),
         })),
       }),
     );

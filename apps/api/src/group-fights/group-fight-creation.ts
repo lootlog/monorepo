@@ -3,6 +3,10 @@ import { createHash } from "node:crypto";
 import { and, eq, sql } from "drizzle-orm";
 import { Effect } from "effect";
 import {
+  getGroupFightMapNpcs,
+  getGroupFightNpcType,
+} from "@lootlog/domain/group-fight-maps";
+import {
   calculateGroupFightDurationSeconds,
   calculateGroupFightParticipationSeconds,
   countGroupFightTeamSizes,
@@ -71,6 +75,19 @@ export const makeGroupFightCreation =
         const endedAt = new Date(payload.endedAt);
         const sizes = countGroupFightTeamSizes(payload.participants);
         const initialResolution = resolveGroupFightResolution(payload);
+        const mapNpcs = [...getGroupFightMapNpcs(payload.map.name)];
+        const observedNpc = payload.qualification.npc;
+        const observedNpcType = getGroupFightNpcType(observedNpc?.wt);
+        if (
+          observedNpc &&
+          observedNpcType &&
+          !mapNpcs.some(
+            (npc) =>
+              npc.name === observedNpc.name && npc.npcType === observedNpcType,
+          )
+        ) {
+          mapNpcs.push({ name: observedNpc.name, npcType: observedNpcType });
+        }
         if (!fight) {
           [fight] = yield* transaction
             .insert(groupFightTable)
@@ -82,6 +99,7 @@ export const makeGroupFightCreation =
               mapName: payload.map.name,
               qualificationSource: payload.qualification.source,
               qualifyingNpcName: payload.qualification.npc?.name ?? null,
+              mapNpcs,
               startedAt,
               endedAt,
               durationSeconds: calculateGroupFightDurationSeconds({
