@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState, type RefObject } from "react";
+import {
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useState,
+  type RefObject,
+} from "react";
 
 const SLIDE_DURATION_MS = 8000;
 
@@ -19,8 +25,7 @@ export const useWrappedAutoplay = ({
   const [isUserPaused, setIsUserPaused] = useState(false);
   const [isInteractionPaused, setIsInteractionPaused] = useState(false);
   const elapsedMillisecondsRef = useRef(0);
-  const onAdvanceRef = useRef(onAdvance);
-  onAdvanceRef.current = onAdvance;
+  const advance = useEffectEvent(onAdvance);
 
   useEffect(() => {
     elapsedMillisecondsRef.current = 0;
@@ -126,7 +131,7 @@ export const useWrappedAutoplay = ({
       if (elapsedMilliseconds >= SLIDE_DURATION_MS) {
         elapsedMillisecondsRef.current = 0;
         setProgress(0);
-        onAdvanceRef.current();
+        advance();
         return;
       }
 

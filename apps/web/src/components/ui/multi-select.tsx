@@ -224,10 +224,20 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
     const [open, setOpen] = React.useState(false);
     const [inputValue, setInputValue] = React.useState(searchValue ?? "");
     const selectedValues = resolveValue(value, internalValue);
-    const optionCacheRef = React.useRef(new Map<string, MultiSelectOption>());
-
-    for (const option of options) {
-      optionCacheRef.current.set(option.value, option);
+    const [cachedOptions, setCachedOptions] = React.useState(
+      () => new Map(options.map((option) => [option.value, option])),
+    );
+    const incomingOptions = new Map(
+      options.map((option) => [option.value, option]),
+    );
+    let optionCache = cachedOptions;
+    if (
+      [...incomingOptions].some(
+        ([value, option]) => cachedOptions.get(value) !== option,
+      )
+    ) {
+      optionCache = new Map([...cachedOptions, ...incomingOptions]);
+      setCachedOptions(optionCache);
     }
 
     React.useEffect(() => {
@@ -250,7 +260,7 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
     const visibleOptions = shouldPromptForSearch || errorMessage ? [] : options;
     const selectedOptions = selectedValues.map(
       (selectedValue) =>
-        optionCacheRef.current.get(selectedValue) ?? {
+        optionCache.get(selectedValue) ?? {
           label: selectedValue,
           value: selectedValue,
         },
@@ -305,7 +315,7 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
         items={optionValues}
         filteredItems={controlledSearch ? optionValues : undefined}
         itemToStringLabel={(optionValue) =>
-          optionCacheRef.current.get(optionValue)?.label ?? optionValue
+          optionCache.get(optionValue)?.label ?? optionValue
         }
         disabled={disabled}
         modal={modalPopover}

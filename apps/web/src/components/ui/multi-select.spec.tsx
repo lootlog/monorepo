@@ -127,6 +127,46 @@ describe("MultiSelect", () => {
     expect(screen.getByText("Freaky nikky")).toBeTruthy();
   });
 
+  it("uses the last label when remote options contain duplicate values", () => {
+    render(
+      <MultiSelect
+        onClose={() => {}}
+        onValueChange={() => {}}
+        value={["player-1"]}
+        options={[
+          { label: "Old name", value: "player-1" },
+          { label: "New name", value: "player-1" },
+        ]}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Usuń New name" })).toBeTruthy();
+  });
+
+  it("refreshes a selected label when the same remote option changes", () => {
+    const sharedProps = {
+      onClose: () => {},
+      onValueChange: () => {},
+      value: ["player-1"],
+    };
+    const { rerender } = render(
+      <MultiSelect
+        {...sharedProps}
+        options={[{ label: "Old name", value: "player-1" }]}
+      />,
+    );
+
+    rerender(
+      <MultiSelect
+        {...sharedProps}
+        options={[{ label: "New name", value: "player-1" }]}
+      />,
+    );
+
+    expect(screen.queryByText("Old name")).toBeNull();
+    expect(screen.getByRole("button", { name: "Usuń New name" })).toBeTruthy();
+  });
+
   it("updates controlled-search text immediately while the query value is debounced", () => {
     const onSearchChange = vi.fn();
 

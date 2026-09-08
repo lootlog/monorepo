@@ -25,14 +25,13 @@ export const useLocalCoverageTimer = (
 ) => {
   const [startTime, setStartTime] = useState<number | null>(null);
   const prevGapTypeRef = useRef<CoverageGapType | null>(null);
-  const ignoredGapIdRef = useRef<string | null>(null);
+  const [ignoredGapId, setIgnoredGapId] = useState<string | null>(null);
 
   const statusGapType = getGapTypeFromStatus(status);
   const activeGapId = activeGap?.id ?? null;
   const activeGapType = activeGap?.gapType ?? null;
   const activeGapStartedAt = activeGap?.startedAt ?? null;
-  const fallbackGapType =
-    activeGapId !== ignoredGapIdRef.current ? activeGapType : null;
+  const fallbackGapType = activeGapId !== ignoredGapId ? activeGapType : null;
   const gapType =
     statusGapType ?? (status === "ASSIGNED_UNKNOWN" ? fallbackGapType : null);
 
@@ -42,7 +41,7 @@ export const useLocalCoverageTimer = (
 
     if (gapType === null) {
       if (activeGapId) {
-        ignoredGapIdRef.current = activeGapId;
+        setIgnoredGapId(activeGapId);
       }
       setStartTime(null);
       return;
@@ -50,7 +49,7 @@ export const useLocalCoverageTimer = (
 
     const hasCurrentBackendGap =
       activeGapId !== null &&
-      activeGapId !== ignoredGapIdRef.current &&
+      activeGapId !== ignoredGapId &&
       activeGapType === gapType &&
       activeGapStartedAt !== null;
 
@@ -65,7 +64,7 @@ export const useLocalCoverageTimer = (
     if (prevGapType === null || prevGapType !== gapType) {
       setStartTime(Date.now());
     }
-  }, [activeGapId, activeGapStartedAt, activeGapType, gapType]);
+  }, [activeGapId, activeGapStartedAt, activeGapType, gapType, ignoredGapId]);
 
   const elapsedSeconds =
     startTime === null
