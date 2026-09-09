@@ -36,3 +36,9 @@ For local userscript integrations use the installed `lootlogGameClientApi` and
 these functions from service OpenAPI documents. `bun run client:check` detects
 drift; `bun run build` builds portable ESM and bundled declarations. Publication
 is a separate explicit release action.
+
+Builds use the repository's TypeScript 7 catalog version and tsdown. The shared
+`packages/tsconfig.public-api.json` includes workspace source dependencies so
+declarations are bundled without requiring consumers to install private packages.
+Run `bun run test:package` to install both public packages in an isolated
+consumer and verify all SDK entry points with runtime checks and TypeScript.

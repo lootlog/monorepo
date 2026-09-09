@@ -22,7 +22,7 @@ writeFileSync(
     dependencies: {
       "@lootlog/sdk": "file:lootlog-sdk-0.1.0.tgz",
       "@lootlog/game-client-api": "file:lootlog-game-client-api-0.1.0.tgz",
-      typescript: "5.9.3",
+      typescript: "7.0.2",
       "@types/node": "^26.4.0",
     },
   }),
@@ -34,8 +34,14 @@ writeFileSync(
 import { configureLootlogApi } from '@lootlog/sdk';
 import { usersControllerGetCurrentUserGuilds } from '@lootlog/sdk/main';
 import { RealtimeClient, REALTIME_JSON_SUBPROTOCOL } from '@lootlog/sdk/realtime';
+import * as activity from '@lootlog/sdk/activity';
+import * as battles from '@lootlog/sdk/battlelog';
+import * as search from '@lootlog/sdk/search';
 import type { LootlogGameClientApi } from '@lootlog/game-client-api';
 import { strict as assert } from 'node:assert';
+assert.ok(Object.keys(activity).length > 0);
+assert.ok(Object.keys(battles).length > 0);
+assert.ok(Object.keys(search).length > 0);
 let calls = 0;
 const restore = configureLootlogApi({apiKey:'test-only', fetch: async (input,init) => {
   assert.equal(String(input),'https://api.lootlog.pl/users/@me/guilds');
@@ -56,7 +62,8 @@ run(
   [
     "--noEmit",
     "--strict",
-    "--skipLibCheck",
+    "--types",
+    "node",
     "--target",
     "ES2022",
     "--module",
