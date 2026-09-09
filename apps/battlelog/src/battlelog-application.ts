@@ -32,6 +32,7 @@ RedisConnection.clientFactory = (options) => {
 };
 
 export interface BattlelogApplicationService {
+  readonly cleanupSecret?: Redacted.Redacted<string>;
   readonly port: number;
   readonly operations: BattlelogOperations;
 }
@@ -87,7 +88,7 @@ export class BattlelogApplication extends Context.Service<
       const operations = makeBattlelogOperations(
         battlesService,
         analyticsService,
-        queue,
+        { add: (name, data) => queue.add(name, data).then(() => undefined) },
       );
 
       yield* Effect.logInfo("Battlelog application initialized").pipe(
@@ -97,7 +98,11 @@ export class BattlelogApplication extends Context.Service<
         }),
       );
 
-      return BattlelogApplication.of({ operations, port: config.port });
+      return BattlelogApplication.of({
+        operations,
+        port: config.port,
+        cleanupSecret: config.cleanupSecret,
+      });
     }),
   );
 

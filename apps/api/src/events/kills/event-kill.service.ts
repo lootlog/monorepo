@@ -833,6 +833,7 @@ export const makeEventKills = (
         .emit(RoutingKey.EVENT_HERO_KILLED, {
           guildId,
           eventId: event.id,
+          heroNpcLvl: eventHero.npcLvl,
           killId: kill.kill.id,
         })
         .pipe(Effect.withSpan("rabbit.eventEmitter.emit"));
@@ -842,6 +843,7 @@ export const makeEventKills = (
           .emit(RoutingKey.EVENT_RESPAWN_WINDOW_CLOSED, {
             guildId,
             eventId: event.id,
+            heroNpcLvl: eventHero.npcLvl,
             heroId: eventHero.id,
           })
           .pipe(Effect.withSpan("rabbit.eventEmitter.emit"));
@@ -851,6 +853,7 @@ export const makeEventKills = (
             .emit(RoutingKey.EVENT_RESPAWN_WINDOW_OPENED, {
               guildId,
               eventId: event.id,
+              heroNpcLvl: eventHero.npcLvl,
               heroId: eventHero.id,
             })
             .pipe(Effect.withSpan("rabbit.eventEmitter.emit"));
@@ -864,6 +867,7 @@ export const makeEventKills = (
             .emit(RoutingKey.EVENT_MAP_STATUS_UPDATE, {
               guildId,
               eventId: event.id,
+              heroNpcLvl: eventHero.npcLvl,
               mapId: map.id,
             })
             .pipe(Effect.withSpan("rabbit.eventEmitter.emit")),

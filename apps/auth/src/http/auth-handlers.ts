@@ -71,7 +71,10 @@ const getIdpToken = Effect.fn("AuthController_getIdpToken")(function* () {
         }),
     ),
   );
-  return yield* auth.getIdpTokenResponse(decoded);
+  return yield* auth.getIdpTokenResponse(
+    decoded,
+    (yield* requestHeaders).get("authorization") ?? undefined,
+  );
 });
 
 export const AuthHandlers = Layer.merge(
@@ -100,7 +103,9 @@ export const AuthHandlers = Layer.merge(
       )
       .handleRaw("AuthControllerGetIdpToken", () =>
         toHttpResponse(getIdpToken(), (token) =>
-          HttpServerResponse.jsonUnsafe(token),
+          HttpServerResponse.jsonUnsafe(token, {
+            headers: { "cache-control": "no-store" },
+          }),
         ),
       ),
   ),

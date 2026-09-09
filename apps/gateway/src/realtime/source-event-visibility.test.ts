@@ -55,6 +55,53 @@ const timerRead = [
 
 describe("source visibility at delivery", () => {
   test.each([
+    "event.map-status-updated",
+    "event.hero-killed",
+    "event.respawn-window-opened",
+    "event.respawn-window-closed",
+  ] as const)(
+    "%s uses the HTTP hero visibility policy and rejects missing source metadata",
+    (type) => {
+      const session = reader([
+        role([Permission.LOOTLOG_EVENTS_READ], 100, 200),
+      ]);
+      const event = (
+        heroNpcLvl: number | string | null | undefined,
+        guildId = "organization",
+      ): Event => ({
+        v: 1,
+        type,
+        data: {
+          organizationId: "organization",
+          payload: { guildId, heroNpcLvl },
+        },
+      });
+      for (const level of [100, 200, 0, null])
+        expect(canReadSourceEvent(session, event(level))).toBe(true);
+      for (const level of [99, 201, undefined, "100", -1, Number.NaN])
+        expect(canReadSourceEvent(session, event(level))).toBe(false);
+      expect(
+        canReadSourceEvent(session, event(100, "another-organization")),
+      ).toBe(false);
+      expect(canReadSourceEvent(reader([role([], 100, 200)]), event(100))).toBe(
+        false,
+      );
+      expect(
+        canReadSourceEvent(
+          reader([role([Permission.ADMIN], 100, 200)]),
+          event(300),
+        ),
+      ).toBe(true);
+      session.guilds = session.guilds.map((guild) => ({
+        ...guild,
+        roles: [...guild.roles, role([], 250, 350)],
+      }));
+      // Event visibility intentionally accepts the level range from any role, as HTTP does.
+      expect(canReadSourceEvent(session, event(300))).toBe(true);
+    },
+  );
+
+  test.each([
     [199, false],
     [200, true],
     [500, true],

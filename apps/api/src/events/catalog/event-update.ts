@@ -1,3 +1,8 @@
+import {
+  getEffectiveCapabilities,
+  type AccessPolicy,
+} from "@lootlog/domain/access-policy";
+import { filterHeroesByLevel } from "@lootlog/domain/event-hero-visibility";
 import { invalidateEventCachePatterns } from "#src/events/catalog/event-cache-invalidation";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
@@ -14,6 +19,7 @@ import {
   eventHeroNpcTable,
   eventMapTable,
   eventTable,
+  type roleTable,
   userPinnedEventTable,
 } from "#src/database/drizzle/schema";
 import type { RedisService } from "#src/redis/redis.service";
@@ -67,7 +73,13 @@ export const makeEventUpdate =
     catalogRead: Pick<EventsCatalogRead, "hydrateMutation">,
     logger: Pick<Logger, "warn">,
   ) =>
-  (guild: { id: string }, eventId: string, data: UpdateEventRequest) =>
+  (
+    guild: { id: string },
+    eventId: string,
+    data: UpdateEventRequest,
+    roles: Array<typeof roleTable.$inferSelect>,
+    accessPolicy: AccessPolicy,
+  ) =>
     Effect.gen(function* () {
       const rows = yield* database
         .select()
@@ -132,6 +144,21 @@ export const makeEventUpdate =
                 .where(eq(userPinnedEventTable.eventId, eventId));
             }
             if (heroNpcs) {
+              const existingHeroes = yield* transaction
+                .select()
+                .from(eventHeroNpcTable)
+                .where(eq(eventHeroNpcTable.eventId, eventId));
+              if (
+                filterHeroesByLevel(
+                  existingHeroes,
+                  roles,
+                  getEffectiveCapabilities(accessPolicy),
+                ).length !== existingHeroes.length
+              ) {
+                return yield* Effect.fail(
+                  new ResourceNotFoundError("Hero not found"),
+                );
+              }
               yield* transaction
                 .delete(eventHeroNpcTable)
                 .where(eq(eventHeroNpcTable.eventId, eventId));
@@ -185,12 +212,13 @@ export const makeEventUpdate =
           }),
         )
         .pipe(
-          Effect.mapError(
-            (cause) =>
-              new EventUpdateError({
-                operation: "events.update.transaction",
-                cause,
-              }),
+          Effect.mapError((cause) =>
+            cause instanceof ResourceNotFoundError
+              ? cause
+              : new EventUpdateError({
+                  operation: "events.update.transaction",
+                  cause,
+                }),
           ),
           Effect.withSpan("events.update.transaction", {
             attributes: { adapter: "events.drizzle", retryCount: 0 },
@@ -208,7 +236,17 @@ export const makeEventUpdate =
         ],
         "Failed to invalidate event cache",
       );
-      return attachComputedEventActive(updated, referenceTime);
+      return attachComputedEventActive(
+        {
+          ...updated,
+          heroNpcs: filterHeroesByLevel(
+            updated.heroNpcs,
+            roles,
+            getEffectiveCapabilities(accessPolicy),
+          ),
+        },
+        referenceTime,
+      );
     }).pipe(Effect.withSpan("EventsController_updateEvent"));
 
 export type EventUpdate = ReturnType<typeof makeEventUpdate>;

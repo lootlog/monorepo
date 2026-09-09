@@ -1,7 +1,15 @@
+import {
+  getEffectiveCapabilities,
+  type AccessPolicy,
+} from "@lootlog/domain/access-policy";
+import { filterHeroesByLevel } from "@lootlog/domain/event-hero-visibility";
 import { isRecord } from "@lootlog/schema/records";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import { Clock, Effect } from "effect";
-import type { eventMapCoverageGapTable } from "#src/database/drizzle/schema";
+import type {
+  eventMapCoverageGapTable,
+  roleTable,
+} from "#src/database/drizzle/schema";
 import type { EventTimersPort } from "#src/events/respawn/event-timers.port";
 import { buildTimerKey } from "#src/timers/timer-key";
 import {
@@ -74,7 +82,12 @@ export const makeEventCoordination = (
   repository: EventCoordinationStore,
   timersService: EventTimersPort,
 ) => ({
-  getCoordination(guildId: string, eventId: string) {
+  getCoordination(
+    guildId: string,
+    eventId: string,
+    roles: Array<typeof roleTable.$inferSelect>,
+    accessPolicy: AccessPolicy,
+  ) {
     return Effect.gen(function* () {
       const event = yield* repository.findEvent(guildId, eventId);
 
@@ -82,15 +95,20 @@ export const makeEventCoordination = (
         return yield* Effect.fail(new ResourceNotFoundError("Event not found"));
       }
 
+      const visibleHeroes = filterHeroesByLevel(
+        event.heroNpcs,
+        roles,
+        getEffectiveCapabilities(accessPolicy),
+      );
       const now = new Date(yield* Clock.currentTimeMillis);
       const [timers, activeGaps] = yield* Effect.all(
         [
           timersService.getTimersForEventHeroFilters(
             guildId,
             event.world,
-            event.heroNpcs,
+            visibleHeroes,
           ),
-          repository.findActiveGaps(event.heroNpcs.map((hero) => hero.id)),
+          repository.findActiveGaps(visibleHeroes.map((hero) => hero.id)),
         ],
         { concurrency: "unbounded" },
       );
@@ -103,7 +121,7 @@ export const makeEventCoordination = (
       );
       const activeGapsByHeroId = groupActiveGapsByHeroId(activeGaps);
 
-      const heroes = event.heroNpcs
+      const heroes = visibleHeroes
         .map((hero) => {
           const timer = findHeroTimer(hero, timersByKey, timersByNpcName);
           const status = getEventRespawnWindowStatus(timer, now);

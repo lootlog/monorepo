@@ -17,6 +17,53 @@ const httpErrorResponse = {
   },
 };
 
+test.each([
+  ["auth", "/auth/idp-token"],
+  ["battlelog", "/internal/delete-user-data"],
+] as const)(
+  "%s service-auth exception rejects loss of its credential header or denial response",
+  (service, path) => {
+    const document = decodeOpenApiDocument(
+      parse(
+        readFileSync(
+          new URL(`../../../apps/${service}/openapi.yaml`, import.meta.url),
+          "utf8",
+        ),
+      ),
+    );
+    const raw = document.paths?.[path]?.post;
+    if (!raw) throw new Error("Missing service operation");
+    const operation =
+      service === "battlelog" ? normalizeApiKeyErrors(raw, undefined) : raw;
+    if (!isJsonObject(operation) || !isJsonObject(operation.responses))
+      throw new Error("Missing service responses");
+    const responses = operation.responses;
+    expect(
+      normalizeAllowedChanges(service, `POST ${path}`, operation),
+    ).not.toHaveProperty("responses.401");
+    expect(() =>
+      normalizeAllowedChanges(service, `POST ${path}`, {
+        ...operation,
+        parameters: [],
+      }),
+    ).toThrow("service authorization header");
+    expect(() =>
+      normalizeAllowedChanges(service, `POST ${path}`, {
+        ...operation,
+        responses: { ...responses, "401": {} },
+      }),
+    ).toThrow("service authentication error");
+    if (service === "auth") {
+      expect(() =>
+        normalizeAllowedChanges(service, `POST ${path}`, {
+          ...operation,
+          responses: { ...responses, "400": {} },
+        }),
+      ).toThrow("IDP request error");
+    }
+  },
+);
+
 test("verified HTTP errors restore previous empty responses and remove only added statuses", () => {
   expect(
     normalizeAllowedChanges("api", "DELETE /users/@me", {

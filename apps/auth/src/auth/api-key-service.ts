@@ -1,5 +1,5 @@
 import { HttpClient, HttpClientResponse } from "effect/unstable/http";
-import { timingSafeEqual } from "node:crypto";
+import { hasServiceAuthorization } from "@lootlog/protocol/http/service-auth";
 import { and, eq, inArray } from "drizzle-orm";
 import { Context, Effect, Layer, Schema } from "effect";
 import {
@@ -10,7 +10,7 @@ import {
 import { AuthDatabase } from "#src/database/drizzle";
 import { authApiKeys, authUsers } from "#src/database/drizzle.schema";
 import { BetterAuthRuntime } from "#src/auth/provider/better-auth";
-import { AppConfig, reveal } from "#src/config/env";
+import { AppConfig } from "#src/config/env";
 import { HttpResponseError } from "#src/auth/auth-service";
 
 const Name = Schema.Trim.check(Schema.isMinLength(1), Schema.isMaxLength(80));
@@ -361,13 +361,11 @@ export class ApiKeyService extends Context.Service<
           };
         }),
         statuses: Effect.fn("ApiKeyService.statuses")(function* (headers, ids) {
-          const secret = config.apiKeyStatusSecret;
-          const supplied = headers.get("authorization") ?? "";
-          const expected = secret ? `Bearer ${reveal(secret)}` : "";
           if (
-            !expected ||
-            Buffer.byteLength(supplied) !== Buffer.byteLength(expected) ||
-            !timingSafeEqual(Buffer.from(supplied), Buffer.from(expected))
+            !hasServiceAuthorization(
+              headers.get("authorization") ?? undefined,
+              config.apiKeyStatusSecret,
+            )
           )
             return yield* failure(401, "Unauthorized");
           if (config.apiKeysEnabled !== true)

@@ -196,17 +196,20 @@ export const EventScope = Schema.Struct({
 
 export const EventMapStatusUpdated = Schema.Struct({
   ...EventScope.fields,
+  heroNpcLvl: Schema.optional(Schema.NullOr(NonNegativeInt)),
   mapId: NonEmptyString,
   reason: Schema.optional(Schema.String),
 });
 
 export const EventHeroKilled = Schema.Struct({
   ...EventScope.fields,
+  heroNpcLvl: Schema.optional(Schema.NullOr(NonNegativeInt)),
   heroId: Schema.optional(NonEmptyString),
 });
 
 export const EventRespawnWindowChanged = Schema.Struct({
   ...EventScope.fields,
+  heroNpcLvl: Schema.optional(Schema.NullOr(NonNegativeInt)),
   heroId: NonEmptyString,
 });
 

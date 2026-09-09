@@ -1,9 +1,17 @@
+import { Capability, createAccessPolicy } from "@lootlog/domain/access-policy";
 import { describe, expect, it } from "bun:test";
 import { Effect, Schema } from "effect";
 import { eq } from "drizzle-orm";
 import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
-import { eventTable, guildTable } from "#src/database/drizzle/schema";
-import { InvalidRequestError } from "#src/shared/http/http-errors";
+import {
+  eventTable,
+  eventHeroNpcTable,
+  guildTable,
+} from "#src/database/drizzle/schema";
+import {
+  InvalidRequestError,
+  ResourceNotFoundError,
+} from "#src/shared/http/http-errors";
 import { UpdateEventRequest } from "#src/contracts/events/schemas";
 import { makeEventsCatalogRead } from "#src/events/catalog/events-catalog-read";
 import { makeEventUpdate } from "#src/events/catalog/event-update";
@@ -16,6 +24,11 @@ describe("event update Effect module", () => {
         startsAt: "2026-09-02T13:00:00.000Z",
         endsAt: "2026-09-02T12:00:00.000Z",
       },
+      rejects: true,
+    },
+    {
+      name: "rejects replacing hidden heroes without changing persistence",
+      data: { heroNpcs: [] },
       rejects: true,
     },
     {
@@ -48,6 +61,14 @@ describe("event update Effect module", () => {
           updatedAt: startsAt,
         }),
       );
+      await boundary.run(
+        database.insert(eventHeroNpcTable).values({
+          id: "hidden",
+          eventId: "event-1",
+          npcName: "Hidden",
+          npcLvl: 300,
+        }),
+      );
       const logger = { warn: () => undefined };
       const catalog = makeEventsCatalogRead(
         database,
@@ -65,13 +86,28 @@ describe("event update Effect module", () => {
       );
       const request = Schema.decodeUnknownSync(UpdateEventRequest)(data);
       const result = boundary.run(
-        updateEvent({ id: "guild-1" }, "event-1", request),
+        updateEvent(
+          { id: "guild-1" },
+          "event-1",
+          request,
+          [],
+          createAccessPolicy({
+            capabilities: [Capability.LOOTLOG_EVENTS_MANAGE],
+          }),
+        ),
       );
       if (rejects) {
-        await expect(result).rejects.toBeInstanceOf(InvalidRequestError);
+        await expect(result).rejects.toBeInstanceOf(
+          "heroNpcs" in data ? ResourceNotFoundError : InvalidRequestError,
+        );
       } else {
-        expect((await result).endsAt).toBeNull();
+        const updated = await result;
+        expect(updated.endsAt).toBeNull();
+        expect(updated.heroNpcs).toEqual([]);
       }
+      expect(
+        await boundary.run(database.select().from(eventHeroNpcTable)),
+      ).toHaveLength(1);
       const rows = await boundary.run(
         database.select().from(eventTable).where(eq(eventTable.id, "event-1")),
       );

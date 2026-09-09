@@ -230,6 +230,7 @@ Before calling a change complete, account for every applicable item:
   release boundary justifies independent deployment.
 - Import from the module that owns a symbol. Do not create source files that
   only re-export symbols.
+- When importing node built-in modules, first, look for Bun built-ins and only then Node built-ins.
 
 ### Prevent duplicated logic
 

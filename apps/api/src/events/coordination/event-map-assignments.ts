@@ -239,12 +239,18 @@ export const makeEventMapAssignments = (
       ),
     );
 
-  const publishStatus = (guildId: string, eventId: string, mapId: string) =>
+  const publishStatus = (
+    guildId: string,
+    eventId: string,
+    mapId: string,
+    heroNpcLvl: number | null,
+  ) =>
     bestEffort(
       publisher.publish(RoutingKey.EVENT_MAP_STATUS_UPDATE, {
         guildId,
         eventId,
         mapId,
+        heroNpcLvl,
       }),
       "events.assignments.publishStatus",
     );
@@ -366,7 +372,7 @@ export const makeEventMapAssignments = (
         yield* Effect.all(
           [
             invalidate(guild.id, eventId),
-            publishStatus(guild.id, eventId, mapId),
+            publishStatus(guild.id, eventId, mapId, scoped.hero.npcLvl),
           ],
           { concurrency: "unbounded", discard: true },
         );
@@ -421,7 +427,7 @@ export const makeEventMapAssignments = (
         yield* Effect.all(
           [
             invalidate(guild.id, eventId),
-            publishStatus(guild.id, eventId, mapId),
+            publishStatus(guild.id, eventId, mapId, scoped.hero.npcLvl),
           ],
           { concurrency: "unbounded", discard: true },
         );
