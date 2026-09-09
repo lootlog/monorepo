@@ -10,11 +10,11 @@ http:
         - "web"
 
     developer:
-      rule: "PathPrefix(`/developer`)"
+      rule: "Path(`/developer`) || PathPrefix(`/developer/`)"
       service: "developer"
       priority: 25
       middlewares:
-        - "developerStripPrefix"
+        - "developerTrailingSlash"
         - "apiCompress"
       entryPoints:
         - "web"
@@ -186,10 +186,10 @@ http:
         servers:
           - url: "http://host.docker.internal:4027"
   middlewares:
-    developerStripPrefix:
-      stripPrefix:
-        prefixes:
-          - "/developer"
+    developerTrailingSlash:
+      redirectRegex:
+        regex: "^(https?://[^/]+/developer)([?].*)?$"
+        replacement: "${1}/${2}"
     apiStripPrefix:
       stripPrefix:
         prefixes:
@@ -204,6 +204,7 @@ http:
         customRequestHeaders:
           X-Auth-User-Id: ""
           X-Auth-Discord-Id: ""
+          X-Auth-Api-Key-Access: ""
     apiForwardAuth:
       forwardAuth:
         address: "http://host.docker.internal:4001/auth/verify"
@@ -211,7 +212,9 @@ http:
         authResponseHeaders:
           - "X-Auth-User-Id"
           - "X-Auth-Discord-Id"
+          - "X-Auth-Api-Key-Access"
         authRequestHeaders:
+          - "X-Api-Key"
           - "Authorization"
           - "Cookie"
     apiCompress:
@@ -235,6 +238,7 @@ http:
           - "OPTIONS"
           - "PATCH"
         accessControlAllowHeaders:
+          - "X-Api-Key"
           - "Content-Type"
           - "Authorization"
           - "X-Lootlog-Dev-Permission-Override"

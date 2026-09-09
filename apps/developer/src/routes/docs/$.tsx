@@ -45,14 +45,16 @@ function Documentation() {
   return (
     <DocsLayout
       tree={pageTree}
-      nav={{ title: portalText.title, url: "/docs" }}
+      nav={{ title: portalText.docs, url: "/docs" }}
       themeSwitch={{ enabled: false }}
-      links={[
-        { text: portalText.reference, url: "/reference" },
-        { text: portalText.keys, url: "/keys" },
-      ]}
+      searchToggle={{ full: { className: "md:hidden" } }}
+      containerProps={{ className: "documentation-layout" }}
     >
-      <DocsPage toc={toc}>
+      <DocsPage
+        toc={toc}
+        full={path === "index.mdx"}
+        tableOfContentPopover={{ enabled: path !== "index.mdx" }}
+      >
         <DocsTitle>{page.title}</DocsTitle>
         <DocsDescription>{page.description}</DocsDescription>
         <DocsBody>

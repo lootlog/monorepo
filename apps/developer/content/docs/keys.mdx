@@ -1,20 +1,22 @@
 ---
-title: Klucze i uprawnienia
-description: Osobisty klucz, jawny zakres Organizacji i aktualne uprawnienia użytkownika.
+title: Keys and permissions
+description: Personal keys with explicit Organization scopes and the user's current permissions.
 ---
 
-## Zakres
+## Scope
 
-Klucz należy do użytkownika. Wybierasz Organizacje oraz odczyt albo odczyt/zapis. Dostęp do własnych danych jest osobną opcją, domyślnie wyłączoną. Nie ma dodatkowego ACL pozwalającego na tworzenie kluczy.
+A key belongs to a User. Select Organizations and either read-only or read/write access. Access to your own data is a separate option, disabled by default. Creating keys does not require a separate ACL permission.
 
-Dostęp jest przecięciem zakresu klucza i aktualnych uprawnień użytkownika. Usunięcie członka z Organizacji odbiera dostęp do jej danych także integracji. Klucz obejmujący kilka Organizacji może nadal działać w pozostałych. Dołączenie do nowej Organizacji nie dodaje jej automatycznie do zakresu.
+Access is the intersection of the key's scope and the user's current permissions. Removing a Member from an Organization also removes the integration's access to its data. A key covering several Organizations may continue to work in the others. Joining a new Organization does not automatically add it to the key's scope.
 
-## Tworzenie i rotacja
+## Creation and rotation
 
-[Panel kluczy](/keys) pozwala utworzyć maksymalnie 10 aktywnych kluczy. Wybierz 30, 90 lub 365 dni albo ważność bezterminową. Domyślna ważność wynosi 90 dni.
+The [key management page](/keys) lets you create up to 10 active keys. Choose an expiration of 30, 90, or 365 days, or no expiration. The default is 90 days.
 
-Sekret jest wyświetlany tylko po utworzeniu. Nazwę można zmienić. Zmiana zakresu wymaga nowego klucza: utwórz go, podmień sekret w integracji, sprawdź działanie i usuń stary.
+The secret is displayed only when you create the key. You can rename a key. Changing its scope requires a new key: create it, replace the secret in your integration, verify that it works, and delete the old key.
 
-## Usunięcie
+If a change succeeds but the key list cannot be refreshed, select **Refresh list** to retry loading it. This does not repeat the change. Save any newly created secret before leaving the page; it remains visible while you retry.
 
-Usunięty lub wygasły klucz przestaje uwierzytelniać nowe żądania HTTP. Otwarte połączenie realtime traci autoryzację najpóźniej po 60 sekundach bez skutecznego odnowienia. Nie zapisuj sekretów w logach ani komunikatach o błędach.
+## Deletion
+
+A deleted or expired key stops authenticating new HTTP requests. An open realtime connection loses authorization within 60 seconds unless renewal succeeds. Never write secrets to logs or error messages.

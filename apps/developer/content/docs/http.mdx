@@ -1,41 +1,67 @@
 ---
-title: Pierwsze żądanie HTTP
-description: Utwórz klucz, wybierz środowisko i odczytaj dane Organizacji.
+title: Your first HTTP request
+description: Create a key, choose an environment, and read Organization data.
 ---
 
-## Przygotowanie
+This guide runs from your terminal or server. For code running inside Margonem, use the [game client API](/docs/game-client).
 
-Zaloguj się przez Discord w [panelu kluczy](/keys). Wybierz Organizacje i zakres odczytu. Zapisz sekret — zobaczysz go tylko raz. W aplikacji serwerowej przechowuj go w zmiennej środowiskowej lub magazynie sekretów.
+## Setup
 
-Na dev używaj `https://dev-api.lootlog.pl`; produkcja ma adres `https://api.lootlog.pl`. Pozostałe usługi mają hosty `dev-activity`, `dev-battlelog`, `dev-search` na dev oraz `activity`, `battlelog`, `search` na produkcji.
+### 1. Create an API key
+
+Open [API Keys](/keys) in your target environment and sign in with Discord. Create a key with at least one Organization and read-only access. Access to your own data is not needed for this request.
+
+Copy the secret from the confirmation before dismissing it. It is shown only once. Store it as `LOOTLOG_API_KEY` in your server's environment or secret store. See [keys and permissions](/docs/keys) for scope and rotation rules.
+
+### 2. Choose an environment
+
+Use the same environment for your key and requests. This guide uses development.
+
+| Service   | Development                        | Production                     |
+| --------- | ---------------------------------- | ------------------------------ |
+| Main API  | `https://dev-api.lootlog.pl`       | `https://api.lootlog.pl`       |
+| Activity  | `https://dev-activity.lootlog.pl`  | `https://activity.lootlog.pl`  |
+| Battlelog | `https://dev-battlelog.lootlog.pl` | `https://battlelog.lootlog.pl` |
+| Search    | `https://dev-search.lootlog.pl`    | `https://search.lootlog.pl`    |
+
+### 3. Send your first request
+
+With `LOOTLOG_API_KEY` set, copy and run this command:
 
 ```bash
 export LOOTLOG_API_URL=https://dev-api.lootlog.pl
-# LOOTLOG_API_KEY ustaw przez magazyn sekretów swojego środowiska.
 curl --fail-with-body "$LOOTLOG_API_URL/users/@me/guilds" \
   -H "X-Api-Key: $LOOTLOG_API_KEY"
 ```
 
-## Referencja operacji
+A successful request returns JSON with your Organizations and their Lootlog access status, limited by the key's scope and your current access. API paths and response fields use `guild` for the Discord server that anchors an Organization.
 
-[Scalar](/reference) pokazuje dostępne operacje, parametry i schematy odpowiedzi na podstawie wygenerowanego OpenAPI. Wybierz usługę i wprowadź klucz do wykonania żądania. Portal nie zapisuje klucza trwale; żądanie trafia bezpośrednio do wybranego środowiska Lootloga.
+If the request is rejected, check the environment, key expiration, and selected Organizations. See [errors and limits](/docs/errors) for the response status.
 
-Przesyłaj klucz wyłącznie nagłówkiem `X-Api-Key`. Nie dodawaj go do adresu URL. Błędny klucz powoduje odmowę dostępu, nawet jeśli przeglądarka ma również aktywną sesję.
+## Operation reference
 
-## Zapisy
+Open the [API Reference](/reference), select the main API, and find `GET /users/@me/guilds`. Enter your key in the `X-Api-Key` authentication field to try the request and inspect its response. Switch services to explore Activity, Battlelog, and Search.
 
-Operacja zapisu wymaga klucza odczyt/zapis i odpowiednich aktualnych uprawnień użytkownika w Organizacji. Klucz nie daje dostępu do zarządzania kontem, innymi kluczami ani operacji wewnętrznych.
+Scalar displays operations, parameters, and response schemas from the generated OpenAPI specifications. The portal does not persist the key or transfer it from API Keys; requests go directly to the selected Lootlog environment.
 
-Nie ponawiaj automatycznie zapisów po utracie odpowiedzi. Żądanie mogło zostać wykonane; najpierw sprawdź wynik operacji. Zasady idempotencji konkretnej operacji znajdziesz w referencji.
+Send the key only in the `X-Api-Key` header. Do not add it to the URL. An invalid key causes access to be denied even if the browser also has an active session.
 
-## Ustawienia użytkownika i Organizacje
+For typed requests in a server application, continue with the [TypeScript SDK](/docs/sdk). To receive changes over WebSocket, see [Realtime](/docs/realtime).
 
-Dostęp do własnych danych pozwala odczytywać i zmieniać obsługiwane ustawienia osobiste, ale nie rozszerza zakresu Organizacji.
+## Writes
 
-- W `GET /users/@me/preferences` pola `guildsOrder` i `hiddenGuildIds` zawierają wyłącznie Organizacje wybrane dla klucza, do których nadal masz dostęp. Próba zmiany tych dwóch pól kluczem zwraca `403`; ich edycja wymaga sesji użytkownika.
-- W `GET /users/@me/game-preferences/accounts/{id}` reguły detektora odnoszące się do innych Organizacji są ukryte, a `guildIds` w ustawieniach powiadomień ograniczone do dozwolonych Organizacji. Zmiana `detector.routingRules` lub `guildIds` powiadomień kluczem zwraca `403` i wymaga sesji.
-- Obsługiwane ustawienia osobiste, takie jak motyw, wygląd i przełączniki, nadal można zmieniać kluczem odczyt/zapis z dostępem do własnych danych.
+A write operation requires a read/write key and the user's current permissions for that operation in the Organization. A key does not grant access to account management, other keys, or internal operations.
 
-Feed Organizacji i pokoje gotowości nie wymagają opcji dostępu do własnych danych tylko dlatego, że ich adres zaczyna się od `/users/@me`. Obowiązuje zakres Organizacji. Współdzielony zasób obejmujący kilka Organizacji jest dostępny kluczem tylko wtedy, gdy wszystkie wymagane Organizacje mieszczą się w jego aktualnym zakresie.
+Do not automatically retry writes after losing a response. The request may have succeeded; check the operation's result first. See the reference for each operation's idempotency rules.
 
-Ogólne dokumenty ustawień pod `/preferences` oraz operacje rodziny `/timer-settings` (odczyt, zapis i migracja) wymagają sesji użytkownika. Nie są częścią API dostępnego kluczem. Ograniczenie dotyczy ustawień timerów, nie odczytu ani zapisu samych timerów. Typowane preferencje konta i obsługiwane ustawienia dźwięku pozostają dostępne zgodnie z zakresem klucza.
+## User settings and Organizations
+
+Access to your own data lets you read and change supported personal settings, but does not expand the key's Organization scope.
+
+- In `GET /users/@me/preferences`, `guildsOrder` and `hiddenGuildIds` contain only Organizations selected for the key that you can still access. Attempting to change these two fields with a key returns `403`; editing them requires a user session.
+- In `GET /users/@me/game-preferences/accounts/{id}`, detector rules referring to other Organizations are hidden, and `guildIds` in notification settings are limited to permitted Organizations. Changing `detector.routingRules` or notification `guildIds` with a key returns `403` and requires a session.
+- Supported personal settings, such as theme, appearance, and toggles, can still be changed with a read/write key that has access to your own data.
+
+Organization feeds and ready rooms do not require access to your own data merely because their URL starts with `/users/@me`. Organization scope applies. A shared resource spanning several Organizations is accessible with a key only when all required Organizations are within its current scope.
+
+Generic settings documents under `/preferences` and operations in the `/timer-settings` family (read, write, and migration) require a user session. They are not part of the API available to keys. This restriction applies to timer settings, not to reading or writing timers themselves. Typed account preferences and supported sound settings remain available according to the key's scope.

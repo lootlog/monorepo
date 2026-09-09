@@ -1,5 +1,8 @@
 {
   "plugins": ["react", "typescript", "unicorn", "vitest"],
+  "categories": {
+    "correctness": "error"
+  },
   "ignorePatterns": [
     ".agent/**",
     ".agents/**",

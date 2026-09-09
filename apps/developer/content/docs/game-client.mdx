@@ -1,15 +1,15 @@
 ---
-title: API game-clienta
-description: Publiczne API v1 pod window.lootlogGameClientApi, dostępne wyłącznie w Margonem z uruchomionym Lootlogiem.
+title: Game client API
+description: Public API v1 at window.lootlogGameClientApi, available only inside Margonem with Lootlog running.
 ---
 
-## Dostęp i gotowość
+## Access and readiness
 
-Obiekt działa w kontekście strony gry, zarówno przy instalacji Lootloga jako userscriptu, jak i rozszerzenia. Nie istnieje na stronie portalu. W userscripcie uruchamianym w izolowanym kontekście użyj `unsafeWindow` i odpowiedniego `@grant unsafeWindow` zgodnie z menedżerem userscriptów. W kontekście strony wystarczy `window`.
+The object runs in the game page context, whether Lootlog is installed as a userscript or a browser extension. It does not exist on the portal. For a userscript running in an isolated context, use `unsafeWindow` with the appropriate `@grant unsafeWindow` setting for your userscript manager. In the page context, use `window`.
 
-`apiVersion` ma wartość `1`. `ready` oznacza inicjalizację gry, a nie dostępność wszystkich danych lub połączenie realtime. `undefined` przy odczycie oznacza brak załadowanych danych — nie pustą listę.
+`apiVersion` is `1`. `ready` means the game has initialized, not that all data is available or realtime is connected. An `undefined` read result means the data has not loaded — it is not an empty list.
 
-Poniższy przykład czeka maksymalnie 30 sekund, subskrybuje zmiany i sprząta nasłuchiwanie przy opuszczaniu strony. Ustaw nazwę świata swojej postaci.
+The following example waits up to 30 seconds, subscribes to changes, and removes listeners when you leave the page. Set the world to your character's world.
 
 ```js
 const page = typeof unsafeWindow === "undefined" ? window : unsafeWindow;
@@ -26,7 +26,7 @@ const wait = setInterval(() => {
   const stopTimers = api.subscribe("timers:changed", (event) => {
     if (event.world === world) console.log(event.timers);
   });
-  const stopReady = api.subscribe("ready", () => console.log("Gra gotowa"));
+  const stopReady = api.subscribe("ready", () => console.log("Game ready"));
   console.log({ ready: api.ready, timers: api.getTimers({ world }) });
   window.addEventListener(
     "pagehide",
@@ -40,17 +40,17 @@ const wait = setInterval(() => {
 window.addEventListener("pagehide", () => clearInterval(wait), { once: true });
 ```
 
-## Metody
+## Methods
 
-| Metoda                                 | Wynik i zachowanie                                                                                  |
-| -------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| `getGuilds()`                          | `PublicGuild[]` lub `undefined`; Organizacje gracza                                                 |
-| `getTimers({ world })`                 | `PublicTimer[]` lub `undefined`; odczyt załadowanych timerów świata; bez `world` zwraca `undefined` |
-| `getOnlinePlayers({ guildId, world })` | Promise z wynikiem `success` i `players` albo `forbidden` z kodem `ONLINE_PLAYERS_ACCESS_DENIED`    |
-| `getSocketState()`                     | `{ connected, joined, joinedGuilds }`; stan połączenia i Organizacji, do których dołączono          |
-| `subscribe(eventName, listener)`       | Funkcja odsubskrybowania; można ją bezpiecznie wywołać wielokrotnie                                 |
+| Method                                 | Result and behavior                                                                                       |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `getGuilds()`                          | `PublicGuild[]` or `undefined`; the player's Organizations                                                |
+| `getTimers({ world })`                 | `PublicTimer[]` or `undefined`; reads loaded timers for a world; returns `undefined` without `world`      |
+| `getOnlinePlayers({ guildId, world })` | A Promise returning `success` with `players`, or `forbidden` with the code `ONLINE_PLAYERS_ACCESS_DENIED` |
+| `getSocketState()`                     | `{ connected, joined, joinedGuilds }`; connection state and joined Organizations                          |
+| `subscribe(eventName, listener)`       | An unsubscribe function that is safe to call more than once                                               |
 
-`getGuilds` i `getTimers` odczytują lokalne dane Lootloga. Nie wymuszają pobrania z serwera. Połącz pierwszy odczyt z subskrypcją. Przy rozłączeniu pokaż użytkownikowi, że dane mogą być nieaktualne.
+`getGuilds` and `getTimers` read local Lootlog data. They do not trigger a server fetch. Combine an initial read with a subscription. When disconnected, show users that the data may be stale.
 
 ```js
 (async () => {
@@ -59,42 +59,42 @@ window.addEventListener("pagehide", () => clearInterval(wait), { once: true });
   if (!api?.ready) return;
   try {
     const result = await api.getOnlinePlayers({
-      guildId: "ID_ORGANIZACJI",
+      guildId: "ORGANIZATION_ID",
       world: "fobos",
     });
     if (result.status === "success") console.log(result.players);
     else console.log(result.code);
   } catch (error) {
-    console.error("Nie udało się pobrać graczy", error);
+    console.error("Failed to fetch players", error);
   }
 })();
 ```
 
-## Zdarzenia
+## Events
 
-| Zdarzenie                | Dane                                                                                                                                  |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `ready`                  | Brak payloadu; gra zakończyła inicjalizację                                                                                           |
-| `guilds:changed`         | `PublicGuild[]` lub `undefined`                                                                                                       |
-| `timers:changed`         | `{ world, guildId, timers: PublicTimer[] }`                                                                                           |
-| `online-players:changed` | `{ guildId, world, status: "success", players }` albo `{ guildId, world, status: "forbidden", code: "ONLINE_PLAYERS_ACCESS_DENIED" }` |
-| `socket:state-changed`   | `{ connected, joined, joinedGuilds }`                                                                                                 |
+| Event                    | Data                                                                                                                                |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `ready`                  | No payload; the game has finished initializing                                                                                      |
+| `guilds:changed`         | `PublicGuild[]` or `undefined`                                                                                                      |
+| `timers:changed`         | `{ world, guildId, timers: PublicTimer[] }`                                                                                         |
+| `online-players:changed` | `{ guildId, world, status: "success", players }` or `{ guildId, world, status: "forbidden", code: "ONLINE_PLAYERS_ACCESS_DENIED" }` |
+| `socket:state-changed`   | `{ connected, joined, joinedGuilds }`                                                                                               |
 
-Subskrypcja nie zastępuje odczytu stanu początkowego. Nie wykonuj ciężkich obliczeń w callbackach; nie blokuj normalnej gry. Zakończ subskrypcje także wtedy, gdy użytkownik wyłącza Twój dodatek.
+A subscription does not replace reading the initial state. Keep callbacks lightweight so they do not block normal gameplay. Unsubscribe when the user disables your add-on as well.
 
-## Typy danych
+## Data types
 
-`PublicGuild` zawiera `id`, `name`, `icon` i opcjonalny `vanityUrl`. `guildId` oznacza Organizację Lootloga zakotwiczoną w serwerze Discord, nie klan Margonem.
+`PublicGuild` contains `id`, `name`, `icon`, and an optional `vanityUrl`. `guildId` refers to a Lootlog Organization anchored to a Discord server, not a Margonem clan.
 
-`PublicTimer` zawiera `timerKey`, `npcId`, `npc`, `member`, opcjonalne `members`, `world`, `guildId`, `minSpawnTime`, `maxSpawnTime`, `updatedAt` oraz opcjonalne flagi `isCustomTime`, `isPending`, `wasReset`. Czasy są ciągami znaków; `updatedAt` może być `null`.
+`PublicTimer` contains `timerKey`, `npcId`, `npc`, `member`, optional `members`, `world`, `guildId`, `minSpawnTime`, `maxSpawnTime`, `updatedAt`, and the optional flags `isCustomTime`, `isPending`, and `wasReset`. Timestamps are strings; `updatedAt` can be `null`.
 
-`PublicNpc` opisuje `id`, `name`, `lvl`, `prof`, `icon`, `wt`, `type`, `margonemType` i opcjonalne `location`. `PublicMember` opisuje `id`, `userId`, `guildId`, `type`, `name`, opcjonalny `avatar`, `user` i `roles`.
+`PublicNpc` describes `id`, `name`, `lvl`, `prof`, `icon`, `wt`, `type`, `margonemType`, and optional `location`. `PublicMember` describes `id`, `userId`, `guildId`, `type`, `name`, optional `avatar`, `user`, and `roles`.
 
-`players` to mapa identyfikatorów na listy obecności. Obecność zawiera postać (`player`), Organizację (`guildId`), sesję, platformę, status, mapę, flagę AFK, weryfikację konta i czas aktualizacji. Nie traktuj tej mapy jako dowodu uprawnienia do zapisu.
+`players` maps identifiers to lists of presence records. Each record includes a character (`player`), an Organization (`guildId`), session, platform, status, map, AFK flag, account verification, and update time. Do not treat this map as proof of write permissions.
 
-Pełne deklaracje są dostępne opcjonalnie w `@lootlog/game-client-api`. Pakiet nie zawiera kodu wykonawczego i nie tworzy globalnego obiektu.
+Full declarations are optionally available in `@lootlog/game-client-api`. The package contains no runtime code and does not create the global object.
 
 ```ts
 import type { LootlogGameClientApi } from "@lootlog/game-client-api";
-// Typ można wykorzystać przy rozwijaniu userscriptu w edytorze.
+// Use this type when developing a userscript in your editor.
 ```

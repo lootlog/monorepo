@@ -1,25 +1,53 @@
 ---
-title: Twórz z Lootlogiem
-description: Dwie ścieżki integracji — dodatek działający w grze i aplikacja korzystająca z serwerowego API.
+title: Documentation
+description: Start a server integration or build a Margonem add-on with Lootlog.
 ---
 
-## Dodatek do Margonem
+## Start with your integration
 
-Piszesz userscript? Zainstalowany Lootlog udostępnia `window.lootlogGameClientApi` w kontekście strony gry. Korzystasz z danych i połączenia gracza, bez klucza API, npm i SDK.
+A server application uses a personal API key. A Margonem add-on uses the installed Lootlog game client. Choose the guide for where your code runs.
 
-[Przejdź do API game-clienta](/docs/game-client).
+<Cards>
+  <Card
+    title="Server application"
+    href="/docs/http"
+    description="Create a key, configure your environment, and send your first HTTP request."
+  />
+  <Card
+    title="Margonem add-on"
+    href="/docs/game-client"
+    description="Use the player's existing Lootlog client from a userscript, without a server API key."
+  />
+</Cards>
 
-## Integracja serwerowa
+## Connect a server application
 
-Bot, skrypt lub własna aplikacja serwerowa korzysta z HTTP i WebSocket. Utwórz osobisty klucz dla wybranych Organizacji. Jego uprawnienia nigdy nie przekraczają Twoich aktualnych uprawnień.
+1. [Create an API key](/keys). Sign in with Discord and select the Organizations your integration needs.
+2. [Send your first request](/docs/http). Configure your environment and read Organization data.
+3. [Explore the API reference](/reference). Find operations, request parameters, and response schemas for each service.
 
-[Zacznij od HTTP](/docs/http), [utwórz klucz](/keys) lub [przeglądaj referencję Scalar](/reference).
+A key is limited by its selected scope and your current permissions. Read [keys and permissions](/docs/keys) before adding write operations or rotating a key.
 
-## Środowiska
+## Continue building
 
-| Portal                     | Usługi                                                                                                     |
-| -------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `dev-developer.lootlog.pl` | `dev-api`, `dev-auth`, `dev-gateway`, `dev-activity`, `dev-battlelog`, `dev-search` w domenie `lootlog.pl` |
-| `developer.lootlog.pl`     | Te same hosty bez przedrostka `dev-`                                                                       |
+- [TypeScript SDK](/docs/sdk): typed HTTP clients and realtime tools for server applications.
+- [Realtime](/docs/realtime): WebSocket authentication, subscriptions, and reconnect behavior.
+- [Errors and limits](/docs/errors): handle rejected requests and service limits.
+- [Changelog](/docs/changelog): changes to the developer platform.
 
-Klucze twórz osobno w każdym środowisku. Najpierw przetestuj integrację na dev. Nie umieszczaj klucza serwerowego w userscripcie, kodzie frontendowym ani publicznym repozytorium.
+Keep server API keys in a secret store. Never put them in userscripts, frontend code, or public repositories.
+
+## Choose your environment
+
+Create separate keys for each environment. Test your integration in development before using production data.
+
+| Environment | Developer portal           | Main API             |
+| ----------- | -------------------------- | -------------------- |
+| Development | `dev-developer.lootlog.pl` | `dev-api.lootlog.pl` |
+| Production  | `developer.lootlog.pl`     | `api.lootlog.pl`     |
+
+The [HTTP guide](/docs/http#2-choose-an-environment) lists the service hosts. Use the [realtime guide](/docs/realtime#authentication) for gateway addresses.
+
+### Local development
+
+The portal is available through Traefik at `http://localhost/developer`, with Vite running on port 3004. You can also open `http://localhost:3004/developer/` directly. If Traefik still uses old rules after a configuration change, run `docker compose restart traefik`.
