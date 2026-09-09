@@ -1,6 +1,8 @@
+import type { ReactElement } from "react";
+import { createChatTestWrapper } from "../chat-test-wrapper";
 import userEvent from "@testing-library/user-event";
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render as renderUi, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { MessageType } from "@/api/chat.api";
 import type {
   ChatMessageResponseDtoOutput as ChatMessageType,
@@ -8,6 +10,9 @@ import type {
 } from "@lootlog/client/main";
 
 import { ChatNpcMessage } from "./chat-npc-message";
+
+const render = (ui: ReactElement) =>
+  renderUi(ui, { wrapper: createChatTestWrapper().wrapper });
 
 const makeChatMessage = (
   overrides?: Partial<ChatMessageType>,
@@ -51,6 +56,26 @@ const member: GuildMember = {
 };
 
 describe("ChatNpcMessage", () => {
+  it("copies the NPC location through the context menu", async () => {
+    const user = userEvent.setup();
+    const writeText = vi.spyOn(navigator.clipboard, "writeText");
+    render(
+      <ChatNpcMessage
+        all={false}
+        guildName="Guild"
+        message={makeChatMessage()}
+      />,
+    );
+    expect(
+      screen.queryByRole("button", { name: "Kopiuj lokalizację" }),
+    ).not.toBeInTheDocument();
+    fireEvent.contextMenu(screen.getByText("Hydra"));
+    await user.click(
+      await screen.findByRole("menuitem", { name: "Kopiuj lokalizację" }),
+    );
+    expect(writeText).toHaveBeenCalledWith("Swamp (7, 9)");
+  });
+
   it("renders a compact npc card with sender, guild label and group badge", () => {
     render(
       <ChatNpcMessage

@@ -1,3 +1,4 @@
+import type { GameNpc } from "@lootlog/margonem/npcs";
 import {
   type ChatMessage as ChatMessageType,
   MessageType,
@@ -73,3 +74,17 @@ export const getChatMessageBody = (
     text: message.message,
   };
 };
+
+export const toChatGameNpc = (npc: ChatNpc): GameNpc => ({
+  actions: 0,
+  icon: npc.icon,
+  id: npc.id,
+  lvl: npc.lvl,
+  nick: npc.name,
+  prof: npc.prof,
+  tpl: npc.id,
+  type: npc.type,
+  wt: npc.wt,
+  x: npc.x ?? 0,
+  y: npc.y ?? 0,
+});

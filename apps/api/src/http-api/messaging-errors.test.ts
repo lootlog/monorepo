@@ -79,6 +79,7 @@ const services = Layer.mergeAll(
           cause: new ResourceConflictError({ code: "REVISION_CONFLICT" }),
         }),
       ),
+    active: unused,
     list: unused,
     apply: unused,
     withdraw: unused,

@@ -1,3 +1,4 @@
+import { readyRoomSourceVisibility } from "./ready-room-visibility.js";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import {
   requestApiKeyAccess,
@@ -8,6 +9,7 @@ import { randomUUID } from "node:crypto";
 import { Effect, Layer } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
 import type {
+  PartyGatheringNpc,
   PartyReadyRoomCharacter,
   PartyReadyRoomParticipant,
   PartyReadyRoomUpdateEnvelope,
@@ -59,6 +61,7 @@ export const createReadyRoomForNotification = (
   redis: ReadyRoomRedis,
   effects: Pick<ReadyRoomEffects, "publish">,
   input: {
+    readonly npc?: PartyGatheringNpc;
     readonly notificationId: string;
     readonly organizerDiscordId: string;
     readonly organizerCharacter: PartyReadyRoomCharacter;
@@ -83,6 +86,7 @@ export const createReadyRoomForNotification = (
     expiresAt: new Date(now + ROOM_LIFETIME_MS).toISOString(),
     participants: {},
   };
+  if (input.npc) aggregate.npc = input.npc;
   return makeReadyRoomRepository(redis, clock)
     .create(aggregate)
     .pipe(
@@ -158,16 +162,19 @@ export const makeReadyRoomDataLayer = (
         Effect.forEach(
           [...new Set(recipients)],
           (recipientDiscordId) =>
-            effects
-              .publish({
-                recipientDiscordId,
-                eligibleGuildIds: [...aggregate.guildIds],
-                update: createReadyRoomClientUpdate(
-                  aggregate,
+            clientUpdate(aggregate, recipientDiscordId).pipe(
+              Effect.flatMap((update) =>
+                effects.publish({
                   recipientDiscordId,
-                ),
-              })
-              .pipe(Effect.ignore),
+                  eligibleGuildIds:
+                    update.type === "UPSERT"
+                      ? update.projection.guildIds
+                      : [...aggregate.guildIds],
+                  update,
+                }),
+              ),
+              Effect.ignore,
+            ),
           { discard: true },
         );
       const getLive = (notificationId: string) =>
@@ -235,6 +242,37 @@ export const makeReadyRoomDataLayer = (
           Effect.map((rows) => rows.map(({ guild }) => guild.id)),
         );
 
+      const projectionGuildIds = (
+        aggregate: ReadyRoomAggregate,
+        discordId: string,
+      ) =>
+        accessibleGuildIds(discordId).pipe(
+          Effect.flatMap((guildIds) =>
+            aggregate.npc
+              ? readyRoomSourceVisibility(database, discordId, guildIds).pipe(
+                  Effect.map((visible) => visible(aggregate)),
+                )
+              : Effect.succeed(
+                  aggregate.guildIds.filter((id) => guildIds.includes(id)),
+                ),
+          ),
+        );
+      const projectionForViewer = (
+        aggregate: ReadyRoomAggregate,
+        discordId: string,
+      ) =>
+        projectionGuildIds(aggregate, discordId).pipe(
+          Effect.map((guildIds) =>
+            createReadyRoomProjection(aggregate, discordId, guildIds),
+          ),
+        );
+      const clientUpdate = (aggregate: ReadyRoomAggregate, discordId: string) =>
+        projectionGuildIds(aggregate, discordId).pipe(
+          Effect.map((guildIds) =>
+            createReadyRoomClientUpdate(aggregate, discordId, guildIds),
+          ),
+        );
+
       const joinWithRetry = (
         discordId: string,
         notificationId: string,
@@ -252,7 +290,12 @@ export const makeReadyRoomDataLayer = (
               new ResourceConflictError({ code: "CHARACTER_ALREADY_JOINED" }),
             );
           }
-          const sharesGuild = guildIds.some((id) =>
+          const visibleGuilds = yield* readyRoomSourceVisibility(
+            database,
+            discordId,
+            guildIds,
+          );
+          const sharesGuild = visibleGuilds(aggregate).some((id) =>
             aggregate.guildIds.includes(id),
           );
           const meetsLevel =
@@ -278,7 +321,7 @@ export const makeReadyRoomDataLayer = (
                 new ResourceConflictError({ code: "CHARACTER_ALREADY_JOINED" }),
               );
             }
-            return createReadyRoomProjection(aggregate, discordId);
+            return yield* projectionForViewer(aggregate, discordId);
           }
           const updatedAt = new Date(clock()).toISOString();
           const participantId = idGenerator();
@@ -328,7 +371,7 @@ export const makeReadyRoomDataLayer = (
             result.aggregate.organizerDiscordId,
             discordId,
           ]);
-          return createReadyRoomProjection(result.aggregate, discordId);
+          return yield* projectionForViewer(result.aggregate, discordId);
         });
 
       const withdrawWithRetry = (
@@ -377,7 +420,7 @@ export const makeReadyRoomDataLayer = (
                 );
           }
           yield* publish(result.aggregate, recipients);
-          return createReadyRoomClientUpdate(result.aggregate, discordId);
+          return yield* clientUpdate(result.aggregate, discordId);
         });
 
       const observeWithRetry = (
@@ -414,7 +457,7 @@ export const makeReadyRoomDataLayer = (
             }
           }
           if (changed.length === 0) {
-            return createReadyRoomProjection(aggregate, discordId);
+            return yield* projectionForViewer(aggregate, discordId);
           }
           const next: ReadyRoomAggregate = {
             ...aggregate,
@@ -443,7 +486,7 @@ export const makeReadyRoomDataLayer = (
                 );
           }
           yield* publish(result.aggregate, [discordId, ...changed]);
-          return createReadyRoomProjection(result.aggregate, discordId);
+          return yield* projectionForViewer(result.aggregate, discordId);
         });
 
       return ReadyRoomData.of({
@@ -507,10 +550,46 @@ export const makeReadyRoomDataLayer = (
               }),
             ),
           ),
+        active: (identity, guildIds, world) =>
+          operation(
+            Effect.gen(function* () {
+              const visibleGuilds = yield* readyRoomSourceVisibility(
+                database,
+                identity.discordId,
+                guildIds,
+              );
+              const rooms = yield* repository.findActive(guildIds, world);
+              return rooms
+                .flatMap((room) => {
+                  const visible = visibleGuilds(room);
+                  if (visible.length === 0) return [];
+                  return [
+                    {
+                      notificationId: room.notificationId,
+                      organizerName: room.organizerCharacter.nick,
+                      guildIds: visible,
+                      world: room.world,
+                      description: room.description,
+                      minLvl: room.minLvl,
+                      maxLvl: room.maxLvl,
+                      npc: room.npc,
+                      createdAt: room.createdAt,
+                      expiresAt: room.expiresAt,
+                    },
+                  ];
+                })
+                .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+            }),
+          ),
         list: (identity, guildIds) =>
           operation(
             Effect.gen(function* () {
               const apiKey = yield* requestApiKeyAccess;
+              const visibleSources = yield* readyRoomSourceVisibility(
+                database,
+                identity.discordId,
+                guildIds,
+              );
               return yield* repository.findForUser(identity.discordId).pipe(
                 Effect.map((aggregates) =>
                   [
@@ -525,6 +604,8 @@ export const makeReadyRoomDataLayer = (
                       aggregate.guildIds.includes(id),
                     );
                     if (!live || !sharesGuild) return [];
+                    if (aggregate.npc && visibleSources(aggregate).length === 0)
+                      return [];
                     if (
                       apiKey &&
                       !aggregate.guildIds.every((id) => guildIds.includes(id))
@@ -533,6 +614,7 @@ export const makeReadyRoomDataLayer = (
                     const projection = createReadyRoomProjection(
                       aggregate,
                       identity.discordId,
+                      aggregate.npc ? visibleSources(aggregate) : guildIds,
                     );
                     return projection ? [projection] : [];
                   }),
@@ -543,20 +625,32 @@ export const makeReadyRoomDataLayer = (
         get: (identity, notificationId, guildIds) =>
           operation(
             getLive(notificationId).pipe(
-              Effect.flatMap((aggregate) => {
-                const projection = createReadyRoomProjection(
-                  aggregate,
-                  identity.discordId,
-                );
-                const sharesGuild = guildIds.some((id) =>
-                  aggregate.guildIds.includes(id),
-                );
-                return projection && sharesGuild
-                  ? Effect.succeed(projection)
-                  : Effect.fail(
-                      new PermissionDeniedError({ code: "FORBIDDEN" }),
-                    );
-              }),
+              Effect.flatMap((aggregate) =>
+                Effect.gen(function* () {
+                  const visibleSources = yield* readyRoomSourceVisibility(
+                    database,
+                    identity.discordId,
+                    guildIds,
+                  );
+                  if (aggregate.npc && visibleSources(aggregate).length === 0)
+                    return yield* new PermissionDeniedError({
+                      code: "FORBIDDEN",
+                    });
+                  const projection = createReadyRoomProjection(
+                    aggregate,
+                    identity.discordId,
+                    aggregate.npc ? visibleSources(aggregate) : guildIds,
+                  );
+                  const sharesGuild = guildIds.some((id) =>
+                    aggregate.guildIds.includes(id),
+                  );
+                  return yield* projection && sharesGuild
+                    ? Effect.succeed(projection)
+                    : Effect.fail(
+                        new PermissionDeniedError({ code: "FORBIDDEN" }),
+                      );
+                }),
+              ),
             ),
           ),
         apply: (identity, notificationId, guildIds, payload) =>
@@ -609,10 +703,7 @@ export const makeReadyRoomDataLayer = (
                 .exitParticipant(aggregate, next, payload.participantId)
                 .pipe(Effect.flatMap(assertCommitted));
               yield* publish(result.aggregate, recipients);
-              return createReadyRoomClientUpdate(
-                result.aggregate,
-                identity.discordId,
-              );
+              return yield* clientUpdate(result.aggregate, identity.discordId);
             }),
           ),
         resolveInvitationTargets: (identity, notificationId, payload) =>
@@ -683,10 +774,7 @@ export const makeReadyRoomDataLayer = (
                 result.aggregate.guildIds,
               );
               yield* publish(result.aggregate, recipients);
-              return createReadyRoomClientUpdate(
-                result.aggregate,
-                identity.discordId,
-              );
+              return yield* clientUpdate(result.aggregate, identity.discordId);
             }).pipe(
               Effect.withSpan("PartyReadyRoomControllerCancel.redis", {
                 attributes: { adapter: "ReadyRoomRedis", retryCount: 0 },

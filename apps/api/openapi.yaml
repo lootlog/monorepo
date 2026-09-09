@@ -8055,6 +8055,68 @@ paths:
             schema:
               $ref: "#/components/schemas/CreateVolunteerDto"
         required: true
+  /messaging/party-gathering/active:
+    get:
+      tags:
+        - party-ready-room
+      operationId: PartyReadyRoomController_active
+      parameters:
+        - name: world
+          in: query
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 50
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivePartyGatheringSummary"
+        "401":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
   /messaging/party-gathering:
     get:
       tags:
@@ -19017,6 +19079,10 @@ components:
         npc:
           type: object
           properties:
+            world:
+              type: string
+              minLength: 1
+              maxLength: 50
             id:
               type: number
             name:
@@ -19162,6 +19228,10 @@ components:
         npc:
           type: object
           properties:
+            world:
+              type: string
+              minLength: 1
+              maxLength: 50
             id:
               type: number
             name:
@@ -22874,9 +22944,101 @@ components:
         - targetDiscordId
         - character
       additionalProperties: false
+    ActivePartyGatheringSummary:
+      type: object
+      properties:
+        notificationId:
+          type: string
+        organizerName:
+          type: string
+        guildIds:
+          type: array
+          items:
+            type: string
+        world:
+          type: string
+        description:
+          type: string
+        minLvl:
+          type: number
+        maxLvl:
+          type: number
+        npc:
+          type: object
+          properties:
+            name:
+              type: string
+            location:
+              type: string
+            lvl:
+              type: number
+            x:
+              type: number
+            y:
+              type: number
+          required:
+            - name
+            - location
+            - lvl
+          additionalProperties: false
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        expiresAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+      required:
+        - notificationId
+        - organizerName
+        - guildIds
+        - world
+        - createdAt
+        - expiresAt
+      additionalProperties: false
     PartyReadyRoomProjectionDto_Output:
       type: object
       properties:
+        npc:
+          type: object
+          properties:
+            name:
+              type: string
+            location:
+              type: string
+            lvl:
+              anyOf:
+                - type: number
+                - type: string
+                  enum:
+                    - Infinity
+                    - -Infinity
+                    - NaN
+            type:
+              type: string
+            x:
+              anyOf:
+                - type: number
+                - type: string
+                  enum:
+                    - Infinity
+                    - -Infinity
+                    - NaN
+            y:
+              anyOf:
+                - type: number
+                - type: string
+                  enum:
+                    - Infinity
+                    - -Infinity
+                    - NaN
+          required:
+            - name
+            - location
+            - lvl
+            - type
+          additionalProperties: false
         schemaVersion:
           type: number
           enum:
@@ -23205,6 +23367,45 @@ components:
         projection:
           type: object
           properties:
+            npc:
+              type: object
+              properties:
+                name:
+                  type: string
+                location:
+                  type: string
+                lvl:
+                  anyOf:
+                    - type: number
+                    - type: string
+                      enum:
+                        - Infinity
+                        - -Infinity
+                        - NaN
+                type:
+                  type: string
+                x:
+                  anyOf:
+                    - type: number
+                    - type: string
+                      enum:
+                        - Infinity
+                        - -Infinity
+                        - NaN
+                y:
+                  anyOf:
+                    - type: number
+                    - type: string
+                      enum:
+                        - Infinity
+                        - -Infinity
+                        - NaN
+              required:
+                - name
+                - location
+                - lvl
+                - type
+              additionalProperties: false
             schemaVersion:
               type: number
               enum:

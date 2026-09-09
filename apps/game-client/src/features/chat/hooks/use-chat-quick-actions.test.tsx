@@ -1,0 +1,118 @@
+import { act, renderHook } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { configureApiClients } from "@lootlog/client/transport";
+import {
+  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
+  getUsersControllerGetUserPreferencesQueryKey,
+} from "@lootlog/client/main";
+import type { ReactNode } from "react";
+import { beforeEach, afterEach, expect, it, vi } from "vitest";
+import { useChatQuickActions } from "./use-chat-quick-actions";
+import { setTestRuntimeGame } from "@/test/test-runtime-window";
+import { useChatStore } from "@/store/chat.store";
+
+const request = vi.fn<typeof fetch>();
+let queryClient: QueryClient;
+let restoreApi: () => void;
+const wrapper = ({ children }: { children: ReactNode }) => (
+  <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+);
+beforeEach(() => {
+  setTestRuntimeGame();
+  useChatStore.setState(useChatStore.getInitialState(), true);
+  queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+  queryClient.setQueryData(
+    getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
+    [{ id: "a", name: "Organization A", icon: null, vanityUrl: null }],
+  );
+  queryClient.setQueryData(getUsersControllerGetUserPreferencesQueryKey(), {
+    guildsOrder: [],
+    hiddenGuildIds: [],
+  });
+  request.mockReset();
+  restoreApi = configureApiClients({
+    main: { baseUrl: "https://api.example.test", fetch: request },
+  });
+});
+afterEach(() => {
+  restoreApi();
+  queryClient.clear();
+  vi.restoreAllMocks();
+});
+
+it("does not send when no organization is selected at the top", async () => {
+  const { result } = renderHook(useChatQuickActions, { wrapper });
+  await act(() => result.current.sendHelp());
+  expect(request).not.toHaveBeenCalled();
+});
+
+it("reads the current top selection at invocation even with no composer mounted", async () => {
+  const { result } = renderHook(useChatQuickActions, { wrapper });
+  useChatStore.getState().setSelectedChatGuildId("all");
+  await act(() => result.current.sendHelp());
+  expect(request).not.toHaveBeenCalled();
+  useChatStore.getState().setSelectedChatGuildId("a");
+  request
+    .mockResolvedValueOnce(
+      Response.json({ guildIds: ["a"], notificationId: "sent" }),
+    )
+    .mockRejectedValueOnce(new Error("chat offline"));
+  await act(() => result.current.sendHelp());
+  expect(request.mock.calls[0]?.[1]?.body).toContain('"guildIds":["a"]');
+});
+
+it("handles partial alarm delivery without retrying or changing a draft", async () => {
+  useChatStore.getState().setSelectedChatGuildId("a");
+  useChatStore.getState().setDraft("a", "unfinished conversation");
+  request
+    .mockResolvedValueOnce(
+      Response.json({ guildIds: ["a"], notificationId: "sent" }),
+    )
+    .mockRejectedValueOnce(new Error("chat offline"));
+  const { result } = renderHook(useChatQuickActions, { wrapper });
+  await act(() => result.current.sendHelp());
+  expect(request).toHaveBeenCalledTimes(2);
+  expect(useChatStore.getState().draftsByGuild.a).toBe(
+    "unfinished conversation",
+  );
+});
+
+it("ignores overlapping alarm presses while the notification is being delivered", async () => {
+  useChatStore.getState().setSelectedChatGuildId("a");
+  const pending = Promise.withResolvers<Response>();
+  request
+    .mockReturnValueOnce(pending.promise)
+    .mockRejectedValueOnce(new Error("chat offline"));
+  const { result } = renderHook(useChatQuickActions, { wrapper });
+  await act(async () => {
+    const first = result.current.sendHelp();
+    await result.current.sendHelp();
+    pending.resolve(Response.json({ guildIds: ["a"], notificationId: "sent" }));
+    await first;
+  });
+  expect(request).toHaveBeenCalledTimes(2);
+});
+
+it("sends Position immediately to the selected organization without changing a full draft", async () => {
+  useChatStore.getState().setSelectedChatGuildId("a");
+  useChatStore.getState().setDraft("a", "x".repeat(128));
+  request.mockResolvedValueOnce(
+    Response.json({
+      id: "position",
+      guildId: "a",
+      message: "Tester(230w), Ithan (1, 2)",
+      type: "NORMAL",
+      timestamp: new Date().toISOString(),
+    }),
+  );
+  const { result } = renderHook(useChatQuickActions, { wrapper });
+  await act(() => result.current.sendPosition());
+  expect(request).toHaveBeenCalledTimes(1);
+  expect(request.mock.calls[0]?.[1]?.body).toContain(
+    '"message":"Tester(230w), Ithan (1, 2)"',
+  );
+  expect(String(request.mock.calls[0]?.[0])).toContain("a");
+  expect(useChatStore.getState().draftsByGuild.a).toBe("x".repeat(128));
+});

@@ -25592,6 +25592,11 @@
           "npc": {
             "type": "object",
             "properties": {
+              "world": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 50
+              },
               "id": {
                 "type": "number"
               },
@@ -25761,6 +25766,11 @@
           "npc": {
             "type": "object",
             "properties": {
+              "world": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 50
+              },
               "id": {
                 "type": "number"
               },
@@ -30278,6 +30288,55 @@
       "PartyReadyRoomProjectionDto_Output": {
         "type": "object",
         "properties": {
+          "npc": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "location": {
+                "type": "string"
+              },
+              "lvl": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string",
+                    "enum": ["Infinity", "-Infinity", "NaN"]
+                  }
+                ]
+              },
+              "type": {
+                "type": "string"
+              },
+              "x": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string",
+                    "enum": ["Infinity", "-Infinity", "NaN"]
+                  }
+                ]
+              },
+              "y": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string",
+                    "enum": ["Infinity", "-Infinity", "NaN"]
+                  }
+                ]
+              }
+            },
+            "required": ["name", "location", "lvl", "type"],
+            "additionalProperties": false
+          },
           "schemaVersion": {
             "type": "number",
             "enum": [3]
@@ -30676,6 +30735,55 @@
           "projection": {
             "type": "object",
             "properties": {
+              "npc": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "location": {
+                    "type": "string"
+                  },
+                  "lvl": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string",
+                        "enum": ["Infinity", "-Infinity", "NaN"]
+                      }
+                    ]
+                  },
+                  "type": {
+                    "type": "string"
+                  },
+                  "x": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string",
+                        "enum": ["Infinity", "-Infinity", "NaN"]
+                      }
+                    ]
+                  },
+                  "y": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string",
+                        "enum": ["Infinity", "-Infinity", "NaN"]
+                      }
+                    ]
+                  }
+                },
+                "required": ["name", "location", "lvl", "type"],
+                "additionalProperties": false
+              },
               "schemaVersion": {
                 "type": "number",
                 "enum": [3]

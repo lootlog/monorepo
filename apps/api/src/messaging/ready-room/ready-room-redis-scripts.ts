@@ -38,6 +38,11 @@ redis.call("set", KEYS[1], ARGV[2], "EX", ARGV[4])
 redis.call("set", KEYS[2], ARGV[3], "EX", ARGV[4])
 redis.call("set", KEYS[3], ARGV[3], "EX", ARGV[4])
 
+for index = 4, #KEYS do
+  redis.call("zadd", KEYS[index], ARGV[5], ARGV[3])
+  local ttl = redis.call("ttl", KEYS[index])
+  if ttl < tonumber(ARGV[4]) then redis.call("expire", KEYS[index], ARGV[4]) end
+end
 return { "CREATED" }
 `;
 
@@ -135,4 +140,16 @@ for _, notificationId in ipairs(ARGV) do
 end
 
 return { "PRUNED" }
+`;
+
+export const FIND_ACTIVE_READY_ROOM_IDS_SCRIPT = `
+local result = {}
+local seen = {}
+for _, key in ipairs(KEYS) do
+  redis.call("zremrangebyscore", key, "-inf", ARGV[1])
+  for _, id in ipairs(redis.call("zrange", key, 0, -1)) do
+    if not seen[id] then table.insert(result, id); seen[id] = true end
+  end
+end
+return result
 `;

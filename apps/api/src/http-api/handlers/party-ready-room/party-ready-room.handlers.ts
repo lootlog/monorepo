@@ -7,6 +7,7 @@ import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { decodeDomainJson } from "../../domain-json.schema.js";
 import { LootlogApi } from "../../lootlog-api.js";
 import {
+  ActivePartyGatheringsResponse,
   PartyReadyRoomResponse,
   PartyReadyRoomUpdateResponse,
   PartyReadyRoomsResponse,
@@ -50,6 +51,11 @@ export class ReadyRoomData extends Context.Service<
       identity: ReadyRoomIdentity,
       guildIds: ReadonlyArray<string>,
       payload: CreatePartyGatheringRequest,
+    ) => DataEffect;
+    readonly active: (
+      identity: ReadyRoomIdentity,
+      accessibleGuildIds: ReadonlyArray<string>,
+      world: string,
     ) => DataEffect;
     readonly list: (
       identity: ReadyRoomIdentity,
@@ -127,6 +133,17 @@ const assertVisible = Effect.fn("assertReadyRoomVisible")(function* (
 ) {
   const guildIds = yield* accessibleGuildIds(current.discordId);
   yield* data((service) => service.get(current, notificationId, guildIds));
+});
+
+export const activeReadyRooms = Effect.fn("activeReadyRooms")(function* (
+  world: string,
+) {
+  const current = yield* identity;
+  const guildIds = yield* accessibleGuildIds(current.discordId);
+  const value = yield* data((service) =>
+    service.active(current, guildIds, world),
+  );
+  return yield* decode(ActivePartyGatheringsResponse, value);
 });
 
 export const listReadyRooms = Effect.fn("listReadyRooms")(function* () {
@@ -251,6 +268,9 @@ export const PartyReadyRoomHandlers = HttpApiBuilder.group(
   "party-ready-room",
   (handlers) =>
     handlers
+      .handle("PartyReadyRoomControllerActive", ({ query }) =>
+        orDieHttpFailure(activeReadyRooms(query.world)),
+      )
       .handle("PartyReadyRoomControllerList", () =>
         orDieHttpFailure(listReadyRooms()),
       )

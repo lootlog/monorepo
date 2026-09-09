@@ -13,6 +13,7 @@ import {
   ReadyRoomAuthorization,
   ReadyRoomData,
   ReadyRoomOperationError,
+  activeReadyRooms,
   cancelReadyRoom,
   createReadyRoom,
   getReadyRoom,
@@ -62,6 +63,7 @@ const makeData = (overrides: Partial<ReadyRoomData["Service"]> = {}) =>
   ReadyRoomData.of({
     accessibleGuildIds: () => Effect.succeed(["guild-visible"]),
     create: () => Effect.succeed(projection),
+    active: () => Effect.succeed([]),
     list: () => Effect.succeed([projection]),
     get: () => Effect.succeed(projection),
     apply: () => Effect.succeed(projection),
@@ -206,4 +208,46 @@ describe("Party Ready Room HttpApi handlers", () => {
     expect(removeCalled).toBe(false);
     expect(Schema.is(PartyReadyRoomUpdateResponse)(update)).toBe(true);
   });
+});
+
+it("returns active discovery summaries for the requested world without participant data", async () => {
+  let requestedWorld = "";
+  const result = await Effect.runPromise(
+    activeReadyRooms("Fobos").pipe(
+      Effect.provide(
+        provideServices(
+          makeAuthorization(),
+          makeData({
+            active: (_identity, guildIds, world) => {
+              requestedWorld = world;
+              expect(guildIds).toEqual(["guild-visible"]);
+              return Effect.succeed([
+                {
+                  notificationId: "room-a",
+                  organizerName: "Hero",
+                  guildIds: ["guild-visible"],
+                  world,
+                  createdAt: projection.createdAt,
+                  expiresAt: projection.expiresAt,
+                  participants: { private: { discordId: "not-public" } },
+                  organizerDiscordId: "not-public",
+                },
+              ]);
+            },
+          }),
+        ),
+      ),
+    ),
+  );
+  expect(requestedWorld).toBe("Fobos");
+  expect(result).toEqual([
+    {
+      notificationId: "room-a",
+      organizerName: "Hero",
+      guildIds: ["guild-visible"],
+      world: "Fobos",
+      createdAt: projection.createdAt,
+      expiresAt: projection.expiresAt,
+    },
+  ]);
 });

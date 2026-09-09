@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { ApiError, configureApiClients } from "@lootlog/client/transport";
 import {
+  NotificationChatPublishError,
   isNotificationRateLimitError,
   useNotificationChatOrchestration,
 } from "./use-notification-chat-orchestration";
@@ -97,6 +98,29 @@ describe("useNotificationChatOrchestration", () => {
       ).rejects.toThrow("unavailable");
     });
 
+    expect(result.current.isCreatingNotificationMessage).toBe(false);
+  });
+
+  it("distinguishes delivered notification from failed chat publishing without retrying", async () => {
+    fetchRequest.mockResolvedValue(
+      Response.json({ guildIds: ["guild-1"], notificationId: "sent" }),
+    );
+    const { result } = renderHook(() => useNotificationChatOrchestration(), {
+      wrapper,
+    });
+    await act(async () => {
+      await expect(
+        result.current.startNotificationMessage({
+          guildIds: ["guild-1"],
+          world: "tempest",
+          message: "alarm",
+          sendChatMessage: async () => {
+            throw new Error("chat unavailable");
+          },
+        }),
+      ).rejects.toBeInstanceOf(NotificationChatPublishError);
+    });
+    expect(fetchRequest).toHaveBeenCalledTimes(1);
     expect(result.current.isCreatingNotificationMessage).toBe(false);
   });
 

@@ -1,10 +1,56 @@
 {
+  "messageActions": {
+    "label": "Akcje wiadomości",
+    "more": "Więcej akcji",
+    "mention": "Wspomnij autora",
+    "copy": "Kopiuj wiadomość",
+    "copied": "Skopiowano",
+    "copyFailed": "Nie udało się skopiować",
+    "coming": "Idę",
+    "showOriginal": "Przejdź do wiadomości: {{name}}",
+    "clearReply": "Anuluj odpowiedź",
+    "editLabel": "Treść wiadomości",
+    "copyLocation": "Kopiuj lokalizację",
+    "gather": "Zbierz grupę",
+    "gathered": "Utworzono zbiórkę",
+    "gatherFailed": "Nie udało się utworzyć zbiórki",
+    "activeGathering": "Masz już aktywną zbiórkę. Znajdziesz ją na pasku zbiórek.",
+    "prepareHelp": "Przygotuj wezwanie pomocy",
+    "npcHelp": "!Potrzebuję pomocy przy {{npc}}! {{location}}",
+    "finishDraft": "Dokończ obecną wiadomość przed przygotowaniem wezwania",
+    "helpTooLong": "Wezwanie przekracza limit 128 znaków",
+    "missingLocation": "Zgłoszenie nie zawiera pełnej lokalizacji",
+    "otherWorld": "Akcja wymaga zgłoszenia z aktualnego świata"
+  },
+  "gatherings": {
+    "generic": "Zbiórka",
+    "publicationFailed": "Zbiórka została utworzona, ale nie udało się opublikować wiadomości na czacie.",
+    "showLatest": "Pokaż najnowszą zbiórkę",
+    "owned": "Twoja zbiórka",
+    "applied": "Zgłoszono",
+    "manage": "Zarządzaj",
+    "cancel": "Anuluj",
+    "withdraw": "Wycofaj",
+    "new": "Nowa zbiórka",
+    "apply": "Zgłoś się",
+    "applying": "Zgłaszanie…",
+    "others": "Pozostałe · {{count}}",
+    "failed": "Nie udało się odświeżyć zbiórek lub wykonać akcji.",
+    "retry": "Odśwież"
+  },
+  "integration": {
+    "tab": "Lootlog",
+    "attach": "Przenieś do czatu gry",
+    "detach": "Otwórz w osobnym oknie"
+  },
   "window": {
-    "title": "Chat"
+    "title": "Czat"
   },
   "filters": {
     "all": "Wszystko",
-    "normal": "Czat",
+    "normal": "Rozmowy",
+    "reports": "Zdarzenia",
+    "label": "Widok czatu",
     "npc": "NPC",
     "party": "Grupa"
   },
@@ -28,7 +74,8 @@
     "yesterday": "Wczoraj"
   },
   "input": {
-    "hint": "(! = powiadomienie, /grp = szukaj grupy)",
+    "recipient": "Do:",
+    "chooseRecipient": "Wybierz organizację",
     "placeholder": "Wiadomość...",
     "pending": "Wysyłanie wiadomości",
     "clearChatConfirm": {
@@ -49,9 +96,7 @@
   },
   "actions": {
     "hideFilters": "Ukryj filtry",
-    "showFilters": "Pokaż filtry",
-    "hideInput": "Ukryj pole czatu",
-    "showInput": "Pokaż pole czatu"
+    "showFilters": "Pokaż filtry"
   },
   "edit": {
     "save": "Zapisz",
@@ -91,5 +136,41 @@
     "clearFailed": "Nie udało się wyczyścić czatu",
     "editFailed": "Nie udało się edytować wiadomości",
     "deleteFailed": "Nie udało się usunąć wiadomości"
+  },
+  "quickActions": {
+    "selectOrganization": "Wybierz organizację u góry czatu",
+    "comingMessage": "Idę",
+    "comingSent": "Wysłano odpowiedź „Idę”",
+    "help": "Pomoc",
+    "position": "Pozycja",
+    "helpMessage": "Potrzebuję pomocy! {{map}} ({{x}}, {{y}}).",
+    "enemyCount": " Wykryci wrogowie: {{count}}.",
+    "helpSent": "Wysłano wezwanie pomocy",
+    "partialDelivery": "Powiadomienie wysłano, ale nie udało się zapisać go w czacie. Nie wysyłaj ponownie.",
+    "runtimeUnavailable": "Dane gry nie są jeszcze dostępne",
+    "organizationsUnavailable": "Poczekaj na załadowanie organizacji",
+    "unassigned": "Nieprzypisany",
+    "hotkeys": {
+      "chat-help": {
+        "label": "Wezwij pomoc",
+        "description": "Wysyła wezwanie pomocy do organizacji wybranej u góry czatu."
+      },
+      "join-party-gathering": {
+        "label": "Zgłoś się do zbiórki",
+        "description": "Zgłasza do zbiórki widocznej na pasku czatu."
+      }
+    },
+    "positionSent": "Wysłano pozycję"
+  },
+  "navigation": {
+    "unread": "Nieprzeczytane wiadomości",
+    "attention": "Wzmianki i odpowiedzi do Ciebie",
+    "sent": "Wiadomość wysłana",
+    "latest": "Najnowsze wiadomości",
+    "newMessages_one": "{{count}} nowa wiadomość",
+    "newMessages_few": "{{count}} nowe wiadomości",
+    "newMessages_many": "{{count}} nowych wiadomości",
+    "newMessages_other": "{{count}} nowych wiadomości",
+    "messageUnavailable": "Wiadomość została usunięta lub nie jest już dostępna w historii"
   }
 }

@@ -26,6 +26,7 @@ type BuildNpcNotificationPayloadOptions = {
 };
 
 type BuildNpcChatMessagePayloadOptions = {
+  world: string;
   npc: GameNpcWithLocation;
   guildIds: string[];
   messageType: ChatMessageType;
@@ -90,6 +91,7 @@ export function buildNpcNotificationPayload({
 }
 
 export const buildNpcChatMessagePayload = ({
+  world,
   npc,
   guildIds,
   messageType,
@@ -104,7 +106,7 @@ export const buildNpcChatMessagePayload = ({
     guildIds,
     type: messageType,
     characterData,
-    npc: buildNotificationNpcPayload(npc),
+    npc: { ...buildNotificationNpcPayload(npc), world },
   };
   if (partyGathering) payload.partyGathering = partyGathering;
   return payload;

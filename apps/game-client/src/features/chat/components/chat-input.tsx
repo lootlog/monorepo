@@ -1,3 +1,4 @@
+import { ChatQuickActionStrip } from "./chat-quick-action-strip";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { Label } from "@/components/ui/label";
@@ -29,7 +30,7 @@ import {
 import { upsertChatMessage } from "@/features/chat/chat.helpers";
 import { CHAT_QUERY_GC_TIME_MS } from "@/features/chat/chat.constants";
 import {
-  isNotificationRateLimitError,
+  NotificationChatPublishError,
   useNotificationChatOrchestration,
 } from "@/features/chat/hooks/use-notification-chat-orchestration";
 import {
@@ -73,14 +74,11 @@ import {
 } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import { ChatReadyRoomIndicator } from "@/features/chat/components/chat-ready-room-indicator";
 import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
 
 type ChatInputProps = {
   selectedGuildId?: string;
   autofocus?: boolean;
-  onMessageSent?: () => void;
 };
 
 type TabCompletionSession = {
@@ -216,14 +214,21 @@ const getChatMentionQueryData = <MemberItem, RoleItem>({
 export const ChatInput: FC<ChatInputProps> = ({
   selectedGuildId,
   autofocus,
-  onMessageSent,
 }) => {
   const { t } = useTranslation("chat");
   const { t: tCommand } = useTranslation("command");
   const queryClient = useQueryClient();
-  const replyDraft = useChatStore((state) => state.replyDraft);
-  const clearReplyDraft = useChatStore((state) => state.clearReplyDraft);
+  const replyDraft = useChatStore(
+    (state) => state.replyDraftsByGuild[selectedGuildId ?? ""],
+  );
+  const focusRequest = useChatStore((state) => state.focusRequest);
+  const clearReplyDraft = () =>
+    useChatStore.getState().clearReplyDraft(selectedGuildId);
   const editorRef = useRef<ChatInputEditorHandle>(null);
+  const currentGuildRef = useRef(selectedGuildId);
+  useEffect(() => {
+    currentGuildRef.current = selectedGuildId;
+  }, [selectedGuildId]);
   const clearConfirmAnchorRef = useRef<HTMLDivElement>(null);
   const world = useGameStore((state) => state.game?.world ?? "unknown");
   const currentCharacterNick = useGameStore(
@@ -236,7 +241,11 @@ export const ChatInput: FC<ChatInputProps> = ({
   const { isCreatingNotificationMessage, startNotificationMessage } =
     useNotificationChatOrchestration();
   const { handlePartyCommand } = usePartyCommand();
-  const [messageValue, setMessageValue] = useState("");
+  const messageValue = useChatStore(
+    (state) => state.draftsByGuild[selectedGuildId ?? ""] ?? "",
+  );
+  const setMessageValue = (message: string) =>
+    useChatStore.getState().setDraft(selectedGuildId ?? "", message);
   const [caretIndex, setCaretIndex] = useState(0);
   const [requestedMentionIndex, setRequestedMentionIndex] = useState(-1);
   const [dismissedMentionKey, setDismissedMentionKey] = useState<string | null>(
@@ -248,11 +257,12 @@ export const ChatInput: FC<ChatInputProps> = ({
   const pendingFocusCaretRef = useRef<number | null>(null);
   const submissionInProgressRef = useRef(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const isPending =
-    isSubmitting ||
-    isSendingMessage ||
-    isCreatingNotificationMessage ||
-    isClearingChat;
+  const isPending = [
+    isSubmitting,
+    isSendingMessage,
+    isCreatingNotificationMessage,
+    isClearingChat,
+  ].includes(true);
   const resolvedGuildId = selectedGuildId ?? "";
   const activeMention = getActiveChatMention({
     message: messageValue,
@@ -382,18 +392,18 @@ export const ChatInput: FC<ChatInputProps> = ({
   const isClearConfirmOpen = isClearChatCommand && clearConfirmRequested;
 
   useEffect(() => {
-    if (
-      !replyDraft ||
-      !selectedGuildId ||
-      replyDraft.guildId === selectedGuildId
-    ) {
-      return;
-    }
-
-    clearReplyDraft();
-  }, [clearReplyDraft, replyDraft, selectedGuildId]);
+    if (focusRequest?.guildId !== selectedGuildId) return;
+    const frame = requestAnimationFrame(() =>
+      editorRef.current?.focus(
+        useChatStore.getState().draftsByGuild[selectedGuildId ?? ""]?.length ??
+          0,
+      ),
+    );
+    return () => cancelAnimationFrame(frame);
+  }, [focusRequest, selectedGuildId]);
 
   const focusEditorCaret = (nextCaretIndex: number) => {
+    if (currentGuildRef.current !== selectedGuildId) return;
     pendingFocusCaretRef.current = nextCaretIndex;
 
     requestAnimationFrame(() => {
@@ -499,7 +509,7 @@ export const ChatInput: FC<ChatInputProps> = ({
       message,
       type,
       characterData,
-      replyTo: getChatReplyPayload(replyDraft),
+      replyTo: getChatReplyPayload(replyDraft ?? null),
     };
   };
 
@@ -517,11 +527,12 @@ export const ChatInput: FC<ChatInputProps> = ({
 
   const resetInputState = () => {
     setMessageValue("");
+    clearReplyDraft();
+    if (currentGuildRef.current !== selectedGuildId) return;
     setCaretIndex(0);
     setDismissedMentionKey(null);
     setTabCompletionSession(null);
     setRequestedMentionIndex(-1);
-    clearReplyDraft();
     setIsClearConfirmOpen(false);
     editorRef.current?.setValue("", 0);
   };
@@ -546,7 +557,6 @@ export const ChatInput: FC<ChatInputProps> = ({
       resetInputState();
       focusEditorCaret(0);
     } catch {
-      toast.error(t("errors.clearFailed"));
       focusEditorCaret(caretIndex);
     }
   };
@@ -622,17 +632,11 @@ export const ChatInput: FC<ChatInputProps> = ({
         updater: (old: ChatMessageResponseDtoOutput[] | undefined) =>
           upsertChatMessage(old, response),
       });
-      onMessageSent?.();
       resetInputState();
       focusEditorCaret(0);
     } catch (error) {
-      if (
-        submitAction.kind === "notification" &&
-        isNotificationRateLimitError(error)
-      ) {
-        toast.error(tCommand("errors.notificationRateLimited"));
-      } else {
-        toast.error(t("errors.sendFailed"));
+      if (error instanceof NotificationChatPublishError) {
+        resetInputState();
       }
       focusEditorCaret(currentCaretIndex);
     } finally {
@@ -735,115 +739,120 @@ export const ChatInput: FC<ChatInputProps> = ({
 
   return (
     <form className="ll:flex ll:justify-center ll:flex-col ll:mt-1 ll:mr-0.5">
-      <ChatReadyRoomIndicator />
       {replyDraft && (
         <div className="ll:mb-1">
           <Label className="ll:text-[9px] ll:text-gray-400">
             {t("reply.replyingTo")}
           </Label>
-          <ChatReplyPreview reply={replyDraft} onClear={clearReplyDraft} />
+          <ChatReplyPreview
+            reply={replyDraft}
+            onClear={() => clearReplyDraft()}
+          />
         </div>
       )}
-      <Label className="ll:text-[9px] ll:text-gray-400">
-        {t("input.hint")}
-      </Label>
-      <div className="ll:relative ll:overflow-visible">
-        <ChatMentionSuggestions
-          suggestionMode={suggestionMode}
-          suggestions={activeSuggestions}
-          isOpen={suggestionMode !== null && activeSuggestions.length > 0}
-          isLoading={
-            isMentionSuggestionsOpen &&
-            (isFetchingMemberNames || isFetchingRoleNames)
-          }
-          showNoResults={showMentionSuggestionNoResults}
-          selectedIndex={selectedMentionIndex}
-          onSelect={handleSuggestionSelect}
-        />
-        <Popover open={isClearConfirmOpen} onOpenChange={setIsClearConfirmOpen}>
-          <div
-            ref={clearConfirmAnchorRef}
-            className={cn(
-              CHAT_INPUT_SHELL_CLASS,
-              !isPending && CHAT_INPUT_FOCUS_CLASS,
-            )}
+      <div className="ll:flex ll:items-center ll:gap-1">
+        <div className="ll:relative ll:min-w-0 ll:flex-1 ll:overflow-visible">
+          <ChatMentionSuggestions
+            suggestionMode={suggestionMode}
+            suggestions={activeSuggestions}
+            isOpen={suggestionMode !== null && activeSuggestions.length > 0}
+            isLoading={
+              isMentionSuggestionsOpen &&
+              (isFetchingMemberNames || isFetchingRoleNames)
+            }
+            showNoResults={showMentionSuggestionNoResults}
+            selectedIndex={selectedMentionIndex}
+            onSelect={handleSuggestionSelect}
+          />
+          <Popover
+            open={isClearConfirmOpen}
+            onOpenChange={setIsClearConfirmOpen}
           >
-            <ChatInputEditor
-              ref={editorRef}
-              autoFocus={autofocus}
-              caretIndex={caretIndex}
-              disabled={isPending}
-              message={messageValue}
-              mentionContext={mentionContext}
-              placeholder={t("input.placeholder")}
-              onChange={(nextMessage, nextCaretIndex) => {
-                setMessageValue(nextMessage);
-                setCaretIndex(nextCaretIndex);
-                setDismissedMentionKey(null);
-                setTabCompletionSession(null);
-                setRequestedMentionIndex(-1);
-                if (nextMessage.trim() !== "/clr") {
-                  setIsClearConfirmOpen(false);
-                }
-              }}
-              onCaretChange={setCaretIndex}
-              onKeyDown={handleInputKeyDown}
-            />
-            {isPending ? (
-              <Loader2
-                aria-label={t("input.pending")}
-                className="ll:pointer-events-none ll:absolute ll:right-1 ll:top-1/2 ll:size-3.5 ll:-translate-y-1/2 ll:animate-spin ll:motion-reduce:animate-none"
-              />
-            ) : null}
-          </div>
-          <PopoverContent
-            anchor={clearConfirmAnchorRef}
-            side="top"
-            align="start"
-            className="ll:w-64"
-            initialFocus={false}
-            finalFocus={false}
-          >
-            <div className="ll:flex ll:flex-col ll:gap-2">
-              <div className="ll:flex ll:flex-col ll:gap-1">
-                <p className="ll:text-xs ll:font-semibold ll:text-white">
-                  {t("input.clearChatConfirm.title")}
-                </p>
-                <p className="ll:text-[11px] ll:text-gray-300">
-                  {t("input.clearChatConfirm.description")}
-                </p>
-              </div>
-              <div className="ll:flex ll:justify-end ll:gap-2">
-                <Button
-                  type="button"
-                  onClick={() => {
+            <div
+              ref={clearConfirmAnchorRef}
+              className={cn(
+                CHAT_INPUT_SHELL_CLASS,
+                !isPending && CHAT_INPUT_FOCUS_CLASS,
+              )}
+            >
+              <ChatInputEditor
+                ref={editorRef}
+                autoFocus={autofocus}
+                caretIndex={caretIndex}
+                disabled={isPending || !selectedGuildId}
+                message={messageValue}
+                mentionContext={mentionContext}
+                placeholder={t("input.placeholder")}
+                onChange={(nextMessage, nextCaretIndex) => {
+                  setMessageValue(nextMessage);
+                  setCaretIndex(nextCaretIndex);
+                  setDismissedMentionKey(null);
+                  setTabCompletionSession(null);
+                  setRequestedMentionIndex(-1);
+                  if (nextMessage.trim() !== "/clr") {
                     setIsClearConfirmOpen(false);
-                    focusEditorCaret(caretIndex);
-                  }}
-                >
-                  {t("input.clearChatConfirm.cancel")}
-                </Button>
-                <Button
-                  type="button"
-                  disabled={isClearingChat}
-                  className="ll:border-red-500/60 ll:bg-red-500/20 ll:text-red-100 ll:hover:bg-red-500/30 ll:disabled:opacity-50"
-                  onClick={() => {
-                    void handleClearChatConfirm();
-                  }}
-                >
-                  {isClearingChat ? (
-                    <Loader2
-                      aria-hidden
-                      className="ll:size-3 ll:animate-spin ll:motion-reduce:animate-none"
-                    />
-                  ) : (
-                    t("input.clearChatConfirm.confirm")
-                  )}
-                </Button>
-              </div>
+                  }
+                }}
+                onCaretChange={setCaretIndex}
+                onKeyDown={handleInputKeyDown}
+              />
+              {isPending ? (
+                <Loader2
+                  aria-label={t("input.pending")}
+                  className="ll:pointer-events-none ll:absolute ll:right-1 ll:top-1/2 ll:size-3.5 ll:-translate-y-1/2 ll:animate-spin ll:motion-reduce:animate-none"
+                />
+              ) : null}
             </div>
-          </PopoverContent>
-        </Popover>
+            <PopoverContent
+              anchor={clearConfirmAnchorRef}
+              side="top"
+              align="start"
+              className="ll:w-64"
+              initialFocus={false}
+              finalFocus={false}
+            >
+              <div className="ll:flex ll:flex-col ll:gap-2">
+                <div className="ll:flex ll:flex-col ll:gap-1">
+                  <p className="ll:text-xs ll:font-semibold ll:text-white">
+                    {t("input.clearChatConfirm.title")}
+                  </p>
+                  <p className="ll:text-[11px] ll:text-gray-300">
+                    {t("input.clearChatConfirm.description")}
+                  </p>
+                </div>
+                <div className="ll:flex ll:justify-end ll:gap-2">
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      setIsClearConfirmOpen(false);
+                      focusEditorCaret(caretIndex);
+                    }}
+                  >
+                    {t("input.clearChatConfirm.cancel")}
+                  </Button>
+                  <Button
+                    type="button"
+                    disabled={isClearingChat}
+                    className="ll:border-red-500/60 ll:bg-red-500/20 ll:text-red-100 ll:hover:bg-red-500/30 ll:disabled:opacity-50"
+                    onClick={() => {
+                      void handleClearChatConfirm();
+                    }}
+                  >
+                    {isClearingChat ? (
+                      <Loader2
+                        aria-hidden
+                        className="ll:size-3 ll:animate-spin ll:motion-reduce:animate-none"
+                      />
+                    ) : (
+                      t("input.clearChatConfirm.confirm")
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+        <ChatQuickActionStrip guildId={selectedGuildId} />
       </div>
     </form>
   );

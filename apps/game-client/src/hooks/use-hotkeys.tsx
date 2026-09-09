@@ -18,6 +18,7 @@ import {
 
 type HotkeyEvent = KeyboardEvent | MouseEvent;
 type UseHotkeysOptions = {
+  onChatHelp?: () => void;
   onMapPingCancel?: () => void;
   onMapPingEnd?: (event: HotkeyEvent) => void;
   onMapPingStart?: (event: HotkeyEvent) => boolean;
@@ -67,6 +68,7 @@ const hotkeyScopes = new Map<string, HotkeyActionConfig["scope"]>(
 );
 
 export const useHotkeys = ({
+  onChatHelp,
   onMapPingCancel,
   onMapPingEnd,
   onMapPingStart,
@@ -115,6 +117,13 @@ export const useHotkeys = ({
           continue;
         }
 
+        if (action === "chat-help" || action === "join-party-gathering") {
+          if (event instanceof KeyboardEvent && event.repeat) return true;
+          if (action === "chat-help") onChatHelp?.();
+          else
+            window.dispatchEvent(new Event("lootlog:join-visible-gathering"));
+          return true;
+        }
         const windowId = ACTION_TO_WINDOW.get(action);
         if (windowId) {
           toggleOpen(windowId, true);
@@ -249,7 +258,14 @@ export const useHotkeys = ({
         handledMouseTimeoutRef.current = null;
       }
     };
-  }, [bindings, onMapPingCancel, onMapPingEnd, onMapPingStart, toggleOpen]);
+  }, [
+    bindings,
+    onChatHelp,
+    onMapPingCancel,
+    onMapPingEnd,
+    onMapPingStart,
+    toggleOpen,
+  ]);
 
   return null;
 };

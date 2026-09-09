@@ -45,9 +45,12 @@ export function resetTransientRuntimeState(): void {
   useLootStore.getState().setLastLootId(null);
   useFriendsStore.setState({ friends: [], friendsMax: 0 });
 
-  if (useChatStore.getState().replyDraft) {
-    useChatStore.getState().clearReplyDraft();
-  }
+  useChatStore.setState({
+    draftsByGuild: {},
+    replyDraftsByGuild: {},
+    replyDraft: null,
+    focusRequest: null,
+  });
 
   useGlobalStore.setState({
     gameState: { gameInitialized: false },

@@ -36,6 +36,7 @@ export interface PartyReadyRoomParticipant {
 }
 
 export interface PartyReadyRoomProjectionBase {
+  npc?: PartyGatheringNpc;
   schemaVersion: 3;
   notificationId: string;
   organizerDiscordId: string;
@@ -111,8 +112,19 @@ export const PartyReadyRoomParticipantSchema = Schema.Struct({
   updatedAt: Schema.String,
 });
 
+export const PartyGatheringNpcSchema = Schema.Struct({
+  name: Schema.String,
+  location: Schema.String,
+  lvl: Schema.Number,
+  type: Schema.String,
+  x: Schema.optionalKey(Schema.Number),
+  y: Schema.optionalKey(Schema.Number),
+});
+export type PartyGatheringNpc = typeof PartyGatheringNpcSchema.Type;
+
 export const PartyReadyRoomAggregateSchema = Schema.Struct({
   schemaVersion: Schema.Literal(3),
+  npc: Schema.optionalKey(PartyGatheringNpcSchema),
   notificationId: Schema.String,
   organizerDiscordId: Schema.String,
   organizerCharacter: PartyReadyRoomCharacterSchema,
