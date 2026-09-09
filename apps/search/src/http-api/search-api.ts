@@ -1,3 +1,4 @@
+import { ApiKeyEndpointPolicy } from "@lootlog/schema/api-key-http";
 /** Authoritative composition root for the search HTTP contract. */
 import { HttpApi, OpenApi } from "effect/unstable/httpapi";
 import { HealthGroup } from "./contracts/health/api.js";
@@ -11,4 +12,5 @@ export class SearchApi extends HttpApi.make("SearchApi")
   .annotate(OpenApi.Version, "1.0")
   .annotate(OpenApi.Description, "Meilisearch-powered search microservice")
   .annotate(OpenApi.Servers, [])
-  .add(HealthGroup, PlayersGroup, NPCsGroup, ItemsGroup, AllGroup) {}
+  .add(HealthGroup, PlayersGroup, NPCsGroup, ItemsGroup, AllGroup)
+  .middleware(ApiKeyEndpointPolicy) {}

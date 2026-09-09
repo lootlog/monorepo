@@ -45,6 +45,35 @@ describe("Better Auth 1.7 PostgreSQL migration", () => {
     await postgres.stop();
   });
 
+  it("serializes concurrent pod migrations without duplicate tracking or partial DDL", async () => {
+    const databaseUri = await createDatabase(postgres, "concurrent_migrations");
+    const connections = await Promise.all(
+      Array.from({ length: 3 }, () => makeConnection(databaseUri)),
+    );
+    try {
+      await Promise.all(
+        connections.map(({ db, client }) =>
+          Effect.runPromise(runAuthMigrations(db, client)),
+        ),
+      );
+      const connection = connections[0];
+      if (!connection) throw new Error("Missing test connection");
+      expect(
+        await Effect.runPromise(planAuthMigration(connection.client)),
+      ).toMatchObject({ status: "up-to-date", pendingMigrations: 0 });
+      const result = await connection.pool.query(
+        "SELECT count(*)::int AS count, count(DISTINCT hash)::int AS unique_count FROM drizzle.__drizzle_migrations",
+      );
+      expect(result.rows).toEqual([{ count: 4, unique_count: 4 }]);
+      const table = await connection.pool.query(
+        "SELECT to_regclass('public.apikey') AS name",
+      );
+      expect(table.rows).toEqual([{ name: "apikey" }]);
+    } finally {
+      await Promise.all(connections.map(({ close }) => close()));
+    }
+  });
+
   it("creates a fresh 1.7 schema and can run again", async () => {
     const connection = await makeConnection(postgres.getConnectionUri());
     try {
@@ -88,7 +117,7 @@ describe("Better Auth 1.7 PostgreSQL migration", () => {
       ).toMatchObject({
         status: "ready",
         source: "better-auth-1.7-pre-jwks-metadata",
-        pendingMigrations: 1,
+        pendingMigrations: 2,
       });
 
       await Effect.runPromise(

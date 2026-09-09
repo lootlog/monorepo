@@ -24,3 +24,11 @@ export function buildGuildKillDedupKey(
 ): string {
   return buildKillDedupKey("guild", guildId, data);
 }
+
+export function buildMemberKillDedupKey(
+  guildId: string,
+  memberId: number,
+  data: KillDedupKeyData,
+): string {
+  return `${buildGuildKillDedupKey(guildId, data)}:member:${memberId}`;
+}

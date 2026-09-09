@@ -1,3 +1,8 @@
+import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
+import {
+  apiKeyAllowsOrganization,
+  readApiKeyAccess,
+} from "@lootlog/schema/api-key-policy";
 import { OnlineRepository } from "#src/online/online-repository";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { BunHttpServer } from "@effect/platform-bun";
@@ -157,6 +162,9 @@ const authorize = Effect.fn("Activity.authorize")(function* (
     ),
   );
   if (!guildId) return yield* fail(403, "Insufficient permissions");
+  const apiKey = readApiKeyAccess(request.headers);
+  if (apiKey === null || !apiKeyAllowsOrganization(apiKey, guildId))
+    return yield* fail(403, "Insufficient permissions");
   const capabilities = yield* permissions
     .getUserGuildPermissions(discordId, userId, guildId)
     .pipe(
@@ -338,7 +346,11 @@ export const ActivityHandlers = Layer.mergeAll(
         ),
       ),
   ),
-).pipe(Layer.provide(BearerSecurityLive));
+).pipe(
+  Layer.provide(
+    Layer.merge(BearerSecurityLive, apiKeyEndpointPolicyLayer("activity")),
+  ),
+);
 
 const DocumentationRoute = HttpRouter.use((router) =>
   router.add(

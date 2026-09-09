@@ -1,18 +1,7 @@
-import { activeGuildMemberJoin } from "#src/members/member-access-query";
+import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { upsertActorCharacter } from "./timer-actor-snapshot.js";
 import { randomUUID } from "node:crypto";
-import {
-  and,
-  arrayOverlaps,
-  desc,
-  eq,
-  gt,
-  gte,
-  inArray,
-  isNull,
-  lte,
-  or,
-} from "drizzle-orm";
+import { and, desc, eq, gt, gte, inArray, isNull, lte, or } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
@@ -24,10 +13,7 @@ import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventHeroNpcTable,
   eventTable,
-  guildTable,
   memberTable,
-  memberToRoleTable,
-  roleTable,
   timerHistoryEntryTable,
   timerTable,
   userCharactersLootlogSettingsTable,
@@ -552,23 +538,11 @@ export const makeAutoTimer = (
               message: ErrorKey.INVALID_CUSTOM_SPAWN_TIME,
             }),
     });
-    const guildRows = yield* database
-      .selectDistinct({ guild: guildTable })
-      .from(guildTable)
-      .leftJoin(memberTable, activeGuildMemberJoin(identity.discordId))
-      .leftJoin(memberToRoleTable, eq(memberToRoleTable.A, memberTable.id))
-      .leftJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
-      .where(
-        and(
-          eq(guildTable.active, true),
-          or(
-            eq(guildTable.ownerId, identity.discordId),
-            arrayOverlaps(roleTable.permissions, [
-              Permission.LOOTLOG_TIMERS_WRITE,
-            ]),
-          ),
-        ),
-      );
+    const guildRows = yield* selectAccessibleGuilds(
+      database,
+      identity.discordId,
+      [Permission.LOOTLOG_TIMERS_WRITE],
+    );
     if (guildRows.length === 0)
       return yield* Effect.fail(new PermissionDeniedError());
     const configs = yield* database

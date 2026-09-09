@@ -54,6 +54,22 @@
         "*.config.{ts,mts,js,mjs}",
         "**/*.{spec,test}.{ts,tsx,js}"
       ]
+    },
+    "packages/sdk": {
+      "entry": [
+        "src/index.ts",
+        "index.ts",
+        "src/generated/**/*.{ts,tsx}",
+        "scripts/**/*.{ts,mjs}"
+      ],
+      "project": [
+        "src/**/*.{ts,tsx}",
+        "scripts/**/*.{ts,mjs}",
+        "*.{ts,mts,js,mjs}",
+        "*.config.{ts,mts,js,mjs}",
+        "**/*.{spec,test}.{ts,tsx,js}"
+      ],
+      "ignoreDependencies": ["@msgpack/msgpack", "@lootlog/protocol"]
     }
   },
   "ignore": ["**/dist/**", "**/build/**", "**/node_modules/**"],

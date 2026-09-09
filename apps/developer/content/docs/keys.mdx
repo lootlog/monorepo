@@ -1,0 +1,24 @@
+---
+title: Keys and permissions
+description: Personal keys with explicit Organization scopes and the user's current permissions.
+---
+
+## Scope
+
+A key belongs to a User. Select Organizations and either read-only or read/write access. Access to your own data is a separate option, disabled by default. Creating keys does not require a separate ACL permission.
+
+Access is the intersection of the key's scope and the user's current permissions. Removing a Member from an Organization also removes the integration's access to its data. A key covering several Organizations may continue to work in the others. Joining a new Organization does not automatically add it to the key's scope.
+
+## Creation and rotation
+
+The [key management page](/keys) lets you create up to 10 active keys. Choose an expiration of 30, 90, or 365 days, or no expiration. The default is 90 days.
+
+The secret is displayed only when you create the key. You can rename a key. Changing its scope requires a new key: create it, replace the secret in your integration, verify that it works, and delete the old key.
+
+If a change succeeds but the key list cannot be refreshed, select **Refresh list** to retry loading it. This does not repeat the change. Save any newly created secret before leaving the page; it remains visible while you retry.
+
+## Deletion
+
+A deleted or expired key stops authenticating new HTTP requests. An open realtime connection loses authorization within 60 seconds unless renewal succeeds. Never write secrets to logs or error messages.
+
+System reservation-reminder rules are managed through reservations and require a user session for direct notification-rule changes. API keys cannot modify these shared rules or change or delete a Discord target linked to them, even with access to personal data. Ordinary personal scheduled messages remain available.

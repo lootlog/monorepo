@@ -1,3 +1,4 @@
+import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
 import { Layer } from "effect";
 import { AllHandlers } from "./handlers/all.handlers.js";
 import { HealthHandlers } from "./handlers/health.handlers.js";
@@ -11,4 +12,4 @@ export const SearchHandlers = Layer.mergeAll(
   NpcsHandlers,
   ItemsHandlers,
   AllHandlers,
-);
+).pipe(Layer.provide(apiKeyEndpointPolicyLayer("search")));

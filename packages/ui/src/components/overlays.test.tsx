@@ -149,6 +149,23 @@ describe("Base UI overlays", () => {
     );
   });
 
+  it("uses the supplied accessible label for the sheet close action", async () => {
+    render(
+      <Sheet defaultOpen>
+        <SheetContent closeLabel="Zamknij nawigację">
+          <SheetTitle>Nawigacja</SheetTitle>
+        </SheetContent>
+      </Sheet>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Zamknij nawigację" }));
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("dialog", { name: "Nawigacja" }),
+      ).not.toBeInTheDocument(),
+    );
+  });
+
   it("opens a popover and closes it on outside press", async () => {
     render(
       <Popover>

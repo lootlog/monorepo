@@ -1,4 +1,5 @@
 import { hydrateMemberRoles } from "#src/members/member-role-hydration";
+import { requestApiKeyAccess } from "#src/runtime/auth/forward-auth-identity";
 import { and, eq, inArray } from "drizzle-orm";
 import { Clock, Effect } from "effect";
 import type { RESTAPIPartialCurrentUserGuild } from "discord-api-types/v10";
@@ -121,6 +122,8 @@ export const makeCurrentUserGuilds = (
   const operation = Effect.fn("getCurrentUserGuilds")(function* (
     identity: AuthenticatedIdentity,
   ) {
+    if (yield* requestApiKeyAccess)
+      return yield* ports.accessibleFallback(identity);
     const discordGuilds = yield* ports.freshDiscordGuilds(identity).pipe(
       Effect.map((guilds) => ({ kind: "discord" as const, guilds })),
       Effect.catch((error) =>

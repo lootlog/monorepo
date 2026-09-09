@@ -1,0 +1,922 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Search API",
+    "version": "1.0",
+    "description": "Meilisearch-powered search microservice",
+    "contact": {}
+  },
+  "servers": [
+    {
+      "url": "https://search.lootlog.pl"
+    }
+  ],
+  "paths": {
+    "/players": {
+      "get": {
+        "tags": ["Players"],
+        "operationId": "PlayersController_getPlayers",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "default": 10
+            },
+            "required": false
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ]
+            },
+            "required": false
+          },
+          {
+            "name": "world",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of matching players",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PlayerHitDto_Output"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["message"]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["message"]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["message"]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchUnavailableEncoded"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Search players by name",
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "x-lootlog-access": "read",
+        "x-lootlog-data": "public"
+      }
+    },
+    "/npcs": {
+      "get": {
+        "tags": ["NPCs"],
+        "operationId": "NpcsController_getNpcs",
+        "parameters": [
+          {
+            "name": "ids",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": false
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "default": 10
+            },
+            "required": false
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ]
+            },
+            "required": false
+          },
+          {
+            "name": "world",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of matching NPCs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NpcHitDto_Output"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["message"]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["message"]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["message"]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchUnavailableEncoded"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Search NPCs by name",
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "x-lootlog-access": "read",
+        "x-lootlog-data": "public"
+      }
+    },
+    "/items": {
+      "get": {
+        "tags": ["Items"],
+        "operationId": "ItemsController_getItems",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "default": 20
+            },
+            "required": false
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "default": 0
+            },
+            "required": false
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "world",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ]
+            },
+            "required": false,
+            "style": "form",
+            "explode": true
+          },
+          {
+            "name": "facets",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "required": false,
+            "style": "form",
+            "explode": true
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "required": false,
+            "style": "form",
+            "explode": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Item search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchItemsResponseDto_Output"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["message"]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["message"]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["message"]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchUnavailableEncoded"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Search items with filters, sorting, and facets",
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "x-lootlog-access": "read",
+        "x-lootlog-data": "public"
+      }
+    },
+    "/all": {
+      "get": {
+        "tags": ["All"],
+        "operationId": "AllController_searchAll",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "default": 10
+            },
+            "required": false
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "world",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Aggregated search results across items, players, and NPCs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchAllResponseDto_Output"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["message"]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["message"]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["message"]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchUnavailableEncoded"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Search across all categories",
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "x-lootlog-access": "read",
+        "x-lootlog-data": "public"
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "apiKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Api-Key"
+      }
+    },
+    "schemas": {
+      "PlayerHitDto_Output": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "lvl": {
+            "type": "number"
+          },
+          "prof": {
+            "type": "string"
+          },
+          "icon": {
+            "type": "string"
+          },
+          "characterId": {
+            "type": "number"
+          },
+          "accountId": {
+            "type": "number"
+          },
+          "world": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "lvl",
+          "prof",
+          "icon",
+          "characterId",
+          "accountId",
+          "world"
+        ],
+        "description": "Player search hit"
+      },
+      "SearchUnavailableEncoded": {
+        "type": "object",
+        "properties": {
+          "_tag": {
+            "type": "string",
+            "enum": ["SearchUnavailable"]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": ["_tag", "message"]
+      },
+      "NpcHitDto_Output": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "prof": {
+            "type": "string"
+          },
+          "icon": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "lvl": {
+            "type": "number"
+          },
+          "wt": {
+            "type": "number"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "COMMON",
+              "ELITE",
+              "ELITE2",
+              "ELITE3",
+              "HERO",
+              "EVENT_HERO",
+              "COLOSSUS",
+              "TITAN",
+              "NPC"
+            ]
+          },
+          "margonemType": {
+            "type": "number"
+          },
+          "world": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "prof",
+          "icon",
+          "name",
+          "lvl",
+          "wt",
+          "type",
+          "margonemType",
+          "world"
+        ],
+        "description": "NPC search hit"
+      },
+      "SearchItemsResponseDto_Output": {
+        "type": "object",
+        "properties": {
+          "hits": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "number"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "icon": {
+                  "type": "string"
+                },
+                "stat": {
+                  "type": "string",
+                  "default": ""
+                },
+                "lvl": {
+                  "type": "number"
+                },
+                "rarity": {
+                  "nullable": true,
+                  "type": "string"
+                },
+                "type": {
+                  "nullable": true,
+                  "type": "string"
+                },
+                "worlds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "default": []
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "icon",
+                "stat",
+                "lvl",
+                "rarity",
+                "type",
+                "worlds"
+              ],
+              "description": "Item search hit"
+            }
+          },
+          "estimatedTotalHits": {
+            "type": "number"
+          },
+          "facetDistribution": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "number"
+              }
+            },
+            "default": {}
+          },
+          "facetStats": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "min": {
+                  "type": "number"
+                },
+                "max": {
+                  "type": "number"
+                }
+              },
+              "required": ["min", "max"]
+            },
+            "default": {}
+          }
+        },
+        "required": [
+          "hits",
+          "estimatedTotalHits",
+          "facetDistribution",
+          "facetStats"
+        ],
+        "description": "Item search results"
+      },
+      "SearchAllResponseDto_Output": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "number"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "icon": {
+                  "type": "string"
+                },
+                "stat": {
+                  "type": "string",
+                  "default": ""
+                },
+                "lvl": {
+                  "type": "number"
+                },
+                "rarity": {
+                  "nullable": true,
+                  "type": "string"
+                },
+                "type": {
+                  "nullable": true,
+                  "type": "string"
+                },
+                "worlds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "default": []
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "icon",
+                "stat",
+                "lvl",
+                "rarity",
+                "type",
+                "worlds"
+              ],
+              "description": "Item search hit"
+            }
+          },
+          "players": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "lvl": {
+                  "type": "number"
+                },
+                "prof": {
+                  "type": "string"
+                },
+                "icon": {
+                  "type": "string"
+                },
+                "characterId": {
+                  "type": "number"
+                },
+                "accountId": {
+                  "type": "number"
+                },
+                "world": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "lvl",
+                "prof",
+                "icon",
+                "characterId",
+                "accountId",
+                "world"
+              ],
+              "description": "Player search hit"
+            }
+          },
+          "npcs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "number"
+                },
+                "prof": {
+                  "type": "string"
+                },
+                "icon": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "lvl": {
+                  "type": "number"
+                },
+                "wt": {
+                  "type": "number"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "COMMON",
+                    "ELITE",
+                    "ELITE2",
+                    "ELITE3",
+                    "HERO",
+                    "EVENT_HERO",
+                    "COLOSSUS",
+                    "TITAN",
+                    "NPC"
+                  ]
+                },
+                "margonemType": {
+                  "type": "number"
+                },
+                "world": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "prof",
+                "icon",
+                "name",
+                "lvl",
+                "wt",
+                "type",
+                "margonemType",
+                "world"
+              ],
+              "description": "NPC search hit"
+            }
+          }
+        },
+        "required": ["items", "players", "npcs"],
+        "description": "Aggregated search results"
+      }
+    }
+  }
+}

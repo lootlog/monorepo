@@ -1,5 +1,5 @@
 import type { GuildMemberChanged } from "@lootlog/protocol/rabbit/events";
-import { activeGuildMemberJoin } from "#src/members/member-access-query";
+import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import {
   pathString,
   statusCodeResponse,
@@ -14,17 +14,7 @@ import {
   type Permission as PermissionValue,
 } from "@lootlog/schema/permissions";
 import type { ReservationViewerContext } from "#src/reservations/reservation-viewer";
-import {
-  and,
-  arrayOverlaps,
-  asc,
-  desc,
-  eq,
-  gte,
-  inArray,
-  lt,
-  or,
-} from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, lt, or } from "drizzle-orm";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   guildTable,
@@ -156,26 +146,11 @@ export class MyReservationsData extends Context.Service<
           Effect.gen(function* () {
             const [guildRows, preferenceRows] = yield* Effect.all(
               [
-                database
-                  .selectDistinct({ id: guildTable.id })
-                  .from(guildTable)
-                  .leftJoin(memberTable, activeGuildMemberJoin(discordId))
-                  .leftJoin(
-                    memberToRoleTable,
-                    eq(memberToRoleTable.A, memberTable.id),
-                  )
-                  .leftJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
-                  .where(
-                    and(
-                      eq(guildTable.active, true),
-                      or(
-                        eq(guildTable.ownerId, discordId),
-                        arrayOverlaps(roleTable.permissions, [
-                          Permission.LOOTLOG_ACCESS,
-                        ]),
-                      ),
-                    ),
+                selectAccessibleGuilds(database, discordId).pipe(
+                  Effect.map((rows) =>
+                    rows.map(({ guild }) => ({ id: guild.id })),
                   ),
+                ),
                 database
                   .select({ guildsOrder: userSettingsTable.guildsOrder })
                   .from(userSettingsTable)

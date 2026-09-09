@@ -11,6 +11,8 @@ export interface GatewayConfiguration {
   readonly serviceName: string;
   readonly serviceNamespace: string;
   readonly apiUrl: string;
+  readonly authUrl?: string;
+  readonly apiKeyStatusSecret?: Redacted.Redacted<string>;
   readonly margonemSigningKeyUrl: string;
   readonly rabbitmqUri: Redacted.Redacted<string>;
   readonly activityEventSignatureSecret: Redacted.Redacted<string>;
@@ -51,6 +53,10 @@ export const loadGatewayConfiguration = Effect.gen(function* () {
     serviceName,
     serviceNamespace: yield* Config.string("SERVICE_NAMESPACE").pipe(
       Config.withDefault("local"),
+    ),
+    authUrl: yield* Config.string("AUTH_URL").pipe(Config.withDefault("")),
+    apiKeyStatusSecret: yield* Config.redacted("API_KEY_STATUS_SECRET").pipe(
+      Config.withDefault(Redacted.make("")),
     ),
     apiUrl: (yield* Config.url("API_URL")).toString().replace(/\/$/, ""),
     margonemSigningKeyUrl: (yield* Config.url("MARGONEM_SIGNING_KEY_URL").pipe(

@@ -1,5 +1,6 @@
 import { and, eq, inArray, isNotNull, isNull, lt, or } from "drizzle-orm";
 import { Clock, Effect } from "effect";
+import { requestApiKeyAccess } from "#src/runtime/auth/forward-auth-identity";
 import type { RESTAPIPartialCurrentUserGuild } from "discord-api-types/v10";
 import type { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -121,7 +122,7 @@ export const makeUserGuildList = (
     identity: AuthenticatedIdentity,
     source?: string,
   ) {
-    if (source === "game") {
+    if (source === "game" || (yield* requestApiKeyAccess)) {
       const summaries = yield* ports.accessible(identity);
       const guilds = summaries.map(
         ({ hasLootlogAccess: _access, isAccessDataStale: _stale, ...guild }) =>

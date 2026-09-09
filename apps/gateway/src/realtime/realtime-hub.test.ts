@@ -1154,3 +1154,73 @@ test("chat capabilities are recipient-specific and cannot be supplied by the sen
   }
   expect(targets[1]?.sent[0]).toBe(targets[2]?.sent[0]);
 });
+
+test("expired API key sockets cannot receive responses or user-targeted events", async () => {
+  const bus = new FederationBus();
+  const hub = new RealtimeHub(config, new FakeRedisStore(bus));
+  await Effect.runPromise(hub.start());
+  const target = makeSocket(makeSession("integration"));
+  target.socket.data.apiKeyAccess = {
+    keyId: "key",
+    organizationIds: ["123"],
+    mode: "read",
+    personalData: true,
+    expiresAt: null,
+  };
+  target.socket.data.apiKeyLeaseExpiresAt = 0;
+  hub.register(target.socket);
+  expect(
+    hub.sendResponse(target.socket, {
+      v: 1,
+      requestId: "request",
+      status: "success",
+      data: {},
+    }),
+  ).toBe(false);
+  expect(target.sent).toHaveLength(0);
+  expect(target.closes).toContain(1008);
+});
+
+test("API key user-targeted organization events stay inside selected current organizations", async () => {
+  const bus = new FederationBus();
+  const hub = new RealtimeHub(config, new FakeRedisStore(bus));
+  await Effect.runPromise(hub.start());
+  const target = makeSocket(makeSession("integration"));
+  target.socket.data.apiKeyAccess = {
+    keyId: "key",
+    organizationIds: ["123"],
+    mode: "read",
+    personalData: false,
+    expiresAt: null,
+  };
+  target.socket.data.apiKeyLeaseExpiresAt = Date.now() + 60_000;
+  target.socket.data.guilds = [
+    { guild: { id: "123", ownerId: "owner" }, roles: [] },
+  ];
+  hub.register(target.socket);
+  await hub.publishToUser(target.socket.data.userId, {
+    v: 1,
+    type: "reservation.created",
+    data: { organizationId: "456", payload: {} },
+  });
+  expect(target.sent).toHaveLength(0);
+  await hub.publishToUser(target.socket.data.userId, {
+    v: 1,
+    type: "reservation.created",
+    data: { organizationId: "123", payload: {} },
+  });
+  expect(target.sent).toHaveLength(1);
+  await hub.publishToUser(target.socket.data.userId, {
+    v: 1,
+    type: "reservation.changed",
+    data: {
+      version: 2,
+      action: "updated",
+      sourceGuildId: "123",
+      audienceGuildIds: ["123", "456"],
+      reservationId: 1,
+      spotId: null,
+    },
+  });
+  expect(target.sent).toHaveLength(1);
+});

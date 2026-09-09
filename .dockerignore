@@ -28,6 +28,10 @@ dist
 build
 **/generated
 generated
+!packages/sdk/src/generated
+!packages/sdk/src/generated/**
+!packages/client/src/generated
+!packages/client/src/generated/**
 **/.turbo
 .turbo
 

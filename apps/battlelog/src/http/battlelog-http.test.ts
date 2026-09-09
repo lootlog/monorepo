@@ -62,3 +62,58 @@ for (const [method, path] of [
     });
   });
 }
+
+it("rejects personal-data and write grants before executing battle operations", async () => {
+  const access = {
+    keyId: "key",
+    organizationIds: ["123"],
+    mode: "read",
+    personalData: false,
+    expiresAt: null,
+  };
+  const keyHeaders = {
+    "x-auth-user-id": "user",
+    "x-auth-discord-id": "discord",
+    "x-auth-api-key-access": JSON.stringify(access),
+  };
+  expect(
+    (
+      await handler(
+        new Request("http://battlelog.test/battles/@me", {
+          headers: keyHeaders,
+        }),
+      )
+    ).status,
+  ).toBe(403);
+  keyHeaders["x-auth-api-key-access"] = JSON.stringify({
+    ...access,
+    personalData: true,
+  });
+  expect(
+    (
+      await handler(
+        new Request("http://battlelog.test/battles", {
+          method: "POST",
+          headers: keyHeaders,
+          body: "{}",
+        }),
+      )
+    ).status,
+  ).toBe(403);
+  keyHeaders["x-auth-api-key-access"] = JSON.stringify({
+    ...access,
+    personalData: true,
+    mode: "read-write",
+  });
+  expect(
+    (
+      await handler(
+        new Request("http://battlelog.test/internal/delete-user-data", {
+          method: "POST",
+          headers: keyHeaders,
+          body: "{}",
+        }),
+      )
+    ).status,
+  ).toBe(403);
+});

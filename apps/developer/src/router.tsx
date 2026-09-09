@@ -4,7 +4,9 @@ import { routeTree } from "./routeTree.gen";
 export function getRouter() {
   return createTanStackRouter({
     routeTree,
-    scrollRestoration: true,
+    // Scalar owns hash navigation and scrolling inside the HTTP reference.
+    scrollRestoration: ({ location }) =>
+      !location.pathname.replace(/\/$/, "").endsWith("/reference"),
   });
 }
 

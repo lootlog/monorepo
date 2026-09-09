@@ -813,3 +813,99 @@ test("client NPC policy decisions match gateway source filtering across roles an
     }
   }
 });
+
+test("API key joins and rebalances preserve each key's organization scope without creating player activity", async () => {
+  const { handler, guilds, hub, activity, presence } = setup();
+  const { socket } = makeSocket();
+  const other = makeSocket().socket;
+  guilds.guilds = [
+    guild(),
+    { ...guild(), guild: { id: "organization-2", ownerId: "owner" } },
+  ];
+  socket.data.apiKeyAccess = {
+    keyId: "k1",
+    organizationIds: ["organization-1"],
+    mode: "read",
+    personalData: false,
+    expiresAt: null,
+  };
+  socket.data.apiKeyLeaseExpiresAt = Date.now() + 60_000;
+  other.data.apiKeyAccess = {
+    ...socket.data.apiKeyAccess,
+    keyId: "k2",
+    organizationIds: ["organization-2"],
+  };
+  other.data.apiKeyLeaseExpiresAt = Date.now() + 60_000;
+  hub.sockets.push(socket, other);
+  for (const target of [socket, other])
+    await Effect.runPromise(
+      handler.handle(
+        target,
+        Buffer.from(
+          encode({ v: 1, requestId: "join", type: "session.join", data: {} }),
+        ),
+      ),
+    );
+  expect(socket.data.guilds.map(({ guild }) => guild.id)).toEqual([
+    "organization-1",
+  ]);
+  expect(other.data.guilds.map(({ guild }) => guild.id)).toEqual([
+    "organization-2",
+  ]);
+  expect(
+    [...socket.data.subscriptions.values()].every(
+      (scope) => scope.organizationId === "organization-1",
+    ),
+  ).toBe(true);
+  await Effect.runPromise(
+    handler.rebalanceUser(socket.data.discordId, socket.data.userId),
+  );
+  expect(socket.data.guilds.map(({ guild }) => guild.id)).toEqual([
+    "organization-1",
+  ]);
+  expect(other.data.guilds.map(({ guild }) => guild.id)).toEqual([
+    "organization-2",
+  ]);
+  expect(activity.calls).toEqual([]);
+  expect(presence.reconciled).toEqual([]);
+});
+
+test("API key sockets reject presence writes and expired leases before dispatch", async () => {
+  const { handler, hub } = setup();
+  const { socket, closes } = makeSocket();
+  socket.data.apiKeyAccess = {
+    keyId: "k",
+    organizationIds: ["organization-1"],
+    mode: "read-write",
+    personalData: true,
+    expiresAt: null,
+  };
+  socket.data.apiKeyLeaseExpiresAt = Date.now() + 60_000;
+  await Effect.runPromise(
+    handler.handle(
+      socket,
+      Buffer.from(
+        encode({
+          v: 1,
+          requestId: "heartbeat",
+          type: "presence.heartbeat",
+          data: { sessionId: "session-1" },
+        }),
+      ),
+    ),
+  );
+  expect(hub.responses).toContainEqual(
+    expect.objectContaining({ requestId: "heartbeat", status: "error" }),
+  );
+  socket.data.apiKeyLeaseExpiresAt = 0;
+  await Effect.runPromise(
+    handler.handle(
+      socket,
+      Buffer.from(
+        encode({ v: 1, requestId: "join", type: "session.join", data: {} }),
+      ),
+    ),
+  );
+  expect(closes).toEqual([1008]);
+  expect(socket.data.joined).toBe(false);
+});

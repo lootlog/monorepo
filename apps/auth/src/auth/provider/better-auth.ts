@@ -1,3 +1,4 @@
+import { apiKey } from "@better-auth/api-key";
 import type { AuthProvider } from "#src/auth/auth-service";
 import { runLogEffect } from "@lootlog/instrumentation";
 import { betterAuth, type BetterAuthOptions } from "better-auth";
@@ -117,6 +118,16 @@ export const createLootlogAuth = ({
       cookiePrefix: config.cookiePrefix,
     },
     plugins: [
+      apiKey({
+        references: "user",
+        enableSessionForAPIKeys: false,
+        defaultPrefix: "ll_",
+        requireName: true,
+        maximumNameLength: 80,
+        enableMetadata: true,
+        rateLimit: { enabled: true, maxRequests: 120, timeWindow: 60_000 },
+        keyExpiration: { defaultExpiresIn: null },
+      }),
       jwt({
         jwt: {
           issuer: config.appUrl,
@@ -142,6 +153,10 @@ export class BetterAuthRuntime extends Context.Service<
   BetterAuthRuntime,
   AuthProvider &
     Pick<LootlogAuth, "handler"> & {
+      readonly apiKeys?: Pick<
+        LootlogAuth["api"],
+        "createApiKey" | "verifyApiKey"
+      >;
       readonly options: Pick<LootlogAuth["options"], "baseURL">;
     }
 >()("@lootlog/auth/BetterAuthRuntime") {
@@ -152,14 +167,13 @@ export class BetterAuthRuntime extends Context.Service<
       const pool = yield* PostgresPool;
       const redis = yield* AuthRedisStorage;
 
-      return BetterAuthRuntime.of(
-        createLootlogAuth({
-          config,
-          // Better Auth requires Promise-based Drizzle; reuse the Effect-owned pool.
-          database: drizzle({ client: pool }),
-          secondaryStorage: redis.secondaryStorage,
-        }),
-      );
+      const auth = createLootlogAuth({
+        config,
+        // Better Auth requires Promise-based Drizzle; reuse the Effect-owned pool.
+        database: drizzle({ client: pool }),
+        secondaryStorage: redis.secondaryStorage,
+      });
+      return BetterAuthRuntime.of({ ...auth, apiKeys: auth.api });
     }),
   );
 }

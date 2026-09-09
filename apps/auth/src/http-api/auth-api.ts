@@ -1,3 +1,4 @@
+import { ApiKeysGroup } from "./contracts/auth/api-keys.js";
 /** Authoritative composition root for the auth HTTP contract. */
 import { HttpApi, OpenApi } from "effect/unstable/httpapi";
 import { HealthGroup } from "./contracts/health/api.js";
@@ -11,4 +12,4 @@ export class AuthApi extends HttpApi.make("AuthApi")
     "Authentication and identity service documentation",
   )
   .annotate(OpenApi.Servers, [])
-  .add(HealthGroup, AuthGroup) {}
+  .add(HealthGroup, AuthGroup, ApiKeysGroup) {}

@@ -1,0 +1,70 @@
+---
+title: Realtime for server integrations
+description: Receive changes over WebSocket and perform writes over HTTP.
+---
+
+## Authentication
+
+Server integrations send `X-Api-Key` in the WebSocket connection header. The browser's native WebSocket does not allow this header to be set. Userscripts use the [game client API](/docs/game-client), without a separate connection using a key.
+
+Choose a gateway in the same environment as the key: `dev-gateway.lootlog.pl` or `gateway.lootlog.pl`. The SDK provides a client for the existing realtime protocol and supports a server-side WebSocket implementation.
+
+## Bun example
+
+Run this example on a server using Bun. In a TypeScript project, use Bun types and the `ES2022` or `ESNext` library without `DOM` so the WebSocket constructor accepts server options. Set `LOOTLOG_API_KEY` and `LOOTLOG_ORGANIZATION_ID` for the development environment. The WebSocket factory adds the key header; do not pass it in the URL.
+
+```ts
+import {
+  RealtimeClient,
+  REALTIME_JSON_SUBPROTOCOL,
+} from "@lootlog/sdk/realtime";
+
+const apiKey = process.env.LOOTLOG_API_KEY;
+const organizationId = process.env.LOOTLOG_ORGANIZATION_ID;
+if (!apiKey || !organizationId)
+  throw new Error("Missing Lootlog configuration");
+
+const client = new RealtimeClient({
+  url: "wss://dev-gateway.lootlog.pl",
+  protocols: [REALTIME_JSON_SUBPROTOCOL],
+  frameEncoding: "json",
+  webSocketFactory: (url, protocols) =>
+    new WebSocket(url, {
+      protocols,
+      headers: { "X-Api-Key": apiKey },
+    }),
+});
+const stopEvents = client.subscribe((event) => {
+  if (event.type === "timer.created") console.log(event.data);
+});
+const stopState = client.subscribeState((state) => console.log(state));
+
+// Store the session and subscription before connecting so they can be restored.
+await client.join({});
+await client.subscribeScope({
+  topic: "organization.timers",
+  organizationId,
+  world: "fobos",
+});
+client.connect();
+
+process.once("SIGINT", () => {
+  stopEvents();
+  stopState();
+  client.disconnect();
+});
+```
+
+The `ready` state means the client has joined the session. The SDK restores the stored session and subscriptions after reconnecting. This example logs only `timer.created` events; fetch the initial timer list separately over HTTP. In a running integration, limit retry duration or attempts after a persistent authentication error and notify the operator.
+
+## Allowed actions
+
+An integration receives available events and uses permitted subscriptions and queries. Its scope is limited by the key's Organizations and the user's current permissions. Perform writes, such as adding a timer, over HTTP.
+
+An integration connection does not represent a character's presence in the game. The game client publishes presence and game observations.
+
+## Disconnection
+
+Mark data as stale when the connection is lost. The SDK restores subscriptions after reconnecting; fetch the current state over HTTP at that point. Do not assume you will receive every event from the outage.
+
+Authorization must be renewed at least every 60 seconds. Deleting the key, losing access, or failing to renew blocks further communication. Do not retry indefinitely when a connection is rejected because of an invalid key.

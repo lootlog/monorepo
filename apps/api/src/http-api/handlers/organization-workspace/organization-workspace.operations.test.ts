@@ -1,3 +1,4 @@
+import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
 import { describe, expect, it } from "bun:test";
 import { Cause, Effect, Exit, FileSystem, Layer, Path, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
@@ -523,6 +524,7 @@ describe("reservation HTTP error responses", () => {
             ReservationsHandlers.pipe(HttpRouter.provideRequest(services)),
           ),
           Effect.provide(Layer.succeed(BearerSecurityMiddleware, bearer)),
+          Effect.provide(apiKeyEndpointPolicyLayer("main")),
         );
         const response = yield* client.reservations.createReservation({
           params: { guildId: "guild-a", spotId: "driady" },

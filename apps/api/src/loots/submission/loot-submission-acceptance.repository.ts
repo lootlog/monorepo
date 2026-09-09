@@ -4,18 +4,9 @@ import {
 } from "./loot-map-players.persistence.js";
 import { resolvePlayerSnapshots } from "#src/shared/margonem/player-snapshot.persistence";
 import type { MapPlayersSnapshot } from "#src/contracts/loots/map-players-snapshot";
-import { activeGuildMemberJoin } from "#src/members/member-access-query";
+import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { DependencyUnavailableError } from "#src/shared/http/http-errors";
-import {
-  and,
-  arrayOverlaps,
-  desc,
-  eq,
-  inArray,
-  isNull,
-  ne,
-  or,
-} from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, ne, or } from "drizzle-orm";
 import { Clock, Effect } from "effect";
 import { lootPublicationOutboxTable } from "#src/database/drizzle/loot-publication-outbox.schema";
 import type { LootPublication } from "./loot-publication-outbox.js";
@@ -31,10 +22,8 @@ import {
   lootSubmissionTable,
   lootTable,
   memberTable,
-  memberToRoleTable,
   npcSnapshotTable,
   organizationLootRecordTable,
-  roleTable,
   userCharactersLootlogSettingsTable,
 } from "#src/database/drizzle/schema";
 import type { Permission } from "@lootlog/schema/permissions";
@@ -157,22 +146,9 @@ export const makeLootSubmissionAcceptancePersistence = (
   database: typeof ApiDatabase.Service,
 ): LootSubmissionAcceptancePersistence => ({
   findGuildsForPermissions: (discordId, permissions) =>
-    database
-      .selectDistinct({ guild: guildTable })
-      .from(guildTable)
-      .leftJoin(memberTable, activeGuildMemberJoin(discordId))
-      .leftJoin(memberToRoleTable, eq(memberToRoleTable.A, memberTable.id))
-      .leftJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
-      .where(
-        and(
-          eq(guildTable.active, true),
-          or(
-            eq(guildTable.ownerId, discordId),
-            arrayOverlaps(roleTable.permissions, permissions),
-          ),
-        ),
-      )
-      .pipe(Effect.map((rows) => rows.map(({ guild }) => guild))),
+    selectAccessibleGuilds(database, discordId, permissions).pipe(
+      Effect.map((rows) => rows.map(({ guild }) => guild)),
+    ),
 
   findCharacterConfig: (userId, accountId, characterId) =>
     database

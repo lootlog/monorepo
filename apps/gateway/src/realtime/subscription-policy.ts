@@ -44,7 +44,13 @@ const hasPermission = (
 export const canSubscribe = (session: SessionData, scope: Scope): boolean => {
   if (!session.joined) return false;
   const organizationId = scope.organizationId;
-  if (!organizationId) return scope.topic === "party.ready-room";
+  if (!organizationId)
+    return scope.topic === "party.ready-room" && !session.apiKeyAccess;
+  if (
+    session.apiKeyAccess &&
+    !session.apiKeyAccess.organizationIds.includes(organizationId)
+  )
+    return false;
   const permission = TOPIC_PERMISSION.get(scope.topic);
   if (!permission)
     return hasPermission(session, organizationId, Permission.LOOTLOG_ACCESS);
@@ -73,6 +79,6 @@ export const defaultScopes = (session: SessionData): Scope[] => {
       if (canSubscribe(session, scope)) scopes.push(scope);
     }
   }
-  scopes.push({ topic: "party.ready-room" });
+  if (!session.apiKeyAccess) scopes.push({ topic: "party.ready-room" });
   return scopes;
 };

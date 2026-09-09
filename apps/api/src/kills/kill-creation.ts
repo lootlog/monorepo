@@ -1,7 +1,8 @@
-import { activeGuildMemberJoin } from "#src/members/member-access-query";
+import { requestApiKeyAccess } from "#src/runtime/auth/forward-auth-identity";
+import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
-import { and, arrayOverlaps, desc, eq, isNotNull, or, sql } from "drizzle-orm";
+import { and, desc, eq, isNotNull, or, sql } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
@@ -11,12 +12,9 @@ import {
   guildKillSummaryBucketTable,
   guildKillActivityTable,
   guildKillSummaryTable,
-  guildTable,
   memberTable,
-  memberToRoleTable,
   npcKillStatsBucketTable,
   npcKillStatsTable,
-  roleTable,
   userCharactersLootlogSettingsTable,
   userKillStatsBucketTable,
   userKillStatsTable,
@@ -26,6 +24,7 @@ import { getStableNpcId } from "#src/shared/margonem/stable-npc-id";
 import type { CreateKillRequest } from "#src/contracts/kills/schemas";
 import {
   buildGuildKillDedupKey,
+  buildMemberKillDedupKey,
   buildUserKillDedupKey,
 } from "./kill-dedup-key.js";
 import { getKillStatsBucketStart } from "./kill-stats-period.js";
@@ -41,6 +40,10 @@ export class KillCreationError extends TaggedErrorClass<KillCreationError>()(
 export interface KillCreationCache {
   readonly deleteByPattern: (
     pattern: string,
+  ) => Effect.Effect<unknown, unknown>;
+  readonly deleteIfValue: (
+    key: string,
+    value: string,
   ) => Effect.Effect<unknown, unknown>;
   readonly setNx: (
     key: string,
@@ -89,63 +92,93 @@ export const makeKillCreation = (
       ),
     );
 
+  const writeOnce = Effect.fnUntraced(function* (
+    key: string,
+    operation: string,
+    write: Effect.Effect<void, KillCreationError>,
+  ) {
+    const token = randomUUID();
+    const acquired = yield* protect(
+      operation,
+      cache.setNx(key, token, DEDUP_TTL_SECONDS),
+    );
+    if (!acquired) return false;
+    yield* write.pipe(
+      Effect.tapError(() =>
+        cache.deleteIfValue(key, token).pipe(
+          Effect.catch((error) =>
+            Effect.sync(() =>
+              logger.warn("Failed to release kill dedup claim", {
+                error,
+                key,
+              }),
+            ),
+          ),
+        ),
+      ),
+    );
+    return true;
+  });
+
   const incrementUser = (input: KillInput, periodStart: Date) =>
     protect(
       "kills.create.user",
-      Effect.all(
-        [
-          database
-            .insert(userKillStatsTable)
-            .values({
-              id: randomUUID(),
-              ...input,
-              totalKills: 1,
-              updatedAt: new Date(),
-            })
-            .onConflictDoUpdate({
-              target: [
-                userKillStatsTable.userId,
-                userKillStatsTable.world,
-                userKillStatsTable.npcId,
-              ],
-              set: {
-                totalKills: sql`${userKillStatsTable.totalKills} + 1`,
-                lastKilledAt: input.lastKilledAt,
-                npcName: input.npcName,
-                npcLvl: input.npcLvl,
-                npcProf: input.npcProf,
-                npcIcon: input.npcIcon,
+      database.transaction((transaction) =>
+        Effect.all(
+          [
+            transaction
+              .insert(userKillStatsTable)
+              .values({
+                id: randomUUID(),
+                ...input,
+                totalKills: 1,
                 updatedAt: new Date(),
-              },
-            }),
-          database
-            .insert(userKillStatsBucketTable)
-            .values({
-              id: randomUUID(),
-              ...input,
-              periodStart,
-              totalKills: 1,
-              updatedAt: new Date(),
-            })
-            .onConflictDoUpdate({
-              target: [
-                userKillStatsBucketTable.userId,
-                userKillStatsBucketTable.world,
-                userKillStatsBucketTable.npcId,
-                userKillStatsBucketTable.periodStart,
-              ],
-              set: {
-                totalKills: sql`${userKillStatsBucketTable.totalKills} + 1`,
-                lastKilledAt: input.lastKilledAt,
-                npcName: input.npcName,
-                npcLvl: input.npcLvl,
-                npcProf: input.npcProf,
-                npcIcon: input.npcIcon,
+              })
+              .onConflictDoUpdate({
+                target: [
+                  userKillStatsTable.userId,
+                  userKillStatsTable.world,
+                  userKillStatsTable.npcId,
+                ],
+                set: {
+                  totalKills: sql`${userKillStatsTable.totalKills} + 1`,
+                  lastKilledAt: input.lastKilledAt,
+                  npcName: input.npcName,
+                  npcLvl: input.npcLvl,
+                  npcProf: input.npcProf,
+                  npcIcon: input.npcIcon,
+                  updatedAt: new Date(),
+                },
+              }),
+            transaction
+              .insert(userKillStatsBucketTable)
+              .values({
+                id: randomUUID(),
+                ...input,
+                periodStart,
+                totalKills: 1,
                 updatedAt: new Date(),
-              },
-            }),
-        ],
-        { discard: true },
+              })
+              .onConflictDoUpdate({
+                target: [
+                  userKillStatsBucketTable.userId,
+                  userKillStatsBucketTable.world,
+                  userKillStatsBucketTable.npcId,
+                  userKillStatsBucketTable.periodStart,
+                ],
+                set: {
+                  totalKills: sql`${userKillStatsBucketTable.totalKills} + 1`,
+                  lastKilledAt: input.lastKilledAt,
+                  npcName: input.npcName,
+                  npcLvl: input.npcLvl,
+                  npcProf: input.npcProf,
+                  npcIcon: input.npcIcon,
+                  updatedAt: new Date(),
+                },
+              }),
+          ],
+          { discard: true },
+        ),
       ),
     );
 
@@ -155,62 +188,64 @@ export const makeKillCreation = (
   ) =>
     protect(
       "kills.create.member",
-      Effect.all(
-        [
-          database
-            .insert(npcKillStatsTable)
-            .values({
-              id: randomUUID(),
-              ...input,
-              memberKills: 1,
-              updatedAt: new Date(),
-            })
-            .onConflictDoUpdate({
-              target: [
-                npcKillStatsTable.guildId,
-                npcKillStatsTable.memberId,
-                npcKillStatsTable.world,
-                npcKillStatsTable.npcId,
-              ],
-              set: {
-                memberKills: sql`${npcKillStatsTable.memberKills} + 1`,
-                lastKilledAt: input.lastKilledAt,
-                npcName: input.npcName,
-                npcLvl: input.npcLvl,
-                npcProf: input.npcProf,
-                npcIcon: input.npcIcon,
+      database.transaction((transaction) =>
+        Effect.all(
+          [
+            transaction
+              .insert(npcKillStatsTable)
+              .values({
+                id: randomUUID(),
+                ...input,
+                memberKills: 1,
                 updatedAt: new Date(),
-              },
-            }),
-          database
-            .insert(npcKillStatsBucketTable)
-            .values({
-              id: randomUUID(),
-              ...input,
-              periodStart,
-              memberKills: 1,
-              updatedAt: new Date(),
-            })
-            .onConflictDoUpdate({
-              target: [
-                npcKillStatsBucketTable.guildId,
-                npcKillStatsBucketTable.memberId,
-                npcKillStatsBucketTable.world,
-                npcKillStatsBucketTable.npcId,
-                npcKillStatsBucketTable.periodStart,
-              ],
-              set: {
-                memberKills: sql`${npcKillStatsBucketTable.memberKills} + 1`,
-                lastKilledAt: input.lastKilledAt,
-                npcName: input.npcName,
-                npcLvl: input.npcLvl,
-                npcProf: input.npcProf,
-                npcIcon: input.npcIcon,
+              })
+              .onConflictDoUpdate({
+                target: [
+                  npcKillStatsTable.guildId,
+                  npcKillStatsTable.memberId,
+                  npcKillStatsTable.world,
+                  npcKillStatsTable.npcId,
+                ],
+                set: {
+                  memberKills: sql`${npcKillStatsTable.memberKills} + 1`,
+                  lastKilledAt: input.lastKilledAt,
+                  npcName: input.npcName,
+                  npcLvl: input.npcLvl,
+                  npcProf: input.npcProf,
+                  npcIcon: input.npcIcon,
+                  updatedAt: new Date(),
+                },
+              }),
+            transaction
+              .insert(npcKillStatsBucketTable)
+              .values({
+                id: randomUUID(),
+                ...input,
+                periodStart,
+                memberKills: 1,
                 updatedAt: new Date(),
-              },
-            }),
-        ],
-        { discard: true },
+              })
+              .onConflictDoUpdate({
+                target: [
+                  npcKillStatsBucketTable.guildId,
+                  npcKillStatsBucketTable.memberId,
+                  npcKillStatsBucketTable.world,
+                  npcKillStatsBucketTable.npcId,
+                  npcKillStatsBucketTable.periodStart,
+                ],
+                set: {
+                  memberKills: sql`${npcKillStatsBucketTable.memberKills} + 1`,
+                  lastKilledAt: input.lastKilledAt,
+                  npcName: input.npcName,
+                  npcLvl: input.npcLvl,
+                  npcProf: input.npcProf,
+                  npcIcon: input.npcIcon,
+                  updatedAt: new Date(),
+                },
+              }),
+          ],
+          { discard: true },
+        ),
       ),
     );
 
@@ -327,23 +362,30 @@ export const makeKillCreation = (
       world: data.world,
       npcId,
     });
-    const isNew = yield* cache
-      .setNx(userDedupKey, "1", DEDUP_TTL_SECONDS)
-      .pipe(
-        Effect.mapError(
-          (cause) =>
-            new KillCreationError({ operation: "kills.dedup.user", cause }),
+    const apiKey = yield* requestApiKeyAccess;
+    let personalUpdated = false;
+    if (!apiKey || apiKey.personalData) {
+      personalUpdated = yield* writeOnce(
+        userDedupKey,
+        "kills.dedup.user",
+        incrementUser(input, periodStart),
+      ).pipe(
+        Effect.catch((error) =>
+          error.operation === "kills.dedup.user"
+            ? Effect.fail(error)
+            : Effect.sync(() => {
+                logger.error({
+                  message: "Failed to upsert user kill stats",
+                  error,
+                });
+                return false;
+              }),
         ),
       );
-    if (!isNew) return { deduplicated: true, updated: 0 };
-
-    yield* incrementUser(input, periodStart).pipe(
-      Effect.catch((error) =>
-        Effect.sync(() => {
-          logger.error({ message: "Failed to upsert user kill stats", error });
-        }),
-      ),
-    );
+      if (personalUpdated) {
+        yield* invalidate(`${STATS_CACHE_PREFIX}:user-*:${discordId}:*`);
+      }
+    }
 
     const [configs, writableGuildRows] = yield* protect(
       "kills.create.scope",
@@ -370,37 +412,24 @@ export const makeKillCreation = (
             )
             .orderBy(desc(userCharactersLootlogSettingsTable.createdAt))
             .limit(1),
-          database
-            .selectDistinct({ id: guildTable.id })
-            .from(guildTable)
-            .leftJoin(memberTable, activeGuildMemberJoin(discordId))
-            .leftJoin(
-              memberToRoleTable,
-              eq(memberToRoleTable.A, memberTable.id),
-            )
-            .leftJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
-            .where(
-              and(
-                eq(guildTable.active, true),
-                or(
-                  eq(guildTable.ownerId, discordId),
-                  arrayOverlaps(roleTable.permissions, [
-                    Permission.LOOTLOG_LOOTS_WRITE,
-                  ]),
-                ),
-              ),
-            ),
+          selectAccessibleGuilds(database, discordId, [
+            Permission.LOOTLOG_LOOTS_WRITE,
+          ]).pipe(
+            Effect.map((rows) => rows.map(({ guild }) => ({ id: guild.id }))),
+          ),
         ],
         { concurrency: "unbounded" },
       ),
     );
 
-    yield* invalidate(`${STATS_CACHE_PREFIX}:user-*:${discordId}:*`);
     const writableGuildIds = new Set(writableGuildRows.map(({ id }) => id));
     const guildIds = (configs[0]?.catchingGuildIds ?? []).filter((guildId) =>
       writableGuildIds.has(guildId),
     );
-    if (guildIds.length === 0) return { updated: 0 };
+    if (guildIds.length === 0)
+      return personalUpdated
+        ? { updated: 0 }
+        : { deduplicated: true, updated: 0 };
 
     const members = yield* protect(
       "kills.create.members",
@@ -427,7 +456,15 @@ export const makeKillCreation = (
         if (!member) return Effect.succeed({ guildId, updated: false });
         const memberInput = { ...input, guildId, memberId: member.id };
         return Effect.gen(function* () {
-          yield* incrementMember(memberInput, periodStart);
+          const newMemberKill = yield* writeOnce(
+            buildMemberKillDedupKey(guildId, member.id, {
+              world: data.world,
+              npcId,
+            }),
+            "kills.dedup.member",
+            incrementMember(memberInput, periodStart),
+          );
+          if (!newMemberKill) return { guildId, updated: false };
           const first = yield* cache
             .setNx(
               buildGuildKillDedupKey(guildId, {
@@ -472,6 +509,9 @@ export const makeKillCreation = (
         ),
       { concurrency: "unbounded", discard: true },
     );
-    return { updated: results.filter(({ updated }) => updated).length };
+    const updated = results.filter(({ updated }) => updated).length;
+    return !personalUpdated && updated === 0
+      ? { deduplicated: true, updated: 0 }
+      : { updated };
   });
 };

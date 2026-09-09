@@ -335,10 +335,14 @@ export class RedisService {
     lockToken: string,
   ): Promise<void> {
     try {
-      await this.eval<number>(RELEASE_LOCK_SCRIPT, [lockKey], [lockToken]);
+      await this.deleteIfValue(lockKey, lockToken);
     } catch {
       // The lock has a short TTL; a release failure should not fail the read.
     }
+  }
+
+  async deleteIfValue(key: string, value: string): Promise<number> {
+    return await this.eval<number>(RELEASE_LOCK_SCRIPT, [key], [value]);
   }
 
   async del(key: string): Promise<number> {

@@ -1,3 +1,8 @@
+import {
+  notificationApiKeyOrganizations,
+  notificationRulesInApiKeyScope,
+  requireNotificationRuleApiKeyScope,
+} from "../notification-api-key-scope.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, count, desc, eq, inArray, or } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
@@ -140,7 +145,17 @@ export const makeNotificationWatchedItems = (
       .pipe(
         Effect.mapError(databaseFailure("notifications.watchedItems.list")),
       );
-    return yield* hydrate(rows);
+    const organizations = yield* notificationApiKeyOrganizations(database);
+    const ids = organizations?.map((guild) => guild.id);
+    const allowed = yield* notificationRulesInApiKeyScope(
+      database,
+      rows.flatMap(({ rule }) => (rule ? [rule] : [])),
+      ids,
+    );
+    const allowedIds = new Set(allowed.map(({ id }) => id));
+    return yield* hydrate(
+      rows.filter(({ rule }) => rule === null || allowedIds.has(rule.id)),
+    );
   });
 
   const hydrate = Effect.fn("notifications.watchedItems.hydrate")(function* (
@@ -235,7 +250,10 @@ export const makeNotificationWatchedItems = (
           ),
         );
       }
-      const available = yield* guilds.list(discordId, userId);
+      const scopedOrganizations =
+        yield* notificationApiKeyOrganizations(database);
+      const available =
+        scopedOrganizations ?? (yield* guilds.list(discordId, userId));
       const resolved = uniqueIds.map(
         (input) =>
           available.find(
@@ -292,6 +310,11 @@ export const makeNotificationWatchedItems = (
       );
     }
     const existing = yield* findByScope(discordId, params.itemId, params.world);
+    if (existing?.notificationRule)
+      yield* requireNotificationRuleApiKeyScope(
+        database,
+        existing.notificationRule,
+      );
     const currentFilters = existing?.notificationRule?.filters ?? null;
     const guildIds = params.mergeGuilds
       ? [
@@ -416,8 +439,12 @@ export const makeNotificationWatchedItems = (
     watchedItemId: number,
   ) {
     const rows = yield* database
-      .select()
+      .select({ item: watchedItemTable, rule: notificationRuleTable })
       .from(watchedItemTable)
+      .leftJoin(
+        notificationRuleTable,
+        eq(watchedItemTable.notificationRuleId, notificationRuleTable.id),
+      )
       .where(
         and(
           eq(watchedItemTable.id, watchedItemId),
@@ -428,7 +455,9 @@ export const makeNotificationWatchedItems = (
       .pipe(
         Effect.mapError(databaseFailure("notifications.watchedItems.findById")),
       );
-    const item = rows[0];
+    const item = rows[0]?.item;
+    if (rows[0]?.rule)
+      yield* requireNotificationRuleApiKeyScope(database, rows[0].rule);
     if (!item) {
       return yield* Effect.fail(
         new ResourceNotFoundError(NotificationError.WATCHED_ITEM_NOT_FOUND),
