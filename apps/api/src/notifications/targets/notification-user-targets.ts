@@ -1,6 +1,6 @@
 import {
   notificationApiKeyOrganizations,
-  notificationRuleInApiKeyScope,
+  notificationRulesInApiKeyScope,
 } from "../notification-api-key-scope.js";
 import {
   mapNotificationTarget,
@@ -122,11 +122,12 @@ export const makeNotificationUserTargets = (
           eq(notificationRuleTargetTable.ruleId, notificationRuleTable.id),
         )
         .where(eq(notificationRuleTargetTable.targetId, targetId));
-      if (
-        rules.some(
-          ({ rule }) => !notificationRuleInApiKeyScope(rule, organizationIds),
-        )
-      ) {
+      const allowed = yield* notificationRulesInApiKeyScope(
+        database,
+        rules.map(({ rule }) => rule),
+        organizationIds,
+      );
+      if (allowed.length !== rules.length) {
         return yield* new PermissionDeniedError(
           "Notification target affects organizations outside the API key scope",
         );
@@ -259,14 +260,12 @@ export const makeNotificationUserTargets = (
                 isNotNull(watchedItemTable.notificationRuleId),
               ),
             );
-          const ruleIds = watchedRules
-            .filter(({ rule }) =>
-              notificationRuleInApiKeyScope(
-                rule,
-                organizations?.map((guild) => guild.id),
-              ),
-            )
-            .flatMap(({ ruleId }) => (ruleId === null ? [] : [ruleId]));
+          const allowed = yield* notificationRulesInApiKeyScope(
+            transaction,
+            watchedRules.map(({ rule }) => rule),
+            organizations?.map((guild) => guild.id),
+          );
+          const ruleIds = allowed.map(({ id }) => id);
           if (ruleIds.length > 0) {
             yield* transaction
               .insert(notificationRuleTargetTable)

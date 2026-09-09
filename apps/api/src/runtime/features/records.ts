@@ -127,6 +127,11 @@ export const recordsServicesLive = Layer.effect(
                 try: () => redis.deleteByPattern(pattern),
                 catch: (error) => error,
               }),
+            deleteIfValue: (key, value) =>
+              Effect.tryPromise({
+                try: () => redis.deleteIfValue(key, value),
+                catch: (error) => error,
+              }),
             setNx: (key, value, ttlSeconds) =>
               Effect.tryPromise({
                 try: () => redis.setNX(key, value, ttlSeconds),

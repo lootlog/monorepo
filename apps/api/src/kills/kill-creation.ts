@@ -41,6 +41,10 @@ export interface KillCreationCache {
   readonly deleteByPattern: (
     pattern: string,
   ) => Effect.Effect<unknown, unknown>;
+  readonly deleteIfValue: (
+    key: string,
+    value: string,
+  ) => Effect.Effect<unknown, unknown>;
   readonly setNx: (
     key: string,
     value: string,
@@ -88,63 +92,93 @@ export const makeKillCreation = (
       ),
     );
 
+  const writeOnce = Effect.fnUntraced(function* (
+    key: string,
+    operation: string,
+    write: Effect.Effect<void, KillCreationError>,
+  ) {
+    const token = randomUUID();
+    const acquired = yield* protect(
+      operation,
+      cache.setNx(key, token, DEDUP_TTL_SECONDS),
+    );
+    if (!acquired) return false;
+    yield* write.pipe(
+      Effect.tapError(() =>
+        cache.deleteIfValue(key, token).pipe(
+          Effect.catch((error) =>
+            Effect.sync(() =>
+              logger.warn("Failed to release kill dedup claim", {
+                error,
+                key,
+              }),
+            ),
+          ),
+        ),
+      ),
+    );
+    return true;
+  });
+
   const incrementUser = (input: KillInput, periodStart: Date) =>
     protect(
       "kills.create.user",
-      Effect.all(
-        [
-          database
-            .insert(userKillStatsTable)
-            .values({
-              id: randomUUID(),
-              ...input,
-              totalKills: 1,
-              updatedAt: new Date(),
-            })
-            .onConflictDoUpdate({
-              target: [
-                userKillStatsTable.userId,
-                userKillStatsTable.world,
-                userKillStatsTable.npcId,
-              ],
-              set: {
-                totalKills: sql`${userKillStatsTable.totalKills} + 1`,
-                lastKilledAt: input.lastKilledAt,
-                npcName: input.npcName,
-                npcLvl: input.npcLvl,
-                npcProf: input.npcProf,
-                npcIcon: input.npcIcon,
+      database.transaction((transaction) =>
+        Effect.all(
+          [
+            transaction
+              .insert(userKillStatsTable)
+              .values({
+                id: randomUUID(),
+                ...input,
+                totalKills: 1,
                 updatedAt: new Date(),
-              },
-            }),
-          database
-            .insert(userKillStatsBucketTable)
-            .values({
-              id: randomUUID(),
-              ...input,
-              periodStart,
-              totalKills: 1,
-              updatedAt: new Date(),
-            })
-            .onConflictDoUpdate({
-              target: [
-                userKillStatsBucketTable.userId,
-                userKillStatsBucketTable.world,
-                userKillStatsBucketTable.npcId,
-                userKillStatsBucketTable.periodStart,
-              ],
-              set: {
-                totalKills: sql`${userKillStatsBucketTable.totalKills} + 1`,
-                lastKilledAt: input.lastKilledAt,
-                npcName: input.npcName,
-                npcLvl: input.npcLvl,
-                npcProf: input.npcProf,
-                npcIcon: input.npcIcon,
+              })
+              .onConflictDoUpdate({
+                target: [
+                  userKillStatsTable.userId,
+                  userKillStatsTable.world,
+                  userKillStatsTable.npcId,
+                ],
+                set: {
+                  totalKills: sql`${userKillStatsTable.totalKills} + 1`,
+                  lastKilledAt: input.lastKilledAt,
+                  npcName: input.npcName,
+                  npcLvl: input.npcLvl,
+                  npcProf: input.npcProf,
+                  npcIcon: input.npcIcon,
+                  updatedAt: new Date(),
+                },
+              }),
+            transaction
+              .insert(userKillStatsBucketTable)
+              .values({
+                id: randomUUID(),
+                ...input,
+                periodStart,
+                totalKills: 1,
                 updatedAt: new Date(),
-              },
-            }),
-        ],
-        { discard: true },
+              })
+              .onConflictDoUpdate({
+                target: [
+                  userKillStatsBucketTable.userId,
+                  userKillStatsBucketTable.world,
+                  userKillStatsBucketTable.npcId,
+                  userKillStatsBucketTable.periodStart,
+                ],
+                set: {
+                  totalKills: sql`${userKillStatsBucketTable.totalKills} + 1`,
+                  lastKilledAt: input.lastKilledAt,
+                  npcName: input.npcName,
+                  npcLvl: input.npcLvl,
+                  npcProf: input.npcProf,
+                  npcIcon: input.npcIcon,
+                  updatedAt: new Date(),
+                },
+              }),
+          ],
+          { discard: true },
+        ),
       ),
     );
 
@@ -154,62 +188,64 @@ export const makeKillCreation = (
   ) =>
     protect(
       "kills.create.member",
-      Effect.all(
-        [
-          database
-            .insert(npcKillStatsTable)
-            .values({
-              id: randomUUID(),
-              ...input,
-              memberKills: 1,
-              updatedAt: new Date(),
-            })
-            .onConflictDoUpdate({
-              target: [
-                npcKillStatsTable.guildId,
-                npcKillStatsTable.memberId,
-                npcKillStatsTable.world,
-                npcKillStatsTable.npcId,
-              ],
-              set: {
-                memberKills: sql`${npcKillStatsTable.memberKills} + 1`,
-                lastKilledAt: input.lastKilledAt,
-                npcName: input.npcName,
-                npcLvl: input.npcLvl,
-                npcProf: input.npcProf,
-                npcIcon: input.npcIcon,
+      database.transaction((transaction) =>
+        Effect.all(
+          [
+            transaction
+              .insert(npcKillStatsTable)
+              .values({
+                id: randomUUID(),
+                ...input,
+                memberKills: 1,
                 updatedAt: new Date(),
-              },
-            }),
-          database
-            .insert(npcKillStatsBucketTable)
-            .values({
-              id: randomUUID(),
-              ...input,
-              periodStart,
-              memberKills: 1,
-              updatedAt: new Date(),
-            })
-            .onConflictDoUpdate({
-              target: [
-                npcKillStatsBucketTable.guildId,
-                npcKillStatsBucketTable.memberId,
-                npcKillStatsBucketTable.world,
-                npcKillStatsBucketTable.npcId,
-                npcKillStatsBucketTable.periodStart,
-              ],
-              set: {
-                memberKills: sql`${npcKillStatsBucketTable.memberKills} + 1`,
-                lastKilledAt: input.lastKilledAt,
-                npcName: input.npcName,
-                npcLvl: input.npcLvl,
-                npcProf: input.npcProf,
-                npcIcon: input.npcIcon,
+              })
+              .onConflictDoUpdate({
+                target: [
+                  npcKillStatsTable.guildId,
+                  npcKillStatsTable.memberId,
+                  npcKillStatsTable.world,
+                  npcKillStatsTable.npcId,
+                ],
+                set: {
+                  memberKills: sql`${npcKillStatsTable.memberKills} + 1`,
+                  lastKilledAt: input.lastKilledAt,
+                  npcName: input.npcName,
+                  npcLvl: input.npcLvl,
+                  npcProf: input.npcProf,
+                  npcIcon: input.npcIcon,
+                  updatedAt: new Date(),
+                },
+              }),
+            transaction
+              .insert(npcKillStatsBucketTable)
+              .values({
+                id: randomUUID(),
+                ...input,
+                periodStart,
+                memberKills: 1,
                 updatedAt: new Date(),
-              },
-            }),
-        ],
-        { discard: true },
+              })
+              .onConflictDoUpdate({
+                target: [
+                  npcKillStatsBucketTable.guildId,
+                  npcKillStatsBucketTable.memberId,
+                  npcKillStatsBucketTable.world,
+                  npcKillStatsBucketTable.npcId,
+                  npcKillStatsBucketTable.periodStart,
+                ],
+                set: {
+                  memberKills: sql`${npcKillStatsBucketTable.memberKills} + 1`,
+                  lastKilledAt: input.lastKilledAt,
+                  npcName: input.npcName,
+                  npcLvl: input.npcLvl,
+                  npcProf: input.npcProf,
+                  npcIcon: input.npcIcon,
+                  updatedAt: new Date(),
+                },
+              }),
+          ],
+          { discard: true },
+        ),
       ),
     );
 
@@ -329,21 +365,24 @@ export const makeKillCreation = (
     const apiKey = yield* requestApiKeyAccess;
     let personalUpdated = false;
     if (!apiKey || apiKey.personalData) {
-      personalUpdated = yield* protect(
+      personalUpdated = yield* writeOnce(
+        userDedupKey,
         "kills.dedup.user",
-        cache.setNx(userDedupKey, "1", DEDUP_TTL_SECONDS),
+        incrementUser(input, periodStart),
+      ).pipe(
+        Effect.catch((error) =>
+          error.operation === "kills.dedup.user"
+            ? Effect.fail(error)
+            : Effect.sync(() => {
+                logger.error({
+                  message: "Failed to upsert user kill stats",
+                  error,
+                });
+                return false;
+              }),
+        ),
       );
       if (personalUpdated) {
-        yield* incrementUser(input, periodStart).pipe(
-          Effect.catch((error) =>
-            Effect.sync(() => {
-              logger.error({
-                message: "Failed to upsert user kill stats",
-                error,
-              });
-            }),
-          ),
-        );
         yield* invalidate(`${STATS_CACHE_PREFIX}:user-*:${discordId}:*`);
       }
     }
@@ -417,19 +456,15 @@ export const makeKillCreation = (
         if (!member) return Effect.succeed({ guildId, updated: false });
         const memberInput = { ...input, guildId, memberId: member.id };
         return Effect.gen(function* () {
-          const newMemberKill = yield* protect(
+          const newMemberKill = yield* writeOnce(
+            buildMemberKillDedupKey(guildId, member.id, {
+              world: data.world,
+              npcId,
+            }),
             "kills.dedup.member",
-            cache.setNx(
-              buildMemberKillDedupKey(guildId, member.id, {
-                world: data.world,
-                npcId,
-              }),
-              "1",
-              DEDUP_TTL_SECONDS,
-            ),
+            incrementMember(memberInput, periodStart),
           );
           if (!newMemberKill) return { guildId, updated: false };
-          yield* incrementMember(memberInput, periodStart);
           const first = yield* cache
             .setNx(
               buildGuildKillDedupKey(guildId, {

@@ -1,3 +1,4 @@
+import { RESERVATION_REMINDER_RULE_NAME } from "./rules/reservation-reminder.js";
 import { and, eq, inArray, or, sql, type SQL } from "drizzle-orm";
 import { Effect } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
@@ -20,7 +21,7 @@ import {
 
 type RuleScope = Pick<
   typeof notificationRuleTable.$inferSelect,
-  "guildId" | "triggerType" | "filters"
+  "id" | "guildId" | "triggerType" | "filters" | "name"
 >;
 
 export const notificationApiKeyOrganizations = (database: ApiDatabaseValue) =>
@@ -31,11 +32,13 @@ export const notificationApiKeyOrganizations = (database: ApiDatabaseValue) =>
     return guilds.map(({ guild }) => guild);
   });
 
-export function notificationRuleInApiKeyScope(
+function notificationRuleInApiKeyScope(
   rule: RuleScope,
   organizationIds: readonly string[] | undefined,
 ): boolean {
   if (organizationIds === undefined) return true;
+  // This shared system rule controls reservations across Organizations.
+  if (rule.name === RESERVATION_REMINDER_RULE_NAME) return false;
   if (rule.guildId !== null) return organizationIds.includes(rule.guildId);
   if (rule.triggerType === "SCHEDULED_MESSAGE") return true;
   const guildIds = parseNotificationFilters(rule.filters).guildIds;
@@ -44,18 +47,49 @@ export function notificationRuleInApiKeyScope(
   );
 }
 
+/** Reservation jobs retain their source even when a session renames the shared rule. */
+export const notificationRulesInApiKeyScope = Effect.fnUntraced(function* <
+  Rule extends RuleScope,
+>(
+  database: ApiDatabaseValue,
+  rules: readonly Rule[],
+  organizationIds: readonly string[] | undefined,
+) {
+  if (organizationIds === undefined || rules.length === 0) return [...rules];
+  const reservationRules = yield* database
+    .selectDistinct({ ruleId: notificationJobTable.ruleId })
+    .from(notificationJobTable)
+    .where(
+      and(
+        inArray(
+          notificationJobTable.ruleId,
+          rules.map(({ id }) => id),
+        ),
+        eq(notificationJobTable.sourceEntityType, "reservation"),
+      ),
+    );
+  const reservationRuleIds = new Set(
+    reservationRules.map(({ ruleId }) => ruleId),
+  );
+  return rules.filter(
+    (rule) =>
+      !reservationRuleIds.has(rule.id) &&
+      notificationRuleInApiKeyScope(rule, organizationIds),
+  );
+});
+
 export const requireNotificationRuleApiKeyScope = (
   database: ApiDatabaseValue,
   rule: RuleScope,
 ) =>
   Effect.gen(function* () {
     const guilds = yield* notificationApiKeyOrganizations(database);
-    if (
-      !notificationRuleInApiKeyScope(
-        rule,
-        guilds?.map((guild) => guild.id),
-      )
-    ) {
+    const allowed = yield* notificationRulesInApiKeyScope(
+      database,
+      [rule],
+      guilds?.map((guild) => guild.id),
+    );
+    if (allowed.length === 0) {
       return yield* new PermissionDeniedError(
         "Notification rule is outside the API key scope",
       );
