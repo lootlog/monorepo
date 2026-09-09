@@ -130,7 +130,7 @@ async function renderSelector() {
                 isLoading: false,
               }}
             >
-              <GuildsSelector />
+              <GuildsSelector onReleaseAnnouncementsClick={() => {}} />
               <Toaster />
             </ThemeContext.Provider>
           </GlobalContextProvider>

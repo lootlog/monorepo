@@ -3,6 +3,7 @@ import { GuildNavCreate } from "@/components/layout/guild-nav-create";
 import { GuildNavItem } from "@/components/layout/guild-nav-item";
 import { InstallButton } from "@/components/layout/install-button";
 import { UserNavItem } from "@/components/layout/user-nav-item";
+import { WhatsNewButton } from "@/components/layout/whats-new-button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { Reorder, motion } from "framer-motion";
@@ -21,7 +22,13 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
 import { RotateCcw } from "lucide-react";
 
-export const GuildsSelector: FC = () => {
+interface GuildsSelectorProps {
+  readonly onReleaseAnnouncementsClick: () => void;
+}
+
+export const GuildsSelector: FC<GuildsSelectorProps> = ({
+  onReleaseAnnouncementsClick,
+}) => {
   const { t } = useTranslation();
   const guildsQuery = useUsersControllerGetCurrentUserGuilds();
   const guilds = guildsQuery.data;
@@ -235,6 +242,10 @@ export const GuildsSelector: FC = () => {
       <Separator />
       <div className="flex items-center justify-center">
         <GuildNavCreate />
+      </div>
+      <Separator />
+      <div className="flex items-center justify-center">
+        <WhatsNewButton onClick={onReleaseAnnouncementsClick} />
       </div>
       <Separator />
       <div className="flex items-center justify-center">
