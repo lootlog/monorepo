@@ -2608,6 +2608,11 @@ export type ChatMessageResponseDtoOutputCharacterData = {
 };
 
 export type ChatMessageResponseDtoOutputNpc = {
+  /**
+     * @minLength 1
+     * @maxLength 50
+     */
+  world?: string;
   id: number;
   /** @minLength 1 */
   name: string;
@@ -2710,6 +2715,11 @@ export type SendMessageDtoCharacterData = {
 };
 
 export type SendMessageDtoNpc = {
+  /**
+     * @minLength 1
+     * @maxLength 50
+     */
+  world?: string;
   id: number;
   /** @minLength 1 */
   name: string;
@@ -5681,6 +5691,15 @@ export interface CreateVolunteerDto {
   character: CreateVolunteerDtoCharacter;
 }
 
+export type PartyReadyRoomProjectionDtoOutputNpc = {
+  name: string;
+  location: string;
+  lvl: number | 'Infinity' | '-Infinity' | 'NaN';
+  type: string;
+  x?: number | 'Infinity' | '-Infinity' | 'NaN';
+  y?: number | 'Infinity' | '-Infinity' | 'NaN';
+};
+
 export type PartyReadyRoomProjectionDtoOutputSchemaVersion = typeof PartyReadyRoomProjectionDtoOutputSchemaVersion[keyof typeof PartyReadyRoomProjectionDtoOutputSchemaVersion];
 
 
@@ -5795,6 +5814,7 @@ export type PartyReadyRoomProjectionDtoOutputParticipants = {[key: string]: {
 }};
 
 export interface PartyReadyRoomProjectionDtoOutput {
+  npc?: PartyReadyRoomProjectionDtoOutputNpc;
   schemaVersion: PartyReadyRoomProjectionDtoOutputSchemaVersion;
   notificationId: string;
   organizerDiscordId: string;
@@ -5944,6 +5964,15 @@ export const PartyReadyRoomClientUpdateDtoOutputType = {
   REMOVE: 'REMOVE',
 } as const;
 
+export type PartyReadyRoomClientUpdateDtoOutputProjectionNpc = {
+  name: string;
+  location: string;
+  lvl: number | 'Infinity' | '-Infinity' | 'NaN';
+  type: string;
+  x?: number | 'Infinity' | '-Infinity' | 'NaN';
+  y?: number | 'Infinity' | '-Infinity' | 'NaN';
+};
+
 export type PartyReadyRoomClientUpdateDtoOutputProjectionSchemaVersion = typeof PartyReadyRoomClientUpdateDtoOutputProjectionSchemaVersion[keyof typeof PartyReadyRoomClientUpdateDtoOutputProjectionSchemaVersion];
 
 
@@ -6058,6 +6087,7 @@ export type PartyReadyRoomClientUpdateDtoOutputProjectionParticipants = {[key: s
 }};
 
 export type PartyReadyRoomClientUpdateDtoOutputProjection = {
+  npc?: PartyReadyRoomClientUpdateDtoOutputProjectionNpc;
   schemaVersion: PartyReadyRoomClientUpdateDtoOutputProjectionSchemaVersion;
   notificationId: string;
   organizerDiscordId: string;

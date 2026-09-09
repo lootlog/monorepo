@@ -14,7 +14,9 @@ export type HotkeyAction =
   | "toggle-online-players"
   | "toggle-quick-access"
   | "invite-all"
-  | "map-ping";
+  | "map-ping"
+  | "chat-help"
+  | "join-party-gathering";
 
 type HotkeyModifiers = {
   shift: boolean;
@@ -55,6 +57,20 @@ export const HOTKEY_CATEGORY_KEYS: Record<HotkeyCategory, string> = {
 };
 
 export const HOTKEY_ACTIONS: HotkeyActionConfig[] = [
+  ...(["chat-help", "join-party-gathering"] as const).map((action) => ({
+    action,
+    labelKey: `chat:quickActions.hotkeys.${action}.label`,
+    descriptionKey: `chat:quickActions.hotkeys.${action}.description`,
+    category: "communication" as const,
+    scope: "global" as const,
+    defaultBinding: {
+      type: "keyboard" as const,
+      key: "",
+      shift: false,
+      ctrl: false,
+      alt: false,
+    },
+  })),
   {
     action: "toggle-command",
     labelKey: "settings.hotkeys.actions.toggle-command.label",
@@ -275,7 +291,7 @@ export const useHotkeysStore = create<HotkeysState>()(
       name: STORAGE_KEY,
       partialize: (state) => ({ bindings: state.bindings }),
       storage: createJSONStorage(() => localStorage),
-      version: 4,
+      version: 5,
       migrate: migrateHotkeysState,
     },
   ),
@@ -285,6 +301,11 @@ export const bindingsEqual = (
   first: HotkeyBinding,
   second: HotkeyBinding,
 ): boolean => {
+  if (
+    (first.type === "keyboard" && !first.key) ||
+    (second.type === "keyboard" && !second.key)
+  )
+    return false;
   if (
     first.type !== second.type ||
     first.shift !== second.shift ||
@@ -306,6 +327,8 @@ export const bindingsEqual = (
 };
 
 export const formatBinding = (binding: HotkeyBinding): string => {
+  if (binding.type === "keyboard" && !binding.key)
+    return i18n.t("chat:quickActions.unassigned");
   const parts: string[] = [];
   if (binding.ctrl) parts.push(i18n.t("settings.hotkeys.modifiers.ctrl"));
   if (binding.alt) parts.push(i18n.t("settings.hotkeys.modifiers.alt"));

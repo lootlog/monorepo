@@ -17,6 +17,7 @@ const ChatCharacter = Schema.Struct({
 });
 
 const ChatNpc = Schema.Struct({
+  world: Schema.optionalKey(NonEmptyString.check(Schema.isMaxLength(50))),
   id: FiniteNumber,
   name: NonEmptyString,
   location: NonEmptyString,

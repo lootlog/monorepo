@@ -1,8 +1,9 @@
+import { Message } from "@/components/ui/message";
+import { Bubble } from "@/components/ui/bubble";
 import { NpcTile } from "@/components/npc-tile";
 import { cn } from "cn";
 import { format } from "@/utils/local-date";
 import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/client/main";
-import type { GameNpc } from "@lootlog/margonem/npcs";
 import {
   CHAT_APPEARANCE_READABLE_PRESET,
   type ChatAppearanceSettings,
@@ -10,6 +11,7 @@ import {
 import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
 import type { FC, ReactElement, ReactNode } from "react";
 import {
+  toChatGameNpc,
   getChatNpcCoordinatesLabel,
   getChatNpcLocationName,
   getChatNpcTextColor,
@@ -18,6 +20,7 @@ import {
 import { ChatNpcCountBadge } from "./chat-npc-count-badge";
 
 type ChatNpcMessageViewProps = {
+  actions?: ReactNode;
   all: boolean;
   appearance?: ChatAppearanceSettings;
   count?: number;
@@ -29,22 +32,9 @@ type ChatNpcMessageViewProps = {
   wrapSender?: (sender: ReactElement) => ReactNode;
 };
 
-const toChatGameNpc = (npc: NonNullable<ChatMessageType["npc"]>): GameNpc => ({
-  actions: 0,
-  icon: npc.icon,
-  id: npc.id,
-  lvl: npc.lvl,
-  nick: npc.name,
-  prof: npc.prof,
-  tpl: npc.id,
-  type: npc.type,
-  wt: npc.wt,
-  x: npc.x ?? 0,
-  y: npc.y ?? 0,
-});
-
 export const ChatNpcMessageView: FC<ChatNpcMessageViewProps> = (props) => {
   const {
+    actions,
     all,
     guildName,
     memberColor,
@@ -75,8 +65,8 @@ export const ChatNpcMessageView: FC<ChatNpcMessageViewProps> = (props) => {
   );
 
   return (
-    <div
-      className="ll:w-full ll:min-w-0 ll:max-w-full ll:box-border ll:cursor-text ll:select-text ll:rounded-sm ll:text-[length:var(--ll-chat-font-size)] ll:leading-[var(--ll-chat-line-height)] ll:text-white ll:transition-colors ll:hover:bg-gray-500/20"
+    <Message
+      className="ll:cursor-text ll:select-text"
       data-chat-message-id={message.id}
     >
       <div
@@ -104,7 +94,7 @@ export const ChatNpcMessageView: FC<ChatNpcMessageViewProps> = (props) => {
         ) : null}
         {wrapSender ? wrapSender(sender) : sender}{" "}
       </div>
-      <div
+      <Bubble
         className={cn(
           "ll:flex ll:w-full ll:min-w-0 ll:max-w-full ll:box-border ll:items-center ll:gap-[var(--ll-chat-space-sm)] ll:overflow-hidden ll:rounded-sm ll:px-[var(--ll-chat-space-md)] ll:py-[var(--ll-chat-space-sm)]",
           appearance.npcLayout === "tile"
@@ -174,7 +164,8 @@ export const ChatNpcMessageView: FC<ChatNpcMessageViewProps> = (props) => {
             </div>
           ) : null}
         </div>
-      </div>
-    </div>
+      </Bubble>
+      {actions}
+    </Message>
   );
 };

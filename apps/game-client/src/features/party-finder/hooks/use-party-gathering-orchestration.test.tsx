@@ -103,10 +103,12 @@ describe("usePartyGatheringOrchestration", () => {
     });
     await act(() =>
       result.current.startPartyGathering({
+        openPartyFinder: false,
         guildIds: ["guild-1"],
         world: "tempest",
       }),
     );
+    expect(useWindowsStore.getState()["party-finder"].open).toBe(false);
     expect(await sendChat.mock.calls[0]?.[0].json()).toMatchObject({
       partyGathering: { discordId: "organizer-1", notificationId: "room-1" },
     });
@@ -187,12 +189,13 @@ describe("usePartyGatheringOrchestration", () => {
     expect(useWindowsStore.getState()["party-finder"].open).toBe(true);
     expect(sendChat).not.toHaveBeenCalled();
   });
-  it("uses the fetched organizer when publishing an NPC gathering", async () => {
+  it("publishes an NPC gathering without opening Party Finder when requested", async () => {
     const { result } = renderHook(() => usePartyGatheringOrchestration(), {
       wrapper: Wrapper,
     });
     await act(() =>
       result.current.startNpcPartyGathering({
+        openPartyFinder: false,
         npc: {
           id: 1,
           nick: "Hydra",
@@ -211,6 +214,7 @@ describe("usePartyGatheringOrchestration", () => {
         world: "tempest",
       }),
     );
+    expect(useWindowsStore.getState()["party-finder"].open).toBe(false);
     expect(await sendChat.mock.calls[0]?.[0].json()).toMatchObject({
       partyGathering: { discordId: "organizer-1", notificationId: "room-1" },
     });

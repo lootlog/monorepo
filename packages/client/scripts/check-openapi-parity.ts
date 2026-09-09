@@ -967,6 +967,40 @@ const PERSONAL_ANALYTICS_ADDITIONS = new Map<
       },
     },
     api: {
+      // Verified by ready-room-visibility.test.ts and ready-room-cas.integration.test.ts.
+      "GET /messaging/party-gathering/active": {
+        operationId: "PartyReadyRoomController_active",
+        parameters: [
+          {
+            name: "world",
+            in: "query",
+            required: true,
+            schema: { type: "string", minLength: 1, maxLength: 50 },
+          },
+        ],
+        security: [{ bearer: [] }],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: {
+                    $ref: "#/components/schemas/ActivePartyGatheringSummary",
+                  },
+                },
+              },
+            },
+          },
+          "401": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/HttpErrorResponse" },
+              },
+            },
+          },
+        },
+      },
       "GET /users/@me/feed": {
         operationId: "UsersController_getUserFeed",
         parameters: [],

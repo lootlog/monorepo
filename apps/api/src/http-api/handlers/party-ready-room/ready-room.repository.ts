@@ -1,6 +1,7 @@
 import { Effect, Schema } from "effect";
 import { PartyReadyRoomAggregateSchema } from "@lootlog/schema/party-ready-room";
 import {
+  FIND_ACTIVE_READY_ROOM_IDS_SCRIPT,
   COMMIT_READY_ROOM_SCRIPT,
   CREATE_READY_ROOM_SCRIPT,
   EXIT_READY_ROOM_PARTICIPANT_SCRIPT,
@@ -45,6 +46,10 @@ export interface ReadyRoomRedis {
 }
 
 export interface ReadyRoomEffectRepository {
+  readonly findActive: (
+    guildIds: ReadonlyArray<string>,
+    world: string,
+  ) => Effect.Effect<ReadonlyArray<ReadyRoomAggregate>, unknown>;
   readonly create: (
     aggregate: ReadyRoomAggregate,
   ) => Effect.Effect<CreateReadyRoomResult, unknown>;
@@ -125,6 +130,33 @@ export const makeReadyRoomRepository = (
     redis.getJson(roomKey(notificationId), PartyReadyRoomAggregateSchema);
   return {
     get,
+    findActive: (guildIds, world) =>
+      redis
+        .eval(
+          FIND_ACTIVE_READY_ROOM_IDS_SCRIPT,
+          guildIds.map(
+            (id) =>
+              `party-ready-room:v3:discovery:${encodeURIComponent(id)}:${encodeURIComponent(world)}`,
+          ),
+          [clock()],
+        )
+        .pipe(
+          Effect.flatMap((value) =>
+            Effect.try(() =>
+              Schema.decodeUnknownSync(Schema.Array(Schema.String))(value),
+            ),
+          ),
+          Effect.flatMap((ids) => Effect.all(ids.map(get))),
+          Effect.map((rooms) =>
+            rooms.filter(
+              (room): room is ReadyRoomAggregate =>
+                room !== null &&
+                room.status === "ACTIVE" &&
+                room.world === world &&
+                Date.parse(room.expiresAt) > clock(),
+            ),
+          ),
+        ),
     findForUser: (discordId) =>
       redis
         .eval(
@@ -179,12 +211,17 @@ export const makeReadyRoomRepository = (
               aggregate.world,
               aggregate.organizerCharacter.characterId,
             ),
+            ...aggregate.guildIds.map(
+              (id) =>
+                `party-ready-room:v3:discovery:${encodeURIComponent(id)}:${encodeURIComponent(aggregate.world)}`,
+            ),
           ],
           [
             ROOM_PREFIX,
             JSON.stringify(aggregate),
             aggregate.notificationId,
             ttl,
+            Date.parse(aggregate.expiresAt),
           ],
         )
         .pipe(

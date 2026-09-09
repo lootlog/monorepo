@@ -21,7 +21,7 @@ it("renders the real add form with its window's guild and closes through the win
   });
   expect(screen.getByText("Dodaj timer")).toBeVisible();
   expect(screen.getByLabelText("Nazwa")).toBeVisible();
-  expect(screen.getByRole("button", { name: "A" })).toHaveAttribute(
+  expect(screen.getByRole("button", { name: "Alpha" })).toHaveAttribute(
     "aria-pressed",
     "true",
   );

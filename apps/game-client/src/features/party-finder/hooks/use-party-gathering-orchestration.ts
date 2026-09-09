@@ -1,3 +1,5 @@
+import { getFixedT } from "@/i18n/get-fixed-t";
+import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 import { MessageType, type SendChatMessageOptions } from "@/api/chat.api";
 import { ActivePartyGatheringError } from "@/features/party-finder/active-party-gathering-error";
 import { useSendChatMessage } from "@/hooks/api/use-send-chat-message";
@@ -33,9 +35,11 @@ type StartPartyGatheringOptions = {
   minLvl?: number;
   maxLvl?: number;
   closeCreateWindow?: boolean;
+  openPartyFinder?: boolean;
 };
 
 type StartNpcPartyGatheringOptions = {
+  openPartyFinder?: boolean;
   npc: GameNpcWithLocation;
   guildIds: string[];
   world: string;
@@ -51,6 +55,7 @@ type FinalizePartyGatheringOptions = {
   notificationId: string;
   guildIds: string[];
   closeCreateWindow?: boolean;
+  openPartyFinder?: boolean;
   chatMessageOptions: SendChatMessageOptions;
 };
 
@@ -84,18 +89,36 @@ export const usePartyGatheringOrchestration = () => {
     setOpen("party-finder", true);
   };
 
+  const recoverActiveGathering = async (
+    cause: unknown,
+    shouldOpen: boolean,
+    closeCreateWindow = false,
+  ) => {
+    const notificationId = getActivePartyGatheringNotificationId(cause);
+    if (!notificationId) return;
+    mergeProjection(
+      decodePartyReadyRoomProjection(
+        await partyReadyRoomControllerGet({ notificationId }),
+      ),
+    );
+    if (shouldOpen) openPartyFinder(closeCreateWindow);
+    return notificationId;
+  };
+
   const finalizePartyGathering = async ({
     notificationId,
     guildIds,
     closeCreateWindow,
     chatMessageOptions,
+    openPartyFinder: shouldOpen = true,
   }: FinalizePartyGatheringOptions) => {
-    openPartyFinder(closeCreateWindow);
+    if (shouldOpen) openPartyFinder(closeCreateWindow);
 
     try {
       await sendChatMessageAsync(chatMessageOptions);
     } catch {
-      // The Ready Room is already committed and remains the source of truth.
+      // The Ready Room is committed; retrying creation would duplicate the user action.
+      showRuntimeMessage(getFixedT("chat")("gatherings.publicationFailed"));
     }
 
     return {
@@ -111,6 +134,7 @@ export const usePartyGatheringOrchestration = () => {
     minLvl,
     maxLvl,
     closeCreateWindow = false,
+    openPartyFinder: shouldOpen = true,
   }: StartPartyGatheringOptions): Promise<
     Awaited<ReturnType<typeof finalizePartyGathering>> | undefined
   > => {
@@ -120,7 +144,7 @@ export const usePartyGatheringOrchestration = () => {
 
     const ownedReadyRoom = selectOwnedReadyRoom(usePartyFinderStore.getState());
     if (ownedReadyRoom) {
-      openPartyFinder(closeCreateWindow);
+      if (shouldOpen) openPartyFinder(closeCreateWindow);
       return Promise.reject(
         new ActivePartyGatheringError(ownedReadyRoom.notificationId),
       );
@@ -142,16 +166,7 @@ export const usePartyGatheringOrchestration = () => {
           },
         });
       } catch (error) {
-        const notificationId = getActivePartyGatheringNotificationId(error);
-        if (notificationId) {
-          const existingProjection = decodePartyReadyRoomProjection(
-            await partyReadyRoomControllerGet({
-              notificationId,
-            }),
-          );
-          mergeProjection(existingProjection);
-          openPartyFinder(closeCreateWindow);
-        }
+        await recoverActiveGathering(error, shouldOpen, closeCreateWindow);
         throw error;
       }
       const projection = decodePartyReadyRoomProjection(response);
@@ -162,6 +177,7 @@ export const usePartyGatheringOrchestration = () => {
         notificationId: projection.notificationId,
         guildIds: resolvedGuildIds,
         closeCreateWindow,
+        openPartyFinder: shouldOpen,
         chatMessageOptions: {
           message: heroName,
           guildIds: resolvedGuildIds,
@@ -188,9 +204,17 @@ export const usePartyGatheringOrchestration = () => {
     npc,
     guildIds,
     world,
+    openPartyFinder: shouldOpen = true,
   }: StartNpcPartyGatheringOptions): Promise<
     Awaited<ReturnType<typeof finalizePartyGathering>> | undefined
   > => {
+    const ownedReadyRoom = selectOwnedReadyRoom(usePartyFinderStore.getState());
+    if (ownedReadyRoom) {
+      if (shouldOpen) openPartyFinder();
+      return Promise.reject(
+        new ActivePartyGatheringError(ownedReadyRoom.notificationId),
+      );
+    }
     const notificationPayload = buildNpcNotificationPayload({
       npc,
       guildIds,
@@ -202,9 +226,14 @@ export const usePartyGatheringOrchestration = () => {
     setIsCreatingNpcPartyGathering(true);
 
     const createNpcPartyGathering = async () => {
-      const response = await createNotificationAsync({
-        data: notificationPayload,
-      });
+      let response: Awaited<ReturnType<typeof createNotificationAsync>>;
+      try {
+        response = await createNotificationAsync({ data: notificationPayload });
+      } catch (error) {
+        const notificationId = await recoverActiveGathering(error, shouldOpen);
+        if (notificationId) throw new ActivePartyGatheringError(notificationId);
+        throw error;
+      }
       const resolvedGuildIds = response.guildIds ?? guildIds;
       const projection = decodePartyReadyRoomProjection(
         await partyReadyRoomControllerGet({
@@ -214,6 +243,7 @@ export const usePartyGatheringOrchestration = () => {
       mergeProjection(projection);
 
       const chatMessageOptions = buildNpcChatMessagePayload({
+        world,
         npc,
         guildIds: resolvedGuildIds,
         messageType: MessageType.PARTY_GATHERING,
@@ -230,6 +260,7 @@ export const usePartyGatheringOrchestration = () => {
         notificationId: response.notificationId,
         guildIds: resolvedGuildIds,
         chatMessageOptions,
+        openPartyFinder: shouldOpen,
       });
     };
 
@@ -258,6 +289,7 @@ export const usePartyGatheringOrchestration = () => {
       const resolvedGuildIds = response.guildIds ?? guildIds;
 
       const chatMessageOptions = buildNpcChatMessagePayload({
+        world,
         npc,
         guildIds: resolvedGuildIds,
         messageType: MessageType.NPC,

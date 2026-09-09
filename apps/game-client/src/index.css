@@ -170,6 +170,12 @@ body.si :is(#lootlog-root, .ll-theme-boundary) * {
   user-select: none;
 }
 
+body :is(#lootlog-root, .ll-theme-boundary) [data-chat-viewport],
+body :is(#lootlog-root, .ll-theme-boundary) [data-chat-viewport] * {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
 body.si :is(#lootlog-root, .ll-theme-boundary) .ll-custom-cursor-pointer * {
   /* Needed because SI has * { cursor: default } */
   cursor: inherit;
@@ -325,11 +331,6 @@ body.si > #lootlog-root .checkbox-custom [type="checkbox"] + label {
 }
 
 #lootlog-root .ll-npc-list-row {
-  content-visibility: auto;
-  contain-intrinsic-block-size: 48px;
-}
-
-#lootlog-root .ll-chat-message-list > * {
   content-visibility: auto;
   contain-intrinsic-block-size: 48px;
 }

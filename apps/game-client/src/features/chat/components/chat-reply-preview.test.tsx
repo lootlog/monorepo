@@ -21,7 +21,9 @@ describe("ChatReplyPreview", () => {
     const content = sender.parentElement;
     const root = content?.parentElement;
     const snippet = screen.getByText(/A very long reply snippet/);
-    const clearButton = screen.getByRole("button");
+    const clearButton = screen.getByRole("button", {
+      name: "Anuluj odpowiedź",
+    });
 
     expect(root?.className).toContain("ll:box-border");
     expect(content?.className).toContain("ll:w-full");
@@ -49,7 +51,7 @@ describe("ChatReplyPreview", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button"));
+    fireEvent.click(screen.getByRole("button", { name: "Anuluj odpowiedź" }));
 
     expect(onClear).toHaveBeenCalledTimes(1);
     expect(onClick).not.toHaveBeenCalled();

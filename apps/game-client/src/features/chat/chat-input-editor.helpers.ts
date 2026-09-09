@@ -5,6 +5,7 @@ import {
   $getRoot,
   $isElementNode,
   $setSelection,
+  SKIP_DOM_SELECTION_TAG,
   type LexicalNode,
   type LexicalEditor,
   type PointType,
@@ -132,7 +133,7 @@ export const setChatInputEditorValue = ({
         message,
       });
     },
-    { tag: CHAT_INPUT_PROGRAMMATIC_UPDATE_TAG },
+    { tag: [CHAT_INPUT_PROGRAMMATIC_UPDATE_TAG, SKIP_DOM_SELECTION_TAG] },
   );
 };
 

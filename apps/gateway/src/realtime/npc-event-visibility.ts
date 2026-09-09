@@ -25,7 +25,8 @@ type NpcEvent = Extract<
       | "chat.created"
       | "chat.updated"
       | "chat.deleted"
-      | "notification.sent";
+      | "notification.sent"
+      | "party-ready-room.updated";
   }
 >;
 
@@ -91,6 +92,19 @@ const mutationRouting = (
     : null;
 };
 
+const readyRoomRouting = (
+  event: Extract<NpcEvent, { type: "party-ready-room.updated" }>,
+): Routing | null => {
+  const payload = event.data.payload;
+  if (!Predicate.isObject(payload)) return null;
+  if (payload.type === "REMOVE") return { tier: "base" };
+  if (payload.type !== "UPSERT" || !Predicate.isObject(payload.projection))
+    return null;
+  return payload.projection.npc === undefined
+    ? { tier: "base" }
+    : npcRouting(payload.projection.npc);
+};
+
 const eventRouting = (event: NpcEvent): Routing | null => {
   const payload = event.data.payload;
   if (!Predicate.isObject(payload)) return null;
@@ -106,6 +120,8 @@ const eventRouting = (event: NpcEvent): Routing | null => {
   )
     return null;
   switch (event.type) {
+    case "party-ready-room.updated":
+      return readyRoomRouting(event);
     case "timer.created":
       return npcRouting(payload.npc);
     case "notification.sent":
@@ -187,10 +203,22 @@ const canReadEventHeroSource = (
   );
 };
 
+const isUnscopedReadyRoomUpdate = (event: Event): boolean => {
+  if (event.type !== "party-ready-room.updated") return false;
+  const payload = event.data.payload;
+  if (!Predicate.isObject(payload)) return false;
+  if (payload.type === "REMOVE") return true;
+  return (
+    Predicate.isObject(payload.projection) &&
+    payload.projection.npc === undefined
+  );
+};
+
 export const canReadNpcSourceEvent = (
   session: SessionData,
   event: Event,
 ): boolean => {
+  if (isUnscopedReadyRoomUpdate(event)) return true;
   switch (event.type) {
     case "member-refresh.updated":
       return isOrganizationAdministrator(session, event.data.organizationId);
@@ -204,6 +232,7 @@ export const canReadNpcSourceEvent = (
         decodeEventHeroSource(event.data.payload),
       );
     }
+    case "party-ready-room.updated":
     case "timer.created":
     case "timer.deleted":
     case "chat.created":

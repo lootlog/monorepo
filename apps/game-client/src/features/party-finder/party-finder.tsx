@@ -2,6 +2,7 @@ import { DraggableWindow } from "@/components/draggable-window";
 import { Button } from "@/components/ui/button";
 import { useWindowsStore } from "@/store/windows.store";
 import {
+  selectOwnedReadyRoom,
   selectReadyRoomForCharacter,
   usePartyFinderStore,
 } from "@/store/party-finder.store";
@@ -20,8 +21,10 @@ export const PartyFinder = () => {
   const setOpen = useWindowsStore((state) => state.setOpen);
 
   const currentCharacterIdentity = getCurrentReadyRoomCharacterIdentity();
-  const readyRoom = usePartyFinderStore((state) =>
-    selectReadyRoomForCharacter(state, currentCharacterIdentity),
+  const readyRoom = usePartyFinderStore(
+    (state) =>
+      selectOwnedReadyRoom(state) ??
+      selectReadyRoomForCharacter(state, currentCharacterIdentity),
   );
   const partyMembers = usePartyStore((s) => s.members);
   const { mutate: cancelPartyGathering, isPending: isCancelling } =
@@ -54,38 +57,47 @@ export const PartyFinder = () => {
       minWidth={242}
     >
       <div className="ll:flex ll:flex-col ll:h-full">
-        <div className="ll:shrink-0 ll:flex ll:items-center ll:justify-center ll:gap-1 ll:py-1.5 ll:border-b ll:border-gray-700">
-          <span className="ll:text-[11px] ll:text-gray-300">
-            {t("header.party")}
-          </span>
-          <span
-            className={`ll:text-[11px] ll:font-semibold ${partyMembers.length >= 10 ? "ll:text-red-400" : "ll:text-green-400"}`}
-          >
-            {partyMembers.length}/10
-          </span>
-        </div>
+        {isOrganizerView ? (
+          <div className="ll:shrink-0 ll:flex ll:items-center ll:justify-center ll:gap-1 ll:py-1.5 ll:border-b ll:border-gray-700">
+            <span className="ll:text-[11px] ll:text-gray-300">
+              {t("header.party")}
+            </span>
+            <span
+              className={`ll:text-[11px] ll:font-semibold ${partyMembers.length >= 10 ? "ll:text-red-400" : "ll:text-green-400"}`}
+            >
+              {partyMembers.length}/10
+            </span>
+          </div>
+        ) : (
+          <div className="ll:p-2 ll:text-xs">
+            {readyRoom.organizerCharacter.nick} · {readyRoom.world}
+          </div>
+        )}
         <ScrollArea className="ll:flex-1">
-          {isOrganizerView && readyRoom.viewer === "ORGANIZER" ? (
+          {readyRoom.viewer === "ORGANIZER" ? (
             <ReadyRoomParticipantsList room={readyRoom} />
           ) : (
             <ReadyRoomParticipantStatus room={readyRoom} />
           )}
         </ScrollArea>
-        {isOrganizerView ? (
+        {readyRoom.viewer === "ORGANIZER" ? (
           <div className="ll:shrink-0 ll:p-2 ll:border-t ll:border-gray-700 ll:flex ll:flex-col ll:gap-1.5">
-            <Button
-              onClick={() => {
-                void inviteParticipants().catch((cause: unknown) => {
-                  console.warn("Failed to resolve party invitations", cause);
-                });
-              }}
-              disabled={
-                invitableParticipantIds.length === 0 || !canInviteParticipants()
-              }
-              className="ll:w-full ll:border-green-500 ll:text-green-400 ll:hover:bg-green-600/20"
-            >
-              {t("actions.inviteAll")}
-            </Button>
+            {isOrganizerView ? (
+              <Button
+                onClick={() => {
+                  void inviteParticipants().catch((cause: unknown) => {
+                    console.warn("Failed to resolve party invitations", cause);
+                  });
+                }}
+                disabled={
+                  invitableParticipantIds.length === 0 ||
+                  !canInviteParticipants()
+                }
+                className="ll:w-full ll:border-green-500 ll:text-green-400 ll:hover:bg-green-600/20"
+              >
+                {t("actions.inviteAll")}
+              </Button>
+            ) : null}
             <Button
               onClick={() => cancelPartyGathering()}
               disabled={isCancelling}

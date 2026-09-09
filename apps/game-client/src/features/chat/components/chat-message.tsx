@@ -32,8 +32,8 @@ import { dispatchChatScrollToMessage } from "@/features/chat/chat-scroll-to-mess
 import { updateChatMessagesCache } from "@/features/chat/chat-query-cache.helpers";
 import { ChatCharacterTooltip } from "@/features/chat/components/chat-character-tooltip";
 import { ChatPlayerMessageView } from "@/features/chat/components/chat-player-message-view";
-import { toast } from "sonner";
 import { ChatMessageBody } from "./chat-message-body";
+import { ChatMessageActions } from "./chat-message-actions";
 import { ChatMessageContextMenu } from "./chat-message-context-menu";
 
 type ChatMessageProps = {
@@ -45,6 +45,8 @@ type ChatMessageProps = {
   member?: GuildMember;
   mentionContext?: ChatMentionContext;
   onReply?: () => void;
+  onMention?: () => void;
+  isContinuation?: boolean;
 };
 
 export const ChatMessage: FC<ChatMessageProps> = ({
@@ -56,6 +58,8 @@ export const ChatMessage: FC<ChatMessageProps> = ({
   member,
   mentionContext,
   onReply,
+  onMention,
+  isContinuation,
 }) => {
   const { t } = useTranslation("chat");
   const heroName = useGameStore((state) => state.game?.hero.name);
@@ -80,9 +84,6 @@ export const ChatMessage: FC<ChatMessageProps> = ({
           });
           setIsEditing(false);
         },
-        onError: () => {
-          toast.error(t("errors.editFailed"));
-        },
       },
     });
   const { mutate: deleteChatMessageMutation, isPending: isDeleting } =
@@ -95,9 +96,6 @@ export const ChatMessage: FC<ChatMessageProps> = ({
             updater: (old: ChatMessageType[] | undefined) =>
               old ? removeChatMessage(old, message.id) : old,
           });
-        },
-        onError: () => {
-          toast.error(t("errors.deleteFailed"));
         },
       },
     });
@@ -135,6 +133,8 @@ export const ChatMessage: FC<ChatMessageProps> = ({
         member={member}
         message={message}
         npcTypeColors={npcTypeColors}
+        onReply={onReply}
+        onMention={onMention}
       />
     );
   }
@@ -144,11 +144,33 @@ export const ChatMessage: FC<ChatMessageProps> = ({
     dispatchChatScrollToMessage(message.replyTo.messageId);
   };
 
+  const actionProps = {
+    canDelete: canDeleteMessage,
+    canEdit: canEditMessage,
+    canReply: canReplyMessage,
+    gameInterface,
+    heroName,
+    isDeleting,
+    isUpdating,
+    message,
+    onReply,
+    onDelete: () =>
+      deleteChatMessageMutation({
+        pathParams: { guildId: message.guildId, messageId: message.id },
+      }),
+    onEdit: () => {
+      setDraftMessage(message.message);
+      setIsEditing(true);
+    },
+  };
+
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
         <ChatPlayerMessageView
           all={all}
+          isContinuation={isContinuation}
+          actions=<ChatMessageActions {...actionProps} onMention={onMention} />
           appearance={appearance}
           body=<ChatMessageBody
             draftMessage={draftMessage}
@@ -194,29 +216,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({
         />
       </ContextMenuTrigger>
 
-      <ChatMessageContextMenu
-        canDelete={canDeleteMessage}
-        canEdit={canEditMessage}
-        canReply={canReplyMessage}
-        gameInterface={gameInterface}
-        heroName={heroName}
-        isDeleting={isDeleting}
-        isUpdating={isUpdating}
-        message={message}
-        onDelete={() => {
-          deleteChatMessageMutation({
-            pathParams: {
-              guildId: message.guildId,
-              messageId: message.id,
-            },
-          });
-        }}
-        onEdit={() => {
-          setDraftMessage(message.message);
-          setIsEditing(true);
-        }}
-        onReply={onReply}
-      />
+      <ChatMessageContextMenu {...actionProps} />
     </ContextMenu>
   );
 };

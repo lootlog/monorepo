@@ -148,3 +148,16 @@ describe("Ready Room projections", () => {
     });
   });
 });
+
+it("does not expose hidden target Organization IDs in private projections or updates", () => {
+  const room = { ...aggregate, guildIds: ["guild-1", "hidden-guild"] };
+  expect(
+    createReadyRoomProjection(room, "shared", ["guild-1"])?.guildIds,
+  ).toEqual(["guild-1"]);
+  const update = createReadyRoomClientUpdate(room, "shared", ["guild-1"]);
+  expect(update.type).toBe("UPSERT");
+  if (update.type === "UPSERT")
+    expect(update.projection.guildIds).toEqual(["guild-1"]);
+  expect(createReadyRoomClientUpdate(room, "shared", []).type).toBe("REMOVE");
+  expect(room.guildIds).toEqual(["guild-1", "hidden-guild"]);
+});

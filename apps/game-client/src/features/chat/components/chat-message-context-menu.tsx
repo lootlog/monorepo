@@ -1,3 +1,4 @@
+import { copyChatText } from "../chat-copy-text";
 import {
   ContextMenuContent,
   ContextMenuItem,
@@ -13,7 +14,8 @@ import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/c
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
-type ChatMessageContextMenuProps = {
+export type ChatMessageContextMenuProps = {
+  inline?: boolean;
   canDelete: boolean;
   canEdit: boolean;
   canReply: boolean;
@@ -30,6 +32,7 @@ type ChatMessageContextMenuProps = {
 };
 
 export const ChatMessageContextMenu: FC<ChatMessageContextMenuProps> = ({
+  inline = false,
   canDelete,
   canEdit,
   canReply,
@@ -48,8 +51,11 @@ export const ChatMessageContextMenu: FC<ChatMessageContextMenuProps> = ({
   const isNewInterface = gameInterface === "ni";
   const isMutationPending = isUpdating || isDeleting;
 
-  return (
-    <ContextMenuContent className="ll:w-48 ll:flex ll:flex-col">
+  const items = (
+    <>
+      <ContextMenuItem onClick={() => void copyChatText(message.message)}>
+        {t("messageActions.copy")}
+      </ContextMenuItem>
       {!isCurrentCharacter && (
         <ContextMenuItem
           onClick={() => startPrivateMessage(characterData.nick)}
@@ -114,6 +120,13 @@ export const ChatMessageContextMenu: FC<ChatMessageContextMenuProps> = ({
           {t("contextMenu.showProfile")}
         </ContextMenuItem>
       )}
+    </>
+  );
+  return inline ? (
+    items
+  ) : (
+    <ContextMenuContent className="ll:w-48 ll:flex ll:flex-col">
+      {items}
     </ContextMenuContent>
   );
 };

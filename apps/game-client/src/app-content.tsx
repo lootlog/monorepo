@@ -1,3 +1,4 @@
+import { useChatQuickActions } from "@/features/chat/hooks/use-chat-quick-actions";
 import { AddTimer } from "@/features/timers/add-timer";
 import { AnimationEffectsRootClass } from "@/components/animation-effects-root-class";
 import { BackendPreferencesWarning } from "@/features/backend-preferences-warning/backend-preferences-warning";
@@ -37,7 +38,8 @@ export const AppContent = () => {
   useGameAccountPreferencesSync();
   const mapPingHotkeyHandlers = useMapPings();
   useAirTags();
-  useHotkeys(mapPingHotkeyHandlers);
+  const { sendHelp } = useChatQuickActions();
+  useHotkeys({ ...mapPingHotkeyHandlers, onChatHelp: () => void sendHelp() });
   useTimerSettingsMutationsRegistry();
   usePartyGatheringSocket();
   usePartyReadyRoomSocket();

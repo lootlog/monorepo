@@ -81,6 +81,15 @@ describe("Ready Room revision CAS integration", () => {
       expect(
         (await Effect.runPromise(repository.create(original))).status,
       ).toBe("created");
+      expect(
+        await Effect.runPromise(repository.findActive([id], "Other")),
+      ).toEqual([]);
+      expect(
+        await Effect.runPromise(repository.findActive([`${id}-other`], "Test")),
+      ).toEqual([]);
+      expect(
+        await Effect.runPromise(repository.findActive([id, id], "Test")),
+      ).toEqual([original]);
       const current = await Effect.runPromise(repository.get(id));
       if (!current) throw new Error("Created room missing");
       expect(current).toEqual(original);
@@ -99,6 +108,9 @@ describe("Ready Room revision CAS integration", () => {
           : repository[operation](current, next);
       expect((await Effect.runPromise(mutate())).status).toBe("committed");
       expect(await Effect.runPromise(repository.get(id))).toEqual(next);
+      expect(
+        await Effect.runPromise(repository.findActive([id], "Test")),
+      ).toEqual(operation === "terminate" ? [] : [next]);
       expect((await Effect.runPromise(mutate())).status).toBe("conflict");
       expect(await Effect.runPromise(repository.get(id))).toEqual(next);
     });

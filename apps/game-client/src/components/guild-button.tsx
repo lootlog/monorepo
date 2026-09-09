@@ -32,6 +32,7 @@ export const GuildButton: FC<GuildButtonProps> = ({
         type="button"
         onClick={onClick}
         disabled={disabled}
+        aria-label={tooltipLabel}
         aria-pressed={isSelected}
         className={cn(
           "ll:relative ll:flex ll:items-center ll:justify-center ll:overflow-visible ll:rounded-sm ll:border-2",

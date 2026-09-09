@@ -7,6 +7,8 @@ import {
 } from "effect/unstable/httpapi";
 import { BearerSecurityMiddleware, HttpErrorResponse } from "../shared.js";
 import {
+  ActivePartyGatheringsQuery,
+  ActivePartyGatheringsResponse,
   PartyReadyRoomResponse,
   PartyReadyRoomParams,
   ApplyToPartyReadyRoomRequest,
@@ -24,6 +26,17 @@ import {
 export class PartyReadyRoomGroup extends HttpApiGroup.make(
   "party-ready-room",
 ).add(
+  HttpApiEndpoint.get(
+    "PartyReadyRoomControllerActive",
+    "/messaging/party-gathering/active",
+    {
+      error: [HttpErrorResponse.pipe(HttpApiSchema.status(401))],
+      query: ActivePartyGatheringsQuery,
+      success: ActivePartyGatheringsResponse,
+    },
+  )
+    .middleware(BearerSecurityMiddleware)
+    .annotate(OpenApi.Identifier, "PartyReadyRoomController_active"),
   HttpApiEndpoint.get(
     "PartyReadyRoomControllerList",
     "/messaging/party-gathering",

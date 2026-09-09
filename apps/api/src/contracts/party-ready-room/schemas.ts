@@ -1,7 +1,10 @@
 import { GameCharacter } from "../game-character.schema.js";
 /** Shared input and output schemas for the party-ready-room feature. */
 import * as Schema from "effect/Schema";
-import { PARTY_READY_ROOM_PARTY_PRESENCE_STATES } from "@lootlog/schema/party-ready-room";
+import {
+  PartyGatheringNpcSchema,
+  PARTY_READY_ROOM_PARTY_PRESENCE_STATES,
+} from "@lootlog/schema/party-ready-room";
 import {
   DateTimeString,
   FiniteNumber,
@@ -18,6 +21,7 @@ const ReadyRoomParticipant = Schema.Struct({
   updatedAt: DateTimeString,
 });
 const readyRoomFields = {
+  npc: Schema.optionalKey(PartyGatheringNpcSchema),
   schemaVersion: Schema.Literal(3),
   notificationId: Schema.String,
   organizerDiscordId: Schema.String,
@@ -207,3 +211,30 @@ export const PartyReadyRoomParams = Schema.Struct({
   notificationId: Schema.String,
 });
 export type PartyReadyRoomParams = typeof PartyReadyRoomParams.Type;
+
+export const ActivePartyGatheringsQuery = Schema.Struct({
+  world: NonEmptyString.check(Schema.isMaxLength(50)),
+});
+export const ActivePartyGatheringSummary = Schema.Struct({
+  notificationId: Schema.String,
+  organizerName: Schema.String,
+  guildIds: Schema.Array(Schema.String),
+  world: Schema.String,
+  description: Schema.optionalKey(Schema.String),
+  minLvl: Schema.optionalKey(FiniteNumber),
+  maxLvl: Schema.optionalKey(FiniteNumber),
+  npc: Schema.optionalKey(
+    Schema.Struct({
+      name: Schema.String,
+      location: Schema.String,
+      lvl: FiniteNumber,
+      x: Schema.optionalKey(FiniteNumber),
+      y: Schema.optionalKey(FiniteNumber),
+    }),
+  ),
+  createdAt: DateTimeString,
+  expiresAt: DateTimeString,
+}).annotate({ identifier: "ActivePartyGatheringSummary" });
+export const ActivePartyGatheringsResponse = Schema.Array(
+  ActivePartyGatheringSummary,
+);

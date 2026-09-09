@@ -1,3 +1,4 @@
+import { CHAT_INPUT_MAX_LENGTH } from "@/features/chat/chat.constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ChatMentionText } from "@/features/chat/components/chat-mention-text";
@@ -53,9 +54,10 @@ export const ChatMessageBody: FC<ChatMessageBodyProps> = ({
         onSubmit={onSubmit}
       >
         <Input
+          aria-label={t("messageActions.editLabel")}
           value={draftMessage}
           disabled={isUpdating}
-          maxLength={128}
+          maxLength={CHAT_INPUT_MAX_LENGTH}
           onChange={onDraftChange}
           className="ll:h-[var(--ll-chat-control-height)] ll:flex-1"
         />
@@ -80,7 +82,7 @@ export const ChatMessageBody: FC<ChatMessageBodyProps> = ({
   }
 
   return (
-    <span
+    <div
       className="ll:whitespace-pre-wrap ll:select-text"
       style={{ overflowWrap: "anywhere", wordBreak: "normal" }}
     >
@@ -107,6 +109,6 @@ export const ChatMessageBody: FC<ChatMessageBodyProps> = ({
           <ChatMentionText segments={mentionSegments} />
         </span>
       )}
-    </span>
+    </div>
   );
 };

@@ -283,3 +283,29 @@ describe("source visibility at delivery", () => {
     }
   });
 });
+
+test("NPC gathering updates retain source tier and level restrictions after signup", () => {
+  const update = (lvl: number): Event => ({
+    v: 1,
+    type: "party-ready-room.updated",
+    data: {
+      organizationId: "organization",
+      payload: { type: "UPSERT", projection: { npc: { type: "HERO", lvl } } },
+    },
+  });
+  expect(
+    canReadSourceEvent(
+      reader([role([Permission.LOOTLOG_CHAT_READ], 100, 200)]),
+      update(150),
+    ),
+  ).toBe(false);
+  const session = reader([
+    role(
+      [Permission.LOOTLOG_CHAT_READ, Permission.LOOTLOG_CHAT_HEROES_READ],
+      100,
+      200,
+    ),
+  ]);
+  expect(canReadSourceEvent(session, update(150))).toBe(true);
+  expect(canReadSourceEvent(session, update(250))).toBe(false);
+});

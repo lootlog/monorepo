@@ -1,3 +1,4 @@
+import type { PartyGatheringNpc } from "@lootlog/schema/party-ready-room";
 import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { randomUUID } from "node:crypto";
@@ -90,6 +91,7 @@ export interface MessagingEvents {
 
 export interface MessagingReadyRoom {
   readonly create: (input: {
+    readonly npc?: PartyGatheringNpc;
     readonly notificationId: string;
     readonly organizerDiscordId: string;
     readonly organizerCharacter: NonNullable<
@@ -232,6 +234,17 @@ export const makeMessagingDataLayer = (
                   organizerCharacter: data.character,
                   guildIds,
                   world: data.world,
+                  npc: data.npc
+                    ? {
+                        ...data.npc,
+                        type: getNpcTypeByWt(
+                          NpcType,
+                          data.npc.wt,
+                          data.npc.prof,
+                          data.npc.type,
+                        ),
+                      }
+                    : undefined,
                 });
               }
               yield* redis.set(
