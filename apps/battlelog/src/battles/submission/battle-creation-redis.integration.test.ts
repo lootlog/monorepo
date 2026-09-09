@@ -185,7 +185,8 @@ it("renews the real Lua lock beyond its TTL while concurrent callers create one 
   const blocker = await pool.connect();
   const creations: Promise<{ battleId: string }>[] = [];
   try {
-    await blocker.query("BEGIN; LOCK TABLE battles IN ACCESS EXCLUSIVE MODE");
+    // Allow the submission lookup while holding INSERTs past the Redis lock TTL.
+    await blocker.query("BEGIN; LOCK TABLE battles IN SHARE MODE");
     creations.push(
       runtime.runPromise(
         services.battles.createBattle({
@@ -231,7 +232,8 @@ it("does not renew or release another owner's real Redis lock after ownership ch
   const blocker = await pool.connect();
   let creation: Promise<unknown> | undefined;
   try {
-    await blocker.query("BEGIN; LOCK TABLE battles IN ACCESS EXCLUSIVE MODE");
+    // Allow the submission lookup while holding INSERTs past the Redis lock TTL.
+    await blocker.query("BEGIN; LOCK TABLE battles IN SHARE MODE");
     creation = runtime.runPromise(
       Effect.exit(services.battles.createBattle({ data, userId })),
     );

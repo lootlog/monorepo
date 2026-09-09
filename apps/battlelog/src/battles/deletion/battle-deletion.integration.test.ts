@@ -19,7 +19,7 @@ beforeAll(async () => {
   pool = new pg.Pool({ connectionString: postgres.getConnectionUri() });
   const migrations = new URL("../../../drizzle/", import.meta.url);
   for (const entry of (await readdir(migrations)).sort()) {
-    if (entry === "20260904192453_pending_object_deletions") continue;
+    if (entry > "20260726194145_plain_gorgon") continue;
     const migration = Bun.file(new URL(`${entry}/migration.sql`, migrations));
     if (await migration.exists()) await pool.query(await migration.text());
   }
@@ -47,9 +47,11 @@ beforeAll(async () => {
   const tracked = await pool.query(
     "SELECT name FROM drizzle.__drizzle_migrations ORDER BY name",
   );
-  expect(tracked.rows).toHaveLength(8);
-  expect(tracked.rows.at(-1)?.name).toBe(
-    "20260904192453_pending_object_deletions",
+  expect(tracked.rows).toEqual(
+    expect.arrayContaining([
+      { name: "20260904192453_pending_object_deletions" },
+      { name: "20260909045921_scoped_battle_submissions" },
+    ]),
   );
   // The adoption command must not mark new migrations as applied without SQL.
   expect(
@@ -185,4 +187,26 @@ it("rolls back database removal if durable cleanup cannot be recorded", async ()
       "ALTER TABLE battle_object_deletions DROP CONSTRAINT reject_cleanup",
     );
   }
+});
+
+it("migrates submission uniqueness to the owner and rejects duplicate retries for that owner", async () => {
+  await pool.query(
+    `UPDATE battles SET "submissionId" = 'shared-submission' WHERE id = 'one'`,
+  );
+  await pool.query(
+    `UPDATE battles SET "submissionId" = 'shared-submission' WHERE id = 'other'`,
+  );
+  await expect(
+    pool.query(
+      `UPDATE battles SET "submissionId" = 'shared-submission' WHERE id = 'two'`,
+    ),
+  ).rejects.toMatchObject({ code: "23505" });
+  expect(
+    (await pool.query('SELECT id, "submissionId" FROM battles ORDER BY id'))
+      .rows,
+  ).toEqual([
+    { id: "one", submissionId: "shared-submission" },
+    { id: "other", submissionId: "shared-submission" },
+    { id: "two", submissionId: null },
+  ]);
 });
