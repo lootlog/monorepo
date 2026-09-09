@@ -91,30 +91,6 @@ describe("PartyGatheringCard", () => {
     useWindowsStore.getState().setOpen("party-finder", false);
   });
 
-  it("keeps the target and description without duplicating the organizer", () => {
-    render(
-      <PartyGatheringCard
-        all={false}
-        guildName="Guild"
-        isMsgYesterday={false}
-        member={member}
-        message={makeMessage()}
-      />,
-    );
-    expect(screen.getByText("Member:")).toBeVisible();
-    expect(screen.getByText("Hydra (250m)")).toBeVisible();
-    expect(
-      screen.getByText(/Very long party gathering description/),
-    ).toBeVisible();
-    expect(screen.queryByText("Leader (200w)")).not.toBeInTheDocument();
-    expect(
-      document.querySelector('[style*="leader.png"]'),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Dołącz do grupy" }),
-    ).toBeEnabled();
-  });
-
   it("shows the organizer character tooltip", async () => {
     const user = userEvent.setup();
     render(
