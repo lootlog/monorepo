@@ -769,6 +769,33 @@ const normalizeServiceAuthentication = (
         : unauthorizedSchema,
     );
     normalized = removeResponseStatus({ ...normalized, parameters: [] }, "401");
+    if (service === "auth") {
+      assertErrorResponse(
+        normalized,
+        operationKey,
+        "400",
+        "IDP request error",
+        {
+          anyOf: [
+            {
+              type: "object",
+              properties: {
+                message: { type: "string" },
+                error: { type: "string" },
+                statusCode: { type: "number", enum: [400] },
+              },
+              required: ["message", "error", "statusCode"],
+            },
+            {
+              type: "object",
+              properties: { error: { type: "string" } },
+              required: ["error"],
+            },
+          ],
+        },
+      );
+      normalized = removeResponseStatus(normalized, "400");
+    }
   }
   return normalized;
 };

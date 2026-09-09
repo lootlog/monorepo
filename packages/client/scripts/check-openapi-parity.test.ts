@@ -53,6 +53,14 @@ test.each([
         responses: { ...responses, "401": {} },
       }),
     ).toThrow("service authentication error");
+    if (service === "auth") {
+      expect(() =>
+        normalizeAllowedChanges(service, `POST ${path}`, {
+          ...operation,
+          responses: { ...responses, "400": {} },
+        }),
+      ).toThrow("IDP request error");
+    }
   },
 );
 
