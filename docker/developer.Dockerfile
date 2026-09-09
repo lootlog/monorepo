@@ -27,6 +27,7 @@ RUN --mount=type=cache,id=bun,target=/root/.bun/install/cache,sharing=locked \
     bun install --frozen-lockfile
 
 COPY --from=pruner /pruned/full/ .
+COPY --from=pruner /usr/src/app/packages/tsconfig.public-api.json ./packages/tsconfig.public-api.json
 
 RUN bunx turbo run build --filter="${PACKAGE}"
 
