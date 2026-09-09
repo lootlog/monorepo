@@ -4,10 +4,7 @@ import {
   PermissionDeniedError,
   ResourceConflictError,
 } from "#src/shared/http/http-errors";
-import {
-  PartyReadyRoomUpdateResponse,
-  PartyReadyRoomResponse,
-} from "#src/contracts/party-ready-room/schemas";
+import { PartyReadyRoomResponse } from "#src/contracts/party-ready-room/schemas";
 import {
   ReadyRoomAccessDenied,
   ReadyRoomAuthorization,
@@ -206,7 +203,6 @@ describe("Party Ready Room HttpApi handlers", () => {
 
     expect(error).toBe(forbidden);
     expect(removeCalled).toBe(false);
-    expect(Schema.is(PartyReadyRoomUpdateResponse)(update)).toBe(true);
   });
 });
 

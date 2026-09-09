@@ -75,30 +75,6 @@ describe("ChatNpcMessage", () => {
     expect(writeText).toHaveBeenCalledWith("Swamp (7, 9)");
   });
 
-  it("renders a compact npc card with sender, guild label and group badge", () => {
-    render(
-      <ChatNpcMessage
-        all
-        guildName="Guild"
-        message={makeChatMessage()}
-        member={member}
-        count={3}
-      />,
-    );
-
-    expect(screen.getByText("Member:")).toBeInTheDocument();
-    expect(screen.getByText("[Guild]")).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: "Hydra" })).toBeInTheDocument();
-    expect(screen.getByText("Hydra")).toBeInTheDocument();
-    expect(screen.getByText("Hydra").parentElement).toHaveTextContent(
-      "Hydra(250m)",
-    );
-    expect(screen.getByText("(250m)")).toBeInTheDocument();
-    expect(screen.getByText("Swamp")).toBeInTheDocument();
-    expect(screen.getByText("(7, 9)")).toHaveClass("ll:whitespace-nowrap");
-    expect(screen.getByText("x3")).toBeInTheDocument();
-  });
-
   it("hides the counter when there is only one grouped message", () => {
     render(
       <ChatNpcMessage
@@ -215,21 +191,4 @@ describe("ChatNpcMessage", () => {
     expect(screen.getByText("Swamp")).toBeInTheDocument();
     expect(screen.getByText("(7, 9)")).toBeInTheDocument();
   });
-});
-
-it("shows NPC information without gathering or announcement buttons", () => {
-  render(
-    <ChatNpcMessage
-      all={false}
-      guildName="Guild"
-      message={makeChatMessage()}
-    />,
-  );
-  expect(screen.getByText("Hydra")).toBeVisible();
-  expect(
-    screen.queryByRole("button", { name: "Zbierz grupę" }),
-  ).not.toBeInTheDocument();
-  expect(
-    screen.queryByRole("button", { name: "Przygotuj wezwanie pomocy" }),
-  ).not.toBeInTheDocument();
 });

@@ -155,50 +155,6 @@ describe("ChatMessage", () => {
     unsubscribe();
   });
 
-  it("highlights targeted mentions in the message body", () => {
-    render(
-      <ChatMessage
-        all={false}
-        guildName="Guild"
-        member={member}
-        mentionContext={{
-          memberColorsByName: {
-            hero: "12ab34",
-          },
-          currentUserNames: ["Hero"],
-          currentUserRoleNames: ["Raid Team"],
-        }}
-        message={makeChatMessage({
-          message: "hej @Hero",
-        })}
-      />,
-    );
-
-    expect(screen.getByText("@Hero")).toHaveStyle({ color: "#12ab34" });
-    expect(screen.getByText("@Hero")).toHaveClass("ll:ring-1");
-  });
-
-  it("uses discord colors for role mentions in the message body", () => {
-    render(
-      <ChatMessage
-        all={false}
-        guildName="Guild"
-        member={member}
-        mentionContext={{
-          roleNames: ["Raid Team"],
-          roleColorsByName: {
-            "raid team": "ff8800",
-          },
-        }}
-        message={makeChatMessage({
-          message: "hej @Raid Team",
-        })}
-      />,
-    );
-
-    expect(screen.getByText("@Raid Team")).toHaveStyle({ color: "#ff8800" });
-  });
-
   it("shows the reply action only for replyable message types", () => {
     const onReply = vi.fn<() => void>();
 

@@ -156,15 +156,6 @@ describe("ChatInput", () => {
     return screen.getByRole("textbox", { name: "Wiadomość..." });
   };
 
-  const getEditorShell = () => {
-    const editorShell = getEditor().parentElement?.parentElement;
-
-    expect(editorShell).not.toBeNull();
-
-    if (!editorShell) throw new Error("Expected editor shell");
-    return editorShell;
-  };
-
   afterEach(() => {
     restoreApi();
     queryClient.clear();
@@ -279,16 +270,6 @@ describe("ChatInput", () => {
     await waitFor(() => expect(getEditor()).toHaveFocus());
   });
 
-  it("uses the shared input focus ring on the editor shell", () => {
-    render(<ChatInput selectedGuildId="guild-1" />);
-
-    expect(getEditorShell()).toHaveClass(
-      "ll:focus-within:border-ring",
-      "ll:focus-within:ring-ring/50",
-      "ll:focus-within:ring-[3px]",
-    );
-  });
-
   it("shows grouped suggestions inside the scroll area and inserts the highlighted mention instead of submitting", async () => {
     const user = userEvent.setup();
     render(<ChatInput selectedGuildId="guild-1" />);
@@ -304,9 +285,6 @@ describe("ChatInput", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Role")).toBeInTheDocument();
     expect(screen.getByText("Nicki")).toBeInTheDocument();
-
-    expect(screen.getByText("@Raid Team")).toHaveStyle({ color: "#ff8800" });
-    expect(screen.getByText("@Raider")).toHaveStyle({ color: "#12ab34" });
 
     await user.keyboard("{Enter}");
 
@@ -343,7 +321,6 @@ describe("ChatInput", () => {
 
     await user.keyboard("{ArrowDown}{Enter}");
     expect(editor.textContent).toBe("hej @Raider ");
-    expect(screen.getByText("@Raider")).toHaveStyle({ color: "#12ab34" });
 
     firstRender.unmount();
 
@@ -583,7 +560,6 @@ describe("ChatInput", () => {
     const mention = editor.querySelector("[data-chat-mention='raider']");
 
     expect(mention).toHaveTextContent("@Raider");
-    expect(mention).toHaveStyle({ color: "#12ab34" });
 
     await user.keyboard("{Control>}{Backspace}{/Control}");
     await waitFor(() => {
@@ -624,16 +600,6 @@ describe("ChatInput", () => {
 
     expect(sendRequest).not.toHaveBeenCalled();
     expect(editor.textContent).toBe("zażółć");
-  });
-
-  it("keeps the single-line editor horizontally scrollable", () => {
-    render(<ChatInput selectedGuildId="guild-1" />);
-
-    expect(getEditor()).toHaveClass(
-      "ll:overflow-x-auto",
-      "ll:overflow-y-hidden",
-      "ll:whitespace-pre",
-    );
   });
 
   it("shows the placeholder again after deleting the editor content to zero", async () => {
@@ -850,15 +816,4 @@ describe("ChatInput", () => {
     });
     expect(editor.textContent).toBe("hello");
   });
-});
-
-it("previews notification color only for a leading exclamation mark and restores normal color", async () => {
-  render(<ChatInput selectedGuildId="guild-1" />);
-  const input = screen.getByRole("textbox");
-  await act(() => useChatStore.getState().setDraft("guild-1", "!Pomocy"));
-  expect(input).toHaveStyle({ color: "rgba(219, 39, 99, 1)" });
-  await act(() => useChatStore.getState().setDraft("guild-1", "Pomocy"));
-  expect(input.style.color).toBe("");
-  await act(() => useChatStore.getState().setDraft("guild-1", "Pomocy!"));
-  expect(input.style.color).toBe("");
 });

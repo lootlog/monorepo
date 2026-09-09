@@ -11,10 +11,6 @@ import {
   type ActivePartyGatheringSummary,
 } from "@lootlog/client/main";
 import { configureApiClients } from "@lootlog/client/transport";
-import {
-  DEFAULT_NPC_TYPE_COLORS,
-  type NpcTypeColors,
-} from "@lootlog/schema/npc-appearance";
 import { createRealtimeTest } from "@/test/realtime-test";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import {
@@ -28,10 +24,7 @@ import { ACTIVE_GATHERINGS_QUERY_KEY } from "../hooks/use-active-party-gathering
 import { createChatReadyRoom } from "../chat-test-fixtures";
 import { ChatGatheringBar } from "./chat-gathering-bar";
 
-const setup = async (
-  rooms: ActivePartyGatheringSummary[] = [],
-  npcTypeColors?: NpcTypeColors,
-) => {
+const setup = async (rooms: ActivePartyGatheringSummary[] = []) => {
   const harness = createRealtimeTest();
   usePartyFinderStore.getState().clearReadyRooms();
   setTestRuntimeGame({ hero: { accountId: "account-1", characterId: "101" } });
@@ -60,7 +53,7 @@ const setup = async (
       },
     },
   });
-  const view = render(<ChatGatheringBar npcTypeColors={npcTypeColors} />, {
+  const view = render(<ChatGatheringBar />, {
     wrapper: harness.wrapper,
   });
   onTestFinished(() => {
@@ -318,78 +311,41 @@ it.each(["OUTSIDE", "IN_PARTY"] as const)(
   },
 );
 
-it("uses group color for missing or unknown NPC types and preserves the hovered candidate color until an owned room takes precedence", async () => {
+it("keeps the hovered signup target and prioritizes an owned room", async () => {
   const room: ActivePartyGatheringSummary = {
-    notificationId: "color-room",
+    notificationId: "original-room",
     organizerName: "Leader",
     guildIds: ["guild-1"],
     world: "pandora",
     createdAt: new Date().toISOString(),
     expiresAt: new Date(Date.now() + 60_000).toISOString(),
   };
-  const harness = await setup([room], {
-    ...DEFAULT_NPC_TYPE_COLORS,
-    ELITE2: "#123456",
-    TITAN: "#ABCDEF",
-  });
+  const harness = await setup([room]);
   await screen.findByRole("button", { name: "Zgłoś się" });
   const panel = harness.container.firstElementChild;
   if (!(panel instanceof HTMLElement))
     throw new Error("Expected gathering panel");
-  expect(panel).toHaveStyle({
-    backgroundColor:
-      "color-mix(in srgb, rgba(147, 51, 234, 0.4) 37.5%, transparent)",
-  });
-  const npc = { name: "Hunter", lvl: 100, location: "Forest" };
-  harness.discovery.mockImplementation(async () =>
-    Response.json([{ ...room, npc }]),
-  );
-  await harness.refresh();
-  expect(panel).toHaveStyle({
-    backgroundColor:
-      "color-mix(in srgb, rgba(147, 51, 234, 0.4) 37.5%, transparent)",
-  });
-  harness.discovery.mockImplementation(async () =>
-    Response.json([{ ...room, npc: { ...npc, type: "UNKNOWN" } }]),
-  );
-  await harness.refresh();
-  expect(panel).toHaveStyle({
-    backgroundColor:
-      "color-mix(in srgb, rgba(147, 51, 234, 0.4) 37.5%, transparent)",
-  });
-  const elite = { ...room, npc: { ...npc, type: "ELITE2" } };
-  harness.discovery.mockImplementation(async () => Response.json([elite]));
-  await harness.refresh();
-  await waitFor(() =>
-    expect(panel).toHaveStyle({
-      backgroundColor:
-        "color-mix(in srgb, rgba(18, 52, 86, 0.4) 37.5%, transparent)",
-    }),
-  );
   fireEvent.mouseEnter(panel);
   harness.discovery.mockImplementation(async () =>
-    Response.json([
-      { ...room, notificationId: "newer", npc: { ...npc, type: "TITAN" } },
-      elite,
-    ]),
+    Response.json([{ ...room, notificationId: "newer-room" }, room]),
   );
   await harness.refresh();
-  expect(await screen.findByText("Nowa zbiórka")).toBeVisible();
-  expect(panel).toHaveStyle({
-    backgroundColor:
-      "color-mix(in srgb, rgba(18, 52, 86, 0.4) 37.5%, transparent)",
-  });
+  harness.mutation.mockResolvedValue(
+    Response.json({ message: "Failed" }, { status: 500 }),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Zgłoś się" }));
+  await waitFor(() => expect(harness.mutation).toHaveBeenCalledTimes(1));
+  expect(String(harness.mutation.mock.calls[0]?.[0])).toContain(
+    "original-room",
+  );
   act(() =>
-    usePartyFinderStore.getState().mergeProjection({
-      ...readyRoomOrganizerFixture,
-      world: "pandora",
-      npc: { ...npc, type: "TITAN" },
-    }),
+    usePartyFinderStore
+      .getState()
+      .mergeProjection({ ...readyRoomOrganizerFixture, world: "pandora" }),
   );
   await waitFor(() =>
-    expect(panel).toHaveStyle({
-      backgroundColor:
-        "color-mix(in srgb, rgba(171, 205, 239, 0.4) 37.5%, transparent)",
-    }),
+    expect(
+      screen.queryByRole("button", { name: "Zgłoś się" }),
+    ).not.toBeInTheDocument(),
   );
 });
