@@ -1,17 +1,17 @@
 ---
-title: Błędy i limity
-description: Rozróżniaj brak dostępu, limit żądań i niedostępność usługi.
+title: Errors and limits
+description: Distinguish access denials, rate limits, and service outages.
 ---
 
-| Status | Działanie integracji                                                                         |
-| ------ | -------------------------------------------------------------------------------------------- |
-| `400`  | Popraw dane według schematu operacji                                                         |
-| `401`  | Sprawdź sekret, ważność i środowisko; nie ponawiaj automatycznie                             |
-| `403`  | Sprawdź zakres klucza i aktualne uprawnienia użytkownika                                     |
-| `404`  | Zasób nie istnieje lub nie jest widoczny; nie traktuj tego jako potwierdzenia jego istnienia |
-| `429`  | Zaczekaj zgodnie z `Retry-After`, zanim ponowisz żądanie                                     |
-| `5xx`  | Usługa jest niedostępna; pokaż stan błędu i ostrożnie ponów odczyt                           |
+| Status | Integration action                                                                              |
+| ------ | ----------------------------------------------------------------------------------------------- |
+| `400`  | Correct the input to match the operation's schema                                               |
+| `401`  | Check the secret, expiration, and environment; do not retry automatically                       |
+| `403`  | Check the key's scope and the user's current permissions                                        |
+| `404`  | The resource does not exist or is not visible; do not treat this as confirmation that it exists |
+| `429`  | Wait for the duration specified by `Retry-After` before retrying                                |
+| `5xx`  | The service is unavailable; show an error state and retry reads cautiously                      |
 
-Limit początkowy wynosi 120 żądań na minutę na klucz. Nadal obowiązują limity konkretnych operacji. Nie obchodź ich przez tworzenie kolejnych kluczy.
+The initial limit is 120 requests per minute per key. Operation-specific limits still apply. Do not bypass them by creating additional keys.
 
-Nie zamieniaj błędu pobierania danych na pustą listę. Zachowaj ostatni odczyt jako nieaktualny albo pokaż brak danych. Dla zapisów utrata odpowiedzi nie dowodzi, że operacja się nie powiodła.
+Do not turn a failed data fetch into an empty list. Keep the last result marked as stale, or show that data is unavailable. For writes, losing the response does not prove that the operation failed.

@@ -5,7 +5,8 @@ import {
   createRootRoute,
 } from "@tanstack/react-router";
 import { RootProvider } from "fumadocs-ui/provider/tanstack";
-import { polishTranslations, portalText } from "~/lib/translations";
+import { portalText } from "~/lib/translations";
+import { PortalNav } from "~/components/portal-nav";
 import appCss from "~/styles/app.css?url";
 
 export const Route = createRootRoute({
@@ -26,16 +27,19 @@ export const Route = createRootRoute({
 
 function RootComponent() {
   return (
-    <html lang="pl" className="dark">
+    <html lang="en" className="dark">
       <head>
         <HeadContent />
       </head>
       <body className="min-h-screen bg-background text-foreground antialiased">
         <RootProvider
           theme={{ enabled: false }}
-          i18n={{ locale: "pl", translations: polishTranslations }}
+          search={{ options: { api: `${import.meta.env.BASE_URL}api/search` } }}
         >
-          <Outlet />
+          <PortalNav />
+          <div id="portal-content" tabIndex={-1} className="outline-none">
+            <Outlet />
+          </div>
         </RootProvider>
         <Scripts />
       </body>

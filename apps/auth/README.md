@@ -18,3 +18,15 @@ to verify migrations against disposable PostgreSQL.
 
 TypeScript source is edited directly. Better Auth CLI generation and database
 introspection must not overwrite the application's schema.
+
+## Local developer portal
+
+The local portal at `http://localhost/developer/keys` requires
+`API_KEYS_ENABLED=true` in `apps/auth/.env`. Set `API_URL=http://localhost:4003`
+so auth can check the selected Organizations against the local API. Reload the
+running auth service after changing these values. The application default remains
+disabled; other environments must explicitly enable API keys during rollout.
+
+Local Traefik must forward `X-Api-Key` to auth and copy the returned
+`X-Auth-Api-Key-Access` alongside the user identity. Strip client-supplied identity
+and access headers before forward authentication.

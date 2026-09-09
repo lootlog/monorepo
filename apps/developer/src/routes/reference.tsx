@@ -1,37 +1,38 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ApiReferenceReact } from "@scalar/api-reference-react";
-import "@scalar/api-reference-react/style.css";
-import { PortalNav } from "~/components/portal-nav";
-import { getPortalEnvironment } from "~/lib/environment";
+import {
+  ApiReferenceReact,
+  type AnyApiReferenceConfiguration,
+} from "@scalar/api-reference-react";
 import { portalText as t } from "~/lib/translations";
+
+// Scalar reapplies navigation when configuration changes, including on hash renders.
+const configuration = {
+  persistAuth: false,
+  proxyUrl: "",
+  theme: "none",
+  darkMode: true,
+  hideDarkModeToggle: true,
+  hideClientButton: true,
+  showDeveloperTools: "never",
+  mcp: { disabled: true },
+  sources: (["main", "activity", "battlelog", "search"] as const).map(
+    (service) => ({
+      title: t[service],
+      url: `${import.meta.env.BASE_URL}openapi/${service}.json`,
+      slug: service,
+      agent: { disabled: true },
+    }),
+  ),
+} satisfies AnyApiReferenceConfiguration;
+
 export const Route = createFileRoute("/reference")({
   ssr: false,
   component: ReferencePage,
 });
 function ReferencePage() {
-  const environment = getPortalEnvironment(location.hostname);
   return (
-    <>
-      <div className="portal-page">
-        <PortalNav />
-        <h1>{t.reference}</h1>
-        <p>{environment.production ? t.production : t.dev}</p>
-      </div>
-      <ApiReferenceReact
-        configuration={{
-          persistAuth: false,
-          proxyUrl: "",
-          theme: "default",
-          darkMode: true,
-          sources: (["main", "activity", "battlelog", "search"] as const).map(
-            (service) => ({
-              title: t[service],
-              url: `/openapi/${service}.json`,
-              slug: service,
-            }),
-          ),
-        }}
-      />
-    </>
+    <div className="reference-page">
+      <ApiReferenceReact configuration={configuration} />
+    </div>
   );
 }

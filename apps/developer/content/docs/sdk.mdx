@@ -1,11 +1,11 @@
 ---
-title: SDK TypeScript
-description: Klient HTTP i narzędzia realtime dla aplikacji serwerowych.
+title: TypeScript SDK
+description: An HTTP client and realtime tools for server applications.
 ---
 
 ## HTTP
 
-Pakiet `@lootlog/sdk` zawiera JavaScript i deklaracje TypeScript, bez zależności od Reacta. Nazwy operacji oraz typy są generowane z tego samego OpenAPI, które widzisz w Scalar. Pakiet jest przygotowany do publikacji; przed publikacją korzystaj z niego w workspace lub ze spakowanego archiwum.
+The `@lootlog/sdk` package contains JavaScript and TypeScript declarations with no React dependency. Operation names and types are generated from the same OpenAPI specifications shown in Scalar. The package is ready for publication; until it is published, use it within the workspace or from a packed archive.
 
 ```ts
 import { configureLootlogApi } from "@lootlog/sdk";
@@ -22,12 +22,12 @@ try {
 }
 ```
 
-Importy usług: `@lootlog/sdk/main`, `@lootlog/sdk/activity`, `@lootlog/sdk/battlelog` i `@lootlog/sdk/search`. Przekazuj `AbortSignal` w opcjach żądania, aby anulować odczyt. SDK nie ponawia automatycznie zapisów.
+Service imports are `@lootlog/sdk/main`, `@lootlog/sdk/activity`, `@lootlog/sdk/battlelog`, and `@lootlog/sdk/search`. Pass an `AbortSignal` in request options to cancel a read. The SDK does not automatically retry writes.
 
 ## Realtime
 
-`@lootlog/sdk/realtime` udostępnia `RealtimeClient`. Użyj serwerowej fabryki `webSocketFactory`, która dołącza nagłówek `X-Api-Key`, i adresu gateway odpowiedniego środowiska. Nie umieszczaj klucza w URL. [Gotowy przykład dla Bun](/docs/realtime#przykład-w-bun) pokazuje konfigurację nagłówka, sesji i subskrypcji.
+`@lootlog/sdk/realtime` provides `RealtimeClient`. Use a server-side `webSocketFactory` that adds the `X-Api-Key` header and the gateway URL for the correct environment. Do not put the key in the URL. The [complete Bun example](/docs/realtime#bun-example) shows how to configure the header, session, and subscription.
 
-## Userscripty
+## Userscripts
 
-Userscript nie potrzebuje tego SDK. Wywołuje bezpośrednio `window.lootlogGameClientApi`. Opcjonalny `@lootlog/game-client-api` dostarcza wyłącznie typy do edytora.
+A userscript does not need this SDK. It calls `window.lootlogGameClientApi` directly. The optional `@lootlog/game-client-api` package provides editor types only.

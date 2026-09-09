@@ -1,12 +1,15 @@
 {
   "title": "Lootlog Developers",
   "pages": [
+    "---Getting started---",
     "index",
-    "game-client",
-    "http",
     "keys",
-    "realtime",
+    "http",
+    "---Integrations---",
     "sdk",
+    "realtime",
+    "game-client",
+    "---Resources---",
     "errors",
     "changelog"
   ]

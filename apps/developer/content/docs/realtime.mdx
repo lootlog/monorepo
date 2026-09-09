@@ -1,17 +1,17 @@
 ---
-title: Realtime dla integracji serwerowych
-description: Odbieraj zmiany przez WebSocket, a zapisy wykonuj przez HTTP.
+title: Realtime for server integrations
+description: Receive changes over WebSocket and perform writes over HTTP.
 ---
 
-## Uwierzytelnianie
+## Authentication
 
-Integracja serwerowa przekazuje `X-Api-Key` w nagłówku połączenia WebSocket. Natywne WebSocket w przeglądarce nie pozwala ustawiać tego nagłówka. Userscript korzysta z [API game-clienta](/docs/game-client), bez osobnego połączenia z kluczem.
+Server integrations send `X-Api-Key` in the WebSocket connection header. The browser's native WebSocket does not allow this header to be set. Userscripts use the [game client API](/docs/game-client), without a separate connection using a key.
 
-Wybieraj gateway z tego samego środowiska co klucz: `dev-gateway.lootlog.pl` albo `gateway.lootlog.pl`. SDK udostępnia klienta istniejącego protokołu realtime i możliwość podłączenia serwerowej implementacji WebSocket.
+Choose a gateway in the same environment as the key: `dev-gateway.lootlog.pl` or `gateway.lootlog.pl`. The SDK provides a client for the existing realtime protocol and supports a server-side WebSocket implementation.
 
-## Przykład w Bun
+## Bun example
 
-Poniższy przykład uruchom po stronie serwera w Bun. W projekcie TypeScript użyj typów Bun oraz biblioteki `ES2022` lub `ESNext` bez `DOM`, aby konstruktor WebSocket obsługiwał opcje serwerowe. Ustaw `LOOTLOG_API_KEY` i `LOOTLOG_ORGANIZATION_ID` dla środowiska dev. Fabryka WebSocket dodaje nagłówek klucza; nie przekazuj go w URL.
+Run this example on a server using Bun. In a TypeScript project, use Bun types and the `ES2022` or `ESNext` library without `DOM` so the WebSocket constructor accepts server options. Set `LOOTLOG_API_KEY` and `LOOTLOG_ORGANIZATION_ID` for the development environment. The WebSocket factory adds the key header; do not pass it in the URL.
 
 ```ts
 import {
@@ -39,7 +39,7 @@ const stopEvents = client.subscribe((event) => {
 });
 const stopState = client.subscribeState((state) => console.log(state));
 
-// Przed połączeniem zapamiętaj sesję i subskrypcję do odtworzenia.
+// Store the session and subscription before connecting so they can be restored.
 await client.join({});
 await client.subscribeScope({
   topic: "organization.timers",
@@ -55,16 +55,16 @@ process.once("SIGINT", () => {
 });
 ```
 
-Stan `ready` oznacza zakończone dołączenie do sesji. SDK odtwarza zapamiętaną sesję i subskrypcje po reconnect. Przykład wypisuje tylko zdarzenia `timer.created`; pierwszą listę timerów pobierz osobno przez HTTP. W działającej integracji ogranicz czas lub liczbę ponowień po trwałym błędzie uwierzytelnienia i powiadom operatora.
+The `ready` state means the client has joined the session. The SDK restores the stored session and subscriptions after reconnecting. This example logs only `timer.created` events; fetch the initial timer list separately over HTTP. In a running integration, limit retry duration or attempts after a persistent authentication error and notify the operator.
 
-## Dozwolone działania
+## Allowed actions
 
-Integracja odbiera dostępne zdarzenia oraz korzysta z dozwolonych subskrypcji i zapytań. Jej zakres jest ograniczony Organizacjami klucza i aktualnymi uprawnieniami użytkownika. Zapisy, na przykład dodanie timera, wykonuj przez HTTP.
+An integration receives available events and uses permitted subscriptions and queries. Its scope is limited by the key's Organizations and the user's current permissions. Perform writes, such as adding a timer, over HTTP.
 
-Połączenie integracji nie oznacza obecności postaci w grze. Obecność i obserwacje gry publikuje game-client.
+An integration connection does not represent a character's presence in the game. The game client publishes presence and game observations.
 
-## Rozłączenie
+## Disconnection
 
-Po utracie połączenia oznacz dane jako nieaktualne. SDK odtwarza subskrypcje po ponownym połączeniu; pobierz wtedy aktualny stan przez HTTP. Nie zakładaj, że otrzymasz wszystkie zdarzenia z czasu przerwy.
+Mark data as stale when the connection is lost. The SDK restores subscriptions after reconnecting; fetch the current state over HTTP at that point. Do not assume you will receive every event from the outage.
 
-Autoryzacja wymaga odnowienia najpóźniej co 60 sekund. Usunięcie klucza, utrata dostępu lub brak możliwości odnowienia blokuje dalszą komunikację. Nie ponawiaj bez końca połączenia odrzuconego z powodu nieważnego klucza.
+Authorization must be renewed at least every 60 seconds. Deleting the key, losing access, or failing to renew blocks further communication. Do not retry indefinitely when a connection is rejected because of an invalid key.
