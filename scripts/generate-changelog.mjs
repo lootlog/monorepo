@@ -13,13 +13,13 @@ const catalogPath = path.join(
   "apps/docs/generated/changelog-releases.json",
 );
 const shaPattern = /^[0-9a-f]{40}$/u;
-const slugPattern = /^\d{4}-\d{2}-\d{2}$/u;
+const calendarDateSchema = z.iso.date();
 const releaseDefinitionSchema = z.object({
   base: z.string().regex(shaPattern),
   description: z.string(),
   head: z.string().regex(shaPattern),
-  publishedAt: z.string(),
-  slug: z.string().regex(slugPattern),
+  publishedAt: calendarDateSchema,
+  slug: calendarDateSchema,
   title: z.string(),
 });
 const releaseSchema = releaseDefinitionSchema.extend({
@@ -41,11 +41,9 @@ const previousCatalog = await readFile(catalogPath, "utf8")
   });
 
 for (const release of previousCatalog) {
-  if (slugPattern.test(release.slug)) {
-    await rm(path.join(outputDirectory, `${release.slug}.mdx`), {
-      force: true,
-    });
-  }
+  await rm(path.join(outputDirectory, `${release.slug}.mdx`), {
+    force: true,
+  });
 }
 
 const releases = [];

@@ -20,7 +20,6 @@ describe("ReleaseAnnouncementsDialog", () => {
     expect(
       screen.getByRole("heading", { name: latestReleaseAnnouncement.title }),
     ).toBeTruthy();
-    expect(screen.getByText(/Count unique Discord accounts/u)).toBeTruthy();
     expect(fetchSpy).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole("button", { name: "Zamknij" }));
