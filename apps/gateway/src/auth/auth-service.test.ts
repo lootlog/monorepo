@@ -76,3 +76,49 @@ describe("AuthService websocket upgrade boundary", () => {
     },
   );
 });
+
+test("API key proxy assertions require renewal configuration and cannot fall back to session", () => {
+  const headers = {
+    "x-auth-user-id": "u",
+    "x-auth-discord-id": "d",
+    "x-api-key": "invalid",
+  };
+  expect(
+    makeGatewayAuth(config).readIdentity(
+      new Request("https://gateway.example/ws", { headers }),
+    ),
+  ).toBeNull();
+  for (const assertion of [
+    "",
+    "{",
+    JSON.stringify({
+      keyId: "k",
+      organizationIds: ["a"],
+      mode: "read",
+      personalData: false,
+      expiresAt: null,
+    }),
+  ]) {
+    expect(
+      makeGatewayAuth(config).readIdentity(
+        new Request("https://gateway.example/ws", {
+          headers: { ...headers, "x-auth-api-key-access": assertion },
+        }),
+      ),
+    ).toBeNull();
+  }
+});
+
+test("normal sessions accept the empty grant header emitted to clear proxy assertions", () => {
+  expect(
+    makeGatewayAuth(config).readIdentity(
+      new Request("https://gateway.example/ws", {
+        headers: {
+          "x-auth-user-id": "u",
+          "x-auth-discord-id": "d",
+          "x-auth-api-key-access": "",
+        },
+      }),
+    ),
+  ).toEqual({ userId: "u", discordId: "d" });
+});

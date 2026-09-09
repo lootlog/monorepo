@@ -1,4 +1,5 @@
 import { visibleReservationGuildIds } from "#src/reservations/reservation-visibility-query";
+import { apiKeyOrganizationFilter } from "#src/runtime/auth/organization-scope";
 import { and, asc, eq, gt, inArray, lt } from "drizzle-orm";
 import { Clock, Effect, Layer } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -33,19 +34,31 @@ export const makeReservationReadDataLayer = (
         guildIds: ReadonlyArray<string>,
         condition: Exclude<ReturnType<typeof and>, undefined>,
       ) =>
-        database
-          .select({ reservation: reservationTable, guild: guildTable })
-          .from(reservationTable)
-          .innerJoin(guildTable, eq(guildTable.id, reservationTable.guildId))
-          .where(
-            and(inArray(reservationTable.guildId, [...guildIds]), condition),
-          )
-          .orderBy(asc(reservationTable.startsAt), asc(reservationTable.id))
-          .pipe(
-            Effect.map((rows) =>
-              rows.map(({ reservation, guild }) => ({ ...reservation, guild })),
-            ),
+        Effect.gen(function* () {
+          const keyScope = yield* apiKeyOrganizationFilter(
+            reservationTable.guildId,
           );
+          return yield* database
+            .select({ reservation: reservationTable, guild: guildTable })
+            .from(reservationTable)
+            .innerJoin(guildTable, eq(guildTable.id, reservationTable.guildId))
+            .where(
+              and(
+                keyScope,
+                inArray(reservationTable.guildId, [...guildIds]),
+                condition,
+              ),
+            )
+            .orderBy(asc(reservationTable.startsAt), asc(reservationTable.id))
+            .pipe(
+              Effect.map((rows) =>
+                rows.map(({ reservation, guild }) => ({
+                  ...reservation,
+                  guild,
+                })),
+              ),
+            );
+        });
       const requireSpot = (spotId: string) =>
         Effect.flatMap(catalog.getSpots, (spots) => {
           const spot = spots.find((candidate) => candidate.id === spotId);

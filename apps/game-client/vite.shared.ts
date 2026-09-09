@@ -1,6 +1,5 @@
 import { loadEnv, type UserConfig } from "vite";
-import react, { reactCompilerPreset } from "@vitejs/plugin-react";
-import babel from "@rolldown/plugin-babel";
+import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "node:path";
 import gameClientPackage from "./package.json";
@@ -57,10 +56,6 @@ export function gameClientViteConfig(mode: string): UserConfig {
       },
       target: "es2020",
     },
-    plugins: [
-      react(),
-      babel({ presets: [reactCompilerPreset()] }),
-      tailwindcss(),
-    ],
+    plugins: [react({ compiler: true }), tailwindcss()],
   };
 }

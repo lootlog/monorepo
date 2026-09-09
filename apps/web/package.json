@@ -64,7 +64,6 @@
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
-    "@rolldown/plugin-babel": "^0.2.3",
     "@tailwindcss/postcss": "catalog:",
     "@tanstack/router-plugin": "^1.168.35",
     "@testing-library/react": "^16.3.3",
@@ -73,8 +72,8 @@
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "catalog:",
-    "babel-plugin-react-compiler": "^1.0.0",
     "happy-dom": "^20.11.12",
+    "oxc-transform-react": "^0.149.0",
     "typescript": "catalog:",
     "vite": "catalog:",
     "vitest": "catalog:"

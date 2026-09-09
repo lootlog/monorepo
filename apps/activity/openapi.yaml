@@ -61,6 +61,39 @@ paths:
                     example:
                       database:
                         status: up
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
         "503":
           description: |-
             Service is unhealthy
@@ -200,6 +233,39 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PaginatedActivitiesResponseDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
         "503":
           description: ""
           content:
@@ -251,6 +317,39 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ActorNameSuggestionsResponseDto_Output"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
         "503":
           description: ""
           content:
@@ -302,6 +401,39 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WorldSuggestionsResponseDto_Output"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
         "503":
           description: ""
           content:
@@ -353,6 +485,39 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ClanNameSuggestionsResponseDto_Output"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
         "503":
           description: ""
           content:
@@ -457,6 +622,39 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PaginatedActivitiesResponseDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
         "503":
           description: ""
           content:
@@ -496,6 +694,39 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/MemberActivityStatsResponseDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
         "503":
           description: ""
           content:
@@ -538,8 +769,41 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ActivityResponseDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
         "404":
           description: Activity not found
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
         "503":
           description: ""
           content:
@@ -581,8 +845,41 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DeleteActivityResponseDto_Output"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
         "404":
           description: Activity not found
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
         "503":
           description: ""
           content:
@@ -630,17 +927,46 @@ paths:
           content:
             application/json:
               schema:
+                anyOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                      statusCode:
+                        type: number
+                        enum:
+                          - 401
+                    required:
+                      - message
+                      - statusCode
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
                 type: object
                 properties:
                   message:
                     type: string
-                  statusCode:
-                    type: number
-                    enum:
-                      - 401
                 required:
                   - message
-                  - statusCode
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
       description: An inclusive range of at most 112 Warsaw calendar dates. Only the latest 16 weeks of confirmed online intervals are retained.
       summary: Get the signed-in user's confirmed game online time by Warsaw calendar day
 components:

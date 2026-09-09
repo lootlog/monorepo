@@ -1,3 +1,4 @@
+import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
 import {
   createGuildFixture,
   createMemberFixture,
@@ -177,6 +178,7 @@ describe("domain errors across the HTTP boundary", () => {
           ]).pipe(
             Effect.provide(NotificationsHandlers),
             Effect.provide(bearer),
+            Effect.provide(apiKeyEndpointPolicyLayer("main")),
           );
           const response =
             yield* client.notifications.NotificationsUserControllerTriggerUserTargetTest(
@@ -218,6 +220,7 @@ describe("domain errors across the HTTP boundary", () => {
           const client = yield* HttpApiTest.groups(LootlogApi, ["events"]).pipe(
             Effect.provide(EventsHandlers),
             Effect.provide(bearer),
+            Effect.provide(apiKeyEndpointPolicyLayer("main")),
           );
           const response =
             yield* client.events.EventsMonitoringControllerCloseRespawnWindow({
@@ -291,6 +294,7 @@ describe("domain errors across the HTTP boundary", () => {
               TimersHandlers.pipe(HttpRouter.provideRequest(services)),
             ),
             Effect.provide(bearer),
+            Effect.provide(apiKeyEndpointPolicyLayer("main")),
           );
           const response =
             yield* client.timers.TimersControllerRestoreTimerFromHistory({

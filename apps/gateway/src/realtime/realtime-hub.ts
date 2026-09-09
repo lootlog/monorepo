@@ -1,3 +1,4 @@
+import { canReadApiKeyEvent } from "#src/realtime/api-key-event-visibility";
 import type { LootVisibilityNpc } from "@lootlog/domain/loot-visibility";
 import {
   chatMessagePermissions,
@@ -25,7 +26,11 @@ import type {
   FederatedRealtimeMessage,
   RedisGatewayStore,
 } from "#src/platform/redis-store";
-import type { GatewaySocket, SessionData } from "#src/realtime/session";
+import {
+  hasValidApiKeyLease,
+  type GatewaySocket,
+  type SessionData,
+} from "#src/realtime/session";
 import { canReadPreciseLocation } from "#src/realtime/subscription-policy";
 
 type Scope = typeof SubscriptionScope.Type;
@@ -246,6 +251,7 @@ export class RealtimeHub {
   }
 
   sendEvent(socket: GatewaySocket, event: Event): boolean {
+    if (!canReadApiKeyEvent(socket.data, event)) return false;
     return this.sendFrame(socket, event);
   }
 
@@ -459,6 +465,23 @@ export class RealtimeHub {
 
     for (const socket of this.candidates(message)) {
       if (!this.matchesRecipient(socket, message)) continue;
+      if (socket.data.apiKeyAccess && frame.type === "map-ping.received") {
+        const scopes = message.scopes ?? (message.scope ? [message.scope] : []);
+        if (
+          !scopes.length ||
+          !scopes.every(
+            (scope) =>
+              scope.organizationId !== undefined &&
+              socket.data.apiKeyAccess?.organizationIds.includes(
+                scope.organizationId,
+              ) &&
+              socket.data.guilds.some(
+                ({ guild }) => guild.id === scope.organizationId,
+              ),
+          )
+        )
+          continue;
+      }
       if (!this.matchesPresenceAudience(socket, message)) continue;
       if (!canReadSourceEvent(socket.data, frame, message.sourceNpcs)) continue;
       if (frame.type === "chat.created") {
@@ -595,6 +618,10 @@ export class RealtimeHub {
   }
 
   private send(socket: GatewaySocket, data: string | Uint8Array): boolean {
+    if (!hasValidApiKeyLease(socket.data)) {
+      socket.close(1008, "API key authorization expired");
+      return false;
+    }
     if (socket.getBufferedAmount() > this.config.maxBackpressureBytes) {
       socket.data.backpressureStrikes += 1;
       if (

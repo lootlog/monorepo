@@ -6,7 +6,7 @@ import type {
 import { Permission } from "@lootlog/schema/permissions";
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { bootstrapPublicApi } from "../index";
-import type { ApiEventMap } from "../types";
+import type { ApiEventMap } from "@lootlog/game-client-api";
 import { useGlobalStore } from "@/store/global.store";
 import { getSocket } from "@/lib/socket";
 import {

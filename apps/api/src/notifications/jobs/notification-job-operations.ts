@@ -1,3 +1,4 @@
+import { notificationApiKeyJobFilter } from "../notification-api-key-scope.js";
 import { selectNotificationJobsWithRelations } from "./notification-job-query.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, asc, desc, eq, inArray } from "drizzle-orm";
@@ -56,47 +57,50 @@ export const makeNotificationJobOperations = (
     ownerId: string,
     statuses: readonly NotificationJobStatusValue[],
     history: boolean,
-  ) => {
-    const query = selectNotificationJobsWithRelations(database)
-      .where(
-        and(
-          eq(notificationJobTable.ownerType, ownerType),
-          eq(notificationJobTable.ownerId, ownerId),
-          inArray(notificationJobTable.status, [...statuses]),
+  ) =>
+    Effect.gen(function* () {
+      const scopeFilter = yield* notificationApiKeyJobFilter(database);
+      const query = selectNotificationJobsWithRelations(database)
+        .where(
+          and(
+            scopeFilter,
+            eq(notificationJobTable.ownerType, ownerType),
+            eq(notificationJobTable.ownerId, ownerId),
+            inArray(notificationJobTable.status, [...statuses]),
+          ),
+        )
+        .orderBy(
+          history
+            ? desc(notificationJobTable.updatedAt)
+            : asc(notificationJobTable.scheduledFor),
+        );
+      return yield* (
+        history ? query.limit(NOTIFICATIONS_HISTORY_RESPONSE_LIMIT) : query
+      ).pipe(
+        Effect.mapError(databaseFailure("notifications.jobs.list")),
+        Effect.map((rows) =>
+          rows.map(({ job, rule, target }) => ({
+            ...job,
+            payloadSnapshot: Schema.decodeUnknownSync(
+              NotificationJobPayloadSnapshotResponse,
+            )(job.payloadSnapshot),
+            rule: {
+              ...rule,
+              filters:
+                rule.filters === null
+                  ? null
+                  : Schema.decodeUnknownSync(NotificationFiltersResponse)(
+                      rule.filters,
+                    ),
+            },
+            target: {
+              ...target,
+              metadata: target.metadata,
+            },
+          })),
         ),
-      )
-      .orderBy(
-        history
-          ? desc(notificationJobTable.updatedAt)
-          : asc(notificationJobTable.scheduledFor),
       );
-    return (
-      history ? query.limit(NOTIFICATIONS_HISTORY_RESPONSE_LIMIT) : query
-    ).pipe(
-      Effect.mapError(databaseFailure("notifications.jobs.list")),
-      Effect.map((rows) =>
-        rows.map(({ job, rule, target }) => ({
-          ...job,
-          payloadSnapshot: Schema.decodeUnknownSync(
-            NotificationJobPayloadSnapshotResponse,
-          )(job.payloadSnapshot),
-          rule: {
-            ...rule,
-            filters:
-              rule.filters === null
-                ? null
-                : Schema.decodeUnknownSync(NotificationFiltersResponse)(
-                    rule.filters,
-                  ),
-          },
-          target: {
-            ...target,
-            metadata: target.metadata,
-          },
-        })),
-      ),
-    );
-  };
+    });
 
   const list = Effect.fn("notifications.jobs.listOwner")(function* (
     ownerType: NotificationOwnerTypeValue,

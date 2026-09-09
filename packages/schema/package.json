@@ -32,7 +32,11 @@
     "./user-preferences": "./src/user-preferences.ts",
     "./records": "./src/records.ts",
     "./http-scalars": "./src/http-scalars.ts",
-    "./numbers": "./src/numbers.ts"
+    "./numbers": "./src/numbers.ts",
+    "./api-key-access": "./src/api-key-access.ts",
+    "./api-key-policy": "./src/api-key-policy.ts",
+    "./public-api-policy": "./src/public-api-policy.ts",
+    "./api-key-http": "./src/api-key-http.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",

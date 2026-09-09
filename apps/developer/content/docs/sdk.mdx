@@ -1,0 +1,33 @@
+---
+title: TypeScript SDK
+description: An HTTP client and realtime tools for server applications.
+---
+
+## HTTP
+
+The `@lootlog/sdk` package contains JavaScript and TypeScript declarations with no React dependency. Operation names and types are generated from the same OpenAPI specifications shown in Scalar. The package is ready for publication; until it is published, use it within the workspace or from a packed archive.
+
+```ts
+import { configureLootlogApi } from "@lootlog/sdk";
+import { usersControllerGetCurrentUserGuilds } from "@lootlog/sdk/main";
+
+const apiKey = process.env.LOOTLOG_API_KEY;
+if (!apiKey) throw new Error("Missing LOOTLOG_API_KEY");
+const cleanup = configureLootlogApi({ apiKey, environment: "development" });
+try {
+  const organizations = await usersControllerGetCurrentUserGuilds();
+  console.log(organizations);
+} finally {
+  cleanup();
+}
+```
+
+Service imports are `@lootlog/sdk/main`, `@lootlog/sdk/activity`, `@lootlog/sdk/battlelog`, and `@lootlog/sdk/search`. Pass an `AbortSignal` in request options to cancel a read. The SDK does not automatically retry writes.
+
+## Realtime
+
+`@lootlog/sdk/realtime` provides `RealtimeClient`. Use a server-side `webSocketFactory` that adds the `X-Api-Key` header and the gateway URL for the correct environment. Do not put the key in the URL. The [complete Bun example](/docs/realtime#bun-example) shows how to configure the header, session, and subscription.
+
+## Userscripts
+
+A userscript does not need this SDK. It calls `window.lootlogGameClientApi` directly. The optional `@lootlog/game-client-api` package provides editor types only.
