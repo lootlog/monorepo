@@ -77,6 +77,7 @@
     "dev:core": "turbo run dev --filter=@lootlog/api --filter=@lootlog/auth --filter=@lootlog/gateway --filter=@lootlog/web --filter=@lootlog/game-client --filter=@lootlog/search --filter=@lootlog/discord-bot --concurrency 13",
     "dev:wiki": "turbo run dev --filter=@lootlog/wiki --filter=@lootlog/search --filter=@lootlog/auth",
     "build": "turbo run build",
+    "changelog:generate": "bun scripts/generate-changelog.mjs",
     "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",
     "format": "oxfmt .",
@@ -140,7 +141,8 @@
     "react-doctor": "catalog:",
     "turbo": "2.10.12",
     "typescript": "catalog:",
-    "wrangler": "^4.127.0"
+    "wrangler": "^4.127.0",
+    "zod": "catalog:"
   },
   "overrides": {
     "deepmerge-ts@<=7.1.5": ">=8.0.2",

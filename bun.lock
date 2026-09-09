@@ -16,6 +16,7 @@
         "turbo": "2.10.12",
         "typescript": "catalog:",
         "wrangler": "^4.127.0",
+        "zod": "catalog:",
       },
     },
     "apps/activity": {

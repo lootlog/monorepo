@@ -1,3 +1,4 @@
 [tools]
 bun = "1.4.2"
+git-cliff = "2.14.1"
 node = "26.8.1"
