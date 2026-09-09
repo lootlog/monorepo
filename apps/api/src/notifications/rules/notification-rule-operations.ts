@@ -1,6 +1,6 @@
 import {
   notificationApiKeyOrganizations,
-  notificationRuleInApiKeyScope,
+  notificationRulesInApiKeyScope,
   requireNotificationRuleApiKeyScope,
 } from "../notification-api-key-scope.js";
 import { parseNotificationFilters } from "./notification-matching.service.js";
@@ -101,8 +101,10 @@ export const makeNotificationRuleOperations = (
           desc(notificationRuleTable.enabled),
           desc(notificationRuleTable.updatedAt),
         );
-      const ruleRows = loadedRows.filter((rule) =>
-        notificationRuleInApiKeyScope(rule, organizationIds),
+      const ruleRows = yield* notificationRulesInApiKeyScope(
+        database,
+        loadedRows,
+        organizationIds,
       );
       const ruleIds = ruleRows.map(({ id }) => id);
       const links =
@@ -419,6 +421,7 @@ export const makeNotificationRuleOperations = (
           .returning();
         const created = rows[0];
         if (!created) return yield* Effect.die("Rule insert returned no row");
+        yield* requireNotificationRuleApiKeyScope(transaction, created);
         yield* transaction
           .insert(notificationRuleTargetTable)
           .values(
@@ -469,6 +472,10 @@ export const makeNotificationRuleOperations = (
         guildIds,
       };
     }
+    yield* requireNotificationRuleApiKeyScope(database, {
+      ...existing,
+      ...values,
+    });
     yield* database.transaction((transaction) =>
       Effect.gen(function* () {
         yield* transaction

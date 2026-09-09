@@ -1,3 +1,4 @@
+import { makeNotificationJobScheduler } from "./jobs/notification-job-scheduler.js";
 import { NotificationTriggerType } from "@lootlog/schema/notifications";
 import { Permission } from "@lootlog/schema/permissions";
 import { expect, test, mock } from "bun:test";
@@ -373,6 +374,197 @@ test("job history follows the original loot NPC policy and archival state", asyn
         .where(eq(organizationLootRecordTable.guildId, "1")),
     );
     expect((await list()).history).toEqual([]);
+  } finally {
+    await boundary.dispose();
+  }
+});
+
+test("personal API keys cannot cancel Organization reservation reminders through rules or shared targets", async () => {
+  const boundary = await createDatabaseBoundary();
+  try {
+    const database = boundary.database;
+    const reminder = createNotificationRuleFixture({
+      id: 7,
+      ownerId: "discord-1",
+      name: "__system:reservation-reminder__",
+      filters: null,
+    });
+    await boundary.run(
+      database.insert(notificationRuleTable).values([
+        reminder,
+        createNotificationRuleFixture({
+          id: 8,
+          ownerId: "discord-1",
+          name: "Personal message",
+        }),
+        createNotificationRuleFixture({
+          id: 10,
+          ownerId: "discord-1",
+          name: "__system:user-dm-test__",
+        }),
+      ]),
+    );
+    await boundary.run(
+      database.insert(notificationTargetTable).values(
+        createNotificationTargetFixture({
+          ownerId: "discord-1",
+          externalId: "discord-1",
+        }),
+      ),
+    );
+    await boundary.run(
+      database
+        .insert(notificationRuleTargetTable)
+        .values({ ruleId: 7, targetId: 9 }),
+    );
+    await boundary.run(
+      database.insert(notificationJobTable).values([
+        createNotificationJobFixture({
+          ownerId: "discord-1",
+          status: "PENDING",
+          jobKind: "SCHEDULED",
+          sourceEntityType: "reservation",
+          sourceEntityId: "reservation-in-org-2",
+          payloadSnapshot: { guildId: "2" },
+        }),
+        createNotificationJobFixture({
+          id: "personal-job",
+          idempotencyKey: "personal-job",
+          ruleId: 8,
+          ownerId: "discord-1",
+          status: "PENDING",
+          sourceEntityType: "scheduled-message",
+        }),
+      ]),
+    );
+    const removeFromQueue = mock(() => Effect.void);
+    const scheduler = makeNotificationJobScheduler(database, {
+      remove: removeFromQueue,
+      add: () => Effect.void,
+    });
+    const rules = makeNotificationRuleOperations(database, {
+      ensureGuildPermissions: () => Effect.die("Unexpected guild operation"),
+      rebuildJobs: () => Effect.die("Unexpected job rebuild"),
+      cancelJobs: scheduler.cancel,
+      buildTestPayload: () => Effect.die("Unexpected test payload"),
+      createTestJob: scheduler.create,
+      enqueueJob: scheduler.enqueue,
+    });
+    const targets = makeNotificationUserTargets(database, scheduler);
+    const personalIdentity = {
+      ...identity,
+      apiKey: { ...identity.apiKey, organizationIds: [] },
+    };
+    const run = <A, E>(effect: Effect.Effect<A, E>) =>
+      boundary.run(
+        effect.pipe(
+          Effect.provideService(ForwardAuthIdentity, personalIdentity),
+        ),
+      );
+    // The reported exploit must fail before touching either persistence or the queue.
+    await expect(run(rules.deleteUser("discord-1", 7))).rejects.toBeInstanceOf(
+      PermissionDeniedError,
+    );
+    expect(
+      (await run(rules.listUser("discord-1")))
+        .map(({ id }) => id)
+        .sort((a, b) => a - b),
+    ).toEqual([8, 10]);
+    await expect(
+      run(
+        rules.updateUser("discord-1", 7, { name: "Renamed", enabled: false }),
+      ),
+    ).rejects.toBeInstanceOf(PermissionDeniedError);
+    await expect(run(targets.remove("discord-1", 9))).rejects.toBeInstanceOf(
+      PermissionDeniedError,
+    );
+    await expect(
+      run(targets.update("discord-1", 9, { active: false })),
+    ).rejects.toBeInstanceOf(PermissionDeniedError);
+    await expect(
+      run(targets.create("discord-1", { targetType: "DM" })),
+    ).rejects.toBeInstanceOf(PermissionDeniedError);
+    expect(removeFromQueue).not.toHaveBeenCalled();
+    expect(
+      (
+        await boundary.run(
+          database
+            .select()
+            .from(notificationRuleTable)
+            .where(eq(notificationRuleTable.id, 7)),
+        )
+      )[0],
+    ).toEqual(reminder);
+    expect(
+      (
+        await boundary.run(
+          database
+            .select()
+            .from(notificationJobTable)
+            .where(eq(notificationJobTable.id, "job-1")),
+        )
+      )[0]?.status,
+    ).toBe("PENDING");
+    expect(
+      (await boundary.run(database.select().from(notificationTargetTable)))[0]
+        ?.active,
+    ).toBe(true);
+    await boundary.run(
+      rules.updateUser("discord-1", 7, { name: "Renamed reminder" }),
+    );
+    await expect(run(rules.deleteUser("discord-1", 7))).rejects.toBeInstanceOf(
+      PermissionDeniedError,
+    );
+    await expect(run(targets.remove("discord-1", 9))).rejects.toBeInstanceOf(
+      PermissionDeniedError,
+    );
+    expect(
+      (await run(rules.listUser("discord-1")))
+        .map(({ id }) => id)
+        .sort((a, b) => a - b),
+    ).toEqual([8, 10]);
+    expect(removeFromQueue).not.toHaveBeenCalled();
+    // Rejected names must not leave behind a new or renamed inaccessible rule.
+    await expect(
+      run(
+        rules.createUser("discord-1", {
+          name: "__system:reservation-reminder__",
+          triggerType: NotificationTriggerType.SCHEDULED_MESSAGE,
+          targetIds: [9],
+          scheduledAt: "2099-01-01T12:00:00.000Z",
+          contentTemplate: "Personal message",
+        }),
+      ),
+    ).rejects.toBeInstanceOf(PermissionDeniedError);
+    await expect(
+      run(
+        rules.updateUser("discord-1", 8, {
+          name: "__system:reservation-reminder__",
+        }),
+      ),
+    ).rejects.toBeInstanceOf(PermissionDeniedError);
+    const persistedRules = await boundary.run(
+      database.select().from(notificationRuleTable),
+    );
+    expect(persistedRules).toHaveLength(3);
+    expect(persistedRules.find(({ id }) => id === 8)?.name).toBe(
+      "Personal message",
+    );
+    // Personal scheduled messages remain manageable, while a session retains its existing access.
+    expect(await run(rules.deleteUser("discord-1", 8))).toEqual({
+      success: true,
+    });
+    expect(removeFromQueue).toHaveBeenCalledTimes(1);
+    expect(removeFromQueue).toHaveBeenCalledWith("personal-job");
+    expect(
+      (await boundary.run(rules.listUser("discord-1")))
+        .map(({ id }) => id)
+        .sort((a, b) => a - b),
+    ).toEqual([7, 10]);
+    expect(await boundary.run(rules.deleteUser("discord-1", 7))).toEqual({
+      success: true,
+    });
+    expect(removeFromQueue).toHaveBeenCalledWith("job-1");
   } finally {
     await boundary.dispose();
   }

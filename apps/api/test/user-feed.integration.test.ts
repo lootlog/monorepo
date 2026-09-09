@@ -394,17 +394,21 @@ describe("personal Organization activity feed", () => {
         updatedAt: now,
       }),
     );
-    const seen = new Set<string>();
+    const seen = new Map<string, string>();
     const published = Promise.withResolvers<void>();
     let publicationCount = 0;
     const create = makeKillCreation(
       database,
       {
         deleteByPattern: () => Effect.void,
-        setNx: (key) =>
+        deleteIfValue: (key, value) =>
+          Effect.sync(() => {
+            if (seen.get(key) === value) seen.delete(key);
+          }),
+        setNx: (key, value) =>
           Effect.sync(() => {
             if (seen.has(key)) return false;
-            seen.add(key);
+            seen.set(key, value);
             return true;
           }),
       },

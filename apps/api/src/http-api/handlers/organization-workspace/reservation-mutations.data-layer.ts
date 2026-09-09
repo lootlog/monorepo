@@ -1,3 +1,4 @@
+import { RESERVATION_REMINDER_RULE_NAME } from "#src/notifications/rules/reservation-reminder";
 import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import { visibleReservationGuildIds } from "#src/reservations/reservation-visibility-query";
 import { apiKeyOrganizationFilter } from "#src/runtime/auth/organization-scope";
@@ -92,7 +93,6 @@ type ReminderContext = {
   readonly scheduledFor: Date;
 };
 
-const RULE_NAME = "__system:reservation-reminder__";
 const RESERVATION_SOURCE_ENTITY_TYPE = "reservation";
 
 const accessibleGuildIds = (
@@ -174,7 +174,7 @@ const getOrCreateReminderRule = (
         and(
           eq(notificationRuleTable.ownerType, "USER"),
           eq(notificationRuleTable.ownerId, discordId),
-          eq(notificationRuleTable.name, RULE_NAME),
+          eq(notificationRuleTable.name, RESERVATION_REMINDER_RULE_NAME),
         ),
       )
       .limit(1);
@@ -203,7 +203,7 @@ const getOrCreateReminderRule = (
             ownerType: "USER",
             ownerId: discordId,
             triggerType: "SCHEDULED_MESSAGE",
-            name: RULE_NAME,
+            name: RESERVATION_REMINDER_RULE_NAME,
             scheduleStrategy: "FIXED_DATETIME",
             enabled: true,
             updatedAt: new Date(yield* Clock.currentTimeMillis),

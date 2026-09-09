@@ -98,8 +98,11 @@ export class ApiKeyLeases {
           users.set(status.userId, status.discordId);
         }
       }
-      for (const [userId, discordId] of users)
-        yield* refreshUser(discordId, userId);
+      yield* Effect.forEach(
+        users,
+        ([userId, discordId]) => refreshUser(discordId, userId),
+        { concurrency: 8, discard: true },
+      );
       for (const [keyId, sockets] of groups) {
         if (!valid.has(keyId)) continue;
         for (const socket of sockets) {

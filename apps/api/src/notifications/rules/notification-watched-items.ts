@@ -1,6 +1,6 @@
 import {
   notificationApiKeyOrganizations,
-  notificationRuleInApiKeyScope,
+  notificationRulesInApiKeyScope,
   requireNotificationRuleApiKeyScope,
 } from "../notification-api-key-scope.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
@@ -147,11 +147,14 @@ export const makeNotificationWatchedItems = (
       );
     const organizations = yield* notificationApiKeyOrganizations(database);
     const ids = organizations?.map((guild) => guild.id);
+    const allowed = yield* notificationRulesInApiKeyScope(
+      database,
+      rows.flatMap(({ rule }) => (rule ? [rule] : [])),
+      ids,
+    );
+    const allowedIds = new Set(allowed.map(({ id }) => id));
     return yield* hydrate(
-      rows.filter(
-        (row) =>
-          row.rule === null || notificationRuleInApiKeyScope(row.rule, ids),
-      ),
+      rows.filter(({ rule }) => rule === null || allowedIds.has(rule.id)),
     );
   });
 
