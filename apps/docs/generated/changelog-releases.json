@@ -1,0 +1,47 @@
+[
+  {
+    "slug": "2026-09-08",
+    "title": "Release 2026-09-08",
+    "description": "Changes generated from the Git history for this release.",
+    "publishedAt": "2026-09-08",
+    "bodyMarkdown": "## Fixes\n\n- Restore realtime authorization and permission revocation\n- Omit undefined fields from ready room projections\n- Compare ready room revisions independently of JSON field order\n- Remove broad cache resets on permission rebalance\n- Rebalance member sessions after role policy updates\n- **game-client:** Reconcile access changes without redundant refreshes\n- **game-client:** Enforce current policy across presence updates\n- **web:** Preserve activity feed during permission rebalancing\n- **web:** Prune revoked organizations before feed refresh\n- **gateway:** Invalidate shared permissions before federation\n- **observability:** Restore Bun metrics and structured telemetry\n- **observability:** Reduce context overhead and omit auth details\n- **gateway:** Count unique Discord accounts in player metrics\n- Resolve lint errors and synchronize React state\n- Keep autoplay callbacks current and align React peers\n- **cli:** Generate seed account identifiers with randomUUID\n- Resolve main conflicts in lint cleanup\n\n## Performance\n\n- **gateway:** Index realtime delivery audiences\n- **gateway:** Streamline routing and checkpoint delivery",
+    "base": "71135f8615f6fce7512d93fdba70bbd649114981",
+    "head": "f44143e3396fd68ff6c947b728984d90f0602a0b"
+  },
+  {
+    "slug": "2026-09-04",
+    "title": "Release 2026-09-04",
+    "description": "Changes generated from the Git history for this release.",
+    "publishedAt": "2026-09-04",
+    "bodyMarkdown": "## Features\n\n- Establish bun effect rewrite foundation\n- Migrate service contracts to bun and effect\n- **api:** Preserve forward auth identity boundary\n- **api:** Compose effect http runtime\n- **api:** Wire organization authorization context\n- **api:** Extend organization authorization adapters\n- **api:** Complete organization authorization wiring\n- **api:** Bridge remaining legacy controllers in process\n- **api:** Launch effect http server on bun\n- Complete Bun Effect migration\n\n## Fixes\n\n- **ci:** Stabilize affected workspace checks\n- **ci:** Validate dispatched commit identity\n- **ci:** Avoid injected dependency sync races\n- **game-client:** Preserve npc type unions\n- **api:** Stabilize generated http api formatting\n- **api:** Make legacy logger loadable on bun\n- **api:** Include build helper in pruned workspace\n- **messaging:** Scope rabbit delivery fibers\n- **gateway:** Scope websocket background tasks\n- **api:** Stage bull workers for atomic cutover\n- Rules\n- **auth:** Complete Better Auth 1.7 upgrade\n- Restore web read flows after Effect rewrite\n- **api:** Return forbidden for inaccessible guild metadata\n- **realtime:** Harden presence authorization\n- **ci:** Repair dependency check imports\n- **game-client:** Restore coverage verification\n- **ci:** Stream deployment planner input\n- **ci:** Fetch client parity baseline\n- **api:** Select migration archive directory\n- **realtime:** Address presence review feedback\n- **ci:** Use configured production environment\n- Close Effect migration parity gaps\n- Close rewrite reliability gaps\n- **backend:** Harden Effect runtime boundaries\n- **realtime:** Stabilize presence connections\n- Align settings dates and gateway websocket path\n- Harden production release workflow\n- **ci:** Restore Cloudflare preview variables\n- **ci:** Redeploy targets after pipeline changes\n- **auth:** Migrate Better Auth JWKS metadata\n- **realtime:** Use gateway websocket path\n- **realtime:** Authenticate web sockets with tickets\n\n## Performance\n\n- **infra:** Tune local compose resources\n\n## Reverts\n\n- Remove vendored Effect sources",
+    "base": "5a1dc9fcb1df33be9c2aa311d5eef748826780fe",
+    "head": "9797dc7d34519ce39331a41479a15cd10c39449a"
+  },
+  {
+    "slug": "2026-08-28",
+    "title": "Release 2026-08-28",
+    "description": "Changes generated from the Git history for this release.",
+    "publishedAt": "2026-08-28",
+    "bodyMarkdown": "## Features\n\n- **api:** Make colossus loot sharing automatic and idempotent\n- **reservations:** Rebuild reservation coordination\n\n## Fixes\n\n- Preserve Nest Swagger metadata generation\n- **api:** Allow chat to confirm inferred loot shares\n- **web:** Hide native scroll area scrollbars\n- **reservations:** Harden rollout and event delivery",
+    "base": "680355382ac0b7d5fdf04de44709d6b657f6ab67",
+    "head": "b79e6e022d39f5b5ade01edbdc3c89c8cbea3c56"
+  },
+  {
+    "slug": "2026-08-23",
+    "title": "Release 2026-08-23",
+    "description": "Changes generated from the Git history for this release.",
+    "publishedAt": "2026-08-23",
+    "bodyMarkdown": "## Fixes\n\n- **events:** Rework event pinning\n- **ci:** Ignore release-neutral workspace metadata\n- **game-client:** Address runtime review feedback\n- **game-client:** Handle timer removal boundary race\n\n## Performance\n\n- **game-client:** Defer runtime event processing\n- **game-client:** Batch chat updates and stabilize scrolling\n- **game-client:** Reduce timer render work",
+    "base": "71af2708b207b23950b4a24f55bb9d813c007b5b",
+    "head": "f8f01161384b625fa1c722df339ae0812be342aa"
+  },
+  {
+    "slug": "2026-07-31",
+    "title": "Release 2026-07-31",
+    "description": "Changes generated from the Git history for this release.",
+    "publishedAt": "2026-07-31",
+    "bodyMarkdown": "## Fixes\n\n- **ci:** Order automated pull request dispatches\n- **ci:** Publish automated pull request status\n- **ci:** Classify version merge groups\n- Correct event hero status and realtime updates\n- **ci:** Stabilize delivery pipelines",
+    "base": "91d3a4a5aae286d0514b20208e818863b469c08e",
+    "head": "d7ac6adbcae36f37c8085702fa7629692388afc7"
+  }
+]

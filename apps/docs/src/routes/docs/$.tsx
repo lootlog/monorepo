@@ -11,11 +11,13 @@ import {
   DocsTitle,
 } from "fumadocs-ui/page";
 import { use, type CSSProperties } from "react";
+import { ChangelogIndex } from "@/components/changelog-index";
 import { DocsChapterRail } from "@/components/docs-chapter-rail";
 import { DocsHeader } from "@/components/docs-header";
 import { DocsScrollToTop } from "@/components/docs-scroll-to-top";
 import { DocsSidebarSeparator } from "@/components/docs-sidebar-separator";
 import { ProductScreenshot } from "@/components/product-screenshot";
+import { getChangelogEntries } from "@/lib/changelog";
 import { getChapterBySlug } from "@/lib/docs-chapters";
 import { docsTranslations } from "@/lib/polish-translations";
 import { docs, source } from "@/lib/source";
@@ -89,6 +91,14 @@ function DocsRoute() {
   const { toc } = use(page.load());
   const MDX = page.body;
   const chapter = getChapterBySlug(slugs);
+  const pageToc =
+    slugs.length === 1 && slugs[0] === "changelog"
+      ? getChangelogEntries().map((entry) => ({
+          title: entry.title,
+          url: `#${entry.slug}`,
+          depth: 2 as const,
+        }))
+      : toc;
   const layoutStyle: DocsLayoutStyle = {
     "--fd-header-height": "72px",
     gridTemplate: `"header header header"
@@ -139,7 +149,8 @@ function DocsRoute() {
     >
       <DocsScrollToTop />
       <DocsPage
-        toc={toc}
+        toc={pageToc}
+        breadcrumb={{ enabled: slugs[0] !== "changelog" || slugs.length === 1 }}
         footer={{ className: "docs-page-footer" }}
         className={`docs-article docs-chapter-${chapter.id}`}
         style={chapterStyle}
@@ -157,6 +168,7 @@ function DocsRoute() {
             <MDX
               components={{
                 ...defaultMdxComponents,
+                ChangelogIndex,
                 ProductScreenshot,
               }}
             />
