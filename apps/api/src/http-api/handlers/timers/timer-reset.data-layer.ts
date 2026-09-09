@@ -1,4 +1,5 @@
 import {
+  canViewTimer,
   findTimerMatches,
   findActiveTimerEventHeroes,
 } from "./timer-selection.js";
@@ -62,6 +63,11 @@ export const makeResetTimer = (
       payload.world,
       timerIdentifier,
     );
+    if (matches.some((timer) => !canViewTimer(access, timer))) {
+      return yield* Effect.fail(
+        new ResourceNotFoundError({ message: ErrorKey.TIMER_NOT_FOUND }),
+      );
+    }
     if (matches.length > 1) {
       return yield* Effect.fail(
         new InvalidRequestError({
@@ -106,7 +112,7 @@ export const makeResetTimer = (
             )
             .limit(1);
           const current = currentRows[0];
-          if (!current) {
+          if (!current || !canViewTimer(access, current)) {
             return yield* Effect.fail(
               new ResourceNotFoundError({
                 message: ErrorKey.TIMER_NOT_FOUND,

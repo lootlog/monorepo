@@ -32,6 +32,7 @@ import {
   type SessionData,
 } from "#src/realtime/session";
 import { canReadPreciseLocation } from "#src/realtime/subscription-policy";
+import { SubscriptionLimitExceeded } from "#src/realtime/realtime-errors";
 
 type Scope = typeof SubscriptionScope.Type;
 type Event = typeof ServerEvent.Type;
@@ -39,6 +40,8 @@ type Response = typeof RealtimeResponse.Type;
 
 // ponytail: replay deduplication covers 10,000 events per live instance; use a durable inbox if retries must survive eviction or restarts.
 const MAX_DEDUPLICATION_ENTRIES = 10_000;
+const MAX_SUBSCRIPTIONS = 4_096;
+const MAX_SCOPE_BYTES = 1_024;
 const ConnectionRegistration = Schema.Struct({
   connectionId: Schema.String,
   instanceId: Schema.String,
@@ -174,6 +177,11 @@ export class RealtimeHub {
   subscribe(socket: GatewaySocket, scope: Scope): void {
     const key = getScopeKey(scope);
     const previous = socket.data.subscriptions.get(key);
+    if (
+      (!previous && socket.data.subscriptions.size >= MAX_SUBSCRIPTIONS) ||
+      Buffer.byteLength(JSON.stringify(scope)) > MAX_SCOPE_BYTES
+    )
+      throw new SubscriptionLimitExceeded();
     if (previous) this.unsubscribe(socket, previous);
     socket.data.subscriptions.set(key, scope);
     if (this.sockets.get(socket.data.connectionId) === socket)
@@ -196,10 +204,26 @@ export class RealtimeHub {
     socket: GatewaySocket,
     scopes: ReadonlyArray<Scope>,
   ): void {
+    const replacements = new Map(
+      scopes.map((scope) => [getScopeKey(scope), scope]),
+    );
+    if (
+      replacements.size > MAX_SUBSCRIPTIONS ||
+      scopes.some(
+        (scope) => Buffer.byteLength(JSON.stringify(scope)) > MAX_SCOPE_BYTES,
+      )
+    ) {
+      // Reconciliation must never retain subscriptions revoked by a permission change.
+      for (const scope of socket.data.subscriptions.values())
+        this.removeAudience(getScopeAudienceKey(scope), socket);
+      socket.data.subscriptions.clear();
+      socket.close(1008, "subscription limit exceeded");
+      throw new SubscriptionLimitExceeded();
+    }
     for (const scope of socket.data.subscriptions.values())
       this.removeAudience(getScopeAudienceKey(scope), socket);
     socket.data.subscriptions.clear();
-    for (const scope of scopes) this.subscribe(socket, scope);
+    for (const scope of replacements.values()) this.subscribe(socket, scope);
   }
 
   async refreshRegistry(session: SessionData): Promise<void> {

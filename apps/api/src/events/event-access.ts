@@ -14,7 +14,7 @@ import {
   type roleTable,
 } from "#src/database/drizzle/schema";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
-import { filterHeroesByLevel } from "#src/events/event-hero-visibility";
+import { filterHeroesByLevel } from "@lootlog/domain/event-hero-visibility";
 
 type Role = typeof roleTable.$inferSelect;
 

@@ -9,6 +9,7 @@ const splitCommaSeparated = (value: string): string[] =>
 const optionalString = (name: string) => Config.option(Config.string(name));
 
 export interface AuthConfig {
+  readonly idpTokenSecret?: Redacted.Redacted<string>;
   readonly apiUrl?: string;
   readonly apiKeysEnabled?: boolean;
   readonly apiKeyStatusSecret?: Redacted.Redacted<string>;
@@ -42,6 +43,9 @@ export interface AuthConfig {
 }
 
 export const authConfig = Config.all({
+  idpTokenSecret: Config.option(Config.redacted("AUTH_IDP_TOKEN_SECRET")).pipe(
+    Config.map(Option.getOrUndefined),
+  ),
   apiUrl: Config.option(Config.string("API_URL")).pipe(
     Config.map(Option.getOrUndefined),
   ),

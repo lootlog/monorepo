@@ -11,8 +11,9 @@ import { Effect } from "effect";
 import { decode, encode } from "@msgpack/msgpack";
 import type { FederatedRealtimeMessage } from "#src/platform/redis-store";
 import { getScopeKey, RealtimeHub } from "./realtime-hub.js";
-import { RabbitBridge } from "#src/rabbit/rabbit-bridge";
+import { RabbitBridge, gatewayConsumerSpecs } from "#src/rabbit/rabbit-bridge";
 import type { SessionData } from "./session.js";
+import { SubscriptionLimitExceeded } from "./realtime-errors.js";
 
 class FederationBus {
   readonly listeners: Array<(message: FederatedRealtimeMessage) => void> = [];
@@ -81,6 +82,201 @@ const makeSocket = (data: SessionData, bufferedAmount = 0) => {
 };
 
 describe("RealtimeHub federation", () => {
+  test("filters hero events from RabbitMQ on local and federated connections after role changes", async () => {
+    const bus = new FederationBus();
+    const local = new RealtimeHub(config, new FakeRedisStore(bus));
+    const remote = new RealtimeHub(config, new FakeRedisStore(bus));
+    const scope = {
+      topic: "event.coordination",
+      organizationId: "organization-1",
+    } as const;
+    const targets = [local, remote].flatMap((hub, index) =>
+      [false, true].map((visible) => {
+        const session = makeSession(`${index}-${visible}`);
+        session.guilds = [
+          {
+            guild: { id: scope.organizationId, ownerId: "owner" },
+            roles: [
+              {
+                id: "role",
+                permissions: [Permission.LOOTLOG_EVENTS_READ],
+                lvlRangeFrom: 1,
+                lvlRangeTo: visible ? 500 : 100,
+              },
+            ],
+          },
+        ];
+        const target = makeSocket(session);
+        hub.register(target.socket);
+        hub.subscribe(target.socket, scope);
+        return { ...target, visible };
+      }),
+    );
+    const handlers = new Map<
+      string,
+      (delivery: RabbitDelivery) => Effect.Effect<void, unknown>
+    >();
+    const messaging: RabbitMessagingService = {
+      publish: () => Effect.void,
+      ack: () => Effect.void,
+      nack: () => Effect.void,
+      consume: (options, handler) =>
+        Effect.sync(() => {
+          handlers.set(options.queue, handler);
+          return { consumerTag: options.queue, cancel: Effect.void };
+        }),
+    };
+    const unexpected = () => {
+      throw new Error("Unexpected control operation");
+    };
+    const bridge = new RabbitBridge(
+      messaging,
+      local,
+      { rebalanceAcrossInstances: unexpected },
+      { coverageForMap: unexpected },
+      { publish: unexpected },
+    );
+    for (const hub of [local, remote]) await Effect.runPromise(hub.start());
+    await Effect.runPromise(
+      Effect.scoped(
+        Effect.gen(function* () {
+          yield* bridge.start();
+          const routingKeys = [
+            RabbitRoutingKey.EVENT_MAP_STATUS_UPDATE,
+            RabbitRoutingKey.EVENT_HERO_KILLED,
+            RabbitRoutingKey.EVENT_RESPAWN_WINDOW_OPENED,
+            RabbitRoutingKey.EVENT_RESPAWN_WINDOW_CLOSED,
+          ];
+          for (const routingKey of routingKeys) {
+            const spec = gatewayConsumerSpecs.find(
+              (entry) => entry.routingKey === routingKey,
+            );
+            const handler = spec && handlers.get(spec.queue);
+            if (!handler) throw new Error("Missing event consumer");
+            yield* handler(
+              createRabbitDelivery(
+                routingKey,
+                Buffer.from(
+                  JSON.stringify({
+                    guildId: scope.organizationId,
+                    eventId: "event",
+                    heroId: "hidden-hero",
+                    mapId: "hidden-map",
+                    heroNpcLvl: 300,
+                  }),
+                ),
+                routingKey,
+              ),
+            );
+          }
+          for (const target of targets)
+            expect(target.sent).toHaveLength(target.visible ? 4 : 0);
+          // Delivery must use current roles even when old subscription objects remain.
+          for (const target of targets)
+            target.socket.data.guilds = target.socket.data.guilds.map(
+              (guild) => ({
+                ...guild,
+                roles: guild.roles.map((role) => ({
+                  ...role,
+                  lvlRangeTo: 100,
+                })),
+              }),
+            );
+          yield* Effect.tryPromise(() =>
+            local.publishToScope(scope, {
+              v: 1,
+              type: "event.respawn-window-opened",
+              data: {
+                organizationId: scope.organizationId,
+                payload: { guildId: scope.organizationId, heroNpcLvl: 300 },
+              },
+            }),
+          );
+          for (const target of targets)
+            expect(target.sent).toHaveLength(target.visible ? 4 : 0);
+        }),
+      ),
+    );
+  });
+
+  test("bounds retained subscriptions, permits replacement at capacity and reclaims capacity", async () => {
+    const hub = new RealtimeHub(
+      config,
+      new FakeRedisStore(new FederationBus()),
+    );
+    const target = makeSocket(makeSession("bounded"));
+    hub.register(target.socket);
+    const scope = {
+      topic: "organization.chat",
+      organizationId: "organization-1",
+    } as const;
+    for (let index = 0; index < 4_096; index += 1)
+      hub.subscribe(target.socket, { ...scope, eventId: String(index) });
+    expect(() =>
+      hub.subscribe(target.socket, { ...scope, eventId: "excess" }),
+    ).toThrow(SubscriptionLimitExceeded);
+    expect(target.socket.data.subscriptions.size).toBe(4_096);
+    hub.subscribe(target.socket, { ...scope, eventId: "0" });
+    expect(target.socket.data.subscriptions.size).toBe(4_096);
+    await hub.publishToScope(
+      { ...scope, eventId: "excess" },
+      {
+        v: 1,
+        type: "chat.cleared",
+        data: { organizationId: scope.organizationId, payload: {} },
+      },
+    );
+    expect(target.sent).toHaveLength(0);
+    hub.unsubscribe(target.socket, { ...scope, eventId: "0" });
+    hub.subscribe(target.socket, { ...scope, eventId: "excess" });
+    await hub.publishToScope(
+      { ...scope, eventId: "excess" },
+      {
+        v: 1,
+        type: "chat.cleared",
+        data: { organizationId: scope.organizationId, payload: {} },
+      },
+    );
+    expect(target.sent).toHaveLength(1);
+    hub.replaceSubscriptions(
+      target.socket,
+      Array.from({ length: 5_000 }, () => scope),
+    );
+    expect(target.socket.data.subscriptions.size).toBe(1);
+  });
+
+  test("rejects oversized UTF-8 scopes and clears revoked audiences when replacement exceeds the budget", async () => {
+    const hub = new RealtimeHub(
+      config,
+      new FakeRedisStore(new FederationBus()),
+    );
+    const target = makeSocket(makeSession("oversized"));
+    hub.register(target.socket);
+    const scope = {
+      topic: "organization.chat",
+      organizationId: "organization-1",
+    } as const;
+    hub.subscribe(target.socket, scope);
+    expect(() =>
+      hub.subscribe(target.socket, { ...scope, world: "ą".repeat(512) }),
+    ).toThrow(SubscriptionLimitExceeded);
+    expect(target.socket.data.subscriptions.size).toBe(1);
+    expect(() =>
+      hub.replaceSubscriptions(target.socket, [
+        scope,
+        { ...scope, eventId: "a".repeat(1_024) },
+      ]),
+    ).toThrow(SubscriptionLimitExceeded);
+    expect(target.socket.data.subscriptions.size).toBe(0);
+    expect(target.closes).toEqual([1008]);
+    await hub.publishToScope(scope, {
+      v: 1,
+      type: "chat.cleared",
+      data: { organizationId: scope.organizationId, payload: {} },
+    });
+    expect(target.sent).toHaveLength(0);
+  });
+
   test("keeps local and federated delivery aligned through subscription changes and disconnect", async () => {
     const bus = new FederationBus();
     const hubs = [0, 1].map(

@@ -6,6 +6,11 @@ export class SessionNotJoined extends TaggedErrorClass<SessionNotJoined>()(
   {},
 ) {}
 
+export class SubscriptionLimitExceeded extends TaggedErrorClass<SubscriptionLimitExceeded>()(
+  "SubscriptionLimitExceeded",
+  {},
+) {}
+
 export class OrganizationAccessDenied extends TaggedErrorClass<OrganizationAccessDenied>()(
   "OrganizationAccessDenied",
   {},
@@ -42,6 +47,7 @@ export class RealtimeDependencyError extends TaggedErrorClass<RealtimeDependency
 ) {}
 
 export type CommandRejection =
+  | SubscriptionLimitExceeded
   | SessionNotJoined
   | OrganizationAccessDenied
   | GameCharacterRequired
@@ -55,6 +61,7 @@ export type CommandFailure =
   | RealtimeDependencyError;
 
 export const isCommandFailure = (error: unknown): error is CommandFailure =>
+  error instanceof SubscriptionLimitExceeded ||
   error instanceof SessionNotJoined ||
   error instanceof OrganizationAccessDenied ||
   error instanceof GameCharacterRequired ||
@@ -66,6 +73,8 @@ export const isCommandFailure = (error: unknown): error is CommandFailure =>
 
 export const commandFailureDetails = (error: CommandFailure) => {
   switch (error._tag) {
+    case "SubscriptionLimitExceeded":
+      return { message: "subscription limit exceeded", retryable: false };
     case "SessionNotJoined":
       return { message: "session.join is required", retryable: false };
     case "OrganizationAccessDenied":

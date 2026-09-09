@@ -263,12 +263,23 @@ export const EventsHandlers = HttpApiBuilder.group(
         ),
       deleteEvent: ({ params }) =>
         event("deleteEvent", owner, params, (caller, eventId) =>
-          operations.catalog.deleteEvent(caller.guild, eventId),
+          operations.catalog.deleteEvent(
+            caller.guild,
+            eventId,
+            [...caller.roles],
+            caller.accessPolicy,
+          ),
         ),
       updateEvent: ({ params, payload }) =>
         event("updateEvent", manage, params, (caller, eventId) =>
           operations.catalog
-            .updateEvent(caller.guild, eventId, payload)
+            .updateEvent(
+              caller.guild,
+              eventId,
+              payload,
+              [...caller.roles],
+              caller.accessPolicy,
+            )
             .pipe(
               Effect.map((value) =>
                 encodeUnknownResponse(EventMutationResponse, value),
@@ -324,6 +335,8 @@ export const EventsHandlers = HttpApiBuilder.group(
                 eventId,
                 mapId,
                 payload,
+                [...caller.roles],
+                caller.accessPolicy,
               ),
             ).pipe(Effect.asVoid),
         ),
@@ -339,6 +352,8 @@ export const EventsHandlers = HttpApiBuilder.group(
                 eventId,
                 mapId,
                 optionalPathString(query.memberId),
+                [...caller.roles],
+                caller.accessPolicy,
               ),
             ).pipe(Effect.asVoid),
         ),
@@ -393,7 +408,13 @@ export const EventsHandlers = HttpApiBuilder.group(
           params,
           (caller, eventId) =>
             Effect.flatMap(stringParameter(params.heroId, "heroId"), (heroId) =>
-              operations.assignment.deleteHero(caller.guild, eventId, heroId),
+              operations.assignment.deleteHero(
+                caller.guild,
+                eventId,
+                heroId,
+                [...caller.roles],
+                caller.accessPolicy,
+              ),
             ).pipe(Effect.asVoid),
         ),
       EventsAssignmentControllerUpdateHero: ({ params, payload }) =>
@@ -408,6 +429,8 @@ export const EventsHandlers = HttpApiBuilder.group(
                 eventId,
                 heroId,
                 payload,
+                [...caller.roles],
+                caller.accessPolicy,
               ),
             ).pipe(Effect.asVoid),
         ),
@@ -423,6 +446,8 @@ export const EventsHandlers = HttpApiBuilder.group(
                 eventId,
                 heroId,
                 payload,
+                [...caller.roles],
+                caller.accessPolicy,
               ),
             ),
         ),
@@ -439,6 +464,8 @@ export const EventsHandlers = HttpApiBuilder.group(
                   eventId,
                   heroId,
                   mapId,
+                  [...caller.roles],
+                  caller.accessPolicy,
                 ),
               ),
             ).pipe(Effect.asVoid),
@@ -471,6 +498,8 @@ export const EventsHandlers = HttpApiBuilder.group(
                 eventId,
                 heroId,
                 payload,
+                [...caller.roles],
+                caller.accessPolicy,
               ),
             ).pipe(Effect.asVoid),
         ),
@@ -489,6 +518,8 @@ export const EventsHandlers = HttpApiBuilder.group(
                     eventId,
                     heroId,
                     locationId,
+                    [...caller.roles],
+                    caller.accessPolicy,
                   ),
               ),
             ).pipe(Effect.asVoid),
@@ -509,6 +540,8 @@ export const EventsHandlers = HttpApiBuilder.group(
                     heroId,
                     locationId,
                     payload,
+                    [...caller.roles],
+                    caller.accessPolicy,
                   ),
               ),
             ).pipe(Effect.asVoid),
@@ -525,6 +558,8 @@ export const EventsHandlers = HttpApiBuilder.group(
                 eventId,
                 heroId,
                 payload,
+                [...caller.roles],
+                caller.accessPolicy,
               ),
             ).pipe(Effect.asVoid),
         ),
@@ -542,6 +577,8 @@ export const EventsHandlers = HttpApiBuilder.group(
                   heroId,
                   mapId,
                   payload,
+                  [...caller.roles],
+                  caller.accessPolicy,
                 ),
               ),
             ).pipe(Effect.asVoid),
@@ -788,7 +825,12 @@ export const EventsHandlers = HttpApiBuilder.group(
           params,
           (caller, eventId) =>
             operations.monitoring
-              .getCoordination(caller.guild, eventId)
+              .getCoordination(
+                caller.guild,
+                eventId,
+                [...caller.roles],
+                caller.accessPolicy,
+              )
               .pipe(
                 Effect.map((value) =>
                   encodeUnknownResponse(EventCoordinationResponse, value),
@@ -856,7 +898,13 @@ export const EventsHandlers = HttpApiBuilder.group(
           (caller, eventId) =>
             Effect.flatMap(stringParameter(params.mapId, "mapId"), (mapId) =>
               operations.monitoring
-                .getMapCoverageGaps(caller.guild, eventId, mapId)
+                .getMapCoverageGaps(
+                  caller.guild,
+                  eventId,
+                  mapId,
+                  [...caller.roles],
+                  caller.accessPolicy,
+                )
                 .pipe(
                   Effect.map((values) =>
                     values.map((value) =>
@@ -874,7 +922,13 @@ export const EventsHandlers = HttpApiBuilder.group(
           (caller, eventId) =>
             Effect.flatMap(stringParameter(params.mapId, "mapId"), (mapId) =>
               operations.monitoring
-                .getActiveGapForMap(caller.guild, eventId, mapId)
+                .getActiveGapForMap(
+                  caller.guild,
+                  eventId,
+                  mapId,
+                  [...caller.roles],
+                  caller.accessPolicy,
+                )
                 .pipe(
                   Effect.map((value) =>
                     encodeUnknownResponse(NullableCoverageGapResponse, value),
@@ -962,6 +1016,8 @@ export const EventsHandlers = HttpApiBuilder.group(
                 eventId,
                 heroId,
                 payload,
+                [...caller.roles],
+                caller.accessPolicy,
               ),
             ).pipe(Effect.asVoid),
         ),
@@ -977,6 +1033,8 @@ export const EventsHandlers = HttpApiBuilder.group(
                 eventId,
                 heroId,
                 payload,
+                [...caller.roles],
+                caller.accessPolicy,
               ),
             ).pipe(Effect.asVoid),
         ),

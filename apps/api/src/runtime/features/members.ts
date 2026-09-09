@@ -115,6 +115,7 @@ export const memberServicesLive = Layer.effect(
             redis,
             httpClient,
             config.authServiceUrl,
+            config.authIdpTokenSecret,
           ),
           runPromise,
         );

@@ -3,6 +3,7 @@ import {
   type TimerPublishedEvent,
 } from "#src/timers/timer-projection";
 import {
+  canViewTimer,
   findTimerMatches,
   findActiveTimerEventHeroes,
   timerIdentifierCondition,
@@ -66,6 +67,11 @@ export const makeDeleteTimer = (
           world,
           timerIdentifier,
         );
+        if (timers.some((timer) => !canViewTimer(access, timer))) {
+          return yield* Effect.fail(
+            new ResourceNotFoundError({ message: ErrorKey.TIMER_NOT_FOUND }),
+          );
+        }
         if (timers.length > 1) {
           return yield* Effect.fail(
             new InvalidRequestError({

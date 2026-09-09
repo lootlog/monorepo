@@ -266,6 +266,7 @@ export const makeEventRespawnCommands = (
               guildId: guild.id,
               eventId,
               heroId,
+              heroNpcLvl: row.hero.npcLvl,
             }),
             Effect.forEach(
               maps,
@@ -274,6 +275,7 @@ export const makeEventRespawnCommands = (
                   guildId: guild.id,
                   eventId,
                   mapId: map.id,
+                  heroNpcLvl: row.hero.npcLvl,
                 }),
               { concurrency: "unbounded", discard: true },
             ),
@@ -335,6 +337,7 @@ export const makeEventRespawnCommands = (
               guildId: guild.id,
               eventId,
               heroId,
+              heroNpcLvl: row.hero.npcLvl,
             }),
           ],
           { concurrency: "unbounded", discard: true },

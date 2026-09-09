@@ -1,9 +1,18 @@
+import {
+  getEffectiveCapabilities,
+  type AccessPolicy,
+} from "@lootlog/domain/access-policy";
+import { filterHeroesByLevel } from "@lootlog/domain/event-hero-visibility";
 import { invalidateEventCachePatterns } from "#src/events/catalog/event-cache-invalidation";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, eq } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import { eventTable } from "#src/database/drizzle/schema";
+import {
+  eventTable,
+  eventHeroNpcTable,
+  type roleTable,
+} from "#src/database/drizzle/schema";
 import type { RedisService } from "#src/redis/redis.service";
 import { getEventWrappedCachePattern } from "#src/shared/cache";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
@@ -31,7 +40,12 @@ export const makeEventDeletion =
     queue: EventDeletionQueue,
     logger: Pick<Logger, "warn">,
   ) =>
-  (guild: { id: string }, eventId: string) =>
+  (
+    guild: { id: string },
+    eventId: string,
+    roles: Array<typeof roleTable.$inferSelect>,
+    accessPolicy: AccessPolicy,
+  ) =>
     Effect.gen(function* () {
       const rows = yield* database
         .select({ id: eventTable.id })
@@ -51,6 +65,29 @@ export const makeEventDeletion =
         );
       if (!rows[0]) {
         return yield* Effect.fail(new ResourceNotFoundError("Event not found"));
+      }
+
+      const heroes = yield* database
+        .select()
+        .from(eventHeroNpcTable)
+        .where(eq(eventHeroNpcTable.eventId, eventId))
+        .pipe(
+          Effect.mapError(
+            (cause) =>
+              new EventDeletionError({
+                operation: "events.delete.heroes",
+                cause,
+              }),
+          ),
+        );
+      if (
+        filterHeroesByLevel(
+          heroes,
+          roles,
+          getEffectiveCapabilities(accessPolicy),
+        ).length !== heroes.length
+      ) {
+        return yield* Effect.fail(new ResourceNotFoundError("Hero not found"));
       }
 
       const jobs = yield* Effect.all(

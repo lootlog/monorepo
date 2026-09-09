@@ -1,7 +1,6 @@
 import { and, desc, eq } from "drizzle-orm";
 import { Effect } from "effect";
-import { Capability } from "@lootlog/domain/access-policy";
-import { canViewNpcTimer } from "@lootlog/domain/npc-permissions";
+import { canViewTimer } from "./timer-selection.js";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   guildTable,
@@ -20,7 +19,6 @@ import {
   mapTimerCharacter,
   mapTimerMember,
   mapTimerNpc,
-  parseTimerNpc,
 } from "#src/timers/timer-projection";
 
 export const makeTimerHistory = (database: typeof ApiDatabase.Service) => {
@@ -90,13 +88,9 @@ export const makeTimerHistory = (database: typeof ApiDatabase.Service) => {
         .where(condition)
         .orderBy(desc(timerHistoryEntryTable.createdAt))
         .limit(limit);
-      const administrative = access.accessPolicy.allows(Capability.ADMIN);
       return rows.flatMap(
         ({ entry, guildName, actorMember, actorCharacter }) => {
-          if (
-            !administrative &&
-            !canViewNpcTimer(parseTimerNpc(entry.npc), access.roles)
-          ) {
+          if (!canViewTimer(access, entry)) {
             return [];
           }
           return [

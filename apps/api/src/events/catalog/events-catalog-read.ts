@@ -19,7 +19,7 @@ import {
 import { makeJsonCodec, type RedisService } from "#src/redis/redis.service";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
-import { filterHeroesByLevel } from "#src/events/event-hero-visibility";
+import { filterHeroesByLevel } from "@lootlog/domain/event-hero-visibility";
 import {
   attachComputedEventActive,
   compareEventsByActivityAndStart,

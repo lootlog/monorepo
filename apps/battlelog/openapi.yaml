@@ -2575,7 +2575,13 @@ paths:
       tags:
         - internal
       operationId: InternalController_deleteUserData
-      parameters: []
+      parameters:
+        - name: authorization
+          in: header
+          schema:
+            nullable: true
+            type: string
+          required: false
       responses:
         "201":
           description: ""
@@ -2629,12 +2635,27 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
+                anyOf:
+                  - type: object
+                    properties:
+                      error:
+                        type: string
+                      message:
+                        type: string
+                      statusCode:
+                        type: number
+                        enum:
+                          - 401
+                    required:
+                      - error
+                      - message
+                      - statusCode
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
         "403":
           description: ""
           content:
@@ -2657,6 +2678,7 @@ paths:
                     type: string
                 required:
                   - message
+      description: Internal API caller only. Requires the BATTLELOG_CLEANUP_SECRET bearer credential; user sessions and forwarded identity headers do not authorize this operation.
       summary: Queue battle data deletion for a user
       requestBody:
         content:
