@@ -62,6 +62,13 @@ export type AuthControllerGetIdpToken200 = {
   scopes: string[];
 };
 
+export type AuthControllerGetIdpToken401 = {
+  message: string;
+  statusCode: 401;
+} | {
+  error: string;
+};
+
 export type ApiKeysListApiKeys200KeysItemMode = typeof ApiKeysListApiKeys200KeysItemMode[keyof typeof ApiKeysListApiKeys200KeysItemMode];
 
 
@@ -825,6 +832,7 @@ export const getAuthControllerGetIdpTokenUrl = () => {
 }
 
 /**
+ * Internal API caller only. Requires the AUTH_IDP_TOKEN_SECRET bearer credential; user sessions and forwarded identity headers do not authorize this operation.
  * @summary Issue an IDP token for a user account
  */
 export const authControllerGetIdpToken = async (authControllerGetIdpTokenBody: AuthControllerGetIdpTokenBody, options?: Parameters<typeof authFetch>[1]): Promise<AuthControllerGetIdpToken200> => {
@@ -848,7 +856,7 @@ return authFetch<AuthControllerGetIdpToken200>(getAuthControllerGetIdpTokenUrl()
 
 
 
-export const getAuthControllerGetIdpTokenMutationOptions = <TError = ErrorType<unknown>,
+export const getAuthControllerGetIdpTokenMutationOptions = <TError = ErrorType<AuthControllerGetIdpToken401>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authControllerGetIdpToken>>, TError,AuthControllerGetIdpTokenMutationVariables, TContext>, request?: SecondParameter<typeof authFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof authControllerGetIdpToken>>, TError,AuthControllerGetIdpTokenMutationVariables, TContext> => {
 
@@ -877,13 +885,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type AuthControllerGetIdpTokenMutationResult = NonNullable<Awaited<ReturnType<typeof authControllerGetIdpToken>>>
     export type AuthControllerGetIdpTokenMutationBody = BodyType<AuthControllerGetIdpTokenBody>
-    export type AuthControllerGetIdpTokenMutationError = ErrorType<unknown>
+    export type AuthControllerGetIdpTokenMutationError = ErrorType<AuthControllerGetIdpToken401>
     export type AuthControllerGetIdpTokenMutationVariables = {data: BodyType<AuthControllerGetIdpTokenBody>}
 
     /**
  * @summary Issue an IDP token for a user account
  */
-export const useAuthControllerGetIdpToken = <TError = ErrorType<unknown>,
+export const useAuthControllerGetIdpToken = <TError = ErrorType<AuthControllerGetIdpToken401>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authControllerGetIdpToken>>, TError,AuthControllerGetIdpTokenMutationVariables, TContext>, request?: SecondParameter<typeof authFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof authControllerGetIdpToken>>,

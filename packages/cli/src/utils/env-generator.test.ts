@@ -52,6 +52,20 @@ const getValue = (variables: EnvVariable[], key: string): string => {
   return variable.value;
 };
 
+test("internal service credentials are generated once and reused by their callers", () => {
+  const values = new Map<string, string>();
+  for (const key of ["AUTH_IDP_TOKEN_SECRET", "BATTLELOG_CLEANUP_SECRET"]) {
+    const receiver = generateEnvValues([envVariable(key, "")], values);
+    const caller = generateEnvValues([envVariable(key, "")], values);
+    assert.ok(getValue(receiver, key).length >= 32);
+    assert.equal(getValue(caller, key), getValue(receiver, key));
+  }
+  assert.notEqual(
+    values.get("AUTH_IDP_TOKEN_SECRET"),
+    values.get("BATTLELOG_CLEANUP_SECRET"),
+  );
+});
+
 const assertDerivedAppValues = (): void => {
   const apiVariables = enhanceVariablesWithDerivedValues(
     [

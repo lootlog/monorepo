@@ -1,5 +1,8 @@
 import { and, eq, gt, isNull, lte, or } from "drizzle-orm";
-import { timerNpcField } from "#src/timers/timer-projection";
+import { Capability } from "@lootlog/domain/access-policy";
+import { canViewNpcTimer } from "@lootlog/domain/npc-permissions";
+import type { TimersGuildAccess } from "./timers.handlers.js";
+import { timerNpcField, parseTimerNpc } from "#src/timers/timer-projection";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventHeroNpcTable,
@@ -7,6 +10,13 @@ import {
   timerTable,
 } from "#src/database/drizzle/schema";
 import { isLegacyNpcIdIdentifier } from "#src/timers/timer-key";
+
+export const canViewTimer = (
+  access: Pick<TimersGuildAccess, "accessPolicy" | "roles">,
+  timer: Pick<typeof timerTable.$inferSelect, "npc">,
+) =>
+  access.accessPolicy.allows(Capability.ADMIN) ||
+  canViewNpcTimer(parseTimerNpc(timer.npc), access.roles);
 
 type TimerDatabase = Pick<typeof ApiDatabase.Service, "select">;
 

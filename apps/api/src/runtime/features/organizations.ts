@@ -6,7 +6,7 @@ import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/member-discord-status";
 import { outboundHttpRequest } from "#src/shared/http/outbound-http";
 import { RabbitMessaging } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
-import { Context, Effect, Layer } from "effect";
+import { Context, Effect, Layer, Redacted } from "effect";
 import { HttpClient } from "effect/unstable/http";
 import {
   GuildSummaryCacheSchema,
@@ -103,7 +103,12 @@ export const accountOrganizationOperationsLive = Layer.effect(
         outboundHttpRequest(httpClient, {
           adapter: "battlelog-account-cleanup",
           body: JSON.stringify({ userId }),
-          headers: { "content-type": "application/json" },
+          headers: {
+            "content-type": "application/json",
+            authorization: config.battlelogCleanupSecret
+              ? `Bearer ${Redacted.value(config.battlelogCleanupSecret)}`
+              : "",
+          },
           method: "POST",
           responseLimitBytes: 1024 * 1024,
           retryTimes: 0,

@@ -1,13 +1,8 @@
-import type { Queue } from "bullmq";
 import { Effect, Schema } from "effect";
 import { battlelogOperation } from "./battlelog-operation.js";
 import type { Battles } from "#src/battles/battles.service";
 import type { DeleteUserBattlesJobData } from "#src/battles/deletion/delete-user-battles.processor";
-import {
-  BattleResponseSchemas,
-  type BattleResponseInput,
-  type BattlesListResponseInput,
-} from "#src/battles/catalog/battle-response";
+import { BattleResponseSchemas } from "#src/battles/catalog/battle-response";
 import type { CreateBattleInput } from "#src/battles/submission/create-battle";
 import type { BattleAnalyticsCriteria } from "#src/battles/analytics/query-battle-analytics";
 import type {
@@ -24,24 +19,14 @@ import type {
 import type { BattleAnalytics } from "#src/battles/analytics/battle-analytics.service";
 import type { DeleteUserData } from "./internal-operations.js";
 
-const normalizeBattleResponse = (
-  battle: BattleWithRelations,
-): BattleResponseInput => ({
-  ...battle,
-  createdAt: battle.createdAt.toISOString(),
-  updatedAt: battle.updatedAt.toISOString(),
-  warriors: battle.warriors.map((warrior) => ({
-    ...warrior,
-    spellsUsedMap: warrior.spellsUsedMap,
-  })),
-  statistics: Schema.decodeUnknownSync(
-    BattleResponseSchemas.battle.fields.statistics,
-  )(battle.statistics),
-});
+const normalizeBattleResponse = (battle: BattleWithRelations) =>
+  Schema.decodeUnknownSync(BattleResponseSchemas.battle)({
+    ...battle,
+    createdAt: battle.createdAt.toISOString(),
+    updatedAt: battle.updatedAt.toISOString(),
+  });
 
-const normalizeBattlesListResponse = (
-  response: GetAllBattlesResult,
-): BattlesListResponseInput => ({
+const normalizeBattlesListResponse = (response: GetAllBattlesResult) => ({
   ...response,
   battles: response.battles.map(normalizeBattleResponse),
 });
@@ -49,7 +34,12 @@ const normalizeBattlesListResponse = (
 export const makeBattlelogOperations = (
   battles: Battles,
   analytics: BattleAnalytics,
-  deleteQueue: Pick<Queue<DeleteUserBattlesJobData>, "add">,
+  deleteQueue: {
+    readonly add: (
+      name: string,
+      data: DeleteUserBattlesJobData,
+    ) => Promise<void>;
+  },
 ) => ({
   battles: {
     createBattle: battlelogOperation(
@@ -176,11 +166,23 @@ export const makeBattlelogOperations = (
     ),
     getPublicBattleRaw: battlelogOperation(
       "PublicBattlesController_getPublicBattleRaw",
-      (battleId: string) => battles.getPublicBattleRaw(battleId),
+      (battleId: string) =>
+        battles
+          .getPublicBattleRaw(battleId)
+          .pipe(
+            Effect.map(Schema.decodeUnknownSync(BattleResponseSchemas.raw)),
+          ),
     ),
     getPublicBattleTimeline: battlelogOperation(
       "PublicBattlesController_getPublicBattleTimeline",
-      (battleId: string) => battles.getPublicBattleTimeline(battleId),
+      (battleId: string) =>
+        battles
+          .getPublicBattleTimeline(battleId)
+          .pipe(
+            Effect.map(
+              Schema.decodeUnknownSync(BattleResponseSchemas.timeline),
+            ),
+          ),
     ),
   },
   internal: {

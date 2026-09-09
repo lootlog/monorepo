@@ -8,13 +8,23 @@ type EventScope = { guildId: string; eventId: string };
 
 export type EventEmitPayloads = {
   [RoutingKey.EVENT_MAP_STATUS_UPDATE]: EventScope & {
+    heroNpcLvl: number | null;
     mapId: string;
     reason?: string;
   };
-  [RoutingKey.EVENT_HERO_KILLED]: EventScope & { killId: string };
+  [RoutingKey.EVENT_HERO_KILLED]: EventScope & {
+    killId: string;
+    heroNpcLvl: number | null;
+  };
   [RoutingKey.EVENT_RANKING_UPDATE]: EventScope;
-  [RoutingKey.EVENT_RESPAWN_WINDOW_OPENED]: EventScope & { heroId: string };
-  [RoutingKey.EVENT_RESPAWN_WINDOW_CLOSED]: EventScope & { heroId: string };
+  [RoutingKey.EVENT_RESPAWN_WINDOW_OPENED]: EventScope & {
+    heroId: string;
+    heroNpcLvl: number | null;
+  };
+  [RoutingKey.EVENT_RESPAWN_WINDOW_CLOSED]: EventScope & {
+    heroId: string;
+    heroNpcLvl: number | null;
+  };
 };
 
 export type EventEmitRoutingKey = keyof EventEmitPayloads;

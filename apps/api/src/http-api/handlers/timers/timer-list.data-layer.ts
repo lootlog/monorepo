@@ -13,7 +13,7 @@ import {
   sql,
 } from "drizzle-orm";
 import { Effect } from "effect";
-import { Capability } from "@lootlog/domain/access-policy";
+import { canViewTimer } from "./timer-selection.js";
 import { canViewNpcTimer } from "@lootlog/domain/npc-permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -161,13 +161,8 @@ export const makeGuildTimerList = (
         );
       }),
     );
-    const administrative = access.accessPolicy.allows(Capability.ADMIN);
     return timers
-      .filter(
-        (timer) =>
-          administrative ||
-          canViewNpcTimer(parseTimerNpc(timer.npc), access.roles),
-      )
+      .filter((timer) => canViewTimer(access, timer))
       .map(mapTimerResponse);
   });
   return (access: TimersGuildAccess, world?: string) =>

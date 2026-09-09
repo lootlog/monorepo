@@ -5,6 +5,7 @@ import {
   ApplicationError,
   ResourceNotFoundError,
   DependencyUnavailableError,
+  InvalidRequestError,
 } from "#src/infrastructure/http-error";
 import { Logger } from "#src/infrastructure/logger";
 import {
@@ -145,7 +146,25 @@ export const makeBattles = (
           data: normalizedData,
           userId,
         });
+        const existingSubmission =
+          yield* battlesModule.getMatchingBattleBySubmissionId(
+            normalizedData.submissionId,
+            userId,
+            semanticFingerprint,
+          );
+        if (existingSubmission?.semanticFingerprint === null) {
+          return { battleId: existingSubmission.id };
+        }
         const analysis = battlesModule.analyzeBattle(normalizedData);
+        if (existingSubmission) {
+          return yield* battlesModule.createCanonicalBattle({
+            analysis,
+            data: normalizedData,
+            semanticFingerprint,
+            userId,
+            existingBattleId: existingSubmission.id,
+          });
+        }
 
         return yield* battlesModule.runBattleCreationSingleFlight(
           semanticFingerprint,
@@ -179,11 +198,13 @@ export const makeBattles = (
       data,
       semanticFingerprint,
       userId,
+      existingBattleId,
     }: {
       analysis: BattleAnalysis;
       data: CreateBattleInput;
       semanticFingerprint: string;
       userId: string;
+      existingBattleId?: string;
     }) {
       return Effect.gen(function* () {
         const rawBattleData = {
@@ -193,22 +214,23 @@ export const makeBattles = (
           characterId: data.characterId,
           world: data.world,
         };
-        const existingBattleId =
-          yield* battlesModule.getRecentBattleIdBySemanticFingerprint(
+        const canonicalBattleId =
+          existingBattleId ??
+          (yield* battlesModule.getRecentBattleIdBySemanticFingerprint(
             semanticFingerprint,
             userId,
-          );
-        if (existingBattleId) {
+          ));
+        if (canonicalBattleId) {
           yield* battlesModule.preserveCanonicalBattleDuration(
-            existingBattleId,
+            canonicalBattleId,
             analysis.duration,
             userId,
           );
           yield* battlesModule.storeRawBattleData(
-            existingBattleId,
+            canonicalBattleId,
             rawBattleData,
           );
-          return { battleId: existingBattleId };
+          return { battleId: canonicalBattleId };
         }
 
         const battleId = (yield* battlesModule.storeBattleInDatabase(
@@ -425,20 +447,35 @@ export const makeBattles = (
       );
     },
 
-    getExistingBattleBySubmissionId(submissionId: string | undefined) {
+    getMatchingBattleBySubmissionId(
+      submissionId: string | undefined,
+      userId: string,
+      semanticFingerprint: string,
+    ) {
       if (!submissionId) {
         return Effect.succeed(null);
       }
 
       return adapter("Battles_findSubmission", () =>
         drizzle.query.battles.findFirst({
-          where: { submissionId },
-          with: { warriors: true },
+          where: { submissionId, userId },
+          columns: { id: true, semanticFingerprint: true },
         }),
       ).pipe(
-        Effect.map((battle) =>
-          battle ? inflateBattleWarriorsInBattle(battle) : null,
-        ),
+        Effect.flatMap((battle) => {
+          if (
+            battle &&
+            battle.semanticFingerprint !== null &&
+            battle.semanticFingerprint !== semanticFingerprint
+          ) {
+            return Effect.fail(
+              new InvalidRequestError(
+                "Submission ID is already used for a different battle",
+              ),
+            );
+          }
+          return Effect.succeed(battle ?? null);
+        }),
       );
     },
 
@@ -904,14 +941,13 @@ export const makeBattles = (
                       dailyRewardsMax: analysis.matchmaking.dailyRewardsMax,
                     }),
                   })
+                  .onConflictDoNothing({
+                    target: [battles.userId, battles.submissionId],
+                  })
                   .returning(),
               );
 
-              if (!insertedBattle) {
-                return yield* Effect.fail(
-                  new Error("Battle insert did not return a row"),
-                );
-              }
+              if (!insertedBattle) return null;
 
               const warriorValues = analysis.warriors.map(
                 (warrior: Warrior) => ({
@@ -1014,28 +1050,27 @@ export const makeBattles = (
           ),
         );
 
-        return inflateBattleWarriorsInBattle(battle);
+        if (battle) return inflateBattleWarriorsInBattle(battle);
+
+        const existingBattle =
+          yield* battlesModule.getMatchingBattleBySubmissionId(
+            data.submissionId,
+            userId,
+            semanticFingerprint,
+          );
+        if (existingBattle) return existingBattle;
+        return yield* Effect.fail(
+          new Error("Battle insert did not return a row"),
+        );
       });
       return store.pipe(
-        Effect.catch((error) =>
-          Effect.gen(function* () {
-            const existingBattle =
-              yield* battlesModule.getExistingBattleBySubmissionId(
-                data.submissionId,
-              );
-
-            if (existingBattle) {
-              return existingBattle;
-            }
-
-            logger.error("Failed to store battle in database:", error);
-            return yield* Effect.fail(
-              new Error(
-                `Database storage failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-              ),
-            );
-          }),
-        ),
+        Effect.mapError((error) => {
+          if (error instanceof ApplicationError) return error;
+          logger.error("Failed to store battle in database:", error);
+          return new Error(
+            `Database storage failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+          );
+        }),
       );
     },
 

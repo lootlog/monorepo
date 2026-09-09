@@ -1,5 +1,5 @@
 import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
-import { Effect, Schema } from "effect";
+import { Effect, Redacted, Schema } from "effect";
 import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
 import type { GetIdpTokenResponse } from "#src/auth/get-idp-token-response";
 import { AccountNotFoundError } from "#src/auth/errors/account-not-found.error";
@@ -50,9 +50,13 @@ export class AuthService {
 
   constructor(
     private readonly logger: Logger,
-    private readonly redisService: RedisService,
+    private readonly redisService: Pick<
+      RedisService,
+      "getJson" | "setJson" | "del" | "deleteByPattern"
+    >,
     private readonly httpClient: HttpClientValue,
     authServiceUrl: URL,
+    private readonly idpTokenSecret?: Redacted.Redacted<string>,
   ) {
     this.authServiceUrl = authServiceUrl.toString().replace(/\/$/, "");
   }
@@ -66,7 +70,12 @@ export class AuthService {
       const response = yield* outboundHttpRequest(this.httpClient, {
         adapter: "auth-idp-token",
         body: JSON.stringify({ userId, discordId }),
-        headers: { "content-type": "application/json" },
+        headers: {
+          "content-type": "application/json",
+          authorization: this.idpTokenSecret
+            ? `Bearer ${Redacted.value(this.idpTokenSecret)}`
+            : "",
+        },
         method: "POST",
         responseLimitBytes: 1024 * 1024,
         retryTimes: 0,

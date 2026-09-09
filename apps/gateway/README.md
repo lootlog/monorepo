@@ -63,6 +63,27 @@ include cookie values or private handshake headers in reports or committed tests
 
 ## Realtime access policy updates
 
+Each connection can retain at most 4,096 distinct subscriptions, including its
+automatic Organization subscriptions. A scope's JSON representation is limited
+to 1,024 UTF-8 bytes. Extra subscriptions are rejected with the existing
+`COMMAND_REJECTED` response and `retryable: false` before either routing index
+changes. Replacing an existing scope remains allowed at capacity; unsubscribing
+releases capacity. These limits apply to JSON and MessagePack clients and to
+air-tag subscriptions through the same hub.
+
+If server-side subscription reconciliation exceeds a limit, the gateway clears
+the connection's subscriptions and closes it with code 1008. It never retains
+revoked subscriptions or silently reports a partially applied replacement.
+This requires no protocol version change or client rollout.
+
+Hero-specific coordination events carry `heroNpcLvl` from the API's source row.
+Gateway applies the same level visibility function as HTTP before local or
+federated delivery, including after role changes. Missing source metadata is
+rejected; an explicit null or zero level retains the HTTP unknown-level policy.
+Deploy the API publishers before Gateway. The Rabbit field is additive and
+optional for wire compatibility, but older queued messages without it are not
+delivered by the updated gateway; clients can refresh the authorized HTTP view.
+
 Gateway refreshes each connected session's server-side roles after a permission
 rebalance. It sends `permissions.updated` only when the effective policy changes.
 Role identifiers, role order, and redundant overlapping grants do not cause a

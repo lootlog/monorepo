@@ -31,3 +31,24 @@ it, so retain a compatible worker until the backlog is empty. The migration
 cannot recover object identifiers lost by deletions before it was installed.
 `db:migrate:init` adopts only the historical schema; it never marks this new
 migration as applied without executing its SQL.
+
+## User-scoped battle submissions
+
+`20260909045921_scoped_battle_submissions` replaces the global submission ID
+index with uniqueness on `(userId, submissionId)`. Existing rows are preserved;
+different users may subsequently use the same submission ID. Reusing an ID with
+a different battle payload for the same user returns HTTP 400. Equivalent
+retries retain the original battle ID, and R2 uploads use `If-None-Match: *` so
+an already accepted object is never replaced. A failed initial upload can still
+be retried without inserting another battle. Legacy submissions without a
+stored semantic fingerprint return their original ID without changing metadata
+or replacing raw data; unverified retry content cannot repair those old objects.
+
+Deploy this change as a coordinated write cutover: stop and drain the old
+Battlelog writers, apply the migration, then start the updated service. Do not
+run old and new writers together: old code performs global submission lookups,
+and new code requires the composite index for its conflict target. Keep game
+clients retrying failed submissions during the cutover. Do not restore the old
+runtime or global unique index after different users have reused a submission
+ID; use a forward fix or a compatible release. No existing battle records should
+be deleted to make a rollback succeed.

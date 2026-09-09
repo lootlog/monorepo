@@ -181,20 +181,25 @@ ${chalk.bold("Note:")}
 
   let sharedValues = new Map<string, string>();
   if (options.auto && (!options.force || options.skipExisting)) {
-    const signatureKey = "ACTIVITY_EVENT_SIGNATURE_SECRET";
-    for (const envFile of envFiles) {
-      if (!existsSync(envFile.path)) continue;
-      const value = extractSharedValues(
-        parseEnvFile(readEnvFile(envFile.path)),
-      ).get(signatureKey);
-      if (value === undefined) continue;
-      const previous = sharedValues.get(signatureKey);
-      if (!value || (previous !== undefined && previous !== value)) {
-        throw new Error(
-          `Invalid or inconsistent ${signatureKey} in existing .env files. Align the root, apps/gateway and apps/activity values or regenerate all files with --force.`,
-        );
+    for (const secretKey of [
+      "ACTIVITY_EVENT_SIGNATURE_SECRET",
+      "AUTH_IDP_TOKEN_SECRET",
+      "BATTLELOG_CLEANUP_SECRET",
+    ]) {
+      for (const envFile of envFiles) {
+        if (!existsSync(envFile.path)) continue;
+        const value = extractSharedValues(
+          parseEnvFile(readEnvFile(envFile.path)),
+        ).get(secretKey);
+        if (value === undefined) continue;
+        const previous = sharedValues.get(secretKey);
+        if (!value || (previous !== undefined && previous !== value)) {
+          throw new Error(
+            `Invalid or inconsistent ${secretKey} in existing .env files. Align the root and relevant application values or regenerate all files with --force.`,
+          );
+        }
+        sharedValues.set(secretKey, value);
       }
-      sharedValues.set(signatureKey, value);
     }
   }
   let createdCount = 0;

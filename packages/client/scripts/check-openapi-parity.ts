@@ -705,13 +705,85 @@ const normalizeManageableOrganizationResponse = (
   return operation;
 };
 
+const normalizeServiceAuthentication = (
+  service: string,
+  operationKey: string,
+  operation: JsonValue,
+): JsonValue => {
+  let normalized = operation;
+  // Verified by Auth application and Battlelog HTTP service-credential tests.
+  if (
+    (service === "auth" && operationKey === "POST /auth/idp-token") ||
+    (service === "battlelog" &&
+      operationKey === "POST /internal/delete-user-data")
+  ) {
+    const authorizationParameter = [
+      {
+        name: "authorization",
+        in: "header",
+        required: false,
+        schema: { nullable: true, type: "string" },
+      },
+    ];
+    if (
+      !isJsonObject(normalized) ||
+      JSON.stringify(
+        normalizeOpenApiRepresentation(normalized.parameters ?? null),
+      ) !==
+        JSON.stringify(normalizeOpenApiRepresentation(authorizationParameter))
+    )
+      throw new Error(
+        `${operationKey} must declare the service authorization header`,
+      );
+    const properties = {
+      message: { type: "string" },
+      statusCode: { type: "number", enum: [401] },
+    };
+    const unauthorizedSchema = {
+      type: "object",
+      properties:
+        service === "battlelog"
+          ? { error: { type: "string" }, ...properties }
+          : properties,
+      required:
+        service === "battlelog"
+          ? ["error", "message", "statusCode"]
+          : ["message", "statusCode"],
+    };
+    assertErrorResponse(
+      normalized,
+      operationKey,
+      "401",
+      "service authentication error",
+      service === "auth"
+        ? {
+            anyOf: [
+              unauthorizedSchema,
+              {
+                type: "object",
+                properties: { error: { type: "string" } },
+                required: ["error"],
+              },
+            ],
+          }
+        : unauthorizedSchema,
+    );
+    normalized = removeResponseStatus({ ...normalized, parameters: [] }, "401");
+  }
+  return normalized;
+};
+
 export const normalizeAllowedChanges = (
   service: string,
   operationKey: string,
   operation: JsonValue,
   schemas?: Record<string, JsonValue>,
 ): JsonValue => {
-  let normalized = operation;
+  let normalized = normalizeServiceAuthentication(
+    service,
+    operationKey,
+    operation,
+  );
   if (service === "auth" && operationKey === "GET /auth/verify") {
     for (const status of ["401", "429", "503"]) {
       assertErrorResponse(

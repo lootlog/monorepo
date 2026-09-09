@@ -8,6 +8,8 @@ import {
   NpcRoutingTierSchema,
 } from "@lootlog/schema/npc-routing";
 import { Permission } from "@lootlog/schema/permissions";
+import { NonNegativeInt } from "@lootlog/schema/primitives";
+import { canViewEventHero } from "@lootlog/domain/event-hero-visibility";
 import type { ServerEvent } from "@lootlog/protocol/realtime";
 import { Function, Option, Predicate, Schema } from "effect";
 import type { UserGuildData } from "#src/guilds/guild";
@@ -26,6 +28,13 @@ type NpcEvent = Extract<
       | "notification.sent";
   }
 >;
+
+const decodeEventHeroSource = Schema.decodeUnknownOption(
+  Schema.Struct({
+    guildId: Schema.String,
+    heroNpcLvl: Schema.NullOr(NonNegativeInt),
+  }),
+);
 
 const decodeNpc = Schema.decodeUnknownOption(
   Schema.Struct({
@@ -153,6 +162,31 @@ const canReadFeatureEvent = (
   );
 };
 
+const canReadEventHeroSource = (
+  session: SessionData,
+  organizationId: string,
+  source: ReturnType<typeof decodeEventHeroSource>,
+): boolean => {
+  if (Option.isNone(source) || source.value.guildId !== organizationId)
+    return false;
+  const guild = session.guilds.find(
+    (entry) => entry.guild.id === organizationId,
+  );
+  if (!guild) return false;
+  const administrator = isOrganizationAdministrator(session, organizationId);
+  const permissions = administrator
+    ? [Permission.ADMIN]
+    : guild.roles.flatMap((role) => role.permissions);
+  return (
+    (administrator || permissions.includes(Permission.LOOTLOG_EVENTS_READ)) &&
+    canViewEventHero(
+      { npcLvl: source.value.heroNpcLvl },
+      guild.roles,
+      permissions,
+    )
+  );
+};
+
 export const canReadNpcSourceEvent = (
   session: SessionData,
   event: Event,
@@ -160,6 +194,16 @@ export const canReadNpcSourceEvent = (
   switch (event.type) {
     case "member-refresh.updated":
       return isOrganizationAdministrator(session, event.data.organizationId);
+    case "event.map-status-updated":
+    case "event.hero-killed":
+    case "event.respawn-window-opened":
+    case "event.respawn-window-closed": {
+      return canReadEventHeroSource(
+        session,
+        event.data.organizationId,
+        decodeEventHeroSource(event.data.payload),
+      );
+    }
     case "timer.created":
     case "timer.deleted":
     case "chat.created":

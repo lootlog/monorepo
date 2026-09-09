@@ -5,9 +5,9 @@ import {
   createAccessPolicySnapshot,
 } from "@lootlog/protocol/realtime/access-policy";
 import { describe, expect, test } from "bun:test";
-import { encode } from "@msgpack/msgpack";
+import { decode, encode } from "@msgpack/msgpack";
 import { Permission } from "@lootlog/schema/permissions";
-import { Effect } from "effect";
+import { Effect, Predicate } from "effect";
 import { CommandHandler } from "./command-handler.js";
 import { canReadSourceEvent } from "./source-event-visibility.js";
 import {
@@ -17,7 +17,8 @@ import {
 import { makeGuildStore, type GuildStore } from "#src/guilds/guild-store";
 import type { ActivityPublisher } from "#src/rabbit/activity-publisher";
 import type { PresenceStore } from "#src/realtime/presence-store";
-import type { RealtimeHub } from "#src/realtime/realtime-hub";
+import { RealtimeHub } from "#src/realtime/realtime-hub";
+import { unusedFederationStore } from "../../test/realtime-fixtures.js";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
 import type { UserGuildData } from "#src/guilds/guild";
 
@@ -173,6 +174,94 @@ const setup = (guildStore?: GuildStore) => {
 };
 
 describe("CommandHandler session lifecycle", () => {
+  test.each(["json", "msgpack"] as const)(
+    "rejects subscription exhaustion through %s commands while allowing unsubscribe",
+    async (frameEncoding) => {
+      const hub = new RealtimeHub(
+        { maxBackpressureBytes: 1_024, maxBackpressureStrikes: 3 },
+        unusedFederationStore,
+      );
+      const { guilds, presence, activity } = setup();
+      const handler = new CommandHandler(
+        guilds,
+        {
+          verify: () =>
+            Effect.succeed({ valid: false, reason: "not supplied" }),
+        },
+        presence,
+        hub,
+        activity,
+        { send: () => Promise.reject(new Error("Unexpected map ping")) },
+        {
+          updateSubscription: () =>
+            Promise.reject(new Error("Unexpected air tag subscription")),
+          publishObservations: () =>
+            Promise.reject(new Error("Unexpected air tag observation")),
+        },
+      );
+      const responses: unknown[] = [];
+      const target = makeSocket();
+      const socket: GatewaySocket = {
+        ...target.socket,
+        data: {
+          ...target.socket.data,
+          frameEncoding: frameEncoding === "json" ? "json" : undefined,
+          joined: true,
+        },
+        send: (data) => {
+          if (Predicate.isString(data)) responses.push(JSON.parse(data));
+          else if (data instanceof Uint8Array) responses.push(decode(data));
+          else throw new Error("Unexpected frame encoding");
+          return 0;
+        },
+      };
+      for (let index = 0; index < 4_096; index += 1)
+        hub.subscribe(socket, {
+          topic: "party.ready-room",
+          eventId: String(index),
+        });
+      for (const [requestId, type, eventId] of [
+        ["over-capacity", "subscription.subscribe", "extra"],
+        ["oversized", "subscription.subscribe", "ą".repeat(512)],
+        ["replacement", "subscription.subscribe", "0"],
+        ["unsubscribe", "subscription.unsubscribe", "0"],
+        ["new-slot", "subscription.subscribe", "extra"],
+      ]) {
+        const command = {
+          v: 1,
+          requestId,
+          type,
+          data: { topic: "party.ready-room", eventId },
+        };
+        await Effect.runPromise(
+          handler.handle(
+            socket,
+            frameEncoding === "json"
+              ? JSON.stringify(command)
+              : Buffer.from(encode(command)),
+          ),
+        );
+      }
+      expect(responses).toEqual([
+        ...["over-capacity", "oversized"].map((requestId) => ({
+          v: 1,
+          requestId,
+          status: "error",
+          error: {
+            code: "COMMAND_REJECTED",
+            message: "subscription limit exceeded",
+            retryable: false,
+          },
+        })),
+        ...["replacement", "unsubscribe", "new-slot"].map((requestId) =>
+          expect.objectContaining({ requestId, status: "success" }),
+        ),
+      ]);
+      expect(socket.data.subscriptions.size).toBe(4_096);
+      expect(target.closes).toEqual([]);
+    },
+  );
+
   test("accepts readable JSON commands for local diagnostic sockets", async () => {
     const { handler, hub } = setup();
     const target = makeSocket();
