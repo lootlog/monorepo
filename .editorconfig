@@ -17,10 +17,6 @@ trim_trailing_whitespace = false
 indent_style = space
 indent_size = 2
 
-[*.prisma]
-indent_style = space
-indent_size = 2
-
 [Makefile]
 indent_style = tab
 

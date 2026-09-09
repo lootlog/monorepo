@@ -1,6 +1,5 @@
 import type { JsonValue } from "#src/database/json";
 // Hand-maintained API database schema. Generate SQL migrations from this source.
-// drizzle/legacy-prisma is immutable adoption evidence, not a schema input.
 import { sql } from "drizzle-orm";
 import {
   boolean,
