@@ -1,3 +1,4 @@
+import { DEFAULT_NPC_TYPE_COLORS } from "@lootlog/schema/npc-appearance";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { MessageType } from "@/api/chat.api";
@@ -33,7 +34,7 @@ const message: ChatMessageType = {
     type: 1,
     wt: 80,
   },
-  canEdit: false,
+
   canDelete: false,
 };
 
@@ -98,5 +99,32 @@ describe("ChatNpcMessageView", () => {
     expect(screen.queryByText("Old Ruins")).not.toBeInTheDocument();
     expect(screen.queryByText(/\[\d{2}:\d{2}\]/)).not.toBeInTheDocument();
     expect(screen.getByText("Dark Hunter")).toBeInTheDocument();
+  });
+});
+
+it("uses configured NPC background colors in both layouts", () => {
+  const props = {
+    all: false,
+    guildName: "Guild",
+    memberColor: "ffffff",
+    message,
+    senderName: "Hero",
+    npcTypeColors: { ...DEFAULT_NPC_TYPE_COLORS, HERO: "#123456" },
+  };
+  const { container, rerender } = render(<ChatNpcMessageView {...props} />);
+  expect(container.querySelector('[data-slot="bubble"]')).toHaveStyle({
+    backgroundColor:
+      "color-mix(in srgb, rgba(18, 52, 86, 0.4) 37.5%, transparent)",
+  });
+  rerender(
+    <ChatNpcMessageView
+      {...props}
+      appearance={{ ...CHAT_APPEARANCE_READABLE_PRESET, npcLayout: "inline" }}
+      npcTypeColors={{ ...DEFAULT_NPC_TYPE_COLORS, HERO: "#abcdef" }}
+    />,
+  );
+  expect(container.querySelector('[data-slot="bubble"]')).toHaveStyle({
+    backgroundColor:
+      "color-mix(in srgb, rgba(171, 205, 239, 0.4) 37.5%, transparent)",
   });
 });

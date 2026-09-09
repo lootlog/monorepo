@@ -1,7 +1,7 @@
+import { inputVariantClasses, type InputVariant } from "@/components/ui/input";
 import { ChatQuickActionStrip } from "./chat-quick-action-strip";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
-import { Label } from "@/components/ui/label";
 import type { MessageType } from "@/api/chat.api";
 import { Popover, PopoverContent } from "@/components/ui/popover";
 import {
@@ -77,6 +77,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 
 type ChatInputProps = {
+  variant?: InputVariant;
   selectedGuildId?: string;
   autofocus?: boolean;
 };
@@ -88,11 +89,14 @@ type TabCompletionSession = {
 
 const REQUIRED_CLEAR_CHAT_PERMISSIONS = [Permission.OWNER, Permission.ADMIN];
 
-const CHAT_INPUT_SHELL_CLASS =
-  "ll:h-6 ll:w-full ll:min-w-0 ll:overflow-hidden ll:rounded-sm ll:border ll:border-solid ll:border-gray-400 ll:bg-black/92 ll:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ll:transition-[color,box-shadow]";
+const CHAT_INPUT_FOCUS_CLASSES = {
+  default:
+    "ll:focus-within:border-ring ll:focus-within:ring-ring/50 ll:focus-within:ring-[3px]",
+  borderless: "",
+};
 
-const CHAT_INPUT_FOCUS_CLASS =
-  "ll:focus-within:border-ring ll:focus-within:ring-ring/50 ll:focus-within:ring-[3px]";
+const CHAT_INPUT_SHELL_CLASS =
+  "ll:h-6 ll:w-full ll:min-w-0 ll:overflow-hidden ll:transition-[color,box-shadow]";
 
 const getActiveMentionForSuggestions = ({
   activeMention,
@@ -211,7 +215,13 @@ const getChatMentionQueryData = <MemberItem, RoleItem>({
   roles: roles ?? [],
 });
 
+function resolveSelectedSuggestionIndex(count: number, requested: number) {
+  if (count === 0) return -1;
+  return requested >= 0 && requested < count ? requested : 0;
+}
+
 export const ChatInput: FC<ChatInputProps> = ({
+  variant = "default",
   selectedGuildId,
   autofocus,
 }) => {
@@ -377,13 +387,10 @@ export const ChatInput: FC<ChatInputProps> = ({
     mentionSuggestions,
   });
   const isClearChatCommand = messageValue.trim() === "/clr";
-  const selectedMentionIndex =
-    suggestionMode === null || activeSuggestions.length === 0
-      ? -1
-      : requestedMentionIndex >= 0 &&
-          requestedMentionIndex < activeSuggestions.length
-        ? requestedMentionIndex
-        : 0;
+  const selectedMentionIndex = resolveSelectedSuggestionIndex(
+    suggestionMode === null ? 0 : activeSuggestions.length,
+    requestedMentionIndex,
+  );
   const setSelectedMentionIndex = (
     update: (currentIndex: number) => number,
   ) => {
@@ -738,19 +745,30 @@ export const ChatInput: FC<ChatInputProps> = ({
   };
 
   return (
-    <form className="ll:flex ll:justify-center ll:flex-col ll:mt-1 ll:mr-0.5">
+    <form
+      className={cn(
+        "ll:flex ll:justify-center ll:flex-col",
+        variant === "default" && "ll:mt-1",
+      )}
+    >
       {replyDraft && (
-        <div className="ll:mb-1">
-          <Label className="ll:text-[9px] ll:text-gray-400">
-            {t("reply.replyingTo")}
-          </Label>
+        <div className="ll:border-solid ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40">
           <ChatReplyPreview
+            variant="compact"
             reply={replyDraft}
-            onClear={() => clearReplyDraft()}
+            onClear={() => {
+              clearReplyDraft();
+              focusEditorCaret(caretIndex);
+            }}
           />
         </div>
       )}
-      <div className="ll:flex ll:items-center ll:gap-1">
+      <div
+        className={cn("ll:flex ll:items-center ll:gap-1", {
+          "ll:border-solid ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40 ll:has-[[data-slot=chat-input]:focus]:bg-white/10 ll:pl-1":
+            variant === "borderless",
+        })}
+      >
         <div className="ll:relative ll:min-w-0 ll:flex-1 ll:overflow-visible">
           <ChatMentionSuggestions
             suggestionMode={suggestionMode}
@@ -772,7 +790,11 @@ export const ChatInput: FC<ChatInputProps> = ({
               ref={clearConfirmAnchorRef}
               className={cn(
                 CHAT_INPUT_SHELL_CLASS,
-                !isPending && CHAT_INPUT_FOCUS_CLASS,
+                inputVariantClasses[variant],
+                variant === "borderless" && "ll:h-8",
+                !isPending && CHAT_INPUT_FOCUS_CLASSES[variant],
+                variant === "default" &&
+                  "ll:bg-black/92 ll:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]",
               )}
             >
               <ChatInputEditor

@@ -90,7 +90,7 @@ describe("QuickAccess", () => {
     expect(screen.queryByText("Lootlog")).not.toBeInTheDocument();
   });
 
-  it("keeps the user-defined size when an active Ready Room appears", () => {
+  it("keeps quick access unchanged when an active Ready Room appears", () => {
     useWindowsStore
       .getState()
       .setSize("quick-access", { width: 340, height: 84 });
@@ -119,8 +119,8 @@ describe("QuickAccess", () => {
     );
 
     expect(
-      screen.getByRole("button", { name: "Aktywne zbieranie grupy" }),
-    ).toBeInTheDocument();
+      screen.queryByRole("button", { name: "Aktywne zbieranie grupy" }),
+    ).not.toBeInTheDocument();
     expect(quickAccessWindow?.style.width).toBe("340px");
     expect(quickAccessWindow?.style.height).toBe("84px");
   });

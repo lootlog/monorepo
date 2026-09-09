@@ -4,7 +4,7 @@ import type { GameNpc } from "@lootlog/margonem/npcs";
 import type { FC } from "react";
 
 type NpcTileProps = {
-  npc: GameNpc;
+  npc: Pick<GameNpc, "icon" | "nick">;
   className?: string;
   containerClassName?: string;
 };

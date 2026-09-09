@@ -1,35 +1,110 @@
-import { MapPin, Siren } from "lucide-react";
+import { usePartyCommand } from "@/features/command/hooks/use-party-command";
+import { useChatStore } from "@/store/chat.store";
+import { MapPin, Plus, Siren, Swords } from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { useChatQuickActions } from "@/features/chat/hooks/use-chat-quick-actions";
+import { formatBinding, useHotkeysStore } from "@/store/hotkeys.store";
 
 export const ChatQuickActionStrip = ({ guildId }: { guildId?: string }) => {
   const { t } = useTranslation("chat");
   const { sendHelp, sendPosition, isPending } = useChatQuickActions();
+  const bindings = useHotkeysStore((state) => state.bindings);
+  const { handlePartyCommand } = usePartyCommand();
+  const selectedInputGuildIds = useChatStore(
+    (state) => state.selectedInputGuildIds,
+  );
+  const [creatingParty, setCreatingParty] = useState(false);
+  const [open, setOpen] = useState(false);
+  const disabled = !guildId || isPending;
+  const actions = [
+    {
+      key: "chat-position",
+      label: t("quickActions.position"),
+      icon: MapPin,
+      run: () => sendPosition(guildId),
+      disabled,
+      shortcut: formatBinding(bindings["chat-position"]),
+    },
+    {
+      key: "chat-help",
+      label: t("quickActions.help"),
+      icon: Siren,
+      run: () => sendHelp(guildId),
+      disabled,
+      shortcut: formatBinding(bindings["chat-help"]),
+    },
+    {
+      key: "party-finder",
+      label: t("gatherings.title"),
+      icon: Swords,
+      run: async () => {
+        setCreatingParty(true);
+        try {
+          await handlePartyCommand(undefined, selectedInputGuildIds);
+        } finally {
+          setCreatingParty(false);
+        }
+      },
+      disabled: creatingParty || selectedInputGuildIds.length === 0,
+      shortcut: "",
+    },
+  ] as const;
   return (
-    <div className="ll:flex ll:shrink-0 ll:items-center ll:gap-1">
-      <Button
-        type="button"
-        className="ll:size-6 ll:p-0"
-        disabled={!guildId || isPending}
-        aria-label={t("quickActions.position")}
-        title={t("quickActions.position")}
-        onMouseDown={(event) => event.preventDefault()}
-        onClick={() => void sendPosition(guildId)}
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          className="ll:size-6 ll:shrink-0 ll:p-0 ll:mr-2 ll:border-0"
+          aria-label={t("quickActions.menu")}
+          title={t("quickActions.menu")}
+        >
+          <Plus aria-hidden className="ll:size-3" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        side="top"
+        align="end"
+        className="ll:flex ll:flex-col ll:gap-0.5 ll:p-1"
+        aria-label={t("quickActions.menu")}
       >
-        <MapPin aria-hidden className="ll:size-3.5" />
-      </Button>
-      <Button
-        type="button"
-        className="ll:size-6 ll:p-0"
-        disabled={!guildId || isPending}
-        aria-label={t("quickActions.help")}
-        title={t("quickActions.help")}
-        onMouseDown={(event) => event.preventDefault()}
-        onClick={() => void sendHelp(guildId)}
-      >
-        <Siren aria-hidden className="ll:size-3.5" />
-      </Button>
-    </div>
+        {actions.map(
+          ({
+            key,
+            label,
+            icon: Icon,
+            run,
+            disabled: actionDisabled,
+            shortcut,
+          }) => (
+            <Button
+              key={key}
+              aria-label={label}
+              type="button"
+              variant="ghost"
+              className="ll:flex ll:w-full ll:justify-start ll:gap-2 ll:px-2"
+              disabled={actionDisabled}
+              onClick={() => {
+                setOpen(false);
+                void run();
+              }}
+            >
+              <Icon aria-hidden className="ll:size-3.5" />
+              {label}
+              <span className="ll:ml-auto ll:pl-3 ll:text-[10px] ll:text-muted-foreground">
+                {shortcut}
+              </span>
+            </Button>
+          ),
+        )}
+      </PopoverContent>
+    </Popover>
   );
 };

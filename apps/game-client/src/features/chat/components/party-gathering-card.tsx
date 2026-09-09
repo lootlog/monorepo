@@ -1,3 +1,4 @@
+import { CHAT_GATHERING_ACTION_CLASS } from "../chat.constants";
 import {
   type ChatMessageResponseDtoOutput,
   type MemberSummaryResponseDtoOutput,
@@ -7,14 +8,13 @@ import {
 import { decodePartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 
-import { CharacterTile } from "@/components/character-tile";
 import { Button } from "@/components/ui/button";
 import { cn } from "cn";
 import { useGameStore } from "@/store/game.store";
 import { buildCurrentCharacterPayload } from "@/lib/api/generated-helpers";
 import { format } from "@/utils/local-date";
 import { Loader2 } from "lucide-react";
-import type { FC } from "react";
+import { useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import {
   selectReadyRoomForCharacter,
@@ -96,6 +96,15 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = (props) => {
   const { t } = useTranslation("chat");
   const memberColor = useMemberColor(member);
   const applyToReadyRoom = usePartyReadyRoomControllerApply();
+  const notificationId = message.partyGathering?.notificationId;
+  const [signupState, setSignupState] = useState({
+    notificationId,
+    failed: false,
+  });
+  if (signupState.notificationId !== notificationId) {
+    setSignupState({ notificationId, failed: false });
+  }
+  const world = useGameStore((state) => state.game?.world);
   const mergeProjection = usePartyFinderStore((state) => state.mergeProjection);
   const currentCharacterIdentity = getCurrentReadyRoomCharacterIdentity();
   const currentReadyRoom = usePartyFinderStore((state) =>
@@ -185,8 +194,22 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = (props) => {
   }
 
   const handleVolunteer = () => {
+    const game = useGameStore.getState().game;
+    if (
+      applyToReadyRoom.isPending ||
+      isOrganizingCharacter ||
+      game?.world !== partyGathering.world ||
+      game.hero.level < minLvl ||
+      game.hero.level > maxLvl ||
+      selectReadyRoomForCharacter(
+        usePartyFinderStore.getState(),
+        getCurrentReadyRoomCharacterIdentity(),
+      )
+    )
+      return;
     const character = buildCurrentCharacterPayload();
     if (!character) return;
+    setSignupState({ notificationId, failed: false });
 
     applyToReadyRoom.mutate(
       {
@@ -199,7 +222,9 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = (props) => {
         },
       },
       {
+        onError: () => setSignupState({ notificationId, failed: true }),
         onSuccess: (projection) => {
+          setSignupState({ notificationId, failed: false });
           if (projection.schemaVersion !== 3) return;
           mergeProjection(decodePartyReadyRoomProjection(projection));
         },
@@ -236,35 +261,22 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = (props) => {
           [G]
         </span>
       </div>
-      <div
-        className="ll:flex ll:w-full ll:min-w-0 ll:max-w-full ll:box-border ll:flex-col ll:items-stretch ll:gap-[var(--ll-chat-space-sm)] ll:overflow-hidden ll:rounded-sm ll:border ll:border-solid ll:bg-gray-500/30 ll:px-[var(--ll-chat-space-lg)] ll:py-[var(--ll-chat-space-md)]"
-        style={{ borderColor: "#FF8C00" }}
-      >
-        <div className="ll:flex ll:w-full ll:min-w-0 ll:max-w-full ll:items-center ll:gap-[var(--ll-chat-space-md)] ll:overflow-hidden">
-          <CharacterTile
-            character={message.characterData}
-            className="ll:shrink-0 ll:h-[var(--ll-chat-character-size)] ll:w-[var(--ll-chat-character-size)]"
-          />
-          <span className="ll:flex-1 ll:min-w-0 ll:max-w-full ll:truncate ll:font-bold ll:text-[length:var(--ll-chat-meta-font-size)] ll:leading-[var(--ll-chat-meta-line-height)] ll:text-white">
-            {message.characterData.nick} ({message.characterData.lvl}
-            {message.characterData.prof})
-          </span>
-        </div>
+      <div className="ll:flex ll:w-full ll:min-w-0 ll:max-w-full ll:box-border ll:flex-col ll:items-stretch ll:gap-[var(--ll-chat-space-xs)] ll:overflow-hidden ll:rounded-sm ll:bg-slate-800/50 ll:px-[var(--ll-chat-space-sm)] ll:py-[var(--ll-chat-space-xs)]">
         {message.npc && (
           <div className="ll:flex ll:w-full ll:min-w-0 ll:max-w-full ll:items-center ll:gap-[var(--ll-chat-space-md)] ll:overflow-hidden">
-            <span className="ll:flex-1 ll:min-w-0 ll:max-w-full ll:truncate ll:text-[length:var(--ll-chat-meta-font-size)] ll:leading-[var(--ll-chat-meta-line-height)] ll:text-amber-300 ll:font-semibold">
+            <span className="ll:flex-1 ll:min-w-0 ll:max-w-full ll:[overflow-wrap:anywhere] ll:text-[length:var(--ll-chat-meta-font-size)] ll:leading-[var(--ll-chat-meta-line-height)] ll:text-amber-300 ll:font-semibold">
               {message.npc.name} ({message.npc.lvl}
               {message.npc.prof ?? ""})
             </span>
           </div>
         )}
         {partyGathering.description && (
-          <p className="ll:w-full ll:min-w-0 ll:max-w-full ll:break-words ll:text-[length:var(--ll-chat-meta-font-size)] ll:leading-[var(--ll-chat-meta-line-height)] ll:text-gray-300 ll:italic">
+          <p className="ll:m-0 ll:w-full ll:min-w-0 ll:max-w-full ll:[overflow-wrap:anywhere] ll:text-[length:var(--ll-chat-meta-font-size)] ll:leading-[var(--ll-chat-meta-line-height)] ll:text-gray-300 ll:italic">
             &quot;{partyGathering.description}&quot;
           </p>
         )}
         {hasLevelRange(partyGathering) && (
-          <p className="ll:w-full ll:min-w-0 ll:max-w-full ll:break-words ll:text-[length:var(--ll-chat-detail-font-size)] ll:leading-[var(--ll-chat-detail-line-height)] ll:text-gray-400">
+          <p className="ll:m-0 ll:w-full ll:min-w-0 ll:max-w-full ll:break-words ll:text-[length:var(--ll-chat-detail-font-size)] ll:leading-[var(--ll-chat-detail-line-height)] ll:text-gray-400">
             {t("partyGathering.levelRange", {
               min: minLvl,
               max: maxLvl,
@@ -273,19 +285,36 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = (props) => {
         )}
         {!isOrganizingCharacter && (
           <Button
+            variant="ghost"
             onClick={handleVolunteer}
-            disabled={isVolunteerDisabled(
-              applyToReadyRoom.isPending,
-              meetsLevelReq,
-              currentReadyRoom !== null,
+            disabled={
+              world !== partyGathering.world ||
+              isVolunteerDisabled(
+                applyToReadyRoom.isPending,
+                meetsLevelReq,
+                currentReadyRoom !== null,
+              )
+            }
+            className={cn(
+              CHAT_GATHERING_ACTION_CLASS,
+              "ll:box-border ll:w-full ll:min-w-0 ll:max-w-full ll:h-auto ll:min-h-[var(--ll-chat-control-height)] ll:py-[var(--ll-chat-space-xs)] ll:text-[length:var(--ll-chat-meta-font-size)] ll:text-amber-300",
             )}
-            className="ll:box-border ll:w-full ll:min-w-0 ll:max-w-full ll:mt-[var(--ll-chat-space-xs)] ll:text-[length:var(--ll-chat-meta-font-size)] ll:h-[var(--ll-chat-control-height)] ll:font-semibold ll:border-[#FF8C00] ll:text-[#FF8C00] ll:hover:bg-[#FF8C00]/20"
           >
             {applyToReadyRoom.isPending ? (
-              <Loader2 className="ll:w-[var(--ll-chat-icon-size)] ll:h-[var(--ll-chat-icon-size)] ll:animate-spin ll:mr-[var(--ll-chat-space-sm)]" />
+              <Loader2 className="ll:w-[var(--ll-chat-icon-size)] ll:h-[var(--ll-chat-icon-size)] ll:animate-spin ll:motion-reduce:animate-none ll:mr-[var(--ll-chat-space-sm)]" />
             ) : null}
-            {volunteerLabel}
+            {world !== partyGathering.world
+              ? t("partyGathering.otherWorld")
+              : volunteerLabel}
           </Button>
+        )}
+        {signupState.failed && (
+          <p
+            role="alert"
+            className="ll:[overflow-wrap:anywhere] ll:text-red-300 ll:text-[length:var(--ll-chat-meta-font-size)] ll:leading-[var(--ll-chat-meta-line-height)]"
+          >
+            {t("partyGathering.joinFailed")}
+          </p>
         )}
       </div>
     </div>

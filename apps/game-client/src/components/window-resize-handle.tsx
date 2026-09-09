@@ -226,17 +226,16 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
   return (
     <div
       data-ll-window-resize-handle=""
-      className="ll:absolute ll:bottom-0 ll:right-0 ll:w-4 ll:h-4 ll:bg-transparent touch-none"
+      className="ll:absolute ll:bottom-0 ll:right-0 ll:w-3 ll:h-3 ll:bg-transparent touch-none"
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
       style={{
         background:
           "linear-gradient(-45deg, transparent 40%, rgba(255,255,255,0.3) 50%, transparent 60%)",
+        clipPath: "polygon(100% 0, 100% 100%, 0 100%)",
         cursor,
         touchAction: "none",
       }}
-    >
-      <div className="ll:absolute ll:-bottom-2 ll:-right-2 ll:w-8 ll:h-8 ll:pointer-events-auto" />
-    </div>
+    />
   );
 };

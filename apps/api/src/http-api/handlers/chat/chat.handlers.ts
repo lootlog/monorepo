@@ -75,12 +75,6 @@ export class ChatData extends Context.Service<
       guildId: string,
       messageId: string,
     ) => DataEffect;
-    readonly updateMessage: (
-      discordId: string,
-      guildId: string,
-      messageId: string,
-      message: string,
-    ) => DataEffect;
   }
 >()("@lootlog/api/http-api/chat/data") {}
 
@@ -163,18 +157,6 @@ export const deleteChatMessage = Effect.fn("deleteChatMessage")(function* (
   return yield* decode(ChatMessageActionResponse, value);
 });
 
-export const updateChatMessage = Effect.fn("updateChatMessage")(function* (
-  guildId: string,
-  messageId: string,
-  message: string,
-) {
-  const access = yield* requireGuild(guildId, writeCapabilities);
-  const value = yield* data((service) =>
-    service.updateMessage(access.discordId, access.guildId, messageId, message),
-  );
-  return yield* decode(ChatMessageActionResponse, value);
-});
-
 export const ChatHandlers = HttpApiBuilder.group(
   LootlogApi,
   "chat",
@@ -207,13 +189,6 @@ export const ChatHandlers = HttpApiBuilder.group(
         declaredHttpFailure(
           Effect.flatMap(pathString(params.guildId, "guildId"), (guildId) =>
             deleteChatMessage(guildId, params.messageId),
-          ),
-        ),
-      )
-      .handle("ChatControllerUpdateChatMessage", ({ params, payload }) =>
-        declaredHttpFailure(
-          Effect.flatMap(pathString(params.guildId, "guildId"), (guildId) =>
-            updateChatMessage(guildId, params.messageId, payload.message),
           ),
         ),
       ),

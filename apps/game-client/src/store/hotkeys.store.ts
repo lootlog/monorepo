@@ -15,8 +15,10 @@ export type HotkeyAction =
   | "toggle-quick-access"
   | "invite-all"
   | "map-ping"
+  | "chat-position"
   | "chat-help"
-  | "join-party-gathering";
+  | "join-party-gathering"
+  | "create-party-gathering";
 
 type HotkeyModifiers = {
   shift: boolean;
@@ -57,7 +59,14 @@ export const HOTKEY_CATEGORY_KEYS: Record<HotkeyCategory, string> = {
 };
 
 export const HOTKEY_ACTIONS: HotkeyActionConfig[] = [
-  ...(["chat-help", "join-party-gathering"] as const).map((action) => ({
+  ...(
+    [
+      { action: "chat-position", key: "P" },
+      { action: "chat-help", key: "H" },
+      { action: "join-party-gathering", key: "" },
+      { action: "create-party-gathering", key: "" },
+    ] as const
+  ).map(({ action, key }) => ({
     action,
     labelKey: `chat:quickActions.hotkeys.${action}.label`,
     descriptionKey: `chat:quickActions.hotkeys.${action}.description`,
@@ -65,10 +74,10 @@ export const HOTKEY_ACTIONS: HotkeyActionConfig[] = [
     scope: "global" as const,
     defaultBinding: {
       type: "keyboard" as const,
-      key: "",
+      key,
       shift: false,
       ctrl: false,
-      alt: false,
+      alt: key !== "",
     },
   })),
   {
@@ -195,7 +204,7 @@ const getDefaultBindings = (): Record<HotkeyAction, HotkeyBinding> => {
   return bindings as Record<HotkeyAction, HotkeyBinding>;
 };
 
-export const migrateHotkeysState = (persisted: unknown) => {
+export const migrateHotkeysState = (persisted: unknown, version = 0) => {
   if (!isObjectRecord(persisted))
     throw new TypeError("Invalid persisted hotkey state");
   const state = persisted;
@@ -214,9 +223,24 @@ export const migrateHotkeysState = (persisted: unknown) => {
   const defaults = getDefaultBindings();
 
   for (const [action, binding] of Object.entries(defaults)) {
-    if (!bindings[action]) {
-      bindings[action] = binding;
-    }
+    const previous = bindings[action];
+    const isQuickAction = action === "chat-help" || action === "chat-position";
+    const needsDefault =
+      !previous ||
+      (version < 7 &&
+        isQuickAction &&
+        previous.type === "keyboard" &&
+        !previous.key);
+    if (!needsDefault) continue;
+    const occupied =
+      isQuickAction &&
+      Object.entries(bindings).some(
+        ([otherAction, otherBinding]) =>
+          otherAction !== action && bindingsEqual(otherBinding, binding),
+      );
+    bindings[action] = occupied
+      ? { type: "keyboard", key: "", shift: false, ctrl: false, alt: false }
+      : binding;
   }
 
   // SAFETY: The defaults loop adds every missing HotkeyAction after validating stored bindings.
@@ -243,7 +267,10 @@ const migrateBinding = (binding: unknown): HotkeyBinding | null => {
     return { type: "mouse", button: candidate.button, ...modifiers };
   }
 
-  if (typeof candidate.key === "string" && candidate.key.length > 0) {
+  if (
+    typeof candidate.key === "string" &&
+    (candidate.key.length > 0 || candidate.type === "keyboard")
+  ) {
     return { type: "keyboard", key: candidate.key, ...modifiers };
   }
 
@@ -291,7 +318,7 @@ export const useHotkeysStore = create<HotkeysState>()(
       name: STORAGE_KEY,
       partialize: (state) => ({ bindings: state.bindings }),
       storage: createJSONStorage(() => localStorage),
-      version: 5,
+      version: 8,
       migrate: migrateHotkeysState,
     },
   ),

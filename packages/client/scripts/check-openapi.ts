@@ -60,7 +60,6 @@ const responseChecks = [
   ["/guilds/{guildId}/loots/{lootId}/comments", "post", "201"],
   ["/guilds/{guildId}/chat-messages", "get", "200"],
   ["/guilds/{guildId}/chat-messages", "post", "201"],
-  ["/guilds/{guildId}/chat-messages/{messageId}", "patch", "200"],
   ["/guilds/{guildId}/chat-messages/{messageId}", "delete", "200"],
   ["/messaging", "post", "201"],
   ["/messaging/party-gathering", "post", "201"],

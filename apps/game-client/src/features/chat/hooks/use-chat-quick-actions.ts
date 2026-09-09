@@ -5,15 +5,11 @@ import { useTranslation } from "react-i18next";
 import { MessageType } from "@/api/chat.api";
 import { upsertChatMessage } from "@/features/chat/chat.helpers";
 import { updateChatMessagesCache } from "@/features/chat/chat-query-cache.helpers";
-import { getChatReplyPayload } from "@/features/chat/chat-submit.helpers";
 import { useNotificationChatOrchestration } from "@/features/chat/hooks/use-notification-chat-orchestration";
 import { useVisibleLootlogGuilds } from "@/hooks/use-visible-lootlog-guilds";
 import { buildChatCharacterData } from "@/lib/api/generated-helpers";
 import { getChatAlarmLocation } from "@/lib/margonem-runtime/adapters/chat-alarm-runtime-adapter";
-import {
-  getSelectedChatGuildId,
-  type ChatReplyDraft,
-} from "@/store/chat.store";
+import { getSelectedChatGuildId } from "@/store/chat.store";
 import { useGameStore } from "@/store/game.store";
 
 // Shared by the always-mounted hotkey handler and the visible action strip.
@@ -26,35 +22,6 @@ export const useChatQuickActions = () => {
   const { mutateAsync: send, isPending } = useChatControllerSendChatMessage();
   const { startNotificationMessage, isCreatingNotificationMessage } =
     useNotificationChatOrchestration();
-  const sendComing = async (reply: ChatReplyDraft) => {
-    const key = `coming:${reply.guildId}:${reply.messageId}`;
-    if (pendingActions.has(key)) return;
-    const characterData = buildChatCharacterData();
-    if (!characterData) {
-      return;
-    }
-    pendingActions.add(key);
-    try {
-      const response = await send({
-        pathParams: { guildId: reply.guildId },
-        data: {
-          message: t("quickActions.comingMessage"),
-          type: MessageType.NORMAL,
-          characterData,
-          replyTo: getChatReplyPayload(reply),
-        },
-      });
-      updateChatMessagesCache({
-        guildId: reply.guildId,
-        queryClient,
-        updater: (old) => upsertChatMessage(old, response),
-      });
-    } catch {
-      // Keep drafts and existing state intact; failed actions are not retried.
-    } finally {
-      pendingActions.delete(key);
-    }
-  };
   const sendPosition = async (guildId = getSelectedChatGuildId()) => {
     if (pendingActions.has("position")) return;
     if (!guildId || !visibleGuilds.some((guild) => guild.id === guildId))
@@ -142,7 +109,6 @@ export const useChatQuickActions = () => {
     }
   };
   return {
-    sendComing,
     sendPosition,
     sendHelp,
     isPending: isPending || isCreatingNotificationMessage,

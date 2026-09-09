@@ -147,7 +147,7 @@ const createSentMessageResponse = (): ChatMessageResponseDtoOutput => ({
     prof: "w",
     icon: "hero.png",
   },
-  canEdit: false,
+
   canDelete: false,
 });
 
@@ -271,6 +271,12 @@ describe("ChatInput", () => {
       expect(getEditor().textContent).toBe("Keep this draft"),
     );
     expect(screen.getByText("[P] Help")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Anuluj odpowiedź" }));
+    expect(
+      useChatStore.getState().replyDraftsByGuild["guild-1"],
+    ).toBeUndefined();
+    expect(getEditor().textContent).toBe("Keep this draft");
+    await waitFor(() => expect(getEditor()).toHaveFocus());
   });
 
   it("uses the shared input focus ring on the editor shell", () => {
@@ -844,4 +850,15 @@ describe("ChatInput", () => {
     });
     expect(editor.textContent).toBe("hello");
   });
+});
+
+it("previews notification color only for a leading exclamation mark and restores normal color", async () => {
+  render(<ChatInput selectedGuildId="guild-1" />);
+  const input = screen.getByRole("textbox");
+  await act(() => useChatStore.getState().setDraft("guild-1", "!Pomocy"));
+  expect(input).toHaveStyle({ color: "rgba(219, 39, 99, 1)" });
+  await act(() => useChatStore.getState().setDraft("guild-1", "Pomocy"));
+  expect(input.style.color).toBe("");
+  await act(() => useChatStore.getState().setDraft("guild-1", "Pomocy!"));
+  expect(input.style.color).toBe("");
 });

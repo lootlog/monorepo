@@ -17,12 +17,9 @@ import type { ChatAppearanceSettings } from "@lootlog/schema/chat-appearance";
 import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
 import type { FC } from "react";
 import { ChatCharacterTooltip } from "./chat-character-tooltip";
-import { ChatNpcMessageActions } from "./chat-npc-message-actions";
 import { ChatNpcMessageView } from "./chat-npc-message-view";
 
 type ChatNpcMessageProps = {
-  onReply?: () => void;
-  onMention?: () => void;
   all: boolean;
   appearance?: ChatAppearanceSettings;
   count?: number;
@@ -33,8 +30,6 @@ type ChatNpcMessageProps = {
 };
 
 export const ChatNpcMessage: FC<ChatNpcMessageProps> = ({
-  onReply,
-  onMention,
   all,
   appearance,
   count = 1,
@@ -53,11 +48,6 @@ export const ChatNpcMessage: FC<ChatNpcMessageProps> = ({
     <ContextMenu>
       <ContextMenuTrigger>
         <ChatNpcMessageView
-          actions=<ChatNpcMessageActions
-            message={message}
-            onReply={onReply}
-            onMention={onMention}
-          />
           all={all}
           appearance={appearance}
           count={count}

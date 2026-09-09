@@ -21,7 +21,7 @@ import { PartyGatheringCard } from "./party-gathering-card";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 import { useWindowsStore } from "@/store/windows.store";
 
-beforeEach(() => setTestRuntimeGame());
+beforeEach(() => setTestRuntimeGame({ world: "tempest" }));
 
 const fetchRequest = vi.fn<typeof fetch>();
 let restoreApi: () => void;
@@ -74,7 +74,7 @@ const makeMessage = (
     minLvl: 180,
     maxLvl: 230,
   },
-  canEdit: false,
+
   canDelete: false,
   ...overrides,
 });
@@ -91,7 +91,7 @@ describe("PartyGatheringCard", () => {
     useWindowsStore.getState().setOpen("party-finder", false);
   });
 
-  it("keeps width-constrained classes on the card rows and button", () => {
+  it("keeps the target and description without duplicating the organizer", () => {
     render(
       <PartyGatheringCard
         all={false}
@@ -101,23 +101,18 @@ describe("PartyGatheringCard", () => {
         message={makeMessage()}
       />,
     );
-
-    const characterTile = document.querySelector<HTMLElement>(
-      '[style*="leader.png"]',
-    );
-    expect(characterTile).toBeInTheDocument();
-    const characterRow = characterTile?.parentElement;
-    const npcRow = screen.getByText("Hydra (250m)").parentElement;
-    const card = characterRow?.parentElement;
-    const joinButton = screen.getByRole("button", { name: "Dołącz do grupy" });
-
-    expect(card?.className).toContain("ll:overflow-hidden");
-    expect(characterRow?.className).toContain("ll:max-w-full");
-    expect(characterRow?.className).toContain("ll:overflow-hidden");
-    expect(npcRow?.className).toContain("ll:max-w-full");
-    expect(npcRow?.className).toContain("ll:overflow-hidden");
-    expect(joinButton.className).toContain("ll:box-border");
-    expect(joinButton.className).toContain("ll:max-w-full");
+    expect(screen.getByText("Member:")).toBeVisible();
+    expect(screen.getByText("Hydra (250m)")).toBeVisible();
+    expect(
+      screen.getByText(/Very long party gathering description/),
+    ).toBeVisible();
+    expect(screen.queryByText("Leader (200w)")).not.toBeInTheDocument();
+    expect(
+      document.querySelector('[style*="leader.png"]'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Dołącz do grupy" }),
+    ).toBeEnabled();
   });
 
   it("shows the organizer character tooltip", async () => {
@@ -185,6 +180,7 @@ describe("PartyGatheringCard", () => {
 
   it("shows that the current character is already registered", () => {
     setTestRuntimeGame({
+      world: "tempest",
       hero: { accountId: "999", characterId: "999" },
     });
     usePartyFinderStore.getState().mergeProjection(
@@ -248,5 +244,67 @@ describe("PartyGatheringCard", () => {
     expect(
       screen.getByRole("button", { name: "Dołącz do grupy" }),
     ).toBeVisible();
+  });
+  it("blocks signup from another world or outside the level range", () => {
+    setTestRuntimeGame({ world: "pandora" });
+    const { rerender } = render(
+      <PartyGatheringCard
+        all={false}
+        guildName="Guild"
+        isMsgYesterday={false}
+        message={makeMessage()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Inny świat" }));
+    expect(fetchRequest).not.toHaveBeenCalled();
+    setTestRuntimeGame({ world: "tempest", hero: { level: 100 } });
+    rerender(
+      <PartyGatheringCard
+        all={false}
+        guildName="Guild"
+        isMsgYesterday={false}
+        message={makeMessage()}
+      />,
+    );
+    expect(
+      screen.getByRole("button", { name: "Wymagany poziom 180-230" }),
+    ).toBeDisabled();
+    expect(fetchRequest).not.toHaveBeenCalled();
+  });
+
+  it("shows a failed signup and clears the error on retry and room change", async () => {
+    fetchRequest.mockRejectedValueOnce(new Error("offline"));
+    const { rerender } = render(
+      <PartyGatheringCard
+        all={false}
+        guildName="Guild"
+        isMsgYesterday={false}
+        message={makeMessage()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Dołącz do grupy" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Nie udało się dołączyć",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Dołącz do grupy" }));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    await waitFor(() => expect(fetchRequest).toHaveBeenCalledTimes(2));
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Dołącz do grupy" }),
+      ).toBeEnabled(),
+    );
+    fetchRequest.mockRejectedValueOnce(new Error("offline again"));
+    fireEvent.click(screen.getByRole("button", { name: "Dołącz do grupy" }));
+    await screen.findByRole("alert");
+    rerender(
+      <PartyGatheringCard
+        all={false}
+        guildName="Guild"
+        isMsgYesterday={false}
+        message={makeMessage({ partyGathering: undefined })}
+      />,
+    );
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 });

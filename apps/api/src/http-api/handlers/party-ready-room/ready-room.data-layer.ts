@@ -569,10 +569,29 @@ export const makeReadyRoomDataLayer = (
                       organizerName: room.organizerCharacter.nick,
                       guildIds: visible,
                       world: room.world,
-                      description: room.description,
-                      minLvl: room.minLvl,
-                      maxLvl: room.maxLvl,
-                      npc: room.npc,
+                      ...(room.description !== undefined && {
+                        description: room.description,
+                      }),
+                      ...(room.minLvl !== undefined && { minLvl: room.minLvl }),
+                      ...(room.maxLvl !== undefined && { maxLvl: room.maxLvl }),
+                      ...(room.npc && {
+                        npc: {
+                          ...(room.npc.icon !== undefined && {
+                            icon: room.npc.icon,
+                          }),
+                          ...(room.npc.type !== undefined && {
+                            type: room.npc.type,
+                          }),
+                          ...(room.npc.prof !== undefined && {
+                            prof: room.npc.prof,
+                          }),
+                          name: room.npc.name,
+                          location: room.npc.location,
+                          lvl: room.npc.lvl,
+                          ...(room.npc.x !== undefined && { x: room.npc.x }),
+                          ...(room.npc.y !== undefined && { y: room.npc.y }),
+                        },
+                      }),
                       createdAt: room.createdAt,
                       expiresAt: room.expiresAt,
                     },

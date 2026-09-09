@@ -2688,7 +2688,6 @@ export interface ChatMessageResponseDtoOutput {
   npc?: ChatMessageResponseDtoOutputNpc;
   partyGathering?: ChatMessageResponseDtoOutputPartyGathering;
   replyTo?: ChatMessageResponseDtoOutputReplyTo;
-  canEdit: boolean;
   canDelete: boolean;
 }
 
@@ -2791,14 +2790,6 @@ export interface SendMessageDto {
 
 export interface ChatMessageActionResponseDtoOutput {
   success: boolean;
-}
-
-export interface UpdateMessageDto {
-  /**
-     * @minLength 1
-     * @maxLength 128
-     */
-  message: string;
 }
 
 export type ReservationSpotsResponseDtoItemCurrentReservationAuthor = {
@@ -5692,6 +5683,8 @@ export interface CreateVolunteerDto {
 }
 
 export type PartyReadyRoomProjectionDtoOutputNpc = {
+  prof?: string;
+  icon?: string;
   name: string;
   location: string;
   lvl: number | 'Infinity' | '-Infinity' | 'NaN';
@@ -5965,6 +5958,8 @@ export const PartyReadyRoomClientUpdateDtoOutputType = {
 } as const;
 
 export type PartyReadyRoomClientUpdateDtoOutputProjectionNpc = {
+  prof?: string;
+  icon?: string;
   name: string;
   location: string;
   lvl: number | 'Infinity' | '-Infinity' | 'NaN';
@@ -9897,22 +9892,6 @@ export type ChatControllerDeleteChatMessage429 = {
   message: string;
 };
 
-export type ChatControllerUpdateChatMessagePathParameters = {
- guildId: string,
-    messageId: string,
- }
-export type ChatControllerUpdateChatMessage401 = {
-  message: string;
-};
-
-export type ChatControllerUpdateChatMessage403 = {
-  message: string;
-};
-
-export type ChatControllerUpdateChatMessage429 = {
-  message: string;
-};
-
 export type ListReservationSpotsPathParameters = {
  guildId: string,
  }
@@ -13785,38 +13764,6 @@ export const chatControllerDeleteChatMessage = async ({ guildId, messageId }: Ch
     method: 'DELETE'
 
 
-  }
-);}
-
-
-
-export const getChatControllerUpdateChatMessageUrl = ({ guildId, messageId }: ChatControllerUpdateChatMessagePathParameters,) => {
-
-
-
-
-  return `/guilds/${guildId}/chat-messages/${messageId}`
-}
-
-/**
- * Update the content of a chat message
- * @summary Update chat message
- */
-export const chatControllerUpdateChatMessage = async ({ guildId, messageId }: ChatControllerUpdateChatMessagePathParameters,
-    updateMessageDto: UpdateMessageDto, options?: Parameters<typeof mainFetch>[1]): Promise<ChatMessageActionResponseDtoOutput> => {
-
-    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
-    if (!h) return {};
-    if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
-  };
-return mainFetch<ChatMessageActionResponseDtoOutput>(getChatControllerUpdateChatMessageUrl({ guildId, messageId }),
-  {
-    ...options,
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(updateMessageDto)
   }
 );}
 

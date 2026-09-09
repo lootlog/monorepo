@@ -1,7 +1,4 @@
-import {
-  canDeleteChatMessage,
-  canEditChatMessage,
-} from "@lootlog/domain/chat-message-permissions";
+import { canDeleteChatMessage } from "@lootlog/domain/chat-message-permissions";
 import { Permission } from "@lootlog/schema/permissions";
 import type { ServerEvent } from "@lootlog/protocol/realtime";
 import { Option, Schema } from "effect";
@@ -22,18 +19,17 @@ export const chatMessagePermissions = (
   const payload = Schema.decodeUnknownOption(
     Schema.Struct({ senderId: Schema.String }),
   )(event.data.payload);
-  if (Option.isNone(payload)) return { canEdit: false, canDelete: false };
+  if (Option.isNone(payload)) return { canDelete: false };
   const viewer = { discordId: session.discordId, permissions };
   const message = { senderId: payload.value.senderId };
   return {
-    canEdit: canEditChatMessage(viewer, message),
     canDelete: canDeleteChatMessage(viewer, message),
   };
 };
 
 export const withChatMessagePermissions = (
   event: ChatEvent,
-  permissions: { canEdit: boolean; canDelete: boolean },
+  permissions: { canDelete: boolean },
 ): ChatEvent => ({
   ...event,
   data: {

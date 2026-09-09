@@ -1,4 +1,6 @@
-import { Dock, SquareArrowOutUpRight } from "lucide-react";
+import { useChatStore } from "@/store/chat.store";
+import { CHAT_INTEGRATION_ENABLED } from "../chat.constants";
+import { ListFilter, Dock, SquareArrowOutUpRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
   Tooltip,
@@ -18,6 +20,13 @@ export const ChatWindowActions = ({
   toggleIntegrated,
 }: ChatWindowActionsProps) => {
   const { t } = useTranslation("chat");
+  const filtersVisible = useChatStore((state) => state.filtersVisible);
+  const toggleFiltersVisible = useChatStore(
+    (state) => state.toggleFiltersVisible,
+  );
+  const filterLabel = t(
+    filtersVisible ? "actions.hideFilters" : "actions.showFilters",
+  );
   const integrationLabel = integrated
     ? t("integration.detach")
     : t("integration.attach");
@@ -31,7 +40,22 @@ export const ChatWindowActions = ({
   } as const;
   return (
     <div className="ll:flex ll:shrink-0 ll:items-center ll:gap-1">
-      {(canIntegrate || integrated) && (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            style={style}
+            className="ll-custom-cursor-pointer ll:flex ll:size-5 ll:items-center ll:justify-center ll:rounded-sm ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:focus-visible:outline-2 ll:focus-visible:outline-ring"
+            aria-label={filterLabel}
+            aria-pressed={filtersVisible}
+            onClick={toggleFiltersVisible}
+          >
+            <ListFilter size={14} aria-hidden="true" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="top">{filterLabel}</TooltipContent>
+      </Tooltip>
+      {CHAT_INTEGRATION_ENABLED && (canIntegrate || integrated) && (
         <Tooltip>
           <TooltipTrigger asChild>
             <button

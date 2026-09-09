@@ -43,7 +43,7 @@ export const getChatNpcLocation = (npc: ChatNpc) => {
 
 export const getChatNpcLocationName = (npc: ChatNpc) => npc.location.trim();
 
-export const getChatNpcCoordinatesLabel = (npc: ChatNpc) => {
+export const getChatNpcCoordinatesLabel = (npc: Pick<ChatNpc, "x" | "y">) => {
   if (npc.x === undefined || npc.y === undefined) {
     return "";
   }

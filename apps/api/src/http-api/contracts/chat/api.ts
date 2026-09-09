@@ -13,7 +13,6 @@ import {
   ChatMessagesResponse,
   ChatMessageResponse,
   SendChatMessageRequest,
-  UpdateChatMessageRequest,
 } from "#src/contracts/chat/schemas";
 
 export class ChatGroup extends HttpApiGroup.make("chat").add(
@@ -70,18 +69,4 @@ export class ChatGroup extends HttpApiGroup.make("chat").add(
     .annotate(OpenApi.Identifier, "ChatController_deleteChatMessage")
     .annotate(OpenApi.Summary, "Delete chat message")
     .annotate(OpenApi.Description, "Delete a chat message from a guild"),
-  HttpApiEndpoint.patch(
-    "ChatControllerUpdateChatMessage",
-    "/guilds/:guildId/chat-messages/:messageId",
-    {
-      params: ChatMessagePath,
-      payload: UpdateChatMessageRequest,
-      success: ChatMessageActionResponse,
-      error: [HttpApiSchema.Empty(403), HttpApiSchema.Empty(404)],
-    },
-  )
-    .middleware(BearerSecurityMiddleware)
-    .annotate(OpenApi.Identifier, "ChatController_updateChatMessage")
-    .annotate(OpenApi.Summary, "Update chat message")
-    .annotate(OpenApi.Description, "Update the content of a chat message"),
 ) {}

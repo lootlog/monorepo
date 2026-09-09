@@ -1,4 +1,5 @@
 import { QueryClient, QueryObserver } from "@tanstack/react-query";
+import { getUsersControllerGetCurrentUserAccessibleGuildsQueryKey } from "@lootlog/client/main";
 import {
   createAccessPolicySnapshot,
   diffAccessPolicies,
@@ -42,6 +43,115 @@ const notify = (
   });
 
 afterEach(() => vi.useRealTimers());
+it.each([
+  ["/timers", { world: "alpha" }],
+  ["/timers/history", { guildId: "a", world: "alpha" }],
+  ["/guilds/a/timers/titan/history", { world: "alpha" }],
+])(
+  "immediately restarts the initial %s request after applying access",
+  async (...key) => {
+    vi.useFakeTimers();
+    const client = new QueryClient();
+    const manager = createGameAccessCache(client);
+    const fresh = timer("a", "ELITE2");
+    let finishOld: (rows: (typeof fresh)[]) => void = () => undefined;
+    const oldResponse = new Promise<(typeof fresh)[]>((resolve) => {
+      finishOld = resolve;
+    });
+    const fetch = vi
+      .fn<() => Promise<(typeof fresh)[]>>()
+      .mockReturnValueOnce(oldResponse)
+      .mockResolvedValue([fresh]);
+    const observer = new QueryObserver(client, {
+      queryKey: key,
+      queryFn: fetch,
+    });
+    const off = observer.subscribe(() => {});
+    try {
+      expect(fetch).toHaveBeenCalledTimes(1);
+      manager.apply({ accessPolicy: policy(false) });
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(fetch).toHaveBeenCalledTimes(2);
+      expect(client.getQueryData(key)).toEqual([fresh]);
+      finishOld([timer("a", "TITAN")]);
+      await oldResponse;
+      await Promise.resolve();
+      expect(client.getQueryData(key)).toEqual([fresh]);
+      await vi.advanceTimersByTimeAsync(5000);
+      expect(fetch).toHaveBeenCalledTimes(2);
+    } finally {
+      off();
+      manager.dispose();
+      client.clear();
+    }
+  },
+);
+
+it("immediately reloads initial organization metadata without restoring a cancelled response", async () => {
+  vi.useFakeTimers();
+  const client = new QueryClient();
+  const manager = createGameAccessCache(client);
+  const key = getUsersControllerGetCurrentUserAccessibleGuildsQueryKey();
+  const fresh = {
+    id: "a",
+    name: "Current organization",
+    hasLootlogAccess: true,
+    isAccessDataStale: false,
+  };
+  let finishOld: (rows: (typeof fresh)[]) => void = () => undefined;
+  const oldResponse = new Promise<(typeof fresh)[]>((resolve) => {
+    finishOld = resolve;
+  });
+  const fetch = vi
+    .fn<() => Promise<(typeof fresh)[]>>()
+    .mockReturnValueOnce(oldResponse)
+    .mockResolvedValue([fresh]);
+  const observer = new QueryObserver(client, { queryKey: key, queryFn: fetch });
+  const off = observer.subscribe(() => {});
+  try {
+    expect(fetch).toHaveBeenCalledTimes(1);
+    manager.apply({ accessPolicy: policy() });
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(client.getQueryData(key)).toEqual([fresh]);
+    finishOld([{ ...fresh, id: "removed" }]);
+    await oldResponse;
+    await Promise.resolve();
+    expect(client.getQueryData(key)).toEqual([fresh]);
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(fetch).toHaveBeenCalledTimes(2);
+  } finally {
+    off();
+    manager.dispose();
+    client.clear();
+  }
+});
+
+it("does not restart initial timer requests when the first policy denies their scope", async () => {
+  vi.useFakeTimers();
+  const client = new QueryClient();
+  const manager = createGameAccessCache(client);
+  const key = ["/guilds/a/timers/titan/history"];
+  const fetch = vi.fn<() => Promise<ReturnType<typeof timer>[]>>(
+    () => new Promise(() => {}),
+  );
+  const observer = new QueryObserver(client, { queryKey: key, queryFn: fetch });
+  const off = observer.subscribe(() => {});
+  try {
+    manager.apply({ accessPolicy: createAccessPolicySnapshot([], "reader") });
+    expect(client.getQueryData(key)).toEqual([]);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(fetch).toHaveBeenCalledTimes(1);
+  } finally {
+    off();
+    manager.dispose();
+    client.clear();
+  }
+});
+
 it("removes only revoked timer tiers from every world and both history caches", () => {
   const client = new QueryClient();
   const manager = createGameAccessCache(client);

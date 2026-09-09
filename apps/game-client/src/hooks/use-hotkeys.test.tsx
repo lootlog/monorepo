@@ -27,32 +27,35 @@ describe("useHotkeys", () => {
     }));
   });
 
-  it("runs configured help with a closed chat without moving focus and ignores key repeats", () => {
-    const onChatHelp = vi.fn();
-    useHotkeysStore.getState().setBinding("chat-help", {
-      type: "keyboard",
-      key: "H",
-      shift: true,
-      ctrl: false,
-      alt: false,
-    });
-    const active = document.activeElement;
-    renderHook(() => useHotkeys({ onChatHelp }));
-    act(() => {
-      window.dispatchEvent(
-        new KeyboardEvent("keydown", { key: "H", shiftKey: true }),
-      );
-      window.dispatchEvent(
-        new KeyboardEvent("keydown", {
-          key: "H",
-          shiftKey: true,
-          repeat: true,
-        }),
-      );
-    });
-    expect(onChatHelp).toHaveBeenCalledTimes(1);
-    expect(document.activeElement).toBe(active);
-  });
+  it.each(["chat-help", "chat-position"] as const)(
+    "runs configured %s with a closed chat without moving focus and ignores key repeats",
+    (action) => {
+      const onChatHelp = vi.fn();
+      useHotkeysStore.getState().setBinding(action, {
+        type: "keyboard",
+        key: "H",
+        shift: true,
+        ctrl: false,
+        alt: false,
+      });
+      const active = document.activeElement;
+      renderHook(() => useHotkeys({ onChatHelp, onChatPosition: onChatHelp }));
+      act(() => {
+        window.dispatchEvent(
+          new KeyboardEvent("keydown", { key: "H", shiftKey: true }),
+        );
+        window.dispatchEvent(
+          new KeyboardEvent("keydown", {
+            key: "H",
+            shiftKey: true,
+            repeat: true,
+          }),
+        );
+      });
+      expect(onChatHelp).toHaveBeenCalledTimes(1);
+      expect(document.activeElement).toBe(active);
+    },
+  );
 
   it("toggles quick access with the configured binding", () => {
     renderHook(() => useHotkeys());
@@ -282,4 +285,36 @@ describe("useHotkeys", () => {
       participantIds: ["participant-1"],
     });
   });
+});
+
+it("opens party creation once and ignores typing and repeated keys", () => {
+  useHotkeysStore.getState().resetAll();
+  useHotkeysStore.getState().setBinding("create-party-gathering", {
+    type: "keyboard",
+    key: "G",
+    alt: true,
+    ctrl: false,
+    shift: false,
+  });
+  useWindowsStore.getState().setOpen("create-party-gathering", false);
+  renderHook(() => useHotkeys());
+  const press = (repeat = false) =>
+    act(() => {
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "G", altKey: true, repeat }),
+      );
+    });
+  press();
+  expect(useWindowsStore.getState()["create-party-gathering"].open).toBe(true);
+  act(() =>
+    useWindowsStore.getState().setOpen("create-party-gathering", false),
+  );
+  press(true);
+  expect(useWindowsStore.getState()["create-party-gathering"].open).toBe(false);
+  const input = document.createElement("input");
+  document.body.append(input);
+  onTestFinished(() => input.remove());
+  input.focus();
+  press();
+  expect(useWindowsStore.getState()["create-party-gathering"].open).toBe(false);
 });

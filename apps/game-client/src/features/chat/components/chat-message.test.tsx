@@ -50,6 +50,7 @@ describe("ChatMessage", () => {
   });
 
   it("renders the party card for party gathering messages", () => {
+    setTestRuntimeGame({ world: "tempest" });
     render(
       <ChatMessage
         all={false}
@@ -87,24 +88,6 @@ describe("ChatMessage", () => {
     expect(screen.getByText("Hero:")).toBeInTheDocument();
   });
 
-  it("shows edit and delete actions when backend capabilities allow them", () => {
-    render(
-      <ChatMessage
-        all={false}
-        guildName="Guild"
-        member={member}
-        message={makeChatMessage({
-          canEdit: true,
-          canDelete: true,
-        })}
-      />,
-    );
-
-    fireEvent.contextMenu(screen.getByText("Member:"));
-    expect(screen.getByText("Edytuj")).toBeInTheDocument();
-    expect(screen.getByText("Usuń")).toBeInTheDocument();
-  });
-
   it("shows delete without edit when backend allows only moderation", () => {
     render(
       <ChatMessage
@@ -112,7 +95,6 @@ describe("ChatMessage", () => {
         guildName="Guild"
         member={member}
         message={makeChatMessage({
-          canEdit: false,
           canDelete: true,
         })}
       />,
@@ -140,7 +122,7 @@ describe("ChatMessage", () => {
       />,
     );
 
-    expect(screen.getByText("QuotedHero")).toBeInTheDocument();
+    expect(screen.getByText("QuotedHero:")).toBeInTheDocument();
     expect(screen.getByText("quoted message")).toBeInTheDocument();
   });
 

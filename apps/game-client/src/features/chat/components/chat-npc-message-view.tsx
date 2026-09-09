@@ -1,3 +1,6 @@
+import { getSubtleBackgroundColor } from "@/utils/notifications-and-detector/background";
+import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
+import { NpcType } from "@/api/npcs.api";
 import { Message } from "@/components/ui/message";
 import { Bubble } from "@/components/ui/bubble";
 import { NpcTile } from "@/components/npc-tile";
@@ -20,7 +23,6 @@ import {
 import { ChatNpcCountBadge } from "./chat-npc-count-badge";
 
 type ChatNpcMessageViewProps = {
-  actions?: ReactNode;
   all: boolean;
   appearance?: ChatAppearanceSettings;
   count?: number;
@@ -34,7 +36,6 @@ type ChatNpcMessageViewProps = {
 
 export const ChatNpcMessageView: FC<ChatNpcMessageViewProps> = (props) => {
   const {
-    actions,
     all,
     guildName,
     memberColor,
@@ -96,11 +97,15 @@ export const ChatNpcMessageView: FC<ChatNpcMessageViewProps> = (props) => {
       </div>
       <Bubble
         className={cn(
-          "ll:flex ll:w-full ll:min-w-0 ll:max-w-full ll:box-border ll:items-center ll:gap-[var(--ll-chat-space-sm)] ll:overflow-hidden ll:rounded-sm ll:px-[var(--ll-chat-space-md)] ll:py-[var(--ll-chat-space-sm)]",
-          appearance.npcLayout === "tile"
-            ? "ll:bg-gray-500/25 ll:shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
-            : "ll:bg-transparent ll:px-[var(--ll-chat-space-xs)] ll:py-0",
+          "ll:flex ll:-ml-1.5 ll:-mr-0.5 ll:w-[calc(100%+8px)] ll:min-w-0 ll:max-w-none ll:box-border ll:items-center ll:gap-[var(--ll-chat-space-sm)] ll:overflow-hidden ll:rounded-none ll:pl-1.5 ll:pr-0.5 ll:py-[var(--ll-chat-space-sm)]",
+          appearance.npcLayout === "inline" && "ll:py-0",
         )}
+        style={{
+          backgroundColor: getSubtleBackgroundColor(
+            getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type),
+            npcTypeColors,
+          ),
+        }}
       >
         {appearance.showNpcAvatar ? (
           <NpcTile
@@ -165,7 +170,6 @@ export const ChatNpcMessageView: FC<ChatNpcMessageViewProps> = (props) => {
           ) : null}
         </div>
       </Bubble>
-      {actions}
     </Message>
   );
 };

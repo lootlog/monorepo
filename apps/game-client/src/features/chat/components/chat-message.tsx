@@ -1,12 +1,11 @@
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { cn } from "cn";
-import { useState, type FC } from "react";
+import type { FC } from "react";
 import { MessageType } from "@/api/chat.api";
 import {
   type ChatMessageResponseDtoOutput as ChatMessageType,
   type MemberSummaryResponseDtoOutput as GuildMember,
   useChatControllerDeleteChatMessage,
-  useChatControllerUpdateChatMessage,
 } from "@lootlog/client/main";
 
 import type { ChatAppearanceSettings } from "@lootlog/schema/chat-appearance";
@@ -24,16 +23,13 @@ import type { ChatMentionContext } from "@/features/chat/chat-mentions.helpers";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 
-import {
-  removeChatMessage,
-  updateChatMessage,
-} from "@/features/chat/chat.helpers";
+import { removeChatMessage } from "@/features/chat/chat.helpers";
 import { dispatchChatScrollToMessage } from "@/features/chat/chat-scroll-to-message";
 import { updateChatMessagesCache } from "@/features/chat/chat-query-cache.helpers";
 import { ChatCharacterTooltip } from "@/features/chat/components/chat-character-tooltip";
 import { ChatPlayerMessageView } from "@/features/chat/components/chat-player-message-view";
+import { ChatReplyPreview } from "./chat-reply-preview";
 import { ChatMessageBody } from "./chat-message-body";
-import { ChatMessageActions } from "./chat-message-actions";
 import { ChatMessageContextMenu } from "./chat-message-context-menu";
 
 type ChatMessageProps = {
@@ -45,8 +41,6 @@ type ChatMessageProps = {
   member?: GuildMember;
   mentionContext?: ChatMentionContext;
   onReply?: () => void;
-  onMention?: () => void;
-  isContinuation?: boolean;
 };
 
 export const ChatMessage: FC<ChatMessageProps> = ({
@@ -58,8 +52,6 @@ export const ChatMessage: FC<ChatMessageProps> = ({
   member,
   mentionContext,
   onReply,
-  onMention,
-  isContinuation,
 }) => {
   const { t } = useTranslation("chat");
   const heroName = useGameStore((state) => state.game?.hero.name);
@@ -68,24 +60,6 @@ export const ChatMessage: FC<ChatMessageProps> = ({
   const memberColor = useMemberColor(member);
   const isMsgYesterday = isChatMessageYesterdayOrOlder(message.timestamp);
   const messageBody = getChatMessageBody(message);
-  const [isEditing, setIsEditing] = useState(false);
-  const [draftMessage, setDraftMessage] = useState(message.message);
-  const { mutate: updateChatMessageMutation, isPending: isUpdating } =
-    useChatControllerUpdateChatMessage({
-      mutation: {
-        onSuccess: () => {
-          updateChatMessagesCache({
-            guildId: message.guildId,
-            queryClient,
-            updater: (old: ChatMessageType[] | undefined) =>
-              old
-                ? updateChatMessage(old, message.id, draftMessage.trim())
-                : old,
-          });
-          setIsEditing(false);
-        },
-      },
-    });
   const { mutate: deleteChatMessageMutation, isPending: isDeleting } =
     useChatControllerDeleteChatMessage({
       mutation: {
@@ -99,7 +73,6 @@ export const ChatMessage: FC<ChatMessageProps> = ({
         },
       },
     });
-  const canEditMessage = message.canEdit;
   const canDeleteMessage = message.canDelete;
   const canReplyMessage = canReplyToChatMessage(message);
   const senderName =
@@ -133,8 +106,6 @@ export const ChatMessage: FC<ChatMessageProps> = ({
         member={member}
         message={message}
         npcTypeColors={npcTypeColors}
-        onReply={onReply}
-        onMention={onMention}
       />
     );
   }
@@ -146,57 +117,61 @@ export const ChatMessage: FC<ChatMessageProps> = ({
 
   const actionProps = {
     canDelete: canDeleteMessage,
-    canEdit: canEditMessage,
     canReply: canReplyMessage,
     gameInterface,
     heroName,
     isDeleting,
-    isUpdating,
     message,
     onReply,
     onDelete: () =>
       deleteChatMessageMutation({
         pathParams: { guildId: message.guildId, messageId: message.id },
       }),
-    onEdit: () => {
-      setDraftMessage(message.message);
-      setIsEditing(true);
-    },
   };
 
   return (
     <ContextMenu>
-      <ContextMenuTrigger asChild>
+      <ContextMenuTrigger
+        asChild
+        tabIndex={0}
+        onKeyDown={(event) => {
+          if (event.target !== event.currentTarget) return;
+          if (
+            event.key !== "ContextMenu" &&
+            !(event.shiftKey && event.key === "F10")
+          )
+            return;
+          event.preventDefault();
+          const rect = event.currentTarget.getBoundingClientRect();
+          event.currentTarget.dispatchEvent(
+            new MouseEvent("contextmenu", {
+              bubbles: true,
+              cancelable: true,
+              clientX: rect.left,
+              clientY: rect.top,
+            }),
+          );
+        }}
+      >
         <ChatPlayerMessageView
           all={all}
-          isContinuation={isContinuation}
-          actions=<ChatMessageActions {...actionProps} onMention={onMention} />
           appearance={appearance}
           body=<ChatMessageBody
-            draftMessage={draftMessage}
             isDeleting={isDeleting}
-            isEditing={isEditing}
             isMsgYesterday={isMsgYesterday}
-            isUpdating={isUpdating}
             mentionContext={mentionContext}
             message={message}
-            onCancel={() => {
-              setDraftMessage(message.message);
-              setIsEditing(false);
-            }}
-            onDraftChange={(event) => setDraftMessage(event.target.value)}
-            onScrollToOriginal={scrollToOriginalMessage}
-            onSubmit={(event) => {
-              event.preventDefault();
-              updateChatMessageMutation({
-                pathParams: {
-                  guildId: message.guildId,
-                  messageId: message.id,
-                },
-                data: { message: draftMessage.trim() },
-              });
-            }}
           />
+          replyPreview={
+            message.replyTo ? (
+              <ChatReplyPreview
+                variant="compact"
+                reply={message.replyTo}
+                onClick={scrollToOriginalMessage}
+                className="ll:mb-0.5 ll:-ml-1.5 ll:-mr-0.5 ll:w-[calc(100%+8px)] ll:max-w-none ll:pl-1.5 ll:pr-0.5"
+              />
+            ) : null
+          }
           guildName={guildName}
           isMsgYesterday={isMsgYesterday}
           messageId={message.id}

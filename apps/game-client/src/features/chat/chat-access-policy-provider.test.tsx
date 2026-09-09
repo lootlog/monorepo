@@ -51,7 +51,7 @@ it("purges and coalesces legacy chat refresh in the provider even without a moun
       prof: "w",
       icon: "icon",
     },
-    canEdit: false,
+
     canDelete: false,
   };
   queryClient.setQueryData(key, [row]);

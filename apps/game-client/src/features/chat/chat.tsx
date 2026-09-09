@@ -1,3 +1,4 @@
+import { CHAT_INTEGRATION_ENABLED } from "./chat.constants";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
@@ -36,7 +37,7 @@ export const Chat = () => {
       return before === after ? current : { ...current, [accountId]: after };
     });
   const integrated = useIntegratedChatHost(
-    isIntegratedMode && gameInterface === "ni",
+    CHAT_INTEGRATION_ENABLED && isIntegratedMode && gameInterface === "ni",
     t("integration.tab"),
   );
   const isVisible = integrated.target ? integrated.visible : open;

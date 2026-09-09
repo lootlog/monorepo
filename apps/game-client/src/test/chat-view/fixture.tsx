@@ -1,3 +1,4 @@
+import { CHAT_INTEGRATION_ENABLED } from "@/features/chat/chat.constants";
 import "@/index.css";
 import i18n from "@/i18n/config";
 import { createRoot } from "react-dom/client";
@@ -60,9 +61,58 @@ const messages = Array.from({ length: 20 }, (_, index) =>
   createChatMessage({
     id: `view-${index}`,
     guildId: index % 2 === 0 ? "a" : "b",
-    message: `Synthetic conversation ${index}: help with this monster`,
+    message:
+      index === 0
+        ? "OK"
+        : `Synthetic conversation ${index}: help with this monster`,
     senderId: `sender-${index % 3}`,
+    type: index === 16 ? "NPC" : "NORMAL",
+    npc:
+      index === 16
+        ? {
+            id: 16,
+            name: "Fixture NPC",
+            icon: "fixture/npc.gif",
+            wt: 80,
+            type: 1,
+            prof: "w",
+            lvl: 180,
+            hpp: 100,
+            x: 1,
+            y: 2,
+            location: "Fixture",
+            world: "Fobos",
+          }
+        : undefined,
+    replyTo:
+      index === 18
+        ? {
+            messageId: "view-0",
+            senderNick: "VeryLongQuotedCharacterName",
+            message:
+              "Quoted message with enough context to exceed the available width. " +
+              "longword".repeat(15),
+            type: "NOTIFICATION",
+          }
+        : undefined,
     timestamp: new Date(Date.UTC(2026, 8, 9, 12, 0, index)).toISOString(),
+  }),
+);
+messages.push(
+  createChatMessage({
+    id: "visual-gathering",
+    guildId: "a",
+    type: "PARTY_GATHERING",
+    message: "Gathering",
+    timestamp: "2026-09-09T12:01:00.000Z",
+    partyGathering: {
+      notificationId: "visual-room",
+      discordId: "organizer",
+      world: "Fobos",
+      description: "Long gathering description " + "longword".repeat(20),
+      minLvl: 100,
+      maxLvl: 300,
+    },
   }),
 );
 const http: typeof fetch = (input) => {
@@ -181,6 +231,216 @@ const nativeWidthMatches = () => {
   );
 };
 
+function messageStartsBesideSender() {
+  const message = document.querySelector('[data-slot="message"]');
+  const body = message?.lastElementChild;
+  const sender = message?.querySelector("[data-base-ui-tooltip-trigger]");
+  return (
+    !!sender &&
+    !!body &&
+    Math.abs(
+      body.getBoundingClientRect().top - sender.getBoundingClientRect().top,
+    ) <= 1
+  );
+}
+
+async function checkReplyHighlight(
+  check: (label: string, pass: boolean) => void,
+) {
+  const quote = document.querySelector<HTMLButtonElement>(
+    'button[title^="VeryLongQuotedCharacterName:"]',
+  );
+  quote?.click();
+  await wait();
+  const target = document.querySelector<HTMLElement>(
+    '[data-message-id="view-0"]',
+  );
+  const viewport = document.querySelector("[data-chat-viewport]");
+  check(
+    "Reply scroll highlights the visible original message",
+    !!target?.dataset.chatHighlighted &&
+      !!viewport &&
+      target.getBoundingClientRect().bottom >
+        viewport.getBoundingClientRect().top &&
+      target.getBoundingClientRect().top <
+        viewport.getBoundingClientRect().bottom,
+  );
+  await wait(800);
+  quote?.click();
+  await wait(800);
+  check(
+    "Repeated reply click restarts highlight duration",
+    target?.dataset.chatHighlighted === "true",
+  );
+  await wait(800);
+  check(
+    "Reply highlight clears automatically",
+    !target?.dataset.chatHighlighted,
+  );
+}
+
+async function checkGatheringLayout(
+  width: number,
+  check: (label: string, pass: boolean) => void,
+) {
+  useWindowsStore.getState().setSize("chat", { width, height: 440 });
+  usePartyFinderStore.getState().clearReadyRooms();
+  useChatStore.getState().clearReplyDraft("a");
+  await wait();
+  const inputTop = () =>
+    document.querySelector('[contenteditable="true"]')?.getBoundingClientRect()
+      .top;
+  const rows = Array.from(
+    document.querySelectorAll<HTMLElement>("[data-chat-row-key]"),
+  );
+  check(
+    `Messages fit with 6px left and 2px right padding at ${width}px`,
+    rows.length > 0 &&
+      rows.every(
+        (row) =>
+          getComputedStyle(row).paddingLeft === "6px" &&
+          getComputedStyle(row).paddingRight === "2px" &&
+          row.scrollWidth <= row.clientWidth,
+      ),
+  );
+  const quote = document.querySelector<HTMLButtonElement>(
+    'button[title^="VeryLongQuotedCharacterName:"]',
+  );
+  check(
+    `Long quote fits at ${width}px`,
+    !!quote && quote.scrollWidth <= quote.clientWidth,
+  );
+  const npcBubble = document.querySelector(
+    '[data-chat-message-id="view-16"] [data-slot="bubble"]',
+  );
+  const npcRow = npcBubble?.closest("[data-chat-row-key]");
+  check(
+    `NPC background fills row at ${width}px`,
+    !!npcBubble &&
+      !!npcRow &&
+      Math.abs(
+        npcBubble.getBoundingClientRect().left -
+          npcRow.getBoundingClientRect().left,
+      ) < 1 &&
+      Math.abs(
+        npcBubble.getBoundingClientRect().right -
+          npcRow.getBoundingClientRect().right,
+      ) < 1,
+  );
+  const baselineTop = inputTop();
+  const room = createChatReadyRoom({
+    guildIds: ["a"],
+    description: "Long gathering " + "longword".repeat(20),
+    npc: {
+      name: "Long monster name for panel",
+      icon: "fixture/npc.gif",
+      location: "Fixture",
+      lvl: 180,
+      type: "ELITE2",
+    },
+  });
+  usePartyFinderStore.getState().mergeProjection(room);
+  useChatStore.getState().setReplyDraft({
+    guildId: "a",
+    messageId: "view-0",
+    senderNick: "Quoted author",
+    message: "Long reply ".repeat(20),
+    type: "NORMAL",
+  });
+  await wait();
+  check(
+    `Gathering and reply preserve input position at ${width}px`,
+    inputTop() === baselineTop,
+  );
+  const chat = document.querySelector<HTMLElement>(
+    '[data-ll-draggable-window="chat"]',
+  );
+  check(
+    `Gathering and reply fit ${width}px`,
+    !!chat && chat.scrollWidth <= chat.clientWidth + 1,
+  );
+  check(
+    `Gathering management link is available at ${width}px`,
+    Array.from(chat?.querySelectorAll("button") ?? []).some(
+      (button) => button.getAttribute("aria-label") === "Zarządzaj",
+    ),
+  );
+  usePartyFinderStore.getState().mergeProjection({
+    ...room,
+    revision: room.revision + 1,
+    viewer: "ORGANIZER",
+    ownedParticipantIds: [],
+  });
+  await wait();
+  check(
+    `Organizer gathering preserves input position at ${width}px`,
+    inputTop() === baselineTop,
+  );
+  const invite = button("Zaproś zgłoszonych");
+  const npc = chat?.querySelector<HTMLImageElement>(
+    'img[alt="Long monster name for panel"]',
+  );
+  check(
+    `NPC invite action is to the right at ${width}px`,
+    !!npc &&
+      invite.getBoundingClientRect().left > npc.getBoundingClientRect().right,
+  );
+  usePartyFinderStore.getState().mergeProjection({
+    ...room,
+    npc: undefined,
+    revision: room.revision + 2,
+    viewer: "ORGANIZER",
+    ownedParticipantIds: [],
+  });
+  await wait();
+  const heading = Array.from(chat?.querySelectorAll("span") ?? []).find(
+    (element) => element.textContent === "Party finder",
+  );
+  check(
+    `Description invite sits below the header at ${width}px`,
+    !!heading &&
+      button("Zaproś zgłoszonych").getBoundingClientRect().top >
+        heading.getBoundingClientRect().bottom,
+  );
+  usePartyFinderStore.getState().mergeProjection({
+    ...room,
+    npc: undefined,
+    description: undefined,
+    minLvl: undefined,
+    maxLvl: undefined,
+    revision: room.revision + 3,
+    viewer: "ORGANIZER",
+    ownedParticipantIds: [],
+  });
+  await wait();
+  check(
+    `Empty gathering has no header bottom margin at ${width}px`,
+    !!heading?.parentElement &&
+      getComputedStyle(heading.parentElement).marginBottom === "0px",
+  );
+  check(
+    `Empty gathering invite stays in header at ${width}px`,
+    !!heading &&
+      Math.abs(
+        button("Zaproś zgłoszonych").getBoundingClientRect().top -
+          heading.getBoundingClientRect().top,
+      ) <= 4,
+  );
+  check(
+    `Organizer header fits ${width}px`,
+    !!chat && chat.scrollWidth <= chat.clientWidth + 1,
+  );
+
+  useChatStore.getState().clearReplyDraft("a");
+  usePartyFinderStore.getState().clearReadyRooms();
+  await wait();
+  check(
+    `Leaving gathering preserves draft at ${width}px`,
+    document.querySelector('[contenteditable="true"]')?.textContent ===
+      "Session draft",
+  );
+}
+
 function Fixture() {
   const [results, setResults] = useState<string[]>([]);
   const [running, setRunning] = useState(false);
@@ -200,8 +460,8 @@ function Fixture() {
         visible("[data-chat-viewport]"),
       );
       check(
-        "All view requires explicit recipient",
-        visible('[role="textbox"]') && button("Pozycja").disabled,
+        "All view keeps quick actions available",
+        visible('[role="textbox"]') && !button("Szybkie akcje").disabled,
       );
       check(
         "Gathering survives independently of composer",
@@ -220,29 +480,110 @@ function Fixture() {
         (document.querySelector("[data-chat-viewport]")?.getBoundingClientRect()
           .height ?? 0) >= 60,
       );
-      const message = document.querySelector<HTMLElement>(
-        '[data-slot="message"]',
-      );
-      const body = message?.querySelector<HTMLElement>('[data-slot="bubble"]');
+      check("Message starts beside sender", messageStartsBesideSender());
+      button("Ukryj filtry").click();
+      await wait();
       check(
-        "Message actions do not enlarge the sender line",
-        !!message &&
-          !!body &&
-          body.getBoundingClientRect().top -
-            message.getBoundingClientRect().top <=
-            Number.parseFloat(getComputedStyle(message).lineHeight) + 1,
+        "Filter toggle hides the three tabs",
+        !Array.from(document.querySelectorAll("button")).some(
+          (element) => element.textContent?.trim() === "Rozmowy",
+        ),
       );
-      const help = button("Pomoc");
+      check(
+        "Hidden filters show all messages",
+        useChatStore.getState().chatFilter === "all",
+      );
+      button("Pokaż filtry").click();
+      await wait();
+      check(
+        "Filter toggle restores the three tabs",
+        Array.from(document.querySelectorAll("button")).some(
+          (element) => element.textContent?.trim() === "Rozmowy",
+        ),
+      );
+
+      const checkFullWidth = (hostSelector: string) => {
+        const viewport = document.querySelector("[data-chat-viewport]");
+        const row = document.querySelector("[data-chat-row-key]");
+        const host = document.querySelector(hostSelector);
+        check(
+          "Striped rows fill the chat width",
+          !!viewport &&
+            !!row &&
+            !!host &&
+            Math.abs(
+              row.getBoundingClientRect().width - viewport.clientWidth,
+            ) <= 1 &&
+            Math.abs(
+              viewport.getBoundingClientRect().width - host.clientWidth,
+            ) <= 1,
+        );
+      };
+      checkFullWidth('[data-ll-draggable-window="chat"] > div');
+      const help = button("Szybkie akcje");
       const helpRect = help.getBoundingClientRect();
       check(
-        "Resize handle does not cover Help",
+        "Resize handle does not cover the quick action button",
         help.contains(
-          document.elementFromPoint(helpRect.right - 2, helpRect.bottom - 2),
+          document.elementFromPoint(
+            helpRect.left + helpRect.width / 2,
+            helpRect.top + helpRect.height / 2,
+          ),
         ),
       );
       useWindowsStore.getState().setSize("chat", { width: 280, height: 440 });
       await wait();
       useChatStore.getState().setDraft("a", "Session draft");
+      await checkGatheringLayout(280, check);
+      await checkGatheringLayout(420, check);
+      await checkReplyHighlight(check);
+      useWindowsStore.getState().setSize("chat", { width: 280, height: 440 });
+      usePartyFinderStore.getState().mergeProjection({
+        ...createChatReadyRoom({
+          notificationId: "room-final",
+          guildIds: ["a"],
+          description:
+            "Gathering preview\nLooking for players to join the group.",
+          npc: {
+            name: "Monster preview",
+            prof: "w",
+            x: 0,
+            y: 12,
+            icon: "fixture/npc.gif",
+            location: "Fixture",
+            lvl: 180,
+            type: "ELITE2",
+          },
+        }),
+        viewer: "ORGANIZER",
+        ownedParticipantIds: [],
+      });
+      await wait();
+      if (!CHAT_INTEGRATION_ENABLED) {
+        useChatStore.setState({ isIntegratedMode: true });
+        await wait(350);
+        check(
+          "Saved integrated preference still uses the draggable window",
+          visible('[data-ll-draggable-window="chat"] [data-chat-viewport]'),
+        );
+        check(
+          "Integration toggle is unavailable",
+          !document.querySelector('button[aria-label="Przenieś do czatu gry"]'),
+        );
+        check("Native input remains visible", visible(".chat-input-wrapper"));
+        check(
+          "No integrated host is installed",
+          !document.querySelector(
+            ".ll-integrated-chat-tab, .ll-integrated-chat-panel",
+          ),
+        );
+        check(
+          "Draft remains available",
+          document.querySelector('[contenteditable="true"]')?.textContent ===
+            "Session draft",
+        );
+        return;
+      }
       button("Przenieś do czatu gry").click();
       await wait(350);
       check(
@@ -261,6 +602,7 @@ function Fixture() {
       const host = document.querySelector<HTMLElement>(
         ".ll-integrated-chat-panel",
       );
+      checkFullWidth(".ll-integrated-chat-panel");
       check("NI window stays within native column", nativeWidthMatches());
       check(
         "NI contents fit 280px host",

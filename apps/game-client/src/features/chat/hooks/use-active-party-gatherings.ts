@@ -1,3 +1,4 @@
+import { isApiError } from "@lootlog/client/transport";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { partyReadyRoomControllerActive } from "@lootlog/client/main";
@@ -19,7 +20,12 @@ export function useActivePartyGatherings() {
     queryKey: [...ACTIVE_GATHERINGS_QUERY_KEY, session?.user?.id, world],
     queryFn: ({ signal }) =>
       partyReadyRoomControllerActive({ world }, { signal }),
-    enabled: joined && !!world && areVisibleGuildsResolved,
+    enabled:
+      joined &&
+      connected &&
+      !!session?.user.id &&
+      !!world &&
+      areVisibleGuildsResolved,
     refetchInterval: 30_000,
     staleTime: 0,
   });
@@ -73,17 +79,22 @@ export function useActivePartyGatherings() {
     );
     return () => window.clearTimeout(timer);
   }, [query.data, now]);
+  const accessDenied =
+    isApiError(query.error) &&
+    (query.error.status === 401 || query.error.status === 403);
   const enabledIds = new Set(visibleGuilds.map((guild) => guild.id));
   return {
     ...query,
     world,
     visibleGuilds,
+    isStale: query.isError || !connected,
     data:
-      joined && !query.isError
+      joined && areVisibleGuildsResolved && !accessDenied
         ? (query.data ?? []).filter(
             (room) =>
               room.world === world &&
-              Date.parse(room.expiresAt) > now &&
+              Date.parse(room.expiresAt) >
+                Math.max(now, query.dataUpdatedAt, query.errorUpdatedAt) &&
               room.guildIds.some((id) => enabledIds.has(id)),
           )
         : [],

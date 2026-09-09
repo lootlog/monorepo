@@ -113,6 +113,8 @@ export const PartyReadyRoomParticipantSchema = Schema.Struct({
 });
 
 export const PartyGatheringNpcSchema = Schema.Struct({
+  prof: Schema.optionalKey(Schema.String),
+  icon: Schema.optionalKey(Schema.String),
   name: Schema.String,
   location: Schema.String,
   lvl: Schema.Number,

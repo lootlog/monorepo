@@ -1,3 +1,4 @@
+import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
 import { MessageScroller } from "@shadcn/react/message-scroller";
 import type { ChatRenderableMessage } from "../chat.helpers";
 import type { ChatTranscriptProps } from "./chat-transcript";
@@ -14,11 +15,11 @@ type Props = Pick<
   | "membersByGuildId"
   | "mentionContextsByGuildId"
   | "onReplyToMessage"
-  | "onMention"
-> & { row: ChatRenderableMessage; continuation: boolean };
+> & { row: ChatRenderableMessage; highlighted?: boolean };
 
 export function ChatTranscriptRow({
   row,
+  highlighted = false,
   appearance,
   npcTypeColors,
   selectedGuildId,
@@ -26,15 +27,19 @@ export function ChatTranscriptRow({
   membersByGuildId,
   mentionContextsByGuildId,
   onReplyToMessage,
-  onMention,
-  continuation,
 }: Props) {
   return (
     <MessageScroller.Item
       messageId={row.kind === "date-divider" ? undefined : row.message.id}
       data-chat-row-key={row.key}
+      data-chat-highlighted={highlighted || undefined}
       role="listitem"
-      className="ll:min-w-0 ll:shrink-0 ll:odd:bg-white/15 ll:even:bg-black/25"
+      style={{
+        backgroundColor: highlighted ? "rgba(255, 255, 255, 0.18)" : undefined,
+        paddingBlock:
+          (appearance ?? CHAT_APPEARANCE_READABLE_PRESET).messageGapPx / 2,
+      }}
+      className={`ll:min-w-0 ll:shrink-0 ll:pl-1.5 ll:pr-0.5 ll:box-border ll:odd:bg-white/5 ll:even:bg-black/25 ${row.kind !== "date-divider" ? "ll:odd:hover:bg-white/10 ll:even:hover:bg-white/10" : ""}`}
     >
       {row.kind === "date-divider" ? (
         <ChatDateDivider timestamp={row.timestamp} />
@@ -47,7 +52,6 @@ export function ChatTranscriptRow({
           member={membersByGuildId[row.message.guildId]?.[row.message.senderId]}
           message={row.message}
           npcTypeColors={npcTypeColors}
-          onMention={() => onMention?.(row.message)}
         />
       ) : (
         <ChatMessage
@@ -59,8 +63,6 @@ export function ChatTranscriptRow({
           message={row.message}
           npcTypeColors={npcTypeColors}
           onReply={() => onReplyToMessage(row.message)}
-          onMention={() => onMention?.(row.message)}
-          isContinuation={continuation}
         />
       )}
     </MessageScroller.Item>
