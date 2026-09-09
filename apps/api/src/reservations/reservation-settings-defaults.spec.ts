@@ -1,18 +1,16 @@
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "bun:test";
 import { DEFAULT_RESERVATION_SETTINGS } from "@lootlog/domain/reservations";
+import { getTableColumns } from "drizzle-orm";
+import { guildTable } from "../database/drizzle/schema.js";
 
 describe("Reservation settings defaults", () => {
   it("keeps TypeScript fallbacks aligned with persisted Guild defaults", () => {
-    const legacyPrismaSchema = readFileSync(
-      new URL("../../drizzle/legacy-prisma/schema.prisma", import.meta.url),
-      "utf8",
-    );
+    const columns = getTableColumns(guildTable);
 
     for (const [field, value] of Object.entries(DEFAULT_RESERVATION_SETTINGS)) {
-      expect(legacyPrismaSchema).toMatch(
-        new RegExp(`${field}\\s+Int\\s+@default\\(${value}\\)`),
-      );
+      expect(
+        Object.entries(columns).find(([name]) => name === field)?.[1].default,
+      ).toBe(value);
     }
   });
 });
