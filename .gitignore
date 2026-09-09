@@ -39,7 +39,6 @@ npm-debug.log*
 *.pem
 
 **/battlelog-service/generated
-**/activity/prisma/generated
 /apps/api/generated
 /apps/api/src/mocks/data/players.json
 

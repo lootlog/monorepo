@@ -1,4 +1,0 @@
-ALTER TYPE "NotificationJobKind" ADD VALUE 'TEST';
-
-ALTER TABLE "Guild"
-ADD COLUMN "notificationRuleLimit" INTEGER NOT NULL DEFAULT 20;

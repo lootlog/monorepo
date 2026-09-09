@@ -1,22 +1,15 @@
 # API database migration evidence
 
-`legacy-prisma/` is the immutable archive of the Prisma schema and every Prisma
-migration deployed before the Drizzle adoption. It is the only retained Prisma
-artifact and exists solely as physical-schema evidence.
+The API schema is maintained in `src/database/drizzle/schema.ts`. New databases
+use `migrations/20260901121000_legacy_prisma_baseline/migration.sql` followed by
+subsequent Drizzle migrations. Preserve deployed migration names and SQL hashes.
+The baseline includes database constraints originally introduced by handwritten
+migrations, including reservation checks.
 
-Verify the archive from the repository root with:
-
-```sh
-shasum -a 256 -c apps/api/drizzle/legacy-prisma.sha256
-```
-
-`legacy-prisma-schema.sql` is the deterministic Prisma datamodel DDL generated
-with `prisma migrate diff`. It is retained for mechanical comparison.
-
-`migrations/20260901121000_legacy_prisma_baseline/migration.sql` is the Drizzle
-baseline for a new empty database. It includes the reservation checks that were
-introduced by handwritten Prisma migrations and therefore are absent from the
-Prisma datamodel DDL.
+The previous ORM schema, migration archive, and comparison DDL have been removed.
+The frozen catalog and adoption fingerprints remain in `expected-catalog.ts`;
+the migration evidence hash is part of persisted adoption markers and must remain
+unchanged even though the source archive is no longer kept in the working tree.
 
 An existing database is never marked as adopted merely because tables exist.
 The adoption routine compares tables, columns, physical types, nullability,
