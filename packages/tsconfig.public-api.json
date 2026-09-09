@@ -1,0 +1,18 @@
+{
+  "extends": "./sdk/tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@lootlog/client/*": ["./client/src/*"],
+      "@lootlog/protocol/realtime": ["./protocol/src/realtime/protocol.ts"],
+      "@lootlog/protocol/*": ["./protocol/src/*"],
+      "@lootlog/schema/*": ["./schema/src/*"]
+    },
+    "types": []
+  },
+  "include": [
+    "sdk/src",
+    "client/src/realtime/index.ts",
+    "client/src/transport.ts",
+    "game-client-api/src"
+  ]
+}

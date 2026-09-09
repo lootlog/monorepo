@@ -37,7 +37,7 @@
     }
   },
   "scripts": {
-    "build": "tsup",
+    "build": "tsdown",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint src/*.ts scripts *.ts --deny-warnings",
     "test": "bun test",
@@ -58,8 +58,8 @@
     "@types/bun": "catalog:",
     "@types/node": "catalog:",
     "orval": "^8.26.0",
-    "tsup": "^8.5.0",
-    "typescript": "npm:typescript@5.9.3",
+    "tsdown": "^0.23.0",
+    "typescript": "catalog:",
     "yaml": "catalog:"
   }
 }

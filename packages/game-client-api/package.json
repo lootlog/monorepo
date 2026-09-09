@@ -14,7 +14,7 @@
     }
   },
   "scripts": {
-    "build": "tsup",
+    "build": "tsdown",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint src *.ts --deny-warnings",
     "test": "bun run typecheck",
@@ -25,7 +25,7 @@
     "@lootlog/typescript-config": "workspace:*",
     "@types/bun": "catalog:",
     "@types/node": "catalog:",
-    "tsup": "^8.5.0",
-    "typescript": "npm:typescript@5.9.3"
+    "tsdown": "^0.23.0",
+    "typescript": "catalog:"
   }
 }
