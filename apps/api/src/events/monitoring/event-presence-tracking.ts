@@ -292,6 +292,7 @@ export const makeEventPresenceTracking = (
               guildId,
               eventId: event.id,
               mapId: map.id,
+              heroNpcLvl: hero.npcLvl,
               reason: "presence",
             });
           }),

@@ -24,8 +24,18 @@ export const makeEventsMonitoring = (
   gapReads: EventGapReads,
   respawnCommands: EventRespawnCommands,
 ) => ({
-  getCoordination(guildData: { id: string }, eventId: string) {
-    return coordination.getCoordination(guildData.id, eventId);
+  getCoordination(
+    guildData: { id: string },
+    eventId: string,
+    roles: Role[],
+    accessPolicy: AccessPolicy,
+  ) {
+    return coordination.getCoordination(
+      guildData.id,
+      eventId,
+      roles,
+      accessPolicy,
+    );
   },
 
   getKillTimelineData(
@@ -78,16 +88,28 @@ export const makeEventsMonitoring = (
     guildData: { id: string },
     eventId: string,
     mapId: string,
+    roles: Role[],
+    accessPolicy: AccessPolicy,
   ) {
-    return gapReads.getMapCoverageGaps(guildData, eventId, mapId);
+    return eventAccess
+      .getMap(guildData.id, eventId, mapId, roles, accessPolicy)
+      .pipe(
+        Effect.andThen(gapReads.getMapCoverageGaps(guildData, eventId, mapId)),
+      );
   },
 
   getActiveGapForMap(
     guildData: { id: string },
     eventId: string,
     mapId: string,
+    roles: Role[],
+    accessPolicy: AccessPolicy,
   ) {
-    return gapReads.getActiveGapForMap(guildData, eventId, mapId);
+    return eventAccess
+      .getMap(guildData.id, eventId, mapId, roles, accessPolicy)
+      .pipe(
+        Effect.andThen(gapReads.getActiveGapForMap(guildData, eventId, mapId)),
+      );
   },
 
   getActiveGapsForHero(
@@ -155,8 +177,14 @@ export const makeEventsMonitoring = (
     eventId: string,
     heroId: string,
     data: CloseRespawnWindowRequest,
+    roles: Role[],
+    accessPolicy: AccessPolicy,
   ) {
-    return respawnCommands.close(guildData, eventId, heroId, data);
+    return eventAccess
+      .getHero(guildData.id, eventId, heroId, roles, accessPolicy)
+      .pipe(
+        Effect.andThen(respawnCommands.close(guildData, eventId, heroId, data)),
+      );
   },
 
   openRespawnWindow(
@@ -164,8 +192,14 @@ export const makeEventsMonitoring = (
     eventId: string,
     heroId: string,
     data: OpenRespawnWindowRequest,
+    roles: Role[],
+    accessPolicy: AccessPolicy,
   ) {
-    return respawnCommands.open(guildData, eventId, heroId, data);
+    return eventAccess
+      .getHero(guildData.id, eventId, heroId, roles, accessPolicy)
+      .pipe(
+        Effect.andThen(respawnCommands.open(guildData, eventId, heroId, data)),
+      );
   },
 });
 

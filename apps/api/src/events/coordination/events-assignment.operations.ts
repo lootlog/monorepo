@@ -26,13 +26,16 @@ export const makeEventsAssignment = (
     eventId: string,
     mapId: string,
     data: AssignEventMemberRequest,
+    roles: Role[],
+    accessPolicy: AccessPolicy,
   ) {
-    return mapAssignments.assignMember(
-      guildData,
-      eventId,
-      mapId,
-      data.memberId,
-    );
+    return eventAccess
+      .getMap(guildData.id, eventId, mapId, roles, accessPolicy)
+      .pipe(
+        Effect.andThen(
+          mapAssignments.assignMember(guildData, eventId, mapId, data.memberId),
+        ),
+      );
   },
 
   selfAssignMember(
@@ -98,12 +101,30 @@ export const makeEventsAssignment = (
     eventId: string,
     heroId: string,
     data: UpdateEventHeroRequest,
+    roles: Role[],
+    accessPolicy: AccessPolicy,
   ) {
-    return catalogMutations.updateHero(guildData, eventId, heroId, data);
+    return eventAccess
+      .getHero(guildData.id, eventId, heroId, roles, accessPolicy)
+      .pipe(
+        Effect.andThen(
+          catalogMutations.updateHero(guildData, eventId, heroId, data),
+        ),
+      );
   },
 
-  deleteHero(guildData: { id: string }, eventId: string, heroId: string) {
-    return catalogMutations.deleteHero(guildData, eventId, heroId);
+  deleteHero(
+    guildData: { id: string },
+    eventId: string,
+    heroId: string,
+    roles: Role[],
+    accessPolicy: AccessPolicy,
+  ) {
+    return eventAccess
+      .getHero(guildData.id, eventId, heroId, roles, accessPolicy)
+      .pipe(
+        Effect.andThen(catalogMutations.deleteHero(guildData, eventId, heroId)),
+      );
   },
 
   addMap(
@@ -111,8 +132,16 @@ export const makeEventsAssignment = (
     eventId: string,
     heroId: string,
     data: CreateEventMapRequest,
+    roles: Role[],
+    accessPolicy: AccessPolicy,
   ) {
-    return catalogMutations.addMap(guildData, eventId, heroId, data);
+    return eventAccess
+      .getHero(guildData.id, eventId, heroId, roles, accessPolicy)
+      .pipe(
+        Effect.andThen(
+          catalogMutations.addMap(guildData, eventId, heroId, data),
+        ),
+      );
   },
 
   deleteMap(
@@ -120,8 +149,16 @@ export const makeEventsAssignment = (
     eventId: string,
     heroId: string,
     mapId: string,
+    roles: Role[],
+    accessPolicy: AccessPolicy,
   ) {
-    return catalogMutations.deleteMap(guildData, eventId, heroId, mapId);
+    return eventAccess
+      .getMap(guildData.id, eventId, mapId, roles, accessPolicy)
+      .pipe(
+        Effect.andThen(
+          catalogMutations.deleteMap(guildData, eventId, heroId, mapId),
+        ),
+      );
   },
 
   getLocations(
@@ -148,8 +185,16 @@ export const makeEventsAssignment = (
     eventId: string,
     heroId: string,
     data: CreateEventLocationRequest,
+    roles: Role[],
+    accessPolicy: AccessPolicy,
   ) {
-    return catalogMutations.createLocation(guildData, eventId, heroId, data);
+    return eventAccess
+      .getHero(guildData.id, eventId, heroId, roles, accessPolicy)
+      .pipe(
+        Effect.andThen(
+          catalogMutations.createLocation(guildData, eventId, heroId, data),
+        ),
+      );
   },
 
   updateLocation(
@@ -158,14 +203,22 @@ export const makeEventsAssignment = (
     heroId: string,
     locationId: string,
     data: UpdateEventLocationRequest,
+    roles: Role[],
+    accessPolicy: AccessPolicy,
   ) {
-    return catalogMutations.updateLocation(
-      guildData,
-      eventId,
-      heroId,
-      locationId,
-      data,
-    );
+    return eventAccess
+      .getHero(guildData.id, eventId, heroId, roles, accessPolicy)
+      .pipe(
+        Effect.andThen(
+          catalogMutations.updateLocation(
+            guildData,
+            eventId,
+            heroId,
+            locationId,
+            data,
+          ),
+        ),
+      );
   },
 
   deleteLocation(
@@ -173,13 +226,21 @@ export const makeEventsAssignment = (
     eventId: string,
     heroId: string,
     locationId: string,
+    roles: Role[],
+    accessPolicy: AccessPolicy,
   ) {
-    return catalogMutations.deleteLocation(
-      guildData,
-      eventId,
-      heroId,
-      locationId,
-    );
+    return eventAccess
+      .getHero(guildData.id, eventId, heroId, roles, accessPolicy)
+      .pipe(
+        Effect.andThen(
+          catalogMutations.deleteLocation(
+            guildData,
+            eventId,
+            heroId,
+            locationId,
+          ),
+        ),
+      );
   },
 
   reorderLocations(
@@ -187,8 +248,16 @@ export const makeEventsAssignment = (
     eventId: string,
     heroId: string,
     data: ReorderEventLocationsRequest,
+    roles: Role[],
+    accessPolicy: AccessPolicy,
   ) {
-    return catalogMutations.reorderLocations(guildData, eventId, heroId, data);
+    return eventAccess
+      .getHero(guildData.id, eventId, heroId, roles, accessPolicy)
+      .pipe(
+        Effect.andThen(
+          catalogMutations.reorderLocations(guildData, eventId, heroId, data),
+        ),
+      );
   },
 
   assignMapToLocation(
@@ -197,28 +266,44 @@ export const makeEventsAssignment = (
     heroId: string,
     mapId: string,
     data: AssignEventMapLocationRequest,
+    roles: Role[],
+    accessPolicy: AccessPolicy,
   ) {
-    return catalogMutations.assignMapToLocation(
-      guildData,
-      eventId,
-      heroId,
-      mapId,
-      data,
-    );
+    return eventAccess
+      .getMap(guildData.id, eventId, mapId, roles, accessPolicy)
+      .pipe(
+        Effect.andThen(
+          catalogMutations.assignMapToLocation(
+            guildData,
+            eventId,
+            heroId,
+            mapId,
+            data,
+          ),
+        ),
+      );
   },
 
   unassignMember(
     guildData: { id: string },
     eventId: string,
     mapId: string,
-    memberId?: string,
+    memberId: string | undefined,
+    roles: Role[],
+    accessPolicy: AccessPolicy,
   ) {
-    return mapAssignments.unassignMember(
-      guildData,
-      eventId,
-      mapId,
-      memberId ? Number.parseInt(memberId, 10) : undefined,
-    );
+    return eventAccess
+      .getMap(guildData.id, eventId, mapId, roles, accessPolicy)
+      .pipe(
+        Effect.andThen(
+          mapAssignments.unassignMember(
+            guildData,
+            eventId,
+            mapId,
+            memberId ? Number.parseInt(memberId, 10) : undefined,
+          ),
+        ),
+      );
   },
 });
 

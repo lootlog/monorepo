@@ -33,6 +33,7 @@ import {
   RealtimeDependencyError,
   type CommandFailure,
   SessionNotJoined,
+  SubscriptionLimitExceeded,
 } from "#src/realtime/realtime-errors";
 import {
   canSubscribe,
@@ -257,7 +258,19 @@ export class CommandHandler {
             scopeKeys.add(getScopeKey(scope));
           }
         }
-        hub.replaceSubscriptions(socket, scopes);
+        const replaced = yield* Effect.try(() =>
+          hub.replaceSubscriptions(socket, scopes),
+        ).pipe(
+          Effect.as(true),
+          Effect.catch((cause) => {
+            socket.close(1008, "subscription reconciliation failed");
+            return Effect.logWarning(
+              "Subscription reconciliation failed",
+              cause,
+            ).pipe(Effect.as(false));
+          }),
+        );
+        if (!replaced) continue;
         const event = {
           v: 1,
           type: "permissions.updated",
@@ -358,9 +371,18 @@ export class CommandHandler {
           return Effect.fail(new OrganizationAccessDenied());
         return requireJoined.pipe(
           Effect.andThen(
-            Effect.sync(() => {
-              this.hub.subscribe(socket, command.data);
-              return { scope: command.data };
+            Effect.try({
+              try: () => {
+                this.hub.subscribe(socket, command.data);
+                return { scope: command.data };
+              },
+              catch: (cause) =>
+                cause instanceof SubscriptionLimitExceeded
+                  ? cause
+                  : new RealtimeDependencyError({
+                      operation: "subscribe",
+                      cause,
+                    }),
             }),
           ),
         );
@@ -468,7 +490,16 @@ export class CommandHandler {
       socket.data.guilds = authorizedGuilds;
       socket.data.joined = true;
       const scopes = defaultScopes(socket.data);
-      hub.replaceSubscriptions(socket, scopes);
+      yield* Effect.try({
+        try: () => hub.replaceSubscriptions(socket, scopes),
+        catch: (cause) =>
+          cause instanceof SubscriptionLimitExceeded
+            ? cause
+            : new RealtimeDependencyError({
+                operation: "replaceSubscriptions",
+                cause,
+              }),
+      });
       const event = {
         v: 1,
         type: "session.joined",

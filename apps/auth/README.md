@@ -1,5 +1,29 @@
 # Auth source contracts
 
+## Internal service credentials
+
+`POST /auth/idp-token` requires `Authorization: Bearer <AUTH_IDP_TOKEN_SECRET>`.
+Configure the same nonempty secret in Auth and API. The credential authorizes
+the API to retrieve Discord OAuth tokens; do not share it with browser clients,
+Gateway, or the API-key status service. Tokens are returned with `Cache-Control:
+no-store`. Sessions, user JWTs, and forwarded identity headers cannot authorize
+this endpoint.
+
+The account-deletion workflow separately requires `BATTLELOG_CLEANUP_SECRET`
+in API and Battlelog for `POST /internal/delete-user-data`. Both endpoints reject
+requests when their credential is absent or empty. Keep these routes private at
+the ingress as well; network isolation does not replace the service check.
+
+For rollout, provision two distinct random secrets in the appropriate services,
+deploy API callers that send them, then deploy the guarded Auth and Battlelog
+endpoints. Until all services agree, Discord token retrieval or account deletion
+fails closed. Do not roll back to unguarded endpoint implementations. Rotate a
+credential with a coordinated caller/receiver deployment. No data migration is
+required. Local `bun run env:generate` shares generated values across the root
+and relevant application environment files.
+
+## Source maintenance
+
 Maintain HTTP schemas and endpoints in `src/http-api/contracts` and compose them
 in `src/http-api/auth-api.ts`. Run `bun run openapi:generate` to export
 `openapi.yaml` after changing a contract.

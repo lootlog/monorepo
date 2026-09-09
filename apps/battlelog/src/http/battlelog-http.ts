@@ -1,10 +1,19 @@
 import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
+import { hasServiceAuthorization } from "@lootlog/protocol/http/service-auth";
 import { BunHttpServer } from "@effect/platform-bun";
 import {
   httpServerMetrics,
   httpServerRouteMetrics,
 } from "@lootlog/instrumentation";
-import { Cause, Effect, Layer, Option, Schema, SchemaIssue } from "effect";
+import {
+  Cause,
+  Effect,
+  Layer,
+  Option,
+  Schema,
+  SchemaIssue,
+  type Redacted,
+} from "effect";
 import {
   HttpRouter,
   HttpMiddleware,
@@ -390,6 +399,19 @@ export const BattlelogHandlers = Layer.mergeAll(
     handlers.handleRaw("InternalControllerDeleteUserData", () =>
       toResponse(
         Effect.gen(function* () {
+          const request = yield* HttpServerRequest.HttpServerRequest;
+          const application = yield* BattlelogApplication;
+          if (
+            !hasServiceAuthorization(
+              request.headers.authorization,
+              application.cleanupSecret,
+            )
+          ) {
+            return yield* new BattlelogOperationFailure({
+              operation: "InternalController_deleteUserData",
+              cause: new AuthenticationRequiredError(),
+            });
+          }
           const body: DeleteUserData = yield* HttpServerRequest.schemaBodyJson(
             DeleteUserDataSchema,
             {
@@ -503,6 +525,7 @@ export const BattlelogHttpServer = Layer.unwrap(
 
 export const makeBattlelogTestBoundary = (
   testOperations: BattlelogOperations,
+  cleanupSecret?: Redacted.Redacted<string>,
 ) => {
   const boundary = HttpRouter.toWebHandler(
     BattlelogRoutes.pipe(
@@ -510,7 +533,11 @@ export const makeBattlelogTestBoundary = (
       Layer.provideMerge(
         Layer.succeed(
           BattlelogApplication,
-          BattlelogApplication.of({ operations: testOperations, port: 0 }),
+          BattlelogApplication.of({
+            operations: testOperations,
+            port: 0,
+            cleanupSecret,
+          }),
         ),
       ),
       Layer.provide(HttpServer.layerServices),

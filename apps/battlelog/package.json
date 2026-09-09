@@ -45,6 +45,7 @@
     "@lootlog/battle-processor": "workspace:*",
     "@lootlog/database": "workspace:*",
     "@lootlog/instrumentation": "workspace:*",
+    "@lootlog/protocol": "workspace:*",
     "@lootlog/schema": "workspace:*",
     "bullmq": "^6.3.4",
     "drizzle-orm": "catalog:",

@@ -2460,6 +2460,10 @@ export type InternalControllerDeleteUserData400 = {
 };
 
 export type InternalControllerDeleteUserData401 = {
+  error: string;
+  message: string;
+  statusCode: 401;
+} | {
   message: string;
 };
 
@@ -5974,6 +5978,7 @@ export const getInternalControllerDeleteUserDataUrl = () => {
 }
 
 /**
+ * Internal API caller only. Requires the BATTLELOG_CLEANUP_SECRET bearer credential; user sessions and forwarded identity headers do not authorize this operation.
  * @summary Queue battle data deletion for a user
  */
 export const internalControllerDeleteUserData = async (deleteUserDataDto: DeleteUserDataDto, options?: Parameters<typeof battlelogFetch>[1]): Promise<BattleAcceptedResponseDtoOutput> => {

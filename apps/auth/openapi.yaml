@@ -105,7 +105,13 @@ paths:
       tags:
         - auth
       operationId: AuthController_getIdpToken
-      parameters: []
+      parameters:
+        - name: authorization
+          in: header
+          schema:
+            nullable: true
+            type: string
+          required: false
       responses:
         "200":
           description: ""
@@ -126,6 +132,56 @@ paths:
                   - accessToken
                   - expiresIn
                   - scopes
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                      error:
+                        type: string
+                      statusCode:
+                        type: number
+                        enum:
+                          - 400
+                    required:
+                      - message
+                      - error
+                      - statusCode
+                  - type: object
+                    properties:
+                      error:
+                        type: string
+                    required:
+                      - error
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                      statusCode:
+                        type: number
+                        enum:
+                          - 401
+                    required:
+                      - message
+                      - statusCode
+                  - type: object
+                    properties:
+                      error:
+                        type: string
+                    required:
+                      - error
+      description: Internal API caller only. Requires the AUTH_IDP_TOKEN_SECRET bearer credential; user sessions and forwarded identity headers do not authorize this operation.
       summary: Issue an IDP token for a user account
       requestBody:
         content:

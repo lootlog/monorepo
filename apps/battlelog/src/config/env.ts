@@ -1,8 +1,9 @@
-import { Config, Context, Effect, Layer, Redacted } from "effect";
+import { Config, Context, Effect, Layer, Option, Redacted } from "effect";
 import type { R2Config } from "#src/config/r2.config";
 import type { RedisOptions } from "#src/infrastructure/redis-store";
 
 export interface BattlelogConfiguration {
+  readonly cleanupSecret?: Redacted.Redacted<string>;
   readonly environment: string;
   readonly port: number;
   readonly serviceName: string;
@@ -41,6 +42,9 @@ const loadConfiguration = Effect.gen(function* () {
   const r2BucketName = yield* Config.string("R2_BUCKET_NAME");
 
   return {
+    cleanupSecret: yield* Config.option(
+      Config.redacted("BATTLELOG_CLEANUP_SECRET"),
+    ).pipe(Config.map(Option.getOrUndefined)),
     environment,
     port,
     postgresqlConnectionUri,
