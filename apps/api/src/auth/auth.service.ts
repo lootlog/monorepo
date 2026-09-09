@@ -220,6 +220,12 @@ export class AuthService {
       return new TokenExpiredError();
     }
 
+    if (this.getErrorResponse(error)?.status === 401) {
+      return new AuthServiceUnavailableError(
+        "Auth service rejected the internal service credential",
+      );
+    }
+
     if (this.isClientError(error)) {
       const errorMessage = this.getErrorMessage(error);
       this.logger.log({
