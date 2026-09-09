@@ -282,6 +282,7 @@ input:focus-visible {
 
 #nd-toc a {
   color: var(--text-quiet);
+  text-decoration: none;
 }
 
 #nd-toc a[data-active="true"] {

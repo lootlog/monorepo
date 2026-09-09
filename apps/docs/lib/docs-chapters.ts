@@ -7,7 +7,7 @@ export const docsChapters = [
     label: "Start",
     color: "#35d3e4",
     separator: "01 · Start",
-    slugs: ["index", "installation", "getting-started"],
+    slugs: ["index", "installation", "getting-started", "changelog"],
   },
   {
     id: "addon",

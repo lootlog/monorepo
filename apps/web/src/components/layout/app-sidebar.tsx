@@ -10,17 +10,21 @@ import type { ReactNode } from "react";
 type AppSidebarProps = {
   navigation?: ReactNode;
   compact?: boolean;
+  onReleaseAnnouncementsClick: () => void;
 };
 
 export const AppSidebar = ({
   compact = false,
   navigation,
+  onReleaseAnnouncementsClick,
 }: AppSidebarProps) => {
   return (
     <Sidebar className="border-r border-sidebar-border bg-sidebar">
       <SidebarContent className="h-full bg-sidebar">
         <div className="relative flex min-h-0 min-w-0 w-full flex-1 flex-row gap-0 text-sm">
-          <GuildsSelector />
+          <GuildsSelector
+            onReleaseAnnouncementsClick={onReleaseAnnouncementsClick}
+          />
           {!compact && (navigation ?? <div className="flex-1 bg-sidebar" />)}
         </div>
       </SidebarContent>

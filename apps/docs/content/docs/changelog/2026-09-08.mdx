@@ -1,0 +1,30 @@
+---
+title: Release 2026-09-08
+description: Changes generated from the Git history for this release.
+publishedAt: 2026-09-08
+---
+
+## Fixes
+
+- Restore realtime authorization and permission revocation
+- Omit undefined fields from ready room projections
+- Compare ready room revisions independently of JSON field order
+- Remove broad cache resets on permission rebalance
+- Rebalance member sessions after role policy updates
+- **game-client:** Reconcile access changes without redundant refreshes
+- **game-client:** Enforce current policy across presence updates
+- **web:** Preserve activity feed during permission rebalancing
+- **web:** Prune revoked organizations before feed refresh
+- **gateway:** Invalidate shared permissions before federation
+- **observability:** Restore Bun metrics and structured telemetry
+- **observability:** Reduce context overhead and omit auth details
+- **gateway:** Count unique Discord accounts in player metrics
+- Resolve lint errors and synchronize React state
+- Keep autoplay callbacks current and align React peers
+- **cli:** Generate seed account identifiers with randomUUID
+- Resolve main conflicts in lint cleanup
+
+## Performance
+
+- **gateway:** Index realtime delivery audiences
+- **gateway:** Streamline routing and checkpoint delivery

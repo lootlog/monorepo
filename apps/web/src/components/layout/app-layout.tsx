@@ -1,4 +1,4 @@
-import { lazy, Suspense, type CSSProperties } from "react";
+import { lazy, Suspense, useState, type CSSProperties } from "react";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { GuildShell } from "@/components/layout/guild-shell";
 import { GuildSidebarNavPlaceholder } from "@/components/layout/guild-sidebar-nav-placeholder";
@@ -11,6 +11,7 @@ import { SidebarProvider } from "@lootlog/ui/components/sidebar";
 import { Outlet, useLocation, useMatches } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { GlobalModals } from "@/components/common/global-modals";
+import { ReleaseAnnouncementsDialog } from "@/features/release-announcements/release-announcements-dialog";
 
 const ThemeAnnouncement = lazy(() =>
   import("@/components/common/theme-announcement").then((module) => ({
@@ -19,6 +20,8 @@ const ThemeAnnouncement = lazy(() =>
 );
 export const AppLayout = () => {
   const { t } = useTranslation();
+  const [releaseAnnouncementsOpen, setReleaseAnnouncementsOpen] =
+    useState(false);
   const location = useLocation();
   const guildRouteMatch = useMatches({
     select: (matches) =>
@@ -69,6 +72,7 @@ export const AppLayout = () => {
         <AppSidebar
           compact={isStandaloneRoute}
           navigation={sidebarNavigation}
+          onReleaseAnnouncementsClick={() => setReleaseAnnouncementsOpen(true)}
         />
         {isStandaloneRoute ? (
           <StandaloneShell>
@@ -84,6 +88,10 @@ export const AppLayout = () => {
           </GuildShell>
         )}
       </SidebarProvider>
+      <ReleaseAnnouncementsDialog
+        open={releaseAnnouncementsOpen}
+        onOpenChange={setReleaseAnnouncementsOpen}
+      />
       <Toaster />
       <GlobalModals />
     </div>

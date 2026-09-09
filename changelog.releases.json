@@ -1,0 +1,42 @@
+[
+  {
+    "slug": "2026-09-08",
+    "title": "Release 2026-09-08",
+    "description": "Changes generated from the Git history for this release.",
+    "publishedAt": "2026-09-08",
+    "base": "71135f8615f6fce7512d93fdba70bbd649114981",
+    "head": "f44143e3396fd68ff6c947b728984d90f0602a0b"
+  },
+  {
+    "slug": "2026-09-04",
+    "title": "Release 2026-09-04",
+    "description": "Changes generated from the Git history for this release.",
+    "publishedAt": "2026-09-04",
+    "base": "5a1dc9fcb1df33be9c2aa311d5eef748826780fe",
+    "head": "9797dc7d34519ce39331a41479a15cd10c39449a"
+  },
+  {
+    "slug": "2026-08-28",
+    "title": "Release 2026-08-28",
+    "description": "Changes generated from the Git history for this release.",
+    "publishedAt": "2026-08-28",
+    "base": "680355382ac0b7d5fdf04de44709d6b657f6ab67",
+    "head": "b79e6e022d39f5b5ade01edbdc3c89c8cbea3c56"
+  },
+  {
+    "slug": "2026-08-23",
+    "title": "Release 2026-08-23",
+    "description": "Changes generated from the Git history for this release.",
+    "publishedAt": "2026-08-23",
+    "base": "71af2708b207b23950b4a24f55bb9d813c007b5b",
+    "head": "f8f01161384b625fa1c722df339ae0812be342aa"
+  },
+  {
+    "slug": "2026-07-31",
+    "title": "Release 2026-07-31",
+    "description": "Changes generated from the Git history for this release.",
+    "publishedAt": "2026-07-31",
+    "base": "91d3a4a5aae286d0514b20208e818863b469c08e",
+    "head": "d7ac6adbcae36f37c8085702fa7629692388afc7"
+  }
+]
