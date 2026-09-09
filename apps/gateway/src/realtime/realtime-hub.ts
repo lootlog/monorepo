@@ -526,7 +526,7 @@ export class RealtimeHub {
     frames: Map<string, string | Uint8Array>,
   ): string | Uint8Array {
     const permissions = chatMessagePermissions(session, event);
-    const key = `${session.frameEncoding}:${permissions.canEdit}:${permissions.canDelete}`;
+    const key = `${session.frameEncoding}:${permissions.canDelete}`;
     let encoded = frames.get(key);
     if (encoded === undefined) {
       const recipientFrame = withChatMessagePermissions(event, permissions);

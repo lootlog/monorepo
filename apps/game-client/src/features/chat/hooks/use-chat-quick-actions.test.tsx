@@ -1,4 +1,14 @@
-import { act, renderHook } from "@testing-library/react";
+import { useWindowsStore } from "@/store/windows.store";
+import userEvent from "@testing-library/user-event";
+import { ChatQuickActionStrip } from "../components/chat-quick-action-strip";
+import { useHotkeysStore } from "@/store/hotkeys.store";
+import {
+  act,
+  render,
+  screen,
+  waitFor,
+  renderHook,
+} from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { configureApiClients } from "@lootlog/client/transport";
 import {
@@ -31,6 +41,7 @@ beforeEach(() => {
     guildsOrder: [],
     hiddenGuildIds: [],
   });
+  useHotkeysStore.getState().resetAll();
   request.mockReset();
   restoreApi = configureApiClients({
     main: { baseUrl: "https://api.example.test", fetch: request },
@@ -115,4 +126,62 @@ it("sends Position immediately to the selected organization without changing a f
   );
   expect(String(request.mock.calls[0]?.[0])).toContain("a");
   expect(useChatStore.getState().draftsByGuild.a).toBe("x".repeat(128));
+});
+
+it("opens quick actions with current shortcuts and sends position without changing the draft", async () => {
+  const user = userEvent.setup();
+  useHotkeysStore.getState().setBinding("chat-position", {
+    type: "keyboard",
+    key: "P",
+    ctrl: true,
+    shift: false,
+    alt: true,
+  });
+  useChatStore.getState().setDraft("a", "Keep this draft");
+  request.mockResolvedValueOnce(
+    Response.json({
+      id: "position",
+      guildId: "a",
+      message: "Position",
+      type: "NORMAL",
+      timestamp: new Date().toISOString(),
+    }),
+  );
+  render(<ChatQuickActionStrip guildId="a" />, { wrapper });
+  const trigger = screen.getByRole("button", { name: "Szybkie akcje" });
+  expect(
+    screen.queryByRole("button", { name: "Pozycja" }),
+  ).not.toBeInTheDocument();
+  await user.click(trigger);
+  expect(screen.getByText("Ctrl + Alt + P")).toBeVisible();
+  await user.click(screen.getByRole("button", { name: "Pozycja" }));
+  await waitFor(() => expect(request).toHaveBeenCalledTimes(1));
+  await waitFor(() => expect(trigger).toHaveFocus());
+  expect(useChatStore.getState().draftsByGuild.a).toBe("Keep this draft");
+  await user.click(trigger);
+  await user.keyboard("{Escape}");
+  await waitFor(() => expect(trigger).toHaveFocus());
+});
+
+it("creates an empty gathering like /grp without opening the form or changing the draft", async () => {
+  const user = userEvent.setup();
+  useChatStore.getState().setSelectedInputGuildIds(["a"]);
+  useChatStore.getState().setDraft("a", "Keep draft");
+  useWindowsStore.getState().setOpen("create-party-gathering", false);
+  request.mockRejectedValueOnce(new Error("offline"));
+  render(<ChatQuickActionStrip />, { wrapper });
+  await user.click(screen.getByRole("button", { name: "Szybkie akcje" }));
+  expect(
+    screen.queryByRole("button", { name: "Ustawienia" }),
+  ).not.toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "Party finder" }));
+  await waitFor(() => expect(request).toHaveBeenCalledTimes(1));
+  const body = JSON.parse(String(request.mock.calls[0]?.[1]?.body));
+  expect(body.guildIds).toEqual(["a"]);
+  expect(body).not.toHaveProperty("description");
+  expect(body).not.toHaveProperty("npc");
+  expect(body).not.toHaveProperty("minLvl");
+  expect(body).not.toHaveProperty("maxLvl");
+  expect(useWindowsStore.getState()["create-party-gathering"].open).toBe(false);
+  expect(useChatStore.getState().draftsByGuild.a).toBe("Keep draft");
 });

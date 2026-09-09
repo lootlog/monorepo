@@ -15,44 +15,35 @@ import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
 export type ChatMessageContextMenuProps = {
-  inline?: boolean;
   canDelete: boolean;
-  canEdit: boolean;
   canReply: boolean;
   gameInterface?: string;
   heroName?: string;
   isDeleting: boolean;
-  isUpdating: boolean;
   message: ChatMessageType & {
     characterData: NonNullable<ChatMessageType["characterData"]>;
   };
   onDelete: () => void;
-  onEdit: () => void;
   onReply?: () => void;
 };
 
 export const ChatMessageContextMenu: FC<ChatMessageContextMenuProps> = ({
-  inline = false,
   canDelete,
-  canEdit,
   canReply,
   gameInterface,
   heroName,
   isDeleting,
-  isUpdating,
   message,
   onDelete,
-  onEdit,
   onReply,
 }) => {
   const { t } = useTranslation("chat");
   const { characterData } = message;
   const isCurrentCharacter = characterData.nick === heroName;
   const isNewInterface = gameInterface === "ni";
-  const isMutationPending = isUpdating || isDeleting;
 
-  const items = (
-    <>
+  return (
+    <ContextMenuContent className="ll:w-48 ll:flex ll:flex-col">
       <ContextMenuItem onClick={() => void copyChatText(message.message)}>
         {t("messageActions.copy")}
       </ContextMenuItem>
@@ -68,13 +59,8 @@ export const ChatMessageContextMenu: FC<ChatMessageContextMenuProps> = ({
           {t("contextMenu.reply")}
         </ContextMenuItem>
       )}
-      {canEdit && (
-        <ContextMenuItem disabled={isMutationPending} onClick={onEdit}>
-          {t("contextMenu.edit")}
-        </ContextMenuItem>
-      )}
       {canDelete && (
-        <ContextMenuItem disabled={isMutationPending} onClick={onDelete}>
+        <ContextMenuItem disabled={isDeleting} onClick={onDelete}>
           {t("contextMenu.delete")}
         </ContextMenuItem>
       )}
@@ -120,13 +106,6 @@ export const ChatMessageContextMenu: FC<ChatMessageContextMenuProps> = ({
           {t("contextMenu.showProfile")}
         </ContextMenuItem>
       )}
-    </>
-  );
-  return inline ? (
-    items
-  ) : (
-    <ContextMenuContent className="ll:w-48 ll:flex ll:flex-col">
-      {items}
     </ContextMenuContent>
   );
 };

@@ -1,3 +1,4 @@
+import { ChatFilterSwitcher } from "./components/chat-filter-switcher";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { DraggableWindow } from "@/components/draggable-window";
@@ -9,8 +10,7 @@ import { ChatGatheringBar } from "./components/chat-gathering-bar";
 import { useChatGuildData } from "./hooks/use-chat-guild-data";
 import { getGuildNamesById } from "@/lib/api/generated-helpers";
 import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/client/main";
-import { cn } from "cn";
-import { type ChatFilter, useChatStore } from "@/store/chat.store";
+import { useChatStore } from "@/store/chat.store";
 import { useGameStore } from "@/store/game.store";
 import { useWindowsStore } from "@/store/windows.store";
 import {
@@ -21,7 +21,10 @@ import {
   getCurrentChatMessages,
   getNextSelectedGuildId,
 } from "./chat.helpers";
-import { canReplyToChatMessage } from "./chat-reply.helpers";
+import {
+  canReplyToChatMessage,
+  resolveChatReplyNames,
+} from "./chat-reply.helpers";
 import { useNpcTypeColors } from "@/hooks/api/use-settings-documents";
 import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
 import { AsyncContent } from "@/components/async-content";
@@ -146,6 +149,7 @@ export const ChatView = ({
   const { npcTypeColors } = useNpcTypeColors();
   const chatAppearance =
     preferences.data?.chatAppearance ?? CHAT_APPEARANCE_READABLE_PRESET;
+  const filtersVisible = useChatStore((state) => state.filtersVisible);
   const chatFilter = useChatStore((state) => state.chatFilter);
   const gameInterface = useGameStore((state) => state.game?.interface);
   const currentCharacterNick = useGameStore(
@@ -236,17 +240,19 @@ export const ChatView = ({
       return [guild.id, summary.attention];
     }),
   );
-  const effectiveFilter =
-    chatFilter === "npc" || chatFilter === "party" ? "reports" : chatFilter;
-  const chatFilters: { key: ChatFilter; label: string; unread: boolean }[] = [
-    { key: "normal", label: t("filters.normal"), unread: unread.conversations },
-    { key: "reports", label: t("filters.reports"), unread: unread.reports },
-    { key: "all", label: t("filters.all"), unread: unread.ids.size > 0 },
-  ];
-  const currentMessages = getCurrentChatMessages(
+  const effectiveFilter = !filtersVisible
+    ? "all"
+    : chatFilter === "npc" || chatFilter === "party"
+      ? "reports"
+      : chatFilter;
+  const currentMessages = resolveChatReplyNames(
+    getCurrentChatMessages(
+      messagesByGuildId,
+      effectiveSelectedGuildId,
+      effectiveFilter,
+    ),
     messagesByGuildId,
-    effectiveSelectedGuildId,
-    effectiveFilter,
+    membersByGuildId,
   );
   const currentRenderableMessages = getChatRenderableMessages(currentMessages);
   const selectedMessageGroups = groupDuplicateChatMessages(
@@ -285,7 +291,9 @@ export const ChatView = ({
     useChatStore.getState().setReplyDraft({
       guildId: message.guildId,
       messageId: message.id,
-      senderNick: message.characterData.nick,
+      senderNick:
+        membersByGuildId[message.guildId]?.[message.senderId]?.name ??
+        message.characterData.nick,
       message: message.message,
       type: message.type,
     });
@@ -324,44 +332,13 @@ export const ChatView = ({
         />
         {embedded && actions}
       </div>
-      <div
-        className="ll:flex ll:shrink-0 ll:gap-0.5 ll:px-1 ll:pb-1"
-        role="group"
-        aria-label={t("filters.label")}
-      >
-        {chatFilters.map((filter) => (
-          <button
-            key={filter.key}
-            type="button"
-            aria-pressed={effectiveFilter === filter.key}
-            onClick={() => {
-              useChatStore.getState().setChatFilter(filter.key);
-            }}
-            className={cn(
-              "ll:flex ll:flex-1 ll:items-center ll:justify-center ll:gap-1 ll:rounded-sm ll:border ll:px-1 ll:py-1 ll:text-[11px] ll:focus-visible:outline-2 ll:focus-visible:outline-ring",
-              effectiveFilter === filter.key
-                ? "ll:border-primary/50 ll:bg-primary/15 ll:text-foreground"
-                : "ll:border-border ll:bg-transparent ll:text-muted-foreground",
-            )}
-          >
-            {filter.label}
-            {filter.unread && (
-              <span
-                className="ll:size-1.5 ll:rounded-full ll:bg-primary"
-                aria-label={t("navigation.unread")}
-              />
-            )}
-          </button>
-        ))}
-        {unread.attention > 0 && (
-          <span
-            className="ll:self-center ll:rounded ll:bg-primary/20 ll:px-1 ll:text-xs ll:font-semibold"
-            title={t("navigation.attention")}
-          >
-            {unread.attention}
-          </span>
-        )}
-      </div>
+      {filtersVisible && (
+        <ChatFilterSwitcher
+          value={effectiveFilter}
+          onValueChange={useChatStore.getState().setChatFilter}
+          unread={unread}
+        />
+      )}
       <div className="ll:relative ll:min-h-0 ll:flex-1 ll:overflow-hidden">
         <div className="ll:pointer-events-auto ll:absolute ll:right-1 ll:top-1 ll:z-20">
           <AsyncStatusIndicator
@@ -409,15 +386,6 @@ export const ChatView = ({
             membersByGuildId={membersByGuildId}
             mentionContextsByGuildId={mentionContextsByGuildId}
             onReplyToMessage={handleReplyToMessage}
-            onMention={(message) =>
-              useChatStore
-                .getState()
-                .insertMention(
-                  message.guildId,
-                  membersByGuildId[message.guildId]?.[message.senderId]?.name ??
-                    message.characterData.nick,
-                )
-            }
             renderables={currentRenderableMessages}
             selectedGuildId={effectiveSelectedGuildId}
             isActive={isOpen}
@@ -437,19 +405,19 @@ export const ChatView = ({
           />
         </AsyncContent>
       </div>
-      <div
-        className={cn(
-          "ll:shrink-0 ll:border-t ll:border-border ll:px-1 ll:pb-1",
-          !embedded && "ll:pr-6",
-        )}
-      >
-        <ChatGatheringBar isVisible={isOpen} />
-        {!resolvedComposeGuildId && (
-          <p className="ll:text-[10px] ll:text-muted-foreground">
-            {t("quickActions.selectOrganization")}
-          </p>
-        )}
-        <ChatInput selectedGuildId={resolvedComposeGuildId || undefined} />
+      <div className="ll:shrink-0">
+        <ChatGatheringBar isVisible={isOpen} npcTypeColors={npcTypeColors} />
+        <div>
+          {!resolvedComposeGuildId && (
+            <p className="ll:text-[10px] ll:text-muted-foreground">
+              {t("quickActions.selectOrganization")}
+            </p>
+          )}
+          <ChatInput
+            variant="borderless"
+            selectedGuildId={resolvedComposeGuildId || undefined}
+          />
+        </div>
       </div>
     </div>
   );
@@ -458,10 +426,11 @@ export const ChatView = ({
     <DraggableWindow
       isOpen={isOpen}
       id="chat"
+      contentClassName="ll:-mx-1 ll:-mb-1"
       title={t("window.title")}
       onClose={() => useWindowsStore.getState().setOpen("chat", false)}
       minHeight={260}
-      minWidth={260}
+      // minWidth={260}
       actions={actions}
     >
       {content}

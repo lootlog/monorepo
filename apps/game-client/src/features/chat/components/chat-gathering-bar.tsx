@@ -1,3 +1,10 @@
+import { getSubtleBackgroundColor } from "@/utils/notifications-and-detector/background";
+import {
+  isCombatNpcType,
+  type NpcTypeColors,
+} from "@lootlog/schema/npc-appearance";
+import { ChatAvailableGatherings } from "./chat-available-gatherings";
+import { CHAT_GATHERING_ACTION_CLASS } from "../chat.constants";
 import { ChatOwnGatheringBar } from "./chat-own-gathering-bar";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -34,10 +41,23 @@ export function selectFeaturedGathering(
   return candidates[0] ?? null;
 }
 
+function getGatheringBackground(
+  gathering: { npc?: { type?: string } } | null | undefined,
+  colors?: NpcTypeColors,
+) {
+  const type = gathering?.npc?.type;
+  return getSubtleBackgroundColor(
+    isCombatNpcType(type) ? type : "party-gathering",
+    colors,
+  );
+}
+
 export function ChatGatheringBar({
   isVisible = true,
+  npcTypeColors,
 }: {
   isVisible?: boolean;
+  npcTypeColors?: NpcTypeColors;
 }) {
   const { t } = useTranslation("chat");
   const discovery = useActivePartyGatherings();
@@ -49,8 +69,7 @@ export function ChatGatheringBar({
       selectReadyRoomForCharacter(state, identity),
   );
   const queryClient = useQueryClient();
-  const [error, setError] = useState(false);
-  const [expanded, setExpanded] = useState(false);
+
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
   const [frozen, setFrozen] = useState<ActivePartyGatheringSummary | null>(
@@ -72,7 +91,6 @@ export function ChatGatheringBar({
       usePartyFinderStore
         .getState()
         .mergeProjection(decodePartyReadyRoomProjection(projection)),
-    onError: () => setError(true),
     onSettled: () => {
       pendingRef.current = false;
       void queryClient.invalidateQueries({
@@ -89,10 +107,9 @@ export function ChatGatheringBar({
   const locked = hovered || focused || application.isPending;
   const target = selectFeaturedGathering(candidates, locked ? frozen : null);
   const apply = (candidate: ActivePartyGatheringSummary) => {
-    if (pendingRef.current || room) return;
+    if (pendingRef.current || room || discovery.isStale) return;
     pendingRef.current = true;
     setFrozen(candidate);
-    setError(false);
     application.mutate(candidate);
   };
   useEffect(() => {
@@ -109,17 +126,27 @@ export function ChatGatheringBar({
     return () =>
       window.removeEventListener("lootlog:join-visible-gathering", join);
   });
-  const label = (candidate: ActivePartyGatheringSummary) =>
-    `${candidate.npc?.name ?? candidate.description ?? t("gatherings.generic")} · ${candidate.organizerName} · ${discovery.visibleGuilds
-      .filter((guild) => candidate.guildIds.includes(guild.id))
-      .map((guild) => guild.name)
-      .join(", ")}`;
-  const hasError = error || discovery.isError;
-  if (!room && candidates.length === 0 && !hasError) return null;
+  const hasError = discovery.isError;
+  const {
+    isError: applyError,
+    variables: appliedTarget,
+    reset: resetApplication,
+  } = application;
+  const applyFailed =
+    applyError && appliedTarget.notificationId === target?.notificationId;
+  useEffect(() => {
+    if (applyError && appliedTarget.notificationId !== target?.notificationId)
+      resetApplication();
+  }, [applyError, appliedTarget, resetApplication, target?.notificationId]);
+  if (!room && candidates.length === 0 && !hasError && !applyFailed)
+    return null;
   return (
     <div
       ref={barRef}
-      className="ll:shrink-0 ll:border-t ll:border-amber-600/40 ll:bg-amber-950/30 ll:p-1.5 ll:text-xs"
+      style={{
+        backgroundColor: getGatheringBackground(room ?? target, npcTypeColors),
+      }}
+      className="ll:shrink-0 ll:border-solid ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40 ll:px-1.5 ll:py-1.5 ll:text-[11px] ll:leading-[14px] ll:[--ll-chat-detail-font-size:11px] ll:[--ll-chat-detail-line-height:14px] ll:text-gray-100"
       onMouseEnter={() => {
         setFrozen(target);
         setHovered(true);
@@ -135,83 +162,45 @@ export function ChatGatheringBar({
       }}
     >
       {room ? (
-        <ChatOwnGatheringBar room={room} onError={() => setError(true)} />
-      ) : target ? (
+        <ChatOwnGatheringBar key={room.notificationId} room={room} />
+      ) : (
+        <ChatAvailableGatherings
+          candidates={candidates}
+          target={target}
+          locked={locked}
+          pending={application.isPending}
+          stale={discovery.isStale}
+          onApply={apply}
+          onShowLatest={() => setFrozen(newest)}
+        />
+      )}
+      {applyFailed && (
+        <p role="alert" className="ll:m-0 ll:text-amber-200">
+          {t("gatherings.applyFailed")}
+        </p>
+      )}
+      {discovery.isStale ? (
         <div className="ll:flex ll:items-center ll:gap-1">
-          <span
-            className="ll:min-w-0 ll:flex-1 ll:truncate"
-            title={label(target)}
+          <p
+            role="status"
+            className="ll:m-0 ll:min-w-0 ll:flex-1 ll:text-amber-200"
           >
-            {label(target)}
-          </span>
-          {locked && newest?.notificationId !== target.notificationId ? (
-            <span>{t("gatherings.new")}</span>
-          ) : null}
+            {t(hasError ? "gatherings.failed" : "gatherings.stale")}
+          </p>
           <Button
-            disabled={application.isPending}
-            onClick={() => apply(target)}
+            type="button"
+            variant="ghost"
+            className={CHAT_GATHERING_ACTION_CLASS}
+            disabled={discovery.isFetching}
+            onClick={() => void discovery.refetch()}
           >
             {t(
-              application.isPending
-                ? "gatherings.applying"
-                : "gatherings.apply",
+              discovery.isFetching
+                ? "gatherings.refreshing"
+                : "gatherings.retry",
             )}
           </Button>
-          {candidates.length > 1 ? (
-            <Button
-              aria-expanded={expanded}
-              onClick={() => setExpanded(!expanded)}
-            >
-              {t("gatherings.others", { count: candidates.length - 1 })}
-            </Button>
-          ) : null}
         </div>
-      ) : (
-        <Button onClick={() => setFrozen(newest)}>
-          {t("gatherings.showLatest")}
-        </Button>
-      )}
-      {expanded && !room ? (
-        <ul className="ll:max-h-32 ll:overflow-auto">
-          {candidates
-            .filter(
-              (candidate) =>
-                candidate.notificationId !== target?.notificationId,
-            )
-            .map((candidate) => (
-              <li
-                key={candidate.notificationId}
-                className="ll:flex ll:items-center ll:gap-1 ll:py-1"
-              >
-                <span
-                  className="ll:min-w-0 ll:flex-1 ll:truncate"
-                  title={label(candidate)}
-                >
-                  {label(candidate)}
-                </span>
-                <Button
-                  disabled={application.isPending}
-                  onClick={() => apply(candidate)}
-                >
-                  {t("gatherings.apply")}
-                </Button>
-              </li>
-            ))}
-        </ul>
-      ) : null}
-      {hasError ? (
-        <p role="alert">
-          {t("gatherings.failed")}{" "}
-          <button
-            type="button"
-            onClick={() => {
-              setError(false);
-              void discovery.refetch();
-            }}
-          >
-            {t("gatherings.retry")}
-          </button>
-        </p>
       ) : null}
     </div>
   );

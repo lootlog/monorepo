@@ -225,6 +225,9 @@ export const ActivePartyGatheringSummary = Schema.Struct({
   maxLvl: Schema.optionalKey(FiniteNumber),
   npc: Schema.optionalKey(
     Schema.Struct({
+      prof: Schema.optionalKey(Schema.String),
+      icon: Schema.optionalKey(Schema.String),
+      type: Schema.optionalKey(Schema.String),
       name: Schema.String,
       location: Schema.String,
       lvl: FiniteNumber,

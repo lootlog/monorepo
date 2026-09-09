@@ -2,40 +2,46 @@
   "messageActions": {
     "label": "Akcje wiadomości",
     "more": "Więcej akcji",
-    "mention": "Wspomnij autora",
     "copy": "Kopiuj wiadomość",
     "copied": "Skopiowano",
     "copyFailed": "Nie udało się skopiować",
-    "coming": "Idę",
     "showOriginal": "Przejdź do wiadomości: {{name}}",
     "clearReply": "Anuluj odpowiedź",
-    "editLabel": "Treść wiadomości",
     "copyLocation": "Kopiuj lokalizację",
-    "gather": "Zbierz grupę",
     "gathered": "Utworzono zbiórkę",
     "gatherFailed": "Nie udało się utworzyć zbiórki",
     "activeGathering": "Masz już aktywną zbiórkę. Znajdziesz ją na pasku zbiórek.",
-    "prepareHelp": "Przygotuj wezwanie pomocy",
-    "npcHelp": "!Potrzebuję pomocy przy {{npc}}! {{location}}",
     "finishDraft": "Dokończ obecną wiadomość przed przygotowaniem wezwania",
     "helpTooLong": "Wezwanie przekracza limit 128 znaków",
-    "missingLocation": "Zgłoszenie nie zawiera pełnej lokalizacji",
-    "otherWorld": "Akcja wymaga zgłoszenia z aktualnego świata"
+    "missingLocation": "Zgłoszenie nie zawiera pełnej lokalizacji"
   },
   "gatherings": {
-    "generic": "Zbiórka",
     "publicationFailed": "Zbiórka została utworzona, ale nie udało się opublikować wiadomości na czacie.",
     "showLatest": "Pokaż najnowszą zbiórkę",
-    "owned": "Twoja zbiórka",
-    "applied": "Zgłoszono",
+    "title": "Party finder",
+    "applicantCount": "Zgłoszeni: {{count}}",
+    "inPartyCount": "W grupie: {{count}} ze zgłoszonych",
+    "invite": "Zaproś zgłoszonych",
+    "inviting": "Wysyłanie zaproszeń…",
+    "inviteFailed": "Nie udało się wysłać zaproszeń",
+    "inParty": "W grupie",
+    "level": "Poziom: {{min}}–{{max}}",
     "manage": "Zarządzaj",
-    "cancel": "Anuluj",
-    "withdraw": "Wycofaj",
+    "applied": "Zgłoszono",
+    "cancel": "Anuluj zbiórkę",
+    "withdraw": "Wycofaj zgłoszenie",
     "new": "Nowa zbiórka",
     "apply": "Zgłoś się",
     "applying": "Zgłaszanie…",
     "others": "Pozostałe · {{count}}",
-    "failed": "Nie udało się odświeżyć zbiórek lub wykonać akcji.",
+    "failed": "Nie udało się odświeżyć zbiórek.",
+    "stale": "Dane zbiórek mogą być nieaktualne.",
+    "applyFailed": "Nie udało się zgłosić do zbiórki. Spróbuj ponownie.",
+    "cancelFailed": "Nie udało się anulować zbiórki. Spróbuj ponownie.",
+    "withdrawFailed": "Nie udało się wycofać zgłoszenia. Spróbuj ponownie.",
+    "refreshing": "Odświeżanie…",
+    "cancelling": "Anulowanie…",
+    "withdrawing": "Wycofywanie…",
     "retry": "Odśwież"
   },
   "integration": {
@@ -98,10 +104,6 @@
     "hideFilters": "Ukryj filtry",
     "showFilters": "Pokaż filtry"
   },
-  "edit": {
-    "save": "Zapisz",
-    "cancel": "Anuluj"
-  },
   "reply": {
     "replyingTo": "Odpowiedź"
   },
@@ -112,7 +114,6 @@
     "unknownUser": "Nieznany",
     "sendMessage": "Wyślij wiadomość",
     "reply": "Odpowiedz",
-    "edit": "Edytuj",
     "delete": "Usuń",
     "deleting": "Usuwanie wiadomości",
     "showEquipment": "Pokaż ekwipunek",
@@ -121,6 +122,8 @@
     "showProfile": "Pokaż profil"
   },
   "partyGathering": {
+    "otherWorld": "Inny świat",
+    "joinFailed": "Nie udało się dołączyć do grupy. Spróbuj ponownie.",
     "levelRange": "Poziom: {{min}} - {{max}}",
     "volunteering": "Zgłaszanie...",
     "requiredLevel": "Wymagany poziom {{min}}-{{max}}",
@@ -134,13 +137,11 @@
   "errors": {
     "sendFailed": "Nie udało się wysłać wiadomości na czat",
     "clearFailed": "Nie udało się wyczyścić czatu",
-    "editFailed": "Nie udało się edytować wiadomości",
     "deleteFailed": "Nie udało się usunąć wiadomości"
   },
   "quickActions": {
+    "menu": "Szybkie akcje",
     "selectOrganization": "Wybierz organizację u góry czatu",
-    "comingMessage": "Idę",
-    "comingSent": "Wysłano odpowiedź „Idę”",
     "help": "Pomoc",
     "position": "Pozycja",
     "helpMessage": "Potrzebuję pomocy! {{map}} ({{x}}, {{y}}).",
@@ -151,9 +152,17 @@
     "organizationsUnavailable": "Poczekaj na załadowanie organizacji",
     "unassigned": "Nieprzypisany",
     "hotkeys": {
+      "chat-position": {
+        "label": "Wyślij pozycję",
+        "description": "Wysyła pozycję do organizacji wybranej u góry czatu."
+      },
       "chat-help": {
         "label": "Wezwij pomoc",
         "description": "Wysyła wezwanie pomocy do organizacji wybranej u góry czatu."
+      },
+      "create-party-gathering": {
+        "label": "Utwórz grupę — Party finder",
+        "description": "Otwiera formularz tworzenia grupy."
       },
       "join-party-gathering": {
         "label": "Zgłoś się do zbiórki",

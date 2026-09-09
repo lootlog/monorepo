@@ -9,7 +9,6 @@ import {
   getUsersControllerGetUserPreferencesQueryKey,
 } from "@lootlog/client/main";
 import { ChatInput } from "@/features/chat/components/chat-input";
-import { useChatQuickActions } from "@/features/chat/hooks/use-chat-quick-actions";
 import {
   getSelectedChatGuildId,
   useChatStore,
@@ -64,7 +63,7 @@ configureApiClients({
               guildId: "a",
               senderId: "fixture",
               timestamp: new Date().toISOString(),
-              canEdit: false,
+
               canDelete: false,
             }),
           );
@@ -136,7 +135,7 @@ const quote: ChatReplyDraft = {
 };
 
 const hasHighlightedQuote = () => {
-  const text = Array.from(document.querySelectorAll("div")).find(
+  const text = Array.from(document.querySelectorAll("span")).find(
     (element) =>
       element.childElementCount === 0 &&
       element.textContent?.endsWith("Help on this map"),
@@ -145,7 +144,7 @@ const hasHighlightedQuote = () => {
   if (!card || !text) return false;
   return (
     getComputedStyle(card).borderTopWidth === "0px" &&
-    getComputedStyle(text).fontStyle === "italic" &&
+    getComputedStyle(text).fontStyle === "normal" &&
     getComputedStyle(card).backgroundColor !== "rgba(0, 0, 0, 0)"
   );
 };
@@ -155,7 +154,6 @@ const Fixture = () => {
   const [results, setResults] = useState<string[]>([]);
   const [running, setRunning] = useState(false);
   const selectedGuildId = useChatStore(getSelectedChatGuildId);
-  const { sendComing } = useChatQuickActions();
   const run = async () => {
     if (running) return;
     setRunning(true);
@@ -195,7 +193,7 @@ const Fixture = () => {
           document.body.textContent?.includes("Help on this map") === true,
       );
       check(
-        "Quote uses an italic highlight without a border",
+        "Quote uses a compact highlight without a border",
         hasHighlightedQuote(),
       );
       failChat = true;
@@ -212,17 +210,23 @@ const Fixture = () => {
       failChat = false;
       const probe = document.getElementById("focus-probe");
       probe?.focus();
+      clickLabel(i18n.t("chat:quickActions.menu"));
+      await wait();
       clickLabel(i18n.t("chat:quickActions.position"));
       await wait();
       check("Position sends immediately", hasSentPosition());
       check(
-        "Position preserves draft and focus",
-        editor().textContent === "Draft A" && document.activeElement === probe,
+        "Position preserves draft and returns focus to the menu",
+        editor().textContent === "Draft A" &&
+          document.activeElement?.getAttribute("aria-label") ===
+            i18n.t("chat:quickActions.menu"),
       );
       store.setDraft("a", "x".repeat(128));
       await wait();
       const lengthBeforePosition = editorText().length;
       probe?.focus();
+      clickLabel(i18n.t("chat:quickActions.menu"));
+      await wait();
       clickLabel(i18n.t("chat:quickActions.position"));
       await wait();
       check(
@@ -235,6 +239,8 @@ const Fixture = () => {
       await wait();
       probe?.focus();
       const beforeAlarm = requests.length;
+      clickLabel(i18n.t("chat:quickActions.menu"));
+      await wait();
       clickLabel(i18n.t("chat:quickActions.help"));
       await wait();
       check(
@@ -249,25 +255,10 @@ const Fixture = () => {
           ),
       );
       check(
-        "Help preserves draft and focus",
+        "Help preserves draft and returns focus to the menu",
         editor().textContent === "Keep while sending alarm" &&
-          document.activeElement === probe,
-      );
-      const beforeComing = requests.length;
-      await sendComing(quote);
-      await wait();
-      check(
-        "Coming sends a normal quoted response without changing draft or focus",
-        requests
-          .slice(beforeComing)
-          .some(
-            (item) =>
-              item.body.includes('"message":"Idę"') &&
-              item.body.includes('"type":"NORMAL"') &&
-              item.body.includes('"messageId":"original"'),
-          ) &&
-          editor().textContent === "Keep while sending alarm" &&
-          document.activeElement === probe,
+          document.activeElement?.getAttribute("aria-label") ===
+            i18n.t("chat:quickActions.menu"),
       );
       store.setSelectedChatGuildId("all");
       store.setDraft("", "Unaddressed draft");

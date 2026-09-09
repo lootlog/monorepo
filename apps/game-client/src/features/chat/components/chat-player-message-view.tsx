@@ -1,5 +1,4 @@
 import { Message } from "@/components/ui/message";
-import { Bubble } from "@/components/ui/bubble";
 import { cn } from "cn";
 import { format } from "@/utils/local-date";
 import {
@@ -9,11 +8,10 @@ import {
 import type { ComponentPropsWithRef, FC, ReactNode } from "react";
 
 type ChatPlayerMessageViewProps = ComponentPropsWithRef<"div"> & {
-  actions?: ReactNode;
-  isContinuation?: boolean;
   all: boolean;
   appearance?: ChatAppearanceSettings;
   body: ReactNode;
+  replyPreview?: ReactNode;
   guildName: string;
   isMsgYesterday: boolean;
   messageId: string;
@@ -22,11 +20,10 @@ type ChatPlayerMessageViewProps = ComponentPropsWithRef<"div"> & {
 };
 
 export const ChatPlayerMessageView: FC<ChatPlayerMessageViewProps> = ({
-  actions,
-  isContinuation = false,
   all,
   appearance = CHAT_APPEARANCE_READABLE_PRESET,
   body,
+  replyPreview,
   className,
   guildName,
   isMsgYesterday,
@@ -37,16 +34,15 @@ export const ChatPlayerMessageView: FC<ChatPlayerMessageViewProps> = ({
 }) => (
   <Message
     {...rootProps}
-    className={cn("ll:flow-root ll:cursor-text ll:select-text", className)}
+    className={cn(
+      "ll:flow-root ll:cursor-text ll:select-text ll:outline-none",
+      className,
+    )}
     data-chat-message-id={messageId}
   >
-    <div className="ll:float-right ll:ml-1">{actions}</div>
-    <div className={cn("ll:min-w-0", isContinuation && "ll:sr-only")}>
+    <span className="ll:min-w-0">
       <span
-        className={cn(
-          "ll:min-w-0 ll:flex-1 ll:select-text",
-          isContinuation && "ll:sr-only",
-        )}
+        className="ll:min-w-0 ll:flex-1 ll:select-text"
         style={{ overflowWrap: "anywhere" }}
       >
         {appearance.showTimestamp ? (
@@ -68,9 +64,10 @@ export const ChatPlayerMessageView: FC<ChatPlayerMessageViewProps> = ({
             [{guildName}]{" "}
           </span>
         ) : null}
-        {sender}
+        {sender}{" "}
       </span>
-    </div>
-    <Bubble>{body}</Bubble>
+    </span>
+    {replyPreview}
+    {body}
   </Message>
 );

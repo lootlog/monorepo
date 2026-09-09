@@ -38,8 +38,12 @@ export const AppContent = () => {
   useGameAccountPreferencesSync();
   const mapPingHotkeyHandlers = useMapPings();
   useAirTags();
-  const { sendHelp } = useChatQuickActions();
-  useHotkeys({ ...mapPingHotkeyHandlers, onChatHelp: () => void sendHelp() });
+  const { sendHelp, sendPosition } = useChatQuickActions();
+  useHotkeys({
+    ...mapPingHotkeyHandlers,
+    onChatHelp: () => void sendHelp(),
+    onChatPosition: () => void sendPosition(),
+  });
   useTimerSettingsMutationsRegistry();
   usePartyGatheringSocket();
   usePartyReadyRoomSocket();

@@ -573,14 +573,6 @@ export const PUBLIC_API_OPERATIONS = [
   },
   {
     service: "main",
-    method: "PATCH",
-    path: "/guilds/{guildId}/chat-messages/{messageId}",
-    operationId: "ChatController_updateChatMessage",
-    access: "write",
-    data: "organization",
-  },
-  {
-    service: "main",
     method: "GET",
     path: "/guilds/{guildId}/reservation-spots",
     operationId: "listReservationSpots",

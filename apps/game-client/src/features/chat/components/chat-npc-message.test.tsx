@@ -44,7 +44,6 @@ const makeChatMessage = (
     type: 1,
     wt: 100,
   },
-  canEdit: false,
   canDelete: false,
   ...overrides,
 });
@@ -216,4 +215,21 @@ describe("ChatNpcMessage", () => {
     expect(screen.getByText("Swamp")).toBeInTheDocument();
     expect(screen.getByText("(7, 9)")).toBeInTheDocument();
   });
+});
+
+it("shows NPC information without gathering or announcement buttons", () => {
+  render(
+    <ChatNpcMessage
+      all={false}
+      guildName="Guild"
+      message={makeChatMessage()}
+    />,
+  );
+  expect(screen.getByText("Hydra")).toBeVisible();
+  expect(
+    screen.queryByRole("button", { name: "Zbierz grupę" }),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Przygotuj wezwanie pomocy" }),
+  ).not.toBeInTheDocument();
 });

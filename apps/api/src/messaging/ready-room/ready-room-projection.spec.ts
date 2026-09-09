@@ -71,6 +71,17 @@ describe("Ready Room projections", () => {
     for (const optionalFields of [
       {},
       { description: "", minLvl: 1, maxLvl: 500 },
+      {
+        npc: {
+          name: "NPC",
+          location: "Map",
+          lvl: 100,
+          type: "HERO",
+          icon: "npc.gif",
+          prof: "w",
+        },
+      },
+      { npc: { name: "NPC", location: "Map", lvl: 100, type: "HERO" } },
     ]) {
       it(`serializes HTTP snapshots and updates for ${viewer} with ${JSON.stringify(optionalFields)}`, async () => {
         const current = { ...aggregate, ...optionalFields };

@@ -70,3 +70,9 @@ export const getBorderColor = (
     return "rgba(156, 163, 175, 1)";
   return TEXT_COLORS_BY_KEY[key];
 };
+
+export const getSubtleBackgroundColor = (
+  key: string | undefined,
+  npcTypeColors?: NpcTypeColors,
+) =>
+  `color-mix(in srgb, ${getBackgroundColor(key, true, npcTypeColors)} 37.5%, transparent)`;

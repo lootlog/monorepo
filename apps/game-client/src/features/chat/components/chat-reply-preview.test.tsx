@@ -28,7 +28,7 @@ describe("ChatReplyPreview", () => {
     expect(root?.className).toContain("ll:box-border");
     expect(content?.className).toContain("ll:w-full");
     expect(content?.className).toContain("ll:max-w-full");
-    expect(content?.className).toContain("ll:overflow-hidden");
+    expect(content?.className).toContain("ll:line-clamp-2");
     expect(sender.className).toContain("ll:truncate");
     expect(snippet.className).toContain("ll:w-full");
     expect(snippet.className).toContain("ll:max-w-full");

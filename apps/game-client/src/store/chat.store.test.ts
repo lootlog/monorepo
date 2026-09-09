@@ -51,14 +51,45 @@ describe("organization composer state", () => {
     expect(useChatStore.getState().replyDraftsByGuild.a).toBeUndefined();
     expect(useChatStore.getState().replyDraftsByGuild.b).toEqual(reply("b"));
   });
-  it("appends a mention without overwriting a draft and refuses additions exceeding the limit", () => {
-    const state = useChatStore.getState();
-    state.setDraft("a", "Help");
-    state.insertMention("a", "@Player");
-    expect(useChatStore.getState().draftsByGuild.a).toBe("Help @Player ");
-    expect(useChatStore.getState().focusRequest?.guildId).toBe("a");
-    state.setDraft("a", "x".repeat(128));
-    state.insertMention("a", "@Player");
-    expect(useChatStore.getState().draftsByGuild.a).toHaveLength(128);
-  });
+});
+
+it("migrates the saved filter once while retaining preferences, then persists later selections", async () => {
+  const name = storageKey("ll:chat:state");
+  localStorage.setItem(
+    name,
+    JSON.stringify({
+      version: 1,
+      state: {
+        chatFilter: "normal",
+        isNotificationEnabled: false,
+        selectedInputGuildIds: ["a"],
+      },
+    }),
+  );
+  await useChatStore.persist.rehydrate();
+  expect(useChatStore.getState().chatFilter).toBe("all");
+  expect(useChatStore.getState().isNotificationEnabled).toBe(false);
+  expect(useChatStore.getState().selectedInputGuildIds).toEqual(["a"]);
+  useChatStore.getState().setDraft("a", "Keep this draft");
+  useChatStore.getState().setChatFilter("reports");
+  await useChatStore.persist.rehydrate();
+  expect(useChatStore.getState().chatFilter).toBe("reports");
+  expect(useChatStore.getState().draftsByGuild.a).toBe("Keep this draft");
+  localStorage.removeItem(name);
+});
+
+it("shows filters by default and persists toggling them off and on", async () => {
+  expect(useChatStore.getState().filtersVisible).toBe(true);
+  useChatStore.getState().setChatFilter("reports");
+  useChatStore.getState().toggleFiltersVisible();
+  await useChatStore.persist.rehydrate();
+  expect(useChatStore.getState().filtersVisible).toBe(false);
+  expect(
+    JSON.parse(localStorage.getItem(storageKey("ll:chat:state")) ?? "null")
+      .state.filtersVisible,
+  ).toBe(false);
+  expect(useChatStore.getState().chatFilter).toBe("all");
+  useChatStore.getState().toggleFiltersVisible();
+  await useChatStore.persist.rehydrate();
+  expect(useChatStore.getState().filtersVisible).toBe(true);
 });

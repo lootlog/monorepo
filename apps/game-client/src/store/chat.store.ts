@@ -1,6 +1,6 @@
+import { isObjectRecord } from "@lootlog/schema/records";
 import { z } from "zod";
 import { useGameStore } from "@/store/game.store";
-import { CHAT_INPUT_MAX_LENGTH } from "@/features/chat/chat.constants";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { storageKey } from "@/lib/storage-key";
@@ -35,7 +35,6 @@ interface ChatState {
   replyDraftsByGuild: Record<string, ChatReplyDraft | undefined>;
   focusRequest: { guildId: string; sequence: number } | null;
   requestComposeFocus: (guildId: string) => void;
-  insertMention: (guildId: string, label: string) => void;
   selectedGuildByCharacter: Record<string, string>;
   setSelectedChatGuildId: (guildId: string) => void;
   replyDraft: ChatReplyDraft | null;
@@ -64,11 +63,11 @@ export const useChatStore = create<ChatState>()(
           selectedInputGuildIds: guildIds,
         }));
       },
-      chatFilter: "normal",
+      chatFilter: "all",
       setChatFilter: (filter) => {
         set(() => ({ chatFilter: filter }));
       },
-      filtersVisible: false,
+      filtersVisible: true,
       toggleFiltersVisible: () => {
         set((state) => ({
           filtersVisible: !state.filtersVisible,
@@ -93,23 +92,6 @@ export const useChatStore = create<ChatState>()(
             sequence: (state.focusRequest?.sequence ?? 0) + 1,
           },
         })),
-      insertMention: (guildId, label) =>
-        set((state) => {
-          const current = state.draftsByGuild[guildId] ?? "";
-          const next = `${current}${current && !current.endsWith(" ") ? " " : ""}${label} `;
-          if (next.length > CHAT_INPUT_MAX_LENGTH) return state;
-          return {
-            selectedGuildByCharacter: {
-              ...state.selectedGuildByCharacter,
-              [getChatCharacterKey()]: guildId,
-            },
-            draftsByGuild: { ...state.draftsByGuild, [guildId]: next },
-            focusRequest: {
-              guildId,
-              sequence: (state.focusRequest?.sequence ?? 0) + 1,
-            },
-          };
-        }),
       selectedGuildByCharacter: {},
       setSelectedChatGuildId: (guildId) =>
         set((state) => ({
@@ -160,7 +142,11 @@ export const useChatStore = create<ChatState>()(
         filtersVisible: state.filtersVisible,
       }),
       storage: createJSONStorage(() => localStorage),
-      version: 1,
+      version: 2,
+      migrate: (persisted) => {
+        if (!isObjectRecord(persisted)) return { chatFilter: "all" as const };
+        return { ...persisted, chatFilter: "all" as const };
+      },
     },
   ),
 );

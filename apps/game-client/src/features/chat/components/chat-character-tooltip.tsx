@@ -17,7 +17,9 @@ export const ChatCharacterTooltip: FC<ChatCharacterTooltipProps> = ({
   children,
 }) => (
   <Tooltip>
-    <TooltipTrigger asChild>{children}</TooltipTrigger>
+    <TooltipTrigger asChild className="ll:cursor-pointer">
+      {children}
+    </TooltipTrigger>
     <TooltipContent className="ll:bg-black ll:px-1.5 ll:py-1">
       <div className="ll:flex ll:items-center ll:gap-1">
         <CharacterTile

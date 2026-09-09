@@ -1,6 +1,7 @@
 @import "tailwindcss/theme.css" prefix(ll);
 @import "tailwindcss/utilities.css" prefix(ll);
 @import "tw-animate-css";
+@import "shadcn/tailwind.css";
 @source "src/**/*.{ts,tsx}";
 
 @variant dark (:is(#lootlog-root.dark-theme, .ll-theme-boundary.dark-theme) *);

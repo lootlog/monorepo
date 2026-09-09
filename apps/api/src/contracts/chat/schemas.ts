@@ -98,7 +98,6 @@ export const ChatMessageResponse = Schema.Struct({
   npc: Schema.optionalKey(ChatNpc),
   partyGathering: Schema.optionalKey(PartyGathering),
   replyTo: Schema.optionalKey(ChatReply),
-  canEdit: Schema.Boolean,
   canDelete: Schema.Boolean,
 }).annotate({ identifier: "ChatMessageResponseDto_Output" });
 
@@ -122,16 +121,6 @@ export type ChatMessageActionResponse = typeof ChatMessageActionResponse.Type;
 export const ChatMessageActionResponse = Schema.Struct({
   success: Schema.Boolean,
 }).annotate({ identifier: "ChatMessageActionResponseDto_Output" });
-
-export type UpdateChatMessageRequest = typeof UpdateChatMessageRequest.Type;
-
-export const UpdateChatMessageRequest = Schema.Struct({
-  message: NonEmptyString.check(
-    Schema.isMaxLength(128).annotate({
-      expected: "a value with a length of at most 128",
-    }),
-  ),
-}).annotate({ identifier: "UpdateMessageDto" });
 
 export type ChatOrganizationPath = typeof ChatOrganizationPath.Type;
 

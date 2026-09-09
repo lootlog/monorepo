@@ -1,3 +1,5 @@
+import { ScrollArea as BaseScrollArea } from "@base-ui/react/scroll-area";
+import { ScrollBar } from "@/components/ui/scroll-bar";
 import {
   MessageScroller,
   useMessageScroller,
@@ -9,6 +11,7 @@ import {
   useEffectEvent,
   useLayoutEffect,
   useRef,
+  useState,
   type PointerEvent,
 } from "react";
 import { useTranslation } from "react-i18next";
@@ -43,7 +46,6 @@ export type ChatTranscriptProps = {
   membersByGuildId: ChatGuildData["membersByGuildId"];
   mentionContextsByGuildId: ChatGuildData["mentionContextsByGuildId"];
   onReplyToMessage: (message: ChatMessageResponseDtoOutput) => void;
-  onMention?: (message: ChatMessageResponseDtoOutput) => void;
   renderables: ChatRenderableMessage[];
   selectedGuildId: string;
   isActive?: boolean;
@@ -52,21 +54,6 @@ export type ChatTranscriptProps = {
   position?: ChatScrollPosition;
   onPositionChange?: (position: ChatScrollPosition) => void;
 };
-
-const isContinuation = (
-  previous: ChatRenderableMessage | undefined,
-  current: ChatRenderableMessage,
-) =>
-  previous?.kind === "message" &&
-  current.kind === "message" &&
-  previous.message.type === "NORMAL" &&
-  current.message.type === "NORMAL" &&
-  previous.message.guildId === current.message.guildId &&
-  previous.message.senderId === current.message.senderId &&
-  !current.message.replyTo &&
-  new Date(current.message.timestamp).getTime() -
-    new Date(previous.message.timestamp).getTime() <
-    300_000;
 
 const getViewportPosition = (viewport: HTMLElement): ChatScrollPosition => {
   const box = viewport.getBoundingClientRect();
@@ -90,7 +77,6 @@ export const ChatTranscript = ({
   membersByGuildId,
   mentionContextsByGuildId,
   onReplyToMessage,
-  onMention,
   renderables,
   selectedGuildId,
   isActive = true,
@@ -105,6 +91,13 @@ export const ChatTranscript = ({
   const { visibleMessageIds } = useMessageScrollerVisibility();
   const viewport = useRef<HTMLDivElement>(null);
   const pointerHeld = useRef(false);
+  const [highlightedMessageId, setHighlightedMessageId] = useState<
+    string | null
+  >(null);
+  const highlightTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
+  useEffect(() => () => clearTimeout(highlightTimer.current), []);
   const initialPosition = useRef(position);
   const restored = useRef(false);
   const isEmpty = renderables.length === 0;
@@ -123,6 +116,12 @@ export const ChatTranscript = ({
     ) {
       return false;
     }
+    clearTimeout(highlightTimer.current);
+    setHighlightedMessageId(row.message.id);
+    highlightTimer.current = setTimeout(
+      () => setHighlightedMessageId(null),
+      1500,
+    );
     return true;
   });
 
@@ -238,18 +237,22 @@ export const ChatTranscript = ({
   }, []);
 
   return (
-    <MessageScroller.Root className="ll:relative ll:flex ll:size-full ll:min-h-0 ll:flex-col ll:overflow-hidden">
+    <BaseScrollArea.Root
+      render=<MessageScroller.Root />
+      className="ll:relative ll:flex ll:size-full ll:min-h-0 ll:flex-col ll:overflow-hidden"
+    >
       {isEmpty ? (
         <EmptyState icon={MessageCircle} title={emptyStateTitle} />
       ) : null}
-      <MessageScroller.Viewport
+      <BaseScrollArea.Viewport
+        render=<MessageScroller.Viewport />
         ref={viewport}
         aria-label={ariaLabel}
         hidden={isEmpty}
         data-chat-viewport
         data-ll-draggable="false"
-        className="ll:size-full ll:min-h-0 ll:overflow-y-auto ll:overscroll-contain ll:rounded ll:outline-none ll:focus-visible:ring-1 ll:focus-visible:ring-inset ll:focus-visible:ring-ring"
-        style={{ overflowAnchor: "auto", scrollbarWidth: "thin" }}
+        className="ll:scroll-fade-y ll:scroll-fade-4 ll:size-full ll:min-h-0 ll:overflow-y-auto ll:overscroll-contain ll:rounded ll:outline-none ll:focus-visible:ring-1 ll:focus-visible:ring-inset ll:focus-visible:ring-ring"
+        style={{ overflowAnchor: "auto", overflowX: "hidden" }}
         onPointerDown={holdPosition}
         onScroll={() => {
           resumeAtEnd();
@@ -259,19 +262,22 @@ export const ChatTranscript = ({
           if (event.deltaY > 0) resumeAtEnd();
         }}
       >
-        <MessageScroller.Content
+        <BaseScrollArea.Content
+          render=<MessageScroller.Content />
           role="list"
           aria-live="off"
-          className="ll-chat-message-list ll:flex ll:h-max ll:min-h-full ll:w-full ll:min-w-0 ll:flex-col ll:px-1.5 ll:box-border"
-          style={{
-            ...getChatDensityStyle(appearance.fontScalePercent),
-            gap: appearance.messageGapPx,
-          }}
+          className="ll-chat-message-list ll:flex ll:h-max ll:min-h-full ll:w-full ll:min-w-0 ll:flex-col ll:box-border"
+          style={getChatDensityStyle(appearance.fontScalePercent)}
         >
-          {renderables.map((row, index) => (
+          {renderables.map((row) => (
             <ChatTranscriptRow
               key={row.key}
               row={row}
+              highlighted={
+                isActive &&
+                row.kind !== "date-divider" &&
+                row.message.id === highlightedMessageId
+              }
               appearance={appearance}
               npcTypeColors={npcTypeColors}
               selectedGuildId={selectedGuildId}
@@ -279,21 +285,20 @@ export const ChatTranscript = ({
               membersByGuildId={membersByGuildId}
               mentionContextsByGuildId={mentionContextsByGuildId}
               onReplyToMessage={onReplyToMessage}
-              onMention={onMention}
-              continuation={isContinuation(renderables[index - 1], row)}
             />
           ))}
-        </MessageScroller.Content>
-      </MessageScroller.Viewport>
+        </BaseScrollArea.Content>
+      </BaseScrollArea.Viewport>
+      <ScrollBar />
       <Button
         hidden={!end}
         style={{ display: end ? undefined : "none" }}
         onClick={() => scrollToEnd({ behavior: "instant" })}
         aria-label={t("navigation.latest")}
-        className="ll:absolute ll:bottom-2 ll:left-1/2 ll:-translate-x-1/2 ll:size-7 ll:p-0 ll:shadow-md"
+        className="ll:absolute ll:bottom-2 ll:left-1/2 ll:-translate-x-1/2 ll:size-7 ll:p-0 ll:shadow-md ll:bg-gray-800/90 ll:hover:bg-gray-700/95"
       >
         <ArrowDown aria-hidden className="ll:size-3" />
       </Button>
-    </MessageScroller.Root>
+    </BaseScrollArea.Root>
   );
 };

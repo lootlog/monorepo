@@ -35,7 +35,6 @@ const ORGANIZATION_NOT_FOUND_OPERATIONS = new Set([
   "GET /guilds/{guildId}/chat-messages",
   "POST /guilds/{guildId}/chat-messages",
   "DELETE /guilds/{guildId}/chat-messages",
-  "PATCH /guilds/{guildId}/chat-messages/{messageId}",
   "DELETE /guilds/{guildId}/chat-messages/{messageId}",
 ]);
 // Domain and access failures now retain their 4xx status and structured reason.
@@ -1204,9 +1203,17 @@ if (import.meta.main) {
     for (const key of additions) {
       assertVerifiedPersonalAddition(service.current, key, current.get(key));
     }
-    if (removals.length > 0) {
+    // User editing was removed; system party-ending updates remain realtime-only.
+    const expectedRemovals =
+      service.current === "api"
+        ? ["PATCH /guilds/{guildId}/chat-messages/{messageId}"]
+        : [];
+    if (
+      removals.length !== expectedRemovals.length ||
+      removals.some((key) => !expectedRemovals.includes(key))
+    ) {
       throw new Error(
-        `${service.current} removed OpenAPI operations: ${removals.join(", ")}`,
+        `${service.current} has unexpected OpenAPI removals: ${removals.join(", ") || "none"}`,
       );
     }
 

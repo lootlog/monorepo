@@ -4952,76 +4952,6 @@ paths:
                 additionalProperties: false
       description: Delete a chat message from a guild
       summary: Delete chat message
-    patch:
-      tags:
-        - chat
-      operationId: ChatController_updateChatMessage
-      parameters:
-        - name: messageId
-          in: path
-          schema:
-            type: string
-            example: msg_123
-          required: true
-        - name: guildId
-          in: path
-          schema: {}
-          required: true
-      security:
-        - bearer: []
-      responses:
-        "200":
-          description: ChatMessageActionResponseDto_Output
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ChatMessageActionResponseDto_Output"
-        "401":
-          description: Error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
-        "403":
-          description: <No Content>
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
-        "404":
-          description: <No Content>
-        "429":
-          description: Error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
-      description: Update the content of a chat message
-      summary: Update chat message
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateMessageDto"
-        required: true
   /guilds/{guildId}/reservation-spots:
     get:
       tags:
@@ -19171,8 +19101,6 @@ components:
             - message
             - type
           additionalProperties: false
-        canEdit:
-          type: boolean
         canDelete:
           type: boolean
       required:
@@ -19183,7 +19111,6 @@ components:
         - timestamp
         - type
         - characterData
-        - canEdit
         - canDelete
       additionalProperties: false
     SendMessageDto:
@@ -19332,16 +19259,6 @@ components:
           type: boolean
       required:
         - success
-      additionalProperties: false
-    UpdateMessageDto:
-      type: object
-      properties:
-        message:
-          type: string
-          minLength: 1
-          maxLength: 128
-      required:
-        - message
       additionalProperties: false
     ReservationSpotsResponseDto:
       type: array
@@ -22966,6 +22883,12 @@ components:
         npc:
           type: object
           properties:
+            prof:
+              type: string
+            icon:
+              type: string
+            type:
+              type: string
             name:
               type: string
             location:
@@ -23003,6 +22926,10 @@ components:
         npc:
           type: object
           properties:
+            prof:
+              type: string
+            icon:
+              type: string
             name:
               type: string
             location:
@@ -23370,6 +23297,10 @@ components:
             npc:
               type: object
               properties:
+                prof:
+                  type: string
+                icon:
+                  type: string
                 name:
                   type: string
                 location:
