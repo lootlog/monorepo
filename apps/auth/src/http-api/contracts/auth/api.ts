@@ -33,13 +33,23 @@ export class AuthGroup extends HttpApiGroup.make("auth").add(
     .annotate(OpenApi.Summary, "Get scopes for the current user"),
   HttpApiEndpoint.post("AuthControllerGetIdpToken", "/auth/idp-token", {
     headers: Schema.Struct({ authorization: Schema.optional(Schema.String) }),
-    error: Schema.Union([
-      Schema.Struct({
-        message: Schema.String,
-        statusCode: Schema.Literal(401),
-      }),
-      Schema.Struct({ error: Schema.String }),
-    ]).pipe(HttpApiSchema.status(401)),
+    error: [
+      Schema.Union([
+        Schema.Struct({
+          message: Schema.String,
+          statusCode: Schema.Literal(401),
+        }),
+        Schema.Struct({ error: Schema.String }),
+      ]).pipe(HttpApiSchema.status(401)),
+      Schema.Union([
+        Schema.Struct({
+          message: Schema.String,
+          error: Schema.String,
+          statusCode: Schema.Literal(400),
+        }),
+        Schema.Struct({ error: Schema.String }),
+      ]).pipe(HttpApiSchema.status(400)),
+    ],
     payload: AuthControllerGetIdpTokenRequestJson,
     success: AuthControllerGetIdpToken200,
   })

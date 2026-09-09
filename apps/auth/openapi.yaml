@@ -132,6 +132,32 @@ paths:
                   - accessToken
                   - expiresIn
                   - scopes
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                      error:
+                        type: string
+                      statusCode:
+                        type: number
+                        enum:
+                          - 400
+                    required:
+                      - message
+                      - error
+                      - statusCode
+                  - type: object
+                    properties:
+                      error:
+                        type: string
+                    required:
+                      - error
         "401":
           description: ""
           content:

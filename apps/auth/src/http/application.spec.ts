@@ -8,6 +8,8 @@ import { BetterAuthRuntime } from "#src/auth/provider/better-auth";
 import { resolveBetterAuthBaseURL } from "#src/auth/provider/better-auth-url";
 import { normalizeBetterAuthRequest } from "./application.js";
 import { AuthRoutes } from "./server.js";
+import { OpenApi } from "effect/unstable/httpapi";
+import { AuthApi } from "#src/http-api/auth-api";
 
 const makeRuntime = (
   authenticated = true,
@@ -348,5 +350,13 @@ describe("Auth HttpApi contract", () => {
       }),
     );
     expect(rejected.status).toBe(400);
+    const responses =
+      OpenApi.fromApi(AuthApi).paths["/auth/idp-token"]?.post?.responses;
+    expect(
+      responses?.[rejected.status]?.content?.["application/json"]?.schema,
+    ).toBeDefined();
+    expect(
+      responses?.[401]?.content?.["application/json"]?.schema,
+    ).toBeDefined();
   });
 });

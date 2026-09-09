@@ -62,6 +62,14 @@ export type AuthControllerGetIdpToken200 = {
   scopes: string[];
 };
 
+export type AuthControllerGetIdpToken400 = {
+  message: string;
+  error: string;
+  statusCode: 400;
+} | {
+  error: string;
+};
+
 export type AuthControllerGetIdpToken401 = {
   message: string;
   statusCode: 401;
@@ -856,7 +864,7 @@ return authFetch<AuthControllerGetIdpToken200>(getAuthControllerGetIdpTokenUrl()
 
 
 
-export const getAuthControllerGetIdpTokenMutationOptions = <TError = ErrorType<AuthControllerGetIdpToken401>,
+export const getAuthControllerGetIdpTokenMutationOptions = <TError = ErrorType<AuthControllerGetIdpToken400 | AuthControllerGetIdpToken401>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authControllerGetIdpToken>>, TError,AuthControllerGetIdpTokenMutationVariables, TContext>, request?: SecondParameter<typeof authFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof authControllerGetIdpToken>>, TError,AuthControllerGetIdpTokenMutationVariables, TContext> => {
 
@@ -885,13 +893,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type AuthControllerGetIdpTokenMutationResult = NonNullable<Awaited<ReturnType<typeof authControllerGetIdpToken>>>
     export type AuthControllerGetIdpTokenMutationBody = BodyType<AuthControllerGetIdpTokenBody>
-    export type AuthControllerGetIdpTokenMutationError = ErrorType<AuthControllerGetIdpToken401>
+    export type AuthControllerGetIdpTokenMutationError = ErrorType<AuthControllerGetIdpToken400 | AuthControllerGetIdpToken401>
     export type AuthControllerGetIdpTokenMutationVariables = {data: BodyType<AuthControllerGetIdpTokenBody>}
 
     /**
  * @summary Issue an IDP token for a user account
  */
-export const useAuthControllerGetIdpToken = <TError = ErrorType<AuthControllerGetIdpToken401>,
+export const useAuthControllerGetIdpToken = <TError = ErrorType<AuthControllerGetIdpToken400 | AuthControllerGetIdpToken401>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authControllerGetIdpToken>>, TError,AuthControllerGetIdpTokenMutationVariables, TContext>, request?: SecondParameter<typeof authFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof authControllerGetIdpToken>>,
