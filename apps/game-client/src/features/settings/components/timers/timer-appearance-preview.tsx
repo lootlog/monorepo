@@ -10,10 +10,10 @@ export const TimerAppearancePreview = () => {
 
   return (
     <div
-      className="ll:rounded-lg ll:border ll:border-purple-400/30 ll:bg-gray-950/85 ll:p-3 ll:shadow-lg"
+      className="ll:rounded-lg ll:border ll:border-border ll:bg-gray-950/85 ll:p-3 ll:shadow-lg"
       aria-label={t("settings.timers.preview.ariaLabel")}
     >
-      <div className="ll:mb-2 ll:text-[10px] ll:font-semibold ll:uppercase ll:tracking-wider ll:text-purple-300">
+      <div className="ll:mb-2 ll:text-[10px] ll:font-semibold ll:uppercase ll:tracking-wider ll:text-primary">
         {t("settings.timers.preview.label")}
       </div>
       <div

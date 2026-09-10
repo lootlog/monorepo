@@ -2,10 +2,10 @@ import { ScrollArea as BaseScrollArea } from "@base-ui/react/scroll-area";
 import { cn } from "cn";
 
 const scrollbarClassName =
-  "ll:z-10 ll:flex ll:touch-none ll:select-none ll:rounded-full ll:bg-gray-600/60 ll:opacity-0 ll:pointer-events-none ll:transition-opacity ll:duration-100 ll:ease-out ll:data-[hovering]:opacity-100 ll:data-[hovering]:pointer-events-auto ll:data-[hovering]:duration-0 ll:data-[scrolling]:opacity-100 ll:data-[scrolling]:pointer-events-auto ll:data-[scrolling]:duration-0 ll-custom-cursor-pointer";
+  "ll:z-10 ll:flex ll:touch-none ll:select-none ll:rounded-full ll:bg-muted ll:opacity-0 ll:pointer-events-none ll:transition-opacity ll:duration-100 ll:ease-out ll:data-[hovering]:opacity-100 ll:data-[hovering]:pointer-events-auto ll:data-[hovering]:duration-0 ll:data-[scrolling]:opacity-100 ll:data-[scrolling]:pointer-events-auto ll:data-[scrolling]:duration-0 ll-custom-cursor-pointer";
 
 const thumbClassName =
-  "ll:relative ll:flex-1 ll:rounded-full ll:bg-gray-300/80 ll:transition-colors ll:hover:bg-gray-200/90";
+  "ll:relative ll:flex-1 ll:rounded-full ll:bg-muted-foreground/60 ll:transition-colors ll:hover:bg-muted-foreground";
 
 export function ScrollBar({
   orientation = "vertical",

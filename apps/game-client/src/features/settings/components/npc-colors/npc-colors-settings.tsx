@@ -113,7 +113,7 @@ export const NpcColorsSettings = () => {
               >
                 <button
                   type="button"
-                  className="ll:flex ll:h-9 ll:min-w-0 ll:items-center ll:gap-2 ll:rounded-sm ll:border ll:border-solid ll:border-gray-500/40 ll:bg-gray-900/50 ll:px-2 ll:text-left ll:text-xs ll:text-white ll:outline-none focus-visible:ll:ring-1 focus-visible:ll:ring-purple-400 ll-custom-cursor-pointer"
+                  className="ll:flex ll:h-9 ll:min-w-0 ll:items-center ll:gap-2 ll:rounded-sm ll:border ll:border-solid ll:border-gray-500/40 ll:bg-gray-900/50 ll:px-2 ll:text-left ll:text-xs ll:text-white ll:outline-none focus-visible:ll:ring-1 focus-visible:ll:ring-ring ll-custom-cursor-pointer"
                   style={{
                     borderColor:
                       openType === npcType ? surfaceColors.border : undefined,
@@ -136,7 +136,7 @@ export const NpcColorsSettings = () => {
                   </span>
                   {isModified ? (
                     <span
-                      className="ll:size-1.5 ll:shrink-0 ll:rounded-full ll:bg-purple-400"
+                      className="ll:size-1.5 ll:shrink-0 ll:rounded-full ll:bg-primary"
                       title={t("settings.npcColors.modified")}
                     />
                   ) : null}

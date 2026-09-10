@@ -52,7 +52,7 @@ export const TimerColorListItem: FC<TimerColorListItemProps> = ({
       >
         <button
           type="button"
-          className="ll:flex ll:min-w-0 ll:flex-1 ll:appearance-none ll:items-center ll:gap-2 ll:rounded-sm ll:border-0 ll:bg-transparent ll:p-0 ll:text-left ll:outline-none focus-visible:ll:ring-1 focus-visible:ll:ring-purple-400 ll-custom-cursor-pointer"
+          className="ll:flex ll:min-w-0 ll:flex-1 ll:appearance-none ll:items-center ll:gap-2 ll:rounded-sm ll:border-0 ll:bg-transparent ll:p-0 ll:text-left ll:outline-none focus-visible:ll:ring-1 focus-visible:ll:ring-ring ll-custom-cursor-pointer"
           aria-label={`${t("settings.timers.colors.editColorAria")}: ${data.name}`}
         >
           <span className="ll:w-20 ll:shrink-0">
@@ -71,7 +71,7 @@ export const TimerColorListItem: FC<TimerColorListItemProps> = ({
           </span>
           {isModified ? (
             <span
-              className="ll:size-1.5 ll:shrink-0 ll:rounded-full ll:bg-purple-400"
+              className="ll:size-1.5 ll:shrink-0 ll:rounded-full ll:bg-primary"
               title={t("settings.timers.colors.modified")}
             />
           ) : null}

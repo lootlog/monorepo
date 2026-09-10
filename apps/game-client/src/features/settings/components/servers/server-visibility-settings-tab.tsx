@@ -158,7 +158,7 @@ export const ServerVisibilitySettingsTab = () => {
                     type="button"
                     variant="ghost"
                     aria-pressed={visibilityFilter === filter}
-                    className="ll:px-2 ll:aria-pressed:border-purple-400 ll:aria-pressed:bg-purple-500/20"
+                    className="ll:px-2 ll:aria-pressed:border-ring ll:aria-pressed:bg-accent"
                     onClick={() => setVisibilityFilter(filter)}
                   >
                     {t(`settings.servers.filters.${filter}`)}

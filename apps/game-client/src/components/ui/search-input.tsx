@@ -22,7 +22,7 @@ export const SearchInput: FC<SearchInputProps> = ({
         onChange={onChange}
         className="ll:pr-7"
       />
-      <Search className="ll:absolute ll:right-2 ll:top-1/2 ll:h-3.5 ll:w-3.5 ll:-translate-y-1/2 ll:text-gray-400 ll:pointer-events-none" />
+      <Search className="ll:absolute ll:right-2 ll:top-1/2 ll:h-3.5 ll:w-3.5 ll:-translate-y-1/2 ll:text-muted-foreground ll:pointer-events-none" />
     </div>
   );
 };
