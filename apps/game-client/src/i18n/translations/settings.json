@@ -602,8 +602,7 @@
   "chatFilters": {
     "hiddenNpcTypes": {
       "title": "Ukryte typy NPC",
-      "description": "Wiadomości o NPC wybranych typów nie pojawią się w chacie i nie wywołają powiadomień o wzmiankach.",
-      "hide": "Ukryj wiadomości: {{npcType}}"
+      "description": "Wiadomości o NPC wybranych typów nie pojawią się w chacie i nie wywołają powiadomień o wzmiankach."
     },
     "saveError": "Nie udało się zapisać filtrów chatu."
   }

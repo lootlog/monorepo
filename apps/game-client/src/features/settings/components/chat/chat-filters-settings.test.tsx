@@ -52,13 +52,9 @@ describe("ChatFiltersSettings", () => {
       screen.getByRole("heading", { name: "Ukryte typy NPC" }),
     ).toBeInTheDocument();
     expect(screen.queryByText(/chatFilters\./)).not.toBeInTheDocument();
-    expect(
-      screen.getByRole("switch", { name: "Ukryj wiadomości: Tytan" }),
-    ).toBeChecked();
+    expect(screen.getByRole("switch", { name: "Tytan" })).toBeChecked();
 
-    await user.click(
-      screen.getByRole("switch", { name: "Ukryj wiadomości: Elita 2" }),
-    );
+    await user.click(screen.getByRole("switch", { name: "Elita 2" }));
 
     await waitFor(() => {
       expect(patchRequest.mock.calls[0]?.[1]?.body).toBe(
