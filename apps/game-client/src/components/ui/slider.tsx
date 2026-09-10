@@ -152,17 +152,17 @@ const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
             }}
           >
             <BaseSlider.Track className="ll:relative ll:box-border ll:h-2 ll:w-full ll:grow ll:overflow-hidden ll:rounded-sm ll:border ll:border-gray-400 ll:bg-gray-700">
-              <BaseSlider.Indicator className="ll:absolute ll:h-full ll:bg-purple-500/80 ll:transition-[width] ll:duration-[120ms] ll:ease-[cubic-bezier(0.4,0,0.2,1)] ll:group-data-[interaction=direct]/slider:transition-none ll:motion-reduce:transition-none" />
+              <BaseSlider.Indicator className="ll:absolute ll:h-full ll:bg-primary ll:transition-[width] ll:duration-[120ms] ll:ease-[cubic-bezier(0.4,0,0.2,1)] ll:group-data-[interaction=direct]/slider:transition-none ll:motion-reduce:transition-none" />
             </BaseSlider.Track>
             <BaseSlider.Thumb
               aria-label={ariaLabel}
               data-slot="slider-thumb"
               className={cn(
-                "ll:relative ll:flex ll:h-3.5 ll:w-2.5 ll:items-center ll:justify-center ll:rounded-sm ll:border ll:border-purple-300 ll:bg-white ll:shadow-[0_0_8px_rgba(168,85,247,0.4)] ll:transition-[left,translate,scale] ll:duration-[120ms] ll:ease-[cubic-bezier(0.4,0,0.2,1)] ll:hover:scale-110 ll:has-[:focus-visible]:outline-none ll:has-[:focus-visible]:ring-1 ll:has-[:focus-visible]:ring-purple-400 ll:has-[:focus-visible]:ring-offset-1 ll:has-[:focus-visible]:ring-offset-purple-950 ll:group-data-[interaction=direct]/slider:scale-90 ll:group-data-[interaction=direct]/slider:transition-none ll:motion-reduce:scale-100 ll:motion-reduce:transition-none ll:data-[disabled]:pointer-events-none ll:data-[disabled]:opacity-50 ll-custom-cursor-pointer",
+                "ll:relative ll:flex ll:h-3.5 ll:w-2.5 ll:items-center ll:justify-center ll:rounded-sm ll:border ll:border-ring ll:bg-background ll:shadow-xs ll:transition-[left,translate,scale] ll:duration-[120ms] ll:ease-[cubic-bezier(0.4,0,0.2,1)] ll:hover:scale-110 ll:has-[:focus-visible]:outline-none ll:has-[:focus-visible]:ring-1 ll:has-[:focus-visible]:ring-ring ll:has-[:focus-visible]:ring-offset-1 ll:has-[:focus-visible]:ring-offset-background ll:group-data-[interaction=direct]/slider:scale-90 ll:group-data-[interaction=direct]/slider:transition-none ll:motion-reduce:scale-100 ll:motion-reduce:transition-none ll:data-[disabled]:pointer-events-none ll:data-[disabled]:opacity-50 ll-custom-cursor-pointer",
               )}
             >
               {showValue && dragging && (
-                <span className="ll:absolute ll:-top-5 ll:left-1/2 ll:-translate-x-1/2 ll:select-none ll:text-[9px] ll:font-medium ll:leading-none ll:rounded ll:bg-purple-600 ll:px-1 ll:py-0.5 ll:text-white ll:shadow-sm ll:pointer-events-none">
+                <span className="ll:absolute ll:-top-5 ll:left-1/2 ll:-translate-x-1/2 ll:select-none ll:text-[9px] ll:font-medium ll:leading-none ll:rounded ll:bg-primary ll:px-1 ll:py-0.5 ll:text-primary-foreground ll:shadow-sm ll:pointer-events-none">
                   {displayValue}
                 </span>
               )}
@@ -170,7 +170,7 @@ const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
           </BaseSlider.Control>
         </BaseSlider.Root>
         {showEndpoints && (
-          <span className="ll:mt-1 ll:flex ll:justify-between ll:text-[9px] ll:font-medium ll:text-purple-300/70">
+          <span className="ll:mt-1 ll:flex ll:justify-between ll:text-[9px] ll:font-medium ll:text-muted-foreground">
             <span>{renderEndpoint(min, "min")}</span>
             <span>{renderEndpoint(max, "max")}</span>
           </span>
