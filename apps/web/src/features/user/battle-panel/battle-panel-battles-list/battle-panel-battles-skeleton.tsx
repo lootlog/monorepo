@@ -5,8 +5,11 @@ import { SectionCard } from "@/components/common/section-card/section-card";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 
 const tableRows = Array.from({ length: 10 });
+
 const filterGroups = Array.from({ length: 6 });
+
 const teamMembers = Array.from({ length: 2 });
+
 const tagItems = Array.from({ length: 3 });
 
 const renderTeamSkeleton = () => (

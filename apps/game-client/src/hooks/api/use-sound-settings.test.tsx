@@ -11,16 +11,20 @@ import { useUpdateSoundSettings } from "./use-sound-settings";
 
 it("preserves HTTP timestamps and other sound fields during an optimistic patch, then rolls back on failure", async () => {
   const response = Promise.withResolvers<Response>();
+
   const restoreApi = configureApiClients({
     main: {
       baseUrl: "https://api.example.test",
       fetch: () => response.promise,
     },
   });
+
   const queryClient = new QueryClient({
     defaultOptions: { mutations: { retry: false } },
   });
+
   const queryKey = getSoundSettingsControllerGetSettingsQueryKey();
+
   const initial: SoundSettingsResponseDto = {
     userId: "user-1",
     masterVolume: 0.5,
@@ -34,11 +38,15 @@ it("preserves HTTP timestamps and other sound fields during an optimistic patch,
     createdAt: "2026-09-01T00:00:00.000Z",
     updatedAt: "2026-09-02T00:00:00.000Z",
   };
+
   queryClient.setQueryData(queryKey, initial);
+
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
+
   const { result, unmount } = renderHook(useUpdateSoundSettings, { wrapper });
+
   try {
     act(() =>
       result.current.mutate({ notificationsConfig: { HERO: { volume: 0.8 } } }),

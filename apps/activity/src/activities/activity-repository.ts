@@ -41,6 +41,7 @@ export class ActivityNotFound extends TaggedErrorClass<ActivityNotFound>()(
   "ActivityNotFound",
   { id: Schema.String },
 ) {}
+
 export interface ActivityRepositoryValue {
   readonly create: (dto: CreateActivity) => Effect.Effect<unknown, unknown>;
   readonly clearActiveSessionsForMember: (member: {
@@ -81,14 +82,17 @@ export interface ActivityRepositoryValue {
 
 const detailsString = (dto: CreateActivity, key: string) => {
   const value = dto.details?.[key];
+
   return Option.getOrUndefined(
     Schema.decodeUnknownOption(Schema.NonEmptyString)(value),
   );
 };
+
 const mapDetails = Function.compose(
   Schema.decodeUnknownOption(Schema.Record(Schema.String, Schema.Unknown)),
   Option.getOrUndefined,
 );
+
 const encodeCursor = (activity: {
   readonly createdAt: Date;
   readonly id: string;
@@ -96,16 +100,21 @@ const encodeCursor = (activity: {
   Buffer.from(
     JSON.stringify([activity.createdAt.toISOString(), activity.id]),
   ).toString("base64url");
+
 const decodeCursor = (cursor: string) => {
   const value = Schema.decodeUnknownOption(
     Schema.fromJsonString(Schema.Tuple([Schema.String, Schema.String])),
   )(Buffer.from(cursor, "base64url").toString("utf8"));
+
   if (Option.isNone(value) || !Number.isFinite(Date.parse(value.value[0]))) {
     throw new Error("Invalid activity cursor");
   }
+
   const [createdAt, id] = value.value;
+
   return { createdAt: new Date(createdAt), id };
 };
+
 export class ActivityRepository extends Context.Service<
   ActivityRepository,
   ActivityRepositoryValue
@@ -114,11 +123,13 @@ export class ActivityRepository extends Context.Service<
     ActivityRepository,
     Effect.gen(function* () {
       const db = yield* ActivityDatabase;
+
       const snapshotId = Effect.fn("ActivityRepository.snapshotId")(function* (
         dto: CreateActivity,
       ) {
         if (!dto.actorSnapshot) return undefined;
         const snapshot = dto.actorSnapshot;
+
         if (
           snapshot.accountId === undefined ||
           snapshot.characterId === undefined ||
@@ -130,6 +141,7 @@ export class ActivityRepository extends Context.Service<
           return yield* Effect.fail(
             new Error("Actor snapshot is missing a database-required field"),
           );
+
         const fingerprint = createHash("sha256")
           .update(
             JSON.stringify({
@@ -145,7 +157,9 @@ export class ActivityRepository extends Context.Service<
             }),
           )
           .digest("hex");
+
         const id = crypto.randomUUID();
+
         const rows = yield* db
           .insert(activityActorSnapshots)
           .values({
@@ -166,22 +180,28 @@ export class ActivityRepository extends Context.Service<
             set: { fingerprint },
           })
           .returning({ id: activityActorSnapshots.id });
+
         const row = rows[0];
+
         if (!row)
           return yield* Effect.fail(
             new Error("Actor snapshot upsert did not return an identifier"),
           );
+
         return row.id;
       });
+
       const create = Effect.fn("ActivityRepository.create")(function* (
         dto: CreateActivity,
       ) {
         const actorSnapshotId = yield* snapshotId(dto);
+
         return yield* db.transaction((tx) =>
           Effect.gen(function* () {
             yield* tx.execute(
               drizzleSql`select pg_advisory_xact_lock(hashtextextended(${dto.idempotencyKey}, 0))`,
             );
+
             const existing = yield* tx
               .select({
                 activity: activities,
@@ -194,6 +214,7 @@ export class ActivityRepository extends Context.Service<
               )
               .where(eq(activities.idempotencyKey, dto.idempotencyKey))
               .limit(1);
+
             if (existing[0]) {
               return {
                 ...existing[0].activity,
@@ -201,6 +222,7 @@ export class ActivityRepository extends Context.Service<
                 actorSnapshot: existing[0].actorSnapshot ?? undefined,
               };
             }
+
             const createdRows = yield* tx
               .insert(activities)
               .values({
@@ -216,18 +238,23 @@ export class ActivityRepository extends Context.Service<
                 actorSnapshotId,
               })
               .returning();
+
             const created = createdRows[0];
+
             if (!created)
               return yield* Effect.fail(
                 new Error("Activity insert did not return a row"),
               );
+
             if (dto.type === ActivityType.CONNECT_EVENT) {
               const sessionId = detailsString(dto, "sessionId");
+
               if (!sessionId)
                 return yield* Effect.fail(
                   new Error("Activity session identifier is missing"),
                 );
               const now = new Date(yield* Clock.currentTimeMillis);
+
               const inserted = yield* tx
                 .insert(memberActivitySessions)
                 .values({
@@ -242,6 +269,7 @@ export class ActivityRepository extends Context.Service<
                 })
                 .onConflictDoNothing()
                 .returning({ sessionId: memberActivitySessions.sessionId });
+
               const active =
                 (yield* tx
                   .select({ value: count() })
@@ -253,6 +281,7 @@ export class ActivityRepository extends Context.Service<
                       eq(memberActivitySessions.source, dto.source),
                     ),
                   ))[0]?.value ?? 0;
+
               yield* tx
                 .insert(memberActivityStats)
                 .values({
@@ -279,6 +308,7 @@ export class ActivityRepository extends Context.Service<
                 });
             } else {
               const sessionId = detailsString(dto, "sessionId");
+
               if (!sessionId)
                 return yield* Effect.fail(
                   new Error("Activity session identifier is missing"),
@@ -293,6 +323,7 @@ export class ActivityRepository extends Context.Service<
                     eq(memberActivitySessions.sessionId, sessionId),
                   ),
                 );
+
               const active =
                 (yield* tx
                   .select({ value: count() })
@@ -304,6 +335,7 @@ export class ActivityRepository extends Context.Service<
                       eq(memberActivitySessions.source, dto.source),
                     ),
                   ))[0]?.value ?? 0;
+
               yield* tx
                 .update(memberActivityStats)
                 .set({
@@ -318,10 +350,12 @@ export class ActivityRepository extends Context.Service<
                   ),
                 );
             }
+
             return created;
           }),
         );
       });
+
       const clearActiveSessionsForMember = Effect.fn(
         "ActivityRepository.clearSessions",
       )(function* (member: { guildId: string; discordId: string }) {
@@ -351,10 +385,12 @@ export class ActivityRepository extends Context.Service<
           }),
         );
       });
+
       const findMany = Effect.fn("ActivityRepository.findMany")(function* (
         query: QueryActivities,
       ) {
         const cursor = query.cursor ? decodeCursor(query.cursor) : undefined;
+
         const conditions = [
           query.userId ? eq(activities.userId, query.userId) : undefined,
           query.guildId ? eq(activities.guildId, query.guildId) : undefined,
@@ -385,6 +421,7 @@ export class ActivityRepository extends Context.Service<
             ? ilike(activityActorSnapshots.clanName, `%${query.clanName}%`)
             : undefined,
         ].filter((value) => value !== undefined);
+
         const statement = db
           .select({
             activity: activities,
@@ -398,10 +435,12 @@ export class ActivityRepository extends Context.Service<
           .where(and(...conditions))
           .orderBy(desc(activities.createdAt), desc(activities.id))
           .limit(query.limit + 1);
+
         const rows = yield* statement;
         const hasMore = rows.length > query.limit;
         const page = hasMore ? rows.slice(0, query.limit) : rows;
         const lastActivity = page.at(-1)?.activity;
+
         return {
           data: page.map(({ activity, actorSnapshot }) => ({
             ...activity,
@@ -413,6 +452,7 @@ export class ActivityRepository extends Context.Service<
           hasMore,
         };
       });
+
       const findOne = Effect.fn("ActivityRepository.findOne")(function* (
         id: string,
         guildId: string,
@@ -429,13 +469,16 @@ export class ActivityRepository extends Context.Service<
           )
           .where(and(eq(activities.id, id), eq(activities.guildId, guildId)))
           .limit(1);
+
         if (!rows[0]) return yield* new ActivityNotFound({ id });
+
         return {
           ...rows[0].activity,
           details: mapDetails(rows[0].activity.details),
           actorSnapshot: rows[0].actorSnapshot ?? undefined,
         };
       });
+
       const deleteOne = Effect.fn("ActivityRepository.deleteOne")(function* (
         id: string,
         guildId: string,
@@ -445,6 +488,7 @@ export class ActivityRepository extends Context.Service<
           .from(activities)
           .where(and(eq(activities.id, id), eq(activities.guildId, guildId)))
           .limit(1);
+
         if (!row[0]) return yield* new ActivityNotFound({ id });
         yield* db
           .delete(activities)
@@ -454,8 +498,10 @@ export class ActivityRepository extends Context.Service<
               eq(activities.createdAt, row[0].createdAt),
             ),
           );
+
         return 1;
       });
+
       const memberStats = (guildId: string) =>
         db
           .select()
@@ -466,18 +512,24 @@ export class ActivityRepository extends Context.Service<
             desc(memberActivityStats.lastSeenAt),
             asc(memberActivityStats.source),
           );
+
       const normalize = (limit = 10) => Math.min(Math.max(limit, 1), 50);
+
       const dedupe = (rows: Array<string | null>, limit: number) => {
         const byKey = new Map<string, string>();
+
         for (const v of rows) {
           if (!v?.trim()) continue;
           byKey.set(v.toLowerCase(), v.trim());
         }
+
         return [...byKey.values()].slice(0, limit);
       };
+
       const suggestActorNames = Effect.fn("ActivityRepository.suggestActors")(
         function* (guildId: string, search?: string, limit = 10) {
           const n = normalize(limit);
+
           const hasGuildActivity = db
             .select({ value: drizzleSql`1` })
             .from(activities)
@@ -487,6 +539,7 @@ export class ActivityRepository extends Context.Service<
                 eq(activities.guildId, guildId),
               ),
             );
+
           const rows = yield* db
             .select({ value: activityActorSnapshots.name })
             .from(activityActorSnapshots)
@@ -500,15 +553,18 @@ export class ActivityRepository extends Context.Service<
             )
             .orderBy(desc(activityActorSnapshots.createdAt))
             .limit(n * 2);
+
           return dedupe(
             rows.map((r) => r.value),
             n,
           );
         },
       );
+
       const suggestWorlds = Effect.fn("ActivityRepository.suggestWorlds")(
         function* (guildId: string, search?: string, limit = 20) {
           const n = normalize(limit);
+
           const rows = yield* db
             .selectDistinct({ value: activities.world })
             .from(activities)
@@ -523,15 +579,18 @@ export class ActivityRepository extends Context.Service<
             )
             .orderBy(asc(activities.world))
             .limit(n);
+
           return dedupe(
             rows.map((r) => r.value),
             n,
           );
         },
       );
+
       const suggestClanNames = Effect.fn("ActivityRepository.suggestClans")(
         function* (guildId: string, search?: string, limit = 10) {
           const n = normalize(limit);
+
           const hasGuildActivity = db
             .select({ value: drizzleSql`1` })
             .from(activities)
@@ -541,6 +600,7 @@ export class ActivityRepository extends Context.Service<
                 eq(activities.guildId, guildId),
               ),
             );
+
           const rows = yield* db
             .select({ value: activityActorSnapshots.clanName })
             .from(activityActorSnapshots)
@@ -555,12 +615,14 @@ export class ActivityRepository extends Context.Service<
             )
             .orderBy(desc(activityActorSnapshots.createdAt))
             .limit(n * 2);
+
           return dedupe(
             rows.map((r) => r.value),
             n,
           );
         },
       );
+
       return ActivityRepository.of({
         create,
         clearActiveSessionsForMember,

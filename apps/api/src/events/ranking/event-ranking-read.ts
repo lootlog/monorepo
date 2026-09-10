@@ -52,16 +52,20 @@ export const makeEventRankingRead = (
         .from(eventTable)
         .where(and(eq(eventTable.id, eventId), eq(eventTable.guildId, guildId)))
         .limit(1);
+
       if (!eventRows[0]) {
         return yield* Effect.fail(new ResourceNotFoundError("Event not found"));
       }
+
       const rows = yield* database
         .select({ ranking: eventRankingTable, member: memberTable })
         .from(eventRankingTable)
         .innerJoin(memberTable, eq(memberTable.id, eventRankingTable.memberId))
         .where(eq(eventRankingTable.eventId, eventId))
         .orderBy(desc(eventRankingTable.totalPoints));
+
       const memberIds = rows.map(({ member }) => member.id);
+
       const roles =
         memberIds.length === 0
           ? []
@@ -75,6 +79,7 @@ export const makeEventRankingRead = (
               .innerJoin(roleTable, eq(roleTable.id, memberToRoleTable.B))
               .where(inArray(memberToRoleTable.A, memberIds))
               .orderBy(desc(roleTable.position));
+
       return rows.map(({ ranking, member }) => ({
         ...ranking,
         member: {
@@ -92,6 +97,7 @@ export const makeEventRankingRead = (
   return {
     getRanking(guildId: string, eventId: string) {
       const key = cache.getEventKey(guildId, eventId, "ranking");
+
       return cache
         .getOrSet(key, CachedEventRankingResponse, () =>
           getRankingUncached(guildId, eventId),
@@ -101,6 +107,7 @@ export const makeEventRankingRead = (
 
     getEditHistories(guildId: string, eventId: string, rankingIds: string[]) {
       if (rankingIds.length === 0) return Effect.succeed(new Map());
+
       return Effect.gen(function* () {
         const histories = yield* database
           .select({ history: eventPointsEditHistoryTable })
@@ -119,9 +126,11 @@ export const makeEventRankingRead = (
           )
           .orderBy(desc(eventPointsEditHistoryTable.editedAt))
           .pipe(Effect.map((rows) => rows.map(({ history }) => history)));
+
         const editorIds = [
           ...new Set(histories.map((row) => row.editedByUserId)),
         ];
+
         const editors =
           editorIds.length === 0
             ? []
@@ -137,6 +146,7 @@ export const makeEventRankingRead = (
                     inArray(memberTable.globalUserId, editorIds),
                   ),
                 );
+
         const names = new Map(
           editors.flatMap((editor) =>
             editor.globalUserId
@@ -144,6 +154,7 @@ export const makeEventRankingRead = (
               : [],
           ),
         );
+
         const grouped = new Map<
           string,
           Array<
@@ -153,6 +164,7 @@ export const makeEventRankingRead = (
             }
           >
         >();
+
         for (const history of histories) {
           const entry = {
             ...history,
@@ -161,10 +173,12 @@ export const makeEventRankingRead = (
             ),
             editedByName: names.get(history.editedByUserId) ?? null,
           };
+
           const entries = grouped.get(history.rankingId) ?? [];
           entries.push(entry);
           grouped.set(history.rankingId, entries);
         }
+
         return grouped;
       }).pipe(
         Effect.withSpan("events.ranking.editHistory", {

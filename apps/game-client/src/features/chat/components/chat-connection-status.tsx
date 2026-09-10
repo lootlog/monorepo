@@ -13,6 +13,7 @@ export function ChatConnectionStatus({
   onRetry,
 }: Props) {
   const { t } = useTranslation("chat");
+
   return (
     <div className="ll:pointer-events-auto ll:absolute ll:right-1 ll:top-1 ll:z-20 ll:flex ll:max-w-[calc(100%-8px)] ll:items-start ll:gap-1">
       <AsyncStatusIndicator

@@ -19,19 +19,25 @@ import type { ApiServiceConfig } from "@lootlog/client/transport";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const signInFetch = vi.fn<NonNullable<ApiServiceConfig["fetch"]>>();
+
 vi.stubGlobal("fetch", signInFetch);
+
 const { SignIn } = await import("./signin");
+
 const { Route } = await import("../../routes/signin");
+
 await initializeTestTranslations();
 
 const renderSignIn = async () => {
   const root = createRootRoute();
+
   const signin = createRoute({
     getParentRoute: () => root,
     path: "signin",
     component: SignIn,
     validateSearch: Route.options.validateSearch,
   });
+
   const router = createRouter({
     routeTree: root.addChildren([signin]),
     history: createMemoryHistory({
@@ -40,7 +46,9 @@ const renderSignIn = async () => {
       ],
     }),
   });
+
   await router.load();
+
   return render(<RouterProvider router={router} />);
 };
 
@@ -48,6 +56,7 @@ beforeEach(() => {
   signInFetch.mockReset();
   signInFetch.mockImplementation(() => new Promise<Response>(() => undefined));
 });
+
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();

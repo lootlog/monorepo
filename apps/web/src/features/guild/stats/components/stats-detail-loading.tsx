@@ -1,6 +1,7 @@
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
+
 export function StatsDetailLoading({ entity }: { entity: "npc" | "member" }) {
   return (
     <div className="flex flex-col h-full min-h-0 bg-background">

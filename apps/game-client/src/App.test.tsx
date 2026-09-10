@@ -6,8 +6,11 @@ import {
 } from "@lootlog/client/realtime";
 import { createNativeRuntime } from "@/test/native-runtime";
 import { useGameStore } from "@/store/game.store";
+
 vi.stubGlobal("Engine", createNativeRuntime());
+
 const { default: App } = await import("./App");
+
 import { authClient } from "@/lib/auth-client";
 import { configureGameClientPlatform } from "@/lib/game-client-platform";
 import { disposeSocket } from "@/lib/socket";
@@ -17,18 +20,21 @@ import { useNotificationsStore } from "@/store/notifications.store";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 
 const privateQueryKey = ["users", "@me", "private-data"];
+
 const privateState = () => ({
   query: queryClient.getQueryData(privateQueryKey),
   reply: useChatStore.getState().replyDraft,
   notifications: useNotificationsStore.getState().notifications,
   owners: useOnlineCharacterOwnersStore.getState().ownersByCharacterKey,
 });
+
 const clearedState = {
   query: undefined,
   reply: null,
   notifications: [],
   owners: {},
 };
+
 function seedPrivateState() {
   queryClient.setQueryData(privateQueryKey, { secret: "old-account" });
   useChatStore.getState().setReplyDraft({
@@ -65,6 +71,7 @@ function seedPrivateState() {
 }
 
 let restorePlatform: (() => void) | undefined;
+
 afterEach(() => {
   disposeSocket();
   restorePlatform?.();
@@ -75,6 +82,7 @@ afterEach(() => {
 describe("extension session lifecycle", () => {
   it("opens no socket without a session, starts after login and disconnects on confirmed logout", async () => {
     let userId: string | null = null;
+
     const fetcher = vi.fn<typeof fetch>().mockImplementation(() =>
       Promise.resolve(
         Response.json(
@@ -101,6 +109,7 @@ describe("extension session lifecycle", () => {
         ),
       ),
     );
+
     const socket: RealtimeWebSocket = {
       readyState: 0,
       binaryType: "arraybuffer",
@@ -108,11 +117,15 @@ describe("extension session lifecycle", () => {
       send: vi.fn<RealtimeWebSocket["send"]>(),
       close: vi.fn<RealtimeWebSocket["close"]>(),
     };
+
     const stateAtConnection: ReturnType<typeof privateState>[] = [];
+
     const factory = vi.fn<() => RealtimeWebSocket>(() => {
       stateAtConnection.push(privateState());
+
       return socket;
     });
+
     restorePlatform = configureGameClientPlatform({
       fetch: fetcher,
       createRealtime: () =>

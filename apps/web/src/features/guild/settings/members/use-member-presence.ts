@@ -30,10 +30,12 @@ export function useMemberPresence<
   updateEvent,
 }: UseMemberPresenceOptions<TPresence, TResponse, TUpdate>) {
   const { socket, connected, joined } = useGateway();
+
   const [presence, setPresence] = useState<{
     guildId: string;
     value: TPresence | undefined;
   }>();
+
   const [refreshVersion, setRefreshVersion] = useState(0);
   const requestIdRef = useRef(0);
 

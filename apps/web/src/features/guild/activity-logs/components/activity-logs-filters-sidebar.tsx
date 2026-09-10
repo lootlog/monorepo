@@ -45,8 +45,10 @@ export const ActivityLogsFiltersSidebar = (
     hasActiveFilters,
     clearFilters,
   } = useActivityLogsFilterModel(props);
+
   const selectedTypes = new Set(filters.types);
   const selectedSources = new Set(filters.sources);
+
   return (
     <div
       className={cn(
@@ -133,9 +135,11 @@ export const ActivityLogsFiltersSidebar = (
                               const currentTypes = getActivityLogTypes(
                                 filters.types,
                               );
+
                               const newTypes = checked
                                 ? [...currentTypes, type.value]
                                 : currentTypes.filter((t) => t !== type.value);
+
                               updateFilters({ types: newTypes });
                             }}
                           />
@@ -171,11 +175,13 @@ export const ActivityLogsFiltersSidebar = (
                               const currentSources = getActivityLogSources(
                                 filters.sources,
                               );
+
                               const newSources = checked
                                 ? [...currentSources, source.value]
                                 : currentSources.filter(
                                     (s) => s !== source.value,
                                   );
+
                               updateFilters({ sources: newSources });
                             }}
                           />
@@ -208,9 +214,11 @@ export const ActivityLogsFiltersSidebar = (
                           const normalizedDate = date
                             ? startOfDay(date)
                             : undefined;
+
                           const normalizedEndDate = endDateValue
                             ? startOfDay(endDateValue)
                             : undefined;
+
                           const shouldClearEndDate =
                             normalizedDate &&
                             normalizedEndDate &&

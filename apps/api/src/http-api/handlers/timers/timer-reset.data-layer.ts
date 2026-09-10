@@ -63,11 +63,13 @@ export const makeResetTimer = (
       payload.world,
       timerIdentifier,
     );
+
     if (matches.some((timer) => !canViewTimer(access, timer))) {
       return yield* Effect.fail(
         new ResourceNotFoundError({ message: ErrorKey.TIMER_NOT_FOUND }),
       );
     }
+
     if (matches.length > 1) {
       return yield* Effect.fail(
         new InvalidRequestError({
@@ -75,13 +77,17 @@ export const makeResetTimer = (
         }),
       );
     }
+
     const resolved = matches[0];
+
     if (!resolved) {
       return yield* Effect.fail(
         new ResourceNotFoundError({ message: ErrorKey.TIMER_NOT_FOUND }),
       );
     }
+
     const now = new Date(yield* Clock.currentTimeMillis);
+
     const activeEventHero = yield* findActiveTimerEventHeroes(
       database,
       access.guild.id,
@@ -89,6 +95,7 @@ export const makeResetTimer = (
       resolved,
       now,
     );
+
     if (activeEventHero.length > 0) {
       return yield* Effect.fail(
         new InvalidRequestError({
@@ -96,6 +103,7 @@ export const makeResetTimer = (
         }),
       );
     }
+
     const projection = yield* ports.withLock(
       `timer:lock:${access.guild.id}:${payload.world}:${resolved.timerKey}`,
       database.transaction((transaction) =>
@@ -111,7 +119,9 @@ export const makeResetTimer = (
               ),
             )
             .limit(1);
+
           const current = currentRows[0];
+
           if (!current || !canViewTimer(access, current)) {
             return yield* Effect.fail(
               new ResourceNotFoundError({
@@ -119,16 +129,21 @@ export const makeResetTimer = (
               }),
             );
           }
+
           const respawnMilliseconds = current.latestRespBaseSeconds * 1000;
+
           const variance = Math.round(
             respawnMilliseconds * (current.latestRespawnRandomness / 100),
           );
+
           const minSpawnTime = new Date(
             now.getTime() + respawnMilliseconds - variance,
           );
+
           const maxSpawnTime = new Date(
             now.getTime() + respawnMilliseconds + variance,
           );
+
           const members = yield* transaction
             .select()
             .from(memberTable)
@@ -139,7 +154,9 @@ export const makeResetTimer = (
               ),
             )
             .limit(1);
+
           const member = members[0];
+
           if (!member)
             return yield* Effect.die(
               new TimersMemberNotFound({
@@ -148,17 +165,20 @@ export const makeResetTimer = (
               }),
             );
           const actor = payload.actorCharacter;
+
           const actorCharacter = yield* upsertActorCharacter(
             transaction,
             payload.world,
             actor,
           );
+
           const actorUpdate = actor
             ? {
                 actorCharacterSnapshotId: actorCharacter?.id ?? null,
                 actorCharacterLvl: actor.lvl ?? null,
               }
             : {};
+
           const updatedRows = yield* transaction
             .update(timerTable)
             .set({
@@ -178,7 +198,9 @@ export const makeResetTimer = (
               ),
             )
             .returning();
+
           const updated = updatedRows[0];
+
           if (!updated) {
             return yield* Effect.fail(
               new ResourceNotFoundError({
@@ -186,9 +208,11 @@ export const makeResetTimer = (
               }),
             );
           }
+
           const manual =
             Number(timerNpcField(updated.npc, "margonemType")) ===
             TIMER_TYPES.CUSTOM_MANUAL;
+
           if (!manual) {
             yield* transaction.insert(timerHistoryEntryTable).values({
               guildId: access.guild.id,
@@ -210,6 +234,7 @@ export const makeResetTimer = (
               timerActorCharacterSnapshotId: updated.actorCharacterSnapshotId,
               timerActorCharacterLvl: updated.actorCharacterLvl,
             });
+
             const stale = yield* transaction
               .select({ id: timerHistoryEntryTable.id })
               .from(timerHistoryEntryTable)
@@ -225,6 +250,7 @@ export const makeResetTimer = (
                 desc(timerHistoryEntryTable.id),
               )
               .offset(5);
+
             if (stale.length > 0) {
               yield* transaction.delete(timerHistoryEntryTable).where(
                 inArray(
@@ -234,10 +260,12 @@ export const makeResetTimer = (
               );
             }
           }
+
           return { ...updated, member, actorCharacter };
         }),
       ),
     );
+
     const response = mapTimerResponse(projection);
     yield* ports.invalidate(`timer:list:${access.guild.id}:*`);
     yield* ports.publish(RabbitRoutingKey.GUILDS_TIMERS_UPDATE, response);
@@ -245,8 +273,10 @@ export const makeResetTimer = (
       RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
       response,
     );
+
     return response;
   });
+
   return (
     access: TimersGuildAccess,
     timerIdentifier: string,

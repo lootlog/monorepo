@@ -5,6 +5,7 @@ import {
   FiniteNumber,
   JsonValue,
 } from "@lootlog/schema/http-scalars";
+
 const TimerConfiguration = JsonValue.annotate({
   identifier: "TimerSettingsResponseDto__schema0",
 });
@@ -26,6 +27,7 @@ export const TimerSettingsResponse = Schema.Struct({
   createdAt: DateTimeString,
   updatedAt: DateTimeString,
 }).annotate({ identifier: "TimerSettingsResponseDto" });
+
 export type TimerSettingsResponse = typeof TimerSettingsResponse.Type;
 
 export const UpdateTimerSettingsRequest = Schema.Struct({
@@ -108,6 +110,7 @@ export const UpdateTimerSettingsRequest = Schema.Struct({
   timersSortOrder: Schema.optionalKey(Schema.Literals(["asc", "desc"])),
   syncEnabled: Schema.optionalKey(Schema.Boolean),
 }).annotate({ identifier: "UpdateTimerSettingsDto" });
+
 export type UpdateTimerSettingsRequest = typeof UpdateTimerSettingsRequest.Type;
 
 export const OrganizationTimerSettingsResponse = Schema.Struct({
@@ -118,6 +121,7 @@ export const OrganizationTimerSettingsResponse = Schema.Struct({
   createdAt: DateTimeString,
   updatedAt: DateTimeString,
 }).annotate({ identifier: "GuildTimerSettingsResponseDto" });
+
 export type OrganizationTimerSettingsResponse =
   typeof OrganizationTimerSettingsResponse.Type;
 
@@ -125,6 +129,7 @@ export const UpdateOrganizationTimerSettingsRequest = Schema.Struct({
   hiddenTimers: Schema.optionalKey(Schema.Array(Schema.String)),
   pinnedTimers: Schema.optionalKey(Schema.Array(Schema.String)),
 }).annotate({ identifier: "UpdateGuildTimerSettingsDto" });
+
 export type UpdateOrganizationTimerSettingsRequest =
   typeof UpdateOrganizationTimerSettingsRequest.Type;
 
@@ -134,11 +139,13 @@ export const MigrateTimerSettingsRequest = Schema.Struct({
     Schema.Literals(["local", "remote", "merge"]),
   ),
 }).annotate({ identifier: "MigrateTimerSettingsDto" });
+
 export type MigrateTimerSettingsRequest =
   typeof MigrateTimerSettingsRequest.Type;
 
 export const OrganizationTimerSettingsParams = Schema.Struct({
   guildId: Schema.String.annotate({ examples: ["guild_123"] }),
 });
+
 export type OrganizationTimerSettingsParams =
   typeof OrganizationTimerSettingsParams.Type;

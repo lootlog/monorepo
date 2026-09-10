@@ -7,6 +7,7 @@ import {
 } from "react";
 
 type ButtonVariant = "default" | "ghost" | "destructive" | "menu";
+
 type ButtonProps = ComponentProps<"button"> & {
   variant?: ButtonVariant;
 };

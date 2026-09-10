@@ -16,11 +16,14 @@ export const EventCoordinationPriorityIcon = ({
   if (priority === "CRITICAL") {
     return <AlertTriangle className="size-3" />;
   }
+
   if (priority === "WARNING") {
     return <Clock3 className="size-3" />;
   }
+
   if (priority === "OK") {
     return <CheckCircle2 className="size-3" />;
   }
+
   return <CircleDashed className="size-3" />;
 };

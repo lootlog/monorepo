@@ -48,10 +48,14 @@ const resolveMentionSourceNpc = (
   if (data.type !== "NPC" && !(data.type === "PARTY_GATHERING" && data.npc)) {
     return undefined;
   }
+
   const type = resolveNpcType(data.npc);
+
   if (!type || !data.npc || !Number.isFinite(data.npc.lvl) || data.npc.lvl < 0)
     return "skip";
+
   if (data.type === "NPC" && hiddenNpcTypes?.has(type)) return "skip";
+
   return { type, lvl: data.npc.lvl };
 };
 
@@ -68,19 +72,24 @@ export const useChatMessagesListener = (
   const { connected, joined, joinedGuilds, socket } = useSocket();
   const { data: sessionData } = useSession();
   const { presentNotifications } = useNotificationPresenter();
+
   const [chatCacheBatcher] = useState(() =>
     createChatCacheBatcher(queryClient),
   );
+
   const runtimeAccountId = useGameStore(
     (state) => state.game?.hero.accountId ?? "",
   );
+
   const runtimeHeroName = useGameStore((state) => state.game?.hero.name ?? "");
   const runtimeWorld = useGameStore((state) => state.game?.world ?? "");
+
   const runtimeIdentityRef = useRef({
     accountId: runtimeAccountId,
     heroName: runtimeHeroName,
     world: runtimeWorld,
   });
+
   const sessionDiscordIdRef = useRef(sessionData?.user?.discordId);
   const onRemoteMessageRef = useRef(options?.onRemoteMessage);
   const hiddenNpcTypesRef = useRef(options?.hiddenNpcTypes);
@@ -144,29 +153,37 @@ export const useChatMessagesListener = (
       permissionGenerationRef.current += 1;
       chatCacheBatcher.discardAll();
     };
+
     const handlePermissionsUpdated = (data: PermissionsUpdatedPayload) => {
       if (!data.accessPolicy) {
         discardAllPending();
+
         return;
       }
+
       const guildIds = (data.changes ?? []).flatMap((change) =>
         change.restricted && change.areas.includes("chat")
           ? [change.organizationId]
           : [],
       );
+
       for (const guildId of guildIds) {
         guildPermissionGenerationsRef.current.set(
           guildId,
           (guildPermissionGenerationsRef.current.get(guildId) ?? 0) + 1,
         );
       }
+
       chatCacheBatcher.discardGuilds(guildIds);
       applyChatAccessPolicy(queryClient, data.accessPolicy);
     };
+
     socket?.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
     socket?.on(GatewayEvent.DISCONNECT, discardAllPending);
     const currentPolicy = socket?.getAccessPolicy?.();
+
     if (currentPolicy) applyChatAccessPolicy(queryClient, currentPolicy);
+
     return () => {
       socket?.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
       socket?.off(GatewayEvent.DISCONNECT, discardAllPending);
@@ -176,15 +193,19 @@ export const useChatMessagesListener = (
   const handlerRef = useRef<
     (data: ChatMessage, afterFlush?: () => void) => void
   >(() => undefined);
+
   const mentionNotificationRef = useRef<
     (data: ChatMessage) => void | Promise<void>
   >(() => undefined);
+
   const deleteHandlerRef = useRef<
     (data: { guildId: string; messageId: string }) => void
   >(() => undefined);
+
   const updateHandlerRef = useRef<
     (data: { guildId: string; messageId: string; message: string }) => void
   >(() => undefined);
+
   const clearHandlerRef = useRef<(data: { guildId: string }) => void>(
     () => undefined,
   );
@@ -200,6 +221,7 @@ export const useChatMessagesListener = (
       const membersQueryKey = getGuildMembersSummaryQueryKey({
         guildId: data.guildId,
       });
+
       const cachedMembers = queryClient.getQueryData(membersQueryKey);
 
       if (!cachedMembers) {
@@ -210,12 +232,16 @@ export const useChatMessagesListener = (
         );
       }
     };
+
     mentionNotificationRef.current = async (data) => {
       const permissionGeneration = permissionGenerationRef.current;
+
       const guildGeneration =
         guildPermissionGenerationsRef.current.get(data.guildId) ?? 0;
+
       try {
         if (!data.message || !hasChatMentionToken(data.message)) return;
+
         if (
           data.senderId === sessionDiscordIdRef.current ||
           data.characterData.nick === runtimeIdentityRef.current.heroName
@@ -227,7 +253,9 @@ export const useChatMessagesListener = (
           data,
           hiddenNpcTypesRef.current,
         );
+
         if (sourceNpc === "skip") return;
+
         const currentMember = await queryClient.fetchQuery({
           queryKey: getMembersControllerGetMeQueryKey({
             guildId: data.guildId,
@@ -235,18 +263,22 @@ export const useChatMessagesListener = (
           queryFn: () => membersControllerGetMe({ guildId: data.guildId }),
           staleTime: 5 * 60 * 1000,
         });
+
         if (
           permissionGeneration !== permissionGenerationRef.current ||
           guildGeneration !==
             (guildPermissionGenerationsRef.current.get(data.guildId) ?? 0)
         )
           return;
+
         const currentUserNames = getCurrentUserMentionNames({
           currentCharacterNick: runtimeIdentityRef.current.heroName,
           currentMember,
         });
+
         const currentUserRoleNames =
           getCurrentUserMentionRoleNames(currentMember);
+
         if (
           !hasCurrentUserMention(data.message, {
             currentUserNames,
@@ -279,6 +311,7 @@ export const useChatMessagesListener = (
         // Mention resolution is best-effort and must not interrupt chat ingestion.
       }
     };
+
     deleteHandlerRef.current = (data) => {
       chatCacheBatcher.enqueue({
         guildId: data.guildId,
@@ -286,6 +319,7 @@ export const useChatMessagesListener = (
         messageId: data.messageId,
       });
     };
+
     updateHandlerRef.current = (data) => {
       chatCacheBatcher.enqueue({
         guildId: data.guildId,
@@ -294,6 +328,7 @@ export const useChatMessagesListener = (
         messageId: data.messageId,
       });
     };
+
     clearHandlerRef.current = (data) => {
       chatCacheBatcher.enqueue({
         guildId: data.guildId,
@@ -314,6 +349,7 @@ export const useChatMessagesListener = (
       const isRemoteMessage =
         data.senderId !== sessionDiscordIdRef.current &&
         data.characterData.nick !== runtimeIdentityRef.current.heroName;
+
       handlerRef.current(
         data,
         isRemoteMessage ? () => onRemoteMessageRef.current?.(data) : undefined,

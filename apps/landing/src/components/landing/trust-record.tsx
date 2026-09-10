@@ -17,6 +17,7 @@ const facts = [
 
 export function TrustRecord() {
   const { t } = useTranslation();
+
   return (
     <section
       id="trust"

@@ -21,6 +21,7 @@ export type CharacterTooltipCatchingGuildsEntry = {
 };
 
 export const CHARACTER_TOOLTIP_ENTRY_CAP = 500;
+
 export const CHARACTER_TOOLTIP_ENTRY_TTL_MS = 5 * 60 * 1000;
 
 const visibleEntryKeys = new Set<string>();
@@ -69,6 +70,7 @@ export function getOtherCatchingGuildsTarget(
 ): CharacterTooltipCatchingGuildsTarget | null {
   const accountId =
     "d" in other ? String(other.d?.account ?? "") : other.accountId;
+
   const characterId =
     "d" in other ? String(other.d?.id ?? "") : other.characterId;
 
@@ -79,6 +81,7 @@ export function getOtherCatchingGuildsTarget(
   const owner = useOnlineCharacterOwnersStore
     .getState()
     .getOwner(accountId, characterId);
+
   if (!owner) {
     return null;
   }
@@ -107,6 +110,7 @@ function withEntryRetention(
   activeKey?: string,
 ): Record<string, CharacterTooltipCatchingGuildsEntry | undefined> {
   const protectedKeys = new Set(visibleEntryKeys);
+
   if (activeKey) protectedKeys.add(activeKey);
 
   const protectedEntries: [string, CharacterTooltipCatchingGuildsEntry][] = [];
@@ -156,6 +160,7 @@ function updateTargetEntry(
   ) {
     return state;
   }
+
   return {
     entriesByKey: withEntryRetention(
       {
@@ -196,14 +201,17 @@ export const useCharacterTooltipCatchingGuildsStore =
     getEntry: (key) => get().entriesByKey[key],
     pruneEntries: (visibleKeys, now) => {
       visibleEntryKeys.clear();
+
       for (const key of visibleKeys) {
         visibleEntryKeys.add(key);
       }
 
       set((state) => {
         const touchedEntriesByKey = { ...state.entriesByKey };
+
         for (const key of visibleEntryKeys) {
           const entry = touchedEntriesByKey[key];
+
           if (entry) {
             touchedEntriesByKey[key] = { ...entry, lastAccessedAt: now };
           }
@@ -221,6 +229,7 @@ export const useCharacterTooltipCatchingGuildsStore =
     setActiveOther: (other) =>
       set((state) => {
         const activeTarget = getOtherCatchingGuildsTarget(other);
+
         if (
           state.activeOther === other &&
           state.activeTarget?.key === activeTarget?.key

@@ -20,7 +20,9 @@ import { useWindowsStore } from "@/store/windows.store";
 import { mapPingInteractionController } from "@/features/map-pings/map-ping-interaction-controller";
 
 vi.stubGlobal("Engine", createNativeRuntime());
+
 const { AppContent } = await import("./app-content");
+
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
@@ -34,6 +36,7 @@ it("opens the map ping wheel from the configured hotkey and cancels it on Escape
     apiData: { CALL_DRAW_ADD_TO_RENDERER: "call_draw_add_to_renderer" },
     map: { ...native.map, offset: [0, 0], size: { x: 100, y: 100 } },
   });
+
   const preferences: UserGameAccountPreferencesResponseDtoOutput = {
     accountId: "202",
     notifications: createNotificationsSettings(),
@@ -46,6 +49,7 @@ it("opens the map ping wheel from the configured hotkey and cancels it on Escape
     hasStoredAirTags: true,
     hasStoredPreferences: true,
   };
+
   test.queryClient.setQueryData(
     getUsersControllerGetUserGameAccountPreferencesQueryKey({
       accountId: "202",

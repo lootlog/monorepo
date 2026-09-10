@@ -25,7 +25,9 @@ const snapshot = () =>
     ],
     "reader",
   );
+
 afterEach(() => useNotificationsStore.getState().clearNotifications());
+
 it("removes only revoked sources of grouped notifications without replaying their animations", () => {
   useNotificationsStore.getState().presentNotifications([
     {
@@ -53,8 +55,10 @@ it("removes only revoked sources of grouped notifications without replaying thei
       autoHideDurationMs: 5000,
     },
   ]);
+
   const animation =
     useNotificationsStore.getState().latestNotificationAnimationCycle;
+
   reconcileNotificationAccess(snapshot());
   const state = useNotificationsStore.getState();
   expect(state.notifications).toHaveLength(1);
@@ -71,6 +75,7 @@ it("removes only revoked sources of grouped notifications without replaying thei
     state.notifications,
   );
 });
+
 it("applies the server's NPC tier and level rules to numeric game NPC types", () => {
   const policy = snapshot();
   expect(
@@ -125,6 +130,7 @@ it("drops unverified mention sources while preserving verified plain mentions ac
     createdAt: "2026-09-07T00:00:00Z",
     message: "Mention",
   };
+
   useNotificationsStore.getState().presentNotifications([
     { notification: mention },
     {
@@ -135,11 +141,13 @@ it("drops unverified mention sources while preserving verified plain mentions ac
       },
     },
   ]);
+
   const plain = useNotificationsStore
     .getState()
     .notifications.find(
       (notification) => notification.notificationId === "plain-source",
     );
+
   reconcileNotificationAccess(snapshot());
   expect(useNotificationsStore.getState().notifications).toEqual([plain]);
   expect(useNotificationsStore.getState().notifications[0]).toBe(plain);

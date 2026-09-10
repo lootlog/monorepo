@@ -11,14 +11,17 @@ export const combatProfileCalculator = (() => {
   ): CombatProfile {
     const damageMix = new Map<string, number>();
     const mitigationMix = new Map<string, number>();
+
     const spellUsage = new Map<
       string,
       { spell: string; skillId: number | null; casts: number }
     >();
+
     const matchupByProfession = new Map<
       string,
       { wins: number; losses: number }
     >();
+
     const highlights = new Map<string, CombatProfileHighlight>();
 
     let totalBattles = 0;
@@ -47,11 +50,13 @@ export const combatProfileCalculator = (() => {
 
       const isWin = userWarrior.team === battle.winningTeam;
       const isLoss = userWarrior.team === battle.losingTeam;
+
       if (!isWin && !isLoss) {
         continue;
       }
 
       totalBattles++;
+
       if (isWin) {
         wins++;
       } else {
@@ -131,10 +136,13 @@ export const combatProfileCalculator = (() => {
     const avgDuration = totalBattles > 0 ? totalDuration / totalBattles : 0;
     const damagePerTurn = totalTurns > 0 ? totalDamage / totalTurns : 0;
     const mitigationBase = totalDamageTaken + totalBlockedDamage;
+
     const mitigationRate =
       mitigationBase > 0 ? (totalBlockedDamage / mitigationBase) * 100 : 0;
+
     const controlRate =
       totalTurns > 0 ? (totalControlTaken / totalTurns) * 100 : 0;
+
     const totalSpellCasts = Array.from(spellUsage.values()).reduce(
       (sum, spell) => sum + spell.casts,
       0,
@@ -242,11 +250,13 @@ export const combatProfileCalculator = (() => {
   ): void {
     for (const [spell, casts] of Object.entries(spellsUsedMap)) {
       const skillId = Number.parseInt(spell, 10);
+
       const current = spellUsage.get(spell) ?? {
         spell,
         skillId: Number.isNaN(skillId) ? null : skillId,
         casts: 0,
       };
+
       current.casts += casts;
       spellUsage.set(spell, current);
     }
@@ -314,6 +324,7 @@ export const combatProfileCalculator = (() => {
     value: CombatProfileHighlight,
   ): void {
     const current = highlights.get(key);
+
     if (!current || value.value > current.value) {
       highlights.set(key, value);
     }

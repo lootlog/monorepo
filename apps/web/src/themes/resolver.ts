@@ -94,8 +94,11 @@ export const getThemeGreetingSuffix = (
   theme: ThemeId | ResolvedThemeId,
 ): string => {
   if (isCatTheme(theme)) return "🐱";
+
   if (isRukiaTheme(theme)) return "❄️";
+
   if (isRiasTheme(theme)) return "♔";
+
   return "👋";
 };
 

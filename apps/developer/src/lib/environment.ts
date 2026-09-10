@@ -9,6 +9,7 @@ export function getPortalEnvironment(hostname: string) {
       search: "https://search.lootlog.pl",
     };
   }
+
   if (hostname === "dev-developer.lootlog.pl") {
     return {
       production: false,
@@ -19,6 +20,7 @@ export function getPortalEnvironment(hostname: string) {
       search: "https://dev-search.lootlog.pl",
     };
   }
+
   if (hostname === "localhost" || hostname === "127.0.0.1") {
     return {
       production: false,
@@ -29,5 +31,6 @@ export function getPortalEnvironment(hostname: string) {
       search: "http://localhost/api/search",
     };
   }
+
   throw new Error("Unsupported developer portal host");
 }

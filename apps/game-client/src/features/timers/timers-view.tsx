@@ -58,10 +58,13 @@ const getTimersViewState = ({
 
 export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
   const { t } = useTranslation("timers");
+
   const characterId = useGameStore(
     (state) => state.game?.hero.characterId ?? "",
   );
+
   const defaultWorld = useGameStore((state) => state.game?.world ?? "unknown");
+
   const { worldByGuildId, allowWorldSelection, guildIdByCharId } =
     useSettingsStore(
       useShallow((state) => ({
@@ -70,11 +73,15 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
         guildIdByCharId: state.guildIdByCharId,
       })),
     );
+
   const guildId = guildIdByCharId[characterId];
   const selectedWorld = guildId ? worldByGuildId[guildId] : undefined;
+
   const desiredWorld =
     selectedWorld && allowWorldSelection ? selectedWorld : defaultWorld;
+
   const setOpen = useWindowsStore((state) => state.setOpen);
+
   const {
     hiddenTimers,
     pinnedTimers,
@@ -118,6 +125,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
       alwaysVisibleExpiredTimers: state.alwaysVisibleExpiredTimers,
     })),
   );
+
   const {
     data: timers,
     error: timersError,
@@ -125,12 +133,14 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     isLoading: timersLoading,
     refetch: refetchTimers,
   } = useTimers({ world: desiredWorld });
+
   const hasTimersResponse = timers !== undefined;
   const initialTimersLoading = timersLoading && !hasTimersResponse;
   const timersRefreshError = Boolean(timersError) && hasTimersResponse;
   const timersRefreshing = timersFetching && hasTimersResponse;
   const [showHiddenTimers, setShowHiddenTimers] = useState(false);
   const settingsKey = generalConfig.timersGrouping ? "global" : guildId;
+
   const {
     filters,
     hiddenTimers: hiddenTimersForSettings,
@@ -153,6 +163,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     allowWorldSelection,
     timers,
   });
+
   const {
     areFiltersActive,
     colorStatistics,
@@ -185,9 +196,11 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     },
     timers: resolvedTimers,
   });
+
   const handleAddTimer = () => {
     setOpen("add-timer", true, { guildId });
   };
+
   const handleResetFilters = () => {
     setTimerFiltersSearchText("");
     setTimersFilters(settingsKey, {

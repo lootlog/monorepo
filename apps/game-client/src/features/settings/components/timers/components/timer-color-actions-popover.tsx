@@ -35,10 +35,13 @@ export const TimerColorActionsPopover: FC<TimerColorActionsPopoverProps> = ({
 
   const commitName = () => {
     const normalizedName = nameDraft.trim();
+
     if (!normalizedName) {
       setNameDraft(name);
+
       return;
     }
+
     onNameCommit(normalizedName);
   };
 
@@ -74,6 +77,7 @@ export const TimerColorActionsPopover: FC<TimerColorActionsPopoverProps> = ({
                   commitName();
                   event.currentTarget.blur();
                 }
+
                 if (event.key === "Escape") {
                   setNameDraft(name);
                   onOpenChange(false);

@@ -13,10 +13,14 @@ import { usePartyFinderStore } from "@/store/party-finder.store";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 
 type InvitationResponse = { targets: PartyReadyRoomInvitationTarget[] };
+
 const resolveInvitationTargets =
   vi.fn<(request: Request) => Promise<InvitationResponse>>();
+
 const inviteCharacterToParty = vi.fn<(command: string) => void>();
+
 let restoreClient = () => {};
+
 afterEach(() => {
   restoreClient();
   vi.unstubAllGlobals();
@@ -81,6 +85,7 @@ describe("useReadyRoomInvitations", () => {
 
   it("serializes rapid explicit clicks while preserving every intent", async () => {
     const firstResolution = Promise.withResolvers<InvitationResponse>();
+
     const response = {
       targets: [
         {
@@ -89,6 +94,7 @@ describe("useReadyRoomInvitations", () => {
         },
       ],
     };
+
     resolveInvitationTargets
       .mockImplementationOnce(() => firstResolution.promise)
       .mockResolvedValueOnce(response);
@@ -115,6 +121,7 @@ describe("useReadyRoomInvitations", () => {
 
   it("coalesces an arbitrary number of queued clicks into one pending promise", async () => {
     const firstResolution = Promise.withResolvers<InvitationResponse>();
+
     const response = {
       targets: [
         {
@@ -123,12 +130,14 @@ describe("useReadyRoomInvitations", () => {
         },
       ],
     };
+
     resolveInvitationTargets
       .mockImplementationOnce(() => firstResolution.promise)
       .mockResolvedValueOnce(response);
     const { result } = renderHook(() => useReadyRoomInvitations());
 
     const firstIntent = result.current.inviteParticipants();
+
     const queuedIntents = Array.from({ length: 1_000 }, () =>
       result.current.inviteParticipants(),
     );
@@ -228,10 +237,12 @@ describe("useReadyRoomInvitations", () => {
             `participant-${index}`,
             `character-${index}`,
           );
+
           return [nextParticipant.participantId, nextParticipant];
         },
       ),
     );
+
     usePartyFinderStore.getState().mergeProjection({
       ...projection,
       revision: 4,
@@ -256,6 +267,7 @@ describe("useReadyRoomInvitations", () => {
       "participant-2",
       "second-character",
     );
+
     usePartyFinderStore.getState().mergeProjection({
       ...projection,
       revision: 4,

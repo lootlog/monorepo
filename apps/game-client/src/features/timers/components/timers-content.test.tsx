@@ -27,10 +27,12 @@ beforeEach(() => {
     worldByGuildId: { "guild-1": "pandora" },
   });
 });
+
 afterEach(() => {
   vi.useRealTimers();
   useGameStore.getState().clearGame();
 });
+
 const mountContent = (
   overrides: Partial<ComponentProps<typeof TimersContent>> = {},
 ) => {
@@ -41,6 +43,7 @@ const mountContent = (
         : [],
     ),
   );
+
   fixture.queryClient.setQueryData(
     getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
     [
@@ -60,6 +63,7 @@ const mountContent = (
   const onRetry = vi.fn<() => void>();
   const onResetFilters = vi.fn<() => void>();
   const onPointerDown = vi.fn<() => void>();
+
   const view = render(
     <QueryClientProvider client={fixture.queryClient}>
       <div onPointerDown={onPointerDown}>
@@ -84,12 +88,15 @@ const mountContent = (
       </div>
     </QueryClientProvider>,
   );
+
   onTestFinished(() => {
     view.unmount();
     fixture.cleanup();
   });
+
   return { onAddTimer, onRetry, onResetFilters, onPointerDown };
 };
+
 it("shows delayed loading feedback without falsely presenting an empty timer list", () => {
   vi.useFakeTimers();
   mountContent({ initialLoading: true });
@@ -100,6 +107,7 @@ it("shows delayed loading feedback without falsely presenting an empty timer lis
   );
   expect(screen.queryByText("Brak timerów")).not.toBeInTheDocument();
 });
+
 it("lets users retry an initial request failure", async () => {
   const user = userEvent.setup();
   const { onRetry } = mountContent({ error: new Error("network") });
@@ -108,13 +116,16 @@ it("lets users retry an initial request failure", async () => {
   expect(onRetry).toHaveBeenCalledOnce();
   expect(screen.queryByText("Brak timerów")).not.toBeInTheDocument();
 });
+
 it("renders real controls and timer tiles while retaining scroll and window drag behavior", async () => {
   const user = userEvent.setup();
+
   const timer = {
     ...createTimerFixture(),
     minTimeLeft: 60_000,
     maxTimeLeft: 120_000,
   };
+
   const { onAddTimer, onPointerDown } = mountContent({ sortedTimers: [timer] });
   expect(screen.getByPlaceholderText("Szukaj...")).toBeVisible();
   expect(screen.getByRole("combobox")).toHaveTextContent(/pandora/i);
@@ -135,13 +146,16 @@ it("renders real controls and timer tiles while retaining scroll and window drag
   await user.click(screen.getByRole("button", { name: "+" }));
   expect(onAddTimer).toHaveBeenCalledOnce();
 });
+
 it("offers filter recovery in compact mode without the regular toolbar or footer", async () => {
   const user = userEvent.setup();
+
   const { onResetFilters } = mountContent({
     compactView: true,
     areFiltersActive: true,
     isUnderBag: true,
   });
+
   expect(screen.getByText("Brak pasujących timerów")).toBeVisible();
   expect(screen.queryByPlaceholderText("Szukaj...")).not.toBeInTheDocument();
   expect(screen.queryByRole("combobox")).not.toBeInTheDocument();

@@ -44,6 +44,7 @@ export const docsChapters = [
 ] as const;
 
 export type DocsChapter = (typeof docsChapters)[number];
+
 export type DocsChapterId = DocsChapter["id"];
 
 export const docsSlugs = docsChapters.flatMap((chapter) => chapter.slugs);

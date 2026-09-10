@@ -34,5 +34,6 @@ export const findNpcType = (value: string | null) =>
 
 export const getNpcTypeName = (value: string) => {
   const type = findNpcType(value);
+
   return type ? NPC_TYPE_NAMES[type] : value;
 };

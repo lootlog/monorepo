@@ -20,13 +20,17 @@ type ChatPolicyState = {
   timer?: ReturnType<typeof setTimeout>;
   listeners: number;
 };
+
 const states = new WeakMap<QueryClient, ChatPolicyState>();
+
 const getState = (queryClient: QueryClient) => {
   let state = states.get(queryClient);
+
   if (!state) {
     state = { pendingGuilds: new Set(), listeners: 0 };
     states.set(queryClient, state);
   }
+
   return state;
 };
 
@@ -37,7 +41,9 @@ const scheduleRefresh = (
 ) => {
   clearTimeout(state.timer);
   state.timer = undefined;
+
   if (state.pendingGuilds.size === 0) return;
+
   const refresh = () => {
     const guildIds = new Set(state.pendingGuilds);
     state.pendingGuilds.clear();
@@ -46,6 +52,7 @@ const scheduleRefresh = (
       {
         predicate: (query) => {
           const guildId = getChatMessagesQueryGuildId(query);
+
           return guildId !== undefined && guildIds.has(guildId);
         },
         refetchType: "active",
@@ -53,6 +60,7 @@ const scheduleRefresh = (
       { cancelRefetch: false },
     );
   };
+
   if (immediate) refresh();
   else state.timer = setTimeout(refresh, REFRESH_DELAY_MS);
 };
@@ -60,15 +68,19 @@ const scheduleRefresh = (
 export const retainChatAccessPolicy = (queryClient: QueryClient) => {
   const state = getState(queryClient);
   state.listeners += 1;
+
   return () => {
     state.listeners -= 1;
+
     if (state.listeners === 0) {
       clearTimeout(state.timer);
       state.timer = undefined;
+
       if (state.pendingGuilds.size > 0) {
         void queryClient.invalidateQueries({
           predicate: (query) => {
             const guildId = getChatMessagesQueryGuildId(query);
+
             return guildId !== undefined && state.pendingGuilds.has(guildId);
           },
           refetchType: "none",
@@ -84,14 +96,18 @@ export const canReadChatMessage = (
   message: ChatMessage,
 ) => {
   if (!organization) return false;
+
   if (
     message.type !== "NPC" &&
     !(message.type === "PARTY_GATHERING" && message.npc)
   ) {
     return canReadPolicyNpc(organization, "chat", null);
   }
+
   const type = resolveNpcType(message.npc);
+
   if (!type || !message.npc) return false;
+
   return canReadPolicyNpc(organization, "chat", { type, lvl: message.npc.lvl });
 };
 
@@ -101,29 +117,36 @@ export const applyChatAccessPolicy = (
   policy: AccessPolicySnapshot,
 ) => {
   const state = getState(queryClient);
+
   if (state.policy?.version === policy.version) return;
   const initial = state.policy === undefined;
+
   const changes = diffAccessPolicies(
     state.policy ?? { version: "", organizations: [] },
     policy,
   ).filter((change) => change.areas.includes("chat"));
+
   state.policy = policy;
+
   const restrictedGuilds = new Set(
     changes.flatMap((change) =>
       change.restricted ? [change.organizationId] : [],
     ),
   );
+
   const organizations = new Map(
     policy.organizations.map((organization) => [
       organization.organizationId,
       organization,
     ]),
   );
+
   const shouldReconcile = (query: {
     queryKey: readonly unknown[];
     state: { data: unknown; fetchStatus: string };
   }) => {
     const guildId = getChatMessagesQueryGuildId(query);
+
     return (
       guildId !== undefined &&
       (query.state.data !== undefined ||
@@ -131,11 +154,14 @@ export const applyChatAccessPolicy = (
       (initial || restrictedGuilds.has(guildId))
     );
   };
+
   const affectedQueries = new Set(
     queryClient.getQueryCache().findAll({ predicate: shouldReconcile }),
   );
+
   const affected = (query: Query) => affectedQueries.has(query);
   const interruptedUnloadedGuilds: string[] = [];
+
   for (const query of affectedQueries) {
     if (
       query.state.data !== undefined ||
@@ -143,30 +169,39 @@ export const applyChatAccessPolicy = (
     )
       continue;
     const guildId = getChatMessagesQueryGuildId(query);
+
     if (!guildId) continue;
     const organization = organizations.get(guildId);
+
     if (organization && canReadPolicyNpc(organization, "chat", null))
       interruptedUnloadedGuilds.push(guildId);
   }
+
   // Cancellation reverts synchronously; prune after it so late responses cannot restore revoked rows.
   void queryClient.cancelQueries({ predicate: affected });
   queryClient.setQueriesData<ChatMessage[]>(
     { predicate: affected },
     (messages) => {
       if (!messages) return [];
+
       const visible = messages.filter((message) =>
         canReadChatMessage(organizations.get(message.guildId), message),
       );
+
       return visible.length === messages.length ? messages : visible;
     },
   );
+
   for (const guildId of restrictedGuilds) state.pendingGuilds.delete(guildId);
+
   for (const change of changes) {
     if (change.expanded && !initial)
       state.pendingGuilds.add(change.organizationId);
   }
+
   for (const guildId of interruptedUnloadedGuilds)
     state.pendingGuilds.add(guildId);
+
   if (changes.length === 0) return;
   scheduleRefresh(queryClient, state, initial);
 };
@@ -175,14 +210,19 @@ export const applyChatAccessPolicy = (
 export const applyLegacyChatAccessChange = (queryClient: QueryClient) => {
   const state = getState(queryClient);
   state.policy = undefined;
+
   const queries = queryClient
     .getQueryCache()
     .findAll({ predicate: isChatMessagesQuery });
+
   void queryClient.cancelQueries({ predicate: isChatMessagesQuery });
+
   for (const query of queries) {
     const guildId = getChatMessagesQueryGuildId(query);
+
     if (guildId !== undefined) state.pendingGuilds.add(guildId);
   }
+
   queryClient.setQueriesData<ChatMessage[]>(
     { predicate: isChatMessagesQuery },
     [],

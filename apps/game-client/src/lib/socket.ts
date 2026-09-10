@@ -90,6 +90,7 @@ const toLegacyPresence = (
   presence: BasicPresence | PresenceWithLocation,
 ) => {
   const location = "location" in presence ? presence.location : undefined;
+
   return {
     discordId: presence.discordId ?? presence.userId,
     guildId,
@@ -146,20 +147,24 @@ type SocketCommandPayloads = {
   [GatewayEvent.AIR_TAG_SUBSCRIPTION]: typeof AirTagSubscriptionCommand.fields.data.Type;
   [GatewayEvent.AIR_TAG_OBSERVATION]: typeof AirTagObservationCommand.fields.data.Type;
 };
+
 type SocketCommandResponses = {
   [GatewayEvent.ONLINE_PLAYERS_PRESENCE_FETCH]: PlayerPresenceAckPayload;
   [GatewayEvent.MAP_PING_SEND]: typeof MapPingAckSchema.Type;
   [GatewayEvent.AIR_TAG_SUBSCRIPTION]: typeof AirTagSubscriptionAck.Type;
   [GatewayEvent.AIR_TAG_OBSERVATION]: typeof AirTagObservationAck.Type;
 };
+
 type SocketPayload<Event extends GatewayEvent> =
   Event extends keyof SocketCommandPayloads
     ? SocketCommandPayloads[Event]
     : undefined;
+
 type SocketResponse<Event extends GatewayEvent> =
   Event extends keyof SocketCommandResponses
     ? SocketCommandResponses[Event]
     : undefined;
+
 type SocketRequest = {
   [Event in GatewayEvent]: [event: Event, payload?: SocketPayload<Event>];
 }[GatewayEvent];
@@ -187,8 +192,10 @@ export class AppSocket {
     this.unsubscribeState = this.realtime.subscribeState((state) => {
       const connected =
         state === "connected" || state === "joining" || state === "ready";
+
       if (connected === this.wasConnected) return;
       this.wasConnected = connected;
+
       if (state === "disconnected") this.id = undefined;
       this.listeners.emit(
         connected ? GatewayEvent.CONNECT : GatewayEvent.DISCONNECT,
@@ -215,6 +222,7 @@ export class AppSocket {
   dispose(): void {
     if (this.disposed) return;
     this.disposed = true;
+
     try {
       this.disconnect();
     } finally {
@@ -235,11 +243,13 @@ export class AppSocket {
 
   on(event: GatewayEvent, listener: Listener): this {
     this.listeners.add(event, listener);
+
     return this;
   }
 
   off(event: GatewayEvent, listener: Listener): this {
     this.listeners.delete(event, listener);
+
     return this;
   }
 
@@ -250,7 +260,9 @@ export class AppSocket {
     if (this.lastJoinData && this.lastJoinData.accountId !== data.accountId) {
       this.currentAccessPolicy = undefined;
     }
+
     this.lastJoinData = data;
+
     const response = await this.realtime.join({
       world: data.world,
       character: {
@@ -265,25 +277,33 @@ export class AppSocket {
       },
       margonemAccountProof,
     });
+
     if (!isJoinResult(response))
       throw new Error("Invalid session.join response");
     this.id = response.connectionId;
     this.joinedOrganizationIds = [...response.organizationIds];
+
     if (response.accessPolicy) this.applyAccessPolicy(response.accessPolicy);
+
     if (margonemAccountProof) {
       this.dispatchJoin(response);
+
       return response;
     }
+
     const proof = await requestMargonemAccountProof({
       socketId: response.connectionId,
       accountId: data.accountId,
       characterId: data.characterId,
       clanId: data.clan?.id,
     }).catch(() => undefined);
+
     if (!proof) {
       this.dispatchJoin(response);
+
       return response;
     }
+
     return this.join(data, proof);
   }
 
@@ -296,11 +316,14 @@ export class AppSocket {
       if (payload && "isAfk" in payload && payload.isAfk !== undefined)
         this.lastIsAfk = payload.isAfk;
       void this.publishPresence();
+
       return this;
     }
+
     void this.requestLegacy(event, payload)
       .then((response) => acknowledgement?.(response))
       .catch(() => undefined);
+
     return this;
   }
 
@@ -322,6 +345,7 @@ export class AppSocket {
           ),
         ),
       ]);
+
     return {
       emit: <Event extends GatewayEvent>(
         event: Event,
@@ -348,7 +372,9 @@ export class AppSocket {
 
   private async publishPresence(): Promise<void> {
     const game = useGameStore.getState().game;
+
     if (!game) return;
+
     // Presence publication opt-out is temporarily disabled; keep stored preferences intact.
     try {
       await this.realtime.request("presence.publish", {
@@ -387,15 +413,18 @@ export class AppSocket {
         organizationId: data.guildId,
         world: data.world,
       });
+
       if (!isPresenceFetchResult(response))
         throw new Error("Invalid presence.fetch response");
       const players: Record<string, ReturnType<typeof toLegacyPresence>[]> = {};
+
       for (const presence of response.presences ?? []) {
         if (presence.platform !== "game") continue;
         (players[presence.discordId ?? presence.userId] ??= []).push(
           toLegacyPresence(data.guildId, presence),
         );
       }
+
       return { status: "success", players };
     } catch (cause) {
       // Gateway command-handler maps OrganizationAccessDenied to this exact wire response.
@@ -419,37 +448,50 @@ export class AppSocket {
   ): Promise<SocketResponse<GatewayEvent>> {
     if (event === GatewayEvent.ONLINE_PLAYERS_PRESENCE_FETCH) {
       if (!payload) throw new Error("Missing presence.fetch payload");
+
       return this.fetchPresence(payload);
     }
+
     if (event === GatewayEvent.MAP_PING_SEND) {
       if (!payload) throw new Error("Missing map-ping.send payload");
       const response = await this.realtime.request("map-ping.send", payload);
+
       if (!isMapPingAcknowledgement(response))
         throw new Error("Invalid map-ping.send response");
+
       return response;
     }
+
     if (event === GatewayEvent.AIR_TAG_SUBSCRIPTION) {
       if (!payload) throw new Error("Missing air-tag.subscription payload");
       const data = payload;
+
       const response = await this.realtime.request("air-tag.subscription", {
         requestId: data.requestId,
         enabled: data.enabled,
         expectedMapId: data.expectedMapId,
       });
+
       if (!isAirTagSubscriptionAcknowledgement(response))
         throw new Error("Invalid air-tag.subscription response");
+
       return response;
     }
+
     if (event === GatewayEvent.AIR_TAG_OBSERVATION) {
       if (!payload) throw new Error("Missing air-tag.observation payload");
+
       const response = await this.realtime.request(
         "air-tag.observation",
         payload,
       );
+
       if (!isAirTagObservationAcknowledgement(response))
         throw new Error("Invalid air-tag.observation response");
+
       return response;
     }
+
     return undefined;
   }
 
@@ -457,18 +499,25 @@ export class AppSocket {
     if (event.type === "session.joined") {
       this.id = event.data.connectionId;
       this.joinedOrganizationIds = [...event.data.organizationIds];
+
       if (event.data.accessPolicy)
         this.applyAccessPolicy(event.data.accessPolicy);
+
       return;
     }
+
     if (event.type === "permissions.updated") {
       const joinedOrganizations = new Set(this.joinedOrganizationIds);
+
       const addedOrganization = event.data.organizationIds.some(
         (id) => !joinedOrganizations.has(id),
       );
+
       this.joinedOrganizationIds = [...event.data.organizationIds];
+
       if (event.data.accessPolicy) {
         this.applyAccessPolicy(event.data.accessPolicy);
+
         if (addedOrganization) void this.publishPresence();
       } else {
         this.currentAccessPolicy = undefined;
@@ -480,8 +529,10 @@ export class AppSocket {
         });
         void this.publishPresence();
       }
+
       return;
     }
+
     if (event.type === "presence.snapshot") {
       for (const presence of event.data.presences) {
         this.listeners.emit(
@@ -489,8 +540,10 @@ export class AppSocket {
           toLegacyPresence(event.data.organizationId, presence),
         );
       }
+
       return;
     }
+
     if (event.type === "presence.delta") {
       for (const change of event.data.changes) {
         const payload =
@@ -502,30 +555,38 @@ export class AppSocket {
                 sessionId: change.sessionId,
                 status: "offline",
               };
+
         this.listeners.emit(
           GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
           payload,
         );
       }
+
       return;
     }
+
     const legacyEvent = legacyEventNames[event.type];
+
     if (legacyEvent) {
       const payload =
         event.type === "map-ping.received" || event.type === "air-tag.updated"
           ? event.data
           : unwrapOrganizationEvent(event);
+
       this.listeners.emit(legacyEvent, payload);
     }
   }
 
   private applyAccessPolicy(policy: AccessPolicySnapshot): void {
     const previous = this.currentAccessPolicy;
+
     if (previous?.version === policy.version) return;
+
     const changes = diffAccessPolicies(
       previous ?? createAccessPolicySnapshot([], ""),
       policy,
     );
+
     this.currentAccessPolicy = policy;
     this.listeners.emit(GatewayEvent.PERMISSIONS_UPDATED, {
       guilds: policy.organizations.map(({ organizationId }) => ({
@@ -543,6 +604,7 @@ export class AppSocket {
         guilds: result.organizationIds.map((id) => ({ guild: { id } })),
       } satisfies PermissionsUpdatedPayload);
     }
+
     this.listeners.emit(GatewayEvent.JOIN, {
       status: "success",
       guildsCount: result.organizationIds.length,
@@ -555,11 +617,13 @@ let socket: AppSocket | null = null;
 
 export const getSocket = (): AppSocket => {
   socket ??= new AppSocket();
+
   return socket;
 };
 
 export const disposeSocket = (): void => {
   const activeSocket = socket;
+
   if (!activeSocket) return;
   socket = null;
   activeSocket.dispose();

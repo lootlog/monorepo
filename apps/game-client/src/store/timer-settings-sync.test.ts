@@ -15,8 +15,10 @@ describe("timer settings sync lifecycle", () => {
 
   it("unregisters the last mutation and cancels its pending callback", () => {
     vi.useFakeTimers();
+
     const mutate =
       vi.fn<Parameters<typeof registerGlobalSettingsMutation>[0]>();
+
     const unregister = registerGlobalSettingsMutation(mutate);
 
     debouncedSyncGlobalSettings({ timerFiltersEnabled: true });
@@ -29,10 +31,13 @@ describe("timer settings sync lifecycle", () => {
 
   it("keeps the latest mutation active when an older registration unmounts", () => {
     vi.useFakeTimers();
+
     const firstMutation =
       vi.fn<Parameters<typeof registerGlobalSettingsMutation>[0]>();
+
     const secondMutation =
       vi.fn<Parameters<typeof registerGlobalSettingsMutation>[0]>();
+
     const unregisterFirst = registerGlobalSettingsMutation(firstMutation);
     const unregisterSecond = registerGlobalSettingsMutation(secondMutation);
 
@@ -47,11 +52,14 @@ describe("timer settings sync lifecycle", () => {
 
   it("idempotently disposes every pending timeout and payload", () => {
     vi.useFakeTimers();
+
     const consoleWarning = vi
       .spyOn(console, "warn")
       .mockImplementation(() => undefined);
+
     const staleMutation =
       vi.fn<Parameters<typeof registerGlobalSettingsMutation>[0]>();
+
     registerGlobalSettingsMutation(staleMutation);
     debouncedSyncGlobalSettings({ timerFiltersEnabled: true });
     debouncedSyncGuildSettings("guild-1", { hiddenTimers: ["Tanroth"] });
@@ -65,6 +73,7 @@ describe("timer settings sync lifecycle", () => {
 
     const currentMutation =
       vi.fn<Parameters<typeof registerGlobalSettingsMutation>[0]>();
+
     registerGlobalSettingsMutation(currentMutation);
     debouncedSyncGlobalSettings({ syncEnabled: true });
     vi.advanceTimersByTime(500);

@@ -162,6 +162,7 @@ const PERMISSION_GROUPS = [
 const PERMISSIONS = PERMISSION_GROUPS.flatMap((group) => group.permissions);
 
 const DEFAULT_LVL_RANGE_FROM = "0";
+
 const DEFAULT_LVL_RANGE_TO = "500";
 
 const formSchema = z.object({
@@ -171,9 +172,13 @@ const formSchema = z.object({
     .max(500)
     .transform((val) => {
       const num = Number(val);
+
       if (Number.isNaN(num)) return DEFAULT_LVL_RANGE_FROM;
+
       if (num > 500) return DEFAULT_LVL_RANGE_TO;
+
       if (num < 0) return DEFAULT_LVL_RANGE_FROM;
+
       return String(num);
     }),
   lvlRangeTo: z
@@ -182,9 +187,13 @@ const formSchema = z.object({
     .max(500)
     .transform((val) => {
       const num = Number(val);
+
       if (Number.isNaN(num)) return DEFAULT_LVL_RANGE_FROM;
+
       if (num > 500) return DEFAULT_LVL_RANGE_TO;
+
       if (num < 0) return DEFAULT_LVL_RANGE_FROM;
+
       return String(num);
     }),
   permissions: z.partialRecord(z.enum(Permission), z.boolean()),
@@ -199,8 +208,10 @@ type RolesFormProps = {
 export const RolesForm: FC<RolesFormProps> = ({ role }) => {
   const guildId = useGuildId();
   const queryClient = useQueryClient();
+
   const { mutate: updateGuildRole, isPending } =
     useRolesControllerUpdateGuildRole();
+
   const { t } = useTranslation();
 
   const form = useForm<FormSchemaType>({
@@ -252,6 +263,7 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
               guildId,
             });
           }
+
           toast.success(t("settings.roles.updateSuccess"));
           form.reset({
             lvlRangeFrom:
@@ -337,6 +349,7 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
           >
             {PERMISSION_GROUPS.map((group) => {
               const IconComponent = group.icon;
+
               const enabledCount = group.permissions.filter((p) =>
                 form.watch(`permissions.${p}`),
               ).length;

@@ -24,6 +24,7 @@ export const readyRoomSourceVisibility = Effect.fn("readyRoomSourceVisibility")(
   ) {
     if (guildIds.length === 0)
       return (_room: ReadyRoomAggregate): string[] => [];
+
     const rows = yield* database
       .select({ guild: guildTable, role: roleTable })
       .from(guildTable)
@@ -41,10 +42,12 @@ export const readyRoomSourceVisibility = Effect.fn("readyRoomSourceVisibility")(
       .where(
         and(inArray(guildTable.id, [...guildIds]), eq(guildTable.active, true)),
       );
+
     return (room: ReadyRoomAggregate): string[] =>
       room.guildIds.filter((guildId) => {
         const matching = rows.filter((row) => row.guild.id === guildId);
         const roles = matching.flatMap(({ role }) => (role ? [role] : []));
+
         if (
           matching.some(({ guild }) => guild.ownerId === discordId) ||
           roles.some((role) => role.permissions.includes(Permission.ADMIN)) ||
@@ -52,8 +55,10 @@ export const readyRoomSourceVisibility = Effect.fn("readyRoomSourceVisibility")(
         )
           return true;
         const base = NPC_FEATURE_PERMISSIONS.chat.base;
+
         if (!roles.some((role) => role.permissions.includes(base)))
           return false;
+
         return (
           !room.npc ||
           hasRolePermissionInLevelRange(

@@ -1,6 +1,8 @@
 import { createEmptyGuildDocumentContent } from "@lootlog/domain/guild-documents";
+
 const EMPTY_DOCUMENT_CONTENT =
   createEmptyGuildDocumentContent() satisfies GuildDocumentContent;
+
 import {
   InvalidRequestError,
   ResourceNotFoundError,
@@ -30,17 +32,21 @@ import type {
 
 const normalizeTitle = (title: string) => {
   const normalizedTitle = title.trim();
+
   if (!normalizedTitle) {
     return Effect.fail(new InvalidRequestError("Document title is required"));
   }
+
   if (normalizedTitle.length > GUILD_DOCUMENT_TITLE_MAX_LENGTH) {
     return Effect.fail(new InvalidRequestError("Document title is too long"));
   }
+
   return Effect.succeed(normalizedTitle);
 };
 
 const normalizeContent = (content: JsonValue) => {
   let decodedContent: GuildDocumentContent;
+
   try {
     decodedContent = Schema.decodeUnknownSync(GuildDocumentContentSchema)(
       content,
@@ -50,6 +56,7 @@ const normalizeContent = (content: JsonValue) => {
   }
 
   let stringifiedContent: string;
+
   try {
     stringifiedContent = JSON.stringify(decodedContent);
   } catch {
@@ -57,6 +64,7 @@ const normalizeContent = (content: JsonValue) => {
       new InvalidRequestError("Document content is not serializable"),
     );
   }
+
   return stringifiedContent.length > GUILD_DOCUMENT_CONTENT_MAX_LENGTH
     ? Effect.fail(new InvalidRequestError("Document content is too long"))
     : Effect.succeed(decodedContent);
@@ -105,6 +113,7 @@ const mapHistoryRecordWithEditors = (
 export const makeDocsService = (repository: DocsRepositoryService) => {
   const getEditorNameByMemberId = (guildId: string, memberIds: string[]) => {
     const uniqueMemberIds = [...new Set(memberIds)];
+
     return repository
       .findEditors(guildId, uniqueMemberIds)
       .pipe(
@@ -177,15 +186,18 @@ export const makeDocsService = (repository: DocsRepositoryService) => {
     listDocuments: (guildId: string) =>
       Effect.gen(function* () {
         const result = yield* repository.listDocuments(guildId);
+
         if (!result.guild) {
           return yield* Effect.fail(
             new ResourceNotFoundError("Guild not found"),
           );
         }
+
         const max = Math.max(
           0,
           result.guild.documentLimit ?? GUILD_DOCUMENT_DEFAULT_LIMIT,
         );
+
         return {
           items: yield* mapDocumentRecords(guildId, result.documents),
           limit: {
@@ -203,6 +215,7 @@ export const makeDocsService = (repository: DocsRepositoryService) => {
     ) =>
       Effect.gen(function* () {
         const title = yield* normalizeTitle(data.title);
+
         const document = yield* repository.createDocument({
           guildId,
           memberId,
@@ -210,6 +223,7 @@ export const makeDocsService = (repository: DocsRepositoryService) => {
           content: EMPTY_DOCUMENT_CONTENT,
           defaultLimit: GUILD_DOCUMENT_DEFAULT_LIMIT,
         });
+
         return yield* mapDocumentRecord(guildId, document);
       }),
     getDocument: (guildId: string, documentId: string) =>
@@ -225,6 +239,7 @@ export const makeDocsService = (repository: DocsRepositoryService) => {
       Effect.gen(function* () {
         const title = yield* normalizeTitle(data.title);
         const content = yield* normalizeContent(data.content);
+
         const document = yield* repository.updateDocument({
           guildId,
           documentId,
@@ -232,12 +247,14 @@ export const makeDocsService = (repository: DocsRepositoryService) => {
           title,
           content,
         });
+
         return yield* mapDocumentRecord(guildId, document);
       }),
     listHistory: (guildId: string, documentId: string) =>
       Effect.gen(function* () {
         yield* findDocumentOrFail(guildId, documentId);
         const history = yield* repository.listHistory(guildId, documentId);
+
         return {
           items: yield* mapHistoryRecords(guildId, history),
         };
@@ -249,21 +266,25 @@ export const makeDocsService = (repository: DocsRepositoryService) => {
     ) =>
       Effect.gen(function* () {
         yield* findDocumentOrFail(guildId, documentId);
+
         const history = yield* repository.findHistory(
           guildId,
           documentId,
           historyId,
         );
+
         if (!history) {
           return yield* Effect.fail(
             new ResourceNotFoundError("Document history not found"),
           );
         }
+
         return yield* mapHistoryRecord(guildId, history);
       }),
     listTrash: (guildId: string) =>
       Effect.gen(function* () {
         const documents = yield* repository.listTrash(guildId);
+
         const editors = yield* getEditorNameByMemberId(
           guildId,
           documents.flatMap((document) => [
@@ -272,10 +293,12 @@ export const makeDocsService = (repository: DocsRepositoryService) => {
             document.deletedByMemberId ?? document.updatedByMemberId,
           ]),
         );
+
         return {
           items: documents.map((document) => {
             const deletedByMemberId =
               document.deletedByMemberId ?? document.updatedByMemberId;
+
             return {
               ...mapDocumentRecordWithEditors(document, editors),
               deletedAt: document.deletedAt ?? document.updatedAt,

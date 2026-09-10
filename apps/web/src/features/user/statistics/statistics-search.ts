@@ -1,13 +1,18 @@
 import { z } from "zod";
+
 export const STATISTICS_TABS = [
   "overview",
   "activity",
   "monsters",
   "worlds",
 ] as const;
+
 export const STATISTICS_DAYS = [7, 30, 90, 365] as const;
+
 export type StatisticsTab = (typeof STATISTICS_TABS)[number];
+
 export type StatisticsDays = (typeof STATISTICS_DAYS)[number];
+
 export type StatisticsSearch = {
   tab: StatisticsTab;
   days: StatisticsDays;

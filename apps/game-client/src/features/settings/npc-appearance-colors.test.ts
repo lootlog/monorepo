@@ -30,6 +30,7 @@ describe("NPC appearance colors", () => {
         scopes: ["USER"],
       });
     }
+
     expect(SETTINGS_CATALOG.appearance.schemaVersion).toBe(3);
   });
 

@@ -33,13 +33,16 @@ export const reservationSharingData = Layer.unwrap(
     }),
   ),
 );
+
 export const reservationReadData = Layer.unwrap(
   Effect.gen(function* () {
     const redis = yield* ApiRedis;
     const config = yield* ApiRuntimeConfig;
     const httpClient = yield* HttpClient.HttpClient;
+
     const attempt = <A>(operation: () => PromiseLike<A>) =>
       Effect.tryPromise({ try: operation, catch: (error) => error });
+
     return makeReservationReadDataLayer(
       makeReservationCatalogAdapter({
         cache: {
@@ -54,12 +57,14 @@ export const reservationReadData = Layer.unwrap(
     );
   }),
 );
+
 export const reservationMutationsData = Layer.unwrap(
   Effect.gen(function* () {
     const redis = yield* ApiRedis;
     const rabbit = yield* RabbitMessaging;
     const config = yield* ApiRuntimeConfig;
     const httpClient = yield* HttpClient.HttpClient;
+
     const notificationsQueue = yield* Effect.acquireRelease(
       Effect.sync(
         () =>
@@ -70,8 +75,10 @@ export const reservationMutationsData = Layer.unwrap(
       ),
       (queue) => Effect.tryPromise(() => queue.close()),
     );
+
     const attempt = <A>(operation: () => PromiseLike<A>) =>
       Effect.tryPromise({ try: operation, catch: (error) => error });
+
     const catalog = makeReservationCatalogAdapter({
       cache: {
         getJson: (key, schema) =>
@@ -82,6 +89,7 @@ export const reservationMutationsData = Layer.unwrap(
       httpClient,
       url: config.reservationsCardsUrl.toString(),
     });
+
     return makeReservationMutationsDataLayer({
       catalog,
       enqueueNotification: (notificationJobId, delay) =>

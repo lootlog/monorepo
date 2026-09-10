@@ -14,27 +14,33 @@ import { KeyManager } from "~/components/key-manager";
 import { KeysSidebar } from "~/components/keys-sidebar";
 import { getPortalEnvironment } from "~/lib/environment";
 import { portalText as t } from "~/lib/translations";
+
 export const Route = createFileRoute("/keys")({
   ssr: false,
   component: KeysPage,
 });
+
 function KeysPage() {
   const [auth] = useState(() =>
     createAuthClient({
       baseURL: `${getPortalEnvironment(location.hostname).auth}/idp`,
     }),
   );
+
   const session = auth.useSession();
   const [error, setError] = useState(false);
   const [pending, setPending] = useState(false);
+
   async function login() {
     setPending(true);
     setError(false);
+
     try {
       const result = await auth.signIn.social({
         provider: "discord",
         callbackURL: `${location.origin}${import.meta.env.BASE_URL}keys`,
       });
+
       if (result.error) setError(true);
     } catch {
       setError(true);
@@ -42,11 +48,14 @@ function KeysPage() {
       setPending(false);
     }
   }
+
   async function logout() {
     setPending(true);
     setError(false);
+
     try {
       const result = await auth.signOut();
+
       if (result.error) setError(true);
     } catch {
       setError(true);
@@ -54,6 +63,7 @@ function KeysPage() {
       setPending(false);
     }
   }
+
   return (
     <div className="keys-layout">
       <KeysSidebar signedIn={Boolean(session.data)} />

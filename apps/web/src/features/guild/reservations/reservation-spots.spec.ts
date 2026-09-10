@@ -53,6 +53,7 @@ describe("reservation spot presentation", () => {
       createSpot("potepione", { name: "Potępione Zamczysko" }),
       createSpot("grota", { name: "Grota Szeptów" }),
     ];
+
     const previous = searchable;
     const optimistic = setReservationSpotPinned(searchable, "potepione", true);
 

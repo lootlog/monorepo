@@ -39,6 +39,7 @@ function App() {
     setActiveUserId(userId);
   }, [extension, session.isPending, session.error, activeUserId, userId]);
   const showGame = !extension || (userId !== null && activeUserId === userId);
+
   return (
     <ThemeProvider>
       <TooltipProvider>

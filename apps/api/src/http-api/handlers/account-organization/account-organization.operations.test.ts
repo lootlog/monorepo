@@ -140,14 +140,17 @@ describe("Users and Guilds HttpApi handlers", () => {
         },
       ]),
     );
+
     const bearer = BearerSecurityMiddleware.of({
       bearer: (httpEffect) =>
         Effect.provideService(httpEffect, ForwardAuthIdentity, identity),
     });
+
     const services = provideServices(
       makeAuthorization(),
       makeData({ getManageableUserGuilds }),
     );
+
     const responseEffect = Effect.scoped(
       Effect.gen(function* () {
         const client = yield* HttpApiTest.groups(LootlogApi, ["guilds"]).pipe(
@@ -157,6 +160,7 @@ describe("Users and Guilds HttpApi handlers", () => {
           Effect.provide(Layer.succeed(BearerSecurityMiddleware, bearer)),
           Effect.provide(apiKeyEndpointPolicyLayer("main")),
         );
+
         return yield* client.guilds.GuildsControllerGetManageableUserGuilds();
       }),
     ).pipe(
@@ -168,6 +172,7 @@ describe("Users and Guilds HttpApi handlers", () => {
       ),
       Effect.provide(httpApiTestServices),
     );
+
     const response = await Effect.runPromise(responseEffect);
     expect(response).toEqual([
       { id: "admin-guild", name: "Admin guild", icon: null },
@@ -182,6 +187,7 @@ describe("Users and Guilds HttpApi handlers", () => {
       makeAuthorization({ requireGuild: () => Effect.fail(denied) }),
       makeData(),
     );
+
     const bearer = BearerSecurityMiddleware.of({
       bearer: (httpEffect) =>
         Effect.provideService(httpEffect, ForwardAuthIdentity, identity),
@@ -209,6 +215,7 @@ describe("Users and Guilds HttpApi handlers", () => {
         ]);
       }),
     ).pipe(Effect.provide(services), Effect.provide(httpApiTestServices));
+
     const runnableResponsesEffect = responsesEffect;
     const responses = await Effect.runPromise(runnableResponsesEffect);
 
@@ -220,11 +227,13 @@ describe("Users and Guilds HttpApi handlers", () => {
 
   it("returns current user preferences through the generated response schema", async () => {
     const userIds: string[] = [];
+
     const layer = provideServices(
       makeAuthorization(),
       makeData({
         getUserPreferences: (userId) => {
           userIds.push(userId);
+
           return Effect.succeed(userPreferences);
         },
       }),
@@ -244,12 +253,15 @@ describe("Users and Guilds HttpApi handlers", () => {
       status: 401,
       code: "AUTH_REQUIRED",
     });
+
     let dataCalled = false;
+
     const layer = provideServices(
       makeAuthorization({ identity: Effect.fail(denied) }),
       makeData({
         getUserPreferences: () => {
           dataCalled = true;
+
           return Effect.succeed(userPreferences);
         },
       }),
@@ -268,11 +280,14 @@ describe("Users and Guilds HttpApi handlers", () => {
       guildId: string;
       anyOf: ReadonlyArray<string>;
     }> = [];
+
     const updateCalls: string[] = [];
+
     const layer = provideServices(
       makeAuthorization({
         requireGuild: (options) => {
           authorizationCalls.push(options);
+
           return Effect.succeed({
             guildId: "guild-a",
             permissions: [Permission.ADMIN],
@@ -283,6 +298,7 @@ describe("Users and Guilds HttpApi handlers", () => {
       makeGuildConfigurationData({
         updateGuildConfig: (guildId) => {
           updateCalls.push(guildId);
+
           return Effect.succeed(guild);
         },
       }),
@@ -309,13 +325,16 @@ describe("Users and Guilds HttpApi handlers", () => {
       status: 403,
       code: "GUILD_MANAGE_REQUIRED",
     });
+
     let updateCalled = false;
+
     const layer = provideServices(
       makeAuthorization({ requireGuild: () => Effect.fail(denied) }),
       makeData(),
       makeGuildConfigurationData({
         updateGuildConfig: () => {
           updateCalled = true;
+
           return Effect.succeed(guild);
         },
       }),
@@ -336,13 +355,16 @@ describe("Users and Guilds HttpApi handlers", () => {
       status: 404,
       code: "GUILD_NOT_FOUND",
     });
+
     let updateCalled = false;
+
     const layer = provideServices(
       makeAuthorization({ requireGuild: () => Effect.fail(notFound) }),
       makeData(),
       makeGuildConfigurationData({
         updateGuildConfig: () => {
           updateCalled = true;
+
           return Effect.succeed(guild);
         },
       }),

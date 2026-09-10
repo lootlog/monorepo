@@ -18,11 +18,13 @@ describe("chat read state", () => {
   it("only marks actually displayed messages read and ignores a redelivered read message", () => {
     const first = createChatMessage({ id: "first" });
     const second = createChatMessage({ id: "second", type: "NOTIFICATION" });
+
     const received = receiveChatMessage(
       receiveChatMessage({}, first, false),
       second,
       true,
     );
+
     const read = markChatMessagesRead(received, [first.id]);
     expect(getChatUnreadSummary(read, first.guildId).ids).toEqual(
       new Set([second.id]),
@@ -60,7 +62,9 @@ describe("chat read state", () => {
         wt: 100,
       },
     });
+
     const state = receiveChatMessage({}, titan, false);
+
     const reconcile = (hiddenNpcTypes: ReadonlySet<NpcTypeEnum>) =>
       getChatUnreadSummary(
         reconcileChatReadState(state, {
@@ -72,6 +76,7 @@ describe("chat read state", () => {
         }),
         titan.guildId,
       );
+
     expect(reconcile(new Set()).reports).toBe(true);
     expect(reconcile(new Set([NpcTypeEnum.TITAN])).reports).toBe(false);
   });
@@ -82,6 +87,7 @@ describe("chat read state", () => {
       createChatMessage({ guildId: "other" }),
       true,
     );
+
     for (let index = 0; index < 301; index++) {
       state = receiveChatMessage(
         state,
@@ -89,30 +95,37 @@ describe("chat read state", () => {
         false,
       );
     }
+
     expect(state["guild-1"]).toHaveLength(300);
     expect(state["other"]).toHaveLength(1);
     expect(getChatUnreadSummary(state, "guild-1").ids.has("0")).toBe(false);
   });
   it("marks all accessible copies read when their representative is viewed in All", () => {
     const first = createChatMessage({ id: "a", guildId: "a" });
+
     const copy = createChatMessage({
       id: "b",
       guildId: "b",
       timestamp: new Date(Date.parse(first.timestamp) + 100).toISOString(),
     });
+
     const hiddenCopy = createChatMessage({ id: "hidden", guildId: "hidden" });
+
     const received = receiveChatMessage(
       receiveChatMessage(receiveChatMessage({}, first, false), copy, false),
       hiddenCopy,
       false,
     );
+
     const groups = groupDuplicateChatMessages(
       getMessagesForSelectedGuild({ a: [first], b: [copy] }, "all"),
     );
+
     const read = markChatMessagesRead(
       received,
       getVisibleChatMessageAliases(groups, [first.id]),
     );
+
     expect(groups).toHaveLength(1);
     expect(getChatUnreadSummary(read, "a").ids.size).toBe(0);
     expect(getChatUnreadSummary(read, "b").ids.size).toBe(0);
@@ -124,18 +137,22 @@ describe("chat read state", () => {
   it("does not mark copies in another organization read from a single-organization view", () => {
     const first = createChatMessage({ id: "a", guildId: "a" });
     const copy = createChatMessage({ id: "b", guildId: "b" });
+
     const received = receiveChatMessage(
       receiveChatMessage({}, first, false),
       copy,
       false,
     );
+
     const groups = groupDuplicateChatMessages(
       getMessagesForSelectedGuild({ a: [first], b: [copy] }, "a"),
     );
+
     const read = markChatMessagesRead(
       received,
       getVisibleChatMessageAliases(groups, [first.id]),
     );
+
     expect(getChatUnreadSummary(read, "a").ids.size).toBe(0);
     expect(getChatUnreadSummary(read, "b").ids.has(copy.id)).toBe(true);
   });

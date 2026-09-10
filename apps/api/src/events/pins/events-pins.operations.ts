@@ -11,11 +11,13 @@ export const makeEventsPins = (persistence: PinnedEventsPersistence) => ({
     Effect.gen(function* () {
       const referenceTime = new Date(yield* Clock.currentTimeMillis);
       yield* persistence.removeInactive(userId, guildData.id, referenceTime);
+
       const pinnedEvents = yield* persistence.findActive(
         userId,
         guildData.id,
         referenceTime,
       );
+
       return pinnedEvents.map(({ event, pinnedAt }) => ({
         pinnedAt,
         event: attachComputedEventActive(event, referenceTime),
@@ -26,22 +28,29 @@ export const makeEventsPins = (persistence: PinnedEventsPersistence) => ({
     Effect.gen(function* () {
       const referenceTime = new Date(yield* Clock.currentTimeMillis);
       const event = yield* persistence.findEvent(eventId, guildData.id);
+
       if (!event) {
         return yield* Effect.fail(new ResourceNotFoundError("Event not found"));
       }
+
       const activeEvent = attachComputedEventActive(event, referenceTime);
+
       if (!activeEvent.active) {
         yield* persistence.remove(userId, eventId);
+
         return yield* Effect.fail(
           new ResourceConflictError("Only active events can be pinned"),
         );
       }
+
       const pinnedEvent = yield* persistence.pin(userId, eventId);
+
       if (!pinnedEvent) {
         return yield* Effect.fail(
           new ResourceNotFoundError("Event pin not found"),
         );
       }
+
       return { pinnedAt: pinnedEvent.pinnedAt, event: activeEvent };
     }).pipe(Effect.withSpan("EventsPins.pinEvent")),
 

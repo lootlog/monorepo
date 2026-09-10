@@ -31,7 +31,9 @@ import {
 import { getMapPingPresentation } from "./map-ping-presentation";
 
 const ACK_TIMEOUT_MS = 1_500;
+
 const HINT_THROTTLE_MS = 2_000;
+
 const REGISTER_RETRY_MS = 100;
 
 type PointerPosition = {
@@ -47,6 +49,7 @@ type ResolvedTrigger = {
 
 const areMapPingsEnabled = () => {
   const accountId = useGameStore.getState().game?.hero.accountId;
+
   if (!accountId) {
     return false;
   }
@@ -65,12 +68,15 @@ const onMapPingCancel = () => {
 
 export const useMapPings = () => {
   const { socket, connected, joined } = useSocket();
+
   const isNewInterface = useGameStore(
     (state) => state.game?.interface === "ni",
   );
+
   const gameInitialized = useGlobalStore(
     (state) => state.gameState.gameInitialized,
   );
+
   const { data: preferences } = useCurrentGameAccountPreferences();
   const enabled = preferences?.pings.enabled ?? false;
   const pointerRef = useRef<PointerPosition | null>(null);
@@ -108,8 +114,10 @@ export const useMapPings = () => {
         x: event.clientX,
         y: event.clientY,
       });
+
       if (!isMapPingSurface(event.target)) {
         pointerRef.current = null;
+
         return;
       }
 
@@ -121,6 +129,7 @@ export const useMapPings = () => {
     };
 
     window.addEventListener("mousemove", handleMouseMove);
+
     return () => {
       pointerRef.current = null;
       window.removeEventListener("mousemove", handleMouseMove);
@@ -151,6 +160,7 @@ export const useMapPings = () => {
     const handleMapPing = (event: MapPingEvent) => {
       const tile = { x: event.x, y: event.y };
       const game = useGameStore.getState().game;
+
       if (
         !game ||
         !isMapPingType(event.type) ||
@@ -164,6 +174,7 @@ export const useMapPings = () => {
 
       const presentation = getMapPingPresentation(event.type);
       const typeLabel = t(presentation.translationKey);
+
       if (mapPingController.addRemote(event, typeLabel)) {
         const { key, ...soundProfile } = presentation.sound;
         playSound("pings", key, soundProfile);
@@ -171,6 +182,7 @@ export const useMapPings = () => {
     };
 
     socket.on(GatewayEvent.MAP_PING_RECEIVE, handleMapPing);
+
     return () => {
       socket.off(GatewayEvent.MAP_PING_RECEIVE, handleMapPing);
     };
@@ -187,9 +199,11 @@ export const useMapPings = () => {
     }
 
     const now = Date.now();
+
     if (now - lastHintAtRef.current < HINT_THROTTLE_MS) {
       return;
     }
+
     lastHintAtRef.current = now;
 
     const message =
@@ -201,6 +215,7 @@ export const useMapPings = () => {
             ),
           })
         : t("mapPings.temporarilyUnavailable");
+
     showRuntimeMessage(message);
   };
 
@@ -217,12 +232,14 @@ export const useMapPings = () => {
         event.clientX,
         event.clientY,
       );
+
       return tile
         ? { origin: { x: event.clientX, y: event.clientY }, tile }
         : null;
     }
 
     const pointer = pointerRef.current;
+
     if (!pointer) {
       return null;
     }
@@ -232,6 +249,7 @@ export const useMapPings = () => {
       pointer.clientX,
       pointer.clientY,
     );
+
     return tile
       ? {
           origin: { x: pointer.clientX, y: pointer.clientY },
@@ -242,6 +260,7 @@ export const useMapPings = () => {
 
   const sendMapPing = (submission: MapPingSubmission) => {
     const game = useGameStore.getState().game;
+
     if (
       !socket ||
       !connected ||
@@ -255,6 +274,7 @@ export const useMapPings = () => {
 
     const presentation = getMapPingPresentation(submission.type);
     const typeLabel = t(presentation.translationKey);
+
     const localPingId = mapPingController.addOptimistic(
       submission.tile,
       submission.mapId,
@@ -262,6 +282,7 @@ export const useMapPings = () => {
       submission.type,
       typeLabel,
     );
+
     const { key, ...soundProfile } = presentation.sound;
     playSound("pings", key, soundProfile);
     socket.timeout(ACK_TIMEOUT_MS).emit(
@@ -298,6 +319,7 @@ export const useMapPings = () => {
 
     const trigger = resolveTrigger(event);
     const mapId = useGameStore.getState().game?.map.id;
+
     if (!trigger || mapId === undefined || !Number.isInteger(mapId)) {
       return false;
     }
@@ -314,6 +336,7 @@ export const useMapPings = () => {
     const submission = mapPingInteractionController.complete(
       createMapPingPressIdentity(event),
     );
+
     if (submission) {
       sendMapPing(submission);
     }
@@ -325,4 +348,5 @@ export const useMapPings = () => {
     onMapPingStart,
   };
 };
+
 import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";

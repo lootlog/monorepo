@@ -25,11 +25,14 @@ export const HorizontalMenu = ({
   className,
 }: HorizontalMenuProps) => {
   const pathname = useLocation({ select: (location) => location.pathname });
+
   const activeUrl = items.reduce<string | null>((best, item) => {
     const url = `${basePath}${item.href}`;
+
     if (pathname === url || pathname.startsWith(`${url}/`)) {
       if (!best || url.length > best.length) return url;
     }
+
     return best;
   }, null);
 
@@ -40,8 +43,10 @@ export const HorizontalMenu = ({
     >
       {items.map((item) => {
         const url = `${basePath}${item.href}`;
+
         const active =
           activeId === undefined ? url === activeUrl : item.id === activeId;
+
         return (
           <li key={item.id} className="min-w-0 max-w-full">
             <Link

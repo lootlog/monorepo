@@ -3,6 +3,7 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 
 export function DashboardActivitySkeleton() {
   const { t } = useTranslation();
+
   return (
     <div
       role="status"

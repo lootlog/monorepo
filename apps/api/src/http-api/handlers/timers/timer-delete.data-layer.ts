@@ -61,17 +61,20 @@ export const makeDeleteTimer = (
           world,
           timerIdentifier,
         );
+
         const timers = yield* findTimerMatches(
           transaction,
           access.guild.id,
           world,
           timerIdentifier,
         );
+
         if (timers.some((timer) => !canViewTimer(access, timer))) {
           return yield* Effect.fail(
             new ResourceNotFoundError({ message: ErrorKey.TIMER_NOT_FOUND }),
           );
         }
+
         if (timers.length > 1) {
           return yield* Effect.fail(
             new InvalidRequestError({
@@ -79,7 +82,9 @@ export const makeDeleteTimer = (
             }),
           );
         }
+
         const timer = timers[0];
+
         if (!timer) {
           return yield* Effect.fail(
             new ResourceNotFoundError({
@@ -87,7 +92,9 @@ export const makeDeleteTimer = (
             }),
           );
         }
+
         const now = new Date(yield* Clock.currentTimeMillis);
+
         const activeEventHero = yield* findActiveTimerEventHeroes(
           transaction,
           access.guild.id,
@@ -95,6 +102,7 @@ export const makeDeleteTimer = (
           timer,
           now,
         );
+
         if (activeEventHero.length > 0) {
           return yield* Effect.fail(
             new InvalidRequestError({
@@ -102,9 +110,11 @@ export const makeDeleteTimer = (
             }),
           );
         }
+
         const manual =
           Number(timerNpcField(timer.npc, "margonemType")) ===
           TIMER_TYPES.CUSTOM_MANUAL;
+
         if (!manual) {
           const actors = yield* transaction
             .select({ id: memberTable.id })
@@ -116,12 +126,15 @@ export const makeDeleteTimer = (
               ),
             )
             .limit(1);
+
           const actorMemberId = actors[0]?.id;
+
           if (actorMemberId === undefined) {
             return yield* Effect.die(
               new TimersInvariantViolation({ code: "HISTORY_ACTOR_NOT_FOUND" }),
             );
           }
+
           yield* transaction.insert(timerHistoryEntryTable).values({
             guildId: access.guild.id,
             world,
@@ -140,6 +153,7 @@ export const makeDeleteTimer = (
             timerActorCharacterSnapshotId: timer.actorCharacterSnapshotId,
             timerActorCharacterLvl: timer.actorCharacterLvl,
           });
+
           const staleHistory = yield* transaction
             .select({ id: timerHistoryEntryTable.id })
             .from(timerHistoryEntryTable)
@@ -155,6 +169,7 @@ export const makeDeleteTimer = (
               desc(timerHistoryEntryTable.id),
             )
             .offset(5);
+
           if (staleHistory.length > 0) {
             yield* transaction.delete(timerHistoryEntryTable).where(
               inArray(
@@ -163,11 +178,13 @@ export const makeDeleteTimer = (
               ),
             );
           }
+
           const updated = yield* transaction
             .update(timerTable)
             .set({ deletedAt: now, updatedAt: now })
             .where(timerCondition)
             .returning();
+
           if (!updated[0]) {
             return yield* Effect.fail(
               new ResourceNotFoundError({
@@ -180,6 +197,7 @@ export const makeDeleteTimer = (
             .delete(timerTable)
             .where(timerCondition)
             .returning();
+
           if (!deleted[0]) {
             return yield* Effect.fail(
               new ResourceNotFoundError({
@@ -188,10 +206,13 @@ export const makeDeleteTimer = (
             );
           }
         }
+
         return timer;
       }),
     );
+
     const npcLevel = timerNpcField(resolved.npc, "lvl");
+
     const payload = {
       npcId: resolved.npcId,
       timerKey: resolved.timerKey,
@@ -202,10 +223,12 @@ export const makeDeleteTimer = (
         npcLevel: Schema.is(Schema.Number)(npcLevel) ? npcLevel : undefined,
       },
     };
+
     yield* ports.invalidate(`timer:list:${access.guild.id}:*`);
     yield* ports.publish(RabbitRoutingKey.GUILDS_TIMERS_DELETE, payload);
     yield* ports.publish(RabbitRoutingKey.NOTIFICATIONS_TIMER_DELETED, payload);
   });
+
   return (
     access: TimersGuildAccess,
     timerIdentifier: string,

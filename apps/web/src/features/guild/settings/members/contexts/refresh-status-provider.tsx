@@ -20,6 +20,7 @@ export const RefreshStatusProvider = ({
   const [failedIds, setFailedIds] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
   const routeGuildId = useGuildId();
+
   const { data: guild } = useGuildsControllerGetGuildById({
     guildId: routeGuildId ?? "",
   });
@@ -28,11 +29,13 @@ export const RefreshStatusProvider = ({
     setRefreshedIds((prev) => {
       const newSet = new Set(prev);
       ids.forEach((id) => newSet.add(id));
+
       return newSet;
     });
     setFailedIds((prev) => {
       const newSet = new Set(prev);
       ids.forEach((id) => newSet.delete(id));
+
       return newSet;
     });
   }, []);
@@ -41,11 +44,13 @@ export const RefreshStatusProvider = ({
     setFailedIds((prev) => {
       const newSet = new Set(prev);
       ids.forEach((id) => newSet.add(id));
+
       return newSet;
     });
     setRefreshedIds((prev) => {
       const newSet = new Set(prev);
       ids.forEach((id) => newSet.delete(id));
+
       return newSet;
     });
   }, []);
@@ -54,6 +59,7 @@ export const RefreshStatusProvider = ({
     setRefreshedIds((prev) => {
       const newSet = new Set(prev);
       newSet.delete(id);
+
       return newSet;
     });
   }, []);
@@ -76,7 +82,9 @@ export const RefreshStatusProvider = ({
         }),
       });
     }
+
     if (data.refreshedIds?.length) markAsRefreshed(data.refreshedIds);
+
     if (data.failedIds?.length) markAsFailed(data.failedIds);
   });
 

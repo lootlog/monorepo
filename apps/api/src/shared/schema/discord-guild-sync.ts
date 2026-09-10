@@ -24,6 +24,7 @@ export const DiscordGuildChannelSnapshotResponse = Schema.Struct({
   createdAt: isoDatetimeCodec,
   updatedAt: isoDatetimeCodec,
 });
+
 export type DiscordGuildChannelSnapshotResponse =
   typeof DiscordGuildChannelSnapshotResponse.Type;
 
@@ -39,5 +40,6 @@ export const DiscordGuildSyncStateResponse = Schema.Struct({
   createdAt: isoDatetimeCodec,
   updatedAt: isoDatetimeCodec,
 });
+
 export type DiscordGuildSyncStateResponse =
   typeof DiscordGuildSyncStateResponse.Type;

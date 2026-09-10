@@ -12,6 +12,7 @@ export const makeTimersCleanup = (
     if (!options.enabled) return;
     const cutoff = new Date(yield* Clock.currentTimeMillis);
     cutoff.setDate(cutoff.getDate() - options.retentionDays);
+
     const deleted = yield* database
       .delete(timerTable)
       .where(
@@ -21,6 +22,7 @@ export const makeTimersCleanup = (
         ),
       )
       .returning({ timerKey: timerTable.timerKey });
+
     yield* Effect.logInfo("Expired manual timers deleted").pipe(
       Effect.annotateLogs({ deleted: deleted.length, cutoff }),
     );

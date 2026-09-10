@@ -39,15 +39,19 @@ export const LevelFilters: React.FC<LevelFiltersProps> = ({
 
   const handleMinLvlInput = (e: React.FormEvent<HTMLInputElement>) => {
     const value = e.currentTarget.value;
+
     // Only allow digits
     if (value !== "" && !/^\d+$/.test(value)) {
       e.currentTarget.value = minLvl;
+
       return;
     }
+
     // Debounce the state update
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
+
     debounceTimerRef.current = setTimeout(() => {
       onMinLvlChange(value);
     }, 300);
@@ -55,15 +59,19 @@ export const LevelFilters: React.FC<LevelFiltersProps> = ({
 
   const handleMaxLvlInput = (e: React.FormEvent<HTMLInputElement>) => {
     const value = e.currentTarget.value;
+
     // Only allow digits
     if (value !== "" && !/^\d+$/.test(value)) {
       e.currentTarget.value = maxLvl;
+
       return;
     }
+
     // Debounce the state update
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
+
     debounceTimerRef.current = setTimeout(() => {
       onMaxLvlChange(value);
     }, 300);

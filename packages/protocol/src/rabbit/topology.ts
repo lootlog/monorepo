@@ -11,6 +11,7 @@ export const RabbitExchangeName = Schema.Literals([
   RabbitExchange.DEAD_LETTER,
   RabbitExchange.RETRY,
 ]);
+
 export type RabbitExchangeName = typeof RabbitExchangeName.Type;
 
 export const RabbitRoutingKey = {
@@ -131,6 +132,7 @@ export const RabbitRoutingKey = {
 export const RabbitRoutingKeyName = Schema.Literals(
   Object.values(RabbitRoutingKey),
 );
+
 export type RabbitRoutingKeyName = typeof RabbitRoutingKeyName.Type;
 
 export const DEFAULT_RETRY_TTL_MS = 30_000;
@@ -140,6 +142,7 @@ export const RabbitExchangeDefinition = Schema.Struct({
   type: Schema.Literal("topic"),
   durable: Schema.Boolean,
 });
+
 export type RabbitExchangeDefinition = typeof RabbitExchangeDefinition.Type;
 
 export const RabbitQueueDefinition = Schema.Struct({
@@ -152,6 +155,7 @@ export const RabbitQueueDefinition = Schema.Struct({
   deadLetterExchange: Schema.optional(RabbitExchangeName),
   deadLetterRoutingKey: Schema.optional(RabbitRoutingKeyName),
 });
+
 export type RabbitQueueDefinition = typeof RabbitQueueDefinition.Type;
 
 export const canonicalExchanges = [

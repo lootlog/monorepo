@@ -12,6 +12,7 @@ const decodeCursor = (cursor: string | undefined): number => {
   try {
     const decodedCursor = Buffer.from(cursor, "base64").toString("utf-8");
     const cursorIndex = Number.parseInt(decodedCursor, 10);
+
     return Number.isNaN(cursorIndex) || cursorIndex < 0 ? 0 : cursorIndex;
   } catch {
     return 0;

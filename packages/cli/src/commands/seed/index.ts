@@ -72,16 +72,21 @@ interface SeedOptions {
 type SeedSubcommandHandler = (options: SeedOptions) => Promise<void>;
 
 const DEFAULT_ITEMS_OUTPUT = "./packages/cli/src/mocks/data/items.json";
+
 const DEFAULT_NPCS_OUTPUT = "./packages/cli/src/mocks/data/npcs.json";
+
 const DEFAULT_PLAYERS_OUTPUT = "./packages/cli/src/mocks/data/players.json";
 
 const parseOptions = (args: string[]): SeedOptions => {
   const options: SeedOptions = {};
   const takeNextArg = (index: number): string | undefined => args[index + 1];
+
   const parseIntegerOption = (index: number): number | undefined => {
     const value = takeNextArg(index);
+
     return value === undefined ? undefined : Number.parseInt(value, 10);
   };
+
   const setOption = <K extends keyof SeedOptions>(
     key: K,
     value: SeedOptions[K],
@@ -164,6 +169,7 @@ const generatePlayersFile = async (
         `⏭️  Players file already exists at ${outputPath}. Use --force to regenerate.`,
       ),
     );
+
     return false;
   }
 
@@ -175,6 +181,7 @@ const generatePlayersFile = async (
       `✅ Generated ${players.length} players saved to ${outputPath}`,
     ),
   );
+
   return true;
 };
 
@@ -201,6 +208,7 @@ const scrapeSetupData = async (options: SeedOptions): Promise<void> => {
     console.log(
       chalk.gray("⏭️  Step 1: Skipped scraping (using existing data)\n"),
     );
+
     return;
   }
 
@@ -224,6 +232,7 @@ const generateSetupPlayers = async (
         `⏭️  Players file already exists. Use --force to regenerate.\n`,
       ),
     );
+
     return;
   }
 
@@ -265,14 +274,18 @@ const SEED_SUBCOMMAND_HANDLERS = new Map<string, SeedSubcommandHandler>(
 export const seedCommand = async (args: string[]): Promise<void> => {
   if (args.length === 0 || args.includes("--help") || args.includes("-h")) {
     displaySeedHelp();
+
     return;
   }
 
   const [subcommand, ...rest] = args;
+
   if (!subcommand) {
     displaySeedHelp();
+
     return;
   }
+
   const options = parseOptions(rest);
   const handler = SEED_SUBCOMMAND_HANDLERS.get(subcommand);
 

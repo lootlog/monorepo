@@ -16,6 +16,7 @@ export function StatisticsMonsters({
   data: UserKillAnalyticsResponseDtoOutput;
 }) {
   const { t } = useTranslation();
+
   const columns: ColumnDef<
     typeof coreTableFeatures,
     UserKillAnalyticsResponseDtoOutput["types"][number]
@@ -51,12 +52,14 @@ export function StatisticsMonsters({
       ),
     },
   ];
+
   const table = useTable({
     features: coreTableFeatures,
     data: data.types,
     columns,
     getRowId: (type) => type.npcType,
   });
+
   return (
     <>
       <SectionCard>

@@ -43,6 +43,7 @@ export const LogsActionCard: FC<LogsActionCardProps> = ({
   const requestSummary = getActionRequestSummary(action);
   const [isOpen, setIsOpen] = useState(false);
   const { t } = useTranslation();
+
   const toggleOpen = () => {
     setIsOpen((currentIsOpen) => !currentIsOpen);
   };

@@ -28,6 +28,7 @@ export const getRecentOpponentBattleContext = (
   const userWarrior = battle.warriors.find(
     (warrior) => warrior.originalId === battle.characterId,
   );
+
   const opponentWarrior = battle.warriors.find(
     (warrior) => warrior.originalId !== battle.characterId,
   );

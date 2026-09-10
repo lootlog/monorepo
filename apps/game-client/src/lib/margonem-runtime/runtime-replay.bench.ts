@@ -23,6 +23,7 @@ import { RuntimeStateProjection } from "./runtime-state-projection";
 
 const runtimeReplayMetricsFile =
   process.env.RUNTIME_REPLAY_METRICS_FILE?.trim() || null;
+
 if (runtimeReplayMetricsFile) {
   writeFileSync(runtimeReplayMetricsFile, "", "utf8");
 }
@@ -34,12 +35,14 @@ const npcs = Array.from({ length: 120 }, (_, index) => ({
   x: index % 32,
   y: index % 24,
 }));
+
 const other = Object.fromEntries(
   Array.from({ length: 50 }, (_, index) => [
     String(index + 1),
     { dir: index % 4, x: index % 32, y: index % 24 },
   ]),
 );
+
 const warriors = Object.fromEntries(
   Array.from({ length: 50 }, (_, index) => [
     String(index + 1),
@@ -57,6 +60,7 @@ const warriors = Object.fromEntries(
     },
   ]),
 );
+
 const replayEvent = {
   f: { init: "1", m: ["turn"], w: warriors },
   item: {},
@@ -65,7 +69,9 @@ const replayEvent = {
   npcs_del: [{ id: 2 }, { id: 70 }, { id: 119 }],
   other,
 } satisfies GameEvent;
+
 const stringReplayEvent = JSON.stringify(replayEvent);
+
 const npcTemplates = npcs.map((npc) => ({
   id: npc.tpl,
   level: 300,
@@ -75,14 +81,17 @@ const npcTemplates = npcs.map((npc) => ({
   type: 2,
   warrior_type: 85,
 }));
+
 const npcIcons = npcs.map((npc) => ({
   icon: "npc.gif",
   id: npc.icon.id,
 }));
+
 const fullReplayEvent = {
   ...replayEvent,
   chat: { channels: {} },
 } satisfies GameEvent;
+
 const npcMetadataEvent = {
   icons: npcIcons,
   npc_tpls: npcTemplates,
@@ -105,10 +114,12 @@ const game = Object.freeze({
   map: Object.freeze({ id: 1, name: "Benchmark", visibility: 30 }),
   world: "benchmark",
 });
+
 const runtimeOthers = Object.freeze(
   Object.fromEntries(
     Array.from({ length: 50 }, (_, index) => {
       const id = String(index + 1);
+
       return [
         id,
         Object.freeze({
@@ -123,6 +134,7 @@ const runtimeOthers = Object.freeze(
     }),
   ),
 );
+
 const adapter: MargonemRuntimeAdapter = {
   interface: "si",
   getAllNpcs: () => [],
@@ -148,16 +160,21 @@ describe("runtime bridge mixed replay (50 players, 120 NPCs)", () => {
   const originalSuccessData = runtimeWindow.successData;
   const bridge = new MargonemRuntimeBridge({ adapter, interface: "si" });
   let dispatchPayload: RuntimeFunction | null = null;
+
   const dispatch = (payload: GameEvent | string) => {
     if (dispatchPayload) {
       dispatchPayload(payload);
+
       return;
     }
+
     runtimeWindow.successData = () => undefined;
     bridge.install();
+
     if (!runtimeWindow.successData) {
       throw new Error("Runtime benchmark bridge did not install");
     }
+
     dispatchPayload = runtimeWindow.successData.bind(runtimeWindow);
     dispatchPayload(payload);
   };
@@ -196,7 +213,9 @@ function createReplayState() {
     x: 12,
     y: 8,
   };
+
   const rawMap = { id: 1, name: "Benchmark", visibility: 30 };
+
   const rawNpcs = Object.fromEntries(
     npcs.map((entry) => [
       String(entry.id),
@@ -214,6 +233,7 @@ function createReplayState() {
       },
     ]),
   );
+
   const rawOthers = Object.fromEntries(
     Object.keys(other).map((id) => [
       id,
@@ -229,8 +249,10 @@ function createReplayState() {
       },
     ]),
   );
+
   return { rawHero, rawMap, rawNpcs, rawOthers };
 }
+
 type ReplayState = ReturnType<typeof createReplayState>;
 
 type ReplayWindow = Window & {
@@ -282,6 +304,7 @@ type FullReplayHarness = {
 };
 
 type BenchmarkController = ThisParameterType<BenchFunction>;
+
 type BenchmarkCycleEvent = Event & {
   task: BenchmarkController["tasks"][number];
 };
@@ -289,12 +312,14 @@ type BenchmarkCycleEvent = Event & {
 const heroMovementEvent = {
   h: { x: 12, y: 8 },
 } satisfies GameEvent;
+
 const alternateHeroMovementEvent = {
   h: { x: 13, y: 8 },
 } satisfies GameEvent;
 
 function RuntimeReplayProjection() {
   const heroX = useGameStore((state) => state.game?.hero.x);
+
   const visibleOtherCount = useOthersStore(
     (state) => Object.keys(state.othersById).length,
   );
@@ -315,14 +340,17 @@ function createCountingAdapter(
     getAllOthers: () => adapter.getAllOthers(),
     getGameSnapshot: () => {
       onGameSnapshotRead();
+
       return adapter.getGameSnapshot();
     },
     getNpc: (id) => {
       onNpcRead();
+
       return adapter.getNpc(id);
     },
     getOther: (id) => {
       onOtherRead();
+
       return adapter.getOther(id);
     },
     getOtherHandle: (id) => adapter.getOtherHandle(id),
@@ -338,9 +366,11 @@ function createFullReplayHarness(
   const reactEnvironment: typeof globalThis & {
     IS_REACT_ACT_ENVIRONMENT?: boolean;
   } = globalThis;
+
   const previousReactActEnvironment = reactEnvironment.IS_REACT_ACT_ENVIRONMENT;
   reactEnvironment.IS_REACT_ACT_ENVIRONMENT = false;
   const replayWindow: ReplayWindow = window;
+
   const previousRuntime = {
     Engine: replayWindow.Engine,
     g: replayWindow.g,
@@ -348,6 +378,7 @@ function createFullReplayHarness(
     map: replayWindow.map,
     successData: replayWindow.successData,
   };
+
   const { rawHero, rawMap, rawNpcs, rawOthers } = createReplayState();
   let gameSnapshotReads = 0;
   let dispatches = 0;
@@ -362,17 +393,22 @@ function createFullReplayHarness(
     if (event.h) {
       rawHero.x = rawHero.x === 12 ? 13 : 12;
     }
+
     for (const [id, entry] of Object.entries(event.other ?? {})) {
       if ("del" in entry) {
         delete rawOthers[id];
         continue;
       }
+
       if ("x" in entry) rawOthers[id].x = entry.x;
+
       if ("y" in entry) rawOthers[id].y = entry.y;
     }
+
     for (const deletion of event.npcs_del ?? []) {
       delete rawNpcs[String(deletion.id)];
     }
+
     return "game-result";
   };
 
@@ -380,6 +416,7 @@ function createFullReplayHarness(
     const niOthers = Object.fromEntries(
       Object.entries(rawOthers).map(([id, value]) => [id, { d: value }]),
     );
+
     replayWindow.Engine = {
       communication: { parseJSON: originalHandler },
       hero: { d: rawHero },
@@ -392,6 +429,7 @@ function createFullReplayHarness(
           ),
         getById: (id) => {
           const value = rawNpcs[String(id)];
+
           return value ? { d: value } : undefined;
         },
       },
@@ -416,6 +454,7 @@ function createFullReplayHarness(
 
   const baseAdapter =
     runtimeInterface === "ni" ? new NiRuntimeAdapter() : new SiRuntimeAdapter();
+
   const adapter = createCountingAdapter(
     baseAdapter,
     () => {
@@ -428,27 +467,33 @@ function createFullReplayHarness(
       otherReads += 1;
     },
   );
+
   const bridge = new MargonemRuntimeBridge({
     adapter,
     interface: runtimeInterface,
   });
+
   const projection = new RuntimeStateProjection({ adapter });
   const pipeline = new RuntimeEventPipeline({ bridge, projection });
   const dispatcher = new EventDispatcher(pipeline);
   projection.bootstrap();
   pipeline.install();
   dispatcher.register();
+
   if (!bridge.install()) {
     throw new Error(`Could not install ${runtimeInterface} replay bridge`);
   }
+
   pipeline.setReady(true);
 
   const container = document.createElement("div");
   document.body.append(container);
   const root: Root = createRoot(container);
+
   const onRender: ProfilerOnRenderCallback = () => {
     commits += 1;
   };
+
   flushSync(() => {
     root.render(
       createElement(
@@ -458,15 +503,19 @@ function createFullReplayHarness(
       ),
     );
   });
+
   const unsubscribeGameStore = useGameStore.subscribe(() => {
     gameStoreUpdates += 1;
   });
+
   const unsubscribeOthersStore = useOthersStore.subscribe(() => {
     othersStoreUpdates += 1;
   });
+
   const unsubscribeNpcsStore = useNpcsStore.subscribe(() => {
     npcsStoreUpdates += 1;
   });
+
   const resetMetrics = () => {
     commits = 0;
     dispatches = 0;
@@ -477,16 +526,19 @@ function createFullReplayHarness(
     otherReads = 0;
     othersStoreUpdates = 0;
   };
+
   const inbound =
     runtimeInterface === "ni"
       ? replayWindow.Engine?.communication.parseJSON
       : replayWindow.successData;
+
   if (!inbound) throw new Error("Runtime replay inbound seam is unavailable");
   let useAlternateHeroPosition = true;
 
   inbound.call(replayWindow, npcMetadataEvent);
   pipeline.flush();
   resetMetrics();
+
   return {
     bridge,
     cleanup: () => {
@@ -509,14 +561,17 @@ function createFullReplayHarness(
     dispatch: (payload) => {
       dispatches += 1;
       let effectivePayload = payload;
+
       if (payload === heroMovementEvent) {
         effectivePayload = useAlternateHeroPosition
           ? alternateHeroMovementEvent
           : heroMovementEvent;
         useAlternateHeroPosition = !useAlternateHeroPosition;
       }
+
       const result = inbound.call(replayWindow, effectivePayload);
       pipeline.flush();
+
       return result;
     },
     getMetrics: () => ({
@@ -535,6 +590,7 @@ function createFullReplayHarness(
 
 function getLatencyPercentiles(samples: readonly number[]) {
   const durations = [...samples].sort((left, right) => left - right);
+
   return {
     p50: durations[Math.floor(durations.length * 0.5)] ?? 0,
     p95: durations[Math.floor(durations.length * 0.95)] ?? 0,
@@ -544,16 +600,20 @@ function getLatencyPercentiles(samples: readonly number[]) {
 for (const runtimeInterface of ["ni", "si"] as const) {
   describe(`${runtimeInterface.toUpperCase()} full projected pipeline`, () => {
     let harness: FullReplayHarness | null = null;
+
     const getHarness = (benchmark: BenchmarkController) => {
       if (harness) return harness;
 
       harness = createFullReplayHarness(runtimeInterface);
+
       const handleCycle = (event: BenchmarkCycleEvent) => {
         if (!harness) return;
         const task = event.task;
         const metrics = harness.getMetrics();
+
         if (task.result) {
           const latency = getLatencyPercentiles(task.result.samples);
+
           if (runtimeReplayMetricsFile) {
             appendFileSync(
               runtimeReplayMetricsFile,
@@ -578,6 +638,7 @@ for (const runtimeInterface of ["ni", "si"] as const) {
             );
           }
         }
+
         if (
           task.name.startsWith("50-player movement") &&
           (metrics.gameSnapshotReads !== 0 ||
@@ -592,6 +653,7 @@ for (const runtimeInterface of ["ni", "si"] as const) {
             `${runtimeInterface.toUpperCase()} movement replay performed inactive overlay work`,
           );
         }
+
         if (
           task.name.startsWith("crowded battle") &&
           (metrics.gameSnapshotReads !== 0 ||
@@ -611,6 +673,7 @@ for (const runtimeInterface of ["ni", "si"] as const) {
         harness = null;
         benchmark.removeEventListener("cycle", handleCycle);
       };
+
       benchmark.addEventListener("cycle", handleCycle);
 
       return harness;

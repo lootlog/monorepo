@@ -24,15 +24,19 @@ const ScoringClockTime = Schema.String.check(
 const EventScoringState = JsonValue.annotate({
   identifier: "EventMutationResponseDto__schema0",
 });
+
 const EventOverviewScoringState = JsonValue.annotate({
   identifier: "EventOverviewResponseDto__schema0",
 });
+
 const KillHistoryBonusBreakdown = JsonValue.annotate({
   identifier: "EventKillHistoryResponseDto__schema0",
 });
+
 const MemberKillBonusBreakdown = JsonValue.annotate({
   identifier: "EventMemberKillHistoryResponseDto__schema0",
 });
+
 const KillScoringState = JsonValue.annotate({
   identifier: "KillDetailResponseDto__schema0",
 });

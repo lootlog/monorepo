@@ -9,8 +9,10 @@ const config = {
   authUrl: "https://auth.internal",
   apiKeyStatusSecret: Redacted.make("test"),
 };
+
 function socket(keyId: string, userId = "u", discordId = "d") {
   const closes: number[] = [];
+
   const data: SessionData = {
     userId,
     discordId,
@@ -31,6 +33,7 @@ function socket(keyId: string, userId = "u", discordId = "d") {
     },
     apiKeyLeaseExpiresAt: 60_000,
   };
+
   const result: GatewaySocket = {
     data,
     close: (code) => {
@@ -39,16 +42,20 @@ function socket(keyId: string, userId = "u", discordId = "d") {
     send: () => 0,
     getBufferedAmount: () => 0,
   };
+
   return { socket: result, closes };
 }
 
 test("renewal batches duplicate keys and refreshes a shared user once before extending leases", async () => {
   const first = socket("k"),
     second = socket("k");
+
   let calls = 0,
     refreshes = 0;
+
   const client = httpClientFromResponses(() => {
     calls += 1;
+
     return Effect.succeed(
       Response.json({
         keys: [
@@ -63,6 +70,7 @@ test("renewal batches duplicate keys and refreshes a shared user once before ext
       }),
     );
   });
+
   const leases = new ApiKeyLeases(
     config,
     client,
@@ -73,6 +81,7 @@ test("renewal batches duplicate keys and refreshes a shared user once before ext
       }),
     () => 30_000,
   );
+
   await Effect.runPromise(leases.renew());
   expect(calls).toBe(1);
   expect(refreshes).toBe(1);
@@ -87,6 +96,7 @@ test("revocation, unavailable auth and already expired authorization fail closed
     new Response(null, { status: 503 }),
   ]) {
     const target = socket("k");
+
     const leases = new ApiKeyLeases(
       config,
       httpClientFromResponses(() => Effect.succeed(response)),
@@ -94,11 +104,14 @@ test("revocation, unavailable auth and already expired authorization fail closed
       () => Effect.void,
       () => 30_000,
     );
+
     await Effect.runPromise(leases.renew());
     expect(target.closes).toEqual([1008]);
     expect(target.socket.data.apiKeyLeaseExpiresAt).toBe(0);
   }
+
   const target = socket("k");
+
   const leases = new ApiKeyLeases(
     config,
     httpClientFromResponses(() =>
@@ -108,6 +121,7 @@ test("revocation, unavailable auth and already expired authorization fail closed
     () => Effect.void,
     () => 60_000,
   );
+
   await Effect.runPromise(leases.renew());
   expect(target.closes).toEqual([1008]);
 });
@@ -116,9 +130,11 @@ test("slow independent user refreshes share the renewal deadline concurrently", 
   const targets = Array.from({ length: 16 }, (_, index) =>
     socket(`k${index}`, `u${index}`, `d${index}`),
   );
+
   let active = 0;
   let peak = 0;
   let completed = 0;
+
   const leases = new ApiKeyLeases(
     config,
     httpClientFromResponses(() =>
@@ -145,6 +161,7 @@ test("slow independent user refreshes share the renewal deadline concurrently", 
       }),
     () => 30_000,
   );
+
   await Effect.runPromise(
     Effect.gen(function* () {
       const renewal = yield* leases.renew().pipe(Effect.forkChild);
@@ -155,6 +172,7 @@ test("slow independent user refreshes share the renewal deadline concurrently", 
   expect(completed).toBe(16);
   expect(peak).toBeGreaterThan(1);
   expect(peak).toBeLessThanOrEqual(8);
+
   for (const target of targets) {
     expect(target.closes).toEqual([]);
     expect(target.socket.data.apiKeyLeaseExpiresAt).toBe(90_000);
@@ -165,6 +183,7 @@ test("failed, timed out or expired refreshes never extend authority", async () =
   for (const outcome of ["failure", "timeout", "expired"] as const) {
     const target = socket("k");
     let now = 30_000;
+
     const leases = new ApiKeyLeases(
       config,
       httpClientFromResponses(() =>
@@ -185,13 +204,16 @@ test("failed, timed out or expired refreshes never extend authority", async () =
       () => [target.socket],
       () => {
         if (outcome === "failure") return Effect.fail(new Error("unavailable"));
+
         if (outcome === "timeout") return Effect.never;
+
         return Effect.sync(() => {
           now = 60_000;
         });
       },
       () => now,
     );
+
     await Effect.runPromise(
       Effect.gen(function* () {
         const renewal = yield* leases.renew().pipe(Effect.forkChild);

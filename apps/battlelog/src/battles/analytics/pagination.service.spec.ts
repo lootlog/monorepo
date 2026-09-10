@@ -22,6 +22,7 @@ const createDatabaseFixture = () => {
       execute: mock(),
     },
   };
+
   return mockDrizzleService;
 };
 
@@ -168,11 +169,13 @@ describe("battle pagination", () => {
 
     it("should return previous cursor when cursor has a previous page", async () => {
       const currentCursor = `${new Date("2024-01-04").toISOString()}_4`;
+
       const previousWindow = [
         { ...mockBattles[0], id: "4", createdAt: new Date("2024-01-04") },
         { ...mockBattles[0], id: "3", createdAt: new Date("2024-01-03") },
         { ...mockBattles[0], id: "2", createdAt: new Date("2024-01-02") },
       ];
+
       drizzleService.db.query.battles.findMany
         .mockReturnValueOnce(Effect.succeed(mockBattles))
         .mockReturnValueOnce(Effect.succeed(previousWindow));
@@ -195,10 +198,12 @@ describe("battle pagination", () => {
 
     it("should not return previous cursor for the first cursor page", async () => {
       const currentCursor = `${new Date("2024-01-02").toISOString()}_2`;
+
       const previousWindow = [
         { ...mockBattles[0], id: "2", createdAt: new Date("2024-01-02") },
         { ...mockBattles[0], id: "1", createdAt: new Date("2024-01-01") },
       ];
+
       drizzleService.db.query.battles.findMany
         .mockReturnValueOnce(Effect.succeed(mockBattles))
         .mockReturnValueOnce(Effect.succeed(previousWindow));

@@ -17,11 +17,14 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 const groupedActions = new Map<HotkeyCategory, HotkeyActionConfig[]>();
+
 for (const config of HOTKEY_ACTIONS) {
   const actions = groupedActions.get(config.category);
+
   if (actions) actions.push(config);
   else groupedActions.set(config.category, [config]);
 }
+
 const categories = Array.from(groupedActions);
 
 const HOTKEY_CONTROL_CLASS_NAME = "ll:w-44";
@@ -29,9 +32,11 @@ const HOTKEY_CONTROL_CLASS_NAME = "ll:w-44";
 export const HotkeysSettingsTab = () => {
   const gameInterface = useGameStore((state) => state.game?.interface);
   const { bindings, setBinding, resetBinding, resetAll } = useHotkeysStore();
+
   const [capturingAction, setCapturingAction] = useState<HotkeyAction | null>(
     null,
   );
+
   const [captureError, setCaptureError] = useState<string | null>(null);
   const { t } = useTranslation();
 
@@ -41,6 +46,7 @@ export const HotkeysSettingsTab = () => {
     const saveBinding = (binding: HotkeyBinding) => {
       if (!setBinding(capturingAction, binding)) {
         setCaptureError(t("settings.hotkeys.conflict"));
+
         return;
       }
 
@@ -53,10 +59,12 @@ export const HotkeysSettingsTab = () => {
       event.stopPropagation();
 
       const ignoredKeys = ["Shift", "Control", "Alt", "Meta"];
+
       if (ignoredKeys.includes(event.key)) return;
 
       if (event.key === "Escape") {
         setCapturingAction(null);
+
         return;
       }
 
@@ -87,6 +95,7 @@ export const HotkeysSettingsTab = () => {
 
     window.addEventListener("keydown", handleCapture, { capture: true });
     window.addEventListener("mousedown", handleMouseCapture, { capture: true });
+
     return () => {
       window.removeEventListener("keydown", handleCapture, { capture: true });
       window.removeEventListener("mousedown", handleMouseCapture, {

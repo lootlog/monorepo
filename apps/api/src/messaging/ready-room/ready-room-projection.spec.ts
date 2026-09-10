@@ -86,15 +86,19 @@ describe("Ready Room projections", () => {
       it(`serializes HTTP snapshots and updates for ${viewer} with ${JSON.stringify(optionalFields)}`, async () => {
         const current = { ...aggregate, ...optionalFields };
         const projection = createReadyRoomProjection(current, viewer);
+
         const decoded = await Effect.runPromise(
           decodeDomainJson(PartyReadyRoomResponse, projection),
         );
+
         expect(decoded).toMatchObject(optionalFields);
+
         if (!("description" in optionalFields)) {
           expect(decoded).not.toHaveProperty("description");
           expect(decoded).not.toHaveProperty("minLvl");
           expect(decoded).not.toHaveProperty("maxLvl");
         }
+
         expect(
           await Effect.runPromise(
             decodeDomainJson(PartyReadyRoomsResponse, [projection]),
@@ -167,6 +171,7 @@ it("does not expose hidden target Organization IDs in private projections or upd
   ).toEqual(["guild-1"]);
   const update = createReadyRoomClientUpdate(room, "shared", ["guild-1"]);
   expect(update.type).toBe("UPSERT");
+
   if (update.type === "UPSERT")
     expect(update.projection.guildIds).toEqual(["guild-1"]);
   expect(createReadyRoomClientUpdate(room, "shared", []).type).toBe("REMOVE");

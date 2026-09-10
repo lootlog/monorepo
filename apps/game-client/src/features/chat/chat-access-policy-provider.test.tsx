@@ -10,14 +10,18 @@ import { useGlobalStore } from "@/store/global.store";
 import type { ChatMessage } from "@/api/chat.api";
 
 let restorePlatform: () => void;
+
 let wire: RealtimeWire;
+
 beforeEach(() => {
   disposeSocket();
   wire = new RealtimeWire();
+
   const realtime = new RealtimeClient({
     url: "https://gateway.example.test",
     webSocketFactory: () => wire,
   });
+
   restorePlatform = configureGameClientPlatform({
     fetch: globalThis.fetch,
     createRealtime: () => realtime,
@@ -36,6 +40,7 @@ it("purges and coalesces legacy chat refresh in the provider even without a moun
   useGlobalStore.setState({ gameState: { gameInitialized: false } });
   const key = ["/guilds/a/chat-messages"];
   const otherKey = ["/guilds/b/chat-messages"];
+
   const row: ChatMessage = {
     id: "old",
     guildId: "a",
@@ -54,20 +59,25 @@ it("purges and coalesces legacy chat refresh in the provider even without a moun
 
     canDelete: false,
   };
+
   queryClient.setQueryData(key, [row]);
   queryClient.setQueryData(otherKey, [{ ...row, guildId: "b" }]);
   const fetch = vi.fn<() => Promise<ChatMessage[]>>().mockResolvedValue([]);
+
   const observer = new QueryObserver(queryClient, {
     queryKey: key,
     queryFn: fetch,
     staleTime: Infinity,
   });
+
   const unsubscribe = observer.subscribe(() => {});
+
   const { unmount } = render(
     <SocketProvider>
       <div />
     </SocketProvider>,
   );
+
   act(() => wire.open());
   await act(async () => {
     for (let index = 0; index < 10; index++)

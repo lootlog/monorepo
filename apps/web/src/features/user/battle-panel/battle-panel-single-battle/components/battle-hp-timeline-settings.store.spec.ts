@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_BATTLE_HP_TIMELINE_LAYER_CONFIG } from "./battle-hp-timeline-layers";
 
 const SETTINGS_STORAGE_KEY = "lootlog-battle-hp-timeline-settings-v1";
+
 const LEGACY_LAYERS_STORAGE_KEY = "lootlog-battle-timeline-layers-v2";
 
 const createMemoryStorage = (initialValues: Record<string, string> = {}) => {
@@ -39,10 +40,12 @@ describe("useBattleHpTimelineSettingsStore", () => {
         unknownLayer: true,
       }),
     });
+
     vi.stubGlobal("localStorage", storage);
 
     const { useBattleHpTimelineSettingsStore } =
       await import("./battle-hp-timeline-settings.store");
+
     const state = useBattleHpTimelineSettingsStore.getState();
 
     expect(state.heightMode).toBe("default");
@@ -68,10 +71,12 @@ describe("useBattleHpTimelineSettingsStore", () => {
         version: 1,
       }),
     });
+
     vi.stubGlobal("localStorage", storage);
 
     const { useBattleHpTimelineSettingsStore } =
       await import("./battle-hp-timeline-settings.store");
+
     const state = useBattleHpTimelineSettingsStore.getState();
 
     expect(state.heightMode).toBe("expanded");

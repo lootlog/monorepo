@@ -125,6 +125,7 @@ export const makeUserKillQueries = (
     const npcTypes = query.npcType
       ? [query.npcType, ...(query.npcTypes ?? [])]
       : query.npcTypes;
+
     const periodStart = getKillStatsPeriodStart(query.period);
 
     return cached(
@@ -142,6 +143,7 @@ export const makeUserKillQueries = (
             const killsByType: Record<string, number> = {};
             const killsByWorld: Record<string, number> = {};
             let totalKills = 0;
+
             const npcMap = new Map<
               string,
               {
@@ -164,6 +166,7 @@ export const makeUserKillQueries = (
 
               const key = `${stat.world}:${stat.npcId}`;
               const existing = npcMap.get(key);
+
               if (existing) {
                 existing.totalKills += stat.totalKills;
               } else {
@@ -232,13 +235,16 @@ export const makeUserKillQueries = (
 
             const sortBy = query.sortBy ?? "kills";
             const sortAscending = query.sortOrder === "asc";
+
             const allNpcs = Array.from(npcMap.values()).sort((left, right) => {
               const difference =
                 sortBy === "level"
                   ? left.npcLvl - right.npcLvl
                   : left.totalKills - right.totalKills;
+
               return sortAscending ? difference : -difference;
             });
+
             const total = allNpcs.length;
 
             return {
@@ -257,6 +263,7 @@ export const makeUserKillQueries = (
   };
 
   const analytics = makeUserKillAnalytics(database, cache);
+
   return {
     getUserKillStats,
     getUserNpcKills,

@@ -56,6 +56,7 @@ export const makeNotificationJobRecurrence = (
 ) =>
   Effect.fn("notifications.jobs.scheduleNext")(function* (ruleId: number) {
     const rule = yield* store.findRule(ruleId);
+
     if (
       !rule ||
       !rule.enabled ||
@@ -65,8 +66,11 @@ export const makeNotificationJobRecurrence = (
     ) {
       return;
     }
+
     const statuses = yield* store.cycleStatuses(ruleId, rule.scheduledAt);
+
     if (statuses.some(({ status }) => !finalStatuses.includes(status))) return;
+
     const next = calculateNextOccurrenceInTimeZone({
       currentScheduledAt: rule.scheduledAt,
       intervalType: rule.scheduleIntervalType,
@@ -79,13 +83,18 @@ export const makeNotificationJobRecurrence = (
           ? GUILD_NOTIFICATION_TIMEZONE
           : "UTC"),
     });
+
     if (!next) return;
+
     if (rule.scheduledUntil && next > rule.scheduledUntil) return;
+
     if (!(yield* store.advance(ruleId, rule.scheduledAt, next))) return;
+
     const permitted =
       rule.ownerType === NotificationOwnerType.USER
         ? true
         : yield* hasRequiredGuildPermissions(rule.ownerId);
+
     yield* scheduleNotificationOccurrence(
       rule,
       next,

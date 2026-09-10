@@ -19,10 +19,12 @@ describe("decodeRabbitEvent", () => {
           icon,
           ownerId: "user-1",
         };
+
         const payload =
           routingKey === RabbitRoutingKey.GUILDS_CREATE
             ? { ...basePayload, roles: [] }
             : basePayload;
+
         expect(
           decodeRabbitEventJson(routingKey, JSON.stringify(payload)),
         ).toEqual(payload);

@@ -45,6 +45,7 @@ const isSingleEditApart = (left: string, right: string): boolean => {
     }
 
     const [firstIndex, secondIndex] = differentIndexes;
+
     return (
       secondIndex === firstIndex + 1 &&
       left[firstIndex] === right[secondIndex] &&
@@ -54,6 +55,7 @@ const isSingleEditApart = (left: string, right: string): boolean => {
 
   const [shorter, longer] =
     left.length < right.length ? [left, right] : [right, left];
+
   let shorterIndex = 0;
   let longerIndex = 0;
   let edits = 0;
@@ -81,6 +83,7 @@ const getMatchScore = (
   normalizedQuery: string,
 ): number | undefined => {
   const searchableValues: string[] = [];
+
   for (const value of [
     item.label,
     item.subsectionLabel,
@@ -104,6 +107,7 @@ const getMatchScore = (
   }
 
   const queryTokens = normalizedQuery.split(/\s+/);
+
   const searchableTokens = searchableValues.flatMap((value) =>
     value.split(/\s+/),
   );
@@ -140,13 +144,17 @@ export const searchSettings = (
   }
 
   const matches: { item: SettingsSearchItem; score: number }[] = [];
+
   for (const item of items) {
     const score = getMatchScore(item, normalizedQuery);
+
     if (score !== undefined) matches.push({ item, score });
   }
+
   matches.sort(
     (left, right) =>
       left.score - right.score || left.item.order - right.item.order,
   );
+
   return matches.map(({ item }) => item);
 };

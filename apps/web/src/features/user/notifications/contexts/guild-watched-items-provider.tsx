@@ -21,14 +21,17 @@ const getWatchedItemGuildIds = (
 
 export const GuildWatchedItemsProvider = ({ children }: PropsWithChildren) => {
   const queryClient = useQueryClient();
+
   const targetsQuery = useNotificationsUserControllerGetUserTargets({
     query: { queryKey: getNotificationsUserControllerGetUserTargetsQueryKey() },
   });
+
   const watchedItemsQuery = useNotificationsUserControllerGetWatchedItems({
     query: {
       queryKey: getNotificationsUserControllerGetWatchedItemsQueryKey(),
     },
   });
+
   const quickAddWatchedItemMutation =
     useNotificationsUserControllerQuickAddWatchedItem({
       mutation: {
@@ -37,29 +40,36 @@ export const GuildWatchedItemsProvider = ({ children }: PropsWithChildren) => {
         },
       },
     });
+
   const currentGuildId = useGuildId();
+
   const guildQuery = useGuildsControllerGetGuildById({
     guildId: currentGuildId ?? "",
   });
+
   const resolvedGuildId = guildQuery.data?.id;
 
   const resolveGuildId = (guildId: string): string => {
     if (resolvedGuildId && guildId === currentGuildId) {
       return resolvedGuildId;
     }
+
     return guildId;
   };
 
   const dmTarget =
     targetsQuery.data?.find((target) => target.targetType === "DM") ?? null;
+
   const hasActiveDm = Boolean(dmTarget?.active && dmTarget.canSend);
   const watchedItems = watchedItemsQuery.data ?? [];
+
   const watchedGuildIds = new Map(
     watchedItems.map((item) => [
       item.id,
       new Set(getWatchedItemGuildIds(item)),
     ]),
   );
+
   const state =
     targetsQuery.data !== undefined && watchedItemsQuery.data !== undefined
       ? "ready"
@@ -85,6 +95,7 @@ export const GuildWatchedItemsProvider = ({ children }: PropsWithChildren) => {
           const guildId = scope.guildId
             ? resolveGuildId(scope.guildId)
             : undefined;
+
           return watchedItems.some(
             (watchedItem) =>
               watchedItem.itemId === itemId &&
@@ -97,6 +108,7 @@ export const GuildWatchedItemsProvider = ({ children }: PropsWithChildren) => {
           const guildId = scope.guildId
             ? resolveGuildId(scope.guildId)
             : undefined;
+
           return (
             watchedItems.find(
               (watchedItem) =>

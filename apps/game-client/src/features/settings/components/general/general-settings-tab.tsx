@@ -11,15 +11,19 @@ import { useGameStore } from "@/store/game.store";
 
 export const GeneralSettingsTab: FC = () => {
   const gameInterface = useGameStore((state) => state.game?.interface);
+
   const {
     allowWorldSelection,
     animationEffectsEnabled,
     toggleAllowWorldSelection,
     toggleAnimationEffects,
   } = useSettingsStore();
+
   const { t } = useTranslation();
+
   const { accountId, data: accountPreferences } =
     useCurrentGameAccountPreferences();
+
   const updateAccountPreferences =
     useUpdateUserGameAccountPreferences(accountId);
 

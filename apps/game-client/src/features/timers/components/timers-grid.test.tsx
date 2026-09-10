@@ -17,6 +17,7 @@ import { createTimerHttpFixture } from "../timer-http-fixtures";
 import { TimersGrid } from "./timers-grid";
 
 const NOW = Date.parse("2026-04-22T10:00:00.000Z");
+
 const createTimer = (name: string, guildId = "guild-1") => {
   const timer = createTimerFixture({
     guildId,
@@ -24,6 +25,7 @@ const createTimer = (name: string, guildId = "guild-1") => {
     minSpawnTime: new Date(NOW + 5000).toISOString(),
     maxSpawnTime: new Date(NOW + 10000).toISOString(),
   });
+
   return {
     ...timer,
     npc: { ...timer.npc, name },
@@ -32,10 +34,12 @@ const createTimer = (name: string, guildId = "guild-1") => {
     maxTimeLeft: 10000,
   };
 };
+
 beforeEach(() => {
   useTimersStore.setState(useTimersStore.getInitialState(), true);
   vi.spyOn(Date, "now").mockReturnValue(NOW);
 });
+
 afterEach(() => {
   vi.useRealTimers();
   vi.restoreAllMocks();
@@ -43,6 +47,7 @@ afterEach(() => {
 
 it("renders guild metadata and hidden state and applies each organization's real permissions response", async () => {
   const user = userEvent.setup();
+
   const fixture = createTimerHttpFixture((request) =>
     Response.json(
       new URL(request.url).pathname.includes("guild-1")
@@ -50,10 +55,12 @@ it("renders guild metadata and hidden state and applies each organization's real
         : [Permission.LOOTLOG_TIMERS_RESET],
     ),
   );
+
   fixture.queryClient.setQueryData(
     getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
     [createTimerGuildFixture()],
   );
+
   const view = render(
     <QueryClientProvider client={fixture.queryClient}>
       <TimersGrid
@@ -68,6 +75,7 @@ it("renders guild metadata and hidden state and applies each organization's real
       />
     </QueryClientProvider>,
   );
+
   onTestFinished(() => {
     view.unmount();
     fixture.cleanup();
@@ -107,12 +115,15 @@ it("updates twenty countdowns without adding permission observers or remounting 
   vi.useFakeTimers();
   vi.setSystemTime(NOW);
   const fixture = createTimerHttpFixture();
+
   const permissionKey = getGuildsControllerGetGuildPermissionsQueryKey({
     guildId: "guild-1",
   });
+
   fixture.queryClient.setQueryData(permissionKey, [
     Permission.LOOTLOG_TIMERS_DELETE,
   ]);
+
   const view = render(
     <QueryClientProvider client={fixture.queryClient}>
       <TimersGrid
@@ -123,13 +134,16 @@ it("updates twenty countdowns without adding permission observers or remounting 
       />
     </QueryClientProvider>,
   );
+
   onTestFinished(() => {
     view.unmount();
     fixture.cleanup();
   });
+
   const query = fixture.queryClient
     .getQueryCache()
     .find({ queryKey: permissionKey });
+
   expect(query?.getObserversCount()).toBe(1);
   const labels = screen.getAllByText(/\[H\] Timer/);
   expect(screen.getAllByText("00:00:10")).toHaveLength(20);

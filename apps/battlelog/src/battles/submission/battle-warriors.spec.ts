@@ -185,6 +185,7 @@ describe("WarriorsRecordSchema", () => {
     });
 
     expect(Result.isSuccess(result)).toBe(true);
+
     if (Result.isFailure(result)) return;
 
     expect(result.success.events[1]?.f.w).toBeUndefined();

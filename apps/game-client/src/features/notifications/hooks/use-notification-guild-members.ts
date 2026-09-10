@@ -34,6 +34,7 @@ const getStableMembersLookup = (
   )[],
 ) => {
   const cachedLookup = cacheOwner.lookup;
+
   const unchanged =
     guildIds.length === memberDataByGuildId.length &&
     cachedLookup?.memberDataByGuildId.size === guildIds.length &&
@@ -42,12 +43,14 @@ const getStableMembersLookup = (
         cachedLookup.memberDataByGuildId.get(guildId) ===
         memberDataByGuildId[index],
     );
+
   if (unchanged && cachedLookup) return cachedLookup.membersByGuildId;
 
   const nextMemberDataByGuildId = new Map<
     string,
     MemberSummaryResponseDtoOutput[] | undefined
   >();
+
   const nextMembersByGuildId: NotificationGuildMembersByGuildId = {};
   guildIds.forEach((guildId, index) => {
     const memberData = memberDataByGuildId[index];
@@ -58,11 +61,14 @@ const getStableMembersLookup = (
         ? cachedLookup.membersByGuildId[guildId]
         : mapGuildMembersByUserId(memberData);
   });
+
   const nextCache = {
     memberDataByGuildId: nextMemberDataByGuildId,
     membersByGuildId: nextMembersByGuildId,
   };
+
   cacheOwner.lookup = nextCache;
+
   return nextMembersByGuildId;
 };
 
@@ -73,11 +79,13 @@ export const useNotificationGuildMembers = (
   const [cacheOwner] = useState<MembersLookupCacheOwner>(() => ({}));
   const invalidatedMemberKeysRef = useRef<Set<string>>(new Set());
   const guildIds = [...new Set(notifications.map(({ guildId }) => guildId))];
+
   const memberQueries = useQueries({
     queries: guildIds.map((guildId) =>
       getGuildMembersSummaryQueryOptions({ guildId }),
     ),
   });
+
   const membersByGuildId = getStableMembersLookup(
     cacheOwner,
     guildIds,
@@ -93,6 +101,7 @@ export const useNotificationGuildMembers = (
 
       if (invalidatedMemberKeysRef.current.has(memberKey)) {
         nextInvalidatedMemberKeys.add(memberKey);
+
         return;
       }
 

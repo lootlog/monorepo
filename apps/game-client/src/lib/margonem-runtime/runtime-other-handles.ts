@@ -14,8 +14,10 @@ class RuntimeOtherHandleRegistry {
     upserts?: Readonly<Record<string, OtherHandle>>;
   }): void {
     let writableHandlesById: Record<string, OtherHandle> | null = null;
+
     const getWritableHandlesById = () => {
       writableHandlesById ??= { ...this.handlesById };
+
       return writableHandlesById;
     };
 
@@ -23,8 +25,10 @@ class RuntimeOtherHandleRegistry {
       if (!(id in this.handlesById)) continue;
       delete getWritableHandlesById()[id];
     }
+
     for (const [id, handle] of Object.entries(batch.upserts ?? {})) {
       const currentHandle = (writableHandlesById ?? this.handlesById)[id];
+
       if (currentHandle === handle) continue;
       getWritableHandlesById()[id] = handle;
     }

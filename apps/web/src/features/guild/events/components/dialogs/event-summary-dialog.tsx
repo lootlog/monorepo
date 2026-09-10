@@ -49,6 +49,7 @@ export const EventSummaryDialog = ({
     eventId,
     eventName,
   });
+
   const renderStage = () => {
     if (isLoading) {
       return (
@@ -62,6 +63,7 @@ export const EventSummaryDialog = ({
         </div>
       );
     }
+
     if (error || !data || !deck) {
       return (
         <div className="mx-auto flex h-full max-w-xl flex-col items-center justify-center px-6 text-center">
@@ -84,12 +86,15 @@ export const EventSummaryDialog = ({
         </div>
       );
     }
+
     if (deck.mode === "sparse") {
       return <WrappedSparseSummary eventName={eventName} facts={deck.facts} />;
     }
+
     if (!activeSlide) {
       return null;
     }
+
     return (
       <>
         <AnimatePresence initial={false} mode="wait" custom={direction}>

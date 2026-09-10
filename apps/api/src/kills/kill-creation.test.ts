@@ -37,12 +37,14 @@ const payload = {
 describe("kill creation Effect module", () => {
   it("returns the established dedup response when no new destination accepts a kill", async () => {
     const boundary = await createDatabaseBoundary();
+
     try {
       const cache: KillCreationCache = {
         deleteByPattern: () => Effect.succeed(0),
         deleteIfValue: () => Effect.succeed(0),
         setNx: () => Effect.succeed(false),
       };
+
       const createKill = makeKillCreation(boundary.database, cache, logger);
 
       await expect(
@@ -55,12 +57,14 @@ describe("kill creation Effect module", () => {
 
   it("maps a Redis dedup failure to the typed module error", async () => {
     const boundary = await createDatabaseBoundary();
+
     try {
       const cache: KillCreationCache = {
         deleteByPattern: () => Effect.succeed(0),
         deleteIfValue: () => Effect.succeed(0),
         setNx: () => Effect.fail(new Error("redis unavailable")),
       };
+
       const createKill = makeKillCreation(boundary.database, cache, logger);
 
       await expect(
@@ -75,6 +79,7 @@ describe("kill creation Effect module", () => {
 it("a scoped key cannot suppress later personal or other-organization kill records", async () => {
   const boundary = await createDatabaseBoundary();
   const keys = new Set<string>();
+
   const cache: KillCreationCache = {
     deleteByPattern: () => Effect.succeed(0),
     deleteIfValue: () => Effect.succeed(0),
@@ -82,9 +87,11 @@ it("a scoped key cannot suppress later personal or other-organization kill recor
       Effect.sync(() => {
         if (keys.has(key)) return false;
         keys.add(key);
+
         return true;
       }),
   };
+
   try {
     const database = boundary.database;
     await boundary.run(
@@ -118,6 +125,7 @@ it("a scoped key cannot suppress later personal or other-organization kill recor
       }),
     );
     const createKill = makeKillCreation(database, cache, logger);
+
     const keyRequest = createKill("discord-1", payload).pipe(
       Effect.provideService(ForwardAuthIdentity, {
         userId: "user",
@@ -131,6 +139,7 @@ it("a scoped key cannot suppress later personal or other-organization kill recor
         },
       }),
     );
+
     expect(await boundary.run(keyRequest)).toEqual({ updated: 1 });
     expect(
       await boundary.run(database.select().from(userKillStatsTable)),
@@ -181,12 +190,14 @@ for (const { name, failingTable, failedTotalTable } of [
   it(`retries rolled-back writes to ${name} stats without duplicating successful destinations`, async () => {
     const boundary = await createDatabaseBoundary();
     const claims = new Map<string, string>();
+
     const cache: KillCreationCache = {
       deleteByPattern: () => Effect.succeed(0),
       setNx: (key, token) =>
         Effect.sync(() => {
           if (claims.has(key)) return false;
           claims.set(key, token);
+
           return true;
         }),
       deleteIfValue: (key, token) =>
@@ -194,6 +205,7 @@ for (const { name, failingTable, failedTotalTable } of [
           if (claims.get(key) === token) claims.delete(key);
         }),
     };
+
     try {
       const database = boundary.database;
       await boundary.run(
@@ -226,6 +238,7 @@ for (const { name, failingTable, failedTotalTable } of [
         ),
       );
       const personalData = failingTable === userKillStatsBucketTable;
+
       const request = makeKillCreation(
         database,
         cache,
@@ -243,6 +256,7 @@ for (const { name, failingTable, failedTotalTable } of [
           },
         }),
       );
+
       await boundary.run(request);
       expect(
         await boundary.run(database.select().from(failedTotalTable)),
@@ -299,21 +313,25 @@ it("does not release a replacement claim when a failed write outlives its claim"
   const boundary = await createDatabaseBoundary();
   const claims = new Map<string, string>();
   const replacementToken = "replacement-owner";
+
   const cache: KillCreationCache = {
     deleteByPattern: () => Effect.succeed(0),
     setNx: (key, token) =>
       Effect.sync(() => {
         if (claims.has(key)) return false;
         claims.set(key, token);
+
         return true;
       }),
     deleteIfValue: (key, token) =>
       Effect.sync(() => {
         // The original claim expired and another request acquired it before cleanup.
         claims.set(key, replacementToken);
+
         if (claims.get(key) === token) claims.delete(key);
       }),
   };
+
   try {
     const database = boundary.database;
     await boundary.run(
@@ -321,11 +339,13 @@ it("does not release a replacement claim when a failed write outlives its claim"
         sql`ALTER TABLE ${userKillStatsBucketTable} ADD CONSTRAINT fail_write CHECK (false)`,
       ),
     );
+
     const request = makeKillCreation(
       database,
       cache,
       logger,
     )("discord-1", payload);
+
     await boundary.run(request);
     expect([...claims.values()]).toEqual([replacementToken]);
     await boundary.run(

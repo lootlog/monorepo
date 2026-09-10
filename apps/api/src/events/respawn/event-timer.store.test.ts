@@ -19,6 +19,7 @@ describe("event timer name lookup", () => {
     "matches literal hero names and isolates Organization and world (%j)",
     async ({ names }) => {
       const boundary = await createDatabaseBoundary();
+
       try {
         const database = boundary.database;
         await boundary.run(
@@ -34,6 +35,7 @@ describe("event timer name lookup", () => {
             .insert(memberTable)
             .values(createMemberFixture({ guildId: "guild-a" })),
         );
+
         const timer = (
           name: string,
           index: number,
@@ -50,6 +52,7 @@ describe("event timer name lookup", () => {
           maxSpawnTime: new Date(1000),
           updatedAt: new Date(0),
         });
+
         await boundary.run(
           database
             .insert(timerTable)
@@ -60,6 +63,7 @@ describe("event timer name lookup", () => {
               timer(names[0], 52, "guild-a", "Other"),
             ]),
         );
+
         const result = await boundary.run(
           makeEventTimerStore(database).findEventHeroTimersByNames(
             "guild-a",
@@ -67,6 +71,7 @@ describe("event timer name lookup", () => {
             [...names],
           ),
         );
+
         expect(result.map((row) => row.timerKey).sort()).toEqual(
           names.map((_, index) => `hero-${index}`).sort(),
         );

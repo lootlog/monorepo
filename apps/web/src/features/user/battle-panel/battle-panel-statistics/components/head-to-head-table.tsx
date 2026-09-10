@@ -53,6 +53,7 @@ export function HeadToHeadTable({
 }: HeadToHeadTableProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+
   const handleNavigateToHeadToHead = () => {
     void navigate({
       to: ROUTES.user.battlePanel.h2h,

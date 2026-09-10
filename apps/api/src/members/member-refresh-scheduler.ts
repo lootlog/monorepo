@@ -54,12 +54,14 @@ export interface MemberRefreshSchedulerPorts {
 }
 
 const USER_LOCK_TTL_SECONDS = 30;
+
 const EXTEND_LOCK_SCRIPT = `
 if redis.call("GET", KEYS[1]) == ARGV[1] then
   return redis.call("EXPIRE", KEYS[1], ARGV[2])
 end
 return 0
 `;
+
 const RELEASE_LOCK_SCRIPT = `
 if redis.call("GET", KEYS[1]) == ARGV[1] then
   return redis.call("DEL", KEYS[1])
@@ -71,7 +73,9 @@ const jobId = (userId: string, guildId: string) =>
   ["member", "refresh", userId, guildId]
     .map((value) => value.replaceAll(":", "_"))
     .join("-");
+
 const lockKey = (userId: string) => `member:refresh:lock:${userId}`;
+
 const errorCode = (error: unknown) =>
   typeof error === "object" &&
   error !== null &&
@@ -94,6 +98,7 @@ export const makeMemberRefreshScheduler = (
         attributes: { adapter: "bullmq", retryCount: 0 },
       }),
     );
+
   const updateExisting = async (
     job: Job<MemberRefreshJobData>,
     data: MemberRefreshJobData,
@@ -105,7 +110,9 @@ export const makeMemberRefreshScheduler = (
       ...data,
       priority: Math.min(job.data.priority, data.priority),
     };
+
     await job.updateData(nextData);
+
     if ((job.opts.priority ?? nextData.priority) > nextData.priority) {
       try {
         await job.changePriority({ priority: nextData.priority });
@@ -118,7 +125,9 @@ export const makeMemberRefreshScheduler = (
         });
       }
     }
+
     if (state !== "delayed") return;
+
     try {
       if (delay === 0) await job.promote();
       else await job.changeDelay(delay);
@@ -126,6 +135,7 @@ export const makeMemberRefreshScheduler = (
       if (errorCode(error) === -3 && (await job.getState()) !== "delayed") {
         return;
       }
+
       logger.log({
         level: "debug",
         message: "Failed to reschedule delayed member refresh job",
@@ -134,6 +144,7 @@ export const makeMemberRefreshScheduler = (
       });
     }
   };
+
   const add = (id: string, data: MemberRefreshJobData, delay: number) =>
     queue.add("member-refresh", data, {
       jobId: id,
@@ -149,32 +160,43 @@ export const makeMemberRefreshScheduler = (
     data: MemberRefreshJobData,
   ) {
     const nextRefreshAt = yield* ports.nextRefreshAt(data.userId);
+
     const delay = nextRefreshAt
       ? Math.max(nextRefreshAt.getTime() - (yield* Clock.currentTimeMillis), 0)
       : 0;
+
     yield* bull("members.refresh.queue", async () => {
       const id = jobId(data.userId, data.guildId);
       const existing = await queue.getJob(id);
+
       if (!existing) {
         await add(id, data, delay);
+
         return;
       }
+
       const state = await existing.getState();
+
       if (["completed", "failed", "unknown"].includes(state)) {
         try {
           await existing.remove();
         } catch (error) {
           if (errorCode(error) !== -1) throw error;
         }
+
         await add(id, data, delay);
+
         return;
       }
+
       await updateExisting(existing, data, delay, state);
     });
     yield* ports.recordMetric({ outcome: "queued", reason: data.reason });
+
     if (delay > 0) {
       yield* ports.recordMetric({ outcome: "delayed", reason: data.reason });
     }
+
     return { queued: true, nextRefreshAt };
   });
 

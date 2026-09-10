@@ -58,6 +58,7 @@ import {
 import type { ReservationCatalogAdapter } from "./reservation-catalog.adapter.js";
 
 type Reservation = typeof reservationTable.$inferSelect;
+
 type ReservationWithGuild = Reservation & {
   guild: typeof guildTable.$inferSelect;
 };
@@ -116,6 +117,7 @@ const findReservationWithGuild = (
     .pipe(
       Effect.map((rows) => {
         const row = rows[0];
+
         return row ? { ...row.reservation, guild: row.guild } : null;
       }),
     );
@@ -130,14 +132,17 @@ const prepareReminder = (
 ): Effect.Effect<ReminderContext | null, unknown> =>
   Effect.gen(function* () {
     if (options.reminderMinutesBefore === null) return null;
+
     const scheduledFor = new Date(
       options.startsAt.getTime() - options.reminderMinutesBefore * 60_000,
     );
+
     if (scheduledFor.getTime() <= (yield* Clock.currentTimeMillis)) {
       return yield* Effect.fail(
         new InvalidEntityError({ code: "REMINDER_TIME_ELAPSED" }),
       );
     }
+
     const targets = yield* database
       .select()
       .from(notificationTargetTable)
@@ -153,12 +158,15 @@ const prepareReminder = (
       )
       .orderBy(desc(notificationTargetTable.updatedAt))
       .limit(1);
+
     const target = targets[0];
+
     if (!target) {
       return yield* Effect.fail(
         new InvalidEntityError({ code: "DM_TARGET_REQUIRED" }),
       );
     }
+
     return { target, scheduledFor };
   });
 
@@ -178,7 +186,9 @@ const getOrCreateReminderRule = (
         ),
       )
       .limit(1);
+
     if (existing[0]) return existing[0];
+
     return yield* database.transaction((transaction) =>
       Effect.gen(function* () {
         const targets = yield* transaction
@@ -195,8 +205,11 @@ const getOrCreateReminderRule = (
           )
           .orderBy(desc(notificationTargetTable.updatedAt))
           .limit(1);
+
         const target = targets[0];
+
         if (!target) return null;
+
         const rules = yield* transaction
           .insert(notificationRuleTable)
           .values({
@@ -209,11 +222,14 @@ const getOrCreateReminderRule = (
             updatedAt: new Date(yield* Clock.currentTimeMillis),
           })
           .returning();
+
         const rule = rules[0];
+
         if (!rule) return null;
         yield* transaction
           .insert(notificationRuleTargetTable)
           .values({ ruleId: rule.id, targetId: target.id });
+
         return rule;
       }),
     );
@@ -238,10 +254,12 @@ const cancelReminder = (
           inArray(notificationJobTable.status, ["PENDING", "BLOCKED"]),
         ),
       );
+
     yield* Effect.forEach(jobs, ({ id }) => ports.removeNotification(id), {
       concurrency: "unbounded",
       discard: true,
     });
+
     if (jobs.length > 0) {
       yield* database
         .update(notificationJobTable)
@@ -274,13 +292,16 @@ const scheduleReminder = (
   Effect.gen(function* () {
     if (!options.context) return;
     const rule = yield* getOrCreateReminderRule(database, options.discordId);
+
     if (!rule) {
       return yield* Effect.fail(
         new InvalidEntityError({ code: "DM_TARGET_REQUIRED" }),
       );
     }
+
     const startsAtDiscord = formatDiscordRelativeTimestamp(options.startsAt);
     const message = `Rezerwacja ${options.spotName} w ${options.organizationName} rozpoczyna się ${startsAtDiscord}.`;
+
     const idempotencyKey = [
       "scheduled",
       rule.id,
@@ -289,6 +310,7 @@ const scheduleReminder = (
       options.reservationId,
       options.context.scheduledFor.toISOString(),
     ].join(":");
+
     const values = {
       id: randomUUID(),
       ruleId: rule.id,
@@ -315,18 +337,22 @@ const scheduleReminder = (
       blockedReason: null,
       updatedAt: new Date(yield* Clock.currentTimeMillis),
     };
+
     const inserted = yield* database
       .insert(notificationJobTable)
       .values(values)
       .onConflictDoNothing({ target: notificationJobTable.idempotencyKey })
       .returning();
+
     let job = inserted[0] ?? null;
+
     if (!job) {
       const existing = yield* database
         .select()
         .from(notificationJobTable)
         .where(eq(notificationJobTable.idempotencyKey, idempotencyKey))
         .limit(1);
+
       if (existing[0]?.status === "CANCELED") {
         job = yield* database.transaction((transaction) =>
           Effect.gen(function* () {
@@ -336,15 +362,18 @@ const scheduleReminder = (
                 idempotencyKey: `${idempotencyKey}:canceled:${randomUUID()}`,
               })
               .where(eq(notificationJobTable.id, existing[0].id));
+
             const created = yield* transaction
               .insert(notificationJobTable)
               .values(values)
               .returning();
+
             return created[0] ?? null;
           }),
         );
       }
     }
+
     if (!job) return;
     yield* ports
       .enqueueNotification(
@@ -382,6 +411,7 @@ const publishEvent = (
     reservationId: input.reservation.id,
     spotId: input.reservation.spotId,
   };
+
   const legacy = {
     guildId: input.sourceGuildId,
     reservation: {
@@ -393,6 +423,7 @@ const publishEvent = (
       createdBy: input.actorDiscordId,
     },
   };
+
   const publications = [
     ports.publish("guilds.reservations.v2.changed", v2),
     ...(action === "updated"
@@ -406,6 +437,7 @@ const publishEvent = (
           ),
         ]),
   ];
+
   return Effect.all(publications, {
     concurrency: "unbounded",
     discard: true,
@@ -444,6 +476,7 @@ export const makeReservationMutationsDataLayer = (
           const keyScope = yield* apiKeyOrganizationFilter(
             reservationTable.guildId,
           );
+
           return yield* database
             .select()
             .from(reservationTable)
@@ -502,17 +535,21 @@ export const makeReservationMutationsDataLayer = (
         readonly reminderNeedsReschedule: boolean;
       }) => {
         const { reservation } = options;
+
         if (
           !options.reminderNeedsReschedule ||
           reservation.reminderMinutesBefore === null
         ) {
           return Effect.succeed(null);
         }
+
         const scheduledFor = new Date(
           reservation.startsAt.getTime() -
             reservation.reminderMinutesBefore * 60_000,
         );
+
         if (scheduledFor.getTime() <= Date.now()) return Effect.succeed(null);
+
         return prepareReminder(database, {
           discordId: options.discordId,
           startsAt: reservation.startsAt,
@@ -590,6 +627,7 @@ export const makeReservationMutationsDataLayer = (
               .limit(1)
               .pipe(Effect.map((rows) => rows[0] ?? null)),
           ]);
+
           if (!member || !guild) {
             return yield* Effect.fail(
               new PermissionDeniedError({
@@ -597,26 +635,32 @@ export const makeReservationMutationsDataLayer = (
               }),
             );
           }
+
           const settings = resolveReservationSettings(guild);
+
           const range = {
             startsAt: new Date(data.startsAt),
             endsAt: new Date(data.endsAt),
           };
+
           yield* Effect.try({
             try: () => validateReservationTime({ ...range, settings }),
             catch: (cause) => cause,
           });
           const reminderMinutesBefore = data.reminderMinutesBefore ?? null;
+
           const reminderContext = yield* prepareReminder(database, {
             discordId: context.discordId,
             startsAt: range.startsAt,
             reminderMinutesBefore,
           });
+
           const createResult = yield* database.transaction((transaction) =>
             Effect.gen(function* () {
               yield* transaction.execute(
                 sql`SET TRANSACTION ISOLATION LEVEL SERIALIZABLE`,
               );
+
               const overlap = yield* transaction
                 .select({ id: reservationTable.id })
                 .from(reservationTable)
@@ -629,7 +673,9 @@ export const makeReservationMutationsDataLayer = (
                   ),
                 )
                 .limit(1);
+
               if (overlap.length > 0) return { kind: "overlap" } as const;
+
               const active = yield* transaction
                 .select({ count: count() })
                 .from(reservationTable)
@@ -650,12 +696,14 @@ export const makeReservationMutationsDataLayer = (
                     ),
                   ),
                 );
+
               if (
                 (active[0]?.count ?? 0) >=
                 settings.reservationActiveLimitPerSpot
               ) {
                 return { kind: "active-limit" } as const;
               }
+
               const rows = yield* transaction
                 .insert(reservationTable)
                 .values({
@@ -675,16 +723,19 @@ export const makeReservationMutationsDataLayer = (
                   updatedAt: new Date(yield* Clock.currentTimeMillis),
                 })
                 .returning();
+
               return rows[0]
                 ? ({ kind: "created", reservation: rows[0] } as const)
                 : ({ kind: "insert-failed" } as const);
             }),
           );
+
           if (createResult.kind === "overlap") {
             return yield* Effect.fail(
               new ResourceConflictError({ code: "RESERVATION_OVERLAP" }),
             );
           }
+
           if (createResult.kind === "active-limit") {
             return yield* Effect.fail(
               new InvalidEntityError({
@@ -693,9 +744,11 @@ export const makeReservationMutationsDataLayer = (
               }),
             );
           }
+
           if (createResult.kind === "insert-failed") {
             return yield* Effect.die("Reservation insert returned no row");
           }
+
           const created = { ...createResult.reservation, guild };
           yield* schedule({
             context: reminderContext,
@@ -718,6 +771,7 @@ export const makeReservationMutationsDataLayer = (
             reservation: created,
             actorDiscordId: context.discordId,
           });
+
           return presentReservation(created, {
             guildId: context.guildId,
             userId: context.userId,
@@ -737,12 +791,15 @@ export const makeReservationMutationsDataLayer = (
             database,
             options.discordId,
           );
+
           const reservation = yield* findOwned({ ...options, guildIds });
+
           if (!reservation) {
             return yield* Effect.fail(
               new ResourceNotFoundError({ code: "RESERVATION_NOT_FOUND" }),
             );
           }
+
           const range = {
             startsAt: options.data.startsAt
               ? new Date(options.data.startsAt)
@@ -751,24 +808,30 @@ export const makeReservationMutationsDataLayer = (
               ? new Date(options.data.endsAt)
               : reservation.endsAt,
           };
+
           const comment =
             options.data.comment === undefined
               ? reservation.comment
               : options.data.comment || null;
+
           const reminderMinutesBefore =
             options.data.reminderMinutesBefore === undefined
               ? reservation.reminderMinutesBefore
               : options.data.reminderMinutesBefore;
+
           const timeChanged =
             range.startsAt.getTime() !== reservation.startsAt.getTime() ||
             range.endsAt.getTime() !== reservation.endsAt.getTime();
+
           const reminderNeedsReschedule =
             timeChanged ||
             reminderMinutesBefore !== reservation.reminderMinutesBefore;
+
           const audienceGuildIds = yield* visibleReservationGuildIds(
             database,
             reservation.guildId,
           );
+
           if (timeChanged) {
             yield* Effect.try({
               try: () =>
@@ -781,6 +844,7 @@ export const makeReservationMutationsDataLayer = (
               catch: (cause) => cause,
             });
           }
+
           const reminderContext = reminderNeedsReschedule
             ? yield* prepareReminder(database, {
                 discordId: options.discordId,
@@ -788,16 +852,19 @@ export const makeReservationMutationsDataLayer = (
                 reminderMinutesBefore,
               })
             : null;
+
           const previousReminderContext = yield* preparePreviousReminder({
             reservation,
             discordId: options.discordId,
             reminderNeedsReschedule,
           });
+
           const updateResult = yield* database.transaction((transaction) =>
             Effect.gen(function* () {
               yield* transaction.execute(
                 sql`SET TRANSACTION ISOLATION LEVEL SERIALIZABLE`,
               );
+
               if (timeChanged) {
                 const overlap = yield* transaction
                   .select({ id: reservationTable.id })
@@ -812,8 +879,10 @@ export const makeReservationMutationsDataLayer = (
                     ),
                   )
                   .limit(1);
+
                 if (overlap.length > 0) return null;
               }
+
               const rows = yield* transaction
                 .update(reservationTable)
                 .set({
@@ -824,15 +893,19 @@ export const makeReservationMutationsDataLayer = (
                 })
                 .where(eq(reservationTable.id, reservation.id))
                 .returning();
+
               return rows[0] ?? reservation;
             }),
           );
+
           if (!updateResult) {
             return yield* Effect.fail(
               new ResourceConflictError({ code: "RESERVATION_OVERLAP" }),
             );
           }
+
           const updated = { ...updateResult, guild: reservation.guild };
+
           if (reminderNeedsReschedule) {
             yield* cancelReminder(database, ports, updated.id).pipe(
               Effect.andThen(
@@ -854,6 +927,7 @@ export const makeReservationMutationsDataLayer = (
               ),
             );
           }
+
           yield* publishEvent(ports, "updated", {
             sourceGuildId: updated.guildId,
             audienceGuildIds,
@@ -861,6 +935,7 @@ export const makeReservationMutationsDataLayer = (
             actorDiscordId:
               reservation.legacyCreatedByDiscordId ?? options.discordId,
           });
+
           return presentReservation(updated, {
             guildId: null,
             userId: options.userId,
@@ -893,18 +968,23 @@ export const makeReservationMutationsDataLayer = (
                 database,
                 context.guildId,
               );
+
               const reservation = yield* findVisible(reservationId, visible);
+
               if (!reservation) {
                 return yield* Effect.fail(
                   new ResourceNotFoundError({ code: "RESERVATION_NOT_FOUND" }),
                 );
               }
+
               const isOwned =
                 reservation.createdByUserId === context.userId ||
                 reservation.legacyCreatedByDiscordId === context.discordId;
+
               const canModerateSource =
                 reservation.guildId === context.guildId &&
                 canModerateReservations(context);
+
               if (!isOwned && !canModerateSource) {
                 return yield* Effect.fail(
                   new PermissionDeniedError({
@@ -912,6 +992,7 @@ export const makeReservationMutationsDataLayer = (
                   }),
                 );
               }
+
               const audienceGuildIds =
                 reservation.guildId === context.guildId
                   ? visible
@@ -919,6 +1000,7 @@ export const makeReservationMutationsDataLayer = (
                       database,
                       reservation.guildId,
                     );
+
               yield* deletePersisted({
                 reservation,
                 audienceGuildIds,
@@ -932,17 +1014,20 @@ export const makeReservationMutationsDataLayer = (
             "deleteMyReservation",
             Effect.gen(function* () {
               const guildIds = yield* accessibleGuildIds(database, discordId);
+
               const reservation = yield* findOwned({
                 reservationId,
                 guildIds,
                 userId,
                 discordId,
               });
+
               if (!reservation) {
                 return yield* Effect.fail(
                   new ResourceNotFoundError({ code: "RESERVATION_NOT_FOUND" }),
                 );
               }
+
               yield* deletePersisted({
                 reservation,
                 audienceGuildIds: yield* visibleReservationGuildIds(

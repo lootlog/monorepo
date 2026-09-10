@@ -1,4 +1,5 @@
 import { defineConfig } from "orval";
+
 export default defineConfig(
   Object.fromEntries(
     ["main", "activity", "battlelog", "search"].map((service) => [

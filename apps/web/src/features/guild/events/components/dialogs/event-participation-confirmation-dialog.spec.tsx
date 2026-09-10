@@ -30,45 +30,59 @@ const initialData: PendingParticipationConfirmationsResponseDto = {
   items: [],
   expiredItems: [],
 };
+
 const mocks = {
   confirmParticipation: vi.fn<() => Promise<Response>>(),
   data: initialData,
 };
+
 let queryClient: QueryClient;
+
 let requests: Request[];
+
 const queryKey = getListPendingParticipationConfirmationsQueryKey({
   guildId: "guild-1",
   eventId: "event-1",
 });
+
 function render(element: ReactElement) {
   queryClient.setQueryData(queryKey, mocks.data);
+
   return renderElement(
     <QueryClientProvider client={queryClient}>{element}</QueryClientProvider>,
   );
 }
+
 async function expectAcknowledged(killId: string) {
   await act(() => vi.advanceTimersByTimeAsync(0));
+
   const request = requests.find((request) =>
     request.url.endsWith("/participation-confirmations/expired/acknowledge"),
   );
+
   if (!request) throw new Error("Missing acknowledgement request");
   expect(new URL(request.url).pathname).toBe(
     "/guilds/guild-1/events/event-1/participation-confirmations/expired/acknowledge",
   );
   expect(await request.json()).toEqual({ killIds: [killId] });
 }
+
 await initializeTestTranslations({});
 
 describe("EventParticipationConfirmationDialog", () => {
   it("keeps bulk confirmation busy after one request fails until every request settles", async () => {
     let failFirst = (_reason: Error) => {};
+
     let finishLast = () => {};
+
     const first = new Promise<Response>((_resolve, reject) => {
       failFirst = reject;
     });
+
     const last = new Promise<Response>((resolve) => {
       finishLast = () => resolve(Response.json({}));
     });
+
     mocks.confirmParticipation
       .mockReturnValueOnce(first)
       .mockReturnValueOnce(last);
@@ -131,8 +145,10 @@ describe("EventParticipationConfirmationDialog", () => {
           fetch: (input, init) => {
             const request = new Request(input, init);
             requests.push(request);
+
             if (request.url.endsWith("/confirm-participation"))
               return mocks.confirmParticipation();
+
             return Promise.resolve(
               Response.json(request.method === "GET" ? mocks.data : {}),
             );

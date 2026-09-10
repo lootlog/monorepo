@@ -15,6 +15,7 @@ export const MembersSettingsFooter = ({
   onProblemsClick,
 }: MembersSettingsFooterProps) => {
   const { t } = useTranslation();
+
   const summaryItems = [
     t("settings.members.summary.total", { count: totalMembers }),
     t("settings.members.summary.active", { count: activeMembers }),

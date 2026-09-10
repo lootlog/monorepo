@@ -12,6 +12,7 @@ export default defineBackground(() => {
   let active: { close: () => void } | undefined;
   browser.runtime.onConnect.addListener((port) => {
     const sender = port.sender;
+
     if (
       port.name !== EXTENSION_CHANNEL ||
       sender?.id !== browser.runtime.id ||
@@ -23,30 +24,38 @@ export default defineBackground(() => {
       )
     ) {
       port.disconnect();
+
       return;
     }
+
     active?.close();
     const realtime = createGameRealtimeClient();
+
     const connection = createBackgroundConnection(realtime, (message) =>
       port.postMessage(message),
     );
+
     const owner = {
       close: () => {
         connection.dispose();
+
         try {
           port.postMessage(encodeMessage({ type: "closed" }));
         } catch {
           /* Already disconnected. */
         }
+
         port.disconnect();
       },
     };
+
     active = owner;
     port.onMessage.addListener(function receivePageMessage(message: unknown) {
       void connection.receive(message).catch(() => owner.close());
     });
     port.onDisconnect.addListener(() => {
       connection.dispose();
+
       if (active === owner) active = undefined;
     });
     port.postMessage(encodeMessage({ type: "ready" }));

@@ -15,6 +15,7 @@ export type TimerWithTimeLeft = Timer & {
 const MANUAL_TIMER_MARGONEM_TYPE = 999;
 
 const TIMER_EPOCH_CACHE_LIMIT = 20_000;
+
 const timerEpochByTimestamp = new Map<string, number>();
 
 export const clearTimerEpochCache = (): void => {
@@ -39,6 +40,7 @@ export const getTimerEpoch = (timestamp: string): number => {
   }
 
   timerEpochByTimestamp.set(timestamp, epoch);
+
   return epoch;
 };
 

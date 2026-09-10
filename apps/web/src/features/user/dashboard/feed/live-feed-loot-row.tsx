@@ -18,6 +18,7 @@ type Props = {
 
 export const LiveFeedLootRow = ({ loot, now, organizations }: Props) => {
   const { t } = useTranslation();
+
   return (
     <div
       className={cn(

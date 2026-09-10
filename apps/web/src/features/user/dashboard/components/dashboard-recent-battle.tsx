@@ -22,9 +22,11 @@ export function DashboardRecentBattle({
 }) {
   const { t } = useTranslation();
   const { rightTeam } = getBattleTeams(battle);
+
   const opponents = rightTeam
     .map(({ name, lvl }) => `${name} (${lvl})`)
     .join(", ");
+
   return (
     <li className="group flex min-w-0 items-stretch border-b border-border last:border-b-0 hover:bg-muted/40 focus-within:bg-muted/40">
       <Link

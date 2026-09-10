@@ -6,6 +6,7 @@ import { playerSnapshotTable } from "#src/database/drizzle/schema";
 import { DependencyUnavailableError } from "#src/shared/http/http-errors";
 
 type PlayerSnapshot = typeof playerSnapshotTable.$inferSelect;
+
 export type PlayerSnapshotInput = Pick<
   PlayerSnapshot,
   "world" | "accountId" | "characterId" | "name" | "prof" | "icon"
@@ -46,11 +47,13 @@ export const resolvePlayerSnapshots = Effect.fnUntraced(function* (
   snapshots: readonly PlayerSnapshotInput[],
 ) {
   if (snapshots.length === 0) return [];
+
   const unique = [
     ...new Map(
       snapshots.map((snapshot) => [contentKey(snapshot), snapshot]),
     ).values(),
   ];
+
   // Older writers used different hash inputs for the same stored character data.
   const existing = yield* database
     .select()
@@ -74,14 +77,19 @@ export const resolvePlayerSnapshots = Effect.fnUntraced(function* (
       ),
     )
     .orderBy(asc(playerSnapshotTable.id));
+
   const byContent = new Map<string, PlayerSnapshot>();
+
   for (const snapshot of existing) {
     const key = contentKey(snapshot);
+
     if (!byContent.has(key)) byContent.set(key, snapshot);
   }
+
   const missing = unique.filter(
     (snapshot) => !byContent.has(contentKey(snapshot)),
   );
+
   if (missing.length > 0) {
     // Versioned structured hashes cannot collide with legacy concatenated fields.
     // Keep one ordered insert batch so overlapping callers acquire keys consistently.
@@ -95,6 +103,7 @@ export const resolvePlayerSnapshots = Effect.fnUntraced(function* (
       .sort((left, right) =>
         identityKey(left).localeCompare(identityKey(right)),
       );
+
     const inserted = yield* database
       .insert(playerSnapshotTable)
       .values(inserts)
@@ -107,26 +116,34 @@ export const resolvePlayerSnapshots = Effect.fnUntraced(function* (
         ],
       })
       .returning();
+
     const insertedIdentities = new Set(inserted.map(identityKey));
+
     for (const snapshot of inserted) {
       byContent.set(contentKey(snapshot), snapshot);
     }
+
     const conflicts = inserts.filter(
       (snapshot) => !insertedIdentities.has(identityKey(snapshot)),
     );
+
     if (conflicts.length > 0) {
       const concurrent = yield* database
         .select()
         .from(playerSnapshotTable)
         .where(or(...conflicts.map(matchesIdentity)));
+
       for (const snapshot of concurrent) {
         byContent.set(contentKey(snapshot), snapshot);
       }
     }
   }
+
   const resolved: PlayerSnapshot[] = [];
+
   for (const input of snapshots) {
     const snapshot = byContent.get(contentKey(input));
+
     if (
       !snapshot ||
       snapshot.name !== input.name ||
@@ -137,7 +154,9 @@ export const resolvePlayerSnapshots = Effect.fnUntraced(function* (
         new DependencyUnavailableError("Failed to resolve player snapshot"),
       );
     }
+
     resolved.push(snapshot);
   }
+
   return resolved;
 });

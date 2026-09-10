@@ -8,6 +8,7 @@ export const ChatMessageList = (props: ChatTranscriptProps) => {
   const [defaultScrollPosition] = useState<"start" | "end">(() =>
     props.position?.atEnd === false ? "start" : "end",
   );
+
   return (
     <MessageScroller.Provider
       autoScroll

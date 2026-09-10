@@ -25,6 +25,7 @@ describe("EventHeroLoots", () => {
             requests.push(
               new URL(input instanceof Request ? input.url : input.toString()),
             );
+
             return Response.json([createLoot(1), createLoot(2)]);
           },
         },
@@ -43,10 +44,12 @@ describe("EventHeroLoots", () => {
     const action = screen.getByRole("link", { name: "events.loots.showAll" });
 
     expect(action.closest("header")).toBeTruthy();
+
     const target = new URL(
       action.getAttribute("href") ?? "",
       "https://web.test",
     );
+
     expect(target.pathname).toBe("/guild-one");
     expect(target.searchParams.get("npcs")).toBe("Potulny Berserker");
     expect(action.getAttribute("class")).toContain("hover:text-primary");

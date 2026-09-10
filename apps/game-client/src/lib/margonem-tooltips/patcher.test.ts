@@ -256,6 +256,7 @@ describe("installCharacterTooltipTransforms", () => {
 
   it("does not double-transform prototype-based other tooltips", () => {
     const hero = createCharacter("Hero");
+
     class PrototypeOther {
       d = createCharacter("Other").d;
       tip?: [string, string];
@@ -267,6 +268,7 @@ describe("installCharacterTooltipTransforms", () => {
         return "<div>Other</div>";
       }
     }
+
     const other = new PrototypeOther();
     setRuntime(hero, { 1: other });
     seedRuntimeOthers({ 1: other });
@@ -288,10 +290,12 @@ describe("installCharacterTooltipTransforms", () => {
     const hero = createCharacter("Hero");
     const first = createCharacter("First");
     const second = createCharacter("Second");
+
     const canvasTip = {
       hide: vi.fn<NonNullable<RuntimeCanvasTip["hide"]>>(),
       show: vi.fn<NonNullable<RuntimeCanvasTip["show"]>>(),
     };
+
     first.canvasObjectType = "OTHER";
     first.d = { ...first.d, account: 9822301, id: "617", nick: "First" };
     second.canvasObjectType = "OTHER";
@@ -335,10 +339,12 @@ describe("installCharacterTooltipTransforms", () => {
   it("clears active other state during canvas tip cleanup", () => {
     const hero = createCharacter("Hero");
     const other = createCharacter("Other");
+
     const canvasTip = {
       hide: vi.fn<NonNullable<RuntimeCanvasTip["hide"]>>(),
       show: vi.fn<NonNullable<RuntimeCanvasTip["show"]>>(),
     };
+
     other.canvasObjectType = "OTHER";
     other.d = { ...other.d, account: 9822301, id: "617", nick: "Other" };
     setRuntime(hero, { 1: other }, canvasTip);
@@ -364,10 +370,12 @@ describe("installCharacterTooltipTransforms", () => {
   it("refreshes the currently visible other canvas tooltip", () => {
     const hero = createCharacter("Hero");
     const other = createCharacter("Other");
+
     const canvasTip = {
       hide: vi.fn<NonNullable<RuntimeCanvasTip["hide"]>>(),
       show: vi.fn<NonNullable<RuntimeCanvasTip["show"]>>(),
     };
+
     const originalCanvasTipShow = canvasTip.show;
     other.canvasObjectType = "OTHER";
     other.d = { ...other.d, account: 9822301, id: "617", nick: "Other" };
@@ -393,10 +401,12 @@ describe("installCharacterTooltipTransforms", () => {
   it("refreshes a hovered other tooltip when shift is already pressed", () => {
     const hero = createCharacter("Hero");
     const other = createCharacter("Other");
+
     const canvasTip = {
       hide: vi.fn<NonNullable<RuntimeCanvasTip["hide"]>>(),
       show: vi.fn<NonNullable<RuntimeCanvasTip["show"]>>(),
     };
+
     const originalCanvasTipShow = canvasTip.show;
     other.canvasObjectType = "OTHER";
     other.d = { ...other.d, account: 9822301, id: "617", nick: "Other" };

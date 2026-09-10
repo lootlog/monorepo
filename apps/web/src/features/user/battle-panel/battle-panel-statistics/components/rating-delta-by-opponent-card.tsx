@@ -44,6 +44,7 @@ const getRatingDeltaClassName = (delta: number) =>
 
 const formatSignedRating = (delta: number, fractionDigits = 0) => {
   const sign = delta >= 0 ? "+" : "";
+
   return `${sign}${delta.toFixed(fractionDigits)}`;
 };
 
@@ -96,6 +97,7 @@ export function RatingDeltaByOpponentCard({
       ),
       cell: ({ row }) => {
         const delta = row.original.totalRatingDelta;
+
         return (
           <div className="text-center">
             <span className={getRatingDeltaClassName(delta)}>
@@ -114,6 +116,7 @@ export function RatingDeltaByOpponentCard({
       ),
       cell: ({ row }) => {
         const delta = row.original.avgRatingDelta;
+
         return (
           <div className="text-center">
             <span className={getRatingDeltaClassName(delta)}>

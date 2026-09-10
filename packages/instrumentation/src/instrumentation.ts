@@ -25,10 +25,12 @@ const durationBoundaries = [
 
 const defaultLogRunner = (effect: Effect.Effect<void>) =>
   Effect.runFork(effect);
+
 let logRunner = defaultLogRunner;
 
 export const runLogEffect = (effect: Effect.Effect<void>) => {
   const span = currentLogSpan();
+
   return logRunner(span ? Effect.withParentSpan(effect, span) : effect);
 };
 
@@ -64,14 +66,17 @@ export const recordHttpServerMetrics = (input: {
 }) => {
   if (input.route !== undefined && isHealthcheck(input.route))
     return Effect.void;
+
   const methodAttributes = {
     "http.request.method": input.method,
     "http.response.status_code": String(input.status),
   };
+
   const attributes =
     input.route === undefined
       ? methodAttributes
       : { ...methodAttributes, "http.route": input.route };
+
   return Effect.all(
     [
       Metric.update(
@@ -102,7 +107,9 @@ export const httpServerRouteMetrics = HttpRouter.middleware(
     Effect.gen(function* () {
       const metrics = yield* RequestMetrics;
       const { route } = yield* HttpRouter.RouteContext;
+
       if (metrics) metrics.route = route.path;
+
       return yield* httpApp;
     }),
 ).layer;
@@ -120,11 +127,14 @@ export const httpServerMetrics = HttpMiddleware.make(
   ) =>
     Effect.gen(function* () {
       const request = yield* HttpServerRequest.HttpServerRequest;
+
       if (isHealthcheck(request.url)) {
         return yield* HttpMiddleware.withLoggerDisabled(httpApp);
       }
+
       const startedAt = yield* Clock.currentTimeNanos;
       const metrics: RequestMetricsState = {};
+
       return yield* httpApp.pipe(
         Effect.onExit((exit) =>
           Effect.gen(function* () {

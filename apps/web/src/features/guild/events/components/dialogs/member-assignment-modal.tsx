@@ -17,6 +17,7 @@ import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useMembersControllerGetGuildMembers } from "@lootlog/client/main";
 import { SearchInput } from "@/components/ui/search-input";
+
 interface MemberAssignmentModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -45,16 +46,19 @@ export const MemberAssignmentModal = ({
 }: MemberAssignmentModalProps) => {
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
+
   const [pendingAction, setPendingAction] = useState<{
     kind: "assign" | "unassign";
     memberId: number;
   } | null>(null);
+
   const changeAssignment = async (
     kind: "assign" | "unassign",
     memberId: number,
   ) => {
     await (kind === "assign" ? onAssign(memberId) : onUnassign(memberId));
   };
+
   const runAction = async (kind: "assign" | "unassign", memberId: number) => {
     if (pendingAction) return;
     setPendingAction({ kind, memberId });
@@ -62,7 +66,9 @@ export const MemberAssignmentModal = ({
       setPendingAction(null),
     );
   };
+
   const guildId = useGuildId();
+
   const { data: members, isLoading } = useMembersControllerGetGuildMembers({
     guildId: guildId ?? "",
   });

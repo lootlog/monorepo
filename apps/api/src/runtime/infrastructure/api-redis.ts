@@ -10,6 +10,7 @@ RedisConnection.clientFactory = (options) => {
   if (!options.url) {
     throw new Error("BullMQ requires a Redis URL");
   }
+
   return createBunRedisClient(new RedisClient(options.url));
 };
 
@@ -22,6 +23,7 @@ export class ApiRedis extends Context.Service<ApiRedis, RedisService>()(
       const redis = yield* Redis.Redis;
       const fibers = yield* FiberSet.make<unknown, unknown>();
       const runPromise = yield* FiberSet.runtimePromise(fibers)<never>();
+
       return new RedisService(redis, {}, runPromise);
     }),
   );
@@ -44,5 +46,6 @@ export const redisUrl = (
 ): string => {
   const username = encodeURIComponent(redis.username);
   const password = encodeURIComponent(Redacted.value(redis.password));
+
   return `redis://${username}:${password}@${redis.host}:${redis.port}`;
 };

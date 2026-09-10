@@ -6,10 +6,12 @@ export {
   type RealtimeWebSocket,
   type RealtimeWebSocketFactory,
 } from "./realtime-client.js";
+
 export {
   REALTIME_JSON_SUBPROTOCOL,
   REALTIME_SUBPROTOCOL,
 } from "@lootlog/protocol/realtime";
+
 export type {
   BasicPresence,
   ClientCommand,

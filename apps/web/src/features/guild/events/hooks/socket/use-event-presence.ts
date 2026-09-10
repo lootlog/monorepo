@@ -27,11 +27,14 @@ export const useEventPresence = ({
   world,
 }: UseEventPresenceOptions) => {
   const { socket, connected, joined } = useGateway();
+
   const [presenceData, setPresenceData] = useState<
     Map<string, PlayerPresence[]> | undefined
   >(undefined);
+
   const [accessState, setAccessState] =
     useState<EventPresenceAccessState>("allowed");
+
   const [refreshVersion, setRefreshVersion] = useState(0);
   const requestIdRef = useRef(0);
   const [scope, setScope] = useState({ guildId, world });
@@ -56,10 +59,12 @@ export const useEventPresence = ({
         if (response.status === "forbidden") {
           setPresenceData(undefined);
           setAccessState("forbidden");
+
           return;
         }
 
         const newMap = new Map<string, PlayerPresence[]>();
+
         for (const [discordId, players] of Object.entries(response.players)) {
           const filteredPlayers = players.filter((player) => {
             return !world || player.world === world;
@@ -79,6 +84,7 @@ export const useEventPresence = ({
   const handleEventPresenceUpdate = useEffectEvent(
     (payload: PresenceUpdatePayload) => {
       if (payload.guildId !== guildId) return;
+
       if (accessState === "forbidden") return;
 
       setPresenceData((prev) => {
@@ -89,9 +95,11 @@ export const useEventPresence = ({
 
         if ((disconnected || status === "offline") && disconnectedSessionId) {
           const existing = newMap.get(discordId) ?? [];
+
           const filtered = existing.filter(
             (presence) => presence.sessionId !== disconnectedSessionId,
           );
+
           if (filtered.length === 0) {
             newMap.delete(discordId);
           } else {
@@ -100,9 +108,11 @@ export const useEventPresence = ({
         } else if (player) {
           if (world && player.world !== world) {
             const existing = newMap.get(discordId) ?? [];
+
             const filtered = existing.filter(
               (p) => p.sessionId !== player.sessionId,
             );
+
             if (filtered.length === 0) {
               newMap.delete(discordId);
             } else {
@@ -113,9 +123,11 @@ export const useEventPresence = ({
           }
 
           const existing = newMap.get(discordId) ?? [];
+
           const idx = existing.findIndex(
             (p) => p.sessionId === player.sessionId,
           );
+
           if (idx >= 0) {
             const updated = [...existing];
             updated[idx] = player;

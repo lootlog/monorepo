@@ -115,10 +115,12 @@ export const makeNotificationJobScheduler = (
         ),
       )
       .pipe(Effect.mapError(failure("notifications.scheduler.findCancelable")));
+
     yield* Effect.forEach(jobs, ({ id }) => queue.remove(id), {
       concurrency: "unbounded",
       discard: true,
     });
+
     if (jobs.length === 0) return;
     const now = new Date(yield* Clock.currentTimeMillis);
     yield* database
@@ -148,6 +150,7 @@ export const makeNotificationJobScheduler = (
   ) {
     const idempotencyKey = notificationJobIdempotencyKey(options);
     const now = new Date(yield* Clock.currentTimeMillis);
+
     const values = {
       id: randomUUID(),
       ruleId: options.notificationRule.id,
@@ -170,28 +173,35 @@ export const makeNotificationJobScheduler = (
       createdAt: now,
       updatedAt: now,
     } as const;
+
     const rows = yield* database
       .insert(notificationJobTable)
       .values(values)
       .onConflictDoNothing({ target: notificationJobTable.idempotencyKey })
       .returning()
       .pipe(Effect.mapError(failure("notifications.scheduler.createRow")));
+
     if (rows[0]) return rows[0];
+
     const existingRows = yield* database
       .select()
       .from(notificationJobTable)
       .where(eq(notificationJobTable.idempotencyKey, idempotencyKey))
       .limit(1)
       .pipe(Effect.mapError(failure("notifications.scheduler.findExisting")));
+
     const existing = existingRows[0];
+
     if (options.jobKind === NotificationJobKind.INSTANT && existing) {
       return existing.status === NotificationJobStatus.PENDING
         ? existing
         : null;
     }
+
     if (!existing || existing.status !== NotificationJobStatus.CANCELED) {
       return null;
     }
+
     return yield* database
       .transaction((transaction) =>
         Effect.gen(function* () {
@@ -201,10 +211,12 @@ export const makeNotificationJobScheduler = (
               idempotencyKey: `${idempotencyKey}:canceled:${randomUUID()}`,
             })
             .where(eq(notificationJobTable.id, existing.id));
+
           const created = yield* transaction
             .insert(notificationJobTable)
             .values(values)
             .returning();
+
           return created[0] ?? null;
         }),
       )

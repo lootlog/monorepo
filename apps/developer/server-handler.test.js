@@ -27,10 +27,12 @@ async function startServer(context, serverEntry, clientDirectory) {
 
 test("GET /healthz responds without invoking the application", async (context) => {
   let applicationInvoked = false;
+
   const origin = await startServer(context, {
     default: {
       fetch() {
         applicationInvoked = true;
+
         return new Response("application");
       },
     },
@@ -51,6 +53,7 @@ test("application responses preserve multiple Set-Cookie headers", async (contex
         const headers = new Headers();
         headers.append("Set-Cookie", "session=abc; Path=/; HttpOnly");
         headers.append("Set-Cookie", "csrf=def; Path=/");
+
         return new Response("application", { headers });
       },
     },
@@ -91,12 +94,14 @@ test("assets are served from the client directory", async (context) => {
   await writeFile(join(assetsDirectory, "application.js"), "asset");
 
   let applicationInvoked = false;
+
   const origin = await startServer(
     context,
     {
       default: {
         fetch() {
           applicationInvoked = true;
+
           return new Response("application");
         },
       },

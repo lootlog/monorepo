@@ -1,7 +1,9 @@
 const secondTickListeners = new Set<(currentSecond: number) => void>();
+
 let secondTickInterval: ReturnType<typeof setInterval> | null = null;
 
 export const getClockSecond = () => Math.floor(Date.now() / 1000);
+
 export const subscribeToSecondClock = (
   listener: (currentSecond: number) => void,
 ) => {

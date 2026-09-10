@@ -61,13 +61,16 @@ const getDmHint = (
   t: ReturnType<typeof useTranslation>["t"],
 ) => {
   if (!hasDmTarget) return t("settings.userNotifications.dm.requiredHint");
+
   if (!canSend) return t("settings.userNotifications.dm.cannotSendHint");
+
   return t("settings.userNotifications.dm.reactivateHint");
 };
 
 export const DmActionsCard = ({ dmTarget, onAddWatch }: DmActionsCardProps) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+
   const createUserTarget = useNotificationsUserControllerCreateUserTarget({
     mutation: {
       onSuccess: async () => {
@@ -75,6 +78,7 @@ export const DmActionsCard = ({ dmTarget, onAddWatch }: DmActionsCardProps) => {
       },
     },
   });
+
   const updateUserTarget = useNotificationsUserControllerUpdateUserTarget({
     mutation: {
       onSuccess: async () => {
@@ -82,6 +86,7 @@ export const DmActionsCard = ({ dmTarget, onAddWatch }: DmActionsCardProps) => {
       },
     },
   });
+
   const triggerUserTargetTest =
     useNotificationsUserControllerTriggerUserTargetTest({
       mutation: {

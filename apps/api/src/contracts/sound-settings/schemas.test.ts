@@ -46,6 +46,7 @@ describe("sound settings contracts", () => {
       createdAt: "2026-09-04T12:00:00Z",
       updatedAt: "2026-09-04T12:00:00Z",
     };
+
     const decode = Schema.decodeUnknownSync(SoundSettingsResponse);
     expect(decode(response)).toEqual(response);
     expect(() =>

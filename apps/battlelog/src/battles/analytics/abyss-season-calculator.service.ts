@@ -14,6 +14,7 @@ export const abyssSeasonCalculator = {
 
     for (const battle of sortedBattles) {
       const previousBattle = seasonBattles.at(-1);
+
       const startsNewSeason =
         previousBattle &&
         battle.createdAt.getTime() - previousBattle.createdAt.getTime() >

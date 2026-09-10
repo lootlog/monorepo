@@ -166,6 +166,7 @@ export async function createManualTimer({
   results.forEach((result, index) => {
     if (result.status === "fulfilled") {
       successful.push(result.value);
+
       return;
     }
 

@@ -37,6 +37,7 @@ const HTTP_METHODS = [
   "head",
   "trace",
 ] as const;
+
 const ENCODED_NUMBER_PATTERN = "^[+-]?\\d*\\.?\\d+(?:[Ee][+-]?\\d+)?$";
 
 type JsonObject = Record<string, unknown>;
@@ -109,13 +110,16 @@ const replaceReferences = (
 ): void => {
   if (Array.isArray(value)) {
     for (const item of value) replaceReferences(item, replacements);
+
     return;
   }
+
   if (!isJsonObject(value)) return;
 
   if (typeof value["$ref"] === "string") {
     value["$ref"] = replacements.get(value["$ref"]) ?? value["$ref"];
   }
+
   for (const item of Object.values(value))
     replaceReferences(item, replacements);
 };
@@ -123,8 +127,10 @@ const replaceReferences = (
 const normalizeNullableSchemas = (value: unknown): void => {
   if (Array.isArray(value)) {
     for (const item of value) normalizeNullableSchemas(item);
+
     return;
   }
+
   if (!isJsonObject(value)) return;
 
   normalizeSchemaAnnotations(value);
@@ -153,15 +159,20 @@ const normalizeJsonComponents = (document: {
 };
 
 const target = new URL("../../openapi.yaml", import.meta.url);
+
 const temporary = new URL("../../openapi.yaml.tmp", import.meta.url);
+
 const document = { ...OpenApi.fromApi(LootlogApi), openapi: "3.0.0" };
 
 const duplicateSchemaReferences = new Map<string, string>();
+
 for (const [name, schema] of Object.entries(document.components.schemas)) {
   const match = /^(.*)_([1-9][0-9]*)$/.exec(name);
   const baseName = match?.[1];
+
   if (baseName === undefined) continue;
   const baseSchema = document.components.schemas[baseName];
+
   if (
     baseSchema !== undefined &&
     JSON.stringify(schema) === JSON.stringify(baseSchema)
@@ -173,16 +184,20 @@ for (const [name, schema] of Object.entries(document.components.schemas)) {
     delete document.components.schemas[name];
   }
 }
+
 replaceReferences(document, duplicateSchemaReferences);
 
 for (const path of Object.values(document.paths)) {
   for (const method of HTTP_METHODS) {
     const operation = path[method];
+
     if (operation === undefined) continue;
     const operationId = operation.operationId;
+
     for (const parameter of operation.parameters ?? []) {
       if ("$ref" in parameter || parameter.schema === undefined) continue;
       const schema = parameter.schema;
+
       if (
         parameter.in === "query" &&
         schema["type"] === "string" &&
@@ -191,6 +206,7 @@ for (const path of Object.values(document.paths)) {
         parameter.schema = { type: "boolean" };
         continue;
       }
+
       if (
         parameter.in === "path" &&
         schema["type"] === "string" &&
@@ -199,10 +215,13 @@ for (const path of Object.values(document.paths)) {
         parameter.schema = { type: "number" };
         continue;
       }
+
       if (parameter.in !== "query" || operationId === undefined) continue;
+
       const replacement = queryParameterSchemas.get(
         `${operationId}:${parameter.name}`,
       );
+
       if (replacement !== undefined) parameter.schema = replacement;
     }
   }
@@ -252,7 +271,9 @@ const compatibilitySchemas = {
 } as const;
 
 normalizeNullableSchemas(document);
+
 normalizeJsonComponents(document);
+
 Object.assign(document.components.schemas, compatibilitySchemas);
 
 const yaml = stringify(document, {

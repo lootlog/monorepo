@@ -264,7 +264,11 @@ export const battleWarriors = pgTable(
 );
 
 export type Battle = typeof battles.$inferSelect;
+
 export type NewBattle = typeof battles.$inferInsert;
+
 export type BattleWarrior = typeof battleWarriors.$inferSelect;
+
 export type NewBattleWarrior = typeof battleWarriors.$inferInsert;
+
 export type UserCharacter = typeof userCharacters.$inferSelect;

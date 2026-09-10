@@ -20,14 +20,18 @@ export function useSoundSettingsForm() {
   const masterVolume = useSettingsStore((state) => state.masterVolume);
   const setMasterVolume = useSettingsStore((state) => state.setMasterVolume);
   const soundsMuted = useSettingsStore((state) => state.soundsMuted);
+
   const toggleSoundsMuted = useSettingsStore(
     (state) => state.toggleSoundsMuted,
   );
+
   const { playSoundTest } = useSoundPlayback();
   const { t } = useTranslation(["settings", "common"]);
+
   const settings = soundSettings
     ? normalizeSoundSettings(soundSettings)
     : undefined;
+
   const [mutedCategories, setMutedCategories] = useState<
     Record<SoundCategory, boolean>
   >({
@@ -36,20 +40,24 @@ export function useSoundSettingsForm() {
     timers: false,
     pings: false,
   });
+
   const serverVolumes = {
     notifications: soundSettings?.notificationsVolume ?? 0.5,
     detector: soundSettings?.detectorVolume ?? 0.5,
     timers: soundSettings?.timersVolume ?? 0.5,
     pings: soundSettings?.pingsVolume ?? 0,
   };
+
   const [localVolumeState, setLocalVolumeState] = useState({
     source: soundSettings,
     values: serverVolumes,
   });
+
   const localVolumes =
     localVolumeState.source === soundSettings
       ? localVolumeState.values
       : serverVolumes;
+
   const setLocalVolumes = (
     update: (currentVolumes: typeof localVolumes) => typeof localVolumes,
   ) => {
@@ -58,15 +66,18 @@ export function useSoundSettingsForm() {
         currentState.source === soundSettings
           ? currentState.values
           : serverVolumes;
+
       return {
         source: soundSettings,
         values: update(currentVolumes),
       };
     });
   };
+
   const [urlErrors, setUrlErrors] = useState<
     Record<string, Record<string, string>>
   >({});
+
   const notificationNpcTypes = [
     { label: t("common:npcTypes.message"), key: "message" },
     { label: t("common:npcTypes.elite2"), key: NpcType.ELITE2 },
@@ -74,9 +85,11 @@ export function useSoundSettingsForm() {
     { label: t("common:npcTypes.colossus"), key: NpcType.COLOSSUS },
     { label: t("common:npcTypes.titan"), key: NpcType.TITAN },
   ] as const;
+
   const detectorTimerNpcTypes = notificationNpcTypes.filter(
     (field) => field.key !== "message",
   );
+
   const categories: {
     id: Exclude<SoundCategory, "pings">;
     label: string;
@@ -106,6 +119,7 @@ export function useSoundSettingsForm() {
       description: t("sounds.categories.timers.description"),
     },
   ];
+
   const queueSoundConfigPatch = useSoundSettingsPatchQueue(updateSettings);
 
   return {

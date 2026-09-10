@@ -27,10 +27,14 @@ import type {
 } from "#src/contracts/messaging/schemas";
 
 const NOTIFICATION_TTL_SECONDS = 1800;
+
 export const NOTIFICATION_RATE_LIMIT_WINDOW_MS = 5_000;
+
 export const NOTIFICATION_RATE_LIMIT_MAX_ATTEMPTS = 5;
+
 export const buildNotificationRateLimitKey = (userId: string) =>
   `messaging:notification-rate:${userId}`;
+
 const RATE_LIMIT_SCRIPT = `
 local time = redis.call("TIME")
 local now = (tonumber(time[1]) * 1000) + math.floor(tonumber(time[2]) / 1000)
@@ -53,6 +57,7 @@ type NotificationMetadata = {
   readonly guildIds: ReadonlyArray<string>;
   readonly createdAt: string;
 };
+
 const NotificationMetadataJson = Schema.fromJsonString(
   Schema.Struct({
     discordId: Schema.String,
@@ -60,6 +65,7 @@ const NotificationMetadataJson = Schema.fromJsonString(
     createdAt: Schema.String,
   }),
 );
+
 const decodeNotificationMetadata = Schema.decodeUnknownSync(
   NotificationMetadataJson,
 );
@@ -126,14 +132,17 @@ export const consumeNotificationRateLimit = (
         if (!Array.isArray(result) || result.length !== 2) {
           return Effect.fail(new DependencyUnavailableError());
         }
+
         const accepted = Number(result[0]);
         const retryAfterMs = Number(result[1]);
+
         if (
           (accepted !== 0 && accepted !== 1) ||
           !Number.isFinite(retryAfterMs)
         ) {
           return Effect.fail(new DependencyUnavailableError());
         }
+
         return Effect.succeed(
           accepted === 1
             ? ({ accepted: true } as const)
@@ -157,16 +166,19 @@ export const makeMessagingDataLayer = (
         effect.pipe(
           Effect.mapError((cause) => new MessagingOperationError({ cause })),
         );
+
       const guildIdsFor = (discordId: string) =>
         selectAccessibleGuilds(
           database,
           discordId,
           NOTIFICATION_SEND_PERMISSIONS,
         ).pipe(Effect.map((rows) => rows.map(({ guild }) => guild.id)));
+
       const metadata = (notificationId: string) =>
         redis.get(`notification:${notificationId}`).pipe(
           Effect.map((value): NotificationMetadata | null => {
             if (!value) return null;
+
             try {
               return decodeNotificationMetadata(value);
             } catch {
@@ -183,6 +195,7 @@ export const makeMessagingDataLayer = (
                 redis,
                 userId,
               );
+
               if (rateLimit.accepted === false) {
                 return yield* Effect.fail(
                   new RateLimitedError({
@@ -191,30 +204,39 @@ export const makeMessagingDataLayer = (
                   }),
                 );
               }
+
               if (!data.message && !data.npc) {
                 return yield* Effect.fail(
                   new InvalidRequestError("MISSING_MESSAGE_OR_NPC"),
                 );
               }
+
               if (data.message && data.npc) {
                 return yield* Effect.fail(
                   new InvalidRequestError("EITHER_MESSAGE_OR_NPC"),
                 );
               }
+
               const authorized = yield* guildIdsFor(discordId);
+
               if (authorized.length === 0) {
                 return yield* Effect.fail(new PermissionDeniedError());
               }
+
               const guildIds = authorized.filter((id) =>
                 data.guildIds.includes(id),
               );
+
               if (guildIds.length === 0) {
                 return yield* Effect.fail(new PermissionDeniedError());
               }
+
               const notificationId = uuid();
+
               const createdAt = new Date(
                 yield* Clock.currentTimeMillis,
               ).toISOString();
+
               if (data.isGatheringParty) {
                 if (!data.character) {
                   return yield* Effect.fail(
@@ -223,6 +245,7 @@ export const makeMessagingDataLayer = (
                     ),
                   );
                 }
+
                 yield* readyRoom.create({
                   notificationId,
                   organizerDiscordId: discordId,
@@ -242,6 +265,7 @@ export const makeMessagingDataLayer = (
                     : undefined,
                 });
               }
+
               yield* redis.set(
                 `notification:${notificationId}`,
                 JSON.stringify({ discordId, guildIds, createdAt }),
@@ -250,6 +274,7 @@ export const makeMessagingDataLayer = (
               const { guildIds: _guildIds, ...rest } = data;
               const base = { ...rest, discordId, notificationId, createdAt };
               const npc = data.npc;
+
               const payload =
                 data.message || !npc
                   ? base
@@ -265,6 +290,7 @@ export const makeMessagingDataLayer = (
                         ),
                       },
                     };
+
               yield* Effect.forEach(
                 guildIds,
                 (guildId) =>
@@ -276,6 +302,7 @@ export const makeMessagingDataLayer = (
                     .pipe(Effect.ignore),
                 { discard: true },
               );
+
               return { notificationId, guildIds };
             }).pipe(
               Effect.withSpan("MessagingControllerSendNotification", {
@@ -291,17 +318,21 @@ export const makeMessagingDataLayer = (
           operation(
             Effect.gen(function* () {
               const stored = yield* metadata(notificationId);
+
               if (!stored) {
                 return yield* Effect.fail(
                   new InvalidRequestError("Notification expired or not found"),
                 );
               }
+
               if (data.targetDiscordId !== stored.discordId) {
                 return yield* Effect.fail(
                   new PermissionDeniedError("Invalid target"),
                 );
               }
+
               const guildIds = yield* guildIdsFor(discordId);
+
               if (!guildIds.some((id) => stored.guildIds.includes(id))) {
                 return yield* Effect.fail(
                   new PermissionDeniedError(
@@ -309,6 +340,7 @@ export const makeMessagingDataLayer = (
                   ),
                 );
               }
+
               yield* events
                 .publish(RabbitRoutingKey.GUILDS_NOTIFICATIONS_VOLUNTEER, {
                   notificationId,

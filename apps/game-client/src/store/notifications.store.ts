@@ -106,12 +106,14 @@ const createRecencyIndex = () => {
 
   const remove = (itemId: number) => {
     const node = nodeByItemId.get(itemId);
+
     if (!node) {
       return;
     }
 
     if (node.olderItemId !== undefined) {
       const olderNode = nodeByItemId.get(node.olderItemId);
+
       if (olderNode) {
         olderNode.newerItemId = node.newerItemId;
       }
@@ -119,6 +121,7 @@ const createRecencyIndex = () => {
 
     if (node.newerItemId !== undefined) {
       const newerNode = nodeByItemId.get(node.newerItemId);
+
       if (newerNode) {
         newerNode.olderItemId = node.olderItemId;
       }
@@ -135,6 +138,7 @@ const createRecencyIndex = () => {
     getNewestItemId: (key: string) => newestItemIdByKey.get(key),
     set: (itemId: number, key?: string) => {
       remove(itemId);
+
       if (key === undefined) {
         return;
       }
@@ -145,6 +149,7 @@ const createRecencyIndex = () => {
 
       if (olderItemId !== undefined) {
         const olderNode = nodeByItemId.get(olderItemId);
+
         if (olderNode) {
           olderNode.newerItemId = itemId;
         }
@@ -159,6 +164,7 @@ const getNpcWorldLookupKey = (
   notification: PresentableNotification | StoredNotification,
 ) => {
   const npcId = "npc" in notification ? notification.npc?.id : undefined;
+
   return JSON.stringify([
     notification.world,
     npcId === undefined ? "undefined" : "number",
@@ -182,6 +188,7 @@ const upsertNotificationBatch = (
 
   for (let index = currentNotifications.length - 1; index >= 0; index -= 1) {
     const notification = currentNotifications[index];
+
     if (!notification) {
       continue;
     }
@@ -201,6 +208,7 @@ const upsertNotificationBatch = (
   for (const presentation of presentations) {
     const { notification } = presentation;
     const receivedAtMs = Date.now();
+
     let itemId = notificationIdIndex.getNewestItemId(
       notification.notificationId,
     );
@@ -217,6 +225,7 @@ const upsertNotificationBatch = (
 
     const existingNotification =
       itemId === undefined ? undefined : notificationsByItemId.get(itemId);
+
     let storedNotification: StoredNotification;
 
     if (existingNotification && itemId !== undefined) {
@@ -290,6 +299,7 @@ export const useNotificationsStore = create<NotificationsState>()(
 
             if (autoHideDurationMs <= 0) {
               delete writableAutoHideState[storedNotification.listKey];
+
               return;
             }
 
@@ -340,6 +350,7 @@ export const useNotificationsStore = create<NotificationsState>()(
         }
 
         const idSet = new Set(ids);
+
         const notificationsToRemove = state.notifications.filter(
           (notification) => idSet.has(notification.notificationId),
         );
@@ -351,6 +362,7 @@ export const useNotificationsStore = create<NotificationsState>()(
         const notificationAutoHideByListKey = {
           ...state.notificationAutoHideByListKey,
         };
+
         notificationsToRemove.forEach((notification) => {
           delete notificationAutoHideByListKey[notification.listKey];
         });
@@ -372,12 +384,14 @@ export const useNotificationsStore = create<NotificationsState>()(
         const npcIdSet = new Set(npcIds);
         let notificationAutoHideByListKey = state.notificationAutoHideByListKey;
         let removedAnyNotification = false;
+
         const notifications = state.notifications.filter((notification) => {
           if (isPartyGatheringNotification(notification)) {
             return true;
           }
 
           const npc = "npc" in notification ? notification.npc : undefined;
+
           const shouldRemove =
             npc?.id !== undefined &&
             npcIdSet.has(npc.id) &&
@@ -392,6 +406,7 @@ export const useNotificationsStore = create<NotificationsState>()(
 
             removedAnyNotification = true;
             delete notificationAutoHideByListKey[notification.listKey];
+
             return false;
           }
 
@@ -419,7 +434,9 @@ export const useNotificationsStore = create<NotificationsState>()(
           const notificationAutoHideByListKey = {
             ...state.notificationAutoHideByListKey,
           };
+
           delete notificationAutoHideByListKey[listKey];
+
           return { notificationAutoHideByListKey };
         }
 
@@ -484,6 +501,7 @@ export const useNotificationsStore = create<NotificationsState>()(
         const notificationAutoHideByListKey = {
           ...state.notificationAutoHideByListKey,
         };
+
         delete notificationAutoHideByListKey[listKey];
 
         return { notificationAutoHideByListKey };

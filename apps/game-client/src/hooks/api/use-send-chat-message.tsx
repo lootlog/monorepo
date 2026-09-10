@@ -6,6 +6,7 @@ import { getChatControllerSendChatMessageMutationOptions } from "@lootlog/client
 export const useSendChatMessage = () => {
   const t = getFixedT("chat");
   const { mutationKey } = getChatControllerSendChatMessageMutationOptions();
+
   // useChatMessages applies authoritative CHAT_MESSAGE socket events to the shared query cache.
   // oxlint-disable-next-line react-doctor/query-mutation-missing-invalidation
   const mutation = useMutation({
@@ -19,4 +20,5 @@ export const useSendChatMessage = () => {
 
   return mutation;
 };
+
 import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";

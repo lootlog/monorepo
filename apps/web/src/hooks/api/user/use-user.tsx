@@ -6,6 +6,7 @@ import {
 import { useSession, type SessionData } from "@/hooks/auth/use-session";
 
 export type SessionUser = NonNullable<SessionData>["user"];
+
 export type UserPreferences = UsersControllerGetUserPreferencesQueryResult;
 
 export type User = SessionUser & {
@@ -14,6 +15,7 @@ export type User = SessionUser & {
 
 export const useUser = () => {
   const { data: session, isPending: sessionPending } = useSession();
+
   const { data: preferences, isLoading: preferencesLoading } =
     useUsersControllerGetUserPreferences({
       query: {

@@ -17,14 +17,18 @@ export const activityType = pgEnum("ActivityType", [
   "CONNECT_EVENT",
   "DISCONNECT_EVENT",
 ]);
+
 export type ActivityType = (typeof activityType.enumValues)[number];
+
 export const ActivityType = {
   CONNECT_EVENT: "CONNECT_EVENT",
   DISCONNECT_EVENT: "DISCONNECT_EVENT",
 } as const satisfies Record<ActivityType, ActivityType>;
 
 export const activitySource = pgEnum("ActivitySource", ["GAME", "WEB_APP"]);
+
 export type ActivitySource = (typeof activitySource.enumValues)[number];
+
 export const ActivitySource = {
   GAME: "GAME",
   WEB_APP: "WEB_APP",
@@ -162,6 +166,7 @@ export const activitySchema = {
   memberActivitySessions,
   memberActivityStats,
 };
+
 export const oneDay = sql`INTERVAL '1 day'`;
 
 // Private user history is independent of Organization activity logs and their seven-day retention.
@@ -189,10 +194,12 @@ export const userOnlineIntervals = pgTable(
     ),
   ],
 );
+
 export const userOnlineTracking = pgTable("UserOnlineTracking", {
   userId: text().primaryKey(),
   lastObservedAt: timestamp({ withTimezone: true, mode: "date" }).notNull(),
 });
+
 export const userOnlineCollector = pgTable(
   "UserOnlineCollector",
   {

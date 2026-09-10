@@ -34,6 +34,7 @@ type ColumnsProps = Pick<
   onWorldClick?: (world: string) => void;
   renderBattleActions: (battle: Battle) => ReactNode;
 };
+
 const renderBattleStatus = (battle: Battle) => {
   const result = getBattleResult(battle);
 
@@ -43,6 +44,7 @@ const renderBattleStatus = (battle: Battle) => {
     </div>
   );
 };
+
 export function useBattleTableColumns({
   headerCheckboxState,
   handleHeaderSelectionChange,
@@ -55,6 +57,7 @@ export function useBattleTableColumns({
 }: ColumnsProps) {
   const { t } = useTranslation();
   const selectionId = useId();
+
   const columns: ColumnDef<typeof coreTableFeatures, Battle>[] = [
     {
       id: "select",
@@ -163,6 +166,7 @@ export function useBattleTableColumns({
       header: t("battlePanel.list.columns.time"),
       cell: ({ row }) => {
         const battle = row.original;
+
         const exactTime = format(
           new Date(battle.createdAt),
           "dd.MM.yyyy HH:mm",

@@ -21,6 +21,7 @@ const ReadyRoomParticipant = Schema.Struct({
   createdAt: DateTimeString,
   updatedAt: DateTimeString,
 });
+
 const readyRoomFields = {
   npc: Schema.optionalKey(PartyGatheringNpcSchema),
   schemaVersion: Schema.Literal(3),
@@ -46,6 +47,7 @@ const readyRoomFields = {
 export const PartyReadyRoomResponse = Schema.Struct(readyRoomFields).annotate({
   identifier: "PartyReadyRoomProjectionDto_Output",
 });
+
 export type PartyReadyRoomResponse = typeof PartyReadyRoomResponse.Type;
 
 export const CreatePartyGatheringRequest = Schema.Struct({
@@ -102,6 +104,7 @@ export const CreatePartyGatheringRequest = Schema.Struct({
     ),
   ),
 }).annotate({ identifier: "CreatePartyGatheringDto" });
+
 export type CreatePartyGatheringRequest =
   typeof CreatePartyGatheringRequest.Type;
 
@@ -113,6 +116,7 @@ export const ApplyToPartyReadyRoomRequest = Schema.Struct({
   ),
   character: GameCharacter,
 }).annotate({ identifier: "PartyReadyRoomApplicationDto" });
+
 export type ApplyToPartyReadyRoomRequest =
   typeof ApplyToPartyReadyRoomRequest.Type;
 
@@ -123,6 +127,7 @@ export const PartyParticipantIdentity = Schema.Struct({
     }),
   ),
 }).annotate({ identifier: "PartyReadyRoomParticipantIdentityDto" });
+
 export type PartyParticipantIdentity = typeof PartyParticipantIdentity.Type;
 
 export const PartyReadyRoomUpdateResponse = Schema.Struct({
@@ -132,6 +137,7 @@ export const PartyReadyRoomUpdateResponse = Schema.Struct({
   notificationId: Schema.optionalKey(Schema.String),
   revision: Schema.optionalKey(PositiveSafeInteger),
 }).annotate({ identifier: "PartyReadyRoomClientUpdateDto_Output" });
+
 export type PartyReadyRoomUpdateResponse =
   typeof PartyReadyRoomUpdateResponse.Type;
 
@@ -143,6 +149,7 @@ export const PartyParticipantActionRequest = Schema.Struct({
     }),
   ),
 }).annotate({ identifier: "PartyReadyRoomParticipantActionDto" });
+
 export type PartyParticipantActionRequest =
   typeof PartyParticipantActionRequest.Type;
 
@@ -165,6 +172,7 @@ export const ResolvePartyInvitationsRequest = Schema.Struct({
       }),
     ),
 }).annotate({ identifier: "PartyReadyRoomResolveInvitationTargetsDto" });
+
 export type ResolvePartyInvitationsRequest =
   typeof ResolvePartyInvitationsRequest.Type;
 
@@ -173,6 +181,7 @@ export const PartyInvitationTargetsResponse = Schema.Struct({
     Schema.Struct({ participantId: Schema.String, characterId: Schema.String }),
   ),
 }).annotate({ identifier: "PartyReadyRoomInvitationTargetsDto_Output" });
+
 export type PartyInvitationTargetsResponse =
   typeof PartyInvitationTargetsResponse.Type;
 
@@ -199,24 +208,29 @@ export const ObservePartyRequest = Schema.Struct({
     }),
   ),
 }).annotate({ identifier: "PartyReadyRoomObservationDto" });
+
 export type ObservePartyRequest = typeof ObservePartyRequest.Type;
 
 export const PartyRevisionRequest = Schema.Struct({
   expectedRevision: PositiveSafeInteger,
 }).annotate({ identifier: "PartyReadyRoomExpectedRevisionDto" });
+
 export type PartyRevisionRequest = typeof PartyRevisionRequest.Type;
 
 export const PartyReadyRoomsResponse = Schema.Array(PartyReadyRoomResponse);
+
 export type PartyReadyRoomsResponse = typeof PartyReadyRoomsResponse.Type;
 
 export const PartyReadyRoomParams = Schema.Struct({
   notificationId: Schema.String,
 });
+
 export type PartyReadyRoomParams = typeof PartyReadyRoomParams.Type;
 
 export const ActivePartyGatheringsQuery = Schema.Struct({
   world: NonEmptyString.check(Schema.isMaxLength(50)),
 });
+
 export const ActivePartyGatheringSummary = Schema.Struct({
   notificationId: Schema.String,
   organizerName: Schema.String,
@@ -246,6 +260,7 @@ export const ActivePartyGatheringSummary = Schema.Struct({
   createdAt: DateTimeString,
   expiresAt: DateTimeString,
 }).annotate({ identifier: "ActivePartyGatheringSummary" });
+
 export const ActivePartyGatheringsResponse = Schema.Array(
   ActivePartyGatheringSummary,
 );

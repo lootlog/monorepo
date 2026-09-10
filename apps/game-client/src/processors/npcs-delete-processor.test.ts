@@ -31,6 +31,7 @@ const trackedNpc = (id = 500) => ({
   location: "Urwisko",
   notificationSent: false,
 });
+
 const notification = (id = 500): StoredNotification => ({
   notificationId: `notification-${id}`,
   listKey: `notification-${id}`,
@@ -43,10 +44,12 @@ const notification = (id = 500): StoredNotification => ({
   message: "NPC",
   npc: { ...trackedNpc(id), name: "Stwór" },
 });
+
 const configKey =
   getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
     accountId: "202",
   });
+
 const createFixture = () => {
   setTestRuntimeGame({
     world: "pandora",
@@ -55,20 +58,25 @@ const createFixture = () => {
   });
   const npcsById: Record<number, RuntimeNpc> = {};
   npcsById[500] = normalizeNpc({ ...trackedNpc(), resp_rand: 15 });
+
   const ingress = {
     game: useGameStore.getState().game,
     intent: null,
     npcsById,
     othersById: {},
   } satisfies RuntimeIngressSnapshot;
+
   const requests: Request[] = [];
   let status = 200;
+
   const fetch: typeof globalThis.fetch = (input, init) => {
     requests.push(new Request(input, init));
+
     return Promise.resolve(
       Response.json({ submittedGuilds: [], rejectedGuilds: [] }, { status }),
     );
   };
+
   onTestFinished(
     configureApiClients({
       main: { baseUrl: "https://api.example.test", fetch },
@@ -78,6 +86,7 @@ const createFixture = () => {
     "101": { catchingGuildIds: ["guild-1"] },
   });
   const processor = new NpcsDeleteProcessor();
+
   return {
     ingress,
     requests,
@@ -91,6 +100,7 @@ const createFixture = () => {
     },
   };
 };
+
 beforeEach(() => {
   queryClient.clear();
   useNpcDetectorStore.setState({
@@ -103,16 +113,19 @@ beforeEach(() => {
     notificationAutoHideByListKey: {},
   });
 });
+
 afterEach(() => {
   queryClient.clear();
   vi.restoreAllMocks();
 });
+
 it("ignores packets without deleted NPCs", () => {
   const fixture = createFixture();
   fixture.handle({});
   expect(fixture.requests).toHaveLength(0);
   expect(useNpcDetectorStore.getState().npcs).toHaveLength(1);
 });
+
 it("removes local detection and notifications before validating missing runtime data", () => {
   const fixture = createFixture();
   fixture.ingress.npcsById = {};
@@ -121,6 +134,7 @@ it("removes local detection and notifications before validating missing runtime 
   expect(useNotificationsStore.getState().notifications).toEqual([]);
   expect(fixture.requests).toHaveLength(0);
 });
+
 it("publishes each local store once for a deletion batch", () => {
   const fixture = createFixture();
   fixture.ingress.npcsById = {};
@@ -151,6 +165,7 @@ it("publishes each local store once for a deletion batch", () => {
   expect(useNpcDetectorStore.getState().npcs).toEqual([]);
   expect(useNotificationsStore.getState().notifications).toEqual([]);
 });
+
 it.each([undefined, 1])(
   "does not submit missing or too short respawn duration %s",
   (respBaseSeconds) => {
@@ -159,6 +174,7 @@ it.each([undefined, 1])(
     expect(fixture.requests).toHaveLength(0);
   },
 );
+
 it("does not submit low-weight NPCs", () => {
   const fixture = createFixture();
   fixture.ingress.npcsById[500] = {
@@ -168,12 +184,14 @@ it("does not submit low-weight NPCs", () => {
   fixture.handle({ npcs_del: [{ id: 500, respBaseSeconds: 30 }] });
   expect(fixture.requests).toHaveLength(0);
 });
+
 it("does not submit without whitelisted guilds", () => {
   const fixture = createFixture();
   queryClient.setQueryData(configKey, { "101": { catchingGuildIds: [] } });
   fixture.handle({ npcs_del: [{ id: 500, respBaseSeconds: 30 }] });
   expect(fixture.requests).toHaveLength(0);
 });
+
 it("submits distinct respawn effects sharing one event id", async () => {
   const fixture = createFixture();
   fixture.handle({ ev: 77, npcs_del: [{ id: 500, respBaseSeconds: 30 }] });
@@ -186,6 +204,7 @@ it("submits distinct respawn effects sharing one event id", async () => {
     respBaseSeconds: 31,
   });
 });
+
 it("sends native respawn details and actor identity to the timer endpoint", async () => {
   const fixture = createFixture();
   fixture.handle({ npcs_del: [{ id: 500, respBaseSeconds: 30 }] });
@@ -210,6 +229,7 @@ it("sends native respawn details and actor identity to the timer endpoint", asyn
     },
   });
 });
+
 it.each([
   { mapId: 3327, name: "Terrozaur (urwisko)" },
   { mapId: 9999, name: "Bazowa nazwa" },
@@ -217,12 +237,15 @@ it.each([
   "uses mapped elite name when available on map $mapId",
   async ({ mapId, name }) => {
     const fixture = createFixture();
+
     const npc: RuntimeNpc = {
       ...fixture.ingress.npcsById[500],
       weight: 20,
       name: "Bazowa nazwa",
     };
+
     fixture.ingress.npcsById[500] = npc;
+
     if (fixture.ingress.game)
       fixture.ingress.game = {
         ...fixture.ingress.game,
@@ -233,6 +256,7 @@ it.each([
     expect(await fixture.requests[0].json()).toMatchObject({ npc: { name } });
   },
 );
+
 it("reports an HTTP rejection and permits a subsequent attempt", async () => {
   const fixture = createFixture();
   fixture.fail();

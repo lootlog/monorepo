@@ -34,6 +34,8 @@ export const getRarityStyle = (rarity: string | null) => {
 };
 
 export const allTrue = (...values: boolean[]) => values.every(Boolean);
+
 export const anyTrue = (...values: boolean[]) => values.some(Boolean);
+
 export const renderIf = (condition: boolean, content: ReactNode) =>
   condition ? content : null;

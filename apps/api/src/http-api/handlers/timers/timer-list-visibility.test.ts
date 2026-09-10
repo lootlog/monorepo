@@ -18,6 +18,7 @@ it.each([Permission.ADMIN, Permission.LOOTLOG_TIMERS_READ])(
   "applies all-organization timer visibility for %s",
   async (permission) => {
     const boundary = await createDatabaseBoundary();
+
     try {
       const database = boundary.database;
       const now = new Date();
@@ -68,9 +69,11 @@ it.each([Permission.ADMIN, Permission.LOOTLOG_TIMERS_READ])(
           })),
         ),
       );
+
       const timers = await boundary.run(
         makeAllTimerList(database)({ userId: "user", discordId: "discord" }),
       );
+
       expect(timers.map((entry) => entry.npcId)).toEqual(
         permission === Permission.ADMIN ? [105] : [],
       );

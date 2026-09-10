@@ -33,10 +33,12 @@ const repository: ActivityRepositoryValue = {
   suggestWorlds: () => Effect.succeed(["Tempest"]),
   suggestClanNames: () => Effect.succeed(["Clan"]),
 };
+
 const health: ActivityHealthValue = {
   check: () =>
     Effect.succeed({ status: "ok", info: {}, error: null, details: {} }),
 };
+
 const unusedOnlineRepository = Layer.succeed(OnlineRepository, {
   ingest: () =>
     Effect.die(new Error("Unexpected online ingest in activity route test")),
@@ -62,12 +64,15 @@ const makeBoundary = (capabilities: Permission[]) => {
     Layer.provideMerge(unusedOnlineRepository),
     Layer.provide(HttpServer.layerServices),
   );
+
   const boundary = HttpRouter.toWebHandler(routes, { disableLogger: true });
+
   return {
     dispose: boundary.dispose,
     handler: boundary.handler,
   };
 };
+
 const headers = {
   authorization: "Bearer forwarded",
   "x-auth-discord-id": "discord",
@@ -77,20 +82,24 @@ const headers = {
 describe("Activity HttpApi contract", () => {
   it("requires the deployed forward-auth headers", async () => {
     const boundary = makeBoundary([Permission.ADMIN]);
+
     const response = await boundary.handler(
       new Request("https://activity/guilds/g/activity-logs", {
         headers: { authorization: "Bearer forwarded" },
       }),
     );
+
     expect(response.status).toBe(401);
     await boundary.dispose();
   });
 
   it("resolves vanity organizations before querying", async () => {
     const boundary = makeBoundary([Permission.ADMIN]);
+
     const response = await boundary.handler(
       new Request("https://activity/guilds/vanity/activity-logs", { headers }),
     );
+
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
       data: [{ guildId: "123" }],
@@ -102,18 +111,21 @@ describe("Activity HttpApi contract", () => {
   it("requires OWNER for deletion", async () => {
     const admin = makeBoundary([Permission.ADMIN]);
     const owner = makeBoundary([Permission.OWNER]);
+
     const forbidden = await admin.handler(
       new Request("https://activity/guilds/g/activity-logs/a", {
         method: "DELETE",
         headers,
       }),
     );
+
     const allowed = await owner.handler(
       new Request("https://activity/guilds/g/activity-logs/a", {
         method: "DELETE",
         headers,
       }),
     );
+
     expect(forbidden.status).toBe(403);
     expect(allowed.status).toBe(200);
     expect(await allowed.json()).toEqual({ count: 1 });
@@ -122,12 +134,14 @@ describe("Activity HttpApi contract", () => {
 
   it("keeps suggestion response envelopes", async () => {
     const boundary = makeBoundary([Permission.ADMIN]);
+
     const response = await boundary.handler(
       new Request(
         "https://activity/guilds/g/activity-logs/actor-name-suggestions",
         { headers },
       ),
     );
+
     expect(await response.json()).toEqual({ suggestions: ["Hero"] });
     await boundary.dispose();
   });
@@ -136,15 +150,19 @@ describe("Activity HttpApi contract", () => {
 for (const failure of ["status", "transport", "invalid-body"] as const) {
   it(`returns 503 on ${failure} authorization failure and recovers without caching the failure`, async () => {
     const cache = new Map<string, string>();
+
     const redis = Redis.Redis.of({
       send: <A>(command: string, ...args: ReadonlyArray<string | number>) =>
         Effect.sync(() => {
           if (command !== "GET" && command !== "SET" && command !== "PING") {
             throw new Error(`Unexpected Redis command: ${command}`);
           }
+
           if (command === "SET") cache.set(String(args[0]), String(args[1]));
+
           const reply =
             command === "GET" ? (cache.get(String(args[0])) ?? null) : "OK";
+
           // SAFETY: These cache scenarios request string | null for GET and ignore SET/PING replies; Redis's caller-selected A is erased at the fake transport boundary.
           return reply as A;
         }),
@@ -159,8 +177,10 @@ for (const failure of ["status", "transport", "invalid-body"] as const) {
         (..._params: Config["params"]) =>
           Effect.die("unused"),
     });
+
     let unavailable = true;
     let permissionRequests = 0;
+
     const config = ActivityConfig.of({
       environment: RuntimeEnvironment.LOCAL,
       port: 0,
@@ -172,6 +192,7 @@ for (const failure of ["status", "transport", "invalid-body"] as const) {
       apiServiceUrl: "http://api.test",
       signatureSecret: Redacted.make("a".repeat(32)),
     });
+
     const permissions = Permissions.layer.pipe(
       Layer.provide(Layer.succeed(ActivityConfig, config)),
       Layer.provide(Layer.succeed(Redis.Redis, redis)),
@@ -186,6 +207,7 @@ for (const failure of ["status", "transport", "invalid-body"] as const) {
                   body: new TextEncoder().encode(JSON.stringify({ id: "g" })),
                 });
               permissionRequests++;
+
               if (unavailable && failure === "transport")
                 return Effect.fail(
                   new ApiHttpClientFailure({
@@ -194,11 +216,13 @@ for (const failure of ["status", "transport", "invalid-body"] as const) {
                     retryable: true,
                   }),
                 );
+
               const body = unavailable
                 ? "invalid"
                 : JSON.stringify([
                     { guild: { id: "g", ownerId: "discord" }, roles: [] },
                   ]);
+
               return Effect.succeed({
                 status: unavailable && failure === "status" ? 503 : 200,
                 body: new TextEncoder().encode(body),
@@ -208,6 +232,7 @@ for (const failure of ["status", "transport", "invalid-body"] as const) {
         ),
       ),
     );
+
     const boundary = HttpRouter.toWebHandler(
       ActivityRoutes.pipe(
         Layer.provideMerge(permissions),
@@ -218,11 +243,14 @@ for (const failure of ["status", "transport", "invalid-body"] as const) {
       ),
       { disableLogger: true },
     );
+
     const handler = boundary.handler;
+
     try {
       const response = await handler(
         new Request("https://activity/guilds/g/activity-logs", { headers }),
       );
+
       expect(response.status).toBe(503);
       expect(await response.json()).toEqual({
         message: "Authorization service unavailable",
@@ -230,9 +258,11 @@ for (const failure of ["status", "transport", "invalid-body"] as const) {
       });
       expect(cache.has("permissions:user:discord")).toBe(false);
       unavailable = false;
+
       const recovered = await handler(
         new Request("https://activity/guilds/g/activity-logs", { headers }),
       );
+
       expect(recovered.status).toBe(200);
       expect(await recovered.json()).toEqual({
         data: [{ guildId: "g" }],
@@ -247,6 +277,7 @@ for (const failure of ["status", "transport", "invalid-body"] as const) {
 
 it("restricts API keys after canonical organization resolution and before writes", async () => {
   const boundary = makeBoundary([Permission.OWNER, Permission.ADMIN]);
+
   const access = {
     keyId: "key",
     organizationIds: ["123"],
@@ -254,36 +285,45 @@ it("restricts API keys after canonical organization resolution and before writes
     personalData: false,
     expiresAt: null,
   };
+
   const keyHeaders = {
     ...headers,
     "x-auth-api-key-access": JSON.stringify(access),
   };
+
   try {
     const allowed = await boundary.handler(
       new Request("https://activity/guilds/vanity/activity-logs", {
         headers: keyHeaders,
       }),
     );
+
     expect(allowed.status).toBe(200);
     expect(await allowed.json()).toMatchObject({ data: [{ guildId: "123" }] });
+
     const denied = await boundary.handler(
       new Request("https://activity/guilds/456/activity-logs", {
         headers: keyHeaders,
       }),
     );
+
     expect(denied.status).toBe(403);
+
     const write = await boundary.handler(
       new Request("https://activity/guilds/123/activity-logs/a", {
         method: "DELETE",
         headers: keyHeaders,
       }),
     );
+
     expect(write.status).toBe(403);
+
     const personal = await boundary.handler(
       new Request("https://activity/users/@me/activity/online", {
         headers: keyHeaders,
       }),
     );
+
     expect(personal.status).toBe(403);
   } finally {
     await boundary.dispose();

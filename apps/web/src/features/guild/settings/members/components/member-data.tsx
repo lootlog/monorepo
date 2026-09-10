@@ -42,6 +42,7 @@ const getPermissionStyle = (permission: Permission) => {
   const category = PERMISSION_CATEGORIES.find((cat) =>
     cat.permissions.includes(permission),
   );
+
   return category
     ? { icon: category.icon, color: category.color, bgColor: category.bgColor }
     : null;
@@ -92,6 +93,7 @@ const getMemberActivityPresentation = ({
 > & { t: Translate }) => {
   const emptyValueLabel = t("settings.members.discordSync.values.notAvailable");
   let onlineStatusLabel = t("settings.members.webActivity.offline");
+
   if (isOnlineOnWeb && isOnlineInGame) {
     onlineStatusLabel = t(
       "settings.members.webActivity.onlineSources.webAndGame",
@@ -166,6 +168,7 @@ export const MemberData = ({
   const accessState = getMemberAccessState({ member, isOnline });
   const hasProblem = isMemberProblematic(member);
   const syncPresentation = getMemberDiscordSyncPresentation(member);
+
   const {
     emptyValueLabel,
     gameLastSeenAt,
@@ -179,6 +182,7 @@ export const MemberData = ({
     t,
     webActivityStats,
   });
+
   const accessSummary = {
     active: {
       label: t("settings.members.access.ok"),
@@ -205,6 +209,7 @@ export const MemberData = ({
       className: "border-amber-500/25 bg-amber-500/10 text-amber-500",
     },
   }[accessState];
+
   const AccessIcon = accessSummary.icon;
   const syncRows = getMemberSyncRows(member, emptyValueLabel, t);
 
@@ -348,6 +353,7 @@ export const MemberData = ({
           <div className="divide-y divide-border/60">
             {member.roles.map((role) => {
               const color = getColorFromRoleColor(role.color);
+
               const filteredPermissions = role.permissions.filter(
                 (permission) => permission !== "OWNER",
               );

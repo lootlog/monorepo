@@ -5,6 +5,7 @@ import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpCli
 import type { RedisService } from "#src/redis/redis.service";
 
 const cacheKey = "maps:all";
+
 const cacheTtlSeconds = 60 * 60;
 
 export class MapsOperationFailure extends TaggedErrorClass<MapsOperationFailure>()(
@@ -26,6 +27,7 @@ export class MapsOperationFailure extends TaggedErrorClass<MapsOperationFailure>
 const GameMapsJson = Schema.fromJsonString(
   Schema.Array(Schema.Struct({ id: Schema.Number, name: Schema.String })),
 );
+
 const decodeGameMapsJson = Schema.decodeUnknownSync(GameMapsJson);
 
 export interface MapsOperationOptions {
@@ -65,6 +67,7 @@ export const makeMapsOperation = (options: MapsOperationOptions) => {
       try: () => options.redis.get(cacheKey),
       catch: () => failure("cache"),
     });
+
     if (cached) {
       return yield* Effect.try({
         try: () => decodeGameMapsJson(cached),
@@ -78,6 +81,7 @@ export const makeMapsOperation = (options: MapsOperationOptions) => {
         options.redis.set(cacheKey, JSON.stringify(maps), cacheTtlSeconds),
       catch: () => failure("cache"),
     });
+
     return maps;
   })().pipe(
     Effect.catch((error) =>

@@ -71,6 +71,7 @@ const resolvePresenceDetails = (
   unknownWorld: string,
 ) => {
   const { player } = presence;
+
   return {
     accountId: player?.accountId ? Number.parseInt(player.accountId, 10) : 0,
     characterId: player?.characterId
@@ -109,10 +110,12 @@ const resolveOnlinePlayerActionState = ({
 }: OnlinePlayerActionStateInput) => {
   const isSelf =
     String(characterId) === heroCharacterId || characterNick === heroName;
+
   const isSameClan =
     playerClanId !== undefined &&
     heroClanId !== undefined &&
     playerClanId === heroClanId;
+
   const canUseCharacterActions = characterId > 0 && accountId > 0;
 
   return {
@@ -129,13 +132,16 @@ export const OnlinePlayersAccountListEntry: FC<
 > = ({ presence, guildMember }) => {
   const { t } = useTranslation("onlinePlayers");
   const character = getPresenceCharacter(presence);
+
   const { accountId, characterId, locationName, player, world } =
     resolvePresenceDetails(presence, t("location.unknown"), t("world.unknown"));
+
   const heroCharacterId = useGameStore((state) => state.game?.hero.characterId);
   const heroName = useGameStore((state) => state.game?.hero.name);
   const heroClanId = useGameStore((state) => state.game?.hero.clan?.id);
   const currentMapName = useGameStore((state) => state.game?.map.name);
   const gameInterface = useGameStore((state) => state.game?.interface);
+
   const isPartyMember = usePartyStore(
     (state) =>
       characterId > 0 &&
@@ -143,9 +149,11 @@ export const OnlinePlayersAccountListEntry: FC<
         (member) => member.characterId === String(characterId),
       ),
   );
+
   const isFriend = useFriendsStore((state) =>
     state.isFriend(characterId.toString()),
   );
+
   const {
     canAddFriend,
     canInviteToParty,
@@ -164,16 +172,19 @@ export const OnlinePlayersAccountListEntry: FC<
     isPartyMember,
     playerClanId: player?.clan?.id,
   });
+
   const highlightClassName = getHighlightClassName({
     isSelf,
     isAfk: presence.isAfk,
     isPartyMember,
     isSameClan,
   });
+
   const visibleLocationName =
     isSelf && !player?.location?.map && !presence.mapName && currentMapName
       ? currentMapName
       : locationName;
+
   const memberName = guildMember?.name ?? t("member.unknown");
 
   const handleInviteToParty = () => {

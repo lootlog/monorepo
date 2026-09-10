@@ -56,18 +56,22 @@ describe("Map Templates HttpApi handlers", () => {
       guildId: string;
       capability: string;
     }> = [];
+
     const createCalls: Array<{
       guildId: string;
       payload: CreateMapTemplate;
     }> = [];
+
     const layer = provideTestServices(
       makeAuthorization((options) => {
         authorizationCalls.push(options);
+
         return Effect.succeed({ guildId: options.guildId });
       }),
       makeData({
         create: (guildId, receivedPayload) => {
           createCalls.push({ guildId, payload: receivedPayload });
+
           return Effect.succeed(storedTemplate);
         },
       }),
@@ -98,12 +102,15 @@ describe("Map Templates HttpApi handlers", () => {
       status: 403,
       code: "LOOTLOG_MANAGE_REQUIRED",
     });
+
     let createCalled = false;
+
     const layer = provideTestServices(
       makeAuthorization(() => Effect.fail(denied)),
       makeData({
         create: () => {
           createCalled = true;
+
           return Effect.succeed(storedTemplate);
         },
       }),
@@ -116,20 +123,24 @@ describe("Map Templates HttpApi handlers", () => {
     );
 
     expect(error).toBe(denied);
+
     if (!(error instanceof MapTemplatesAccessDenied)) {
       throw new Error("Expected MapTemplatesAccessDenied");
     }
+
     expect(error.status).toBe(403);
     expect(createCalled).toBe(false);
   });
 
   it("returns not-found without crossing the requested Organization boundary", async () => {
     const updateCalls: Array<{ guildId: string; templateId: string }> = [];
+
     const layer = provideTestServices(
       makeAuthorization(({ guildId }) => Effect.succeed({ guildId })),
       makeData({
         update: (guildId, templateId) => {
           updateCalls.push({ guildId, templateId });
+
           // The repository returns null when the id belongs to another guild.
           return Effect.succeed(null);
         },

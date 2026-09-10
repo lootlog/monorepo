@@ -17,6 +17,7 @@ import type { UserGuildData } from "#src/guilds/guild";
 import type { SessionData } from "#src/realtime/session";
 
 type Event = typeof ServerEvent.Type;
+
 type NpcEvent = Extract<
   Event,
   {
@@ -54,11 +55,14 @@ const decodeNpc = Schema.decodeUnknownOption(
     lvl: Schema.Number,
   }),
 );
+
 const RoutingSchema = Schema.Struct({
   tier: NpcRoutingTierSchema,
   npcLevel: Schema.optionalKey(Schema.Number),
 });
+
 const decodeRouting = Schema.decodeUnknownOption(RoutingSchema);
+
 type Routing = typeof RoutingSchema.Type;
 
 export const isOrganizationAdministrator = (
@@ -68,6 +72,7 @@ export const isOrganizationAdministrator = (
   const guild = session.guilds.find(
     (entry) => entry.guild.id === organizationId,
   );
+
   return (
     guild !== undefined &&
     (guild.guild.ownerId === session.discordId ||
@@ -83,6 +88,7 @@ const npcRouting = Function.compose(decodeNpc, (decoded): Routing | null => {
     resolveNpcType(decoded.value) === null
   )
     return null;
+
   return {
     tier: getNpcRoutingTier(decoded.value),
     npcLevel: decoded.value.lvl,
@@ -95,9 +101,11 @@ const mutationRouting = (
 ): Routing | null => {
   if (Option.isNone(decoded)) return null;
   const routing = decoded.value;
+
   if (routing.npcLevel === undefined) {
     return !requiresLevel && routing.tier === "base" ? routing : null;
   }
+
   return Number.isFinite(routing.npcLevel) && routing.npcLevel >= 0
     ? routing
     : null;
@@ -107,10 +115,14 @@ const readyRoomRouting = (
   event: Extract<NpcEvent, { type: "party-ready-room.updated" }>,
 ): Routing | null => {
   const payload = event.data.payload;
+
   if (!Predicate.isObject(payload)) return null;
+
   if (payload.type === "REMOVE") return { tier: "base" };
+
   if (payload.type !== "UPSERT" || !Predicate.isObject(payload.projection))
     return null;
+
   return payload.projection.npc === undefined
     ? { tier: "base" }
     : npcRouting(payload.projection.npc);
@@ -118,18 +130,22 @@ const readyRoomRouting = (
 
 const eventRouting = (event: NpcEvent): Routing | null => {
   const payload = event.data.payload;
+
   if (!Predicate.isObject(payload)) return null;
+
   // Never let an envelope for one Organization authorize another source.
   if (
     payload.guildId !== undefined &&
     payload.guildId !== event.data.organizationId
   )
     return null;
+
   if (
     payload.organizationId !== undefined &&
     payload.organizationId !== event.data.organizationId
   )
     return null;
+
   switch (event.type) {
     case "party-ready-room.updated":
       return readyRoomRouting(event);
@@ -145,6 +161,7 @@ const eventRouting = (event: NpcEvent): Routing | null => {
         (payload.type === "PARTY_GATHERING" && payload.npc !== undefined)
       )
         return npcRouting(payload.npc);
+
       return { tier: "base" };
     case "timer.deleted":
     case "chat.updated":
@@ -162,6 +179,7 @@ const canReadFeatureEvent = (
   routing: Routing,
 ): boolean => {
   let feature: keyof typeof NPC_FEATURE_PERMISSIONS;
+
   switch (event.type) {
     case "timer.created":
     case "timer.deleted":
@@ -173,6 +191,7 @@ const canReadFeatureEvent = (
     default:
       feature = "chat";
   }
+
   if (
     !guild.roles.some((role) =>
       role.permissions.includes(NPC_FEATURE_PERMISSIONS[feature].base),
@@ -180,8 +199,10 @@ const canReadFeatureEvent = (
   )
     return false;
   const permission = NPC_FEATURE_PERMISSIONS[feature][routing.tier];
+
   if (routing.npcLevel === undefined)
     return guild.roles.some((role) => role.permissions.includes(permission));
+
   return hasRolePermissionInLevelRange(
     guild.roles,
     permission,
@@ -196,14 +217,18 @@ const canReadEventHeroSource = (
 ): boolean => {
   if (Option.isNone(source) || source.value.guildId !== organizationId)
     return false;
+
   const guild = session.guilds.find(
     (entry) => entry.guild.id === organizationId,
   );
+
   if (!guild) return false;
   const administrator = isOrganizationAdministrator(session, organizationId);
+
   const permissions = administrator
     ? [Permission.ADMIN]
     : guild.roles.flatMap((role) => role.permissions);
+
   return (
     (administrator || permissions.includes(Permission.LOOTLOG_EVENTS_READ)) &&
     canViewEventHero(
@@ -217,8 +242,11 @@ const canReadEventHeroSource = (
 const isUnscopedReadyRoomUpdate = (event: Event): boolean => {
   if (event.type !== "party-ready-room.updated") return false;
   const payload = event.data.payload;
+
   if (!Predicate.isObject(payload)) return false;
+
   if (payload.type === "REMOVE") return true;
+
   return (
     Predicate.isObject(payload.projection) &&
     payload.projection.npc === undefined
@@ -231,6 +259,7 @@ const canReadOwnReadyRoom = (
   guild: UserGuildData,
 ): boolean => {
   const update = decodeReadyRoomOrganizer(event.data.payload);
+
   return (
     Option.isSome(update) &&
     update.value.projection.guildIds.includes(event.data.organizationId) &&
@@ -247,6 +276,7 @@ export const canReadNpcSourceEvent = (
   event: Event,
 ): boolean => {
   if (isUnscopedReadyRoomUpdate(event)) return true;
+
   switch (event.type) {
     case "member-refresh.updated":
       return isOrganizationAdministrator(session, event.data.organizationId);
@@ -260,6 +290,7 @@ export const canReadNpcSourceEvent = (
         decodeEventHeroSource(event.data.payload),
       );
     }
+
     case "party-ready-room.updated":
     case "timer.created":
     case "timer.deleted":
@@ -270,17 +301,23 @@ export const canReadNpcSourceEvent = (
       const guild = session.guilds.find(
         (entry) => entry.guild.id === event.data.organizationId,
       );
+
       const routing = eventRouting(event);
+
       if (!guild || !routing) return false;
+
       if (isOrganizationAdministrator(session, event.data.organizationId))
         return true;
+
       if (
         event.type === "party-ready-room.updated" &&
         canReadOwnReadyRoom(session, event, guild)
       )
         return true;
+
       return canReadFeatureEvent(guild, event, routing);
     }
+
     default:
       return true;
   }

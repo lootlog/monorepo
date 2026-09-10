@@ -41,6 +41,7 @@ describe("member game presence utils", () => {
       discordId: "discord-1",
       player: buildPresence({ sessionId: "session-1", mapName: "Ithan" }),
     });
+
     const updated = applyMemberGamePresenceUpdate(added, {
       guildId: "guild-1",
       discordId: "discord-1",
@@ -58,6 +59,7 @@ describe("member game presence utils", () => {
         buildPresence({ sessionId: "session-2" }),
       ],
     });
+
     const updated = applyMemberGamePresenceUpdate(mapped, {
       guildId: "guild-1",
       discordId: "discord-1",
@@ -115,6 +117,7 @@ describe("member game presence utils", () => {
     const gamePresence = mapMemberGamePresenceByDiscordId({
       "discord-1": [buildPresence({ sessionId: "session-1" })],
     });
+
     const webPresence = mapMemberWebPresenceByDiscordId({
       "discord-1": [{ sessionId: "web-session-1" }],
     });

@@ -3,6 +3,7 @@ import * as m from "framer-motion/m";
 
 export const SidebarMagicCircle = () => {
   const prefersReducedMotion = usePrefersReducedMotion();
+
   return (
     <div className="flex items-center justify-center py-4 mt-auto pointer-events-none">
       <m.svg

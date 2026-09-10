@@ -24,6 +24,7 @@ import {
   BetterAuthRuntime,
   type AppUserSession,
 } from "#src/auth/provider/better-auth";
+
 export interface VerifiedIdentity {
   readonly apiKeyAccess?: ApiKeyAccess;
   readonly userId: string;
@@ -52,6 +53,7 @@ export class HttpResponseError extends TaggedErrorClass<HttpResponseError>()(
 type SessionIdentity = {
   readonly user: Pick<AppUserSession["user"], "id" | "discordId">;
 };
+
 type AccessTokenPayload = {
   readonly accessToken?: string;
   readonly accessTokenExpiresAt?: string | number | Date;
@@ -115,7 +117,9 @@ export const normalizeScopes = Function.compose(
   (result): ReadonlyArray<string> => {
     if (Option.isNone(result)) return [];
     const scopes = result.value;
+
     if (Predicate.isString(scopes)) return scopes.split(/\s+/).filter(Boolean);
+
     return scopes.filter(Predicate.isString);
   },
 );
@@ -220,10 +224,14 @@ export const createAuthService = ({
 
       if (headers.has("x-api-key")) {
         const key = headers.get("x-api-key")?.trim();
+
         if (!key || !verifyApiKey) return yield* unauthorized();
+
         return yield* verifyApiKey(key);
       }
+
       const session = yield* getSession(headers);
+
       const verifiedIdentity = yield* buildVerifiedIdentityFromRequest(
         session,
         authorizationHeader,
@@ -234,6 +242,7 @@ export const createAuthService = ({
       }
 
       const identity: VerifiedIdentity = verifiedIdentity;
+
       return identity;
     },
   );
@@ -241,6 +250,7 @@ export const createAuthService = ({
   const getDiscordAccessToken = Effect.fn("AuthService.getDiscordAccessToken")(
     function* (request: AccessTokenRequest) {
       const accountId = yield* findDiscordAccountId(request);
+
       if (accountId === null) {
         return yield* Effect.fail(
           new APIError("BAD_REQUEST", { code: "ACCOUNT_NOT_FOUND" }),
@@ -342,6 +352,7 @@ export const createAuthService = ({
       if (!hasServiceAuthorization(authorizationHeader, idpTokenSecret)) {
         return yield* unauthorized();
       }
+
       const result = yield* Effect.result(
         getDiscordAccessTokenOrThrow(request, {
           missing: new HttpResponseError({
@@ -371,6 +382,7 @@ export const createAuthService = ({
 
       const now = yield* DateTime.now;
       const expiresAt = parseExpiresAt(result.success.accessTokenExpiresAt);
+
       const expiresIn = Option.isSome(expiresAt)
         ? Math.floor(
             (DateTime.toEpochMillis(expiresAt.value) -

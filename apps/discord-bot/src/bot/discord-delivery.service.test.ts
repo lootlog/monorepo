@@ -35,12 +35,14 @@ describe("Discord delivery", () => {
   test("sends a DM and publishes the delivery result", async () => {
     const send = mock(async () => ({ id: "message-1" }));
     const publish = mock(() => Effect.void);
+
     const client = {
       users: {
         fetch: mock(async () => ({ createDM: async () => ({ send }) })),
       },
       channels: { fetch: mock() },
     } satisfies DiscordDeliveryClient;
+
     await Effect.runPromise(
       makeDiscordDelivery({ publish }, client).sendNotification(
         command(NotificationTargetType.DM),
@@ -63,6 +65,7 @@ describe("Discord delivery", () => {
   test("keeps allowed mentions for guild channels", async () => {
     const send = mock(async () => ({ id: "message-2" }));
     const publish = mock(() => Effect.void);
+
     const client = {
       users: { fetch: mock() },
       channels: {
@@ -74,11 +77,13 @@ describe("Discord delivery", () => {
         })),
       },
     } satisfies DiscordDeliveryClient;
+
     const input = {
       ...command(NotificationTargetType.CHANNEL),
       content: "<@&123> alert",
       allowedMentions: { roles: ["123"] },
     };
+
     await Effect.runPromise(
       makeDiscordDelivery({ publish }, client).sendNotification(input),
     );
@@ -90,6 +95,7 @@ describe("Discord delivery", () => {
 
   test("publishes a non-retryable result for invalid channels", async () => {
     const publish = mock(() => Effect.void);
+
     const client = {
       users: { fetch: mock() },
       channels: {
@@ -100,6 +106,7 @@ describe("Discord delivery", () => {
         })),
       },
     } satisfies DiscordDeliveryClient;
+
     await Effect.runPromise(
       makeDiscordDelivery({ publish }, client).sendNotification(
         command(NotificationTargetType.CHANNEL),
@@ -120,15 +127,18 @@ describe("Discord delivery", () => {
     const fetchPending = new Promise<never>(() => undefined);
     const publish = mock(() => Effect.void);
     const fetch = mock(() => fetchPending);
+
     const client = {
       users: { fetch: mock() },
       channels: { fetch },
     } satisfies DiscordDeliveryClient;
+
     const fiber = Effect.runFork(
       makeDiscordDelivery({ publish }, client).sendNotification(
         command(NotificationTargetType.CHANNEL),
       ),
     );
+
     while (fetch.mock.calls.length === 0) await Promise.resolve();
 
     await Effect.runPromise(Fiber.interrupt(fiber));

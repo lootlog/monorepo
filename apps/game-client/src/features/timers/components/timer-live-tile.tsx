@@ -22,6 +22,7 @@ export const TimerLiveTile = ({
   const { maxTimeLeft, minTimeLeft } = getTimerTimeLeft(timer, epoch);
   const isMinSpawnTime = minTimeLeft < 0;
   const hasPassedRedThreshold = maxTimeLeft < 0;
+
   const timeLeft = calculateTimeLeft(
     minTimeLeft,
     maxTimeLeft,

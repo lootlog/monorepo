@@ -30,6 +30,7 @@ export const WatchedItemCard = ({
 }: WatchedItemCardProps) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+
   const deleteWatchedItem = useNotificationsUserControllerDeleteWatchedItem({
     mutation: {
       onSuccess: async () => {

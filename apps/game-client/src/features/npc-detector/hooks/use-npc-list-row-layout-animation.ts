@@ -22,9 +22,11 @@ export function useNpcListRowLayoutAnimation({
   rowStride,
 }: Options) {
   const [rowLayoutAnimations] = useState(() => new Map<number, Animation>());
+
   const [initialNpcIndexById] = useState(
     () => new Map((npcs ?? []).map((npc, index) => [npc.id, index])),
   );
+
   const previousNpcIndexByIdRef = useRef(initialNpcIndexById);
   useLayoutEffect(() => {
     const currentNpcIndexById = new Map(
@@ -39,10 +41,12 @@ export function useNpcListRowLayoutAnimation({
     }
 
     const listContent = listContentRef.current;
+
     if (animationEffectsEnabled && listContent) {
       (npcs ?? []).slice(startIndex, endIndex).forEach((npc, visibleIndex) => {
         const previousIndex = previousNpcIndexByIdRef.current.get(npc.id);
         const currentIndex = startIndex + visibleIndex;
+
         if (previousIndex === undefined || previousIndex === currentIndex) {
           return;
         }
@@ -50,12 +54,14 @@ export function useNpcListRowLayoutAnimation({
         const rowElement = listContent.querySelector<HTMLElement>(
           `[data-ll-npc-row-id="${npc.id}"]`,
         );
+
         if (!rowElement || !supportsElementAnimation(rowElement)) {
           return;
         }
 
         rowLayoutAnimations.get(npc.id)?.cancel();
         const translateY = (previousIndex - currentIndex) * rowStride;
+
         const animation = rowElement.animate(
           [
             { transform: `translateY(${translateY}px)` },
@@ -66,12 +72,15 @@ export function useNpcListRowLayoutAnimation({
             easing: "cubic-bezier(0.22, 1, 0.36, 1)",
           },
         );
+
         rowLayoutAnimations.set(npc.id, animation);
+
         const clearAnimation = () => {
           if (rowLayoutAnimations.get(npc.id) === animation) {
             rowLayoutAnimations.delete(npc.id);
           }
         };
+
         animation.oncancel = clearAnimation;
         animation.onfinish = clearAnimation;
       });

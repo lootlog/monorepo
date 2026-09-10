@@ -42,16 +42,21 @@ export const makeEventCreation =
           rulebookMarkdown,
           ...eventData
         } = data;
+
         const normalizedWorld = world.trim().toLowerCase();
+
         if (!normalizedWorld)
           throw new InvalidRequestError("World is required");
         const startDate = startsAt ? new Date(startsAt) : new Date();
         const endDate = endsAt ? new Date(endsAt) : null;
+
         if (endDate && endDate <= startDate) {
           throw new InvalidRequestError("End date must be after start date");
         }
+
         const normalizedScoringMode = normalizeEventScoringMode(scoringMode);
         const trimmedRulebook = rulebookMarkdown?.trim();
+
         return {
           eventData,
           startDate,
@@ -83,6 +88,7 @@ export const makeEventCreation =
     return Effect.gen(function* () {
       const input = yield* normalized;
       const eventId = randomUUID();
+
       const created = yield* database
         .transaction((transaction) =>
           Effect.gen(function* () {
@@ -101,7 +107,9 @@ export const makeEventCreation =
                 updatedAt: new Date(yield* Clock.currentTimeMillis),
               })
               .returning();
+
             const event = eventRows[0];
+
             if (!event) {
               return yield* Effect.fail(
                 new EventCreationError({
@@ -110,9 +118,12 @@ export const makeEventCreation =
                 }),
               );
             }
+
             const heroes = [];
+
             for (const hero of input.heroNpcs) {
               const heroId = randomUUID();
+
               const heroRows = yield* transaction
                 .insert(eventHeroNpcTable)
                 .values({
@@ -122,8 +133,11 @@ export const makeEventCreation =
                   npcName: hero.npcName,
                 })
                 .returning();
+
               const createdHero = heroRows[0];
+
               if (!createdHero) continue;
+
               const maps =
                 hero.maps.length === 0
                   ? []
@@ -139,11 +153,13 @@ export const makeEventCreation =
                         })),
                       )
                       .returning();
+
               heroes.push({
                 ...createdHero,
                 maps: maps.map((map) => ({ ...map, assignedMembers: [] })),
               });
             }
+
             return { ...event, heroNpcs: heroes };
           }),
         )
@@ -160,6 +176,7 @@ export const makeEventCreation =
             attributes: { adapter: "events.drizzle", retryCount: 0 },
           }),
         );
+
       yield* Effect.tryPromise({
         try: () => redis.deleteByPattern(`event-read:v2:${guild.id}:*`),
         catch: (cause) => cause,
@@ -170,6 +187,7 @@ export const makeEventCreation =
           ),
         ),
       );
+
       return attachComputedEventActive(
         created,
         new Date(yield* Clock.currentTimeMillis),

@@ -8,6 +8,7 @@ import { afterEach, expect, it } from "vitest";
 import { BattlesTable } from "./battles-table";
 
 await initializeTestTranslations();
+
 afterEach(cleanup);
 
 it("selects and clears a battle exactly once when clicking the whole selection cell", async () => {
@@ -21,13 +22,17 @@ it("selects and clears a battle exactly once when clicking the whole selection c
   await screen.findByRole("checkbox", {
     name: "battlePanel.bulk.selectRow",
   });
+
   const checkbox = () =>
     screen.getByRole("checkbox", { name: "battlePanel.bulk.selectRow" });
+
   const clickSelectionCell = () => {
     const label = checkbox().parentElement?.querySelector("label");
+
     if (!label) throw new Error("Missing selection label");
     fireEvent.click(label);
   };
+
   clickSelectionCell();
   expect(checkbox().getAttribute("aria-checked")).toBe("true");
   clickSelectionCell();

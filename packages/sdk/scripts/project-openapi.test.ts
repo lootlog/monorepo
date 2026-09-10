@@ -6,6 +6,7 @@ test("public projection excludes unknown operations and private schemas but reta
   const operations = PUBLIC_API_OPERATIONS.filter(
     (entry) => entry.service === "search" && entry.access !== "session-only",
   );
+
   const paths = Object.fromEntries(
     operations.map((entry) => [
       entry.path,
@@ -25,6 +26,7 @@ test("public projection excludes unknown operations and private schemas but reta
       },
     ]),
   );
+
   const projected = projectOpenApi(
     {
       openapi: "3.1.0",
@@ -45,6 +47,7 @@ test("public projection excludes unknown operations and private schemas but reta
     },
     "search",
   );
+
   expect(projected.paths).not.toHaveProperty("/secret");
   expect(projected.components).toHaveProperty("schemas.Item");
   expect(projected.components).not.toHaveProperty("schemas.Secret");

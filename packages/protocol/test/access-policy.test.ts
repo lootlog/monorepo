@@ -12,10 +12,12 @@ const role = (permissions: Permission[], from = 0, to = 500) => ({
   lvlRangeFrom: from,
   lvlRangeTo: to,
 });
+
 const guild = (roles: ReturnType<typeof role>[], id = "one") => ({
   guild: { id, ownerId: "owner" },
   roles,
 });
+
 const snapshot = (guilds: ReturnType<typeof guild>[], viewer = "member") =>
   createAccessPolicySnapshot(guilds, viewer);
 
@@ -24,6 +26,7 @@ describe("realtime effective access policy", () => {
     const a = guild([role([Permission.LOOTLOG_TIMERS_READ], 0, 500)]);
     const b = guild([role([Permission.LOOTLOG_CHAT_READ])], "two");
     const previous = snapshot([a, b]);
+
     const next = snapshot([
       b,
       guild([
@@ -32,6 +35,7 @@ describe("realtime effective access policy", () => {
         role([Permission.LOOTLOG_TIMERS_READ], 0, 300),
       ]),
     ]);
+
     expect(next.version).toBe(previous.version);
     expect(diffAccessPolicies(previous, next)).toEqual([]);
     expect(isAccessPolicySnapshot(next)).toBe(true);
@@ -41,14 +45,17 @@ describe("realtime effective access policy", () => {
     const previous = snapshot([
       guild([role([Permission.LOOTLOG_TIMERS_READ], 0, 200)]),
     ]);
+
     const next = snapshot([
       guild([
         role([Permission.LOOTLOG_TIMERS_READ], 0, 100),
         role([Permission.LOOTLOG_TIMERS_READ], 101, 200),
       ]),
     ]);
+
     const previousOrganization = previous.organizations[0];
     const nextOrganization = next.organizations[0];
+
     if (!previousOrganization || !nextOrganization)
       throw new Error("Missing fixture policy");
     expect(
@@ -63,11 +70,13 @@ describe("realtime effective access policy", () => {
         lvl: 100.5,
       }),
     ).toBe(false);
+
     for (const lvl of [0, 100, 101, 200]) {
       expect(
         canReadPolicyNpc(nextOrganization, "timers", { type: "ELITE2", lvl }),
       ).toBe(true);
     }
+
     expect(diffAccessPolicies(previous, next)).toEqual([
       {
         organizationId: "one",
@@ -80,6 +89,7 @@ describe("realtime effective access policy", () => {
 
   test("tier revocation and narrower levels affect only timers of their organization", () => {
     const unaffected = guild([role([Permission.LOOTLOG_CHAT_READ])], "two");
+
     const previous = snapshot([
       guild([
         role([
@@ -90,6 +100,7 @@ describe("realtime effective access policy", () => {
       ]),
       unaffected,
     ]);
+
     const next = snapshot([
       guild([
         role([Permission.LOOTLOG_TIMERS_READ], 200, 500),
@@ -97,6 +108,7 @@ describe("realtime effective access policy", () => {
       ]),
       unaffected,
     ]);
+
     expect(diffAccessPolicies(previous, next)).toEqual([
       {
         organizationId: "one",
@@ -106,6 +118,7 @@ describe("realtime effective access policy", () => {
       },
     ]);
     const policy = next.organizations[0];
+
     if (!policy) throw new Error("Missing fixture policy");
     expect(
       canReadPolicyNpc(policy, "timers", { type: "TITAN", lvl: 250 }),
@@ -123,12 +136,15 @@ describe("realtime effective access policy", () => {
     const previous = snapshot([
       guild([role([Permission.LOOTLOG_TIMERS_READ], 100, 200)]),
     ]);
+
     const expanded = snapshot([
       guild([role([Permission.LOOTLOG_TIMERS_READ], 0, 500)]),
     ]);
+
     const shifted = snapshot([
       guild([role([Permission.LOOTLOG_TIMERS_READ], 150, 250)]),
     ]);
+
     expect(diffAccessPolicies(previous, expanded)).toEqual([
       {
         organizationId: "one",
@@ -163,13 +179,16 @@ describe("realtime effective access policy", () => {
 
   test("administrator NPC reads ignore redundant grants while loot ranges remain significant", () => {
     const previous = snapshot([guild([role([Permission.ADMIN])])]);
+
     const next = snapshot([
       guild([
         role([Permission.ADMIN]),
         role([Permission.LOOTLOG_TIMERS_TITANS_READ], 100, 200),
       ]),
     ]);
+
     expect(next.version).toBe(previous.version);
+
     const withLoot = snapshot([
       guild([
         role([Permission.ADMIN]),
@@ -180,6 +199,7 @@ describe("realtime effective access policy", () => {
         ),
       ]),
     ]);
+
     expect(diffAccessPolicies(previous, withLoot)).toEqual([
       {
         organizationId: "one",
@@ -189,6 +209,7 @@ describe("realtime effective access policy", () => {
       },
     ]);
     const policy = next.organizations[0];
+
     if (!policy) throw new Error("Missing fixture policy");
     expect(
       canReadPolicyNpc(policy, "timers", { type: "TITAN", lvl: 700 }),
@@ -202,7 +223,9 @@ describe("realtime effective access policy", () => {
     const previous = snapshot([
       guild([role([Permission.LOOTLOG_CHAT_TITANS_READ])]),
     ]);
+
     const policy = previous.organizations[0];
+
     if (!policy) throw new Error("Missing fixture policy");
     expect(canReadPolicyNpc(policy, "chat", { type: "TITAN", lvl: 250 })).toBe(
       false,
@@ -218,6 +241,7 @@ test("loot tier coverage keeps the base grant on the same role", () => {
       role([Permission.LOOTLOG_LOOTS_TITANS_READ]),
     ]),
   ]);
+
   const combined = snapshot([
     guild([
       role([
@@ -226,6 +250,7 @@ test("loot tier coverage keeps the base grant on the same role", () => {
       ]),
     ]),
   ]);
+
   expect(diffAccessPolicies(split, combined)).toEqual([
     {
       organizationId: "one",

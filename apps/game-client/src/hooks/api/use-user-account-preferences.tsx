@@ -39,6 +39,7 @@ export const useUpdateUserGameAccountPreferences = (
   accountId: string | null,
 ) => {
   const queryClient = useQueryClient();
+
   const queryKey = accountId
     ? getUsersControllerGetUserGameAccountPreferencesQueryKey({ accountId })
     : ["usersControllerGetUserGameAccountPreferences", "disabled"];
@@ -92,6 +93,7 @@ export const useUpdateUserGameAccountPreferences = (
             },
           )
         : previousData.notifications;
+
       const nextDetector = payload.detector
         ? (() => {
             const nextSettings = cloneDetectorSettings(previousData.detector);
@@ -121,9 +123,11 @@ export const useUpdateUserGameAccountPreferences = (
             return nextSettings;
           })()
         : previousData.detector;
+
       const nextPings = payload.pings
         ? { ...previousData.pings, ...payload.pings }
         : previousData.pings;
+
       const nextAirTags = payload.airTags
         ? { ...previousData.airTags, ...payload.airTags }
         : previousData.airTags;

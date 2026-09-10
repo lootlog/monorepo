@@ -21,9 +21,11 @@ export function StatisticsActivity({
   const { t } = useTranslation();
   const distributions = summarizeActivityDistributions(data.hourlyWeekday);
   const max = Math.max(1, ...data.hourlyWeekday.map((cell) => cell.kills));
+
   const weekdays = Array.from({ length: 7 }, (_, day) =>
     weekdayFormatter.format(new Date(Date.UTC(2026, 0, 5 + day, 12))),
   );
+
   return (
     <>
       <SectionCard>
@@ -104,6 +106,7 @@ export function StatisticsActivity({
                           (cell) =>
                             cell.weekday === index + 1 && cell.hour === hour,
                         )?.kills ?? 0;
+
                       return (
                         <td
                           key={hour}

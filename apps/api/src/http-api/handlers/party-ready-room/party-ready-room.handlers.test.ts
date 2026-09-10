@@ -18,6 +18,7 @@ import {
 } from "./party-ready-room.handlers.js";
 
 const identity = { userId: "user-a", discordId: "discord-organizer" };
+
 const character = {
   lvl: 300,
   nick: "Hero",
@@ -26,6 +27,7 @@ const character = {
   prof: "w",
   icon: "hero.gif",
 };
+
 const projection = {
   schemaVersion: 3 as const,
   notificationId: "room-a",
@@ -42,6 +44,7 @@ const projection = {
   participants: {},
   ownedParticipantIds: [],
 };
+
 const update = {
   schemaVersion: 3 as const,
   type: "UPSERT" as const,
@@ -85,6 +88,7 @@ const provideServices = (
 describe("Party Ready Room HttpApi handlers", () => {
   it("creates a room only for visible Organizations and preserves projection TTL fields", async () => {
     const calls: unknown[] = [];
+
     const layer = provideServices(
       makeAuthorization(),
       makeData({
@@ -92,6 +96,7 @@ describe("Party Ready Room HttpApi handlers", () => {
           Effect.succeed(["guild-visible", "guild-second"]),
         create: (current, guildIds, payload) => {
           calls.push({ current, guildIds, payload });
+
           return Effect.succeed(projection);
         },
       }),
@@ -125,12 +130,15 @@ describe("Party Ready Room HttpApi handlers", () => {
       status: 401,
       code: "AUTH_REQUIRED",
     });
+
     let dataCalled = false;
+
     const layer = provideServices(
       makeAuthorization({ identity: Effect.fail(denied) }),
       makeData({
         get: () => {
           dataCalled = true;
+
           return Effect.succeed(projection);
         },
       }),
@@ -148,17 +156,21 @@ describe("Party Ready Room HttpApi handlers", () => {
     const conflictCause = new ResourceConflictError({
       code: "REVISION_CONFLICT",
     });
+
     const conflict = new ReadyRoomOperationError({ cause: conflictCause });
     const calls: string[] = [];
+
     const layer = provideServices(
       makeAuthorization(),
       makeData({
         get: () => {
           calls.push("visibility");
+
           return Effect.succeed(projection);
         },
         cancel: (_current, _notificationId, payload) => {
           calls.push(`cancel:${payload.expectedRevision}`);
+
           return Effect.fail(conflict);
         },
       }),
@@ -181,13 +193,16 @@ describe("Party Ready Room HttpApi handlers", () => {
     const forbidden = new ReadyRoomOperationError({
       cause: new PermissionDeniedError({ code: "FORBIDDEN" }),
     });
+
     let removeCalled = false;
+
     const layer = provideServices(
       makeAuthorization(),
       makeData({
         get: () => Effect.fail(forbidden),
         remove: () => {
           removeCalled = true;
+
           return Effect.succeed(update);
         },
       }),
@@ -209,6 +224,7 @@ describe("Party Ready Room HttpApi handlers", () => {
 
 it("returns active discovery summaries for the requested world without participant data", async () => {
   let requestedWorld = "";
+
   const result = await Effect.runPromise(
     activeReadyRooms("Fobos").pipe(
       Effect.provide(
@@ -218,6 +234,7 @@ it("returns active discovery summaries for the requested world without participa
             active: (_identity, guildIds, world) => {
               requestedWorld = world;
               expect(guildIds).toEqual(["guild-visible"]);
+
               return Effect.succeed([
                 {
                   notificationId: "room-a",
@@ -238,6 +255,7 @@ it("returns active discovery summaries for the requested world without participa
       ),
     ),
   );
+
   expect(requestedWorld).toBe("Fobos");
   expect(result).toEqual([
     {

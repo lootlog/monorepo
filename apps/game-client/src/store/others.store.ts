@@ -3,6 +3,7 @@ import type {
   RuntimeOther,
   RuntimeStatus,
 } from "@/lib/margonem-runtime/runtime.types";
+
 type OthersById = Readonly<Record<string, RuntimeOther>>;
 
 type OthersBatch = {
@@ -46,6 +47,7 @@ function reconcileOthersById(
 
   for (const [id, other] of incomingEntries) {
     const currentOther = current[id];
+
     if (currentOther && areRuntimeOthersEqual(currentOther, other)) {
       reconciled[id] = currentOther;
       continue;
@@ -66,8 +68,10 @@ export const useOthersStore = create<OthersState>()((set, get) => ({
   applyBatch: ({ removeIds = [], upserts = {} }) =>
     set((state) => {
       let writableOthersById: Record<string, RuntimeOther> | null = null;
+
       const getWritableOthersById = () => {
         writableOthersById ??= { ...state.othersById };
+
         return writableOthersById;
       };
 
@@ -78,16 +82,19 @@ export const useOthersStore = create<OthersState>()((set, get) => ({
 
       for (const [id, other] of Object.entries(upserts)) {
         const currentOther = (writableOthersById ?? state.othersById)[id];
+
         if (
           currentOther === other ||
           (currentOther && areRuntimeOthersEqual(currentOther, other))
         ) {
           continue;
         }
+
         getWritableOthersById()[id] = other;
       }
 
       if (!writableOthersById) return state;
+
       return {
         othersById: Object.freeze(
           writableOthersById ?? { ...state.othersById },
@@ -111,6 +118,7 @@ export const useOthersStore = create<OthersState>()((set, get) => ({
         state.othersById,
         othersById,
       );
+
       if (
         !mapChanged &&
         state.status === "ready" &&

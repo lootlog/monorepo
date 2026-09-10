@@ -22,6 +22,7 @@ export const normalizeRouteErrorStatus = (
 const createRouteLoaderAbortError = () => {
   const error = new Error("Route loader was cancelled");
   error.name = "AbortError";
+
   return error;
 };
 

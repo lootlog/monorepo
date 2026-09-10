@@ -66,15 +66,18 @@ const defaultBattleDeduplicationTiming: BattleDeduplicationTiming = {
   waitIntervalMs: 50,
   waitTimeoutMs: 30_000,
 };
+
 const CreateBattleResultCodec = makeJsonCodec(
   Schema.Struct({ battleId: Schema.String }),
 );
+
 const EXTEND_BATTLE_DEDUPLICATION_LOCK_SCRIPT = `
 if redis.call("get", KEYS[1]) == ARGV[1] then
   return redis.call("expire", KEYS[1], ARGV[2])
 end
 return 0
 `;
+
 const RELEASE_BATTLE_DEDUPLICATION_LOCK_SCRIPT = `
 if redis.call("get", KEYS[1]) == ARGV[1] then
   return redis.call("del", KEYS[1])
@@ -98,6 +101,7 @@ const adapter = <A, E>(
 ) =>
   Effect.suspend(() => {
     const result = run();
+
     return Effect.isEffect(result)
       ? result
       : Effect.tryPromise({
@@ -132,30 +136,38 @@ export const makeBattles = (
   deduplicationTiming: BattleDeduplicationTiming = defaultBattleDeduplicationTiming,
 ) => {
   const logger = new Logger("Battles");
+
   const deletion = makeBattleDeletion(
     drizzle,
     r2Service,
     battleAnalyticsService,
   );
+
   const battlesModule = {
     createBattle(params: CreateBattleParams) {
       const { data, userId } = params;
+
       return Effect.gen(function* () {
         const normalizedData = normalizeBattleSubmission(data);
+
         const semanticFingerprint = createBattleSemanticFingerprint({
           data: normalizedData,
           userId,
         });
+
         const existingSubmission =
           yield* battlesModule.getMatchingBattleBySubmissionId(
             normalizedData.submissionId,
             userId,
             semanticFingerprint,
           );
+
         if (existingSubmission?.semanticFingerprint === null) {
           return { battleId: existingSubmission.id };
         }
+
         const analysis = battlesModule.analyzeBattle(normalizedData);
+
         if (existingSubmission) {
           return yield* battlesModule.createCanonicalBattle({
             analysis,
@@ -185,7 +197,9 @@ export const makeBattles = (
       }).pipe(
         Effect.mapError((error) => {
           logger.error(`Failed to create battle for user ${userId}:`, error);
+
           if (error instanceof ApplicationError) return error;
+
           return new Error(
             `Battle creation failed: ${error instanceof Error ? error.message : "Unknown error"}`,
           );
@@ -214,12 +228,14 @@ export const makeBattles = (
           characterId: data.characterId,
           world: data.world,
         };
+
         const canonicalBattleId =
           existingBattleId ??
           (yield* battlesModule.getRecentBattleIdBySemanticFingerprint(
             semanticFingerprint,
             userId,
           ));
+
         if (canonicalBattleId) {
           yield* battlesModule.preserveCanonicalBattleDuration(
             canonicalBattleId,
@@ -230,6 +246,7 @@ export const makeBattles = (
             canonicalBattleId,
             rawBattleData,
           );
+
           return { battleId: canonicalBattleId };
         }
 
@@ -256,26 +273,33 @@ export const makeBattles = (
     ) {
       const cacheKey = `battle-submission:${semanticFingerprint}`;
       const lockKey = `${cacheKey}:lock`;
+
       const attempt = (
         deadline?: number,
       ): Effect.Effect<CreateBattleResult, unknown> =>
         Effect.gen(function* () {
           const currentTime = yield* Clock.currentTimeMillis;
+
           const activeDeadline =
             deadline ?? currentTime + deduplicationTiming.waitTimeoutMs;
+
           const cachedResult =
             yield* battlesModule.requireBattleDeduplicationRedis(() =>
               redisService.getJson(cacheKey, CreateBattleResultCodec),
             );
+
           if (cachedResult) {
             yield* reconcileCachedBattle(cachedResult);
+
             return cachedResult;
           }
+
           yield* battlesModule.throwIfBattleDeduplicationTimedOut(
             activeDeadline,
           );
 
           const lockToken = randomUUID();
+
           const lockAcquired =
             yield* battlesModule.requireBattleDeduplicationRedis(() =>
               redisService.setNX(
@@ -295,8 +319,10 @@ export const makeBattles = (
                     yield* battlesModule.requireBattleDeduplicationRedis(() =>
                       redisService.getJson(cacheKey, CreateBattleResultCodec),
                     );
+
                   if (cachedAfterLock) {
                     yield* reconcileCachedBattle(cachedAfterLock);
+
                     return cachedAfterLock;
                   }
 
@@ -308,6 +334,7 @@ export const makeBattles = (
                       deduplicationTiming.cacheTtlSeconds,
                     ),
                   );
+
                   return result;
                 }),
               )
@@ -322,8 +349,10 @@ export const makeBattles = (
           }
 
           yield* Effect.sleep(`${deduplicationTiming.waitIntervalMs} millis`);
+
           return yield* attempt(activeDeadline);
         });
+
       return attempt();
     },
 
@@ -353,10 +382,12 @@ export const makeBattles = (
                 ),
               );
             }
+
             return Effect.void;
           }),
         ),
       );
+
       return Effect.raceFirst(Effect.uninterruptible(operation), renewal);
     },
 
@@ -474,6 +505,7 @@ export const makeBattles = (
               ),
             );
           }
+
           return Effect.succeed(battle ?? null);
         }),
       );
@@ -485,6 +517,7 @@ export const makeBattles = (
           yield* battleListFilterService.buildFilterConditions(query);
 
         const paginationOptions = battlesModule.buildPaginationOptions(query);
+
         const result = yield* paginationService.paginateBattles(
           (table) => and(eq(table.public, true), filterBuilder(table)),
           paginationOptions,
@@ -500,6 +533,7 @@ export const makeBattles = (
       }).pipe(
         Effect.mapError((error) => {
           logger.error("Failed to retrieve public battles:", error);
+
           return new Error(
             `Failed to retrieve public battles: ${error instanceof Error ? error.message : "Unknown error"}`,
           );
@@ -510,6 +544,7 @@ export const makeBattles = (
     getDashboardBattles(query: BattleListQuery, requestingUserId: string) {
       return Effect.gen(function* () {
         const { userId: _userId, ...filteredQuery } = query;
+
         const filterBuilder =
           yield* battleListFilterService.buildFilterConditions(
             filteredQuery,
@@ -517,6 +552,7 @@ export const makeBattles = (
           );
 
         const paginationOptions = battlesModule.buildPaginationOptions(query);
+
         const result = yield* paginationService.paginateBattles(
           (table) =>
             and(eq(table.userId, requestingUserId), filterBuilder(table)),
@@ -533,6 +569,7 @@ export const makeBattles = (
       }).pipe(
         Effect.mapError((error) => {
           logger.error("Failed to retrieve dashboard battles:", error);
+
           return new Error(
             `Failed to retrieve dashboard battles: ${error instanceof Error ? error.message : "Unknown error"}`,
           );
@@ -558,6 +595,7 @@ export const makeBattles = (
           "BattleObjectStorage_getBattleData",
           () => r2Service.getBattleData(battleId, decodeRawBattleDataJson),
         );
+
         return battlesModule.normalizeRawBattleData(rawData);
       }).pipe(
         Effect.tapError((error) =>
@@ -588,6 +626,7 @@ export const makeBattles = (
         if (requestingUserId) {
           yield* battlesModule.checkBattleAccess(battleId, requestingUserId);
         }
+
         const battle = yield* adapter("Battles_getFromDatabase", () =>
           drizzle.query.battles.findFirst({
             where: { id: battleId },
@@ -614,6 +653,7 @@ export const makeBattles = (
           const processor = new BattleProcessor();
 
           let analysis: BattleAnalysis;
+
           if (rawBattleData.rawData.sourceEvents?.length) {
             analysis = processor.processBattle({
               accountId: rawBattleData.rawData.accountId,
@@ -846,6 +886,7 @@ export const makeBattles = (
               new PermissionDeniedError("Access denied: Battle is private"),
             );
           }
+
           return Effect.void;
         }),
       );
@@ -870,6 +911,7 @@ export const makeBattles = (
               new PermissionDeniedError("You can only modify your own battles"),
             );
           }
+
           return Effect.void;
         }),
       );
@@ -885,6 +927,7 @@ export const makeBattles = (
         const userWarrior = analysis.warriors.find(
           (w) => w.originalId === data.characterId,
         );
+
         if (userWarrior) {
           yield* battleMetadataService.upsertUserCharacter({
             userId,
@@ -1058,15 +1101,19 @@ export const makeBattles = (
             userId,
             semanticFingerprint,
           );
+
         if (existingBattle) return existingBattle;
+
         return yield* Effect.fail(
           new Error("Battle insert did not return a row"),
         );
       });
+
       return store.pipe(
         Effect.mapError((error) => {
           if (error instanceof ApplicationError) return error;
           logger.error("Failed to store battle in database:", error);
+
           return new Error(
             `Database storage failed: ${error instanceof Error ? error.message : "Unknown error"}`,
           );
@@ -1097,6 +1144,7 @@ export const makeBattles = (
             `Failed to store raw battle data for ${battleId}:`,
             error,
           );
+
           return new Error(
             `R2 storage failed: ${error instanceof Error ? error.message : "Unknown error"}`,
           );

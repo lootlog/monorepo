@@ -14,12 +14,15 @@ describe("Activity permissions", () => {
         body: new TextEncoder().encode("[]"),
       }),
     );
+
     const redis = Redis.Redis.of({
       send: <A>(command: string) => {
         if (command !== "GET" && command !== "PING" && command !== "SET") {
           return Effect.die(new Error(`Unexpected Redis command: ${command}`));
         }
+
         const reply = command === "GET" ? "not-json" : "OK";
+
         // SAFETY: This scenario calls GET as string | null and ignores PING/SET replies; Redis's caller-selected A is erased at this fake transport boundary.
         return Effect.succeed(reply as A);
       },
@@ -34,6 +37,7 @@ describe("Activity permissions", () => {
         (..._params: Config["params"]) =>
           Effect.die("unused"),
     });
+
     const config = ActivityConfig.of({
       environment: RuntimeEnvironment.LOCAL,
       port: 0,

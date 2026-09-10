@@ -1,6 +1,7 @@
 import { expect, it } from "bun:test";
 import { Schema } from "effect";
 import { SendChatMessageRequest } from "./schemas.js";
+
 it("preserves source world in new NPC reports while accepting historical reports without it", () => {
   const message = {
     message: "",
@@ -24,6 +25,7 @@ it("preserves source world in new NPC reports while accepting historical reports
       type: 2,
     },
   };
+
   const decode = Schema.decodeUnknownSync(SendChatMessageRequest);
   expect(decode(message).npc?.world).toBeUndefined();
   expect(

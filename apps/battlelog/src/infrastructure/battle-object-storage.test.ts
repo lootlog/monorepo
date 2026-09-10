@@ -14,19 +14,24 @@ afterEach(() => mock.restore());
 for (const failure of ["R2", "Redis"] as const) {
   it(`propagates ${failure} cleanup failure and succeeds when retried`, async () => {
     let calls = 0;
+
     const send = spyOn(S3Client.prototype, "send").mockImplementation(
       async () => {
         if (++calls === 1 && failure === "R2")
           throw new Error("R2 unavailable");
+
         return {};
       },
     );
+
     let cacheCalls = 0;
+
     const storage = makeBattleObjectStorage(
       {
         del: async () => {
           if (++cacheCalls === 1 && failure === "Redis")
             throw new Error("Redis unavailable");
+
           return 1;
         },
         zrem: async () => 1,
@@ -92,8 +97,10 @@ it("keeps the first accepted object when the same battle is uploaded again", asy
     if (!(command instanceof PutObjectCommand))
       throw new Error("Unexpected command");
     const { Key, Body, IfNoneMatch } = command.input;
+
     if (!Key || !(Body instanceof Uint8Array))
       throw new Error("Invalid object");
+
     if (IfNoneMatch === "*" && objects.has(Key)) {
       throw new S3ServiceException({
         name: "PreconditionFailed",
@@ -101,7 +108,9 @@ it("keeps the first accepted object when the same battle is uploaded again", asy
         $metadata: { httpStatusCode: 412 },
       });
     }
+
     objects.set(Key, Body);
+
     return {};
   });
   const storage = createStorage();
@@ -112,6 +121,7 @@ it("keeps the first accepted object when the same battle is uploaded again", asy
   });
 
   const stored = objects.get("battles/one.json");
+
   if (!stored) throw new Error("Object not stored");
   expect(JSON.parse(gunzipSync(stored).toString())).toEqual(rawBattleData);
 });
@@ -119,6 +129,7 @@ it("keeps the first accepted object when the same battle is uploaded again", asy
 for (const status of [409, 503]) {
   it(`propagates object upload failure ${status} and permits a retry`, async () => {
     let attempts = 0;
+
     const send = spyOn(S3Client.prototype, "send").mockImplementation(
       async () => {
         if (++attempts === 1)
@@ -127,9 +138,11 @@ for (const status of [409, 503]) {
             $fault: "server",
             $metadata: { httpStatusCode: status },
           });
+
         return {};
       },
     );
+
     const storage = createStorage();
     await expect(
       storage.uploadBattleData("one", rawBattleData),

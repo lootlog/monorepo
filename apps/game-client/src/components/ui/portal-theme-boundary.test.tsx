@@ -56,13 +56,16 @@ describe("overlay theme boundary", () => {
 
     expectContentInsideThemeBoundary("tooltip-content");
     expectSmallRadius("tooltip-content");
+
     const tooltipPositioner =
       screen.getByTestId("tooltip-content").parentElement;
 
     expect(tooltipPositioner).not.toBeNull();
+
     if (!tooltipPositioner) {
       throw new Error("Tooltip positioner was not rendered");
     }
+
     expect(getComputedStyle(tooltipPositioner).zIndex).toBe("500");
   });
 
@@ -98,14 +101,17 @@ describe("overlay theme boundary", () => {
     });
 
     expectContentInsideThemeBoundary("context-menu-content");
+
     const contextMenuPositioner = screen.getByTestId(
       "context-menu-content",
     ).parentElement;
 
     expect(contextMenuPositioner).not.toBeNull();
+
     if (!contextMenuPositioner) {
       throw new Error("Context menu positioner was not rendered");
     }
+
     expect(getComputedStyle(contextMenuPositioner).zIndex).toBe("500");
   });
 
@@ -148,18 +154,22 @@ describe("overlay theme boundary", () => {
     );
 
     expectContentInsideThemeBoundary("popover-content");
+
     const popoverPositioner =
       screen.getByTestId("popover-content").parentElement;
 
     expect(popoverPositioner).not.toBeNull();
+
     if (!popoverPositioner) {
       throw new Error("Popover positioner was not rendered");
     }
+
     expect(getComputedStyle(popoverPositioner).zIndex).toBe("500");
   });
 
   it("reports an outside press through the popover root", async () => {
     const user = userEvent.setup();
+
     const onOpenChange =
       vi.fn<NonNullable<ComponentProps<typeof Popover>["onOpenChange"]>>();
 

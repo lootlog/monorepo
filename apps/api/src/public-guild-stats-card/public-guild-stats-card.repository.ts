@@ -16,6 +16,7 @@ export type GuildStatsCardGuild = {
   readonly icon: string | null;
   readonly publicStatsCardEnabled: boolean;
 };
+
 export type GuildStatsCardLootStats = {
   readonly totalLoots: number;
   readonly legendaryItems: number;
@@ -52,6 +53,7 @@ export class PublicGuildStatsCardRepository extends Context.Service<
     Effect.map(ApiDatabase, (database) => {
       const persistenceError = (cause: unknown) =>
         new PublicGuildStatsCardPersistenceError({ cause });
+
       return PublicGuildStatsCardRepository.of({
         findActiveGuild: (guildId) =>
           database

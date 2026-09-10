@@ -27,10 +27,12 @@ import {
 import { EventCoordinationPage } from "./event-coordination-page";
 
 await initializeTestTranslations({});
+
 beforeEach(() => {
   vi.useFakeTimers();
   vi.setSystemTime(new Date("2026-06-19T12:00:00.000Z"));
 });
+
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
@@ -43,6 +45,7 @@ async function renderPage(
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: Infinity } },
   });
+
   onTestFinished(() => client.clear());
   client.setQueryData(
     getGuildsControllerGetGuildPermissionsQueryKey({ guildId: "guild-1" }),
@@ -64,24 +67,30 @@ async function renderPage(
     }),
   );
   const root = createRootRoute();
+
   const route = createRoute({
     getParentRoute: () => root,
     path: "/$guildId/events/$eventId/coordination",
     component: EventCoordinationPage,
   });
+
   const router = createRouter({
     routeTree: root.addChildren([route]),
     history: createMemoryHistory({
       initialEntries: ["/guild-1/events/event-1/coordination"],
     }),
   });
+
   await router.load();
+
   const { container } = render(
     <QueryClientProvider client={client}>
       <RouterProvider router={router} />
     </QueryClientProvider>,
   );
+
   await act(() => vi.advanceTimersByTimeAsync(0));
+
   return container.innerHTML;
 }
 
@@ -104,6 +113,7 @@ describe("EventCoordinationPage", () => {
       Permission.LOOTLOG_EVENTS_WRITE,
       Permission.LOOTLOG_EVENTS_MANAGE,
     ]);
+
     expect(html).toContain("events.coordination.title");
     expect(html).toContain("Przykladowy Heros");
     expect(html).toContain("events.coordination.actions.openMaps");
@@ -120,6 +130,7 @@ describe("EventCoordinationPage", () => {
       ]),
       [Permission.LOOTLOG_EVENTS_WRITE],
     );
+
     expect(html).toContain('disabled=""');
     expect(html).toContain("events.maps.assignmentDisabledWithTime");
   });

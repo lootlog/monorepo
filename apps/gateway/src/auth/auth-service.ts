@@ -24,6 +24,7 @@ export const makeGatewayAuth = (
   isAllowedOrigin: (origin) => {
     if (!origin) return false;
     const normalized = origin.replace(/\/$/, "");
+
     return (
       GAME_URL_REGEX.test(normalized) ||
       config.allowedWebOrigins.has(normalized) ||
@@ -39,27 +40,35 @@ export const makeGatewayAuth = (
   readIdentity: (request) => {
     const userId = request.headers.get("x-auth-user-id")?.trim();
     const discordId = request.headers.get("x-auth-discord-id")?.trim();
+
     if (!userId || !discordId) return null;
+
     const access = readApiKeyAccess({
       [API_KEY_ACCESS_HEADER]:
         request.headers.get(API_KEY_ACCESS_HEADER) ?? undefined,
     });
+
     if (access === null) return null;
+
     if (access === undefined) {
       if (request.headers.has("x-api-key")) return null;
+
       return { userId, discordId };
     }
+
     if (
       !config.authUrl ||
       !config.apiKeyStatusSecret ||
       !Redacted.value(config.apiKeyStatusSecret)
     )
       return null;
+
     if (
       access.expiresAt !== null &&
       !(Date.parse(access.expiresAt) > Date.now())
     )
       return null;
+
     return {
       userId,
       discordId,

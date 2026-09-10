@@ -13,6 +13,7 @@ import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import { useGameStore } from "@/store/game.store";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { useGameAccountPreferencesSync } from "./use-game-account-preferences-sync";
+
 const queueNpc = () =>
   npcsDetectionProcessor.handle({
     npcs: [{ id: 500, tpl: 900, x: 12, y: 18, icon: { id: 44 } }],
@@ -29,6 +30,7 @@ const queueNpc = () =>
     ],
     icons: [{ id: 44, icon: "npc.gif" }],
   });
+
 it("stores defaults for accessible organizations when server settings are missing", async () => {
   const fixture = createAccountPreferencesTest();
   fixture.queryClient.setQueryData(
@@ -59,10 +61,12 @@ it("stores defaults for accessible organizations when server settings are missin
     hasStoredPreferences: true,
   });
 });
+
 it("waits for organization membership before storing defaults", () => {
   const fixture = createAccountPreferencesTest(
     () => new Promise<Response>(() => undefined),
   );
+
   fixture.queryClient.removeQueries({ queryKey: fixture.guildsKey });
   const preferences = createAccountPreferences();
   fixture.queryClient.setQueryData(fixture.queryKey, preferences);
@@ -76,6 +80,7 @@ it("waits for organization membership before storing defaults", () => {
     preferences,
   );
 });
+
 it("flushes queued NPC detection once the preference request fails", async () => {
   const pending = Promise.withResolvers<Response>();
   const fixture = createAccountPreferencesTest(() => pending.promise);
@@ -94,10 +99,12 @@ it("flushes queued NPC detection once the preference request fails", async () =>
     ),
   );
 });
+
 it("fetches and flushes queued detection after runtime account identity becomes available", async () => {
   const fixture = createAccountPreferencesTest(() =>
     Response.json({ message: "unavailable" }, { status: 503 }),
   );
+
   queueNpc();
   useGameStore.getState().clearGame();
   renderHook(() => useGameAccountPreferencesSync(), {

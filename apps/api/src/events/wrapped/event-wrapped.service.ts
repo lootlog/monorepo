@@ -29,8 +29,11 @@ import type {
 } from "#src/events/wrapped/event-wrapped.model";
 import { selectEventWrappedLeader } from "#src/events/wrapped/select-event-wrapped-leader";
 import type { EventWrappedStore } from "#src/events/wrapped/event-wrapped.repository";
+
 type Guild = typeof guildTable.$inferSelect;
+
 type ItemRarity = NonNullable<typeof itemSnapshotTable.$inferSelect.rarity>;
+
 type Role = typeof roleTable.$inferSelect;
 
 type RankingRow = {
@@ -101,8 +104,11 @@ const getRarityKey = (
   rarity: ItemRarity | null | undefined,
 ): keyof EventWrappedRarityTotalsDto | null => {
   if (rarity === "UNIQUE") return "unique";
+
   if (rarity === "HEROIC") return "heroic";
+
   if (rarity === "LEGENDARY") return "legendary";
+
   return null;
 };
 
@@ -130,6 +136,7 @@ export const makeEventWrapped = (
     );
 
     const load = getWrappedUncached(guild, eventId, permissions, roles);
+
     return Effect.gen(function* () {
       const cached = yield* Effect.tryPromise({
         try: () => redis.getJson(cacheKey, makeJsonCodec(EventWrappedResponse)),
@@ -138,10 +145,12 @@ export const makeEventWrapped = (
         Effect.catch((error) =>
           Effect.sync(() => {
             logger.warn("Event wrapped cache unavailable", error);
+
             return null;
           }),
         ),
       );
+
       if (cached !== null) return cached;
       const response = yield* load;
       yield* Effect.tryPromise({
@@ -155,6 +164,7 @@ export const makeEventWrapped = (
           ),
         ),
       );
+
       return response;
     }).pipe(Effect.withSpan("EventsCatalogController_showEventWrapped"));
   }
@@ -172,9 +182,12 @@ export const makeEventWrapped = (
         return yield* Effect.fail(new ResourceNotFoundError("Event not found"));
 
       const eventWindowStart = event.startsAt ?? event.createdAt;
+
       const eventWindowEnd =
         event.endsAt ?? new Date(yield* Clock.currentTimeMillis);
+
       const heroIds = event.heroNpcs.map((hero) => hero.id);
+
       const heroByName = new Map(
         event.heroNpcs.map((hero) => [hero.npcName.toLowerCase(), hero]),
       );
@@ -203,8 +216,10 @@ export const makeEventWrapped = (
         eventWindowStart,
         eventWindowEnd,
       });
+
       const heroLoots = aggregateHeroLoots(loots, heroByName);
       const coverage = aggregateCoverage(windowSummaries, event.heroNpcs);
+
       const avgMapsPerSpawnWindow = calculateAverageMapsPerSpawnWindow(
         kills,
         assignments,
@@ -215,14 +230,17 @@ export const makeEventWrapped = (
           const heroRankings = rankings.filter(
             (ranking) => ranking.heroNpcName === hero.npcName,
           );
+
           const totalPoints = heroRankings.reduce(
             (sum, ranking) => sum + ranking.totalPoints,
             0,
           );
+
           const totalKills = heroRankings.reduce(
             (sum, ranking) => sum + ranking.totalKills,
             0,
           );
+
           const topHunter = selectEventWrappedLeader(
             heroRankings,
             (ranking) => ranking.totalKills,
@@ -247,6 +265,7 @@ export const makeEventWrapped = (
         .sort((left, right) => right.totalKills - left.totalKills);
 
       const killsByHour = new Map<number, number>();
+
       for (const kill of kills) {
         const hour = kill.killedAt.getHours();
         killsByHour.set(hour, (killsByHour.get(hour) ?? 0) + 1);
@@ -254,6 +273,7 @@ export const makeEventWrapped = (
 
       let busiestHour: number | null = null;
       let busiestHourKills = 0;
+
       for (const [hour, count] of killsByHour.entries()) {
         if (count > busiestHourKills) {
           busiestHour = hour;
@@ -265,20 +285,25 @@ export const makeEventWrapped = (
         (sum, member) => sum + member.totalPoints,
         0,
       );
+
       const totalTrackedSeconds = Array.from(members.values()).reduce(
         (sum, member) => sum + member.totalTimeSeconds,
         0,
       );
+
       const totalAfkSeconds = Array.from(members.values()).reduce(
         (sum, member) => sum + member.totalAfkSeconds,
         0,
       );
+
       const totalLoots = loots.length;
+
       const totalRarityTotals = Array.from(heroLoots.values()).reduce(
         (accumulator, aggregate) => {
           accumulator.unique += aggregate.rarityTotals.unique;
           accumulator.heroic += aggregate.rarityTotals.heroic;
           accumulator.legendary += aggregate.rarityTotals.legendary;
+
           return accumulator;
         },
         createEmptyRarityTotals(),
@@ -413,6 +438,7 @@ export const makeEventWrapped = (
     const accessPolicy = createAccessPolicy({
       capabilities: params.permissions,
     });
+
     const fetchLootsBatch = (
       cursor: number | undefined,
       collectedLoots: LootQueryResult[],
@@ -442,6 +468,7 @@ export const makeEventWrapped = (
         }
 
         const nextCursor = batch[batch.length - 1]?.id;
+
         if (!nextCursor) {
           return collectedLoots;
         }
@@ -462,6 +489,7 @@ export const makeEventWrapped = (
     options: { eventWindowStart: Date; eventWindowEnd: Date },
   ): Map<number, AggregatedMember> {
     const members = new Map<number, AggregatedMember>();
+
     const respawnStatsByMemberId = calculateMemberRespawnMapStats(
       kills,
       assignments,
@@ -632,8 +660,10 @@ export const makeEventWrapped = (
         };
 
         existing.totalLoots += 1;
+
         for (const item of loot.items) {
           const rarityKey = getRarityKey(item.rarity);
+
           if (rarityKey) {
             existing.rarityTotals[rarityKey] += 1;
           }
@@ -658,6 +688,7 @@ export const makeEventWrapped = (
     heroCoverageById: Map<string, EventWrappedHeroCoverageDto>;
   } {
     const heroCoverageById = new Map<string, EventWrappedHeroCoverageDto>();
+
     const heroCoverageTotals = new Map<
       string,
       {
@@ -666,6 +697,7 @@ export const makeEventWrapped = (
         totalKills: number;
       }
     >();
+
     let totalWindowSeconds = 0;
     let totalCoverageSeconds = 0;
     let totalUncoveredSeconds = 0;
@@ -691,6 +723,7 @@ export const makeEventWrapped = (
     for (const summary of summaries) {
       const heroCoverage = heroCoverageById.get(summary.heroNpcId);
       const heroTotals = heroCoverageTotals.get(summary.heroNpcId);
+
       const mapCount =
         countMapStats(summary.mapStats) ?? heroCoverage?.mapCount ?? 0;
 
@@ -764,6 +797,7 @@ export const makeEventWrapped = (
 
     for (const kill of kills) {
       const assignedMaps = new Set<string>();
+
       for (const assignment of assignments) {
         const overlapsWindow =
           assignment.assignedAt <= kill.killedAt &&

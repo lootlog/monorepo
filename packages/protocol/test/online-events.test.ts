@@ -3,6 +3,7 @@ import { Schema } from "effect";
 import { UserOnlineEventV1 } from "../src/rabbit/events.js";
 
 const decode = Schema.decodeUnknownSync(UserOnlineEventV1);
+
 const checkpoint = {
   version: 1,
   type: "checkpoint",
@@ -13,6 +14,7 @@ const checkpoint = {
   endedAt: "2026-09-01T09:00:00Z",
   observedAt: "2026-09-01T09:00:00Z",
 };
+
 describe("private online event contract", () => {
   it("accepts cumulative checkpoints and collector health without a fake user", () => {
     expect(decode(checkpoint)).toEqual(checkpoint);

@@ -16,6 +16,7 @@ describe("createFailOpenSecondaryStorage", () => {
       ),
       delete: mock((_key: string) => Promise.resolve(undefined)),
     } satisfies SecondaryStorage;
+
     const onError = mock<SecondaryStorageErrorHandler>();
     const failOpenStorage = createFailOpenSecondaryStorage(storage, onError);
 
@@ -45,6 +46,7 @@ describe("createFailOpenSecondaryStorage", () => {
 
   it("falls back when Redis storage operations fail", async () => {
     const error = new Error("redis unavailable");
+
     const storage = {
       get: mock((_key: string): Promise<string | null> =>
         Promise.reject(error),
@@ -60,6 +62,7 @@ describe("createFailOpenSecondaryStorage", () => {
       ),
       delete: mock((_key: string): Promise<void> => Promise.reject(error)),
     } satisfies SecondaryStorage;
+
     const onError = mock<SecondaryStorageErrorHandler>();
     const failOpenStorage = createFailOpenSecondaryStorage(storage, onError);
 

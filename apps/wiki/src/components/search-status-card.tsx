@@ -11,6 +11,7 @@ export function SearchStatusCard({
 }) {
   if (status === "ready" && !empty) return null;
   const message = status === "ready" ? "noResults" : status;
+
   return (
     <Card
       className={

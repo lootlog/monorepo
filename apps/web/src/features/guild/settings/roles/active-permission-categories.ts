@@ -6,12 +6,14 @@ export const getActivePermissionCategories = (
 ) => {
   const activePermissions = new Set(permissions);
   const hasAdminPermission = activePermissions.has(Permission.ADMIN);
+
   return PERMISSION_CATEGORIES.flatMap((category) => {
     const visible = hasAdminPermission
       ? category.permissions.includes(Permission.ADMIN)
       : category.permissions.some((permission) =>
           activePermissions.has(permission),
         );
+
     return visible
       ? [
           {

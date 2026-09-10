@@ -35,10 +35,13 @@ export interface EventRankingPublisher {
 }
 
 const roundPoints = (value: number) => Math.round(value * 10_000) / 10_000;
+
 const normalizeComment = (comment?: string | null) => {
   const trimmed = comment?.trim();
+
   return trimmed ? trimmed : null;
 };
+
 const countedInRanking = (point: {
   confirmationDeadlineAt: Date | null;
   confirmedAt: Date | null;
@@ -60,6 +63,7 @@ export const makeEventPointEdits = (
         attributes: { adapter: "events.points.drizzle", retryCount: 0 },
       }),
     );
+
   const afterEdit = (guildId: string, eventId: string) =>
     Effect.all(
       [
@@ -126,17 +130,22 @@ export const makeEventPointEdits = (
             )
             .limit(1),
         );
+
         const ranking = scoped[0]?.ranking;
+
         if (!ranking)
           return yield* Effect.fail(
             new ResourceNotFoundError("Ranking not found"),
           );
         const delta = roundPoints(data.pointsDelta);
+
         if (delta === 0) return ranking;
         const totalPoints = roundPoints(ranking.totalPoints + delta);
+
         const manualAdjustmentPoints = roundPoints(
           ranking.manualAdjustmentPoints + delta,
         );
+
         const manualPoints = yield* query(
           "events.points.updateRanking.manualKillPoints",
           database
@@ -163,6 +172,7 @@ export const makeEventPointEdits = (
               ),
             ),
         );
+
         const updated = yield* query(
           "events.points.updateRanking.transaction",
           database.transaction((transaction) =>
@@ -176,6 +186,7 @@ export const makeEventPointEdits = (
                 editedByUserId: userId,
                 comment: normalizeComment(data.comment),
               });
+
               const rows = yield* transaction
                 .update(eventRankingTable)
                 .set({
@@ -188,11 +199,14 @@ export const makeEventPointEdits = (
                 })
                 .where(eq(eventRankingTable.id, rankingId))
                 .returning();
+
               return rows[0];
             }),
           ),
         );
+
         yield* afterEdit(guild.id, eventId);
+
         return updated;
       }).pipe(Effect.withSpan("EventsRankingController_updateRankingPoints")),
 
@@ -219,18 +233,23 @@ export const makeEventPointEdits = (
             )
             .limit(1),
         );
+
         const row = scoped[0];
+
         if (!row)
           return yield* Effect.fail(
             new ResourceNotFoundError("Kill point not found"),
           );
         const delta = roundPoints(data.pointsDelta);
+
         if (delta === 0)
           return { ...row.point, kill: { ...row.kill, heroNpc: row.hero } };
         const points = roundPoints(row.point.points + delta);
+
         const manualAdjustmentPoints = roundPoints(
           row.point.manualAdjustmentPoints + delta,
         );
+
         const rankingRows = countedInRanking(row.point)
           ? yield* query(
               "events.points.updateKillPoint.ranking",
@@ -247,6 +266,7 @@ export const makeEventPointEdits = (
                 .limit(1),
             )
           : [];
+
         const updated = yield* query(
           "events.points.updateKillPoint.transaction",
           database.transaction((transaction) =>
@@ -256,7 +276,9 @@ export const makeEventPointEdits = (
                 .set({ points, manualAdjustmentPoints })
                 .where(eq(eventKillPointTable.id, killPointId))
                 .returning();
+
               const ranking = rankingRows[0];
+
               if (ranking) {
                 const rankingPoints = roundPoints(ranking.totalPoints + delta);
                 yield* transaction
@@ -277,11 +299,14 @@ export const makeEventPointEdits = (
                   comment: normalizeComment(data.comment),
                 });
               }
+
               return pointsRows[0];
             }),
           ),
         );
+
         if (countedInRanking(row.point)) yield* afterEdit(guild.id, eventId);
+
         return updated;
       }).pipe(Effect.withSpan("EventsRankingController_updateKillPoint")),
   };

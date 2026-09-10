@@ -55,6 +55,7 @@ export const createTemplateEditorNodes = (
   const roleById = new Map(roles.map((role) => [role.id, role] as const));
   const lines = value.split("\n");
   const nodes: Array<LexicalNode> = [];
+
   const tokenPattern =
     /(<@&(\d+)>|@(everyone|here)|\{\{(ruleName|npcName|npcId|world|minSpawnTime|maxSpawnTime|scheduledFor)\}\})/g;
 
@@ -119,9 +120,11 @@ export const serializeTemplateEditorValue = () =>
         .map((childNode: LexicalNode) => {
           if ($isNotificationTemplateRoleNode(childNode)) {
             const roleId = childNode.getRoleId();
+
             if (roleId === "everyone" || roleId === "here") {
               return `@${roleId}`;
             }
+
             return `<@&${roleId}>`;
           }
 
@@ -148,11 +151,13 @@ export const removeTemplateTokenNode = (tokenNode: LexicalNode) => {
 
   if ($isTextNode(previousSibling)) {
     previousSibling.selectEnd();
+
     return;
   }
 
   if ($isTextNode(nextSibling)) {
     nextSibling.selectStart();
+
     return;
   }
 
@@ -162,6 +167,7 @@ export const removeTemplateTokenNode = (tokenNode: LexicalNode) => {
       : 0;
 
     parentNode.select(selectionIndex, selectionIndex);
+
     return;
   }
 
@@ -187,6 +193,7 @@ export const getBackspaceTemplateTokenNode = () => {
     }
 
     const previousSibling = anchorNode.getPreviousSibling();
+
     return $isTemplateTokenNode(previousSibling) ? previousSibling : null;
   }
 
@@ -194,6 +201,7 @@ export const getBackspaceTemplateTokenNode = () => {
     const previousChild = anchorNode.getChildAtIndex(
       selection.anchor.offset - 1,
     );
+
     return $isTemplateTokenNode(previousChild) ? previousChild : null;
   }
 

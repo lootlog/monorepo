@@ -54,9 +54,11 @@ export const InfoSettings = () => {
   const { t } = useTranslation();
   const guildId = useGuildId();
   const queryClient = useQueryClient();
+
   const { data, isLoading } = useGuildsControllerGetGuildDiscordSyncStatus({
     guildId: guildId ?? "",
   });
+
   const refreshMutation = useGuildsControllerRefreshGuildDiscordSync({
     mutation: {
       onSuccess: async (_, variables) => {
@@ -81,6 +83,7 @@ export const InfoSettings = () => {
 
   const installUrl = guildId ? buildDiscordBotInstallUrl(guildId) : "#";
   const hasRequiredPermissions = hasConfirmedGuildDiscordPermissions(data);
+
   const {
     channelCount,
     lastAttempt,

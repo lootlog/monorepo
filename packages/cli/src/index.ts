@@ -47,12 +47,14 @@ const main = async (): Promise<void> => {
   // Show version
   if (args.includes("--version") || args.includes("-v")) {
     console.log(`v${CLI_VERSION}`);
+
     return;
   }
 
   // Show main help only if no command provided
   if (args.length === 0) {
     displayMainHelp();
+
     return;
   }
 
@@ -61,13 +63,16 @@ const main = async (): Promise<void> => {
   // Show main help if help flag without command
   if ((command === "--help" || command === "-h") && commandArgs.length === 0) {
     displayMainHelp();
+
     return;
   }
 
   if (!command) {
     displayMainHelp();
+
     return;
   }
+
   const commandHandler = COMMANDS.get(command);
 
   if (!commandHandler) {

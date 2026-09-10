@@ -96,9 +96,11 @@ const getSettingsContent = (subsection: SettingsSubsectionValue): ReactNode =>
 export const SettingsTabs = () => {
   const { t } = useTranslation();
   const activeTab = useWindowsStore((state) => state.settings.state?.activeTab);
+
   const activeSubsection = useWindowsStore(
     (state) => state.settings.state?.activeSubsection,
   );
+
   const settingsWidth = useWindowsStore((state) => state.settings.size.width);
   const setSettingsPath = useWindowsStore((state) => state.setSettingsPath);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -106,20 +108,24 @@ export const SettingsTabs = () => {
   const [selectedResultIndex, setSelectedResultIndex] = useState(0);
   const [compactPanelOpen, setCompactPanelOpen] = useState(false);
   const path = resolveSettingsPath(activeTab, activeSubsection);
+
   const visibleDomains = SETTINGS_MANIFEST.map((domain) => ({
     ...domain,
     subsections: domain.subsections.filter(
       (subsection) => subsection.visible?.() ?? true,
     ),
   }));
+
   const activeDomain =
     visibleDomains.find((domain) => domain.id === path.domain) ??
     visibleDomains[0];
+
   const selectedSubsection = activeDomain.subsections.some(
     (subsection) => subsection.id === path.subsection,
   )
     ? path.subsection
     : activeDomain.subsections[0].id;
+
   const searchItems: SettingsSearchItem[] = visibleDomains.flatMap(
     (domain, domainIndex) =>
       domain.subsections.flatMap((subsection, subsectionIndex) =>
@@ -138,6 +144,7 @@ export const SettingsTabs = () => {
         })),
       ),
   );
+
   const results = searchSettings(searchItems, query);
   const isCompact = settingsWidth < COMPACT_WIDTH;
 
@@ -151,6 +158,7 @@ export const SettingsTabs = () => {
     };
 
     window.addEventListener("keydown", handleShortcut);
+
     return () => window.removeEventListener("keydown", handleShortcut);
   }, []);
 
@@ -166,11 +174,14 @@ export const SettingsTabs = () => {
 
     window.setTimeout(() => {
       const exactControl = document.getElementById(result.controlId);
+
       const control =
         exactControl?.closest<HTMLElement>("[data-settings-control]") ??
         exactControl ??
         document.getElementById(`settings-subsection-${result.subsectionId}`);
+
       const collapsedSection = control?.closest("details");
+
       if (collapsedSection) collapsedSection.open = true;
 
       window.requestAnimationFrame(() => {
@@ -191,6 +202,7 @@ export const SettingsTabs = () => {
       event.preventDefault();
       setQuery("");
       setCompactPanelOpen(false);
+
       return;
     }
 
@@ -199,12 +211,14 @@ export const SettingsTabs = () => {
       setSelectedResultIndex((currentIndex) =>
         Math.min(currentIndex + 1, Math.max(results.length - 1, 0)),
       );
+
       return;
     }
 
     if (event.key === "ArrowUp") {
       event.preventDefault();
       setSelectedResultIndex((currentIndex) => Math.max(currentIndex - 1, 0));
+
       return;
     }
 
@@ -262,6 +276,7 @@ export const SettingsTabs = () => {
           <TabsList className="ll:flex ll:w-full ll:flex-col ll:items-stretch ll:gap-1">
             {visibleDomains.map((domain) => {
               const Icon = ICONS[domain.icon];
+
               return (
                 <TabsTrigger
                   key={domain.id}
@@ -284,6 +299,7 @@ export const SettingsTabs = () => {
       value={activeDomain.id}
       onValueChange={(domainId) => {
         const domain = visibleDomains.find(({ id }) => id === domainId);
+
         if (domain) {
           setSettingsPath(domain.id, domain.subsections[0].id);
         }
@@ -306,6 +322,7 @@ export const SettingsTabs = () => {
             </button>
             {visibleDomains.map((domain) => {
               const Icon = ICONS[domain.icon];
+
               return (
                 <button
                   key={domain.id}

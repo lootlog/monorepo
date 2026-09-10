@@ -18,10 +18,12 @@ describe("useEventSocket", () => {
     const gateway = createTestGateway();
     const GatewayWrapper = gateway.wrapper;
     const queryClient = new QueryClient();
+
     const eventMapsQueryKey = getListEventMapsQueryKey({
       guildId: "guild-1",
       eventId: "event-1",
     });
+
     queryClient.setQueryData(eventMapsQueryKey, { heroNpcs: [] });
 
     const QueryWrapper = ({ children }: { children: ReactNode }) => (

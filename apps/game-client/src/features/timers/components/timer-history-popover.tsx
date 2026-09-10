@@ -26,8 +26,10 @@ export const TimerHistoryPopover: FC<TimerHistoryPopoverProps> = ({
 }) => {
   const { t } = useTranslation("timers");
   const [open, setOpen] = useState(false);
+
   const { restoreTimer: handleRestore, isPending: restorePending } =
     useRestoreTimer(() => setOpen(false));
+
   const { data: history = [], isLoading } = useTimersControllerGetTimerHistory(
     {
       guildId: timer.guildId,

@@ -58,18 +58,21 @@ export const SendNotificationRequest = Schema.Struct({
       if (!notification.isGatheringParty) return undefined;
 
       const issues: Array<Schema.FilterIssue> = [];
+
       if (notification.npc === undefined) {
         issues.push({
           path: ["npc"],
           issue: "Party gathering notifications require an NPC",
         });
       }
+
       if (notification.character === undefined) {
         issues.push({
           path: ["character"],
           issue: "Party gathering notifications require a character",
         });
       }
+
       return issues;
     }),
   )

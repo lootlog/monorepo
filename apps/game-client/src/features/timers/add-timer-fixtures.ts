@@ -22,6 +22,7 @@ export const createAddTimerFixture = ({
       request.method === "POST" ? createTimerFixture() : npcResults,
     ),
   );
+
   setTestRuntimeGame();
   useSettingsStore.setState({
     selectedGuildIdsForTimersByCharId: { "101": ["guild-2"] },
@@ -40,6 +41,7 @@ export const createAddTimerFixture = ({
     (preferences) =>
       preferences ? { ...preferences, hiddenGuildIds } : preferences,
   );
+
   return {
     ...fixture,
     posts: () =>

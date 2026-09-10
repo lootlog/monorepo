@@ -42,9 +42,11 @@ export const loadGatewayConfiguration = Effect.gen(function* () {
   const environment = yield* Config.string("ENV").pipe(
     Config.withDefault("local"),
   );
+
   const serviceName = yield* Config.string("SERVICE_NAME").pipe(
     Config.withDefault("gateway"),
   );
+
   const redisPassword = yield* Config.redacted("REDIS_PASSWORD");
 
   return {

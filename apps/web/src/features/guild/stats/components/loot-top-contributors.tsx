@@ -24,6 +24,7 @@ export const LootTopContributors: React.FC<LootTopContributorsProps> = ({
 }) => {
   const { t } = useTranslation();
   const guildId = useGuildId();
+
   const { data: guildMembers } = useMembersControllerGetGuildMemberReferences(
     { guildId: guildId ?? "" },
     {
@@ -79,6 +80,7 @@ export const LootTopContributors: React.FC<LootTopContributorsProps> = ({
               <div className="flex items-end justify-center gap-2">
                 {([2, 1, 3] as const).map((position) => {
                   const member = topThree[position - 1];
+
                   return (
                     <StatsPodiumSlot
                       key={position}

@@ -294,6 +294,7 @@ describe("use-character-list helpers", () => {
   it("removes a persistent character cache entry after its stale TTL", async () => {
     const fetchMock = vi.mocked(fetch);
     fetchMock.mockResolvedValueOnce(createJsonResponse([createCharacter()]));
+
     const options = {
       accountId: 123,
       world: "fobos",
@@ -321,6 +322,7 @@ describe("use-character-list helpers", () => {
         JSON.stringify({ cachedAt: now, characters: [] }),
       );
     }
+
     testRuntimeWindow.getCookie = vi.fn<() => null>(() => null);
 
     await expect(
@@ -335,6 +337,7 @@ describe("use-character-list helpers", () => {
       { length: window.localStorage.length },
       (_, index) => window.localStorage.key(index),
     ).filter((key) => key?.startsWith(`${cachePrefix}:`));
+
     expect(retainedKeys).toHaveLength(20);
     expect(
       window.localStorage.getItem(`${cachePrefix}:test:0:world-0`),
@@ -344,4 +347,5 @@ describe("use-character-list helpers", () => {
     ).not.toBeNull();
   });
 });
+
 import { testRuntimeWindow } from "@/test/test-runtime-window";

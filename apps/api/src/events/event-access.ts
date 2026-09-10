@@ -77,6 +77,7 @@ export const makeEventAccess = (
       ).pipe(
         Effect.flatMap((rows) => {
           const hero = rows[0]?.hero;
+
           return hero && visible(hero, roles, accessPolicy)
             ? Effect.succeed(hero)
             : Effect.fail(new ResourceNotFoundError("Hero not found"));
@@ -111,6 +112,7 @@ export const makeEventAccess = (
       ).pipe(
         Effect.flatMap((rows) => {
           const row = rows[0];
+
           return row && visible(row.heroNpc, roles, accessPolicy)
             ? Effect.succeed({ ...row.map, heroNpc: row.heroNpc })
             : Effect.fail(new ResourceNotFoundError("Map not found"));

@@ -34,11 +34,13 @@ function createProjection(revision: number): PartyReadyRoomProjection {
 }
 
 let restoreClient = () => {};
+
 afterEach(() => {
   restoreClient();
   vi.unstubAllGlobals();
   vi.useRealTimers();
 });
+
 describe("usePartyReadyRoomSync", () => {
   beforeEach(() => {
     vi.clearAllMocks();

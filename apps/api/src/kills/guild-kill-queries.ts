@@ -52,6 +52,7 @@ export const makeGuildKillQueries = (
     roles: ReadonlyArray<KillQueryRole>,
   ) => {
     const visibleRoles = readableRoles(roles);
+
     return {
       filter: visibilityFilter(accessPolicy, visibleRoles),
       cacheScope: visibilityCacheScope(accessPolicy, visibleRoles),
@@ -66,6 +67,7 @@ export const makeGuildKillQueries = (
   ) => {
     const visibility = context(accessPolicy, roles);
     const periodStart = getKillStatsPeriodStart(query.period);
+
     const filter = {
       guildId,
       ...(query.npcTypes && { npcType: { in: query.npcTypes } }),
@@ -97,14 +99,18 @@ export const makeGuildKillQueries = (
             ],
             { concurrency: "unbounded" },
           );
+
           const members = yield* persistence.findMembers([
             ...new Set(memberStats.map((stat) => stat.memberId)),
           ]);
+
           const membersById = new Map(
             members.map((member) => [member.id, member] as const),
           );
+
           const killsByType: Record<string, number> = {};
           let guildUniqueKills = 0;
+
           for (const summary of guildSummary) {
             const uniqueKills = summary._sum.uniqueKills ?? 0;
             killsByType[summary.npcType] =
@@ -114,6 +120,7 @@ export const makeGuildKillQueries = (
 
           const participationsByType: Record<string, number> = {};
           let totalMemberParticipations = 0;
+
           const ranking = new Map<
             number,
             {
@@ -125,12 +132,14 @@ export const makeGuildKillQueries = (
               participationsByType: Record<string, number>;
             }
           >();
+
           for (const stat of memberStats) {
             const memberKills = stat._sum.memberKills ?? 0;
             participationsByType[stat.npcType] =
               (participationsByType[stat.npcType] ?? 0) + memberKills;
             totalMemberParticipations += memberKills;
             const existing = ranking.get(stat.memberId);
+
             if (existing) {
               existing.totalParticipations += memberKills;
               existing.participationsByType[stat.npcType] =
@@ -138,7 +147,9 @@ export const makeGuildKillQueries = (
                 memberKills;
               continue;
             }
+
             const member = membersById.get(stat.memberId);
+
             if (member) {
               ranking.set(stat.memberId, {
                 memberId: stat.memberId,
@@ -182,6 +193,7 @@ export const makeGuildKillQueries = (
   ) => {
     const visibility = context(accessPolicy, roles);
     const periodStart = getKillStatsPeriodStart(period);
+
     return protect(
       "kills.guild-top-npcs",
       cachedKillQuery({
@@ -230,6 +242,7 @@ export const makeGuildKillQueries = (
   ) => {
     const visibility = context(accessPolicy, roles);
     const periodStart = getKillStatsPeriodStart(period);
+
     return protect(
       "kills.guild-top-killers",
       cachedKillQuery({
@@ -284,6 +297,7 @@ export const makeGuildKillQueries = (
   ) => {
     const visibility = context(accessPolicy, roles);
     const periodStart = getKillStatsPeriodStart(period);
+
     const filter = {
       guildId,
       npcId,
@@ -291,6 +305,7 @@ export const makeGuildKillQueries = (
       ...visibility.filter,
       ...(periodStart && { periodStart: { gte: periodStart } }),
     };
+
     return protect(
       "kills.guild-npc-killers",
       cachedKillQuery({
@@ -321,6 +336,7 @@ export const makeGuildKillQueries = (
             ],
             { concurrency: "unbounded" },
           );
+
           const fallback =
             !memberNpc && summaries.length === 0
               ? yield* persistence.topGuildNpcs(
@@ -329,7 +345,9 @@ export const makeGuildKillQueries = (
                   1,
                 )
               : [];
+
           const summary = summaries[0] ?? fallback[0];
+
           const npc =
             memberNpc ??
             (summary
@@ -342,7 +360,9 @@ export const makeGuildKillQueries = (
                   npcIcon: summary.npcIcon,
                 }
               : null);
+
           if (!npc) return null;
+
           return {
             npc: {
               ...npc,

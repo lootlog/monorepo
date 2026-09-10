@@ -47,6 +47,7 @@ const killsSearchSchema = z.object({
     .optional()
     .catch(undefined),
 });
+
 type KillsSearchParams = z.infer<typeof killsSearchSchema>;
 
 const ITEMS_PER_PAGE = 20;
@@ -120,10 +121,13 @@ export const KillsPage: React.FC = () => {
   );
 
   const cursor = searchParams.cursor ? Number(searchParams.cursor) : 0;
+
   const sortOrder: KillsControllerGetUserNpcKillsParams["sortOrder"] =
     sorting[0]?.desc === false ? "asc" : "desc";
+
   const sortBy: KillsControllerGetUserNpcKillsParams["sortBy"] =
     sorting[0]?.id === "npcLvl" ? "level" : "kills";
+
   const npcKillsParams: KillsControllerGetUserNpcKillsParams = {
     ...filters,
     cursor,
@@ -263,6 +267,7 @@ export const KillsPage: React.FC = () => {
     if (isLoading) {
       return <TableRowsSkeleton trailingColumns={2} />;
     }
+
     if (!data || data.npcs.length === 0) {
       return (
         <div className="flex flex-col items-center justify-center gap-3 p-16 h-full">
@@ -276,9 +281,11 @@ export const KillsPage: React.FC = () => {
         </div>
       );
     }
+
     if (isMobile) {
       return <KillsMobileList npcs={data.npcs} startRank={cursor} />;
     }
+
     return (
       <Table className="border-b">
         <TanStackTableHeader

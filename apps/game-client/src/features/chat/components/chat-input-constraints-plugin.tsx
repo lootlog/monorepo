@@ -31,9 +31,11 @@ export const normalizeChatInputText = (
 const getAvailableLength = () => {
   const root = $getRoot();
   const selection = $getSelection();
+
   const selectionOffsets = $isRangeSelection(selection)
     ? $getChatInputSelectionOffsets(selection)
     : [root.getTextContentSize(), root.getTextContentSize()];
+
   const selectedLength = Math.abs(selectionOffsets[0] - selectionOffsets[1]);
 
   return Math.max(
@@ -84,6 +86,7 @@ export const ChatInputConstraintsPlugin: FC = () => {
           }
 
           event.preventDefault();
+
           return insertConstrainedText(clipboardData.getData("text/plain"));
         },
         COMMAND_PRIORITY_HIGH,
@@ -134,6 +137,7 @@ export const ChatInputConstraintsPlugin: FC = () => {
         event.inputType === "insertLineBreak"
       ) {
         event.preventDefault();
+
         return;
       }
 

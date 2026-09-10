@@ -15,16 +15,20 @@ import { DashboardRecentBattle } from "./dashboard-recent-battle";
 
 export function DashboardRecentBattles() {
   const { t } = useTranslation();
+
   const actions = useBattleTableActions({
     selectedBattles: [],
     clearSelection: () => {},
     removeBattleFromSelection: () => {},
   });
+
   const now = useMinuteTimestamp();
+
   const query = useBattlesControllerGetDashboardBattles(
     { size: 5, sortOrder: "desc", includeTotal: false },
     { query: { staleTime: 60_000 } },
   );
+
   return (
     <SectionCard>
       <SectionCardHeader

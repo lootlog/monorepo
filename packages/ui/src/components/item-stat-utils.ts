@@ -26,6 +26,7 @@ export type ItemStatSection = {
 };
 
 type StatBlockName = keyof StatBlocks;
+
 type StatValueFormatter = (
   key: string,
   value: ItemStat["value"],
@@ -137,6 +138,7 @@ function toStringValue(value: ItemStat["value"]): string {
 
 function parseNumber(value: string): number | null {
   const parsedValue = Number.parseFloat(value);
+
   return Number.isFinite(parsedValue) ? parsedValue : null;
 }
 
@@ -148,11 +150,13 @@ function formatNumber(value: number): string {
 
 function formatSignedValue(value: string): string {
   const parsedValue = parseNumber(value);
+
   return parsedValue !== null && parsedValue > 0 ? `+${value}` : value;
 }
 
 function formatAbsoluteValue(value: string): string {
   const parsedValue = parseNumber(value);
+
   return parsedValue === null ? value : formatNumber(Math.abs(parsedValue));
 }
 
@@ -166,6 +170,7 @@ function formatColonRange(value: string): string {
 
 function getStatValue(stats: ItemStat[], key: string): string | undefined {
   const value = stats.find((stat) => stat.key === key)?.value;
+
   return isString(value) ? value : undefined;
 }
 
@@ -187,12 +192,14 @@ const dateTimeFormatter = new Intl.DateTimeFormat("pl-PL", {
   timeZone: "Europe/Warsaw",
   year: "numeric",
 });
+
 const datePartsFormatter = new Intl.DateTimeFormat("en-CA", {
   day: "numeric",
   month: "numeric",
   timeZone: "Europe/Warsaw",
   year: "numeric",
 });
+
 const yearFormatter = new Intl.DateTimeFormat("pl-PL", {
   timeZone: "Europe/Warsaw",
   year: "numeric",
@@ -200,6 +207,7 @@ const yearFormatter = new Intl.DateTimeFormat("pl-PL", {
 
 function formatUnixDate(value: string): string {
   const timestamp = Number.parseInt(value, 10);
+
   return Number.isFinite(timestamp)
     ? dateTimeFormatter.format(new Date(timestamp * 1000))
     : value;
@@ -208,6 +216,7 @@ function formatUnixDate(value: string): string {
 function getCreatedDate(stats: ItemStat[]): Date {
   const created = getStatValue(stats, "created");
   const timestamp = created ? Number.parseInt(created, 10) : Number.NaN;
+
   return Number.isFinite(timestamp) ? new Date(timestamp * 1000) : new Date();
 }
 
@@ -218,6 +227,7 @@ function getShiftedYear(
 ): string {
   const date = getCreatedDate(stats);
   const parsedOffset = Number.parseInt(offset, 10);
+
   if (!Number.isFinite(parsedOffset)) {
     return yearFormatter.format(date);
   }
@@ -227,14 +237,17 @@ function getShiftedYear(
       .formatToParts(date)
       .map(({ type, value }) => [type, value]),
   );
+
   const year = Number.parseInt(dateParts.year ?? "", 10);
   const month = Number.parseInt(dateParts.month ?? "", 10);
   const day = Number.parseInt(dateParts.day ?? "", 10);
+
   if (![year, month, day].every(Number.isFinite)) {
     return yearFormatter.format(date);
   }
 
   const shiftedDate = new Date(Date.UTC(year, month - 1, day, 12));
+
   if (unit === "D") {
     shiftedDate.setUTCDate(shiftedDate.getUTCDate() + parsedOffset);
   } else if (unit === "M") {
@@ -248,6 +261,7 @@ const formatDefaultStat: StatValueFormatter = (key, value) => ({ key, value });
 
 const formatScaledStat: StatValueFormatter = (key, value) => {
   const parsedValue = parseNumber(toStringValue(value));
+
   return {
     key,
     value: parsedValue === null ? toStringValue(value) : parsedValue / 100,
@@ -272,6 +286,7 @@ const formatListStat: StatValueFormatter = (key, value) => ({
 const formatScaledListStat: StatValueFormatter = (key, value) => {
   const entries = toStringValue(value).split(",");
   const scaledValue = parseNumber(entries[0] ?? "");
+
   if (scaledValue !== null) {
     entries[0] = formatNumber(scaledValue / 100);
   }
@@ -281,6 +296,7 @@ const formatScaledListStat: StatValueFormatter = (key, value) => {
 
 const formatDescription: StatValueFormatter = (key, value, stats) => {
   const createdDate = getCreatedDate(stats);
+
   const description = toStringValue(value)
     .replace(/\[br\]/g, "\n")
     .replace(/#DATE#/g, dateTimeFormatter.format(createdDate))
@@ -300,6 +316,7 @@ const formatProfessionRequirement: StatValueFormatter = (key, value) => ({
 
 const formatTargetClass: StatValueFormatter = (key, value) => {
   const rawValue = toStringValue(value);
+
   const aliases = new Map(
     Object.entries({
       EQUIPPABLE: ["allEquippable"],
@@ -307,7 +324,9 @@ const formatTargetClass: StatValueFormatter = (key, value) => {
       WEAPONS: ["allWeapons"],
     }),
   );
+
   const aliasValues = aliases.get(rawValue);
+
   if (aliasValues) {
     return { key, translateKey: "itemStats.class", value: aliasValues };
   }
@@ -316,6 +335,7 @@ const formatTargetClass: StatValueFormatter = (key, value) => {
     .split(",")
     .map((entry) => ITEM_CLASS_KEYS[Number.parseInt(entry.trim(), 10)])
     .filter(isPresentItemClassKey);
+
   return { key, translateKey: "itemStats.class", value: classKeys };
 };
 
@@ -328,6 +348,7 @@ const formatRarityRequirement: StatValueFormatter = (key, value) => ({
 const formatLegendaryBonus: StatValueFormatter = (_key, value) => {
   const bonusName = toStringValue(value).split(",")[0] ?? "";
   const bonusValue = LEGENDARY_BONUS_VALUES.get(bonusName);
+
   return bonusValue === undefined
     ? { key: "legbon.not-supported", value: bonusName }
     : { key: `legbon.${bonusName}`, value: bonusValue };
@@ -346,8 +367,10 @@ const formatSocketContent: StatValueFormatter = (key, value, stats) => {
 const formatNestedBonus: StatValueFormatter = (_key, value) => {
   const [bonusName = "unknown", ...bonusValues] =
     toStringValue(value).split(",");
+
   if (bonusName === "sa" || bonusName === "slow") {
     const parsedValue = parseNumber(bonusValues[0] ?? "");
+
     if (parsedValue !== null) {
       bonusValues[0] = formatNumber(parsedValue / 100);
     }
@@ -370,6 +393,7 @@ const formatNestedBonus: StatValueFormatter = (_key, value) => {
     "sa",
     "slow",
   ]);
+
   if (!supportedBonusNames.has(bonusName)) {
     return {
       key: "bonus.not-supported",
@@ -383,6 +407,7 @@ const formatNestedBonus: StatValueFormatter = (_key, value) => {
 const formatAction: StatValueFormatter = (_key, value) => {
   const [actionName = "unknown", ...actionValues] =
     toStringValue(value).split(",");
+
   const staticActions = new Set([
     "auction",
     "clandeposit",
@@ -391,12 +416,14 @@ const formatAction: StatValueFormatter = (_key, value) => {
     "mail",
     "shop",
   ]);
+
   if (staticActions.has(actionName)) {
     return { key: `action.${actionName}`, value: false };
   }
 
   if (actionName === "fatigue") {
     const fatigue = parseNumber(actionValues[0] ?? "");
+
     return {
       key:
         fatigue !== null && fatigue < 0
@@ -427,11 +454,13 @@ const formatAction: StatValueFormatter = (_key, value) => {
 
 const formatHealingStat: StatValueFormatter = (_key, value) => {
   const rawValue = toStringValue(value);
+
   if (rawValue.includes(":")) {
     return { key: "trujeRange", value: formatColonRange(rawValue) };
   }
 
   const parsedValue = parseNumber(rawValue);
+
   return parsedValue !== null && parsedValue < 0
     ? { key: "truje", value: formatAbsoluteValue(rawValue) }
     : { key: "leczy", value: rawValue };
@@ -443,6 +472,7 @@ function formatSignedVariant(
 ): ItemDisplayValue {
   const rawValue = toStringValue(value);
   const parsedValue = parseNumber(rawValue);
+
   return {
     key:
       parsedValue !== null && parsedValue < 0
@@ -458,6 +488,7 @@ const formatSignedVariantStat: StatValueFormatter = (key, value) =>
 const formatExpiry: StatValueFormatter = (key, value) => {
   const rawValue = toStringValue(value);
   const expiresAt = Number.parseInt(rawValue, 10);
+
   if (!Number.isFinite(expiresAt)) {
     return { key: `${key}.unknown`, value: rawValue };
   }
@@ -472,26 +503,31 @@ const formatExpiry: StatValueFormatter = (key, value) => {
 const formatDuration: StatValueFormatter = (key, value) => {
   const rawValue = toStringValue(value);
   const match = /^(\d+)([dhms])$/.exec(rawValue);
+
   if (!match) {
     return { key: `${key}.unknown`, value: rawValue };
   }
 
   const [, duration = "", unit = ""] = match;
+
   return { key: `${key}.${unit}`, value: duration };
 };
 
 const formatBag: StatValueFormatter = (key, value) => {
   const rawValue = toStringValue(value);
   const amount = Number.parseInt(rawValue, 10);
+
   if (amount === 1) {
     return { key: `${key}.one`, value: rawValue };
   }
 
   const lastDigit = Math.abs(amount) % 10;
   const lastTwoDigits = Math.abs(amount) % 100;
+
   const usesFewForm =
     [2, 3, 4].includes(lastDigit) &&
     !(lastTwoDigits >= 12 && lastTwoDigits <= 14);
+
   return {
     key: usesFewForm ? `${key}.few` : `${key}.many`,
     value: rawValue,
@@ -502,6 +538,7 @@ const formatOutfit: StatValueFormatter = (key, value) => {
   const [duration = "0", , location = ""] = toStringValue(value).split(",");
   const locationSuffix = location ? ` w ${location}` : "";
   const durationMinutes = Number.parseInt(duration, 10);
+
   if (!Number.isFinite(durationMinutes) || durationMinutes < 1) {
     return { key: `${key}.permanent`, value: locationSuffix };
   }
@@ -511,6 +548,7 @@ const formatOutfit: StatValueFormatter = (key, value) => {
   }
 
   const roundedHours = Math.round(durationMinutes / 60);
+
   return {
     key: roundedHours < 5 ? `${key}.hoursFew` : `${key}.hours`,
     value: [roundedHours.toString(), locationSuffix],
@@ -520,10 +558,13 @@ const formatOutfit: StatValueFormatter = (key, value) => {
 const formatPet: StatValueFormatter = (key, value) => {
   const entries = toStringValue(value).split(",");
   const tasks: string[] = [];
+
   for (const entry of entries.slice(2)) {
     if (["elite", "heroic", "legendary", "quest"].includes(entry)) continue;
+
     for (const task of entry.split("|")) {
       const description = task.replace(/#.*/, "");
+
       if (description) tasks.push(description);
     }
   }
@@ -537,8 +578,10 @@ const formatPet: StatValueFormatter = (key, value) => {
 const formatLoot: StatValueFormatter = (key, value) => {
   const [playerName = "", , groupSize = "", timestamp = "", npcName = ""] =
     toStringValue(value).split(",");
+
   const parsedGroupSize = Number.parseInt(groupSize, 10);
   let variant = "solo";
+
   if (parsedGroupSize === 2) {
     variant = "companion";
   } else if (parsedGroupSize > 2) {
@@ -553,6 +596,7 @@ const formatLoot: StatValueFormatter = (key, value) => {
 
 const formatCustomTeleport: StatValueFormatter = (key, value) => {
   const rawValue = toStringValue(value);
+
   return rawValue
     ? { key: `${key}.set`, value: rawValue.split(",") }
     : { key: `${key}.empty`, value: false };
@@ -560,6 +604,7 @@ const formatCustomTeleport: StatValueFormatter = (key, value) => {
 
 const formatEnhancementRefund: StatValueFormatter = (key, value) => {
   const amount = parseNumber(toStringValue(value));
+
   return {
     key: amount !== null && amount > 1 ? `${key}.multiple` : `${key}.default`,
     value: toStringValue(value),
@@ -568,6 +613,7 @@ const formatEnhancementRefund: StatValueFormatter = (key, value) => {
 
 const formatExperienceLevelBonus: StatValueFormatter = (key, value) => {
   const [level = "", multiplier = ""] = toStringValue(value).split(",");
+
   return { key, value: [multiplier, level] };
 };
 
@@ -581,6 +627,7 @@ const formatBtype: StatValueFormatter = (key, value) => {
     .split(",")
     .map((entry) => ITEM_CLASS_KEYS[Number.parseInt(entry, 10)])
     .filter(isPresentItemClassKey);
+
   return { key, translateKey: "itemStats.classLower", value: classKeys };
 };
 
@@ -601,6 +648,7 @@ const formatTimelimit: StatValueFormatter = (key, value) => ({
 
 const formatPumpkinWeight: StatValueFormatter = (key, value) => {
   const parsedValue = parseNumber(toStringValue(value));
+
   return {
     key,
     value: parsedValue === null ? toStringValue(value) : parsedValue / 1000,
@@ -609,6 +657,7 @@ const formatPumpkinWeight: StatValueFormatter = (key, value) => {
 
 const formatEtiquette: StatValueFormatter = (key, value) => {
   const entries = toStringValue(value).split("|");
+
   return { key, value: entries[entries.length - 1] ?? "" };
 };
 
@@ -626,10 +675,12 @@ const formatBindingMetadata: StatValueFormatter = (key, value, stats) => {
 const formatResManaEnergyDestroy: StatValueFormatter = (key, value) => {
   const rawValue = toStringValue(value);
   const parsedValue = parseNumber(rawValue);
+
   const energyValue =
     parsedValue === null
       ? rawValue
       : Math.max(1, Math.round(parsedValue * 0.444));
+
   return { key, value: [rawValue, energyValue.toString()] };
 };
 
@@ -913,6 +964,7 @@ function getSemanticBlock(
   if (["amount", "cansplit", "capacity", "ttl"].includes(key)) {
     return "usageStatsBlock";
   }
+
   if (["lvlupgcost", "lvlupgs"].includes(key)) {
     return "enhancementStatsBlock";
   }
@@ -934,6 +986,7 @@ function createStatDefinitions(): ReadonlyMap<string, StatDefinition> {
           sectionIndex: section.sectionIndex,
         });
       }
+
       order += 1;
     }
   }
@@ -947,6 +1000,7 @@ export const SUPPORTED_ITEM_STAT_KEYS = [...STAT_DEFINITIONS.keys()];
 
 const parseItemStat = (stat: string): ItemStat => {
   const separatorIndex = stat.indexOf("=");
+
   if (separatorIndex === -1) {
     return { key: stat, value: true };
   }
@@ -978,6 +1032,7 @@ function mapStatsToOrderedValues(stats: ItemStat[]): OrderedDisplayValue[] {
     }
 
     const definition = STAT_DEFINITIONS.get(stat.key);
+
     if (!definition) {
       orderedValues.push({
         block: "unrecognizedBlock",
@@ -990,6 +1045,7 @@ function mapStatsToOrderedValues(stats: ItemStat[]): OrderedDisplayValue[] {
     }
 
     const displayValue = definition.formatter(stat.key, stat.value, stats);
+
     if (displayValue) {
       orderedValues.push({ ...definition, value: displayValue });
     }
@@ -1002,6 +1058,7 @@ export const mapStatsToDisplaySections = (
   stats: ItemStat[],
 ): ItemStatSection[] => {
   const sections = new Map<number, ItemDisplayValue[]>();
+
   for (const entry of mapStatsToOrderedValues(stats)) {
     const values = sections.get(entry.sectionIndex) ?? [];
     values.push(entry.value);
@@ -1028,6 +1085,7 @@ function createEmptyBlocks(): StatBlocks {
 
 export const mapStatsToDisplayValues = (stats: ItemStat[]): StatBlocks => {
   const blocks = createEmptyBlocks();
+
   for (const entry of mapStatsToOrderedValues(stats)) {
     blocks[entry.block].push(entry.value);
   }
@@ -1053,11 +1111,13 @@ export function getItemStatTemplateValues(
   translate: (key: string, fallback: string) => string,
 ): ItemStatTemplateValues {
   const { value, translateKey } = displayValue;
+
   if (!Array.isArray(value)) {
     return {
       value: isString(value) ? formatNumericText(value) : value,
     };
   }
+
   if (translateKey) {
     return {
       value: value
@@ -1065,6 +1125,7 @@ export function getItemStatTemplateValues(
         .join(",\u00A0"),
     };
   }
+
   return Object.fromEntries(
     value.map((entry, index) => [
       "value" + (index + 1),
@@ -1077,5 +1138,6 @@ export function formatItemDisplayValue(
   value: ItemDisplayValue["value"],
 ): string {
   if (Array.isArray(value)) return value.join(",\u00A0");
+
   return isString(value) ? formatNumericText(value) : String(value ?? "");
 }

@@ -11,11 +11,16 @@ export function activityLevel(
   maximum: number,
 ): "unknown" | "zero" | 1 | 2 | 3 | 4 {
   if (value === null) return "unknown";
+
   if (value === 0) return "zero";
   const ratio = value / Math.max(1, maximum);
+
   if (ratio <= 0.25) return 1;
+
   if (ratio <= 0.5) return 2;
+
   if (ratio <= 0.75) return 3;
+
   return 4;
 }
 
@@ -30,6 +35,7 @@ export function calendarRange(now = new Date(), count = 365) {
   const endDate = calendarDateFormatter.format(now);
   const start = new Date(`${endDate}T12:00:00Z`);
   start.setUTCDate(start.getUTCDate() - count + 1);
+
   return { from: start.toISOString().slice(0, 10), to: endDate };
 }
 

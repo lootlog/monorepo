@@ -25,7 +25,9 @@ const createRedisService = (client: RedisClientMock) => {
         const key = Schema.decodeUnknownSync(
           Schema.Literals(["scan", "del", "get", "set", "eval", "keys"]),
         )(command.toLowerCase());
+
         const reply = await client[key](...args);
+
         // SAFETY: This is the Redis driver's generic transport seam. Each scenario
         // supplies the protocol reply for the checked command used by RedisService;
         // the transport cannot validate an arbitrary caller-selected A.
@@ -45,6 +47,7 @@ const createRedisService = (client: RedisClientMock) => {
           ),
         ),
   });
+
   return new RedisService(redis, { prefix: "lootlog" }, Effect.runPromise);
 };
 
@@ -142,6 +145,7 @@ describe("RedisService", () => {
     client.set.mockResolvedValueOnce("OK").mockResolvedValueOnce("OK");
     client.eval.mockResolvedValueOnce(1);
     const service = createRedisService(client);
+
     const factory = vi
       .fn<() => Promise<{ value: number }>>()
       .mockResolvedValue({ value: 1 });
@@ -185,6 +189,7 @@ describe("RedisService", () => {
       .mockResolvedValueOnce(JSON.stringify({ cached: true }));
     client.set.mockResolvedValueOnce(null);
     const service = createRedisService(client);
+
     const factory = vi
       .fn<() => Promise<{ cached: boolean }>>()
       .mockResolvedValue({ cached: false });
@@ -207,9 +212,11 @@ describe("RedisService", () => {
     const cacheError = new Error("Redis unavailable");
     client.get.mockRejectedValueOnce(cacheError);
     const service = createRedisService(client);
+
     const factory = vi
       .fn<() => Promise<{ fresh: boolean }>>()
       .mockResolvedValue({ fresh: true });
+
     const onError = vi.fn<(cause: unknown) => void>();
 
     const result = await service.getOrSetJsonBestEffort({
@@ -232,9 +239,11 @@ describe("RedisService", () => {
     client.eval.mockResolvedValueOnce(1);
     const service = createRedisService(client);
     const factoryError = new Error("Domain error");
+
     const factory = vi
       .fn<() => Promise<{ fresh: boolean }>>()
       .mockRejectedValue(factoryError);
+
     const onError = vi.fn<(cause: unknown) => void>();
 
     await expect(

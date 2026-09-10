@@ -39,9 +39,12 @@ export const WarriorsRecordSchema = Schema.Record(
   Schema.makeFilter(
     (record) => {
       const entries = Object.entries(record);
+
       if (entries.length === 0) return false;
+
       if (entries.some(([key]) => key.startsWith("-"))) return false;
       const teams = new Set(entries.map(([, warrior]) => warrior.team));
+
       return teams.size > 1;
     },
     { expected: "a valid record of warriors from at least two teams" },
@@ -49,6 +52,7 @@ export const WarriorsRecordSchema = Schema.Record(
 );
 
 const optionalWarriorsRecord = Schema.optional(WarriorsRecordSchema);
+
 const decodeOptionalWarriorsRecord = Schema.decodeUnknownEffect(
   optionalWarriorsRecord,
 );
@@ -63,6 +67,7 @@ const OptionalWarriorsRecordSchema = Schema.Unknown.pipe(
             ),
           )
         : value;
+
       const normalized =
         Predicate.isObject(warriors) && Object.keys(warriors).length === 0
           ? undefined

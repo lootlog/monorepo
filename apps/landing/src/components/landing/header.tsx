@@ -34,6 +34,7 @@ export function LandingHeader() {
     const updateScroll = () => setScrolled(window.scrollY > 0);
     updateScroll();
     window.addEventListener("scroll", updateScroll, { passive: true });
+
     return () => window.removeEventListener("scroll", updateScroll);
   }, []);
 

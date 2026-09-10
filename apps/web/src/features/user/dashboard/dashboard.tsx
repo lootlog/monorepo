@@ -8,6 +8,7 @@ import { DashboardActivity } from "./components/dashboard-activity";
 
 export const Dashboard = () => {
   const { t } = useTranslation();
+
   return (
     <ScrollArea className="h-full min-h-0 [&>[data-slot=scroll-area-viewport]>div]:h-full">
       <div className="@container/dashboard flex min-h-full flex-col gap-3 p-3">

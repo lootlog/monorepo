@@ -11,6 +11,7 @@ const run = (
   Effect.runPromise(
     Effect.gen(function* () {
       const client = yield* HttpClient.HttpClient;
+
       return yield* boundedHttpGet({
         client,
         url: "https://example.invalid",
@@ -43,14 +44,17 @@ const run = (
 
 test("successful-response policy retries server status with caller's exact budget", async () => {
   let calls = 0;
+
   const result = await run(
     "successful",
     () => {
       calls++;
+
       return Promise.resolve(new Response("unavailable", { status: 503 }));
     },
     3,
   );
+
   expect(calls).toBe(4);
   expect(Result.isFailure(result)).toBe(true);
   expect(result).toMatchObject({
@@ -60,10 +64,13 @@ test("successful-response policy retries server status with caller's exact budge
 
 test("raw policy returns non-success responses without retrying", async () => {
   let calls = 0;
+
   const result = await run("raw", () => {
     calls++;
+
     return Promise.resolve(new Response("unavailable", { status: 503 }));
   });
+
   expect(calls).toBe(1);
   expect(Result.isSuccess(result)).toBe(true);
   expect(result).toMatchObject({
@@ -75,10 +82,13 @@ test.each(["successful", "raw"] as const)(
   "%s response size failures retain policy-specific status without retrying",
   async (response) => {
     let calls = 0;
+
     const result = await run(response, () => {
       calls++;
+
       return Promise.resolve(new Response(new Uint8Array(1024 * 1024 + 1)));
     });
+
     expect(calls).toBe(1);
     expect(Result.isFailure(result)).toBe(true);
     expect(result).toMatchObject({

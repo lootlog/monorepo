@@ -7,15 +7,18 @@ import type {
   playerSnapshotTable,
   npcSnapshotTable,
 } from "#src/database/drizzle/schema";
+
 type LootItemWithSnapshot = {
   hid: string;
   itemSnapshot: typeof itemSnapshotTable.$inferSelect;
 };
+
 type LootPlayerWithSnapshot = {
   lvl: number | null;
   hpp: number | null;
   playerSnapshot: typeof playerSnapshotTable.$inferSelect;
 };
+
 type LootNpcWithSnapshot = {
   npcSnapshot: typeof npcSnapshotTable.$inferSelect;
 };
@@ -25,12 +28,14 @@ const parseNumber = (
 ): number | null => {
   if (value === null || value === undefined) return null;
   const parsed = Number(value);
+
   return Number.isFinite(parsed) ? parsed : null;
 };
 
 const parseStatValue = (statRaw: string, key: string): string | null => {
   const prefix = `${key}=`;
   const segment = statRaw.split(";").find((entry) => entry.startsWith(prefix));
+
   return segment?.slice(prefix.length) ?? null;
 };
 
@@ -44,10 +49,12 @@ const parseRequiredProf = (required?: string | null): Profession[] =>
 
 export const mapItem = (lootItem: LootItemWithSnapshot): LootItemDto => {
   const statRaw = lootItem.itemSnapshot.statRaw;
+
   const lvl =
     lootItem.itemSnapshot.lvl ??
     parseNumber(parseStatValue(statRaw, "lvl")) ??
     0;
+
   return {
     id: lootItem.itemSnapshot.itemId,
     hid: lootItem.hid,
@@ -65,6 +72,7 @@ export const mapPlayer = (lootPlayer: LootPlayerWithSnapshot) => {
   const snapshot = lootPlayer.playerSnapshot;
   const accountId = parseNumber(snapshot.accountId);
   const characterId = parseNumber(snapshot.characterId);
+
   return {
     id: `${characterId ?? snapshot.characterId}${accountId ?? snapshot.accountId}`,
     name: snapshot.name,

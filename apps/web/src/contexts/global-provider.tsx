@@ -37,6 +37,7 @@ export const GlobalContextProvider: React.FC<Props> = ({ children }) => {
     createGuildModalReducer,
     CREATE_GUILD_MODAL_INITIAL_STATE,
   );
+
   const [installAddonModalState, installAddonModalDispatch] = useReducer(
     createGuildModalReducer,
     { isOpen: false },

@@ -39,13 +39,16 @@ const handleMatchmakingToggle = () => {};
 
 export const BattlePanelBattlesList = () => {
   const { t } = useTranslation();
+
   const [queryState, setQueryState] = useQueryStates(
     battlePanelBattlesSearchParsers,
   );
+
   const pageSize = 20;
   const isMobile = useIsMobile();
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const pageIndex = getBattlePanelPageIndex(queryState.page);
+
   const selectedWarriors = getSelectedWarriorsFromSearch(
     optionalQueryValue(queryState.search),
   );
@@ -66,6 +69,7 @@ export const BattlePanelBattlesList = () => {
       minLevel: queryState.minLevel,
       maxLevel: queryState.maxLevel,
     });
+
   const { data: charactersResponse } = useBattlesControllerGetUserCharacters();
   const { data: worldsResponse } = useBattlesControllerGetUserWorlds();
   const characters = charactersResponse?.characters;
@@ -116,6 +120,7 @@ export const BattlePanelBattlesList = () => {
     handleMaxLevelChange,
     handleWorldChange,
   } = createBattleFilterHandlers(filters, handleFiltersChange);
+
   const handleClearFilters = () => {
     handleFiltersChange(getResetBattleListFilters());
   };

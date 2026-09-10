@@ -14,6 +14,7 @@ export const createTestGateway = () => {
   vi.spyOn(RealtimeClient.prototype, "subscribe").mockImplementation(
     (listener) => {
       eventListeners.add(listener);
+
       return () => {
         eventListeners.delete(listener);
       };
@@ -22,6 +23,7 @@ export const createTestGateway = () => {
   vi.spyOn(RealtimeClient.prototype, "subscribeState").mockImplementation(
     (listener) => {
       stateListeners.add(listener);
+
       return () => {
         stateListeners.delete(listener);
       };
@@ -29,6 +31,7 @@ export const createTestGateway = () => {
   );
   const request = vi.spyOn(RealtimeClient.prototype, "request");
   const socket = new GatewayClient();
+
   const wrapper = ({ children }: PropsWithChildren) => (
     <GatewayContext
       value={{ socket, connected: true, joined: true, lootUnreadCounts: {} }}
@@ -36,6 +39,7 @@ export const createTestGateway = () => {
       {children}
     </GatewayContext>
   );
+
   return {
     socket,
     request,

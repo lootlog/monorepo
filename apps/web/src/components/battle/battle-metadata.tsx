@@ -36,6 +36,7 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
   className,
 }) => {
   const { t } = useTranslation();
+
   const warrior = battle.warriors.find(
     (w) => w.originalId === battle.characterId,
   );

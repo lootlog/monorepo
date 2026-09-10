@@ -34,14 +34,17 @@ describe("logical subscription policy", () => {
 
   test("rebalances basic and precise presence capabilities independently", () => {
     const basic = makeSession([Permission.LOOTLOG_ONLINE_PLAYERS_READ]);
+
     const precise = makeSession([
       Permission.LOOTLOG_ONLINE_PLAYERS_READ,
       Permission.LOOTLOG_PRESENCE_LOCATION_READ,
     ]);
+
     const scope = {
       topic: "organization.presence",
       organizationId: "organization-1",
     } as const;
+
     expect(canSubscribe(basic, scope)).toBe(true);
     expect(canReadPreciseLocation(basic, "organization-1")).toBe(false);
     expect(canReadPreciseLocation(precise, "organization-1")).toBe(true);

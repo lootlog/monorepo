@@ -30,6 +30,7 @@ const getScrollToTurnRequestId = (
   if (scrollTargetTurn === null || scrollTargetTurn !== selectedTurnNumber) {
     return 0;
   }
+
   return requestId;
 };
 
@@ -82,6 +83,7 @@ export function BattleDetailView({
     sideContent,
     timeline,
   });
+
   return (
     <ScrollArea
       ref={scrollViewportRef}

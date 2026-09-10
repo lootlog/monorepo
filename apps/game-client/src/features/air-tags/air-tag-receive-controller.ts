@@ -8,6 +8,7 @@ import {
 } from "@lootlog/schema/air-tag";
 
 const MAX_QUEUED_UPDATES = 1_000;
+
 const MAX_TARGETS_PER_SCOPE = 100;
 
 type AirTagScopeState = Omit<AirTagScopeSnapshot, "targets"> & {
@@ -61,6 +62,7 @@ export class AirTagReceiveController {
 
   subscribe(listener: () => void): () => void {
     this.changeListeners.add(listener);
+
     return () => {
       this.changeListeners.delete(listener);
     };
@@ -78,6 +80,7 @@ export class AirTagReceiveController {
     if (acknowledgement.status === "rejected") {
       this.scopes.clear();
       this.notifyChange();
+
       return;
     }
 
@@ -93,6 +96,7 @@ export class AirTagReceiveController {
     queuedUpdates
       .toSorted((first, second) => {
         const epochOrder = compareEpoch(first, second);
+
         return epochOrder === 0 ? first.revision - second.revision : epochOrder;
       })
       .forEach((update) => this.applyUpdate(update));
@@ -106,7 +110,9 @@ export class AirTagReceiveController {
       if (this.queuedUpdates.length >= MAX_QUEUED_UPDATES) {
         this.queuedUpdates.shift();
       }
+
       this.queuedUpdates.push(value);
+
       return;
     }
 
@@ -126,6 +132,7 @@ export class AirTagReceiveController {
         }
 
         const existing = targets.get(targetId);
+
         if (!existing) {
           targets.set(targetId, { ...target });
           continue;
@@ -133,6 +140,7 @@ export class AirTagReceiveController {
 
         const freshest =
           target.observedAt > existing.observedAt ? target : existing;
+
         targets.set(targetId, {
           ...freshest,
           enemyObservedAt: this.maximumTimestamp(
@@ -152,16 +160,20 @@ export class AirTagReceiveController {
 
   retainOrganizations(organizationIds?: ReadonlySet<string>): void {
     this.allowedOrganizations = organizationIds;
+
     if (!organizationIds) return;
     let changed = false;
+
     for (const [key, scope] of this.scopes) {
       if (organizationIds.has(scope.guildId)) continue;
       this.scopes.delete(key);
       changed = true;
     }
+
     this.queuedUpdates = this.queuedUpdates.filter((update) =>
       organizationIds.has(update.guildId),
     );
+
     if (changed) this.notifyChange();
   }
 
@@ -176,9 +188,11 @@ export class AirTagReceiveController {
 
   private applyUpdate(update: AirTagUpdateEvent): boolean {
     const scope = this.scopes.get(getScopeKey(update));
+
     if (!scope) return false;
 
     const epochOrder = compareEpoch(update, scope);
+
     if (epochOrder < 0) return false;
 
     if (epochOrder > 0) {
@@ -191,6 +205,7 @@ export class AirTagReceiveController {
         revision: update.revision,
         targets: this.createTargetMap([update.target]),
       });
+
       return true;
     }
 
@@ -198,14 +213,17 @@ export class AirTagReceiveController {
 
     scope.revision = update.revision;
     this.setTarget(scope.targets, update.target);
+
     return true;
   }
 
   private createTargetMap(targets: AirTagTarget[]): Map<string, AirTagTarget> {
     const targetMap = new Map<string, AirTagTarget>();
+
     for (const target of targets) {
       this.setTarget(targetMap, target);
     }
+
     return targetMap;
   }
 
@@ -214,9 +232,11 @@ export class AirTagReceiveController {
     target: AirTagTarget,
   ): void {
     targets.set(target.targetId, target);
+
     if (targets.size <= MAX_TARGETS_PER_SCOPE) return;
 
     let oldestTarget: AirTagTarget | undefined;
+
     for (const candidate of targets.values()) {
       if (
         !oldestTarget ||
@@ -255,7 +275,9 @@ export class AirTagReceiveController {
     second: number | undefined,
   ): number | undefined {
     if (first === undefined) return second;
+
     if (second === undefined) return first;
+
     return Math.max(first, second);
   }
 

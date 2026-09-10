@@ -27,6 +27,7 @@ const readTranslationText = (translation: string): string => {
   let text = "";
   let insideTag = false;
   let quote = "";
+
   for (const character of translation) {
     if (!insideTag) {
       if (character === "<") insideTag = true;
@@ -39,6 +40,7 @@ const readTranslationText = (translation: string): string => {
       insideTag = false;
     }
   }
+
   return text;
 };
 
@@ -68,6 +70,7 @@ export function buildBattleLogVisibleText({
   t: TFunction;
 }): string {
   const parsed = parseActions(event.actions);
+
   const actionText = (
     action: { type: string; value: string },
     mode: "generic" | "spell" | "attack" = "generic",
@@ -80,7 +83,9 @@ export function buildBattleLogVisibleText({
         : getBattleActionPresentation(action).i18nKey,
       getBattleActionValues(action, event, attacker, target, mode),
     );
+
   const damage = groupBattleAttackDamage(parsed.attackActions);
+
   const attackText = [
     damage.hasPositiveDamage
       ? translateText(t, "battle.+combined_dmg", {
@@ -100,6 +105,7 @@ export function buildBattleLogVisibleText({
         })
       : "",
   ];
+
   return [
     `#${turn}`,
     ...parsed.buffActions.map((action) => actionText(action)),

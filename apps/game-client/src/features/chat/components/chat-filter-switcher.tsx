@@ -13,17 +13,20 @@ type Props = {
 
 export function ChatFilterSwitcher({ value, onValueChange, unread }: Props) {
   const { t } = useTranslation("chat");
+
   const options = [
     { value: "all", unread: unread.ids.size > 0 },
     { value: "normal", unread: unread.conversations },
     { value: "reports", unread: unread.reports },
   ] as const;
+
   return (
     <div className="ll:flex ll:shrink-0 ll:items-center ll:gap-1 ll:border-solid ll:border-y ll:border-x-0 ll:border-gray-400/40">
       <ToggleGroup
         value={[value]}
         onValueChange={(values) => {
           const option = options.find((item) => item.value === values[0]);
+
           if (option) onValueChange(option.value);
         }}
         aria-label={t("filters.label")}

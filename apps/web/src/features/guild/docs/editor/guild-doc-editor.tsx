@@ -37,7 +37,9 @@ type GuildDocEditorProps = {
 
 const URL_MATCHER =
   /((https?:\/\/)?(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,12}\b[-a-zA-Z0-9()@:%_+.~#?&//=]*)/;
+
 const EMAIL_MATCHER = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
+
 const AUTO_LINK_MATCHERS = [
   createLinkMatcherWithRegExp(URL_MATCHER, (text) => formatUrl(text)),
   createLinkMatcherWithRegExp(EMAIL_MATCHER, (text) =>

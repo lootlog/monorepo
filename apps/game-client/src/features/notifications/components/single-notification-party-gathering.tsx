@@ -11,6 +11,7 @@ export const SingleNotificationPartyGathering: FC<
   SingleNotificationPartyGatheringProps
 > = ({ notification, meetsLevelReq }) => {
   const { t } = useTranslation("notifications");
+
   return (
     <div className="ll:flex ll:min-w-0 ll:flex-col">
       <div className="ll:flex ll:gap-1 ll:overflow-hidden ll:text-xs">

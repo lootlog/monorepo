@@ -73,9 +73,11 @@ export const EventDetail = () => {
     isLoading,
     isMapsLoading,
   } = useEventDetail();
+
   if (isLoading || isMapsLoading) {
     return <EventDetailSkeleton />;
   }
+
   if (error || !event) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4 max-h-full overflow-y-auto [justify-content:safe_center]">
@@ -87,6 +89,7 @@ export const EventDetail = () => {
       </div>
     );
   }
+
   return (
     <div className="flex flex-col h-full min-h-0 bg-background">
       <EventParticipationConfirmationDialog

@@ -23,6 +23,7 @@ const makeData = (overrides: Partial<UserLootlogConfigData["Service"]> = {}) =>
     getPlayersCatchingGuilds: () => Effect.succeed({ players: [] }),
     ...overrides,
   });
+
 const provideServices = (
   data: UserLootlogConfigData["Service"],
   identity = UserLootlogConfigIdentity.of({
@@ -37,10 +38,12 @@ const provideServices = (
 describe("user lootlog config HttpApi handlers", () => {
   it("passes only the authenticated Discord identity to account reads", async () => {
     const calls: Array<[string, string]> = [];
+
     const layer = provideServices(
       makeData({
         getAccount: (discordId, accountId) => {
           calls.push([discordId, accountId]);
+
           return Effect.succeed({});
         },
       }),
@@ -57,11 +60,14 @@ describe("user lootlog config HttpApi handlers", () => {
       status: 401,
       code: "AUTH_REQUIRED",
     });
+
     let dataCalled = false;
+
     const layer = provideServices(
       makeData({
         upsertCharacter: () => {
           dataCalled = true;
+
           return Effect.succeed({});
         },
       }),
@@ -76,6 +82,7 @@ describe("user lootlog config HttpApi handlers", () => {
         }).pipe(Effect.provide(layer)),
       ),
     );
+
     expect(error).toBe(denied);
     expect(dataCalled).toBe(false);
   });
@@ -91,6 +98,7 @@ describe("user lootlog config HttpApi handlers", () => {
         },
       ],
     };
+
     const layer = provideServices(
       makeData({
         getPlayersCatchingGuilds: () => Effect.succeed(response),
@@ -100,6 +108,7 @@ describe("user lootlog config HttpApi handlers", () => {
     const result = await Effect.runPromise(
       getPlayersCatchingGuilds({ players: [] }).pipe(Effect.provide(layer)),
     );
+
     expect(result).toEqual(response);
     expect(Schema.is(PlayersCatchingOrganizationsResponse)(result)).toBe(true);
   });

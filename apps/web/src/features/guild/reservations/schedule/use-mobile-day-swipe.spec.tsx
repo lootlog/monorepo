@@ -29,6 +29,7 @@ describe("useMobileDaySwipe", () => {
     const matchMedia = vi.fn((query: string) =>
       createMediaQueryList(query, true),
     );
+
     vi.stubGlobal("matchMedia", matchMedia);
 
     const { result } = renderHook(() => useMobileDaySwipe());

@@ -17,11 +17,13 @@ import { BattleLogList, type BattleLogListProps } from "./battle-log-list";
 import type { RawBattleParsedEvent } from "@/lib/api/battlelog-types";
 
 const i18n = i18next.createInstance();
+
 i18n.init({
   lng: "pl",
   resources: { pl: { translation: { battle, battlePanel } } },
   interpolation: { escapeValue: false },
 });
+
 const events: RawBattleParsedEvent[] = Array.from(
   { length: 1000 },
   (_, index) => ({
@@ -38,6 +40,7 @@ const events: RawBattleParsedEvent[] = Array.from(
     ],
   }),
 );
+
 let desktop = true;
 
 function isScrollToOptions(
@@ -49,6 +52,7 @@ function isScrollToOptions(
 function Fixture(props: Partial<BattleLogListProps>) {
   const outer = useRef<HTMLDivElement>(null);
   const inner = useRef<HTMLDivElement>(null);
+
   return (
     <I18nextProvider i18n={i18n}>
       <div ref={outer} data-testid="outer">
@@ -72,6 +76,7 @@ function SearchFixture({
   onTurnFocus: (turn: number) => void;
 }) {
   const outer = useRef<HTMLDivElement>(null);
+
   return (
     <I18nextProvider i18n={i18n}>
       <div ref={outer} data-testid="outer">
@@ -119,11 +124,14 @@ beforeEach(() => {
       const viewport = document.querySelector<HTMLElement>(
         desktop ? '[data-testid="inner"]' : '[data-testid="outer"]',
       );
+
       const translation = Number.parseFloat(
         this.style.transform.match(/translateY\(([-\d.]+)px\)/)?.[1] ?? "0",
       );
+
       const top =
         this.tagName === "LI" ? translation - (viewport?.scrollTop ?? 0) : 0;
+
       return new DOMRect(0, top, 800, this.tagName === "LI" ? 72 : 480);
     },
   );
@@ -136,6 +144,7 @@ beforeEach(() => {
     this.dispatchEvent(new Event("scroll"));
   });
 });
+
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
@@ -196,13 +205,17 @@ describe("virtual battle log", () => {
   it("retains a keyboard-focused row when it leaves the viewport", async () => {
     const onSelect = vi.fn();
     const view = render(<Fixture onTurnSelect={onSelect} />);
+
     const first = await waitFor(() => {
       const row = view.container.querySelector<HTMLElement>(
         '[data-battle-turn="1"]',
       );
+
       expect(row).not.toBeNull();
+
       return row;
     });
+
     if (!first) throw new Error("Missing first turn");
     fireEvent.focus(first);
     fireEvent.keyDown(first, { key: "Enter" });
@@ -245,6 +258,7 @@ describe("virtual battle log", () => {
   it("cancels pending alignment when the user starts scrolling", async () => {
     const onCancel = vi.fn();
     const onComplete = vi.fn();
+
     const view = render(
       <Fixture
         selectedTurn={900}
@@ -253,6 +267,7 @@ describe("virtual battle log", () => {
         onSelectedTurnScrollComplete={onComplete}
       />,
     );
+
     fireEvent.wheel(view.getByTestId("inner"), { deltaY: 20 });
     await waitFor(() => expect(onCancel).toHaveBeenCalledWith(900));
     expect(onComplete).not.toHaveBeenCalled();
@@ -263,12 +278,15 @@ describe("virtual battle log", () => {
     const input = view.getByRole("searchbox");
     fireEvent.change(input, { target: { value: "dotyk aniola" } });
     await waitFor(() => expect(onTurnFocus).toHaveBeenLastCalledWith(400));
+
     const next = view.getByRole("button", {
       name: i18n.t("battlePanel.single.log.search.next"),
     });
+
     const previous = view.getByRole("button", {
       name: i18n.t("battlePanel.single.log.search.previous"),
     });
+
     fireEvent.click(next);
     await waitFor(() => expect(onTurnFocus).toHaveBeenLastCalledWith(900));
     fireEvent.click(next);

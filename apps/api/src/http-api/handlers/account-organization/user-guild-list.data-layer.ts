@@ -72,10 +72,13 @@ export const makeUserGuildList = (
     Effect.gen(function* () {
       if (guilds.length === 0) return;
       const throttleKey = `member:sync:throttle:${identity.discordId}`;
+
       if (yield* ports.getCache(throttleKey)) return;
+
       const staleThreshold = new Date(
         (yield* Clock.currentTimeMillis) - getMemberCacheSoftTtl(environment),
       );
+
       const stale = yield* database
         .select({
           discordId: memberTable.userId,
@@ -98,6 +101,7 @@ export const makeUserGuildList = (
             ),
           ),
         );
+
       if (stale.length === 0) return;
       yield* ports.setCache(throttleKey, "1", SYNC_THROTTLE_TTL_SECONDS);
       yield* Effect.forEach(
@@ -124,11 +128,14 @@ export const makeUserGuildList = (
   ) {
     if (source === "game" || (yield* requestApiKeyAccess)) {
       const summaries = yield* ports.accessible(identity);
+
       const guilds = summaries.map(
         ({ hasLootlogAccess: _access, isAccessDataStale: _stale, ...guild }) =>
           guild,
       );
+
       yield* queueStale(identity, guilds);
+
       return guilds;
     }
 
@@ -138,7 +145,9 @@ export const makeUserGuildList = (
       ...identity,
       activeDiscordGuildIds: discordGuildIds,
     });
+
     if (discordGuildIds.length === 0) return [];
+
     const guilds = yield* database
       .select()
       .from(guildTable)
@@ -148,20 +157,25 @@ export const makeUserGuildList = (
           eq(guildTable.active, true),
         ),
       );
+
     const orderRows = yield* database
       .select({ guildsOrder: userSettingsTable.guildsOrder })
       .from(userSettingsTable)
       .where(eq(userSettingsTable.userId, identity.userId))
       .limit(1);
+
     const order = new Map(
       (orderRows[0]?.guildsOrder ?? []).map((id, index) => [id, index]),
     );
+
     const result = [...guilds].sort(
       (left, right) =>
         (order.get(left.id) ?? Number.MAX_SAFE_INTEGER) -
         (order.get(right.id) ?? Number.MAX_SAFE_INTEGER),
     );
+
     yield* queueStale(identity, result);
+
     return result;
   });
 

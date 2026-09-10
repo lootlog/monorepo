@@ -47,13 +47,16 @@ export class NotificationJobDispatchFailure extends TaggedErrorClass<Notificatio
 
 const targetBlockedReason = (target: NotificationDispatchJob["target"]) => {
   if (!target.active) return "Notification target is disabled";
+
   if (target.canSend) return null;
   const metadata = isObjectRecord(target.metadata) ? target.metadata : null;
+
   const missingPermissions = Array.isArray(metadata?.missingPermissions)
     ? metadata.missingPermissions.filter(
         (permission): permission is string => typeof permission === "string",
       )
     : [];
+
   return missingPermissions.length === 0
     ? "Discord channel is missing required permissions"
     : `Discord channel is missing required permissions: ${missingPermissions.join(", ")}`;
@@ -69,6 +72,7 @@ const isPayloadObject = (value: JsonValue): value is JsonObject =>
 
 const parseDispatchPayload = (value: JsonValue) => {
   const payload = isPayloadObject(value) ? value : undefined;
+
   return {
     content: typeof payload?.content === "string" ? payload.content : undefined,
     title: typeof payload?.title === "string" ? payload.title : "Powiadomienie",
@@ -89,20 +93,25 @@ export const makeNotificationJobDispatch = (
 ) =>
   Effect.fn("notifications.jobs.dispatch")(function* (jobId: string) {
     const job = yield* store.find(jobId);
+
     if (!job) return;
     const blockedReason = targetBlockedReason(job.target);
+
     if (blockedReason) {
       yield* store.update(job.id, {
         status: NotificationJobStatus.BLOCKED,
         blockedReason,
         lastError: blockedReason,
       });
+
       return;
     }
+
     if (job.ownerType === NotificationOwnerType.GUILD) {
       const permitted = yield* permissions.hasRequiredGuildPermissions(
         job.ownerId,
       );
+
       if (!permitted) {
         const missingPermissions = "Missing Discord bot permissions";
         yield* store.update(job.id, {
@@ -110,11 +119,14 @@ export const makeNotificationJobDispatch = (
           blockedReason: missingPermissions,
           lastError: missingPermissions,
         });
+
         return;
       }
     }
+
     if (!(yield* store.claim(job.id))) return;
     const payload = parseDispatchPayload(job.payloadSnapshot);
+
     const published = yield* publisher
       .publish({
         notificationJobId: job.id,
@@ -133,6 +145,7 @@ export const makeNotificationJobDispatch = (
         },
       })
       .pipe(Effect.result);
+
     if (Result.isSuccess(published)) return;
     const message = errorMessage(published.failure);
     yield* store.update(job.id, {

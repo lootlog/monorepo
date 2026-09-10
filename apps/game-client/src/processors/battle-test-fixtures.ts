@@ -21,6 +21,7 @@ export const createBattleWarrior = (
   type: id < 0 ? 2 : 0,
   ...overrides,
 });
+
 export const createBattleTest = () => {
   useBattleStore.setState(useBattleStore.getInitialState(), true);
   useBattleStore.getState().clearEvents();
@@ -36,9 +37,11 @@ export const createBattleTest = () => {
   });
   const requests: Request[] = [];
   let status = 200;
+
   const fetch: typeof globalThis.fetch = (input, init) => {
     const request = new Request(input, init);
     requests.push(request);
+
     return Promise.resolve(
       Response.json(
         new URL(request.url).pathname === "/battles"
@@ -48,11 +51,14 @@ export const createBattleTest = () => {
       ),
     );
   };
+
   const restore = configureApiClients({
     main: { baseUrl: "https://api.example.test", fetch },
     battlelog: { baseUrl: "https://battlelog.example.test", fetch },
   });
+
   onTestFinished(restore);
+
   return {
     requests,
     battles: () =>

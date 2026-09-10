@@ -22,15 +22,18 @@ export const useAirTags = (): void => {
     }
 
     const socket = getSocket();
+
     const handleUpdate = (event: AirTagUpdateEvent) => {
       airTagRuntime.handleUpdate(event);
     };
+
     const handlePermissionsUpdated = (payload: PermissionsUpdatedPayload) => {
       airTagRuntime.handlePermissionsUpdated(payload);
     };
 
     socket.on(GatewayEvent.AIR_TAG_UPDATE, handleUpdate);
     socket.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
+
     return () => {
       socket.off(GatewayEvent.AIR_TAG_UPDATE, handleUpdate);
       socket.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);

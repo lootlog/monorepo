@@ -14,6 +14,7 @@ import { Storage as MemoryStorage } from "happy-dom";
 import { afterEach, beforeEach, expect, it, onTestFinished, vi } from "vitest";
 import "@/i18n/config";
 import { DashboardActivity } from "./dashboard-activity";
+
 const onlineDefaults: UserOnlineResponseDto = {
   timezone: "Europe/Warsaw",
   trackingStartedAt: null,
@@ -21,6 +22,7 @@ const onlineDefaults: UserOnlineResponseDto = {
   status: "fresh",
   days: [],
 };
+
 const killsDefaults: UserKillActivityResponseDtoOutput = {
   meta: {
     timezone: "Europe/Warsaw",
@@ -38,19 +40,26 @@ const killsDefaults: UserKillActivityResponseDtoOutput = {
   },
   daily: [],
 };
+
 let onlineResponse: UserOnlineResponseDto | undefined;
+
 let killsResponse: UserKillActivityResponseDtoOutput | undefined;
+
 let onlineRequests: URL[];
+
 let killRequests: URL[];
+
 function renderActivity() {
   const client = new QueryClient();
   onTestFinished(() => client.clear());
+
   return render(
     <QueryClientProvider client={client}>
       <DashboardActivity />
     </QueryClientProvider>,
   );
 }
+
 beforeEach(() => {
   onlineResponse = undefined;
   killsResponse = undefined;
@@ -64,6 +73,7 @@ beforeEach(() => {
           killRequests.push(
             new URL(input instanceof Request ? input.url : input.toString()),
           );
+
           return killsResponse
             ? Promise.resolve(Response.json(killsResponse))
             : new Promise<Response>(() => {});
@@ -75,6 +85,7 @@ beforeEach(() => {
           onlineRequests.push(
             new URL(input instanceof Request ? input.url : input.toString()),
           );
+
           return onlineResponse
             ? Promise.resolve(Response.json(onlineResponse))
             : new Promise<Response>(() => {});
@@ -84,11 +95,13 @@ beforeEach(() => {
   );
   vi.stubGlobal("localStorage", new MemoryStorage());
 });
+
 afterEach(() => {
   vi.unstubAllGlobals();
   cleanup();
   vi.useRealTimers();
 });
+
 it("defaults to lightweight online and enables kills activity only on demand", async () => {
   renderActivity();
   const onlineButton = screen.getByRole("button", { name: "Online" });
@@ -178,6 +191,7 @@ it("uses the lowest activity level for missing days in both tabs without details
     ],
   };
   renderActivity();
+
   for (const mode of ["Online", "Bicia"]) {
     fireEvent.click(screen.getByRole("button", { name: mode }));
     const day = await screen.findByRole("button", { name: /1 września/ });

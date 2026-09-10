@@ -9,6 +9,7 @@ export function AnimatedLiveFeedRow({
 }: ComponentProps<typeof LiveFeedRow> & { animateEntry?: boolean }) {
   const reducedMotion = useReducedMotion();
   const shouldAnimate = animateEntry && !reducedMotion;
+
   return (
     <m.li
       className="border-t border-border/50 first:border-t-0 odd:bg-card even:bg-muted/60"

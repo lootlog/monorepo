@@ -68,6 +68,7 @@ const deletePersistedAccount = (
         })
         .from(memberTable)
         .where(eq(memberTable.userId, identity.discordId));
+
       const memberIds = members.map(({ id }) => id);
 
       if (memberIds.length > 0) {
@@ -75,6 +76,7 @@ const deletePersistedAccount = (
           .delete(npcKillStatsTable)
           .where(inArray(npcKillStatsTable.memberId, memberIds));
       }
+
       yield* transaction
         .delete(userKillStatsTable)
         .where(eq(userKillStatsTable.userId, identity.discordId));
@@ -106,6 +108,7 @@ const deletePersistedAccount = (
         .where(eq(userPinnedEventTable.userId, identity.userId));
 
       const deactivatedAt = new Date(yield* Clock.currentTimeMillis);
+
       for (const member of members) {
         yield* transaction
           .delete(memberToRoleTable)
@@ -145,12 +148,14 @@ const invalidateRemovedMember = (
         userId: member.globalUserId,
       })
     : null;
+
   const legacyCacheKeys = member.globalUserId
     ? getLegacyGuildMemberCacheKeys({
         guildId: member.guildId,
         userId: member.globalUserId,
       })
     : null;
+
   const effects: Array<Effect.Effect<unknown, unknown>> = [
     ports.deleteCachePattern(
       getUserLootlogConfigCachePattern(member.discordId),

@@ -7,6 +7,7 @@ export const ApiKeyGrant = Schema.Struct({
   mode: Schema.Literals(["read", "read-write"]),
   personalData: Schema.Boolean,
 });
+
 export type ApiKeyGrant = typeof ApiKeyGrant.Type;
 
 export const ApiKeyAccess = Schema.Struct({
@@ -14,9 +15,11 @@ export const ApiKeyAccess = Schema.Struct({
   keyId: Schema.NonEmptyString,
   expiresAt: Schema.NullOr(Schema.String),
 });
+
 export type ApiKeyAccess = typeof ApiKeyAccess.Type;
 
 export const API_KEY_ACCESS_HEADER = "x-auth-api-key-access";
+
 export const API_KEY_LEASE_MS = 60_000;
 
 export const ApiKeyStatus = Schema.Union([
@@ -29,4 +32,5 @@ export const ApiKeyStatus = Schema.Union([
     discordId: Schema.NonEmptyString,
   }),
 ]);
+
 export type ApiKeyStatus = typeof ApiKeyStatus.Type;

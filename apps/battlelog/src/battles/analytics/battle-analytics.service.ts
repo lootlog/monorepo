@@ -114,6 +114,7 @@ export const makeBattleAnalytics = (
             userId,
             query,
           );
+
           if (characterIds.length === 0) {
             return {
               totalBattles: 0,
@@ -152,6 +153,7 @@ export const makeBattleAnalytics = (
       () =>
         Effect.gen(function* () {
           const characterContext = yield* getCharacterContext(userId, query);
+
           if (!characterContext) {
             return [];
           }
@@ -172,6 +174,7 @@ export const makeBattleAnalytics = (
       () =>
         Effect.gen(function* () {
           const characterContext = yield* getCharacterContext(userId, query);
+
           if (!characterContext) {
             return combatProfileCalculator.getEmptyProfile();
           }
@@ -208,6 +211,7 @@ export const makeBattleAnalytics = (
       () =>
         Effect.gen(function* () {
           const characterContext = yield* getCharacterContext(userId, query);
+
           if (!characterContext) {
             return summaryCalculator.getEmptyStreak();
           }
@@ -238,6 +242,7 @@ export const makeBattleAnalytics = (
       () =>
         Effect.gen(function* () {
           const characterContext = yield* getCharacterContext(userId, query);
+
           if (!characterContext) {
             return summaryCalculator.getEmptyDurationStats();
           }
@@ -268,6 +273,7 @@ export const makeBattleAnalytics = (
       () =>
         Effect.gen(function* () {
           const characterContext = yield* getCharacterContext(userId, query);
+
           if (!characterContext) {
             return [];
           }
@@ -303,6 +309,7 @@ export const makeBattleAnalytics = (
       () =>
         Effect.gen(function* () {
           const characterContext = yield* getCharacterContext(userId, query);
+
           if (!characterContext) {
             return [];
           }
@@ -338,6 +345,7 @@ export const makeBattleAnalytics = (
       () =>
         Effect.gen(function* () {
           const characterContext = yield* getCharacterContext(userId, query);
+
           if (!characterContext) {
             return [];
           }
@@ -380,6 +388,7 @@ export const makeBattleAnalytics = (
   const getAbyssSeasonsUncached = (query: AbyssSeasonsQuery, userId: string) =>
     Effect.gen(function* () {
       const characterIds = yield* queryModule.getCharacterIds(userId, query);
+
       if (characterIds.length === 0) return [];
 
       const fetchedBattles = yield* drizzle.query.battles.findMany({
@@ -411,6 +420,7 @@ export const makeBattleAnalytics = (
   ) =>
     Effect.gen(function* () {
       const startTime = yield* Clock.currentTimeMillis;
+
       const characterContext = yield* getCharacterContext(userId, {
         characterId: query.characterId,
         world: query.world,
@@ -418,6 +428,7 @@ export const makeBattleAnalytics = (
 
       if (!characterContext) {
         const finishedAt = yield* Clock.currentTimeMillis;
+
         return getEmptyHeadToHeadResponse(query, finishedAt - startTime);
       }
 
@@ -428,11 +439,13 @@ export const makeBattleAnalytics = (
         hasFlee: false,
         orderBy: { createdAt: "desc" },
       });
+
       const records = headToHeadCalculator.calculateRecords(
         filteredBattles,
         characterContext.characterIdSet,
         query,
       );
+
       const paginated = paging.paginate(records, query);
 
       return {
@@ -453,6 +466,7 @@ export const makeBattleAnalytics = (
   ) =>
     Effect.gen(function* () {
       const startTime = yield* Clock.currentTimeMillis;
+
       const characterContext = yield* getCharacterContext(userId, {
         characterId: query.characterId,
         world: query.world,
@@ -460,6 +474,7 @@ export const makeBattleAnalytics = (
 
       if (!characterContext) {
         const finishedAt = yield* Clock.currentTimeMillis;
+
         return getEmptyPlayerVsPlayerResponse(query, finishedAt - startTime);
       }
 
@@ -470,11 +485,13 @@ export const makeBattleAnalytics = (
         levelFilter: "none",
         orderBy: { createdAt: "desc" },
       });
+
       const battlesList = playerVsPlayerCalculator.calculateBattles(
         fetchedBattles,
         characterContext.characterIdSet,
         query,
       );
+
       const paginated = paging.paginate(battlesList, query);
 
       return {
@@ -508,6 +525,7 @@ export const makeBattleAnalytics = (
   > =>
     Effect.gen(function* () {
       const characterIds = yield* queryModule.getCharacterIds(userId, query);
+
       if (characterIds.length === 0) {
         return null;
       }
@@ -521,6 +539,7 @@ export const makeBattleAnalytics = (
   const getFilteredAnalyticsBattles = (options: AnalyticsFetchOptions) =>
     Effect.gen(function* () {
       const dateRange = queryModule.getDateRangeFilter(options.query);
+
       const fetchQuery = {
         where: {
           RAW: (table: typeof battles) =>
@@ -550,10 +569,13 @@ export const makeBattleAnalytics = (
       } satisfies NonNullable<
         Parameters<typeof drizzle.query.battles.findMany>[0]
       >;
+
       const orderedQuery: typeof fetchQuery & {
         orderBy?: AnalyticsBattleOrderBy;
       } = fetchQuery;
+
       if (options.orderBy) orderedQuery.orderBy = options.orderBy;
+
       const fetchedBattles =
         yield* drizzle.query.battles.findMany(orderedQuery);
 

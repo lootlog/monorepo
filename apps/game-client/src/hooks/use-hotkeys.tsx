@@ -17,6 +17,7 @@ import {
 } from "@/features/map-pings/map-ping-interaction-controller";
 
 type HotkeyEvent = KeyboardEvent | MouseEvent;
+
 type UseHotkeysOptions = {
   onChatHelp?: () => void;
   onChatPosition?: () => void;
@@ -39,6 +40,7 @@ const matchesBinding = (event: HotkeyEvent, binding: HotkeyBinding) => {
     event.shiftKey === binding.shift &&
     event.ctrlKey === binding.ctrl &&
     event.altKey === binding.alt;
+
   if (!modifiersMatch) {
     return false;
   }
@@ -56,6 +58,7 @@ const matchesBinding = (event: HotkeyEvent, binding: HotkeyBinding) => {
 
 const isEditableElementActive = () => {
   const activeElement = window.document.activeElement;
+
   return (
     activeElement instanceof HTMLElement &&
     (["TEXTAREA", "MAGIC_INPUT", "INPUT"].includes(activeElement.tagName) ||
@@ -78,12 +81,14 @@ export const useHotkeys = ({
   const toggleOpen = useWindowsStore((state) => state.toggleOpen);
   const bindings = useHotkeysStore((s) => s.bindings);
   const activeMapPingIdentityRef = useRef<MapPingPressIdentity | null>(null);
+
   const handledMouseRef = useRef<{
     button: number;
     ctrl: boolean;
     alt: boolean;
     shift: boolean;
   } | null>(null);
+
   const handledMouseTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -91,6 +96,7 @@ export const useHotkeys = ({
       if (handledMouseTimeoutRef.current !== null) {
         window.clearTimeout(handledMouseTimeoutRef.current);
       }
+
       handledMouseRef.current = {
         button: event.button,
         ctrl: event.ctrlKey,
@@ -110,6 +116,7 @@ export const useHotkeys = ({
 
       activeMapPingIdentityRef.current = null;
       onMapPingCancel?.();
+
       return true;
     };
 
@@ -126,6 +133,7 @@ export const useHotkeys = ({
         () => window.dispatchEvent(new Event("lootlog:join-visible-gathering")),
       ],
     ]);
+
     const executeAction = (event: HotkeyEvent) => {
       for (const [action, binding] of Object.entries(bindings)) {
         if (!matchesBinding(event, binding)) {
@@ -133,14 +141,19 @@ export const useHotkeys = ({
         }
 
         const quickAction = quickActions.get(action);
+
         if (quickAction) {
           if (event instanceof KeyboardEvent && event.repeat) return true;
           quickAction();
+
           return true;
         }
+
         const windowId = ACTION_TO_WINDOW.get(action);
+
         if (windowId) {
           toggleOpen(windowId, true);
+
           return true;
         }
 
@@ -148,6 +161,7 @@ export const useHotkeys = ({
           void enqueueReadyRoomInvitations().catch((cause: unknown) => {
             console.warn("Failed to resolve party invitations", cause);
           });
+
           return true;
         }
 
@@ -157,10 +171,12 @@ export const useHotkeys = ({
           }
 
           const handled = onMapPingStart?.(event) ?? false;
+
           if (handled) {
             activeMapPingIdentityRef.current =
               createMapPingPressIdentity(event);
           }
+
           return handled || activeMapPingIdentityRef.current !== null;
         }
 
@@ -173,9 +189,12 @@ export const useHotkeys = ({
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape" && cancelActiveMapPing()) {
         event.preventDefault();
+
         return;
       }
+
       if (isEditableElementActive()) return;
+
       if (executeAction(event)) {
         event.preventDefault();
       }
@@ -183,6 +202,7 @@ export const useHotkeys = ({
 
     const handleKeyUp = (event: KeyboardEvent) => {
       const activeIdentity = activeMapPingIdentityRef.current;
+
       if (
         !activeIdentity ||
         activeIdentity.kind !== "keyboard" ||
@@ -207,6 +227,7 @@ export const useHotkeys = ({
           (hotkeyScopes.get(action) === "global" ||
             hotkeyScopes.get(action) === "map-surface"),
       );
+
       if (
         !matchingAction ||
         (isEditableElementActive() && matchingAction[0] !== "map-ping") ||
@@ -216,6 +237,7 @@ export const useHotkeys = ({
       }
 
       event.preventDefault();
+
       if (matchingAction[0] !== "map-ping") {
         rememberHandledMouse(event);
       }
@@ -223,6 +245,7 @@ export const useHotkeys = ({
 
     const handleMouseUp = (event: MouseEvent) => {
       const activeIdentity = activeMapPingIdentityRef.current;
+
       if (
         !activeIdentity ||
         activeIdentity.kind !== "mouse" ||
@@ -242,6 +265,7 @@ export const useHotkeys = ({
 
     const suppressHandledMouseEvent = (event: MouseEvent) => {
       const handledMouse = handledMouseRef.current;
+
       if (
         handledMouse &&
         handledMouse.button === event.button &&
@@ -259,6 +283,7 @@ export const useHotkeys = ({
     window.addEventListener("mouseup", handleMouseUp);
     window.addEventListener("auxclick", suppressHandledMouseEvent);
     window.addEventListener("blur", cancelActiveMapPing);
+
     return () => {
       cancelActiveMapPing();
       window.removeEventListener("keydown", handleKeyDown);
@@ -267,6 +292,7 @@ export const useHotkeys = ({
       window.removeEventListener("mouseup", handleMouseUp);
       window.removeEventListener("auxclick", suppressHandledMouseEvent);
       window.removeEventListener("blur", cancelActiveMapPing);
+
       if (handledMouseTimeoutRef.current !== null) {
         window.clearTimeout(handledMouseTimeoutRef.current);
         handledMouseTimeoutRef.current = null;

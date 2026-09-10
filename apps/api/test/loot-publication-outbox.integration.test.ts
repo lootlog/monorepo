@@ -83,6 +83,7 @@ describe("durable loot publications", () => {
         });
       }),
     );
+
     const submission: CreateLootRequest = {
       loots: [
         {
@@ -124,8 +125,10 @@ describe("durable loot publications", () => {
       accountId: "123",
       characterId: "456",
     };
+
     return { id, request: { discordId: id, submission } };
   };
+
   const acceptance = () =>
     makeLootSubmissionAcceptance(
       makeLootSubmissionAcceptancePersistence(database),
@@ -133,6 +136,7 @@ describe("durable loot publications", () => {
         withLock: (_resource, _ttl, _options, effect) => effect,
       },
     );
+
   const pending = (lootId: number) =>
     runtime.runPromise(
       database
@@ -187,19 +191,24 @@ describe("durable loot publications", () => {
       icon: null,
     },
   ];
+
   const seededGuild = async (guildId: string) => {
     const [guild] = await runtime.runPromise(
       database.select().from(guildTable).where(eq(guildTable.id, guildId)),
     );
+
     if (!guild) throw new Error("Expected seeded Organization");
+
     return guild;
   };
+
   const lootRecord = async (
     guildId: string,
     lootId: number,
     permissions: Permission[] = [Permission.OWNER],
   ) => {
     const guild = await seededGuild(guildId);
+
     const loot = await runtime.runPromise(
       makeLootQueryOperations(makeLootQueryPersistence(database)).fetchLootById(
         guild,
@@ -208,17 +217,21 @@ describe("durable loot publications", () => {
         lootId,
       ),
     );
+
     return Schema.decodeUnknownSync(LootDetailResponse)(
       Schema.encodeSync(NullableLootResponse)(loot),
     );
   };
+
   const lootList = async (guildId: string) => {
     const guild = await seededGuild(guildId);
+
     const loots = await runtime.runPromise(
       makeLootQueryOperations(
         makeLootQueryPersistence(database),
       ).fetchLootsByGuildId(guild, [Permission.OWNER], [], {}),
     );
+
     return Schema.decodeUnknownSync(Schema.Array(LootResponse))(
       Schema.encodeSync(Schema.Array(RuntimeLootResponse))(loots),
     );
@@ -234,6 +247,7 @@ describe("durable loot publications", () => {
     };
     const result = await runtime.runPromise(acceptance().accept(first.request));
     snapshotTestLootIds.push(result.id);
+
     const secondSnapshot = [
       {
         ...mapPlayersSnapshot[0],
@@ -242,6 +256,7 @@ describe("durable loot publications", () => {
         name: "Other Organization observer",
       },
     ] satisfies MapPlayersSnapshot;
+
     second.request.submission = {
       ...second.request.submission,
       loots: first.request.submission.loots,
@@ -283,6 +298,7 @@ describe("durable loot publications", () => {
       const first = await seed(true);
       const second = await seed(true);
       const world = `concurrent-map-${randomUUID()}`;
+
       const playerA = {
         accountId: randomInt(1, 1_000_000),
         characterId: randomInt(1, 1_000_000),
@@ -290,6 +306,7 @@ describe("durable loot publications", () => {
         prof: "WARRIOR" as const,
         icon: "player-a.png",
       };
+
       const playerB = {
         accountId: randomInt(1_000_001, 2_000_000),
         characterId: randomInt(1_000_001, 2_000_000),
@@ -297,6 +314,7 @@ describe("durable loot publications", () => {
         prof: "MAGE" as const,
         icon: "player-b.png",
       };
+
       first.request.submission = {
         ...first.request.submission,
         world,
@@ -329,29 +347,37 @@ describe("durable loot publications", () => {
         players: [{ ...playerB, id: playerB.characterId, prof: "m", lvl: 80 }],
         mapPlayersSnapshot: [playerB, playerA],
       };
+
       const [firstResult, secondResult] = await Promise.all(
         [first.request, second.request].map(async (request) => {
           const result = await runtime.runPromise(acceptance().accept(request));
           snapshotTestLootIds.push(result.id);
+
           return result;
         }),
       );
+
       if (!firstResult || !secondResult)
         throw new Error("Expected both accepted loots");
       expect(firstResult.id).not.toBe(secondResult.id);
+
       const snapshots = await runtime.runPromise(
         database
           .select()
           .from(playerSnapshotTable)
           .where(eq(playerSnapshotTable.world, world)),
       );
+
       expect(snapshots).toHaveLength(2);
+
       const snapshotA = snapshots.find(
         (player) => player.characterId === playerA.characterId,
       );
+
       const snapshotB = snapshots.find(
         (player) => player.characterId === playerB.characterId,
       );
+
       if (!snapshotA || !snapshotB)
         throw new Error("Expected both player snapshots");
       await Promise.all(
@@ -366,12 +392,14 @@ describe("durable loot publications", () => {
           expect(new Set(links.map((link) => link.playerSnapshotId))).toEqual(
             new Set([snapshotA.id, snapshotB.id]),
           );
+
           const participants = await runtime.runPromise(
             database
               .select()
               .from(lootPlayerTable)
               .where(eq(lootPlayerTable.lootId, result.id)),
           );
+
           expect(participants).toHaveLength(1);
           expect(participants[0]?.playerSnapshotId).toBe(participant.id);
           expect(
@@ -387,6 +415,7 @@ describe("durable loot publications", () => {
     async (legacySnapshot) => {
       const first = await seed(true);
       const second = await seed(true);
+
       const observers: MapPlayersSnapshot = [
         {
           accountId: 123,
@@ -396,15 +425,19 @@ describe("durable loot publications", () => {
           icon: "player.png",
         },
       ];
+
       first.request.submission = {
         ...first.request.submission,
         world: `outbox-test-${first.id}`,
         mapPlayersSnapshot: observers,
       };
       let legacySnapshotId: number | undefined;
+
       if (legacySnapshot) {
         const player = observers[0];
+
         if (!player) throw new Error("Expected map observer");
+
         const inserted = await runtime.runPromise(
           database
             .insert(playerSnapshotTable)
@@ -417,12 +450,15 @@ describe("durable loot publications", () => {
             })
             .returning(),
         );
+
         legacySnapshotId = inserted[0]?.id;
         expect(legacySnapshotId).toBeDefined();
       }
+
       const result = await runtime.runPromise(
         acceptance().accept(first.request),
       );
+
       snapshotTestLootIds.push(result.id);
       second.request.submission = first.request.submission;
       await runtime.runPromise(acceptance().accept(second.request));
@@ -433,9 +469,12 @@ describe("durable loot publications", () => {
           .from(lootPlayerTable)
           .where(eq(lootPlayerTable.lootId, result.id)),
       );
+
       expect(participants).toHaveLength(1);
       const participant = participants[0];
+
       if (!participant) throw new Error("Expected fight participant");
+
       if (legacySnapshot)
         expect(participant.playerSnapshotId).toBe(legacySnapshotId);
       const firstLinks = await mapPlayerLinks(first.id, result.id);
@@ -472,6 +511,7 @@ describe("durable loot publications", () => {
 
   it("accepts map observers whose legacy concatenated hash collides without changing historical snapshots", async () => {
     const { id, request } = await seed(true);
+
     const legacyObserver = {
       accountId: 321,
       characterId: 654,
@@ -479,17 +519,21 @@ describe("durable loot publications", () => {
       prof: "WARRIOR" as const,
       icon: "outfit.gif",
     };
+
     const observer = { ...legacyObserver, name: "Foow", prof: null };
     const world = `hash-collision-${id}`;
+
     const legacyHash = createHash("sha256")
       .update("Foowoutfit.gif")
       .digest("hex");
+
     const [legacy] = await runtime.runPromise(
       database
         .insert(playerSnapshotTable)
         .values({ ...legacyObserver, world, snapshotHash: legacyHash })
         .returning(),
     );
+
     if (!legacy) throw new Error("Expected historical player snapshot");
     request.submission = {
       ...request.submission,
@@ -538,6 +582,7 @@ describe("durable loot publications", () => {
     "preserves old map presence when player snapshot attributes change: %j",
     async (change) => {
       const { id, request } = await seed(true);
+
       const original = {
         accountId: 123,
         characterId: 456,
@@ -545,6 +590,7 @@ describe("durable loot publications", () => {
         prof: "WARRIOR" as const,
         icon: "player.png",
       };
+
       request.submission = {
         ...request.submission,
         world: `outbox-test-${id}`,
@@ -553,6 +599,7 @@ describe("durable loot publications", () => {
       const first = await runtime.runPromise(acceptance().accept(request));
       snapshotTestLootIds.push(first.id);
       const changed = { ...original, ...change };
+
       const second = await runtime.runPromise(
         acceptance().accept({
           ...request,
@@ -566,6 +613,7 @@ describe("durable loot publications", () => {
           },
         }),
       );
+
       snapshotTestLootIds.push(second.id);
       expect(second.id).not.toBe(first.id);
       const originalLinks = await mapPlayerLinks(id, first.id);
@@ -575,12 +623,14 @@ describe("durable loot publications", () => {
       expect(originalLinks[0]?.playerSnapshotId).not.toBe(
         changedLinks[0]?.playerSnapshotId,
       );
+
       const storedSnapshots = await runtime.runPromise(
         database
           .select()
           .from(playerSnapshotTable)
           .where(eq(playerSnapshotTable.world, request.submission.world)),
       );
+
       expect(storedSnapshots).toHaveLength(2);
       expect(storedSnapshots).toEqual(
         expect.arrayContaining([
@@ -603,15 +653,18 @@ describe("durable loot publications", () => {
     snapshotTestLootIds.push(result.id);
     expect((await lootRecord(id, result.id))?.mapPlayersSnapshot).toBeNull();
     expect(await mapPlayerLinks(id, result.id)).toEqual([]);
+
     const firstSnapshot = [
       ...mapPlayersSnapshot,
       { ...mapPlayersSnapshot[0], characterId: 1001, name: "First witness" },
     ] satisfies MapPlayersSnapshot;
+
     const otherSnapshot = [
       { ...mapPlayersSnapshot[0], name: "Later observer" },
       { ...mapPlayersSnapshot[0], characterId: 1002, name: "Second witness" },
       { ...mapPlayersSnapshot[0], characterId: 1003, name: "Third witness" },
     ] satisfies MapPlayersSnapshot;
+
     await Promise.all(
       [firstSnapshot, otherSnapshot].map((snapshot) =>
         runtime.runPromise(
@@ -623,6 +676,7 @@ describe("durable loot publications", () => {
       ),
     );
     const saved = (await lootRecord(id, result.id))?.mapPlayersSnapshot;
+
     if (!saved) throw new Error("Expected winning map snapshot");
     expect([firstSnapshot, otherSnapshot]).toContainEqual([...saved]);
     const linksBeforeRetry = await mapPlayerLinks(id, result.id);
@@ -677,6 +731,7 @@ describe("durable loot publications", () => {
     expect((await pending(result.id)).length).toBe(6);
     const sent: PublishOptions[] = [];
     const invalidated: string[][] = [];
+
     const dispatch = makeLootPublicationDispatcher(
       database,
       {
@@ -695,6 +750,7 @@ describe("durable loot publications", () => {
       },
       () => Effect.fail(new Error("Cache unavailable")),
     );
+
     await runtime.runPromise(dispatch());
     expect(invalidated).toEqual([]);
     expect(await pending(result.id)).toHaveLength(2);
@@ -706,6 +762,7 @@ describe("durable loot publications", () => {
     await runtime.dispose();
     runtime = ManagedRuntime.make(ApiDatabaseLive);
     database = await runtime.runPromise(ApiDatabase);
+
     const recovered = makeLootPublicationDispatcher(
       database,
       {
@@ -719,6 +776,7 @@ describe("durable loot publications", () => {
           invalidated.push(ids);
         }),
     );
+
     await runtime.runPromise(
       Effect.all([recovered(), recovered()], { concurrency: 2 }),
     );
@@ -743,14 +801,17 @@ describe("durable loot publications", () => {
           .where(eq(lootTable.id, result.id)),
       ),
     ).toEqual([{ value: 1 }]);
+
     const records = await runtime.runPromise(
       database
         .select()
         .from(organizationLootRecordTable)
         .where(eq(organizationLootRecordTable.lootId, result.id)),
     );
+
     expect(records).toHaveLength(1);
     const record = records[0];
+
     if (!record) throw new Error("Accepted Organization record is missing");
     expect(
       await runtime.runPromise(
@@ -765,16 +826,20 @@ describe("durable loot publications", () => {
   it("atomically adds publication intents when another Organization accepts an existing loot", async () => {
     const first = await seed();
     const second = await seed();
+
     const accepted = await runtime.runPromise(
       acceptance().accept(first.request),
     );
+
     const additionalRequest = {
       ...second.request,
       submission: first.request.submission,
     };
+
     const additional = await runtime.runPromise(
       acceptance().accept(additionalRequest),
     );
+
     expect(additional.id).toBe(accepted.id);
     expect(additional.submittedGuilds.map((guild) => guild.guildId)).toEqual([
       second.id,
@@ -793,6 +858,7 @@ describe("durable loot publications", () => {
                 const payload: { guildId: string } = JSON.parse(
                   new TextDecoder().decode(message.content),
                 );
+
                 organizations.push(payload.guildId);
               }
             }),
@@ -806,9 +872,11 @@ describe("durable loot publications", () => {
 
   it("rolls back the durable loot when persisting its publication intent fails", async () => {
     const { request } = await seed();
+
     const before = await runtime.runPromise(
       database.select({ value: count() }).from(lootTable),
     );
+
     await runtime.runPromise(
       database.execute(
         sql`CREATE FUNCTION reject_test_loot_publication() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'injected outbox failure'; END $$`,
@@ -819,10 +887,12 @@ describe("durable loot publications", () => {
         sql`CREATE TRIGGER reject_test_loot_publication BEFORE INSERT ON "LootPublicationOutbox" FOR EACH ROW EXECUTE FUNCTION reject_test_loot_publication()`,
       ),
     );
+
     try {
       const result = await runtime.runPromise(
         Effect.exit(acceptance().accept(request)),
       );
+
       expect(result._tag).toBe("Failure");
       expect(
         await runtime.runPromise(
@@ -844,6 +914,7 @@ describe("durable loot publications", () => {
   it("reuses the pending notification job when queueing failed after its database commit", async () => {
     const { id } = await seed();
     const now = new Date();
+
     const [target] = await runtime.runPromise(
       database
         .insert(notificationTargetTable)
@@ -857,6 +928,7 @@ describe("durable loot publications", () => {
         })
         .returning(),
     );
+
     const [rule] = await runtime.runPromise(
       database
         .insert(notificationRuleTable)
@@ -868,7 +940,9 @@ describe("durable loot publications", () => {
         })
         .returning(),
     );
+
     if (!target || !rule) throw new Error("Notification seed failed");
+
     const input: NotificationJobInput = {
       notificationRule: rule,
       target,
@@ -879,8 +953,10 @@ describe("durable loot publications", () => {
       sourceEventId: `loot:${id}`,
       payloadSnapshot: {},
     };
+
     let unavailable = true;
     const queued = new Set<string>();
+
     const scheduler = makeNotificationJobScheduler(database, {
       remove: () => Effect.void,
       add: (jobId) =>
@@ -890,6 +966,7 @@ describe("durable loot publications", () => {
               queued.add(jobId);
             }),
     });
+
     const delivery = () =>
       scheduler
         .create(input)
@@ -898,18 +975,21 @@ describe("durable loot publications", () => {
             job ? scheduler.enqueue(job.id, 0) : Effect.void,
           ),
         );
+
     expect((await runtime.runPromise(Effect.exit(delivery())))._tag).toBe(
       "Failure",
     );
     unavailable = false;
     await runtime.runPromise(delivery());
     await runtime.runPromise(delivery());
+
     const jobs = await runtime.runPromise(
       database
         .select()
         .from(notificationJobTable)
         .where(eq(notificationJobTable.ruleId, rule.id)),
     );
+
     expect(jobs).toHaveLength(1);
     expect(queued).toEqual(new Set(jobs.map((job) => job.id)));
     await runtime.runPromise(

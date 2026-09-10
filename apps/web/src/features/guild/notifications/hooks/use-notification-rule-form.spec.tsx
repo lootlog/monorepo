@@ -10,6 +10,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import { useNotificationRuleForm } from "./use-notification-rule-form";
 
 await initializeTestTranslations();
+
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
@@ -19,32 +20,39 @@ it("lets a recovered NPC search replace a failed selected-label lookup", async (
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } },
   });
+
   const restore = configureApiClients({
     main: { baseUrl: "https://api.test" },
     search: { baseUrl: "https://search.test" },
   });
+
   const npc = { id: 2, name: "Smok", type: "HERO" };
   vi.stubGlobal(
     "fetch",
     vi.fn(async (input: string | URL | Request) => {
       const url = new URL(input instanceof Request ? input.url : input);
+
       if (url.pathname === "/npcs") {
         if (url.searchParams.get("search") === "smok") {
           return Response.json([npc]);
         }
+
         return Response.json(
           { _tag: "SearchUnavailable", message: "Search unavailable" },
           { status: 503 },
         );
       }
+
       if (url.pathname.endsWith("/rules")) {
         return Response.json({ items: [] });
       }
+
       return Response.json([]);
     }),
   );
 
   const RouterWrapper = await createOrganizationTestWrapper("/test-org");
+
   try {
     const { result } = renderHook(useNotificationRuleForm, {
       wrapper: ({ children }) => (
@@ -53,6 +61,7 @@ it("lets a recovered NPC search replace a failed selected-label lookup", async (
         </RouterWrapper>
       ),
     });
+
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     act(() => result.current.form.setValue("npcIds", ["1"]));
     await waitFor(() =>

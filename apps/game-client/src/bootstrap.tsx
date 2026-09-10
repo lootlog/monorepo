@@ -23,6 +23,7 @@ const ROOT_Z_INDEX_BY_INTERFACE = {
 } as const;
 
 type GameInterface = keyof typeof ROOT_Z_INDEX_BY_INTERFACE;
+
 export type GameClientRuntime = {
   dispose: () => void;
   root: ReturnType<typeof ReactDOM.createRoot>;
@@ -74,6 +75,7 @@ function createRootElement(): HTMLDivElement {
     "ll:absolute ll:top-0 ll:left-0 ll:h-screen ll:w-screen ll:pointer-events-none";
   rootElement.style.zIndex = String(getLootlogRootZIndex());
   document.body.append(rootElement);
+
   return rootElement;
 }
 
@@ -109,9 +111,11 @@ export function bootstrapGameClient(
   const dispose = () => {
     if (disposed) return;
     disposed = true;
+
     if (runtime) runtime.state = "disposed";
 
     let failure: { error: unknown } | undefined;
+
     const steps = [
       () => root?.unmount(),
       () => teardownPublicApi?.(),
@@ -127,6 +131,7 @@ export function bootstrapGameClient(
       },
       () => rootElement?.remove(),
     ];
+
     for (const step of steps) {
       try {
         step();
@@ -134,6 +139,7 @@ export function bootstrapGameClient(
         failure ??= { error };
       }
     }
+
     if (failure) throw failure.error;
   };
 
@@ -151,6 +157,7 @@ export function bootstrapGameClient(
     };
     runtimeWindow.__lootlogGameClientRuntime = runtime;
     teardownPublicApi = bootstrapPublicApi(queryClient);
+
     if (installation === "extension") resetExtensionLoginWindow();
     root.render(
       <React.StrictMode>
@@ -158,6 +165,7 @@ export function bootstrapGameClient(
       </React.StrictMode>,
     );
     runtime.state = "ready";
+
     return runtime;
   } catch (error) {
     try {
@@ -165,6 +173,7 @@ export function bootstrapGameClient(
     } catch {
       // Cleanup must not replace the error that prevented startup.
     }
+
     throw error;
   }
 }

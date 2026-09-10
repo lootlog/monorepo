@@ -13,6 +13,7 @@ const scheduleStatusRecalculation = (
   if (delay <= 0) return () => undefined;
 
   const timeoutId = setTimeout(recalculate, delay);
+
   return () => clearTimeout(timeoutId);
 };
 
@@ -25,6 +26,7 @@ export function useWindowStatus(
   useEffect(() => {
     if (!minSpawnTime || !maxSpawnTime) {
       setStatus("NONE");
+
       return () => undefined;
     }
 
@@ -33,6 +35,7 @@ export function useWindowStatus(
 
     const recalc = () => {
       const now = Date.now();
+
       if (now >= max) setStatus("OVERDUE");
       else if (now >= min) setStatus("OPEN");
       else setStatus("WAITING");
@@ -41,10 +44,12 @@ export function useWindowStatus(
     recalc();
 
     const now = Date.now();
+
     const cancelMinRecalculation = scheduleStatusRecalculation(
       recalc,
       now < min ? min - now + 100 : 0,
     );
+
     const cancelMaxRecalculation = scheduleStatusRecalculation(
       recalc,
       now < max ? max - now + 100 : 0,

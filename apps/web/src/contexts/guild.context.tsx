@@ -8,4 +8,5 @@ export type GuildContextProviderValue = {
 export const GuildContext = createContext<GuildContextProviderValue | null>(
   null,
 );
+
 GuildContext.displayName = "GuildContext";

@@ -35,6 +35,7 @@ export const EventRankingActions = ({
 }: EventRankingActionsProps) => {
   const { t } = useTranslation();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
   const memberLabel =
     ranking.member?.name ??
     t("events.ranking.memberFallback", {

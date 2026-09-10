@@ -33,6 +33,7 @@ export const ensureBattlePanelCharacterId = async ({
   const charactersResponse = await queryClient.ensureQueryData(
     getBattlesControllerGetUserCharactersQueryOptions(),
   );
+
   return characterId ?? charactersResponse.characters[0]?.id;
 };
 
@@ -53,6 +54,7 @@ export const loadBattlePanelStatistics = ({
     }
 
     const search = loadBattlePanelStatisticsSearch(location.searchStr);
+
     const normalizedCharacterId = normalizeBattlePanelCharacterId(
       search.characterId,
     );

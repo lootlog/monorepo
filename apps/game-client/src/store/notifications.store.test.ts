@@ -123,6 +123,7 @@ describe("notifications.store", () => {
       latestPresentationStartedEmpty: boolean;
       notificationsCount: number;
     }> = [];
+
     const unsubscribe = useNotificationsStore.subscribe((state) => {
       publishedStates.push({
         latestPresentationStartedEmpty: state.latestPresentationStartedEmpty,
@@ -236,6 +237,7 @@ describe("notifications.store", () => {
       listKey: notificationId,
       receivedAtMs: 1,
     });
+
     const keptMessage = {
       ...createNotification({ notificationId: "message-1" }),
       listKey: "message-1",
@@ -301,6 +303,7 @@ describe("notifications.store", () => {
         servers: ["guild-1"],
       }),
     );
+
     const initialListKey =
       useNotificationsStore.getState().notifications[0]?.listKey;
 
@@ -331,6 +334,7 @@ describe("notifications.store", () => {
         npc: createNpc(500),
       }),
     );
+
     const initialListKey =
       useNotificationsStore.getState().notifications[0]?.listKey;
 
@@ -374,6 +378,7 @@ describe("notifications.store", () => {
   it("preserves ordering, identity, server merging, npc dedupe, and party semantics for a mixed batch", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-04-17T10:00:00.000Z"));
+
     const presentations: NotificationPresentation[] = [
       {
         notification: createNotification({
@@ -441,6 +446,7 @@ describe("notifications.store", () => {
         }),
       },
     ];
+
     const listener = vi.fn<() => void>();
     const unsubscribe = useNotificationsStore.subscribe(listener);
 
@@ -448,6 +454,7 @@ describe("notifications.store", () => {
 
     const { notifications, notificationAutoHideByListKey } =
       useNotificationsStore.getState();
+
     expect(
       notifications.map(({ listKey, notificationId }) => ({
         listKey,

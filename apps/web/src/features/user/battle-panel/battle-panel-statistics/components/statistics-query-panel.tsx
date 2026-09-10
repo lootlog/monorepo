@@ -17,6 +17,7 @@ export function StatisticsQueryPanel({
   children,
 }: StatisticsQueryPanelProps) {
   const { t } = useTranslation();
+
   return (
     <div className="min-w-0 space-y-2">
       {query.isError && (

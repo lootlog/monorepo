@@ -15,9 +15,12 @@ export function usePartyReadyRoomSocket(): void {
       if (update.schemaVersion !== 3) {
         return;
       }
+
       applyUpdate(update);
     };
+
     socket.on(GatewayEvent.PARTY_READY_ROOM_UPDATE, handleUpdate);
+
     return () => {
       socket.off(GatewayEvent.PARTY_READY_ROOM_UPDATE, handleUpdate);
     };

@@ -7,6 +7,7 @@ import {
 import { runSingleLoggedAction } from "@/lib/logs/log-actions";
 
 export type CreateNotificationOptions = CreateNotificationDto;
+
 export type CreateNotificationResponse = NotificationResponseDtoOutput;
 
 export function createNotification(

@@ -65,6 +65,7 @@ export const WarriorSearchFilter = ({
         },
       },
     );
+
   const searchResults = searchResponse?.warriors ?? [];
 
   return (
@@ -115,6 +116,7 @@ export const WarriorSearchFilter = ({
                 const isSelected = selectedWarriors.some(
                   (w) => w.name === warrior.name,
                 );
+
                 return (
                   <CommandItem
                     key={warrior.name}

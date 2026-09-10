@@ -65,12 +65,14 @@ describe("useUpdateUserPreferences", () => {
     });
 
     respond.mockReset();
+
     const restore = configureApiClients({
       main: {
         baseUrl: "https://api.example.test",
         fetch: async () => Response.json(await respond()),
       },
     });
+
     onTestFinished(() => {
       restore();
       queryClient.clear();
@@ -81,6 +83,7 @@ describe("useUpdateUserPreferences", () => {
     const deferred = Promise.withResolvers<UserPreferencesResponseDtoOutput>();
     const previousData = createTestUserPreferences();
     const nextPlayers = [{ discordId: "discord-2", displayName: "Beta" }];
+
     const payload: UpdateUserPreferencesDto = {
       mutes: {
         players: nextPlayers,
@@ -122,6 +125,7 @@ describe("useUpdateUserPreferences", () => {
   it("optimistically merges a partial chat appearance patch", async () => {
     const deferred = Promise.withResolvers<UserPreferencesResponseDtoOutput>();
     const previousData = createTestUserPreferences();
+
     const payload: UpdateUserPreferencesDto = {
       chatAppearance: { messageGapPx: 12 },
     };
@@ -131,6 +135,7 @@ describe("useUpdateUserPreferences", () => {
       UsersModule.getUsersControllerGetUserPreferencesQueryKey(),
       previousData,
     );
+
     const { result } = renderHook(() => useUpdateUserPreferences(), {
       wrapper: createWrapper(queryClient),
     });
@@ -142,6 +147,7 @@ describe("useUpdateUserPreferences", () => {
         queryClient.getQueryData<UserPreferencesResponseDtoOutput>(
           UsersModule.getUsersControllerGetUserPreferencesQueryKey(),
         );
+
       expect(optimistic?.chatAppearance).toEqual({
         ...previousData.chatAppearance,
         messageGapPx: 12,
@@ -167,6 +173,7 @@ describe("useUpdateUserPreferences", () => {
       UsersModule.getUsersControllerGetUserPreferencesQueryKey(),
       previousData,
     );
+
     const { result } = renderHook(() => useUpdateUserPreferences(), {
       wrapper: createWrapper(queryClient),
     });
@@ -195,8 +202,10 @@ describe("useUpdateUserPreferences", () => {
   it("serializes rapid preference updates", async () => {
     const firstDeferred =
       Promise.withResolvers<UserPreferencesResponseDtoOutput>();
+
     const secondDeferred =
       Promise.withResolvers<UserPreferencesResponseDtoOutput>();
+
     const previousData = createTestUserPreferences();
     respond
       .mockReturnValueOnce(firstDeferred.promise)
@@ -205,6 +214,7 @@ describe("useUpdateUserPreferences", () => {
       UsersModule.getUsersControllerGetUserPreferencesQueryKey(),
       previousData,
     );
+
     const { result } = renderHook(() => useUpdateUserPreferences(), {
       wrapper: createWrapper(queryClient),
     });
@@ -232,6 +242,7 @@ describe("useUpdateUserPreferences", () => {
   it("optimistically merges NPC mute updates without replacing player mutes", async () => {
     const deferred = Promise.withResolvers<UserPreferencesResponseDtoOutput>();
     const previousData = createTestUserPreferences();
+
     const nextNpcs = [
       {
         npcKey: "npc-2",
@@ -243,6 +254,7 @@ describe("useUpdateUserPreferences", () => {
         icon: null,
       },
     ];
+
     const payload: UpdateUserPreferencesDto = {
       mutes: {
         npcs: nextNpcs,
@@ -283,6 +295,7 @@ describe("useUpdateUserPreferences", () => {
 
   it("restores the previous cache entry when the mutation fails", async () => {
     const previousData = createTestUserPreferences();
+
     const payload: UpdateUserPreferencesDto = {
       mutes: {
         players: [{ discordId: "discord-3", displayName: "Gamma" }],
@@ -316,6 +329,7 @@ describe("useUpdateUserPreferences", () => {
 
   it("replaces the cache with the server response after success", async () => {
     const previousData = createTestUserPreferences();
+
     const serverData: UserPreferencesResponseDtoOutput = {
       ...previousData,
       theme: "updated",

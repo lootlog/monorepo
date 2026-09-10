@@ -1,7 +1,9 @@
 // Native wrappers forward foreign values unchanged; parsing would alter the game contract.
 // oxlint-disable-next-line anti-slop/no-unknown-returns
 type NativeMethod = (...args: unknown[]) => unknown;
+
 type ChatOwner = { setChannel?: NativeMethod; focus?: NativeMethod };
+
 type ChatHostWindow = Window & {
   Engine?: {
     chatController?: {
@@ -21,8 +23,10 @@ function getNativeChatOwners(runtime: ChatHostWindow) {
   const controller = runtime.Engine?.chatController;
   const chatWindow = controller?.getChatWindow?.();
   const chatInput = controller?.getChatInputWrapper?.();
+
   if (!chatWindow?.setChannel || !chatInput?.setChannel || !chatInput.focus)
     return null;
+
   return { chatWindow, chatInput };
 }
 
@@ -40,6 +44,7 @@ export function watchIntegratedChatHost(
   let currentInput: ChatOwner | undefined;
   let cleanup: (() => void) | undefined;
   let select = () => {};
+
   let selected = true;
   let stopped = false;
 
@@ -48,12 +53,15 @@ export function watchIntegratedChatHost(
     const owners = getNativeChatOwners(runtime);
     const chatWindow = owners?.chatWindow;
     const chatInput = owners?.chatInput;
+
     const host = owners
       ? doc.querySelector<HTMLElement>(".new-chat-window")
       : null;
+
     const nextTabs =
       host?.querySelector<HTMLElement>(":scope > .chat-channel-card-wrapper") ??
       null;
+
     if (
       host === current &&
       tabs === nextTabs &&
@@ -68,17 +76,22 @@ export function watchIntegratedChatHost(
     currentWindow = chatWindow;
     currentInput = chatInput;
     select = () => {};
+
     const messages = host?.querySelector<HTMLElement>(
       ":scope > .chat-message-wrapper",
     );
+
     const input = host?.querySelector<HTMLElement>(
       ":scope > .chat-input-wrapper",
     );
+
     if (!host || !nextTabs || !messages || !input || !owners) {
       current = null;
       onChange(null);
+
       return;
     }
+
     const button = doc.createElement("button");
     button.type = "button";
     button.setAttribute("aria-label", label);
@@ -115,6 +128,7 @@ export function watchIntegratedChatHost(
     host.style.right = "0px";
     const displays = [messages.style.display, input.style.display];
     let intersecting = false;
+
     const update = () => {
       messages.style.display = selected ? "none" : (displays[0] ?? "");
       input.style.display = selected ? "none" : (displays[1] ?? "");
@@ -124,15 +138,18 @@ export function watchIntegratedChatHost(
       panel.style.top = `${nextTabs.offsetTop + nextTabs.offsetHeight}px`;
       onChange({ target: panel, selected, visible: selected && intersecting });
     };
+
     select = () => {
       selected = true;
       update();
     };
+
     const restore = () => {
       if (!selected) return;
       selected = false;
       update();
     };
+
     const nativeClick = (event: Event) => {
       if (
         event.target instanceof Element &&
@@ -140,11 +157,15 @@ export function watchIntegratedChatHost(
       )
         restore();
     };
+
     const restoreCallbacks: (() => void)[] = [];
+
     const wrap = (owner: ChatOwner | undefined, key: keyof ChatOwner) => {
       const original = owner?.[key];
+
       // oxlint-disable-next-line anti-slop/no-runtime-typeof -- Optional foreign runtime capability.
       if (!owner || typeof original !== "function") return;
+
       // oxlint-disable-next-line anti-slop/no-unknown-parameters -- Preserve the caller's native receiver.
       const wrapped: NativeMethod = function (this: unknown, ...args) {
         // UI failures cannot alter the native receiver, result, exception or calls.
@@ -153,13 +174,16 @@ export function watchIntegratedChatHost(
         } catch {
           /* The native method must still run. */
         }
+
         return original.apply(this, args);
       };
+
       owner[key] = wrapped;
       restoreCallbacks.push(() => {
         if (owner[key] === wrapped) owner[key] = original;
       });
     };
+
     wrap(chatWindow, "setChannel");
     wrap(chatInput, "setChannel");
     wrap(chatInput, "focus");
@@ -167,20 +191,26 @@ export function watchIntegratedChatHost(
     nextTabs.addEventListener("click", nativeClick, true);
     nextTabs.append(button);
     host.append(panel);
+
     const visibility = new IntersectionObserver(([entry]) => {
       intersecting = entry?.isIntersecting ?? false;
       onChange({ target: panel, selected, visible: selected && intersecting });
     });
+
     visibility.observe(panel);
+
     const resize = new ResizeObserver(() => {
       panel.style.top = `${nextTabs.offsetTop + nextTabs.offsetHeight}px`;
     });
+
     resize.observe(nextTabs);
+
     const observer = new MutationObserver(() => {
       if (!panel.isConnected || !messages.isConnected || !input.isConnected)
         current = null;
       refresh();
     });
+
     observer.observe(host, { childList: true });
     cleanup = () => {
       observer.disconnect();
@@ -194,12 +224,15 @@ export function watchIntegratedChatHost(
       button.remove();
       panel.remove();
     };
+
     update();
   };
+
   // Identity-only polling catches replacement of the whole NI interface without
   // observing the game DOM subtree (which changes on every movement).
   const timer = runtime.setInterval(refresh, 1000);
   refresh();
+
   return {
     select: () => select(),
     dispose: () => {

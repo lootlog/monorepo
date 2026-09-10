@@ -12,8 +12,11 @@ import type { SessionData } from "#src/realtime/session";
 
 // Run with `bun run perf:routing`. This measures routing and encoding, not network I/O.
 const connections = 5_000;
+
 const publications = 20_000;
+
 const warmupPublications = 200;
+
 const config = {
   environment: "benchmark",
   port: 0,
@@ -36,7 +39,9 @@ const config = {
   maxBackpressureBytes: 1_048_576,
   maxBackpressureStrikes: 3,
 } satisfies GatewayConfiguration;
+
 const redis = { ...unusedFederationStore, publish: () => Promise.resolve() };
+
 const presence: BasicPresence = {
   userId: "user-0",
   discordId: "discord-0",
@@ -57,6 +62,7 @@ const presence: BasicPresence = {
     icon: "icon",
   },
 };
+
 const presenceEvent: ServerEvent = {
   v: 1,
   type: "presence.delta",
@@ -67,6 +73,7 @@ const presenceEvent: ServerEvent = {
     changes: [{ action: "upsert", presence }],
   },
 };
+
 const pingEvent: ServerEvent = {
   v: 1,
   type: "map-ping.received",
@@ -81,6 +88,7 @@ const pingEvent: ServerEvent = {
     createdAt: 1_783_000_000_000,
   },
 };
+
 const presenceTopics = [
   "organization.timers",
   "organization.loots",
@@ -98,9 +106,11 @@ for (const scenario of [
   let deliveries = 0;
   // Registry background writes are outside this routing/codec benchmark.
   const hub = new RealtimeHub(config, redis, () => {});
+
   for (let index = 0; index < connections; index++) {
     const organizationId =
       scenario === "presence" ? `organization-${index % 30}` : "organization-0";
+
     // Default client subscriptions omit world/map; recipient filters still apply.
     const mapScope: SubscriptionScope =
       scenario === "map.pings.exact"
@@ -111,10 +121,12 @@ for (const scenario of [
             mapId: index % 100,
           }
         : { topic: "map.pings", organizationId };
+
     const scopes: SubscriptionScope[] =
       scenario === "presence"
         ? presenceTopics.map((topic) => ({ topic, organizationId }))
         : [mapScope];
+
     const data: SessionData = {
       connectionId: `connection-${index}`,
       userId: `user-${index}`,
@@ -133,16 +145,19 @@ for (const scenario of [
         location: { mapId: index % 100, map: `Map ${index % 100}` },
       },
     };
+
     hub.register({
       data,
       close: () => {},
       getBufferedAmount: () => 0,
       send: (bytes: Uint8Array) => {
         deliveries++;
+
         return bytes.byteLength;
       },
     });
   }
+
   const publish =
     scenario === "presence"
       ? () =>
@@ -171,16 +186,20 @@ for (const scenario of [
               recipientMapId: 0,
             },
           );
+
   for (let index = 0; index < warmupPublications; index++) await publish();
   deliveries = 0;
   const started = performance.now();
   const cpuStarted = process.cpuUsage();
+
   for (let index = 0; index < publications; index++) await publish();
   const cpu = process.cpuUsage(cpuStarted);
   const wallMs = performance.now() - started;
+
   const recipients = Math.ceil(
     connections / (scenario === "presence" ? 30 : 100),
   );
+
   assert.equal(deliveries, recipients * publications);
   console.log(
     JSON.stringify({

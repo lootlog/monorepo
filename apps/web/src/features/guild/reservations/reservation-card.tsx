@@ -35,20 +35,25 @@ export function ReservationCard({
   const statusTitle = isOccupied
     ? t("reservations.card.occupied")
     : t("reservations.card.freeNow");
+
   let statusDetail = t("reservations.card.noneDescription");
+
   if (spot.availableUntil) {
     statusDetail = t("reservations.card.freeUntil", {
       time: format(new Date(spot.availableUntil), "HH:mm"),
     });
   }
+
   if (spot.currentReservation) {
     statusDetail = `${spot.currentReservation.author.displayName} · ${format(new Date(spot.currentReservation.endsAt), "HH:mm")}`;
   }
 
   const imageOccurrences = new Map<string, number>();
+
   const images = spot.images.slice(0, 4).map((image) => {
     const occurrence = (imageOccurrences.get(image) ?? 0) + 1;
     imageOccurrences.set(image, occurrence);
+
     return { image, key: `${image}:${occurrence}` };
   });
 

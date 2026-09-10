@@ -10,6 +10,7 @@ interface BlocksBreakdownProps {
 
 export const BlocksBreakdown: FC<BlocksBreakdownProps> = ({ warrior }) => {
   const { t } = useTranslation();
+
   const blocksBreakdown = [
     {
       type: t("battleUi.breakdowns.blocks.blocks"),

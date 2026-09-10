@@ -31,6 +31,7 @@ const hasPositiveReduction = (value: string | undefined): value is string => {
   }
 
   const numericValue = Number.parseFloat(value);
+
   return !Number.isNaN(numericValue) && numericValue > 0;
 };
 

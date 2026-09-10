@@ -37,17 +37,21 @@ export const makeUserGuildPermissions = (
     identity: AuthenticatedIdentity,
   ) {
     const cacheKey = `user:${identity.userId}:discord:${identity.discordId}:guild-permissions${yield* apiKeyCacheSuffix}`;
+
     const cached = yield* cache.getJson(
       cacheKey,
       UserOrganizationPermissionsResponse,
     );
+
     if (cached !== null) return cached;
 
     const guildRows = yield* selectAccessibleGuilds(
       database,
       identity.discordId,
     );
+
     const guilds = guildRows.map(({ guild }) => guild);
+
     if (guilds.length === 0) return [];
 
     const members = yield* database
@@ -62,6 +66,7 @@ export const makeUserGuildPermissions = (
           ),
         ),
       );
+
     const roleRows =
       members.length === 0
         ? []
@@ -76,6 +81,7 @@ export const makeUserGuildPermissions = (
               ),
             )
             .orderBy(desc(roleTable.position));
+
     const membersByGuild = new Map(
       members.map((member) => [
         member.guildId,
@@ -87,7 +93,9 @@ export const makeUserGuildPermissions = (
         },
       ]),
     );
+
     const allPermissions = Object.values(Permission);
+
     const result = guilds.flatMap((guild) => {
       if (guild.ownerId === identity.discordId) {
         return [
@@ -104,13 +112,17 @@ export const makeUserGuildPermissions = (
           },
         ];
       }
+
       const member = membersByGuild.get(guild.id);
+
       const hasAccess =
         member?.active &&
         member.roles.some((role) =>
           role.permissions.includes(Permission.LOOTLOG_ACCESS),
         );
+
       if (!hasAccess) return [];
+
       return [
         {
           guild: { id: guild.id, ownerId: guild.ownerId },
@@ -125,7 +137,9 @@ export const makeUserGuildPermissions = (
         },
       ];
     });
+
     yield* cache.setJson(cacheKey, result, CACHE_TTL_SECONDS);
+
     return result;
   });
 

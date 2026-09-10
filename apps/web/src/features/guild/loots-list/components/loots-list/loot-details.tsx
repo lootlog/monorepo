@@ -22,6 +22,7 @@ export const LootDetails: FC<LootDetailsProps> = ({ loot, ownerMap }) => {
   const [open, setOpen] = useState(false);
   const [copyingId, setCopyingId] = useState<string | null>(null);
   const { t } = useTranslation();
+
   const watchContext = {
     world: loot.world,
   };
@@ -29,6 +30,7 @@ export const LootDetails: FC<LootDetailsProps> = ({ loot, ownerMap }) => {
   const handleCopyId = (id: string) => {
     if (copyingId !== null) return;
     setCopyingId(id);
+
     return Promise.resolve()
       .then(() => navigator.clipboard.writeText(id))
       .then(() => toast.success(t("loots.details.copySuccess")))
@@ -38,16 +40,20 @@ export const LootDetails: FC<LootDetailsProps> = ({ loot, ownerMap }) => {
 
   const getOwnerName = (itemHid: string) => {
     const ownerId = ownerMap?.[itemHid];
+
     return ownerId
       ? loot.players.find((player) => player.id === ownerId)?.name
       : undefined;
   };
+
   const getFormattedItemHid = (itemHid: string) =>
     formatItemHid(itemHid, loot.world);
+
   const items = loot.items;
   const showCollapsible = items.length > 3;
   const visibleItems = showCollapsible ? items.slice(0, 3) : items;
   const hiddenItems = showCollapsible ? items.slice(3) : [];
+
   const renderItem = (item: Loot["items"][number]) => {
     const owner = getOwnerName(item.hid);
     const formattedItemHid = getFormattedItemHid(item.hid);

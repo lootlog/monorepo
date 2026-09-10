@@ -53,10 +53,12 @@ interface NotificationsServicesValue {
   readonly delivery: ReturnType<typeof makeNotificationDeliveryResult>;
   readonly rebuild: NotificationJobRebuild;
 }
+
 export class NotificationsServices extends Context.Service<
   NotificationsServices,
   NotificationsServicesValue
 >()("@lootlog/api/http-api/NotificationsServices") {}
+
 export const notificationsServicesLive = Layer.effect(
   NotificationsServices,
   Effect.gen(function* () {
@@ -65,6 +67,7 @@ export const notificationsServicesLive = Layer.effect(
     const config = yield* ApiRuntimeConfig;
     const guildSync = yield* GuildDiscordSync;
     const userGuilds = yield* AccountOrganizationOperations;
+
     const queue = yield* Effect.acquireRelease(
       Effect.sync(
         () =>
@@ -76,11 +79,13 @@ export const notificationsServicesLive = Layer.effect(
       (notificationsQueue) =>
         Effect.tryPromise(() => notificationsQueue.close()),
     );
+
     const store = makeNotificationEventStore(database);
     const jobsStore = makeNotificationJobStore(database);
     const matching = makeNotificationMatching(database);
     const content = makeNotificationContent();
     const testContent = makeNotificationTestContent(store, matching, content);
+
     const notificationScheduler = makeNotificationJobScheduler(database, {
       remove: (jobId) =>
         Effect.tryPromise({
@@ -106,6 +111,7 @@ export const notificationsServicesLive = Layer.effect(
           catch: (cause) => cause,
         }).pipe(Effect.asVoid),
     });
+
     const rebuild = makeNotificationJobRebuild(
       {
         findRule: (ruleId) => jobsStore.findRule(ruleId),
@@ -120,6 +126,7 @@ export const notificationsServicesLive = Layer.effect(
       },
       notificationScheduler,
     );
+
     const dispatch = makeNotificationJobDispatch(
       {
         find: jobsStore.findJobWithRelations,
@@ -142,6 +149,7 @@ export const notificationsServicesLive = Layer.effect(
       notificationScheduler,
       (value) => content.parseAllowedMentions(value),
     );
+
     const recurrence = makeNotificationJobRecurrence(
       {
         findRule: jobsStore.findRule,
@@ -155,6 +163,7 @@ export const notificationsServicesLive = Layer.effect(
       },
       notificationScheduler,
     );
+
     const delivery = makeNotificationDeliveryResult(
       {
         find: jobsStore.findJob,
@@ -170,6 +179,7 @@ export const notificationsServicesLive = Layer.effect(
       notificationScheduler,
       recurrence,
     );
+
     const targets = makeNotificationGuildTargets(
       database,
       {
@@ -179,6 +189,7 @@ export const notificationsServicesLive = Layer.effect(
         cancel: notificationScheduler.cancel,
       },
     );
+
     return {
       scheduler: notificationScheduler,
       matching,
@@ -242,6 +253,7 @@ export const notificationsServicesLive = Layer.effect(
     };
   }),
 );
+
 export const notificationsData = Layer.unwrap(
   Effect.map(NotificationsServices, ({ layer }) => layer),
 );

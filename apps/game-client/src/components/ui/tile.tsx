@@ -55,6 +55,7 @@ export const Tile: FC<TileProps> = ({
     const bgToUse = isHovered
       ? increaseBrightness(customBackgroundColor, 20)
       : customBackgroundColor;
+
     customStyles.backgroundColor = bgToUse;
   }
 

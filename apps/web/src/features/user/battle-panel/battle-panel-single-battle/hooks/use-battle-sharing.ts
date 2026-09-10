@@ -21,10 +21,12 @@ const composeBattleUrl = (battleId: string) => {
 export const useBattleSharing = () => {
   const queryClient = useQueryClient();
   const { mutateAsync: editBattle } = useBattlesControllerUpdateBattle();
+
   const [pendingAction, setPendingAction] = useState<{
     battleId: string;
     action: "share" | "unshare" | "copy";
   } | null>(null);
+
   const busy = useRef(false);
   const [, copy] = useCopyToClipboard();
   const { t } = useTranslation();
@@ -33,8 +35,10 @@ export const useBattleSharing = () => {
     try {
       if (!(await copy(url))) {
         toast.error(t("battlePanel.toasts.linkCopyError"), { duration: 3000 });
+
         return;
       }
+
       toast.success(t("battlePanel.toasts.linkCopied"), {
         duration: 3000,
       });
@@ -56,8 +60,10 @@ export const useBattleSharing = () => {
       try {
         if (action === "copy") {
           await handleCopy(composeBattleUrl(battleId));
+
           return;
         }
+
         await editBattle({
           pathParams: { battleId },
           data: { public: action === "share" },
@@ -86,6 +92,7 @@ export const useBattleSharing = () => {
           ),
           { duration: 3000 },
         );
+
         if (action === "share") await handleCopy(composeBattleUrl(battleId));
       } catch {
         toast.error(

@@ -11,12 +11,15 @@ export const COMBAT_NPC_TYPES = [
 ] as const;
 
 export const CombatNpcTypeSchema = Schema.Literals(COMBAT_NPC_TYPES);
+
 export type CombatNpcType = typeof CombatNpcTypeSchema.Type;
+
 export type NpcTypeColors = Record<CombatNpcType, string>;
 
 export const HexAppearanceColorSchema = Schema.String.check(
   Schema.isPattern(/^#[\dA-F]{6}$/i),
 );
+
 export const NpcTypeColorsSchema = Schema.Struct({
   ELITE: HexAppearanceColorSchema,
   ELITE2: HexAppearanceColorSchema,
@@ -38,4 +41,5 @@ export const DEFAULT_NPC_TYPE_COLORS = {
 } as const satisfies NpcTypeColors;
 
 export const isHexAppearanceColor = Schema.is(HexAppearanceColorSchema);
+
 export const isCombatNpcType = Schema.is(CombatNpcTypeSchema);

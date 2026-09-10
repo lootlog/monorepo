@@ -18,9 +18,11 @@ export type NotificationPresentationRequest = {
 
 export const useNotificationPresenter = () => {
   const { settings } = useCurrentGameAccountNotificationSettings();
+
   const presentInStore = useNotificationsStore(
     (state) => state.presentNotifications,
   );
+
   const setOpen = useWindowsStore((state) => state.setOpen);
   const { playSounds } = useSoundPlayback();
 
@@ -32,12 +34,15 @@ export const useNotificationPresenter = () => {
     }
 
     const soundKeys = new Set<string>();
+
     const presentations = requests.map(
       ({ notification, playSound: audible }) => {
         const settingsKey = getNotificationSettingsKey(notification);
+
         const categorySettings = isNotificationSettingsKey(settingsKey)
           ? settings[settingsKey]
           : undefined;
+
         const autoHideTimeout = categorySettings?.autoHideTimeout ?? 0;
 
         if (audible !== false && categorySettings?.sound) {
@@ -55,6 +60,7 @@ export const useNotificationPresenter = () => {
       presentInStore(presentations);
       setOpen("notifications", true);
     });
+
     if (soundKeys.size > 0) {
       playSounds("notifications", soundKeys);
     }

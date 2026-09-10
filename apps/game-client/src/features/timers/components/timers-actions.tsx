@@ -31,9 +31,11 @@ export const TimersActions: FC<TimersActionsProps> = ({
   setShowHiddenTimers,
 }) => {
   const { t } = useTranslation("timers");
+
   const leadingIconClassName = underBag
     ? "ll:-mt-0.5 ll:h-5 ll:mb-1"
     : "ll:mt-0.5";
+
   return [
     <Tooltip key="filters-tooltip">
       <TooltipTrigger

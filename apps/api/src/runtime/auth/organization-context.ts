@@ -24,6 +24,7 @@ const CachedGuild = createSelectSchema(guildTable, {
   createdAt: isoDatetimeCodec,
   updatedAt: isoDatetimeCodec,
 });
+
 const decodeCachedGuild = Schema.decodeUnknownSync(
   Schema.fromJsonString(CachedGuild),
 );
@@ -54,8 +55,10 @@ export class OrganizationNotFound extends TaggedErrorClass<OrganizationNotFound>
 
 const parseDate = (value: unknown): Date | null => {
   if (value instanceof Date) return value;
+
   if (typeof value !== "string") return null;
   const parsed = new Date(value);
+
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
 
@@ -75,7 +78,9 @@ const cachedContextIsFresh = (
   ) {
     return false;
   }
+
   const lastSync = parseDate(context.member.lastDiscordSyncAt);
+
   return Boolean(
     lastSync &&
     lastSync.getTime() >= Date.now() - getMemberCacheSoftTtl(environment),
@@ -118,16 +123,20 @@ export class OrganizationContextLookup extends Context.Service<
         const readGuild = (idOrVanityUrl: string) =>
           Effect.gen(function* () {
             const key = getGuildCacheKey(idOrVanityUrl);
+
             const cached = yield* cache
               .get(key)
               .pipe(Effect.catch(() => Effect.succeed(null)));
+
             if (cached) {
               const parsed = yield* Effect.try(() => {
                 return decodeCachedGuild(cached);
               }).pipe(Effect.option);
+
               if (Option.isSome(parsed)) return parsed.value;
               yield* cache.del(key).pipe(Effect.ignore);
             }
+
             const rows = yield* database
               .select()
               .from(guildTable)
@@ -142,12 +151,15 @@ export class OrganizationContextLookup extends Context.Service<
               )
               .limit(1)
               .pipe(Effect.orDie);
+
             const guild = rows[0];
+
             if (!guild) {
               return yield* Effect.fail(
                 new OrganizationNotFound({ guildId: idOrVanityUrl }),
               );
             }
+
             const encoded = JSON.stringify(guild);
             yield* Effect.all(
               [
@@ -168,6 +180,7 @@ export class OrganizationContextLookup extends Context.Service<
               ],
               { concurrency: "unbounded", discard: true },
             ).pipe(Effect.ignore);
+
             return guild;
           });
 
@@ -175,18 +188,22 @@ export class OrganizationContextLookup extends Context.Service<
           lookup: (options) =>
             Effect.gen(function* () {
               const guild = yield* readGuild(options.guildId);
+
               const permissionsKey = getPermissionsCacheKey(
                 options.userId,
                 guild.id,
               );
+
               const cached = yield* cache
                 .get(permissionsKey)
                 .pipe(Effect.catch(() => Effect.succeed(null)));
+
               if (cached) {
                 const context = yield* decodeCachedContext(
                   cached,
                   config.environment,
                 );
+
                 if (context) return context;
                 yield* cache.del(permissionsKey).pipe(Effect.ignore);
               }
@@ -198,13 +215,16 @@ export class OrganizationContextLookup extends Context.Service<
                   false,
                 )
                 .pipe(Effect.orDie);
+
               if (!member?.active) return null;
+
               const permissions = resolveCapabilities({
                 capabilities:
                   guild.ownerId === options.discordId
                     ? Object.values(Permission)
                     : member.roles.flatMap((role) => role.permissions),
               });
+
               const context: OrganizationContext = {
                 guildId: guild.id,
                 ownerId: guild.ownerId,
@@ -213,6 +233,7 @@ export class OrganizationContextLookup extends Context.Service<
                 member,
                 roles: member.roles,
               };
+
               if (!member.isStale && !member.refreshQueued) {
                 yield* cache
                   .set(
@@ -222,6 +243,7 @@ export class OrganizationContextLookup extends Context.Service<
                   )
                   .pipe(Effect.ignore);
               }
+
               return context;
             }).pipe(
               Effect.withSpan("organization-context.lookup", {

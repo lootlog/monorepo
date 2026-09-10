@@ -153,6 +153,7 @@ export const ItemTile: FC<ItemTileProps> = ({
   const sharedTooltip = useSharedTooltip();
   const normalizedRarity = rarity ?? ItemRarity.COMMON;
   const triggerClassName = "w-fit appearance-none border-0 bg-transparent p-0";
+
   const tooltipBorderClassName = cn(
     "w-80 p-3 pb-0 bg-popover/95 backdrop-blur-md",
     {
@@ -173,6 +174,7 @@ export const ItemTile: FC<ItemTileProps> = ({
       shareIndex={shareIndex}
     />
   );
+
   const tooltipContent = (
     <ItemTileTooltipBody
       color={color}

@@ -75,6 +75,7 @@ export const Route = createFileRoute("/_authenticated/$guildId")({
         ]);
 
         const accessPolicy = createAccessPolicy({ capabilities: permissions });
+
         const canAccessGuild =
           accessPolicy.allows(Capability.OWNER) || Boolean(guildMember?.active);
 

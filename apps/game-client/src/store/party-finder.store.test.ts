@@ -83,6 +83,7 @@ describe("party-finder Ready Room store", () => {
     const matchingParticipant = createParticipant({
       participantId: "participant-matching",
     });
+
     const otherParticipant = createParticipant({
       participantId: "participant-other",
       character: {
@@ -90,6 +91,7 @@ describe("party-finder Ready Room store", () => {
         characterId: "other-character",
       },
     });
+
     const projection = createProjection(2, matchingParticipant);
     projection.participants[otherParticipant.participantId] = otherParticipant;
     usePartyFinderStore.getState().mergeProjection(projection);
@@ -108,6 +110,7 @@ describe("party-finder Ready Room store", () => {
 
   it("keeps organizer projection precedence at the same revision", () => {
     const participantProjection = createProjection(2);
+
     const organizerProjection: PartyReadyRoomProjection = {
       ...participantProjection,
       viewer: "ORGANIZER",
@@ -130,6 +133,7 @@ describe("party-finder Ready Room store", () => {
       viewer: "ORGANIZER",
       ownedParticipantIds: [],
     };
+
     const participantReadyRoom: PartyReadyRoomProjection = {
       ...createProjection(2),
       notificationId: "room-2",
@@ -155,6 +159,7 @@ describe("party-finder Ready Room store", () => {
 
   it("does not delete a newer socket update after an authoritative REST absence", () => {
     usePartyFinderStore.getState().mergeProjection(createProjection(2));
+
     const baseline = captureReadyRoomSyncBaseline(
       usePartyFinderStore.getState(),
     );
@@ -170,6 +175,7 @@ describe("party-finder Ready Room store", () => {
 
   it("records an authoritative absence as a removal watermark", () => {
     usePartyFinderStore.getState().mergeProjection(createProjection(2));
+
     const baseline = captureReadyRoomSyncBaseline(
       usePartyFinderStore.getState(),
     );

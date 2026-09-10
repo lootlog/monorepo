@@ -36,12 +36,15 @@ export default defineContentScript({
           return;
         cleanup?.();
         const page = event.ports[0];
+
         if (!page) return;
         let stopped = false;
         let background: ReturnType<typeof browser.runtime.connect> | undefined;
         let retry: ReturnType<typeof setTimeout> | undefined;
+
         const connect = () => {
           if (stopped || ctx.isInvalid) return;
+
           try {
             const port = browser.runtime.connect({ name: EXTENSION_CHANNEL });
             background = port;
@@ -49,10 +52,13 @@ export default defineContentScript({
               message: unknown,
             ) {
               if (stopped || background !== port) return;
+
               const parsed = ExtensionMessageSchema.parse(
                 decodeMessage(message),
               );
+
               page.postMessage(encodeMessage(parsed));
+
               if (parsed.type === "closed") {
                 stopped = true;
                 page.close();
@@ -69,18 +75,23 @@ export default defineContentScript({
             page.postMessage(encodeMessage({ type: "closed" }));
           }
         };
+
         // This is a transferred MessagePort, accepted only after the window source and origin checks above.
         // oxlint-disable-next-line react-doctor/postmessage-origin-risk
         page.onmessage = (message: MessageEvent<unknown>) => {
           if (stopped) return;
+
           try {
             const request = ExtensionRequestSchema.parse(
               decodeMessage(message.data),
             );
+
             if (request.type === "release") {
               cleanup?.();
+
               return;
             }
+
             if (background) background.postMessage(encodeMessage(request));
             else if (request.type !== "cancel")
               page.postMessage(
@@ -94,6 +105,7 @@ export default defineContentScript({
             /* Ignore malformed page messages without exposing extension capabilities. */
           }
         };
+
         page.start();
         connect();
         cleanup = () => {

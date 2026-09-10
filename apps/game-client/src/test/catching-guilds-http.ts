@@ -24,11 +24,13 @@ export function createCatchingGuildsHttp() {
         options: { signal: AbortSignal },
       ) => Promise<UserLootlogPlayersCatchingGuildsResponseDtoOutput>
     >();
+
   const restore = configureApiClients({
     main: {
       baseUrl: "https://api.example.test",
       fetch: async (input, init) => {
         const request = new Request(input, init);
+
         if (
           !new URL(request.url).pathname.endsWith(
             "/players/catching-guilds/batch",
@@ -36,10 +38,13 @@ export function createCatchingGuildsHttp() {
         )
           return Response.json(null);
         const body = requestSchema.parse(await request.json());
+
         return Response.json(await endpoint(body, { signal: request.signal }));
       },
     },
   });
+
   onTestFinished(restore);
+
   return endpoint;
 }

@@ -202,6 +202,7 @@ export const useGuildDocEditorToolbarModel = () => {
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const savedSelection = useRef<BaseSelection | null>(null);
   const [selectedLinkText, setSelectedLinkText] = useState("");
+
   const [activeState, setActiveState] =
     useState<ToolbarActiveState>(initialActiveState);
 
@@ -214,6 +215,7 @@ export const useGuildDocEditorToolbarModel = () => {
           ...initialActiveState,
           table: selection ? getIsTableActive(selection) : false,
         });
+
         return;
       }
 
@@ -246,10 +248,12 @@ export const useGuildDocEditorToolbarModel = () => {
         editorState.read(readActiveState);
       },
     );
+
     const unregisterSelectionListener = editor.registerCommand(
       SELECTION_CHANGE_COMMAND,
       () => {
         readActiveState();
+
         return false;
       },
       COMMAND_PRIORITY_LOW,
@@ -271,16 +275,19 @@ export const useGuildDocEditorToolbarModel = () => {
 
       if (type === "paragraph") {
         $setBlocksType(selection, () => $createParagraphNode());
+
         return;
       }
 
       if (type === "quote") {
         $setBlocksType(selection, () => $createQuoteNode());
+
         return;
       }
 
       if (type === "code") {
         $setBlocksType(selection, () => $createCodeNode());
+
         return;
       }
 
@@ -329,6 +336,7 @@ export const useGuildDocEditorToolbarModel = () => {
 
         linkNode.append($createTextNode(data.text || normalizedUrl));
         selection.insertNodes([linkNode]);
+
         return;
       }
 

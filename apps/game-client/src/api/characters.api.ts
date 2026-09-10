@@ -6,14 +6,18 @@ import { getRuntimeCookie } from "@/lib/margonem-runtime/adapters/legacy-ui-runt
 
 const MARGONEM_CHARACTER_LIST_URL =
   "https://public-api.margonem.pl/account/charlist";
+
 const MARGONEM_CHARACTER_LIST_EN_URL =
   "https://public-api.margonem.com/account/charlist";
 
 export const CHARACTER_LIST_CACHE_FRESH_TTL_MS = 15 * 60 * 1000;
+
 export const CHARACTER_LIST_CACHE_STALE_TTL_MS = 24 * 60 * 60 * 1000;
+
 export const CHARACTER_LIST_CACHE_ENTRY_CAP = 20;
 
 const CHARACTER_LIST_CACHE_KEY_PREFIX = "lootlog:margonem-character-list:v1";
+
 const MARGONEM_LOCAL_STORAGE_KEY = "Margonem";
 
 export type MargonemCharacter = {
@@ -111,9 +115,11 @@ const normalizeCharacter = (character: unknown): MargonemCharacter | null => {
   }
 
   const characterData = unwrapCharacterData(character);
+
   const normalizedId = toNumberOrNull(
     findValueByAliases(characterData, ["id", "charId", "characterId"]),
   );
+
   const normalizedIcon = toStringOrNull(
     findValueByAliases(characterData, [
       "icon",
@@ -123,15 +129,19 @@ const normalizeCharacter = (character: unknown): MargonemCharacter | null => {
       "avatar",
     ]),
   );
+
   const normalizedLevel = toNumberOrNull(
     findValueByAliases(characterData, ["lvl", "level"]),
   );
+
   const normalizedNick = toStringOrNull(
     findValueByAliases(characterData, ["nick", "nickname", "name"]),
   );
+
   const normalizedProfession = toStringOrNull(
     findValueByAliases(characterData, ["prof", "profession", "class"]),
   );
+
   const normalizedWorld = toStringOrNull(
     findValueByAliases(characterData, [
       "world",
@@ -156,13 +166,17 @@ const normalizeCharacter = (character: unknown): MargonemCharacter | null => {
   const normalizedClan = toNumberOrNull(
     findValueByAliases(characterData, ["clan", "clanId"]),
   );
+
   const normalizedClanRank = toNumberOrNull(
     findValueByAliases(characterData, ["clan_rank", "clanRank"]),
   );
+
   const normalizedLast = toNumberOrNull(
     findValueByAliases(characterData, ["last", "lastSeen", "lastLogin"]),
   );
+
   const rawGender = findValueByAliases(characterData, ["gender", "sex"]);
+
   const normalizedGender =
     rawGender === "m" || rawGender === "f" ? rawGender : undefined;
 
@@ -222,6 +236,7 @@ const parseJsonOrNull = (value: string | null) => {
 
   try {
     const parsed: unknown = JSON.parse(value);
+
     return parsed;
   } catch {
     return null;
@@ -300,12 +315,14 @@ const sweepPersistentCharacterListCache = (now = Date.now()): void => {
     }
 
     const parsed = parseJsonOrNull(getLocalStorageItem(key));
+
     if (!isCharacterListCacheEntry(parsed)) {
       removeLocalStorageItem(key);
       continue;
     }
 
     const ageMs = now - parsed.cachedAt;
+
     if (ageMs < 0 || ageMs > CHARACTER_LIST_CACHE_STALE_TTL_MS) {
       removeLocalStorageItem(key);
       continue;
@@ -316,10 +333,12 @@ const sweepPersistentCharacterListCache = (now = Date.now()): void => {
 
   retainedEntries.sort((firstEntry, secondEntry) => {
     const timeDifference = secondEntry.cachedAt - firstEntry.cachedAt;
+
     if (timeDifference !== 0) return timeDifference;
 
     return secondEntry.storageIndex - firstEntry.storageIndex;
   });
+
   for (const entry of retainedEntries.slice(CHARACTER_LIST_CACHE_ENTRY_CAP)) {
     removeLocalStorageItem(entry.key);
   }
@@ -344,6 +363,7 @@ const readPersistentCharacterListCache = (
 
   if (ageMs < 0 || ageMs > CHARACTER_LIST_CACHE_STALE_TTL_MS) {
     removeLocalStorageItem(cacheKey);
+
     return [];
   }
 
@@ -380,12 +400,16 @@ const readMargonemCharacterListCache = ({
   const parsed = parseJsonOrNull(
     getLocalStorageItem(MARGONEM_LOCAL_STORAGE_KEY),
   );
+
   const accountIdKey = String(accountId);
+
   const charlist =
     isRecord(parsed) && isRecord(parsed.charlist) ? parsed.charlist : null;
+
   const rawCachedCharacters = accountId
     ? (charlist?.[accountIdKey] ?? null)
     : null;
+
   const cached = accountId ? normalizeCharacterList(rawCachedCharacters) : [];
 
   return filterCharactersByWorld(cached, world);
@@ -402,6 +426,7 @@ export async function fetchCharacterList({
 
   if (filteredCached.length > 0) {
     writePersistentCharacterListCache(options, filteredCached);
+
     return filteredCached;
   }
 
@@ -415,6 +440,7 @@ export async function fetchCharacterList({
   }
 
   const hs3 = getRuntimeCookie("hs3");
+
   const url =
     languageVersion === LanguageVersion.PL
       ? MARGONEM_CHARACTER_LIST_URL
@@ -426,10 +452,13 @@ export async function fetchCharacterList({
     }
 
     const client = createApiClient("main", { credentials: "include" });
+
     const characters = await client.get<MargonemCharacter[]>(
       `${url}?hs3=${hs3}`,
     );
+
     const normalizedCharacters = normalizeCharacterList(characters);
+
     const filteredCharacters = filterCharactersByWorld(
       normalizedCharacters,
       world,

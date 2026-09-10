@@ -2,6 +2,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 
 const services = ["activity", "auth", "battlelog", "main", "search"] as const;
+
 const generatedRoot = resolve("src/generated");
 
 const fixRequestOptionsType = (source: string, filePath: string): string => {

@@ -21,8 +21,10 @@ export function MyReservationsCard() {
   const { t } = useTranslation();
   const query = useListMyReservations({ status: "upcoming" });
   const cancelMutation = useCancelMyReservation();
+
   const [editingReservation, setEditingReservation] =
     useState<MyReservationsResponseDtoItemsItem | null>(null);
+
   const reservations = query.data?.items.slice(0, 5) ?? [];
 
   return (

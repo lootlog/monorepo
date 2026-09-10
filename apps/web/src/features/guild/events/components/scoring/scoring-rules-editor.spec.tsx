@@ -16,14 +16,18 @@ import { initializeTestTranslations } from "@/lib/testing/i18n";
 import { ScoringRulesEditor } from "./scoring-rules-editor";
 
 await initializeTestTranslations();
+
 afterEach(cleanup);
 
 type ParentValues = { name: string; scoringRules: EventScoringRules };
+
 const initialRules = { ...DEFAULT_ADVANCED_EVENT_SCORING_RULES, rules: [] };
+
 function ParentForm({ onSave }: { onSave: (values: ParentValues) => void }) {
   const form = useForm<ParentValues>({
     defaultValues: { name: "Event", scoringRules: initialRules },
   });
+
   return (
     <form aria-label="scoring-form" onSubmit={form.handleSubmit(onSave)}>
       <ScoringRulesEditor
@@ -52,6 +56,7 @@ it("updates the parent form without replacing the focused field and accepts pare
   const onSave = vi.fn<(values: ParentValues) => void>();
   render(<ParentForm onSave={onSave} />);
   const cap = screen.getAllByRole("spinbutton")[0];
+
   if (!(cap instanceof HTMLInputElement))
     throw new Error("Missing hard cap input");
   cap.focus();

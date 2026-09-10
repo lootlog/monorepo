@@ -1,4 +1,5 @@
 import type { JsonValue } from "./openapi-document.js";
+
 // Verified against auth lifecycle PostgreSQL tests and HTTP payload/ownership checks.
 const errors = {
   "400": {

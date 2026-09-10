@@ -25,6 +25,7 @@ const createSegment = (
 ): ReservationSegment => {
   const startsAt = new Date("2026-08-26T10:00:00.000Z");
   const endsAt = new Date(startsAt.getTime() + durationMinutes * 60_000);
+
   return {
     id: String(durationMinutes),
     dayIdx: 0,
@@ -78,6 +79,7 @@ describe("ReservationBlock", () => {
           onSelect={vi.fn()}
         />,
       );
+
       const avatar = container.querySelector(
         '[data-slot="reservation-avatar"]',
       );
@@ -85,6 +87,7 @@ describe("ReservationBlock", () => {
       expect(avatar).not.toBeNull();
       expect(avatar?.className).toContain(sizeClassName);
       expect(avatar?.className.split(" ").includes("hidden")).toBe(isCompact);
+
       if (isCompact) {
         expect(avatar?.className).toContain("@min-[7rem]:flex");
       }

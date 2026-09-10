@@ -15,14 +15,22 @@ import { runtimeOtherHandles } from "@/lib/margonem-runtime/runtime-other-handle
 import { refreshWhoIsHereRuntimeTooltip } from "@/lib/margonem-runtime/adapters/tooltip-runtime-adapter";
 
 const HIGHLIGHT_CLASS = "ll-who-is-here-lootlog-highlight";
+
 const STYLE_ELEMENT_ID = "ll-who-is-here-lootlog-style";
+
 const WHO_IS_HERE_ROOT_SELECTOR = ".whoishere-window";
+
 const WHO_IS_HERE_ROW_SELECTOR = ".whoishere-window .one-other[data-id]";
+
 const WHO_IS_HERE_COLOR_PROPERTY = "--ll-who-is-here-lootlog-color";
+
 const WHO_IS_HERE_DISCOVERY_INTERVAL_MS = 250;
+
 const EMPTY_ENTRIES_BY_KEY: Readonly<Record<string, never>> = Object.freeze({});
+
 const EMPTY_OTHERS_BY_ID: Readonly<Record<string, RuntimeOther>> =
   Object.freeze({});
+
 const EMPTY_OWNERS_BY_CHARACTER_KEY: Readonly<Record<string, never>> =
   Object.freeze({});
 
@@ -54,6 +62,7 @@ function setRowHighlight(row: HTMLElement, color: string): void {
 
 function installStyle(): () => void {
   const existingStyle = document.getElementById(STYLE_ELEMENT_ID);
+
   if (existingStyle) {
     return () => undefined;
   }
@@ -76,6 +85,7 @@ function installStyle(): () => void {
 
 function getRowCharacterId(row: HTMLElement): string | null {
   const characterId = row.dataset.id;
+
   return characterId ? String(characterId) : null;
 }
 
@@ -84,15 +94,18 @@ function getRowOther(
   othersById: Readonly<Record<string, RuntimeOther | undefined>>,
 ): Other | null {
   const characterId = getRowCharacterId(row);
+
   if (!characterId) return null;
 
   if (!othersById[characterId]) return null;
   const handle = runtimeOtherHandles.get(characterId);
+
   return handle && "d" in handle ? handle : null;
 }
 
 function refreshWhoIsHereTooltip(row: HTMLElement, other: Other): void {
   const characterId = getRowCharacterId(row);
+
   if (!characterId) return;
 
   patchOtherCharacterTooltip(other);
@@ -122,26 +135,35 @@ function isMovingInsideRow(
 export function useWhoIsHereLootlogHighlight(): void {
   const hoveredRowRef = useRef<HTMLElement | null>(null);
   const wasActiveRef = useRef(false);
+
   const isShiftPressed = useCharacterTooltipCatchingGuildsStore(
     (state) => state.isShiftPressed,
   );
+
   const selectedGuildId = useSelectedLootlogGuildId();
+
   const activeGuildId = isConcreteLootlogGuildId(selectedGuildId)
     ? selectedGuildId
     : null;
+
   const active = isShiftPressed && activeGuildId !== null;
+
   const entriesByKey = useCharacterTooltipCatchingGuildsStore((state) =>
     active ? state.entriesByKey : EMPTY_ENTRIES_BY_KEY,
   );
+
   const activeTarget = useCharacterTooltipCatchingGuildsStore((state) =>
     active ? state.activeTarget : null,
   );
+
   const othersById = useOthersStore((state) =>
     active ? state.othersById : EMPTY_OTHERS_BY_ID,
   );
+
   const ownersByCharacterKey = useOnlineCharacterOwnersStore((state) =>
     active ? state.ownersByCharacterKey : EMPTY_OWNERS_BY_CHARACTER_KEY,
   );
+
   const refreshRows = useEffectEvent(() => {
     if (activeGuildId === null) return;
 
@@ -179,9 +201,11 @@ export function useWhoIsHereLootlogHighlight(): void {
     if (!active) {
       return () => undefined;
     }
+
     wasActiveRef.current = true;
 
     let animationFrameId: number | null = null;
+
     const scheduleMutationRefresh = () => {
       if (animationFrameId !== null) return;
 
@@ -190,17 +214,21 @@ export function useWhoIsHereLootlogHighlight(): void {
         refreshRows();
       });
     };
+
     const observer = new MutationObserver(scheduleMutationRefresh);
     let discoveryIntervalId: number | null = null;
+
     const observeWhoIsHereRoot = () => {
       const whoIsHereRoot = document.querySelector<HTMLElement>(
         WHO_IS_HERE_ROOT_SELECTOR,
       );
+
       if (!whoIsHereRoot) {
         return false;
       }
 
       observeWhoIsHereMutations(observer, whoIsHereRoot);
+
       return true;
     };
 
@@ -241,14 +269,17 @@ export function useWhoIsHereLootlogHighlight(): void {
   useEffect(() => {
     const handleMouseOver = (event: MouseEvent) => {
       const row = getHoverRow(event.target);
+
       if (!row || isMovingInsideRow(row, event.relatedTarget)) return;
 
       hoveredRowRef.current = row;
       const other = getRowOther(row, useOthersStore.getState().othersById);
+
       if (!other) return;
 
       if (!useCharacterTooltipCatchingGuildsStore.getState().isShiftPressed) {
         refreshWhoIsHereTooltip(row, other);
+
         return;
       }
 
@@ -258,9 +289,11 @@ export function useWhoIsHereLootlogHighlight(): void {
 
     const handleMouseOut = (event: MouseEvent) => {
       const row = getHoverRow(event.target);
+
       if (!row || isMovingInsideRow(row, event.relatedTarget)) return;
 
       const other = getRowOther(row, useOthersStore.getState().othersById);
+
       const activeOther =
         useCharacterTooltipCatchingGuildsStore.getState().activeOther;
 
@@ -284,17 +317,21 @@ export function useWhoIsHereLootlogHighlight(): void {
 
   useEffect(() => {
     const hoveredRow = hoveredRowRef.current;
+
     if (!hoveredRow) return;
 
     const currentOthersById = active
       ? othersById
       : useOthersStore.getState().othersById;
+
     const other = getRowOther(hoveredRow, currentOthersById);
+
     if (!other) return;
 
     if (isShiftPressed) {
       useCharacterTooltipCatchingGuildsStore.getState().setActiveOther(other);
       refreshWhoIsHereTooltip(hoveredRow, other);
+
       return;
     }
 
@@ -316,10 +353,13 @@ export function useWhoIsHereLootlogHighlight(): void {
         activeTarget.characterId,
       )}"]`,
     );
+
     if (!row) return;
 
     const other = getRowOther(row, othersById);
+
     if (!other) return;
+
     if (
       hoveredRowRef.current &&
       hoveredRowRef.current !== row &&

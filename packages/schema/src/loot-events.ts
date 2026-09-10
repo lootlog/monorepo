@@ -28,12 +28,14 @@ export const GuildLootEventNpcSchema = Schema.Struct({
     Schema.NullOr(Schema.Union([Schema.Number, Schema.String])),
   ),
 });
+
 export const GuildLootCreatedEventV2Schema = Schema.Struct({
   version: Schema.Literal(2),
   guildId: Schema.NonEmptyString,
   lootId: Schema.Int,
   npcs: Schema.Array(GuildLootEventNpcSchema),
 });
+
 export const GuildLootShareUpdatedEventV2Schema = Schema.Struct({
   version: Schema.Literal(2),
   guildId: Schema.NonEmptyString,

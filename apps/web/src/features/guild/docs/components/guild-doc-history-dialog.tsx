@@ -38,9 +38,11 @@ export const GuildDocHistoryDialog = ({
   onOpenChange,
 }: GuildDocHistoryDialogProps) => {
   const { t } = useTranslation();
+
   const [selectedHistoryId, setSelectedHistoryId] = useState<string | null>(
     null,
   );
+
   const historyQuery = useDocsControllerGetHistory(
     { guildId, docId },
     {
@@ -50,6 +52,7 @@ export const GuildDocHistoryDialog = ({
       },
     },
   );
+
   const historyItems = historyQuery.data?.items ?? [];
 
   const firstHistoryId = historyItems[0]?.id;

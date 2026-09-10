@@ -36,11 +36,15 @@ const alignDateToStep = (
 ) => {
   const alignedDate = new Date(date);
   const totalMinutes = alignedDate.getHours() * 60 + alignedDate.getMinutes();
+
   const hasSubMinutePart =
     alignedDate.getSeconds() > 0 || alignedDate.getMilliseconds() > 0;
+
   const remainder = totalMinutes % stepMinutes;
+
   const shouldRoundUp =
     direction === "ceil" && (remainder > 0 || hasSubMinutePart);
+
   const nextTotalMinutes = shouldRoundUp
     ? totalMinutes + stepMinutes - remainder
     : totalMinutes - remainder;
@@ -136,16 +140,19 @@ export const clampReservationEndDate = ({
     const maxEndDate = new Date(
       anchorDate.getTime() + settings.reservationMaxDurationMinutes * 60_000,
     );
+
     const maxDurationTargetDate = alignDateToStep(
       new Date(maxEndDate.getTime() - granularityMs),
       settings.reservationTimeGranularityMinutes,
       "floor",
     );
+
     const latestStartDate = alignDateToStep(
       getReservationLatestStartDate(settings, now),
       settings.reservationTimeGranularityMinutes,
       "floor",
     );
+
     const maxTargetDate =
       latestStartDate < maxDurationTargetDate
         ? latestStartDate
@@ -160,20 +167,25 @@ export const clampReservationEndDate = ({
 
   const earliestStartDate = getReservationEarliestStartDate(now);
   const latestStartDate = getReservationLatestStartDate(settings, now);
+
   const minStartDate = new Date(
     anchorDate.getTime() +
       granularityMs -
       settings.reservationMaxDurationMinutes * 60_000,
   );
+
   const lowerBound =
     minStartDate > earliestStartDate ? minStartDate : earliestStartDate;
+
   const upperBound =
     latestStartDate < anchorDate ? latestStartDate : anchorDate;
+
   const alignedLowerBound = alignDateToStep(
     lowerBound,
     settings.reservationTimeGranularityMinutes,
     "ceil",
   );
+
   const alignedUpperBound = alignDateToStep(
     upperBound,
     settings.reservationTimeGranularityMinutes,

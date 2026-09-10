@@ -34,6 +34,7 @@ export function BattleWorldFilter({
 }) {
   const { t } = useTranslation();
   const worldListId = useId();
+
   return (
     <div className="space-y-2">
       <Label>{t("battlePanel.filters.world")}</Label>

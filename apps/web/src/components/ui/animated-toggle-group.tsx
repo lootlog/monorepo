@@ -30,12 +30,14 @@ export function AnimatedToggleGroup<Value extends string>({
   className,
 }: AnimatedToggleGroupProps<Value>) {
   const selectedIndex = options.findIndex((option) => option.value === value);
+
   return (
     <ToggleGroup
       aria-label={label}
       value={[value]}
       onValueChange={(values) => {
         const option = options.find((item) => item.value === values[0]);
+
         if (option && !option.disabled) onValueChange(option.value);
       }}
       spacing={0}

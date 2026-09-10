@@ -5,8 +5,11 @@ import type {
 import type { KillTimerData } from "#src/events/respawn/kill-timer-data";
 
 export const EVENT_HERO_KILL_JOB_NAME = "process-event-hero-kill";
+
 const MANUAL_CLOSE_SUFFIX = "manual";
+
 const TIMER_UPDATE_SUFFIX = "timer";
+
 const JOB_ID_SEPARATOR = "-";
 
 interface EventHeroKillKeyData {
@@ -47,9 +50,11 @@ function buildEventHeroKillDedupKeyValue(
 
 function parseDate(value: string, field: string): Date {
   const parsed = new Date(value);
+
   if (Number.isNaN(parsed.getTime())) {
     throw new Error(`Invalid ${field} in event hero kill job payload`);
   }
+
   return parsed;
 }
 
@@ -57,6 +62,7 @@ function toOptionalDate(value: string | null, field: string): Date | null {
   if (!value) {
     return null;
   }
+
   return parseDate(value, field);
 }
 
@@ -97,6 +103,7 @@ export function getEventHeroKillWindowKey(timerData: KillTimerData): string {
     timerData.windowOpenedAt ??
     timerData.previousMinSpawnTime ??
     timerData.minSpawnTime;
+
   return String(windowDate.getTime());
 }
 
@@ -117,6 +124,7 @@ export function buildEventHeroKillJobId(data: {
     data.windowKey,
     getEventHeroKillMode(data.isManualClose),
   ];
+
   return parts.map(sanitizeJobIdPart).join(JOB_ID_SEPARATOR);
 }
 

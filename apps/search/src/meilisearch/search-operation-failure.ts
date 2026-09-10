@@ -29,10 +29,12 @@ export const completeMeilisearchTask = (
 ) =>
   attemptMeilisearch(operation, async () => {
     const task = await run().waitTask();
+
     if (task.status !== "succeeded") {
       throw (
         task.error ?? new Error(`Meilisearch task ${task.uid} ${task.status}`)
       );
     }
+
     return task;
   });

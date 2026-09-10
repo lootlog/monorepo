@@ -18,24 +18,33 @@ import { CommandWindow } from "./command";
 vi.mock("sonner", () => ({
   toast: { error: vi.fn<typeof SonnerToast.error>() },
 }));
+
 const notificationRequest = vi.fn<typeof fetch>();
+
 const chatRequest = vi.fn<typeof fetch>();
+
 let queryClient: QueryClient;
+
 let restoreApi: () => void;
+
 const mount = () =>
   render(
     <QueryClientProvider client={queryClient}>
       <CommandWindow />
     </QueryClientProvider>,
   );
+
 const submit = (message: string) => {
   const textarea = screen.getByPlaceholderText("Wiadomość...");
   fireEvent.change(textarea, { target: { value: message } });
   const form = textarea.closest("form");
+
   if (!form) throw new Error("Expected command form");
   fireEvent.submit(form);
+
   return { textarea, form };
 };
+
 beforeEach(() => {
   vi.clearAllMocks();
   setTestRuntimeGame({
@@ -71,8 +80,10 @@ beforeEach(() => {
         const pathname = new URL(
           input instanceof Request ? input.url : String(input),
         ).pathname;
+
         if (pathname.startsWith("/messaging"))
           return notificationRequest(input, init);
+
         if (pathname.endsWith("/chat-messages"))
           return chatRequest(input, init);
         throw new Error(`Unexpected HTTP request: ${pathname}`);
@@ -80,6 +91,7 @@ beforeEach(() => {
     },
   });
 });
+
 afterEach(() => {
   restoreApi();
   queryClient.clear();
@@ -87,6 +99,7 @@ afterEach(() => {
   useWindowsStore.setState(useWindowsStore.getInitialState(), true);
   vi.restoreAllMocks();
 });
+
 describe("CommandWindow", () => {
   it("ignores repeated submits and unlocks after a successful notification", async () => {
     const deferred = Promise.withResolvers<Response>();

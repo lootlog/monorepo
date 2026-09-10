@@ -24,13 +24,18 @@ const render = (ui: React.ReactNode, options?: RenderOptions) =>
   });
 
 let coarsePointer = true;
+
 let reducedMotion = false;
+
 const mediaQueries = new Set<MediaQueryList>();
+
 const nativeMatchMedia = window.matchMedia.bind(window);
+
 function setReducedMotion(value: boolean) {
   reducedMotion = value;
   mediaQueries.forEach((query) => query.dispatchEvent(new Event("change")));
 }
+
 beforeEach(() => {
   vi.stubGlobal("matchMedia", (query: string) => {
     const result = nativeMatchMedia(query);
@@ -41,6 +46,7 @@ beforeEach(() => {
           : coarsePointer,
     });
     mediaQueries.add(result);
+
     return result;
   });
 });
@@ -54,6 +60,7 @@ afterEach(() => {
 const createSegment = (): ReservationSegment => {
   const startsAt = new Date(2026, 0, 8, 10, 0);
   const endsAt = new Date(2026, 0, 8, 11, 0);
+
   return {
     id: "reservation-1",
     dayIdx: 3,
@@ -100,6 +107,7 @@ const renderSchedule = (
 ) => {
   const date = new Date(2026, 0, 8);
   const onReservationSelect = vi.fn();
+
   const result = render(
     <MobileDaySchedule
       date={date}
@@ -112,16 +120,21 @@ const renderSchedule = (
       onDaySwipe={onDaySwipe}
     />,
   );
+
   const grid = result.container.querySelector(
     '[data-slot="mobile-day-current"] > .relative',
   );
+
   expect(grid).toBeInstanceOf(HTMLDivElement);
+
   if (!(grid instanceof HTMLDivElement)) {
     throw new Error("Reservation day grid was not rendered");
   }
+
   vi.spyOn(grid, "getBoundingClientRect").mockReturnValue(
     new DOMRect(0, 0, 600, 24 * MIN_ROW_HEIGHT),
   );
+
   return {
     ...result,
     date,
@@ -150,6 +163,7 @@ describe("MobileDaySchedule", () => {
 
   it("keeps a safe scroll buffer below the final calendar hour", () => {
     const { container } = renderSchedule();
+
     const scrollContent = container.querySelector(
       '[data-slot="compact-schedule-scroll-content"]',
     );
@@ -162,10 +176,13 @@ describe("MobileDaySchedule", () => {
   it("prevents the day track from becoming a native horizontal scroll area", () => {
     const { container } = renderSchedule();
     const scrollArea = container.querySelector('[data-slot="scroll-area"]');
+
     const scrollViewport = container.querySelector(
       '[data-slot="scroll-area-viewport"]',
     );
+
     expect(scrollViewport).toBeInstanceOf(HTMLDivElement);
+
     if (!(scrollViewport instanceof HTMLDivElement)) return;
 
     scrollViewport.scrollLeft = 180;
@@ -185,6 +202,7 @@ describe("MobileDaySchedule", () => {
   it("does not render or activate the swipe track on a narrow desktop", () => {
     coarsePointer = false;
     const { container, grid, onDaySwipe } = renderSchedule();
+
     const swipeTrack = container.querySelector(
       '[data-slot="mobile-day-swipe-track"]',
     );
@@ -218,6 +236,7 @@ describe("MobileDaySchedule", () => {
     const scrollIntoView = vi.spyOn(HTMLElement.prototype, "scrollIntoView");
 
     const { container } = renderSchedule();
+
     const scrollViewport = container.querySelector(
       '[data-slot="scroll-area-viewport"]',
     );
@@ -238,15 +257,19 @@ describe("MobileDaySchedule", () => {
     const swipeSurface = container.querySelector(
       '[data-slot="mobile-day-swipe-surface"]',
     );
+
     const swipeTrack = container.querySelector(
       '[data-slot="mobile-day-swipe-track"]',
     );
+
     const previousDay = container.querySelector(
       '[data-slot="mobile-day-preview-previous"]',
     );
+
     const activeDay = container.querySelector(
       '[data-slot="mobile-day-current"]',
     );
+
     const nextDay = container.querySelector(
       '[data-slot="mobile-day-preview-next"]',
     );
@@ -269,6 +292,7 @@ describe("MobileDaySchedule", () => {
     const onDaySwipe = vi.fn<(direction: -1 | 1) => void>();
     const onRangeSelect = vi.fn();
     const onReservationSelect = vi.fn();
+
     const renderForDay = (scheduleDate: Date, scheduleDayIndex: number) => (
       <MobileDaySchedule
         date={scheduleDate}
@@ -281,25 +305,31 @@ describe("MobileDaySchedule", () => {
         onReservationSelect={onReservationSelect}
       />
     );
+
     const result = render(renderForDay(initialDate, 3));
     onDaySwipe.mockImplementation((direction) => {
       expect(direction).toBe(1);
       result.rerender(renderForDay(targetDate, 4));
     });
+
     const grid = result.container.querySelector(
       '[data-slot="mobile-day-current"] > .relative',
     );
+
     const swipeSurface = result.container.querySelector(
       '[data-slot="mobile-day-swipe-surface"]',
     );
+
     expect(grid).toBeInstanceOf(HTMLDivElement);
     expect(swipeSurface).toBeInstanceOf(HTMLDivElement);
+
     if (
       !(grid instanceof HTMLDivElement) ||
       !(swipeSurface instanceof HTMLDivElement)
     ) {
       return;
     }
+
     vi.spyOn(swipeSurface, "getBoundingClientRect").mockReturnValue(
       new DOMRect(0, 0, 390, 800),
     );
@@ -323,6 +353,7 @@ describe("MobileDaySchedule", () => {
     const settledTargetDay = result.container.querySelector(
       '[data-slot="mobile-day-current"]',
     );
+
     expect(settledTargetDay?.querySelector(".reservation-card")).not.toBeNull();
     await expectSettledTrack(result.container);
   });
@@ -410,10 +441,13 @@ describe("MobileDaySchedule", () => {
 
   it("uses native touch movement as the only swipe input pipeline", async () => {
     const { container, grid } = renderSchedule();
+
     const swipeSurface = container.querySelector(
       '[data-slot="mobile-day-swipe-surface"]',
     );
+
     expect(swipeSurface).toBeInstanceOf(HTMLDivElement);
+
     if (!(swipeSurface instanceof HTMLDivElement)) return;
 
     fireEvent.pointerDown(swipeSurface, {
@@ -448,10 +482,13 @@ describe("MobileDaySchedule", () => {
 
   it("snaps to the next day after a deliberate partial left swipe", async () => {
     const { container, grid, onDaySwipe } = renderSchedule();
+
     const swipeSurface = container.querySelector(
       '[data-slot="mobile-day-swipe-surface"]',
     );
+
     expect(swipeSurface).toBeInstanceOf(HTMLDivElement);
+
     if (!(swipeSurface instanceof HTMLDivElement)) return;
     vi.spyOn(swipeSurface, "getBoundingClientRect").mockReturnValue(
       new DOMRect(0, 0, 390, 800),
@@ -481,10 +518,13 @@ describe("MobileDaySchedule", () => {
   it("changes the day from native touch events without relying on pointer drag events", () => {
     setReducedMotion(true);
     const { container, grid, onDaySwipe } = renderSchedule();
+
     const swipeSurface = container.querySelector(
       '[data-slot="mobile-day-swipe-surface"]',
     );
+
     expect(swipeSurface).toBeInstanceOf(HTMLDivElement);
+
     if (!(swipeSurface instanceof HTMLDivElement)) return;
     vi.spyOn(swipeSurface, "getBoundingClientRect").mockReturnValue(
       new DOMRect(0, 0, 360, 800),
@@ -507,10 +547,13 @@ describe("MobileDaySchedule", () => {
   it("allows another native swipe after an interrupted touch gesture", () => {
     setReducedMotion(true);
     const { container, grid, onDaySwipe } = renderSchedule();
+
     const swipeSurface = container.querySelector(
       '[data-slot="mobile-day-swipe-surface"]',
     );
+
     expect(swipeSurface).toBeInstanceOf(HTMLDivElement);
+
     if (!(swipeSurface instanceof HTMLDivElement)) return;
     vi.spyOn(swipeSurface, "getBoundingClientRect").mockReturnValue(
       new DOMRect(0, 0, 360, 800),
@@ -540,22 +583,27 @@ describe("MobileDaySchedule", () => {
 
   it("handles a native touch swipe from a reservation without opening it", () => {
     setReducedMotion(true);
+
     const { container, onDaySwipe, onReservationSelect } = renderSchedule(
       vi.fn(),
       [createSegment()],
     );
+
     const swipeSurface = container.querySelector(
       '[data-slot="mobile-day-swipe-surface"]',
     );
+
     const reservationBlock = container.querySelector(".reservation-card");
     expect(swipeSurface).toBeInstanceOf(HTMLDivElement);
     expect(reservationBlock).toBeInstanceOf(HTMLButtonElement);
+
     if (
       !(swipeSurface instanceof HTMLDivElement) ||
       !(reservationBlock instanceof HTMLButtonElement)
     ) {
       return;
     }
+
     vi.spyOn(swipeSurface, "getBoundingClientRect").mockReturnValue(
       new DOMRect(0, 0, 360, 800),
     );
@@ -578,6 +626,7 @@ describe("MobileDaySchedule", () => {
 
   it("uses the latest day-change callback after rerendering the same day", () => {
     setReducedMotion(true);
+
     const {
       container,
       grid,
@@ -587,12 +636,15 @@ describe("MobileDaySchedule", () => {
       onRangeSelect,
       onReservationSelect,
     } = renderSchedule();
+
     const swipeSurface = container.querySelector(
       '[data-slot="mobile-day-swipe-surface"]',
     );
+
     if (!(swipeSurface instanceof HTMLDivElement)) {
       throw new Error("Missing swipe surface");
     }
+
     vi.spyOn(swipeSurface, "getBoundingClientRect").mockReturnValue(
       new DOMRect(0, 0, 360, 800),
     );
@@ -628,10 +680,13 @@ describe("MobileDaySchedule", () => {
   it("changes the day without animation when reduced motion is enabled", async () => {
     setReducedMotion(true);
     const { container, grid, onDaySwipe } = renderSchedule();
+
     const swipeSurface = container.querySelector(
       '[data-slot="mobile-day-swipe-surface"]',
     );
+
     expect(swipeSurface).toBeInstanceOf(HTMLDivElement);
+
     if (!(swipeSurface instanceof HTMLDivElement)) return;
     vi.spyOn(swipeSurface, "getBoundingClientRect").mockReturnValue(
       new DOMRect(0, 0, 360, 800),
@@ -656,18 +711,22 @@ describe("MobileDaySchedule", () => {
       vi.fn(),
       [createSegment()],
     );
+
     const swipeSurface = container.querySelector(
       '[data-slot="mobile-day-swipe-surface"]',
     );
+
     const reservationBlock = container.querySelector(".reservation-card");
     expect(swipeSurface).toBeInstanceOf(HTMLDivElement);
     expect(reservationBlock).toBeInstanceOf(HTMLButtonElement);
+
     if (
       !(swipeSurface instanceof HTMLDivElement) ||
       !(reservationBlock instanceof HTMLButtonElement)
     ) {
       return;
     }
+
     vi.spyOn(swipeSurface, "getBoundingClientRect").mockReturnValue(
       new DOMRect(0, 0, 360, 800),
     );
@@ -696,10 +755,13 @@ describe("MobileDaySchedule", () => {
 
   it("settles one touch swipe only once when native and pointer endings race", async () => {
     const { container, grid, onDaySwipe } = renderSchedule();
+
     const swipeSurface = container.querySelector(
       '[data-slot="mobile-day-swipe-surface"]',
     );
+
     expect(swipeSurface).toBeInstanceOf(HTMLDivElement);
+
     if (!(swipeSurface instanceof HTMLDivElement)) return;
     vi.spyOn(swipeSurface, "getBoundingClientRect").mockReturnValue(
       new DOMRect(0, 0, 390, 800),
@@ -726,10 +788,13 @@ describe("MobileDaySchedule", () => {
 
   it("does not reset the track when touch cancellation follows a committed swipe", async () => {
     const { container, grid, onDaySwipe } = renderSchedule();
+
     const swipeSurface = container.querySelector(
       '[data-slot="mobile-day-swipe-surface"]',
     );
+
     expect(swipeSurface).toBeInstanceOf(HTMLDivElement);
+
     if (!(swipeSurface instanceof HTMLDivElement)) return;
     vi.spyOn(swipeSurface, "getBoundingClientRect").mockReturnValue(
       new DOMRect(0, 0, 390, 800),
@@ -757,10 +822,13 @@ describe("MobileDaySchedule", () => {
 
   it("ignores new touch drags while the day transition is running", async () => {
     const { container, grid, onDaySwipe } = renderSchedule();
+
     const swipeSurface = container.querySelector(
       '[data-slot="mobile-day-swipe-surface"]',
     );
+
     expect(swipeSurface).toBeInstanceOf(HTMLDivElement);
+
     if (!(swipeSurface instanceof HTMLDivElement)) return;
     vi.spyOn(swipeSurface, "getBoundingClientRect").mockReturnValue(
       new DOMRect(0, 0, 360, 800),
@@ -796,10 +864,13 @@ describe("MobileDaySchedule", () => {
     vi.setSystemTime(new Date(2026, 0, 7, 12, 0));
 
     const { container, grid, onDaySwipe } = renderSchedule();
+
     const swipeSurface = container.querySelector(
       '[data-slot="mobile-day-swipe-surface"]',
     );
+
     expect(swipeSurface).toBeInstanceOf(HTMLDivElement);
+
     if (!(swipeSurface instanceof HTMLDivElement)) return;
     vi.spyOn(swipeSurface, "getBoundingClientRect").mockReturnValue(
       new DOMRect(0, 0, 390, 800),
@@ -834,16 +905,20 @@ describe("MobileDaySchedule", () => {
 
   it("settles a repeated series of alternating partial swipes", async () => {
     const { container, grid, onDaySwipe } = renderSchedule();
+
     const swipeSurface = container.querySelector(
       '[data-slot="mobile-day-swipe-surface"]',
     );
+
     expect(swipeSurface).toBeInstanceOf(HTMLDivElement);
+
     if (!(swipeSurface instanceof HTMLDivElement)) return;
     vi.spyOn(swipeSurface, "getBoundingClientRect").mockReturnValue(
       new DOMRect(0, 0, 390, 800),
     );
 
     const expectedDirections: Array<-1 | 1> = [];
+
     for (let index = 0; index < 20; index += 1) {
       const direction = index % 2 === 0 ? 1 : -1;
       const startClientX = direction === 1 ? 300 : 200;
@@ -948,11 +1023,14 @@ describe("MobileDaySchedule", () => {
       const onRangeSelect = vi.fn();
       const { grid } = renderSchedule(onRangeSelect, [createSegment()]);
       const reservationBlock = grid.querySelector(".reservation-card");
+
       const emptySlot = grid.querySelectorAll(
         "button:not(.reservation-card)",
       )[14];
+
       expect(reservationBlock).toBeInstanceOf(HTMLButtonElement);
       expect(emptySlot).toBeInstanceOf(HTMLButtonElement);
+
       if (
         !(reservationBlock instanceof HTMLButtonElement) ||
         !(emptySlot instanceof HTMLButtonElement)

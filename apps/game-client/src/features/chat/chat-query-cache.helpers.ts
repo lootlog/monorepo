@@ -18,6 +18,7 @@ const CHAT_MESSAGES_QUERY_PATH_PATTERN = /^\/guilds\/([^/]+)\/chat-messages$/;
 
 export const getChatMessagesQueryGuildId = (query: QueryWithKey) => {
   const queryPath = query.queryKey[0];
+
   if (typeof queryPath !== "string") {
     return undefined;
   }
@@ -45,6 +46,7 @@ export const removeChatMessagesQueriesOutsideGuilds = (
   queryClient.removeQueries({
     predicate: (query) => {
       const guildId = getChatMessagesQueryGuildId(query);
+
       return guildId !== undefined && !accessibleGuildIds.has(guildId);
     },
   });

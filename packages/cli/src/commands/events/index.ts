@@ -32,6 +32,7 @@ ${chalk.bold("Requirements:")}
   - RABBITMQ_URI environment variable must be set
   - RabbitMQ server must be running and accessible
     `);
+
     return;
   }
 

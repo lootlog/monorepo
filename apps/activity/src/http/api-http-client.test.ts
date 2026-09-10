@@ -22,6 +22,7 @@ const runWith = (
       ),
     ),
   );
+
   return Effect.runPromise(
     Effect.flatMap(ApiHttpClient, (client) =>
       client.get(operationId, "https://api.internal/resource"),
@@ -35,6 +36,7 @@ describe("Activity API HttpClient", () => {
       if (fetchImplementation.mock.calls.length < 3) {
         return Promise.reject(new Error("connection reset"));
       }
+
       return Promise.resolve(
         new Response(JSON.stringify({ id: "guild-1" }), { status: 200 }),
       );
@@ -58,6 +60,7 @@ describe("Activity API HttpClient", () => {
       () => undefined,
       (cause: unknown) => cause,
     );
+
     expect(error).toBeInstanceOf(ApiHttpClientFailure);
     expect(error).toMatchObject({
       reason: "response-too-large",

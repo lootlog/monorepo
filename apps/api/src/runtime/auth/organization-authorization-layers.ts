@@ -82,13 +82,16 @@ const hasPermissions = (
   requirements: PermissionRequirements,
 ): boolean => {
   const available = new Set(permissions);
+
   const hasAll =
     requirements.allOf === undefined ||
     requirements.allOf.every((permission) => available.has(permission));
+
   const hasAny =
     requirements.anyOf === undefined ||
     requirements.anyOf.length === 0 ||
     requirements.anyOf.some((permission) => available.has(permission));
+
   return hasAll && hasAny;
 };
 

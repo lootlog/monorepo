@@ -35,6 +35,7 @@ export const usePartyStore = create<PartyState>()((set, get) => ({
       if (state.status === "uninitialized" && state.members.length === 0) {
         return state;
       }
+
       return {
         members: Object.freeze([]),
         revision: state.revision + 1,
@@ -50,9 +51,11 @@ export const usePartyStore = create<PartyState>()((set, get) => ({
         members,
         PARTY_MEMBER_FIELDS,
       );
+
       if (state.status === "ready" && reconciled === state.members) {
         return state;
       }
+
       return {
         members: reconciled,
         revision: state.revision + 1,

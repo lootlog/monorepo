@@ -20,6 +20,7 @@ describe("settings documents Effect module", () => {
   it("rejects out-of-key guild scopes before reading or writing any settings", async () => {
     const repository = createRepository();
     const service = makeSettingsDocuments(repository);
+
     const identity = {
       userId: "user-1",
       discordId: "discord-1",
@@ -31,6 +32,7 @@ describe("settings documents Effect module", () => {
         expiresAt: null,
       },
     };
+
     await expect(
       Effect.runPromise(
         service
@@ -184,6 +186,7 @@ describe("settings documents Effect module", () => {
   it("sorts a patch batch before delegating the serializable transaction", async () => {
     const repository = createRepository();
     const service = makeSettingsDocuments(repository);
+
     const operations = [
       {
         domain: "gameData" as const,

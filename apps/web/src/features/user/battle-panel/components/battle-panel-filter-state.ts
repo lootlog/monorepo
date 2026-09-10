@@ -1,4 +1,5 @@
 export const BATTLE_PANEL_DEFAULT_MIN_LEVEL = 1;
+
 export const BATTLE_PANEL_DEFAULT_MAX_LEVEL = 500;
 
 type LevelRangeFilters = {

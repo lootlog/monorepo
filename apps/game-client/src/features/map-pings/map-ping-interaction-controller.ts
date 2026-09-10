@@ -2,8 +2,11 @@ import type { MapPingType } from "@lootlog/schema/map-ping";
 import type { MapTile } from "./map-ping-controller";
 
 export const MAP_PING_HOLD_DELAY_MS = 300;
+
 export const MAP_PING_WHEEL_RADIUS_PX = 88;
+
 export const MAP_PING_WHEEL_DEAD_ZONE_PX = 24;
+
 export const MAP_PING_WHEEL_MARGIN_PX = 12;
 
 export type ClientPoint = {
@@ -97,6 +100,7 @@ export const clampMapPingWheelCenter = (
   viewport: ViewportSize,
 ): ClientPoint => {
   const minimumCenter = MAP_PING_WHEEL_RADIUS_PX + MAP_PING_WHEEL_MARGIN_PX;
+
   const clampAxis = (coordinate: number, viewportSize: number) => {
     if (viewportSize < minimumCenter * 2) {
       return viewportSize / 2;
@@ -120,17 +124,21 @@ export const resolveMapPingTypeFromPointer = (
 ): MapPingType | null => {
   const deltaX = pointer.x - origin.x;
   const deltaY = pointer.y - origin.y;
+
   if (Math.hypot(deltaX, deltaY) <= MAP_PING_WHEEL_DEAD_ZONE_PX) {
     return null;
   }
 
   const angle = (Math.atan2(deltaY, deltaX) * 180) / Math.PI;
+
   if (angle >= -135 && angle < -45) {
     return "attention";
   }
+
   if (angle >= -45 && angle < 45) {
     return "enemy";
   }
+
   if (angle >= 45 && angle < 135) {
     return "avoid";
   }
@@ -157,6 +165,7 @@ export class MapPingInteractionController {
       () => this.openWheel(input.identity),
       MAP_PING_HOLD_DELAY_MS,
     );
+
     this.state = {
       ...input,
       phase: "pending",
@@ -164,6 +173,7 @@ export class MapPingInteractionController {
       timer,
       visualCenter: null,
     };
+
     return true;
   }
 
@@ -173,6 +183,7 @@ export class MapPingInteractionController {
     }
 
     const visualCenter = this.state.visualCenter;
+
     if (!visualCenter) {
       return;
     }
@@ -181,6 +192,7 @@ export class MapPingInteractionController {
       this.state.origin,
       position,
     );
+
     if (selectedType === this.state.selectedType) {
       return;
     }
@@ -194,14 +206,17 @@ export class MapPingInteractionController {
 
   complete(identity: MapPingPressIdentity): MapPingSubmission | null {
     const state = this.state;
+
     if (!state || !isSameMapPingPressIdentity(state.identity, identity)) {
       return null;
     }
 
     this.reset();
+
     if (state.phase === "pending") {
       return { mapId: state.mapId, tile: state.tile, type: "attention" };
     }
+
     if (!state.selectedType) {
       return null;
     }
@@ -225,6 +240,7 @@ export class MapPingInteractionController {
 
   readonly subscribe = (listener: () => void) => {
     this.listeners.add(listener);
+
     return () => this.listeners.delete(listener);
   };
 
@@ -241,6 +257,7 @@ export class MapPingInteractionController {
       this.state.origin,
       this.dependencies.getViewport(),
     );
+
     this.state = {
       ...this.state,
       phase: "wheel-open",
@@ -258,6 +275,7 @@ export class MapPingInteractionController {
     if (this.state.timer) {
       this.dependencies.clearTimer(this.state.timer);
     }
+
     this.state = null;
     this.setSnapshot(null);
   }
@@ -268,6 +286,7 @@ export class MapPingInteractionController {
     }
 
     this.snapshot = snapshot;
+
     for (const listener of this.listeners) {
       listener();
     }

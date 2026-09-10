@@ -11,6 +11,7 @@ export const MAP_PING_TYPES = [
 export type MapPingType = (typeof MAP_PING_TYPES)[number];
 
 export const MapPingTypeSchema = Schema.Literals(MAP_PING_TYPES);
+
 export const MapPingRejectCodeSchema = Schema.Literals([
   "forbidden",
   "invalid-context",

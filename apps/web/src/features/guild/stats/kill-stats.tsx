@@ -22,6 +22,7 @@ import { KillStatsPeriodSelect } from "@/features/kills/components/kill-stats-pe
 export const KillStats: React.FC = () => {
   const { t } = useTranslation();
   const { guildId } = useParams({ from: "/_authenticated/$guildId" });
+
   const {
     settings,
     debouncedMinLvl,
@@ -31,12 +32,14 @@ export const KillStats: React.FC = () => {
     setMaxLvl,
     setPeriod,
   } = useStatsSettings("overview");
+
   const killStatsParams = buildGuildKillStatsParams({
     world: settings.world ?? undefined,
     minLvl: debouncedMinLvl,
     maxLvl: debouncedMaxLvl,
     period: settings.period,
   });
+
   const { data, isLoading } = useKillsControllerGetGuildKillStats(
     { guildId },
     killStatsParams,
@@ -50,7 +53,9 @@ export const KillStats: React.FC = () => {
       },
     },
   );
+
   const isMobile = useIsMobile();
+
   const hasActiveFilters =
     Boolean(settings.world) ||
     Boolean(settings.minLvl) ||

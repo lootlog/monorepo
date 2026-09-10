@@ -48,6 +48,7 @@ function calculateRespawnProgressPercentage(params: {
 
   const fullWindowMs =
     params.maxRespawnTime.getTime() - params.respawnStartTime.getTime();
+
   if (fullWindowMs <= 0) {
     return undefined;
   }
@@ -66,6 +67,7 @@ function parseDateIfValid(value: string | null | undefined): Date | null {
   }
 
   const date = new Date(value);
+
   return Number.isFinite(date.getTime()) ? date : null;
 }
 
@@ -79,12 +81,14 @@ function getMemberKillState(params: {
 
   for (const assignment of params.participant.mapData ?? []) {
     const assignedAt = parseDateIfValid(assignment.assignedAt);
+
     if (!assignedAt || assignedAt > params.killTime) {
       continue;
     }
 
     const unassignedAt = parseDateIfValid(assignment.unassignedAt);
     const assignmentEnd = unassignedAt ?? params.killTime;
+
     if (assignmentEnd < params.respawnStartTime) {
       continue;
     }
@@ -144,6 +148,7 @@ export function getAppliedRuleIdsForParticipant(params: {
   assignedMembersCount: number;
 }): string[] {
   const { kill, participant, scoringRules, assignedMembersCount } = params;
+
   if (!scoringRules) {
     return [];
   }
@@ -151,21 +156,25 @@ export function getAppliedRuleIdsForParticipant(params: {
   const killTime = new Date(kill.killedAt);
   const minSpawnTimeAtKill = new Date(kill.minSpawnTimeAtKill);
   const maxSpawnTimeAtKill = new Date(kill.maxSpawnTimeAtKill);
+
   if (!Number.isFinite(killTime.getTime())) {
     return [];
   }
 
   const respawnStartTime =
     minSpawnTimeAtKill > killTime ? killTime : minSpawnTimeAtKill;
+
   const { memberLeaveTime, memberPresentAtKill } = getMemberKillState({
     participant,
     killTime,
     respawnStartTime,
   });
+
   const minutesSinceLeaveToKill =
     memberLeaveTime && memberLeaveTime < killTime
       ? (killTime.getTime() - memberLeaveTime.getTime()) / 60_000
       : null;
+
   const context: EvaluationContext = {
     trackingDurationPercentage:
       participant.trackingDurationPercentage !== null &&

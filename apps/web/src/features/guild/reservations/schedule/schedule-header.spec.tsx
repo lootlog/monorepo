@@ -62,6 +62,7 @@ const renderHeader = async ({
 
   await router.load();
   const result = render(<RouterProvider router={router} />);
+
   return {
     ...result,
     router,
@@ -90,10 +91,13 @@ describe("ScheduleHeader", () => {
       onFindNearestFreeSlot,
       onToday,
     } = await renderHeader({ isCompact: true });
+
     const header = container.querySelector("header");
+
     const toolbar = screen.getByRole("toolbar", {
       name: "Akcje kalendarza rezerwacji",
     });
+
     const dock = toolbar.closest('[data-slot="schedule-action-dock"]');
 
     expect(header?.contains(toolbar)).toBe(false);
@@ -117,6 +121,7 @@ describe("ScheduleHeader", () => {
       "Ustawienia rezerwacji",
       "Dodaj rezerwację",
     ]);
+
     for (const action of actions) expect(action.className).toContain("size-11");
 
     const [
@@ -126,9 +131,11 @@ describe("ScheduleHeader", () => {
       settingsAction,
       addAction,
     ] = actions;
+
     if (!todayAction || !nearestSlotAction || !settingsAction || !addAction) {
       throw new Error("Expected every compact schedule action");
     }
+
     expect(todayAction.className).not.toContain("border border-input");
 
     fireEvent.click(todayAction);
@@ -148,6 +155,7 @@ describe("ScheduleHeader", () => {
   it("keeps the toolbar in the header for the wide layout", async () => {
     const { container } = await renderHeader({ isCompact: false });
     const header = container.querySelector("header");
+
     const toolbar = screen.getByRole("toolbar", {
       name: "Akcje kalendarza rezerwacji",
     });
@@ -180,6 +188,7 @@ describe("ScheduleHeader", () => {
 
   it("centers compact date navigation across the full header width", async () => {
     const { container } = await renderHeader({ isCompact: true });
+
     const dateNavigation = container.querySelector(
       '[data-slot="schedule-date-navigation"]',
     );
@@ -197,6 +206,7 @@ describe("ScheduleHeader", () => {
       canManageReservationSettings: false,
       isCompact: true,
     });
+
     const toolbar = screen.getByRole("toolbar", {
       name: "Akcje kalendarza rezerwacji",
     });
@@ -215,6 +225,7 @@ describe("ScheduleHeader", () => {
     const action = screen.getByRole("button", {
       name: "Znajdź najbliższy wolny termin",
     });
+
     expect(action.hasAttribute("disabled")).toBe(true);
     expect(action.getAttribute("aria-busy")).toBe("true");
   });

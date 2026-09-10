@@ -24,6 +24,7 @@ type RefreshMembersStatusProps = {
 
 const getRefreshProgress = (job: RefreshDisplayJob) => {
   if (job.totalMembers <= 0) return 0;
+
   return (job.processedMembers / job.totalMembers) * 100;
 };
 
@@ -34,6 +35,7 @@ export const RefreshMembersStatus = ({
   onRefresh,
 }: RefreshMembersStatusProps) => {
   const { t } = useTranslation();
+
   const isRefreshing =
     displayJob?.status === "PROCESSING" || displayJob?.status === "PENDING";
 

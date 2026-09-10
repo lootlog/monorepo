@@ -63,9 +63,12 @@ export function BattleHpTimelineTooltipContent({
   }
 
   const locale = i18n.language || "pl-PL";
+
   const formatNumber = (value: number) =>
     formatBattleHpTimelineTooltipNumber(value, locale);
+
   const formatPercent = (value: number) => `${formatNumber(value)}%`;
+
   const tooltipPanel = (
     <div className="pointer-events-none grid min-w-[15rem] max-w-[min(19rem,calc(100dvw-1rem))] gap-2 rounded-lg border border-border/60 bg-background px-3 py-2.5 text-xs shadow-xl">
       <div>
@@ -183,6 +186,7 @@ export function BattleHpTimelineTooltipContent({
   const chartBounds = chartRoot.getBoundingClientRect();
   const opensLeft = coordinateX > chartBounds.width / 2;
   const opensAbove = coordinateY > chartBounds.height / 2;
+
   const portalStyle: CSSProperties = {
     left: chartBounds.left + coordinateX + (opensLeft ? -12 : 12),
     position: "fixed",

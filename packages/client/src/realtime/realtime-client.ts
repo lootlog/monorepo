@@ -14,6 +14,7 @@ import {
 import { Result } from "effect";
 
 type CommandType = ClientCommand["type"];
+
 type CommandData<Type extends CommandType> = Extract<
   ClientCommand,
   { type: Type }
@@ -79,12 +80,16 @@ const normalizeUrl = (baseUrl: string, path: string): string => {
     typeof globalThis.location === "undefined"
       ? "http://localhost"
       : globalThis.location.href;
+
   const url = new URL(baseUrl, fallbackBase);
+
   if (url.protocol === "http:") url.protocol = "ws:";
+
   if (url.protocol === "https:") url.protocol = "wss:";
   url.pathname = path.startsWith("/") ? path : `/${path}`;
   url.search = "";
   url.hash = "";
+
   return url.toString();
 };
 
@@ -104,13 +109,16 @@ const scopeKey = (scope: SubscriptionScope): string =>
 
 const toBytes = async (data: unknown): Promise<Uint8Array> => {
   if (data instanceof Uint8Array) return data;
+
   if (data instanceof ArrayBuffer) return new Uint8Array(data);
+
   if (data instanceof Blob) return new Uint8Array(await data.arrayBuffer());
   throw new Error("Gateway returned a non-binary realtime frame");
 };
 
 const getPresenceSessionId = (data: unknown): string | null => {
   if (!data || typeof data !== "object" || !("sessionId" in data)) return null;
+
   return typeof data.sessionId === "string" ? data.sessionId : null;
 };
 
@@ -179,6 +187,7 @@ export class RealtimeClient {
 
   subscribe(listener: (event: ServerEvent) => void): () => void {
     this.eventListeners.add(listener);
+
     return () => this.eventListeners.delete(listener);
   }
 
@@ -187,6 +196,7 @@ export class RealtimeClient {
   ): () => void {
     this.stateListeners.add(listener);
     listener(this.stateValue);
+
     return () => this.stateListeners.delete(listener);
   }
 
@@ -196,22 +206,27 @@ export class RealtimeClient {
 
   join(data: CommandData<"session.join">): Promise<unknown> {
     this.joinData = data;
+
     return this.performJoin();
   }
 
   subscribeScope(scope: SubscriptionScope): Promise<unknown> {
     this.subscriptions.set(scopeKey(scope), scope);
+
     if (!this.connected || this.stateValue !== "ready") {
       return Promise.resolve(undefined);
     }
+
     return this.request("subscription.subscribe", scope);
   }
 
   unsubscribeScope(scope: SubscriptionScope): Promise<unknown> {
     this.subscriptions.delete(scopeKey(scope));
+
     if (!this.connected || this.stateValue !== "ready") {
       return Promise.resolve(undefined);
     }
+
     return this.request("subscription.unsubscribe", scope);
   }
 
@@ -220,16 +235,21 @@ export class RealtimeClient {
     data: CommandData<Type>,
   ): Promise<unknown> {
     const activeSocket = this.socket;
+
     if (!activeSocket || activeSocket.readyState !== WEBSOCKET_OPEN) {
       return Promise.reject(new Error("Realtime connection is not open"));
     }
+
     const requestId = crypto.randomUUID();
+
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         this.pending.delete(requestId);
         reject(new Error(`Realtime request timed out: ${type}`));
       }, this.requestTimeoutMs);
+
       this.pending.set(requestId, { type, resolve, reject, timeout });
+
       try {
         // SAFETY: the command discriminator and payload are coupled by CommandData<Type>.
         activeSocket.send(
@@ -250,6 +270,7 @@ export class RealtimeClient {
 
   send<Type extends CommandType>(type: Type, data: CommandData<Type>): void {
     const activeSocket = this.socket;
+
     if (!activeSocket || activeSocket.readyState !== WEBSOCKET_OPEN) return;
     // SAFETY: the command discriminator and payload are coupled by CommandData<Type>.
     activeSocket.send(
@@ -263,6 +284,7 @@ export class RealtimeClient {
 
   private open(state: "connecting" | "reconnecting"): void {
     this.setState(state);
+
     if (this.manuallyClosed) return;
     const socket = this.webSocketFactory(this.url, this.protocols);
     socket.binaryType = "arraybuffer";
@@ -270,10 +292,12 @@ export class RealtimeClient {
     socket.addEventListener("open", () => {
       if (this.socket !== socket) return;
       this.setState("connected");
+
       if (this.joinData) {
         const rejoin =
           this.rejoinHandler ??
           (() => this.performJoin().then(() => undefined));
+
         void rejoin().catch(() => socket.close(4008, "session rejoin failed"));
       }
     });
@@ -291,6 +315,7 @@ export class RealtimeClient {
       this.clearHeartbeat();
       this.rejectPending(new Error("Realtime connection closed"));
       this.setState("disconnected");
+
       if (!this.manuallyClosed) this.scheduleReconnect();
     });
   }
@@ -298,6 +323,7 @@ export class RealtimeClient {
   private async performJoin(): Promise<unknown> {
     if (!this.joinData || !this.connected) return undefined;
     this.setState("joining");
+
     try {
       const result = await this.request("session.join", this.joinData);
       await Promise.all(
@@ -307,6 +333,7 @@ export class RealtimeClient {
       );
       this.reconnectAttempt = 0;
       this.setState("ready");
+
       return result;
     } catch (error) {
       if (this.connected) this.socket?.close(4008, "session join failed");
@@ -316,16 +343,20 @@ export class RealtimeClient {
 
   private async handleMessage(data: unknown): Promise<void> {
     const frame = await this.decodeFrame(data);
+
     if ("status" in frame) {
       const pending = this.pending.get(frame.requestId);
+
       if (!pending) return;
       clearTimeout(pending.timeout);
       this.pending.delete(frame.requestId);
+
       if (frame.status === "success") {
         if (pending.type === "presence.publish") {
           this.presenceSessionId = getPresenceSessionId(frame.data);
           this.scheduleHeartbeat();
         }
+
         pending.resolve(frame.data);
       } else {
         pending.reject(
@@ -337,9 +368,12 @@ export class RealtimeClient {
           ),
         );
       }
+
       return;
     }
+
     if (!isServerEventFrame(frame)) return;
+
     for (const listener of this.eventListeners) listener(frame);
   }
 
@@ -353,19 +387,25 @@ export class RealtimeClient {
     if (this.frameEncoding === "json") {
       if (typeof data !== "string")
         throw new Error("Gateway returned a non-text realtime frame");
+
       return decodeRealtimeFrame(JSON.parse(data));
     }
+
     const decoded = tryDecodeRealtimeFrame(await toBytes(data));
+
     if (Result.isFailure(decoded)) throw decoded.failure;
+
     return decoded.success;
   }
 
   private scheduleReconnect(): void {
     this.reconnectAttempt += 1;
+
     const exponential = Math.min(
       this.reconnectMaxDelayMs,
       this.reconnectBaseDelayMs * 2 ** (this.reconnectAttempt - 1),
     );
+
     const jittered = Math.round(exponential * (0.5 + this.random()));
     this.setState("reconnecting");
     this.reconnectTimeout = setTimeout(
@@ -376,9 +416,11 @@ export class RealtimeClient {
 
   private scheduleHeartbeat(): void {
     this.clearHeartbeat();
+
     if (!this.presenceSessionId || !this.connected) return;
     this.heartbeatTimeout = setTimeout(() => {
       const sessionId = this.presenceSessionId;
+
       if (!sessionId) return;
       void this.request("presence.heartbeat", { sessionId })
         .then(() => this.scheduleHeartbeat())
@@ -391,12 +433,14 @@ export class RealtimeClient {
       clearTimeout(pending.timeout);
       pending.reject(error);
     }
+
     this.pending.clear();
   }
 
   private setState(state: RealtimeConnectionState): void {
     if (this.stateValue === state) return;
     this.stateValue = state;
+
     for (const listener of this.stateListeners) listener(state);
   }
 

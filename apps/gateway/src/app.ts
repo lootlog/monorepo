@@ -66,12 +66,16 @@ export class GatewayApplication extends Context.Service<
       const messaging = yield* RabbitMessaging;
       const httpClient = yield* HttpClient.HttpClient;
       const backgroundFibers = yield* FiberSet.make<unknown, unknown>();
+
       const runBackgroundEffect =
         yield* FiberSet.runtime(backgroundFibers)<never>();
+
       const runPromise =
         yield* FiberSet.runtimePromise(backgroundFibers)<never>();
+
       const runBackground = makeBackgroundTaskRunner(runBackgroundEffect);
       const redisClient = yield* Redis.Redis;
+
       const redis = yield* Effect.acquireRelease(
         Effect.tryPromise({
           try: async () => {
@@ -84,7 +88,9 @@ export class GatewayApplication extends Context.Service<
               runPromise,
               runBackground,
             );
+
             await store.connect();
+
             return store;
           },
           catch: (cause) =>
@@ -92,6 +98,7 @@ export class GatewayApplication extends Context.Service<
         }),
         (store) => Effect.tryPromise(() => store.close()),
       );
+
       const auth = makeGatewayAuth(config);
       const hub = new RealtimeHub(config, redis, runBackground);
       yield* hub.start();
@@ -99,6 +106,7 @@ export class GatewayApplication extends Context.Service<
         .run()
         .pipe(Effect.forkScoped);
       const coverage = new CoveragePublisher(messaging);
+
       const onlineHistory = new OnlineHistory(redis.command, (payload) =>
         messaging
           .publish({
@@ -113,7 +121,9 @@ export class GatewayApplication extends Context.Service<
           })
           .pipe(Effect.asVoid),
       );
+
       yield* onlineHistory.run().pipe(Effect.forkScoped);
+
       const presence = new PresenceStore(
         redis,
         hub,
@@ -128,12 +138,14 @@ export class GatewayApplication extends Context.Service<
             })
             .pipe(Effect.asVoid),
       );
+
       yield* presence.runExpirySweep().pipe(Effect.forkScoped);
       yield* presence.runOfflineSweep().pipe(Effect.forkScoped);
       const activity = new ActivityPublisher(messaging, config);
       const mapPings = new MapPingService(redis, hub);
       const airTags = new AirTagService(redis, hub);
       const guilds = makeGuildStore(config, redis, httpClient);
+
       const commands = new CommandHandler(
         guilds,
         makeMargonemProofVerifier(config, httpClient),
@@ -143,6 +155,7 @@ export class GatewayApplication extends Context.Service<
         mapPings,
         airTags,
       );
+
       yield* new ApiKeyLeases(
         config,
         httpClient,
@@ -154,6 +167,7 @@ export class GatewayApplication extends Context.Service<
       )
         .run()
         .pipe(Effect.forkScoped);
+
       const rabbit = new RabbitBridge(
         messaging,
         hub,
@@ -161,6 +175,7 @@ export class GatewayApplication extends Context.Service<
         presence,
         coverage,
       );
+
       yield* Effect.acquireRelease(rabbit.start(), () =>
         rabbit.stop().pipe(Effect.orDie),
       );
@@ -171,6 +186,7 @@ export class GatewayApplication extends Context.Service<
           serviceNamespace: config.serviceNamespace,
         }),
       );
+
       return GatewayApplication.of({
         config,
         auth,
@@ -188,6 +204,7 @@ export class GatewayApplication extends Context.Service<
 const RabbitLive = Layer.unwrap(
   Effect.gen(function* () {
     const config = yield* GatewayConfig;
+
     return RabbitMessaging.layer({
       uri: Redacted.value(config.rabbitmqUri),
       connectionName: `${config.serviceName}-${config.environment}`,
@@ -240,8 +257,10 @@ const websocketResponseHeaders = (
     .get("sec-websocket-protocol")
     ?.split(",")
     .map((protocol) => protocol.trim());
+
   const selectedProtocol =
     frameEncoding === "json" ? REALTIME_JSON_SUBPROTOCOL : REALTIME_SUBPROTOCOL;
+
   return protocols?.includes(selectedProtocol)
     ? { "sec-websocket-protocol": selectedProtocol }
     : undefined;
@@ -253,6 +272,7 @@ let defaultGatewayHttpBoundary:
 
 const handleGatewayHttpRequest = (request: Request): Promise<Response> => {
   defaultGatewayHttpBoundary ??= makeGatewayHttpBoundary();
+
   return defaultGatewayHttpBoundary.handler(request);
 };
 
@@ -270,22 +290,28 @@ export const createGatewayFetch =
     const url = new URL(request.url);
     const startedAt = performance.now();
     let status = 500;
+
     const route = ["/healthz", application.config.websocketPath].includes(
       url.pathname,
     )
       ? url.pathname
       : undefined;
+
     const complete = (response: Response | undefined) => {
       status = response?.status ?? 101;
+
       return response;
     };
+
     const handle = async () => {
       if (url.pathname === "/healthz") {
         return complete(await httpHandler(request));
       }
+
       if (url.pathname !== application.config.websocketPath) {
         return complete(new Response("Not found", { status: 404 }));
       }
+
       if (hasCredentialQuery(url)) {
         return complete(
           new Response("Credentials are not accepted in the URL", {
@@ -293,29 +319,35 @@ export const createGatewayFetch =
           }),
         );
       }
+
       const origin = request.headers.get("origin");
       const identity = application.auth.readIdentity(request);
+
       if (
         !(origin === null && identity?.apiKeyAccess) &&
         !application.auth.isAllowedOrigin(origin)
       ) {
         return complete(new Response("Origin not allowed", { status: 403 }));
       }
+
       if (!identity)
         return complete(new Response("Unauthorized", { status: 401 }));
 
       const connectionId = crypto.randomUUID();
+
       const offeredProtocols =
         request.headers
           .get("sec-websocket-protocol")
           ?.split(",")
           .map((protocol) => protocol.trim()) ?? [];
+
       const frameEncoding =
         application.config.environment === "local" ||
         (identity.apiKeyAccess &&
           offeredProtocols.includes(REALTIME_JSON_SUBPROTOCOL))
           ? "json"
           : undefined;
+
       const upgraded = activeServer.upgrade(request, {
         data: {
           ...identity,
@@ -340,19 +372,23 @@ export const createGatewayFetch =
         },
         headers: websocketResponseHeaders(request, frameEncoding),
       });
+
       return complete(
         upgraded
           ? undefined
           : new Response("WebSocket upgrade failed", { status: 400 }),
       );
     };
+
     try {
       if (url.pathname === "/healthz") return await handle();
       const baseRequestAttributes = { "http.request.method": request.method };
+
       const requestAttributes =
         route === undefined
           ? baseRequestAttributes
           : { ...baseRequestAttributes, "http.route": route };
+
       const result = await application.runPromise(
         Effect.tryPromise({ try: handle, catch: (cause) => cause }).pipe(
           Effect.onExit(() =>
@@ -371,7 +407,9 @@ export const createGatewayFetch =
           }),
         ),
       );
+
       if (!result.ok) throw result.error;
+
       return result.value;
     } finally {
       await application.runPromise(
@@ -388,11 +426,14 @@ export const createGatewayFetch =
 export const GatewayServer = Layer.effectDiscard(
   Effect.gen(function* () {
     const application = yield* GatewayApplication;
+
     const httpBoundary = yield* Effect.acquireRelease(
       Effect.sync(makeGatewayHttpBoundary),
       (boundary) => Effect.tryPromise(boundary.dispose),
     );
+
     const fetch = createGatewayFetch(application, httpBoundary.handler);
+
     const server = yield* Effect.acquireRelease(
       Effect.sync(() =>
         Bun.serve<SessionData>({
@@ -414,6 +455,7 @@ export const GatewayServer = Layer.effectDiscard(
             },
             close(socket) {
               application.hub.unregister(socket);
+
               if (socket.data.apiKeyAccess) return;
               application.runBackground(
                 "websocket.disconnect-activity",
@@ -429,6 +471,7 @@ export const GatewayServer = Layer.effectDiscard(
       ),
       (activeServer) => Effect.tryPromise(() => activeServer.stop(true)),
     );
+
     yield* Effect.logInfo("Gateway WebSocket server listening").pipe(
       Effect.annotateLogs({
         hostname: server.hostname,

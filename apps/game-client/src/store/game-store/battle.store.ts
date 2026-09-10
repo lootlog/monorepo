@@ -2,6 +2,7 @@ import { create } from "zustand";
 import type { GameEvent, W } from "@lootlog/margonem/game-events";
 
 export const MAX_BATTLE_CAPTURE_EVENTS = 10_000;
+
 export const MAX_BATTLE_CAPTURE_BYTES = 5 * 1024 * 1024;
 
 const clearCapturedEvents = (events: GameEvent[]) => {
@@ -73,22 +74,26 @@ export const useBattleStore = create<BattleState & BattleActions>(
           ) {
             nextState.battleState = batch.battleState;
           }
+
           if (
             batch.lastBattleHash !== undefined &&
             batch.lastBattleHash !== state.lastBattleHash
           ) {
             nextState.lastBattleHash = batch.lastBattleHash;
           }
+
           if (
             batch.lastKillHash !== undefined &&
             batch.lastKillHash !== state.lastKillHash
           ) {
             nextState.lastKillHash = batch.lastKillHash;
           }
+
           if (batch.battleWarriors !== undefined) {
             const battleWarriors = batch.battleWarriors
               ? batch.battleWarriors
               : {};
+
             if (battleWarriors !== state.battleWarriors) {
               nextState.battleWarriors = battleWarriors;
             }
@@ -101,27 +106,33 @@ export const useBattleStore = create<BattleState & BattleActions>(
         if (captureOverflowed) return false;
 
         let eventBytes: number;
+
         try {
           eventBytes = JSON.stringify(event).length * 2;
         } catch {
           overflowCapture();
+
           return false;
         }
 
         const events = get().events;
+
         if (
           events.length >= MAX_BATTLE_CAPTURE_EVENTS ||
           capturedBytes + eventBytes > MAX_BATTLE_CAPTURE_BYTES
         ) {
           overflowCapture();
+
           return false;
         }
 
         events.push(event);
         capturedBytes += eventBytes;
+
         if (event.f?.m) {
           capturedTurns.push(...event.f.m);
         }
+
         return true;
       },
 
@@ -166,6 +177,7 @@ export const useBattleStore = create<BattleState & BattleActions>(
               ...warriors[key],
             };
           });
+
           return { battleWarriors: updatedWarriors };
         }),
     };

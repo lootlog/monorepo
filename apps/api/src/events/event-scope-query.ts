@@ -15,6 +15,7 @@ export const eventHeroScope = (
     eq(eventHeroNpcTable.eventId, eventId),
     eq(eventTable.guildId, guildId),
   );
+
 export const eventMapScope = (
   guildId: string,
   eventId: string,

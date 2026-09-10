@@ -23,6 +23,7 @@ import {
 } from "./editor/guild-doc-editor-content";
 
 const CONTENT_MAX_LENGTH = 250_000;
+
 export const TITLE_MAX_LENGTH = 120;
 
 const createDraftSignature = (title: string, content: GuildDocEditorContent) =>
@@ -37,19 +38,23 @@ export const useGuildDocDraft = () => {
   const { data: accessPolicy } = useGuildPermissions();
   const canWrite = canWriteGuildDocs(accessPolicy);
   const [title, setTitle] = useState("");
+
   const [content, setContent] = useState<GuildDocEditorContent>(() =>
     normalizeGuildDocEditorContent(null),
   );
+
   const [savedSignature, setSavedSignature] = useState("");
   const [editorSeed, setEditorSeed] = useState(0);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [trashConfirmOpen, setTrashConfirmOpen] = useState(false);
+
   const documentQuery = useDocsControllerGetDocument(
     { guildId, docId },
     {
       query: guildDocDetailQueryOptions(guildId, docId),
     },
   );
+
   const updateDocument = useDocsControllerUpdateDocument();
   const deleteDocument = useDocsControllerDeleteDocument();
   const document = documentQuery.data;
@@ -71,6 +76,7 @@ export const useGuildDocDraft = () => {
 
   const [previousDocument, setPreviousDocument] =
     useState<typeof document>(undefined);
+
   if (
     previousDocument?.id !== document?.id ||
     previousDocument?.version !== document?.version
@@ -99,11 +105,13 @@ export const useGuildDocDraft = () => {
   const validateDraft = () => {
     if (title.trim().length > TITLE_MAX_LENGTH) {
       toast.error(t("docs.editor.titleTooLong"));
+
       return false;
     }
 
     if (stringifyGuildDocEditorContent(content).length > CONTENT_MAX_LENGTH) {
       toast.error(t("docs.editor.tooLong"));
+
       return false;
     }
 

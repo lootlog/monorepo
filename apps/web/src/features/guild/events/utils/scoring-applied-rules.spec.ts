@@ -91,6 +91,7 @@ function createContext(
   overrides: Partial<EvaluationContext> = {},
 ): EvaluationContext {
   const now = new Date();
+
   const killTime = new Date(
     now.getFullYear(),
     now.getMonth(),
@@ -98,6 +99,7 @@ function createContext(
     12,
     0,
   );
+
   const respawnStartTime = new Date(killTime.getTime() - 7200 * 1000);
 
   return {
@@ -148,6 +150,7 @@ describe("evaluateEventScoring", () => {
       trackingDurationPercentage: 80,
       assignedMembersCount: 3,
     });
+
     const result = evaluateEventScoring(BASE_RULES, context);
 
     expect(result.bonusPoints).toBe(0.5);
@@ -161,6 +164,7 @@ describe("evaluateEventScoring", () => {
       trackingDurationPercentage: 40,
       assignedMembersCount: 3,
     });
+
     const result = evaluateEventScoring(BASE_RULES, context);
 
     expect(result.bonusPoints).toBe(0);
@@ -174,6 +178,7 @@ describe("evaluateEventScoring", () => {
       trackingDurationPercentage: 80,
       assignedMembersCount: 10,
     });
+
     const result = evaluateEventScoring(BASE_RULES, context);
 
     expect(result.bonusPoints).toBe(0);
@@ -185,6 +190,7 @@ describe("evaluateEventScoring", () => {
       memberPresentAtKill: false,
       minutesSinceLeaveToKill: 15,
     });
+
     const result = evaluateEventScoring(BASE_RULES, context);
 
     // base-75 sets 1.0, base-50 overwrites to 0.5, leave-grace zeroes it
@@ -200,6 +206,7 @@ describe("evaluateEventScoring", () => {
       memberPresentAtKill: false,
       minutesSinceLeaveToKill: 5,
     });
+
     const result = evaluateEventScoring(BASE_RULES, context);
 
     expect(result.basePoints).toBe(0.5);
@@ -213,10 +220,12 @@ describe("evaluateEventScoring", () => {
       ...BASE_RULES,
       hardCapPoints: 0.75,
     };
+
     const context = createContext({
       trackingDurationPercentage: 80,
       assignedMembersCount: 2,
     });
+
     const result = evaluateEventScoring(rules, context);
 
     expect(result.basePoints + result.bonusPoints).toBeGreaterThan(0.75);
@@ -230,6 +239,7 @@ describe("evaluateEventScoring", () => {
         rule.id === "base-75" ? { ...rule, enabled: false } : rule,
       ),
     };
+
     const context = createContext({ trackingDurationPercentage: 80 });
     const result = evaluateEventScoring(rules, context);
 
@@ -241,6 +251,7 @@ describe("evaluateEventScoring", () => {
       ...BASE_RULES,
       rules: [],
     };
+
     const context = createContext();
     const result = evaluateEventScoring(rules, context);
 
@@ -294,6 +305,7 @@ describe("evaluateEventScoring", () => {
         },
       ],
     };
+
     const context = createContext({ trackingDurationPercentage: 80 });
     const result = evaluateEventScoring(rules, context);
 
@@ -306,11 +318,13 @@ describe("evaluateEventScoring", () => {
       trackingDurationPercentage: 80,
       assignedMembersCount: 2,
     });
+
     const result = evaluateEventScoring(BASE_RULES, context);
 
     const groupBonus = result.appliedRules.find(
       (r) => r.ruleId === "bonus-group",
     );
+
     expect(groupBonus).toBeDefined();
     expect(groupBonus?.ruleName).toBe("Small group");
     expect(groupBonus?.points).toBe(0.5);

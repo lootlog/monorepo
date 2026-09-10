@@ -51,6 +51,7 @@ describe("PlayerTile", () => {
         }}
       />,
     );
+
     const trigger = container.firstElementChild;
 
     if (!trigger) throw new Error("Missing player tile trigger");
@@ -85,9 +86,11 @@ describe("PlayerTile", () => {
         onShowLoots={onShowLoots}
       />,
     );
+
     const actionTrigger = screen.getByLabelText(
       "loots.list.playerActions.label",
     );
+
     const tooltipTrigger = actionTrigger.querySelector(
       '[data-slot="tooltip-trigger"]',
     );
@@ -108,6 +111,7 @@ describe("PlayerTile", () => {
     const showLootsAction = await screen.findByText(
       "loots.list.playerActions.showLoots",
     );
+
     fireEvent.click(showLootsAction);
 
     expect(onShowLoots).toHaveBeenCalledOnce();

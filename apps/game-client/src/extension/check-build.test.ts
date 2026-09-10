@@ -6,6 +6,7 @@ import { buildProfile } from "../../extension/build-profile";
 import { checkBuild } from "../../extension/check-build";
 
 const directories: string[] = [];
+
 afterEach(async () => {
   await Promise.all(
     directories
@@ -41,6 +42,7 @@ async function artifact(mode: string) {
       }),
     ),
   ]);
+
   return { directory, source };
 }
 
@@ -49,10 +51,12 @@ it.each(["production-local", "production"])(
   async (mode) => {
     const { directory, source } = await artifact(mode);
     await expect(checkBuild(directory, mode)).resolves.toBeUndefined();
+
     const wrong =
       mode === "production"
         ? "http://localhost/api/auth"
         : "https://auth.lootlog.pl";
+
     await writeFile(path.join(directory, "background.js"), source + wrong);
     await expect(checkBuild(directory, mode)).rejects.toThrow(
       "wrong environment",

@@ -250,6 +250,7 @@ describe("RuntimeStateProjection", () => {
 
   it("publishes identity only for CREATE and ignores movement packets", () => {
     const adapter = createAdapter();
+
     const handle = {
       d: {
         account: 22,
@@ -260,6 +261,7 @@ describe("RuntimeStateProjection", () => {
         lvl: 50,
       },
     };
+
     adapter.getOtherHandle.mockReturnValue(handle);
     const projection = new RuntimeStateProjection({ adapter });
     projection.bootstrap();
@@ -364,6 +366,7 @@ describe("RuntimeStateProjection", () => {
     const adapter = createAdapter();
     const projection = new RuntimeStateProjection({ adapter });
     projection.bootstrap();
+
     const envelope = createEnvelope({
       h: { stasis: 1 },
       npcs_del: [{ id: 501, respBaseSeconds: 120 }],

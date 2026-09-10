@@ -18,8 +18,10 @@ import { ChatMessage } from "./chat-message";
 
 const render = (ui: ReactElement) =>
   renderUi(ui, { wrapper: createChatTestWrapper().wrapper });
+
 const makeChatMessage = (overrides?: Partial<ChatMessageType>) =>
   createChatMessage({ message: "hello", ...overrides });
+
 beforeEach(() =>
   setTestRuntimeGame({ interface: "si", hero: { name: "CurrentHero" } }),
 );

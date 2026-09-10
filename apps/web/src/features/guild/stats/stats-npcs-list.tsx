@@ -50,6 +50,7 @@ export const StatsNpcsList: React.FC = () => {
     handlePreviousPage,
     handleNextPage,
   } = useStatsNpcsListModel();
+
   return (
     <div className="flex flex-col h-full min-h-0 bg-background">
       <ScrollArea className="flex-1 min-h-0">

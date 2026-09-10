@@ -55,6 +55,7 @@ export function useEventCreateDialog({ onOpenChange }: EventCreateDialogProps) {
   const guildId = useGuildId();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
   const createEvent = useCreateEvent({
     mutation: {
       onSuccess: () => {
@@ -64,6 +65,7 @@ export function useEventCreateDialog({ onOpenChange }: EventCreateDialogProps) {
       },
     },
   });
+
   const [step, setStep] = useState<1 | 2>(1);
 
   const form = useForm<FormData>({
@@ -77,6 +79,7 @@ export function useEventCreateDialog({ onOpenChange }: EventCreateDialogProps) {
       form.reset(getDefaultValues());
       setStep(1);
     }
+
     onOpenChange(isOpen);
   };
 
@@ -88,6 +91,7 @@ export function useEventCreateDialog({ onOpenChange }: EventCreateDialogProps) {
           "Data końca musi być po dacie startu",
         ),
       );
+
       return;
     }
 
@@ -98,6 +102,7 @@ export function useEventCreateDialog({ onOpenChange }: EventCreateDialogProps) {
           "Nazwa eventu i świat są wymagane",
         ),
       );
+
       return;
     }
 
@@ -115,8 +120,10 @@ export function useEventCreateDialog({ onOpenChange }: EventCreateDialogProps) {
         : 0,
       scoringMode: normalizedMode,
     };
+
     if (data.rulebookMarkdown?.trim().length)
       request.rulebookMarkdown = data.rulebookMarkdown.trim();
+
     if (normalizedMode === "ADVANCED")
       request.scoringRules = normalizeEventScoringRules(data.scoringRules);
 

@@ -14,8 +14,11 @@ export type MapStatus =
 
 const getGapTypeFromStatus = (status: MapStatus): CoverageGapType | null => {
   if (status === "ASSIGNED_PRESENT") return null;
+
   if (status === "ASSIGNED_UNKNOWN") return null;
+
   if (status === "UNASSIGNED") return "UNASSIGNED";
+
   return "UNCOVERED";
 };
 
@@ -32,6 +35,7 @@ export const useLocalCoverageTimer = (
   const activeGapType = activeGap?.gapType ?? null;
   const activeGapStartedAt = activeGap?.startedAt ?? null;
   const fallbackGapType = activeGapId !== ignoredGapId ? activeGapType : null;
+
   const gapType =
     statusGapType ?? (status === "ASSIGNED_UNKNOWN" ? fallbackGapType : null);
 
@@ -47,9 +51,11 @@ export const useLocalCoverageTimer = (
         // eslint-disable-next-line react-doctor/no-derived-state
         setIgnoredGapId(activeGapId);
       }
+
       // The local elapsed clock ends on a coverage transition, independently of a lagging backend gap.
       // eslint-disable-next-line react-doctor/no-adjust-state-on-prop-change
       setStartTime(null);
+
       return;
     }
 
@@ -61,8 +67,10 @@ export const useLocalCoverageTimer = (
 
     if (hasCurrentBackendGap) {
       const backendStartTime = Date.parse(activeGapStartedAt);
+
       if (!Number.isNaN(backendStartTime)) {
         setStartTime(backendStartTime);
+
         return;
       }
     }

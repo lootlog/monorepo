@@ -31,6 +31,7 @@ const getExpectedMentionSignature = (
   return getChatMentionSegments(message, mentionContext)
     .flatMap((segment) => {
       if (!segment.isMention) return [];
+
       return [
         segment.text,
         segment.kind,
@@ -62,9 +63,11 @@ const rebuildMentionNodes = (mentionContext?: ChatMentionContext) => {
   const root = $getRoot();
   const message = root.getTextContent();
   const selection = $getSelection();
+
   const selectionOffsets = $isRangeSelection(selection)
     ? $getChatInputSelectionOffsets(selection)
     : null;
+
   const segments = getChatMentionSegments(message, mentionContext);
   const paragraph = $createParagraphNode();
 
@@ -121,6 +124,7 @@ export const ChatInputMentionsPlugin: FC<ChatInputMentionsPluginProps> = ({
     };
 
     reconcileMentions();
+
     return editor.registerUpdateListener(reconcileMentions);
   }, [editor, mentionContext]);
 

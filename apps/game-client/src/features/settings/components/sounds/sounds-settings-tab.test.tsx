@@ -6,6 +6,7 @@ import { createSoundSettings } from "@/test/sound-settings-fixtures";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 
 let harness: ReturnType<typeof createGuildPreferencesTest>;
+
 const render = () =>
   renderUi(<SoundsSettingsTab />, { wrapper: harness.wrapper });
 

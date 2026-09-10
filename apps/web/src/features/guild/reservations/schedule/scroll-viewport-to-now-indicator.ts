@@ -2,6 +2,7 @@ export const scrollViewportToNowIndicator = (nowIndicator: HTMLElement) => {
   const scrollViewport = nowIndicator.closest(
     '[data-slot="scroll-area-viewport"]',
   );
+
   if (!(scrollViewport instanceof HTMLElement)) return;
 
   scrollViewport.scrollTop = Math.max(

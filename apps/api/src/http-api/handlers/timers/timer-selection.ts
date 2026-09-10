@@ -48,6 +48,7 @@ export const findTimerMatches = (
     world,
     timerIdentifier,
   );
+
   return database.select().from(timerTable).where(timerCondition);
 };
 

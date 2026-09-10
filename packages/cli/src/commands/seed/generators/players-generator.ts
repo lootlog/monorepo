@@ -19,6 +19,7 @@ export function generatePlayers(count: number): GeneratedPlayer[] {
   for (let i = 0; i < count; i++) {
     const nicknameWords = crypto.randomInt(1, 4);
     const generatedWords = generate({ exactly: nicknameWords });
+
     const name = Array.isArray(generatedWords)
       ? generatedWords.join(" ")
       : generatedWords;

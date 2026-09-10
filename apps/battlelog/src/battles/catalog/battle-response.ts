@@ -310,9 +310,11 @@ const BattleAcceptedResponseSchema = Schema.Struct({
 export type BattleResponseInput = DeepMutable<
   typeof BattleResponseSchema.Encoded
 >;
+
 export type BattlesListResponseInput = DeepMutable<
   typeof BattlesListResponseSchema.Encoded
 >;
+
 export type BattleTimelineResponseInput = DeepMutable<
   typeof BattleTimelineResponseSchema.Encoded
 >;

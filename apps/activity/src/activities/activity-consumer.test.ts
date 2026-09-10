@@ -59,6 +59,7 @@ const makeDelivery = (
       clusterId: undefined,
     },
   } satisfies RabbitDelivery["raw"];
+
   return {
     content: new Uint8Array(raw.content),
     exchange: raw.fields.exchange,
@@ -101,22 +102,27 @@ describe("Activity RabbitMQ topology", () => {
         string,
         (delivery: RabbitDelivery) => Effect.Effect<void, unknown>
       >();
+
       const publish = mock<RabbitMessagingService["publish"]>(
         () => Effect.void,
       );
+
       const create = mock(() => Effect.void);
+
       const rabbit = RabbitMessaging.of({
         publish,
         ack: () => Effect.void,
         nack: () => Effect.void,
         consume: (options, handler) => {
           handlers.set(options.queue, handler);
+
           return Effect.succeed({
             consumerTag: options.queue,
             cancel: Effect.void,
           });
         },
       });
+
       const repository = ActivityRepository.of({
         create,
         clearActiveSessionsForMember: () => Effect.void,
@@ -128,6 +134,7 @@ describe("Activity RabbitMQ topology", () => {
         suggestWorlds: () => Effect.succeed([]),
         suggestClanNames: () => Effect.succeed([]),
       });
+
       const config = ActivityConfig.of({
         environment: RuntimeEnvironment.LOCAL,
         port: 0,
@@ -149,7 +156,9 @@ describe("Activity RabbitMQ topology", () => {
             ),
           );
           const handler = handlers.get("activity-log-create");
+
           if (!handler) return yield* Effect.die("consumer was not registered");
+
           const delivery =
             scenario === "malformed"
               ? makeDelivery("not-json")
@@ -159,6 +168,7 @@ describe("Activity RabbitMQ topology", () => {
                     (scenario === "valid" ? "a" : "b").repeat(32),
                   ),
                 });
+
           yield* handler(delivery);
         }).pipe(Effect.scoped),
       );
@@ -167,11 +177,14 @@ describe("Activity RabbitMQ topology", () => {
       // Registering a log-only DLQ handler would silently delete failed events.
       expect(handlers.has("activity-log-create.dlq")).toBe(false);
       expect(handlers.has("guilds-members-remove.dlq")).toBe(false);
+
       if (scenario === "valid") {
         expect(create).toHaveBeenCalledWith(payload);
         expect(publish).not.toHaveBeenCalled();
+
         return;
       }
+
       expect(create).not.toHaveBeenCalled();
       expect(publish).toHaveBeenCalledTimes(1);
       expect(publish.mock.calls[0]?.[0].headers).toMatchObject(

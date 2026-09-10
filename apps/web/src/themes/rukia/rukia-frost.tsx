@@ -100,6 +100,7 @@ const Snowflake = ({
   delay: number;
 }) => {
   const prefersReducedMotion = usePrefersReducedMotion();
+
   return (
     <m.div
       key={String(prefersReducedMotion)}
@@ -342,6 +343,7 @@ const iceSparkleConfigs = generateIceSparkles();
 
 const IceSparkles = () => {
   const prefersReducedMotion = usePrefersReducedMotion();
+
   return (
     <>
       {iceSparkleConfigs.map((sparkle) => (
@@ -422,6 +424,7 @@ const generateFrostPatches = () => {
 
   for (const edge of edges) {
     const count = 2 + Math.floor(Math.random() * 3);
+
     for (let i = 0; i < count; i++) {
       const pos = Math.random() * 100;
       const size = 80 + Math.random() * 160;
@@ -534,6 +537,7 @@ const FallingSnowflake = ({
   type: FallingSnowflakeType;
 }) => {
   const prefersReducedMotion = usePrefersReducedMotion();
+
   return (
     <m.div
       key={String(prefersReducedMotion)}
@@ -641,25 +645,33 @@ const FallingSnowflake = ({
 
 const getSnowflakeSize = (isTiny: boolean, isLarge: boolean) => {
   if (isTiny) return 3 + Math.random() * 4;
+
   if (isLarge) return 14 + Math.random() * 6;
+
   return 8 + Math.random() * 6;
 };
 
 const getSnowflakeFallDuration = (isTiny: boolean, isLarge: boolean) => {
   if (isTiny) return 25 + Math.random() * 15;
+
   if (isLarge) return 35 + Math.random() * 15;
+
   return 28 + Math.random() * 12;
 };
 
 const getSnowflakeOpacity = (isTiny: boolean, isLarge: boolean) => {
   if (isTiny) return 0.1 + Math.random() * 0.1;
+
   if (isLarge) return 0.15 + Math.random() * 0.1;
+
   return 0.12 + Math.random() * 0.08;
 };
 
 const getSnowflakeType = (isTiny: boolean): FallingSnowflakeType => {
   if (isTiny) return "dot";
+
   if (Math.random() > 0.6) return "detailed";
+
   return "simple";
 };
 
@@ -718,6 +730,7 @@ const generateCircleCrystals = (count: number, circleSize: number) =>
     const rotation = Math.random() * 360;
     const animDuration = 2 + Math.random() * 3;
     const animDelay = Math.random() * 2;
+
     return { x, y, starSize, rotation, angle, animDuration, animDelay };
   });
 

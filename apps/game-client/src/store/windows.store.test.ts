@@ -75,9 +75,11 @@ describe("windows store", () => {
     expect(state.toggleOpen).toBe(initial.toggleOpen);
     state.setOpen("chat", true);
     expect(useWindowsStore.getState().chat.open).toBe(true);
+
     const saved = JSON.parse(
       localStorage.getItem(storageKey("ll-windows-state")) ?? "{}",
     );
+
     expect(saved).toHaveProperty("state.addonPreferences", { enabled: true });
     expect(saved).toHaveProperty("state.create-notification.addonFlag", "keep");
     expect(saved).not.toHaveProperty("state.setOpen");
@@ -171,6 +173,7 @@ describe("windows store", () => {
     const serializedState = localStorage.getItem(
       storageKey("ll-windows-state"),
     );
+
     const persisted: unknown = JSON.parse(serializedState ?? "{}");
 
     expect(persisted).toHaveProperty("state");
@@ -213,6 +216,7 @@ describe("windows store", () => {
 describe("createDeduplicatingStateStorage", () => {
   it("does not write a serialized state that is already persisted", () => {
     const values = new Map<string, string>();
+
     const storage = {
       getItem: vi.fn<Storage["getItem"]>(
         (key: string) => values.get(key) ?? null,
@@ -226,6 +230,7 @@ describe("createDeduplicatingStateStorage", () => {
         },
       ),
     };
+
     const deduplicatedStorage = createDeduplicatingStateStorage(storage);
 
     deduplicatedStorage.setItem("windows", "same-state");

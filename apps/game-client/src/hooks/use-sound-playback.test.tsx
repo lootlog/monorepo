@@ -3,7 +3,9 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { DEFAULT_SOUND_URLS } from "@/features/settings/config/default-sounds";
 import { createNotificationTest } from "@/features/notifications/notification-test";
 import { useSoundPlayback } from "./use-sound-playback";
+
 let test: ReturnType<typeof createNotificationTest>;
+
 describe("useSoundPlayback", () => {
   beforeEach(() => {
     test = createNotificationTest();
@@ -12,6 +14,7 @@ describe("useSoundPlayback", () => {
     const { result, unmount } = renderHook(() => useSoundPlayback(), {
       wrapper: test.wrapper,
     });
+
     expect(test.audio).toHaveLength(0);
     act(() => window.dispatchEvent(new Event("pointerdown")));
     expect(test.audio).toHaveLength(1);
@@ -33,9 +36,11 @@ describe("useSoundPlayback", () => {
     const first = renderHook(() => useSoundPlayback(), {
       wrapper: test.wrapper,
     });
+
     const second = renderHook(() => useSoundPlayback(), {
       wrapper: test.wrapper,
     });
+
     act(() => window.dispatchEvent(new Event("pointerdown")));
     expect(test.audio).toHaveLength(1);
     first.unmount();
@@ -49,9 +54,11 @@ describe("useSoundPlayback", () => {
       HERO: { volume: 0.5, soundUrl: "https://audio.test/shared.mp3" },
     };
     test.setSounds();
+
     const { result, unmount } = renderHook(() => useSoundPlayback(), {
       wrapper: test.wrapper,
     });
+
     act(() => result.current.playSounds("notifications", ["message", "HERO"]));
     expect(test.audio).toHaveLength(1);
     expect(test.audio[0]?.src).toBe("https://audio.test/shared.mp3");

@@ -5,8 +5,11 @@ import {
 } from "@lootlog/datetime";
 
 export const CLOCK_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
 export const EVENT_SCORING_TIMEZONE = "Europe/Warsaw" as const;
+
 export const EVENT_SCORING_MODES = ["SIMPLE", "ADVANCED"] as const;
+
 export const EVENT_SCORING_NUMERIC_OPERATORS = [
   ">",
   ">=",
@@ -15,6 +18,7 @@ export const EVENT_SCORING_NUMERIC_OPERATORS = [
   "==",
   "!=",
 ] as const;
+
 export const EVENT_SCORING_NUMERIC_FACTORS = [
   "trackingDurationPercentage",
   "trackingDurationSeconds",
@@ -25,17 +29,20 @@ export const EVENT_SCORING_NUMERIC_FACTORS = [
   "respawnDurationSeconds",
   "respawnProgressPercentage",
 ] as const;
+
 export const EVENT_SCORING_BOOLEAN_FACTORS = [
   "eligible",
   "memberPresentAtKill",
   "wasPresent",
 ] as const;
+
 export const EVENT_SCORING_CONDITION_TYPES = [
   "NUMERIC",
   "BOOLEAN",
   "KILL_TIME_IN_WINDOW",
   "RESPAWN_WINDOW_COVERAGE",
 ] as const;
+
 export const EVENT_SCORING_ACTION_TYPES = [
   "SET_BASE",
   "ADD_BONUS",
@@ -43,10 +50,13 @@ export const EVENT_SCORING_ACTION_TYPES = [
 ] as const;
 
 export type EventScoringMode = (typeof EVENT_SCORING_MODES)[number];
+
 export type EventScoringNumericOperator =
   (typeof EVENT_SCORING_NUMERIC_OPERATORS)[number];
+
 export type EventScoringNumericFactor =
   (typeof EVENT_SCORING_NUMERIC_FACTORS)[number];
+
 export type EventScoringBooleanFactor =
   (typeof EVENT_SCORING_BOOLEAN_FACTORS)[number];
 
@@ -270,6 +280,7 @@ function toNumber(value: unknown, fallback: number, min = 0, max?: number) {
   }
 
   const boundedValue = Math.max(min, value);
+
   return max === undefined ? boundedValue : Math.min(max, boundedValue);
 }
 
@@ -289,6 +300,7 @@ function parseAction(value: unknown): EventScoringAction | null {
   }
 
   const points = toNumber(value.points, Number.NaN);
+
   if (!Number.isFinite(points)) {
     return null;
   }
@@ -313,6 +325,7 @@ function parseCondition(value: unknown): EventScoringCondition | null {
     }
 
     const parsedValue = toNumber(value.value, Number.NaN);
+
     return Number.isFinite(parsedValue)
       ? {
           type: "NUMERIC",
@@ -351,6 +364,7 @@ function parseCondition(value: unknown): EventScoringCondition | null {
   }
 
   const parsedValue = toNumber(value.value, Number.NaN, 0, 100);
+
   return Number.isFinite(parsedValue)
     ? {
         type: "RESPAWN_WINDOW_COVERAGE",
@@ -376,6 +390,7 @@ function parseRule(rule: unknown, index: number): EventScoringRule | null {
   }
 
   const action = parseAction(rule.action);
+
   if (!action) {
     return null;
   }
@@ -387,6 +402,7 @@ function parseRule(rule: unknown, index: number): EventScoringRule | null {
           (condition): condition is EventScoringCondition => condition !== null,
         )
     : [];
+
   const normalizedRule: EventScoringRule = {
     id:
       typeof rule.id === "string" && rule.id.trim()
@@ -476,6 +492,7 @@ function evaluateCondition(params: {
         respawnDurationSeconds: params.respawnDurationSeconds,
         respawnProgressPercentage: context.respawnProgressPercentage,
       };
+
     const left = values[condition.factor];
 
     return left !== null && left !== undefined && Number.isFinite(left)
@@ -508,6 +525,7 @@ function evaluateCondition(params: {
 
   const totalDurationMs =
     context.killTime.getTime() - context.respawnStartTime.getTime();
+
   const overlapMs = calculateLocalWindowOverlapMs({
     startUtc: context.respawnStartTime,
     endUtc: context.killTime,
@@ -532,6 +550,7 @@ export function evaluateEventScoring(params: {
 
   if (mode === "SIMPLE") {
     const basePoints = context.eligible ? 1 : 0;
+
     return {
       totalPoints: basePoints,
       basePoints,
@@ -545,17 +564,20 @@ export function evaluateEventScoring(params: {
   let bonusPoints = 0;
   const appliedBonuses: EventScoringAppliedBonus[] = [];
   const appliedRules: EventScoringAppliedRule[] = [];
+
   const minutesSinceLeaveToKill =
     context.minutesSinceLeaveToKill ??
     (context.memberLeaveTime && context.memberLeaveTime < context.killTime
       ? (context.killTime.getTime() - context.memberLeaveTime.getTime()) /
         60_000
       : null);
+
   const minimumTrackingPercentage = Number.isFinite(
     rules.minTrackingPercentForBonuses,
   )
     ? Math.min(100, Math.max(0, rules.minTrackingPercentForBonuses))
     : 50;
+
   const respawnDurationSeconds = Math.max(
     0,
     Math.floor(

@@ -40,7 +40,9 @@ import {
 import { LootlogApi } from "../../lootlog-api.js";
 
 type Guild = typeof guildTable.$inferSelect;
+
 type Member = typeof memberTable.$inferSelect;
+
 type Role = typeof roleTable.$inferSelect;
 
 export const docsEndpointIdentifiers = [
@@ -112,7 +114,9 @@ type DocsFailure =
   | DocsDataError
   | DocsInvalidInput
   | DocsNotFound;
+
 type DocsHttpFailure = DocsAccessDenied | DocsFailure;
+
 type DocsEffect<A> = Effect.Effect<A, DocsFailure>;
 
 export class DocsData extends Context.Service<
@@ -167,20 +171,26 @@ export class DocsData extends Context.Service<
       if (status === 404) {
         return new DocsNotFound({ status, code: "DOCS_NOT_FOUND" });
       }
+
       if (status === 409) {
         return new DocsConflict({ status, code: "DOCS_CONFLICT" });
       }
+
       if (status === 400) {
         return new DocsInvalidInput({ status, code: "DOCS_INVALID_INPUT" });
       }
+
       return new DocsDataError({ cause });
     };
+
     const operation = <A, E>(effect: Effect.Effect<A, E>) =>
       effect.pipe(Effect.mapError(operationFailure));
+
     const encode = <A, E, Encoded>(
       effect: Effect.Effect<A, E>,
       encoder: (value: A) => Encoded,
     ) => operation(effect).pipe(Effect.map(encoder));
+
     return DocsData.of({
       list: (caller) =>
         encode(service.listDocuments(caller.guild.id), (value) =>
@@ -260,10 +270,12 @@ const readRequirement = {
   capabilities: [Permission.LOOTLOG_DOCS_READ, Permission.LOOTLOG_DOCS_WRITE],
   mode: "any",
 } as const;
+
 const writeRequirement = {
   capabilities: [Permission.LOOTLOG_DOCS_WRITE],
   mode: "all",
 } as const;
+
 const ownerRequirement = {
   capabilities: [Permission.OWNER, Permission.ADMIN],
   mode: "any",
@@ -276,12 +288,14 @@ const requirementFor = (endpoint: DocsEndpointIdentifier) => {
   ) {
     return ownerRequirement;
   }
+
   if (
     endpoint === "DocsControllerGetDocuments" ||
     endpoint === "DocsControllerGetDocument"
   ) {
     return readRequirement;
   }
+
   return writeRequirement;
 };
 
@@ -307,9 +321,11 @@ const execute = <A>(
 ) =>
   Effect.gen(function* () {
     const caller = yield* authorize(endpoint, guildId);
+
     const value = yield* Effect.flatMap(DocsData, (data) =>
       operation(data, caller),
     );
+
     return yield* decode(decoder, value);
   }).pipe(
     Effect.withSpan(endpoint, {

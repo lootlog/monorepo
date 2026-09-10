@@ -49,10 +49,13 @@ export const makeEventPointRecalculation =
               }),
           ),
         );
+
       const event = rows[0];
+
       if (!event) {
         return yield* Effect.fail(new ResourceNotFoundError("Event not found"));
       }
+
       yield* points.recalculate(event.id, event.basePointsPerKill);
       yield* invalidateEventCachePatterns(
         redis,
@@ -64,6 +67,7 @@ export const makeEventPointRecalculation =
         ],
         "Failed to invalidate event cache",
       );
+
       return { success: true };
     }).pipe(Effect.withSpan("EventsController_recalculateEventPoints"));
 

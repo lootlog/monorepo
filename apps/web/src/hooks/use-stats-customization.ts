@@ -48,9 +48,12 @@ export const useStatsCustomization = (
   ) => {
     setConfig((previous) => {
       const category = previous.categories[categoryId];
+
       if (!category) return previous;
       const updated = update(category);
+
       if (updated === category) return previous;
+
       return {
         ...previous,
         categories: { ...previous.categories, [categoryId]: updated },
@@ -63,16 +66,20 @@ export const useStatsCustomization = (
       ...category,
       visible: !category.visible,
     }));
+
   const updateCategoryName = (categoryId: string, name: string) =>
     updateCategory(categoryId, (category) => ({ ...category, name }));
+
   const updateStatOrder = (categoryId: string, statOrder: string[]) =>
     updateCategory(categoryId, (category) => ({ ...category, statOrder }));
+
   const addStatToCategory = (categoryId: string, statKey: string) =>
     updateCategory(categoryId, (category) =>
       category.statOrder.includes(statKey)
         ? category
         : { ...category, statOrder: [...category.statOrder, statKey] },
     );
+
   const removeStatFromCategory = (categoryId: string, statKey: string) =>
     updateCategory(categoryId, (category) => ({
       ...category,

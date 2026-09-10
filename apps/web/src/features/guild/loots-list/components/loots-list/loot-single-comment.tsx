@@ -16,10 +16,12 @@ export type LootSingleCommentProps = {
 
 export const LootSingleComment: FC<LootSingleCommentProps> = ({ comment }) => {
   const { t } = useTranslation();
+
   const avatarUrl = getDiscordAvatarUrl(
     comment.member.userId,
     comment.member.avatar,
   );
+
   const relativeTime = getRelativeTime(comment.createdAt);
   const color = getColorFromRole(comment.member.roles);
 

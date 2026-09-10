@@ -19,15 +19,19 @@ export function useParticipationConfirmation({
 }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+
   const [dismissedActiveKillIds, setDismissedActiveKillIds] = useState(
     () => new Set<string>(),
   );
+
   const [dismissedExpiredKillIds, setDismissedExpiredKillIds] = useState(
     () => new Set<string>(),
   );
+
   const [confirmingKillIds, setConfirmingKillIds] = useState<Set<string>>(
     () => new Set(),
   );
+
   const [isConfirmingAll, setIsConfirmingAll] = useState(false);
   const [currentTimestamp, setCurrentTimestamp] = useState(Date.now);
 
@@ -35,6 +39,7 @@ export function useParticipationConfirmation({
     guildId,
     eventId,
   });
+
   const confirmParticipation = useConfirmParticipationForKill({
     mutation: {
       onSuccess: () => {
@@ -42,9 +47,11 @@ export function useParticipationConfirmation({
       },
     },
   });
+
   const acknowledgeExpired = useAcknowledgeExpiredParticipationConfirmations();
 
   const pendingItems = data?.items ?? [];
+
   const activeItems = pendingItems
     .filter(
       (item) =>
@@ -55,13 +62,16 @@ export function useParticipationConfirmation({
         new Date(a.confirmationDeadlineAt).getTime() -
         new Date(b.confirmationDeadlineAt).getTime(),
     );
+
   const sortedItems = activeItems.filter(
     (item) => !dismissedActiveKillIds.has(item.killId),
   );
+
   const newlyExpiredItems = pendingItems.filter(
     (item) =>
       new Date(item.confirmationDeadlineAt).getTime() < currentTimestamp,
   );
+
   const sortedExpiredItems = [
     ...(data?.expiredItems ?? []),
     ...newlyExpiredItems,
@@ -72,9 +82,11 @@ export function useParticipationConfirmation({
         new Date(b.confirmationDeadlineAt).getTime() -
         new Date(a.confirmationDeadlineAt).getTime(),
     );
+
   const nearestDeadlineTimestamp = activeItems[0]
     ? new Date(activeItems[0].confirmationDeadlineAt).getTime()
     : null;
+
   const open = sortedItems.length > 0 || sortedExpiredItems.length > 0;
 
   useEffect(() => {
@@ -83,6 +95,7 @@ export function useParticipationConfirmation({
     }
 
     const timeoutMs = Math.max(0, nearestDeadlineTimestamp - Date.now() + 1);
+
     const timeoutId = window.setTimeout(() => {
       setCurrentTimestamp(Date.now());
     }, timeoutMs);
@@ -92,6 +105,7 @@ export function useParticipationConfirmation({
 
   const handleConfirm = async (killId: string) => {
     setConfirmingKillIds((ids) => new Set([...ids, killId]));
+
     try {
       await confirmParticipation.mutateAsync({
         pathParams: {
@@ -114,9 +128,11 @@ export function useParticipationConfirmation({
         ),
       );
     }
+
     setConfirmingKillIds((ids) => {
       const next = new Set(ids);
       next.delete(killId);
+
       return next;
     });
   };
@@ -131,6 +147,7 @@ export function useParticipationConfirmation({
 
   const handleOpenChange = async (nextOpen: boolean) => {
     if (isConfirmingAll || confirmingKillIds.size > 0) return;
+
     if (nextOpen) {
       return;
     }

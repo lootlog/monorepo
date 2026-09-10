@@ -10,6 +10,7 @@ export const SingleNotificationNpc: FC<SingleNotificationNpcProps> = ({
   notification,
 }) => {
   const { t } = useTranslation("notifications");
+
   if (!notification.npc) return null;
 
   return (

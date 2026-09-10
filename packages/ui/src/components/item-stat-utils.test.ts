@@ -11,6 +11,7 @@ import {
 } from "./item-stat-utils";
 
 const translations = createTranslationLookup(itemStats);
+
 function resolveTranslation(path: string): string | undefined {
   return translations.get(path.replace(/^itemStats\./, ""));
 }
@@ -244,6 +245,7 @@ describe("item stat utilities", () => {
       "verycrit",
       "future-bonus",
     ];
+
     const values = mapStatsToDisplayValues(
       bonusNames.map((bonusName) => ({ key: "legbon", value: bonusName })),
     ).legendaryBonusBlock;
@@ -280,15 +282,18 @@ describe("item stat utilities", () => {
         teleport: "x,10,20,Karka-han",
       }),
     );
+
     const stats = SUPPORTED_ITEM_STAT_KEYS.map((key) => ({
       key,
       value: sampleValues.get(key) ?? "1",
     }));
+
     const blocks = mapStatsToDisplayValues(stats);
     const displayValues = Object.values(blocks).flat();
 
     expect(blocks.unrecognizedBlock).toEqual([]);
     displayValues.forEach(expectTranslated);
+
     for (const translationPath of displayValues.flatMap(
       getTranslatedValuePaths,
     )) {

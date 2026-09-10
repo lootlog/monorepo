@@ -33,30 +33,36 @@ type NotificationRuleCardProps = {
 };
 
 type NotificationRule = NotificationRuleCardProps["rule"];
+
 type Translator = ReturnType<typeof useTranslation>["t"];
 
 const getRecurringScheduleLabel = (rule: NotificationRule, t: Translator) => {
   if (rule.triggerType !== NotificationTriggerType.SCHEDULED_MESSAGE) {
     return undefined;
   }
+
   if (
     !rule.scheduleIntervalType ||
     rule.scheduleIntervalType === NotificationScheduleIntervalType.ONCE
   ) {
     return undefined;
   }
+
   if (rule.scheduleIntervalType === NotificationScheduleIntervalType.HOURLY) {
     return t("settings.notifications.intervalTypes.hourly").replace(
       "X",
       String(rule.scheduleIntervalValue ?? 1),
     );
   }
+
   if (rule.scheduleIntervalType === NotificationScheduleIntervalType.DAILY) {
     return `${t("settings.notifications.intervalTypes.daily")} ${rule.scheduleTimeOfDay ?? ""}`;
   }
+
   if (rule.scheduleIntervalType === NotificationScheduleIntervalType.WEEKLY) {
     return `${t(`settings.notifications.weekdays.${rule.scheduleWeekday ?? 0}`)} ${rule.scheduleTimeOfDay ?? ""}`;
   }
+
   return "";
 };
 
@@ -64,7 +70,9 @@ const getNpcLabel = (rule: NotificationRule, t: Translator) => {
   if (rule.triggerType === NotificationTriggerType.SCHEDULED_MESSAGE) {
     return undefined;
   }
+
   const npcCount = getGuildNotificationRuleNpcCount(rule);
+
   return npcCount > 0
     ? t("settings.notifications.npcCount", { count: npcCount })
     : t("settings.notifications.allNpcs");
@@ -77,6 +85,7 @@ const getNotificationRuleCardViewModel = (
   const triggerLabel = t(
     getNotificationTriggerTranslationKey(rule.triggerType),
   );
+
   return {
     triggerLabel,
     displayName: rule.name ?? triggerLabel,
@@ -109,6 +118,7 @@ export const useNotificationRuleActions = ({
   const { t } = useTranslation();
   const guildId = useGuildId();
   const queryClient = useQueryClient();
+
   const deleteRule = useNotificationsGuildControllerDeleteGuildRule<
     unknown,
     GuildNotificationCacheSnapshot | undefined
@@ -135,6 +145,7 @@ export const useNotificationRuleActions = ({
       ...getGuildNotificationMutationCallbacks(queryClient, guildId),
     },
   });
+
   const rebuildRuleJobs = useNotificationsGuildControllerRebuildGuildRuleJobs({
     mutation: {
       onSuccess: async () => {
@@ -146,6 +157,7 @@ export const useNotificationRuleActions = ({
       },
     },
   });
+
   const triggerRuleTest = useNotificationsGuildControllerTriggerGuildRuleTest({
     mutation: {
       onSuccess: async () => {
@@ -157,17 +169,23 @@ export const useNotificationRuleActions = ({
       },
     },
   });
+
   const targetLabels = rule.targets.map(({ target }) => {
     const label = getGuildNotificationTargetLabel(target);
+
     if (!target.active) {
       return `${label} ${t("settings.notifications.targetInactive")}`;
     }
+
     return label;
   });
+
   const viewModel = getNotificationRuleCardViewModel(rule, t);
+
   const hasTestableTargets = rule.targets.some(
     ({ target }) => target.active && target.canSend,
   );
+
   const isActionDisabled =
     actionsDisabled ||
     deleteRule.isPending ||
@@ -181,8 +199,10 @@ export const useNotificationRuleActions = ({
         getApiErrorMessage(error) ??
           t("settings.notifications.toasts.ruleJobsRebuildError"),
       );
+
       return;
     }
+
     try {
       await rebuildRuleJobs.mutateAsync({
         pathParams: { guildId, ruleId: rule.id },
@@ -203,8 +223,10 @@ export const useNotificationRuleActions = ({
         getApiErrorMessage(error) ??
           t("settings.notifications.toasts.ruleTestTriggerError"),
       );
+
       return;
     }
+
     try {
       await triggerRuleTest.mutateAsync({
         pathParams: { guildId, ruleId: rule.id },
@@ -227,6 +249,7 @@ export const useNotificationRuleActions = ({
       );
       throw error;
     }
+
     try {
       await deleteRule.mutateAsync({
         pathParams: { guildId, ruleId: rule.id },

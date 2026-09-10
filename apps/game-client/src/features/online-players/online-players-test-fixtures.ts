@@ -9,6 +9,7 @@ export type PresenceSnapshotData = Extract<
   ServerEvent,
   { type: "presence.snapshot" }
 >["data"];
+
 export const createOnlinePresence = (
   overrides: Partial<PresenceWithLocation> = {},
 ): PresenceWithLocation => ({
@@ -34,6 +35,7 @@ export const createOnlinePresence = (
   location: { map: "Karka-han", x: 1, y: 2 },
   ...overrides,
 });
+
 export const createPresenceSnapshot = (
   presences: PresenceSnapshotData["presences"] = [createOnlinePresence()],
 ): PresenceSnapshotData => ({
@@ -42,17 +44,21 @@ export const createPresenceSnapshot = (
   revision: 1,
   presences,
 });
+
 export const createOnlinePlayersTest = () => {
   const realtime = createRealtimeTest();
+
   const fetchPresence = vi
     .fn<
       (organizationId: string, world?: string) => Promise<PresenceSnapshotData>
     >()
     .mockResolvedValue(createPresenceSnapshot());
+
   const send = realtime.wire.send.bind(realtime.wire);
   vi.spyOn(realtime.wire, "send").mockImplementation((data) => {
     send(data);
     const request = realtime.wire.frames.at(-1);
+
     if (
       !request ||
       !("type" in request) ||
@@ -82,5 +88,6 @@ export const createOnlinePlayersTest = () => {
         }),
     );
   });
+
   return { ...realtime, fetchPresence };
 };

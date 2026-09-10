@@ -16,9 +16,11 @@ export const getPrimaryModifierKeyLabel = (
 
   const reportedPlatform =
     platformNavigator.userAgentData?.platform ?? platformNavigator.platform;
+
   const platform = reportedPlatform.trim()
     ? reportedPlatform
     : platformNavigator.userAgent;
+
   const isApplePlatform = /mac|iphone|ipad|ipod/i.test(platform);
 
   return isApplePlatform ? "⌘" : "Ctrl";

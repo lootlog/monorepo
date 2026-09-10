@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ActivePartyGatheringSummary } from "@lootlog/client/main";
 import { selectFeaturedGathering } from "./chat-gathering-bar";
+
 const first: ActivePartyGatheringSummary = {
   notificationId: "first",
   organizerName: "Hero",
@@ -11,11 +12,13 @@ const first: ActivePartyGatheringSummary = {
   createdAt: "2026-09-09T00:00:00Z",
   expiresAt: "2026-09-09T00:30:00Z",
 };
+
 const newer = {
   ...first,
   notificationId: "newer",
   createdAt: "2026-09-09T00:01:00Z",
 };
+
 describe("featured gathering target", () => {
   it("keeps the hovered or focused target when a newer gathering arrives", () => {
     expect(selectFeaturedGathering([newer, first], first)?.notificationId).toBe(

@@ -42,6 +42,7 @@ export const LootShareResponse = Schema.Record(
   Schema.String,
   Schema.Array(Schema.String),
 );
+
 export const LootSummary = Schema.Struct({
   items: Schema.Array(LootItemResponse),
   players: Schema.Array(LootPlayerResponse),
@@ -49,4 +50,5 @@ export const LootSummary = Schema.Struct({
   lootShare: LootShareResponse,
   location: Schema.String,
 });
+
 export type LootSummary = typeof LootSummary.Type;

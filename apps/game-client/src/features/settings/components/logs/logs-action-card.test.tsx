@@ -7,8 +7,10 @@ import { LogsActionCard } from "./logs-action-card";
 
 it("toggles details with the keyboard without toggling when copying an action", async () => {
   const user = userEvent.setup();
+
   const onCopyAction =
     vi.fn<ComponentProps<typeof LogsActionCard>["onCopyAction"]>();
+
   render(
     <LogsActionCard
       action={{

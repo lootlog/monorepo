@@ -15,6 +15,7 @@ export const LiveFeedTime = ({
   now: number;
 }) => {
   const date = new Date(occurredAt);
+
   return (
     <time
       className="shrink-0 text-xs text-muted-foreground"

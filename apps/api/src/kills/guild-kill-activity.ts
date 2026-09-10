@@ -20,10 +20,13 @@ export const makeGuildKillActivityPublisher = (
       const minute = new Date(
         Math.floor(input.lastKilledAt.getTime() / 60000) * 60000,
       );
+
       const feedEntry = yield* readPublishedFeedEntry(database, input.guildId, {
         kill: { ...input, minute },
       });
+
       if (!feedEntry || feedEntry.type !== "kill") return;
+
       const sourceNpcs = yield* database
         .selectDistinct({
           level: guildKillActivityTable.npcLvl,
@@ -42,6 +45,7 @@ export const makeGuildKillActivityPublisher = (
             ),
           ),
         );
+
       yield* rabbit.publish({
         exchange: "default",
         routingKey: RabbitRoutingKey.GUILDS_KILLS_ACCEPTED_V1,
@@ -74,20 +78,26 @@ export const makeGuildKillActivityCleanup = (
     const cutoff = new Date(
       (yield* Clock.currentTimeMillis) - 86400000,
     ).toISOString();
+
     let removed = 0;
+
     for (let batch = 0; batch < 100; batch++) {
       const result =
         yield* database.execute(sql`DELETE FROM "GuildKillActivity" WHERE id IN (
       SELECT id FROM "GuildKillActivity" WHERE "occurredAt" < ${cutoff}::timestamptz AT TIME ZONE 'UTC'
       ORDER BY "occurredAt",id LIMIT 5000 FOR UPDATE SKIP LOCKED
     ) RETURNING id`);
+
       const decoded = yield* Schema.decodeUnknownEffect(
         Schema.Struct({
           rows: Schema.Array(Schema.Struct({ id: Schema.String })),
         }),
       )(result);
+
       removed += decoded.rows.length;
+
       if (decoded.rows.length < 5000) break;
     }
+
     yield* Effect.logInfo("Expired guild kill activity deleted", { removed });
   });

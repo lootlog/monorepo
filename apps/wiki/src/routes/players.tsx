@@ -40,6 +40,7 @@ function PlayersRoute() {
   const searchForm = useBasicSearchForm(search, navigate);
   const hasActiveSearch = isBasicRouteSearchActive(search);
   const queryParams = getBasicRouteSearchQueryParams(search, SEARCH_LIMIT);
+
   const playersQuery = usePlayersControllerGetPlayers(queryParams, {
     query: {
       enabled: hasActiveSearch,
@@ -52,6 +53,7 @@ function PlayersRoute() {
       },
     },
   });
+
   const data = hasActiveSearch ? (playersQuery.data ?? []) : [];
   let status: SearchStatus = "ready";
 

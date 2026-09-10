@@ -21,6 +21,7 @@ type GameAccountNotificationPreferences = Pick<
   UserGameAccountPreferences,
   "hasStoredNotifications" | "notifications"
 >;
+
 type GameAccountDetectorPreferences = Pick<
   UserGameAccountPreferences,
   "detector" | "hasStoredDetector"

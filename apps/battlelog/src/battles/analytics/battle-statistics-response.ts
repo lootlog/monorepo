@@ -238,35 +238,47 @@ const CombatProfileResponseSchema = Schema.Struct({
 export type BattleAnalyticsSummary = DeepMutable<
   typeof BattleAnalyticsResponseSchema.Type
 >;
+
 export type ProfessionWinRate = DeepMutable<
   typeof ProfessionWinRateResponseSchema.Type
 >;
+
 export type HeadToHeadRecord = DeepMutable<
   typeof HeadToHeadRecordResponseSchema.Type
 >;
+
 export type HeadToHeadPaginatedResponse = DeepMutable<
   typeof HeadToHeadPaginatedResponseSchema.Type
 >;
+
 export type BattleStreak = DeepMutable<typeof StreakResponseSchema.Type>;
+
 export type BattleDurationStats = DeepMutable<
   typeof BattleDurationStatsResponseSchema.Type
 >;
+
 export type PhGrowthDataPoint = DeepMutable<
   typeof PhGrowthDataPointResponseSchema.Type
 >;
+
 export type RatingGrowthDataPoint = DeepMutable<
   typeof RatingGrowthDataPointResponseSchema.Type
 >;
+
 export type RatingDeltaByOpponent = DeepMutable<
   typeof RatingDeltaByOpponentResponseSchema.Type
 >;
+
 export type AbyssSeason = DeepMutable<typeof AbyssSeasonResponseSchema.Type>;
+
 export type PlayerVsPlayerBattle = DeepMutable<
   typeof PlayerVsPlayerBattleResponseSchema.Type
 >;
+
 export type PlayerVsPlayerPaginatedResponse = DeepMutable<
   typeof PlayerVsPlayerPaginatedResponseSchema.Type
 >;
+
 export type CombatProfile = DeepMutable<
   typeof CombatProfileResponseSchema.Type
 >;

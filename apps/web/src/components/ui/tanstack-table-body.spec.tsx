@@ -27,6 +27,7 @@ it.each(["npcName", "npcType"])(
         ],
       }),
     );
+
     const { rerender } = render(
       <Table>
         <TanStackTableBody
@@ -35,6 +36,7 @@ it.each(["npcName", "npcType"])(
         />
       </Table>,
     );
+
     const row = screen.getByRole("row");
     expect(
       within(row)

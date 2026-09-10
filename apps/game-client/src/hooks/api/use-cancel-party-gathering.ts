@@ -33,6 +33,7 @@ export const useCancelPartyGathering = () => {
         { notificationId: ownedReadyRoom.notificationId },
         { expectedRevision: ownedReadyRoom.revision },
       );
+
       state.applyUpdate(decodePartyReadyRoomClientUpdate(response));
       queryClient.setQueriesData<ActivePartyGatheringSummary[]>(
         { queryKey: ACTIVE_GATHERINGS_QUERY_KEY },
@@ -66,4 +67,5 @@ export const useCancelPartyGathering = () => {
     },
   });
 };
+
 import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";

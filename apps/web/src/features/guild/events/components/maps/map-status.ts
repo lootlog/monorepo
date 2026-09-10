@@ -68,11 +68,13 @@ export const getMapStatus = (
   const playersOnMap = getPlayersOnMap(map.mapName, presenceData);
 
   const hasActivePlayer = playersOnMap.some((p) => !p.isAfk);
+
   if (hasActivePlayer) {
     return "ASSIGNED_PRESENT";
   }
 
   const hasAfkPlayer = playersOnMap.some((p) => p.isAfk);
+
   if (hasAfkPlayer) {
     return "ASSIGNED_AFK";
   }

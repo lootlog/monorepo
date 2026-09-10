@@ -11,6 +11,7 @@ export const useRestoreTimer = (onRestored: () => void) => {
   const { t } = useTranslation("timers");
   const { upsertTimer } = useTimersCache();
   const { mutate, isPending } = useTimersControllerRestoreTimerFromHistory();
+
   const restoreTimer = (entry: TimerHistoryResponseDto) => {
     mutate(
       {
@@ -29,5 +30,6 @@ export const useRestoreTimer = (onRestored: () => void) => {
       },
     );
   };
+
   return { restoreTimer, isPending };
 };

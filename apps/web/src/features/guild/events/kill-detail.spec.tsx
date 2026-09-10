@@ -27,11 +27,14 @@ import {
 import { KillDetail } from "./kill-detail";
 
 let detail: KillDetailResponseDto;
+
 let state: "success" | "loading" | "error";
+
 async function renderDetail() {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: Infinity } },
   });
+
   onTestFinished(() => client.clear());
   client.setQueryData(sessionQueryOptions.queryKey, {
     data: null,
@@ -49,10 +52,12 @@ async function renderDetail() {
           const path = new URL(
             input instanceof Request ? input.url : input.toString(),
           ).pathname;
+
           if (path.endsWith("/participation-confirmations/pending"))
             return Promise.resolve(
               Response.json({ items: [], expiredItems: [] }),
             );
+
           if (path.endsWith("/timeline"))
             return Promise.resolve(
               Response.json([
@@ -65,48 +70,61 @@ async function renderDetail() {
                 },
               ]),
             );
+
           if (path.endsWith("/loots"))
             return Promise.resolve(Response.json([]));
+
           if (path.endsWith("/kills/kill-1")) {
             if (state === "loading") return new Promise<Response>(() => {});
+
             return Promise.resolve(
               state === "error"
                 ? Response.json({}, { status: 500 })
                 : Response.json(detail),
             );
           }
+
           throw new Error(`Unexpected request: ${path}`);
         },
       },
     }),
   );
   const root = createRootRoute();
+
   const route = createRoute({
     getParentRoute: () => root,
     path: "/$guildId/events/$eventId/heroes/$heroId/kills/$killId",
     component: KillDetail,
   });
+
   const router = createRouter({
     routeTree: root.addChildren([route]),
     history: createMemoryHistory({
       initialEntries: ["/guild-1/events/event-1/heroes/hero-1/kills/kill-1"],
     }),
   });
+
   await router.load();
+
   const view = render(
     <QueryClientProvider client={client}>
       <RouterProvider router={router} />
     </QueryClientProvider>,
   );
+
   if (state === "success")
     await screen.findByRole("heading", { name: detail.kill.heroNpc.npcName });
+
   return view;
 }
+
 await initializeTestTranslations();
+
 beforeEach(() => {
   detail = createDetailData();
   state = "success";
 });
+
 afterEach(cleanup);
 
 describe("KillDetail states", () => {
@@ -125,6 +143,7 @@ describe("KillDetail states", () => {
 
   it("uses the same compact page padding as the member view", async () => {
     await renderDetail();
+
     const main = screen
       .getByRole("heading", { name: "Potulny Berserker" })
       .closest("header")?.parentElement?.parentElement;

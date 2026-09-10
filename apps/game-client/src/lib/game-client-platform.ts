@@ -24,6 +24,7 @@ export interface GameClientPlatform {
 
 export function createGameRealtimeClient(): RealtimeClient {
   const readable = import.meta.env.VITE_GATEWAY_FRAME_ENCODING === "json";
+
   return new RealtimeClient({
     url: GATEWAY_URL,
     path: GATEWAY_SOCKET_PATH || "/ws",
@@ -39,10 +40,13 @@ const directPlatform: GameClientPlatform = {
   fetch: (input, init) => globalThis.fetch(input, init),
   createRealtime: createGameRealtimeClient,
 };
+
 let currentPlatform = directPlatform;
 
 export const getGameClientPlatform = () => currentPlatform;
+
 export const isExtensionClient = () => currentPlatform !== directPlatform;
+
 export const gameClientFetch: typeof fetch = (input, init) =>
   currentPlatform.fetch(input, init);
 
@@ -51,6 +55,7 @@ export function configureGameClientPlatform(
 ): () => void {
   const previous = currentPlatform;
   currentPlatform = platform;
+
   return () => {
     if (currentPlatform === platform) currentPlatform = previous;
   };

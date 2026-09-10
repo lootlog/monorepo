@@ -55,14 +55,18 @@ export const EventKillsHistoryContent = ({
   initialHeroId,
 }: EventKillsHistoryContentProps) => {
   const { t } = useTranslation();
+
   const [selectedHeroId, setSelectedHeroId] = useState<string | undefined>(
     initialHeroId,
   );
+
   const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(
     null,
   );
+
   const hasEventRouteParams = Boolean(guildId && eventId);
   const routeIds = getEventRouteIds(guildId, eventId);
+
   const {
     data: event,
     isLoading: eventLoading,
@@ -82,6 +86,7 @@ export const EventKillsHistoryContent = ({
       },
     },
   );
+
   const {
     data: killsData,
     fetchNextPage,
@@ -95,6 +100,7 @@ export const EventKillsHistoryContent = ({
     heroId: selectedHeroId,
     limit: 20,
   });
+
   const {
     data: heroStats,
     isError: heroStatsHasError,
@@ -137,9 +143,11 @@ export const EventKillsHistoryContent = ({
 
   const heroes = event.heroNpcs ?? [];
   const allKills = killsData?.pages.flatMap((page) => page.data) ?? [];
+
   const selectedHero = selectedHeroId
     ? heroes.find((hero) => hero.id === selectedHeroId)
     : undefined;
+
   const killCount = getKillCount(
     heroStatsHasError ? undefined : heroStats,
     selectedHeroId,

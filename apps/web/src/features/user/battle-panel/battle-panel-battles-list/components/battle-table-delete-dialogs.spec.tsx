@@ -5,11 +5,13 @@ import { afterEach, expect, it, vi } from "vitest";
 import { BattleTableDeleteDialogs } from "./battle-table-delete-dialogs";
 
 await initializeTestTranslations();
+
 afterEach(cleanup);
 
 it("keeps confirmation open after submission and allows retry after pending ends", () => {
   const onBulkDelete = vi.fn();
   const onBulkDeleteOpenChange = vi.fn();
+
   const props = {
     isBulkDeleteDialogOpen: true,
     isDeletePending: false,
@@ -20,11 +22,14 @@ it("keeps confirmation open after submission and allows retry after pending ends
     selectedCount: 2,
     singleDeleteBattle: null,
   };
+
   const { rerender } = render(<BattleTableDeleteDialogs {...props} />);
+
   const confirm = () =>
     screen.getByRole("button", {
       name: "battlePanel.bulk.deleteDialog.confirm",
     });
+
   fireEvent.click(confirm());
   expect(onBulkDelete).toHaveBeenCalledTimes(1);
   expect(onBulkDeleteOpenChange).not.toHaveBeenCalled();

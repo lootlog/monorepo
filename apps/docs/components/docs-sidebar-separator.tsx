@@ -18,6 +18,7 @@ export function DocsSidebarSeparator({ item }: SeparatorProps) {
   }
 
   const style: SeparatorStyle = { "--chapter-color": chapter.color };
+
   return (
     <div
       className={`docs-sidebar-section docs-sidebar-section-${chapter.id}`}

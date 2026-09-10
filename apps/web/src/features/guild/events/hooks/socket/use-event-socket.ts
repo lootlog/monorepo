@@ -66,6 +66,7 @@ export const useEventSocket = (options?: UseEventSocketOptions) => {
       }
     },
   );
+
   const handleHeroKilled = useEffectEvent((payload: EventPayload) => {
     if (!isMatchingEventPayload(payload, guildId, eventId)) {
       return;
@@ -73,6 +74,7 @@ export const useEventSocket = (options?: UseEventSocketOptions) => {
 
     invalidateKillQueries(queryClient, payload.guildId, payload.eventId);
   });
+
   const handleRankingUpdate = useEffectEvent((payload: EventPayload) => {
     if (!isMatchingEventPayload(payload, guildId, eventId)) {
       return;
@@ -80,6 +82,7 @@ export const useEventSocket = (options?: UseEventSocketOptions) => {
 
     invalidateRankingQueries(queryClient, payload.guildId, payload.eventId);
   });
+
   const handleRespawnWindowChange = useEffectEvent(
     (payload: EventRespawnWindowPayload) => {
       if (!isMatchingEventPayload(payload, guildId, eventId)) {
@@ -94,6 +97,7 @@ export const useEventSocket = (options?: UseEventSocketOptions) => {
       );
     },
   );
+
   const handlePermissionsUpdated = useEffectEvent(() => {
     if (!guildId || !eventId) {
       return;

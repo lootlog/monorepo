@@ -48,6 +48,7 @@ describe("Ready Room revision CAS integration", () => {
     it(`${operation} accepts decoded current state and rejects stale revisions`, async () => {
       const id = crypto.randomUUID();
       const timestamp = new Date().toISOString();
+
       const character = {
         lvl: 200,
         nick: "Organizer",
@@ -56,6 +57,7 @@ describe("Ready Room revision CAS integration", () => {
         prof: "w",
         icon: "hero.gif",
       };
+
       const original: ReadyRoomAggregate = {
         schemaVersion: 3,
         notificationId: id,
@@ -79,6 +81,7 @@ describe("Ready Room revision CAS integration", () => {
           },
         },
       };
+
       expect(
         (await Effect.runPromise(repository.create(original))).status,
       ).toBe("created");
@@ -109,10 +112,12 @@ describe("Ready Room revision CAS integration", () => {
         ),
       ).toEqual({ status: "joined-elsewhere", notificationId: id });
       const current = await Effect.runPromise(repository.get(id));
+
       if (!current) throw new Error("Created room missing");
       expect(current).toEqual(original);
       // The HTTP character schema and storage decoder use different field order.
       expect(JSON.stringify(current)).not.toBe(JSON.stringify(original));
+
       const next: ReadyRoomAggregate = {
         ...current,
         revision: 2,
@@ -120,10 +125,12 @@ describe("Ready Room revision CAS integration", () => {
         participants:
           operation === "exitParticipant" ? {} : current.participants,
       };
+
       const mutate = () =>
         operation === "join" || operation === "exitParticipant"
           ? repository[operation](current, next, "participant")
           : repository[operation](current, next);
+
       expect((await Effect.runPromise(mutate())).status).toBe("committed");
       expect(await Effect.runPromise(repository.get(id))).toEqual(next);
       expect(
@@ -131,19 +138,24 @@ describe("Ready Room revision CAS integration", () => {
       ).toEqual(operation === "terminate" ? [] : [next]);
       expect((await Effect.runPromise(mutate())).status).toBe("conflict");
       expect(await Effect.runPromise(repository.get(id))).toEqual(next);
+
       if (operation === "join") {
         const otherId = crypto.randomUUID();
+
         const other = {
           ...original,
           notificationId: otherId,
           organizerDiscordId: otherId,
           organizerCharacter: { ...character, characterId: otherId },
         };
+
         expect((await Effect.runPromise(repository.create(other))).status).toBe(
           "created",
         );
+
         const joinOther = () =>
           repository.join(other, { ...other, revision: 2 }, "participant");
+
         expect(await Effect.runPromise(joinOther())).toEqual({
           status: "joined-elsewhere",
           notificationId: id,
@@ -152,6 +164,7 @@ describe("Ready Room revision CAS integration", () => {
         await redis.del(`party-ready-room:v3:room:${id}`);
         expect((await Effect.runPromise(joinOther())).status).toBe("committed");
       }
+
       await redis.del(`party-ready-room:v3:room:${id}`);
       expect(
         (await Effect.runPromise(repository.create(original))).status,

@@ -16,7 +16,9 @@ export default async function setup() {
     .withPassword("lootlog")
     .withStartupTimeout(60_000)
     .start();
+
   let redis: StartedTestContainer | undefined;
+
   try {
     redis = await new GenericContainer(
       "docker.dragonflydb.io/dragonflydb/dragonfly:v1.34.1",

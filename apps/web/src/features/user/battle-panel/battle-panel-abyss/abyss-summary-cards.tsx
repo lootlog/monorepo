@@ -23,6 +23,7 @@ const getSeasonRecord = (season: AbyssSeason | undefined, t: Translate) => {
       "battlePanel.statistics.columns.l",
     )}`;
   }
+
   return `${season.wins}${t("battlePanel.statistics.columns.w")} / ${
     season.losses
   }${t("battlePanel.statistics.columns.l")}`;
@@ -30,6 +31,7 @@ const getSeasonRecord = (season: AbyssSeason | undefined, t: Translate) => {
 
 const getOptionalAbyssMetric = (value: number | null | undefined) => {
   if (value === null || value === undefined) return "-";
+
   return formatAbyssNumber(value);
 };
 
@@ -37,6 +39,7 @@ const getPointsSubvalue = (points: number | null | undefined, t: Translate) => {
   if (points === null || points === undefined) {
     return t("battlePanel.abyss.pointsUnavailable");
   }
+
   return t("battlePanel.abyss.stats.points", {
     value: formatAbyssNumber(points),
   });
@@ -45,6 +48,7 @@ const getPointsSubvalue = (points: number | null | undefined, t: Translate) => {
 export function AbyssSummaryCards({ season }: AbyssSummaryCardsProps) {
   const { t } = useTranslation();
   const recordValue = getSeasonRecord(season, t);
+
   const cards = [
     {
       key: "record",

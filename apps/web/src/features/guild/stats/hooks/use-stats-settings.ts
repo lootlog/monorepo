@@ -62,6 +62,7 @@ export const useStatsSettings = (page: StatsSettingsPage) => {
   const setPeriod = (period: KillStatsPeriod) => {
     setSettings((prev) => {
       if ((prev.period ?? "all") === period) return prev;
+
       return { ...prev, period };
     });
   };
@@ -69,6 +70,7 @@ export const useStatsSettings = (page: StatsSettingsPage) => {
   const parsedMinLvl = debouncedMinLvl
     ? Number.parseInt(debouncedMinLvl, 10)
     : undefined;
+
   const parsedMaxLvl = debouncedMaxLvl
     ? Number.parseInt(debouncedMaxLvl, 10)
     : undefined;

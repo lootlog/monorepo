@@ -36,6 +36,7 @@ import { sessionQueryOptions } from "@/hooks/auth/use-session-query";
 import { GuildsSelector } from "./guilds-selector";
 
 await initializeTestTranslations();
+
 const guilds: UserCurrentGuildResponseDtoOutput[] = ["Alpha", "Beta"].map(
   (name, index) => ({
     id: `guild-${index + 1}`,
@@ -47,12 +48,19 @@ const guilds: UserCurrentGuildResponseDtoOutput[] = ["Alpha", "Beta"].map(
     isAccessDataStale: false,
   }),
 );
+
 const preferencesKey = getUsersControllerGetUserPreferencesQueryKey();
+
 const guildsKey = getUsersControllerGetCurrentUserGuildsQueryKey();
+
 let preferences: UserPreferencesResponseDtoOutput;
+
 let requests: Request[];
+
 let rejectReads: boolean;
+
 let writeResponse: (() => Promise<Response>) | undefined;
+
 let client: QueryClient;
 
 beforeEach(() => {
@@ -75,19 +83,26 @@ beforeEach(() => {
         baseUrl: "https://api.test",
         fetch: async (input, init) => {
           const request = new Request(input, init);
+
           if (request.method === "PATCH") {
             requests.push(request.clone());
+
             if (writeResponse) return writeResponse();
+
             const update = z
               .object({
                 hiddenGuildIds: z.array(z.string()).optional(),
                 guildsOrder: z.array(z.string()).optional(),
               })
               .parse(await request.json());
+
             preferences = { ...preferences, ...update };
+
             return Response.json(preferences);
           }
+
           if (rejectReads) return Response.json({}, { status: 503 });
+
           return Response.json(
             new URL(request.url).pathname.endsWith("/preferences")
               ? preferences
@@ -98,6 +113,7 @@ beforeEach(() => {
     }),
   );
 });
+
 // Keep the Toaster mounted until its exit callbacks finish; automatic RTL cleanup
 // would unmount it before this asynchronous teardown can drain those callbacks.
 afterEach(async () => {
@@ -115,10 +131,12 @@ afterEach(async () => {
   cleanup();
   vi.restoreAllMocks();
 });
+
 async function renderSelector() {
   client.setQueryData(preferencesKey, preferences);
   const RouterWrapper = await createOrganizationTestWrapper("/@me");
   const GatewayWrapper = createTestGateway().wrapper;
+
   return render(
     <RouterWrapper>
       <GatewayWrapper>
@@ -141,11 +159,15 @@ async function renderSelector() {
     </RouterWrapper>,
   );
 }
+
 function guildLink(id: string) {
   const link = document.querySelector<HTMLAnchorElement>(`a[href="/${id}"]`);
+
   if (!link) throw new Error(`Missing organization ${id}`);
+
   return link;
 }
+
 async function toggleVisibility(id: string, hidden: boolean) {
   fireEvent.contextMenu(guildLink(id));
   fireEvent.click(
@@ -157,6 +179,7 @@ async function toggleVisibility(id: string, hidden: boolean) {
   );
   await waitFor(() => expect(requests).toHaveLength(1));
 }
+
 function dispatchPointer(
   target: HTMLElement | Window,
   type: "pointerdown" | "pointermove" | "pointerup",
@@ -172,10 +195,12 @@ function dispatchPointer(
     clientX: 20,
     clientY: y,
   });
+
   // happy-dom omits page coordinates consumed by the browser drag engine.
   Object.defineProperties(event, { pageX: { value: 20 }, pageY: { value: y } });
   fireEvent(target, event);
 }
+
 const nextFrame = () =>
   act(
     () =>
@@ -203,11 +228,14 @@ describe("GuildsSelector", () => {
         const link = this.querySelector(
           'a[href="/guild-1"],a[href="/guild-2"]',
         );
+
         const top = link?.getAttribute("href") === "/guild-2" ? 60 : 0;
+
         return new DOMRect(0, top, 60, 50);
       },
     );
     let rejectWrite = (_error: Error) => {};
+
     writeResponse = () =>
       new Promise<Response>((_resolve, reject) => {
         rejectWrite = reject;
@@ -215,6 +243,7 @@ describe("GuildsSelector", () => {
     await renderSelector();
     await nextFrame();
     const item = guildLink("guild-1").closest("li");
+
     if (!item) throw new Error("Missing reorder item");
     dispatchPointer(item, "pointerdown", 20);
     dispatchPointer(window, "pointermove", 40);
@@ -239,9 +268,11 @@ describe("GuildsSelector", () => {
   it("undoes only the visibility change represented by the toast", async () => {
     await renderSelector();
     await toggleVisibility("guild-1", false);
+
     const undo = await screen.findByRole("button", {
       name: "common.actions.undo",
     });
+
     await waitFor(() => {
       expect(client.isMutating()).toBe(0);
       expect(client.isFetching()).toBe(0);
@@ -263,9 +294,11 @@ describe("GuildsSelector", () => {
     preferences = { ...preferences, hiddenGuildIds: ["guild-1"] };
     await renderSelector();
     await toggleVisibility("guild-1", true);
+
     const undo = await screen.findByRole("button", {
       name: "common.actions.undo",
     });
+
     await waitFor(() => {
       expect(client.isMutating()).toBe(0);
       expect(client.isFetching()).toBe(0);

@@ -17,6 +17,7 @@ it("discovers gatherings without chat messages and preserves visible state durin
     getUsersControllerGetUserPreferencesQueryKey(),
     { guildsOrder: [], hiddenGuildIds: [] },
   );
+
   const room: ActivePartyGatheringSummary = {
     notificationId: "active",
     organizerName: "Hero",
@@ -27,6 +28,7 @@ it("discovers gatherings without chat messages and preserves visible state durin
     createdAt: new Date().toISOString(),
     expiresAt: new Date(Date.now() + 60_000).toISOString(),
   };
+
   const request = vi
     .fn<() => Promise<Response>>()
     .mockImplementation(async () =>
@@ -41,6 +43,7 @@ it("discovers gatherings without chat messages and preserves visible state durin
         },
       ]),
     );
+
   const restoreApi = configureApiClients({
     main: {
       baseUrl: "https://api.example.test",
@@ -48,15 +51,18 @@ it("discovers gatherings without chat messages and preserves visible state durin
         const url = new URL(
           input instanceof Request ? input.url : String(input),
         );
+
         if (url.pathname === "/messaging/party-gathering/active")
           return request();
         throw new Error(`Unexpected HTTP request: ${url.pathname}`);
       },
     },
   });
+
   const { result, unmount } = renderHook(useActivePartyGatherings, {
     wrapper: harness.wrapper,
   });
+
   try {
     act(() => harness.setSessionDiscordId("current-discord"));
     harness.open();
@@ -96,6 +102,7 @@ it("discovers gatherings without chat messages and preserves visible state durin
         "generic",
       ]),
     );
+
     const npc = {
       id: 1,
       name: "Titan",
@@ -104,6 +111,7 @@ it("discovers gatherings without chat messages and preserves visible state durin
       prof: "w",
       type: "TITAN",
     };
+
     const npcRoom = { ...room, notificationId: "npc", npc };
     request.mockImplementation(async () => Response.json([room, npcRoom]));
     await harness.receive({

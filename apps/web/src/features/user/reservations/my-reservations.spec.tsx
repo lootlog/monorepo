@@ -28,12 +28,15 @@ describe("MyReservations", () => {
     const client = new QueryClient({
       defaultOptions: { queries: { retry: false, gcTime: 0 } },
     });
+
     const restore = configureApiClients({
       main: { baseUrl: "https://api.test" },
     });
+
     const requests: URL[] = [];
     vi.stubGlobal("fetch", async (input: string | URL | Request) => {
       requests.push(new URL(input instanceof Request ? input.url : input));
+
       return Response.json({ items: [] });
     });
     render(

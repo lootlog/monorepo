@@ -41,6 +41,7 @@ export const CategoryItem = ({
   const [localName, setLocalName] = useState(categoryLabel);
 
   const [previousLabel, setPreviousLabel] = useState(categoryLabel);
+
   if (previousLabel !== categoryLabel) {
     setPreviousLabel(categoryLabel);
     setLocalName(categoryLabel);
@@ -51,6 +52,7 @@ export const CategoryItem = ({
 
     if (!nextName) {
       setLocalName(categoryLabel);
+
       return;
     }
 
@@ -60,6 +62,7 @@ export const CategoryItem = ({
   };
 
   const assignedStatKeys = new Set(category.statOrder);
+
   const availableStats = allAvailableStats.filter(
     (stat) => !assignedStatKeys.has(String(stat.key)),
   );

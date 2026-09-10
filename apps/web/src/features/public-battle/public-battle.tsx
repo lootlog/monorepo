@@ -21,11 +21,13 @@ export const PublicBattle = () => {
     isLoading: isBattleLoading,
     error: battleError,
   } = usePublicBattlesControllerGetPublicBattle({ battleId });
+
   const {
     data: rawBattle,
     isLoading: isRawBattleLoading,
     error: rawBattleError,
   } = usePublicBattlesControllerGetPublicBattleRaw({ battleId });
+
   const { data: timeline, isPending: isTimelinePending } =
     usePublicBattlesControllerGetPublicBattleTimeline({ battleId });
 

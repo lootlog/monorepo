@@ -7,6 +7,7 @@ import { createTimerViewFixture } from "./timer-view-fixtures";
 import { TimersView } from "./timers-view";
 
 const NOW = Date.parse("2026-07-20T10:00:00.000Z");
+
 const createVisibleTimer = (name = "Tanroth", seconds = 5) => {
   const timer = createTimerFixture({
     world: "gefion",
@@ -14,16 +15,20 @@ const createVisibleTimer = (name = "Tanroth", seconds = 5) => {
     minSpawnTime: new Date(NOW + (seconds - 1) * 1000).toISOString(),
     maxSpawnTime: new Date(NOW + seconds * 1000).toISOString(),
   });
+
   return { ...timer, npc: { ...timer.npc, name } };
 };
+
 beforeEach(() => {
   vi.useFakeTimers();
   vi.setSystemTime(NOW);
 });
+
 afterEach(() => {
   vi.useRealTimers();
   vi.restoreAllMocks();
 });
+
 const mountTimers = (
   timers = [createVisibleTimer()],
   open = true,
@@ -31,21 +36,26 @@ const mountTimers = (
   alwaysVisible = false,
 ) => {
   const fixture = createTimerViewFixture(timers);
+
   if (alwaysVisible)
     useTimersStore.setState({
       alwaysVisibleExpiredTimers: { gefion: ["Tanroth"] },
     });
+
   const view = render(
     <QueryClientProvider client={fixture.queryClient}>
       <TimersView isOpen={open} isUnderBag={underBag} />
     </QueryClientProvider>,
   );
+
   onTestFinished(() => {
     view.unmount();
     fixture.cleanup();
   });
+
   return fixture;
 };
+
 it("updates the countdown without remounting the tile and removes it at the expiry boundary", () => {
   mountTimers();
   const label = screen.getByText(/\[H\] Tanroth/);
@@ -57,6 +67,7 @@ it("updates the countdown without remounting the tile and removes it at the expi
   expect(screen.queryByText(/\[H\] Tanroth/)).not.toBeInTheDocument();
   expect(screen.getByText("Brak timerów")).toBeVisible();
 });
+
 it("moves an always-visible expired timer below active timers at the removal boundary", () => {
   mountTimers(
     [createVisibleTimer(), createVisibleTimer("Mushita", 60)],
@@ -72,6 +83,7 @@ it("moves an always-visible expired timer below active timers at the removal bou
     screen.getAllByText(/\[H\]/).map((node) => node.textContent?.trim()),
   ).toEqual(["[H] Mushita", "[H] Tanroth"]);
 });
+
 it.each(["empty", "closed"] as const)(
   "does not start a countdown interval for an %s surface",
   (state) => {

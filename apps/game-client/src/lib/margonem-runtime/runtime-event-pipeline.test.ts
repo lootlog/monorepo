@@ -5,6 +5,7 @@ import type {
 } from "./runtime.types";
 import { RuntimeEventPipeline } from "./runtime-event-pipeline";
 import type { RuntimeStateProjection } from "./runtime-state-projection";
+
 type PipelineDependencies = NonNullable<
   ConstructorParameters<typeof RuntimeEventPipeline>[0]
 >;
@@ -31,6 +32,7 @@ describe("RuntimeEventPipeline", () => {
     const order: string[] = [];
     const scheduled: Array<() => void> = [];
     let applied: ((envelope: RuntimeEventEnvelope) => void) | undefined;
+
     const projection = {
       apply: vi.fn<(envelope: RuntimeEventEnvelope) => void>(
         (envelope: RuntimeEventEnvelope) => {
@@ -40,24 +42,29 @@ describe("RuntimeEventPipeline", () => {
       captureIngress: vi.fn<RuntimeStateProjection["captureIngress"]>(
         (envelope: RuntimeEventEnvelope) => {
           order.push(`ingress:${envelope.sequence}`);
+
           return envelope;
         },
       ),
     };
+
     const pipeline = new RuntimeEventPipeline({
       bridge: {
         subscribeApplied: (handler) => {
           applied = handler;
+
           return vi.fn<() => void>();
         },
       },
       projection,
       schedule: (callback) => {
         scheduled.push(callback);
+
         return scheduled.length;
       },
       cancel: vi.fn<NonNullable<PipelineDependencies["cancel"]>>(),
     });
+
     pipeline.acquireProcessor((envelope) => {
       order.push(`dispatch:${envelope.sequence}`);
     });
@@ -91,10 +98,12 @@ describe("RuntimeEventPipeline", () => {
     const scheduled: Array<() => void> = [];
     let applied: ((envelope: RuntimeEventEnvelope) => void) | undefined;
     const processor = vi.fn<RuntimeEventHandler>();
+
     const pipeline = new RuntimeEventPipeline({
       bridge: {
         subscribeApplied: (handler) => {
           applied = handler;
+
           return vi.fn<() => void>();
         },
       },
@@ -104,10 +113,12 @@ describe("RuntimeEventPipeline", () => {
       },
       schedule: (callback) => {
         scheduled.push(callback);
+
         return scheduled.length;
       },
       cancel: vi.fn<NonNullable<PipelineDependencies["cancel"]>>(),
     });
+
     pipeline.acquireProcessor(processor);
     pipeline.install();
 
@@ -124,10 +135,12 @@ describe("RuntimeEventPipeline", () => {
     let applied: ((envelope: RuntimeEventEnvelope) => void) | undefined;
     const processor = vi.fn<RuntimeEventHandler>();
     const onOverflow = vi.fn<() => void>();
+
     const pipeline = new RuntimeEventPipeline({
       bridge: {
         subscribeApplied: (handler) => {
           applied = handler;
+
           return vi.fn<() => void>();
         },
       },
@@ -137,12 +150,14 @@ describe("RuntimeEventPipeline", () => {
         captureIngress: (envelope) => envelope,
       },
     });
+
     pipeline.acquireProcessor(processor);
     pipeline.install();
 
     for (let sequence = 1; sequence <= 1_001; sequence += 1) {
       applied?.(createEnvelope(sequence));
     }
+
     applied?.(createEnvelope(1_002));
     pipeline.setReady(true);
     pipeline.flush();
@@ -154,6 +169,7 @@ describe("RuntimeEventPipeline", () => {
   it("continues after the processing error reporter throws", () => {
     let applied: ((envelope: RuntimeEventEnvelope) => void) | undefined;
     const projected = vi.fn<RuntimeEventHandler>();
+
     const processor = vi.fn<(envelope: RuntimeEventEnvelope) => void>(
       (envelope: RuntimeEventEnvelope) => {
         if (envelope.sequence === 1) {
@@ -161,13 +177,16 @@ describe("RuntimeEventPipeline", () => {
         }
       },
     );
+
     const onProcessingError = vi.fn<() => never>(() => {
       throw new Error("reporter failed");
     });
+
     const pipeline = new RuntimeEventPipeline({
       bridge: {
         subscribeApplied: (handler) => {
           applied = handler;
+
           return vi.fn<() => void>();
         },
       },
@@ -177,6 +196,7 @@ describe("RuntimeEventPipeline", () => {
         captureIngress: (envelope) => envelope,
       },
     });
+
     pipeline.acquireProcessor(processor);
     pipeline.subscribeProjected(projected);
     pipeline.install();
@@ -194,6 +214,7 @@ describe("RuntimeEventPipeline", () => {
   it("defers events enqueued while the current drain task is running", () => {
     const scheduled: Array<() => void> = [];
     let applied: ((envelope: RuntimeEventEnvelope) => void) | undefined;
+
     const processor = vi.fn<(envelope: RuntimeEventEnvelope) => void>(
       (envelope: RuntimeEventEnvelope) => {
         if (envelope.sequence === 1) {
@@ -201,10 +222,12 @@ describe("RuntimeEventPipeline", () => {
         }
       },
     );
+
     const pipeline = new RuntimeEventPipeline({
       bridge: {
         subscribeApplied: (handler) => {
           applied = handler;
+
           return vi.fn<() => void>();
         },
       },
@@ -214,10 +237,12 @@ describe("RuntimeEventPipeline", () => {
       },
       schedule: (callback) => {
         scheduled.push(callback);
+
         return scheduled.length;
       },
       cancel: vi.fn<NonNullable<PipelineDependencies["cancel"]>>(),
     });
+
     pipeline.acquireProcessor(processor);
     pipeline.install();
     pipeline.setReady(true);
@@ -237,10 +262,12 @@ describe("RuntimeEventPipeline", () => {
     let applied: ((envelope: RuntimeEventEnvelope) => void) | undefined;
     const firstProcessor = vi.fn<RuntimeEventHandler>();
     const secondProcessor = vi.fn<RuntimeEventHandler>();
+
     const pipeline = new RuntimeEventPipeline({
       bridge: {
         subscribeApplied: (handler) => {
           applied = handler;
+
           return vi.fn<() => void>();
         },
       },
@@ -249,6 +276,7 @@ describe("RuntimeEventPipeline", () => {
         captureIngress: (envelope) => envelope,
       },
     });
+
     const releaseFirst = pipeline.acquireProcessor(firstProcessor);
     const releaseSecond = pipeline.acquireProcessor(secondProcessor);
     pipeline.install();

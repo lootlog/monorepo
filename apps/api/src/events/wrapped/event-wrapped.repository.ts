@@ -29,8 +29,11 @@ export const makeEventWrappedStore = (
         .from(eventTable)
         .where(and(eq(eventTable.id, eventId), eq(eventTable.guildId, guildId)))
         .limit(1);
+
       const event = events[0];
+
       if (!event) return null;
+
       const [heroes, maps] = yield* Effect.all(
         [
           database
@@ -56,6 +59,7 @@ export const makeEventWrappedStore = (
         ],
         { concurrency: "unbounded" },
       );
+
       return {
         ...event,
         heroNpcs: heroes.map((hero) => ({
@@ -81,6 +85,7 @@ export const makeEventWrappedStore = (
 
   findKills(heroIds: string[]) {
     if (heroIds.length === 0) return Effect.succeed([]);
+
     return database
       .select({
         id: eventHeroKillTable.id,
@@ -95,6 +100,7 @@ export const makeEventWrappedStore = (
 
   findSummaries(heroIds: string[]) {
     if (heroIds.length === 0) return Effect.succeed([]);
+
     return database
       .select({
         heroNpcId: eventRespawnWindowSummaryTable.heroNpcId,
@@ -113,6 +119,7 @@ export const makeEventWrappedStore = (
 
   findAssignments(heroIds: string[]) {
     if (heroIds.length === 0) return Effect.succeed([]);
+
     return database
       .select({
         assignment: eventMapAssignmentHistoryTable,

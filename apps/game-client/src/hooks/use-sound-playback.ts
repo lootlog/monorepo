@@ -20,10 +20,12 @@ import {
 import { useSettingsStore } from "@/store/settings.store";
 
 type SoundCategory = "notifications" | "detector" | "timers" | "pings";
+
 type ConfigurableSoundCategory = Exclude<SoundCategory, "pings">;
 
 const SOUND_SETTINGS_QUERY_KEY =
   getSoundSettingsControllerGetSettingsQueryKey();
+
 let hasAudioInteraction = navigator.userActivation?.hasBeenActive ?? false;
 
 const getSoundUrl = (
@@ -46,6 +48,7 @@ export const useSoundPlayback = () => {
   const queryClient = useQueryClient();
   const masterVolume = useSettingsStore((state) => state.masterVolume);
   const soundsMuted = useSettingsStore((state) => state.soundsMuted);
+
   const soundSettings = soundSettingsData
     ? normalizeSoundSettings(soundSettingsData)
     : undefined;
@@ -63,14 +66,17 @@ export const useSoundPlayback = () => {
         "detector",
         "timers",
       ];
+
       for (const category of configurableCategories) {
         if (soundSettings[`${category}Volume`] === 0) {
           continue;
         }
 
         const categoryConfig = soundSettings[`${category}Config`];
+
         for (const key of Object.keys(categoryConfig)) {
           const soundUrl = getSoundUrl(soundSettings, category, key);
+
           if (soundUrl) {
             preloadSoundUrl(soundUrl);
           }
@@ -85,6 +91,7 @@ export const useSoundPlayback = () => {
     if (hasAudioInteraction || navigator.userActivation?.hasBeenActive) {
       hasAudioInteraction = true;
       preloadConfiguredSounds();
+
       return;
     }
 
@@ -121,16 +128,19 @@ export const useSoundPlayback = () => {
 
   const playSounds = (category: SoundCategory, keys: Iterable<string>) => {
     const settings = getLatestSettings();
+
     if (!settings) {
       return;
     }
 
     const categoryVolume = settings[`${category}Volume`];
+
     if (soundsMuted || masterVolume === 0 || categoryVolume === 0) {
       return;
     }
 
     const resolvedSoundUrls = new Set<string>();
+
     for (const key of keys) {
       const soundUrl = getSoundUrl(settings, category, key);
 
@@ -157,6 +167,7 @@ export const useSoundPlayback = () => {
     customSoundUrl?: string,
   ) => {
     const settings = getLatestSettings();
+
     if (!settings) {
       return;
     }

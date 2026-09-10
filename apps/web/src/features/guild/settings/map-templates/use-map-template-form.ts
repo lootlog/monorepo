@@ -49,6 +49,7 @@ export const useMapTemplateForm = ({
   const guildId = useGuildId();
   const queryClient = useQueryClient();
   const { data: gameMaps } = useMapsControllerGetMaps();
+
   const { mutate: createTemplate, isPending: isCreating } =
     useMapTemplatesControllerCreateTemplate({
       mutation: {
@@ -63,6 +64,7 @@ export const useMapTemplateForm = ({
         },
       },
     });
+
   const { mutate: updateTemplate, isPending: isUpdating } =
     useMapTemplatesControllerUpdateTemplate({
       mutation: {
@@ -98,6 +100,7 @@ export const useMapTemplateForm = ({
   const filteredGameMaps = useMemo(() => {
     if (!gameMaps) return [];
     const addedMapIds = new Set(maps.map((m) => m.id));
+
     return filterAvailableGameMaps(gameMaps, addedMapIds, searchQuery);
   }, [gameMaps, maps, searchQuery]);
 
@@ -106,6 +109,7 @@ export const useMapTemplateForm = ({
       form.reset();
       setSearchQuery("");
     }
+
     onOpenChange(isOpen);
   };
 
@@ -114,6 +118,7 @@ export const useMapTemplateForm = ({
     checked: boolean,
   ) => {
     const currentMaps = form.getValues("maps");
+
     if (checked) {
       form.setValue("maps", [
         ...currentMaps,
@@ -137,6 +142,7 @@ export const useMapTemplateForm = ({
 
   const onSubmit = (data: FormData) => {
     const payload = { name: data.name.trim(), maps: data.maps };
+
     const errorHandler = (cause: unknown) => {
       if (getApiErrorStatus(cause) === 400) {
         toast.error(t("settings.mapTemplates.toasts.duplicateName"));

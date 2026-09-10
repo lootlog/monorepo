@@ -27,6 +27,7 @@ export const GuildMultiSelector: FC<GuildMultiSelectorProps> = ({
   value,
 }) => {
   const { t } = useTranslation("common");
+
   const {
     data: guilds,
     error,
@@ -38,6 +39,7 @@ export const GuildMultiSelector: FC<GuildMultiSelectorProps> = ({
     if (disabled) return;
 
     const isSelected = value.includes(guildId);
+
     if (isSelected) {
       onChange(value.filter((id) => id !== guildId));
     } else {

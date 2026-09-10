@@ -52,6 +52,7 @@ const SelectTrigger = React.forwardRef<
     />
   </BaseSelect.Trigger>
 ));
+
 SelectTrigger.displayName = "SelectTrigger";
 
 const SelectScrollUpButton = (props: BaseSelect.ScrollUpArrow.Props) => (
@@ -135,6 +136,7 @@ const SelectContent = React.forwardRef<HTMLDivElement, SelectContentProps>(
     </BaseSelect.Portal>
   ),
 );
+
 SelectContent.displayName = "SelectContent";
 
 const SelectItem = React.forwardRef<HTMLElement, BaseSelect.Item.Props>(
@@ -156,6 +158,7 @@ const SelectItem = React.forwardRef<HTMLElement, BaseSelect.Item.Props>(
     </BaseSelect.Item>
   ),
 );
+
 SelectItem.displayName = "SelectItem";
 
 function getSelectItems<Value extends string>(children: React.ReactNode) {
@@ -173,6 +176,7 @@ function getSelectItems<Value extends string>(children: React.ReactNode) {
 
       if (child.type === SelectItem && child.props.value !== undefined) {
         items.push({ label: child.props.children, value: child.props.value });
+
         return;
       }
 
@@ -181,6 +185,7 @@ function getSelectItems<Value extends string>(children: React.ReactNode) {
   };
 
   visit(children);
+
   return items;
 }
 

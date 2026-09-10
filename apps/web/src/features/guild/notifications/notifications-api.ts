@@ -195,6 +195,7 @@ export const prepareGuildNotificationMutation = async (
   guildId: string,
 ) => {
   await cancelGuildNotificationQueries(queryClient, guildId);
+
   return getGuildNotificationCacheSnapshot(queryClient, guildId);
 };
 

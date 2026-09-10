@@ -15,6 +15,7 @@ export interface OnlineRepositoryValue {
   ) => Effect.Effect<UserOnlineResponse, unknown>;
   readonly prune: () => Effect.Effect<void, unknown>;
 }
+
 export class OnlineRepository extends Context.Service<
   OnlineRepository,
   OnlineRepositoryValue
@@ -23,14 +24,17 @@ export class OnlineRepository extends Context.Service<
     OnlineRepository,
     Effect.gen(function* () {
       const sql = yield* PgClient.PgClient;
+
       const ingest = Effect.fn("OnlineRepository.ingest")(function* (
         event: UserOnlineEventV1,
       ) {
         const now = yield* Clock.currentTimeMillis;
+
         if (Date.parse(event.observedAt) > now + 60_000)
           return yield* Effect.fail(
             new Error("Online observation is in the future"),
           );
+
         if (event.type === "collector") {
           yield* sql`INSERT INTO "UserOnlineCollector" (id, "trackingStartedAt", "observedAt", status, "degradedUntil")
           VALUES (1, CASE WHEN ${event.status} = 'healthy' THEN ${event.observedAt}::timestamptz ELSE NULL END, ${event.observedAt}::timestamptz, ${event.status}, CASE WHEN ${event.status} = 'degraded' THEN ${event.observedAt}::timestamptz + interval '180 seconds' ELSE NULL END)
@@ -41,8 +45,10 @@ export class OnlineRepository extends Context.Service<
             status = CASE WHEN EXCLUDED."observedAt" > "UserOnlineCollector"."observedAt"
               OR (EXCLUDED."observedAt" = "UserOnlineCollector"."observedAt" AND EXCLUDED.status = 'degraded')
               THEN EXCLUDED.status ELSE "UserOnlineCollector".status END`;
+
           return;
         }
+
         if (
           Date.parse(event.startedAt) > Date.parse(event.endedAt) ||
           Date.parse(event.endedAt) > Date.parse(event.observedAt)
@@ -51,9 +57,11 @@ export class OnlineRepository extends Context.Service<
             new Error("Invalid online interval ordering"),
           );
         }
+
         const cutoff = new Date(
           now - ONLINE_HISTORY_RETENTION_DAYS * 86_400_000,
         ).toISOString();
+
         // Old redeliveries cannot resurrect expired history or establish tracking metadata.
         if (Date.parse(event.endedAt) <= Date.parse(cutoff)) return;
         // Normalize both starts to the same retention boundary: trimming must not break valid replays.
@@ -70,6 +78,7 @@ export class OnlineRepository extends Context.Service<
           WHERE GREATEST("UserOnlineInterval"."startedAt", ${cutoff}::timestamptz) = EXCLUDED."startedAt"
             AND ("UserOnlineInterval"."world" IS NULL OR EXCLUDED."world" IS NULL OR "UserOnlineInterval"."world" = EXCLUDED."world")
           RETURNING "userId"`;
+
             if (!inserted.length)
               return yield* Effect.fail(
                 new Error("Online segment start or world cannot change"),
@@ -81,15 +90,18 @@ export class OnlineRepository extends Context.Service<
           }),
         );
       });
+
       const find = Effect.fn("OnlineRepository.find")(function* (
         userId: string,
         query: UserOnlineQuery,
       ) {
         const now = yield* Clock.currentTimeMillis;
         const nowIso = new Date(now).toISOString();
+
         const cutoff = new Date(
           now - ONLINE_HISTORY_RETENTION_DAYS * 86_400_000,
         ).toISOString();
+
         const metadata = yield* sql<{
           trackingStartedAt: string | null;
           lastObservedAt: string | null;
@@ -99,13 +111,17 @@ export class OnlineRepository extends Context.Service<
           COALESCE(c.status = 'healthy' AND c."observedAt" >= ${nowIso}::timestamptz - interval '180 seconds' AND (c."degradedUntil" IS NULL OR c."degradedUntil" <= ${nowIso}::timestamptz), false) AS healthy
         FROM (SELECT 1) seed LEFT JOIN "UserOnlineTracking" t ON t."userId" = ${userId}
         LEFT JOIN "UserOnlineCollector" c ON c.id = 1`;
+
         const meta = metadata[0];
+
         const trackingStartedAt = meta?.trackingStartedAt
           ? new Date(meta.trackingStartedAt).toISOString()
           : null;
+
         const lastObservedAt = meta?.lastObservedAt
           ? new Date(meta.lastObservedAt).toISOString()
           : null;
+
         const days = yield* sql<{
           date: string;
           onlineSeconds: number | null;
@@ -141,6 +157,7 @@ export class OnlineRepository extends Context.Service<
             OR (days.start < ${cutoff}::timestamptz AND days.finish > ${cutoff}::timestamptz) AS partial
         FROM days LEFT JOIN intervals ON span && tstzrange(days.start, days.finish, '[)')
         GROUP BY days.date, days.start, days.finish ORDER BY days.date`;
+
         return {
           timezone: "Europe/Warsaw" as const,
           trackingStartedAt,
@@ -153,11 +170,14 @@ export class OnlineRepository extends Context.Service<
           days,
         };
       });
+
       const prune = Effect.fn("OnlineRepository.prune")(function* () {
         const now = yield* Clock.currentTimeMillis;
+
         const cutoff = new Date(
           now - ONLINE_HISTORY_RETENTION_DAYS * 86_400_000,
         ).toISOString();
+
         yield* sql.withTransaction(
           Effect.gen(function* () {
             yield* sql`DELETE FROM "UserOnlineInterval" WHERE "endedAt" <= ${cutoff}::timestamptz`;
@@ -166,6 +186,7 @@ export class OnlineRepository extends Context.Service<
           }),
         );
       });
+
       return OnlineRepository.of({ ingest, find, prune });
     }),
   );

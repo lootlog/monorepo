@@ -8,6 +8,7 @@ export const useDelayedVisibility = (
 ) => {
   const [visibility, setVisibility] = useState({ active, visible: false });
   let currentVisibility = visibility;
+
   if (visibility.active !== active) {
     currentVisibility = { active, visible: false };
     setVisibility(currentVisibility);

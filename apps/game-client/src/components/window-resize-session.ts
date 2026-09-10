@@ -1,5 +1,7 @@
 let resizeSessionCounter = 0;
+
 let activeResizeSessionId: number | null = null;
+
 let cancelActiveResizeSession: (() => void) | null = null;
 
 export const cancelWindowResizeSession = () => {
@@ -12,6 +14,7 @@ export const cancelWindowResizeSession = () => {
 export const createWindowResizeSession = () => {
   resizeSessionCounter += 1;
   activeResizeSessionId = resizeSessionCounter;
+
   return activeResizeSessionId;
 };
 
@@ -30,6 +33,7 @@ export const finishWindowResizeSession = (
   if (activeResizeSessionId === sessionId) {
     activeResizeSessionId = null;
   }
+
   if (cancelActiveResizeSession === cancel) {
     cancelActiveResizeSession = null;
   }

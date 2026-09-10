@@ -17,19 +17,24 @@ export function getBattleTableSelectionState({
   selectionLimit,
 }: BattleTableSelectionStateParams): BattleTableSelectionState {
   const effectiveSelectionLimit = selectionLimit ?? battleIds.length;
+
   const selectableVisibleBattleIds = battleIds.slice(
     0,
     effectiveSelectionLimit,
   );
+
   const selectedVisibleCount = battleIds.filter((battleId) =>
     selectedBattleIds.has(battleId),
   ).length;
+
   const selectedSelectableVisibleCount = selectableVisibleBattleIds.filter(
     (battleId) => selectedBattleIds.has(battleId),
   ).length;
+
   const areAllSelectableRowsSelected =
     selectableVisibleBattleIds.length > 0 &&
     selectedSelectableVisibleCount === selectableVisibleBattleIds.length;
+
   let headerCheckboxState: boolean | "indeterminate" = false;
 
   if (areAllSelectableRowsSelected) {

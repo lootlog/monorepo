@@ -46,6 +46,7 @@ describe("extension login window", () => {
     );
 
     let complete: (response: Response) => void = () => {};
+
     vi.mocked(fetch).mockImplementation(
       () =>
         new Promise<Response>((resolve) => {

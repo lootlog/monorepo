@@ -39,10 +39,13 @@ import type { LootShare } from "#src/loots/loot-response.schema";
 import type { LootSubmissionAcceptancePersistence } from "#src/loots/submission/loot-submission-acceptance.repository";
 
 type CreateLootSubmittedGuild = CreateLootResponse["submittedGuilds"][number];
+
 type CreateLootRejectedGuild = CreateLootResponse["rejectedGuilds"][number];
+
 type CreateLootRejectedGuildReason = CreateLootRejectedGuild["reason"];
 
 type Guild = typeof guildTable.$inferSelect;
+
 type LootlogConfigNpc = typeof lootlogConfigNpcTable.$inferSelect;
 
 type LootSubmissionData = {
@@ -81,6 +84,7 @@ interface LootSubmissionLock {
 }
 
 const LOOT_LOCK_TTL_MS = 30_000;
+
 const LOOT_LOCK_RETRY_OPTIONS = {
   retryCount: 100,
   retryDelay: 100,
@@ -108,6 +112,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
       options.submission.loots,
       options.submission.world,
     );
+
     return this.lock
       .withLock(
         `loot:lock:${uniqueId}`,
@@ -128,10 +133,12 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     uniqueId: string;
   }): Effect.Effect<CreateLootResponse, unknown> {
     const self = this;
+
     return Effect.gen(function* () {
       const existingLootId = yield* self.repository.findLootIdByUniqueId(
         options.uniqueId,
       );
+
       const { guilds, characterConfig } = yield* Effect.all(
         {
           guilds: self.repository.findGuildsForPermissions(options.discordId, [
@@ -145,6 +152,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         },
         { concurrency: "unbounded" },
       );
+
       if (guilds.length === 0) {
         return yield* Effect.fail(new PermissionDeniedError());
       }
@@ -152,9 +160,11 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
       const whitelistedGuildIds = new Set(
         characterConfig?.catchingGuildIds ?? [],
       );
+
       const filteredGuildIds = guilds
         .filter((guild) => whitelistedGuildIds.has(guild.id))
         .map((guild) => guild.id);
+
       if (filteredGuildIds.length === 0) {
         return yield* Effect.fail(
           new InvalidRequestError({
@@ -177,6 +187,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         },
         { concurrency: "unbounded" },
       );
+
       const npcData = yield* Effect.try({
         try: () => self.processNpcs(options.submission.npcs),
         catch: (error) =>
@@ -184,6 +195,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
             ? error
             : new InvalidRequestError(ErrorKey.NPC_WT_TOO_LOW),
       });
+
       if (npcData.primary.wt < 10) {
         return yield* Effect.fail(
           new InvalidRequestError(ErrorKey.NPC_WT_TOO_LOW),
@@ -196,6 +208,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         npcData.primary.prof,
         npcData.primary.type,
       );
+
       const outcome = self.resolveAcceptanceOutcome({
         guilds,
         lootlogConfigs,
@@ -204,6 +217,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         submission: options.submission,
         whitelistedGuildIds,
       });
+
       if (outcome.submissionData.length === 0) {
         return yield* Effect.fail(
           new InvalidRequestError({
@@ -220,6 +234,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         type: npc.type,
         wt: npc.wt,
       }));
+
       const mapPlayersSnapshot =
         options.submission.source === "FIGHT" &&
         primaryNpcType === NpcType.ELITE2 &&
@@ -228,6 +243,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         )
           ? (options.submission.mapPlayersSnapshot ?? null)
           : null;
+
       if (existingLootId !== null) {
         yield* self.acceptExistingLoot(
           existingLootId,
@@ -235,6 +251,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
           socketNpcs,
           mapPlayersSnapshot,
         );
+
         return self.createResponse(existingLootId, outcome);
       }
 
@@ -270,6 +287,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     const lootlogConfigByGuildId = new Map(
       options.lootlogConfigs.map((config) => [config.id, config]),
     );
+
     const memberByGuildId = new Map(
       options.members.map((member) => [member.guildId, member]),
     );
@@ -280,16 +298,20 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
           outcome.rejectedGuilds.push(
             this.createRejectedGuild(guild, "NOT_ON_CHARACTER_WHITELIST"),
           );
+
           return outcome;
         }
 
         const config = lootlogConfigByGuildId.get(guild.id);
+
         if (!config) {
           outcome.rejectedGuilds.push(
             this.createRejectedGuild(guild, "MISSING_LOOTLOG_CONFIG"),
           );
+
           return outcome;
         }
+
         if (
           !this.isAcceptedByConfig(
             options.submission.loots,
@@ -300,16 +322,20 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
           outcome.rejectedGuilds.push(
             this.createRejectedGuild(guild, "LOOT_NOT_ACCEPTED_BY_CONFIG"),
           );
+
           return outcome;
         }
 
         const member = memberByGuildId.get(guild.id);
+
         if (!member) {
           outcome.rejectedGuilds.push(
             this.createRejectedGuild(guild, "MISSING_MEMBER"),
           );
+
           return outcome;
         }
+
         outcome.submissionData.push({
           guildId: guild.id,
           guildName: guild.name,
@@ -319,6 +345,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
           guildId: guild.id,
           guildName: guild.name,
         });
+
         return outcome;
       },
       { submissionData: [], submittedGuilds: [], rejectedGuilds: [] },
@@ -332,21 +359,25 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     mapPlayersSnapshot: MapPlayersSnapshot | null,
   ): Effect.Effect<void, unknown> {
     const self = this;
+
     return Effect.gen(function* () {
       const existingRecords = yield* self.repository.findExistingRecords(
         lootId,
         submissions.map(({ guildId }) => guildId),
       );
+
       const existingSubmissions = existingRecords.flatMap((record) =>
         record.submissions.map((submission) => ({
           guildId: record.guildId,
           memberId: submission.memberId,
         })),
       );
+
       const newSubmissions = self.getNewSubmissions(
         submissions,
         existingSubmissions,
       );
+
       if (newSubmissions.length === 0 && mapPlayersSnapshot === null) {
         return;
       }
@@ -376,12 +407,14 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     publications: (lootId: number) => LootPublication[];
   }): Effect.Effect<number, unknown> {
     const self = this;
+
     return Effect.gen(function* () {
       const initialAllocation = yield* self.inferInitialAllocation(
         options.submission,
         options.npcData.primary,
         options.primaryNpcType,
       );
+
       return yield* self.repository.createNewLoot(
         {
           mapPlayersSnapshot: options.mapPlayersSnapshot,
@@ -414,11 +447,13 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     const organizationIds = this.getUniqueOrganizationIds(
       options.outcome.submissionData,
     );
+
     const intents = this.createdPublications(
       options.lootId,
       organizationIds,
       options.socketNpcs,
     );
+
     const rabbit = (
       routingKey: Extract<
         LootPublication["payload"],
@@ -435,6 +470,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         }),
       });
     };
+
     rabbit(
       RoutingKey.SEARCH_PLAYERS_INDEX,
       this.mapPlayers(options.submission.players).map((player) => ({
@@ -447,6 +483,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
       options.npcs.map((npc) => ({ ...npc, world: options.submission.world })),
     );
     const items = this.mapItems(options.submission.loots);
+
     if (items.length > 0)
       rabbit(
         RoutingKey.SEARCH_ITEMS_INDEX,
@@ -473,6 +510,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         lvl: npc.lvl ?? null,
       })),
     } satisfies LootCreatedNotificationEventV2);
+
     return intents;
   }
 
@@ -485,6 +523,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         .sort((left, right) => left.hid.localeCompare(right.hid))
         .map((loot) => loot.hid)
         .join("") + world;
+
     return createHash("sha256").update(source).digest("hex");
   }
 
@@ -499,6 +538,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         source: LootShareSource.NONE,
       });
     }
+
     return this.repository.hasAmbiguousNpcVariant(primaryNpc.name).pipe(
       Effect.map((ambiguous) => {
         if (ambiguous) {
@@ -507,10 +547,12 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
             source: LootShareSource.NONE,
           };
         }
+
         const share = this.mapItemOwnerAllocation(
           submission.loots,
           submission.players,
         );
+
         return share
           ? { share, source: LootShareSource.ITEM_OWNER }
           : {
@@ -528,34 +570,43 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     if (loots.length === 0 || loots.length !== players.length) return null;
     const shareByCharacter = new Map<number, string>();
     const shareIds = new Set<string>();
+
     for (const player of players) {
       const { accountId, characterId } = this.normalizeCharacterAndAccount(
         player.id,
         player.accountId,
       );
+
       const shareId = `${characterId}${accountId}`;
+
       if (shareByCharacter.has(player.id) || shareIds.has(shareId)) return null;
       shareByCharacter.set(player.id, shareId);
       shareIds.add(shareId);
     }
+
     const assigned = new Set<number>();
     const share: LootShare = {};
+
     for (const loot of loots) {
       if (loot.own === undefined || assigned.has(loot.own)) return null;
       const shareId = shareByCharacter.get(loot.own);
+
       if (shareId === undefined) return null;
       assigned.add(loot.own);
       share[shareId] = [loot.hid];
     }
+
     return assigned.size === players.length ? share : null;
   }
 
   private processNpcs(npcs: CreateLootRequest["npcs"]) {
     const sorted = [...npcs].sort((left, right) => right.wt - left.wt);
     const primary = sorted[0];
+
     if (!primary) {
       throw new InvalidRequestError(ErrorKey.NPC_WT_TOO_LOW);
     }
+
     return {
       primary,
       mapped: sorted.map((npc) => ({
@@ -578,9 +629,11 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     primaryNpcType: NpcType,
   ): boolean {
     const targetNpc = npcs.find((npc) => npc.npcType === primaryNpcType);
+
     if (!targetNpc) {
       return false;
     }
+
     return loots.some((item) =>
       targetNpc.allowedRarities.includes(this.getItemStats(item).rarity),
     );
@@ -590,26 +643,32 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     const parsedStats = this.parseItemStats(item.stat);
     const lvl = parsedStats["lvl"] ? Number(parsedStats["lvl"]) : 0;
     const rawRarity = parsedStats["rarity"]?.toUpperCase();
+
     const rarity =
       rawRarity === undefined
         ? undefined
         : Schema.decodeUnknownSync(ItemRaritySchema)(rawRarity);
+
     const requiredProf = parsedStats["reqp"];
+
     const prof = requiredProf
       ? requiredProf
           .split("")
           .map((id) => getProfByShortname(id))
           .filter((prof) => prof !== undefined)
       : Object.values(Profession);
+
     return { lvl, rarity, prof, type: getItemTypeByCl(item.cl) };
   }
 
   private parseItemStats(stats: string): Record<string, string> {
     return stats.split(";").reduce<Record<string, string>>((parsed, entry) => {
       const [key, value] = entry.split("=");
+
       if (key && value) {
         parsed[key] = value;
       }
+
       return parsed;
     }, {});
   }
@@ -624,6 +683,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         player.id,
         player.accountId,
       );
+
       return {
         id: `${characterId}${accountId}`,
         name: player.name,
@@ -640,6 +700,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     return items.map((item) => {
       const { lvl, rarity, type } = this.getItemStats(item);
       const statsHash = createItemStatsHash(item.stat);
+
       return {
         itemId: item.id,
         statsHash,
@@ -661,10 +722,12 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
   ) {
     return players.map((player) => {
       const prof = getProfByShortname(player.prof) ?? null;
+
       const { accountId, characterId } = this.normalizeCharacterAndAccount(
         player.id,
         player.accountId,
       );
+
       return {
         lvl: player.lvl,
         world,
@@ -683,16 +746,19 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
   ) {
     const account = String(accountId ?? "");
     const character = String(id ?? "");
+
     if (account && character.endsWith(account)) {
       const characterPart = character.slice(
         0,
         character.length - account.length,
       );
+
       return {
         characterId: Number(characterPart || character),
         accountId: Number(account),
       };
     }
+
     return { characterId: Number(character), accountId: Number(account) };
   }
 
@@ -736,6 +802,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         ({ guildId, memberId }) => `${guildId}:${memberId}`,
       ),
     );
+
     return submissions.filter(
       ({ guildId, memberId }) => !existingKeys.has(`${guildId}:${memberId}`),
     );

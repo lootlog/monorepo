@@ -18,6 +18,7 @@ const formatDuration = (seconds: number): string => {
   const duration = intervalToDuration({ start: 0, end: seconds * 1000 });
   const minutes = duration.minutes || 0;
   const secs = duration.seconds || 0;
+
   return `${minutes}:${secs.toString().padStart(2, "0")}`;
 };
 
@@ -26,6 +27,7 @@ export function BattleDurationStatsCard({
   isLoading,
 }: BattleDurationStatsCardProps) {
   const { t } = useTranslation();
+
   const hasData =
     data.avgWinDuration > 0 ||
     data.avgLossDuration > 0 ||

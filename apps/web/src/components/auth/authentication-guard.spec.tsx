@@ -27,8 +27,11 @@ import {
 import { useAuthRecoveryStore } from "@/store/auth-recovery.store";
 
 await initializeTestTranslations();
+
 const signInFetch = vi.fn<NonNullable<ApiServiceConfig["fetch"]>>();
+
 vi.stubGlobal("fetch", signInFetch);
+
 const { AuthenticationGuard } = await import("./authentication-guard");
 
 const renderGuard = (
@@ -38,13 +41,18 @@ const renderGuard = (
   const queryClient = new QueryClient({
     defaultOptions: { queries: { staleTime: Infinity, retry: false } },
   });
+
   onTestFinished(() => queryClient.clear());
+
   const restore = configureApiClients({
     auth: { baseUrl: "https://auth.test", fetch: fetchScopes },
   });
+
   onTestFinished(restore);
+
   if (scopes)
     queryClient.setQueryData(getAuthControllerGetScopesQueryKey(), [...scopes]);
+
   return render(
     <QueryClientProvider client={queryClient}>
       <AuthenticationGuard>
@@ -60,6 +68,7 @@ beforeEach(() => {
   signInFetch.mockImplementation(() => new Promise<Response>(() => undefined));
   vi.stubGlobal("fetch", signInFetch);
 });
+
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
@@ -73,9 +82,11 @@ describe("AuthenticationGuard", () => {
 
   it("starts exactly one OAuth request after an explicit click", async () => {
     renderGuard([]);
+
     const loginButton = screen.getByRole("button", {
       name: "auth.reloginRequired.button",
     });
+
     fireEvent.click(loginButton);
     fireEvent.click(loginButton);
     await waitFor(() => expect(signInFetch).toHaveBeenCalledTimes(1));
@@ -86,9 +97,11 @@ describe("AuthenticationGuard", () => {
   it("allows an explicit retry only after OAuth initiation fails", async () => {
     signInFetch.mockRejectedValueOnce(new Error("connection failed"));
     renderGuard([]);
+
     const loginButton = screen.getByRole("button", {
       name: "auth.reloginRequired.button",
     });
+
     fireEvent.click(loginButton);
     await waitFor(() => expect(signInFetch).toHaveBeenCalledTimes(1));
     await waitFor(() =>
@@ -116,10 +129,13 @@ describe("AuthenticationGuard", () => {
         Response.json({ message: "unavailable" }, { status: 503 }),
       ),
     );
+
     renderGuard(null, fetchScopes);
+
     const retry = await screen.findByRole("button", {
       name: "auth.unavailable.button",
     });
+
     fireEvent.click(retry);
     await waitFor(() => expect(fetchScopes).toHaveBeenCalledTimes(2));
     expect(signInFetch).not.toHaveBeenCalled();

@@ -5,13 +5,17 @@ import { GatewayEvent } from "@/config/gateway";
 import { useBufferedSocketIngress } from "@/hooks/use-buffered-socket-ingress";
 
 const listeners = new RealtimeEventListeners<GatewayEvent>();
+
 const socket = {
   on: listeners.add.bind(listeners),
   off: listeners.delete.bind(listeners),
 };
+
 const emit = listeners.emit.bind(listeners);
+
 const processPayloadBatch =
   vi.fn<(payloads: readonly { notificationId: string }[]) => void>();
+
 const cancelPayload = vi.fn<(payload: { notificationId: string }) => void>();
 
 describe("useBufferedSocketIngress", () => {
@@ -24,6 +28,7 @@ describe("useBufferedSocketIngress", () => {
   it("discards notifications buffered before a permission change", async () => {
     const onProcessBatch =
       vi.fn<(payloads: readonly { notificationId: string }[]) => void>();
+
     renderHook(() =>
       useBufferedSocketIngress({
         socket,
@@ -305,8 +310,10 @@ describe("useBufferedSocketIngress", () => {
 
 it("keeps unaffected queued notifications and rejects revoked data at flush", async () => {
   let allowedGuilds = new Set(["a", "b"]);
+
   const onProcessBatch =
     vi.fn<(payloads: readonly { guildId: string }[]) => void>();
+
   renderHook(() =>
     useBufferedSocketIngress({
       socket,

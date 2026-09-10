@@ -32,6 +32,7 @@ export const useVirtualInfiniteScroll = ({
     }
 
     const lastVirtualItem = virtualItems[virtualItems.length - 1];
+
     if (!lastVirtualItem) {
       return;
     }

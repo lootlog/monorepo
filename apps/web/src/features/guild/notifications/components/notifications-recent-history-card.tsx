@@ -24,9 +24,11 @@ export const NotificationsRecentHistoryCard = ({
 }: NotificationsRecentHistoryCardProps) => {
   const { t } = useTranslation();
   const guildId = useGuildId();
+
   const [selectedJob, setSelectedJob] = useState<
     NotificationJobsResponseDto["history"][number] | null
   >(null);
+
   const recentJobs = historyJobs.slice(0, RECENT_HISTORY_PREVIEW_COUNT);
 
   const openJobDetails = (

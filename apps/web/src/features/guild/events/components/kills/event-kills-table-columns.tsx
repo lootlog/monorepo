@@ -43,6 +43,7 @@ export const createEventKillsTableColumns = ({
     header: t("events.kills.monster"),
     cell: ({ row }) => {
       const kill = row.original;
+
       const detailLabel = t("events.kills.openKillDetails", {
         monsterName: kill.heroNpc.npcName,
       });

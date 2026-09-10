@@ -21,6 +21,7 @@ export const useLogout = () => {
         attempt.current = null;
         setIsPending(false);
       });
+
     return attempt.current;
   };
 

@@ -11,6 +11,7 @@ import { RefreshStatsCardResponse } from "#src/contracts/guild-stats-card/schema
 import { GameMapsResponse } from "#src/contracts/maps/schemas";
 
 const PUBLIC_CACHE_CONTROL = "public, max-age=300, must-revalidate";
+
 const LOCAL_CACHE_CONTROL = "no-store";
 
 export class PublicSystemAccessDenied extends TaggedErrorClass<PublicSystemAccessDenied>()(
@@ -99,6 +100,7 @@ export const healthCheck = Effect.fn("HealthzControllerHealthCheck")(
 
 export const getMaps = Effect.fn("MapsControllerGetMaps")(function* () {
   const data = yield* PublicSystemData;
+
   return yield* decode(GameMapsResponse, yield* data.getMaps);
 });
 
@@ -106,12 +108,14 @@ export const refreshStatsCard = Effect.fn(
   "AuthenticatedGuildStatsCardControllerRefreshStatsCard",
 )(function* (guildId: string) {
   const authorization = yield* PublicSystemAuthorization;
+
   const access = yield* authorization.requireCapability({
     guildId,
     anyOf: [Permission.OWNER, Permission.ADMIN],
   });
 
   const data = yield* PublicSystemData;
+
   return yield* decode(
     RefreshStatsCardResponse,
     yield* data.refreshStatsCard(access.guildId),

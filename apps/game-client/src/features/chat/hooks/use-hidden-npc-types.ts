@@ -34,7 +34,9 @@ export const isChatNpcType = (value: unknown): value is ChatNpcType =>
  * The game client serves a single signed-in user, so the queue is global.
  */
 let writeQueue = Promise.resolve();
+
 let writeGeneration = 0;
+
 let pendingWrites = 0;
 
 /**
@@ -48,13 +50,16 @@ export const useHiddenNpcTypes = () => {
   const settingsDocuments = useChatSettingsDocuments();
   const queryClient = useQueryClient();
   const hidden = new Set<NpcTypeEnum>(settingsDocuments.hiddenNpcTypes);
+
   const queryKey = getSettingsDocumentsControllerGetPreferencesQueryKey(
     settingsDocuments.params,
   );
+
   const ready = Boolean(settingsDocuments.data && preferences.data);
 
   const setNpcTypeVisible = (npcType: NpcTypeEnum, isVisible: boolean) => {
     const userId = preferences.data?.userId;
+
     if (!userId || !settingsDocuments.data) return;
 
     const cached = new Set(
@@ -62,9 +67,11 @@ export const useHiddenNpcTypes = () => {
         queryClient.getQueryData<SettingsDocumentsResponseDtoOutput>(queryKey),
       ),
     );
+
     const next = CHAT_NPC_TYPES.filter((type) =>
       type === npcType ? !isVisible : cached.has(type),
     );
+
     queryClient.setQueryData<SettingsDocumentsResponseDtoOutput>(
       queryKey,
       (current) => updateHiddenNpcTypesInSettingsDocuments(current, next),
@@ -75,6 +82,7 @@ export const useHiddenNpcTypes = () => {
     writeQueue = writeQueue.then(async () => {
       try {
         if (generation !== writeGeneration) return;
+
         const response = await settingsDocumentsControllerPatchPreferences({
           operations: [
             {
@@ -85,6 +93,7 @@ export const useHiddenNpcTypes = () => {
             },
           ],
         });
+
         // A later optimistic write already superseded this response.
         if (pendingWrites > 1) return;
         const confirmed = getHiddenNpcTypesFromSettingsDocuments(response);

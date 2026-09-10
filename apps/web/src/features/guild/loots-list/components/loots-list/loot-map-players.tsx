@@ -19,6 +19,7 @@ export const LootMapPlayers = ({ loot }: LootMapPlayersProps) => {
   const { t } = useTranslation();
   const titleId = useId();
   const players = loot.mapPlayersSnapshot;
+
   const participantIds = new Set(
     loot.source === "FIGHT"
       ? loot.players.flatMap(({ characterId }) =>
@@ -26,11 +27,13 @@ export const LootMapPlayers = ({ loot }: LootMapPlayersProps) => {
         )
       : [],
   );
+
   const primaryNpc = loot.npcs.reduce<(typeof loot.npcs)[number] | undefined>(
     (primary, npc) =>
       !primary || (npc.wt ?? 0) > (primary.wt ?? 0) ? npc : primary,
     undefined,
   );
+
   if (
     !players?.length &&
     (loot.source !== "FIGHT" ||

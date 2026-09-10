@@ -34,6 +34,7 @@ export class DiscordRateLimiterService {
     endpoint: DiscordEndpoint,
   ): Promise<boolean> {
     const state = await this.getRateLimitStateForUser(userId, endpoint);
+
     if (!state?.isBlocked) {
       return false;
     }
@@ -55,18 +56,22 @@ export class DiscordRateLimiterService {
     endpoint: DiscordEndpoint,
   ): Promise<DiscordRateLimitState | null> {
     const key = this.getUserKey(userId, endpoint);
+
     const rateLimitData = await this.getStoredRateLimitData(
       key,
       userId,
       endpoint,
     );
+
     if (!rateLimitData) {
       return null;
     }
+
     const now = Date.now();
 
     if (rateLimitData.resetAt <= now) {
       await this.redis.del(key);
+
       return null;
     }
 
@@ -88,6 +93,7 @@ export class DiscordRateLimiterService {
     endpoint: DiscordEndpoint,
   ): Promise<Date | null> {
     const state = await this.getRateLimitStateForUser(userId, endpoint);
+
     if (!state?.isBlocked) {
       return null;
     }
@@ -103,11 +109,14 @@ export class DiscordRateLimiterService {
     const bucket = headers.get("x-ratelimit-bucket");
     const limitHeader = headers.get("x-ratelimit-limit");
     const remainingHeader = headers.get("x-ratelimit-remaining");
+
     const resetAfterHeader =
       headers.get("x-ratelimit-reset-after") ?? headers.get("retry-after");
+
     const resetHeader = headers.get("x-ratelimit-reset");
 
     const limit = limitHeader ? Number.parseInt(limitHeader, 10) : null;
+
     const remaining = remainingHeader
       ? Number.parseInt(remainingHeader, 10)
       : null;
@@ -115,11 +124,13 @@ export class DiscordRateLimiterService {
     const resetAfterSeconds = resetAfterHeader
       ? Number.parseFloat(resetAfterHeader)
       : Number.NaN;
+
     const resetAtSeconds = resetHeader
       ? Number.parseFloat(resetHeader)
       : Number.NaN;
 
     let resetAt = 0;
+
     if (Number.isFinite(resetAfterSeconds)) {
       resetAt = Date.now() + Math.ceil(resetAfterSeconds * 1000);
     } else if (Number.isFinite(resetAtSeconds)) {
@@ -206,6 +217,7 @@ export class DiscordRateLimiterService {
     } else {
       const pattern = `${this.RATE_LIMIT_KEY_PREFIX}${userId}:*`;
       const keys = await this.redis.scan(pattern);
+
       if (keys.length > 0) {
         await Promise.all(keys.map((key) => this.redis.del(key)));
       }
@@ -218,12 +230,14 @@ export class DiscordRateLimiterService {
     endpoint: DiscordEndpoint,
   ): Promise<UserRateLimitData | null> {
     const data = await this.redis.get(key);
+
     if (!data) {
       return null;
     }
 
     try {
       const parsed = decodeJsonUnknown(data);
+
       if (isUserRateLimitData(parsed)) {
         return parsed;
       }
@@ -238,6 +252,7 @@ export class DiscordRateLimiterService {
     }
 
     await this.redis.del(key);
+
     return null;
   }
 
@@ -252,6 +267,7 @@ function isUserRateLimitData(value: unknown): value is UserRateLimitData {
   }
 
   const data = value;
+
   const isOptional = (field: unknown, type: "number" | "string"): boolean =>
     field === undefined || field === null || typeof field === type;
 

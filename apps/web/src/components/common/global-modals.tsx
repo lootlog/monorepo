@@ -6,6 +6,7 @@ const CreateGuildModal = lazy(() =>
     default: module.CreateGuildModal,
   })),
 );
+
 const InstallAddonModal = lazy(() =>
   import("./install-addon-modal/install-addon-modal").then((module) => ({
     default: module.InstallAddonModal,
@@ -20,6 +21,7 @@ export const GlobalModals = () => {
   if (createGuildModal.state.isOpen && !hasOpenedCreate) {
     setHasOpenedCreate(true);
   }
+
   if (installAddonModal.state.isOpen && !hasOpenedInstall) {
     setHasOpenedInstall(true);
   }

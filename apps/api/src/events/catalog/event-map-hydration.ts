@@ -21,6 +21,7 @@ export const makeEventMapHydration = <Failure>(
     maps: Array<typeof eventMapTable.$inferSelect>,
   ) {
     if (maps.length === 0) return [];
+
     const assignments = yield* query(
       "events.catalog.mapAssignments",
       database
@@ -34,7 +35,9 @@ export const makeEventMapHydration = <Failure>(
           ),
         ),
     );
+
     const memberIds = [...new Set(assignments.map(({ member }) => member.id))];
+
     const roles =
       memberIds.length === 0
         ? []
@@ -51,6 +54,7 @@ export const makeEventMapHydration = <Failure>(
               .where(inArray(memberToRoleTable.A, memberIds))
               .orderBy(desc(roleTable.position)),
           );
+
     return maps.map((map) => ({
       ...map,
       assignedMembers: assignments

@@ -12,6 +12,7 @@ import {
 } from "./runtime-state-projection";
 
 const MAX_PENDING_EVENTS = 1_000;
+
 const MAX_PENDING_FACTS = 10_000;
 
 type ScheduledWork = ReturnType<typeof setTimeout> | number;
@@ -67,6 +68,7 @@ export class RuntimeEventPipeline {
   setReady(ready = true): void {
     if (this.overflowed) return;
     this.ready = ready;
+
     if (ready) this.scheduleDrain();
   }
 
@@ -79,16 +81,20 @@ export class RuntimeEventPipeline {
     return () => {
       if (released) return false;
       released = true;
+
       if (!this.processorRegistrations.delete(registration)) return false;
+
       if (this.processorRegistrations.size > 0) return false;
 
       this.activeProcessor = null;
+
       return true;
     };
   }
 
   subscribeProjected(handler: RuntimeEventHandler): () => void {
     this.projectedHandlers.add(handler);
+
     return () => this.projectedHandlers.delete(handler);
   }
 
@@ -97,12 +103,14 @@ export class RuntimeEventPipeline {
       this.cancel(this.scheduledWork);
       this.scheduledWork = null;
     }
+
     while (this.ready && this.getPendingEventCount() > 0) this.processNext();
   }
 
   cleanup(): void {
     this.unsubscribeApplied?.();
     this.unsubscribeApplied = null;
+
     if (this.scheduledWork !== null) this.cancel(this.scheduledWork);
     this.scheduledWork = null;
     this.queue.length = 0;
@@ -119,6 +127,7 @@ export class RuntimeEventPipeline {
     if (this.overflowed) return;
 
     const nextFacts = this.pendingFacts + envelope.facts.length;
+
     if (
       this.getPendingEventCount() >= MAX_PENDING_EVENTS ||
       nextFacts > MAX_PENDING_FACTS
@@ -128,14 +137,17 @@ export class RuntimeEventPipeline {
       this.queue.length = 0;
       this.queueHead = 0;
       this.pendingFacts = 0;
+
       if (this.scheduledWork !== null) this.cancel(this.scheduledWork);
       this.scheduledWork = null;
       this.onOverflow?.();
+
       return;
     }
 
     this.queue.push(envelope);
     this.pendingFacts = nextFacts;
+
     if (this.ready) this.scheduleDrain();
   };
 
@@ -143,37 +155,46 @@ export class RuntimeEventPipeline {
     if (this.scheduledWork !== null || this.getPendingEventCount() === 0) {
       return;
     }
+
     this.scheduledWork = this.schedule(this.drainQueue);
   }
 
   private readonly drainQueue = (): void => {
     this.scheduledWork = null;
+
     if (!this.ready) return;
 
     const eventsToProcess = this.getPendingEventCount();
+
     for (let index = 0; index < eventsToProcess && this.ready; index += 1) {
       this.processNext();
     }
+
     if (this.ready && this.getPendingEventCount() > 0) this.scheduleDrain();
   };
 
   private processNext(): void {
     const envelope = this.queue[this.queueHead];
+
     if (!envelope) return;
     this.queue[this.queueHead] = undefined;
     this.queueHead += 1;
+
     if (this.queueHead === this.queue.length) {
       this.queue.length = 0;
       this.queueHead = 0;
     }
+
     this.pendingFacts -= envelope.facts.length;
 
     let projectedEnvelope: RuntimeEventEnvelope;
+
     try {
       projectedEnvelope = this.projection.captureIngress(envelope);
       this.projection.apply(projectedEnvelope);
     } catch (error) {
       this.reportProcessingError(error);
+
       return;
     }
 
@@ -182,6 +203,7 @@ export class RuntimeEventPipeline {
     } catch (error) {
       this.reportProcessingError(error);
     }
+
     for (const handler of this.projectedHandlers) {
       try {
         handler(projectedEnvelope);
@@ -210,6 +232,7 @@ export const runtimeEventPipeline = new RuntimeEventPipeline({
       const runtimeWindow: Window & {
         __lootlogGameClientRuntime?: { dispose: () => void };
       } = window;
+
       runtimeWindow.__lootlogGameClientRuntime?.dispose();
     }, 0);
   },

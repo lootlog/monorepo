@@ -27,7 +27,9 @@ import {
 import { renderItemStat } from "@/components/render-item-stat";
 
 const SEARCH_DEBOUNCE_MS = 300;
+
 const SEARCH_LIMIT = 96;
+
 type SearchStatus = "error" | "idle" | "loading" | "ready";
 
 type ItemsRouteSearch = {
@@ -177,6 +179,7 @@ const buildInFilter = (attribute: string, values: readonly string[]) => {
 const buildFilters = (search: ItemsRouteSearch) => {
   const minLevel = normalizeLevelValue(search.minLevel);
   const maxLevel = normalizeLevelValue(search.maxLevel);
+
   const filters = [
     minLevel === undefined ? undefined : `lvl >= ${minLevel}`,
     maxLevel === undefined ? undefined : `lvl <= ${maxLevel}`,
@@ -265,8 +268,11 @@ const getSearchStatus = (
   isPending: boolean,
 ): SearchStatus => {
   if (!hasActiveSearch) return "idle";
+
   if (isError) return "error";
+
   if (isPending) return "loading";
+
   return "ready";
 };
 
@@ -295,14 +301,18 @@ function ItemsRoute() {
   const [typesValue, setTypesValue] = useState(search.types);
   const [professionsValue, setProfessionsValue] = useState(search.professions);
   const [sortValue, setSortValue] = useState(search.sort || "relevance");
+
   const [advancedFilterValue, setAdvancedFilterValue] = useState(
     search.advancedFilter,
   );
+
   const filters = buildFilters(search);
+
   const { hasActiveSearch, queryParams } = getItemsSearchRequest(
     search,
     filters,
   );
+
   const itemsQuery = useItemsControllerGetItems(queryParams, {
     query: {
       enabled: hasActiveSearch,
@@ -315,7 +325,9 @@ function ItemsRoute() {
       },
     },
   });
+
   const data = hasActiveSearch ? itemsQuery.data : undefined;
+
   const status = getSearchStatus(
     hasActiveSearch,
     itemsQuery.isError,
@@ -458,6 +470,7 @@ function ItemsRoute() {
   const activeRarities = splitSearchList(raritiesValue);
   const activeTypes = splitSearchList(typesValue);
   const activeProfessions = splitSearchList(professionsValue);
+
   const itemLabels = {
     rarity: Object.fromEntries(
       displayRarityOptions.map((rarity) => [rarity, t(`itemRarity.${rarity}`)]),

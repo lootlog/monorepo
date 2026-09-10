@@ -40,10 +40,15 @@ import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
 
 const AUTO_HIDE_RING_PATH =
   "M 50 0 H 2 A 2 2 0 0 0 0 2 V 38 A 2 2 0 0 0 2 40 H 98 A 2 2 0 0 0 100 38 V 2 A 2 2 0 0 0 98 0 H 50";
+
 const AUTO_HIDE_BASE_STROKE_WIDTH = 1.5;
+
 const AUTO_HIDE_PROGRESS_STROKE_WIDTH = 3;
+
 const DEFAULT_BORDER_STROKE_WIDTH = 2;
+
 const AUTO_HIDE_BASE_STROKE_OPACITY = 0.45;
+
 const AUTO_HIDE_PROGRESS_STROKE_OPACITY = 0.95;
 
 type SingleNotificationProps = {
@@ -152,10 +157,13 @@ const resolveNotificationAppearance = ({
   const key = getNotificationSettingsKey(notification);
   const autoHideTimeout = categorySettings?.autoHideTimeout ?? 0;
   const autoHideDurationMs = autoHideTimeout > 0 ? autoHideTimeout * 1000 : 0;
+
   const serverNames = notification.servers.flatMap((server) => {
     const name = guildNamesById[server];
+
     return name ? [name] : [];
   });
+
   const time = format(new Date(notification.createdAt), "HH:mm");
   const highlight = categorySettings?.highlight;
 
@@ -173,10 +181,12 @@ const resolveNotificationActionState = (
   joinLabel: string,
 ) => {
   const isPartyGathering = isPartyGatheringNotification(notification);
+
   const regularNotification =
     !isPartyGathering && !isMentionNotification(notification)
       ? notification
       : null;
+
   const minLevel = isPartyGathering ? (notification.minLvl ?? 1) : 1;
   const maxLevel = isPartyGathering ? (notification.maxLvl ?? 500) : 500;
 
@@ -214,7 +224,9 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
     guildMember?.userId,
     guildMember?.avatar,
   );
+
   const memberColor = useMemberColor(guildMember);
+
   const { autoHideDurationMs, background, borderColor, metaText } =
     resolveNotificationAppearance({
       categorySettings,
@@ -222,11 +234,13 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
       notification,
       npcTypeColors,
     });
+
   const hasAutoHideRing = autoHideDurationMs > 0;
   const showAutoHideRing = hasAutoHideRing && animationEffectsEnabled;
   const senderName = guildMember?.name ?? t("states.unknownSender");
 
   const heroLvl = useGameStore((state) => state.game?.hero.level ?? 0);
+
   const { actionLabel, isPartyGathering, meetsLevelReq, showJoinAction } =
     resolveNotificationActionState(notification, heroLvl, t("actions.join"));
 
@@ -244,6 +258,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   useEffect(() => {
     const path = autoHidePathRef.current;
     const svg = path?.ownerSVGElement;
+
     if (!animationEffectsEnabled || !path || !svg || autoHideDurationMs <= 0) {
       return;
     }
@@ -251,8 +266,10 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
     const { width, height } = svg.getBoundingClientRect();
     const totalLength = 2 * (width + height);
     const deadlineMs = autoHideDeadlineMs ?? Date.now() + autoHideDurationMs;
+
     const remainingMs =
       autoHidePausedRemainingMs ?? Math.max(0, deadlineMs - Date.now());
+
     const clampedRemainingMs = Math.min(autoHideDurationMs, remainingMs);
     const elapsedMs = Math.max(0, autoHideDurationMs - clampedRemainingMs);
     const initialOffset = (elapsedMs / autoHideDurationMs) * totalLength;
@@ -264,6 +281,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
     if (clampedRemainingMs <= 0) {
       path.style.strokeDasharray = `0 ${dashGapLength}`;
       path.style.strokeDashoffset = String(totalLength);
+
       return () => {
         path.style.strokeDasharray = "";
         path.style.strokeDashoffset = "";
@@ -288,6 +306,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
         fill: "forwards",
       },
     );
+
     animation.onfinish = () => {
       path.style.strokeDasharray = `0 ${dashGapLength}`;
       path.style.strokeDashoffset = String(totalLength);
@@ -310,6 +329,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   const handleMuteMenuOpenChange = (open: boolean) => {
     if (open) {
       onPauseAutoHide(notification.listKey);
+
       return;
     }
 

@@ -12,6 +12,7 @@ type LootFeedItem = Extract<
 
 export function LiveFeedItems({ item }: { item: LootFeedItem }) {
   const { t } = useTranslation();
+
   return (
     <ul className="flex flex-wrap gap-2" aria-label={t("statistics.feedItems")}>
       {item.items.map((lootItem, index) => (

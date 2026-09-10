@@ -42,11 +42,13 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
         ),
       ),
     );
+
     try {
       const pool = await runtime.runPromise(PostgresPool);
       const client = await runtime.runPromise(PgClient.PgClient);
       const db = await runtime.runPromise(AuthDatabase);
       await runtime.runPromise(runAuthMigrations(db, client));
+
       const options = {
         database: drizzle({ client: pool }),
         config: {
@@ -81,9 +83,11 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
           commitSha: undefined,
         },
       };
+
       const auth = createLootlogAuth(options);
       const { adapter, internalAdapter } = await auth.$context;
       const createdAt = new Date("2026-01-02T03:04:05.123Z");
+
       const user = await adapter.create<typeof authUsers.$inferSelect>({
         model: "user",
         data: {
@@ -100,6 +104,7 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
           updatedAt: createdAt,
         },
       });
+
       expect(
         await runtime.runPromise(
           db.select().from(authUsers).where(eq(authUsers.id, user.id)),
@@ -157,9 +162,11 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
         ),
       ).toEqual([{ name: "Effect update" }]);
       expect(pool.totalCount).toBe(1);
+
       let grantOrganizations = [
         { id: "123", hasLootlogAccess: true, isAccessDataStale: false },
       ];
+
       const makeKeysRuntime = (apiKeysEnabled: boolean) =>
         ManagedRuntime.make(
           ApiKeyService.layer.pipe(
@@ -190,7 +197,9 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
             ),
           ),
         );
+
       const keysRuntime = makeKeysRuntime(true);
+
       try {
         const keys = await keysRuntime.runPromise(ApiKeyService);
         await expect(
@@ -235,6 +244,7 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
         grantOrganizations = [
           { id: "123", hasLootlogAccess: true, isAccessDataStale: false },
         ];
+
         const key = await keysRuntime.runPromise(
           keys.create(user.id, {
             name: "Integration",
@@ -244,6 +254,7 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
             expiresIn: null,
           }),
         );
+
         expect(key.expiresAt).toBeNull();
         expect(
           (await keysRuntime.runPromise(keys.list(user.id))).keys[0],
@@ -259,14 +270,17 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
             headers: new Headers({ "x-api-key": key.key }),
           }),
         ).toBeNull();
+
         for (let index = 1; index < 120; index++)
           await keysRuntime.runPromise(keys.verify(key.key));
         await expect(
           keysRuntime.runPromise(keys.verify(key.key)),
         ).rejects.toMatchObject({ status: 429 });
+
         const stored = await runtime.runPromise(
           db.select().from(authApiKeys).where(eq(authApiKeys.id, key.id)),
         );
+
         expect(stored[0]?.key).not.toBe(key.key);
         await expect(
           keysRuntime.runPromise(keys.rename("another-user", key.id, "stolen")),
@@ -274,9 +288,11 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
         await expect(
           keysRuntime.runPromise(keys.statuses(new Headers(), [key.id])),
         ).rejects.toMatchObject({ status: 401 });
+
         const statusHeaders = new Headers({
           authorization: "Bearer test-status-secret",
         });
+
         expect(
           await keysRuntime.runPromise(keys.statuses(statusHeaders, [key.id])),
         ).toMatchObject({ keys: [{ valid: true }] });
@@ -299,6 +315,7 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
         await expect(
           keysRuntime.runPromise(keys.verify(key.key)),
         ).rejects.toMatchObject({ status: 401 });
+
         const attempts = await Promise.allSettled(
           Array.from({ length: 12 }, (_, index) =>
             auth.api.createApiKey({
@@ -314,10 +331,12 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
             }),
           ),
         );
+
         expect(
           attempts.filter(({ status }) => status === "fulfilled"),
         ).toHaveLength(10);
         const { id: _removedId, ...removedData } = user;
+
         const removedOwner = await adapter.create<
           typeof authUsers.$inferSelect
         >({
@@ -328,7 +347,9 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
             discordId: "removed-discord",
           },
         });
+
         const disabledRuntime = makeKeysRuntime(false);
+
         try {
           const disabled = await disabledRuntime.runPromise(ApiKeyService);
           await expect(
@@ -353,6 +374,7 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
         } finally {
           await disabledRuntime.dispose();
         }
+
         const removedKey = await keysRuntime.runPromise(
           keys.create(removedOwner.id, {
             name: "Removed owner",
@@ -362,6 +384,7 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
             expiresIn: null,
           }),
         );
+
         await runtime.runPromise(
           db.delete(authUsers).where(eq(authUsers.id, removedOwner.id)),
         );

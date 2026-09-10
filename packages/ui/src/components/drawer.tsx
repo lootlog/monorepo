@@ -15,7 +15,9 @@ const DrawerContext = React.createContext<DrawerContextValue | null>(null);
 
 function useDrawer() {
   const context = React.useContext(DrawerContext);
+
   if (!context) throw new Error("useDrawer must be used within a Drawer.");
+
   return context;
 }
 
@@ -92,6 +94,7 @@ function DrawerContent({
   ...props
 }: DrawerPrimitive.Popup.Props) {
   const { modal, showSwipeHandle, swipeDirection } = useDrawer();
+
   const swipeAxis =
     swipeDirection === "down" || swipeDirection === "up" ? "y" : "x";
 

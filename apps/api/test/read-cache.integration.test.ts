@@ -34,9 +34,11 @@ import { applicationLogger } from "#src/shared/application-logger";
 describe("Read cache Dragonfly integration", () => {
   let runtime: ManagedRuntime.ManagedRuntime<Redis.Redis, never>;
   let cache: RedisService;
+
   const codec = makeJsonCodec(
     Schema.NullOr(Schema.Struct({ value: Schema.Number })),
   );
+
   const organization = randomUUID();
 
   const write = (key: string, value: number) =>
@@ -46,6 +48,7 @@ describe("Read cache Dragonfly integration", () => {
       ttlSeconds: 30,
       factory: () => Promise.resolve({ value }),
     });
+
   const read = (key: string) =>
     cache.getOrSetJson({
       key,
@@ -79,6 +82,7 @@ describe("Read cache Dragonfly integration", () => {
       "timer:list:one:other:all",
       "timer:list:two:user:world",
     ] as const;
+
     await Promise.all(keys.map((key) => write(key, 1)));
     await cache.deleteByPattern("timer:list:one:*");
     expect(await read(keys[0])).toBeNull();
@@ -123,6 +127,7 @@ describe("Read cache Dragonfly integration", () => {
     const key = "timer:list:race:user:world";
     const started = Promise.withResolvers<void>();
     const finish = Promise.withResolvers<void>();
+
     const stale = cache.getOrSetJson({
       key,
       codec,
@@ -130,9 +135,11 @@ describe("Read cache Dragonfly integration", () => {
       factory: async () => {
         started.resolve();
         await finish.promise;
+
         return { value: 1 };
       },
     });
+
     await started.promise;
     await cache.deleteByPattern("timer:list:race:*");
     expect(await write(key, 2)).toEqual({ value: 2 });
@@ -152,16 +159,19 @@ describe("Read cache Dragonfly integration", () => {
         })
         .pipe(Effect.flip),
     );
+
     expect(failure).toBe("query failed");
   });
 
   it("refreshes the real loot-list reader after archiving, with Date values on cache hits", async () => {
     const databaseRuntime = ManagedRuntime.make(ApiDatabaseLive);
+
     try {
       await databaseRuntime.runPromise(
         Effect.gen(function* () {
           const db = yield* ApiDatabase;
           const pg = yield* PgClient.PgClient;
+
           const [guild] = yield* db
             .insert(guildTable)
             .values({
@@ -171,6 +181,7 @@ describe("Read cache Dragonfly integration", () => {
               updatedAt: new Date(),
             })
             .returning();
+
           if (!guild) throw new Error("Missing guild fixture");
           yield* db.insert(memberTable).values({
             guildId: guild.id,
@@ -178,6 +189,7 @@ describe("Read cache Dragonfly integration", () => {
             name: "Owner",
             updatedAt: new Date(),
           });
+
           const [loot] = yield* db
             .insert(lootTable)
             .values({
@@ -188,12 +200,14 @@ describe("Read cache Dragonfly integration", () => {
               updatedAt: new Date(),
             })
             .returning();
+
           if (!loot) throw new Error("Missing loot fixture");
           yield* db.insert(organizationLootRecordTable).values({
             guildId: guild.id,
             lootId: loot.id,
             updatedAt: new Date(),
           });
+
           const operations = makeLootsOperations({
             persistence: makeLootPersistence(db),
             query: makeLootQueryOperations(makeLootQueryPersistence(db)),
@@ -201,11 +215,14 @@ describe("Read cache Dragonfly integration", () => {
             redis: cache,
             logger: applicationLogger,
           });
+
           const policy = createAccessPolicy({
             capabilities: [Permission.OWNER],
           });
+
           const request = () =>
             operations.fetchLootsByGuildId(guild, policy, [], {});
+
           expect((yield* request()).map((entry) => entry.id)).toEqual([
             loot.id,
           ]);
@@ -237,6 +254,7 @@ describe("Read cache Dragonfly integration", () => {
 
   it("refreshes catalog and coverage readers after event invalidation and revives Dates", async () => {
     const databaseRuntime = ManagedRuntime.make(ApiDatabaseLive);
+
     try {
       await databaseRuntime.runPromise(
         Effect.gen(function* () {
@@ -278,13 +296,17 @@ describe("Read cache Dragonfly integration", () => {
           });
           const catalog = makeEventsCatalogRead(db, cache, applicationLogger);
           const gaps = makeEventGapReads(db, cache, applicationLogger);
+
           const policy = createAccessPolicy({
             capabilities: [Permission.OWNER],
           });
+
           const overview = () =>
             catalog.getEventOverview({ id: guildId }, eventId, [], policy);
+
           const history = () =>
             gaps.getMapCoverageGaps({ id: guildId }, eventId, mapId);
+
           expect((yield* overview()).name).toBe("Before");
           expect((yield* history())[0]?.endedAt).toBeNull();
           expect((yield* overview()).createdAt).toBeInstanceOf(Date);
@@ -312,26 +334,34 @@ describe("Read cache Dragonfly integration", () => {
 
   it("coalesces concurrent cold loot statistics requests at the SQL boundary", async () => {
     let queries = 0;
+
     const query = makeLootStatsQuery({
       unsafe: () =>
         Effect.gen(function* () {
           queries++;
           yield* Effect.sleep("80 millis");
+
           return [];
         }),
     });
+
     const service = new LootStatsService(query, cache);
+
     const policy = createAccessPolicy({
       capabilities: [Permission.LOOTLOG_LOOTS_READ],
     });
+
     const request = () =>
       Effect.runPromise(service.getLootStatsEffect(organization, policy, []));
+
     const responses = await Promise.all(Array.from({ length: 8 }, request));
     expect(queries).toBe(6);
     expect(await cache.scan(`loot-stats:${organization}:*`)).toEqual([]);
+
     const firstGenerationKeys = await cache.scan(
       `read-cache:v1:*:loot-stats:${organization}:*`,
     );
+
     expect(firstGenerationKeys).toHaveLength(1);
     expect(
       responses.every(
@@ -341,9 +371,11 @@ describe("Read cache Dragonfly integration", () => {
     await cache.deleteByPattern(`loot-stats:${organization}:*`);
     await request();
     expect(queries).toBe(12);
+
     const nextGenerationKeys = await cache.scan(
       `read-cache:v1:*:loot-stats:${organization}:*`,
     );
+
     expect(nextGenerationKeys).toHaveLength(2);
     expect(nextGenerationKeys).toEqual(
       expect.arrayContaining(firstGenerationKeys),

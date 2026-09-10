@@ -51,7 +51,9 @@ export const SettingsGuildSelectionGrid: FC<SettingsGuildSelectionGridProps> = (
     selectionMode = "multiple",
     variant = "default",
   } = props;
+
   const { t } = useTranslation("common");
+
   if (!guilds || guilds.length === 0) {
     return <SettingsEmptyState>{emptyStateLabel}</SettingsEmptyState>;
   }
@@ -72,6 +74,7 @@ export const SettingsGuildSelectionGrid: FC<SettingsGuildSelectionGridProps> = (
       }
 
       onSelect(guildId);
+
       return;
     }
 
@@ -92,9 +95,11 @@ export const SettingsGuildSelectionGrid: FC<SettingsGuildSelectionGridProps> = (
     >
       {guilds.map((guild) => {
         const isSelected = selectedGuildIdSet.has(guild.id);
+
         const stateLabel = isSelected
           ? t("guildSelection.enabled")
           : t("guildSelection.disabled");
+
         const button = (
           <button
             key={guild.id}
@@ -211,7 +216,9 @@ export const toggleAvailableGuild = (
   const nextGuildIds = selectedGuildIds.includes(guildId)
     ? selectedGuildIds.filter((id) => id !== guildId)
     : [...selectedGuildIds, guildId];
+
   const nextGuildIdSet = new Set(nextGuildIds);
+
   return guilds.flatMap((guild) =>
     nextGuildIdSet.has(guild.id) ? [guild.id] : [],
   );

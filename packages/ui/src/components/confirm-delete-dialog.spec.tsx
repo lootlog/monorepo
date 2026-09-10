@@ -8,11 +8,14 @@ afterEach(cleanup);
 
 function deferred() {
   let resolve = () => {};
+
   let reject: (error: Error) => void = () => {};
+
   const promise = new Promise<void>((resolvePromise, rejectPromise) => {
     resolve = resolvePromise;
     reject = rejectPromise;
   });
+
   return { promise, resolve, reject };
 }
 
@@ -20,10 +23,12 @@ it("keeps the confirmation open while saving and after failure, then closes afte
   const user = userEvent.setup();
   const firstAttempt = deferred();
   const retry = deferred();
+
   const onConfirm = vi
     .fn<() => Promise<void>>()
     .mockReturnValueOnce(firstAttempt.promise)
     .mockReturnValueOnce(retry.promise);
+
   render(
     <ConfirmDeleteDialog
       title="Delete item"

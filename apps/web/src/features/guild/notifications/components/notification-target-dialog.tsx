@@ -43,6 +43,7 @@ export const NotificationTargetDialog = (
     target,
     isSubmitting,
   } = useNotificationTargetForm(props);
+
   return (
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-hidden sm:max-w-lg">

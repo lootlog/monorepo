@@ -143,8 +143,10 @@ describe("resetTransientRuntimeState", () => {
 
   it("cancels pending timer settings mutations during runtime teardown", () => {
     vi.useFakeTimers();
+
     const mutate =
       vi.fn<Parameters<typeof registerGlobalSettingsMutation>[0]>();
+
     const unregister = registerGlobalSettingsMutation(mutate);
     debouncedSyncGlobalSettings({ syncEnabled: true });
 

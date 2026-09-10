@@ -19,19 +19,25 @@ export const AppErrorBoundaryFallback = ({ error }: FallbackProps) => {
   const { t } = useTranslation("errorBoundary");
   const setPosition = useWindowsStore((state) => state.setPosition);
   const setOpen = useWindowsStore((state) => state.setOpen);
+
   const position = useWindowsStore(
     (state) => state[APP_ERROR_WINDOW_ID].position,
   );
+
   const [isVisible, setIsVisible] = useState(true);
   const [copyState, setCopyState] = useState<CopyState>("idle");
+
   const centeredPositionX = Math.round(
     (window.innerWidth - APP_ERROR_WINDOW_WIDTH) / 2,
   );
+
   const centeredPositionY = Math.round(
     (window.innerHeight - APP_ERROR_WINDOW_DEFAULT_HEIGHT) / 2,
   );
+
   const isPositionReady =
     position.x === centeredPositionX && position.y === centeredPositionY;
+
   const translations = {
     title: t("title"),
     summary: t("summary"),
@@ -47,6 +53,7 @@ export const AppErrorBoundaryFallback = ({ error }: FallbackProps) => {
     unknownErrorMessage: t("unknownErrorMessage"),
     missingStack: t("missingStack"),
   };
+
   const errorDetails = getErrorBoundaryDetails(error, translations);
 
   useLayoutEffect(() => {

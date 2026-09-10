@@ -18,6 +18,7 @@ describe("runtimeOtherHandles", () => {
         prof: "w",
       },
     };
+
     runtimeOtherHandles.applyBatch({ upserts: { 1: handle } });
     const handles = runtimeOtherHandles.getAll();
 
@@ -37,6 +38,7 @@ describe("runtimeOtherHandles", () => {
         prof: "w",
       },
     };
+
     runtimeOtherHandles.applyBatch({ upserts: { 1: handle } });
 
     runtimeOtherHandles.applyBatch({

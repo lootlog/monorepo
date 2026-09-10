@@ -11,9 +11,11 @@ export type DrizzleDatabase = Effect.Success<typeof drizzleDatabaseEffect>;
 export const PgClientLive = Layer.unwrap(
   Effect.gen(function* () {
     const url = yield* Config.redacted("POSTGRESQL_CONNECTION_URI");
+
     const applicationName = yield* Config.string("SERVICE_NAME").pipe(
       Config.withDefault("battlelog-service"),
     );
+
     return makePostgresLayer({ url, applicationName });
   }),
 );

@@ -1,5 +1,6 @@
 import { ExternalLink, MessageSquare } from "lucide-react";
 import { useTranslation } from "react-i18next";
+
 export const LootHeaderActions = ({
   commentsCount,
   onOpenDetails,
@@ -8,6 +9,7 @@ export const LootHeaderActions = ({
   onOpenDetails: () => void;
 }) => {
   const { t } = useTranslation();
+
   return (
     <div className="flex items-center gap-1.5">
       {" "}

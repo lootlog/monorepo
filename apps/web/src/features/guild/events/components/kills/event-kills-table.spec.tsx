@@ -12,6 +12,7 @@ import { EventKillsTable } from "./event-kills-table";
 await initializeTestTranslations();
 
 const wrapper = await createOrganizationTestWrapper();
+
 const renderTable = (ui: ReactNode) => render(ui, { wrapper });
 
 afterEach(() => {
@@ -89,6 +90,7 @@ describe("EventKillsTable", () => {
     const detailLinks = screen.getAllByRole("link", {
       name: "events.kills.openKillDetails",
     });
+
     expect(detailLinks).toHaveLength(1);
     expect(detailLinks[0]?.getAttribute("href")).toBe(
       "/guild-1/events/event-1/heroes/hero-1/kills/kill-1",
@@ -170,6 +172,7 @@ describe("EventKillsTable", () => {
   it("resets the scroll position after the hero filter changes", () => {
     const scrollElement = document.createElement("div");
     scrollElement.scrollTo = vi.fn();
+
     const { rerender } = renderTable(
       <EventKillsTable
         {...defaultProps}

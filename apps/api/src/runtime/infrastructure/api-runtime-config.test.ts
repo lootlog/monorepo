@@ -71,6 +71,7 @@ describe("apiRuntimeConfiguration", () => {
     const missingRabbit = Effect.runSyncExit(
       loadWith({ ...requiredEnvironment, RABBITMQ_URI: undefined }),
     );
+
     expect(Exit.isFailure(missingRabbit)).toBe(true);
   });
 });

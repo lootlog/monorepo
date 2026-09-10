@@ -159,13 +159,16 @@ export class MyReservationsData extends Context.Service<
               ],
               { concurrency: "unbounded" },
             );
+
             if (guildRows.length === 0) return { items: [] };
+
             const guildOrder = new Map(
               (preferenceRows[0]?.guildsOrder ?? []).map((id, index) => [
                 id,
                 index,
               ]),
             );
+
             const guildIds = guildRows
               .map(({ id }) => id)
               .sort(
@@ -173,7 +176,9 @@ export class MyReservationsData extends Context.Service<
                   (guildOrder.get(left) ?? Number.MAX_SAFE_INTEGER) -
                   (guildOrder.get(right) ?? Number.MAX_SAFE_INTEGER),
               );
+
             const now = new Date(yield* Clock.currentTimeMillis);
+
             const timeCondition =
               query.status === "past"
                 ? and(
@@ -184,6 +189,7 @@ export class MyReservationsData extends Context.Service<
                     lt(reservationTable.endsAt, now),
                   )
                 : gte(reservationTable.endsAt, now);
+
             const rows = yield* database
               .select({ reservation: reservationTable, guild: guildTable })
               .from(reservationTable)
@@ -209,12 +215,14 @@ export class MyReservationsData extends Context.Service<
                   ? desc(reservationTable.id)
                   : asc(reservationTable.id),
               );
+
             const viewer = {
               guildId: null,
               userId,
               discordId,
               canModerateCurrentGuild: false,
             };
+
             return {
               items: rows.map(({ reservation, guild }) =>
                 presentReservation({ ...reservation, guild }, viewer),
@@ -323,7 +331,9 @@ export class RolesData extends Context.Service<
                     ),
                   )
                   .limit(1);
+
                 const role = roles[0];
+
                 if (!role)
                   return yield* Effect.fail(new ResourceNotFoundError());
 
@@ -332,12 +342,15 @@ export class RolesData extends Context.Service<
                   .from(guildTable)
                   .where(eq(guildTable.id, guildId))
                   .limit(1);
+
                 const roleIsAdministrative = createAccessPolicy({
                   capabilities: role.permissions,
                 }).allows(Capability.ADMIN);
+
                 const newPermissionsAreAdministrative = createAccessPolicy({
                   capabilities: payload.permissions,
                 }).allows(Capability.ADMIN);
+
                 if (
                   roleIsAdministrative !== newPermissionsAreAdministrative &&
                   owners[0]?.ownerId !== discordId
@@ -362,9 +375,11 @@ export class RolesData extends Context.Service<
                     ),
                   )
                   .returning();
+
                 yield* cache.deleteByPattern(
                   getPermissionsCachePattern(guildId),
                 );
+
                 const members = yield* database
                   .select({
                     discordId: memberTable.userId,
@@ -382,6 +397,7 @@ export class RolesData extends Context.Service<
                       eq(memberToRoleTable.B, roleId),
                     ),
                   );
+
                 yield* Effect.forEach(
                   members,
                   (member) =>
@@ -394,6 +410,7 @@ export class RolesData extends Context.Service<
                       : Effect.void,
                   { concurrency: 4, discard: true },
                 );
+
                 return updated[0] ?? null;
               }).pipe(
                 Effect.withSpan("roles.update.persistence", {
@@ -499,12 +516,14 @@ export const toOrganizationWorkspaceHttpResponse = <A, R>(
     OrganizationWorkspaceOperationError: ({ cause }) => {
       if (Schema.is(ApplicationError)(cause)) {
         const status = applicationErrorStatus(cause);
+
         if (status < 500) {
           return Effect.succeed(
             HttpServerResponse.jsonUnsafe(cause.getResponse(), { status }),
           );
         }
       }
+
       return Effect.die(cause);
     },
   });
@@ -533,9 +552,11 @@ export const listReservationSpots = Effect.fn("listReservationSpots")(
     const access = yield* requireGuild(guildId, [
       Permission.LOOTLOG_RESERVATIONS_READ,
     ]);
+
     const value = yield* readData((service) =>
       service.listSpots(toViewer(access)),
     );
+
     return yield* decode(ReservationSpotsResponse, value);
   },
 );
@@ -545,9 +566,11 @@ export const listSpotReservations = Effect.fn("listSpotReservations")(
     const access = yield* requireGuild(guildId, [
       Permission.LOOTLOG_RESERVATIONS_READ,
     ]);
+
     const value = yield* readData((service) =>
       service.listWindow(toViewer(access), spotId, query.from, query.to),
     );
+
     return yield* decode(ReservationWindowResponse, value);
   },
 );
@@ -561,9 +584,11 @@ export const createReservation = Effect.fn("createReservation")(function* (
     Permission.LOOTLOG_RESERVATIONS_READ,
     Permission.LOOTLOG_RESERVATIONS_WRITE,
   ]);
+
   const value = yield* data((service) =>
     service.create(toViewer(access), spotId, payload),
   );
+
   return yield* decode(ReservationResponse, value);
 });
 
@@ -573,6 +598,7 @@ export const deleteVisibleReservation = Effect.fn("deleteVisibleReservation")(
       Permission.LOOTLOG_RESERVATIONS_READ,
       Permission.LOOTLOG_RESERVATIONS_WRITE,
     ]);
+
     yield* data((service) =>
       service.deleteVisible(toViewer(access), reservationId),
     );
@@ -587,6 +613,7 @@ const setReservationSpotPin = Effect.fn("setReservationSpotPin")(function* (
   const access = yield* requireGuild(guildId, [
     Permission.LOOTLOG_RESERVATIONS_READ,
   ]);
+
   yield* readData((service) =>
     pinned
       ? service.pinSpot(access.userId, access.guildId, spotId)
@@ -604,9 +631,11 @@ export const listMyReservations = Effect.fn("listMyReservations")(function* (
   query: MyReservationsQuery,
 ) {
   const current = yield* identity;
+
   const value = yield* myReservationsData((service) =>
     service.listMine(current, query),
   );
+
   return yield* decode(MyReservationsResponse, value);
 });
 
@@ -622,9 +651,11 @@ export const updateMyReservation = Effect.fn("updateMyReservation")(function* (
   payload: UpdateReservationRequest,
 ) {
   const current = yield* identity;
+
   const value = yield* data((service) =>
     service.updateOwned(current, reservationId, payload),
   );
+
   return yield* decode(ReservationResponse, value);
 });
 
@@ -638,9 +669,11 @@ export const updateGuildRole = Effect.fn("RolesControllerUpdateGuildRole")(
       Permission.LOOTLOG_ACCESS,
       Permission.ADMIN,
     ]);
+
     const value = yield* rolesData((service) =>
       service.updateRole(access.discordId, access.guildId, roleId, payload),
     );
+
     return yield* decode(RoleResponse, value);
   },
 );
@@ -648,9 +681,11 @@ export const updateGuildRole = Effect.fn("RolesControllerUpdateGuildRole")(
 export const getGuildRoles = Effect.fn("RolesControllerGetGuildRoles")(
   function* (guildId: string) {
     const access = yield* requireGuild(guildId, [Permission.LOOTLOG_ACCESS]);
+
     const value = yield* rolesData((service) =>
       service.getRoles(access.guildId),
     );
+
     return yield* decode(RolesResponse, value);
   },
 );
@@ -663,9 +698,11 @@ const requireSharingAdmin = (guildId: string) =>
 export const listReservationShares = Effect.fn("listReservationShares")(
   function* (guildId: string) {
     const access = yield* requireSharingAdmin(guildId);
+
     const value = yield* sharingData((service) =>
       service.listShares(access.guildId),
     );
+
     return yield* decode(ReservationSharesResponse, value);
   },
 );
@@ -674,9 +711,11 @@ export const previewReservationShareInvitation = Effect.fn(
   "previewReservationShareInvitation",
 )(function* (token: string) {
   const current = yield* identity;
+
   const value = yield* sharingData((service) =>
     service.previewInvitation(token, current.discordId),
   );
+
   return yield* decode(ReservationShareInvitationPreviewResponse, value);
 });
 
@@ -684,9 +723,11 @@ export const acceptReservationShareInvitation = Effect.fn(
   "acceptReservationShareInvitation",
 )(function* (token: string, payload: AcceptReservationShareInvitationRequest) {
   const current = yield* identity;
+
   const value = yield* sharingData((service) =>
     service.acceptInvitation(token, payload, current),
   );
+
   return yield* decode(AcceptedReservationShareResponse, value);
 });
 
@@ -694,9 +735,11 @@ export const createReservationShareInvitation = Effect.fn(
   "createReservationShareInvitation",
 )(function* (guildId: string) {
   const access = yield* requireSharingAdmin(guildId);
+
   const value = yield* sharingData((service) =>
     service.createInvitation(access.guildId, access.userId),
   );
+
   return yield* decode(CreatedReservationShareInvitationResponse, value);
 });
 

@@ -33,6 +33,7 @@ export const EventRulesDialog = ({
   scoringRules,
 }: EventRulesDialogProps) => {
   const { t } = useTranslation();
+
   const hasRulebook = Boolean(
     rulebookMarkdown && rulebookMarkdown.trim().length > 0,
   );

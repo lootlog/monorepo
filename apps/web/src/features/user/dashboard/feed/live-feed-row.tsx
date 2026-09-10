@@ -9,8 +9,10 @@ type Props = {
   now: number;
   organizations?: UserFeedResponseDtoOutput["items"][number]["guild"][];
 };
+
 export function LiveFeedRow(props: Props) {
   const { item, organizations } = props;
+
   if (item.type === "kill") {
     return (
       <LiveFeedKillRow
@@ -20,6 +22,7 @@ export function LiveFeedRow(props: Props) {
       />
     );
   }
+
   if (item.summary) {
     return (
       <LiveFeedLootRow
@@ -36,5 +39,6 @@ export function LiveFeedRow(props: Props) {
       />
     );
   }
+
   return <LiveFeedCompactRow {...props} item={item} />;
 }

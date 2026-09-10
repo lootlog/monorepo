@@ -10,6 +10,7 @@ import {
   outboundHttpRequest,
   type OutboundHttpFailure,
 } from "#src/shared/http/outbound-http";
+
 const DiscordGuildChannelSnapshotSchema = Schema.Struct({
   guildId: Schema.String,
   channelId: Schema.String,
@@ -26,6 +27,7 @@ const DiscordGuildChannelSnapshotSchema = Schema.Struct({
   missingPermissions: Schema.mutable(Schema.Array(Schema.String)),
   lastSyncedAt: Schema.String,
 });
+
 const DiscordGuildSyncStateSchema = Schema.Struct({
   guildId: Schema.String,
   status: DiscordGuildSyncStatusSchema,
@@ -40,6 +42,7 @@ const DiscordGuildSyncStateSchema = Schema.Struct({
   lastError: Schema.NullOr(Schema.String),
   updatedAt: Schema.String,
 });
+
 const DiscordGuildChannelsResponse = Schema.Struct({
   channels: Schema.mutable(Schema.Array(DiscordGuildChannelSnapshotSchema)),
   syncState: DiscordGuildSyncStateSchema,
@@ -114,6 +117,7 @@ export const makeDiscordBotClient = (
     );
 
   const serviceUrl = discordBotServiceUrl.toString().replace(/\/$/, "");
+
   return {
     getGuildChannels: (guildId) =>
       request(

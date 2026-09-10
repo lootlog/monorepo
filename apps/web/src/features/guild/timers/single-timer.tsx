@@ -20,10 +20,12 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
   const minSpawnTime = new Date(timer.minSpawnTime).getTime();
   const npcName = timer.npc?.name ?? "";
   const npcIcon = timer.npc?.icon ?? null;
+
   const npcDetails =
     timer.npc && timer.npc.lvl > 0 && timer.npc.prof
       ? `(${timer.npc.lvl}${timer.npc.prof.charAt(0).toLowerCase()})`
       : null;
+
   const imageHasDomain = npcIcon?.startsWith("https://"); // @TODO: temporary fix for icons with full URL
 
   return (

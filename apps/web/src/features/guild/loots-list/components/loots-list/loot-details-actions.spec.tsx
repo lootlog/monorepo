@@ -23,18 +23,23 @@ afterEach(cleanup);
 
 it("keeps archive pending until the request finishes and prevents duplicate requests", async () => {
   let resolveResponse: (response: Response) => void = () => {};
+
   const response = new Promise<Response>((resolve) => {
     resolveResponse = resolve;
   });
+
   const fetch = vi.fn(
     (_input: RequestInfo | URL, _init?: RequestInit) => response,
   );
+
   const restore = configureApiClients({
     main: { baseUrl: "http://api.test", fetch },
   });
+
   const client = new QueryClient({
     defaultOptions: { mutations: { retry: false } },
   });
+
   const loot = {
     id: 1,
     uniqueId: "loot-1",
@@ -50,16 +55,20 @@ it("keeps archive pending until the request finishes and prevents duplicate requ
     updatedAt: "2026-09-06T10:00:00.000Z",
     commentsCount: 0,
   };
+
   const root = createRootRoute();
+
   const route = createRoute({
     getParentRoute: () => root,
     path: "$guildId/loots",
     component: () => <LootDetailsActions loot={loot} />,
   });
+
   const router = createRouter({
     routeTree: root.addChildren([route]),
     history: createMemoryHistory({ initialEntries: ["/guild-1/loots"] }),
   });
+
   try {
     render(
       <QueryClientProvider client={client}>

@@ -57,22 +57,27 @@ export const MembersTable = ({
 }: MembersTableProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+
   const openMemberDetails = (member: GuildMember) => {
     navigate({
       to: "/$guildId/settings/members/$memberId",
       params: { guildId, memberId: String(member.id) },
     });
   };
+
   const rowEstimateSize = isMobile ? 88 : 64;
+
   const rowVirtualizer = useVirtualizer({
     count: members.length,
     getScrollElement: () => scrollElementRef.current,
     estimateSize: () => rowEstimateSize,
     overscan: 8,
   });
+
   const virtualRows = rowVirtualizer.getVirtualItems();
   const topPadding = virtualRows[0]?.start ?? 0;
   const lastVirtualRow = virtualRows[virtualRows.length - 1];
+
   const bottomPadding =
     virtualRows.length > 0
       ? rowVirtualizer.getTotalSize() - (lastVirtualRow?.end ?? 0)
@@ -86,6 +91,7 @@ export const MembersTable = ({
         )}
         {virtualRows.map((virtualRow) => {
           const member = members[virtualRow.index];
+
           if (!member) return null;
 
           const {
@@ -124,6 +130,7 @@ export const MembersTable = ({
                   <span className="mt-1 flex shrink-0 items-center gap-1">
                     {onlineSources.map((source) => {
                       const Icon = source === "web" ? Globe2 : Gamepad2;
+
                       const labelKey =
                         source === "web"
                           ? "settings.members.webActivity.onlineSources.web"
@@ -239,6 +246,7 @@ export const MembersTable = ({
         )}
         {virtualRows.map((virtualRow) => {
           const member = members[virtualRow.index];
+
           if (!member) return null;
 
           return (

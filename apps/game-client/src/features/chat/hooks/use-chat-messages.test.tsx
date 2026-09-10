@@ -20,6 +20,7 @@ import { useChatMessagesListener } from "./use-chat-messages";
 
 const key = (guildId = "guild-1") =>
   getChatControllerGetChatMessagesQueryKey({ guildId });
+
 const message = (
   id: string,
   guildId = "guild-1",
@@ -32,20 +33,25 @@ const message = (
     message: `Message ${id}`,
     ...overrides,
   });
+
 const created = (message: ChatMessage): ServerEvent => ({
   v: 1,
   type: "chat.created",
   data: { organizationId: message.guildId, payload: message },
 });
+
 const legacyPermissions = (organizationIds = ["guild-1"]): ServerEvent => ({
   v: 1,
   type: "permissions.updated",
   data: { organizationIds, subscriptionScopes: [] },
 });
+
 const ChatListener = () => {
   useChatMessagesListener();
+
   return null;
 };
+
 const notifications = () => useNotificationsStore.getState().notifications;
 
 describe("useChatMessagesListener", () => {
@@ -58,6 +64,7 @@ describe("useChatMessagesListener", () => {
     vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
       const id = nextFrameId++;
       frameCallbacks.set(id, callback);
+
       return id;
     });
     vi.stubGlobal("cancelAnimationFrame", (id: number) =>
@@ -70,24 +77,31 @@ describe("useChatMessagesListener", () => {
     vi.unstubAllGlobals();
     vi.useRealTimers();
   });
+
   const mount = (options?: Parameters<typeof useChatMessagesListener>[0]) => {
     const result = renderHook(() => useChatMessagesListener(options), {
       wrapper: harness.wrapper,
     });
+
     harness.open();
+
     return result;
   };
+
   const flushFrame = () =>
     act(() => {
       const callbacks = [...frameCallbacks.values()];
       frameCallbacks.clear();
       callbacks.forEach((callback) => callback(0));
     });
+
   const cached = (guildId = "guild-1") =>
     harness.queryClient.getQueryData<ChatMessage[]>(key(guildId));
+
   const loseAccount = () =>
     act(() => {
       const game = useGameStore.getState().game;
+
       if (!game) throw new Error("Expected game");
       useGameStore.getState().replaceGame({
         ...game,
@@ -109,11 +123,13 @@ describe("useChatMessagesListener", () => {
     const fetchHistory = vi
       .fn<() => Promise<ChatMessage[]>>()
       .mockResolvedValue([]);
+
     const observer = new QueryObserver(harness.queryClient, {
       queryKey: key(),
       queryFn: fetchHistory,
       staleTime: Infinity,
     });
+
     const unsubscribe = observer.subscribe(() => {});
     mount();
     expect(fetchHistory).not.toHaveBeenCalled();
@@ -147,10 +163,12 @@ describe("useChatMessagesListener", () => {
       const { result } = renderHook(
         () => {
           useChatMessagesListener();
+
           return authClient.useSession().data;
         },
         { wrapper: harness.wrapper },
       );
+
       harness.open();
       act(() => harness.setSessionDiscordId("current-discord"));
       await waitFor(() =>
@@ -158,6 +176,7 @@ describe("useChatMessagesListener", () => {
       );
       harness.queryClient.setQueryData(key(), [message("old-session")]);
       harness.queryClient.setQueryData(["unrelated"], "kept");
+
       if (queued) await harness.receive(created(message("queued-session")));
       act(() => harness.setSessionDiscordId(null));
       await waitFor(() => expect(result.current).toBeNull());
@@ -200,6 +219,7 @@ describe("useChatMessagesListener", () => {
     const response = Promise.withResolvers<Response>();
     harness.memberRequest.mockReturnValue(response.promise);
     mount();
+
     const policy = createAccessPolicySnapshot(
       ["guild-1", "guild-2"].map((id) => ({
         guild: { id, ownerId: "owner" },
@@ -213,6 +233,7 @@ describe("useChatMessagesListener", () => {
       })),
       "user",
     );
+
     await harness.receive({
       v: 1,
       type: "permissions.updated",
@@ -348,6 +369,7 @@ describe("useChatMessagesListener", () => {
     );
     const before = renders;
     const game = useGameStore.getState().game;
+
     if (!game) throw new Error("Expected game");
     act(() =>
       useGameStore
@@ -361,6 +383,7 @@ describe("useChatMessagesListener", () => {
     const onRemoteMessage = vi.fn<(message: ChatMessage) => void>();
     mount({ onRemoteMessage });
     let updates = 0;
+
     const unsubscribe = harness.queryClient
       .getQueryCache()
       .subscribe((event) => {
@@ -371,6 +394,7 @@ describe("useChatMessagesListener", () => {
         )
           updates++;
       });
+
     await harness.receive(
       ...Array.from({ length: 15 }, (_, index) =>
         created(message(String(index))),
@@ -426,6 +450,7 @@ describe("useChatMessagesListener", () => {
   it("publishes each organization at most once in the same frame", async () => {
     mount();
     const updates: string[] = [];
+
     const unsubscribe = harness.queryClient
       .getQueryCache()
       .subscribe((event) => {
@@ -438,6 +463,7 @@ describe("useChatMessagesListener", () => {
         )
           updates.push(event.query.queryHash);
       });
+
     await harness.receive(
       ...[
         message("1a"),
@@ -457,6 +483,7 @@ describe("useChatMessagesListener", () => {
     vi.useFakeTimers();
     vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
       frameCallbacks.set(1, callback);
+
       return 1;
     });
     mount();
@@ -471,6 +498,7 @@ describe("useChatMessagesListener", () => {
     const { rerender } = renderUi(<ChatListener />, {
       wrapper: harness.wrapper,
     });
+
     harness.open();
     await harness.receive(created(message("before-unmount")));
     expect(cached()).toEqual([]);
@@ -488,6 +516,7 @@ describe("useChatMessagesListener", () => {
 
   it("drops pending operations for a guild before removing its cache", async () => {
     mount();
+
     const policy = (ids: string[]) =>
       createAccessPolicySnapshot(
         ids.map((id) => ({
@@ -502,6 +531,7 @@ describe("useChatMessagesListener", () => {
         })),
         "user",
       );
+
     await harness.join(["guild-1", "guild-2"], policy(["guild-1", "guild-2"]));
     await harness.receive(
       created(message("kept")),
@@ -515,6 +545,7 @@ describe("useChatMessagesListener", () => {
 
   it("keeps accepted messages across a socket reconnect", async () => {
     mount();
+
     const policy = createAccessPolicySnapshot(
       [
         {
@@ -530,6 +561,7 @@ describe("useChatMessagesListener", () => {
       ],
       "user",
     );
+
     await harness.join(["guild-1"], policy);
     await harness.receive(created(message("during-reconnect")));
     flushFrame();

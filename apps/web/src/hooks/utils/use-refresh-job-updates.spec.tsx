@@ -12,11 +12,13 @@ afterEach(() => {
 it("delivers only updates for the current organization and stops after unmount", () => {
   const gateway = createTestGateway();
   const received: string[] = [];
+
   const { rerender, unmount } = renderHook(
     ({ guildId }) =>
       useRefreshJobUpdates(guildId, (update) => received.push(update.guildId)),
     { initialProps: { guildId: "first" }, wrapper: gateway.wrapper },
   );
+
   const emit = (guildId: string) =>
     act(() => {
       gateway.deliver({
@@ -35,6 +37,7 @@ it("delivers only updates for the current organization and stops after unmount",
         },
       });
     });
+
   emit("other");
   emit("first");
   rerender({ guildId: "second" });

@@ -30,6 +30,7 @@ const DEFAULT_GENERAL_CONFIG = {
 } satisfies TimersGeneralConfig;
 
 type HiddenTimers = Record<string, string[]>;
+
 type PinnedTimers = Record<string, string[]>;
 
 interface TimersState {
@@ -106,6 +107,7 @@ export const useTimersStore = create<TimersState>()(
   persist(
     (set, get) => {
       const setWithTimestamp = updateTimestamp(set);
+
       const setGlobalSettings = (
         payload: UpdateTimerSettingsPayload & Partial<TimersState>,
       ) => {
@@ -120,9 +122,11 @@ export const useTimersStore = create<TimersState>()(
         selected: boolean,
       ) => {
         const current = get()[field][guildId] ?? [];
+
         const next = selected
           ? [...new Set([...current, timerId])]
           : current.filter((id) => id !== timerId);
+
         setWithTimestamp(() => ({
           [field]: { ...get()[field], [guildId]: next },
         }));
@@ -200,9 +204,11 @@ export const useTimersStore = create<TimersState>()(
         showExpiredTimerAlways: (world: string, timerKey: string) => {
           const currentTimerKeys =
             get().alwaysVisibleExpiredTimers[world] ?? [];
+
           const updatedTimerKeys = [
             ...new Set([...currentTimerKeys, timerKey]),
           ];
+
           const updatedAlwaysVisibleExpiredTimers = {
             ...get().alwaysVisibleExpiredTimers,
             [world]: updatedTimerKeys,
@@ -215,9 +221,11 @@ export const useTimersStore = create<TimersState>()(
         hideExpiredTimerAlways: (world: string, timerKey: string) => {
           const currentTimerKeys =
             get().alwaysVisibleExpiredTimers[world] ?? [];
+
           const updatedTimerKeys = currentTimerKeys.filter(
             (key) => key !== timerKey,
           );
+
           const updatedAlwaysVisibleExpiredTimers = {
             ...get().alwaysVisibleExpiredTimers,
             [world]: updatedTimerKeys,
@@ -236,6 +244,7 @@ export const useTimersStore = create<TimersState>()(
             ...get().timersColors,
             [npcName]: color,
           };
+
           setGlobalSettings({ timersColors: updatedTimersColors });
         },
         addCustomColor: (color: CustomTimerColor) => {
@@ -243,6 +252,7 @@ export const useTimersStore = create<TimersState>()(
             ...get().customColors,
             [color.id]: color,
           };
+
           setGlobalSettings({ customColors: updatedCustomColors });
         },
         updateCustomColor: (id: string, color: CustomTimerColor) => {
@@ -250,6 +260,7 @@ export const useTimersStore = create<TimersState>()(
             ...get().customColors,
             [id]: color,
           };
+
           setGlobalSettings({ customColors: updatedCustomColors });
         },
         deleteCustomColor: (id: string) => {
@@ -274,6 +285,7 @@ export const useTimersStore = create<TimersState>()(
             ...get().defaultColorNames,
             [colorId]: name,
           };
+
           setGlobalSettings({ defaultColorNames: updatedDefaultColorNames });
         },
         updateDefaultColor: (
@@ -285,15 +297,18 @@ export const useTimersStore = create<TimersState>()(
             ...get().overriddenDefaultColors,
             [colorId]: { borderColor, backgroundColor },
           };
+
           setGlobalSettings({
             overriddenDefaultColors: updatedOverriddenDefaultColors,
           });
         },
         resetDefaultColor: (colorId: string) => {
           const state = get();
+
           const overriddenDefaultColors = {
             ...state.overriddenDefaultColors,
           };
+
           const defaultColorNames = { ...state.defaultColorNames };
           delete overriddenDefaultColors[colorId];
           delete defaultColorNames[colorId];
@@ -301,10 +316,12 @@ export const useTimersStore = create<TimersState>()(
         },
         deleteDefaultColor: (colorId: string) => {
           const state = get();
+
           const updatedHiddenDefaultColors = [
             ...state.hiddenDefaultColors,
             colorId,
           ];
+
           const updatedTimersColors = Object.fromEntries(
             Object.entries(state.timersColors).map(([key, value]) =>
               value === colorId ? [key, undefined] : [key, value],
@@ -318,9 +335,11 @@ export const useTimersStore = create<TimersState>()(
         },
         restoreDefaultColor: (colorId: string) => {
           const state = get();
+
           const updatedHiddenDefaultColors = state.hiddenDefaultColors.filter(
             (id) => id !== colorId,
           );
+
           const newOverriddenColors = { ...state.overriddenDefaultColors };
           delete newOverriddenColors[colorId];
           const newDefaultColorNames = { ...state.defaultColorNames };
@@ -357,6 +376,7 @@ export const useTimersStore = create<TimersState>()(
       storage: createJSONStorage(() => localStorage),
       merge: (persistedState, currentState) => {
         const persisted = decodeTimerSettings(persistedState);
+
         return {
           ...currentState,
           updatedAt: persisted.updatedAt ?? currentState.updatedAt,

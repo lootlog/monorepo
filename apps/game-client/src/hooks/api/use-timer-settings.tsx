@@ -15,8 +15,10 @@ import {
 } from "@lootlog/client/main";
 
 const queryPath = z.string();
+
 const hasQueryPathPrefix = (queryKey: QueryKey, prefix: string) => {
   const path = queryPath.safeParse(queryKey[0]);
+
   return path.success && path.data.startsWith(prefix);
 };
 
@@ -27,6 +29,7 @@ const toUpdateTimerSettingsDto = (
   payload: UpdateTimerSettingsPayload,
 ): UpdateTimerSettingsDto => {
   const { timersColors, ...rest } = payload;
+
   const normalizedTimersColors = timersColors
     ? Object.fromEntries(
         Object.entries(timersColors).filter(

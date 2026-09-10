@@ -38,6 +38,7 @@ export function BattleDamageTags({
 
   const { className: containerClassName, ...restContainerProps } =
     containerProps ?? {};
+
   const {
     className: badgeClassName,
     tabIndex: badgeTabIndex,

@@ -13,6 +13,7 @@ export function StatisticsDistribution({
   rows,
 }: StatisticsDistributionProps) {
   const maximum = Math.max(1, ...rows.map((row) => row.kills));
+
   return (
     <SectionCard>
       <SectionCardHeader title={title} description="Europe/Warsaw" />

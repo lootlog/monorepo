@@ -55,6 +55,7 @@ function setOnlineOwner(guildMemberName?: string): void {
 
 function getTarget() {
   const target = getOtherCatchingGuildsTarget(createOther());
+
   if (!target) {
     throw new Error("Expected an online character owner");
   }

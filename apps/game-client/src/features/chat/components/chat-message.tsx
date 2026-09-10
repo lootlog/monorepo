@@ -59,6 +59,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({
   const memberColor = useMemberColor(member);
   const isMsgYesterday = isChatMessageYesterdayOrOlder(message.timestamp);
   const messageBody = getChatMessageBody(message);
+
   const { mutate: deleteChatMessageMutation, isPending: isDeleting } =
     useChatControllerDeleteChatMessage({
       mutation: {
@@ -72,10 +73,13 @@ export const ChatMessage: FC<ChatMessageProps> = ({
         },
       },
     });
+
   const canDeleteMessage = message.canDelete;
   const canReplyMessage = canReplyToChatMessage(message);
+
   const senderName =
     member?.name ?? message.characterData?.nick ?? t("contextMenu.unknownUser");
+
   if (!message.characterData) return null;
 
   if (!guildName) return null;
@@ -121,6 +125,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({
         tabIndex={0}
         onKeyDown={(event) => {
           if (event.target !== event.currentTarget) return;
+
           if (
             event.key !== "ContextMenu" &&
             !(event.shiftKey && event.key === "F10")

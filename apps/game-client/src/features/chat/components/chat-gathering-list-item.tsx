@@ -22,6 +22,7 @@ export function ChatGatheringListItem({
   onRestore: () => void;
 }) {
   const { t } = useTranslation("chat");
+
   return (
     <li className="ll-party-gathering-card ll:min-w-0 ll:border-solid ll:border-x-0 ll:border-t-0 ll:border-b ll:border-gray-400/20 ll:p-2 ll:last:border-b-0">
       <div className="ll:flex ll:min-w-0 ll:items-center ll:gap-1">

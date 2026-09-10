@@ -18,6 +18,7 @@ export const HeroWindowStatusBadge = ({
 }: HeroWindowStatusBadgeProps) => {
   const { t } = useTranslation();
   const guildId = useGuildId();
+
   const { data: queryData } = useEventsMonitoringControllerGetHeroRespawnConfig(
     {
       guildId: guildId ?? "",
@@ -25,6 +26,7 @@ export const HeroWindowStatusBadge = ({
       heroId,
     },
   );
+
   const respawnConfig = queryData ?? {
     hasTimer: false,
     windowStatus: "NONE" as const,

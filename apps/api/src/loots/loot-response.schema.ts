@@ -40,7 +40,9 @@ export const LootResponse = Schema.Struct({
   submissions: Schema.optionalKey(Schema.Array(LootSubmissionResponse)),
   commentsCount: Schema.Number,
 });
+
 export type LootResponse = typeof LootResponse.Type;
 
 export const NullableLootResponse = Schema.NullOr(LootResponse);
+
 export const NullableLootItemResponse = Schema.NullOr(LootItemResponse);

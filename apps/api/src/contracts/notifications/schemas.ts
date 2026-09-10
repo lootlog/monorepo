@@ -20,6 +20,7 @@ import {
   JsonValue,
   NonEmptyString,
 } from "@lootlog/schema/http-scalars";
+
 const NotificationTargetMetadata = JsonValue.annotate({
   identifier: "NotificationTargetResponseDto__schema0",
 });
@@ -43,6 +44,7 @@ const NotificationTargetTestMetadata = JsonValue.annotate({
 const WatchedItemMetadata = JsonValue.annotate({
   identifier: "WatchedItemResponseDto__schema0",
 });
+
 const notificationTargetFields = (metadata: Schema.Codec<Schema.Json>) => ({
   id: SafeInteger,
   ownerType: NotificationOwnerTypeSchema,
@@ -65,6 +67,7 @@ const notificationTargetFields = (metadata: Schema.Codec<Schema.Json>) => ({
 export const NotificationTargetResponse = Schema.Struct(
   notificationTargetFields(NotificationTargetMetadata),
 ).annotate({ identifier: "NotificationTargetResponseDto" });
+
 export type NotificationTargetResponse = typeof NotificationTargetResponse.Type;
 
 export const CreateNotificationTargetRequest = Schema.Struct({
@@ -84,6 +87,7 @@ export const CreateNotificationTargetRequest = Schema.Struct({
     ),
   ),
 }).annotate({ identifier: "CreateNotificationTargetDto" });
+
 export type CreateNotificationTargetRequest =
   typeof CreateNotificationTargetRequest.Type;
 
@@ -125,6 +129,7 @@ export const AvailableOrganizationNotificationTargetsResponse = Schema.Struct({
     Schema.Null,
   ]),
 }).annotate({ identifier: "GuildAvailableNotificationTargetsResponseDto" });
+
 export type AvailableOrganizationNotificationTargetsResponse =
   typeof AvailableOrganizationNotificationTargetsResponse.Type;
 
@@ -141,8 +146,10 @@ export const UpdateNotificationTargetRequest = Schema.Struct({
   ),
   active: Schema.optionalKey(Schema.Boolean),
 }).annotate({ identifier: "UpdateNotificationTargetDto" });
+
 export type UpdateNotificationTargetRequest =
   typeof UpdateNotificationTargetRequest.Type;
+
 const NotificationTestQuota = Schema.Struct({
   limit: SafeInteger,
   used: SafeInteger,
@@ -150,6 +157,7 @@ const NotificationTestQuota = Schema.Struct({
   windowSeconds: SafeInteger,
   nextAvailableAt: Schema.Union([DateTimeWithOffsetString, Schema.Null]),
 });
+
 const notificationRuleFields = {
   id: SafeInteger,
   ownerType: NotificationOwnerTypeSchema,
@@ -223,8 +231,10 @@ export const OrganizationNotificationRulesResponse = Schema.Struct({
     testTriggerWindowSeconds: SafeInteger,
   }),
 }).annotate({ identifier: "GuildNotificationRulesResponseDto" });
+
 export type OrganizationNotificationRulesResponse =
   typeof OrganizationNotificationRulesResponse.Type;
+
 const notificationRuleInputFields = {
   name: Schema.optionalKey(
     Schema.Union([
@@ -360,6 +370,7 @@ export const CreateNotificationRuleRequest = Schema.Struct({
     Schema.makeFilter((data) => {
       if (data.npcId === undefined && data.npcIds === undefined)
         return undefined;
+
       return (data.npcId !== undefined && data.npcId !== null) ||
         (data.npcIds !== undefined && data.npcIds.length > 0)
         ? undefined
@@ -371,6 +382,7 @@ export const CreateNotificationRuleRequest = Schema.Struct({
     }),
   )
   .annotate({ identifier: "CreateNotificationRuleDto" });
+
 export type CreateNotificationRuleRequest =
   typeof CreateNotificationRuleRequest.Type;
 
@@ -385,6 +397,7 @@ export const NotificationRuleResponse = Schema.Struct({
     }),
   ),
 }).annotate({ identifier: "NotificationRuleResponseDto" });
+
 export type NotificationRuleResponse = typeof NotificationRuleResponse.Type;
 
 export const UpdateNotificationRuleRequest = Schema.Struct({
@@ -412,6 +425,7 @@ export const UpdateNotificationRuleRequest = Schema.Struct({
     Schema.makeFilter((data) => {
       if (data.npcId === undefined && data.npcIds === undefined)
         return undefined;
+
       return (data.npcId !== undefined && data.npcId !== null) ||
         (data.npcIds !== undefined && data.npcIds.length > 0)
         ? undefined
@@ -423,8 +437,10 @@ export const UpdateNotificationRuleRequest = Schema.Struct({
     }),
   )
   .annotate({ identifier: "UpdateNotificationRuleDto" });
+
 export type UpdateNotificationRuleRequest =
   typeof UpdateNotificationRuleRequest.Type;
+
 const NotificationJob = Schema.Struct({
   id: Schema.String,
   ruleId: SafeInteger,
@@ -517,12 +533,14 @@ export const NotificationJobsResponse = Schema.Struct({
   pending: Schema.Array(NotificationJob),
   history: Schema.Array(NotificationJob),
 }).annotate({ identifier: "NotificationJobsResponseDto" });
+
 export type NotificationJobsResponse = typeof NotificationJobsResponse.Type;
 
 export const NotificationTargetTestResponse = Schema.Struct({
   ...notificationTargetFields(NotificationTargetTestMetadata),
   testTrigger: NotificationTestQuota,
 }).annotate({ identifier: "NotificationTargetWithTestTriggerResponseDto" });
+
 export type NotificationTargetTestResponse =
   typeof NotificationTargetTestResponse.Type;
 
@@ -570,6 +588,7 @@ export const WatchedItemResponse = Schema.Struct({
     Schema.Null,
   ]),
 }).annotate({ identifier: "WatchedItemResponseDto" });
+
 export type WatchedItemResponse = typeof WatchedItemResponse.Type;
 
 export const CreateWatchedItemRequest = Schema.Struct({
@@ -602,6 +621,7 @@ export const CreateWatchedItemRequest = Schema.Struct({
       }),
     ),
 }).annotate({ identifier: "CreateWatchedItemDto" });
+
 export type CreateWatchedItemRequest = typeof CreateWatchedItemRequest.Type;
 
 export const QuickAddWatchedItemRequest = Schema.Struct({
@@ -622,17 +642,20 @@ export const QuickAddWatchedItemRequest = Schema.Struct({
     }),
   ),
 }).annotate({ identifier: "CreateWatchedItemQuickAddDto" });
+
 export type QuickAddWatchedItemRequest = typeof QuickAddWatchedItemRequest.Type;
 
 export const OrganizationNotificationParams = Schema.Struct({
   guildId: JsonValue,
 });
+
 export type OrganizationNotificationParams =
   typeof OrganizationNotificationParams.Type;
 
 export const OrganizationNotificationTargetsResponse = Schema.Array(
   NotificationTargetResponse,
 );
+
 export type OrganizationNotificationTargetsResponse =
   typeof OrganizationNotificationTargetsResponse.Type;
 
@@ -640,6 +663,7 @@ export const OrganizationNotificationTargetParams = Schema.Struct({
   targetId: FiniteNumber,
   guildId: JsonValue,
 });
+
 export type OrganizationNotificationTargetParams =
   typeof OrganizationNotificationTargetParams.Type;
 
@@ -647,6 +671,7 @@ export const OrganizationNotificationRuleParams = Schema.Struct({
   ruleId: FiniteNumber,
   guildId: JsonValue,
 });
+
 export type OrganizationNotificationRuleParams =
   typeof OrganizationNotificationRuleParams.Type;
 
@@ -654,32 +679,39 @@ export const OrganizationNotificationJobParams = Schema.Struct({
   jobId: Schema.String.annotate({ examples: ["job_123"] }),
   guildId: JsonValue,
 });
+
 export type OrganizationNotificationJobParams =
   typeof OrganizationNotificationJobParams.Type;
 
 export const UserNotificationTargetsResponse = Schema.Array(
   NotificationTargetTestResponse,
 );
+
 export type UserNotificationTargetsResponse =
   typeof UserNotificationTargetsResponse.Type;
 
 export const NotificationTargetParams = Schema.Struct({
   targetId: FiniteNumber,
 });
+
 export type NotificationTargetParams = typeof NotificationTargetParams.Type;
 
 export const NotificationRulesResponse = Schema.Array(NotificationRuleResponse);
+
 export type NotificationRulesResponse = typeof NotificationRulesResponse.Type;
 
 export const NotificationRuleParams = Schema.Struct({
   ruleId: FiniteNumber,
 });
+
 export type NotificationRuleParams = typeof NotificationRuleParams.Type;
 
 export const WatchedItemsResponse = Schema.Array(WatchedItemResponse);
+
 export type WatchedItemsResponse = typeof WatchedItemsResponse.Type;
 
 export const WatchedItemParams = Schema.Struct({
   watchedItemId: FiniteNumber,
 });
+
 export type WatchedItemParams = typeof WatchedItemParams.Type;

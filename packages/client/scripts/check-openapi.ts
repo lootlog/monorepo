@@ -4,11 +4,13 @@ import { resolve } from "node:path";
 import { parse } from "yaml";
 
 const OpenApiSchema = Schema.Record(Schema.String, Schema.Json);
+
 const OpenApiParameter = Schema.Struct({
   in: Schema.optionalKey(Schema.String),
   name: Schema.optionalKey(Schema.String),
   required: Schema.optionalKey(Schema.Boolean),
 });
+
 const OpenApiDocument = Schema.Struct({
   components: Schema.optionalKey(
     Schema.Struct({
@@ -42,6 +44,7 @@ const OpenApiDocument = Schema.Struct({
     ),
   ),
 });
+
 const decodeDocument = Schema.decodeUnknownSync(OpenApiDocument, {
   onExcessProperty: "preserve",
 });
@@ -112,6 +115,7 @@ export const checkOpenApi = (): void => {
       document.paths?.[pathKey]?.[method]?.responses?.[statusCode]?.content?.[
         "application/json"
       ]?.schema;
+
     assert(
       responseSchema,
       `Missing raw OpenAPI response schema for ${method.toUpperCase()} ${pathKey} (${statusCode})`,

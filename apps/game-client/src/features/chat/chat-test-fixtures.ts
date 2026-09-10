@@ -16,6 +16,7 @@ export const createChatCharacter = (
   icon: "hero.gif",
   ...overrides,
 });
+
 export const createChatMessage = (
   overrides: Partial<ChatMessage> = {},
 ): ChatMessage => ({
@@ -30,6 +31,7 @@ export const createChatMessage = (
   canDelete: false,
   ...overrides,
 });
+
 export const createChatRole = (
   overrides: Partial<RoleResponseDtoOutput> = {},
 ): RoleResponseDtoOutput => ({
@@ -40,6 +42,7 @@ export const createChatRole = (
   permissions: [],
   ...overrides,
 });
+
 export const createChatMember = (overrides: Partial<MemberResponseDto> = {}) =>
   ({
     id: 1,

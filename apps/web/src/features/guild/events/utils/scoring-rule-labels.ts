@@ -70,5 +70,6 @@ export const formatScoringAction = (
   if (action.type === "SET_BASE" || action.type === "ADD_BONUS") {
     return `${getScoringActionTypeLabel(action.type, t)} ${action.points}`;
   }
+
   return getScoringActionTypeLabel(action.type, t);
 };

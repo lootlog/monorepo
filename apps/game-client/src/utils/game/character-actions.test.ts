@@ -64,4 +64,5 @@ describe("character actions", () => {
     });
   });
 });
+
 import { testRuntimeWindow } from "@/test/test-runtime-window";

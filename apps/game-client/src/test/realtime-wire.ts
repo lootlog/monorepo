@@ -5,6 +5,7 @@ import {
 } from "@lootlog/protocol/realtime/codec";
 
 type WireEvent = Parameters<RealtimeWebSocket["addEventListener"]>[0];
+
 type WireListener = Parameters<RealtimeWebSocket["addEventListener"]>[1];
 
 export class RealtimeWire implements RealtimeWebSocket {

@@ -18,17 +18,23 @@ import {
 import { createNativeRuntime } from "@/test/native-runtime";
 import { useSettingsStore } from "@/store/settings.store";
 import * as tooltipPatcher from "@/lib/margonem-tooltips/patcher";
+
 vi.stubGlobal("Engine", createNativeRuntime());
+
 const { runtimeEventPipeline } =
   await import("@/lib/margonem-runtime/runtime-event-pipeline");
+
 const { margonemRuntimeBridge } =
   await import("@/lib/margonem-runtime/margonem-runtime-bridge");
+
 const { useCharacterTooltipGameEvents } =
   await import("./use-character-tooltip-game-events");
+
 const patchOtherCharacterTooltips = vi.spyOn(
   tooltipPatcher,
   "patchOtherCharacterTooltips",
 );
+
 function dispatch(event: GameEvent) {
   act(() => {
     margonemRuntimeBridge.triggerManualEvent(event);
@@ -60,6 +66,7 @@ function setRuntimeOthers(others: Record<string, Other>) {
     ...createNativeRuntime(),
     others: { check, getById: (id: number) => others[String(id)] },
   });
+
   return check;
 }
 

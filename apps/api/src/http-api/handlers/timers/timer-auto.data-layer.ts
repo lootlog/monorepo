@@ -45,6 +45,7 @@ import {
 } from "#src/timers/timer-projection";
 
 const DEDUP_TTL_SECONDS = 30;
+
 const RELEASE_DEDUP_LOCK_SCRIPT = `
 if redis.call("get", KEYS[1]) == ARGV[1] then
   return redis.call("del", KEYS[1])
@@ -110,14 +111,17 @@ const calculateSpawnWindow = (payload: CreateAutoTimerRequest, now: Date) => {
   if (payload.customMinSpawnTime && payload.customMaxSpawnTime) {
     const minSpawnTime = new Date(payload.customMinSpawnTime);
     const maxSpawnTime = new Date(payload.customMaxSpawnTime);
+
     if (maxSpawnTime <= minSpawnTime) {
       throw new InvalidRequestError({
         message: ErrorKey.INVALID_CUSTOM_SPAWN_TIME,
       });
     }
+
     if (minSpawnTime < now) {
       throw new InvalidRequestError({ message: ErrorKey.SPAWN_TIME_IN_PAST });
     }
+
     if (
       maxSpawnTime.getTime() - minSpawnTime.getTime() >
       TIMER_LIMITS.MAX_SPAWN_WINDOW_DAYS * 24 * 60 * 60 * 1000
@@ -126,10 +130,13 @@ const calculateSpawnWindow = (payload: CreateAutoTimerRequest, now: Date) => {
         message: ErrorKey.SPAWN_WINDOW_TOO_LARGE,
       });
     }
+
     return { minSpawnTime, maxSpawnTime };
   }
+
   const milliseconds = payload.respBaseSeconds * 1000;
   const randomness = payload.respawnRandomness ?? DEFAULT_RESPAWN_RANDOMNESS;
+
   return {
     minSpawnTime: new Date(
       now.getTime() +
@@ -170,6 +177,7 @@ const migrateSyntheticTimer = (
 ) =>
   Effect.gen(function* () {
     const now = new Date(yield* Clock.currentTimeMillis);
+
     const heroes = yield* database
       .select({ hero: eventHeroNpcTable })
       .from(eventHeroNpcTable)
@@ -184,11 +192,15 @@ const migrateSyntheticTimer = (
         ),
       )
       .limit(1);
+
     const hero = heroes[0]?.hero;
+
     if (hero?.npcId !== null) return null;
     const syntheticNpcId = getSyntheticNpcId(hero.id);
+
     if (syntheticNpcId === options.npcId) return null;
     const syntheticTimerKey = buildTimerKey(syntheticNpcId, options.npcName);
+
     const syntheticRows = yield* database
       .select()
       .from(timerTable)
@@ -200,7 +212,9 @@ const migrateSyntheticTimer = (
         ),
       )
       .limit(1);
+
     const timer = syntheticRows[0];
+
     if (!timer) return null;
     yield* database
       .delete(timerTable)
@@ -211,6 +225,7 @@ const migrateSyntheticTimer = (
           eq(timerTable.timerKey, syntheticTimerKey),
         ),
       );
+
     return { timer, syntheticNpcId, syntheticTimerKey };
   });
 
@@ -259,7 +274,9 @@ export const makeAutoTimer = (
                     message: ErrorKey.INVALID_CUSTOM_SPAWN_TIME,
                   }),
           });
+
           const npc = makeNpc(payload);
+
           const members = yield* transaction
             .select()
             .from(memberTable)
@@ -270,7 +287,9 @@ export const makeAutoTimer = (
               ),
             )
             .limit(1);
+
           const member = members[0];
+
           if (!member)
             return yield* Effect.die(
               new TimersMemberNotFound({
@@ -278,11 +297,13 @@ export const makeAutoTimer = (
                 discordId: identity.discordId,
               }),
             );
+
           const actorCharacter = yield* upsertActorCharacter(
             transaction,
             payload.world,
             payload.actorCharacter,
           );
+
           const existingRows = yield* transaction
             .select()
             .from(timerTable)
@@ -294,9 +315,11 @@ export const makeAutoTimer = (
               ),
             )
             .limit(1);
+
           let previousTimer = existingRows[0] ?? null;
           let migratedSyntheticNpcId: number | null = null;
           let migratedSyntheticTimerKey: string | null = null;
+
           if (!previousTimer) {
             const migrated = yield* migrateSyntheticTimer(transaction, {
               guildId,
@@ -304,13 +327,16 @@ export const makeAutoTimer = (
               npcId: payload.npc.id,
               npcName: payload.npc.name,
             });
+
             if (migrated) {
               previousTimer = migrated.timer;
               migratedSyntheticNpcId = migrated.syntheticNpcId;
               migratedSyntheticTimerKey = migrated.syntheticTimerKey;
             }
           }
+
           const now = new Date(yield* Clock.currentTimeMillis);
+
           const timerRows = yield* transaction
             .insert(timerTable)
             .values({
@@ -354,7 +380,9 @@ export const makeAutoTimer = (
               },
             })
             .returning();
+
           const timer = timerRows[0];
+
           if (!timer)
             return yield* Effect.die(
               new TimersInvariantViolation({ code: "AUTO_UPSERT_NO_ROW" }),
@@ -379,6 +407,7 @@ export const makeAutoTimer = (
             timerActorCharacterSnapshotId: timer.actorCharacterSnapshotId,
             timerActorCharacterLvl: timer.actorCharacterLvl,
           });
+
           const stale = yield* transaction
             .select({ id: timerHistoryEntryTable.id })
             .from(timerHistoryEntryTable)
@@ -394,6 +423,7 @@ export const makeAutoTimer = (
               desc(timerHistoryEntryTable.id),
             )
             .offset(5);
+
           if (stale.length > 0) {
             yield* transaction.delete(timerHistoryEntryTable).where(
               inArray(
@@ -402,6 +432,7 @@ export const makeAutoTimer = (
               ),
             );
           }
+
           return {
             projection: { ...timer, member, actorCharacter },
             previousTimer,
@@ -418,19 +449,25 @@ export const makeAutoTimer = (
           new InvalidRequestError({ message: ErrorKey.WT_TOO_LOW }),
         );
       }
+
       const cached = yield* ports.get(dedupKey);
+
       if (cached) return yield* projectionFromCache(cached);
       const token = randomUUID();
       let acquired = yield* ports.setNx(dedupLockKey, token, DEDUP_TTL_SECONDS);
       const waitedForOwner = !acquired;
+
       if (!acquired) {
         for (let attempt = 0; attempt < 100; attempt += 1) {
           yield* Effect.sleep("50 millis");
           const result = yield* ports.get(dedupKey);
+
           if (result) return yield* projectionFromCache(result);
           acquired = yield* ports.setNx(dedupLockKey, token, DEDUP_TTL_SECONDS);
+
           if (acquired) break;
         }
+
         if (!acquired) {
           return yield* Effect.fail(
             new ResourceConflictError({
@@ -439,11 +476,14 @@ export const makeAutoTimer = (
           );
         }
       }
+
       return yield* Effect.ensuring(
         Effect.gen(function* () {
           const cachedAfterLock = yield* ports.get(dedupKey);
+
           if (cachedAfterLock)
             return yield* projectionFromCache(cachedAfterLock);
+
           if (waitedForOwner) {
             const completedRows = yield* database
               .select()
@@ -457,9 +497,12 @@ export const makeAutoTimer = (
                 ),
               )
               .limit(1);
+
             const completed = completedRows[0];
+
             if (completed) return mapTimerResponse(completed);
           }
+
           const result = yield* persist;
           const response = mapTimerResponse(result.projection);
           yield* ports.set(
@@ -468,6 +511,7 @@ export const makeAutoTimer = (
             DEDUP_TTL_SECONDS,
           );
           yield* ports.invalidate(`timer:list:${guildId}:*`);
+
           if (result.migratedSyntheticNpcId !== null) {
             const deletion = {
               guildId,
@@ -479,6 +523,7 @@ export const makeAutoTimer = (
                 npcLevel: payload.npc.lvl,
               },
             };
+
             yield* ports.publish(
               RabbitRoutingKey.GUILDS_TIMERS_DELETE,
               deletion,
@@ -488,6 +533,7 @@ export const makeAutoTimer = (
               deletion,
             );
           }
+
           yield* ports.publish(RabbitRoutingKey.GUILDS_TIMERS_UPDATE, response);
           yield* ports.publish(
             RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
@@ -513,6 +559,7 @@ export const makeAutoTimer = (
               },
             })
             .pipe(Effect.ignore);
+
           return response;
         }),
         ports.releaseDedup(RELEASE_DEDUP_LOCK_SCRIPT, dedupLockKey, token),
@@ -529,6 +576,7 @@ export const makeAutoTimer = (
         new InvalidRequestError({ message: ErrorKey.WT_TOO_LOW }),
       );
     }
+
     yield* Effect.try({
       try: () => calculateSpawnWindow(payload, new Date()),
       catch: (cause) =>
@@ -538,13 +586,16 @@ export const makeAutoTimer = (
               message: ErrorKey.INVALID_CUSTOM_SPAWN_TIME,
             }),
     });
+
     const guildRows = yield* selectAccessibleGuilds(
       database,
       identity.discordId,
       [Permission.LOOTLOG_TIMERS_WRITE],
     );
+
     if (guildRows.length === 0)
       return yield* Effect.fail(new PermissionDeniedError());
+
     const configs = yield* database
       .select({
         catchingGuildIds: userCharactersLootlogSettingsTable.catchingGuildIds,
@@ -562,8 +613,10 @@ export const makeAutoTimer = (
       )
       .orderBy(desc(userCharactersLootlogSettingsTable.createdAt))
       .limit(1);
+
     const catching = new Set(configs[0]?.catchingGuildIds ?? []);
     const targets = guildRows.filter(({ guild }) => catching.has(guild.id));
+
     const rejectedGuilds: Array<{
       guildId: string;
       guildName: string;
@@ -575,6 +628,7 @@ export const makeAutoTimer = (
         guildName: guild.name,
         reason: "NOT_ON_CATCHING_WHITELIST" as const,
       }));
+
     if (targets.length === 0) {
       return yield* Effect.fail(
         badRequest(
@@ -583,11 +637,14 @@ export const makeAutoTimer = (
         ),
       );
     }
+
     const submittedGuilds: Array<{ guildId: string; guildName: string }> = [];
+
     for (const { guild } of targets) {
       const result = yield* Effect.result(
         writeGuildTimer(identity, guild.id, payload),
       );
+
       if (Result.isSuccess(result)) {
         submittedGuilds.push({ guildId: guild.id, guildName: guild.name });
       } else {
@@ -598,13 +655,16 @@ export const makeAutoTimer = (
         });
       }
     }
+
     if (submittedGuilds.length === 0) {
       return yield* Effect.fail(
         badRequest(ErrorKey.NO_GUILD_ACCEPTS_THIS_TIMER, rejectedGuilds),
       );
     }
+
     return { submittedGuilds, rejectedGuilds };
   });
+
   return (identity: TimersIdentity, payload: CreateAutoTimerRequest) =>
     operation(identity, payload).pipe(Effect.mapError(toTimersDataFailure));
 };

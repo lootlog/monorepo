@@ -65,21 +65,27 @@ describe("EditMyReservationForm", () => {
   it("submits the editable reservation fields through the typed update flow", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-08-26T12:00:00.000Z"));
+
     const client = new QueryClient({
       defaultOptions: { queries: { retry: false, gcTime: 0 } },
     });
+
     const restore = configureApiClients({
       main: { baseUrl: "https://api.test" },
     });
+
     const updates: { url: string; body: string | null | undefined }[] = [];
     vi.stubGlobal(
       "fetch",
       async (input: string | URL | Request, init?: RequestInit) => {
         const request = new Request(input, init);
+
         if (request.method === "PATCH") {
           updates.push({ url: request.url, body: await request.text() });
+
           return Response.json(reservation);
         }
+
         return Response.json([
           { targetType: "DM", active: true, canSend: true },
         ]);

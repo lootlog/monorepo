@@ -32,29 +32,37 @@ export const createRealtimeTest = () => {
     },
   });
   const wire = new RealtimeWire();
+
   const realtime = new RealtimeClient({
     url: "https://gateway.example.test",
     webSocketFactory: () => wire,
   });
+
   const memberRequest = vi
     .fn<typeof fetch>()
     .mockImplementation(() => Promise.resolve(Response.json(null)));
+
   const requests: string[] = [];
   let sessionDiscordId: string | null = null;
   const soundSettings = createSoundSettings();
+
   const externalFetch = vi
     .spyOn(globalThis, "fetch")
     .mockImplementation((input) => {
       const url = input instanceof Request ? input.url : String(input);
+
       if (url.startsWith("https://public-api.margonem.pl/account/validate"))
         return Promise.resolve(
           Response.json({ error: "No game session in test" }, { status: 503 }),
         );
+
       return Promise.reject(new Error(`Unexpected external fetch: ${url}`));
     });
+
   const http: typeof fetch = async (input, init) => {
     const url = new URL(input instanceof Request ? input.url : String(input));
     requests.push(url.pathname);
+
     if (url.pathname.endsWith("/get-session"))
       return Response.json(
         sessionDiscordId
@@ -78,40 +86,53 @@ export const createRealtimeTest = () => {
             }
           : null,
       );
+
     if (url.pathname === "/sound-settings") return Response.json(soundSettings);
+
     if (url.pathname === "/preferences") return Response.json({ domains: {} });
+
     if (url.pathname.endsWith("/members/summary")) return Response.json([]);
+
     if (url.pathname.endsWith("/members/@me"))
       return await memberRequest(input, init);
     throw new Error(`Unexpected HTTP request: ${url.pathname}`);
   };
+
   const restorePlatform = configureGameClientPlatform({
     fetch: http,
     createRealtime: () => realtime,
   });
+
   const restoreApi = configureApiClients({
     main: { baseUrl: "https://api.example.test", fetch: http },
   });
+
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>
       <SocketProvider>{children}</SocketProvider>
     </QueryClientProvider>
   );
+
   const receive = async (...events: ServerEvent[]) => {
     if (events.length === 0) return;
     await act(async () => {
       const received = Promise.withResolvers<void>();
       let remaining = events.length;
+
       const unsubscribe = realtime.subscribe(() => {
         remaining -= 1;
+
         if (remaining === 0) received.resolve();
       });
+
       events.forEach((event) => wire.receive(event));
       await received.promise;
       unsubscribe();
     });
   };
+
   const open = () => act(() => wire.open());
+
   const join = async (
     organizationIds = ["guild-1"],
     accessPolicy?: AccessPolicySnapshot,
@@ -126,9 +147,11 @@ export const createRealtimeTest = () => {
         accountId: "1",
         prof: "w",
       });
+
       const request = wire.frames.findLast(
         (frame) => "type" in frame && frame.type === "session.join",
       );
+
       if (!request || !("requestId" in request) || !request.requestId)
         throw new Error("Expected join request");
       wire.receive({
@@ -140,6 +163,7 @@ export const createRealtimeTest = () => {
       await joined;
     });
   };
+
   onTestFinished(() => {
     externalFetch.mockRestore();
     disposeSocket();
@@ -148,10 +172,12 @@ export const createRealtimeTest = () => {
     queryClient.clear();
     useNotificationsStore.getState().clearNotifications();
   });
+
   const setSessionDiscordId = (id: string | null) => {
     sessionDiscordId = id;
     authClient.$store.notify("$sessionSignal");
   };
+
   return {
     setSessionDiscordId,
     wrapper,

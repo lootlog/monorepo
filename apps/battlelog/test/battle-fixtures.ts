@@ -127,6 +127,7 @@ export const unusedDeleteQueue = {
 
 const unexpectedRedisOperation = () =>
   Promise.reject(new Error("Unexpected Redis operation"));
+
 export const unusedRedisStore = {
   set: unexpectedRedisOperation,
   get: unexpectedRedisOperation,

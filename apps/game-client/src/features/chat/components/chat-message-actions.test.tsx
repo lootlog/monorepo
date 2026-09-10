@@ -23,9 +23,11 @@ describe("chat message actions", () => {
         { wrapper: createChatTestWrapper().wrapper },
       );
       expect(screen.queryByRole("button")).not.toBeInTheDocument();
+
       const message = screen.getByText(
         type === "NOTIFICATION" ? "[P] Hello" : "Hello",
       );
+
       await user.tab();
       expect(document.activeElement).toContainElement(message);
       await user.keyboard("{Shift>}{F10}{/Shift}");
@@ -82,9 +84,11 @@ it("exposes the full compact quote and opens the original with keyboard", async 
       onClick={onClick}
     />,
   );
+
   const quote = screen.getByRole("button", {
     name: new RegExp(message.trim()),
   });
+
   expect(quote).toHaveAttribute("title", `Hero: ${message}`);
   expect(screen.getByText(message.trim())).toBeInTheDocument();
   await user.tab();

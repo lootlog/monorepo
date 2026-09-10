@@ -33,14 +33,19 @@ import {
 } from "./handlers/party-ready-room/party-ready-room.handlers.js";
 
 const caller = { userId: "user", discordId: "discord" };
+
 let rateLimited = true;
+
 const databaseBoundary = await createDatabaseBoundary();
+
 const database = new Proxy(databaseBoundary.database, {
   get() {
     throw new Error("Rejected input must not access the database");
   },
 });
+
 const unused = () => Effect.die("Unexpected ready-room operation");
+
 const services = Layer.mergeAll(
   Layer.succeed(MessagingIdentity, { caller: Effect.succeed(caller) }),
   Layer.succeed(LootlogConfigAuthorization, {
@@ -89,6 +94,7 @@ const services = Layer.mergeAll(
     observeParty: unused,
   }),
 ).pipe(Layer.provide(Layer.succeed(ApiDatabase, database)));
+
 const boundary = HttpRouter.toWebHandler(
   HttpApiBuilder.layer(
     HttpApi.make("LootlogApi").add(
@@ -116,10 +122,12 @@ const boundary = HttpRouter.toWebHandler(
   ),
   { disableLogger: true },
 );
+
 afterAll(async () => {
   await boundary.dispose();
   await databaseBoundary.dispose();
 });
+
 const request = (
   method: string,
   path: string,
@@ -138,34 +146,42 @@ const request = (
 
 it("preserves notification rate-limit status and retry delay through HTTP", async () => {
   rateLimited = true;
+
   const response = await request("POST", "/messaging", {
     guildIds: ["guild"],
     world: "Fobos",
     message: "test",
   });
+
   expect(response.status).toBe(429);
   expect(await response.json()).toEqual({
     message: "NOTIFICATION_RATE_LIMITED",
     retryAfterMs: 2000,
   });
 });
+
 it("preserves missing notification content as a client error", async () => {
   rateLimited = false;
+
   const response = await request("POST", "/messaging", {
     guildIds: ["guild"],
     world: "Fobos",
   });
+
   expect(response.status).toBe(400);
   expect(await response.json()).toEqual({ message: "MISSING_MESSAGE_OR_NPC" });
 });
+
 it("returns 404 for an invalid NPC configuration identifier before database access", async () => {
   const response = await request(
     "PUT",
     "/guilds/guild/lootlog-config/not-a-number",
     { allowedRarities: [] },
   );
+
   expect(response.status).toBe(404);
 });
+
 for (const { method, path, payload, status, code } of [
   {
     method: "POST",

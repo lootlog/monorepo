@@ -48,6 +48,7 @@ import { BearerSecurityMiddleware } from "../../contracts/shared.js";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 
 const identity = { userId: "user-a", discordId: "discord-owner" };
+
 const guildAccess = {
   ...identity,
   guildId: "guild-a",
@@ -186,17 +187,21 @@ describe("Reservations and Roles HttpApi handlers", () => {
       allOf?: ReadonlyArray<string>;
       anyOf?: ReadonlyArray<string>;
     }> = [];
+
     const createContexts: unknown[] = [];
+
     const layer = provideServices(
       makeAuthorization({
         requireGuild: (options) => {
           authorizationCalls.push(options);
+
           return Effect.succeed(guildAccess);
         },
       }),
       makeData({
         create: (context) => {
           createContexts.push(context);
+
           return Effect.succeed(reservation);
         },
       }),
@@ -237,7 +242,9 @@ describe("Reservations and Roles HttpApi handlers", () => {
       status: 403,
       code: "RESERVATIONS_READ_REQUIRED",
     });
+
     let dataCalled = false;
+
     const layer = provideServices(
       makeAuthorization({ requireGuild: () => Effect.fail(denied) }),
       makeData(),
@@ -246,6 +253,7 @@ describe("Reservations and Roles HttpApi handlers", () => {
       makeReadData({
         listSpots: () => {
           dataCalled = true;
+
           return Effect.succeed([]);
         },
       }),
@@ -264,7 +272,9 @@ describe("Reservations and Roles HttpApi handlers", () => {
       status: 404,
       code: "RESERVATION_NOT_FOUND",
     });
+
     let dataCalled = false;
+
     const layer = provideServices(
       makeAuthorization({ requireGuild: () => Effect.fail(hidden) }),
       makeData(),
@@ -273,6 +283,7 @@ describe("Reservations and Roles HttpApi handlers", () => {
       makeReadData({
         listSpots: () => {
           dataCalled = true;
+
           return Effect.succeed([]);
         },
       }),
@@ -290,15 +301,18 @@ describe("Reservations and Roles HttpApi handlers", () => {
 
   it("passes OWNER identity and canonical Organization to role recovery", async () => {
     const authorizationCalls: Array<ReadonlyArray<string>> = [];
+
     const updateCalls: Array<{
       discordId: string;
       guildId: string;
       roleId: string;
     }> = [];
+
     const layer = provideServices(
       makeAuthorization({
         requireGuild: (options) => {
           authorizationCalls.push(options.allOf);
+
           return Effect.succeed(guildAccess);
         },
       }),
@@ -306,6 +320,7 @@ describe("Reservations and Roles HttpApi handlers", () => {
       makeRolesData({
         updateRole: (discordId, guildId, roleId) => {
           updateCalls.push({ discordId, guildId, roleId });
+
           return Effect.succeed(role);
         },
       }),
@@ -334,9 +349,11 @@ describe("Reservations and Roles HttpApi handlers", () => {
 
   it("preserves the role service rejection for non-owner admin-bit changes", async () => {
     const serviceForbidden = new PermissionDeniedError("Forbidden");
+
     const failure = new OrganizationWorkspaceOperationError({
       cause: serviceForbidden,
     });
+
     const layer = provideServices(
       makeAuthorization({
         requireGuild: () =>
@@ -366,10 +383,12 @@ describe("Reservations and Roles HttpApi handlers", () => {
   it("lists reciprocal partner Organizations with OWNER-or-ADMIN authority", async () => {
     const authorizationCalls: unknown[] = [];
     const guildIds: string[] = [];
+
     const layer = provideServices(
       makeAuthorization({
         requireGuild: (options) => {
           authorizationCalls.push(options);
+
           return Effect.succeed(guildAccess);
         },
       }),
@@ -378,6 +397,7 @@ describe("Reservations and Roles HttpApi handlers", () => {
       makeSharingData({
         listShares: (guildId) => {
           guildIds.push(guildId);
+
           return Effect.succeed(sharingList);
         },
       }),
@@ -402,7 +422,9 @@ describe("Reservations and Roles HttpApi handlers", () => {
       status: 404,
       code: "GUILD_NOT_FOUND",
     });
+
     let dataCalled = false;
+
     const layer = provideServices(
       makeAuthorization({ requireGuild: () => Effect.fail(hidden) }),
       makeData(),
@@ -410,6 +432,7 @@ describe("Reservations and Roles HttpApi handlers", () => {
       makeSharingData({
         listShares: () => {
           dataCalled = true;
+
           return Effect.succeed(sharingList);
         },
       }),
@@ -429,9 +452,11 @@ describe("Reservations and Roles HttpApi handlers", () => {
     const invitationNotFound = new ResourceNotFoundError({
       code: "INVITATION_NOT_FOUND",
     });
+
     const failure = new OrganizationWorkspaceOperationError({
       cause: invitationNotFound,
     });
+
     const layer = provideServices(
       makeAuthorization(),
       makeData(),
@@ -455,10 +480,13 @@ describe("Reservations and Roles HttpApi handlers", () => {
     const targetHidden = new ResourceNotFoundError({
       code: "TARGET_ORGANIZATION_NOT_FOUND",
     });
+
     const failure = new OrganizationWorkspaceOperationError({
       cause: targetHidden,
     });
+
     const acceptCalls: unknown[] = [];
+
     const layer = provideServices(
       makeAuthorization(),
       makeData(),
@@ -466,6 +494,7 @@ describe("Reservations and Roles HttpApi handlers", () => {
       makeSharingData({
         acceptInvitation: (token, payload, current) => {
           acceptCalls.push({ token, payload, current });
+
           return Effect.fail(failure);
         },
       }),
@@ -515,15 +544,18 @@ describe("reservation HTTP error responses", () => {
           Effect.fail(new OrganizationWorkspaceOperationError({ cause })),
       }),
     );
+
     const bearer = BearerSecurityMiddleware.of({
       bearer: (effect) =>
         Effect.provideService(effect, ForwardAuthIdentity, identity),
     });
+
     const platform = Layer.mergeAll(
       Path.layer,
       Etag.layerWeak,
       HttpPlatform.layer,
     ).pipe(Layer.provideMerge(FileSystem.layerNoop({})));
+
     const request = Effect.scoped(
       Effect.gen(function* () {
         const client = yield* HttpApiTest.groups(LootlogApi, [
@@ -535,6 +567,7 @@ describe("reservation HTTP error responses", () => {
           Effect.provide(Layer.succeed(BearerSecurityMiddleware, bearer)),
           Effect.provide(apiKeyEndpointPolicyLayer("main")),
         );
+
         const response = yield* client.reservations.createReservation({
           params: { guildId: "guild-a", spotId: "driady" },
           payload: {
@@ -543,9 +576,11 @@ describe("reservation HTTP error responses", () => {
           },
           responseMode: "response-only",
         });
+
         return { status: response.status, text: yield* response.text };
       }),
     ).pipe(Effect.provide(services), Effect.provide(platform));
+
     const response = await Effect.runPromise(request);
     expect(response.status).toBe(status);
     expect(JSON.parse(response.text)).toEqual(body);
@@ -554,12 +589,15 @@ describe("reservation HTTP error responses", () => {
 
 it("keeps unknown infrastructure failures out of domain error responses", async () => {
   const cause = new Error("private database detail");
+
   const exit = await Effect.runPromiseExit(
     toOrganizationWorkspaceHttpResponse(
       Effect.fail(new OrganizationWorkspaceOperationError({ cause })),
     ),
   );
+
   expect(Exit.isFailure(exit)).toBe(true);
+
   if (Exit.isFailure(exit)) {
     expect(Cause.squash(exit.cause)).toBe(cause);
   }
@@ -572,8 +610,10 @@ it.each([
   const response = await Effect.runPromise(
     toOrganizationWorkspaceHttpResponse(Effect.fail(error)),
   );
+
   expect(response.status).toBe(error.status);
   expect(response.body._tag).toBe("Uint8Array");
+
   if (Predicate.isTagged(response.body, "Uint8Array")) {
     expect(JSON.parse(new TextDecoder().decode(response.body.body))).toEqual({
       code: error.code,

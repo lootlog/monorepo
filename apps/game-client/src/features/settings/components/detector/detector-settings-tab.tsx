@@ -18,6 +18,7 @@ import { useTranslation } from "react-i18next";
 export const DetectorSettingsTab = () => {
   const resolvedVisibleStatus = useGameAccountPreferencesSyncIndicator();
   const { t } = useTranslation(["settings", "common"]);
+
   const categoryTabs: Array<{
     label: string;
     key: DetectorNpcType;

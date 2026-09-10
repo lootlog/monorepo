@@ -55,6 +55,7 @@ export const Route = createFileRoute("/_authenticated")({
       ]).catch(() => undefined);
 
       await loadAuthenticatedTranslations();
+
       return null;
     }),
   component: AuthenticatedLayout,

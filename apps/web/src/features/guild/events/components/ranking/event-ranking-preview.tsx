@@ -31,21 +31,26 @@ export const EventRankingPreview = ({
   const heroNamesWithRankings = new Set(
     rankings.map((ranking) => ranking.heroNpcName),
   );
+
   const firstHeroWithRankings = heroNpcs.find((hero) =>
     heroNamesWithRankings.has(hero.npcName),
   );
+
   const defaultHeroName =
     firstHeroWithRankings?.npcName ?? heroNpcs[0]?.npcName ?? null;
+
   const effectiveSelectedHeroName =
     selectedHeroName &&
     heroNpcs.some((hero) => hero.npcName === selectedHeroName)
       ? selectedHeroName
       : defaultHeroName;
+
   const filteredRankings = effectiveSelectedHeroName
     ? rankings.filter(
         (ranking) => ranking.heroNpcName === effectiveSelectedHeroName,
       )
     : rankings;
+
   const sortedRankings = [...filteredRankings]
     .sort(
       (leftRanking, rightRanking) =>

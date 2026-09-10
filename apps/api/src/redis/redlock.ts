@@ -64,6 +64,7 @@ class RedisLock {
       this.resources,
       [this.value, duration],
     );
+
     if (extended !== this.resources.length) {
       throw new ExecutionError("Redis lock ownership was lost");
     }
@@ -99,6 +100,7 @@ class RedisLockManager {
           resources,
           [value, duration],
         );
+
         if (acquired === resources.length) {
           return new RedisLock(this.redis, resources, value);
         }
@@ -123,6 +125,7 @@ class RedisLockManager {
     routine: Effect.Effect<A, E, R>,
   ) {
     const self = this;
+
     return Effect.scoped(
       Effect.gen(function* () {
         const lock = yield* Effect.acquireRelease(
@@ -140,10 +143,12 @@ class RedisLockManager {
               ),
             ),
         );
+
         const refreshAfter = Math.max(
           1,
           duration - self.options.automaticExtensionThreshold,
         );
+
         const renew = Effect.sleep(refreshAfter).pipe(
           Effect.andThen(
             Effect.tryPromise({
@@ -156,6 +161,7 @@ class RedisLockManager {
           ),
           Effect.forever,
         );
+
         return yield* Effect.raceFirst(routine, renew);
       }),
     );

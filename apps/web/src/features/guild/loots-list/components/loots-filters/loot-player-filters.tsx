@@ -7,6 +7,7 @@ import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { FilterCombobox } from "./filter-combobox";
 import type { useLootFiltersSidebar } from "./use-loot-filters-sidebar";
+
 type Props = Pick<
   ReturnType<typeof useLootFiltersSidebar>,
   | "t"
@@ -19,6 +20,7 @@ type Props = Pick<
   | "playersQuery"
   | "filterInputValues"
 >;
+
 export const LootPlayerFilters = ({
   t,
   playerActiveFilterCount,

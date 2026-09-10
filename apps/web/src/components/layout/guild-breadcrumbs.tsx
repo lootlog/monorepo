@@ -44,6 +44,7 @@ const getBreadcrumbRouteFlags = ({
   path: string;
 }) => {
   const isEventRoute = Boolean(eventId && guildId && path.includes("/events"));
+
   return {
     isEventRoute,
     isSettingsRoleRoute: Boolean(
@@ -81,6 +82,7 @@ const useBreadcrumbLookupData = ({
 }) => {
   const queryGuildId = guildId ?? "";
   const queryDocId = docId ?? "";
+
   const { data: settingsMembers } = useMembersControllerGetGuildMembers(
     { guildId: queryGuildId },
     { includeInactive: true },
@@ -94,6 +96,7 @@ const useBreadcrumbLookupData = ({
       },
     },
   );
+
   const { data: settingsRoles } = useRolesControllerGetGuildRoles(
     { guildId: queryGuildId },
     {
@@ -105,6 +108,7 @@ const useBreadcrumbLookupData = ({
       },
     },
   );
+
   const { data: settingsLootlogConfig } =
     useLootlogConfigControllerGetLootlogConfig(
       { guildId: queryGuildId },
@@ -117,6 +121,7 @@ const useBreadcrumbLookupData = ({
         },
       },
     );
+
   const { data: currentDocument } = useDocsControllerGetDocument(
     { guildId: queryGuildId, docId: queryDocId },
     {
@@ -129,6 +134,7 @@ const useBreadcrumbLookupData = ({
       },
     },
   );
+
   return {
     settingsMembers,
     settingsRoles,
@@ -148,6 +154,7 @@ export const GuildBreadcrumbs: FC = () => {
 
   const { guildId, eventId, memberId, npcId, roleId, docId } = params;
   const path = location.pathname;
+
   const routeFlags = getBreadcrumbRouteFlags({
     guildId,
     eventId,
@@ -157,6 +164,7 @@ export const GuildBreadcrumbs: FC = () => {
     docId,
     path,
   });
+
   const {
     settingsMembers,
     settingsRoles,
@@ -170,22 +178,28 @@ export const GuildBreadcrumbs: FC = () => {
     isSettingsNpcRoute: routeFlags.isSettingsNpcRoute,
     isDocsDetailRoute: routeFlags.isDocsDetailRoute,
   });
+
   const resolveSettingsNpcName = () => {
     if (!routeFlags.isSettingsNpcRoute) {
       return undefined;
     }
+
     const settingsNpc = settingsLootlogConfig?.npcs?.find(
       (npc) => String(npc.id) === npcId,
     );
+
     return settingsNpc ? t(`npcType.${settingsNpc.npcType}`) : undefined;
   };
+
   const resolveNavigationInfo = () => {
     const settingsMemberName = routeFlags.isSettingsMemberRoute
       ? settingsMembers?.find((member) => String(member.id) === memberId)?.name
       : undefined;
+
     const settingsRoleName = routeFlags.isSettingsRoleRoute
       ? settingsRoles?.find((role) => role.id === roleId)?.name
       : undefined;
+
     const settingsNpcName = resolveSettingsNpcName();
 
     return resolveAppNavigation({
@@ -198,6 +212,7 @@ export const GuildBreadcrumbs: FC = () => {
         (routeFlags.isDocsDetailRoute ? currentDocument?.title : undefined),
     });
   };
+
   const navInfo = resolveNavigationInfo();
   const parentPath = navInfo.parentPath;
 

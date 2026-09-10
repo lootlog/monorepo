@@ -14,6 +14,7 @@ describe("useWindowPresence", () => {
 
   it("retains a closing window until its exit animation ends", () => {
     useSettingsStore.setState({ animationEffectsEnabled: true });
+
     const { result, rerender } = renderHook(
       ({ isOpen }) => useWindowPresence(isOpen),
       { initialProps: { isOpen: true } },
@@ -35,6 +36,7 @@ describe("useWindowPresence", () => {
       "requestAnimationFrame",
       vi.fn((callback: FrameRequestCallback) => {
         entryFrameCallback = callback;
+
         return 1;
       }),
     );
@@ -61,6 +63,7 @@ describe("useWindowPresence", () => {
       "requestAnimationFrame",
       vi.fn((callback: FrameRequestCallback) => {
         entryFrameCallback = callback;
+
         return 1;
       }),
     );
@@ -76,6 +79,7 @@ describe("useWindowPresence", () => {
 
   it("unmounts immediately when animation effects are disabled", () => {
     useSettingsStore.setState({ animationEffectsEnabled: false });
+
     const { result, rerender } = renderHook(
       ({ isOpen }) => useWindowPresence(isOpen),
       { initialProps: { isOpen: true } },
@@ -96,6 +100,7 @@ describe("useWindowPresence", () => {
   it("uses a timeout when the browser does not emit animationend", () => {
     vi.useFakeTimers();
     useSettingsStore.setState({ animationEffectsEnabled: true });
+
     const { result, rerender } = renderHook(
       ({ isOpen }) => useWindowPresence(isOpen),
       { initialProps: { isOpen: true } },
@@ -110,6 +115,7 @@ describe("useWindowPresence", () => {
   it("cancels exit retention when the window reopens", () => {
     vi.useFakeTimers();
     useSettingsStore.setState({ animationEffectsEnabled: true });
+
     const { result, rerender } = renderHook(
       ({ isOpen }) => useWindowPresence(isOpen),
       { initialProps: { isOpen: true } },
@@ -131,6 +137,7 @@ describe("useWindowPresence", () => {
     );
     vi.stubGlobal("cancelAnimationFrame", cancelAnimationFrame);
     useSettingsStore.setState({ animationEffectsEnabled: true });
+
     const { result, rerender } = renderHook(
       ({ isOpen }) => useWindowPresence(isOpen),
       { initialProps: { isOpen: true } },

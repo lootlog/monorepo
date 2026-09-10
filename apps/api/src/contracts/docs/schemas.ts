@@ -10,9 +10,11 @@ import {
 const DocumentContent = JsonValue.annotate({
   identifier: "GuildDocumentResponseDto__schema0",
 });
+
 const DocumentHistoryContent = JsonValue.annotate({
   identifier: "GuildDocumentHistorySnapshotResponseDto__schema0",
 });
+
 const UpdatedDocumentContent = JsonValue.annotate({
   identifier: "UpdateGuildDocumentDto__schema0",
 });

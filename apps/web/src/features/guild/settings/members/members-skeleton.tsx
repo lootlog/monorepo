@@ -3,6 +3,7 @@ import { SectionCard } from "@/components/common/section-card/section-card";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 
 const tableRows = Array.from({ length: 10 });
+
 const filterButtons = Array.from({ length: 5 });
 
 export const MembersSettingsSkeleton = () => {

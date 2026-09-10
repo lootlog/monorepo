@@ -13,15 +13,18 @@ import { TimersConnectionStatus } from "./timers-connection-status";
 it("shows joined guild names from the real gateway and clears them on disconnect", async () => {
   const user = userEvent.setup();
   const fixture = createTimerHttpFixture();
+
   const guilds = [
     createTimerGuildFixture(),
     createTimerGuildFixture({ id: "guild-2", name: "Beta" }),
   ];
+
   fixture.queryClient.setQueryData(
     getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
     guilds,
   );
   const gateway = createTimerRealtimeFixture();
+
   const view = render(
     <QueryClientProvider client={fixture.queryClient}>
       <SocketProvider>
@@ -29,10 +32,12 @@ it("shows joined guild names from the real gateway and clears them on disconnect
       </SocketProvider>
     </QueryClientProvider>,
   );
+
   try {
     const disconnected = screen.getByRole("button", {
       name: "Nie połączono z żadnym serwerem",
     });
+
     expect(disconnected).toHaveClass("ll:bg-red-400");
     await user.hover(disconnected);
     expect(
@@ -40,9 +45,11 @@ it("shows joined guild names from the real gateway and clears them on disconnect
     ).toBeVisible();
     act(() => gateway.wire.open());
     await gateway.join(["guild-2", "guild-1"]);
+
     const connected = screen.getByRole("button", {
       name: "Połączono z serwerami:",
     });
+
     expect(connected).toHaveClass("ll:bg-green-400");
     await user.unhover(connected);
     await user.hover(connected);

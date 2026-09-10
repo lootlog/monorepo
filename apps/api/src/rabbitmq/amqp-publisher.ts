@@ -5,11 +5,13 @@ import type {
   RabbitExchangeName,
   RabbitRoutingKey,
 } from "@lootlog/protocol/rabbit/topology";
+
 type TimerRoutingKey =
   | typeof RabbitRoutingKey.GUILDS_TIMERS_UPDATE
   | typeof RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED
   | typeof RabbitRoutingKey.GUILDS_TIMERS_DELETE
   | typeof RabbitRoutingKey.NOTIFICATIONS_TIMER_DELETED;
+
 export interface AmqpPublisher {
   publish<Key extends keyof EventEmitPayloads>(
     exchange: RabbitExchangeName,

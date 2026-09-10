@@ -17,6 +17,7 @@ const isValidUrl = (url: string): boolean => {
 
   try {
     new URL(url);
+
     return true;
   } catch {
     return false;
@@ -45,6 +46,7 @@ export function SoundsSettingsTab() {
     categories,
     queueSoundConfigPatch,
   } = useSoundSettingsForm();
+
   if (isLoading) {
     return (
       <SettingsTabLayout title={t("sounds.title")}>
@@ -52,6 +54,7 @@ export function SoundsSettingsTab() {
       </SettingsTabLayout>
     );
   }
+
   return (
     <SettingsTabLayout
       title={t("sounds.title")}
@@ -94,6 +97,7 @@ export function SoundsSettingsTab() {
                     ...previous,
                     pings: value[0],
                   }));
+
                   if (value[0] > 0) {
                     setMutedCategories((previous) => ({
                       ...previous,
@@ -106,8 +110,10 @@ export function SoundsSettingsTab() {
                 }
                 onMuteToggle={(event) => {
                   event.stopPropagation();
+
                   const nextVolume =
                     mutedCategories.pings || localVolumes.pings === 0 ? 0.5 : 0;
+
                   setLocalVolumes((previous) => ({
                     ...previous,
                     pings: nextVolume,
@@ -145,6 +151,7 @@ export function SoundsSettingsTab() {
               const configKey = `${category.id}Config` as const;
               const categoryConfig = settings?.[configKey] ?? {};
               const categoryVolume = localVolumes[category.id];
+
               const isMuted =
                 mutedCategories[category.id] || categoryVolume === 0;
 
@@ -184,6 +191,7 @@ export function SoundsSettingsTab() {
 
                     const isMutedNow =
                       mutedCategories[category.id] || categoryVolume === 0;
+
                     const newVolume = isMutedNow ? 0.5 : 0;
 
                     setLocalVolumes((prev) => ({
@@ -206,25 +214,31 @@ export function SoundsSettingsTab() {
                           [key]: message,
                         },
                       }));
+
                       return;
                     }
 
                     setUrlErrors((prev) => {
                       const categoryErrors = prev[category.id];
+
                       if (!categoryErrors || !(key in categoryErrors))
                         return prev;
+
                       const { [key]: _removedError, ...remainingErrors } =
                         categoryErrors;
+
                       const {
                         [category.id]: _previousCategory,
                         ...otherCategories
                       } = prev;
+
                       return Object.keys(remainingErrors).length > 0
                         ? { ...otherCategories, [category.id]: remainingErrors }
                         : otherCategories;
                     });
 
                     const currentCategoryConfig = settings?.[configKey] ?? {};
+
                     const currentConfig =
                       currentCategoryConfig[key] ?? DEFAULT_NPC_CONFIG;
 

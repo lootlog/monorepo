@@ -57,9 +57,11 @@ export function ConfirmDeleteDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const requiresConfirmation = confirmText !== undefined;
+
   const isConfirmDisabled =
     Boolean(disabled || isSubmitting) ||
     (requiresConfirmation && inputValue !== confirmText);
+
   const baseTrigger = trigger || (
     <Button variant="ghost" size="icon" disabled={disabled}>
       <Trash2 className="h-4 w-4 text-destructive" />

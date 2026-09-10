@@ -15,6 +15,7 @@ export function canModerateReservations(
   context: ReservationViewerContext,
 ): boolean {
   const permissions = new Set(context.permissions);
+
   return (
     context.actorIsOwner ||
     permissions.has(Permission.OWNER) ||

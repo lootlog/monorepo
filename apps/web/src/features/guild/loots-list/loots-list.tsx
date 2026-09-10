@@ -27,16 +27,19 @@ import { useTranslation } from "react-i18next";
 import { useGuildContext } from "@/hooks/context/use-guild-context";
 
 const FILTERS_OPEN_KEY = "loots-filters-open";
+
 const COMPACT_FILTERS_BREAKPOINT = 1100;
 
 export const LootsListPage: React.FC = () => {
   const { t } = useTranslation();
   const { world } = useGuildContext();
   const { hasActiveFilters } = useLootsFilters();
+
   const [isFiltersOpen, setIsFiltersOpen] = useLocalStorage(
     FILTERS_OPEN_KEY,
     true,
   );
+
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const isMobile = useIsMobile();
   const usesOverlayFilters = useMaxWidth(COMPACT_FILTERS_BREAKPOINT);
@@ -45,6 +48,7 @@ export const LootsListPage: React.FC = () => {
   const handleOpenSidebar = () => {
     if (usesOverlayFilters) {
       setIsMobileFiltersOpen((prev) => !prev);
+
       return;
     }
 

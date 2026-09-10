@@ -26,6 +26,7 @@ export function findActiveEventHeroesByNpc(
           leftHero.event.startsAt?.getTime() ??
           leftHero.event.createdAt?.getTime?.() ??
           0;
+
         const rightStart =
           rightHero.event.startsAt?.getTime() ??
           rightHero.event.createdAt?.getTime?.() ??

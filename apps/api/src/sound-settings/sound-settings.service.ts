@@ -9,8 +9,11 @@ import { Effect, Schema } from "effect";
 import type { UpdateSoundSettingsRequest } from "#src/contracts/sound-settings/schemas";
 
 type SoundConfigMap = Record<string, NpcTypeSoundConfig>;
+
 type SoundConfigPatch = Record<string, Partial<NpcTypeSoundConfig> | undefined>;
+
 type JsonValue = typeof Schema.Json.Type;
+
 type SoundEffect = Effect.Effect<unknown, SettingsDocumentsFailure>;
 
 export interface SoundSettings {
@@ -28,6 +31,7 @@ const getDefaultSettingsData = () => {
     COLOSSUS: { volume: 0.5, soundUrl: "" },
     TITAN: { volume: 0.5, soundUrl: "" },
   };
+
   return {
     masterVolume: 0.5,
     notificationsVolume: 0.5,
@@ -52,6 +56,7 @@ const mergeSoundConfigMap = (
   patch?: SoundConfigPatch,
 ): SoundConfigMap => {
   const merged: SoundConfigMap = structuredClone(defaults);
+
   if (isRecord(storedValue)) {
     for (const [key, storedConfig] of Object.entries(storedValue)) {
       if (!isRecord(storedConfig)) continue;
@@ -68,6 +73,7 @@ const mergeSoundConfigMap = (
       };
     }
   }
+
   if (patch) {
     for (const [key, partialConfig] of Object.entries(patch)) {
       if (!partialConfig) continue;
@@ -77,6 +83,7 @@ const mergeSoundConfigMap = (
       };
     }
   }
+
   return merged;
 };
 
@@ -95,6 +102,7 @@ const toCompatibilitySettings = (
   const defaults = getDefaultSettingsData();
   const effective = resolution?.effective ?? {};
   const updatedAt = resolution?.updatedAt ?? new Date();
+
   return {
     userId,
     masterVolume: defaults.masterVolume,
@@ -142,6 +150,7 @@ export const makeSoundSettings = (
     updateSettings: (userId, dto) =>
       Effect.gen(function* () {
         const currentSettings = yield* getSettings(userId);
+
         const {
           masterVolume: _deviceLocalMasterVolume,
           notificationsConfig,
@@ -149,10 +158,13 @@ export const makeSoundSettings = (
           timersConfig,
           ...scalarPatch
         } = dto;
+
         const set: Partial<
           Record<keyof UpdateSoundSettingsRequest, JsonValue>
         > = { ...scalarPatch };
+
         const defaults = getDefaultSettingsData();
+
         if (notificationsConfig) {
           set.notificationsConfig = soundConfigMapToJson(
             mergeSoundConfigMap(
@@ -162,6 +174,7 @@ export const makeSoundSettings = (
             ),
           );
         }
+
         if (detectorConfig) {
           set.detectorConfig = soundConfigMapToJson(
             mergeSoundConfigMap(
@@ -171,6 +184,7 @@ export const makeSoundSettings = (
             ),
           );
         }
+
         if (timersConfig) {
           set.timersConfig = soundConfigMapToJson(
             mergeSoundConfigMap(
@@ -180,7 +194,9 @@ export const makeSoundSettings = (
             ),
           );
         }
+
         if (Object.keys(set).length === 0) return currentSettings;
+
         const response = yield* settingsDocuments.patchPreferences(userId, {
           operations: [
             {
@@ -191,6 +207,7 @@ export const makeSoundSettings = (
             },
           ],
         });
+
         return toCompatibilitySettings(userId, response.domains.sounds);
       }),
   };

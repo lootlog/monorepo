@@ -14,6 +14,7 @@ export const userLootlogConfigData = Layer.unwrap(
         try: operation,
         catch: (cause) => new UserLootlogConfigOperationError({ cause }),
       });
+
     const cache: UserLootlogConfigCache = {
       getJson: (key, schema) =>
         attempt(() => redis.getJson(key, makeJsonCodec(schema))),
@@ -22,6 +23,7 @@ export const userLootlogConfigData = Layer.unwrap(
       deleteByPattern: (pattern) =>
         attempt(() => redis.deleteByPattern(pattern)).pipe(Effect.asVoid),
     };
+
     return UserLootlogConfigData.layerDatabase(cache);
   }),
 );

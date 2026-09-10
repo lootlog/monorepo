@@ -95,6 +95,7 @@ export const CloseRespawnWindowDialog = ({
     }
 
     if (isLoading) return;
+
     try {
       await onConfirm({
         createNewWindow: values.createNewWindow,
@@ -108,9 +109,11 @@ export const CloseRespawnWindowDialog = ({
 
   const handleOpenChange = (isOpen: boolean) => {
     if (isLoading) return;
+
     if (!isOpen) {
       form.reset();
     }
+
     onOpenChange(isOpen);
   };
 

@@ -52,6 +52,7 @@ export function PlayerVsPlayerFullPage() {
     activeFilterChips,
     handleClearFilters,
   } = usePlayerVsPlayerPage();
+
   const filtersContent = (
     <div className="space-y-4 p-4">
       <div className="space-y-2">
@@ -85,6 +86,7 @@ export function PlayerVsPlayerFullPage() {
       </div>
     </div>
   );
+
   const toolbar = (
     <PlayerVsPlayerFilterToolbar
       isMobile={isMobile}
@@ -97,6 +99,7 @@ export function PlayerVsPlayerFullPage() {
       period={period}
     />
   );
+
   const paginationFooter = (
     <BattlePanelPaginationFooter
       hasPrev={Boolean(data?.pagination?.hasPrev)}
@@ -115,6 +118,7 @@ export function PlayerVsPlayerFullPage() {
     if (isLoading) {
       return <TableRowsSkeleton />;
     }
+
     if (isError) {
       return (
         <BattlePanelEmptyState
@@ -127,6 +131,7 @@ export function PlayerVsPlayerFullPage() {
         />
       );
     }
+
     if (!data || data.battles.length === 0) {
       return (
         <BattlePanelEmptyState
@@ -138,6 +143,7 @@ export function PlayerVsPlayerFullPage() {
         />
       );
     }
+
     if (isMobile) {
       return (
         <div className="grid gap-2 p-3">
@@ -151,6 +157,7 @@ export function PlayerVsPlayerFullPage() {
         </div>
       );
     }
+
     return (
       <Table className="border-b">
         <TanStackTableHeader

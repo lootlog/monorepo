@@ -17,6 +17,7 @@ const renderEventActionsCard = ({
   const onDelete = vi.fn();
   const onEdit = vi.fn();
   const onToggleStatus = vi.fn();
+
   const view = render(
     <EventActionsCard
       canManage={canManage}
@@ -54,6 +55,7 @@ describe("EventActionsCard", () => {
     const heading = screen.getByRole("heading", {
       name: "events.actionsCard.subtitle",
     });
+
     expect(heading.closest("header")?.getAttribute("class")).toContain(
       "min-h-12",
     );

@@ -11,6 +11,7 @@ import type { RedisGatewayStore } from "#src/platform/redis-store";
 const UserGuildsJson = Schema.fromJsonString(
   Schema.Array(UserGuildPermissionsDtoSchema),
 );
+
 const CachedGuildDataJson = Schema.fromJsonString(
   Schema.Struct({
     guilds: Schema.Array(UserGuildPermissionsDtoSchema),
@@ -67,6 +68,7 @@ export const makeGuildStore = (
     const url = new URL(`${config.apiUrl}/internal/guilds/user-permissions`);
     url.searchParams.set("discordId", options.discordId);
     url.searchParams.set("userId", options.userId);
+
     return yield* boundedHttpGet({
       client: httpClient,
       url,
@@ -87,6 +89,7 @@ export const makeGuildStore = (
         Effect.try({
           try: () => {
             if (!value) return null;
+
             return Schema.decodeUnknownSync(CachedGuildDataJson)(value);
           },
           catch: () => null,
@@ -101,27 +104,33 @@ export const makeGuildStore = (
     const now = yield* Clock.currentTimeMillis;
     const cacheKey = getUserGuildsCacheKey(options.discordId, options.userId);
     const cached = yield* readCache(cacheKey);
+
     if (cached && now - cached.cachedAt <= CACHE_TTL.USER_GUILDS * 1_000) {
       return [...cached.guilds];
     }
 
     const guilds = yield* fetchGuilds(options).pipe(Effect.option);
+
     if (Option.isSome(guilds)) {
       const value = JSON.stringify({
         guilds: guilds.value,
         cachedAt: now,
       });
+
       yield* Effect.tryPromise(() =>
         redis.command.set(cacheKey, value, "EX", CACHE_TTL.USER_GUILDS * 2),
       ).pipe(Effect.ignore);
+
       return guilds.value;
     }
+
     if (
       cached &&
       now - cached.cachedAt <= CACHE_TTL.MAX_STALE_CACHE_AGE * 1_000
     ) {
       return [...cached.guilds];
     }
+
     return [];
   });
 

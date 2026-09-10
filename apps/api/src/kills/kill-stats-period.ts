@@ -22,6 +22,7 @@ const PERIOD_HOURS: Record<Exclude<KillStatsPeriod, "all">, number> = {
 export const getKillStatsBucketStart = (date: Date): Date => {
   const bucketStart = new Date(date);
   bucketStart.setUTCMinutes(0, 0, 0);
+
   return bucketStart;
 };
 
@@ -45,5 +46,6 @@ export const getKillStatsPeriodStart = (
 
   const periodStart = new Date(now);
   periodStart.setUTCHours(periodStart.getUTCHours() - PERIOD_HOURS[period]);
+
   return getKillStatsBucketStart(periodStart);
 };

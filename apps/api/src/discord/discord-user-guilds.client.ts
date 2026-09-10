@@ -29,6 +29,7 @@ const decodeFreshCompleteHandoff = Schema.decodeUnknownSync(
     }),
   ),
 );
+
 import {
   getFreshCompleteUserGuildsHandoffKey,
   getFreshCompleteUserGuildsLockKey,
@@ -97,11 +98,13 @@ export class DiscordUserGuildsClient {
       this.guildsCacheTtlLocal,
       this.guildsCacheTtlProd,
     );
+
     const identity = { userId, discordId };
     const cacheKey = getUserGuildsCacheKey(identity);
     const lockKey = getUserGuildsLockKey(identity);
 
     const cached = await this.getCachedUserGuilds(cacheKey, userId);
+
     if (cached) {
       return cached;
     }
@@ -112,6 +115,7 @@ export class DiscordUserGuildsClient {
       lock = await this.redlock.acquire([lockKey], this.lockTtl);
 
       const cachedAfterLock = await this.getCachedUserGuilds(cacheKey, userId);
+
       if (cachedAfterLock) {
         return cachedAfterLock;
       }
@@ -178,6 +182,7 @@ export class DiscordUserGuildsClient {
         userId,
         discordId,
       );
+
     this.freshCompleteUserGuildRequests.set(requestKey, request);
 
     try {
@@ -245,6 +250,7 @@ export class DiscordUserGuildsClient {
     const identity = { userId, discordId };
     const handoffKey = getFreshCompleteUserGuildsHandoffKey(identity);
     const lockKey = getFreshCompleteUserGuildsLockKey(identity);
+
     const cachedHandoff =
       await this.getFreshCompleteUserGuildsHandoff(handoffKey);
 
@@ -321,6 +327,7 @@ export class DiscordUserGuildsClient {
 
     try {
       const parsed = decodeFreshCompleteHandoff(cached);
+
       if (isApiGuildArray(parsed.guilds)) {
         return { guilds: parsed.guilds, fresh: true, complete: true };
       }
@@ -334,6 +341,7 @@ export class DiscordUserGuildsClient {
     }
 
     await this.redisService.del(key);
+
     return null;
   }
 
@@ -342,12 +350,14 @@ export class DiscordUserGuildsClient {
     userId: string,
   ): Promise<RESTGetAPICurrentUserGuildsResult | null> {
     const cached = await this.redisService.get(cacheKey);
+
     if (!cached) {
       return null;
     }
 
     try {
       const parsed = decodeJsonUnknown(cached);
+
       if (isApiGuildArray(parsed)) {
         return parsed;
       }
@@ -362,6 +372,7 @@ export class DiscordUserGuildsClient {
     }
 
     await this.redisService.del(cacheKey);
+
     return null;
   }
 
@@ -434,6 +445,7 @@ export class DiscordUserGuildsClient {
     }
 
     const lastGuild = page[page.length - 1];
+
     if (!lastGuild || lastGuild.id === after) {
       throw new DependencyUnavailableError({
         message: "DISCORD_GUILDS_PAGINATION_INCOMPLETE",
@@ -449,6 +461,7 @@ export class DiscordUserGuildsClient {
     after?: string,
   ): Promise<RESTGetAPICurrentUserGuildsResult> {
     const path = Routes.userGuilds();
+
     const query = new URLSearchParams({
       limit: this.userGuildsPageLimit.toString(),
     });
@@ -463,6 +476,7 @@ export class DiscordUserGuildsClient {
         method: RequestMethod.Get,
         query,
       });
+
       await this.rateLimiter.updateRateLimitFromHeaders(
         userId,
         "guilds",
@@ -470,8 +484,10 @@ export class DiscordUserGuildsClient {
       );
 
       const guilds = await parseResponse(response);
+
       if (!isApiGuildArray(guilds))
         throw new TypeError("Invalid Discord guild list response");
+
       return guilds;
     } catch (error: unknown) {
       await recordInvalidDiscordRequest(this.diagnostics, "guilds", error);

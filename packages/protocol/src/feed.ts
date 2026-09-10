@@ -13,6 +13,7 @@ const FeedNpc = Schema.Struct({
   icon: Schema.NullOr(Schema.String),
   prof: Schema.optionalKey(Schema.NullOr(Schema.String)),
 });
+
 const common = {
   id: Schema.String,
   version: PositiveSafeInteger,
@@ -26,6 +27,7 @@ const common = {
   }),
   npc: Schema.NullOr(FeedNpc),
 };
+
 export const UserFeedItem = Schema.Union([
   Schema.Struct({
     ...common,
@@ -52,4 +54,5 @@ export const UserFeedItem = Schema.Union([
     ),
   }),
 ]);
+
 export type UserFeedItem = typeof UserFeedItem.Type;

@@ -13,6 +13,7 @@ const job = {
     reason: "MANUAL",
   },
 };
+
 const makeDependencies = () => ({
   scheduler: {
     acquireUserRefreshLock: mock((_userId: string, _owner: string) =>
@@ -54,9 +55,11 @@ describe("member refresh processor", () => {
     dependencies.scheduler.acquireUserRefreshLock.mockReturnValue(
       Effect.succeed(false),
     );
+
     const result = await Effect.runPromise(
       Effect.result(makeMemberRefreshProcessor(dependencies)(job)),
     );
+
     expect(Result.isFailure(result)).toBe(true);
     expect(result).toMatchObject({
       failure: new Error("MEMBER_REFRESH_LOCKED"),
@@ -76,9 +79,11 @@ describe("member refresh processor", () => {
         nextRefreshAt: null,
       }),
     );
+
     const result = await Effect.runPromise(
       Effect.result(makeMemberRefreshProcessor(dependencies)(job)),
     );
+
     expect(Result.isFailure(result)).toBe(true);
     expect(result).toMatchObject({
       failure: new Error("MEMBER_REFRESH_RATE_LIMITED"),
@@ -106,9 +111,11 @@ describe("member refresh processor", () => {
     );
     await Effect.gen(function* () {
       yield* TestClock.setTime(now);
+
       const fiber = yield* makeMemberRefreshProcessor(dependencies)(job).pipe(
         Effect.forkScoped,
       );
+
       yield* Effect.yieldNow;
       expect(dependencies.sync.syncMemberFromDiscord).not.toHaveBeenCalled();
       yield* TestClock.adjust("1 minute");

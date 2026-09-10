@@ -17,11 +17,13 @@ export function StatisticsOverview({
   const dateFormatter = getOverviewDateFormatter(data.meta.timezone);
   const previousStart = new Date(data.meta.startDate);
   previousStart.setUTCDate(previousStart.getUTCDate() - data.meta.days);
+
   const ranges = {
     current: `${dateFormatter.format(new Date(data.meta.startDate))} – ${dateFormatter.format(new Date(data.comparison.currentThrough))}`,
     previous: `${dateFormatter.format(previousStart)} – ${dateFormatter.format(new Date(data.comparison.previousThrough))}`,
     change: null,
   };
+
   const metrics = {
     total: data.overview.totalKills,
     activeDays: data.overview.activeDays,
@@ -30,6 +32,7 @@ export function StatisticsOverview({
       : null,
     uniqueNpcs: data.overview.uniqueNpcs,
   };
+
   return (
     <>
       <SectionCard>

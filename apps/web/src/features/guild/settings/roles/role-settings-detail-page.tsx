@@ -15,11 +15,14 @@ import { useTranslation } from "react-i18next";
 export const RoleSettingsDetailPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+
   const { guildId, roleId } = useParams({
     from: "/_authenticated/$guildId/settings/roles_/$roleId",
   });
+
   const { data: roles } = useRolesControllerGetGuildRoles({ guildId });
   const role = roles?.find((item) => item.id === roleId) ?? null;
+
   const handleBack = () => {
     navigate({
       to: "/$guildId/settings/roles",

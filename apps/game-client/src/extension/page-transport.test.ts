@@ -10,6 +10,7 @@ import {
 } from "./protocol";
 
 const cleanups: Array<() => void> = [];
+
 afterEach(() => {
   for (const cleanup of cleanups.splice(0)) cleanup();
 });
@@ -23,9 +24,11 @@ function setup() {
     const request = ExtensionRequestSchema.parse(decodeMessage(event.data));
     received.push(request);
     const waiter = waiters.shift();
+
     if (waiter) waiter(request);
     else queue.push(request);
   };
+
   channel.port2.start();
   const closed = vi.fn<() => void>();
   const platform = createPageTransport(channel.port1, closed);
@@ -33,6 +36,7 @@ function setup() {
     platform.dispose();
     channel.port2.close();
   });
+
   return {
     platform,
     closed,
@@ -40,6 +44,7 @@ function setup() {
     next: () =>
       new Promise<ExtensionRequest>((resolve) => {
         const queued = queue.shift();
+
         if (queued) resolve(queued);
         else waiters.push(resolve);
       }),
@@ -75,11 +80,13 @@ describe("page transport", () => {
 
   it("serializes HTTP through the port and reconstructs the response", async () => {
     const bridge = setup();
+
     const result = bridge.platform.fetch("https://lootlog.pl/api/loots", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: '{"loot":1}',
     });
+
     const request = await bridge.next();
     expect(request).toMatchObject({
       type: "http",
@@ -99,9 +106,11 @@ describe("page transport", () => {
 
   it("reconstructs a bodyless 204 response", async () => {
     const bridge = setup();
+
     const result = bridge.platform.fetch("https://lootlog.pl/api/timers", {
       method: "DELETE",
     });
+
     const request = await bridge.next();
     bridge.send({
       type: "result",
@@ -137,9 +146,11 @@ describe("page transport", () => {
   it("propagates transport errors without turning them into HTTP responses", async () => {
     const bridge = setup();
     const result = bridge.platform.fetch("https://lootlog.pl/api/timers");
+
     const rejection = (async () => {
       await expect(result).rejects.toThrow("Network unavailable");
     })();
+
     const request = await bridge.next();
     bridge.send({
       type: "error",
@@ -152,14 +163,17 @@ describe("page transport", () => {
   it("sends cancellation and rejects with AbortError", async () => {
     const bridge = setup();
     const controller = new AbortController();
+
     const result = bridge.platform.fetch("https://lootlog.pl/api/timers", {
       signal: controller.signal,
     });
+
     const rejection = (async () => {
       await expect(result).rejects.toMatchObject({
         name: "AbortError",
       });
     })();
+
     const request = await bridge.next();
     controller.abort();
     await rejection;
@@ -168,13 +182,16 @@ describe("page transport", () => {
 
   it("rejects uncertain mutations on reset without replay and ignores their late results", async () => {
     const bridge = setup();
+
     const result = bridge.platform.fetch("https://lootlog.pl/api/loots", {
       method: "POST",
       body: "{}",
     });
+
     const rejection = (async () => {
       await expect(result).rejects.toThrow("outcome may be unknown");
     })();
+
     const oldRequest = await bridge.next();
     bridge.send({ type: "reset" });
     await rejection;
@@ -201,9 +218,11 @@ describe("page transport", () => {
   it("rejects pending and future requests when disposed", async () => {
     const bridge = setup();
     const result = bridge.platform.fetch("https://lootlog.pl/api/timers");
+
     const rejection = (async () => {
       await expect(result).rejects.toThrow("disconnected");
     })();
+
     await bridge.next();
     bridge.platform.dispose();
     await rejection;
@@ -232,16 +251,20 @@ describe("page transport", () => {
       throw new Error("Broken UI subscriber");
     });
     realtime.subscribe(listener);
+
     const result = bridge.platform.fetch("https://lootlog.pl/api/loots", {
       method: "POST",
       body: "{}",
     });
+
     const request = await bridge.next();
+
     const event = {
       v: 1,
       type: "permissions.updated",
       data: { organizationIds: [], subscriptionScopes: [] },
     };
+
     bridge.send({ type: "event", event });
     bridge.send({ type: "result", id: request.id, data: httpResponse(201) });
     expect((await result).status).toBe(201);
@@ -259,9 +282,11 @@ describe("page transport", () => {
     });
     bridge.send({ type: "result", id: request.id, data: { joined: true } });
     await expect(join).resolves.toEqual({ joined: true });
+
     const heartbeat = realtime.request("presence.heartbeat", {
       sessionId: "session",
     });
+
     const rejection = (async () => {
       await expect(heartbeat).rejects.toMatchObject({
         code: "RATE_LIMITED",
@@ -269,6 +294,7 @@ describe("page transport", () => {
         retryAfterMs: 1000,
       });
     })();
+
     const heartbeatRequest = await bridge.next();
     expect(heartbeatRequest).toMatchObject({
       command: { type: "presence.heartbeat", data: { sessionId: "session" } },
@@ -293,6 +319,7 @@ describe("page transport", () => {
     const unsubscribe = realtime.subscribe(events);
     realtime.subscribeState(states);
     expect(states).toHaveBeenCalledWith("disconnected");
+
     const event = {
       v: 1,
       type: "session.joined",
@@ -302,6 +329,7 @@ describe("page transport", () => {
         subscriptionScopes: [],
       },
     };
+
     bridge.send({ type: "state", state: "ready" });
     bridge.send({ type: "event", event });
     await vi.waitFor(() => expect(events).toHaveBeenCalledWith(event));

@@ -6,9 +6,11 @@ import { PgClientLive } from "./database.js";
 
 export const migrateActivityDatabase = Effect.gen(function* () {
   const sql = yield* PgClient.PgClient;
+
   const table = yield* sql.unsafe<{ exists: boolean }>(
     `SELECT to_regclass('"Activity"') IS NOT NULL AS exists`,
   );
+
   if (!table[0]?.exists) {
     const migration = yield* Effect.tryPromise({
       try: () =>
@@ -21,9 +23,12 @@ export const migrateActivityDatabase = Effect.gen(function* () {
       catch: (cause) =>
         new Error("Failed to read baseline migration", { cause }),
     });
+
     yield* sql.unsafe(migration).unprepared;
   }
+
   yield* verifyAndAdoptDatabase();
+
   const onlineMigration = yield* Effect.tryPromise({
     try: () =>
       Bun.file(
@@ -35,7 +40,9 @@ export const migrateActivityDatabase = Effect.gen(function* () {
     catch: (cause) =>
       new Error("Failed to read online history migration", { cause }),
   });
+
   yield* sql.unsafe(onlineMigration).unprepared;
+
   const onlineRetentionMigration = yield* Effect.tryPromise({
     try: () =>
       Bun.file(
@@ -47,7 +54,9 @@ export const migrateActivityDatabase = Effect.gen(function* () {
     catch: (cause) =>
       new Error("Failed to read online retention migration", { cause }),
   });
+
   yield* sql.unsafe(onlineRetentionMigration).unprepared;
+
   const onlineWorldMigration = yield* Effect.tryPromise({
     try: () =>
       Bun.file(
@@ -59,6 +68,7 @@ export const migrateActivityDatabase = Effect.gen(function* () {
     catch: (cause) =>
       new Error("Failed to read online world migration", { cause }),
   });
+
   yield* sql.unsafe(onlineWorldMigration).unprepared;
 });
 

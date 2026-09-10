@@ -4,7 +4,9 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { useTimersStore } from "@/store/timers.store";
 import { HiddenTimersTab } from "./hidden-timers-tab";
 import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
+
 let harness: ReturnType<typeof createGuildPreferencesTest>;
+
 const render = () =>
   renderUi(<HiddenTimersTab />, { wrapper: harness.wrapper });
 

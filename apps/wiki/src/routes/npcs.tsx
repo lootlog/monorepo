@@ -41,6 +41,7 @@ function NpcsRoute() {
   const searchForm = useBasicSearchForm(search, navigate);
   const hasActiveSearch = isBasicRouteSearchActive(search);
   const queryParams = getBasicRouteSearchQueryParams(search, SEARCH_LIMIT);
+
   const npcsQuery = useNpcsControllerGetNpcs(queryParams, {
     query: {
       enabled: hasActiveSearch,
@@ -53,6 +54,7 @@ function NpcsRoute() {
       },
     },
   });
+
   const data = hasActiveSearch ? (npcsQuery.data ?? []) : [];
   let status: SearchStatus = "ready";
 

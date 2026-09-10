@@ -49,7 +49,9 @@ export interface InternalGuildsCache {
 }
 
 type GuildRecord = typeof guildTable.$inferSelect;
+
 type MemberRecord = typeof memberTable.$inferSelect;
+
 type RoleRecord = typeof roleTable.$inferSelect;
 
 export interface InternalGuildsPersistence {
@@ -80,35 +82,44 @@ export const makeInternalGuildsData = (
   const getGuild = (idOrVanityUrl: string) =>
     Effect.gen(function* () {
       const cached = yield* readGuildConfigurationCache(cache, idOrVanityUrl);
+
       if (cached) return cached;
 
       const guild = yield* persistence.findActiveGuild(idOrVanityUrl);
+
       if (!guild) return yield* Effect.fail(new Error("Guild not found"));
 
       yield* writeGuildConfigurationCache(cache, guild, "unbounded");
+
       return { ...guild, ...resolveReservationSettings(guild) };
     });
 
   const getUserPermissions = (discordId: string, userId: string) =>
     Effect.gen(function* () {
       const cacheKey = `user:${userId}:discord:${discordId}:guild-permissions`;
+
       const cached = yield* cache.getJson(
         cacheKey,
         InternalUserPermissionsResponse,
       );
+
       if (cached !== null) return cached;
 
       const guilds = yield* persistence.findGuildsForPermissions(discordId);
+
       if (guilds.length === 0) return [];
 
       const members = yield* persistence.findMembersWithRoles(
         discordId,
         guilds.map(({ id }) => id),
       );
+
       const memberByGuild = new Map(
         members.map((member) => [member.guildId, member]),
       );
+
       const allPermissions = Object.values(Permission);
+
       const result = guilds.flatMap((guild) => {
         if (guild.ownerId === discordId) {
           return [
@@ -127,6 +138,7 @@ export const makeInternalGuildsData = (
         }
 
         const member = memberByGuild.get(guild.id);
+
         if (
           !member?.active ||
           !member.roles.some((role) =>
@@ -150,7 +162,9 @@ export const makeInternalGuildsData = (
           },
         ];
       });
+
       yield* cache.setJson(cacheKey, result, 60);
+
       return result;
     });
 
@@ -226,6 +240,7 @@ export class InternalGuildsData extends Context.Service<
                     inArray(memberTable.guildId, [...guildIds]),
                   ),
                 );
+
               return yield* hydrateMemberRoles(database, members);
             }),
         };
@@ -245,6 +260,7 @@ export const getInternalUserPermissions = (discordId: string, userId: string) =>
   Effect.gen(function* () {
     if (discordId.length === 0 || userId.length === 0) return [];
     const data = yield* InternalGuildsData;
+
     return yield* Effect.flatMap(
       data.getUserPermissions(discordId, userId),
       (value) => decode(InternalUserPermissionsResponse, value),
@@ -258,6 +274,7 @@ export const getInternalUserPermissions = (discordId: string, userId: string) =>
 export const getInternalGuild = (idOrVanityUrl: string) =>
   Effect.gen(function* () {
     const data = yield* InternalGuildsData;
+
     return yield* Effect.flatMap(data.getGuild(idOrVanityUrl), (value) =>
       decode(OrganizationSummary, value),
     );

@@ -1,4 +1,5 @@
 import { isObjectRecord as isObject } from "@lootlog/schema/records";
+
 const API_SERVICES = [
   "activity",
   "auth",
@@ -6,6 +7,7 @@ const API_SERVICES = [
   "main",
   "search",
 ] as const;
+
 export type ApiService = (typeof API_SERVICES)[number];
 
 type FetchImplementation = (
@@ -93,6 +95,7 @@ export class ApiError<TData = unknown> extends Error {
 }
 
 const serviceConfigurations = new Map<ApiService, ApiServiceConfig>();
+
 const configurationRegistrations: Array<{
   configurations: Partial<Record<ApiService, ApiServiceConfig>>;
 }> = [];
@@ -103,6 +106,7 @@ const rebuildServiceConfigurations = (): void => {
   for (const registration of configurationRegistrations) {
     for (const service of API_SERVICES) {
       const configuration = registration.configurations[service];
+
       if (configuration) {
         serviceConfigurations.set(service, configuration);
       }
@@ -126,6 +130,7 @@ export const configureApiClients = (
 
     restored = true;
     const registrationIndex = configurationRegistrations.indexOf(registration);
+
     if (registrationIndex !== -1) {
       configurationRegistrations.splice(registrationIndex, 1);
       rebuildServiceConfigurations();
@@ -169,6 +174,7 @@ const appendQueryValue = (
     for (const item of value) {
       appendQueryValue(entries, key, item, ancestors);
     }
+
     return;
   }
 
@@ -176,6 +182,7 @@ const appendQueryValue = (
     entries.push(
       `${encodeQueryComponent(key)}=${encodeQueryComponent(value.toISOString())}`,
     );
+
     return;
   }
 
@@ -185,10 +192,13 @@ const appendQueryValue = (
     }
 
     ancestors.add(value);
+
     for (const [nestedKey, nestedValue] of Object.entries(value)) {
       appendQueryValue(entries, `${key}[${nestedKey}]`, nestedValue, ancestors);
     }
+
     ancestors.delete(value);
+
     return;
   }
 
@@ -223,9 +233,11 @@ const buildRequestUrl = ({
 }) => {
   const normalizedBaseUrl = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
   const normalizedPath = path.replace(/^\/+/, "");
+
   const url = isAbsoluteUrl(path)
     ? new URL(path)
     : new URL(normalizedPath, normalizedBaseUrl);
+
   const query = params ? serializeQueryParams(params) : "";
 
   if (query) {
@@ -254,6 +266,7 @@ const parseResponse = async (response: Response) => {
 
   try {
     const parsed: unknown = JSON.parse(responseText);
+
     return parsed;
   } catch {
     return responseText;
@@ -330,6 +343,7 @@ const resolveRequestConfiguration = (
 ) => {
   const serviceConfiguration = serviceConfigurations.get(service);
   const baseUrl = resolveBaseUrl(service, override, serviceConfiguration, path);
+
   const fetchImplementation = resolveFetchImplementation(
     service,
     override,
@@ -384,6 +398,7 @@ const executeFetch = async ({
     };
 
     const fetchImplementation = configuration.fetch;
+
     if (fetchImplementation) {
       return await fetchImplementation.call(globalThis, url, requestOptions);
     }
@@ -412,10 +427,12 @@ export const executeApiRequest = async <TData>(
 ): Promise<TData> => {
   const { apiClient, headers: requestHeaders, ...requestInit } = options;
   const configuration = resolveRequestConfiguration(service, apiClient, path);
+
   const url = buildRequestUrl({
     baseUrl: configuration.baseUrl,
     path,
   });
+
   const headers = new Headers(await configuration.getHeaders?.());
 
   new Headers(requestHeaders).forEach((value, key) => {
@@ -423,6 +440,7 @@ export const executeApiRequest = async <TData>(
   });
 
   const method = requestInit.method ?? "GET";
+
   const response = await executeFetch({
     configuration,
     headers,
@@ -431,6 +449,7 @@ export const executeApiRequest = async <TData>(
     service,
     url,
   });
+
   const data = await parseResponse(response);
 
   if (!response.ok) {
@@ -461,16 +480,19 @@ const requestWithBody = <TData>(
 ) => {
   try {
     const { params, ...requestOptions } = options;
+
     const configuration = resolveRequestConfiguration(
       service,
       requestOptions.apiClient,
       path,
     );
+
     const url = buildRequestUrl({
       baseUrl: configuration.baseUrl,
       params,
       path,
     });
+
     const headers = new Headers(requestOptions.headers);
     const requestBody = createRequestBody(body, headers);
 
@@ -566,6 +588,7 @@ export const getApiErrorStringField = (
 ): string | undefined => {
   if (!isApiError(cause) || !isObject(cause.data)) return undefined;
   const value = cause.data[field];
+
   return typeof value === "string" ? value : undefined;
 };
 

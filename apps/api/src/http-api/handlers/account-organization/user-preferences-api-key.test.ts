@@ -12,6 +12,7 @@ import { makeUserPreferencesData } from "./user-preferences.data-layer.js";
 
 test("key preferences hide unselected organizations and reject destructive routing replacements", async () => {
   const boundary = await createDatabaseBoundary();
+
   try {
     await boundary.run(
       boundary.database
@@ -42,24 +43,30 @@ test("key preferences hide unselected organizations and reject destructive routi
         },
       }),
     );
+
     const result = await boundary.run(
       Effect.gen(function* () {
         const preferences = yield* data.getUserPreferences("user-1");
+
         const game = yield* data.getUserGameAccountPreferences(
           "user-1",
           "account",
         );
+
         const ordering = yield* data
           .updateUserPreferences("user-1", { guildsOrder: [] })
           .pipe(Effect.result);
+
         const routing = yield* data
           .updateUserGameAccountPreferences("user-1", "account", {
             detector: { routingRules: [] },
           })
           .pipe(Effect.result);
+
         const personal = yield* data.updateUserPreferences("user-1", {
           theme: "anime",
         });
+
         return { preferences, game, ordering, routing, personal };
       }).pipe(
         Effect.provideService(ForwardAuthIdentity, {
@@ -75,6 +82,7 @@ test("key preferences hide unselected organizations and reject destructive routi
         }),
       ),
     );
+
     expect(result.preferences).toMatchObject({
       guildsOrder: ["1"],
       hiddenGuildIds: [],
@@ -89,13 +97,17 @@ test("key preferences hide unselected organizations and reject destructive routi
       guildsOrder: ["1"],
       hiddenGuildIds: [],
     });
+
     const stored = await boundary.run(
       boundary.database.select().from(userSettingsTable),
     );
+
     expect(stored[0]?.guildsOrder).toEqual(["1", "2"]);
+
     const gameStored = await boundary.run(
       boundary.database.select().from(userGameAccountSettingsTable),
     );
+
     expect(gameStored[0]?.settings).toMatchObject({
       detector: { routingRules: [{ id: "both" }, { id: "one" }] },
     });

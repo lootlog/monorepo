@@ -85,6 +85,7 @@ export const makeEventRespawnCommands = (
         attributes: { adapter: "events.respawn.drizzle", retryCount: 0 },
       }),
     );
+
   const bestEffort = (
     operation: string,
     effect: Effect.Effect<void, unknown>,
@@ -99,6 +100,7 @@ export const makeEventRespawnCommands = (
         attributes: { adapter: "events.respawn", retryCount: 0 },
       }),
     );
+
   const invalidate = (guildId: string, eventId: string) =>
     Effect.forEach(
       [
@@ -115,6 +117,7 @@ export const makeEventRespawnCommands = (
         ),
       { concurrency: "unbounded", discard: true },
     );
+
   const publish = <
     Key extends
       | typeof RoutingKey.EVENT_MAP_STATUS_UPDATE
@@ -128,6 +131,7 @@ export const makeEventRespawnCommands = (
       "events.respawn.publish",
       publisher.publish(routingKey, payload),
     );
+
   const cancelAutoClose = (heroId: string) =>
     Effect.gen(function* () {
       const jobs = yield* queue.delayed();
@@ -165,11 +169,14 @@ export const makeEventRespawnCommands = (
             )
             .limit(1),
         );
+
         const row = heroRows[0];
+
         if (!row)
           return yield* Effect.fail(
             new ResourceNotFoundError("Hero not found"),
           );
+
         const memberRows = yield* query(
           "events.respawn.open.member",
           database
@@ -178,13 +185,16 @@ export const makeEventRespawnCommands = (
             .where(eq(memberTable.guildId, guild.id))
             .limit(1),
         );
+
         const memberId = memberRows[0]?.id;
+
         if (memberId === undefined)
           return yield* Effect.fail(
             new InvalidRequestError("No members found in guild"),
           );
         const minSpawnTime = new Date(data.minSpawnTime);
         const maxSpawnTime = new Date(data.maxSpawnTime);
+
         const timer = yield* timers.openEventRespawnTimer({
           guildId: guild.id,
           world: row.event.world,
@@ -196,7 +206,9 @@ export const makeEventRespawnCommands = (
           createdById: memberId,
           isUsingSyntheticId: row.hero.npcId === null,
         });
+
         yield* cancelAutoClose(heroId);
+
         const maps = yield* query(
           "events.respawn.open.maps",
           database
@@ -204,6 +216,7 @@ export const makeEventRespawnCommands = (
             .from(eventMapTable)
             .where(eq(eventMapTable.heroNpcId, heroId)),
         );
+
         const assignments =
           maps.length === 0
             ? []
@@ -218,15 +231,19 @@ export const makeEventRespawnCommands = (
                   )
                   .where(eq(eventMapTable.heroNpcId, heroId)),
               );
+
         const assignedMapIds = new Set(assignments.map(({ mapId }) => mapId));
+
         const windowOpenedAt =
           timer.windowOpenedAt ?? new Date(yield* Clock.currentTimeMillis);
+
         yield* Effect.forEach(
           maps,
           (map) => {
             const gapType = assignedMapIds.has(map.id)
               ? ("UNCOVERED" as const)
               : ("UNASSIGNED" as const);
+
             return query(
               "events.respawn.open.gap",
               database
@@ -282,6 +299,7 @@ export const makeEventRespawnCommands = (
           ],
           { concurrency: "unbounded", discard: true },
         );
+
         return { success: true, minSpawnTime, maxSpawnTime };
       }).pipe(Effect.withSpan("EventsMonitoringController_openRespawnWindow")),
 
@@ -307,19 +325,24 @@ export const makeEventRespawnCommands = (
             )
             .limit(1),
         );
+
         const row = heroRows[0];
+
         if (!row) {
           return yield* Effect.fail(
             new ResourceNotFoundError("Hero not found"),
           );
         }
+
         const timerLookup = {
           guildId: guild.id,
           world: row.event.world,
           npcId: row.hero.npcId ?? getSyntheticNpcId(heroId),
           npcName: row.hero.npcName,
         };
+
         const timer = yield* timers.getEventRespawnTimer(timerLookup);
+
         if (timer) {
           yield* manualKill.record({
             guildId: guild.id,
@@ -329,6 +352,7 @@ export const makeEventRespawnCommands = (
           });
           yield* timers.closeEventRespawnTimer(timerLookup);
         }
+
         yield* cancelAutoClose(heroId);
         yield* Effect.all(
           [
@@ -342,6 +366,7 @@ export const makeEventRespawnCommands = (
           ],
           { concurrency: "unbounded", discard: true },
         );
+
         if (data.createNewWindow) {
           if (!data.newMinSpawnTime || !data.newMaxSpawnTime) {
             return yield* Effect.fail(
@@ -350,6 +375,7 @@ export const makeEventRespawnCommands = (
               ),
             );
           }
+
           yield* makeEventRespawnCommands(
             database,
             redis,
@@ -363,6 +389,7 @@ export const makeEventRespawnCommands = (
             maxSpawnTime: data.newMaxSpawnTime,
           });
         }
+
         return { success: true };
       }).pipe(Effect.withSpan("EventsMonitoringController_closeRespawnWindow")),
   };
