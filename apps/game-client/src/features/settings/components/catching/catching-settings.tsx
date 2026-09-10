@@ -1,9 +1,4 @@
 import { Button } from "@/components/ui/button";
-import {
-  SETTINGS_SUBTABS_LIST_CLASS_NAME,
-  SETTINGS_SUBTAB_CONTENT_CLASS_NAME,
-  SETTINGS_SUBTAB_TRIGGER_CLASS_NAME,
-} from "@/components/settings/settings-styles";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -235,13 +230,9 @@ export const CatchingSettings = () => {
           onValueChange={setRequestedCharacterId}
           className="ll:w-full ll:gap-3"
         >
-          <TabsList className={SETTINGS_SUBTABS_LIST_CLASS_NAME}>
+          <TabsList className="ll:w-full">
             {characterList?.map((character) => (
-              <TabsTrigger
-                key={character.id}
-                value={`${character.id}`}
-                className={SETTINGS_SUBTAB_TRIGGER_CLASS_NAME}
-              >
+              <TabsTrigger key={character.id} value={`${character.id}`}>
                 <CharacterTile character={character} />
               </TabsTrigger>
             ))}
@@ -263,11 +254,7 @@ export const CatchingSettings = () => {
             </div>
           ) : null}
           {characterList?.map((character) => (
-            <TabsContent
-              key={character.id}
-              value={`${character.id}`}
-              className={SETTINGS_SUBTAB_CONTENT_CLASS_NAME}
-            >
+            <TabsContent key={character.id} value={`${character.id}`}>
               <CatchingSettingsForm
                 characterId={character.id.toString()}
                 disabled={applyToAllMutation.isPending}

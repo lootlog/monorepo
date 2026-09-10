@@ -296,6 +296,7 @@ export const SettingsTabs = () => {
       }))}
       activeDomainId={showRecent ? "" : activeDomain.id}
       compact={isCompact}
+      label={t("settings.nav.domains")}
       searchLabel={t("settings.search.ariaLabel")}
       onSelect={(domainId) => navigate(domainId)}
       onOpenSearch={focusSearch}

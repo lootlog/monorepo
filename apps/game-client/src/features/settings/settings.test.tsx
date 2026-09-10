@@ -4,6 +4,7 @@ import {
   render as renderUi,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useWindowsStore } from "@/store/windows.store";
@@ -116,21 +117,35 @@ describe("Settings", () => {
 
     render();
 
+    const domainTabs = async () =>
+      within(
+        await screen.findByRole("tablist", {
+          name: "Działy ustawień",
+          hidden: true,
+        }),
+      );
+
     expect(
-      await screen.findByRole("tab", { name: "Powiadomienia", selected: true }),
+      (await domainTabs()).getByRole("tab", {
+        name: "Powiadomienia",
+        selected: true,
+      }),
     ).toBeInTheDocument();
 
     act(() => useWindowsStore.getState().setOpen("settings", false));
 
     expect(
-      screen.getByRole("tab", {
+      (await domainTabs()).getByRole("tab", {
         name: "Powiadomienia",
         selected: true,
         hidden: true,
       }),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole("tab", { name: "Ogólne", selected: true }),
+      (await domainTabs()).queryByRole("tab", {
+        name: "Ogólne",
+        selected: true,
+      }),
     ).toBeNull();
 
     const windowElement = document.querySelector(
@@ -146,17 +161,16 @@ describe("Settings", () => {
     fireEvent.animationEnd(windowBody, { animationName: "ll-window-exit" });
 
     expect(
-      screen.queryByRole("tab", {
-        name: "Powiadomienia",
-        selected: true,
-        hidden: true,
-      }),
+      screen.queryByRole("tablist", { name: "Działy ustawień", hidden: true }),
     ).toBeNull();
 
     act(() => useWindowsStore.getState().setOpen("settings", true));
 
     expect(
-      await screen.findByRole("tab", { name: "Powiadomienia", selected: true }),
+      (await domainTabs()).getByRole("tab", {
+        name: "Powiadomienia",
+        selected: true,
+      }),
     ).toBeInTheDocument();
   });
 });

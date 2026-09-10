@@ -2,11 +2,6 @@ import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
 import { SettingsPanel } from "@/components/settings/settings-panel";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
-import {
-  SETTINGS_SUBTABS_LIST_CLASS_NAME,
-  SETTINGS_SUBTAB_CONTENT_CLASS_NAME,
-  SETTINGS_SUBTAB_TRIGGER_CLASS_NAME,
-} from "@/components/settings/settings-styles";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -63,24 +58,15 @@ export const NotificationMutesSettingsTab = () => {
     >
       <SettingsSection controlId="notification-mutes">
         <Tabs defaultValue="players" className="ll:w-full ll:gap-3">
-          <TabsList className={SETTINGS_SUBTABS_LIST_CLASS_NAME}>
-            <TabsTrigger
-              value="players"
-              className={SETTINGS_SUBTAB_TRIGGER_CLASS_NAME}
-            >
+          <TabsList className="ll:w-full">
+            <TabsTrigger value="players">
               {t("settings.notificationMutes.tabs.players")}
             </TabsTrigger>
-            <TabsTrigger
-              value="npcs"
-              className={SETTINGS_SUBTAB_TRIGGER_CLASS_NAME}
-            >
+            <TabsTrigger value="npcs">
               {t("settings.notificationMutes.tabs.npcs")}
             </TabsTrigger>
           </TabsList>
-          <TabsContent
-            value="players"
-            className={`${SETTINGS_SUBTAB_CONTENT_CLASS_NAME} ll:space-y-3`}
-          >
+          <TabsContent value="players" className="ll:space-y-3">
             <Input
               value={playerSearch}
               onChange={(event) => setPlayerSearch(event.target.value)}
@@ -128,10 +114,7 @@ export const NotificationMutesSettingsTab = () => {
               )}
             </div>
           </TabsContent>
-          <TabsContent
-            value="npcs"
-            className={`${SETTINGS_SUBTAB_CONTENT_CLASS_NAME} ll:space-y-3`}
-          >
+          <TabsContent value="npcs" className="ll:space-y-3">
             <Input
               value={npcSearch}
               onChange={(event) => setNpcSearch(event.target.value)}

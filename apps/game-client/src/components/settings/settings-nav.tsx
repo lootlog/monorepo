@@ -13,6 +13,7 @@ type SettingsNavProps = {
   domains: SettingsNavDomain[];
   activeDomainId: string;
   compact: boolean;
+  label: string;
   searchLabel: string;
   onSelect: (domainId: string) => void;
   onOpenSearch: () => void;
@@ -46,6 +47,7 @@ export const SettingsNav: FC<SettingsNavProps> = ({
   domains,
   activeDomainId,
   compact,
+  label,
   searchLabel,
   onSelect,
   onOpenSearch,
@@ -84,14 +86,16 @@ export const SettingsNav: FC<SettingsNavProps> = ({
 
   return (
     <TabsList
-      className="ll:flex ll:w-full ll:flex-col ll:items-stretch ll:gap-0.5 ll:rounded-none"
+      variant="line"
+      className="ll:h-auto ll:w-full ll:flex-col ll:items-stretch ll:gap-0.5 ll:p-0"
+      aria-label={label}
       aria-orientation="vertical"
     >
       {domains.map((domain) => (
         <TabsTrigger
           key={domain.id}
           value={domain.id}
-          className="ll:mt-0 ll:flex ll:min-h-7 ll:w-full ll:items-center ll:justify-start ll:gap-2 ll:rounded-sm ll:border-0 ll:bg-transparent ll:px-2 ll:py-1 ll:text-left ll:text-[11px] ll:font-semibold ll:leading-none ll:text-gray-300 ll:transition-none ll:hover:bg-white/5 ll:hover:text-gray-100 ll:data-[active]:bg-white/10 ll:data-[active]:text-gray-100 ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:focus-visible:-outline-offset-2"
+          className="ll:h-auto ll:min-h-7 ll:w-full ll:justify-start ll:gap-2 ll:rounded-sm ll:px-2 ll:py-1 ll:text-left ll:text-xs ll:font-semibold ll:text-muted-foreground ll:transition-none ll:hover:bg-accent ll:hover:text-foreground ll:data-active:bg-accent ll:data-active:text-foreground ll:after:hidden"
         >
           <domain.icon className="ll:size-3.5 ll:shrink-0" aria-hidden="true" />
           <span className="ll:truncate">{domain.label}</span>
