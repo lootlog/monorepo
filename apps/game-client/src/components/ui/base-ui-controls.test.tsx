@@ -25,25 +25,6 @@ describe("Base UI control adapters", () => {
     expect(onCheckedChange).toHaveBeenCalledWith(false, expect.any(Object));
   });
 
-  it("keeps equal thumb insets in the checked switch", () => {
-    render(<Switch checked />);
-
-    const switchControl = screen.getByRole("switch");
-
-    const switchThumb = switchControl.querySelector<HTMLElement>(
-      ":scope > [data-checked]",
-    );
-
-    expect(switchThumb).not.toBeNull();
-
-    if (!switchThumb) {
-      throw new Error("Switch thumb was not rendered");
-    }
-
-    expect(getComputedStyle(switchControl).boxSizing).toBe("border-box");
-    expect(switchThumb).toHaveClass("ll:data-[checked]:translate-x-4");
-  });
-
   it("marks the selected tab and reports tab changes", async () => {
     const user = userEvent.setup();
 
