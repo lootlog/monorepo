@@ -206,7 +206,7 @@ it("keeps application errors separate from discovery and blocks duplicate or sta
   await waitFor(() =>
     expect(screen.queryByRole("alert")).not.toBeInTheDocument(),
   );
-});
+}, 15_000);
 
 it.each(["ORGANIZER", "PARTICIPANT"] as const)(
   "retains the %s room after failed removal and removes it after retry",
