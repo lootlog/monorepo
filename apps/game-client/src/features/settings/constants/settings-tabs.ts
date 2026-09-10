@@ -34,7 +34,6 @@ export const SETTINGS_SUBSECTION_VALUES = [
   "behavior",
   "visibility",
   "chat-appearance",
-  "chat-notifications",
   "chat-filters",
   "npc-colors",
   "timer-appearance",

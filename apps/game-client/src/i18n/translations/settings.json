@@ -34,7 +34,6 @@
     "behavior": "Zachowanie",
     "serverVisibility": "Widoczność",
     "chatAppearance": "Wygląd",
-    "chatNotifications": "Powiadomienia",
     "chatFilters": "Filtry",
     "npcColors": "Kolory NPC",
     "timerAppearance": "Wygląd timerów",
@@ -289,7 +288,7 @@
   },
   "notifications": {
     "title": "Ustawienia powiadomień",
-    "description": "Skonfiguruj ustawienia powiadomień. Możesz dostosować, które typy NPC będą wywoływać powiadomienia oraz jak będą one prezentowane. Powiadomienia z chatu znajdziesz w zakładce Chat.",
+    "description": "Skonfiguruj ustawienia powiadomień. Możesz dostosować, które typy NPC będą wywoływać powiadomienia oraz jak będą one prezentowane.",
     "toggles": {
       "show": "Wyświetlaj",
       "ignoreOtherWorlds": "Ignoruj inne światy",
@@ -594,10 +593,6 @@
       "partyLeave": "Opuszczenie grupy",
       "customJson": "Własny JSON"
     }
-  },
-  "chatNotifications": {
-    "title": "Powiadomienia z chatu",
-    "description": "Ustaw, jak prezentować komunikaty graczy i zbiórki grupy z chatu."
   },
   "chatFilters": {
     "npcMessages": {
