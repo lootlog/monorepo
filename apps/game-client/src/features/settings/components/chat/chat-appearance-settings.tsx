@@ -121,10 +121,11 @@ export const ChatAppearanceSettingsForm = () => {
           description={t("settings.chat.npcLayout.description")}
         >
           <ToggleGroup
-            type="single"
-            size="xs"
-            value={draft.npcLayout}
-            onValueChange={(npcLayout: "tile" | "inline") => {
+            variant="outline"
+            size="sm"
+            spacing={0}
+            value={[draft.npcLayout]}
+            onValueChange={([npcLayout]: ("tile" | "inline")[]) => {
               if (!npcLayout) return;
               recordRecentlyChanged("chat-npc-layout");
               updateAndCommit({ npcLayout });

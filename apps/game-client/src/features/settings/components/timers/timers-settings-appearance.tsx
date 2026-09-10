@@ -51,9 +51,10 @@ export const TimersSettingsAppearance: FC = () => {
           >
             <ToggleGroup
               className="ll:ml-auto"
-              type="single"
-              size="xs"
-              onValueChange={(value: "column" | "row") => {
+              variant="outline"
+              size="sm"
+              spacing={0}
+              onValueChange={([value]: ("column" | "row")[]) => {
                 if (value) {
                   setDisplayConfig({
                     ...displayConfig,
@@ -61,7 +62,7 @@ export const TimersSettingsAppearance: FC = () => {
                   });
                 }
               }}
-              value={displayConfig.singleTimerDisplayMode}
+              value={[displayConfig.singleTimerDisplayMode]}
             >
               <ToggleGroupItem value="column">
                 {t("settings.timers.appearance.singleTimerDisplayModeColumn")}

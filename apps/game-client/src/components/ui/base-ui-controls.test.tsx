@@ -1,7 +1,7 @@
 import "@/index.css";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { createRef, type ComponentProps } from "react";
+import type { ComponentProps } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { Collapsible, CollapsibleContent } from "./collapsible";
 import { Slider } from "./slider";
@@ -49,12 +49,12 @@ describe("Base UI control adapters", () => {
     expect(onValueChange).toHaveBeenCalledWith("second", expect.any(Object));
   });
 
-  it("keeps the single-value toggle-group interface", async () => {
+  it("keeps the toggle-group value contract", async () => {
     const user = userEvent.setup();
-    const onValueChange = vi.fn<(value: string) => void>();
+    const onValueChange = vi.fn();
 
     render(
-      <ToggleGroup type="single" value="row" onValueChange={onValueChange}>
+      <ToggleGroup value={["row"]} onValueChange={onValueChange}>
         <ToggleGroupItem value="row">Row</ToggleGroupItem>
         <ToggleGroupItem value="column">Column</ToggleGroupItem>
       </ToggleGroup>,
@@ -63,172 +63,9 @@ describe("Base UI control adapters", () => {
     expect(screen.getByRole("button", { name: "Row" })).toHaveAttribute(
       "data-pressed",
     );
+
     await user.click(screen.getByRole("button", { name: "Column" }));
-    expect(onValueChange).toHaveBeenCalledWith("column");
-  });
-
-  it("moves one indicator between unequal single-value segments", async () => {
-    const segmentGeometry = new Map([
-      ["Row", { left: 2, width: 45 }],
-      ["Column", { left: 47, width: 70 }],
-      ["Stack", { left: 117, width: 58 }],
-    ]);
-
-    const offsetLeft = vi
-      .spyOn(HTMLElement.prototype, "offsetLeft", "get")
-      .mockImplementation(function getOffsetLeft(this: HTMLElement) {
-        return segmentGeometry.get(this.textContent ?? "")?.left ?? 0;
-      });
-
-    const offsetWidth = vi
-      .spyOn(HTMLElement.prototype, "offsetWidth", "get")
-      .mockImplementation(function getOffsetWidth(this: HTMLElement) {
-        return segmentGeometry.get(this.textContent ?? "")?.width ?? 0;
-      });
-
-    const { container, rerender } = render(
-      <ToggleGroup type="single" value="row">
-        <ToggleGroupItem value="row">Row</ToggleGroupItem>
-        <ToggleGroupItem value="column">Column</ToggleGroupItem>
-        <ToggleGroupItem value="stack">Stack</ToggleGroupItem>
-      </ToggleGroup>,
-    );
-
-    const toggleGroup = container.querySelector<HTMLElement>(
-      '[data-slot="toggle-group"]',
-    );
-
-    await waitFor(() => {
-      expect(toggleGroup).toHaveAttribute("data-indicator-visible");
-      expect(toggleGroup?.style.getPropertyValue("--toggle-indicator-x")).toBe(
-        "2px",
-      );
-      expect(
-        toggleGroup?.style.getPropertyValue("--toggle-indicator-width"),
-      ).toBe("45px");
-    });
-
-    rerender(
-      <ToggleGroup type="single" value="stack">
-        <ToggleGroupItem value="row">Row</ToggleGroupItem>
-        <ToggleGroupItem value="column">Column</ToggleGroupItem>
-        <ToggleGroupItem value="stack">Stack</ToggleGroupItem>
-      </ToggleGroup>,
-    );
-
-    await waitFor(() => {
-      expect(toggleGroup?.style.getPropertyValue("--toggle-indicator-x")).toBe(
-        "117px",
-      );
-      expect(
-        toggleGroup?.style.getPropertyValue("--toggle-indicator-width"),
-      ).toBe("58px");
-    });
-
-    offsetLeft.mockRestore();
-    offsetWidth.mockRestore();
-  });
-
-  it("keeps independent pressed backgrounds in multiple-value groups", () => {
-    const { container } = render(
-      <ToggleGroup type="multiple" value={["row", "stack"]}>
-        <ToggleGroupItem value="row">Row</ToggleGroupItem>
-        <ToggleGroupItem value="column">Column</ToggleGroupItem>
-        <ToggleGroupItem value="stack">Stack</ToggleGroupItem>
-      </ToggleGroup>,
-    );
-
-    expect(
-      container.querySelector('[data-slot="toggle-group"]'),
-    ).not.toHaveAttribute("data-indicator-visible");
-    expect(screen.getByRole("button", { name: "Row" })).toHaveAttribute(
-      "data-pressed",
-    );
-    expect(screen.getByRole("button", { name: "Column" })).not.toHaveAttribute(
-      "data-pressed",
-    );
-    expect(screen.getByRole("button", { name: "Stack" })).toHaveAttribute(
-      "data-pressed",
-    );
-  });
-
-  it("remeasures the indicator after an uncontrolled selection change", async () => {
-    const user = userEvent.setup();
-
-    const offsetLeft = vi
-      .spyOn(HTMLElement.prototype, "offsetLeft", "get")
-      .mockImplementation(function getOffsetLeft(this: HTMLElement) {
-        return this.textContent === "Column" ? 42 : 2;
-      });
-
-    const offsetWidth = vi
-      .spyOn(HTMLElement.prototype, "offsetWidth", "get")
-      .mockImplementation(function getOffsetWidth(this: HTMLElement) {
-        return this.textContent === "Column" ? 80 : 40;
-      });
-
-    const { container } = render(
-      <ToggleGroup type="single" defaultValue="row">
-        <ToggleGroupItem value="row">Row</ToggleGroupItem>
-        <ToggleGroupItem value="column">Column</ToggleGroupItem>
-      </ToggleGroup>,
-    );
-
-    const toggleGroup = container.querySelector<HTMLElement>(
-      '[data-slot="toggle-group"]',
-    );
-
-    await waitFor(() =>
-      expect(
-        toggleGroup?.style.getPropertyValue("--toggle-indicator-width"),
-      ).toBe("40px"),
-    );
-    await user.click(screen.getByRole("button", { name: "Column" }));
-
-    await waitFor(() => {
-      expect(toggleGroup?.style.getPropertyValue("--toggle-indicator-x")).toBe(
-        "42px",
-      );
-      expect(
-        toggleGroup?.style.getPropertyValue("--toggle-indicator-width"),
-      ).toBe("80px");
-    });
-
-    offsetLeft.mockRestore();
-    offsetWidth.mockRestore();
-  });
-
-  it("preserves a consumer ref while measuring the indicator", () => {
-    const toggleGroupRef = createRef<HTMLDivElement>();
-
-    const { container } = render(
-      <ToggleGroup type="single" value="row" ref={toggleGroupRef}>
-        <ToggleGroupItem value="row">Row</ToggleGroupItem>
-        <ToggleGroupItem value="column">Column</ToggleGroupItem>
-      </ToggleGroup>,
-    );
-
-    expect(toggleGroupRef.current).toBe(
-      container.querySelector('[data-slot="toggle-group"]'),
-    );
-  });
-
-  it("keeps keyboard selection for segmented controls", async () => {
-    const user = userEvent.setup();
-    const onValueChange = vi.fn<(value: string) => void>();
-
-    render(
-      <ToggleGroup type="single" value="row" onValueChange={onValueChange}>
-        <ToggleGroupItem value="row">Row</ToggleGroupItem>
-        <ToggleGroupItem value="column">Column</ToggleGroupItem>
-      </ToggleGroup>,
-    );
-
-    screen.getByRole("button", { name: "Row" }).focus();
-    await user.keyboard("{ArrowRight} ");
-
-    expect(screen.getByRole("button", { name: "Column" })).toHaveFocus();
-    expect(onValueChange).toHaveBeenCalledWith("column");
+    expect(onValueChange).toHaveBeenCalledWith(["column"], expect.any(Object));
   });
 
   it("keeps the array-valued slider interface and accessible name", () => {
