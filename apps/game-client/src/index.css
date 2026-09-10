@@ -43,6 +43,12 @@
 #lootlog-root,
 .ll-theme-boundary {
   --ll-spacing: 4px;
+  --ll-text-xs: 12px;
+  --ll-text-sm: 14px;
+  --ll-text-base: 16px;
+  --ll-text-lg: 18px;
+  --ll-text-xl: 20px;
+  --ll-text-2xl: 24px;
   --radius: 10px;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);

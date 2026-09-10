@@ -88,9 +88,7 @@ export const ChatAppearancePresetMiniPreview = ({
           isMsgYesterday={false}
           messageId="preset-preview-player"
           sender={
-            <strong className="ll:mr-0.5 ll:text-purple-300">
-              {playerName}:
-            </strong>
+            <strong className="ll:mr-0.5 ll:text-primary">{playerName}:</strong>
           }
           timestamp={PREVIEW_TIMESTAMP}
         />

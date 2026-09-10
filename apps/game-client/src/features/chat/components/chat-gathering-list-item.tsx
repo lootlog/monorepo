@@ -39,7 +39,7 @@ export function ChatGatheringListItem({
         {hidden ? (
           <Button
             variant="ghost"
-            className="ll:h-6 ll:border-0 ll:p-0 ll:text-[10px] ll:text-purple-200 ll:underline ll:underline-offset-2"
+            className="ll:h-6 ll:border-0 ll:p-0 ll:text-[10px] ll:text-primary ll:underline ll:underline-offset-2"
             aria-label={t("gatherings.restoreNamed", {
               name:
                 gathering.npc?.name ??
@@ -57,7 +57,7 @@ export function ChatGatheringListItem({
         )}
         <Button
           variant="ghost"
-          className="ll:h-6 ll:gap-1 ll:border ll:border-purple-400/40 ll:bg-purple-500/20 ll:px-1.5 ll:text-[11px]"
+          className="ll:h-6 ll:gap-1 ll:border ll:border-border ll:bg-accent ll:px-1.5 ll:text-[11px]"
           disabled={disabled || pending}
           onClick={onApply}
         >

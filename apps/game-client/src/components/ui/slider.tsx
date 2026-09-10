@@ -151,7 +151,7 @@ const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
               }
             }}
           >
-            <BaseSlider.Track className="ll:relative ll:box-border ll:h-2 ll:w-full ll:grow ll:overflow-hidden ll:rounded-sm ll:border ll:border-gray-400 ll:bg-gray-700">
+            <BaseSlider.Track className="ll:relative ll:box-border ll:h-2 ll:w-full ll:grow ll:overflow-hidden ll:rounded-sm ll:border ll:border-border ll:bg-muted">
               <BaseSlider.Indicator className="ll:absolute ll:h-full ll:bg-primary ll:transition-[width] ll:duration-[120ms] ll:ease-[cubic-bezier(0.4,0,0.2,1)] ll:group-data-[interaction=direct]/slider:transition-none ll:motion-reduce:transition-none" />
             </BaseSlider.Track>
             <BaseSlider.Thumb

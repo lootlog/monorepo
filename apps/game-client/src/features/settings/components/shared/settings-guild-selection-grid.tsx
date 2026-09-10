@@ -127,8 +127,8 @@ export const SettingsGuildSelectionGrid: FC<SettingsGuildSelectionGridProps> = (
                 : "ll:flex ll:min-h-20 ll:w-full ll:flex-col ll:items-start ll:justify-between ll:gap-2.5 ll:rounded-md ll:border-gray-700/90 ll:bg-gray-900/90 ll:px-2.5 ll:py-2.5 ll:text-left hover:ll:-translate-y-0.5 hover:ll:border-gray-500/90 hover:ll:bg-gray-800/90",
               isSelected &&
                 (variant === "compact"
-                  ? "ll:border-purple-400/85 ll:bg-purple-500/20 ll:shadow-[0_0_0_1px_rgba(192,132,252,0.28),0_8px_18px_rgba(168,85,247,0.18)]"
-                  : "ll:border-purple-400/80 ll:bg-purple-500/20 ll:shadow-[0_0_0_1px_rgba(192,132,252,0.22),0_12px_30px_rgba(168,85,247,0.16)]"),
+                  ? "ll:border-ring ll:bg-accent ll:ring-1 ll:ring-ring"
+                  : "ll:border-ring ll:bg-accent ll:ring-1 ll:ring-ring"),
             )}
             onMouseDown={(event) => {
               event.stopPropagation();
@@ -136,7 +136,7 @@ export const SettingsGuildSelectionGrid: FC<SettingsGuildSelectionGridProps> = (
           >
             <div
               className={cn(
-                "ll:pointer-events-none ll:absolute ll:right-0 ll:top-0 ll:rounded-full ll:bg-purple-400/0 ll:blur-2xl ll:transition-opacity",
+                "ll:pointer-events-none ll:absolute ll:right-0 ll:top-0 ll:rounded-full ll:bg-primary/0 ll:blur-2xl ll:transition-opacity",
                 variant === "compact"
                   ? "ll:h-10 ll:w-10 ll:-translate-y-2 ll:translate-x-2"
                   : "ll:h-12 ll:w-12 ll:-translate-y-3 ll:translate-x-3",
@@ -175,7 +175,7 @@ export const SettingsGuildSelectionGrid: FC<SettingsGuildSelectionGridProps> = (
                     className={cn(
                       "ll:inline-flex ll:min-h-5 ll:items-center ll:rounded-sm ll:border ll:px-1.5 ll:py-0.5 ll:text-[9px] ll:font-semibold ll:uppercase ll:tracking-[0.08em]",
                       isSelected
-                        ? "ll:border-purple-300/80 ll:bg-purple-500/24 ll:text-white"
+                        ? "ll:border-ring ll:bg-primary ll:text-primary-foreground"
                         : "ll:border-gray-600/70 ll:bg-black/20 ll:text-gray-400",
                     )}
                   >

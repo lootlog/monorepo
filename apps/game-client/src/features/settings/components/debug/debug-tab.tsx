@@ -406,7 +406,7 @@ export const DebugTab: FC = () => {
                 t("settings.debug.events.detectTitan"),
               )
             }
-            className="ll:px-2 ll:bg-purple-700 hover:ll:bg-purple-600"
+            className="ll:px-2 ll:bg-primary ll:text-primary-foreground hover:ll:bg-primary/90"
           >
             {t("common:npcTypes.titan")}
           </Button>

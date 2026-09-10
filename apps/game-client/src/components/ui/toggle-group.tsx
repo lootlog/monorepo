@@ -146,7 +146,7 @@ function ToggleGroup<Value extends string>(props: ToggleGroupProps<Value>) {
 
   const commonProps = {
     className: cn(
-      "ll:group/toggle-group ll:relative ll:flex ll:w-fit ll:items-center ll:rounded-sm ll:border ll:border-gray-400 ll:bg-gray-700 ll:p-0.5 ll:shadow-sm ll:before:pointer-events-none ll:before:absolute ll:before:inset-y-0.5 ll:before:left-0 ll:before:w-[var(--toggle-indicator-width)] ll:before:translate-x-[var(--toggle-indicator-x)] ll:before:rounded-[2px] ll:before:bg-primary ll:before:opacity-0 ll:before:shadow-sm ll:before:transition-[width,translate,opacity] ll:before:duration-[120ms] ll:before:ease-[cubic-bezier(0.4,0,0.2,1)] ll:data-[indicator-visible]:before:opacity-100 ll:motion-reduce:before:transition-none",
+      "ll:group/toggle-group ll:relative ll:flex ll:w-fit ll:items-center ll:rounded-sm ll:border ll:border-border ll:bg-muted ll:p-0.5 ll:shadow-sm ll:before:pointer-events-none ll:before:absolute ll:before:inset-y-0.5 ll:before:left-0 ll:before:w-[var(--toggle-indicator-width)] ll:before:translate-x-[var(--toggle-indicator-x)] ll:before:rounded-[2px] ll:before:bg-primary ll:before:opacity-0 ll:before:shadow-sm ll:before:transition-[width,translate,opacity] ll:before:duration-[120ms] ll:before:ease-[cubic-bezier(0.4,0,0.2,1)] ll:data-[indicator-visible]:before:opacity-100 ll:motion-reduce:before:transition-none",
       className,
     ),
     "data-slot": "toggle-group",
@@ -231,7 +231,7 @@ function ToggleGroupItem({
       data-size={resolvedSize}
       className={cn(
         toggleVariants({ variant: resolvedVariant, size: resolvedSize }),
-        "ll:relative ll:z-10 ll:min-w-0 ll:flex-1 ll:shrink-0 ll:rounded-[2px] ll:bg-transparent ll:text-gray-300 ll:shadow-none ll:hover:bg-gray-600 ll:hover:text-white ll:focus:z-20 ll:focus-visible:z-20 ll:focus-visible:ring-ring ll:data-[pressed]:text-primary-foreground",
+        "ll:relative ll:z-10 ll:min-w-0 ll:flex-1 ll:shrink-0 ll:rounded-[2px] ll:bg-transparent ll:text-muted-foreground ll:shadow-none ll:hover:bg-accent ll:hover:text-white ll:focus:z-20 ll:focus-visible:z-20 ll:focus-visible:ring-ring ll:data-[pressed]:text-primary-foreground",
         context.type === "single"
           ? "ll:data-[pressed]:bg-transparent"
           : "ll:data-[pressed]:bg-primary",

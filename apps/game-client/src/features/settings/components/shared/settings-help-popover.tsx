@@ -25,7 +25,7 @@ export const SettingsHelpPopover = ({
     <Popover>
       <PopoverTrigger
         aria-label={t("settings.help.open")}
-        className="ll:ml-1 ll:inline-flex ll:size-4 ll:items-center ll:justify-center ll:border-0 ll:bg-transparent ll:p-0 ll:text-muted-foreground ll-custom-cursor-pointer ll:hover:text-purple-300"
+        className="ll:ml-1 ll:inline-flex ll:size-4 ll:items-center ll:justify-center ll:border-0 ll:bg-transparent ll:p-0 ll:text-muted-foreground ll-custom-cursor-pointer ll:hover:text-foreground"
       >
         <CircleHelp className="ll:size-3.5" />
       </PopoverTrigger>

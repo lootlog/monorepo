@@ -3,7 +3,7 @@ import * as React from "react";
 import { cn } from "cn";
 
 export const inputVariantClasses = {
-  default: "ll:rounded-sm ll:border ll:border-solid ll:border-gray-400",
+  default: "ll:rounded-sm ll:border ll:border-solid ll:border-border",
   borderless: "ll:rounded-none ll:border-0 ll:shadow-none",
 };
 

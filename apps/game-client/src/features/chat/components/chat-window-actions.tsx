@@ -43,7 +43,7 @@ export const ChatWindowActions = ({
         {filtersVisible && (
           <span
             aria-hidden="true"
-            className="ll:absolute ll:right-0 ll:bottom-0 ll:size-1.5 ll:rounded-full ll:bg-purple-400"
+            className="ll:absolute ll:right-0 ll:bottom-0 ll:size-1.5 ll:rounded-full ll:bg-primary"
           />
         )}
       </ChatActionButton>

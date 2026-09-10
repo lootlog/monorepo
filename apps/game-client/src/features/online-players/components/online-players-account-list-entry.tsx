@@ -55,7 +55,7 @@ const getHighlightClassName = ({
   }
 
   if (isPartyMember) {
-    return "ll:border-purple-400 ll:bg-purple-500/10";
+    return "ll:border-ring ll:bg-accent";
   }
 
   if (isSameClan) {
