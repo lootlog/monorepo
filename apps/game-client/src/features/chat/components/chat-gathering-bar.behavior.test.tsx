@@ -4,6 +4,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
@@ -383,7 +384,10 @@ it("keeps the hovered signup target and prioritizes an owned room", async () => 
   harness.mutation.mockResolvedValue(
     Response.json({ message: "Failed" }, { status: 500 }),
   );
-  fireEvent.click(screen.getByRole("button", { name: "Zgłoś się" }));
+  vi.spyOn(HTMLElement.prototype, "getClientRects").mockReturnValue(
+    Object.assign([new DOMRect()], { item: () => new DOMRect() }),
+  );
+  act(() => window.dispatchEvent(new Event("lootlog:join-visible-gathering")));
   await waitFor(() => expect(harness.mutation).toHaveBeenCalledTimes(1));
   expect(String(harness.mutation.mock.calls[0]?.[0])).toContain(
     "original-room",
@@ -393,11 +397,10 @@ it("keeps the hovered signup target and prioritizes an owned room", async () => 
       .getState()
       .mergeProjection({ ...readyRoomOrganizerFixture, world: "pandora" }),
   );
-  await waitFor(() =>
-    expect(
-      screen.queryByRole("button", { name: "Zgłoś się" }),
-    ).not.toBeInTheDocument(),
-  );
+  await waitFor(() => {
+    for (const signup of screen.getAllByRole("button", { name: "Zgłoś się" }))
+      expect(signup).toBeDisabled();
+  });
 });
 
 it("keeps full discovery counts after joining despite a private projection and marks missing counts as unavailable", async () => {
@@ -462,7 +465,9 @@ it("hides a frozen hovered target and makes the next visible gathering the hotke
   );
   await harness.refresh();
   expect(screen.getByText("Original gathering")).toBeVisible();
-  fireEvent.click(screen.getByRole("button", { name: "Ukryj zbiórkę" }));
+  const firstHide = screen.getAllByRole("button", { name: "Ukryj zbiórkę" })[0];
+  if (!firstHide) throw new Error("Expected first gathering hide action");
+  fireEvent.click(firstHide);
   expect(await screen.findByText("New gathering")).toBeVisible();
   expect(screen.queryByText("Original gathering")).toBeNull();
   await harness.refresh();
@@ -546,9 +551,10 @@ it("restores hidden gatherings through their floating menu and keeps new IDs and
     }),
   );
   await waitFor(() =>
-    expect(screen.getByRole("button", { name: "Ukryj zbiórkę" })).toHaveFocus(),
+    expect(
+      screen.getAllByRole("button", { name: "Ukryj zbiórkę" })[0],
+    ).toHaveFocus(),
   );
-  await user.click(screen.getByRole("button", { name: "Pozostałe · 1" }));
   expect(await screen.findByText("Original gathering")).toBeVisible();
   expect(editor).toHaveTextContent("Keep this draft");
   expect(useChatStore.getState().draftsByGuild["guild-1"]).toBe(
@@ -562,7 +568,6 @@ it("keeps keyboard focus on the hidden gatherings menu after hiding a secondary 
     createGathering({ description: "First" }),
     createGathering({ notificationId: "second-room", description: "Second" }),
   ]);
-  await user.click(screen.getByRole("button", { name: "Pozostałe · 1" }));
   const secondaryHide = screen.getAllByRole("button", {
     name: "Ukryj zbiórkę",
   })[1];
@@ -584,32 +589,45 @@ it("keeps keyboard focus on the hidden gatherings menu after hiding a secondary 
   ).toBeVisible();
 });
 
-it("keeps other gatherings expanded after joining and enables their actions again after withdrawal", async () => {
+it("joins the selected organizer from the visible list and enables other signups after withdrawal", async () => {
   const user = userEvent.setup();
   const harness = await setup([
-    createGathering({ description: "First" }),
-    createGathering({ notificationId: "second-room", description: "Second" }),
+    createGathering({ description: "First", organizerName: "First organizer" }),
+    createGathering({
+      notificationId: "second-room",
+      description: "Second",
+      organizerName: "Second organizer",
+    }),
   ]);
-  await user.click(screen.getByRole("button", { name: "Pozostałe · 1" }));
   harness.mutation.mockResolvedValueOnce(
     Response.json(
-      createChatReadyRoom({ world: "pandora", description: "First" }),
+      createChatReadyRoom({
+        notificationId: "second-room",
+        world: "pandora",
+        description: "Second",
+      }),
     ),
   );
-  const signup = screen.getAllByRole("button", { name: "Zgłoś się" })[0];
-  if (!signup) throw new Error("Expected featured gathering signup");
-  await user.click(signup);
+  const secondOrganizer = screen
+    .getAllByRole("listitem")
+    .find((row) => within(row).queryByText("Party finder · Second organizer"));
+  if (!secondOrganizer) throw new Error("Expected second organizer gathering");
+  await user.click(
+    within(secondOrganizer).getByRole("button", { name: "Zgłoś się" }),
+  );
+  await waitFor(() => expect(harness.mutation).toHaveBeenCalledTimes(1));
+  expect(String(harness.mutation.mock.calls[0]?.[0])).toContain("second-room");
   const withdrawal = await screen.findByRole("button", {
     name: "Wycofaj zgłoszenie",
   });
-  expect(screen.getByText("Second")).toBeVisible();
+  expect(screen.getByText("First")).toBeVisible();
   expect(screen.getByRole("button", { name: "Zgłoś się" })).toBeDisabled();
   expect(screen.getByRole("button", { name: "Ukryj zbiórkę" })).toBeEnabled();
   harness.mutation.mockResolvedValueOnce(
     Response.json({
       schemaVersion: 3,
       type: "REMOVE",
-      notificationId: "room-1",
+      notificationId: "second-room",
       revision: 4,
     }),
   );
@@ -619,7 +637,7 @@ it("keeps other gatherings expanded after joining and enables their actions agai
       screen.queryByRole("button", { name: "Wycofaj zgłoszenie" }),
     ).toBeNull(),
   );
-  expect(screen.getByText("Second")).toBeVisible();
+  expect(screen.getByText("First")).toBeVisible();
   for (const action of screen.getAllByRole("button", {
     name: /^(Zgłoś się|Ukryj zbiórkę)$/,
   })) {
@@ -687,7 +705,10 @@ it("updates the main join tooltip from the live binding without advertising its 
   act(() =>
     useHotkeysStore.getState().setBinding("join-party-gathering", binding),
   );
-  const signup = await screen.findByRole("button", { name: "Zgłoś się" });
+  const signup = (
+    await screen.findAllByRole("button", { name: "Zgłoś się" })
+  )[0];
+  if (!signup) throw new Error("Expected first gathering signup");
   await user.keyboard("{Tab}");
   act(() => signup.focus());
   expect(await screen.findByRole("tooltip")).toHaveTextContent(
@@ -709,7 +730,6 @@ it("updates the main join tooltip from the live binding without advertising its 
   expect(screen.getByRole("tooltip")).toHaveTextContent(
     "Zgłoś się (Skrót nieustawiony)",
   );
-  await user.click(screen.getByRole("button", { name: "Pozostałe · 1" }));
   const secondarySignup = screen.getAllByRole("button", {
     name: "Zgłoś się",
   })[1];

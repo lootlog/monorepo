@@ -118,7 +118,6 @@ export function ChatGatheringBar({
     (candidate) => !hidden(candidate),
   );
   const hiddenGatherings = eligibleGatherings.filter(hidden);
-  const newest = candidates[0] ?? null;
   const locked = hovered || focused || application.isPending;
   const target = selectFeaturedGathering(candidates, locked ? frozen : null);
   const apply = (candidate: ActivePartyGatheringSummary) => {
@@ -217,12 +216,10 @@ export function ChatGatheringBar({
           roomSummary={discovery.data.find(
             (candidate) => candidate.notificationId === room?.notificationId,
           )}
-          locked={locked}
           pending={application.isPending}
           stale={discovery.isStale}
           onApply={apply}
           onHide={hideGathering}
-          onShowLatest={() => setFrozen(newest)}
         />
         {applyFailed && (
           <p role="alert" className="ll:m-0 ll:text-amber-200">

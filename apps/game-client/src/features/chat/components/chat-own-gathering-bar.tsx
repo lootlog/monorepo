@@ -74,9 +74,11 @@ export function ChatOwnGatheringBar({
           className={`ll:flex ll:flex-wrap ll:gap-1 ${hasDetails ? "ll:min-h-5 ll:items-start ll:mb-1" : "ll:min-h-6 ll:items-center"}`}
         >
           <span
-            className={`ll:shrink-0 ll:whitespace-nowrap ll:text-[11px] ll:font-semibold ${hasDetails ? "ll:relative ll:-top-px" : ""}`}
+            className={`ll:min-w-0 ll:[overflow-wrap:anywhere] ll:text-[11px] ll:font-semibold ${hasDetails ? "ll:relative ll:-top-px" : ""}`}
           >
-            {t("gatherings.title")}
+            {t("gatherings.titleWithOrganizer", {
+              organizer: room.organizerCharacter.nick,
+            })}
           </span>
           <ChatGatheringCounters {...counts} />
           <div
