@@ -100,13 +100,7 @@ export const ChatFiltersSettings = () => {
             return (
               <SettingsControlRow
                 key={npcType}
-                label={
-                  <label htmlFor={controlId}>
-                    {t("chatFilters.hiddenNpcTypes.hide", {
-                      npcType: label,
-                    })}
-                  </label>
-                }
+                label={<label htmlFor={controlId}>{label}</label>}
                 labelStyle={{
                   color: getTextColor(npcType, true, npcTypeColors),
                 }}
