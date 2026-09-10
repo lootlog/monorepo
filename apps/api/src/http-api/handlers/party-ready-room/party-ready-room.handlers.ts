@@ -1,3 +1,4 @@
+import type { GameCharacterOffline } from "@lootlog/protocol/rabbit/events";
 import { statusCodeResponse } from "#src/shared/http/handler-response";
 import { applicationErrorResponse } from "../../application-error-response.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
@@ -46,6 +47,9 @@ type DataEffect = Effect.Effect<unknown, ReadyRoomOperationError>;
 export class ReadyRoomData extends Context.Service<
   ReadyRoomData,
   {
+    readonly characterOffline: (
+      event: typeof GameCharacterOffline.Type,
+    ) => DataEffect;
     readonly accessibleGuildIds: (discordId: string) => DataEffect;
     readonly create: (
       identity: ReadyRoomIdentity,

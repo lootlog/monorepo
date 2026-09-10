@@ -398,3 +398,20 @@ body:has(> #lootlog-root) .all\:b {
     color-mix(in oklab, var(--ll-color-gray-400) 40%, transparent);
   pointer-events: none;
 }
+
+#lootlog-root .ll-party-gathering-card,
+#lootlog-root ul[data-organizer="true"] {
+  background: rgb(40 16 63 / 92%);
+}
+#lootlog-root .ll-party-gathering-card[data-joined="true"] {
+  background: #183524;
+}
+
+#lootlog-root .ll-party-gathering-card .ll\:text-muted-foreground {
+  color: #999;
+  line-height: 15px;
+}
+#lootlog-root .ll-party-gathering-card .ll\:text-inherit {
+  color: #e5e5e5;
+  line-height: 14px;
+}

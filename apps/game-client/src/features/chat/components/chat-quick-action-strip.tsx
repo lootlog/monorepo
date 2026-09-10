@@ -1,3 +1,8 @@
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 import { usePartyCommand } from "@/features/command/hooks/use-party-command";
 import { MapPin, Plus, Siren, Swords } from "lucide-react";
 import { useState } from "react";
@@ -55,17 +60,21 @@ export const ChatQuickActionStrip = ({ guildId }: { guildId?: string }) => {
   ] as const;
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          className="ll:size-6 ll:shrink-0 ll:p-0 ll:mr-2 ll:border-0"
-          aria-label={t("quickActions.menu")}
-          title={t("quickActions.menu")}
-        >
-          <Plus aria-hidden className="ll:size-4" />
-        </Button>
-      </PopoverTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <PopoverTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              className="ll:size-6 ll:shrink-0 ll:p-0 ll:mr-2 ll:border-0"
+              aria-label={t("quickActions.menu")}
+            >
+              <Plus aria-hidden className="ll:size-4" />
+            </Button>
+          </PopoverTrigger>
+        </TooltipTrigger>
+        <TooltipContent side="top">{t("quickActions.menu")}</TooltipContent>
+      </Tooltip>
       <PopoverContent
         side="top"
         align="end"

@@ -5817,6 +5817,11 @@ export interface PartyReadyRoomProjectionDtoOutput {
   description?: string;
   minLvl?: number;
   maxLvl?: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  partyMemberCount?: number;
   status: PartyReadyRoomProjectionDtoOutputStatus;
   /**
      * @minimum 1
@@ -6092,6 +6097,11 @@ export type PartyReadyRoomClientUpdateDtoOutputProjection = {
   description?: string;
   minLvl?: number;
   maxLvl?: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  partyMemberCount?: number;
   status: PartyReadyRoomClientUpdateDtoOutputProjectionStatus;
   /**
      * @minimum 1

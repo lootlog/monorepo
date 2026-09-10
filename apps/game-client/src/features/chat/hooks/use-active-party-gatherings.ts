@@ -44,6 +44,8 @@ export function useActivePartyGatherings() {
       GatewayEvent.CHAT_MESSAGE_UPDATE,
       GatewayEvent.CHAT_MESSAGE_DELETE,
       GatewayEvent.PARTY_READY_ROOM_UPDATE,
+      GatewayEvent.PARTY_GATHERING_SEND,
+      GatewayEvent.PARTY_GATHERING_CANCEL,
     ];
     const newGathering = (payload: {
       type?: string;

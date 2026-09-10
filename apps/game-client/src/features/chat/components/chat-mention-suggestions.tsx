@@ -7,7 +7,7 @@ import {
 import { cn } from "cn";
 import { useEffect, useRef, type FC } from "react";
 import { useTranslation } from "react-i18next";
-import { Loader2 } from "lucide-react";
+import { CornerDownLeft, Loader2 } from "lucide-react";
 import { useDelayedVisibility } from "@/hooks/ui/use-delayed-visibility";
 
 export type ChatInputSuggestion =
@@ -47,7 +47,7 @@ export const ChatMentionSuggestions: FC<ChatMentionSuggestionsProps> = ({
     }
 
     optionRefs.current[selectedIndex]?.scrollIntoView({
-      behavior: "smooth",
+      behavior: "instant",
       block: "nearest",
     });
   }, [isOpen, selectedIndex, suggestions]);
@@ -60,11 +60,20 @@ export const ChatMentionSuggestions: FC<ChatMentionSuggestionsProps> = ({
     return null;
   }
 
+  const title = t(
+    suggestionMode === "command"
+      ? "input.commandSuggestions.title"
+      : "input.mentionSuggestions.title",
+  );
   return (
-    <div className="ll:absolute ll:bottom-full ll:left-1 ll:right-1 ll:z-50 ll:mb-1 ll:overflow-hidden ll:rounded-sm ll:border ll:border-gray-500 ll:bg-black/96 ll:shadow-[0_8px_24px_rgba(0,0,0,0.55)]">
+    <div className="ll:absolute ll:bottom-full ll:inset-x-0 ll:z-50 ll:w-full ll:overflow-hidden ll:border-solid ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40 ll:bg-[#171719]">
+      <div className="ll:flex ll:items-center ll:justify-between ll:border-solid ll:border-x-0 ll:border-t-0 ll:border-b ll:border-gray-400/20 ll:px-2 ll:py-1 ll:text-[10px] ll:text-neutral-400">
+        <span>{title}</span>
+        <span>{suggestions.length}</span>
+      </div>
       {isLoading ? (
         <div
-          className="ll:flex ll:items-center ll:justify-center ll:gap-2 ll:px-3 ll:py-2 ll:text-xs ll:text-gray-300"
+          className="ll:flex ll:items-center ll:justify-center ll:gap-2 ll:p-2 ll:text-[11px] ll:text-neutral-300"
           role="status"
         >
           <Loader2
@@ -74,115 +83,91 @@ export const ChatMentionSuggestions: FC<ChatMentionSuggestionsProps> = ({
           {t("input.mentionSuggestions.loading")}
         </div>
       ) : showNoResults ? (
-        <p className="ll:px-3 ll:py-2 ll:text-center ll:text-xs ll:text-gray-400">
-          {suggestionMode === "command"
-            ? t("input.commandSuggestions.noResults")
-            : t("input.mentionSuggestions.noResults")}
+        <p className="ll:m-0 ll:p-3 ll:text-center ll:text-[11px] ll:text-neutral-400">
+          {t(
+            suggestionMode === "command"
+              ? "input.commandSuggestions.noResults"
+              : "input.mentionSuggestions.noResults",
+          )}
         </p>
       ) : (
-        <ScrollArea className="ll:max-h-44 ll:w-full">
-          <div role="listbox" className="ll:py-1">
+        <ScrollArea className="ll:max-h-[125px] ll:w-full">
+          <div role="listbox" aria-label={title}>
             {suggestions.map((suggestion, index) => {
-              if (suggestion.type === "command") {
-                return (
-                  <button
-                    key={`command:${suggestion.prefix}`}
-                    ref={(element) => {
-                      optionRefs.current[index] = element;
-                    }}
-                    type="button"
-                    role="option"
-                    aria-selected={index === selectedIndex}
-                    className={cn(
-                      "ll:flex ll:w-full ll:appearance-none ll:flex-col ll:gap-0.5 ll:border-0 ll:bg-transparent ll:px-2 ll:py-1.5 ll:text-left ll:outline-none ll:transition-colors",
-                      index === selectedIndex
-                        ? "ll:bg-slate-700/70"
-                        : "ll:hover:bg-slate-800/60",
-                    )}
-                    onMouseDown={(event) => {
-                      event.preventDefault();
-                    }}
-                    onClick={() => onSelect(suggestion)}
-                  >
-                    <span className="ll:text-xs ll:font-medium ll:text-white">
-                      {suggestion.label}
-                    </span>
-                    <span className="ll:text-[10px] ll:text-gray-400">
-                      {suggestion.description}
-                    </span>
-                  </button>
-                );
-              }
-
-              const previousSuggestion = suggestions[index - 1];
-              const showHeading =
-                !previousSuggestion ||
-                previousSuggestion.type !== "mention" ||
-                previousSuggestion.kind !== suggestion.kind;
-              const heading =
-                suggestion.kind === "role"
-                  ? t("input.mentionSuggestions.roles")
-                  : t("input.mentionSuggestions.members");
-
+              const command = suggestion.type === "command";
+              const label = command
+                ? suggestion.label
+                : getChatMentionSuggestionDisplayLabel(suggestion);
               return (
-                <div
-                  key={`${suggestion.kind}:${suggestion.normalizedLabel}`}
-                  className="ll:flex ll:flex-col"
+                <button
+                  key={
+                    command
+                      ? `command:${suggestion.prefix}`
+                      : `${suggestion.kind}:${suggestion.normalizedLabel}`
+                  }
+                  ref={(element) => {
+                    optionRefs.current[index] = element;
+                  }}
+                  type="button"
+                  role="option"
+                  aria-label={command ? undefined : label}
+                  aria-selected={index === selectedIndex}
+                  className={cn(
+                    "ll:flex ll:w-full ll:appearance-none ll:items-center ll:gap-2 ll:rounded-none ll:border-0 ll:px-2 ll:py-[5px] ll:text-left ll:focus-visible:outline-2 ll:focus-visible:outline-neutral-400 ll:focus-visible:-outline-offset-2",
+                    index === selectedIndex
+                      ? "ll:bg-[#303034]"
+                      : "ll:bg-transparent ll:hover:bg-[#262629]",
+                  )}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => onSelect(suggestion)}
                 >
-                  {showHeading ? (
-                    <div className="ll:px-2 ll:pt-1.5 ll:pb-1 ll:text-[10px] ll:font-semibold ll:uppercase ll:tracking-[0.08em] ll:text-gray-400">
-                      {heading}
-                    </div>
-                  ) : null}
-                  <button
-                    ref={(element) => {
-                      optionRefs.current[index] = element;
-                    }}
-                    type="button"
-                    role="option"
-                    aria-selected={index === selectedIndex}
+                  <span
+                    aria-hidden
                     className={cn(
-                      "ll:flex ll:w-full ll:appearance-none ll:items-center ll:gap-2 ll:border-0 ll:bg-transparent ll:px-2 ll:py-1.5 ll:text-left ll:text-xs ll:text-white ll:outline-none ll:transition-colors",
-                      index === selectedIndex
-                        ? "ll:bg-slate-700/70"
-                        : "ll:hover:bg-slate-800/60",
+                      "ll:flex ll:size-[22px] ll:shrink-0 ll:items-center ll:justify-center ll:text-[10px] ll:text-neutral-300",
+                      !command && "ll:rounded-full ll:bg-[#353539]",
                     )}
-                    onMouseDown={(event) => {
-                      event.preventDefault();
-                    }}
-                    onClick={() => onSelect(suggestion)}
                   >
+                    {command
+                      ? "/"
+                      : suggestion.kind === "role"
+                        ? "@"
+                        : suggestion.label.slice(0, 2).toUpperCase()}
+                  </span>
+                  <span className="ll:min-w-0 ll:flex-1">
                     <span
-                      className="ll:h-1.5 ll:w-1.5 ll:shrink-0 ll:rounded-full ll:bg-current"
+                      className="ll:block ll:truncate ll:text-[12px] ll:leading-[15px] ll:font-semibold ll:text-white"
                       style={
-                        suggestion.color
-                          ? {
-                              color: `#${suggestion.color}`,
-                            }
-                          : {
-                              color: "#9CA3AF",
-                            }
-                      }
-                    />
-                    <span
-                      className="ll:truncate ll:font-medium ll:text-white"
-                      style={
-                        suggestion.color
-                          ? {
-                              color: `#${suggestion.color}`,
-                            }
+                        !command && suggestion.color
+                          ? { color: `#${suggestion.color}` }
                           : undefined
                       }
                     >
-                      {getChatMentionSuggestionDisplayLabel(suggestion)}
+                      {label}
                     </span>
-                  </button>
-                </div>
+                    {command && (
+                      <span className="ll:block ll:truncate ll:text-[10px] ll:leading-[14px] ll:text-neutral-400">
+                        {suggestion.description}
+                      </span>
+                    )}
+                  </span>
+                  <CornerDownLeft
+                    aria-hidden
+                    size={12}
+                    className={cn(
+                      "ll:shrink-0 ll:text-neutral-400",
+                      index !== selectedIndex && "ll:invisible",
+                    )}
+                  />
+                </button>
               );
             })}
           </div>
         </ScrollArea>
       )}
+      <div className="ll:border-solid ll:border-x-0 ll:border-b-0 ll:border-t ll:border-gray-400/20 ll:px-2 ll:py-1 ll:text-[9px] ll:text-neutral-400">
+        {t("input.suggestionKeyboardHint")}
+      </div>
     </div>
   );
 };

@@ -1,3 +1,4 @@
+import { GameCharacterOffline } from "@lootlog/protocol/rabbit/events";
 import type { OnlineHistory } from "./online-history.js";
 import {
   BasicPresence,
@@ -40,6 +41,10 @@ type Published = typeof PublishedPresence.Type;
 type Snapshot = typeof PresenceSnapshot.Type;
 type Event = typeof ServerEvent.Type;
 
+const OFFLINE_PENDING_INDEX = "presence:offline:pending";
+const decodeOffline = Schema.decodeUnknownSync(
+  Schema.fromJsonString(GameCharacterOffline),
+);
 const REDIS_TTL_SECONDS = Math.ceil(PRESENCE_EXPIRY_MS / 1_000);
 const SWEEP_INTERVAL_MS = 5_000;
 const PresenceJson = Schema.fromJsonString(
@@ -80,6 +85,9 @@ export class PresenceStore {
     private readonly now: () => number = Date.now,
     private readonly coverage?: Pick<CoveragePublisher, "publish">,
     private readonly onlineHistory?: Pick<OnlineHistory, "observe">,
+    private readonly publishOffline?: (
+      event: GameCharacterOffline,
+    ) => Effect.Effect<void, unknown>,
   ) {}
 
   readonly sweepSchedule = SWEEP_INTERVAL_MS;
@@ -123,6 +131,15 @@ export class PresenceStore {
         ? { ...basic, location: data.location }
         : basic;
       socket.data.presence = presence;
+      yield* self.cancelOffline(presence);
+      if (
+        previousPresence?.character &&
+        (previousPresence.character.characterId !==
+          presence.character?.characterId ||
+          previousPresence.character.world !== presence.character?.world)
+      ) {
+        yield* self.scheduleOffline(previousPresence);
+      }
 
       for (const organizationId of selectedOrganizationIds) {
         yield* self.write(organizationId, presence, socket.data.discordId);
@@ -203,6 +220,136 @@ export class PresenceStore {
           presence.userId,
           presence.sessionId,
           session.discordId,
+        );
+      }
+      yield* self.scheduleOffline(presence);
+    });
+  }
+
+  private offlineCharacterKey(presence: {
+    userId: string;
+    character?: { characterId: string; world: string };
+  }): string {
+    return `presence:offline:character:${JSON.stringify([presence.userId, presence.character?.world, presence.character?.characterId])}`;
+  }
+
+  private cancelOffline(
+    presence: Basic | Precise,
+  ): Effect.Effect<void, unknown> {
+    const self = this;
+    return Effect.gen(function* () {
+      if (presence.platform !== "game" || !presence.character) return;
+      const index = self.offlineCharacterKey(presence);
+      const keys = yield* fromPromise("presence.offline-list", () =>
+        self.redis.command.smembers(index),
+      );
+      for (const key of keys) {
+        yield* fromPromise("presence.offline-cancel", () =>
+          self.redis.command.del(key),
+        );
+        yield* fromPromise("presence.offline-unindex", () =>
+          self.redis.command.srem(OFFLINE_PENDING_INDEX, key),
+        );
+        yield* fromPromise("presence.offline-character-unindex", () =>
+          self.redis.command.srem(index, key),
+        );
+      }
+    });
+  }
+
+  private scheduleOffline(
+    presence: Basic | Precise,
+  ): Effect.Effect<void, unknown> {
+    const self = this;
+    return Effect.gen(function* () {
+      if (
+        !self.publishOffline ||
+        presence.platform !== "game" ||
+        !presence.character ||
+        !presence.discordId
+      )
+        return;
+      yield* self.cancelOffline(presence);
+      const event: GameCharacterOffline = {
+        userId: presence.userId,
+        discordId: presence.discordId,
+        world: presence.character.world,
+        characterId: presence.character.characterId,
+        organizationIds: presence.organizationIds,
+        disconnectedAt: self.now(),
+      };
+      const key = `${self.offlineCharacterKey(presence)}:session:${presence.sessionId}`;
+      yield* fromPromise("presence.offline-schedule", () =>
+        self.redis.command.set(key, JSON.stringify(event)),
+      );
+      yield* fromPromise("presence.offline-index", () =>
+        self.redis.command.sadd(OFFLINE_PENDING_INDEX, key),
+      );
+      yield* fromPromise("presence.offline-character-index", () =>
+        self.redis.command.sadd(self.offlineCharacterKey(presence), key),
+      );
+    });
+  }
+
+  runOfflineSweep() {
+    return this.sweepOffline().pipe(
+      Effect.catch((error) =>
+        Effect.logError("Character offline sweep failed; retrying", error),
+      ),
+      Effect.repeat(Schedule.spaced(1_000)),
+    );
+  }
+
+  sweepOffline(): Effect.Effect<void, unknown> {
+    const self = this;
+    return Effect.gen(function* () {
+      if (!self.publishOffline) return;
+      const keys = yield* fromPromise("presence.offline-pending", () =>
+        self.redis.command.smembers(OFFLINE_PENDING_INDEX),
+      );
+      for (const key of keys) {
+        const value = yield* fromPromise("presence.offline-read", () =>
+          self.redis.command.get(key),
+        );
+        if (!value) {
+          yield* fromPromise("presence.offline-unindex", () =>
+            self.redis.command.srem(OFFLINE_PENDING_INDEX, key),
+          );
+          continue;
+        }
+        const event = decodeOffline(value);
+        if (self.now() - event.disconnectedAt < 10_000) continue;
+        let online = false;
+        for (const organizationId of event.organizationIds) {
+          const presences = yield* self.readOrganization(organizationId);
+          online ||= presences.some(
+            (presence) =>
+              presence.platform === "game" &&
+              presence.userId === event.userId &&
+              presence.character?.world === event.world &&
+              presence.character.characterId === event.characterId,
+          );
+        }
+        // Reconnect may have removed this pending record while we read presence.
+        const current = yield* fromPromise("presence.offline-recheck", () =>
+          self.redis.command.get(key),
+        );
+        if (current !== value) continue;
+        if (!online) yield* self.publishOffline(event);
+        yield* fromPromise("presence.offline-complete", () =>
+          self.redis.command.del(key),
+        );
+        yield* fromPromise("presence.offline-unindex", () =>
+          self.redis.command.srem(OFFLINE_PENDING_INDEX, key),
+        );
+        yield* fromPromise("presence.offline-character-unindex", () =>
+          self.redis.command.srem(
+            self.offlineCharacterKey({
+              userId: event.userId,
+              character: { world: event.world, characterId: event.characterId },
+            }),
+            key,
+          ),
         );
       }
     });

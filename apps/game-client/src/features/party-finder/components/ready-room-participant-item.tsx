@@ -62,14 +62,7 @@ export function ReadyRoomParticipantItem({
     >
       <div className="ll:flex ll:min-w-0 ll:items-center ll:gap-1">
         <CharacterTile
-          character={{
-            id: Number(participant.character.characterId),
-            nick: participant.character.nick,
-            icon: participant.character.icon,
-            lvl: participant.character.lvl,
-            prof: participant.character.prof,
-            world: room.world,
-          }}
+          character={participant.character}
           className="ll:max-h-7 ll:scale-75"
         />
         <div className="ll:max-w-28 ll:truncate ll:text-[11px] ll:font-semibold ll:text-gray-100">

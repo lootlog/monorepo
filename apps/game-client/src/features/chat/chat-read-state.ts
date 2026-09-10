@@ -15,6 +15,7 @@ export const receiveChatMessage = (
   message: ChatMessageResponseDtoOutput,
   attention: boolean,
 ) => {
+  if (message.type === "PARTY_GATHERING") return state;
   const entries = state[message.guildId] ?? [];
   if (entries.some((entry) => entry.id === message.id)) return state;
   return {
@@ -85,8 +86,6 @@ export const getChatUnreadSummary = (state: ChatReadState, guildId: string) => {
     conversations: entries.some(
       (entry) => entry.type === "NORMAL" || entry.type === "NOTIFICATION",
     ),
-    reports: entries.some(
-      (entry) => entry.type === "NPC" || entry.type === "PARTY_GATHERING",
-    ),
+    reports: entries.some((entry) => entry.type === "NPC"),
   };
 };

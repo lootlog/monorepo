@@ -22868,11 +22868,21 @@ components:
           type: string
         organizerName:
           type: string
+        organizerDiscordId:
+          type: string
+        organizerLvl:
+          type: number
+        organizerProf:
+          type: string
         applicantCount:
           type: integer
           minimum: 0
           maximum: 9007199254740991
         inPartyCount:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        partyMemberCount:
           type: integer
           minimum: 0
           maximum: 9007199254740991
@@ -23038,6 +23048,10 @@ components:
           type: number
         maxLvl:
           type: number
+        partyMemberCount:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
         status:
           type: string
           enum:
@@ -23409,6 +23423,10 @@ components:
               type: number
             maxLvl:
               type: number
+            partyMemberCount:
+              type: integer
+              minimum: 0
+              maximum: 9007199254740991
             status:
               type: string
               enum:

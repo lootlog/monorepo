@@ -17,6 +17,7 @@ export function usePartyReadyRoomObserver(): void {
   );
   const { connected, joined } = useGlobalStore((state) => state.socketState);
   const partyMembers = usePartyStore((state) => state.members);
+  const partyStatus = usePartyStore((state) => state.status);
   const lastReportedSnapshot = useRef<string | null>(null);
 
   useEffect(() => {
@@ -32,6 +33,7 @@ export function usePartyReadyRoomObserver(): void {
       !connected ||
       !joined ||
       !readyRoomsSynchronized ||
+      partyStatus !== "ready" ||
       !isOrganizingCharacter
     ) {
       lastReportedSnapshot.current = null;
@@ -62,6 +64,7 @@ export function usePartyReadyRoomObserver(): void {
   }, [
     ownedReadyRoom,
     partyMembers,
+    partyStatus,
     mergeProjection,
     connected,
     joined,

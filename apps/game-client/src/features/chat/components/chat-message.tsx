@@ -12,7 +12,6 @@ import type { ChatAppearanceSettings } from "@lootlog/schema/chat-appearance";
 import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
 import { ContextMenu, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { useGameStore } from "@/store/game.store";
-import { PartyGatheringCard } from "./party-gathering-card";
 import {
   getChatMessageBody,
   isChatMessageYesterdayOrOlder,
@@ -81,21 +80,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({
 
   if (!guildName) return null;
 
-  if (!messageBody && message.type !== MessageType.PARTY_GATHERING) return null;
-
-  if (message.type === MessageType.PARTY_GATHERING) {
-    return (
-      <PartyGatheringCard
-        message={message}
-        member={member}
-        guildName={guildName}
-        all={all}
-        isMsgYesterday={isMsgYesterday}
-        showGuildLabel={appearance?.showGuildLabel}
-        showTimestamp={appearance?.showTimestamp}
-      />
-    );
-  }
+  if (!messageBody) return null;
 
   if (message.type === MessageType.NPC) {
     return (

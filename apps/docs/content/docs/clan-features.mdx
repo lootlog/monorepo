@@ -71,7 +71,7 @@ i w starym interfejsie. Integracja z czatem gry jest tymczasowo niedostępna.
 
 - **Wszystko** łączy oba widoki i jest domyślnie wybrane.
 - **Rozmowy** zawierają wiadomości, powiadomienia `!` i odpowiedzi.
-- **Zdarzenia** zawierają zgłoszenia potworów i zbiórki.
+- **Zdarzenia** zawierają zgłoszenia potworów.
 
 Ostatnio wybrany widok jest zapamiętywany.
 
@@ -117,30 +117,31 @@ Nie mają przycisków tworzenia grupy ani przygotowania komunikatu.
 Opcja **Party finder** w menu **+** tworzy zbiórkę w organizacji wybranej
 w czacie, tak jak **Pozycja** i **Pomoc**.
 
-Aktywna zbiórka w historii czatu ma nagłówek **Zbiórka**. Jej tło obejmuje
-cały wiersz, tak jak przy zgłoszeniach NPC. Ikona postaci z plusem pozwala
-zgłosić chęć udziału. Po zakończeniu wpis pokazuje tylko **Zbiórka zakończona**.
+Utworzenie zbiórki z NPC lub bez NPC nie dodaje wiadomości do historii czatu.
+Aktywne zbiórki są widoczne na liście nad polem pisania, gdzie możesz zgłosić
+chęć udziału.
 
-Lista nad polem pisania pokazuje od razu wszystkie dostępne zbiórki ze wszystkich
+Pływający panel u góry czatu pokazuje od razu dostępne zbiórki innych graczy ze wszystkich
 włączonych organizacji na bieżącym świecie, od najnowszej. Jest niezależna od historii
 wiadomości i filtra rozmowy. Zbiórki są pobierane również po wejściu do gry
-i ponownym połączeniu. Każda zbiórka ma własny przycisk zgłoszenia.
-Tło zbiórki NPC korzysta z ustawień **Wygląd → Kolory NPC**. Dla zbiórki
-bez rozpoznanej kategorii NPC pasek używa koloru **Grupa** z powiadomień.
-Pole pisania ma ten sam kolor co widoczny pasek, również podczas pisania.
+i ponownym połączeniu. Cały pasek cudzej zbiórki służy do zgłoszenia. Domyślnie widoczna jest najnowsza zbiórka; przycisk z liczbą pozostałych rozwija starsze. Ukrywanie jest dostępne w menu zbiórki.
+Twoja zbiórka, gdy jesteś organizatorem, znajduje się zawsze na końcu listy,
+najbliżej pola pisania. Panel organizatora pokazuje nazwę NPC lub „Twoja zbiórka”, licznik i przycisk „Zaproś”. Zarządzanie oraz anulowanie są dostępne w menu. Zbiórki mają gradient od przezroczystości do delikatnego fioletu, a pole pisania zachowuje zwykłe tło czatu.
+Zbiórki oddzielają cienkie, neutralne poziome linie. Przycisk ukrytych zbiórek znajduje się w prawym dolnym rogu obszaru wiadomości.
 Nazwa NPC pozostaje jasna. Pasek mieści się nad
 odpowiedzią i nie przesuwa pola pisania. Informacje mogą zajmować kilka linii.
 Stan aktywnej zbiórki jest widoczny w panelu czatu; szybki dostęp nie dodaje
 osobnej zielonej ikony.
-Pasek zbiórki oddziela cel i opis od wymaganego poziomu.
+Pasek zbiórki oddziela cel i opis od wymaganego poziomu. Opis nie ma cudzysłowów.
+Zbiórka bez NPC i bez opisu pokazuje tekst „Brak opisu”.
 Zbiórki NPC pokazują również grafikę potwora, jeśli zapisano ją przy zgłoszeniu.
 Obok grafiki widać nazwę, poziom i dostępną profesję, a niżej lokację oraz
 współrzędne, jeśli zostały podane.
-Nagłówek każdej zbiórki pokazuje nick organizatora — przed zgłoszeniem i po nim.
-W nagłówku widać też dwie ikony z liczbami: zgłoszone postacie oraz
-zgłoszeni obecni w grupie. Podpowiedzi wyjaśniają znaczenie liczników;
-liczniki nie doliczają postaci organizatora ani osób spoza zbiórki.
-Są widoczne również przed zgłoszeniem i po nim. Uczestnik dodatkowo widzi
+Nagłówek zbiórki pokazuje nazwę organizatora z Discorda w kolorze jego roli — przed zgłoszeniem i po nim.
+Licznik obok tytułu pokazuje aktualny skład drużyny względem limitu 10 osób.
+Przykładowo `(2/10)` oznacza dwie osoby w grupie. Obejmuje organizatora i osoby
+bez zgłoszenia; nie pokazuje liczby chętnych. Przed pierwszym odczytem składu
+wyświetla `(—/10)`. Uczestnik dodatkowo widzi
 status swojej bieżącej postaci na przycisku zgłoszenia. Zielony znacznik
 potwierdza zgłoszenie, a podpowiedź informuje też o obecności w grupie.
 Jego liczniki odświeżają się wraz z listą
@@ -180,9 +181,17 @@ tego samego organizatora nadal się pojawiają. Ukrywanie nie wysyła zgłoszeni
 ani nie wycofuje już wysłanego.
 Pasek wybiera kolejną dostępną zbiórkę; gdy nie ma następnej, znika, a pole
 pisania wraca do zwykłego tła. Skrót do zgłaszania pomija ukryte zbiórki.
-Przycisk **Ukryte zbiórki** w prawym górnym rogu czatu otwiera listę, z której
-możesz przywrócić pojedynczą zbiórkę, jeśli nadal trwa i masz do niej dostęp.
-Przycisk pojawia się tylko wtedy, gdy masz ukryte zbiórki.
+Przycisk z ikoną grupy i licznikiem w prawym dolnym rogu czatu otwiera listę
+z zakładkami **Aktywne** i **Ukryte**. Z obu zakładek możesz wybrać **Zgłoś się**.
+Przycisk **Pokaż w czacie** przywraca ukrytą zbiórkę na pasek; samo zgłoszenie
+nie zmienia ustawienia ukrywania. Lista obejmuje dostępne zbiórki dla poziomu
+postaci i pomija zbiórkę, w której już uczestniczysz.
+
+Po rozłączeniu z grą masz około **10 sekund** na powrót. Odświeżenie, po którym
+postać ponownie połączy się w tym czasie, zachowuje zbiórkę i zgłoszenie.
+Po dłuższej nieobecności organizatora zbiórka kończy się wszystkim; nieobecność
+chętnego wycofuje tylko jego zgłoszenie. Czas jest liczony od wykrycia rozłączenia
+przez serwer. Druga połączona sesja tej samej postaci zachowuje zbiórkę.
 
 Własną zbiórkę możesz zobaczyć i anulować również po zmianie postaci lub
 świata, jeśli zachowujesz wymagany dostęp do organizacji. Zaproszenia
@@ -196,7 +205,8 @@ przez ich uprawnienia i zakres poziomów.
 
 W ustawieniach skrótów możesz przypisać alarm działający także przy zamkniętym
 czacie do tej samej wybranej organizacji oraz zgłoszenie do zbiórki widocznej na pasku. Oba skróty są domyślnie
-nieprzypisane. Skrót zgłoszenia nie działa przy ukrytym pasku.
+nieprzypisane. Ponowne użycie skrótu zgłoszenia wycofuje obecne zgłoszenie.
+Skrót nie działa przy ukrytym pasku i nie anuluje zbiórki organizatora.
 
 ## Logi aktywności
 

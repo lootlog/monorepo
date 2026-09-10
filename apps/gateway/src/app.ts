@@ -120,8 +120,16 @@ export class GatewayApplication extends Context.Service<
         Date.now,
         coverage,
         onlineHistory,
+        (event) =>
+          messaging
+            .publish({
+              routingKey: RabbitRoutingKey.GAME_CHARACTER_OFFLINE,
+              content: new TextEncoder().encode(JSON.stringify(event)),
+            })
+            .pipe(Effect.asVoid),
       );
       yield* presence.runExpirySweep().pipe(Effect.forkScoped);
+      yield* presence.runOfflineSweep().pipe(Effect.forkScoped);
       const activity = new ActivityPublisher(messaging, config);
       const mapPings = new MapPingService(redis, hub);
       const airTags = new AirTagService(redis, hub);

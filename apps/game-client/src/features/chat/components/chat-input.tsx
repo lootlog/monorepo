@@ -80,7 +80,6 @@ type ChatInputProps = {
   variant?: InputVariant;
   selectedGuildId?: string;
   autofocus?: boolean;
-  backgroundColor?: string;
 };
 
 type TabCompletionSession = {
@@ -225,7 +224,6 @@ export const ChatInput: FC<ChatInputProps> = ({
   variant = "default",
   selectedGuildId,
   autofocus,
-  backgroundColor,
 }) => {
   const { t } = useTranslation("chat");
   const { t: tCommand } = useTranslation("command");
@@ -749,7 +747,7 @@ export const ChatInput: FC<ChatInputProps> = ({
   return (
     <form
       className={cn(
-        "ll:flex ll:justify-center ll:flex-col",
+        "ll:relative ll:flex ll:justify-center ll:flex-col",
         variant === "default" && "ll:mt-1",
       )}
     >
@@ -765,26 +763,25 @@ export const ChatInput: FC<ChatInputProps> = ({
           />
         </div>
       )}
+      <ChatMentionSuggestions
+        suggestionMode={suggestionMode}
+        suggestions={activeSuggestions}
+        isOpen={suggestionMode !== null && activeSuggestions.length > 0}
+        isLoading={
+          isMentionSuggestionsOpen &&
+          (isFetchingMemberNames || isFetchingRoleNames)
+        }
+        showNoResults={showMentionSuggestionNoResults}
+        selectedIndex={selectedMentionIndex}
+        onSelect={handleSuggestionSelect}
+      />
       <div
-        style={{ backgroundColor }}
         className={cn("ll:flex ll:items-center ll:gap-1", {
-          "ll:border-solid ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40 ll:has-[[data-slot=chat-input]:focus]:bg-white/10 ll:pl-1":
+          "ll:border-solid ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40 ll:pl-1":
             variant === "borderless",
         })}
       >
         <div className="ll:relative ll:min-w-0 ll:flex-1 ll:overflow-visible">
-          <ChatMentionSuggestions
-            suggestionMode={suggestionMode}
-            suggestions={activeSuggestions}
-            isOpen={suggestionMode !== null && activeSuggestions.length > 0}
-            isLoading={
-              isMentionSuggestionsOpen &&
-              (isFetchingMemberNames || isFetchingRoleNames)
-            }
-            showNoResults={showMentionSuggestionNoResults}
-            selectedIndex={selectedMentionIndex}
-            onSelect={handleSuggestionSelect}
-          />
           <Popover
             open={isClearConfirmOpen}
             onOpenChange={setIsClearConfirmOpen}

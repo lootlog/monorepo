@@ -15,22 +15,16 @@ type Props = {
     y?: number;
   };
   action?: ReactNode;
+  showNpcIcon?: boolean;
   description?: string;
   minLvl?: number;
   maxLvl?: number;
 };
 
-export const hasChatGatheringDetails = ({
-  npc,
-  description,
-  minLvl,
-  maxLvl,
-}: Props) =>
-  Boolean(npc || description || minLvl !== undefined || maxLvl !== undefined);
-
 export function ChatGatheringDetails({
   npc,
   action,
+  showNpcIcon = true,
   description,
   minLvl,
   maxLvl,
@@ -43,20 +37,22 @@ export function ChatGatheringDetails({
   const location = npc
     ? [npc.location, getChatNpcCoordinatesLabel(npc)].filter(Boolean).join(" ")
     : "";
-  if (!npc && !description && !level) return null;
   return (
-    <div className="ll:flex ll:min-w-0 ll:flex-col ll:gap-0.5 ll:[overflow-wrap:anywhere]">
+    <div className="ll:flex ll:min-w-0 ll:flex-col ll:gap-[2px] ll:[overflow-wrap:anywhere]">
       {npc && (
-        <div className="ll:flex ll:min-w-0 ll:items-center ll:gap-1.5">
-          {npc?.icon && (
+        <div className="ll:flex ll:min-h-[32px] ll:min-w-0 ll:items-center ll:gap-[6px]">
+          {showNpcIcon && npc.icon && (
             <NpcTile
               npc={{ icon: npc.icon, nick: npc.name }}
               containerClassName="ll:w-6 ll:h-8 ll:shrink-0"
               className="ll:w-auto ll:max-w-6 ll:max-h-8 ll:rounded-none ll:object-contain"
             />
           )}
-          <div className="ll:flex ll:min-h-8 ll:min-w-0 ll:flex-1 ll:flex-col ll:justify-center ll:gap-0.5">
-            <div className="ll:text-[11px] ll:font-semibold ll:text-inherit">
+          <div className="ll:flex ll:min-h-[32px] ll:min-w-0 ll:flex-1 ll:flex-col ll:justify-center ll:gap-0">
+            <div
+              className="ll:truncate ll:text-[10px] ll:font-semibold ll:text-inherit"
+              title={npc.name}
+            >
               {npc.name}
               {npc.lvl !== undefined && (
                 <span className="ll:font-normal">{` (${npc.lvl}${npc.prof ?? ""})`}</span>
@@ -71,20 +67,14 @@ export function ChatGatheringDetails({
           {action}
         </div>
       )}
-      {(description || level) && (
-        <div className="ll:flex ll:min-w-0 ll:items-center ll:gap-1.5">
-          <div className="ll:flex ll:min-w-0 ll:flex-1 ll:flex-col ll:gap-0.5">
-            {description && (
-              <div className="ll:whitespace-pre-wrap ll:text-[11px] ll:text-muted-foreground">
-                <span aria-hidden="true">„</span>
-                <span>{description}</span>
-                <span aria-hidden="true">”</span>
-              </div>
-            )}
+      {(!npc || description || level) && (
+        <div className="ll:flex ll:min-h-[32px] ll:min-w-0 ll:items-center ll:gap-[6px]">
+          <div className="ll:flex ll:min-w-0 ll:flex-1 ll:flex-col ll:gap-[2px]">
+            <div className="ll:whitespace-pre-wrap ll:text-[11px] ll:text-white">
+              {description || (!npc && t("gatherings.noDescription"))}
+            </div>
             {level && (
-              <div className="ll:text-[10px] ll:text-muted-foreground">
-                {level}
-              </div>
+              <div className="ll:text-[10px] ll:text-white">{level}</div>
             )}
           </div>
           {!npc && action}

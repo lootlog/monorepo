@@ -4,7 +4,6 @@ import {
   SendMessageDtoType,
   type SendMessageDtoCharacterData,
   type SendMessageDtoNpc,
-  type SendMessageDtoPartyGathering,
 } from "@lootlog/client/main";
 
 import {
@@ -18,7 +17,6 @@ export const MessageType = SendMessageDtoType;
 export type MessageType = (typeof MessageType)[keyof typeof MessageType];
 export type ChatCharacterData = SendMessageDtoCharacterData;
 export type ChatNpc = SendMessageDtoNpc;
-export type PartyGatheringChatData = SendMessageDtoPartyGathering;
 export type ChatMessage = ChatMessageResponseDtoOutput;
 
 export type SendChatMessageOptions = {
@@ -27,7 +25,6 @@ export type SendChatMessageOptions = {
   type: MessageType;
   characterData: ChatCharacterData;
   npc?: ChatNpc;
-  partyGathering?: PartyGatheringChatData;
 };
 
 export type SendChatMessageSuccess = {
@@ -44,7 +41,6 @@ export async function sendChatMessage({
   type,
   characterData,
   npc,
-  partyGathering,
 }: SendChatMessageOptions): Promise<SendChatMessageResult[]> {
   const action = startLoggedAction({
     actionType: "send_chat_message",
@@ -54,7 +50,6 @@ export async function sendChatMessage({
       type,
       characterData,
       npc,
-      partyGathering,
     },
   });
 
@@ -66,7 +61,6 @@ export async function sendChatMessage({
         type,
         characterData,
         npc,
-        partyGathering,
       };
 
       const response = await runLoggedRequest({

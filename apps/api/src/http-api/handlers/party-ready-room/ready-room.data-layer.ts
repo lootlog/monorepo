@@ -1,3 +1,4 @@
+import type { GameCharacterOffline } from "@lootlog/protocol/rabbit/events";
 import { readyRoomSourceVisibility } from "./ready-room-visibility.js";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import {
@@ -42,6 +43,21 @@ const ROOM_LIFETIME_MS = 30 * 60 * 1000;
 const MAX_CAS_ATTEMPTS = 4;
 
 export interface ReadyRoomEffects {
+  readonly publishCancellation: (payload: {
+    readonly notificationId: string;
+    readonly guildId: string;
+  }) => Effect.Effect<void, unknown>;
+  readonly publishGathering: (payload: {
+    readonly notificationId: string;
+    readonly guildId: string;
+    readonly discordId: string;
+    readonly character: PartyReadyRoomCharacter;
+    readonly world: string;
+    readonly createdAt: string;
+    readonly description?: string;
+    readonly minLvl?: number;
+    readonly maxLvl?: number;
+  }) => Effect.Effect<void, unknown>;
   readonly publish: (
     envelope: PartyReadyRoomUpdateEnvelope,
   ) => Effect.Effect<void, unknown>;
@@ -385,19 +401,7 @@ export const makeReadyRoomDataLayer = (
             );
           }
           const recipients = getReadyRoomActiveRecipientDiscordIds(aggregate);
-          const participants = { ...aggregate.participants };
-          delete participants[participantId];
-          const next: ReadyRoomAggregate = {
-            ...aggregate,
-            revision: aggregate.revision + 1,
-            updatedAt: new Date(clock()).toISOString(),
-            participants,
-          };
-          const result = yield* repository.exitParticipant(
-            aggregate,
-            next,
-            participantId,
-          );
+          const result = yield* exitParticipant(aggregate, participantId);
           if (result.status === "missing") {
             return yield* Effect.fail(
               new ResourceNotFoundError({ code: "ROOM_EXPIRED" }),
@@ -452,7 +456,10 @@ export const makeReadyRoomDataLayer = (
               changed.push(participant.discordId);
             }
           }
-          if (changed.length === 0) {
+          if (
+            changed.length === 0 &&
+            aggregate.partyMemberCount === memberIds.size
+          ) {
             return yield* projectionForViewer(aggregate, discordId);
           }
           const next: ReadyRoomAggregate = {
@@ -460,6 +467,7 @@ export const makeReadyRoomDataLayer = (
             revision: aggregate.revision + 1,
             updatedAt,
             participants,
+            partyMemberCount: memberIds.size,
           };
           const result = yield* repository.commit(aggregate, next);
           if (result.status === "missing") {
@@ -481,11 +489,129 @@ export const makeReadyRoomDataLayer = (
                   attempt + 1,
                 );
           }
-          yield* publish(result.aggregate, [discordId, ...changed]);
+          yield* publish(
+            result.aggregate,
+            getReadyRoomActiveRecipientDiscordIds(result.aggregate),
+          );
           return yield* projectionForViewer(result.aggregate, discordId);
         });
 
+      const cancelAggregate = Effect.fnUntraced(function* (
+        aggregate: ReadyRoomAggregate,
+      ) {
+        const recipients = getReadyRoomActiveRecipientDiscordIds(aggregate);
+        const next: ReadyRoomAggregate = {
+          ...aggregate,
+          status: "CANCELLED",
+          revision: aggregate.revision + 1,
+          updatedAt: new Date(clock()).toISOString(),
+        };
+        const result = yield* repository
+          .terminate(aggregate, next)
+          .pipe(Effect.flatMap(assertCommitted));
+        yield* Effect.forEach(
+          result.aggregate.guildIds,
+          (guildId) =>
+            effects
+              .publishCancellation({
+                notificationId: result.aggregate.notificationId,
+                guildId,
+              })
+              .pipe(Effect.ignore),
+          { discard: true },
+        );
+        yield* effects.endPartyGatheringMessages(
+          result.aggregate.notificationId,
+          result.aggregate.guildIds,
+        );
+        yield* publish(result.aggregate, recipients);
+        return result.aggregate;
+      });
+
+      const exitParticipant = Effect.fnUntraced(function* (
+        aggregate: ReadyRoomAggregate,
+        participantId: string,
+      ) {
+        const participants = { ...aggregate.participants };
+        delete participants[participantId];
+        return yield* repository.exitParticipant(
+          aggregate,
+          {
+            ...aggregate,
+            revision: aggregate.revision + 1,
+            updatedAt: new Date(clock()).toISOString(),
+            participants,
+          },
+          participantId,
+        );
+      });
+
+      const offlineRoom = (
+        notificationId: string,
+        event: typeof GameCharacterOffline.Type,
+        attempt = 0,
+      ): Effect.Effect<void, unknown> =>
+        Effect.gen(function* () {
+          const aggregate = yield* repository.get(notificationId);
+          if (
+            !aggregate ||
+            aggregate.status !== "ACTIVE" ||
+            aggregate.world !== event.world ||
+            Date.parse(aggregate.createdAt) > event.disconnectedAt ||
+            !aggregate.guildIds.some((id) => event.organizationIds.includes(id))
+          )
+            return;
+          if (
+            aggregate.organizerDiscordId === event.discordId &&
+            aggregate.organizerCharacter.characterId === event.characterId
+          ) {
+            yield* cancelAggregate(aggregate);
+            return;
+          }
+          const participant = Object.values(aggregate.participants).find(
+            (entry) =>
+              entry.discordId === event.discordId &&
+              entry.character.characterId === event.characterId &&
+              Date.parse(entry.createdAt) <= event.disconnectedAt,
+          );
+          if (!participant) return;
+          const recipients = getReadyRoomActiveRecipientDiscordIds(aggregate);
+          const result = yield* exitParticipant(
+            aggregate,
+            participant.participantId,
+          );
+          if (result.status === "conflict")
+            return yield* Effect.fail(
+              new ResourceConflictError({ code: "REVISION_CONFLICT" }),
+            );
+          if (result.status === "committed")
+            yield* publish(result.aggregate, recipients);
+        }).pipe(
+          Effect.catch((error) => {
+            if (
+              error instanceof ResourceConflictError &&
+              attempt + 1 < MAX_CAS_ATTEMPTS
+            )
+              return offlineRoom(notificationId, event, attempt + 1);
+            return Effect.fail(error);
+          }),
+        );
+
       return ReadyRoomData.of({
+        characterOffline: (event) =>
+          operation(
+            repository
+              .findForUser(event.discordId)
+              .pipe(
+                Effect.flatMap((rooms) =>
+                  Effect.forEach(
+                    rooms,
+                    (room) => offlineRoom(room.notificationId, event),
+                    { discard: true },
+                  ),
+                ),
+              ),
+          ),
         accessibleGuildIds: (discordId) =>
           operation(accessibleGuildIds(discordId)),
         create: (identity, guildIds, payload) =>
@@ -536,6 +662,30 @@ export const makeReadyRoomDataLayer = (
                 );
               }
               yield* publish(result.aggregate, [identity.discordId]);
+              yield* Effect.forEach(
+                guildIds,
+                (guildId) =>
+                  effects
+                    .publishGathering({
+                      notificationId: result.aggregate.notificationId,
+                      guildId,
+                      discordId: identity.discordId,
+                      character: result.aggregate.organizerCharacter,
+                      world: result.aggregate.world,
+                      createdAt: result.aggregate.createdAt,
+                      ...(result.aggregate.description !== undefined && {
+                        description: result.aggregate.description,
+                      }),
+                      ...(result.aggregate.minLvl !== undefined && {
+                        minLvl: result.aggregate.minLvl,
+                      }),
+                      ...(result.aggregate.maxLvl !== undefined && {
+                        maxLvl: result.aggregate.maxLvl,
+                      }),
+                    })
+                    .pipe(Effect.ignore),
+                { discard: true },
+              );
               return createReadyRoomProjection(
                 result.aggregate,
                 identity.discordId,
@@ -570,7 +720,13 @@ export const makeReadyRoomDataLayer = (
                     {
                       notificationId: room.notificationId,
                       organizerName: room.organizerCharacter.nick,
+                      organizerDiscordId: room.organizerDiscordId,
+                      organizerLvl: room.organizerCharacter.lvl,
+                      organizerProf: room.organizerCharacter.prof,
                       applicantCount: applicants.length,
+                      ...(room.partyMemberCount !== undefined && {
+                        partyMemberCount: room.partyMemberCount,
+                      }),
                       inPartyCount: applicants.filter(
                         ({ partyPresence }) => partyPresence === "IN_PARTY",
                       ).length,
@@ -717,17 +873,10 @@ export const makeReadyRoomDataLayer = (
               }
               const recipients =
                 getReadyRoomActiveRecipientDiscordIds(aggregate);
-              const participants = { ...aggregate.participants };
-              delete participants[payload.participantId];
-              const next: ReadyRoomAggregate = {
-                ...aggregate,
-                revision: aggregate.revision + 1,
-                updatedAt: new Date(clock()).toISOString(),
-                participants,
-              };
-              const result = yield* repository
-                .exitParticipant(aggregate, next, payload.participantId)
-                .pipe(Effect.flatMap(assertCommitted));
+              const result = yield* exitParticipant(
+                aggregate,
+                payload.participantId,
+              ).pipe(Effect.flatMap(assertCommitted));
               yield* publish(result.aggregate, recipients);
               return yield* clientUpdate(result.aggregate, identity.discordId);
             }),
@@ -784,23 +933,8 @@ export const makeReadyRoomDataLayer = (
                 identity.discordId,
                 payload.expectedRevision,
               );
-              const recipients =
-                getReadyRoomActiveRecipientDiscordIds(aggregate);
-              const next: ReadyRoomAggregate = {
-                ...aggregate,
-                status: "CANCELLED",
-                revision: aggregate.revision + 1,
-                updatedAt: new Date(clock()).toISOString(),
-              };
-              const result = yield* repository
-                .terminate(aggregate, next)
-                .pipe(Effect.flatMap(assertCommitted));
-              yield* effects.endPartyGatheringMessages(
-                result.aggregate.notificationId,
-                result.aggregate.guildIds,
-              );
-              yield* publish(result.aggregate, recipients);
-              return yield* clientUpdate(result.aggregate, identity.discordId);
+              const cancelled = yield* cancelAggregate(aggregate);
+              return yield* clientUpdate(cancelled, identity.discordId);
             }).pipe(
               Effect.withSpan("PartyReadyRoomControllerCancel.redis", {
                 attributes: { adapter: "ReadyRoomRedis", retryCount: 0 },

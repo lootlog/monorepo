@@ -40,16 +40,16 @@ export function ChatGatheringInviteButton({
       <TooltipTrigger asChild>
         <Button
           variant="ghost"
-          className={`${CHAT_GATHERING_ACTION_CLASS} ll:w-6`}
+          className={`${CHAT_GATHERING_ACTION_CLASS} ll:gap-1 ll:px-2 ll:h-6 ll:border-0 ll:bg-purple-500/15`}
           aria-label={label}
           aria-busy={pending}
           disabled={pending || !canInviteParticipants()}
           onClick={() => void invite()}
         >
           {pending ? (
-            <LoaderCircle size={14} aria-hidden="true" />
+            <LoaderCircle size={16} aria-hidden="true" />
           ) : (
-            <UserPlus size={14} aria-hidden="true" />
+            <UserPlus size={16} aria-hidden="true" />
           )}
         </Button>
       </TooltipTrigger>

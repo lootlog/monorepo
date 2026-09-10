@@ -40,6 +40,8 @@ function createProjectionBase(
     updatedAt: aggregate.updatedAt,
     expiresAt: aggregate.expiresAt,
   };
+  if (aggregate.partyMemberCount !== undefined)
+    projection.partyMemberCount = aggregate.partyMemberCount;
   if (aggregate.npc) projection.npc = { ...aggregate.npc };
   if (aggregate.description !== undefined)
     projection.description = aggregate.description;

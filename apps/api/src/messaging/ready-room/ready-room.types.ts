@@ -16,6 +16,7 @@ export interface ReadyRoomAggregate {
   description?: string;
   minLvl?: number;
   maxLvl?: number;
+  partyMemberCount?: number;
   status: PartyReadyRoomStatus;
   revision: number;
   createdAt: string;

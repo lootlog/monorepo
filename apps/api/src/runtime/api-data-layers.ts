@@ -92,7 +92,7 @@ export const apiRequestDataLayers = coreDataLayers.pipe(
 export const apiDataLayers = Layer.mergeAll(
   coreDataLayers,
   BullWorkers,
-  RabbitConsumers,
+  RabbitConsumers.pipe(Layer.provide(readyRoomData)),
   ScheduledJobs,
 ).pipe(
   Layer.provide(notificationsServicesLive),

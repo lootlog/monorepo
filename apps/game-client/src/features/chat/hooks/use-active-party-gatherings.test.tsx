@@ -8,7 +8,7 @@ import { configureApiClients } from "@lootlog/client/transport";
 import { createRealtimeTest } from "@/test/realtime-test";
 import { useActivePartyGatherings } from "./use-active-party-gatherings";
 
-it("retains visible unexpired gatherings after failed refresh and recovers on success", async () => {
+it("discovers gatherings without chat messages and preserves visible state during refresh failures", async () => {
   const harness = createRealtimeTest();
   const guildsKey = getUsersControllerGetCurrentUserAccessibleGuildsQueryKey();
   const guilds = [{ id: "guild-1", name: "Guild" }];
@@ -61,6 +61,82 @@ it("retains visible unexpired gatherings after failed refresh and recovers on su
     act(() => harness.setSessionDiscordId("current-discord"));
     harness.open();
     await harness.join();
+    await waitFor(() =>
+      expect(result.current.data.map((entry) => entry.notificationId)).toEqual([
+        "active",
+      ]),
+    );
+    const genericRoom = { ...room, notificationId: "generic" };
+    request.mockImplementation(async () => Response.json([room, genericRoom]));
+    await harness.receive({
+      v: 1,
+      type: "party-gathering.updated",
+      data: {
+        organizationId: "guild-1",
+        payload: {
+          notificationId: "generic",
+          guildId: "guild-1",
+          discordId: "organizer-discord",
+          world: "pandora",
+          createdAt: room.createdAt,
+          character: {
+            nick: "Organizer",
+            lvl: 100,
+            prof: "w",
+            characterId: "2",
+            accountId: "2",
+            icon: "hero.gif",
+          },
+        },
+      },
+    });
+    await waitFor(() =>
+      expect(result.current.data.map((entry) => entry.notificationId)).toEqual([
+        "active",
+        "generic",
+      ]),
+    );
+    const npc = {
+      id: 1,
+      name: "Titan",
+      wt: 100,
+      lvl: 100,
+      prof: "w",
+      type: "TITAN",
+    };
+    const npcRoom = { ...room, notificationId: "npc", npc };
+    request.mockImplementation(async () => Response.json([room, npcRoom]));
+    await harness.receive({
+      v: 1,
+      type: "notification.sent",
+      data: {
+        organizationId: "guild-1",
+        payload: {
+          notificationId: "npc",
+          guildId: "guild-1",
+          discordId: "organizer-discord",
+          world: "pandora",
+          createdAt: room.createdAt,
+          isGatheringParty: true,
+          npc,
+        },
+      },
+    });
+    await waitFor(() =>
+      expect(result.current.data.map((entry) => entry.notificationId)).toEqual([
+        "active",
+        "npc",
+      ]),
+    );
+    request.mockImplementation(async () => Response.json([room]));
+    await harness.receive({
+      v: 1,
+      type: "party-gathering.cancelled",
+      data: {
+        organizationId: "guild-1",
+        payload: { notificationId: "npc" },
+      },
+    });
     await waitFor(() =>
       expect(result.current.data.map((entry) => entry.notificationId)).toEqual([
         "active",

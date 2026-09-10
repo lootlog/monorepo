@@ -117,6 +117,7 @@ export const RabbitRoutingKey = {
   NOTIFICATIONS_LOOT_CREATED: "notifications.loot.created",
   NOTIFICATIONS_TIMER_DELETED: "notifications.timer.deleted",
   NOTIFICATIONS_TIMER_UPDATED: "notifications.timer.updated",
+  GAME_CHARACTER_OFFLINE: "game.character.offline",
   PRESENCE_CHECK_REQUEST: "presence.check.request",
   PRESENCE_COVERAGE_CHECK: "presence.coverage.check",
   SEARCH_ITEMS_INDEX: "search.items.index",
