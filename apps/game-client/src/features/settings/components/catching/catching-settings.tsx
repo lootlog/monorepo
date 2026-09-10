@@ -49,9 +49,6 @@ export const CatchingSettings = () => {
   );
   const [requestedCharacterId, setRequestedCharacterId] =
     useState(initialCharacterId);
-  const [selectionByCharacterId, setSelectionByCharacterId] = useState<
-    Record<string, string[]>
-  >({});
   const selectionByCharacterIdRef = useRef<Record<string, string[]>>({});
   const { t } = useTranslation();
 
@@ -140,7 +137,6 @@ export const CatchingSettings = () => {
         nextSelections[characterId] = catchingGuildIds;
       });
       selectionByCharacterIdRef.current = nextSelections;
-      setSelectionByCharacterId(nextSelections);
 
       return {
         previousData,
@@ -164,7 +160,6 @@ export const CatchingSettings = () => {
       if (context?.previousSelectionByCharacterId) {
         selectionByCharacterIdRef.current =
           context.previousSelectionByCharacterId;
-        setSelectionByCharacterId(context.previousSelectionByCharacterId);
       }
 
       if (successCount === 0) {
@@ -187,7 +182,6 @@ export const CatchingSettings = () => {
       if (context?.previousSelectionByCharacterId) {
         selectionByCharacterIdRef.current =
           context.previousSelectionByCharacterId;
-        setSelectionByCharacterId(context.previousSelectionByCharacterId);
       }
 
       toast.error(t("settings.catching.applyFailed"));
@@ -205,7 +199,6 @@ export const CatchingSettings = () => {
     );
     const activeCharacterSelection =
       selectionByCharacterIdRef.current[selectedCharacterId] ??
-      selectionByCharacterId[selectedCharacterId] ??
       lootlogCharactersConfig?.[selectedCharacterId]?.catchingGuildIds ??
       [];
 
@@ -270,10 +263,6 @@ export const CatchingSettings = () => {
                     ...selectionByCharacterIdRef.current,
                     [String(character.id)]: catchingGuildIds,
                   };
-                  setSelectionByCharacterId((currentSelections) => ({
-                    ...currentSelections,
-                    [String(character.id)]: catchingGuildIds,
-                  }));
                 }}
               />
             </TabsContent>

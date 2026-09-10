@@ -76,6 +76,7 @@ export const BattlesListFilterToolbar = ({
   worlds,
 }: BattlesListFilterToolbarProps) => {
   const { t } = useTranslation();
+  const selectedCharacterIds = new Set(filters.characterId);
   const characterListId = useId();
   const [characterOpen, setCharacterOpen] = useState(false);
   const battleTypes = [
@@ -219,7 +220,7 @@ export const BattlesListFilterToolbar = ({
                     <Check
                       className={cn(
                         "ml-auto size-4",
-                        filters.characterId?.includes(character.id)
+                        selectedCharacterIds.has(character.id)
                           ? "opacity-100"
                           : "opacity-0",
                       )}

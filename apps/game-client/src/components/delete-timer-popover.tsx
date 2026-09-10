@@ -56,21 +56,22 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
     (query) => query.isPending,
   );
 
-  const guildsWithPermissions = uniqueGuildIds
-    .map((guildId, index) => {
-      const accessPolicy = createAccessPolicy({
-        capabilities: permissionsQueries[index]?.data ?? [],
-      });
-      const canDelete = accessPolicy.allowsAny(REQUIRED_DELETE_PERMISSIONS);
-      const entry = guildEntries.find((e) => e.guildId === guildId);
-      return {
+  const guildsWithPermissions = uniqueGuildIds.flatMap((guildId, index) => {
+    const accessPolicy = createAccessPolicy({
+      capabilities: permissionsQueries[index]?.data ?? [],
+    });
+    const canDelete = accessPolicy.allowsAny(REQUIRED_DELETE_PERMISSIONS);
+    const entry = guildEntries.find((e) => e.guildId === guildId);
+    if (!canDelete || !entry?.timerKey) return [];
+    return [
+      {
         guildId,
         timerKey: entry?.timerKey ?? "",
         accessPolicy,
         canDelete,
-      };
-    })
-    .filter((g) => g.canDelete && g.timerKey !== "");
+      },
+    ];
+  });
 
   if (permissionsLoading) {
     return (

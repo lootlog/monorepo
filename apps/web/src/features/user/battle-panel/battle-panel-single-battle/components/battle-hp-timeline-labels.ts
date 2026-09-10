@@ -8,10 +8,12 @@ export const getBattleHpTimelineTeamLabel = (
   team: number,
   fallback: string,
 ) => {
-  const names = warriors
-    .filter((warrior) => warrior.team === team)
-    .map((warrior) => warrior.name.trim())
-    .filter(Boolean);
+  const names: string[] = [];
+  for (const warrior of warriors) {
+    if (warrior.team !== team) continue;
+    const name = warrior.name.trim();
+    if (name) names.push(name);
+  }
 
   if (names.length === 0) {
     return fallback;

@@ -1,5 +1,5 @@
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
-import { motion } from "framer-motion";
+import * as m from "framer-motion/m";
 
 export const FrozenSidebarBackground = () => {
   const prefersReducedMotion = usePrefersReducedMotion();
@@ -14,9 +14,9 @@ export const FrozenSidebarBackground = () => {
         { x: "85%", y: "70%", size: 9, delay: 1 },
         { x: "40%", y: "85%", size: 12, delay: 4 },
         { x: "60%", y: "92%", size: 10, delay: 2 },
-      ].map((sf, i) => (
-        <motion.div
-          key={`${i}-${prefersReducedMotion}`}
+      ].map((sf) => (
+        <m.div
+          key={`${`${sf.x}:${sf.y}`}:${prefersReducedMotion}`}
           className="absolute"
           style={{ left: sf.x, top: sf.y }}
           animate={{
@@ -50,7 +50,7 @@ export const FrozenSidebarBackground = () => {
               <line x1="12" y1="22" x2="14" y2="19" />
             </g>
           </svg>
-        </motion.div>
+        </m.div>
       ))}
 
       {[
@@ -59,8 +59,8 @@ export const FrozenSidebarBackground = () => {
         { x: "8%", y: "75%", size: 9, rotation: 30 },
         { x: "88%", y: "88%", size: 7, rotation: -10 },
       ].map((crystal, i) => (
-        <motion.div
-          key={`${`crystal-${i}`}-${prefersReducedMotion}`}
+        <m.div
+          key={`${`${crystal.x}:${crystal.y}`}:${prefersReducedMotion}`}
           className="absolute"
           style={{
             left: crystal.x,
@@ -83,7 +83,7 @@ export const FrozenSidebarBackground = () => {
               }}
             />
           </svg>
-        </motion.div>
+        </m.div>
       ))}
     </div>
   );

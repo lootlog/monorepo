@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useId, useState } from "react";
 import { Search, X, ChevronsUpDown, Check } from "lucide-react";
 import {
@@ -35,6 +36,7 @@ export function ActorNameSelector({
   placeholder = "Nazwa gracza...",
   className,
 }: ActorNameSelectorProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const suggestionsListId = useId();
 
@@ -71,45 +73,41 @@ export function ActorNameSelector({
 
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
-      <PopoverTrigger
-        render={
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-controls={suggestionsListId}
-            aria-expanded={open}
-            className={cn("justify-between gap-2", className)}
-          >
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
-              <span
-                className={cn("truncate", !value && "text-muted-foreground")}
-              >
-                {value ? truncatedValue : displayValue}
-              </span>
-            </div>
-            <div className="flex items-center gap-1 shrink-0">
-              {value && (
+      <div className={cn("relative", className)}>
+        <PopoverTrigger
+          render={
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-controls={suggestionsListId}
+              aria-expanded={open}
+              className={cn("w-full justify-between gap-2", value && "pr-10")}
+            >
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
                 <span
-                  role="button"
-                  tabIndex={0}
-                  onMouseDown={handleClear}
-                  onClick={(e) => e.stopPropagation()}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      handleClear(e);
-                    }
-                  }}
-                  className="flex items-center justify-center"
+                  className={cn("truncate", !value && "text-muted-foreground")}
                 >
-                  <X className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-pointer transition-colors" />
+                  {value ? truncatedValue : displayValue}
                 </span>
-              )}
-              <ChevronsUpDown className="h-4 w-4 opacity-50" />
-            </div>
-          </Button>
-        }
-      />
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                <ChevronsUpDown className="h-4 w-4 opacity-50" />
+              </div>
+            </Button>
+          }
+        />
+        {value && (
+          <button
+            type="button"
+            aria-label={t("common.clear")}
+            onClick={handleClear}
+            className="absolute right-8 top-1/2 -translate-y-1/2 flex size-6 items-center justify-center rounded-sm text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
       <PopoverContent className="w-[250px] p-0" align="start">
         <Command shouldFilter={false}>
           <CommandInputRaw

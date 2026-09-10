@@ -1,5 +1,5 @@
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
-import { motion } from "framer-motion";
+import * as m from "framer-motion/m";
 
 export const RiasSidebarBackground = () => {
   const prefersReducedMotion = usePrefersReducedMotion();
@@ -15,9 +15,9 @@ export const RiasSidebarBackground = () => {
         { x: "85%", y: "78%", size: 3, delay: 0.5 },
         { x: "45%", y: "88%", size: 4.5, delay: 1.8 },
         { x: "60%", y: "95%", size: 3, delay: 2.5 },
-      ].map((p, i) => (
-        <motion.div
-          key={`${i}-${prefersReducedMotion}`}
+      ].map((p) => (
+        <m.div
+          key={`${`${p.x}:${p.y}`}:${prefersReducedMotion}`}
           className="absolute"
           style={{ left: p.x, top: p.y }}
           animate={{
@@ -57,7 +57,7 @@ export const RiasSidebarBackground = () => {
               boxShadow: "0 0 4px rgba(200, 30, 60, 0.3)",
             }}
           />
-        </motion.div>
+        </m.div>
       ))}
 
       {/* Small rotating magic circles */}
@@ -66,8 +66,8 @@ export const RiasSidebarBackground = () => {
         { x: "90%", y: "50%", size: 14, rotation: -20, duration: 20 },
         { x: "10%", y: "80%", size: 12, rotation: 30, duration: 18 },
       ].map((mc, i) => (
-        <motion.div
-          key={`${`mc-${i}`}-${prefersReducedMotion}`}
+        <m.div
+          key={`${`${mc.x}:${mc.y}`}:${prefersReducedMotion}`}
           className="absolute"
           style={{
             left: mc.x,
@@ -118,7 +118,7 @@ export const RiasSidebarBackground = () => {
               strokeWidth="0.4"
             />
           </svg>
-        </motion.div>
+        </m.div>
       ))}
     </div>
   );

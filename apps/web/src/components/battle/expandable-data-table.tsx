@@ -16,7 +16,8 @@ import {
 import { cn } from "cn";
 import { Fragment, type ReactNode, useState } from "react";
 import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
+import * as m from "framer-motion/m";
 import { DamageBreakdown } from "./damage-breakdown";
 import { LegendaryBonusesBreakdown } from "./legendary-bonuses-breakdown";
 import { TurnsBreakdown } from "./turns-breakdown";
@@ -164,7 +165,7 @@ export function ExpandableDataTable<TData extends Warrior>({
                     </TableRow>
                     <AnimatePresence>
                       {expansionType ? (
-                        <motion.tr
+                        <m.tr
                           key={`${row.id}-expanded`}
                           layout
                           data-state="expanded-detail"
@@ -181,7 +182,7 @@ export function ExpandableDataTable<TData extends Warrior>({
                             colSpan={columns.length}
                             className="p-0 overflow-hidden"
                           >
-                            <motion.div
+                            <m.div
                               initial={{ opacity: 0, scaleY: 0.96 }}
                               animate={{ opacity: 1, scaleY: 1 }}
                               exit={{ opacity: 0, scaleY: 0.96 }}
@@ -193,7 +194,7 @@ export function ExpandableDataTable<TData extends Warrior>({
                               layout
                             >
                               <AnimatePresence mode="wait">
-                                <motion.div
+                                <m.div
                                   key={`${warrior.id}-${expansionType}`}
                                   initial={{ opacity: 0, scale: 0.95 }}
                                   animate={{ opacity: 1, scale: 1 }}
@@ -207,11 +208,11 @@ export function ExpandableDataTable<TData extends Warrior>({
                                     expansionType,
                                     warrior,
                                   )}
-                                </motion.div>
+                                </m.div>
                               </AnimatePresence>
-                            </motion.div>
+                            </m.div>
                           </TableCell>
-                        </motion.tr>
+                        </m.tr>
                       ) : null}
                     </AnimatePresence>
                   </Fragment>

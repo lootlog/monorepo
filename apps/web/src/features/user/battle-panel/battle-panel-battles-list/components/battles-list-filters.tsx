@@ -15,10 +15,12 @@ type BattlesListFiltersProps = {
   characters?: Array<{ id: string; name: string; world: string }>;
 };
 
+const EMPTY_CHARACTERS: NonNullable<BattlesListFiltersProps["characters"]> = [];
+
 export const BattlesListFilters = ({
   filters,
   onFiltersChange,
-  characters = [],
+  characters = EMPTY_CHARACTERS,
 }: BattlesListFiltersProps) => {
   const {
     handleCharacterChange,

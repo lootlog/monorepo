@@ -1,76 +1,23 @@
-import React, { createContext, useReducer } from "react";
-
-type Props = {
-  children: React.ReactNode;
-};
-
-type CreateGuildModalAction =
+import { createContext, type Dispatch } from "react";
+export type CreateGuildModalAction =
   | {
       type: "OPEN";
     }
   | { type: "CLOSE" };
 
-type CreateGuildModalState = {
+export type CreateGuildModalState = {
   isOpen: boolean;
 };
 
 export type GlobalContextProviderValue = {
   createGuildModal: {
     state: CreateGuildModalState;
-    dispatch: React.Dispatch<CreateGuildModalAction>;
+    dispatch: Dispatch<CreateGuildModalAction>;
   };
   installAddonModal: {
     state: CreateGuildModalState;
-    dispatch: React.Dispatch<CreateGuildModalAction>;
+    dispatch: Dispatch<CreateGuildModalAction>;
   };
-};
-
-const CREATE_GUILD_MODAL_INITIAL_STATE = {
-  isOpen: false,
-};
-
-const createGuildModalReducer = (
-  state: CreateGuildModalState,
-  action: CreateGuildModalAction,
-): CreateGuildModalState => {
-  switch (action.type) {
-    case "OPEN":
-      return {
-        isOpen: true,
-      };
-    case "CLOSE":
-      return {
-        isOpen: false,
-      };
-    default:
-      return state;
-  }
-};
-
-export const GlobalContextProvider: React.FC<Props> = ({ children }) => {
-  const [reservationsModalState, reservationsModalDispatch] = useReducer(
-    createGuildModalReducer,
-    CREATE_GUILD_MODAL_INITIAL_STATE,
-  );
-  const [installAddonModalState, installAddonModalDispatch] = useReducer(
-    createGuildModalReducer,
-    { isOpen: false },
-  );
-
-  const value = {
-    createGuildModal: {
-      state: reservationsModalState,
-      dispatch: reservationsModalDispatch,
-    },
-    installAddonModal: {
-      state: installAddonModalState,
-      dispatch: installAddonModalDispatch,
-    },
-  };
-
-  return (
-    <GlobalContext.Provider value={value}>{children}</GlobalContext.Provider>
-  );
 };
 
 export const GlobalContext = createContext<

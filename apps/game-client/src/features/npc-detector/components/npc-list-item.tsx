@@ -61,8 +61,6 @@ type NpcListItemProps = {
   npcTypeColors?: NpcTypeColors;
 };
 
-export const NPCS_WITH_LOCATION = [NpcType.HERO];
-
 const getRepeatDetectionFlashFrames = (npcType: string) => {
   if (npcType === NpcType.TITAN) {
     return {

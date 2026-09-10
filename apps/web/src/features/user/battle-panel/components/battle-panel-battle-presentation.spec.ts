@@ -14,7 +14,8 @@ import {
   getBattleTeams,
   getPlayerVsPlayerBattleResult,
 } from "./battle-panel-battle-presentation";
-import { getBattleResultRowClassName } from "./battle-result-status";
+
+import { getBattleResultRowClassName } from "./battle-result-row-class-name";
 
 const createWarrior = ({
   name,

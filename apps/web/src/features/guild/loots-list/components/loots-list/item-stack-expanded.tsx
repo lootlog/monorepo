@@ -1,7 +1,7 @@
 import { WatchableItemTile } from "@/components/tiles/watchable-item-tile";
 import type { WatchedItemScope } from "@/features/user/notifications/types/watched-item-scope";
 import type { Item } from "@/lib/loots/loot-types";
-import { motion } from "framer-motion";
+import * as m from "framer-motion/m";
 import { createPortal } from "react-dom";
 import { Fragment, type ReactNode, type FC } from "react";
 
@@ -21,7 +21,7 @@ export const ItemStackExpanded: FC<Props> = ({
   renderItem,
 }) =>
   createPortal(
-    <motion.div
+    <m.div
       initial={{ opacity: 0, scale: 0.85, y: -8 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.85, y: -8 }}
@@ -34,13 +34,13 @@ export const ItemStackExpanded: FC<Props> = ({
       }}
       onPointerDown={(e) => e.stopPropagation()}
     >
-      {items.map((item, idx) => (
-        <Fragment key={`${item.hid}-${idx}`}>
+      {items.map((item) => (
+        <Fragment key={item.id}>
           {renderItem ? (
             renderItem(item)
           ) : (
             <WatchableItemTile
-              key={`${item.hid}-${idx}`}
+              key={item.id}
               item={item}
               watchContext={watchContext}
               selectedItemNames={selectedItemNames}
@@ -48,6 +48,6 @@ export const ItemStackExpanded: FC<Props> = ({
           )}
         </Fragment>
       ))}
-    </motion.div>,
+    </m.div>,
     document.body,
   );

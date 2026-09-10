@@ -91,9 +91,9 @@ function getAnimatedKeys(
   return [
     ...new Set([
       ...state.animatedKeys,
-      ...groupFeedItems(liveItems)
-        .filter(({ key }) => !existingKeys.has(key))
-        .map(({ key }) => key),
+      ...groupFeedItems(liveItems).flatMap(({ key }) =>
+        existingKeys.has(key) ? [] : [key],
+      ),
     ]),
   ].filter((key) => items.some((item) => (item.groupKey ?? item.id) === key));
 }

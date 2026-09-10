@@ -1,29 +1,10 @@
-import { BattleCharacterOption } from "./battle-character-option";
-import {
-  Users,
-  Medal,
-  User,
-  Award,
-  ChevronsUpDown,
-  Globe,
-  Swords,
-} from "lucide-react";
-import { useId } from "react";
+import { BattleCharacterFilter } from "./battle-character-filter";
+
+import { Users, Medal, Award, Globe, Swords } from "lucide-react";
+
 import { Label } from "@lootlog/ui/components/label";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
-import { Button } from "@lootlog/ui/components/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@lootlog/ui/components/popover";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandList,
-} from "@lootlog/ui/components/command";
+
 import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
 import type { BattleFilters } from "@/features/user/battle-panel/battle-panel-battles-list/utils/battle-filter-handlers";
 import { FilterPopover } from "@lootlog/ui/components/filter-popover";
@@ -68,7 +49,6 @@ export const BattlesListFiltersDesktop = ({
   onMaxLevelChange,
 }: BattlesListFiltersDesktopProps) => {
   const { t } = useTranslation();
-  const characterListId = useId();
   const battleTypes = [
     { value: "solo" as const, label: t("battlePanel.filters.types.solo") },
     { value: "group" as const, label: t("battlePanel.filters.types.group") },
@@ -116,53 +96,17 @@ export const BattlesListFiltersDesktop = ({
         }
       />
 
-      <Popover open={characterOpen} onOpenChange={onCharacterOpenChange}>
-        <PopoverTrigger
-          render={
-            <Button
-              variant="outline"
-              role="combobox"
-              aria-controls={characterListId}
-              aria-expanded={characterOpen}
-              className="w-[180px] justify-between h-10"
-            >
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4" />
-                <span className="text-sm">
-                  {filters.characterId && filters.characterId.length > 0
-                    ? t("battlePanel.filters.selectedCount", {
-                        count: filters.characterId.length,
-                      })
-                    : t("battlePanel.filters.character")}
-                </span>
-              </div>
-              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            </Button>
-          }
-        />
-        <PopoverContent className="w-[180px] p-0">
-          <Command>
-            <CommandInput
-              placeholder={t("battlePanel.filters.characterSearchPlaceholder")}
-            />
-            <CommandList id={characterListId}>
-              <CommandEmpty>
-                {t("battlePanel.filters.noCharacters")}
-              </CommandEmpty>
-              <CommandGroup>
-                {characters.map((char) => (
-                  <BattleCharacterOption
-                    key={char.id}
-                    character={char}
-                    selected={filters.characterId?.includes(char.id) ?? false}
-                    onSelect={onCharacterChange}
-                  />
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
+      <BattleCharacterFilter
+        selectedIds={filters.characterId}
+        characters={characters}
+        open={characterOpen}
+        onOpenChange={onCharacterOpenChange}
+        onChange={onCharacterChange}
+        showLabel={false}
+        placeholder={t("battlePanel.filters.character")}
+        className="w-[180px]"
+        triggerClassName="h-10"
+      />
 
       <FilterPopover
         options={battleTypes}

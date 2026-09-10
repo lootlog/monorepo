@@ -4,7 +4,8 @@ import {
   type QueryCacheNotifyEvent,
 } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
-import { shouldRefreshDocumentTitleFromQueryCacheEvent } from "./document-title-updater";
+
+import { shouldRefreshDocumentTitleFromQueryCacheEvent } from "./document-title-cache-event";
 
 describe("shouldRefreshDocumentTitleFromQueryCacheEvent", () => {
   it("refreshes only for updates to the watched query and ignores observer events", () => {

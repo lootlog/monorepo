@@ -28,7 +28,7 @@ import { isMemberOnlineOnWeb } from "@/features/guild/settings/members/member-we
 import { useMemberGamePresence } from "@/features/guild/settings/members/use-member-game-presence";
 import { useMemberWebPresence } from "@/features/guild/settings/members/use-member-web-presence";
 import { MemberData } from "@/features/guild/settings/members/components/member-data";
-import { RefreshStatusProvider } from "@/features/guild/settings/members/contexts/refresh-status-context";
+import { RefreshStatusProvider } from "@/features/guild/settings/members/contexts/refresh-status-provider";
 import { MemberSyncButton } from "@/features/guild/settings/members/components/member-sync-button";
 import { MemberDeactivationButton } from "@/features/guild/settings/members/components/member-deactivation-button";
 

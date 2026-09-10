@@ -864,6 +864,7 @@ function resolveSimpleRoute(
     const breadcrumbs: Breadcrumb[] = [guildBreadcrumb];
 
     if (route.backPath !== routes.base) {
+      // eslint-disable-next-line react-doctor/js-index-maps -- Only the matching route reaches this lookup, then the outer loop returns; the search runs once, not once per route.
       const parentRoute = simpleRoutes.find((r) => r.path === route.backPath);
       if (parentRoute) {
         breadcrumbs.push({

@@ -16,6 +16,12 @@ import { ThemeCircularFrame, useThemeMeta } from "@/themes";
 import type { MouseEvent } from "react";
 import { useTranslation } from "react-i18next";
 
+const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
+  if (event.detail > 0) {
+    event.currentTarget.blur();
+  }
+};
+
 export const UserNavItem = () => {
   const { t } = useTranslation();
   const { data } = useSession();
@@ -23,11 +29,6 @@ export const UserNavItem = () => {
   const { isRukiaTheme } = useThemeMeta();
 
   const isActive = pathname.startsWith("/@me");
-  const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
-    if (event.detail > 0) {
-      event.currentTarget.blur();
-    }
-  };
   const avatarElement = (
     <Avatar
       className={cn(

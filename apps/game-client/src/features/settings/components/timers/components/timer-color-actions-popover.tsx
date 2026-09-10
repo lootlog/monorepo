@@ -70,7 +70,7 @@ export const TimerColorActionsPopover: FC<TimerColorActionsPopoverProps> = ({
               onChange={(event) => setNameDraft(event.target.value)}
               onBlur={commitName}
               onKeyDown={(event) => {
-                if (event.key === "Enter") {
+                if (event.key === "Enter" && !event.nativeEvent.isComposing) {
                   commitName();
                   event.currentTarget.blur();
                 }

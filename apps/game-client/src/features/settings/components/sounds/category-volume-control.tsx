@@ -16,7 +16,6 @@ interface CategoryVolumeControlProps {
   onVolumeChange: (value: number[]) => void;
   onVolumeCommit: (value: number[]) => void;
   onMuteToggle: (e: React.MouseEvent) => void;
-  onMuteKeyDown: (e: React.KeyboardEvent) => void;
 }
 
 export const CategoryVolumeControl: FC<CategoryVolumeControlProps> = ({
@@ -27,7 +26,6 @@ export const CategoryVolumeControl: FC<CategoryVolumeControlProps> = ({
   onVolumeChange,
   onVolumeCommit,
   onMuteToggle,
-  onMuteKeyDown,
 }) => {
   const { t } = useTranslation();
 
@@ -42,11 +40,13 @@ export const CategoryVolumeControl: FC<CategoryVolumeControlProps> = ({
       <span className="ll:text-sm ll:w-28 ll:text-left">{label}</span>
       <Tooltip>
         <TooltipTrigger asChild>
-          <span
-            role="button"
-            tabIndex={0}
+          <button
+            type="button"
+            aria-label={
+              isMuted ? t("common:actions.unmute") : t("common:actions.mute")
+            }
+            aria-pressed={isMuted}
             onClick={onMuteToggle}
-            onKeyDown={onMuteKeyDown}
             className="ll:size-3.5 ll:p-1 ll:flex ll:items-center ll:justify-center ll:text-[12px] ll:border ll:border-gray-400 ll:bg-gray-400/30 ll:hover:bg-gray-400/50 ll:rounded-sm ll:text-white ll:transition-colors ll-custom-cursor-pointer"
           >
             {isMuted ? (
@@ -54,7 +54,7 @@ export const CategoryVolumeControl: FC<CategoryVolumeControlProps> = ({
             ) : (
               <Volume2 className="ll:size-4" />
             )}
-          </span>
+          </button>
         </TooltipTrigger>
         <TooltipContent>
           {isMuted ? t("common:actions.unmute") : t("common:actions.mute")}

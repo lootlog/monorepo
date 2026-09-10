@@ -1,5 +1,4 @@
-import { previewMarkdownComponents } from "../utils/notification-rule-form-preview.utils";
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { readTemplateEditorState } from "./notification-template-suggestion";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { EditorRefPlugin } from "@lexical/react/LexicalEditorRefPlugin";
@@ -7,33 +6,11 @@ import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
-import {
-  $createTextNode,
-  $getRoot,
-  $getSelection,
-  $isRangeSelection,
-  $isTextNode,
-  COMMAND_PRIORITY_HIGH,
-  KEY_BACKSPACE_COMMAND,
-  type LexicalEditor,
-} from "lexical";
+import { $getRoot } from "lexical";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { useTranslation } from "react-i18next";
-import {
-  CreateNotificationRuleDtoTriggerType as NotificationTriggerType,
-  type CreateNotificationRuleDtoTriggerType,
-  type RoleResponseDtoOutput as GuildRole,
-} from "@lootlog/client/main";
+import { previewMarkdownComponents } from "../utils/notification-rule-form-preview.utils";
 
-import {
-  TIMER_PRESET_SIMPLE,
-  TIMER_PRESET_DETAILED,
-  TIMER_PRESET_MINIMAL,
-  SCHEDULED_PRESET_SIMPLE,
-  SCHEDULED_PRESET_MINIMAL,
-} from "../utils/notification-settings.utils";
-import { getCustomRoleCssColor } from "@/utils/get-color-from-role";
 import { Button } from "@lootlog/ui/components/button";
 import {
   Command,
@@ -51,514 +28,43 @@ import {
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { cn } from "cn";
 import {
-  $createNotificationTemplateRoleNode,
-  NotificationTemplateRoleNode,
-} from "./notification-template-role-node";
-import {
-  $createNotificationTemplateVariableNode,
-  NotificationTemplateVariableNode,
-} from "./notification-template-variable-node";
-import {
-  createPreviewTemplateValues,
-  renderTemplatePreview,
   createTemplateEditorNodes,
-  serializeTemplateEditorValue,
-  getBackspaceTemplateTokenNode,
-  removeTemplateTokenNode,
-  SCHEDULED_MESSAGE_VARIABLE_KEYS,
+  renderTemplatePreview,
 } from "./notification-template-editor.utils";
+import { NotificationTemplateRoleNode } from "./notification-template-role-node";
+import { NotificationTemplateVariableNode } from "./notification-template-variable-node";
 
-type NotificationTemplateEditorProps = {
-  value: string;
-  roles: GuildRole[];
-  triggerType?: CreateNotificationRuleDtoTriggerType;
-  disabled?: boolean;
-  previewButtonClassName?: string;
-  onChange: (value: string) => void;
-};
+import { useNotificationTemplateEditor } from "./use-notification-template-editor";
 
-type MentionSuggestion = {
-  key: string;
-  label: string;
-  role?: GuildRole;
-  snippet: string;
-  type: "mention";
-};
-
-type VariableSuggestion = {
-  key: string;
-  label: string;
-  snippet: string;
-  templateKey: string;
-  type: "variable";
-};
-
-type TemplateSuggestion = MentionSuggestion | VariableSuggestion;
-
-const getFilteredSuggestions = (
-  activeSuggestion: ActiveSuggestion,
-  mentionSuggestions: MentionSuggestion[],
-  variableSuggestions: VariableSuggestion[],
-): TemplateSuggestion[] => {
-  if (activeSuggestion?.type === "mention") {
-    return mentionSuggestions
-      .filter((suggestion) =>
-        suggestion.label
-          .toLocaleLowerCase("pl")
-          .includes(activeSuggestion.query.toLocaleLowerCase("pl")),
-      )
-      .slice(0, 8);
-  }
-
-  if (activeSuggestion?.type === "variable") {
-    return variableSuggestions.filter((suggestion) =>
-      suggestion.key
-        .toLocaleLowerCase("pl")
-        .includes(activeSuggestion.query.toLocaleLowerCase("pl")),
-    );
-  }
-
-  return [];
-};
-
-type ActiveSuggestion =
-  | {
-      left: number;
-      query: string;
-      replaceLength: number;
-      top: number;
-      type: "mention";
-    }
-  | {
-      left: number;
-      query: string;
-      replaceLength: number;
-      top: number;
-      type: "variable";
-    }
-  | null;
-
-type SuggestionPosition = {
-  bottom: number;
-  left: number;
-  top: number;
-};
-
-const getSuggestionPosition = (
-  editorSurface: HTMLDivElement | null,
-): SuggestionPosition => {
-  const selection = window.getSelection();
-  if (!selection || selection.rangeCount === 0 || !editorSurface) {
-    return { bottom: 8, left: 16, top: 8 };
-  }
-
-  const rangeRect = selection.getRangeAt(0).getBoundingClientRect();
-  const editorSurfaceRect = editorSurface.getBoundingClientRect();
-  return {
-    bottom: rangeRect.bottom - editorSurfaceRect.top + 8,
-    left: rangeRect.left - editorSurfaceRect.left,
-    top: rangeRect.top - editorSurfaceRect.top - 8,
-  };
-};
-
-const buildSuggestion = (
-  match: RegExpExecArray,
-  prefixLength: number,
-  position: SuggestionPosition,
-  type: "mention" | "variable",
-): ActiveSuggestion => {
-  const query = match[1] ?? "";
-  return {
-    left: position.left,
-    query,
-    replaceLength: prefixLength + query.length,
-    top: position.top > 160 ? position.top : position.bottom,
-    type,
-  };
-};
-
-const getActiveTemplateSuggestion = (
-  textBeforeCursor: string,
-  position: SuggestionPosition,
-): ActiveSuggestion => {
-  const variableMatch = /\{\{([a-zA-Z]*)$/.exec(textBeforeCursor);
-  if (variableMatch)
-    return buildSuggestion(variableMatch, 2, position, "variable");
-
-  const mentionMatch = /@([^\s@<>]*)$/.exec(textBeforeCursor);
-  if (mentionMatch)
-    return buildSuggestion(mentionMatch, 1, position, "mention");
-  return null;
-};
-
-const readTemplateEditorState = ({
-  editorSurface,
-  onChange,
-  setActiveSuggestion,
-}: {
-  editorSurface: HTMLDivElement | null;
-  onChange: (value: string) => void;
-  setActiveSuggestion: (suggestion: ActiveSuggestion) => void;
-}) => {
-  onChange(serializeTemplateEditorValue());
-  const selection = $getSelection();
-  if (!$isRangeSelection(selection)) {
-    setActiveSuggestion(null);
-    return;
-  }
-
-  const anchorNode = selection.anchor.getNode();
-  if (!$isTextNode(anchorNode)) {
-    setActiveSuggestion(null);
-    return;
-  }
-
-  const textBeforeCursor = anchorNode
-    .getTextContent()
-    .slice(0, selection.anchor.offset);
-  setActiveSuggestion(
-    getActiveTemplateSuggestion(
-      textBeforeCursor,
-      getSuggestionPosition(editorSurface),
-    ),
-  );
-};
-
-export { createPreviewTemplateValues, renderTemplatePreview };
-
-export const NotificationTemplateEditor = ({
-  value,
-  roles,
-  triggerType,
-  disabled = false,
-  previewButtonClassName,
-  onChange,
-}: NotificationTemplateEditorProps) => {
-  const isScheduledMessage =
-    triggerType === NotificationTriggerType.SCHEDULED_MESSAGE;
-  const { t } = useTranslation();
-  const [isPreviewVisible, setIsPreviewVisible] = useState(false);
-  const [activeSuggestion, setActiveSuggestion] =
-    useState<ActiveSuggestion>(null);
-  const [highlightedSuggestion, setHighlightedSuggestion] = useState({
-    identity: "",
-    index: 0,
-  });
-  const editorRef = useRef<LexicalEditor | null>(null);
-  const editorSurfaceRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const editor = editorRef.current;
-
-    if (!editor) {
-      return;
-    }
-
-    return editor.registerCommand(
-      KEY_BACKSPACE_COMMAND,
-      (event) => {
-        if (disabled) {
-          return false;
-        }
-
-        const tokenNode = getBackspaceTemplateTokenNode();
-
-        if (!tokenNode) {
-          return false;
-        }
-
-        event.preventDefault();
-        removeTemplateTokenNode(tokenNode);
-        return true;
-      },
-      COMMAND_PRIORITY_HIGH,
-    );
-  }, [disabled]);
-
-  const suggestionItemRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const editorPlaceholder = t(
-    "settings.notifications.templateEditor.placeholder",
-  );
-  const previewTemplateValues = createPreviewTemplateValues(t);
-
-  const allVariableSuggestions: VariableSuggestion[] = [
-    {
-      key: "ruleName",
-      label: t("settings.notifications.templateEditor.variables.ruleName"),
-      snippet: "{{ruleName}}",
-      templateKey: "ruleName",
-      type: "variable",
-    },
-    {
-      key: "npcName",
-      label: t("settings.notifications.templateEditor.variables.npcName"),
-      snippet: "{{npcName}}",
-      templateKey: "npcName",
-      type: "variable",
-    },
-    {
-      key: "npcId",
-      label: t("settings.notifications.templateEditor.variables.npcId"),
-      snippet: "{{npcId}}",
-      templateKey: "npcId",
-      type: "variable",
-    },
-    {
-      key: "world",
-      label: t("settings.notifications.templateEditor.variables.world"),
-      snippet: "{{world}}",
-      templateKey: "world",
-      type: "variable",
-    },
-    {
-      key: "minSpawnTime",
-      label: t("settings.notifications.templateEditor.variables.minSpawnTime"),
-      snippet: "{{minSpawnTime}}",
-      templateKey: "minSpawnTime",
-      type: "variable",
-    },
-    {
-      key: "maxSpawnTime",
-      label: t("settings.notifications.templateEditor.variables.maxSpawnTime"),
-      snippet: "{{maxSpawnTime}}",
-      templateKey: "maxSpawnTime",
-      type: "variable",
-    },
-    {
-      key: "scheduledFor",
-      label: t("settings.notifications.templateEditor.variables.scheduledFor"),
-      snippet: "{{scheduledFor}}",
-      templateKey: "scheduledFor",
-      type: "variable",
-    },
-  ];
-
-  const variableSuggestions = isScheduledMessage
-    ? allVariableSuggestions.filter((suggestion) =>
-        SCHEDULED_MESSAGE_VARIABLE_KEYS.has(suggestion.key),
-      )
-    : allVariableSuggestions;
-
-  const mentionSuggestions: MentionSuggestion[] = [
-    {
-      key: "everyone",
-      label: "@everyone",
-      snippet: "@everyone",
-      type: "mention",
-    },
-    {
-      key: "here",
-      label: "@here",
-      snippet: "@here",
-      type: "mention",
-    },
-    ...roles.map((role) => ({
-      key: role.id,
-      label: `@${role.name}`,
-      role,
-      snippet: `<@&${role.id}> `,
-      type: "mention" as const,
-    })),
-  ];
-
-  const filteredSuggestions = getFilteredSuggestions(
+export const NotificationTemplateEditor = (
+  props: Parameters<typeof useNotificationTemplateEditor>[0],
+) => {
+  const {
+    templatePresets,
+    disabled,
+    applyPreset,
+    value,
+    previewButtonClassName,
+    setIsPreviewVisible,
+    t,
+    roles,
+    editorSurfaceRef,
+    handleEditorKeyDown,
+    editorPlaceholder,
+    editorRef,
+    onChange,
+    setActiveSuggestion,
     activeSuggestion,
-    mentionSuggestions,
-    variableSuggestions,
-  );
-  const activeSuggestionIdentity = activeSuggestion
-    ? `${activeSuggestion.type}:${activeSuggestion.query}`
-    : "";
-  const highlightedSuggestionIndex =
-    highlightedSuggestion.identity === activeSuggestionIdentity
-      ? highlightedSuggestion.index
-      : 0;
-
-  useEffect(() => {
-    const highlightedSuggestion =
-      filteredSuggestions[highlightedSuggestionIndex];
-
-    if (!highlightedSuggestion) {
-      return;
-    }
-
-    suggestionItemRefs.current[highlightedSuggestion.key]?.scrollIntoView({
-      block: "nearest",
-    });
-  }, [
-    activeSuggestionIdentity,
-    highlightedSuggestionIndex,
     filteredSuggestions,
-  ]);
-
-  const insertSuggestion = (
-    suggestion: TemplateSuggestion,
-    replaceLength = 0,
-  ) => {
-    const editor = editorRef.current;
-
-    if (!editor || disabled) {
-      return;
-    }
-
-    editor.focus();
-    editor.update(() => {
-      const selection = $getSelection();
-
-      if (!$isRangeSelection(selection)) {
-        return;
-      }
-
-      const anchorNode = selection.anchor.getNode();
-
-      if ($isTextNode(anchorNode) && replaceLength > 0) {
-        anchorNode.spliceText(
-          Math.max(0, selection.anchor.offset - replaceLength),
-          replaceLength,
-          "",
-          true,
-        );
-      }
-
-      const nextSelection = $getSelection();
-
-      if (!$isRangeSelection(nextSelection)) {
-        return;
-      }
-
-      if (suggestion.type === "variable") {
-        nextSelection.insertNodes([
-          $createNotificationTemplateVariableNode(suggestion.templateKey),
-          $createTextNode(""),
-        ]);
-      } else {
-        nextSelection.insertNodes([
-          $createNotificationTemplateRoleNode({
-            roleColor: suggestion.role
-              ? getCustomRoleCssColor(suggestion.role.color)
-              : null,
-            roleId: suggestion.role?.id ?? suggestion.key,
-            roleName: suggestion.role?.name ?? suggestion.label.slice(1),
-          }),
-          $createTextNode(""),
-        ]);
-      }
-    });
-
-    setActiveSuggestion(null);
-  };
-
-  const applyPreset = (presetValue: string) => {
-    const editor = editorRef.current;
-
-    if (!editor || disabled) {
-      return;
-    }
-
-    editor.update(() => {
-      const root = $getRoot();
-      root.clear();
-      root.append(...createTemplateEditorNodes(presetValue, roles));
-    });
-
-    onChange(presetValue);
-  };
-
-  const timerPresets = [
-    {
-      key: "simple",
-      label: t("settings.notifications.templateEditor.presets.simple"),
-      value: TIMER_PRESET_SIMPLE,
-    },
-    {
-      key: "detailed",
-      label: t("settings.notifications.templateEditor.presets.detailed"),
-      value: TIMER_PRESET_DETAILED,
-    },
-    {
-      key: "minimal",
-      label: t("settings.notifications.templateEditor.presets.minimal"),
-      value: TIMER_PRESET_MINIMAL,
-    },
-  ];
-
-  const scheduledMessagePresets = [
-    {
-      key: "simple",
-      label: t("settings.notifications.templateEditor.presets.simple"),
-      value: SCHEDULED_PRESET_SIMPLE,
-    },
-    {
-      key: "minimal",
-      label: t("settings.notifications.templateEditor.presets.minimal"),
-      value: SCHEDULED_PRESET_MINIMAL,
-    },
-  ];
-
-  const templatePresets = isScheduledMessage
-    ? scheduledMessagePresets
-    : timerPresets;
-
-  const handleEditorKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (!activeSuggestion || filteredSuggestions.length === 0) {
-      return;
-    }
-
-    if (event.key === "ArrowDown") {
-      event.preventDefault();
-      event.stopPropagation();
-      setHighlightedSuggestion((currentSuggestion) => {
-        const currentIndex =
-          currentSuggestion.identity === activeSuggestionIdentity
-            ? currentSuggestion.index
-            : 0;
-        return {
-          identity: activeSuggestionIdentity,
-          index: (currentIndex + 1) % filteredSuggestions.length,
-        };
-      });
-      return;
-    }
-
-    if (event.key === "ArrowUp") {
-      event.preventDefault();
-      event.stopPropagation();
-      setHighlightedSuggestion((currentSuggestion) => {
-        const currentIndex =
-          currentSuggestion.identity === activeSuggestionIdentity
-            ? currentSuggestion.index
-            : 0;
-        return {
-          identity: activeSuggestionIdentity,
-          index:
-            (currentIndex - 1 + filteredSuggestions.length) %
-            filteredSuggestions.length,
-        };
-      });
-      return;
-    }
-
-    if (event.key === "Enter") {
-      event.preventDefault();
-      event.stopPropagation();
-      const selectedSuggestion =
-        filteredSuggestions[highlightedSuggestionIndex];
-
-      if (!selectedSuggestion) {
-        return;
-      }
-
-      insertSuggestion(selectedSuggestion, activeSuggestion.replaceLength);
-      return;
-    }
-
-    if (event.key === "Escape") {
-      event.preventDefault();
-      event.stopPropagation();
-      setActiveSuggestion(null);
-    }
-  };
-
+    suggestionItemRefs,
+    highlightedSuggestionIndex,
+    setHighlightedSuggestion,
+    activeSuggestionIdentity,
+    insertSuggestion,
+    isPreviewVisible,
+    previewTemplateValues,
+    variableSuggestions,
+  } = useNotificationTemplateEditor(props);
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap gap-2">

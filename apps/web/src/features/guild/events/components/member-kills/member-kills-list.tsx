@@ -29,6 +29,8 @@ type MemberKillsListProps = {
   fetchNextPage: () => void;
 };
 
+// Initial query loading/error and next-page availability/fetching are independent query states, not mutually exclusive presentation variants.
+// eslint-disable-next-line react-doctor/no-many-boolean-props
 export const MemberKillsList = ({
   guildId,
   eventId,

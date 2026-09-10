@@ -33,12 +33,12 @@ export const GuildListPopover = () => {
     });
 
   const handleGuildClick = (guildId: string) => {
-    window.open(`${LOOTLOG_APP_URL}/${guildId}`, "_blank");
+    window.open(`${LOOTLOG_APP_URL}/${guildId}`, "_blank", "noopener");
     setOpen(false);
   };
 
   const handleDashboardClick = () => {
-    window.open(`${LOOTLOG_APP_URL}/@me`, "_blank");
+    window.open(`${LOOTLOG_APP_URL}/@me`, "_blank", "noopener");
     setOpen(false);
   };
 

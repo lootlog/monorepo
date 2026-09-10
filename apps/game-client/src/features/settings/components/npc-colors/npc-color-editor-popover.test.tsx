@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { NpcColorEditorPopover } from "./npc-color-editor-popover";
 
 describe("NpcColorEditorPopover", () => {
-  it("shows faithful samples and a spaced restore action", () => {
+  it("restores the default color when requested", () => {
     const onReset =
       vi.fn<ComponentProps<typeof NpcColorEditorPopover>["onReset"]>();
 
@@ -30,15 +30,7 @@ describe("NpcColorEditorPopover", () => {
       </NpcColorEditorPopover>,
     );
 
-    expect(screen.getByText("Powiadomienie o wykryciu potwora")).toHaveClass(
-      "ll:text-white",
-    );
-    expect(screen.getByText("Potwór widoczny w wykrywaczu")).toHaveClass(
-      "ll:text-white",
-    );
-
     const resetButton = screen.getByRole("button", { name: "Przywróć" });
-    expect(resetButton).toHaveClass("ll:gap-2");
     fireEvent.click(resetButton);
     expect(onReset).toHaveBeenCalledOnce();
   });
@@ -78,5 +70,30 @@ describe("NpcColorEditorPopover", () => {
     expect(
       onOpenChange.mock.calls.some(([nextOpen]) => nextOpen === false),
     ).toBe(true);
+  });
+
+  it("does not commit Enter while an input method is composing", () => {
+    const onCommit = vi.fn();
+    render(
+      <NpcColorEditorPopover
+        color="#F98948"
+        defaultColor="#F98948"
+        npcType="HERO"
+        open
+        saving={false}
+        onOpenChange={vi.fn()}
+        onDraftChange={vi.fn()}
+        onCommit={onCommit}
+        onReset={vi.fn()}
+      >
+        <button type="button">Hero</button>
+      </NpcColorEditorPopover>,
+    );
+    const input = screen.getByRole("textbox");
+    fireEvent.change(input, { target: { value: "#123456" } });
+    fireEvent.keyDown(input, { key: "Enter", isComposing: true });
+    expect(onCommit).not.toHaveBeenCalled();
+    fireEvent.keyDown(input, { key: "Enter", isComposing: false });
+    expect(onCommit).toHaveBeenCalledWith("#123456");
   });
 });

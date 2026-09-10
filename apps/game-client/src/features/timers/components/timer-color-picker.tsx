@@ -40,17 +40,22 @@ export const TimerColorPicker: FC<TimerColorPickerProps> = ({
   onColorChange,
 }) => {
   const { t } = useTranslation("timers");
+  const hiddenColorIds = new Set(hiddenDefaultColors);
   const colors = [
-    ...Object.entries(TIMERS_COLORS)
-      .filter(([id]) => !hiddenDefaultColors.includes(id))
-      .map(([id, color]) => ({
-        id,
-        name: defaultColorNames[id] ?? getDefaultColorName(id),
-        className: overriddenDefaultColors[id]
-          ? undefined
-          : `${color.bgNoOpacity} ${color.border}`,
-        style: overriddenDefaultColors[id],
-      })),
+    ...Object.entries(TIMERS_COLORS).flatMap(([id, color]) =>
+      hiddenColorIds.has(id)
+        ? []
+        : [
+            {
+              id,
+              name: defaultColorNames[id] ?? getDefaultColorName(id),
+              className: overriddenDefaultColors[id]
+                ? undefined
+                : `${color.bgNoOpacity} ${color.border}`,
+              style: overriddenDefaultColors[id],
+            },
+          ],
+    ),
     ...Object.values(customColors).map((color) => ({
       id: color.id,
       name: color.name,

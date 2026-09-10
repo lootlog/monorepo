@@ -16,6 +16,33 @@ import {
 } from "@/features/kills/components/kill-stats-period-select";
 import { StatisticsQueryState } from "@/features/user/statistics/statistics-query-state";
 
+const categories = [
+  {
+    key: "ELITE2",
+    icon: Sword,
+    color: "text-blue-500",
+    surface: "bg-blue-500/10",
+  },
+  {
+    key: "HERO",
+    icon: Shield,
+    color: "text-amber-500",
+    surface: "bg-amber-500/10",
+  },
+  {
+    key: "COLOSSUS",
+    icon: Flame,
+    color: "text-cyan-500",
+    surface: "bg-cyan-500/10",
+  },
+  {
+    key: "TITAN",
+    icon: Mountain,
+    color: "text-red-500",
+    surface: "bg-red-500/10",
+  },
+] as const;
+
 export function DashboardKillSummary() {
   const { t } = useTranslation();
   const [period, setPeriod] = useState<KillStatsPeriod>("all");
@@ -32,32 +59,7 @@ export function DashboardKillSummary() {
   const query = world === null && period === "all" ? lifetime : filtered;
   const worlds = Object.keys(lifetime.data?.overview.killsByWorld ?? {});
   const total = query.data?.overview.totalKills ?? 0;
-  const categories = [
-    {
-      key: "ELITE2",
-      icon: Sword,
-      color: "text-blue-500",
-      surface: "bg-blue-500/10",
-    },
-    {
-      key: "HERO",
-      icon: Shield,
-      color: "text-amber-500",
-      surface: "bg-amber-500/10",
-    },
-    {
-      key: "COLOSSUS",
-      icon: Flame,
-      color: "text-cyan-500",
-      surface: "bg-cyan-500/10",
-    },
-    {
-      key: "TITAN",
-      icon: Mountain,
-      color: "text-red-500",
-      surface: "bg-red-500/10",
-    },
-  ] as const;
+
   const totalSummary = (
     <dl className="w-[7ch] text-4xl @min-[1000px]/kill-summary:text-5xl">
       <dt className="whitespace-nowrap text-xs font-medium text-muted-foreground">

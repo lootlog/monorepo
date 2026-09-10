@@ -266,10 +266,10 @@ const sortTimers = (
 };
 
 const hasCustomNpcTypes = (selectedNpcTypes: NpcType[]): boolean => {
-  const defaultNpcTypes = DEFAULT_TIMERS_FILTERS.selectedNpcTypes;
+  const defaultNpcTypes = new Set(DEFAULT_TIMERS_FILTERS.selectedNpcTypes);
   return (
-    selectedNpcTypes.length !== defaultNpcTypes.length ||
-    !selectedNpcTypes.every((npcType) => defaultNpcTypes.includes(npcType))
+    selectedNpcTypes.length !== defaultNpcTypes.size ||
+    !selectedNpcTypes.every((npcType) => defaultNpcTypes.has(npcType))
   );
 };
 
@@ -331,9 +331,9 @@ const calculateColorStatistics = (
     if (color && statistics[color]) statistics[color].active++;
   }
 
-  return Object.entries(statistics)
-    .filter(([, statistic]) => statistic.total > 0)
-    .map(([color, statistic]) => ({ color, ...statistic }));
+  return Object.entries(statistics).flatMap(([color, statistic]) =>
+    statistic.total > 0 ? [{ color, ...statistic }] : [],
+  );
 };
 
 const getDeduplicatedTimers = (timers: Timer[], isGrouping: boolean) => {

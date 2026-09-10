@@ -1,10 +1,10 @@
 import { Skeleton } from "@lootlog/ui/components/skeleton";
-import { motion } from "framer-motion";
+import * as m from "framer-motion/m";
+
+const skeletonRows = [1, 2, 3, 4];
+const bottomRows = [1, 2, 3];
 
 export const GuildSidebarNavPlaceholder = () => {
-  const skeletonRows = [1, 2, 3, 4];
-  const bottomRows = [1, 2, 3];
-
   return (
     <div className="flex h-full w-full flex-1 flex-col gap-2 overflow-hidden bg-sidebar">
       <div className="mb-2 flex h-14 min-h-14 items-center border-b px-2">
@@ -12,14 +12,14 @@ export const GuildSidebarNavPlaceholder = () => {
       </div>
       <div className="space-y-2 px-2">
         {skeletonRows.map((i) => (
-          <motion.div
+          <m.div
             key={i}
             initial={{ opacity: 0, x: -8 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.25, delay: i * 0.05, ease: "easeOut" }}
           >
             <Skeleton className="h-10 w-full" />
-          </motion.div>
+          </m.div>
         ))}
       </div>
       <div className="px-2 pt-3">
@@ -27,7 +27,7 @@ export const GuildSidebarNavPlaceholder = () => {
       </div>
       <div className="space-y-2 px-2 pb-3">
         {bottomRows.map((i) => (
-          <motion.div
+          <m.div
             key={i}
             initial={{ opacity: 0, x: -8 }}
             animate={{ opacity: 1, x: 0 }}
@@ -38,7 +38,7 @@ export const GuildSidebarNavPlaceholder = () => {
             }}
           >
             <Skeleton className="h-10 w-full" />
-          </motion.div>
+          </m.div>
         ))}
       </div>
     </div>

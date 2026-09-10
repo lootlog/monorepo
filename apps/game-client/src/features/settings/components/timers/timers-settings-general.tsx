@@ -14,7 +14,7 @@ export const TimersSettingsGeneral: FC = () => {
     useTimersStore();
   const { t } = useTranslation();
 
-  const [inputValue, setInputValue] = useState<string>(
+  const [inputValue, setInputValue] = useState<string>(() =>
     (generalConfig.removeTimerAfterMs / 1000).toString(),
   );
 

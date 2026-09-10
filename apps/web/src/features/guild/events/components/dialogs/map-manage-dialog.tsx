@@ -1,21 +1,15 @@
-import { TextLink } from "@lootlog/ui/components/text-link";
-import { filterAvailableGameMaps } from "@/utils/filter-available-game-maps";
-import { useState, useMemo } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
-import { useTranslation } from "react-i18next";
-import { Reorder } from "framer-motion";
+import { SearchInput } from "@/components/ui/search-input";
+import { Button } from "@lootlog/ui/components/button";
+import { Checkbox } from "@lootlog/ui/components/checkbox";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@lootlog/ui/components/dialog";
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
-import { Checkbox } from "@lootlog/ui/components/checkbox";
-import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
   Select,
@@ -24,64 +18,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@lootlog/ui/components/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@lootlog/ui/components/popover";
-import { SearchInput } from "@/components/ui/search-input";
-import { toast } from "sonner";
-import {
-  MapPin,
-  Search,
-  FileText,
-  Plus,
-  FolderPlus,
-  Settings,
-} from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
-import { getApiErrorStatus } from "@lootlog/client/transport";
+import { Reorder } from "framer-motion";
+import { FolderPlus, MapPin, Search } from "lucide-react";
+import { AssignedEventMaps } from "./assigned-event-maps";
+import { EventMapTemplates } from "./event-map-templates";
 import {
-  useEventsAssignmentControllerAddMap,
-  useEventsAssignmentControllerAssignMapToLocation,
-  useEventsAssignmentControllerCreateLocation,
-  useEventsAssignmentControllerDeleteLocation,
-  useEventsAssignmentControllerDeleteMap,
-  useEventsAssignmentControllerReorderLocations,
-  useEventsAssignmentControllerUpdateLocation,
-  useMapTemplatesControllerGetTemplates,
-  useMapsControllerGetMaps,
-  type GameMapResponseDtoOutput,
-  type MapTemplateResponseDto,
-} from "@lootlog/client/main";
+  useMapManageDialog,
+  type MapManageDialogProps,
+} from "./use-map-manage-dialog";
 
-import type { LocationData } from "./map-manage-dialog.types";
-import { invalidateEventMapStructureQueries } from "../../hooks/mutations/invalidate-event-queries";
 import { LocationItem } from "./location-item";
-import { MapChip } from "./map-chip";
-
-interface MapData {
-  id: string;
-  mapId: number;
-  mapName: string;
-  locationId?: string | null;
-}
-
-interface MapManageDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  guildId: string;
-  eventId: string;
-  hero: {
-    id: string;
-    npcName: string;
-    locations?: LocationData[];
-    maps: MapData[];
-  };
-}
-
-const getHeroLocations = (hero: MapManageDialogProps["hero"]) =>
-  hero.locations ?? [];
 
 export const MapManageDialog = ({
   open,
@@ -90,304 +37,36 @@ export const MapManageDialog = ({
   eventId,
   hero,
 }: MapManageDialogProps) => {
-  const { t } = useTranslation();
-  const queryClient = useQueryClient();
-  const invalidateMapQueries = () => {
-    invalidateEventMapStructureQueries(queryClient, guildId, eventId);
-  };
-  const addMap = useEventsAssignmentControllerAddMap({
-    mutation: {
-      onSuccess: invalidateMapQueries,
-    },
-  });
-  const deleteMap = useEventsAssignmentControllerDeleteMap({
-    mutation: {
-      onSuccess: invalidateMapQueries,
-    },
-  });
-  const createLocation = useEventsAssignmentControllerCreateLocation({
-    mutation: {
-      onSuccess: invalidateMapQueries,
-    },
-  });
-  const updateLocation = useEventsAssignmentControllerUpdateLocation({
-    mutation: {
-      onSuccess: invalidateMapQueries,
-    },
-  });
-  const deleteLocation = useEventsAssignmentControllerDeleteLocation({
-    mutation: {
-      onSuccess: invalidateMapQueries,
-    },
-  });
-  const reorderLocations = useEventsAssignmentControllerReorderLocations({
-    mutation: {
-      onSuccess: invalidateMapQueries,
-    },
-  });
-  const assignMapToLocation = useEventsAssignmentControllerAssignMapToLocation({
-    mutation: {
-      onSuccess: invalidateMapQueries,
-    },
-  });
-  const { data: gameMaps } = useMapsControllerGetMaps();
-  const { data: templates } = useMapTemplatesControllerGetTemplates({
-    guildId,
-  });
-  const [pendingTemplate, setPendingTemplate] = useState<{
-    templateId: string;
-    locationId: string | null;
-  } | null>(null);
-  const [isAddingMap, setIsAddingMap] = useState(false);
-  const isAdding = isAddingMap || pendingTemplate !== null;
-  const [searchQuery, setSearchQuery] = useState("");
-  const [newLocationName, setNewLocationName] = useState("");
-  const [editingLocation, setEditingLocation] = useState<{
-    id: string;
-    name: string;
-  } | null>(null);
-  const [selectedLocationId, setSelectedLocationId] = useState<string | null>(
-    null,
-  );
-  const heroLocations = getHeroLocations(hero);
-  const [localLocations, setLocalLocations] =
-    useState<LocationData[]>(heroLocations);
-  const [isDragging, setIsDragging] = useState(false);
-
-  const handleReorder = (newOrder: LocationData[]) => {
-    setLocalLocations(newOrder);
-  };
-
-  const handleDragEnd = () => {
-    setIsDragging(false);
-    const locationIds = localLocations.map((loc) => loc.id);
-    reorderLocations.mutate(
-      {
-        pathParams: {
-          guildId,
-          eventId,
-          heroId: hero.id,
-        },
-        data: { locationIds },
-      },
-      {
-        onError: () => {
-          setLocalLocations(heroLocations);
-          toast.error(t("events.locations.errors.updateFailed"));
-        },
-      },
-    );
-  };
-
-  const heroLocationsKey = heroLocations
-    .map((location) => location.id)
-    .join(":");
-  const localLocationsKey = localLocations
-    .map((location) => location.id)
-    .join(":");
-  const displayedLocations =
-    isDragging || localLocationsKey !== heroLocationsKey
-      ? localLocations
-      : heroLocations;
-
-  const allMapsFromLocations = useMemo(
-    () => heroLocations.flatMap((location) => location.maps),
-    [heroLocations],
-  );
-  const allMaps = useMemo(
-    () => [...allMapsFromLocations, ...hero.maps],
-    [allMapsFromLocations, hero.maps],
-  );
-  const addedMapIds = useMemo(
-    () => new Set(allMaps.map((map) => map.mapId)),
-    [allMaps],
-  );
-
-  const filteredGameMaps = useMemo(() => {
-    if (!gameMaps) return [];
-    return filterAvailableGameMaps(gameMaps, addedMapIds, searchQuery);
-  }, [gameMaps, addedMapIds, searchQuery]);
-
-  const handleAddMapFromGame = async (gameMap: GameMapResponseDtoOutput) => {
-    if (isAdding) return;
-    setIsAddingMap(true);
-    await addMap
-      .mutateAsync({
-        pathParams: { guildId, eventId, heroId: hero.id },
-        data: { mapId: gameMap.id, mapName: gameMap.name },
-      })
-      .then(async (result) => {
-        if (selectedLocationId) {
-          await assignMapToLocation.mutateAsync({
-            pathParams: { guildId, eventId, heroId: hero.id, mapId: result.id },
-            data: { locationId: selectedLocationId },
-          });
-        }
-      })
-      .catch((cause: unknown) => {
-        if (getApiErrorStatus(cause) === 400) {
-          toast.error(t("events.maps.errors.duplicate"));
-        } else {
-          toast.error(t("events.maps.errors.addFailed"));
-        }
-      })
-      .finally(() => setIsAddingMap(false));
-  };
-
-  const handleDeleteMap = async (mapId: string) => {
-    try {
-      await deleteMap.mutateAsync({
-        pathParams: {
-          guildId,
-          eventId,
-          heroId: hero.id,
-          mapId,
-        },
-      });
-    } catch {
-      toast.error(t("events.maps.errors.deleteFailed"));
-    }
-  };
-
-  const handleLoadTemplate = async (
-    template: MapTemplateResponseDto,
-    targetLocationId: string | null,
-  ) => {
-    if (isAdding) return;
-    const mapsToAdd = template.maps.filter((m) => !addedMapIds.has(m.id));
-
-    if (mapsToAdd.length === 0) {
-      toast.info(t("events.maps.allTemplatesAdded"));
-      return;
-    }
-
-    setPendingTemplate({
-      templateId: template.id,
-      locationId: targetLocationId,
-    });
-    const results = await Promise.allSettled(
-      mapsToAdd.map(async (mapItem) => {
-        const result = await addMap.mutateAsync({
-          pathParams: {
-            guildId,
-            eventId,
-            heroId: hero.id,
-          },
-          data: { mapId: mapItem.id, mapName: mapItem.name },
-        });
-        if (targetLocationId) {
-          await assignMapToLocation.mutateAsync({
-            pathParams: {
-              guildId,
-              eventId,
-              heroId: hero.id,
-              mapId: result.id,
-            },
-            data: { locationId: targetLocationId },
-          });
-        }
-        return result;
-      }),
-    );
-
-    setPendingTemplate(null);
-    if (results.some((result) => result.status === "rejected")) {
-      toast.error(t("events.maps.errors.addFailed"));
-    }
-    const addedCount = results.filter((r) => r.status === "fulfilled").length;
-    if (addedCount > 0) {
-      toast.success(
-        t("events.maps.templateLoaded", {
-          count: addedCount,
-          name: template.name,
-        }),
-      );
-    }
-  };
-
-  const handleCreateLocation = async () => {
-    if (!newLocationName.trim()) return;
-    try {
-      await createLocation.mutateAsync({
-        pathParams: {
-          guildId,
-          eventId,
-          heroId: hero.id,
-        },
-        data: { name: newLocationName.trim() },
-      });
-      setNewLocationName("");
-      toast.success(t("events.locations.createSuccess"));
-    } catch (cause) {
-      if (getApiErrorStatus(cause) === 400) {
-        toast.error(t("events.locations.errors.duplicateName"));
-      } else {
-        toast.error(t("events.locations.errors.createFailed"));
-      }
-    }
-  };
-
-  const handleUpdateLocation = async () => {
-    if (!editingLocation || !editingLocation.name.trim()) return;
-    try {
-      await updateLocation.mutateAsync({
-        pathParams: {
-          guildId,
-          eventId,
-          heroId: hero.id,
-          locationId: editingLocation.id,
-        },
-        data: { name: editingLocation.name.trim() },
-      });
-      setEditingLocation(null);
-      toast.success(t("events.locations.updateSuccess"));
-    } catch (cause) {
-      if (getApiErrorStatus(cause) === 400) {
-        toast.error(t("events.locations.errors.duplicateName"));
-      } else {
-        toast.error(t("events.locations.errors.updateFailed"));
-      }
-    }
-  };
-
-  const handleDeleteLocation = async (locationId: string) => {
-    try {
-      await deleteLocation.mutateAsync({
-        pathParams: {
-          guildId,
-          eventId,
-          heroId: hero.id,
-          locationId,
-        },
-      });
-      toast.success(t("events.locations.deleteSuccess"));
-    } catch {
-      toast.error(t("events.locations.errors.deleteFailed"));
-    }
-  };
-
-  const handleMapLocationChange = async (
-    mapId: string,
-    newLocationId: string | null,
-  ) => {
-    try {
-      await assignMapToLocation.mutateAsync({
-        pathParams: {
-          guildId,
-          eventId,
-          heroId: hero.id,
-          mapId,
-        },
-        data: { locationId: newLocationId },
-      });
-    } catch {
-      toast.error(t("events.locations.errors.assignFailed"));
-    }
-  };
-
-  const totalMapsCount = allMaps.length;
-  const hasLotsOfMaps = totalMapsCount > 10;
-
+  const {
+    t,
+    newLocationName,
+    setNewLocationName,
+    handleCreateLocation,
+    createLocation,
+    displayedLocations,
+    handleReorder,
+    editingLocation,
+    setEditingLocation,
+    handleUpdateLocation,
+    handleDeleteLocation,
+    deleteLocation,
+    setIsDragging,
+    handleDragEnd,
+    heroLocations,
+    handleDeleteMap,
+    handleMapLocationChange,
+    deleteMap,
+    templates,
+    isAdding,
+    pendingTemplate,
+    handleLoadTemplate,
+    selectedLocationId,
+    setSelectedLocationId,
+    searchQuery,
+    setSearchQuery,
+    filteredGameMaps,
+    handleAddMapFromGame,
+  } = useMapManageDialog({ open, onOpenChange, guildId, eventId, hero });
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl p-0 gap-0 overflow-hidden max-h-[90vh] flex flex-col">
@@ -421,7 +100,8 @@ export const MapManageDialog = ({
                   placeholder={t("events.locations.namePlaceholder")}
                   className="h-8 text-sm flex-1"
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") handleCreateLocation();
+                    if (e.key === "Enter" && !e.nativeEvent.isComposing)
+                      handleCreateLocation();
                   }}
                 />
                 <Button
@@ -468,185 +148,22 @@ export const MapManageDialog = ({
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {t("events.maps.assigned")}
-                {totalMapsCount > 0 && (
-                  <span className="ml-1.5 text-foreground">
-                    ({totalMapsCount})
-                  </span>
-                )}
-              </Label>
-
-              {totalMapsCount > 0 ? (
-                <ScrollArea className={hasLotsOfMaps ? "h-[140px]" : undefined}>
-                  <div className="space-y-3">
-                    {heroLocations.map((location) =>
-                      location.maps.length > 0 ? (
-                        <div key={location.id} className="space-y-1">
-                          <p className="text-[10px] font-medium text-muted-foreground uppercase">
-                            {location.name}
-                          </p>
-                          <div className="flex flex-wrap gap-1.5">
-                            {location.maps.map((map) => (
-                              <MapChip
-                                key={map.id}
-                                map={map}
-                                locations={heroLocations}
-                                onDelete={() => handleDeleteMap(map.id)}
-                                onLocationChange={(locId) =>
-                                  handleMapLocationChange(map.id, locId)
-                                }
-                                isDeleting={
-                                  deleteMap.isPending &&
-                                  deleteMap.variables?.pathParams.mapId ===
-                                    map.id
-                                }
-                                deletionDisabled={deleteMap.isPending}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      ) : null,
-                    )}
-
-                    {hero.maps.length > 0 && (
-                      <div className="space-y-1">
-                        <p className="text-[10px] font-medium text-muted-foreground/60 uppercase">
-                          {t("events.locations.noLocation")}
-                        </p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {hero.maps.map((map) => (
-                            <MapChip
-                              key={map.id}
-                              map={map}
-                              locations={heroLocations}
-                              onDelete={() => handleDeleteMap(map.id)}
-                              onLocationChange={(locId) =>
-                                handleMapLocationChange(map.id, locId)
-                              }
-                              isDeleting={
-                                deleteMap.isPending &&
-                                deleteMap.variables?.pathParams.mapId === map.id
-                              }
-                              deletionDisabled={deleteMap.isPending}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </ScrollArea>
-              ) : (
-                <div className="px-3 py-3 text-center">
-                  <p className="text-xs text-muted-foreground">
-                    {t("events.maps.noMapsAssigned")}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  {t("events.maps.loadFromTemplate")}
-                </Label>
-                {templates && templates.length > 0 && (
-                  <TextLink
-                    target="_blank"
-                    className="inline-flex items-center gap-1 text-xs"
-                    render=<Link
-                      to="/$guildId/settings/map-templates"
-                      params={{ guildId }}
-                    />
-                  >
-                    <Settings className="size-3" />
-                    {t("events.maps.manageTemplates")}
-                  </TextLink>
-                )}
-              </div>
-              {templates && templates.length > 0 ? (
-                <div className="flex flex-wrap gap-1.5">
-                  {templates.map((template) => (
-                    <Popover key={template.id}>
-                      <PopoverTrigger
-                        render={
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-7 text-xs gap-1.5"
-                            disabled={isAdding}
-                          >
-                            <FileText className="size-3" />
-                            {template.name}
-                            <span className="text-muted-foreground">
-                              ({template.maps.length})
-                            </span>
-                            <Plus className="size-3 ml-0.5" />
-                          </Button>
-                        }
-                      />
-                      <PopoverContent className="w-48 p-2" align="start">
-                        <div className="space-y-1">
-                          <p className="text-xs font-medium text-muted-foreground mb-2">
-                            {t("events.locations.addTo")}
-                          </p>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="w-full justify-start h-7 text-xs"
-                            loading={
-                              pendingTemplate?.templateId === template.id &&
-                              pendingTemplate.locationId === null
-                            }
-                            onClick={() => handleLoadTemplate(template, null)}
-                            disabled={isAdding}
-                          >
-                            {t("events.locations.noLocation")}
-                          </Button>
-                          {heroLocations.map((loc) => (
-                            <Button
-                              key={loc.id}
-                              variant="ghost"
-                              size="sm"
-                              className="w-full justify-start h-7 text-xs"
-                              loading={
-                                pendingTemplate?.templateId === template.id &&
-                                pendingTemplate.locationId === loc.id
-                              }
-                              onClick={() =>
-                                handleLoadTemplate(template, loc.id)
-                              }
-                              disabled={isAdding}
-                            >
-                              {loc.name}
-                            </Button>
-                          ))}
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  ))}
-                </div>
-              ) : (
-                <div className="px-3 py-3 text-center">
-                  <p className="text-xs text-muted-foreground mb-2">
-                    {t("events.maps.noTemplatesHint")}
-                  </p>
-                  <TextLink
-                    target="_blank"
-                    className="inline-flex items-center gap-1.5 text-xs"
-                    render=<Link
-                      to="/$guildId/settings/map-templates"
-                      params={{ guildId }}
-                    />
-                  >
-                    <Plus className="size-3" />
-                    {t("events.maps.createTemplates")}
-                  </TextLink>
-                </div>
-              )}
-            </div>
-
+            <AssignedEventMaps
+              maps={hero.maps}
+              locations={heroLocations}
+              deletingMapId={deleteMap.variables?.pathParams.mapId}
+              deletionPending={deleteMap.isPending}
+              onDelete={handleDeleteMap}
+              onLocationChange={handleMapLocationChange}
+            />
+            <EventMapTemplates
+              guildId={guildId}
+              templates={templates}
+              heroLocations={heroLocations}
+              isAdding={isAdding}
+              pendingTemplate={pendingTemplate}
+              handleLoadTemplate={handleLoadTemplate}
+            />
             <div className="space-y-2">
               <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 {t("events.maps.searchMaps")}

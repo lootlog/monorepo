@@ -5,7 +5,8 @@ import { InstallButton } from "@/components/layout/install-button";
 import { UserNavItem } from "@/components/layout/user-nav-item";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { Reorder, motion } from "framer-motion";
+import { Reorder } from "framer-motion";
+import * as m from "framer-motion/m";
 import { useState, useEffect, useLayoutEffect, useRef, type FC } from "react";
 import { GuildsSelectorSkeleton } from "@/components/layout/guilds-selector-skeleton";
 import { useGateway } from "@/hooks/utils/use-gateway";
@@ -21,11 +22,16 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
 import { RotateCcw } from "lucide-react";
 
+const getHiddenGuildIds = (
+  preferences: { hiddenGuildIds: string[] } | undefined,
+) => new Set(preferences?.hiddenGuildIds);
+
 export const GuildsSelector: FC = () => {
   const { t } = useTranslation();
   const guildsQuery = useUsersControllerGetCurrentUserGuilds();
   const guilds = guildsQuery.data;
   const preferencesQuery = useUserPreferences();
+  const hiddenGuildIds = getHiddenGuildIds(preferencesQuery.data);
   const { lootUnreadCounts } = useGateway();
   const currentGuildId = useGuildId();
   const [localGuilds, setLocalGuilds] = useState<typeof guilds>();
@@ -196,7 +202,7 @@ export const GuildsSelector: FC = () => {
                 dragListener
                 dragControls={undefined}
               >
-                <motion.div
+                <m.div
                   className="w-full"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -211,22 +217,16 @@ export const GuildsSelector: FC = () => {
                     isDragging={isDragging}
                     currentGuildId={currentGuildId}
                     unreadLootsCount={lootUnreadCounts[guild.id] ?? 0}
-                    isHidden={
-                      preferencesQuery.data?.hiddenGuildIds.includes(
-                        guild.id,
-                      ) ?? false
-                    }
+                    isHidden={hiddenGuildIds.has(guild.id)}
                     onToggleHidden={() =>
                       toggleGuildVisibility(
                         guild.id,
                         guild.name,
-                        preferencesQuery.data?.hiddenGuildIds.includes(
-                          guild.id,
-                        ) ?? false,
+                        hiddenGuildIds.has(guild.id),
                       )
                     }
                   />
-                </motion.div>
+                </m.div>
               </Reorder.Item>
             ))}
           </Reorder.Group>

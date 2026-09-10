@@ -90,11 +90,13 @@ export const MemberRankingPodiumCard: React.FC<
 
   const sortedByType: PodiumMember[] =
     data
-      ?.map((m) => ({
-        ...m,
-        typeParticipations: m.participationsByType[selectedNpcType] ?? 0,
-      }))
-      .filter((m) => m.typeParticipations > 0)
+      ?.flatMap((member) => {
+        const typeParticipations =
+          member.participationsByType[selectedNpcType] ?? 0;
+        return typeParticipations > 0
+          ? [{ ...member, typeParticipations }]
+          : [];
+      })
       .sort((a, b) => b.typeParticipations - a.typeParticipations)
       .slice(0, 3) ?? [];
 

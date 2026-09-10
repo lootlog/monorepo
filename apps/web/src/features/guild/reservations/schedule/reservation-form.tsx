@@ -1,9 +1,6 @@
 import { invalidateReservationQueries } from "./invalidate-reservation-queries";
-import {
-  ReservationFormFields,
-  toReminderOffset,
-  type ReminderValue,
-} from "@/features/guild/reservations/schedule/reservation-form-fields";
+import { ReservationFormFields } from "./reservation-form-fields";
+import { toReminderOffset, type ReminderValue } from "./reservation-reminder";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";

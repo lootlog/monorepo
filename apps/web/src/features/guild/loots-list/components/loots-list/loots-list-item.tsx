@@ -2,12 +2,18 @@ import { ItemRarity, type Loot } from "@/lib/loots/loot-types";
 import { SectionCard as Card } from "@/components/common/section-card/section-card";
 import { cn } from "cn";
 import { useSelectedLoot } from "@/hooks/use-selected-loot";
-import { motion, useReducedMotion } from "framer-motion";
+import { useReducedMotion } from "framer-motion";
+import * as m from "framer-motion/m";
 import { useThemeMeta } from "@/themes";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
 import { LootPresentation } from "./loot-presentation";
 import { LootHeaderActions } from "./loot-header-actions";
 type Props = { loot: Loot; isNew?: boolean; variant?: "card" | "embedded" };
+const animate = {
+  opacity: 1,
+  scale: 1,
+};
+
 export const LootsListItem = ({ loot, isNew, variant = "card" }: Props) => {
   const { openLootDetails } = useSelectedLoot();
   const { filters, setFilters } = useLootsFilters();
@@ -18,10 +24,6 @@ export const LootsListItem = ({ loot, isNew, variant = "card" }: Props) => {
     (item) => item.rarity === ItemRarity.LEGENDARY,
   );
   let initialAnimation: false | { opacity: number; scale?: number } = false;
-  const animate = {
-    opacity: 1,
-    scale: 1,
-  };
 
   if (isNew) {
     if (shouldReduceMotion) {
@@ -45,7 +47,7 @@ export const LootsListItem = ({ loot, isNew, variant = "card" }: Props) => {
   );
 
   return (
-    <motion.div
+    <m.div
       data-testid="loot-list-item"
       data-presentation={variant}
       initial={initialAnimation}
@@ -77,6 +79,6 @@ export const LootsListItem = ({ loot, isNew, variant = "card" }: Props) => {
           {lootContent}
         </Card>
       )}
-    </motion.div>
+    </m.div>
   );
 };

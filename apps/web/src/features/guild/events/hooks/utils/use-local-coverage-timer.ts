@@ -35,14 +35,20 @@ export const useLocalCoverageTimer = (
   const gapType =
     statusGapType ?? (status === "ASSIGNED_UNKNOWN" ? fallbackGapType : null);
 
+  // Captures the wall-clock start of a local transition and records closed backend gap IDs; this history is not derivable from the current snapshot.
+  // eslint-disable-next-line react-doctor/no-derived-state-effect
   useEffect(() => {
     const prevGapType = prevGapTypeRef.current;
     prevGapTypeRef.current = gapType;
 
     if (gapType === null) {
       if (activeGapId) {
+        // Remember a closed backend gap until its stale snapshot disappears; current props cannot reconstruct this history.
+        // eslint-disable-next-line react-doctor/no-derived-state
         setIgnoredGapId(activeGapId);
       }
+      // The local elapsed clock ends on a coverage transition, independently of a lagging backend gap.
+      // eslint-disable-next-line react-doctor/no-adjust-state-on-prop-change
       setStartTime(null);
       return;
     }

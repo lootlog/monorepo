@@ -21,7 +21,10 @@ export const useWrappedAutoplay = ({
   stageRef: RefObject<HTMLElement | null>;
   onAdvance: () => void;
 }) => {
-  const [progress, setProgress] = useState(0);
+  const [slideProgress, setSlideProgress] = useState({
+    slideId: activeSlideId,
+    value: 0,
+  });
   const [isUserPaused, setIsUserPaused] = useState(false);
   const [isInteractionPaused, setIsInteractionPaused] = useState(false);
   const elapsedMillisecondsRef = useRef(0);
@@ -29,7 +32,6 @@ export const useWrappedAutoplay = ({
 
   useEffect(() => {
     elapsedMillisecondsRef.current = 0;
-    setProgress(0);
   }, [activeSlideId]);
 
   useEffect(() => {
@@ -126,11 +128,14 @@ export const useWrappedAutoplay = ({
     const updateProgress = (timestamp: number) => {
       const elapsedMilliseconds = timestamp - startedAt;
       elapsedMillisecondsRef.current = elapsedMilliseconds;
-      setProgress(Math.min(elapsedMilliseconds / SLIDE_DURATION_MS, 1));
+      setSlideProgress({
+        slideId: activeSlideId,
+        value: Math.min(elapsedMilliseconds / SLIDE_DURATION_MS, 1),
+      });
 
       if (elapsedMilliseconds >= SLIDE_DURATION_MS) {
         elapsedMillisecondsRef.current = 0;
-        setProgress(0);
+        setSlideProgress({ slideId: activeSlideId, value: 0 });
         advance();
         return;
       }
@@ -144,11 +149,11 @@ export const useWrappedAutoplay = ({
 
   const reset = () => {
     elapsedMillisecondsRef.current = 0;
-    setProgress(0);
+    setSlideProgress({ slideId: activeSlideId, value: 0 });
   };
 
   return {
-    progress,
+    progress: slideProgress.slideId === activeSlideId ? slideProgress.value : 0,
     isUserPaused,
     toggleUserPaused: () => setIsUserPaused((paused) => !paused),
     reset,

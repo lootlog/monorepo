@@ -100,5 +100,4 @@ export {
   ProgressIndicator,
   ProgressLabel,
   ProgressValue,
-  progressIndicatorVariants,
 };

@@ -1,15 +1,9 @@
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import {
-  SectionCard,
-  SectionCard as Card,
-} from "@/components/common/section-card/section-card";
 import { PageHeader } from "@/components/common/page-header";
-import { useEffect, useState, type FormEvent } from "react";
-import { useNavigate, useParams } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
-import { FileText, History, LockKeyhole, Trash2 } from "lucide-react";
-import { toast } from "sonner";
+import {
+  SectionCard as Card,
+  SectionCard,
+} from "@/components/common/section-card/section-card";
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,7 +16,10 @@ import {
 } from "@lootlog/ui/components/alert-dialog";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
+import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
+import { FileText, History, LockKeyhole, Trash2 } from "lucide-react";
 
+import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -31,179 +28,40 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
-import {
-  useDocsControllerDeleteDocument,
-  useDocsControllerGetDocument,
-  useDocsControllerUpdateDocument,
-} from "@lootlog/client/main";
-import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
-import {
-  guildDocDetailQueryOptions,
-  invalidateGuildDocsQueries,
-} from "./docs-api";
-import { canWriteGuildDocs } from "./docs-permissions";
-import { formatGuildDocDateTime } from "./docs-date-format";
 import { GuildDocHistoryDialog } from "./components/guild-doc-history-dialog";
+import { formatGuildDocDateTime } from "./docs-date-format";
 import { GuildDocEditor } from "./editor/guild-doc-editor";
-import {
-  type GuildDocEditorContent,
-  normalizeGuildDocEditorContent,
-  stringifyGuildDocEditorContent,
-} from "./editor/guild-doc-editor-content";
 import { GuildDocEditorSkeleton } from "./guild-doc-editor-skeleton";
-import { useTranslation } from "react-i18next";
 
-const CONTENT_MAX_LENGTH = 250_000;
-const TITLE_MAX_LENGTH = 120;
-
-const createDraftSignature = (title: string, content: GuildDocEditorContent) =>
-  `${title.trim()}\n${stringifyGuildDocEditorContent(content)}`;
+import { TITLE_MAX_LENGTH, useGuildDocDraft } from "./use-guild-doc-draft";
 
 export const GuildDocEditorPage = () => {
-  const { t } = useTranslation();
-  const guildId = useGuildId() ?? "";
-  const { docId = "" } = useParams({ strict: false });
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { data: accessPolicy } = useGuildPermissions();
-  const canWrite = canWriteGuildDocs(accessPolicy);
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState<GuildDocEditorContent>(
-    normalizeGuildDocEditorContent(null),
-  );
-  const [savedSignature, setSavedSignature] = useState("");
-  const [editorSeed, setEditorSeed] = useState(0);
-  const [historyOpen, setHistoryOpen] = useState(false);
-  const [trashConfirmOpen, setTrashConfirmOpen] = useState(false);
-  const documentQuery = useDocsControllerGetDocument(
-    { guildId, docId },
-    {
-      query: guildDocDetailQueryOptions(guildId, docId),
-    },
-  );
-  const updateDocument = useDocsControllerUpdateDocument();
-  const deleteDocument = useDocsControllerDeleteDocument();
-  const document = documentQuery.data;
-  const draftSignature = createDraftSignature(title, content);
-  const isDirty = canWrite && savedSignature !== draftSignature;
-
-  const resetDraft = () => {
-    if (!document) {
-      return;
-    }
-
-    const normalizedContent = normalizeGuildDocEditorContent(document.content);
-
-    setTitle(document.title);
-    setContent(normalizedContent);
-    setSavedSignature(createDraftSignature(document.title, normalizedContent));
-    setEditorSeed((seed) => seed + 1);
-  };
-
-  const [previousDocument, setPreviousDocument] =
-    useState<typeof document>(undefined);
-  if (
-    previousDocument?.id !== document?.id ||
-    previousDocument?.version !== document?.version
-  ) {
-    setPreviousDocument(document);
-    resetDraft();
-  }
-
-  useEffect(() => {
-    if (!isDirty) {
-      return;
-    }
-
-    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-      event.returnValue = "";
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
-  }, [isDirty]);
-
+  const {
+    title,
+    document,
+    t,
+    canWrite,
+    setHistoryOpen,
+    deleteDocument,
+    setTrashConfirmOpen,
+    saveDraft,
+    setTitle,
+    docId,
+    editorSeed,
+    content,
+    setContent,
+    isDirty,
+    updateDocument,
+    resetDraft,
+    guildId,
+    historyOpen,
+    trashConfirmOpen,
+    moveDocumentToTrash,
+    documentQuery,
+  } = useGuildDocDraft();
   if (documentQuery.isLoading) {
     return <GuildDocEditorSkeleton />;
   }
-
-  const validateDraft = () => {
-    if (title.trim().length > TITLE_MAX_LENGTH) {
-      toast.error(t("docs.editor.titleTooLong"));
-      return false;
-    }
-
-    if (stringifyGuildDocEditorContent(content).length > CONTENT_MAX_LENGTH) {
-      toast.error(t("docs.editor.tooLong"));
-      return false;
-    }
-
-    return true;
-  };
-
-  const saveDraft = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (!document || !canWrite || !validateDraft()) {
-      return;
-    }
-
-    updateDocument.mutate(
-      {
-        pathParams: { guildId, docId },
-        data: {
-          title: title.trim(),
-          content,
-        },
-      },
-      {
-        onError: () => {
-          toast.error(t("docs.editor.saveError"));
-        },
-        onSuccess: async (updatedDocument) => {
-          const normalizedContent = normalizeGuildDocEditorContent(
-            updatedDocument.content,
-          );
-
-          setTitle(updatedDocument.title);
-          setContent(normalizedContent);
-          setSavedSignature(
-            createDraftSignature(updatedDocument.title, normalizedContent),
-          );
-          setEditorSeed((seed) => seed + 1);
-          await invalidateGuildDocsQueries(queryClient, guildId, docId);
-          toast.success(t("docs.editor.saved"));
-        },
-      },
-    );
-  };
-
-  const moveDocumentToTrash = async () => {
-    if (!document || !canWrite) {
-      return;
-    }
-
-    try {
-      await deleteDocument.mutateAsync({
-        pathParams: { guildId, docId },
-      });
-      await invalidateGuildDocsQueries(queryClient, guildId, docId);
-      setTrashConfirmOpen(false);
-      toast.success(t("docs.trash.moved"));
-      navigate({
-        to: `/${guildId}/docs`,
-      });
-    } catch {
-      toast.error(t("docs.trash.moveError"));
-    }
-  };
-
   if (documentQuery.isError || !document) {
     return (
       <div className="flex h-full min-h-0 flex-col bg-background">
@@ -220,7 +78,6 @@ export const GuildDocEditorPage = () => {
       </div>
     );
   }
-
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
       <ScrollArea className="min-h-0 flex-1">

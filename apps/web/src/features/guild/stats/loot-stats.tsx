@@ -1,3 +1,5 @@
+import { lazy, Suspense } from "react";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { PageHeader } from "@/components/common/page-header";
 import { Globe, Gift } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -15,13 +17,26 @@ import {
 
 import { useLootStatsSettings } from "./hooks/use-loot-stats-settings";
 import { LootOverviewCards } from "./components/loot-overview-cards";
-import { LootTimelineChart } from "./components/loot-timeline-chart";
-import { LootRarityChart } from "./components/loot-rarity-chart";
-import { LootTopNpcsChart } from "./components/loot-top-npcs-chart";
 import { LootTopContributors } from "./components/loot-top-contributors";
 import { LootTopItems } from "./components/loot-top-items";
 import { LootStatsFiltersMobile } from "./components/loot-stats-filters-mobile";
 import { buildLootStatsParams } from "./utils/build-stats-query-params";
+
+const LootTimelineChart = lazy(() =>
+  import("./components/loot-timeline-chart").then((module) => ({
+    default: module.LootTimelineChart,
+  })),
+);
+const LootRarityChart = lazy(() =>
+  import("./components/loot-rarity-chart").then((module) => ({
+    default: module.LootRarityChart,
+  })),
+);
+const LootTopNpcsChart = lazy(() =>
+  import("./components/loot-top-npcs-chart").then((module) => ({
+    default: module.LootTopNpcsChart,
+  })),
+);
 
 export const LootStats: React.FC = () => {
   const { t } = useTranslation();
@@ -120,17 +135,23 @@ export const LootStats: React.FC = () => {
               data={data?.topContributors}
               isLoading={isLoading}
             />
-            <LootRarityChart data={data?.byRarity} isLoading={isLoading} />
+            <Suspense fallback={<Skeleton className="h-72 w-full" />}>
+              <LootRarityChart data={data?.byRarity} isLoading={isLoading} />
+            </Suspense>
           </div>
 
-          <LootTimelineChart
-            data={data?.timeline}
-            period={settings.period}
-            isLoading={isLoading}
-          />
+          <Suspense fallback={<Skeleton className="h-72 w-full" />}>
+            <LootTimelineChart
+              data={data?.timeline}
+              period={settings.period}
+              isLoading={isLoading}
+            />
+          </Suspense>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <LootTopNpcsChart data={data?.topNpcs} isLoading={isLoading} />
+            <Suspense fallback={<Skeleton className="h-72 w-full" />}>
+              <LootTopNpcsChart data={data?.topNpcs} isLoading={isLoading} />
+            </Suspense>
             <LootTopItems data={data?.topItems} isLoading={isLoading} />
           </div>
         </div>

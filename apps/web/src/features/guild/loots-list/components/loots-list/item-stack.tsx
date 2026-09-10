@@ -81,9 +81,8 @@ export const ItemStack: FC<Props> = ({
   }
   const remainingCount = sorted.length - 1;
   const hasItemFilter = selectedItemNames.length > 0;
-  const hasSelectedItem = items.some((item) =>
-    selectedItemNames.includes(item.name),
-  );
+  const selectedNames = new Set(selectedItemNames);
+  const hasSelectedItem = items.some((item) => selectedNames.has(item.name));
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -101,9 +100,14 @@ export const ItemStack: FC<Props> = ({
         isExpanded && "z-40",
         hasItemFilter && !hasSelectedItem && "opacity-35 grayscale-[0.45]",
       )}
-      onClick={handleClick}
     >
-      <div className="relative">
+      <button
+        type="button"
+        aria-label={topItem.name}
+        aria-expanded={isExpanded}
+        onClick={handleClick}
+        className="relative block rounded-lg focus-visible:outline-2 focus-visible:outline-ring"
+      >
         {remainingCount >= 2 && (
           <div className="absolute inset-0 translate-x-[4px] translate-y-[4px] rounded-md border-2 border-muted-foreground/20 bg-muted/40 w-[32px] h-[32px]" />
         )}
@@ -125,7 +129,7 @@ export const ItemStack: FC<Props> = ({
             <Check className="size-2.5" />
           </span>
         ) : null}
-      </div>
+      </button>
 
       <AnimatePresence>
         {isExpanded && anchorRect && (

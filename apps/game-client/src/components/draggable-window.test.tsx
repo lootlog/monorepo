@@ -131,7 +131,7 @@ const getWindowElements = (
     throw new Error("Expected draggable window title bar wrapper");
   }
 
-  if (requireResizeHandle && !(resizeHandle instanceof HTMLDivElement)) {
+  if (requireResizeHandle && !(resizeHandle instanceof HTMLButtonElement)) {
     throw new Error("Expected resize handle");
   }
 
@@ -140,7 +140,8 @@ const getWindowElements = (
     windowBody,
     titleBarElement,
     contentElement,
-    resizeHandle: resizeHandle instanceof HTMLDivElement ? resizeHandle : null,
+    resizeHandle:
+      resizeHandle instanceof HTMLButtonElement ? resizeHandle : null,
   };
 };
 
@@ -453,7 +454,7 @@ describe("DraggableWindow", () => {
 
     const { windowElement, resizeHandle } = getWindowElements(container);
 
-    if (!(resizeHandle instanceof HTMLDivElement)) {
+    if (!(resizeHandle instanceof HTMLButtonElement)) {
       throw new Error("Expected resize handle");
     }
 
@@ -511,7 +512,7 @@ describe("DraggableWindow", () => {
       resizeHandle,
     } = getWindowElements(container);
 
-    if (!(resizeHandle instanceof HTMLDivElement)) {
+    if (!(resizeHandle instanceof HTMLButtonElement)) {
       throw new Error("Expected resize handle");
     }
 

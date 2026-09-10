@@ -22,30 +22,35 @@ export const LootContent = ({
   selectedPlayerNames: string[];
   selectedItemNames: string[];
   renderItem?: (item: Item) => ReactNode;
-}) => (
-  <div className="flex flex-row justify-between gap-4 py-2 border-t border-border/30 -mx-4 px-4 flex-1">
-    <div className="flex flex-row items-start gap-2 flex-wrap">
-      {sortedPlayers.map((player) => (
-        <LootPlayerWithItems
-          key={player.id}
-          player={player}
-          items={itemsByPlayer[player.id] || []}
-          watchContext={watchContext}
-          onShowLoots={
-            onShowPlayerLoots ? () => onShowPlayerLoots(player.name) : undefined
-          }
-          hasPlayerFilter={selectedPlayerNames.length > 0}
-          isPlayerSelected={selectedPlayerNames.includes(player.name)}
-          selectedItemNames={selectedItemNames}
-          renderItem={renderItem}
-        />
-      ))}
+}) => {
+  const selectedNames = new Set(selectedPlayerNames);
+  return (
+    <div className="flex flex-row justify-between gap-4 py-2 border-t border-border/30 -mx-4 px-4 flex-1">
+      <div className="flex flex-row items-start gap-2 flex-wrap">
+        {sortedPlayers.map((player) => (
+          <LootPlayerWithItems
+            key={player.id}
+            player={player}
+            items={itemsByPlayer[player.id] || []}
+            watchContext={watchContext}
+            onShowLoots={
+              onShowPlayerLoots
+                ? () => onShowPlayerLoots(player.name)
+                : undefined
+            }
+            hasPlayerFilter={selectedPlayerNames.length > 0}
+            isPlayerSelected={selectedNames.has(player.name)}
+            selectedItemNames={selectedItemNames}
+            renderItem={renderItem}
+          />
+        ))}
+      </div>
+      <LootUnassignedItems
+        items={unassignedItems}
+        watchContext={watchContext}
+        selectedItemNames={selectedItemNames}
+        renderItem={renderItem}
+      />
     </div>
-    <LootUnassignedItems
-      items={unassignedItems}
-      watchContext={watchContext}
-      selectedItemNames={selectedItemNames}
-      renderItem={renderItem}
-    />
-  </div>
-);
+  );
+};

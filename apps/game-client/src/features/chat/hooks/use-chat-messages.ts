@@ -124,9 +124,11 @@ export const useChatMessagesListener = (
         discardAllPending();
         return;
       }
-      const guildIds = (data.changes ?? [])
-        .filter((change) => change.restricted && change.areas.includes("chat"))
-        .map((change) => change.organizationId);
+      const guildIds = (data.changes ?? []).flatMap((change) =>
+        change.restricted && change.areas.includes("chat")
+          ? [change.organizationId]
+          : [],
+      );
       for (const guildId of guildIds) {
         guildPermissionGenerationsRef.current.set(
           guildId,

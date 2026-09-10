@@ -27,6 +27,19 @@ const BATTLE_INFO_TAG_CLASS_NAME =
 const BATTLE_INFO_TAG_ACTION_CLASS_NAME =
   "cursor-pointer transition-colors hover:bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2";
 
+const handleFilterBadgeKeyDown = (
+  event: KeyboardEvent<HTMLElement>,
+  action: () => void,
+) => {
+  if (event.key !== "Enter" && event.key !== "") {
+    return;
+  }
+
+  event.preventDefault();
+  event.stopPropagation();
+  action();
+};
+
 export const BattleTableInfoBadges = ({
   battle,
   onMatchmakingClick,
@@ -59,20 +72,8 @@ export const BattleTableInfoBadges = ({
     onMatchmakingClick?.();
   };
 
-  const handleFilterBadgeKeyDown = (
-    event: KeyboardEvent<HTMLElement>,
-    action: () => void,
-  ) => {
-    if (event.key !== "Enter" && event.key !== "") {
-      return;
-    }
-
-    event.preventDefault();
-    event.stopPropagation();
-    action();
-  };
-
   return (
+    // eslint-disable-next-line react-doctor/no-static-element-interactions -- This container only stops bubbling from its native child controls so the surrounding table row does not navigate; it is not a separate action.
     <div
       data-battle-table-action
       onClick={stopBattleTableAction}

@@ -80,15 +80,18 @@ function getInvitableParticipantIds(
   const requestedParticipantIds = participantIds
     ? new Set(participantIds)
     : null;
-  return Object.values(room.participants)
-    .filter(
-      (participant) =>
-        (requestedParticipantIds === null ||
-          requestedParticipantIds.has(participant.participantId)) &&
-        participant.partyPresence === "OUTSIDE",
+  const invitedIds: string[] = [];
+  for (const participant of Object.values(room.participants)) {
+    if (
+      participant.partyPresence !== "OUTSIDE" ||
+      (requestedParticipantIds &&
+        !requestedParticipantIds.has(participant.participantId))
     )
-    .map(({ participantId }) => participantId)
-    .slice(0, READY_ROOM_INVITATION_PARTICIPANT_CAP);
+      continue;
+    invitedIds.push(participant.participantId);
+    if (invitedIds.length === READY_ROOM_INVITATION_PARTICIPANT_CAP) break;
+  }
+  return invitedIds;
 }
 
 function captureInvitationIntent(

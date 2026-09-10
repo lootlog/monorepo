@@ -11,6 +11,7 @@
     "maxHeightLabel": "{{height}} px"
   },
   "actions": {
+    "resizeWindow": "Zmień rozmiar okna strzałkami; Shift zmienia rozmiar o 10 pikseli",
     "remove": "Usuń",
     "reset": "Reset",
     "restore": "Przywróć",

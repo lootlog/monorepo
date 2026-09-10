@@ -8,7 +8,8 @@ import {
 import { cn } from "cn";
 import { getPermissionRefreshInfo } from "@/utils/get-permission-refresh-info";
 import { RefreshCcw } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
+import * as m from "framer-motion/m";
 import { useThemeMeta } from "@/themes";
 import {
   getLootsControllerFetchLootsByGuildIdQueryKey,
@@ -94,7 +95,7 @@ export const GuildSidebarHeader = ({ guildId }: { guildId?: string }) => {
     <>
       <div className="flex items-center gap-2.5 min-w-0 flex-1 pl-3">
         <AnimatePresence mode="wait">
-          <motion.span
+          <m.span
             key={guild?.id ?? "loading"}
             initial={{ opacity: 0, x: -4 }}
             animate={{ opacity: 1, x: 0 }}
@@ -119,25 +120,25 @@ export const GuildSidebarHeader = ({ guildId }: { guildId?: string }) => {
             }
           >
             {guild?.name}
-          </motion.span>
+          </m.span>
         </AnimatePresence>
       </div>
       <Tooltip>
         <TooltipTrigger
           render={
-            <span tabIndex={0}>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={canTriggerRefreshText}
-                className="size-8 text-muted-foreground hover:text-foreground"
-                onClick={handleRefreshPermissions}
-                disabled={!canTriggerRefresh}
-                loading={refreshMember.isPending}
-              >
-                <RefreshCcw aria-hidden="true" className="size-4" />
-              </Button>
-            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={canTriggerRefreshText}
+              className="size-8 text-muted-foreground hover:text-foreground"
+              onClick={() => {
+                if (canTriggerRefresh) handleRefreshPermissions();
+              }}
+              aria-disabled={!canTriggerRefresh}
+              loading={refreshMember.isPending}
+            >
+              <RefreshCcw aria-hidden="true" className="size-4" />
+            </Button>
           }
         />
         <TooltipContent className="z-50 mt-4">

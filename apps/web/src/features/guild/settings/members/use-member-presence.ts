@@ -30,10 +30,12 @@ export function useMemberPresence<
   updateEvent,
 }: UseMemberPresenceOptions<TPresence, TResponse, TUpdate>) {
   const { socket, connected, joined } = useGateway();
-  const [presence, setPresence] = useState<TPresence>();
+  const [presence, setPresence] = useState<{
+    guildId: string;
+    value: TPresence | undefined;
+  }>();
   const [refreshVersion, setRefreshVersion] = useState(0);
   const requestIdRef = useRef(0);
-  const visibleGuildIdRef = useRef(guildId);
 
   const requestPresence = useEffectEvent(() => {
     if (!socket || !connected || !joined || !guildId) {
@@ -47,7 +49,7 @@ export function useMemberPresence<
         return;
       }
 
-      setPresence(mapResponse(response));
+      setPresence({ guildId, value: mapResponse(response) });
     });
   });
 
@@ -56,7 +58,15 @@ export function useMemberPresence<
       return;
     }
 
-    setPresence((currentPresence) => applyUpdate(currentPresence, payload));
+    setPresence((currentPresence) => ({
+      guildId: payload.guildId,
+      value: applyUpdate(
+        currentPresence?.guildId === payload.guildId
+          ? currentPresence.value
+          : undefined,
+        payload,
+      ),
+    }));
   });
 
   const handlePermissionsUpdated = useEffectEvent(() => {
@@ -65,27 +75,15 @@ export function useMemberPresence<
   });
 
   useEffect(() => {
-    if (!guildId) {
-      requestIdRef.current += 1;
-      visibleGuildIdRef.current = guildId;
-      setPresence(undefined);
-    }
-  }, [guildId]);
-
-  useEffect(() => {
     if (!socket || !connected || !joined || !guildId) {
       return;
-    }
-
-    if (visibleGuildIdRef.current !== guildId) {
-      visibleGuildIdRef.current = guildId;
-      setPresence(undefined);
     }
 
     requestPresence();
     socket.on(updateEvent, handlePresenceUpdate);
 
     return () => {
+      requestIdRef.current += 1;
       socket.off(updateEvent, handlePresenceUpdate);
     };
   }, [
@@ -110,5 +108,5 @@ export function useMemberPresence<
     };
   }, [socket, connected, joined]);
 
-  return presence;
+  return guildId && presence?.guildId === guildId ? presence.value : undefined;
 }

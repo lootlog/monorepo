@@ -1,9 +1,6 @@
-import { TextLink } from "@lootlog/ui/components/text-link";
-import { useId } from "react";
-import { Link } from "@tanstack/react-router";
-import { useTranslation } from "react-i18next";
-import type { ReservationSettings } from "@lootlog/domain/reservations";
+import { ROUTES } from "@/config/routes";
 import { useNotificationsUserControllerGetUserTargets } from "@lootlog/client/main";
+import type { ReservationSettings } from "@lootlog/domain/reservations";
 import { DateTimePicker } from "@lootlog/ui/components/date-time-picker";
 import { Label } from "@lootlog/ui/components/label";
 import {
@@ -13,24 +10,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@lootlog/ui/components/select";
+import { TextLink } from "@lootlog/ui/components/text-link";
 import { Textarea } from "@lootlog/ui/components/textarea";
-import { ROUTES } from "@/config/routes";
+import { Link } from "@tanstack/react-router";
+import { useId } from "react";
+import { useTranslation } from "react-i18next";
 
-export type ReminderValue = "none" | "0" | "5" | "15" | "30";
-export type ReminderOffset = 0 | 5 | 15 | 30;
-const REMINDER_VALUES: ReminderValue[] = ["none", "0", "5", "15", "30"];
-const REMINDER_OFFSETS: Record<ReminderValue, ReminderOffset | null> = {
-  none: null,
-  "0": 0,
-  "5": 5,
-  "15": 15,
-  "30": 30,
-};
-export const toReminderOffset = (value: ReminderValue): ReminderOffset | null =>
-  REMINDER_OFFSETS[value];
-export const toReminderValue = (value: ReminderOffset | null): ReminderValue =>
-  REMINDER_VALUES.find((reminder) => REMINDER_OFFSETS[reminder] === value) ??
-  "none";
+import { REMINDER_VALUES, type ReminderValue } from "./reservation-reminder";
 
 type ReservationFormFieldsProps = {
   settings: ReservationSettings;

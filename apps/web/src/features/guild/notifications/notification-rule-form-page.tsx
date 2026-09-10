@@ -1,13 +1,12 @@
 import { PageHeader } from "@/components/common/page-header";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { SectionCard } from "@/components/common/section-card/section-card";
-import { NotificationFormSkeleton } from "./notification-form-skeleton";
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { MultiSelect } from "@/components/ui/multi-select";
-import {
-  CreateNotificationRuleDtoScheduleAnchor as NotificationScheduleAnchor,
-  CreateNotificationRuleDtoScheduleIntervalType as NotificationScheduleIntervalType,
-  CreateNotificationRuleDtoTriggerType as NotificationTriggerType,
-} from "@lootlog/client/main";
+import { NotificationFormSkeleton } from "./notification-form-skeleton";
+import { NotificationNpcFields } from "./notification-npc-fields";
+import { NotificationScheduleFields } from "./notification-schedule-fields";
+import { NotificationTimerFields } from "./notification-timer-fields";
+import { NotificationTriggerField } from "./notification-trigger-field";
 
 import { Button } from "@lootlog/ui/components/button";
 
@@ -22,23 +21,9 @@ import {
 import { Input } from "@lootlog/ui/components/input";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Switch } from "@lootlog/ui/components/switch";
-import { Textarea } from "@lootlog/ui/components/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@lootlog/ui/components/select";
-import { getNotificationTriggerTranslationKey } from "./utils/notification-settings.utils";
-import {
-  formatDateTimeLocalInputValue,
-  GUILD_NOTIFICATION_TIMEZONE,
-} from "./utils/notification-schedule-time.utils";
-import { ALL_WORLDS_VALUE } from "./utils/notification-rule-form.schema";
-import { NotificationTemplateEditor } from "./components/notification-template-editor";
-import { NotificationTargetDialog } from "./components/notification-target-dialog";
 import { NotificationRulePreviewPanel } from "./components/notification-rule-preview-panel";
+import { NotificationTargetDialog } from "./components/notification-target-dialog";
+import { NotificationTemplateEditor } from "./components/notification-template-editor";
 import { useNotificationRuleForm } from "./hooks/use-notification-rule-form";
 
 export const NotificationRuleFormPage = () => {
@@ -51,11 +36,6 @@ export const NotificationRuleFormPage = () => {
     isError,
     isSubmitting,
     isScheduledMessage,
-    isRecurring,
-    showScheduledAtField,
-    showTimeOfDayField,
-    showWeekdayField,
-    showIntervalValueField,
     maxNpcCount,
     npcSearch,
     setNpcSearch,
@@ -127,115 +107,11 @@ export const NotificationRuleFormPage = () => {
                     onSubmit={form.handleSubmit(handleSubmit)}
                     className="flex flex-col gap-5"
                   >
-                    <FormField
-                      control={form.control}
-                      name="triggerType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                            {t("settings.notifications.fields.triggerType")}
-                          </FormLabel>
-                          <Select
-                            value={field.value}
-                            onValueChange={(value) => {
-                              if (!value) return;
-                              field.onChange(value);
-                              const nextType = value;
-                              form.setValue(
-                                "contentTemplate",
-                                getDefaultContentTemplate(nextType),
-                              );
-                              if (
-                                nextType ===
-                                NotificationTriggerType.SCHEDULED_MESSAGE
-                              ) {
-                                form.setValue("world", ALL_WORLDS_VALUE);
-                                form.setValue("npcIds", []);
-                              } else {
-                                form.setValue("scheduledAt", "");
-                              }
-                            }}
-                            items={[
-                              {
-                                value:
-                                  NotificationTriggerType.TIMER_BEFORE_SPAWN,
-                                label: (
-                                  <>
-                                    {t(
-                                      getNotificationTriggerTranslationKey(
-                                        NotificationTriggerType.TIMER_BEFORE_SPAWN,
-                                      ),
-                                    )}
-                                  </>
-                                ),
-                              },
-                              {
-                                value:
-                                  NotificationTriggerType.SCHEDULED_MESSAGE,
-                                label: (
-                                  <>
-                                    {t(
-                                      getNotificationTriggerTranslationKey(
-                                        NotificationTriggerType.SCHEDULED_MESSAGE,
-                                      ),
-                                    )}
-                                  </>
-                                ),
-                              },
-                            ]}
-                          >
-                            <FormControl
-                              render={
-                                <SelectTrigger className="w-full">
-                                  <SelectValue>
-                                    {field.value
-                                      ? t(
-                                          getNotificationTriggerTranslationKey(
-                                            field.value,
-                                          ),
-                                        )
-                                      : null}
-                                  </SelectValue>
-                                </SelectTrigger>
-                              }
-                            />
-                            <SelectContent>
-                              <SelectItem
-                                value={
-                                  NotificationTriggerType.TIMER_BEFORE_SPAWN
-                                }
-                              >
-                                {t(
-                                  getNotificationTriggerTranslationKey(
-                                    NotificationTriggerType.TIMER_BEFORE_SPAWN,
-                                  ),
-                                )}
-                              </SelectItem>
-                              <SelectItem
-                                value={
-                                  NotificationTriggerType.SCHEDULED_MESSAGE
-                                }
-                              >
-                                {t(
-                                  getNotificationTriggerTranslationKey(
-                                    NotificationTriggerType.SCHEDULED_MESSAGE,
-                                  ),
-                                )}
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <p className="text-xs text-muted-foreground">
-                            {isScheduledMessage
-                              ? t(
-                                  "settings.notifications.ruleDialog.triggerDescriptionScheduledMessage",
-                                )
-                              : t(
-                                  "settings.notifications.ruleDialog.triggerDescription",
-                                )}
-                          </p>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                    <NotificationTriggerField
+                      form={form}
+                      t={t}
+                      getDefaultContentTemplate={getDefaultContentTemplate}
+                      isScheduledMessage={isScheduledMessage}
                     />
 
                     <FormField
@@ -259,453 +135,22 @@ export const NotificationRuleFormPage = () => {
                       )}
                     />
 
-                    {!isScheduledMessage ? (
-                      <>
-                        <FormField
-                          control={form.control}
-                          name="world"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                                {t("settings.notifications.fields.world")}
-                              </FormLabel>
-                              <Select
-                                value={field.value}
-                                onValueChange={(value) => {
-                                  if (!value) return;
-                                  field.onChange(value);
-                                }}
-                                items={[
-                                  {
-                                    value: ALL_WORLDS_VALUE,
-                                    label: (
-                                      <>
-                                        {t("settings.notifications.allWorlds")}
-                                      </>
-                                    ),
-                                  },
-                                  ...worldOptions.map((world) => ({
-                                    value: world,
-                                    label: <>{world}</>,
-                                  })),
-                                ]}
-                              >
-                                <FormControl
-                                  render={
-                                    <SelectTrigger className="w-full">
-                                      <SelectValue>
-                                        {field.value === ALL_WORLDS_VALUE
-                                          ? t(
-                                              "settings.notifications.allWorlds",
-                                            )
-                                          : field.value}
-                                      </SelectValue>
-                                    </SelectTrigger>
-                                  }
-                                />
-                                <SelectContent>
-                                  <SelectItem value={ALL_WORLDS_VALUE}>
-                                    {t("settings.notifications.allWorlds")}
-                                  </SelectItem>
-                                  {worldOptions.map((world) => (
-                                    <SelectItem key={world} value={world}>
-                                      {world}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                    <NotificationNpcFields
+                      isScheduledMessage={isScheduledMessage}
+                      form={form}
+                      t={t}
+                      worldOptions={worldOptions}
+                      handleManualNpcEntryChange={handleManualNpcEntryChange}
+                      isManualNpcEntry={isManualNpcEntry}
+                      maxNpcCount={maxNpcCount}
+                      npcOptions={npcOptions}
+                      npcSearch={npcSearch}
+                      setNpcSearch={setNpcSearch}
+                      searchedNpcQuery={searchedNpcQuery}
+                      npcSearchError={npcSearchError}
+                    />
 
-                        <FormField
-                          control={form.control}
-                          name="manualNpcEntry"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between border-b border-border/70 py-3">
-                              <div className="pr-3">
-                                <FormLabel className="text-sm font-medium">
-                                  {t(
-                                    "settings.notifications.manualNpcEntry.checkbox",
-                                  )}
-                                </FormLabel>
-                                <p className="text-xs text-muted-foreground">
-                                  {t(
-                                    "settings.notifications.manualNpcEntry.hint",
-                                  )}
-                                </p>
-                              </div>
-                              <FormControl
-                                render=<Switch
-                                  checked={field.value}
-                                  onCheckedChange={handleManualNpcEntryChange}
-                                />
-                              />
-                            </FormItem>
-                          )}
-                        />
-
-                        {isManualNpcEntry ? (
-                          <FormField
-                            control={form.control}
-                            name="manualNpcIds"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                                  {t(
-                                    "settings.notifications.fields.manualNpcIds",
-                                  )}
-                                </FormLabel>
-                                <p className="mt-1 text-xs text-muted-foreground">
-                                  {t(
-                                    "settings.notifications.validation.maxNpcCount",
-                                    {
-                                      count: maxNpcCount,
-                                    },
-                                  )}
-                                </p>
-                                <FormControl
-                                  render=<Textarea
-                                    {...field}
-                                    value={field.value ?? ""}
-                                    rows={4}
-                                    placeholder={t(
-                                      "settings.notifications.placeholders.manualNpcIds",
-                                    )}
-                                    className="font-mono"
-                                  />
-                                />
-                                <p className="text-xs text-muted-foreground">
-                                  {t(
-                                    "settings.notifications.manualNpcEntry.fieldHint",
-                                  )}
-                                </p>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        ) : (
-                          <FormField
-                            control={form.control}
-                            name="npcIds"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                                  {t("settings.notifications.fields.npcs")}
-                                </FormLabel>
-                                <p className="mt-1 text-xs text-muted-foreground">
-                                  {t(
-                                    "settings.notifications.validation.maxNpcCount",
-                                    {
-                                      count: maxNpcCount,
-                                    },
-                                  )}
-                                </p>
-                                <FormControl
-                                  render=<MultiSelect
-                                    options={npcOptions}
-                                    value={field.value ?? []}
-                                    onValueChange={field.onChange}
-                                    onClose={field.onChange}
-                                    placeholder={t(
-                                      "settings.notifications.placeholders.npcs",
-                                    )}
-                                    controlledSearch
-                                    searchValue={npcSearch}
-                                    onSearchChange={setNpcSearch}
-                                    loading={searchedNpcQuery.isFetching}
-                                    errorMessage={npcSearchError}
-                                    searchPlaceholder={t(
-                                      "settings.notifications.placeholders.searchNpcs",
-                                    )}
-                                    emptyMessage={t(
-                                      "settings.notifications.empty.npcs",
-                                    )}
-                                  />
-                                />
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        )}
-                      </>
-                    ) : null}
-
-                    {isScheduledMessage ? (
-                      <>
-                        <FormField
-                          control={form.control}
-                          name="scheduleIntervalType"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                                {t(
-                                  "settings.notifications.fields.scheduleIntervalType",
-                                )}
-                              </FormLabel>
-                              <Select
-                                value={field.value}
-                                onValueChange={(value) => {
-                                  if (!value) return;
-                                  field.onChange(value);
-                                }}
-                                items={[
-                                  {
-                                    value:
-                                      NotificationScheduleIntervalType.ONCE,
-                                    label: (
-                                      <>
-                                        {t(
-                                          "settings.notifications.intervalTypes.once",
-                                        )}
-                                      </>
-                                    ),
-                                  },
-                                  {
-                                    value:
-                                      NotificationScheduleIntervalType.HOURLY,
-                                    label: (
-                                      <>
-                                        {t(
-                                          "settings.notifications.intervalTypes.hourly",
-                                        )}
-                                      </>
-                                    ),
-                                  },
-                                  {
-                                    value:
-                                      NotificationScheduleIntervalType.DAILY,
-                                    label: (
-                                      <>
-                                        {t(
-                                          "settings.notifications.intervalTypes.daily",
-                                        )}
-                                      </>
-                                    ),
-                                  },
-                                  {
-                                    value:
-                                      NotificationScheduleIntervalType.WEEKLY,
-                                    label: (
-                                      <>
-                                        {t(
-                                          "settings.notifications.intervalTypes.weekly",
-                                        )}
-                                      </>
-                                    ),
-                                  },
-                                ]}
-                              >
-                                <FormControl
-                                  render={
-                                    <SelectTrigger className="w-full">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                  }
-                                />
-                                <SelectContent>
-                                  <SelectItem
-                                    value={
-                                      NotificationScheduleIntervalType.ONCE
-                                    }
-                                  >
-                                    {t(
-                                      "settings.notifications.intervalTypes.once",
-                                    )}
-                                  </SelectItem>
-                                  <SelectItem
-                                    value={
-                                      NotificationScheduleIntervalType.HOURLY
-                                    }
-                                  >
-                                    {t(
-                                      "settings.notifications.intervalTypes.hourly",
-                                    )}
-                                  </SelectItem>
-                                  <SelectItem
-                                    value={
-                                      NotificationScheduleIntervalType.DAILY
-                                    }
-                                  >
-                                    {t(
-                                      "settings.notifications.intervalTypes.daily",
-                                    )}
-                                  </SelectItem>
-                                  <SelectItem
-                                    value={
-                                      NotificationScheduleIntervalType.WEEKLY
-                                    }
-                                  >
-                                    {t(
-                                      "settings.notifications.intervalTypes.weekly",
-                                    )}
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        {showIntervalValueField ? (
-                          <FormField
-                            control={form.control}
-                            name="scheduleIntervalValue"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                                  {t(
-                                    "settings.notifications.fields.scheduleIntervalValue",
-                                  )}
-                                </FormLabel>
-                                <FormControl
-                                  render=<Input
-                                    {...field}
-                                    type="number"
-                                    inputMode="numeric"
-                                    min="1"
-                                    max="24"
-                                    step="1"
-                                  />
-                                />
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        ) : null}
-
-                        {showWeekdayField ? (
-                          <FormField
-                            control={form.control}
-                            name="scheduleWeekday"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                                  {t(
-                                    "settings.notifications.fields.scheduleWeekday",
-                                  )}
-                                </FormLabel>
-                                <Select
-                                  value={field.value}
-                                  onValueChange={(value) => {
-                                    if (!value) return;
-                                    field.onChange(value);
-                                  }}
-                                  items={[0, 1, 2, 3, 4, 5, 6].map((day) => ({
-                                    value: String(day),
-                                    label: (
-                                      <>
-                                        {t(
-                                          `settings.notifications.weekdays.${day}`,
-                                        )}
-                                      </>
-                                    ),
-                                  }))}
-                                >
-                                  <FormControl
-                                    render={
-                                      <SelectTrigger className="w-full">
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                    }
-                                  />
-                                  <SelectContent>
-                                    {[0, 1, 2, 3, 4, 5, 6].map((day) => (
-                                      <SelectItem key={day} value={String(day)}>
-                                        {t(
-                                          `settings.notifications.weekdays.${day}`,
-                                        )}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        ) : null}
-
-                        {showTimeOfDayField ? (
-                          <FormField
-                            control={form.control}
-                            name="scheduleTimeOfDay"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                                  {t(
-                                    "settings.notifications.fields.scheduleTimeOfDay",
-                                  )}
-                                </FormLabel>
-                                <FormControl
-                                  render=<Input
-                                    {...field}
-                                    type="time"
-                                    placeholder={t(
-                                      "settings.notifications.placeholders.scheduleTimeOfDay",
-                                    )}
-                                  />
-                                />
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        ) : null}
-
-                        {showScheduledAtField ? (
-                          <FormField
-                            control={form.control}
-                            name="scheduledAt"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                                  {t(
-                                    "settings.notifications.fields.scheduledAt",
-                                  )}
-                                </FormLabel>
-                                <FormControl
-                                  render=<Input
-                                    {...field}
-                                    type="datetime-local"
-                                    min={formatDateTimeLocalInputValue(
-                                      new Date().toISOString(),
-                                      GUILD_NOTIFICATION_TIMEZONE,
-                                    )}
-                                  />
-                                />
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        ) : null}
-
-                        {isRecurring ? (
-                          <FormField
-                            control={form.control}
-                            name="scheduledUntil"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                                  {t(
-                                    "settings.notifications.fields.scheduledUntil",
-                                  )}
-                                </FormLabel>
-                                <FormControl
-                                  render=<Input
-                                    {...field}
-                                    type="datetime-local"
-                                    placeholder={t(
-                                      "settings.notifications.placeholders.scheduledUntil",
-                                    )}
-                                  />
-                                />
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        ) : null}
-                      </>
-                    ) : null}
+                    <NotificationScheduleFields form={form} t={t} />
 
                     <FormField
                       control={form.control}
@@ -731,104 +176,11 @@ export const NotificationRuleFormPage = () => {
                       )}
                     />
 
-                    {!isScheduledMessage ? (
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <FormField
-                          control={form.control}
-                          name="scheduleAnchor"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                                {t(
-                                  "settings.notifications.fields.scheduleAnchor",
-                                )}
-                              </FormLabel>
-                              <Select
-                                value={field.value}
-                                onValueChange={(value) => {
-                                  if (!value) return;
-                                  field.onChange(value);
-                                }}
-                                items={[
-                                  {
-                                    value: NotificationScheduleAnchor.MIN_SPAWN,
-                                    label: (
-                                      <>
-                                        {t(
-                                          "settings.notifications.scheduleAnchors.minSpawn",
-                                        )}
-                                      </>
-                                    ),
-                                  },
-                                  {
-                                    value: NotificationScheduleAnchor.MAX_SPAWN,
-                                    label: (
-                                      <>
-                                        {t(
-                                          "settings.notifications.scheduleAnchors.maxSpawn",
-                                        )}
-                                      </>
-                                    ),
-                                  },
-                                ]}
-                              >
-                                <FormControl
-                                  render={
-                                    <SelectTrigger className="w-full">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                  }
-                                />
-                                <SelectContent>
-                                  <SelectItem
-                                    value={NotificationScheduleAnchor.MIN_SPAWN}
-                                  >
-                                    {t(
-                                      "settings.notifications.scheduleAnchors.minSpawn",
-                                    )}
-                                  </SelectItem>
-                                  <SelectItem
-                                    value={NotificationScheduleAnchor.MAX_SPAWN}
-                                  >
-                                    {t(
-                                      "settings.notifications.scheduleAnchors.maxSpawn",
-                                    )}
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="scheduleOffsetMinutes"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                                {t(
-                                  "settings.notifications.fields.scheduleOffsetMinutes",
-                                )}
-                              </FormLabel>
-                              <FormControl
-                                render=<Input
-                                  {...field}
-                                  type="number"
-                                  inputMode="numeric"
-                                  min="0"
-                                  step="1"
-                                  placeholder={t(
-                                    "settings.notifications.placeholders.scheduleOffsetMinutes",
-                                  )}
-                                />
-                              />
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    ) : null}
+                    <NotificationTimerFields
+                      isScheduledMessage={isScheduledMessage}
+                      form={form}
+                      t={t}
+                    />
 
                     <FormField
                       control={form.control}

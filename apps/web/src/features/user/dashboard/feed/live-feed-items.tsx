@@ -1,6 +1,8 @@
+/* eslint-disable react-doctor/no-array-index-as-key -- Items belong to one immutable loot event and never reorder within its row. Identical drops may share catalog IDs and HIDs, so the occurrence index disambiguates them. */
 import type { UserFeedResponseDtoOutput } from "@lootlog/client/main";
 import { useTranslation } from "react-i18next";
-import { resolveItemRarity } from "@lootlog/ui/components/item-image";
+
+import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
 import { ItemTile } from "@/components/tiles/item-tile";
 
 type LootFeedItem = Extract<

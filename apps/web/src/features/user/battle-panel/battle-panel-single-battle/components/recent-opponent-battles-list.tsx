@@ -1,7 +1,5 @@
-import {
-  BattleResultStatus,
-  getBattleResultRowClassName,
-} from "@/features/user/battle-panel/components/battle-result-status";
+import { BattleResultStatus } from "@/features/user/battle-panel/components/battle-result-status";
+import { getBattleResultRowClassName } from "@/features/user/battle-panel/components/battle-result-row-class-name";
 import { getPlayerVsPlayerBattleResult } from "@/features/user/battle-panel/components/battle-panel-battle-presentation";
 import { BattlePanelPvpWarriorSummary } from "@/features/user/battle-panel/components/battle-panel-pvp-warrior-summary";
 import type { Battle } from "@/lib/api/battlelog-types";

@@ -17,12 +17,13 @@ export const mapMemberWebPresenceByDiscordId = (
   const presenceByDiscordId: MemberWebPresenceByDiscordId = new Map();
 
   for (const [discordId, memberSessions] of Object.entries(sessions ?? {})) {
-    const sessionIds = memberSessions
-      .map((session) => session.sessionId)
-      .filter((sessionId) => sessionId.length > 0);
+    const sessionIds = new Set<string>();
+    for (const { sessionId } of memberSessions) {
+      if (sessionId.length > 0) sessionIds.add(sessionId);
+    }
 
-    if (sessionIds.length > 0) {
-      presenceByDiscordId.set(discordId, new Set(sessionIds));
+    if (sessionIds.size > 0) {
+      presenceByDiscordId.set(discordId, sessionIds);
     }
   }
 

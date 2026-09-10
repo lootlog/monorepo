@@ -13,7 +13,7 @@ import {
 } from "../../hooks/use-window-status";
 import { useLocalCoverageTimer } from "../../hooks/utils/use-local-coverage-timer";
 import { formatDurationPadded } from "../../utils/format-duration";
-import type { MapStatus } from "./map-card";
+import type { MapStatus } from "./map-status";
 
 interface MapCoverageTimerProps {
   mapId: string;

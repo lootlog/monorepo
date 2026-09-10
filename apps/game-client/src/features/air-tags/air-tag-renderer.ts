@@ -137,6 +137,8 @@ export class AirTagRenderer {
       return;
     }
 
+    // The preceding guard excludes missing, zero, and negative normalSize values.
+    // oxlint-disable-next-line react-doctor/no-arithmetic-on-optional-chained-operand
     const radius = Math.min(5, Math.max(2.5, normalSize * 0.9));
     for (const target of this.frameTargets) {
       if (!this.isWithinMap(target, size)) continue;

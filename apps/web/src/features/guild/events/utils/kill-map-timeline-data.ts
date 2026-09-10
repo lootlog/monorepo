@@ -126,9 +126,9 @@ const normalizeGaps = (
       ? "UNASSIGNED"
       : "UNCOVERED";
     const sourceIds = new Set(
-      activeGaps
-        .filter((gap) => gap.gapType === gapType)
-        .map((gap) => gap.sourceId),
+      activeGaps.flatMap((gap) =>
+        gap.gapType === gapType ? [gap.sourceId] : [],
+      ),
     );
     const previousSegment = segments[segments.length - 1];
 

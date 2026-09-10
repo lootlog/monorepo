@@ -1,4 +1,5 @@
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
+import * as m from "framer-motion/m";
 import { Button } from "@lootlog/ui/components/button";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
@@ -31,7 +32,7 @@ export const UnsavedChangesBar: FC<UnsavedChangesBarProps> = ({
   return (
     <AnimatePresence>
       {isDirty && (
-        <motion.div
+        <m.div
           key="unsaved-bar"
           aria-live="polite"
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -70,7 +71,7 @@ export const UnsavedChangesBar: FC<UnsavedChangesBarProps> = ({
               </Button>
             </div>
           </div>
-        </motion.div>
+        </m.div>
       )}
     </AnimatePresence>
   );

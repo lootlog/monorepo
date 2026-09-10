@@ -75,15 +75,22 @@ export function DashboardActivity() {
                   fill
                   showDetails={false}
                   unknownDisplay="lowest"
-                  days={online.data.days.filter(isInRange).map((day) => ({
-                    date: day.date,
-                    value: day.onlineSeconds,
-                    worlds: day.worlds,
-                    worldsComplete:
-                      day.worldsComplete ??
-                      (day.onlineSeconds === null || day.onlineSeconds === 0),
-                    partial: day.partial,
-                  }))}
+                  days={online.data.days.flatMap((day) =>
+                    isInRange(day)
+                      ? [
+                          {
+                            date: day.date,
+                            value: day.onlineSeconds,
+                            worlds: day.worlds,
+                            worldsComplete:
+                              day.worldsComplete ??
+                              (day.onlineSeconds === null ||
+                                day.onlineSeconds === 0),
+                            partial: day.partial,
+                          },
+                        ]
+                      : [],
+                  )}
                   label={t("statistics.online")}
                   formatValue={(seconds) =>
                     t("statistics.duration", {
@@ -106,16 +113,22 @@ export function DashboardActivity() {
                 fill
                 showDetails={false}
                 unknownDisplay="lowest"
-                days={kills.data.daily.filter(isInRange).map((day) => ({
-                  date: day.date,
-                  value: day.kills,
-                  worlds: day.worlds,
-                  worldsComplete:
-                    day.worlds !== undefined ||
-                    day.kills === null ||
-                    day.kills === 0,
-                  partial: day.partial,
-                }))}
+                days={kills.data.daily.flatMap((day) =>
+                  isInRange(day)
+                    ? [
+                        {
+                          date: day.date,
+                          value: day.kills,
+                          worlds: day.worlds,
+                          worldsComplete:
+                            day.worlds !== undefined ||
+                            day.kills === null ||
+                            day.kills === 0,
+                          partial: day.partial,
+                        },
+                      ]
+                    : [],
+                )}
                 label={t("statistics.kills")}
                 formatValue={(value) => t("statistics.count", { count: value })}
               />

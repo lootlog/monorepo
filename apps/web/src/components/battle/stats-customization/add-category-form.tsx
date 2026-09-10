@@ -28,7 +28,7 @@ export const AddCategoryForm = ({ onAddCategory }: AddCategoryFormProps) => {
           value={newCategoryName}
           onChange={(e) => setNewCategoryName(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") {
+            if (e.key === "Enter" && !e.nativeEvent.isComposing) {
               handleAddCategory();
             } else if (e.key === "Escape") {
               setIsAddingCategory(false);

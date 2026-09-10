@@ -151,7 +151,6 @@
     "postcss@<=8.5.11": ">=8.5.12",
     "postcss@<=8.5.17": ">=8.5.18",
     "sharp@<0.35.0": ">=0.35.0",
-    "typescript": "catalog:",
     "valibot@<=1.4.1": ">=1.4.2"
   },
   "devEngines": {

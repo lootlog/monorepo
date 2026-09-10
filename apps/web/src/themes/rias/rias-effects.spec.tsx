@@ -1,3 +1,4 @@
+import { LazyMotion, domMax } from "framer-motion";
 // @vitest-environment happy-dom
 
 import {
@@ -29,9 +30,11 @@ describe("GremoryCircle motion preferences", () => {
       removeListener: () => {},
     }));
     const { container, getByRole } = render(
-      <GremoryCircle isActive>
-        <input aria-label="Name" />
-      </GremoryCircle>,
+      <LazyMotion features={domMax}>
+        <GremoryCircle isActive>
+          <input aria-label="Name" />
+        </GremoryCircle>
+      </LazyMotion>,
     );
     const input = getByRole("textbox");
     fireEvent.change(input, { target: { value: "Unchanged" } });
