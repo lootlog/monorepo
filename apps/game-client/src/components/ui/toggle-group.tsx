@@ -1,214 +1,57 @@
+import { Toggle as BaseToggle } from "@base-ui/react/toggle";
 import { ToggleGroup as BaseToggleGroup } from "@base-ui/react/toggle-group";
 import type { VariantProps } from "class-variance-authority";
 import * as React from "react";
-import { Toggle, toggleVariants } from "@/components/ui/toggle";
+import { toggleVariants } from "@/components/ui/toggle";
 import { cn } from "cn";
 
-type ToggleGroupContextValue = VariantProps<typeof toggleVariants> & {
-  type: "multiple" | "single";
-};
-
-const ToggleGroupContext = React.createContext<ToggleGroupContextValue>({
+const ToggleGroupContext = React.createContext<
+  VariantProps<typeof toggleVariants> & {
+    spacing?: number;
+    orientation?: "horizontal" | "vertical";
+  }
+>({
   size: "default",
-  type: "single",
   variant: "default",
+  spacing: 2,
+  orientation: "horizontal",
 });
 
-type ToggleGroupVariants = VariantProps<typeof toggleVariants>;
-
-type SingleToggleGroupProps<Value extends string> = Omit<
-  BaseToggleGroup.Props<Value>,
-  "defaultValue" | "multiple" | "onValueChange" | "value"
-> &
-  ToggleGroupVariants & {
-    defaultValue?: Value;
-    onValueChange?: (value: Value) => void;
-    type: "single";
-    value?: Value;
-  };
-
-type MultipleToggleGroupProps<Value extends string> = Omit<
-  BaseToggleGroup.Props<Value>,
-  "defaultValue" | "multiple" | "onValueChange" | "value"
-> &
-  ToggleGroupVariants & {
-    defaultValue?: Value[];
-    onValueChange?: (value: Value[]) => void;
-    type: "multiple";
-    value?: Value[];
-  };
-
-type ToggleGroupProps<Value extends string> =
-  | SingleToggleGroupProps<Value>
-  | MultipleToggleGroupProps<Value>;
-
-const setRefValue = <Value,>(
-  ref: React.Ref<Value> | undefined,
-  value: Value | null,
-) => {
-  if (typeof ref === "function") {
-    ref(value);
-
-    return;
-  }
-
-  if (ref) {
-    ref.current = value;
-  }
-};
-
-const updateToggleGroupIndicator = (root: HTMLElement) => {
-  const activeItem = root.querySelector<HTMLElement>(
-    '[data-slot="toggle-group-item"][data-pressed]',
-  );
-
-  if (!activeItem || activeItem.offsetWidth === 0) {
-    root.removeAttribute("data-indicator-visible");
-
-    return;
-  }
-
-  root.style.setProperty("--toggle-indicator-x", `${activeItem.offsetLeft}px`);
-  root.style.setProperty(
-    "--toggle-indicator-width",
-    `${activeItem.offsetWidth}px`,
-  );
-  root.setAttribute("data-indicator-visible", "");
-};
-
-function ToggleGroup<Value extends string>(props: ToggleGroupProps<Value>) {
-  const { className, size, variant, children, ref: providedRef } = props;
-  const rootRef = React.useRef<HTMLElement | null>(null);
-
-  const setRootRef = (element: HTMLElement | null) => {
-    rootRef.current = element;
-    setRefValue(providedRef, element);
-  };
-
-  // Both observers disconnect and the pending frame is cancelled below, including work scheduled by their callbacks.
-  // oxlint-disable-next-line react-doctor/effect-needs-cleanup
-  React.useLayoutEffect(() => {
-    const root = rootRef.current;
-
-    if (!root || props.type === "multiple") {
-      root?.removeAttribute("data-indicator-visible");
-
-      return;
-    }
-
-    let animationFrame: number | undefined;
-
-    const scheduleIndicatorUpdate = () => {
-      if (animationFrame !== undefined) {
-        cancelAnimationFrame(animationFrame);
-      }
-
-      animationFrame = requestAnimationFrame(() => {
-        animationFrame = undefined;
-        updateToggleGroupIndicator(root);
-      });
-    };
-
-    const resizeObserver = new ResizeObserver(scheduleIndicatorUpdate);
-
-    const observeItems = () => {
-      for (const item of root.querySelectorAll(
-        '[data-slot="toggle-group-item"]',
-      )) {
-        resizeObserver.observe(item);
-      }
-    };
-
-    const mutationObserver = new MutationObserver(() => {
-      observeItems();
-      scheduleIndicatorUpdate();
-    });
-
-    resizeObserver.observe(root);
-    observeItems();
-    mutationObserver.observe(root, {
-      attributeFilter: ["data-pressed"],
-      attributes: true,
-      childList: true,
-      subtree: true,
-    });
-    updateToggleGroupIndicator(root);
-
-    return () => {
-      if (animationFrame !== undefined) {
-        cancelAnimationFrame(animationFrame);
-      }
-
-      mutationObserver.disconnect();
-      resizeObserver.disconnect();
-    };
-  }, [props.type]);
-
-  const commonProps = {
-    className: cn(
-      "ll:group/toggle-group ll:relative ll:flex ll:w-fit ll:items-center ll:rounded-sm ll:border ll:border-border ll:bg-muted ll:p-0.5 ll:shadow-sm ll:before:pointer-events-none ll:before:absolute ll:before:inset-y-0.5 ll:before:left-0 ll:before:w-[var(--toggle-indicator-width)] ll:before:translate-x-[var(--toggle-indicator-x)] ll:before:rounded-[2px] ll:before:bg-primary ll:before:opacity-0 ll:before:shadow-sm ll:before:transition-[width,translate,opacity] ll:before:duration-[120ms] ll:before:ease-[cubic-bezier(0.4,0,0.2,1)] ll:data-[indicator-visible]:before:opacity-100 ll:motion-reduce:before:transition-none",
-      className,
-    ),
-    "data-slot": "toggle-group",
-    "data-size": size,
-    "data-type": props.type,
-    "data-variant": variant,
-  };
-
-  const content = (
-    // Vite React Compiler caches this object by its fields (vite.shared.ts enables compiler: true).
-    // oxlint-disable-next-line react-doctor/jsx-no-constructed-context-values
-    <ToggleGroupContext.Provider value={{ variant, size, type: props.type }}>
-      {children}
-    </ToggleGroupContext.Provider>
-  );
-
-  if (props.type === "multiple") {
-    const {
-      children: _children,
-      className: _className,
-      ref: _ref,
-      size: _size,
-      type: _type,
-      variant: _variant,
-      ...multipleProps
-    } = props;
-
-    return (
-      <BaseToggleGroup
-        {...commonProps}
-        {...multipleProps}
-        ref={setRootRef}
-        multiple
-      >
-        {content}
-      </BaseToggleGroup>
-    );
-  }
-
-  const {
-    children: _children,
-    className: _className,
-    defaultValue,
-    onValueChange,
-    ref: _ref,
-    size: _size,
-    type: _type,
-    value,
-    variant: _variant,
-    ...singleProps
-  } = props;
-
+function ToggleGroup<Value extends string>({
+  className,
+  variant,
+  size,
+  spacing = 2,
+  orientation = "horizontal",
+  children,
+  ...props
+}: BaseToggleGroup.Props<Value> &
+  VariantProps<typeof toggleVariants> & {
+    spacing?: number;
+    orientation?: "horizontal" | "vertical";
+  }) {
   return (
     <BaseToggleGroup
-      {...commonProps}
-      {...singleProps}
-      ref={setRootRef}
-      defaultValue={defaultValue === undefined ? undefined : [defaultValue]}
-      value={value === undefined ? undefined : value ? [value] : []}
-      onValueChange={(nextValue) => onValueChange?.(nextValue[0] ?? "")}
+      data-slot="toggle-group"
+      data-variant={variant}
+      data-size={size}
+      data-spacing={spacing}
+      data-orientation={orientation}
+      // SAFETY: React.CSSProperties has no index signature for custom properties; "--gap" is a valid CSS custom property name consumed by the gap utility below.
+      style={{ "--gap": spacing } as React.CSSProperties}
+      className={cn(
+        "ll:group/toggle-group ll:flex ll:w-fit ll:flex-row ll:items-center ll:gap-[--spacing(var(--gap))] ll:rounded-lg ll:data-[size=sm]:rounded-[min(var(--radius-md),10px)] ll:data-vertical:flex-col ll:data-vertical:items-stretch",
+        className,
+      )}
+      {...props}
     >
-      {content}
+      <ToggleGroupContext.Provider
+        // Vite React Compiler caches this object by its fields (vite.shared.ts enables compiler: true).
+        // oxlint-disable-next-line react-doctor/jsx-no-constructed-context-values
+        value={{ variant, size, spacing, orientation }}
+      >
+        {children}
+      </ToggleGroupContext.Provider>
     </BaseToggleGroup>
   );
 }
@@ -216,35 +59,31 @@ function ToggleGroup<Value extends string>(props: ToggleGroupProps<Value>) {
 function ToggleGroupItem({
   className,
   children,
-  variant,
-  size,
+  variant = "default",
+  size = "default",
   ...props
-}: BaseToggleGroupItemProps) {
+}: BaseToggle.Props & VariantProps<typeof toggleVariants>) {
   const context = React.useContext(ToggleGroupContext);
-  const resolvedVariant = context.variant ?? variant;
-  const resolvedSize = context.size ?? size;
 
   return (
-    <Toggle
+    <BaseToggle
       data-slot="toggle-group-item"
-      data-variant={resolvedVariant}
-      data-size={resolvedSize}
+      data-variant={context.variant || variant}
+      data-size={context.size || size}
+      data-spacing={context.spacing}
       className={cn(
-        toggleVariants({ variant: resolvedVariant, size: resolvedSize }),
-        "ll:relative ll:z-10 ll:min-w-0 ll:flex-1 ll:shrink-0 ll:rounded-[2px] ll:bg-transparent ll:text-muted-foreground ll:shadow-none ll:hover:bg-accent ll:hover:text-white ll:focus:z-20 ll:focus-visible:z-20 ll:focus-visible:ring-ring ll:data-[pressed]:text-primary-foreground",
-        context.type === "single"
-          ? "ll:data-[pressed]:bg-transparent"
-          : "ll:data-[pressed]:bg-primary",
+        "ll:shrink-0 ll:group-data-[spacing=0]/toggle-group:rounded-none ll:group-data-[spacing=0]/toggle-group:px-2 ll:focus:z-10 ll:focus-visible:z-10 ll:group-data-[spacing=0]/toggle-group:has-data-[icon=inline-end]:pr-1.5 ll:group-data-[spacing=0]/toggle-group:has-data-[icon=inline-start]:pl-1.5 ll:group-data-horizontal/toggle-group:data-[spacing=0]:first:rounded-l-lg ll:group-data-vertical/toggle-group:data-[spacing=0]:first:rounded-t-lg ll:group-data-horizontal/toggle-group:data-[spacing=0]:last:rounded-r-lg ll:group-data-vertical/toggle-group:data-[spacing=0]:last:rounded-b-lg ll:group-data-horizontal/toggle-group:data-[spacing=0]:data-[variant=outline]:border-l-0 ll:group-data-vertical/toggle-group:data-[spacing=0]:data-[variant=outline]:border-t-0 ll:group-data-horizontal/toggle-group:data-[spacing=0]:data-[variant=outline]:first:border-l ll:group-data-vertical/toggle-group:data-[spacing=0]:data-[variant=outline]:first:border-t",
+        toggleVariants({
+          variant: context.variant || variant,
+          size: context.size || size,
+        }),
         className,
       )}
       {...props}
     >
       {children}
-    </Toggle>
+    </BaseToggle>
   );
 }
-
-type BaseToggleGroupItemProps = React.ComponentProps<typeof Toggle> &
-  ToggleGroupVariants;
 
 export { ToggleGroup, ToggleGroupItem };

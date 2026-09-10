@@ -103,9 +103,10 @@ export const TimersSettingsGeneral: FC = () => {
         >
           <ToggleGroup
             className="ll:ml-auto"
-            type="single"
-            size="xs"
-            onValueChange={(value: "min" | "max") => {
+            variant="outline"
+            size="sm"
+            spacing={0}
+            onValueChange={([value]: ("min" | "max")[]) => {
               if (value) {
                 setGeneralConfig({
                   ...generalConfig,
@@ -113,7 +114,7 @@ export const TimersSettingsGeneral: FC = () => {
                 });
               }
             }}
-            value={generalConfig.countdownMode}
+            value={[generalConfig.countdownMode]}
           >
             <ToggleGroupItem value="max">
               {t("settings.timers.general.countdownMax")}
