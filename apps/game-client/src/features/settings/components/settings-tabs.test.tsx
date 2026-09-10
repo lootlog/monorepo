@@ -32,7 +32,7 @@ describe("SettingsTabs", () => {
     }));
   });
 
-  it("renders ten domain tabs in order and opens the selected domain", async () => {
+  it("renders eleven domain tabs in order and opens the selected domain", async () => {
     const user = userEvent.setup();
     render();
 
@@ -44,6 +44,7 @@ describe("SettingsTabs", () => {
       "Ogólne",
       "Serwery",
       "Wygląd",
+      "Chat",
       "Timery",
       "Dane z gry",
       "Powiadomienia",
@@ -117,12 +118,10 @@ describe("SettingsTabs", () => {
       screen.queryByRole("button", { name: "Zachowanie" }),
     ).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("tab", { name: "Wygląd" }));
+    await user.click(screen.getByRole("tab", { name: "Chat" }));
 
-    expect(screen.getByRole("button", { name: "Chat" })).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Wygląd timerów" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Wygląd" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Filtry" })).toBeInTheDocument();
   });
 
   it("uses an icon rail and opens the overlaid search panel when compact", async () => {

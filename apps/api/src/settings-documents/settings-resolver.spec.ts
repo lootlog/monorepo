@@ -61,6 +61,15 @@ describe("settings resolver", () => {
     expect(SETTINGS_CATALOG.appearance.schemaVersion).toBe(3);
   });
 
+  it("accepts only known NPC ranks for hidden chat NPC types", () => {
+    const { isValid } = SETTINGS_CATALOG.chat.fields.hiddenNpcTypes;
+
+    expect(isValid(["ELITE2", "TITAN"])).toBe(true);
+    expect(isValid([])).toBe(true);
+    expect(isValid(["DRAGON"])).toBe(false);
+    expect(isValid("TITAN")).toBe(false);
+  });
+
   it("keeps chat values on the user layer while ignoring lower scopes", () => {
     const resolution = resolveSettingsDomain("appearance", [
       {

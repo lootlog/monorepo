@@ -21,11 +21,15 @@ import {
   getCurrentChatMessages,
   getNextSelectedGuildId,
 } from "./chat.helpers";
+import { isChatNpcType } from "./hooks/use-hidden-npc-types";
 import {
   canReplyToChatMessage,
   resolveChatReplyNames,
 } from "./chat-reply.helpers";
-import { useNpcTypeColors } from "@/hooks/api/use-settings-documents";
+import {
+  useChatSettingsDocuments,
+  useNpcTypeColors,
+} from "@/hooks/api/use-settings-documents";
 import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
 import { AsyncContent } from "@/components/async-content";
 import { ChatConnectionStatus } from "./components/chat-connection-status";
@@ -34,8 +38,7 @@ import { useVisibleLootlogGuilds } from "@/hooks/use-visible-lootlog-guilds";
 import {
   getChatUnreadSummary,
   markChatMessagesRead,
-  prioritizeChatMessage,
-  retainChatReadEntries,
+  reconcileChatReadState,
   type ChatReadState,
 } from "./chat-read-state";
 import {
@@ -192,45 +195,38 @@ export const ChatView = ({
     const next = getNextSelectedGuildId(selectedGuildId, visibleGuilds);
     if (next !== undefined) setSelectedGuildId(next);
   }, [selectedGuildId, setSelectedGuildId, visibleGuilds]);
-  // Server message/access subscriptions invalidate persisted read entries, including revoked organizations.
+  const { hiddenNpcTypes } = useChatSettingsDocuments();
+  const hiddenNpcTypeSet = new Set(hiddenNpcTypes);
+  const hiddenNpcTypesKey = [...hiddenNpcTypes].sort().join(",");
+  // Server message/access subscriptions and rank filters invalidate persisted read entries.
   // oxlint-disable-next-line react-doctor/no-pass-data-to-parent
   useEffect(() => {
     if (!visibleGuilds) return;
-    setReadState((current) => {
-      let next = current;
-      const allowed = new Set(visibleGuilds.map((guild) => guild.id));
-      if (Object.keys(current).some((guildId) => !allowed.has(guildId))) {
-        next = Object.fromEntries(
-          Object.entries(current).filter(([guildId]) => allowed.has(guildId)),
-        );
-      }
-      if (!hasMessagesResponse) return next;
-      const failedGuilds = new Set(failedGuildIds);
-      for (const [guildId, messages] of Object.entries(messagesByGuildId)) {
-        if (failedGuilds.has(guildId)) continue;
-        next = retainChatReadEntries(
-          next,
-          guildId,
-          new Set(messages.map((message) => message.id)),
-        );
-        const context = mentionContextsByGuildId[guildId];
-        for (const message of messages) {
-          const repliesToMe =
+    const hidden = new Set(hiddenNpcTypesKey.split(",").filter(isChatNpcType));
+    setReadState((current) =>
+      reconcileChatReadState(current, {
+        allowedGuildIds: new Set(visibleGuilds.map((guild) => guild.id)),
+        failedGuildIds: new Set(failedGuildIds),
+        hiddenNpcTypes: hidden,
+        messagesByGuildId: hasMessagesResponse ? messagesByGuildId : {},
+        hasAttention: (guildId, message) => {
+          const context = mentionContextsByGuildId[guildId];
+          const repliesToMe = Boolean(
             message.replyTo &&
             context?.currentUserNames?.some(
               (name) =>
                 normalizeChatMentionName(name) ===
                 normalizeChatMentionName(message.replyTo?.senderNick ?? ""),
-            );
-          if (repliesToMe || hasCurrentUserMention(message.message, context))
-            next = prioritizeChatMessage(next, guildId, message.id);
-        }
-      }
-      return next;
-    });
+            ),
+          );
+          return repliesToMe || hasCurrentUserMention(message.message, context);
+        },
+      }),
+    );
   }, [
     visibleGuilds,
     hasMessagesResponse,
+    hiddenNpcTypesKey,
     messagesByGuildId,
     mentionContextsByGuildId,
     failedGuildIds,
@@ -255,6 +251,7 @@ export const ChatView = ({
       messagesByGuildId,
       effectiveSelectedGuildId,
       effectiveFilter,
+      hiddenNpcTypeSet,
     ),
     messagesByGuildId,
     membersByGuildId,

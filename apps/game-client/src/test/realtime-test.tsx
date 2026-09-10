@@ -79,6 +79,7 @@ export const createRealtimeTest = () => {
           : null,
       );
     if (url.pathname === "/sound-settings") return Response.json(soundSettings);
+    if (url.pathname === "/preferences") return Response.json({ domains: {} });
     if (url.pathname.endsWith("/members/summary")) return Response.json([]);
     if (url.pathname.endsWith("/members/@me"))
       return await memberRequest(input, init);

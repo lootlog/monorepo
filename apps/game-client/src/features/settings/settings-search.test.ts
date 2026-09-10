@@ -3,9 +3,9 @@ import { searchSettings, type SettingsSearchItem } from "./settings-search";
 
 const searchItems: SettingsSearchItem[] = [
   {
-    categoryId: "appearance",
-    categoryLabel: "Wygląd",
-    subsectionId: "chat",
+    categoryId: "chat",
+    categoryLabel: "Chat",
+    subsectionId: "chat-appearance",
     subsectionLabel: "Chat",
     controlId: "chat-message-gap",
     label: "Odstęp wiadomości",

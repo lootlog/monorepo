@@ -9,8 +9,10 @@ import {
   getChatUnreadSummary,
   markChatMessagesRead,
   receiveChatMessage,
+  reconcileChatReadState,
   retainChatReadEntries,
 } from "./chat-read-state";
+import { NpcTypeEnum } from "@lootlog/schema/npc-type";
 
 describe("chat read state", () => {
   it("only marks actually displayed messages read and ignores a redelivered read message", () => {
@@ -38,6 +40,40 @@ describe("chat read state", () => {
         "all",
       ).ids.size,
     ).toBe(0);
+  });
+
+  it("drops unread entries for NPC ranks hidden after the message was received", () => {
+    const titan = createChatMessage({
+      id: "titan",
+      type: "NPC",
+      npc: {
+        id: 10,
+        name: "Titan",
+        icon: "npc.png",
+        x: 1,
+        y: 2,
+        hpp: 100,
+        location: "Cave",
+        lvl: 300,
+        prof: "m",
+        type: 5,
+        wt: 100,
+      },
+    });
+    const state = receiveChatMessage({}, titan, false);
+    const reconcile = (hiddenNpcTypes: ReadonlySet<NpcTypeEnum>) =>
+      getChatUnreadSummary(
+        reconcileChatReadState(state, {
+          allowedGuildIds: new Set([titan.guildId]),
+          failedGuildIds: new Set(),
+          hiddenNpcTypes,
+          messagesByGuildId: { [titan.guildId]: [titan] },
+          hasAttention: () => false,
+        }),
+        titan.guildId,
+      );
+    expect(reconcile(new Set()).reports).toBe(true);
+    expect(reconcile(new Set([NpcTypeEnum.TITAN])).reports).toBe(false);
   });
 
   it("bounds received metadata per organization to the retained history", () => {
