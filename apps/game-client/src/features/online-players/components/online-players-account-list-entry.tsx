@@ -26,7 +26,7 @@ import {
   showCharacterEquipment,
   showCharacterProfile,
 } from "@/lib/margonem-runtime/adapters/character-action-runtime-adapter";
-import { Plus } from "lucide-react";
+import { Plus, Shirt, UserPlus, UserRound } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -270,15 +270,30 @@ export const OnlinePlayersAccountListEntry: FC<
           {canShowGameContextActions ? (
             <>
               <ContextMenuItem onClick={handleShowProfile}>
+                <UserRound
+                  aria-hidden="true"
+                  strokeWidth={1.5}
+                  className="ll:mr-2 ll:size-3.5 ll:shrink-0"
+                />
                 {t("contextMenu.showProfile")}
               </ContextMenuItem>
               <ContextMenuItem onClick={handleShowEquipment}>
+                <Shirt
+                  aria-hidden="true"
+                  strokeWidth={1.5}
+                  className="ll:mr-2 ll:size-3.5 ll:shrink-0"
+                />
                 {t("contextMenu.showEquipment")}
               </ContextMenuItem>
             </>
           ) : null}
           {canAddFriend ? (
             <ContextMenuItem onClick={handleAddFriend}>
+              <UserPlus
+                aria-hidden="true"
+                strokeWidth={1.5}
+                className="ll:mr-2 ll:size-3.5 ll:shrink-0"
+              />
               {t("contextMenu.addFriend")}
             </ContextMenuItem>
           ) : null}

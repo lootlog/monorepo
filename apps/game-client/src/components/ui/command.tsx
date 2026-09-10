@@ -26,13 +26,13 @@ function CommandInput({
   return (
     <div
       data-slot="command-input-wrapper"
-      className="ll:flex ll:h-6 ll:items-center ll:gap-1 ll:border-b ll:border-gray-400 ll:px-2"
+      className="ll:flex ll:h-6 ll:items-center ll:gap-1 ll:border-b ll:border-border ll:px-2"
     >
-      <Search className="ll:size-3 ll:shrink-0 ll:opacity-50 ll:text-white" />
+      <Search className="ll:size-3 ll:shrink-0 ll:opacity-50 ll:text-popover-foreground" />
       <CommandPrimitive.Input
         data-slot="command-input"
         className={cn(
-          "placeholder:ll:text-muted-foreground ll:flex ll:h-6 ll:w-full ll:bg-transparent ll:py-1 ll:text-xs ll:text-white ll:outline-none ll:border-none focus:ll:outline-none focus:ll:ring-0 focus-visible:ll:outline-none focus-visible:ll:ring-0 disabled:ll:cursor-not-allowed disabled:ll:opacity-50",
+          "placeholder:ll:text-muted-foreground ll:flex ll:h-6 ll:w-full ll:bg-transparent ll:py-1 ll:text-xs ll:text-popover-foreground ll:outline-none ll:border-none focus:ll:outline-none focus:ll:ring-0 focus-visible:ll:outline-none focus-visible:ll:ring-0 disabled:ll:cursor-not-allowed disabled:ll:opacity-50",
           className,
         )}
         {...props}
@@ -106,7 +106,7 @@ function CommandItem({
     <CommandPrimitive.Item
       data-slot="command-item"
       className={cn(
-        "data-[selected=true]:ll:bg-primary/50 data-[selected=true]:ll:text-accent-foreground [&_svg:not([class*='text-'])]:ll:text-muted-foreground ll:relative ll:flex ll:cursor-default ll:items-center ll:gap-2 ll:rounded-sm ll:px-1 ll:py-1.5 ll:text-sm ll:outline-hidden ll:select-none data-[disabled=true]:ll:pointer-events-none data-[disabled=true]:ll:opacity-50 [&_svg]:ll:pointer-events-none [&_svg]:ll:shrink-0 [&_svg:not([class*='size-'])]:ll:size-4",
+        "data-[selected=true]:ll:bg-muted data-[selected=true]:ll:text-popover-foreground [&_svg:not([class*='text-'])]:ll:text-muted-foreground ll:relative ll:flex ll:cursor-default ll:items-center ll:gap-2 ll:rounded-sm ll:text-popover-foreground ll:box-border ll:min-h-6 ll:px-2 ll:py-1 ll:text-[11px] ll:font-semibold ll:outline-hidden ll:select-none data-[disabled=true]:ll:pointer-events-none data-[disabled=true]:ll:opacity-50 [&_svg]:ll:pointer-events-none [&_svg]:ll:shrink-0 [&_svg:not([class*='size-'])]:ll:size-4",
         className,
       )}
       {...props}

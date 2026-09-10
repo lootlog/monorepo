@@ -59,7 +59,7 @@ export const TimerColorQuickPopover: FC<TimerColorQuickPopoverProps> = ({
         className="ll:w-[min(340px,calc(100vw-16px))] ll:p-3"
       >
         <div className="ll:flex ll:flex-col ll:gap-3">
-          <div className="ll:text-xs ll:font-semibold ll:text-white">
+          <div className="ll:text-xs ll:font-semibold ll:text-popover-foreground">
             {data.name}
           </div>
 
@@ -72,7 +72,7 @@ export const TimerColorQuickPopover: FC<TimerColorQuickPopoverProps> = ({
             ).map(([field, labelKey, ariaKey]) => (
               <label
                 key={field}
-                className="ll:flex ll:min-w-0 ll:flex-col ll:gap-1 ll:text-[10px] ll:text-gray-400"
+                className="ll:flex ll:min-w-0 ll:flex-col ll:gap-1 ll:text-[10px] ll:text-muted-foreground"
               >
                 {t(`settings.timers.colors.${labelKey}`)}
                 <div className="ll:flex ll:items-center ll:gap-1">
@@ -83,7 +83,7 @@ export const TimerColorQuickPopover: FC<TimerColorQuickPopoverProps> = ({
                       setDraft({ ...draft, [field]: event.target.value })
                     }
                     onBlur={() => onCommit(draft)}
-                    className="ll:h-8 ll:w-9 ll:shrink-0 ll:p-1"
+                    className="ll:text-popover-foreground ll:border-foreground/20 ll:h-8 ll:w-9 ll:shrink-0 ll:p-1"
                     aria-label={t(`settings.timers.colors.${labelKey}`)}
                   />
                   <Input
@@ -105,7 +105,7 @@ export const TimerColorQuickPopover: FC<TimerColorQuickPopoverProps> = ({
                         onOpenChange(false);
                       }
                     }}
-                    className="ll:min-w-0 ll:flex-1 ll:font-mono ll:text-[10px] ll:uppercase"
+                    className="ll:text-popover-foreground ll:border-foreground/20 ll:min-w-0 ll:flex-1 ll:font-mono ll:text-[10px] ll:uppercase"
                     aria-label={t(`settings.timers.colors.${ariaKey}`)}
                   />
                 </div>
@@ -113,7 +113,7 @@ export const TimerColorQuickPopover: FC<TimerColorQuickPopoverProps> = ({
             ))}
           </div>
 
-          <label className="ll:flex ll:flex-col ll:gap-1 ll:text-[10px] ll:text-gray-400">
+          <label className="ll:flex ll:flex-col ll:gap-1 ll:text-[10px] ll:text-muted-foreground">
             {t("settings.timers.colors.transparencyLabel")}
             <div className="ll:flex ll:items-center ll:gap-2">
               <Slider
@@ -135,14 +135,14 @@ export const TimerColorQuickPopover: FC<TimerColorQuickPopoverProps> = ({
                 className="ll:flex-1"
                 aria-label={t("settings.timers.colors.transparencyAria")}
               />
-              <span className="ll:w-8 ll:text-right ll:text-xs ll:text-white">
+              <span className="ll:w-8 ll:text-right ll:text-xs ll:text-popover-foreground">
                 {draft.backgroundAlpha}%
               </span>
             </div>
           </label>
 
           <div className="ll:flex ll:flex-col ll:gap-1">
-            <span className="ll:text-[10px] ll:uppercase ll:tracking-wide ll:text-gray-400">
+            <span className="ll:text-[10px] ll:uppercase ll:tracking-wide ll:text-muted-foreground">
               {t("settings.timers.colors.previewLabel")}
             </span>
             <TimerTileView

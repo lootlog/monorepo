@@ -62,9 +62,10 @@ export const TimerColorActionsPopover: FC<TimerColorActionsPopoverProps> = ({
       </PopoverTrigger>
       <PopoverContent role="dialog" align="end" className="ll:w-56 ll:p-2.5">
         <div className="ll:flex ll:flex-col ll:gap-2">
-          <label className="ll:flex ll:flex-col ll:gap-1 ll:text-[10px] ll:text-gray-400">
+          <label className="ll:flex ll:flex-col ll:gap-1 ll:text-[10px] ll:text-muted-foreground">
             {t("settings.timers.colors.nameLabel")}
             <Input
+              className="ll:text-popover-foreground ll:border-foreground/20"
               value={nameDraft}
               onChange={(event) => setNameDraft(event.target.value)}
               onBlur={commitName}
@@ -84,8 +85,8 @@ export const TimerColorActionsPopover: FC<TimerColorActionsPopoverProps> = ({
           {isDefault && isModified ? (
             <Button
               type="button"
-              variant="ghost"
-              className="ll:h-7 ll:justify-start ll:gap-2 ll:px-2"
+              variant="menu"
+              className="ll:h-7 ll:justify-start ll:gap-2 ll:border-0 ll:px-2"
               onClick={() => {
                 onReset();
                 onOpenChange(false);
@@ -98,8 +99,8 @@ export const TimerColorActionsPopover: FC<TimerColorActionsPopoverProps> = ({
 
           <Button
             type="button"
-            variant="destructive"
-            className="ll:h-7 ll:justify-start ll:gap-2 ll:px-2"
+            variant="menu"
+            className="ll:h-7 ll:justify-start ll:gap-2 ll:px-2 ll:text-red-700 ll:in-[.dark-theme]:text-red-400 ll:hover:bg-red-500/10 ll:focus-visible:bg-red-500/10"
             onClick={() => {
               onDelete();
               onOpenChange(false);

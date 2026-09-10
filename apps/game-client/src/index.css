@@ -378,3 +378,23 @@ body:has(> #lootlog-root) .all\:b {
   -moz-appearance: textfield;
   appearance: textfield;
 }
+
+:is(#lootlog-root, .ll-theme-boundary)
+  .ll-action-menu
+  :is([role="menuitem"], [data-variant="menu"]) {
+  position: relative;
+  border-radius: 0;
+}
+
+:is(#lootlog-root, .ll-theme-boundary)
+  .ll-action-menu
+  :is([role="menuitem"], [data-variant="menu"])
+  ~ :is([role="menuitem"], [data-variant="menu"])::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  border: 0;
+  border-top: 1px solid
+    color-mix(in oklab, var(--ll-color-gray-400) 40%, transparent);
+  pointer-events: none;
+}

@@ -56,14 +56,16 @@ export function ChatGatheringDetails({
             />
           )}
           <div className="ll:flex ll:min-h-8 ll:min-w-0 ll:flex-1 ll:flex-col ll:justify-center ll:gap-0.5">
-            <div className="ll:text-[11px] ll:font-semibold ll:text-gray-100">
+            <div className="ll:text-[11px] ll:font-semibold ll:text-inherit">
               {npc.name}
               {npc.lvl !== undefined && (
                 <span className="ll:font-normal">{` (${npc.lvl}${npc.prof ?? ""})`}</span>
               )}
             </div>
             {location && (
-              <div className="ll:text-[10px] ll:text-gray-400">{location}</div>
+              <div className="ll:text-[10px] ll:text-muted-foreground">
+                {location}
+              </div>
             )}
           </div>
           {action}
@@ -73,14 +75,16 @@ export function ChatGatheringDetails({
         <div className="ll:flex ll:min-w-0 ll:items-center ll:gap-1.5">
           <div className="ll:flex ll:min-w-0 ll:flex-1 ll:flex-col ll:gap-0.5">
             {description && (
-              <div className="ll:whitespace-pre-wrap ll:text-[11px] ll:text-gray-400">
+              <div className="ll:whitespace-pre-wrap ll:text-[11px] ll:text-muted-foreground">
                 <span aria-hidden="true">„</span>
                 <span>{description}</span>
                 <span aria-hidden="true">”</span>
               </div>
             )}
             {level && (
-              <div className="ll:text-[10px] ll:text-gray-300">{level}</div>
+              <div className="ll:text-[10px] ll:text-muted-foreground">
+                {level}
+              </div>
             )}
           </div>
           {!npc && action}

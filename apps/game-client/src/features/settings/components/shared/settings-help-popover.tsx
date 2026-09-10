@@ -25,7 +25,7 @@ export const SettingsHelpPopover = ({
     <Popover>
       <PopoverTrigger
         aria-label={t("settings.help.open")}
-        className="ll:ml-1 ll:inline-flex ll:size-4 ll:items-center ll:justify-center ll:border-0 ll:bg-transparent ll:p-0 ll:text-gray-400 ll-custom-cursor-pointer ll:hover:text-purple-300"
+        className="ll:ml-1 ll:inline-flex ll:size-4 ll:items-center ll:justify-center ll:border-0 ll:bg-transparent ll:p-0 ll:text-muted-foreground ll-custom-cursor-pointer ll:hover:text-purple-300"
       >
         <CircleHelp className="ll:size-3.5" />
       </PopoverTrigger>
@@ -34,29 +34,29 @@ export const SettingsHelpPopover = ({
         align="start"
         className="ll:w-56 ll:space-y-2 ll:text-[11px] ll:leading-4"
       >
-        <p className="ll:m-0 ll:text-gray-200">{description}</p>
+        <p className="ll:m-0 ll:text-popover-foreground">{description}</p>
         {dependency ? (
           <div>
-            <strong className="ll:text-gray-300">
+            <strong className="ll:text-muted-foreground">
               {t("settings.help.dependency")}
             </strong>{" "}
-            <span className="ll:text-gray-400">{dependency}</span>
+            <span className="ll:text-muted-foreground">{dependency}</span>
           </div>
         ) : null}
         {recommendation ? (
           <div>
-            <strong className="ll:text-purple-300">
+            <strong className="ll:text-popover-foreground">
               {t("settings.help.recommendation")}
             </strong>{" "}
-            <span className="ll:text-gray-300">{recommendation}</span>
+            <span className="ll:text-muted-foreground">{recommendation}</span>
           </div>
         ) : null}
         {example ? (
           <div>
-            <strong className="ll:text-gray-300">
+            <strong className="ll:text-muted-foreground">
               {t("settings.help.example")}
             </strong>{" "}
-            <span className="ll:text-gray-400">{example}</span>
+            <span className="ll:text-muted-foreground">{example}</span>
           </div>
         ) : null}
       </PopoverContent>

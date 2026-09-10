@@ -69,7 +69,7 @@ export const ChatQuickActionStrip = ({ guildId }: { guildId?: string }) => {
       <PopoverContent
         side="top"
         align="end"
-        className="ll:flex ll:flex-col ll:gap-0.5 ll:p-1"
+        className="ll-action-menu ll:flex ll:flex-col ll:gap-0 ll:p-0 ll:overflow-hidden"
         aria-label={t("quickActions.menu")}
       >
         {actions.map(
@@ -85,7 +85,7 @@ export const ChatQuickActionStrip = ({ guildId }: { guildId?: string }) => {
               key={key}
               aria-label={label}
               type="button"
-              variant="ghost"
+              variant="menu"
               className="ll:flex ll:w-full ll:justify-start ll:gap-2 ll:px-2"
               disabled={actionDisabled}
               onClick={() => {

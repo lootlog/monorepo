@@ -47,6 +47,7 @@
     "offline": "Dane timerów mogą być nieaktualne"
   },
   "contextMenu": {
+    "color": "Kolor",
     "creating": "Tworzenie timera...",
     "unpin": "Odepnij",
     "pin": "Przypnij",

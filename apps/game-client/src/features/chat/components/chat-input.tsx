@@ -838,15 +838,16 @@ export const ChatInput: FC<ChatInputProps> = ({
             >
               <div className="ll:flex ll:flex-col ll:gap-2">
                 <div className="ll:flex ll:flex-col ll:gap-1">
-                  <p className="ll:text-xs ll:font-semibold ll:text-white">
+                  <p className="ll:text-xs ll:font-semibold ll:text-popover-foreground">
                     {t("input.clearChatConfirm.title")}
                   </p>
-                  <p className="ll:text-[11px] ll:text-gray-300">
+                  <p className="ll:text-[11px] ll:text-muted-foreground">
                     {t("input.clearChatConfirm.description")}
                   </p>
                 </div>
                 <div className="ll:flex ll:justify-end ll:gap-2">
                   <Button
+                    variant="menu"
                     type="button"
                     onClick={() => {
                       setIsClearConfirmOpen(false);
@@ -856,9 +857,10 @@ export const ChatInput: FC<ChatInputProps> = ({
                     {t("input.clearChatConfirm.cancel")}
                   </Button>
                   <Button
+                    variant="menu"
                     type="button"
                     disabled={isClearingChat}
-                    className="ll:border-red-500/60 ll:bg-red-500/20 ll:text-red-100 ll:hover:bg-red-500/30 ll:disabled:opacity-50"
+                    className="ll:text-red-700 ll:in-[.dark-theme]:text-red-400 ll:hover:bg-red-500/10 ll:focus-visible:bg-red-500/10"
                     onClick={() => {
                       void handleClearChatConfirm();
                     }}
