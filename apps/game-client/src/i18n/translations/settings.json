@@ -21,6 +21,7 @@
     "general": "Ogólne",
     "servers": "Serwery",
     "appearance": "Wygląd",
+    "chat": "Chat",
     "timers": "Timery",
     "gameData": "Dane z gry",
     "notifications": "Powiadomienia",
@@ -32,7 +33,9 @@
   "subsections": {
     "behavior": "Zachowanie",
     "serverVisibility": "Widoczność",
-    "chat": "Chat",
+    "chatAppearance": "Wygląd",
+    "chatNotifications": "Powiadomienia",
+    "chatFilters": "Filtry",
     "npcColors": "Kolory NPC",
     "timerAppearance": "Wygląd timerów",
     "timerColors": "Kolory timerów",
@@ -286,7 +289,7 @@
   },
   "notifications": {
     "title": "Ustawienia powiadomień",
-    "description": "Skonfiguruj ustawienia powiadomień. Możesz dostosować, które typy NPC będą wywoływać powiadomienia oraz jak będą one prezentowane.",
+    "description": "Skonfiguruj ustawienia powiadomień. Możesz dostosować, które typy NPC będą wywoływać powiadomienia oraz jak będą one prezentowane. Powiadomienia z chatu znajdziesz w zakładce Chat.",
     "toggles": {
       "show": "Wyświetlaj",
       "ignoreOtherWorlds": "Ignoruj inne światy",
@@ -591,5 +594,17 @@
       "partyLeave": "Opuszczenie grupy",
       "customJson": "Własny JSON"
     }
+  },
+  "chatNotifications": {
+    "title": "Powiadomienia z chatu",
+    "description": "Ustaw, jak prezentować komunikaty graczy i zbiórki grupy z chatu."
+  },
+  "chatFilters": {
+    "hiddenNpcTypes": {
+      "title": "Ukryte typy NPC",
+      "description": "Wiadomości o NPC wybranych typów nie pojawią się w chacie i nie wywołają powiadomień o wzmiankach.",
+      "hide": "Ukryj wiadomości: {{npcType}}"
+    },
+    "saveError": "Nie udało się zapisać filtrów chatu."
   }
 }

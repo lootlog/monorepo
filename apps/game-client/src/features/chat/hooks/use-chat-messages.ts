@@ -1,5 +1,6 @@
 import { GatewayEvent } from "@/config/gateway";
 import { resolveNpcType } from "@lootlog/domain/npc-routing";
+import type { NpcTypeEnum } from "@lootlog/schema/npc-type";
 import type { PermissionsUpdatedPayload } from "@/lib/socket";
 import {
   applyChatAccessPolicy,
@@ -34,9 +35,30 @@ import {
 } from "@/features/chat/chat-query-cache.helpers";
 import { createChatCacheBatcher } from "@/features/chat/chat-cache-batcher";
 
+type MentionSourceNpc = { type: NpcTypeEnum; lvl: number };
+
+/**
+ * Resolves the NPC a mention originates from. Returns "skip" when the message
+ * carries malformed NPC data or its rank is hidden in chat.
+ */
+const resolveMentionSourceNpc = (
+  data: ChatMessage,
+  hiddenNpcTypes: ReadonlySet<NpcTypeEnum> | undefined,
+): MentionSourceNpc | undefined | "skip" => {
+  if (data.type !== "NPC" && !(data.type === "PARTY_GATHERING" && data.npc)) {
+    return undefined;
+  }
+  const type = resolveNpcType(data.npc);
+  if (!type || !data.npc || !Number.isFinite(data.npc.lvl) || data.npc.lvl < 0)
+    return "skip";
+  if (data.type === "NPC" && hiddenNpcTypes?.has(type)) return "skip";
+  return { type, lvl: data.npc.lvl };
+};
+
 type UseChatMessagesListenerOptions = {
   onRemoteMessage?: (data: ChatMessage) => void;
   prefetchMembers?: boolean;
+  hiddenNpcTypes?: ReadonlySet<NpcTypeEnum>;
 };
 
 export const useChatMessagesListener = (
@@ -61,6 +83,7 @@ export const useChatMessagesListener = (
   });
   const sessionDiscordIdRef = useRef(sessionData?.user?.discordId);
   const onRemoteMessageRef = useRef(options?.onRemoteMessage);
+  const hiddenNpcTypesRef = useRef(options?.hiddenNpcTypes);
   const wasJoinedRef = useRef(joined);
   const permissionGenerationRef = useRef(0);
   const guildPermissionGenerationsRef = useRef(new Map<string, number>());
@@ -81,7 +104,9 @@ export const useChatMessagesListener = (
       world: runtimeWorld,
     };
     onRemoteMessageRef.current = options?.onRemoteMessage;
+    hiddenNpcTypesRef.current = options?.hiddenNpcTypes;
   }, [
+    options?.hiddenNpcTypes,
     options?.onRemoteMessage,
     runtimeAccountId,
     runtimeHeroName,
@@ -198,21 +223,11 @@ export const useChatMessagesListener = (
           return;
         }
 
-        let sourceNpc: { type: string; lvl: number } | undefined;
-        if (
-          data.type === "NPC" ||
-          (data.type === "PARTY_GATHERING" && data.npc)
-        ) {
-          const type = resolveNpcType(data.npc);
-          if (
-            !type ||
-            !data.npc ||
-            !Number.isFinite(data.npc.lvl) ||
-            data.npc.lvl < 0
-          )
-            return;
-          sourceNpc = { type, lvl: data.npc.lvl };
-        }
+        const sourceNpc = resolveMentionSourceNpc(
+          data,
+          hiddenNpcTypesRef.current,
+        );
+        if (sourceNpc === "skip") return;
         const currentMember = await queryClient.fetchQuery({
           queryKey: getMembersControllerGetMeQueryKey({
             guildId: data.guildId,

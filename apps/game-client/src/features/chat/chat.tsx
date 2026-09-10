@@ -12,6 +12,8 @@ import { ChatView } from "./chat-view";
 import { useIntegratedChatHost } from "./hooks/use-integrated-chat-host";
 import { hasCurrentUserMention } from "./chat-mentions.helpers";
 import { receiveChatMessage, type ChatReadState } from "./chat-read-state";
+import { isHiddenNpcChatMessage } from "./chat.helpers";
+import { useChatSettingsDocuments } from "@/hooks/api/use-settings-documents";
 import type { ChatScrollPosition } from "./components/chat-transcript";
 
 export const Chat = () => {
@@ -42,10 +44,14 @@ export const Chat = () => {
   );
   const isVisible = integrated.target ? integrated.visible : open;
   const { shouldRender } = useWindowPresence(open);
+  const { hiddenNpcTypes } = useChatSettingsDocuments();
+  const hiddenNpcTypeSet = new Set(hiddenNpcTypes);
 
   useChatMessagesListener({
     prefetchMembers: isVisible,
+    hiddenNpcTypes: hiddenNpcTypeSet,
     onRemoteMessage: (message) => {
+      if (isHiddenNpcChatMessage(message, hiddenNpcTypeSet)) return;
       const heroName = useGameStore.getState().game?.hero.name ?? "";
       const attention =
         hasCurrentUserMention(message.message, {

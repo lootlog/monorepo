@@ -2118,6 +2118,7 @@ export type PatchSettingsDocumentsDtoOperationsItemDomain = typeof PatchSettings
 export const PatchSettingsDocumentsDtoOperationsItemDomain = {
   general: 'general',
   appearance: 'appearance',
+  chat: 'chat',
   timers: 'timers',
   gameData: 'gameData',
   notifications: 'notifications',

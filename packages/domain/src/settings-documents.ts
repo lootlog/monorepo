@@ -11,10 +11,12 @@ import {
   DEFAULT_NPC_TYPE_COLORS,
   isHexAppearanceColor,
 } from "@lootlog/schema/npc-appearance";
+import { NpcTypeSchema } from "@lootlog/schema/npc-type";
 
 export const SETTINGS_DOMAINS = [
   "general",
   "appearance",
+  "chat",
   "timers",
   "gameData",
   "notifications",
@@ -85,6 +87,7 @@ export interface SettingsDomainDefinition {
 const isBoolean = Schema.is(Schema.Boolean);
 const isString = Schema.is(Schema.String);
 const isStringArray = Schema.is(Schema.Array(Schema.String));
+const isNpcTypeArray = Schema.is(Schema.Array(NpcTypeSchema));
 const isNumberInRange = (minimum: number, maximum: number) =>
   Schema.is(Schema.Finite.check(Schema.isBetween({ minimum, maximum })));
 const isOneOf = <TValue extends string>(values: readonly TValue[]) =>
@@ -223,6 +226,13 @@ export const SETTINGS_CATALOG = {
       "timers.defaultColorNames": field({}, guildScopes, isRecord),
       "timers.overriddenDefaultColors": field({}, guildScopes, isRecord),
       "timers.hiddenDefaultColors": field([], guildScopes, isStringArray),
+    },
+  },
+  chat: {
+    schemaVersion: 1,
+    migrations: [],
+    fields: {
+      hiddenNpcTypes: field([], userScopes, isNpcTypeArray),
     },
   },
   timers: {

@@ -17768,6 +17768,7 @@ components:
                 enum:
                   - general
                   - appearance
+                  - chat
                   - timers
                   - gameData
                   - notifications
