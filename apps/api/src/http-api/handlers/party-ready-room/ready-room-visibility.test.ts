@@ -44,6 +44,7 @@ it("filters Organization, NPC tier, and level boundaries before exposing a gathe
       permissions: [
         Permission.LOOTLOG_CHAT_READ,
         Permission.LOOTLOG_CHAT_HEROES_READ,
+        Permission.LOOTLOG_NOTIFICATIONS_SEND,
       ],
       lvlRangeFrom: 100,
       lvlRangeTo: 200,
@@ -90,6 +91,13 @@ it("filters Organization, NPC tier, and level boundaries before exposing a gathe
       npc: { name: "NPC", location: "map", lvl: 150, type: "TITAN" },
     }),
   ).toEqual([]);
+  expect(
+    visible({
+      ...room,
+      organizerDiscordId: "member",
+      npc: { name: "NPC", location: "map", lvl: 0, type: "TITAN" },
+    }),
+  ).toEqual(["org"]);
   expect(
     await boundary.run(
       readyRoomSourceVisibility(database, "outsider", ["org"]).pipe(

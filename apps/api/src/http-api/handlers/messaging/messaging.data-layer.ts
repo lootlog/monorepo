@@ -8,7 +8,7 @@ import { Clock, Effect, Layer, Schema } from "effect";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
-import { Permission } from "@lootlog/schema/permissions";
+import { NOTIFICATION_SEND_PERMISSIONS } from "@lootlog/domain/npc-permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
 
 import {
@@ -145,13 +145,6 @@ export const consumeNotificationRateLimit = (
       }),
     );
 
-const permissionSet = [
-  Permission.LOOTLOG_NOTIFICATIONS_SEND,
-  Permission.OWNER,
-  Permission.ADMIN,
-  Permission.LOOTLOG_MANAGE,
-] as const;
-
 export const makeMessagingDataLayer = (
   redis: MessagingRedis,
   events: MessagingEvents,
@@ -165,9 +158,11 @@ export const makeMessagingDataLayer = (
           Effect.mapError((cause) => new MessagingOperationError({ cause })),
         );
       const guildIdsFor = (discordId: string) =>
-        selectAccessibleGuilds(database, discordId, permissionSet).pipe(
-          Effect.map((rows) => rows.map(({ guild }) => guild.id)),
-        );
+        selectAccessibleGuilds(
+          database,
+          discordId,
+          NOTIFICATION_SEND_PERMISSIONS,
+        ).pipe(Effect.map((rows) => rows.map(({ guild }) => guild.id)));
       const metadata = (notificationId: string) =>
         redis.get(`notification:${notificationId}`).pipe(
           Effect.map((value): NotificationMetadata | null => {

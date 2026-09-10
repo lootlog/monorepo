@@ -1,3 +1,5 @@
+import { Permission } from "@lootlog/schema/permissions";
+
 export type NpcPermissionData = {
   lvl: number;
   type: string;
@@ -8,6 +10,25 @@ export type RolePermissionData = {
   lvlRangeFrom: number;
   lvlRangeTo: number;
 };
+
+export const NOTIFICATION_SEND_PERMISSIONS = [
+  Permission.LOOTLOG_NOTIFICATIONS_SEND,
+  Permission.OWNER,
+  Permission.ADMIN,
+  Permission.LOOTLOG_MANAGE,
+] as const;
+
+export const canManageOwnPartyGathering = (
+  roles: readonly RolePermissionData[],
+  organizerDiscordId: string,
+  viewerDiscordId: string,
+): boolean =>
+  organizerDiscordId === viewerDiscordId &&
+  roles.some((role) =>
+    NOTIFICATION_SEND_PERMISSIONS.some((permission) =>
+      role.permissions.includes(permission),
+    ),
+  );
 
 export const NPC_FEATURE_PERMISSIONS = {
   timers: {

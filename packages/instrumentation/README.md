@@ -1,8 +1,10 @@
 # Service observability
 
-The seven backend services share `makeObservabilityLayer`. It installs JSON
-stdout logging, parent-based 10% root trace sampling, OTLP metrics and scoped
-process measurements. Keep one layer per service process. Promise-based logger
+The seven backend services share `makeObservabilityLayer`. It installs readable
+stdout logging only when the configured environment is `local`, with multiline
+stack traces and HTTP 5xx entries displayed at error level. All other environments
+retain JSON stdout logging. It also installs parent-based 10% root trace sampling,
+OTLP metrics and scoped process measurements. Keep one layer per service process. Promise-based logger
 adapters use `installScopedLogRunner` inside that layer's scope to retain service
 identity and the current trace context.
 

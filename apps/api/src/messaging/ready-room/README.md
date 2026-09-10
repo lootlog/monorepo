@@ -15,6 +15,13 @@ retain their existing behavior. New chat NPC reports also carry an optional
 `npc.world`; historical reports without it remain readable but must not initiate
 source-dependent actions.
 
+An organizer with current gathering-creation permission in an Organization can
+read and cancel their own gathering regardless of NPC tier or level restrictions.
+The shared policy applies to HTTP discovery, details, owned lists and gateway
+projection delivery. Other viewers retain the NPC source restrictions; ownership
+never grants access to another Organization. Deploy API and gateway together for
+this organizer recovery behavior; persisted rooms need no migration.
+
 Discovery summaries include nonnegative integer `applicantCount` and
 `inPartyCount` values derived from registered characters. Both exclude the
 organizer character, even if explicitly registered; `inPartyCount` includes only

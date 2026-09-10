@@ -3,6 +3,7 @@ import { and, eq, inArray, isNotNull } from "drizzle-orm";
 import { Permission } from "@lootlog/schema/permissions";
 import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
 import {
+  canManageOwnPartyGathering,
   hasRolePermissionInLevelRange,
   NPC_FEATURE_PERMISSIONS,
 } from "@lootlog/domain/npc-permissions";
@@ -46,7 +47,8 @@ export const readyRoomSourceVisibility = Effect.fn("readyRoomSourceVisibility")(
         const roles = matching.flatMap(({ role }) => (role ? [role] : []));
         if (
           matching.some(({ guild }) => guild.ownerId === discordId) ||
-          roles.some((role) => role.permissions.includes(Permission.ADMIN))
+          roles.some((role) => role.permissions.includes(Permission.ADMIN)) ||
+          canManageOwnPartyGathering(roles, room.organizerDiscordId, discordId)
         )
           return true;
         const base = NPC_FEATURE_PERMISSIONS.chat.base;

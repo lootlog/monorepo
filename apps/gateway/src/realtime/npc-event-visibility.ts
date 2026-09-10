@@ -1,4 +1,5 @@
 import {
+  canManageOwnPartyGathering,
   hasRolePermissionInLevelRange,
   NPC_FEATURE_PERMISSIONS,
 } from "@lootlog/domain/npc-permissions";
@@ -34,6 +35,16 @@ const decodeEventHeroSource = Schema.decodeUnknownOption(
   Schema.Struct({
     guildId: Schema.String,
     heroNpcLvl: Schema.NullOr(NonNegativeInt),
+  }),
+);
+
+const decodeReadyRoomOrganizer = Schema.decodeUnknownOption(
+  Schema.Struct({
+    type: Schema.Literal("UPSERT"),
+    projection: Schema.Struct({
+      organizerDiscordId: Schema.String,
+      guildIds: Schema.Array(Schema.String),
+    }),
   }),
 );
 
@@ -214,6 +225,23 @@ const isUnscopedReadyRoomUpdate = (event: Event): boolean => {
   );
 };
 
+const canReadOwnReadyRoom = (
+  session: SessionData,
+  event: Extract<NpcEvent, { type: "party-ready-room.updated" }>,
+  guild: UserGuildData,
+): boolean => {
+  const update = decodeReadyRoomOrganizer(event.data.payload);
+  return (
+    Option.isSome(update) &&
+    update.value.projection.guildIds.includes(event.data.organizationId) &&
+    canManageOwnPartyGathering(
+      guild.roles,
+      update.value.projection.organizerDiscordId,
+      session.discordId,
+    )
+  );
+};
+
 export const canReadNpcSourceEvent = (
   session: SessionData,
   event: Event,
@@ -245,6 +273,11 @@ export const canReadNpcSourceEvent = (
       const routing = eventRouting(event);
       if (!guild || !routing) return false;
       if (isOrganizationAdministrator(session, event.data.organizationId))
+        return true;
+      if (
+        event.type === "party-ready-room.updated" &&
+        canReadOwnReadyRoom(session, event, guild)
+      )
         return true;
       return canReadFeatureEvent(guild, event, routing);
     }

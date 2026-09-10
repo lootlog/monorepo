@@ -7,7 +7,7 @@ import {
 import { randomUUID } from "node:crypto";
 
 import { Effect, Layer } from "effect";
-import { Permission } from "@lootlog/schema/permissions";
+import { NOTIFICATION_SEND_PERMISSIONS } from "@lootlog/domain/npc-permissions";
 import type {
   PartyGatheringNpc,
   PartyReadyRoomCharacter,
@@ -40,12 +40,6 @@ import {
 
 const ROOM_LIFETIME_MS = 30 * 60 * 1000;
 const MAX_CAS_ATTEMPTS = 4;
-const readyRoomPermissions = [
-  Permission.LOOTLOG_NOTIFICATIONS_SEND,
-  Permission.OWNER,
-  Permission.ADMIN,
-  Permission.LOOTLOG_MANAGE,
-] as const;
 
 export interface ReadyRoomEffects {
   readonly publish: (
@@ -238,9 +232,11 @@ export const makeReadyRoomDataLayer = (
       };
 
       const accessibleGuildIds = (discordId: string) =>
-        selectAccessibleGuilds(database, discordId, readyRoomPermissions).pipe(
-          Effect.map((rows) => rows.map(({ guild }) => guild.id)),
-        );
+        selectAccessibleGuilds(
+          database,
+          discordId,
+          NOTIFICATION_SEND_PERMISSIONS,
+        ).pipe(Effect.map((rows) => rows.map(({ guild }) => guild.id)));
 
       const projectionGuildIds = (
         aggregate: ReadyRoomAggregate,

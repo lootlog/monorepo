@@ -5,16 +5,26 @@ import { HttpRouter } from "effect/unstable/http";
 import { HttpApi, HttpApiBuilder } from "effect/unstable/httpapi";
 import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import { guildTable } from "#src/database/drizzle/schema";
+import {
+  guildTable,
+  memberTable,
+  roleTable,
+  memberToRoleTable,
+} from "#src/database/drizzle/schema";
 import { PartyReadyRoomAggregateSchema } from "@lootlog/schema/party-ready-room";
+import { Permission } from "@lootlog/schema/permissions";
 import {
   COMMIT_READY_ROOM_SCRIPT,
   EXIT_READY_ROOM_PARTICIPANT_SCRIPT,
+  TERMINATE_READY_ROOM_SCRIPT,
 } from "#src/messaging/ready-room/ready-room-redis-scripts";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import type { ReadyRoomAggregate } from "#src/messaging/ready-room/ready-room.types";
 import { createDatabaseBoundary } from "../../../../test/database-fixtures.js";
-import { createGuildFixture } from "../../../../test/organization-fixtures.js";
+import {
+  createGuildFixture,
+  createMemberFixture,
+} from "../../../../test/organization-fixtures.js";
 import { PartyReadyRoomGroup } from "../../contracts/party-ready-room/api.js";
 import { BearerSecurityMiddleware } from "../../contracts/shared.js";
 import {
@@ -24,7 +34,7 @@ import {
 import { makeReadyRoomDataLayer } from "./ready-room.data-layer.js";
 import type { ReadyRoomRedis } from "./ready-room.repository.js";
 
-it("encodes minimal and NPC discovery summaries without leaking hidden Organizations", async () => {
+it("lets senders discover and cancel their own NPC gatherings outside read filters without leaking hidden Organizations", async () => {
   const databaseBoundary = await createDatabaseBoundary();
   const caller = { userId: "user", discordId: "owner" };
   const clock = () => Date.parse("2026-09-09T10:00:00Z");
@@ -104,6 +114,11 @@ it("encodes minimal and NPC discovery summaries without leaking hidden Organizat
       },
     },
     { ...base, notificationId: "hidden", guildIds: ["hidden"] },
+    {
+      ...base,
+      notificationId: "own-filtered",
+      npc: { name: "Training NPC", location: "Map", lvl: 0, type: "TITAN" },
+    },
   ];
   const redis: ReadyRoomRedis = {
     getJson: (key, schema) => {
@@ -116,6 +131,7 @@ it("encodes minimal and NPC discovery summaries without leaking hidden Organizat
     },
     eval: (script, _keys, args) => {
       if (
+        script === TERMINATE_READY_ROOM_SCRIPT ||
         script === COMMIT_READY_ROOM_SCRIPT ||
         script === EXIT_READY_ROOM_PARTICIPANT_SCRIPT
       ) {
@@ -164,9 +180,38 @@ it("encodes minimal and NPC discovery summaries without leaking hidden Organizat
       databaseBoundary.database
         .insert(guildTable)
         .values([
-          createGuildFixture({ id: "visible", ownerId: "owner" }),
+          createGuildFixture({ id: "visible", ownerId: "different-owner" }),
           createGuildFixture({ id: "hidden", ownerId: "other" }),
         ]),
+    );
+    await databaseBoundary.run(
+      databaseBoundary.database.insert(memberTable).values(
+        createMemberFixture({
+          id: 1,
+          guildId: "visible",
+          userId: "owner",
+          globalUserId: "user",
+        }),
+      ),
+    );
+    await databaseBoundary.run(
+      databaseBoundary.database.insert(roleTable).values({
+        id: "sender",
+        guildId: "visible",
+        name: "Sender",
+        updatedAt: new Date(),
+        permissions: [
+          Permission.LOOTLOG_NOTIFICATIONS_SEND,
+          Permission.LOOTLOG_CHAT_READ,
+        ],
+        lvlRangeFrom: 200,
+        lvlRangeTo: 500,
+      }),
+    );
+    await databaseBoundary.run(
+      databaseBoundary.database
+        .insert(memberToRoleTable)
+        .values({ A: 1, B: "sender" }),
     );
     const response = await boundary.handler(
       new Request(
@@ -209,6 +254,11 @@ it("encodes minimal and NPC discovery summaries without leaking hidden Organizat
           x: 0,
           y: 12,
         },
+      },
+      {
+        ...summary,
+        notificationId: "own-filtered",
+        npc: { name: "Training NPC", location: "Map", lvl: 0, type: "TITAN" },
       },
     ]);
     const observation = await boundary.handler(
@@ -273,6 +323,54 @@ it("encodes minimal and NPC discovery summaries without leaking hidden Organizat
         }),
       ]),
     );
+    const list = await boundary.handler(
+      new Request("http://api.test/messaging/party-gathering", {
+        headers: { authorization: "Bearer test" },
+      }),
+    );
+    expect(list.status).toBe(200);
+    expect(await list.json()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          notificationId: "own-filtered",
+          viewer: "ORGANIZER",
+          guildIds: ["visible"],
+        }),
+      ]),
+    );
+    const detail = await boundary.handler(
+      new Request("http://api.test/messaging/party-gathering/own-filtered", {
+        headers: { authorization: "Bearer test" },
+      }),
+    );
+    expect(detail.status).toBe(200);
+    expect(await detail.json()).toMatchObject({
+      notificationId: "own-filtered",
+      revision: 1,
+      viewer: "ORGANIZER",
+      guildIds: ["visible"],
+    });
+    const cancel = await boundary.handler(
+      new Request(
+        "http://api.test/messaging/party-gathering/own-filtered/cancel",
+        {
+          method: "POST",
+          headers: {
+            authorization: "Bearer test",
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({ expectedRevision: 1 }),
+        },
+      ),
+    );
+    expect(cancel.status).toBe(201);
+    expect(await cancel.json()).toMatchObject({
+      type: "REMOVE",
+      notificationId: "own-filtered",
+    });
+    expect(
+      rooms.find((room) => room.notificationId === "own-filtered")?.status,
+    ).toBe("CANCELLED");
   } finally {
     await boundary.dispose();
     await databaseBoundary.dispose();
