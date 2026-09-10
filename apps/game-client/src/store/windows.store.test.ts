@@ -263,6 +263,21 @@ describe("migrateWindowsState", () => {
     });
   });
 
+  it("keeps a pre-domain appearance tab on the chat appearance destination", () => {
+    const migrated = migrateWindowsState(
+      {
+        settings: { open: true, state: { activeTab: "appearance" } },
+        windowFocusHistory: [],
+      },
+      11,
+    );
+
+    expect(migrated).toHaveProperty("settings.state", {
+      activeTab: "chat",
+      activeSubsection: "chat-appearance",
+    });
+  });
+
   it("moves the persisted chat appearance path into the chat domain", () => {
     const migrateSettingsPath = (state: {
       activeTab: string;
