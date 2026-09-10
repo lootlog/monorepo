@@ -59,6 +59,10 @@ const areMapPingsEnabled = () => {
   return preferences?.pings.enabled ?? false;
 };
 
+const onMapPingCancel = () => {
+  mapPingInteractionController.cancel();
+};
+
 export const useMapPings = () => {
   const { socket, connected, joined } = useSocket();
   const isNewInterface = useGameStore(
@@ -313,10 +317,6 @@ export const useMapPings = () => {
     if (submission) {
       sendMapPing(submission);
     }
-  };
-
-  const onMapPingCancel = () => {
-    mapPingInteractionController.cancel();
   };
 
   return {

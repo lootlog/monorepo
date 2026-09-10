@@ -1,4 +1,5 @@
-import { useEffect, useState, type FC } from "react";
+import type { FC } from "react";
+import { useLottieAnimation } from "./use-lottie-animation";
 
 import { CatPawLottie } from "./cat-paw-lottie";
 
@@ -6,24 +7,10 @@ interface CatPawSpinnerProps {
   className?: string;
 }
 
-let cachedAnimationData: object | null = null;
-
 export const CatPawSpinner: FC<CatPawSpinnerProps> = ({ className }) => {
-  const [animationData, setAnimationData] = useState<object | null>(
-    cachedAnimationData,
+  const { data: animationData } = useLottieAnimation(
+    "/lottie/cat-paw-loading.json",
   );
-
-  useEffect(() => {
-    if (cachedAnimationData) return;
-
-    fetch("/lottie/cat-paw-loading.json")
-      .then((res) => res.json())
-      .then((data) => {
-        cachedAnimationData = data;
-        setAnimationData(data);
-      })
-      .catch(() => {});
-  }, []);
 
   if (!animationData) return null;
 

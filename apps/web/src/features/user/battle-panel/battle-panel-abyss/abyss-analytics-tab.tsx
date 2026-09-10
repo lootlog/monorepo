@@ -17,80 +17,80 @@ type AbyssAnalyticsSearch = {
   matchmaking?: boolean;
 };
 
+type AnalyticsResult<T> = { data?: T; isLoading: boolean };
+
 type AbyssAnalyticsTabProps = {
-  combatProfile?: ComponentProps<typeof CombatProfileOverview>["data"];
-  durationData?: ComponentProps<typeof BattleDurationStatsCard>["data"];
-  isCombatProfileLoading: boolean;
-  isDurationLoading: boolean;
-  isProfessionLoading: boolean;
-  isRatingDeltaLoading: boolean;
-  isRatingGrowthLoading: boolean;
-  isStreakLoading: boolean;
-  professionData?: ComponentProps<typeof ProfessionWinRateChart>["data"];
-  ratingDeltaData?: ComponentProps<typeof RatingDeltaByOpponentCard>["data"];
-  ratingGrowthData?: ComponentProps<typeof RatingGrowthChart>["data"];
+  combatProfile: AnalyticsResult<
+    ComponentProps<typeof CombatProfileOverview>["data"]
+  >;
+  duration: AnalyticsResult<
+    ComponentProps<typeof BattleDurationStatsCard>["data"]
+  >;
+  profession: AnalyticsResult<
+    ComponentProps<typeof ProfessionWinRateChart>["data"]
+  >;
+  ratingDelta: AnalyticsResult<
+    ComponentProps<typeof RatingDeltaByOpponentCard>["data"]
+  >;
+  ratingGrowth: AnalyticsResult<
+    ComponentProps<typeof RatingGrowthChart>["data"]
+  >;
+  streak: AnalyticsResult<ComponentProps<typeof CurrentStreakCard>["data"]>;
   search: AbyssAnalyticsSearch;
-  streakData?: ComponentProps<typeof CurrentStreakCard>["data"];
 };
 
 export function AbyssAnalyticsTab({
   combatProfile,
-  durationData,
-  isCombatProfileLoading,
-  isDurationLoading,
-  isProfessionLoading,
-  isRatingDeltaLoading,
-  isRatingGrowthLoading,
-  isStreakLoading,
-  professionData,
-  ratingDeltaData,
-  ratingGrowthData,
+  duration,
+  profession,
+  ratingDelta,
+  ratingGrowth,
+  streak,
   search,
-  streakData,
 }: AbyssAnalyticsTabProps) {
   return (
     <div className="flex min-w-0 flex-col gap-4">
       <CombatProfileOverview
-        data={combatProfile}
-        isLoading={isCombatProfileLoading}
+        data={combatProfile.data}
+        isLoading={combatProfile.isLoading}
       />
 
       <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
         <CurrentStreakCard
           data={
-            streakData ?? {
+            streak.data ?? {
               current: { type: "none", count: 0 },
               longest: { wins: 0, losses: 0 },
             }
           }
-          isLoading={isStreakLoading}
+          isLoading={streak.isLoading}
         />
         <BattleDurationStatsCard
           data={
-            durationData ?? {
+            duration.data ?? {
               avgWinDuration: 0,
               avgLossDuration: 0,
               fastest: null,
               longest: null,
             }
           }
-          isLoading={isDurationLoading}
+          isLoading={duration.isLoading}
         />
         <RatingGrowthChart
-          data={ratingGrowthData ?? []}
-          isLoading={isRatingGrowthLoading}
+          data={ratingGrowth.data ?? []}
+          isLoading={ratingGrowth.isLoading}
         />
       </div>
 
       <div className="grid min-w-0 grid-cols-1 gap-4 2xl:grid-cols-2">
         <ProfessionWinRateChart
-          data={professionData ?? []}
-          isLoading={isProfessionLoading}
+          data={profession.data ?? []}
+          isLoading={profession.isLoading}
         />
         <RatingDeltaByOpponentCard
-          data={ratingDeltaData ?? []}
+          data={ratingDelta.data ?? []}
           search={search}
-          isLoading={isRatingDeltaLoading}
+          isLoading={ratingDelta.isLoading}
         />
       </div>
     </div>

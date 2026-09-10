@@ -519,14 +519,14 @@ const formatOutfit: StatValueFormatter = (key, value) => {
 
 const formatPet: StatValueFormatter = (key, value) => {
   const entries = toStringValue(value).split(",");
-  const tasks = entries
-    .slice(2)
-    .filter(
-      (entry) => !["elite", "heroic", "legendary", "quest"].includes(entry),
-    )
-    .flatMap((entry) => entry.split("|"))
-    .map((entry) => entry.replace(/#.*/, ""))
-    .filter(Boolean);
+  const tasks: string[] = [];
+  for (const entry of entries.slice(2)) {
+    if (["elite", "heroic", "legendary", "quest"].includes(entry)) continue;
+    for (const task of entry.split("|")) {
+      const description = task.replace(/#.*/, "");
+      if (description) tasks.push(description);
+    }
+  }
 
   return {
     key: entries.includes("quest") ? `${key}.quest` : `${key}.default`,

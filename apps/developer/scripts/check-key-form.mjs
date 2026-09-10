@@ -314,7 +314,7 @@ try {
   await page.getByRole("button", { name: "Create key", exact: true }).click();
   const createPanel = page.getByRole("dialog");
   assert.ok(await createPanel.isVisible());
-  for (const width of [320, 390]) {
+  const assertMobileFormFitsViewport = async (width) => {
     await page.setViewportSize({ width, height: 844 });
     await page.waitForFunction(() => {
       const panel = document.querySelector('[role="dialog"]');
@@ -328,7 +328,9 @@ try {
         panelBounds.x + panelBounds.width <= width,
       `Mobile form stays within ${width}px viewport`,
     );
-  }
+  };
+  await assertMobileFormFitsViewport(320);
+  await assertMobileFormFitsViewport(390);
   await page.locator("#key-name").fill("Personal integration");
   await page
     .getByRole("dialog")

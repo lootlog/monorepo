@@ -13,8 +13,9 @@ export function ChatGatheringHeader({ organizerDiscordId, guildIds }: Props) {
   const { t } = useTranslation("chat");
   const { visibleGuilds } = useVisibleLootlogGuilds();
   const selectedGuildId = useChatStore(getSelectedChatGuildId);
+  const gatheringGuildIds = new Set(guildIds);
   const gatheringGuilds = visibleGuilds.filter((guild) =>
-    guildIds.includes(guild.id),
+    gatheringGuildIds.has(guild.id),
   );
   const guildId =
     gatheringGuilds.find((guild) => guild.id === selectedGuildId)?.id ??

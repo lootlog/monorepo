@@ -1,3 +1,4 @@
+import { getNotificationFieldVisibility } from "../utils/notification-field-visibility";
 import { z } from "zod";
 import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -129,37 +130,6 @@ const getRuleFormDefaultValues = (
   };
 };
 
-const getNotificationFieldVisibility = (
-  triggerType: CreateNotificationRuleDtoTriggerType,
-  intervalType: NotificationScheduleIntervalType | undefined,
-) => {
-  const isScheduledMessage =
-    triggerType === NotificationTriggerType.SCHEDULED_MESSAGE;
-  const isRecurring =
-    isScheduledMessage &&
-    intervalType !== undefined &&
-    intervalType !== NotificationScheduleIntervalType.ONCE;
-
-  return {
-    isScheduledMessage,
-    isRecurring,
-    showScheduledAtField:
-      isScheduledMessage &&
-      (intervalType === NotificationScheduleIntervalType.ONCE ||
-        intervalType === NotificationScheduleIntervalType.HOURLY),
-    showTimeOfDayField:
-      isScheduledMessage &&
-      (intervalType === NotificationScheduleIntervalType.DAILY ||
-        intervalType === NotificationScheduleIntervalType.WEEKLY),
-    showWeekdayField:
-      isScheduledMessage &&
-      intervalType === NotificationScheduleIntervalType.WEEKLY,
-    showIntervalValueField:
-      isScheduledMessage &&
-      intervalType === NotificationScheduleIntervalType.HOURLY,
-  };
-};
-
 const getWorldOptions = (
   worlds: string[],
   ruleWorld: string | null | undefined,
@@ -266,10 +236,17 @@ export const useNotificationRuleForm = () => {
       },
     },
   });
-  const [npcSearch, setNpcSearch] = useState("");
-  const [extraTargets, setExtraTargets] = useState<
-    NotificationTargetResponseDto[]
-  >([]);
+  const [draftOptions, setDraftOptions] = useState<{
+    rule: typeof rule;
+    npcSearch: string;
+    extraTargets: NotificationTargetResponseDto[];
+  }>({ rule, npcSearch: "", extraTargets: [] });
+  const npcSearch = draftOptions.rule === rule ? draftOptions.npcSearch : "";
+  const extraTargets =
+    draftOptions.rule === rule ? draftOptions.extraTargets : [];
+  const setNpcSearch = (value: string) => {
+    setDraftOptions({ rule, npcSearch: value, extraTargets });
+  };
   const [formResetKey, setFormResetKey] = useState(0);
   const [isCreateTargetDialogOpen, setIsCreateTargetDialogOpen] =
     useState(false);
@@ -281,8 +258,6 @@ export const useNotificationRuleForm = () => {
 
   useEffect(() => {
     form.reset(getRuleFormDefaultValues(rule));
-    setNpcSearch("");
-    setExtraTargets([]);
     setFormResetKey((prev) => prev + 1);
   }, [form, rule, t]);
 
@@ -350,7 +325,14 @@ export const useNotificationRuleForm = () => {
   const handleTargetCreated = (
     createdTarget: NotificationTargetResponseDto,
   ) => {
-    setExtraTargets((currentTargets) => [...currentTargets, createdTarget]);
+    setDraftOptions((current) => ({
+      rule,
+      npcSearch: current.rule === rule ? current.npcSearch : "",
+      extraTargets: [
+        ...(current.rule === rule ? current.extraTargets : []),
+        createdTarget,
+      ],
+    }));
     form.setValue(
       "targetIds",
       Array.from(

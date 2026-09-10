@@ -24,7 +24,7 @@ export const QuickAccessButton: FC<QuickAccessButtonProps> = ({
 
   const handleClick = () => {
     if (href) {
-      window.open(href, "_blank");
+      window.open(href, "_blank", "noopener");
     } else if (id !== "lootlog-app") {
       toggleOpen(id);
     }

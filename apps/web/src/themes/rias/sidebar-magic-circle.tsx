@@ -1,11 +1,11 @@
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
-import { motion } from "framer-motion";
+import * as m from "framer-motion/m";
 
 export const SidebarMagicCircle = () => {
   const prefersReducedMotion = usePrefersReducedMotion();
   return (
     <div className="flex items-center justify-center py-4 mt-auto pointer-events-none">
-      <motion.svg
+      <m.svg
         key={String(prefersReducedMotion)}
         viewBox="0 0 200 200"
         fill="none"
@@ -164,7 +164,7 @@ export const SidebarMagicCircle = () => {
           strokeWidth="0.8"
           strokeLinecap="round"
         />
-      </motion.svg>
+      </m.svg>
     </div>
   );
 };

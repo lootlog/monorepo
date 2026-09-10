@@ -3,10 +3,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import {
-  BATTLE_BADGE_COLORS,
-  BATTLE_SURFACE_COLORS,
-} from "@/components/battle/utils/battle-color-palette";
+import { BATTLE_BADGE_COLORS } from "@/components/battle/utils/battle-color-palette";
 import { cn } from "cn";
 import { Flag, Trophy, XCircle, type LucideIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -42,24 +39,6 @@ const BATTLE_RESULT_STATUS_CONFIG: Record<
     icon: Flag,
     labelKey: "battlePanel.list.results.flee",
   },
-};
-
-export const getBattleResultRowClassName = (
-  result?: BattleResultStatusValue | null,
-) => {
-  if (result === "won") {
-    return BATTLE_SURFACE_COLORS.resultRow.won;
-  }
-
-  if (result === "lost") {
-    return BATTLE_SURFACE_COLORS.resultRow.lost;
-  }
-
-  if (result !== "flee") {
-    return BATTLE_SURFACE_COLORS.resultRow.unknown;
-  }
-
-  return BATTLE_SURFACE_COLORS.resultRow.flee;
 };
 
 const isBattleResultStatusValue = (

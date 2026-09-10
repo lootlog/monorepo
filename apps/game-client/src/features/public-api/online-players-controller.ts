@@ -221,10 +221,14 @@ export class PublicOnlinePlayersController {
       return;
     }
     this.accessPolicy = payload.accessPolicy;
+    const organizations = new Map(
+      payload.accessPolicy.organizations.map((organization) => [
+        organization.organizationId,
+        organization,
+      ]),
+    );
     for (const [key, scope] of this.scopes) {
-      const policy = payload.accessPolicy.organizations.find(
-        (organization) => organization.organizationId === scope.guildId,
-      );
+      const policy = organizations.get(scope.guildId);
       const changes =
         payload.changes?.filter(
           (change) =>
@@ -385,9 +389,9 @@ export class PublicOnlinePlayersController {
     if (!this.active || !connected || !joined) return;
 
     await Promise.allSettled(
-      [...this.scopes.entries()]
-        .filter(([key]) => !keys || keys.has(key))
-        .map(([, scope]) => this.fetchScope(scope, true)),
+      [...this.scopes.entries()].flatMap(([key, scope]) =>
+        !keys || keys.has(key) ? [this.fetchScope(scope, true)] : [],
+      ),
     );
   }
 }

@@ -1,248 +1,57 @@
-import { PageHeader } from "@/components/common/page-header";
-import { createBattlePanelCursorActions } from "../components/battle-panel-cursor-actions";
 import { PlayerTile } from "@/components/battle";
+import { PageHeader } from "@/components/common/page-header";
 import { LevelRangeFilter } from "@/components/filters/level-range-filter";
+import { MobileFiltersDrawer } from "@/components/filters/mobile-filters-drawer";
 import { PeriodSelector } from "@/components/filters/period-selector";
+import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
-import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
-import {
-  buildPlayerVsPlayerFilterLabels,
-  getResetPlayerVsPlayerFilters,
-  removePlayerVsPlayerFilter,
-} from "@/features/user/battle-panel/components/battle-panel-active-filter-helpers";
 import { getPlayerVsPlayerBattleResult } from "@/features/user/battle-panel/components/battle-panel-battle-presentation";
 import { BattlePanelEmptyState } from "@/features/user/battle-panel/components/battle-panel-empty-state";
-import { MobileFiltersDrawer } from "@/components/filters/mobile-filters-drawer";
 import { BattlePanelPaginationFooter } from "@/features/user/battle-panel/components/battle-panel-pagination-footer";
 import { BattlePanelPvpBattleCard } from "@/features/user/battle-panel/components/battle-panel-pvp-battle-card";
 import { BattlePanelResultsSurface } from "@/features/user/battle-panel/components/battle-panel-results-surface";
-import { getBattleResultRowClassName } from "@/features/user/battle-panel/components/battle-result-status";
-import {
-  battlePanelPlayerVsPlayerSearchParsers,
-  getBattlePanelPageIndex,
-  normalizeBattlePanelCharacterId,
-  resetBattlePanelCursorPagination,
-  type Period,
-} from "@/features/user/battle-panel/battle-panel-search";
-import {
-  useBattlesControllerGetPlayerVsPlayerBattles,
-  type PlayerVsPlayerPaginatedResponseDtoOutput,
-} from "@lootlog/client/battlelog";
+import { getBattleResultRowClassName } from "@/features/user/battle-panel/components/battle-result-row-class-name";
 import { getRouteErrorMessage } from "@/lib/router/route-errors";
 import { Label } from "@lootlog/ui/components/label";
 import { Separator } from "@lootlog/ui/components/separator";
 import { Table } from "@lootlog/ui/components/table";
-import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { cn } from "cn";
-import { useNavigate, useParams } from "@tanstack/react-router";
-import { useTable } from "@tanstack/react-table";
 import { AlertCircle, ArrowRight, SearchX, Swords } from "lucide-react";
-import { useQueryStates } from "nuqs";
-import { useState, type KeyboardEvent } from "react";
-import { useTranslation } from "react-i18next";
+import { usePlayerVsPlayerPage } from "./use-player-vs-player-page";
 
-import { playerVsPlayerColumns } from "./components/player-vs-player-columns";
 import { PlayerVsPlayerFilterToolbar } from "./components/player-vs-player-filter-toolbar";
-import { coreTableFeatures } from "@/lib/tanstack-table-features";
-
-const getPlayerVsPlayerRequestIds = (
-  currentCharacterId: string | undefined,
-  ownCharacterId: string | undefined,
-  opponentId: string | undefined,
-) => ({
-  characterId: currentCharacterId ?? ownCharacterId,
-  opponentId: opponentId ?? "",
-});
-
-const getPlayerVsPlayerTableView = (
-  data: PlayerVsPlayerPaginatedResponseDtoOutput | undefined,
-  opponentNameCandidate: string | undefined,
-  opponentNameFallback: string,
-) => ({
-  opponentName: opponentNameCandidate ?? opponentNameFallback,
-  battles: data?.battles ?? [],
-  totalCount: data?.pagination?.total ?? 0,
-  visibleCount: data?.battles.length ?? 0,
-});
 
 export function PlayerVsPlayerFullPage() {
-  const { t } = useTranslation();
-  const navigate = useNavigate();
-  const isMobile = useIsMobile();
-  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
-  const params = useParams({ strict: false });
-
-  const opponentId = params.opponentId ?? params.myId;
-  const [queryState, setQueryState] = useQueryStates(
-    battlePanelPlayerVsPlayerSearchParsers,
-  );
-  const resolvePageState = () => ({
-    pageIndex: getBattlePanelPageIndex(queryState.page),
-    currentCharacterId:
-      normalizeBattlePanelCharacterId(queryState.characterId) ?? params.myId,
-    period: queryState.period ?? "30d",
-    minLevel: queryState.minLevel,
-    maxLevel: queryState.maxLevel,
-    startDate: queryState.startDate ?? undefined,
-    endDate: queryState.endDate ?? undefined,
-    ph: queryState.ph ?? undefined,
-    matchmaking: queryState.matchmaking ?? undefined,
-    cursor: queryState.cursor ?? undefined,
-  });
   const {
+    t,
+    period,
+    handlePeriodChange,
+    minLevel,
+    maxLevel,
+    handleMinLevelChange,
+    handleMaxLevelChange,
+    isMobile,
+    setIsMobileFiltersOpen,
+    data,
+    handlePreviousPage,
+    handleNextPage,
     pageIndex,
-    currentCharacterId,
-    period,
-    minLevel,
-    maxLevel,
-    startDate,
-    endDate,
-    ph,
-    matchmaking,
-    cursor,
-  } = resolvePageState();
-  const pageSize = 20;
-  const requestIds = getPlayerVsPlayerRequestIds(
-    currentCharacterId,
-    params.myId,
-    opponentId,
-  );
-
-  const applyFilterState = ({
-    matchmaking: nextMatchmaking,
-    maxLevel: nextMaxLevel,
-    minLevel: nextMinLevel,
-    period: nextPeriod,
-    ph: nextPh,
-  }: {
-    matchmaking?: boolean;
-    maxLevel?: number;
-    minLevel?: number;
-    period: Period;
-    ph?: boolean;
-  }) => {
-    void setQueryState({
-      ...resetBattlePanelCursorPagination(),
-      period: nextPeriod,
-      minLevel: nextMinLevel ?? 1,
-      maxLevel: nextMaxLevel ?? 500,
-      startDate: startDate ?? null,
-      endDate: endDate ?? null,
-      ph: nextPh ?? null,
-      matchmaking: nextMatchmaking ?? null,
-    });
-  };
-
-  const handlePeriodChange = (newPeriod: Period) => {
-    applyFilterState({
-      period: newPeriod,
-      minLevel,
-      maxLevel,
-      ph,
-      matchmaking,
-    });
-  };
-
-  const handleMinLevelChange = (value: number | undefined) => {
-    applyFilterState({
-      period,
-      minLevel: value,
-      maxLevel,
-      ph,
-      matchmaking,
-    });
-  };
-
-  const handleMaxLevelChange = (value: number | undefined) => {
-    applyFilterState({
-      period,
-      minLevel,
-      maxLevel: value,
-      ph,
-      matchmaking,
-    });
-  };
-
-  const { data, isLoading, isError, error } =
-    useBattlesControllerGetPlayerVsPlayerBattles({
-      cursor,
-      size: pageSize,
-      characterId: requestIds.characterId,
-      period,
-      startDate,
-      endDate,
-      opponentId: requestIds.opponentId,
-      minLevel,
-      maxLevel,
-      ph,
-      matchmaking,
-      includeTotal: true,
-    });
-
-  const { handleNextPage, handlePreviousPage } = createBattlePanelCursorActions(
-    data?.pagination,
-    queryState.page,
-    setQueryState,
-  );
-
-  const handleBattleOpen = (battleId: string) => {
-    void navigate({
-      to: "/@me/battle-panel/battles/$battleId",
-      params: { battleId },
-    });
-  };
-
-  const handleBattleRowKeyDown = (
-    event: KeyboardEvent<HTMLTableRowElement>,
-    battleId: string,
-  ) => {
-    if (event.key !== "Enter" && event.key !== "") {
-      return;
-    }
-
-    event.preventDefault();
-    handleBattleOpen(battleId);
-  };
-
-  const opponentNameCandidate = data?.battles[0]?.opponentWarrior.name;
-  const opponentNameFallback = t(
-    "battlePanel.statistics.playerVsPlayer.opponentFallback",
-  );
-  const { opponentName, battles, totalCount, visibleCount } =
-    getPlayerVsPlayerTableView(
-      data,
-      opponentNameCandidate,
-      opponentNameFallback,
-    );
-  const myCharacter = data?.battles[0]?.userWarrior;
-
-  const table = useTable({
-    features: coreTableFeatures,
-    data: battles,
-    columns: playerVsPlayerColumns,
-  });
-
-  const filterState = {
-    period,
-    minLevel,
-    maxLevel,
-    ph,
-    matchmaking,
-  };
-  const activeFilterChips = buildPlayerVsPlayerFilterLabels({
-    ...filterState,
-    translate: t,
-  }).map((chip) => ({
-    ...chip,
-    onRemove: () =>
-      applyFilterState(removePlayerVsPlayerFilter(filterState, chip.id)),
-  }));
-
-  const handleClearFilters = () => {
-    applyFilterState(getResetPlayerVsPlayerFilters());
-  };
-
+    pageSize,
+    totalCount,
+    visibleCount,
+    isLoading,
+    isError,
+    error,
+    handleBattleOpen,
+    table,
+    handleBattleRowKeyDown,
+    isMobileFiltersOpen,
+    myCharacter,
+    opponentName,
+    activeFilterChips,
+    handleClearFilters,
+  } = usePlayerVsPlayerPage();
   const filtersContent = (
     <div className="space-y-4 p-4">
       <div className="space-y-2">

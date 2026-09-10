@@ -205,6 +205,7 @@ const ConditionRow = ({
           {canRemove && (
             <button
               type="button"
+              aria-label={t("events.delete")}
               onClick={onRemove}
               className="size-5 rounded flex items-center justify-center text-destructive/70 hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
             >

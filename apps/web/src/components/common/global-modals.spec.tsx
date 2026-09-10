@@ -11,7 +11,7 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { configureApiClients } from "@lootlog/client/transport";
 import { afterEach, expect, it, vi } from "vitest";
-import { GlobalContextProvider } from "@/contexts/global-context";
+import { GlobalContextProvider } from "@/contexts/global-provider";
 import { GuildNavCreate } from "@/components/layout/guild-nav-create";
 import { InstallButton } from "@/components/layout/install-button";
 import i18n from "@/i18n/config";

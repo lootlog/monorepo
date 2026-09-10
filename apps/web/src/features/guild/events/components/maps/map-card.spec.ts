@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { EventMap } from "../../types/api";
-import { getMapStatus, STATUS_STYLES } from "./map-card";
+import { getMapStatus, STATUS_STYLES } from "./map-status";
 
 const assignedMap: EventMap = {
   locationId: "location-1",

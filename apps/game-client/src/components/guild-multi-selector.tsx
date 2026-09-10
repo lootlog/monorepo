@@ -45,6 +45,8 @@ export const GuildMultiSelector: FC<GuildMultiSelectorProps> = ({
     }
   };
 
+  const selectedGuildIds = new Set(value);
+
   return (
     <TooltipProvider>
       <ScrollArea
@@ -72,7 +74,7 @@ export const GuildMultiSelector: FC<GuildMultiSelectorProps> = ({
             />
           ) : null}
           {guilds?.map((guild) => {
-            const isSelected = value.includes(guild.id);
+            const isSelected = selectedGuildIds.has(guild.id);
 
             return (
               <Tooltip key={guild.id}>

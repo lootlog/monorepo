@@ -138,12 +138,12 @@ export const ChatTranscript = ({
     const visible = new Set(
       Array.from(
         viewport.current.querySelectorAll<HTMLElement>("[data-message-id]"),
-      )
-        .filter((element) => {
-          const row = element.getBoundingClientRect();
-          return row.bottom > box.top && row.top < box.bottom;
-        })
-        .map((element) => element.dataset.messageId),
+      ).flatMap((element) => {
+        const row = element.getBoundingClientRect();
+        return row.bottom > box.top && row.top < box.bottom
+          ? [element.dataset.messageId]
+          : [];
+      }),
     );
     const ids = renderables.flatMap((row) => {
       if (row.kind === "date-divider" || !visible.has(row.message.id))
@@ -181,6 +181,8 @@ export const ChatTranscript = ({
     onPositionChange?.(getViewportPosition(viewport.current));
   };
   const savePositionFromEffect = useEffectEvent(savePosition);
+  // Persist actual DOM scroll geometry after virtualized rows change; the parent does not own this viewport.
+  // oxlint-disable-next-line react-doctor/no-pass-data-to-parent
   useEffect(() => {
     savePositionFromEffect();
   }, [end, visibleMessageIds, isActive]);

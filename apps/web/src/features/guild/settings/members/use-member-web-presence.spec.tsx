@@ -84,3 +84,27 @@ it("applies online and offline web presence updates", async () => {
   );
   expect(isMemberOnlineOnWeb(result.current, "discord-1")).toBe(false);
 });
+
+it("hides the previous Organization presence immediately when switching or leaving it", async () => {
+  const gateway = createTestGateway();
+  gateway.request
+    .mockResolvedValueOnce({
+      organizationId: "guild-1",
+      revision: 1,
+      presences: [presence],
+    })
+    .mockImplementation(() => new Promise(() => {}));
+  type PresenceProps = { guildId: string | undefined };
+  const initialProps: PresenceProps = { guildId: "guild-1" };
+  const { result, rerender } = renderHook(
+    ({ guildId }: PresenceProps) => useMemberWebPresence(guildId),
+    { initialProps, wrapper: gateway.wrapper },
+  );
+  await waitFor(() =>
+    expect(isMemberOnlineOnWeb(result.current, "discord-1")).toBe(true),
+  );
+  rerender({ guildId: "guild-2" });
+  expect(result.current).toBeUndefined();
+  rerender({ guildId: undefined });
+  expect(result.current).toBeUndefined();
+});

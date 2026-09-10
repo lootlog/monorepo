@@ -151,6 +151,7 @@ export const KillsPage: React.FC = () => {
     });
   };
 
+  // eslint-disable-next-line react-doctor/no-event-handler -- This publishes a completed debounce to the URL; the input event owns the draft and must not navigate on every keystroke.
   useEffect(() => {
     if (debouncedSearch !== prevDebouncedSearch.current) {
       prevDebouncedSearch.current = debouncedSearch;
@@ -165,6 +166,7 @@ export const KillsPage: React.FC = () => {
     }
   }, [debouncedSearch, navigate, searchParams]);
 
+  // eslint-disable-next-line react-doctor/no-event-handler -- This publishes a completed debounce to the URL; the input event owns the draft and must not navigate on every keystroke.
   useEffect(() => {
     if (debouncedMinLvl !== prevDebouncedMinLvl.current) {
       prevDebouncedMinLvl.current = debouncedMinLvl;
@@ -179,6 +181,7 @@ export const KillsPage: React.FC = () => {
     }
   }, [debouncedMinLvl, navigate, searchParams]);
 
+  // eslint-disable-next-line react-doctor/no-event-handler -- This publishes a completed debounce to the URL; the input event owns the draft and must not navigate on every keystroke.
   useEffect(() => {
     if (debouncedMaxLvl !== prevDebouncedMaxLvl.current) {
       prevDebouncedMaxLvl.current = debouncedMaxLvl;

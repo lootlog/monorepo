@@ -1,6 +1,3 @@
-import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
 import {
   Dialog,
@@ -8,26 +5,17 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@lootlog/ui/components/dialog";
+import { AnimatePresence } from "framer-motion";
+import * as m from "framer-motion/m";
 import { ArrowLeft, ArrowRight, RotateCcw } from "lucide-react";
-import {
-  getShowEventWrappedQueryKey,
-  useShowEventWrapped,
-} from "@lootlog/client/main";
-import { buildWrappedDeck } from "./event-summary/build-wrapped-slides";
-import { buildWrappedQualityModel } from "./event-summary/wrapped-data-quality";
 import { LoadingState } from "./event-summary/loading-state";
-import { useWrappedAutoplay } from "./event-summary/use-wrapped-autoplay";
 import { WrappedProgress } from "./event-summary/wrapped-progress";
 import { WrappedSlideContent } from "./event-summary/wrapped-slide-content";
 import { WrappedSparseSummary } from "./event-summary/wrapped-sparse-summary";
-
-interface EventSummaryDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  guildId: string;
-  eventId: string;
-  eventName: string;
-}
+import {
+  useEventSummaryDialog,
+  type EventSummaryDialogProps,
+} from "./use-event-summary-dialog";
 
 export const EventSummaryDialog = ({
   open,
@@ -36,144 +24,31 @@ export const EventSummaryDialog = ({
   eventId,
   eventName,
 }: EventSummaryDialogProps) => {
-  const { t } = useTranslation();
-  const prefersReducedMotion = Boolean(useReducedMotion());
-  const stageRef = useRef<HTMLElement>(null);
-  const [selection, setSelection] = useState({ id: "opening", index: 0 });
-  const currentSlideId = selection.id;
-  const [direction, setDirection] = useState<1 | -1>(1);
-  const { data, isLoading, isFetching, error, refetch } = useShowEventWrapped(
-    { guildId, eventId },
-    {
-      query: {
-        enabled: open,
-        queryKey: getShowEventWrappedQueryKey({ guildId, eventId }),
-      },
-    },
-  );
-
-  const resolveSlideState = () => {
-    const deck = data ? buildWrappedDeck(buildWrappedQualityModel(data)) : null;
-    const slides = deck?.mode === "presentation" ? deck.slides : [];
-    const matchingIndex = slides.findIndex(
-      (slide) => slide.id === currentSlideId,
-    );
-    const activeIndex =
-      matchingIndex >= 0
-        ? matchingIndex
-        : Math.min(selection.index, Math.max(slides.length - 1, 0));
-    const activeSlide = slides[activeIndex];
-    return {
-      deck,
-      slides,
-      activeIndex,
-      activeSlide,
-      isFinalSlide: activeSlide?.kind === "finale",
-    };
-  };
-  const { deck, slides, activeIndex, activeSlide, isFinalSlide } =
-    resolveSlideState();
-
-  const [wasOpen, setWasOpen] = useState(open);
-  const synchronizeSlide = () => {
-    if (wasOpen !== open) {
-      setWasOpen(open);
-      if (open) {
-        setDirection(1);
-        setSelection({ id: "opening", index: 0 });
-      }
-    } else if (
-      activeSlide &&
-      (activeSlide.id !== selection.id || activeIndex !== selection.index)
-    ) {
-      setSelection({ id: activeSlide.id, index: activeIndex });
-    }
-  };
-  synchronizeSlide();
-
-  const advanceAutomatically = () => {
-    if (!activeSlide || activeIndex >= slides.length - 1) {
-      return;
-    }
-
-    setDirection(1);
-    setSelection({
-      id: slides[activeIndex + 1]?.id ?? activeSlide.id,
-      index: activeIndex + 1,
-    });
-  };
-
-  const autoplay = useWrappedAutoplay({
-    activeSlideId: activeSlide?.id ?? "empty",
-    enabled:
-      open &&
-      deck?.mode === "presentation" &&
-      !isFinalSlide &&
-      !prefersReducedMotion,
-    interactionEnabled: open && deck?.mode === "presentation",
+  const {
+    isLoading,
+    t,
+    error,
+    data,
+    deck,
+    isFetching,
+    refetch,
+    activeSlide,
+    direction,
+    prefersReducedMotion,
+    activeIndex,
+    selectSlide,
+    isFinalSlide,
+    slides,
+    autoplay,
     stageRef,
-    onAdvance: advanceAutomatically,
+    activeSlideLabel,
+  } = useEventSummaryDialog({
+    open,
+    onOpenChange,
+    guildId,
+    eventId,
+    eventName,
   });
-
-  const selectSlide = (index: number) => {
-    const nextSlide = slides[index];
-    if (!nextSlide || index === activeIndex) {
-      return;
-    }
-
-    setDirection(index > activeIndex ? 1 : -1);
-    autoplay.reset();
-    setSelection({ id: nextSlide.id, index });
-  };
-
-  useEffect(() => {
-    if (!open || deck?.mode !== "presentation") {
-      return;
-    }
-
-    const handleKeyDown = (keyboardEvent: KeyboardEvent) => {
-      const target = keyboardEvent.target;
-      if (
-        target instanceof HTMLElement &&
-        target.closest("button, a, input, textarea, select, [contenteditable]")
-      ) {
-        return;
-      }
-
-      if (keyboardEvent.key === "ArrowLeft" && activeIndex > 0) {
-        keyboardEvent.preventDefault();
-        selectSlide(activeIndex - 1);
-      }
-
-      if (
-        keyboardEvent.key === "ArrowRight" &&
-        activeIndex < slides.length - 1
-      ) {
-        keyboardEvent.preventDefault();
-        selectSlide(activeIndex + 1);
-      }
-
-      if (keyboardEvent.key === " ") {
-        keyboardEvent.preventDefault();
-        autoplay.toggleUserPaused();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  });
-
-  const getActiveSlideLabel = () => {
-    if (activeSlide?.kind === "fact") {
-      return t(`events.summaryDialog.facts.${activeSlide.id}.label`);
-    }
-    if (activeSlide) {
-      return t(`events.summaryDialog.${activeSlide.kind}ProgressLabel`);
-    }
-    return "";
-  };
-  const activeSlideLabel = getActiveSlideLabel();
-
   const renderStage = () => {
     if (isLoading) {
       return (
@@ -218,7 +93,7 @@ export const EventSummaryDialog = ({
     return (
       <>
         <AnimatePresence initial={false} mode="wait" custom={direction}>
-          <motion.div
+          <m.div
             key={activeSlide.id}
             custom={direction}
             initial={
@@ -240,7 +115,7 @@ export const EventSummaryDialog = ({
               eventName={eventName}
               world={data.event.world}
             />
-          </motion.div>
+          </m.div>
         </AnimatePresence>
         {activeIndex > 0 ? (
           <button

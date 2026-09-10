@@ -1,3 +1,4 @@
+// eslint-disable-next-line react-doctor/prefer-dynamic-import -- Both callers (PH and rating chart content) are loaded by lazy wrappers; this shared chart stays inside those async boundaries.
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import {
   ChartContainer,

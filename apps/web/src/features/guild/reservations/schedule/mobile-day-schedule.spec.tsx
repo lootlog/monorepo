@@ -1,10 +1,12 @@
 // @vitest-environment happy-dom
+import { LazyMotion, domMax } from "framer-motion";
 
 import {
   act,
   cleanup,
   fireEvent,
-  render,
+  render as renderTestingLibrary,
+  type RenderOptions,
   waitFor,
 } from "@testing-library/react";
 
@@ -12,6 +14,14 @@ import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { LABEL_COLUMN_WIDTH, MIN_ROW_HEIGHT } from "./constants";
 import { MobileDaySchedule } from "./mobile-day-schedule";
 import type { ReservationSegment } from "./types";
+
+const render = (ui: React.ReactNode, options?: RenderOptions) =>
+  renderTestingLibrary(ui, {
+    wrapper: ({ children }) => (
+      <LazyMotion features={domMax}>{children}</LazyMotion>
+    ),
+    ...options,
+  });
 
 let coarsePointer = true;
 let reducedMotion = false;

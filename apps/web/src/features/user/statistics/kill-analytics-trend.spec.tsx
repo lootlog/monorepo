@@ -15,7 +15,7 @@ await initializeTestTranslations();
 
 afterEach(cleanup);
 
-it("keeps incomplete intervals identifiable in table view", () => {
+it("keeps incomplete intervals identifiable in table view", async () => {
   render(
     <KillAnalyticsTrend
       title="Weekly kills"
@@ -25,7 +25,9 @@ it("keeps incomplete intervals identifiable in table view", () => {
       ]}
     />,
   );
-  fireEvent.click(screen.getByRole("button", { name: "statistics.table" }));
+  fireEvent.click(
+    await screen.findByRole("button", { name: "statistics.table" }),
+  );
   const table = screen.getByRole("table", { name: "Weekly kills" });
   const partialRow = within(table).getByRole("row", { name: /2026-08-03/ });
   const completeRow = within(table).getByRole("row", { name: /2026-08-10/ });

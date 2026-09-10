@@ -1,4 +1,5 @@
-import { ItemImage, ItemRarity } from "@lootlog/ui/components/item-image";
+import { ItemImage } from "@lootlog/ui/components/item-image";
+import { ItemRarity } from "@lootlog/ui/lib/item-rarity";
 import {
   mapStatsToDisplaySections,
   parseItemStats,

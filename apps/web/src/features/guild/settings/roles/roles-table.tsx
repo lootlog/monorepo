@@ -1,10 +1,6 @@
-import { TextLink } from "@lootlog/ui/components/text-link";
 import { PermissionCategoryTooltip } from "@/features/guild/settings/components/permission-category-tooltip";
-import { PERMISSION_CATEGORIES } from "@/features/guild/settings/roles/constants/permission-categories";
-import type { RoleResponseDtoOutput as GuildRole } from "@lootlog/client/main";
 import { getColorFromRoleColor } from "@/utils/get-color-from-role";
-import { cn } from "cn";
-import { Permission } from "@lootlog/schema/permissions";
+import type { RoleResponseDtoOutput as GuildRole } from "@lootlog/client/main";
 import { Button } from "@lootlog/ui/components/button";
 import {
   DropdownMenu,
@@ -20,8 +16,10 @@ import {
   TableHeader,
   TableRow,
 } from "@lootlog/ui/components/table";
+import { TextLink } from "@lootlog/ui/components/text-link";
 import { TooltipProvider } from "@lootlog/ui/components/tooltip";
 import { Link, useNavigate } from "@tanstack/react-router";
+import { cn } from "cn";
 import { CheckCircle2, MoreHorizontal } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -31,21 +29,7 @@ type RolesTableProps = {
   roles: GuildRole[];
 };
 
-const getActivePermissionCategories = (role: GuildRole) => {
-  const hasAdminPermission = role.permissions.includes(Permission.ADMIN);
-
-  if (hasAdminPermission) {
-    return PERMISSION_CATEGORIES.filter((category) =>
-      category.permissions.includes(Permission.ADMIN),
-    );
-  }
-
-  return PERMISSION_CATEGORIES.filter((category) =>
-    category.permissions.some((permission) =>
-      role.permissions.includes(permission),
-    ),
-  );
-};
+import { getActivePermissionCategories } from "./active-permission-categories";
 
 export const RolesTable = ({ guildId, isMobile, roles }: RolesTableProps) => {
   const { t } = useTranslation();
@@ -122,7 +106,9 @@ export const RolesTable = ({ guildId, isMobile, roles }: RolesTableProps) => {
         {roles.map((role, index) => {
           const color = getColorFromRoleColor(role.color);
           const roleRouteParams = { guildId, roleId: role.id };
-          const activeCategories = getActivePermissionCategories(role);
+          const activeCategories = getActivePermissionCategories(
+            role.permissions,
+          );
           const isLastRole = index === roles.length - 1;
 
           return (
@@ -193,21 +179,19 @@ export const RolesTable = ({ guildId, isMobile, roles }: RolesTableProps) => {
                 >
                   {activeCategories.length > 0 ? (
                     <TooltipProvider delay={100}>
-                      {activeCategories.map((category) => {
-                        const activePermissions = category.permissions.filter(
-                          (permission) => role.permissions.includes(permission),
-                        );
-
-                        return (
-                          <PermissionCategoryTooltip
-                            key={category.name}
-                            category={category}
-                            activePermissions={activePermissions}
-                            side="top"
-                            onClick={(event) => event.stopPropagation()}
-                          />
-                        );
-                      })}
+                      {activeCategories.map(
+                        ({ category, activePermissions }) => {
+                          return (
+                            <PermissionCategoryTooltip
+                              key={category.name}
+                              category={category}
+                              activePermissions={activePermissions}
+                              side="top"
+                              onClick={(event) => event.stopPropagation()}
+                            />
+                          );
+                        },
+                      )}
                     </TooltipProvider>
                   ) : (
                     <span className="truncate text-xs text-muted-foreground">

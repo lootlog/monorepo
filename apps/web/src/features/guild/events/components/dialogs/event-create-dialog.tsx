@@ -1,185 +1,38 @@
-import { useTranslation } from "react-i18next";
-import { useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
 import { Button } from "@lootlog/ui/components/button";
+import { DateTimePicker } from "@lootlog/ui/components/date-time-picker";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@lootlog/ui/components/dialog";
 import { Input } from "@lootlog/ui/components/input";
-import { Textarea } from "@lootlog/ui/components/textarea";
 import { Label } from "@lootlog/ui/components/label";
-import { DateTimePicker } from "@lootlog/ui/components/date-time-picker";
-import { toast } from "sonner";
-import { Trophy, Settings, BookOpenText } from "lucide-react";
-import { useGuildId } from "@/hooks/context/use-guild-id";
+import { Textarea } from "@lootlog/ui/components/textarea";
+import { BookOpenText, Settings, Trophy } from "lucide-react";
 import {
-  getListEventsQueryKey,
-  useCreateEvent,
-  type EventListItemResponseDto,
-} from "@lootlog/client/main";
+  useEventCreateDialog,
+  type EventCreateDialogProps,
+} from "./use-event-create-dialog";
 
-import {
-  DEFAULT_ADVANCED_EVENT_SCORING_RULES,
-  type EventScoringMode,
-  type EventScoringRules,
-  normalizeEventScoringMode,
-  normalizeEventScoringRules,
-} from "@lootlog/domain/scoring";
-
-import { getApiErrorMessage } from "@lootlog/client/transport";
-import { ScoringRulesEditor } from "../scoring/scoring-rules-editor";
 import { ScoringModeSelector } from "../scoring/scoring-mode-selector";
-
-interface EventCreateDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
-
-interface FormData {
-  name: string;
-  world: string;
-  startsAt?: Date;
-  endsAt?: Date;
-  participationConfirmationMinutes: number;
-  rulebookMarkdown: string;
-  scoringMode: EventScoringMode;
-  scoringRules: EventScoringRules;
-}
-
-const getDefaultValues = (): FormData => ({
-  name: "",
-  world: "",
-  startsAt: new Date(),
-  endsAt: undefined,
-  participationConfirmationMinutes: 0,
-  rulebookMarkdown: "",
-  scoringMode: "SIMPLE",
-  scoringRules: normalizeEventScoringRules(
-    DEFAULT_ADVANCED_EVENT_SCORING_RULES,
-  ),
-});
+import { ScoringRulesEditor } from "../scoring/scoring-rules-editor";
 
 export const EventCreateDialog = ({
   open,
   onOpenChange,
 }: EventCreateDialogProps) => {
-  const { t } = useTranslation();
-  const guildId = useGuildId();
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const createEvent = useCreateEvent({
-    mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: getListEventsQueryKey({ guildId: guildId ?? "" }),
-        });
-      },
-    },
-  });
-  const [step, setStep] = useState<1 | 2>(1);
-
-  const form = useForm<FormData>({
-    defaultValues: getDefaultValues(),
-  });
-
-  const scoringMode = normalizeEventScoringMode(form.watch("scoringMode"));
-
-  const handleClose = (isOpen: boolean) => {
-    if (!isOpen) {
-      form.reset(getDefaultValues());
-      setStep(1);
-    }
-    onOpenChange(isOpen);
-  };
-
-  const onSubmit = (data: FormData) => {
-    if (data.endsAt && data.startsAt && data.endsAt <= data.startsAt) {
-      toast.error(
-        t(
-          "events.createDialog.endDateMustBeAfterStart",
-          "Data końca musi być po dacie startu",
-        ),
-      );
-      return;
-    }
-
-    if (!data.name.trim() || !data.world.trim()) {
-      toast.error(
-        t(
-          "events.createDialog.nameWorldRequired",
-          "Nazwa eventu i świat są wymagane",
-        ),
-      );
-      return;
-    }
-
-    const normalizedMode = normalizeEventScoringMode(data.scoringMode);
-
-    const request: Parameters<typeof createEvent.mutate>[0]["data"] = {
-      name: data.name.trim(),
-      world: data.world.trim(),
-      startsAt: data.startsAt?.toISOString(),
-      endsAt: data.endsAt?.toISOString(),
-      participationConfirmationMinutes: Number.isFinite(
-        data.participationConfirmationMinutes,
-      )
-        ? Math.max(0, Math.round(data.participationConfirmationMinutes))
-        : 0,
-      scoringMode: normalizedMode,
-    };
-    if (data.rulebookMarkdown?.trim().length)
-      request.rulebookMarkdown = data.rulebookMarkdown.trim();
-    if (normalizedMode === "ADVANCED")
-      request.scoringRules = normalizeEventScoringRules(data.scoringRules);
-
-    createEvent.mutate(
-      {
-        pathParams: {
-          guildId: guildId ?? "",
-        },
-        data: request,
-      },
-      {
-        onSuccess: (eventData) => {
-          if (guildId) {
-            const listEventsQueryKey = getListEventsQueryKey(
-              { guildId },
-              { activeOnly: "false" },
-            );
-
-            queryClient.setQueryData<EventListItemResponseDto[]>(
-              listEventsQueryKey,
-              (currentEvents) =>
-                currentEvents
-                  ? [
-                      eventData,
-                      ...currentEvents.filter(
-                        (event) => event.id !== eventData.id,
-                      ),
-                    ]
-                  : [eventData],
-            );
-          }
-
-          toast.success(t("events.createDialog.success"));
-          handleClose(false);
-          navigate({ to: `/${guildId}/events/${eventData.id}` });
-        },
-        onError: (error) => {
-          toast.error(
-            getApiErrorMessage(error) ?? t("events.createDialog.error"),
-          );
-        },
-      },
-    );
-  };
-
+  const {
+    createEvent,
+    handleClose,
+    t,
+    step,
+    scoringMode,
+    form,
+    onSubmit,
+    setStep,
+  } = useEventCreateDialog({ open, onOpenChange });
   return (
     <Dialog
       open={open}

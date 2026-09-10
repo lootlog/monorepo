@@ -71,6 +71,10 @@ const isDeferredNotificationSyncField = (fieldName: string | null) => {
   return fieldName === "autoHideTimeout";
 };
 
+const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  event.preventDefault();
+};
+
 export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
   categoryKey,
 }) => {
@@ -167,6 +171,8 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
 
   const syncFromEffect = useEffectEvent(syncCurrentValues);
 
+  // Autosave the form subscription to the debounced server mutation, rather than synchronizing parent render state.
+  // oxlint-disable-next-line react-doctor/no-pass-data-to-parent
   useEffect(() => {
     if (
       !formState.isDirty ||
@@ -205,10 +211,6 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
       shouldDirty: true,
       shouldTouch: true,
     });
-  };
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
   };
 
   return (

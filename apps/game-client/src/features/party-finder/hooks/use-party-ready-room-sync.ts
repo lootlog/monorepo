@@ -21,6 +21,8 @@ export function usePartyReadyRoomSync(): void {
   const setReadyRoomsSynchronized = usePartyFinderStore(
     (state) => state.setReadyRoomsSynchronized,
   );
+  // Cleanup cancels the latest timer; disposed and aborted guards prevent pending requests from scheduling another.
+  // oxlint-disable-next-line react-doctor/effect-needs-cleanup
   useEffect(() => {
     setReadyRoomsSynchronized(false);
     if (!joined) return;
@@ -39,9 +41,11 @@ export function usePartyReadyRoomSync(): void {
         .then((projections) => {
           if (disposed || request.signal.aborted) return;
           applyAuthoritativeSync(
-            projections
-              .filter((projection) => projection.schemaVersion === 3)
-              .map((projection) => decodePartyReadyRoomProjection(projection)),
+            projections.flatMap((projection) =>
+              projection.schemaVersion === 3
+                ? [decodePartyReadyRoomProjection(projection)]
+                : [],
+            ),
             baseline,
           );
         })

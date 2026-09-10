@@ -9,7 +9,8 @@ import { Button } from "@lootlog/ui/components/button";
 import { Label } from "@lootlog/ui/components/label";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { Separator } from "@lootlog/ui/components/separator";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
+import * as m from "framer-motion/m";
 import {
   X,
   Globe,
@@ -81,6 +82,7 @@ export const FiltersSidebar = ({
     handleWorldChange,
   } = createBattleFilterHandlers(filters, onFiltersChange);
   const { t } = useTranslation();
+  const selectedCharacterIds = new Set(filters.characterId);
   const characterListId = useId();
   const [characterOpen, setCharacterOpen] = useState(false);
 
@@ -207,9 +209,7 @@ export const FiltersSidebar = ({
                             <BattleCharacterOption
                               key={char.id}
                               character={char}
-                              selected={
-                                filters.characterId?.includes(char.id) ?? false
-                              }
+                              selected={selectedCharacterIds.has(char.id)}
                               onSelect={handleCharacterChange}
                             />
                           ))}
@@ -301,7 +301,7 @@ export const FiltersSidebar = ({
 
         <AnimatePresence>
           {hasActiveFilters && (
-            <motion.div
+            <m.div
               layout
               initial={{ opacity: 0, scaleY: 0.96 }}
               animate={{ opacity: 1, scaleY: 1 }}
@@ -320,7 +320,7 @@ export const FiltersSidebar = ({
                   {t("loots.filtersPanel.quickFilters.clearButton")}
                 </Button>
               </div>
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
       </div>

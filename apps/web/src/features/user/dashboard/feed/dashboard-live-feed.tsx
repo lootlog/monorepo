@@ -33,6 +33,7 @@ export function DashboardLiveFeed() {
     observer.observe(target);
     return () => observer.disconnect();
   }, []);
+  const animatedKeys = new Set(state.animatedKeys);
   const items = state.items?.filter(
     (item) => new Date(item.occurredAt).getTime() >= now - 86_400_000,
   );
@@ -129,7 +130,7 @@ export function DashboardLiveFeed() {
                   {groupFeedItems(items).map(({ key, item, organizations }) => (
                     <AnimatedLiveFeedRow
                       key={key}
-                      animateEntry={state.animatedKeys.includes(key)}
+                      animateEntry={animatedKeys.has(key)}
                       item={item}
                       organizations={organizations}
                       now={now}

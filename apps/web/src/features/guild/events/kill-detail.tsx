@@ -132,24 +132,21 @@ export const KillDetail = () => {
     const currentDiscordId = session?.user?.discordId;
     return Array.from(
       new Set(
-        participants
-          .filter(
-            (participant) => participant.member.userId === currentDiscordId,
+        participants.flatMap((participant) => {
+          if (participant.member.userId !== currentDiscordId) return [];
+          const evaluatedRuleIds = getAppliedRuleIdsForParticipant({
+            kill,
+            participant,
+            scoringRules: eventConfig.scoringRules,
+            assignedMembersCount: participants.length,
+          });
+          const bonusBreakdownRuleIds = normalizeBonusBreakdown(
+            participant.bonusBreakdown,
           )
-          .flatMap((participant) => {
-            const evaluatedRuleIds = getAppliedRuleIdsForParticipant({
-              kill,
-              participant,
-              scoringRules: eventConfig.scoringRules,
-              assignedMembersCount: participants.length,
-            });
-            const bonusBreakdownRuleIds = normalizeBonusBreakdown(
-              participant.bonusBreakdown,
-            )
-              .map((bonus) => bonus.ruleId)
-              .filter((ruleId): ruleId is string => ruleId.trim().length > 0);
-            return [...evaluatedRuleIds, ...bonusBreakdownRuleIds];
-          }),
+            .map((bonus) => bonus.ruleId)
+            .filter((ruleId): ruleId is string => ruleId.trim().length > 0);
+          return [...evaluatedRuleIds, ...bonusBreakdownRuleIds];
+        }),
       ),
     );
   };

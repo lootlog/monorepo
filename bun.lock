@@ -740,7 +740,6 @@
     "sharp@<0.35.0": {
       ".": ">=0.35.0",
     },
-    "typescript": "catalog:",
     "valibot@<=1.4.1": {
       ".": ">=1.4.2",
     },
@@ -2607,7 +2606,7 @@
 
     "dequal": ["dequal@2.0.3", "", {}, "sha512-0je+qPKHEMohvfRTCEo3CrPG6cAzAYgmzKyxRiYSSDkS6eGJdyVJm7WaYA5ECaAD9wLB2T4EEeymA5aFVcYXCA=="],
 
-    "deslop-js": ["deslop-js@0.9.12", "", { "dependencies": { "@oxc-project/types": "0.143.0", "fast-glob": "3.3.3", "minimatch": "10.2.6", "oxc-parser": "0.143.0", "oxc-resolver": "11.24.2", "typescript": "7.0.2" } }, "sha512-Ku6Zngzmu4EISb58WUkRKZytfgWjJ18Cic7lb4wl+/BF0tHWRvpBOLlA0FP35r82mV45Y72AK3RPC1Nw0GLbIw=="],
+    "deslop-js": ["deslop-js@0.9.12", "", { "dependencies": { "@oxc-project/types": "0.143.0", "fast-glob": "3.3.3", "minimatch": "10.2.6", "oxc-parser": "0.143.0", "oxc-resolver": "11.24.2", "typescript": ">=5.0.4 <6" } }, "sha512-Ku6Zngzmu4EISb58WUkRKZytfgWjJ18Cic7lb4wl+/BF0tHWRvpBOLlA0FP35r82mV45Y72AK3RPC1Nw0GLbIw=="],
 
     "destr": ["destr@2.0.5", "", {}, "sha512-ugFTXCtDZunbzasqBxrK93Ik/DRYsO6S/fedkWEMKqt04xZ4csmnmwGDBAb07QWNaGMAmnTIemsYZCksjATwsA=="],
 
@@ -3563,7 +3562,7 @@
 
     "react-day-picker": ["react-day-picker@10.0.1", "", { "dependencies": { "@date-fns/tz": "1.5.0", "date-fns": "4.4.0" }, "peerDependencies": { "@types/react": ">=16.8.0", "react": ">=16.8.0" }, "optionalPeers": ["@types/react"] }, "sha512-eNh6BlwcYInWaJtRv18mXQ06Ys/H6rdTZAnTaSdOYJuTpwP1JMCHNd1FDRadA+gbeinq+psdULN5Xnowy9mV8w=="],
 
-    "react-doctor": ["react-doctor@0.9.12", "", { "dependencies": { "@astrojs/compiler": "4.0.0", "@sentry/node": "10.73.0", "agent-install": "0.0.5", "conf": "15.1.0", "confbox": "0.2.4", "deslop-js": "0.9.12", "eslint-plugin-react-hooks": "7.1.1", "jiti": "2.7.0", "magicast": "0.5.4", "oxc-resolver": "11.24.2", "oxlint": "1.77.0", "oxlint-plugin-react-doctor": "0.9.12", "prompts": "2.4.2", "typescript": "7.0.2", "vscode-languageserver": "9.0.1", "vscode-languageserver-textdocument": "1.0.14", "vscode-uri": "3.2.0", "yaml": "2.9.0", "yoga-layout": "3.2.1" }, "bin": { "react-doctor": "bin/react-doctor.js" } }, "sha512-H7RNg13RYKwpQvi3+O3IkSj8pAD1pGTxSetxu7aOwXX3wmF+BydCLDiWxkPT9Pq7bIMHjuJ0taSZLsxEjlNjcA=="],
+    "react-doctor": ["react-doctor@0.9.12", "", { "dependencies": { "@astrojs/compiler": "4.0.0", "@sentry/node": "10.73.0", "agent-install": "0.0.5", "conf": "15.1.0", "confbox": "0.2.4", "deslop-js": "0.9.12", "eslint-plugin-react-hooks": "7.1.1", "jiti": "2.7.0", "magicast": "0.5.4", "oxc-resolver": "11.24.2", "oxlint": "1.77.0", "oxlint-plugin-react-doctor": "0.9.12", "prompts": "2.4.2", "typescript": ">=5.0.4 <6", "vscode-languageserver": "9.0.1", "vscode-languageserver-textdocument": "1.0.14", "vscode-uri": "3.2.0", "yaml": "2.9.0", "yoga-layout": "3.2.1" }, "bin": { "react-doctor": "bin/react-doctor.js" } }, "sha512-H7RNg13RYKwpQvi3+O3IkSj8pAD1pGTxSetxu7aOwXX3wmF+BydCLDiWxkPT9Pq7bIMHjuJ0taSZLsxEjlNjcA=="],
 
     "react-dom": ["react-dom@19.2.8", "", { "dependencies": { "scheduler": "0.27.0" }, "peerDependencies": { "react": "^19.2.8" } }, "sha512-rVprimfGBG3DR+Tq0IQG2DT5PxKth1WIGDmj5yPmlzr4YBe7uyE+Du4oVqTDXZSHGGGXRtTJEGSSePyQCMBglQ=="],
 
@@ -4996,5 +4995,7 @@
     "@grpc/grpc-js/@grpc/proto-loader/yargs/cliui/wrap-ansi/ansi-styles": ["ansi-styles@4.3.0", "", { "dependencies": { "color-convert": "2.0.1" } }, "sha512-zbB9rCJAT1rbjiVDb2hqKFHNYLxgtk8NURxZ3IZwD3F6NtxbXZQCnnSi1Lkx+IDohdPlFp222wVALIheZJQSEg=="],
 
     "eslint/find-up/locate-path/p-locate/p-limit/yocto-queue": ["yocto-queue@0.1.0", "", {}, "sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q=="],
+    "react-doctor/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
+    "deslop-js/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
   }
 }

@@ -217,6 +217,8 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
     );
   };
 
+  const selectedGuildIdSet = new Set(selectedGuildIds);
+
   if (status === "single") {
     return null;
   }
@@ -284,7 +286,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
           key={guild.id}
           isSelected={
             multiple
-              ? selectedGuildIds.includes(guild.id)
+              ? selectedGuildIdSet.has(guild.id)
               : guild.id === selectedValue
           }
           disabled={disabled}

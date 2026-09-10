@@ -3,7 +3,7 @@ import {
   type LootItemResponseDto,
   type LootNpcResponseDto,
   type LootPlayerResponseDto,
-  LootResponseDtoSource,
+  type LootResponseDtoSource,
   type LootCommentResponseDto,
   type LootResponseDto,
   type LootShareResponseDto,
@@ -22,4 +22,3 @@ export const ItemRarity = {
   ...LootItemResponseDtoRarity,
   COMMON: "COMMON",
 } as const satisfies Record<ItemRarity, ItemRarity>;
-export const LootSource = LootResponseDtoSource;

@@ -32,7 +32,9 @@ export const SignIn: React.FC = () => {
     } catch {
       signInAttempt.current = null;
       toast.error(t("auth.signin.failed"));
-      setIsLoading(false);
+    } finally {
+      // A successful OAuth attempt stays pending until the redirect unloads this page.
+      setIsLoading(signInAttempt.current !== null);
     }
   };
 

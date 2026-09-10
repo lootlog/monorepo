@@ -30,7 +30,7 @@ import { z } from "zod";
 import { createUserPreferences } from "@/lib/testing/preferences";
 import { createOrganizationTestWrapper } from "@/lib/testing/router";
 import { createTestGateway } from "@/lib/testing/gateway";
-import { GlobalContextProvider } from "@/contexts/global-context";
+import { GlobalContextProvider } from "@/contexts/global-provider";
 import { ThemeContext } from "@/contexts/theme-context";
 import { sessionQueryOptions } from "@/hooks/auth/use-session-query";
 import { GuildsSelector } from "./guilds-selector";

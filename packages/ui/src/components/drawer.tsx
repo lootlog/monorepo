@@ -28,6 +28,8 @@ function Drawer({
   const contextValue = { modal, showSwipeHandle, swipeDirection };
 
   return (
+    // React Compiler in the consuming web build caches this value by its fields.
+    // oxlint-disable-next-line react-doctor/context-provider-value-from-unmemoized-local-literal
     <DrawerContext.Provider value={contextValue}>
       <DrawerPrimitive.Root
         data-slot="drawer"

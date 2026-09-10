@@ -1,0 +1,249 @@
+import { invalidateUserNotificationQueries } from "@/features/user/notifications/utils/invalidate-user-notification-queries";
+import type { Item } from "@/lib/loots/loot-types";
+import { ROUTES } from "@/config/routes";
+import { USER_WATCHED_ITEMS_LIMIT } from "@/features/user/notifications/constants/user-watched-items-limit";
+import { useGuildWatchedItems } from "@/features/user/notifications/hooks/use-guild-watched-items";
+import type { WatchedItemScope } from "@/features/user/notifications/types/watched-item-scope";
+import { getUserNotificationsErrorMessage } from "@/features/user/notifications/utils/get-user-notifications-error-message";
+import { useGuildId } from "@/hooks/context/use-guild-id";
+import { useQueryClient } from "@tanstack/react-query";
+import { useNotificationsUserControllerDeleteWatchedItem } from "@lootlog/client/main";
+import { useNavigate } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
+import { formatItemHid } from "@/lib/utils/hid-detection";
+import { useState } from "react";
+
+const getWatchableItemState = ({
+  currentGuildId,
+  hasActiveDm,
+  itemId,
+  state,
+  watchContext,
+  watchedItemsCount,
+  hasWatchedItem,
+  isItemWatchedInScope,
+}: {
+  currentGuildId: string | undefined;
+  hasActiveDm: boolean;
+  itemId: number;
+  state: "error" | "loading" | "ready";
+  watchContext: WatchedItemScope;
+  watchedItemsCount: number;
+  hasWatchedItem: (itemId: number, world: string) => boolean;
+  isItemWatchedInScope: (itemId: number, scope: WatchedItemScope) => boolean;
+}) => {
+  const effectiveGuildId = watchContext.guildId || currentGuildId || "";
+  const effectiveWatchContext = {
+    guildId: effectiveGuildId,
+    world: watchContext.world,
+  };
+  const isReady = state === "ready";
+  const isWatched =
+    isReady &&
+    effectiveGuildId.length > 0 &&
+    isItemWatchedInScope(itemId, effectiveWatchContext);
+  const wouldCreate = isReady && !hasWatchedItem(itemId, watchContext.world);
+  const limitReached =
+    isReady && watchedItemsCount >= USER_WATCHED_ITEMS_LIMIT && wouldCreate;
+
+  return {
+    effectiveGuildId,
+    effectiveWatchContext,
+    isWatchedItemLimitReached: limitReached,
+    isWatchedInScope: isWatched,
+    showAddAction: isReady && hasActiveDm && !isWatched,
+    showDmRequired: isReady && !hasActiveDm,
+    showPending: state === "loading",
+    showRemoveAction: isReady && hasActiveDm && isWatched,
+    wouldCreateNewWatchedItem: wouldCreate,
+  };
+};
+
+export function useWatchableItemActions(
+  item: Item,
+  watchContext: WatchedItemScope,
+) {
+  const { t } = useTranslation();
+  const [isCopyPending, setIsCopyPending] = useState(false);
+  const [isAddingThisItem, setIsAddingThisItem] = useState(false);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const currentGuildId = useGuildId();
+  const {
+    state,
+    hasActiveDm,
+    isQuickAddPending,
+    watchedItemsCount,
+    quickAddWatchedItem,
+    hasWatchedItem,
+    isItemWatchedInScope,
+    getWatchedItemId,
+  } = useGuildWatchedItems();
+  const deleteWatchedItem = useNotificationsUserControllerDeleteWatchedItem({
+    mutation: {
+      onSuccess: async () => {
+        await invalidateUserNotificationQueries(queryClient);
+      },
+    },
+  });
+  const isRemovePending = deleteWatchedItem.isPending;
+  const {
+    effectiveGuildId,
+    effectiveWatchContext,
+    isWatchedItemLimitReached,
+    isWatchedInScope,
+    showAddAction,
+    showDmRequired,
+    showPending,
+    showRemoveAction,
+    wouldCreateNewWatchedItem,
+  } = getWatchableItemState({
+    currentGuildId,
+    hasActiveDm,
+    hasWatchedItem,
+    isItemWatchedInScope,
+    itemId: item.id,
+    state,
+    watchContext,
+    watchedItemsCount,
+  });
+  const formattedItemHid = formatItemHid(item.hid, watchContext.world);
+
+  const openNotifications = () => {
+    void navigate({ to: ROUTES.user.notifications.base });
+  };
+
+  const handleCopyItemId = async () => {
+    if (isCopyPending) return;
+    setIsCopyPending(true);
+    await (async () => {
+      try {
+        await navigator.clipboard.writeText(formattedItemHid);
+        toast.success(t("loots.details.copySuccess"));
+      } catch {
+        toast.error(t("loots.details.copyError"));
+      }
+    })().finally(() => {
+      setIsCopyPending(false);
+    });
+  };
+
+  const showLootsWithItem = () => {
+    if (!effectiveGuildId) {
+      return;
+    }
+
+    void navigate({
+      to: ROUTES.guild.lootlog(effectiveGuildId),
+      search: { itemNames: [item.name] },
+    });
+  };
+
+  const handleRemove = async () => {
+    const watchedItemId = getWatchedItemId(item.id, effectiveWatchContext);
+    if (!watchedItemId) return;
+
+    const loadingToastId = toast.loading(
+      t("settings.userNotifications.quickAdd.toasts.removing", {
+        itemName: item.name,
+      }),
+    );
+
+    try {
+      await deleteWatchedItem.mutateAsync({
+        pathParams: { watchedItemId },
+      });
+
+      toast.success(
+        t("settings.userNotifications.quickAdd.toasts.removed", {
+          itemName: item.name,
+        }),
+        { id: loadingToastId },
+      );
+    } catch (error) {
+      toast.error(
+        getUserNotificationsErrorMessage(error, t) ??
+          t("settings.userNotifications.quickAdd.toasts.removeError"),
+        { id: loadingToastId },
+      );
+    }
+  };
+
+  const handleQuickAdd = async () => {
+    if (isQuickAddPending || isAddingThisItem) return;
+    if (!effectiveGuildId) {
+      toast.error(t("settings.userNotifications.quickAdd.scopeUnavailable"));
+      return;
+    }
+
+    if (isWatchedItemLimitReached) {
+      toast.error(
+        t("settings.userNotifications.validation.watchLimitReached", {
+          limit: USER_WATCHED_ITEMS_LIMIT,
+        }),
+      );
+      return;
+    }
+
+    const nextWatchedItemsCount = wouldCreateNewWatchedItem
+      ? Math.min(watchedItemsCount + 1, USER_WATCHED_ITEMS_LIMIT)
+      : watchedItemsCount;
+    const loadingToastId = toast.loading(
+      t("settings.userNotifications.quickAdd.toasts.adding", {
+        itemName: item.name,
+        count: nextWatchedItemsCount,
+        limit: USER_WATCHED_ITEMS_LIMIT,
+      }),
+    );
+
+    setIsAddingThisItem(true);
+    await (async () => {
+      try {
+        await quickAddWatchedItem({
+          itemId: item.id,
+          itemName: item.name,
+          world: watchContext.world,
+          guildId: effectiveGuildId,
+        });
+        toast.success(
+          t("settings.userNotifications.quickAdd.toasts.added", {
+            itemName: item.name,
+            count: nextWatchedItemsCount,
+            limit: USER_WATCHED_ITEMS_LIMIT,
+          }),
+          { id: loadingToastId },
+        );
+      } catch (error) {
+        toast.error(
+          getUserNotificationsErrorMessage(error, t) ??
+            t("settings.userNotifications.quickAdd.toasts.error"),
+          { id: loadingToastId },
+        );
+      }
+    })().finally(() => {
+      setIsAddingThisItem(false);
+    });
+  };
+
+  return {
+    t,
+    isCopyPending,
+    isAddingThisItem,
+    state,
+    isQuickAddPending,
+    isRemovePending,
+    effectiveGuildId,
+    isWatchedItemLimitReached,
+    isWatchedInScope,
+    showAddAction,
+    showDmRequired,
+    showPending,
+    showRemoveAction,
+    handleCopyItemId,
+    showLootsWithItem,
+    handleRemove,
+    handleQuickAdd,
+    openNotifications,
+  };
+}

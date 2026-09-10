@@ -131,13 +131,13 @@ export const ServerVisibilitySettingsTab = () => {
               </Button>
             }
           >
-            <div role="search" className="ll:w-full">
+            <search className="ll:w-full">
               <SearchInput
                 value={query}
                 placeholder={t("settings.servers.searchPlaceholder")}
                 onChange={(event) => setQuery(event.target.value)}
               />
-            </div>
+            </search>
             <div className="ll:flex ll:flex-wrap ll:items-center ll:justify-between ll:gap-2">
               <div className="ll:flex ll:gap-1">
                 {(["all", "visible", "hidden"] as const).map((filter) => (

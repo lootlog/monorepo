@@ -1,3 +1,4 @@
+import { createCachedFormatter } from "@lootlog/datetime";
 import type { UserKillAnalyticsResponseDtoOutput } from "@lootlog/client/main";
 import { useTranslation } from "react-i18next";
 import { SectionCard } from "@/components/common/section-card/section-card";
@@ -5,15 +6,15 @@ import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { KillAnalyticsTrend } from "./kill-analytics-trend";
 
+const getOverviewDateFormatter = createCachedFormatter("pl-PL", {});
+
 export function StatisticsOverview({
   data,
 }: {
   data: UserKillAnalyticsResponseDtoOutput;
 }) {
   const { t } = useTranslation();
-  const dateFormatter = new Intl.DateTimeFormat("pl-PL", {
-    timeZone: data.meta.timezone,
-  });
+  const dateFormatter = getOverviewDateFormatter(data.meta.timezone);
   const previousStart = new Date(data.meta.startDate);
   previousStart.setUTCDate(previousStart.getUTCDate() - data.meta.days);
   const ranges = {

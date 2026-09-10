@@ -6,10 +6,8 @@ import { format } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { getPlayerVsPlayerBattleResult } from "./battle-panel-battle-presentation";
 import { BattlePanelPvpWarriorSummary } from "./battle-panel-pvp-warrior-summary";
-import {
-  BattleResultStatus,
-  getBattleResultRowClassName,
-} from "./battle-result-status";
+import { BattleResultStatus } from "./battle-result-status";
+import { getBattleResultRowClassName } from "./battle-result-row-class-name";
 
 type BattlePanelPvpBattleCardProps = {
   battle: PlayerVsPlayerBattle;

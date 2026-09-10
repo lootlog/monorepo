@@ -16,10 +16,8 @@ import {
   PopoverTrigger,
 } from "@lootlog/ui/components/popover";
 import { Spinner } from "@lootlog/ui/components/spinner";
-import {
-  ItemImage,
-  resolveItemRarity,
-} from "@lootlog/ui/components/item-image";
+import { ItemImage } from "@lootlog/ui/components/item-image";
+import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
 import type { SearchItemsResponseDtoOutputHitsItem } from "@lootlog/client/search";
 import { cn } from "cn";
 
@@ -91,56 +89,56 @@ export const WatchedItemSelector = ({
 
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
-      <PopoverTrigger
-        render={
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-controls={resultsListId}
-            aria-expanded={open}
-            disabled={disabled}
-            className="justify-between gap-2"
-          >
-            <div className="flex min-w-0 flex-1 items-center gap-2">
-              {selectedItem ? (
-                <ItemImage
-                  icon={selectedItem.icon}
-                  rarity={resolveItemRarity(selectedItem.rarity)}
-                />
-              ) : (
-                <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+      <div className="relative">
+        <PopoverTrigger
+          render={
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-controls={resultsListId}
+              aria-expanded={open}
+              disabled={disabled}
+              className={cn(
+                "w-full justify-between gap-2",
+                selectedItem && "pr-12",
               )}
-              <span
-                className={cn(
-                  "truncate",
-                  !selectedItem && "text-muted-foreground",
+            >
+              <div className="flex min-w-0 flex-1 items-center gap-2">
+                {selectedItem ? (
+                  <ItemImage
+                    icon={selectedItem.icon}
+                    rarity={resolveItemRarity(selectedItem.rarity)}
+                  />
+                ) : (
+                  <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
                 )}
-              >
-                {disabled ? disabledMessage : displayLabel}
-              </span>
-            </div>
-            <div className="flex shrink-0 items-center gap-1">
-              {selectedItem ? (
                 <span
-                  role="button"
-                  tabIndex={0}
-                  onMouseDown={handleClear}
-                  onClick={(event) => event.stopPropagation()}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      handleClear(event);
-                    }
-                  }}
-                  className="flex items-center justify-center"
+                  className={cn(
+                    "truncate",
+                    !selectedItem && "text-muted-foreground",
+                  )}
                 >
-                  <X className="h-4 w-4 cursor-pointer text-muted-foreground transition-colors hover:text-foreground" />
+                  {disabled ? disabledMessage : displayLabel}
                 </span>
-              ) : null}
-              <ChevronsUpDown className="h-4 w-4 opacity-50" />
-            </div>
-          </Button>
-        }
-      />
+              </div>
+              <div className="flex shrink-0 items-center gap-1">
+                <ChevronsUpDown className="h-4 w-4 opacity-50" />
+              </div>
+            </Button>
+          }
+        />
+        {selectedItem && (
+          <button
+            type="button"
+            disabled={disabled}
+            aria-label={t("common.clear")}
+            onClick={handleClear}
+            className="absolute right-7 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center rounded-sm text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <X className="size-4" aria-hidden="true" />
+          </button>
+        )}
+      </div>
       <PopoverContent className="w-[360px] p-0" align="start">
         <Command shouldFilter={false}>
           <CommandInputRaw

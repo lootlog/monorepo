@@ -2,8 +2,8 @@ import { ChatFilterSwitcher } from "./components/chat-filter-switcher";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { DraggableWindow } from "@/components/draggable-window";
-import { GuildSwitcher } from "@/components/guild-switcher";
-import { ChatInput } from "./components/chat-input";
+import { ChatViewHeader } from "./components/chat-view-header";
+import { ChatComposeArea } from "./components/chat-compose-area";
 import { ChatMessageList } from "./components/chat-message-list";
 import { ChatWindowActions } from "./components/chat-window-actions";
 import { ChatGatheringBar } from "./components/chat-gathering-bar";
@@ -28,7 +28,7 @@ import {
 import { useNpcTypeColors } from "@/hooks/api/use-settings-documents";
 import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
 import { AsyncContent } from "@/components/async-content";
-import { AsyncStatusIndicator } from "@/components/async-status-indicator";
+import { ChatConnectionStatus } from "./components/chat-connection-status";
 import { useSocket } from "@/contexts/socket-context";
 import { useVisibleLootlogGuilds } from "@/hooks/use-visible-lootlog-guilds";
 import {
@@ -186,10 +186,14 @@ export const ChatView = ({
     selectedGuildId: effectiveSelectedGuildId,
   });
 
+  // Reconcile persisted selection when this view's server access subscription changes.
+  // oxlint-disable-next-line react-doctor/no-pass-data-to-parent
   useEffect(() => {
     const next = getNextSelectedGuildId(selectedGuildId, visibleGuilds);
     if (next !== undefined) setSelectedGuildId(next);
   }, [selectedGuildId, setSelectedGuildId, visibleGuilds]);
+  // Server message/access subscriptions invalidate persisted read entries, including revoked organizations.
+  // oxlint-disable-next-line react-doctor/no-pass-data-to-parent
   useEffect(() => {
     if (!visibleGuilds) return;
     setReadState((current) => {
@@ -201,8 +205,9 @@ export const ChatView = ({
         );
       }
       if (!hasMessagesResponse) return next;
+      const failedGuilds = new Set(failedGuildIds);
       for (const [guildId, messages] of Object.entries(messagesByGuildId)) {
-        if (failedGuildIds.includes(guildId)) continue;
+        if (failedGuilds.has(guildId)) continue;
         next = retainChatReadEntries(
           next,
           guildId,
@@ -312,28 +317,21 @@ export const ChatView = ({
     <ChatGatheringBar isVisible={isOpen}>
       {(gatheringBar, hiddenGatherings, ownGathering) => (
         <div className="ll:flex ll:size-full ll:min-h-0 ll:flex-col">
-          <div className="ll:flex ll:shrink-0 ll:items-center ll:gap-1 ll:p-1">
-            <GuildSwitcher
-              allowAll
-              className="ll:min-w-0 ll:flex-1"
-              value={selectedGuildId}
-              onChange={(guildId) => {
-                setSelectedGuildId(guildId);
-              }}
-              unreadCountByGuildId={unreadCountByGuildId}
-              unreadGuildIds={
-                new Set(
-                  (visibleGuilds ?? [])
-                    .filter(
-                      (guild) =>
-                        getChatUnreadSummary(readState, guild.id).ids.size > 0,
-                    )
-                    .map((guild) => guild.id),
-                )
-              }
-            />
-            {embedded && actions}
-          </div>
+          <ChatViewHeader
+            selectedGuildId={selectedGuildId}
+            onGuildChange={setSelectedGuildId}
+            unreadCountByGuildId={unreadCountByGuildId}
+            unreadGuildIds={
+              new Set(
+                (visibleGuilds ?? []).flatMap((guild) =>
+                  getChatUnreadSummary(readState, guild.id).ids.size > 0
+                    ? [guild.id]
+                    : [],
+                ),
+              )
+            }
+            actions={embedded ? actions : null}
+          />
           {filtersVisible && (
             <ChatFilterSwitcher
               value={effectiveFilter}
@@ -345,30 +343,15 @@ export const ChatView = ({
           <div
             className={`ll:relative ll:min-h-0 ll:flex-1 ll:overflow-hidden ${!filtersVisible ? "ll:border-solid ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40" : ""}`}
           >
-            <div className="ll:pointer-events-auto ll:absolute ll:right-1 ll:top-1 ll:z-20 ll:flex ll:max-w-[calc(100%-8px)] ll:items-start ll:gap-1">
-              <AsyncStatusIndicator
-                active={partialError}
-                kind="error"
-                label={
-                  failedGuildIds.length > 0
-                    ? t("states.partialError", { count: failedGuildIds.length })
-                    : t("states.refreshError")
-                }
-                onRetry={retryChatData}
-                retryLabel={t("actions.retry", { ns: "common" })}
-              />
-              <AsyncStatusIndicator
-                active={showOfflineStatus}
-                kind="warning"
-                label={t("states.offline")}
-              />
-              <AsyncStatusIndicator
-                active={showRefreshingStatus}
-                delay
-                kind="loading"
-                label={t("states.refreshing")}
-              />
-            </div>
+            <ChatConnectionStatus
+              status={{
+                partialError,
+                offline: showOfflineStatus,
+                refreshing: showRefreshingStatus,
+              }}
+              failedGuildCount={failedGuildIds.length}
+              onRetry={retryChatData}
+            />
             <div className="ll:absolute ll:right-2 ll:bottom-2 ll:z-20">
               {hiddenGatherings}
             </div>
@@ -413,20 +396,10 @@ export const ChatView = ({
               />
             </AsyncContent>
           </div>
-          <div className="ll:shrink-0">
-            {ownGathering}
-            <div>
-              {!resolvedComposeGuildId && (
-                <p className="ll:text-[10px] ll:text-muted-foreground">
-                  {t("quickActions.selectOrganization")}
-                </p>
-              )}
-              <ChatInput
-                variant="borderless"
-                selectedGuildId={resolvedComposeGuildId || undefined}
-              />
-            </div>
-          </div>
+          <ChatComposeArea
+            guildId={resolvedComposeGuildId}
+            ownGathering={ownGathering}
+          />
         </div>
       )}
     </ChatGatheringBar>

@@ -60,8 +60,10 @@ export const BattleLogList: FC<BattleLogListProps> = ({
   const [resizedTurn, setResizedTurn] = useState<number | null>(null);
   const previousDesktop = useRef(isDesktop);
   const rememberSelectedTurn = useEffectEvent(() =>
+    // eslint-disable-next-line react-doctor/no-derived-state -- This is a snapshot of the selected turn when the viewport changes, retained until its imperative scroll request completes.
     setResizedTurn(selectedTurn ?? null),
   );
+  // eslint-disable-next-line react-doctor/no-derived-state-effect -- A media-query change switches physical scroll containers and requests re-alignment of the previously selected turn.
   useEffect(() => {
     if (previousDesktop.current !== isDesktop) rememberSelectedTurn();
     previousDesktop.current = isDesktop;
@@ -131,6 +133,7 @@ export const BattleLogList: FC<BattleLogListProps> = ({
     .join(",");
   const notifyVisibleTurns = useEffectEvent(() => onVisibleTurnsChange?.());
   useEffect(() => {
+    // eslint-disable-next-line react-doctor/no-prop-callback-in-effect -- Reports completed virtualizer layout so the owner can synchronize its DOM scroll overlay.
     notifyVisibleTurns();
   }, [visibleRangeKey, isDesktop]);
 
@@ -149,6 +152,7 @@ export const BattleLogList: FC<BattleLogListProps> = ({
   useEffect(() => {
     if (requestedTurn === null || requestedTurn === undefined) return;
     if (requestedTurn < 1 || requestedTurn > (events?.length ?? 0)) {
+      // eslint-disable-next-line react-doctor/no-pass-live-state-to-parent, react-doctor/no-prop-callback-in-effect -- Owns an imperative scroll request: completion/cancellation notifications follow DOM measurements and user interruption, not mirrored parent state.
       notifyScrollCancel(requestedTurn);
       return;
     }

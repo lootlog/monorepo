@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { format } from "date-fns";
 import {
   ChevronDownIcon,
   ChevronLeftIcon,
@@ -14,7 +15,8 @@ import {
 } from "react-day-picker";
 
 import { cn } from "cn";
-import { Button, buttonVariants } from "@lootlog/ui/components/button";
+import { Button } from "@lootlog/ui/components/button";
+import { buttonVariants } from "@lootlog/ui/lib/button-variants";
 
 function Calendar({
   className,
@@ -198,7 +200,7 @@ function CalendarDayButton({
       ref={ref}
       variant="ghost"
       size="icon"
-      data-day={day.date.toLocaleDateString()}
+      data-day={format(day.date, "yyyy-MM-dd")}
       data-selected-single={
         modifiers.selected &&
         !modifiers.range_start &&

@@ -127,7 +127,7 @@ export const NpcColorEditorPopover: FC<NpcColorEditorPopoverProps> = ({
               }
               onBlur={(event) => commitColor(event.target.value)}
               onKeyDown={(event) => {
-                if (event.key === "Enter") {
+                if (event.key === "Enter" && !event.nativeEvent.isComposing) {
                   commitColor(event.currentTarget.value);
                   event.currentTarget.blur();
                 }

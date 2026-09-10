@@ -35,6 +35,8 @@ import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
 const optionalQueryValue = <Value,>(value: Value | null | undefined) =>
   value ?? undefined;
 
+const handleMatchmakingToggle = () => {};
+
 export const BattlePanelBattlesList = () => {
   const { t } = useTranslation();
   const [queryState, setQueryState] = useQueryStates(
@@ -130,8 +132,6 @@ export const BattlePanelBattlesList = () => {
       search: warriorNames.length > 0 ? warriorNames.join(",") : undefined,
     });
   };
-
-  const handleMatchmakingToggle = () => {};
 
   const activeFilterChips = buildBattleListFilterLabels({
     filters,

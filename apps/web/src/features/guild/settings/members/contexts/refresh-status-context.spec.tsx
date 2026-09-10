@@ -9,10 +9,8 @@ import type { ReactNode } from "react";
 import { afterEach, expect, it, vi } from "vitest";
 import { createTestGateway } from "@/lib/testing/gateway";
 import { createOrganizationTestWrapper } from "@/lib/testing/router";
-import {
-  RefreshStatusProvider,
-  useRefreshStatus,
-} from "./refresh-status-context";
+import { useRefreshStatus } from "./refresh-status-context";
+import { RefreshStatusProvider } from "./refresh-status-provider";
 
 afterEach(() => {
   cleanup();

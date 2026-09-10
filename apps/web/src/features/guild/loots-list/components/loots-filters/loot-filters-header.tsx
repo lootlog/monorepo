@@ -2,7 +2,8 @@ import { SectionCardContent } from "@/components/common/section-card/section-car
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { Button } from "@lootlog/ui/components/button";
 import { Kbd } from "@lootlog/ui/components/kbd";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
+import * as m from "framer-motion/m";
 import { Filter, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { WorldSwitcher } from "@/components/common/world-switcher";
@@ -112,12 +113,14 @@ export const LootFiltersHeader = ({
                         })}
                       </Kbd>
                     )}
+                    {/* The responsive toolbar owns this button; filter changes keep the presence boundary mounted. */}
+                    {/* eslint-disable-next-line react-doctor/motion-animate-presence-must-outlive-child */}
                     <AnimatePresence>
                       {hasSearchFilters && (
-                        <motion.div
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          exit={{ scale: 0 }}
+                        <m.div
+                          initial={{ scale: 0.95, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          exit={{ scale: 0.95, opacity: 0 }}
                           className="absolute -left-1 -top-1 h-3 w-3 rounded-full border-2 border-background bg-primary"
                         />
                       )}
@@ -172,12 +175,14 @@ export const LootFiltersHeader = ({
                         className="relative size-9 shrink-0"
                       >
                         <Filter className="h-4 w-4" />
+                        {/* The responsive toolbar owns this button; filter changes keep the presence boundary mounted. */}
+                        {/* eslint-disable-next-line react-doctor/motion-animate-presence-must-outlive-child */}
                         <AnimatePresence>
                           {hasActiveFilters && !isFiltersOpen && (
-                            <motion.div
-                              initial={{ scale: 0 }}
-                              animate={{ scale: 1 }}
-                              exit={{ scale: 0 }}
+                            <m.div
+                              initial={{ scale: 0.95, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              exit={{ scale: 0.95, opacity: 0 }}
                               className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full border-2 border-background"
                             />
                           )}

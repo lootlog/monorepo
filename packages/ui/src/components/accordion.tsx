@@ -35,7 +35,7 @@ function AccordionTrigger({
         <span className="text-sm font-semibold cursor-pointer group-hover:text-primary transition-colors">
           {children}
         </span>
-        <ChevronDownIcon className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-all duration-200 group-aria-expanded:rotate-180" />
+        <ChevronDownIcon className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-[color,box-shadow] duration-200 group-aria-expanded:rotate-180" />
       </AccordionPrimitive.Trigger>
     </AccordionPrimitive.Header>
   );

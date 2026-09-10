@@ -69,6 +69,8 @@ export default defineContentScript({
             page.postMessage(encodeMessage({ type: "closed" }));
           }
         };
+        // This is a transferred MessagePort, accepted only after the window source and origin checks above.
+        // oxlint-disable-next-line react-doctor/postmessage-origin-risk
         page.onmessage = (message: MessageEvent<unknown>) => {
           if (stopped) return;
           try {

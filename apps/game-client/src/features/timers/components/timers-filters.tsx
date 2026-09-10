@@ -45,6 +45,9 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
   } = useTimersStore();
 
   const filters = timersFilters[filtersKey] ?? DEFAULT_TIMERS_FILTERS;
+  const selectedNpcTypes = new Set(filters.selectedNpcTypes);
+  const selectedColors = new Set(filters.selectedColors);
+  const hiddenColors = new Set(hiddenDefaultColors);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTimerFiltersSearchText(e.target.value);
@@ -72,7 +75,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
   };
 
   const handleSelectOnlyNpcType = (
-    event: React.MouseEvent<HTMLDivElement>,
+    event: React.MouseEvent<HTMLButtonElement>,
     npcType: NpcType,
   ) => {
     event.preventDefault();
@@ -85,7 +88,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
   const handleToggleColor = (colorId: string) => {
     setTimersFilters(filtersKey, {
       ...filters,
-      selectedColors: filters.selectedColors.includes(colorId)
+      selectedColors: selectedColors.has(colorId)
         ? filters.selectedColors.filter((id) => id !== colorId)
         : [...filters.selectedColors, colorId],
     });
@@ -123,20 +126,21 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
             inputMode="numeric"
           />
         </div>
-        <div className="ll:flex ll-custom-cursor-pointer ll:items-center ll:justify-center ll:border-solid ll:border-gray-400 ll:box-border ll:border ll:rounded-sm ll:bg-gray-500/30 ll:transition-all">
+        <div className="ll:flex ll-custom-cursor-pointer ll:items-center ll:justify-center ll:border-solid ll:border-gray-400 ll:box-border ll:border ll:rounded-sm ll:bg-gray-500/30 ll:transition-colors ll:motion-reduce:transition-none">
           {NPC_TYPES_OPTIONS.map((type, index) => {
             const npc = NPC_NAMES[type];
-            const isSelected = filters.selectedNpcTypes.includes(type);
+            const isSelected = selectedNpcTypes.has(type);
             const isNotLast = index < NPC_TYPES_OPTIONS.length - 1;
 
             return (
-              <div
+              <button
                 key={type}
-                role="button"
+                type="button"
+                aria-pressed={isSelected}
                 onClick={() => handleToggleNpcType(type)}
                 onContextMenu={(event) => handleSelectOnlyNpcType(event, type)}
                 className={cn(
-                  "ll:flex ll:items-center ll:justify-center ll:gap-2 ll:hover:bg-gray-400/50 ll:px-1 ll:py-0.5 ll:box-border ll:text-white ll:text-xs",
+                  "ll:bg-transparent ll:border-0 ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:flex ll:items-center ll:justify-center ll:gap-2 ll:hover:bg-gray-400/50 ll:px-1 ll:py-0.5 ll:box-border ll:text-white ll:text-xs",
                   {
                     "ll:border-r ll:border-r-white ll:border-solid": isNotLast,
                     "ll:bg-gray-400/30": isSelected,
@@ -144,58 +148,63 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
                 )}
               >
                 {npc.shortname}
-              </div>
+              </button>
             );
           })}
         </div>
       </div>
       {colorFiltersEnabled && (
         <div className="ll:flex ll:flex-row ll:gap-1 ll:flex-wrap ll:border-solid ll:border-gray-400 ll:box-border ll:border ll:rounded-sm ll:p-1">
-          {Object.entries(TIMERS_COLORS)
-            .filter(([colorId]) => !hiddenDefaultColors.includes(colorId))
-            .map(([colorId, color]) => {
-              const isSelected = filters.selectedColors.includes(colorId);
-              const overridden = overriddenDefaultColors[colorId];
-              return (
-                <Tooltip key={colorId}>
-                  <TooltipTrigger asChild>
-                    <div
-                      role="button"
-                      onClick={() => handleToggleColor(colorId)}
-                      className={cn(
-                        "ll:size-4 ll:rounded-md ll:box-border ll:border ll-custom-cursor-pointer ll:transition-all",
-                        !overridden && color?.bgNoOpacity,
-                        !overridden && color?.border,
-                        {
-                          "ll:ring-2 ll:ring-white": isSelected,
-                        },
-                      )}
-                      style={
-                        overridden
-                          ? {
-                              backgroundColor: overridden.backgroundColor,
-                              borderColor: overridden.borderColor,
-                            }
-                          : undefined
-                      }
-                    />
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="ll:text-xs">
-                    {defaultColorNames[colorId] ?? getDefaultColorName(colorId)}
-                  </TooltipContent>
-                </Tooltip>
-              );
-            })}
+          {Object.entries(TIMERS_COLORS).flatMap(([colorId, color]) => {
+            if (hiddenColors.has(colorId)) return [];
+            const isSelected = selectedColors.has(colorId);
+            const overridden = overriddenDefaultColors[colorId];
+            return (
+              <Tooltip key={colorId}>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label={
+                      defaultColorNames[colorId] ?? getDefaultColorName(colorId)
+                    }
+                    aria-pressed={isSelected}
+                    onClick={() => handleToggleColor(colorId)}
+                    className={cn(
+                      "ll:p-0 ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:size-4 ll:rounded-md ll:box-border ll:border ll-custom-cursor-pointer ll:transition-colors ll:motion-reduce:transition-none",
+                      !overridden && color?.bgNoOpacity,
+                      !overridden && color?.border,
+                      {
+                        "ll:ring-2 ll:ring-white": isSelected,
+                      },
+                    )}
+                    style={
+                      overridden
+                        ? {
+                            backgroundColor: overridden.backgroundColor,
+                            borderColor: overridden.borderColor,
+                          }
+                        : undefined
+                    }
+                  />
+                </TooltipTrigger>
+                <TooltipContent side="top" className="ll:text-xs">
+                  {defaultColorNames[colorId] ?? getDefaultColorName(colorId)}
+                </TooltipContent>
+              </Tooltip>
+            );
+          })}
           {Object.values(customColors).map((color) => {
-            const isSelected = filters.selectedColors.includes(color.id);
+            const isSelected = selectedColors.has(color.id);
             return (
               <Tooltip key={color.id}>
                 <TooltipTrigger asChild>
-                  <div
-                    role="button"
+                  <button
+                    type="button"
+                    aria-label={color.name}
+                    aria-pressed={isSelected}
                     onClick={() => handleToggleColor(color.id)}
                     className={cn(
-                      "ll:size-4 ll:rounded-md ll:box-border ll:border ll-custom-cursor-pointer ll:transition-all",
+                      "ll:p-0 ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:size-4 ll:rounded-md ll:box-border ll:border ll-custom-cursor-pointer ll:transition-colors ll:motion-reduce:transition-none",
                       {
                         "ll:ring-2 ll:ring-white": isSelected,
                         "ll:opacity-50": !isSelected,
