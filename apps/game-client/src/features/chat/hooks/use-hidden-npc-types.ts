@@ -11,7 +11,6 @@ import {
 } from "@lootlog/client/main";
 import { NpcTypeEnum } from "@lootlog/schema/npc-type";
 import { useQueryClient } from "@tanstack/react-query";
-import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
@@ -30,19 +29,24 @@ const CHAT_NPC_TYPE_SET: ReadonlySet<string> = new Set(CHAT_NPC_TYPES);
 export const isChatNpcType = (value: unknown): value is ChatNpcType =>
   typeof value === "string" && CHAT_NPC_TYPE_SET.has(value);
 
-const initialQueue = Promise.resolve();
+/**
+ * One write queue for every consumer (settings panel, context menu).
+ * The game client serves a single signed-in user, so the queue is global.
+ */
+let writeQueue = Promise.resolve();
+let writeGeneration = 0;
+let pendingWrites = 0;
 
 /**
  * Owns reads and optimistic writes of the user's hidden chat NPC ranks.
- * Writes are serialized; a failed write refetches and reports once.
+ * Each write derives its patch from the live query cache, writes are
+ * serialized across consumers, and a failed write refetches and reports once.
  */
 export const useHiddenNpcTypes = () => {
   const { t } = useTranslation("settings");
   const preferences = useUserPreferences();
   const settingsDocuments = useChatSettingsDocuments();
   const queryClient = useQueryClient();
-  const queue = useRef(initialQueue);
-  const generation = useRef(0);
   const hidden = new Set<NpcTypeEnum>(settingsDocuments.hiddenNpcTypes);
   const queryKey = getSettingsDocumentsControllerGetPreferencesQueryKey(
     settingsDocuments.params,
@@ -53,18 +57,24 @@ export const useHiddenNpcTypes = () => {
     const userId = preferences.data?.userId;
     if (!userId || !settingsDocuments.data) return;
 
+    const cached = new Set(
+      getHiddenNpcTypesFromSettingsDocuments(
+        queryClient.getQueryData<SettingsDocumentsResponseDtoOutput>(queryKey),
+      ),
+    );
     const next = CHAT_NPC_TYPES.filter((type) =>
-      type === npcType ? !isVisible : hidden.has(type),
+      type === npcType ? !isVisible : cached.has(type),
     );
     queryClient.setQueryData<SettingsDocumentsResponseDtoOutput>(
       queryKey,
       (current) => updateHiddenNpcTypesInSettingsDocuments(current, next),
     );
 
-    const currentGeneration = generation.current;
-    queue.current = queue.current.then(async () => {
-      if (currentGeneration !== generation.current) return;
+    const generation = writeGeneration;
+    pendingWrites += 1;
+    writeQueue = writeQueue.then(async () => {
       try {
+        if (generation !== writeGeneration) return;
         const response = await settingsDocumentsControllerPatchPreferences({
           operations: [
             {
@@ -75,6 +85,8 @@ export const useHiddenNpcTypes = () => {
             },
           ],
         });
+        // A later optimistic write already superseded this response.
+        if (pendingWrites > 1) return;
         const confirmed = getHiddenNpcTypesFromSettingsDocuments(response);
         queryClient.setQueryData<SettingsDocumentsResponseDtoOutput>(
           queryKey,
@@ -82,9 +94,11 @@ export const useHiddenNpcTypes = () => {
             updateHiddenNpcTypesInSettingsDocuments(current, confirmed),
         );
       } catch {
-        generation.current += 1;
+        writeGeneration += 1;
         await settingsDocuments.refetch();
         toast.error(t("chatFilters.saveError"));
+      } finally {
+        pendingWrites -= 1;
       }
     });
   };

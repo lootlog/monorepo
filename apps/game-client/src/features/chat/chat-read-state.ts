@@ -1,5 +1,7 @@
 import type { ChatMessageResponseDtoOutput } from "@lootlog/client/main";
 import { CHAT_MESSAGE_LIMIT } from "@lootlog/schema/chat";
+import type { NpcTypeEnum } from "@lootlog/schema/npc-type";
+import { isHiddenNpcChatMessage } from "./chat.helpers";
 
 type ChatReadEntry = {
   id: string;
@@ -88,4 +90,54 @@ export const getChatUnreadSummary = (state: ChatReadState, guildId: string) => {
     ),
     reports: entries.some((entry) => entry.type === "NPC"),
   };
+};
+
+type ReconcileChatReadStateInput = {
+  allowedGuildIds: ReadonlySet<string>;
+  failedGuildIds: ReadonlySet<string>;
+  hiddenNpcTypes: ReadonlySet<NpcTypeEnum>;
+  messagesByGuildId: Record<string, ChatMessageResponseDtoOutput[]>;
+  hasAttention: (
+    guildId: string,
+    message: ChatMessageResponseDtoOutput,
+  ) => boolean;
+};
+
+/**
+ * Aligns persisted read entries with the messages the transcript can show:
+ * drops revoked organizations, prunes entries the transcript no longer renders
+ * (evicted, or hidden by a rank filter), and flags loaded mentions.
+ */
+export const reconcileChatReadState = (
+  state: ChatReadState,
+  {
+    allowedGuildIds,
+    failedGuildIds,
+    hiddenNpcTypes,
+    messagesByGuildId,
+    hasAttention,
+  }: ReconcileChatReadStateInput,
+) => {
+  let next = state;
+  if (Object.keys(state).some((guildId) => !allowedGuildIds.has(guildId))) {
+    next = Object.fromEntries(
+      Object.entries(state).filter(([guildId]) => allowedGuildIds.has(guildId)),
+    );
+  }
+  for (const [guildId, allMessages] of Object.entries(messagesByGuildId)) {
+    if (failedGuildIds.has(guildId)) continue;
+    const messages = allMessages.filter(
+      (message) => !isHiddenNpcChatMessage(message, hiddenNpcTypes),
+    );
+    next = retainChatReadEntries(
+      next,
+      guildId,
+      new Set(messages.map((message) => message.id)),
+    );
+    for (const message of messages) {
+      if (hasAttention(guildId, message))
+        next = prioritizeChatMessage(next, guildId, message.id);
+    }
+  }
+  return next;
 };
