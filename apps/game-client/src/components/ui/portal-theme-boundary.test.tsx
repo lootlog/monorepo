@@ -36,7 +36,7 @@ const expectContentInsideThemeBoundary = (testId: string) => {
 };
 
 const expectSmallRadius = (testId: string) => {
-  expect(["4px", "calc(8px - 4px)"]).toContain(
+  expect(["6px", "calc(10px * 0.6)"]).toContain(
     getComputedStyle(screen.getByTestId(testId)).borderRadius,
   );
 };

@@ -8,10 +8,6 @@
 @variant dark (:is(#lootlog-root.dark-theme, .ll-theme-boundary.dark-theme) *);
 
 @theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -27,144 +23,67 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --shadow-2xs: var(--shadow-2xs);
-  --shadow-xs: var(--shadow-xs);
-  --shadow-sm: var(--shadow-sm);
-  --shadow: var(--shadow);
-  --shadow-md: var(--shadow-md);
-  --shadow-lg: var(--shadow-lg);
-  --shadow-xl: var(--shadow-xl);
-  --shadow-2xl: var(--shadow-2xl);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/*
+ * Neutral shadcn defaults (https://ui.shadcn.com/docs/theming), scoped to the
+ * Lootlog roots instead of :root. Spacing and radius are pinned in px so the
+ * primitives keep the shadcn sizes regardless of the game's <html> font-size.
+ */
 #lootlog-root,
 .ll-theme-boundary {
-  --background: oklch(0.965 0.002 250);
-  --foreground: oklch(0.109 0.081 252.71);
+  --ll-spacing: 4px;
+  --radius: 10px;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.109 0.081 252.71);
+  --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.109 0.081 252.71);
-  --primary: oklch(0.578 0.239 271.077);
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.91 0.007 250);
-  --secondary-foreground: oklch(0.169 0.061 250);
-  --muted: oklch(0.959 0.008 250);
-  --muted-foreground: oklch(0.461 0.017 250);
-  --accent: oklch(0.959 0.008 250);
-  --accent-foreground: oklch(0.109 0.081 252.71);
-  --destructive: oklch(0.602 0.199 27.325);
-  --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0.91 0.007 250);
-  --input: oklch(0.91 0.007 250);
-  --ring: oklch(0.578 0.239 271.077);
-  --chart-1: oklch(0.578 0.239 271.077);
-  --chart-2: oklch(0.504 0.196 271.077);
-  --chart-3: oklch(0.421 0.154 271.077);
-  --chart-4: oklch(0.349 0.119 271.077);
-  --chart-5: oklch(0.21 0.194 273.548);
-  --sidebar: oklch(1 0 0);
-  --sidebar-foreground: oklch(0.109 0.081 252.71);
-  --sidebar-primary: oklch(0.578 0.239 271.077);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.959 0.008 250);
-  --sidebar-accent-foreground: oklch(0.109 0.081 252.71);
-  --sidebar-border: oklch(0.91 0.007 250);
-  --sidebar-ring: oklch(0.578 0.239 271.077);
-  /* --font-sans: Inter;
-    --font-serif: Inter;
-    --font-mono: Fira Code; */
-  --radius: 0.5rem;
-  --shadow-2xs: 0px 4px 10px 0px hsl(0 0% 0% / 0.05);
-  --shadow-xs: 0px 4px 10px 0px hsl(0 0% 0% / 0.05);
-  --shadow-sm:
-    0px 4px 10px 0px hsl(0 0% 0% / 0.1), 0px 1px 2px -1px hsl(0 0% 0% / 0.1);
-  --shadow:
-    0px 4px 10px 0px hsl(0 0% 0% / 0.1), 0px 1px 2px -1px hsl(0 0% 0% / 0.1);
-  --shadow-md:
-    0px 4px 10px 0px hsl(0 0% 0% / 0.1), 0px 2px 4px -1px hsl(0 0% 0% / 0.1);
-  --shadow-lg:
-    0px 4px 10px 0px hsl(0 0% 0% / 0.1), 0px 4px 6px -1px hsl(0 0% 0% / 0.1);
-  --shadow-xl:
-    0px 4px 10px 0px hsl(0 0% 0% / 0.1), 0px 8px 10px -1px hsl(0 0% 0% / 0.1);
-  --shadow-2xl: 0px 4px 10px 0px hsl(0 0% 0% / 0.25);
-  --tracking-normal: 0rem;
-  --spacing: 0.25rem;
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
 }
 
 #lootlog-root.dark-theme,
 .ll-theme-boundary.dark-theme {
-  --background: oklch(0.071 0.011 250);
-  --foreground: oklch(0.98 0.024 213);
-  --card: oklch(0.106 0.007 250);
-  --card-foreground: oklch(0.98 0.024 213);
-  --popover: oklch(0.106 0.007 250);
-  --popover-foreground: oklch(0.98 0.024 213);
-  --primary: oklch(0.5038 0.2937 285.3753);
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.159 0.007 250);
-  --secondary-foreground: oklch(0.98 0.024 213);
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.649 0.008 250);
-  --accent: oklch(0.5038 0.2937 285.3753);
-  --accent-foreground: oklch(0.98 0.024 213);
-  --destructive: oklch(0.306 0.128 27.325);
-  --destructive-foreground: oklch(0.98 0.024 213);
-  --border: oklch(0.159 0.007 250);
-  --input: oklch(0.159 0.007 250);
-  --ring: oklch(0.5038 0.2937 285.3753);
-  --chart-1: oklch(0.663 0.198 258.312);
-  --chart-2: oklch(0.578 0.239 271.077);
-  --chart-3: oklch(0.504 0.196 271.077);
-  --chart-4: oklch(0.421 0.154 271.077);
-  --chart-5: oklch(0.349 0.119 271.077);
-  --sidebar: oklch(0.071 0.011 250);
-  --sidebar-foreground: oklch(0.98 0.024 213);
-  --sidebar-primary: oklch(0.663 0.198 258.312);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.159 0.007 250);
-  --sidebar-accent-foreground: oklch(0.98 0.024 213);
-  --sidebar-border: oklch(0.159 0.007 250);
-  --sidebar-ring: oklch(0.663 0.198 258.312);
-  --font-sans: Inter;
-  --font-serif: Inter;
-  --font-mono: Fira Code;
-  --radius: 0.5rem;
-  --shadow-2xs: 0px 5px 15px 0px hsl(0 0% 0% / 0.2);
-  --shadow-xs: 0px 5px 15px 0px hsl(0 0% 0% / 0.2);
-  --shadow-sm:
-    0px 5px 15px 0px hsl(0 0% 0% / 0.4), 0px 1px 2px -1px hsl(0 0% 0% / 0.4);
-  --shadow:
-    0px 5px 15px 0px hsl(0 0% 0% / 0.4), 0px 1px 2px -1px hsl(0 0% 0% / 0.4);
-  --shadow-md:
-    0px 5px 15px 0px hsl(0 0% 0% / 0.4), 0px 2px 4px -1px hsl(0 0% 0% / 0.4);
-  --shadow-lg:
-    0px 5px 15px 0px hsl(0 0% 0% / 0.4), 0px 4px 6px -1px hsl(0 0% 0% / 0.4);
-  --shadow-xl:
-    0px 5px 15px 0px hsl(0 0% 0% / 0.4), 0px 8px 10px -1px hsl(0 0% 0% / 0.4);
-  --shadow-2xl: 0px 5px 15px 0px hsl(0 0% 0% / 1);
-}
-
-#lootlog-root,
-.ll-theme-boundary {
-  letter-spacing: var(--tracking-normal);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
 }
 
 body.si :is(#lootlog-root, .ll-theme-boundary) * {

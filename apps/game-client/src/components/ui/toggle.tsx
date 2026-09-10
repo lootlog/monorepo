@@ -4,12 +4,12 @@ import * as React from "react";
 import { cn } from "cn";
 
 const toggleVariants = cva(
-  "ll:inline-flex ll:outline-none ll:border-none ll:items-center ll:justify-center ll:gap-2 ll:rounded-md ll:text-sm ll:font-medium ll:transition-colors ll:hover:bg-muted ll:hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 data-[pressed]:bg-accent data-[pressed]:text-white [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "ll:inline-flex ll:outline-none ll:border-none ll:items-center ll:justify-center ll:gap-2 ll:rounded-md ll:text-sm ll:font-medium ll:transition-colors ll:hover:bg-muted ll:hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 data-[pressed]:bg-accent data-[pressed]:text-accent-foreground [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
         default:
-          "ll:bg-muted ll:data-[pressed]:bg-primary ll:data-[pressed]:text-accent-foreground/100 ll:hover:text-accent-foreground/100 ll:text-accent-foreground/50",
+          "ll:bg-muted ll:data-[pressed]:bg-primary ll:data-[pressed]:text-primary-foreground ll:hover:text-accent-foreground/100 ll:text-accent-foreground/50",
         outline:
           "ll:bg-transparent ll:shadow-sm ll:hover:bg-accent ll:hover:text-accent-foreground",
       },

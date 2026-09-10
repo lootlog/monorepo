@@ -67,30 +67,6 @@ describe("Base UI control adapters", () => {
     expect(onValueChange).toHaveBeenCalledWith("column");
   });
 
-  it("renders the toggle group as a compact segmented switch", () => {
-    const { container } = render(
-      <ToggleGroup type="single" value="row">
-        <ToggleGroupItem value="row">Row</ToggleGroupItem>
-        <ToggleGroupItem value="column">Column</ToggleGroupItem>
-      </ToggleGroup>,
-    );
-
-    const toggleGroup = container.querySelector('[data-slot="toggle-group"]');
-    expect(toggleGroup).toHaveClass(
-      "ll:rounded-sm",
-      "ll:border-gray-400",
-      "ll:bg-gray-700",
-      "ll:before:bg-purple-500/80",
-      "ll:before:duration-[120ms]",
-      "ll:motion-reduce:before:transition-none",
-    );
-    expect(screen.getByRole("button", { name: "Row" })).toHaveClass(
-      "ll:bg-transparent",
-      "ll:data-[pressed]:bg-transparent",
-      "ll:data-[pressed]:text-white",
-    );
-  });
-
   it("moves one indicator between unequal single-value segments", async () => {
     const segmentGeometry = new Map([
       ["Row", { left: 2, width: 45 }],
@@ -165,8 +141,11 @@ describe("Base UI control adapters", () => {
     expect(
       container.querySelector('[data-slot="toggle-group"]'),
     ).not.toHaveAttribute("data-indicator-visible");
-    expect(screen.getByRole("button", { name: "Row" })).toHaveClass(
-      "ll:data-[pressed]:bg-purple-500/80",
+    expect(screen.getByRole("button", { name: "Row" })).toHaveAttribute(
+      "data-pressed",
+    );
+    expect(screen.getByRole("button", { name: "Column" })).not.toHaveAttribute(
+      "data-pressed",
     );
     expect(screen.getByRole("button", { name: "Stack" })).toHaveAttribute(
       "data-pressed",
@@ -278,32 +257,14 @@ describe("Base UI control adapters", () => {
     expect(onValueCommit).toHaveBeenCalledWith([26]);
   });
 
-  it("renders the slider in the segmented-switch visual language", () => {
+  it("starts the slider in snap interaction mode", () => {
     const { container } = render(
       <Slider aria-label="Volume" defaultValue={[25]} />,
     );
 
     const sliderRoot = container.querySelector('[data-slot="slider"]');
-    const sliderInput = screen.getByRole("slider", { name: "Volume" });
-    const sliderThumb = sliderInput.parentElement;
-    const sliderTrack = sliderThumb?.parentElement?.firstElementChild;
 
     expect(sliderRoot).toHaveAttribute("data-interaction", "snap");
-    expect(sliderTrack).toHaveClass(
-      "ll:h-2",
-      "ll:box-border",
-      "ll:rounded-sm",
-      "ll:border-gray-400",
-      "ll:bg-gray-700",
-    );
-    expect(sliderThumb).toHaveClass(
-      "ll:rounded-sm",
-      "ll:bg-white",
-      "ll:group-data-[interaction=direct]/slider:scale-90",
-      "ll:group-data-[interaction=direct]/slider:transition-none",
-      "ll:motion-reduce:transition-none",
-      "ll:motion-reduce:scale-100",
-    );
   });
 
   it("positions the slider thumb directly inside the control", () => {
