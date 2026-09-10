@@ -79,7 +79,7 @@ describe("settings manifest persistence references", () => {
       chat?.subsections
         .flatMap((subsection) => subsection.controls)
         .map((control) => control.id),
-    ).toContain("chat-hidden-npc-types");
+    ).toContain("chat-npc-message-types");
   });
 
   it("exposes server visibility as a searchable settings domain", () => {

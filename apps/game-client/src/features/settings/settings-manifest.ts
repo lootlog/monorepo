@@ -250,10 +250,18 @@ export const SETTINGS_MANIFEST: SettingsDomainManifestItem[] = [
         labelKey: "settings.subsections.chatFilters",
         controls: [
           {
-            id: "chat-hidden-npc-types",
-            labelKey: "settings.chatFilters.hiddenNpcTypes.title",
-            descriptionKey: "settings.chatFilters.hiddenNpcTypes.description",
-            aliases: ["ukryj", "elita", "heros", "kolos", "tytan", "filtr"],
+            id: "chat-npc-message-types",
+            labelKey: "settings.chatFilters.npcMessages.title",
+            descriptionKey: "settings.chatFilters.npcMessages.description",
+            aliases: [
+              "ukryj",
+              "wyłącz",
+              "elita",
+              "heros",
+              "kolos",
+              "tytan",
+              "filtr",
+            ],
             settingKeys: ["chat.hiddenNpcTypes"],
           },
         ],

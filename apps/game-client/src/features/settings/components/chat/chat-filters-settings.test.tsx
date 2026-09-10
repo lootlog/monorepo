@@ -40,7 +40,7 @@ describe("ChatFiltersSettings", () => {
     harness.request.mockImplementation(patchRequest);
   });
 
-  it("renders translated copy, reflects hidden ranks and persists a toggle", async () => {
+  it("renders translated copy, shows hidden ranks as disabled and persists a toggle", async () => {
     const user = userEvent.setup();
     render(
       <QueryClientProvider client={harness.queryClient}>
@@ -49,10 +49,11 @@ describe("ChatFiltersSettings", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: "Ukryte typy NPC" }),
+      screen.getByRole("heading", { name: "Wiadomości NPC w chacie" }),
     ).toBeInTheDocument();
     expect(screen.queryByText(/chatFilters\./)).not.toBeInTheDocument();
-    expect(screen.getByRole("switch", { name: "Tytan" })).toBeChecked();
+    expect(screen.getByRole("switch", { name: "Tytan" })).not.toBeChecked();
+    expect(screen.getByRole("switch", { name: "Heros" })).toBeChecked();
 
     await user.click(screen.getByRole("switch", { name: "Elita 2" }));
 

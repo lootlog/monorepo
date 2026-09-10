@@ -43,12 +43,12 @@ export const ChatFiltersSettings = () => {
     settingsDocuments.params,
   );
 
-  const setHidden = (npcType: NpcTypeEnum, isHidden: boolean) => {
+  const setVisible = (npcType: NpcTypeEnum, isVisible: boolean) => {
     const userId = preferences.data?.userId;
     if (!userId || !settingsDocuments.data) return;
 
     const next = CHAT_NPC_TYPES.filter((type) =>
-      type === npcType ? isHidden : hidden.has(type),
+      type === npcType ? !isVisible : hidden.has(type),
     );
     queryClient.setQueryData<SettingsDocumentsResponseDtoOutput>(
       queryKey,
@@ -85,18 +85,18 @@ export const ChatFiltersSettings = () => {
 
   return (
     <SettingsTabLayout
-      title={t("chatFilters.hiddenNpcTypes.title")}
-      description={t("chatFilters.hiddenNpcTypes.description")}
+      title={t("chatFilters.npcMessages.title")}
+      description={t("chatFilters.npcMessages.description")}
     >
       <SettingsSection className="ll:gap-1.5">
         <div
-          id="chat-hidden-npc-types"
-          data-settings-control="chat-hidden-npc-types"
+          id="chat-npc-message-types"
+          data-settings-control="chat-npc-message-types"
           className="ll:flex ll:flex-col ll:gap-1.5"
         >
           {CHAT_NPC_TYPES.map((npcType) => {
             const label = t(`common:npcTypes.${npcType.toLowerCase()}`);
-            const controlId = `chat-hidden-npc-type-${npcType.toLowerCase()}`;
+            const controlId = `chat-npc-message-type-${npcType.toLowerCase()}`;
             return (
               <SettingsControlRow
                 key={npcType}
@@ -107,9 +107,9 @@ export const ChatFiltersSettings = () => {
               >
                 <Switch
                   id={controlId}
-                  checked={hidden.has(npcType)}
+                  checked={!hidden.has(npcType)}
                   disabled={!settingsDocuments.data || !preferences.data}
-                  onCheckedChange={(checked) => setHidden(npcType, checked)}
+                  onCheckedChange={(checked) => setVisible(npcType, checked)}
                 />
               </SettingsControlRow>
             );
