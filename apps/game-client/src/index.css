@@ -12,9 +12,9 @@
  * it would restyle the game page. shadcn primitives assume border-box sizing
  * and a solid zero-width border on every element.
  */
-:is(#lootlog-root, .ll-theme-boundary) *,
-:is(#lootlog-root, .ll-theme-boundary) *::before,
-:is(#lootlog-root, .ll-theme-boundary) *::after {
+:where(#lootlog-root, .ll-theme-boundary) *,
+:where(#lootlog-root, .ll-theme-boundary) *::before,
+:where(#lootlog-root, .ll-theme-boundary) *::after {
   box-sizing: border-box;
   border: 0 solid;
 }
