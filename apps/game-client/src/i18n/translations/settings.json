@@ -600,9 +600,9 @@
     "description": "Ustaw, jak prezentować komunikaty graczy i zbiórki grupy z chatu."
   },
   "chatFilters": {
-    "hiddenNpcTypes": {
-      "title": "Ukryte typy NPC",
-      "description": "Wiadomości o NPC wybranych typów nie pojawią się w chacie i nie wywołają powiadomień o wzmiankach."
+    "npcMessages": {
+      "title": "Wiadomości NPC w chacie",
+      "description": "Wyłącz typy NPC, których wiadomości nie chcesz widzieć w chacie. Wyłączone typy nie pojawiają się w chacie i nie wywołują powiadomień o wzmiankach."
     },
     "saveError": "Nie udało się zapisać filtrów chatu."
   }
