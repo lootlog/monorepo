@@ -1,4 +1,4 @@
-import { SettingsControlRow } from "@/components/settings/settings-control-row";
+import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -52,9 +52,12 @@ export const TimersSettingsGeneral: FC = () => {
   };
 
   return (
-    <div className="ll:flex ll:flex-col ll:gap-3">
-      <SettingsSection title={t("settings.timers.general.behaviorTitle")}>
-        <SettingsControlRow
+    <div className="ll:flex ll:flex-col ll:gap-[var(--ll-settings-space-lg)]">
+      <SettingsSection
+        controlId="timer-behavior"
+        title={t("settings.timers.general.behaviorTitle")}
+      >
+        <SettingsRow
           label={t("settings.timers.general.groupingLabel")}
           description={t("settings.timers.general.groupingDescription")}
         >
@@ -65,8 +68,8 @@ export const TimersSettingsGeneral: FC = () => {
             }
             id="timers-grouping"
           />
-        </SettingsControlRow>
-        <SettingsControlRow
+        </SettingsRow>
+        <SettingsRow
           label={t("settings.timers.general.underBagLabel")}
           description={t("settings.timers.general.underBagDescription")}
         >
@@ -77,8 +80,8 @@ export const TimersSettingsGeneral: FC = () => {
             }
             id="timers-under-bag"
           />
-        </SettingsControlRow>
-        <SettingsControlRow
+        </SettingsRow>
+        <SettingsRow
           label={t("settings.timers.general.compactViewLabel")}
           description={t("settings.timers.general.compactViewDescription")}
         >
@@ -89,10 +92,11 @@ export const TimersSettingsGeneral: FC = () => {
             }
             id="compact-view"
           />
-        </SettingsControlRow>
+        </SettingsRow>
       </SettingsSection>
       <SettingsSection title={t("settings.timers.general.countdownTitle")}>
-        <SettingsControlRow
+        <SettingsRow
+          controlId="timer-countdown"
           label={t("settings.timers.general.countdownLabel")}
           description={t("settings.timers.general.countdownDescription")}
           controlClassName="ll:w-28"
@@ -118,10 +122,10 @@ export const TimersSettingsGeneral: FC = () => {
               {t("settings.timers.general.countdownMin")}
             </ToggleGroupItem>
           </ToggleGroup>
-        </SettingsControlRow>
+        </SettingsRow>
       </SettingsSection>
       <SettingsSection title={t("settings.timers.general.fadeTitle")}>
-        <SettingsControlRow
+        <SettingsRow
           label={t("settings.timers.general.removeTimerAfterLabel")}
           description={t("settings.timers.general.removeTimerAfterDescription")}
           controlClassName="ll:w-10"
@@ -132,7 +136,7 @@ export const TimersSettingsGeneral: FC = () => {
             max={120}
             onChange={handleRemoveTimerAfterMsChange}
           />
-        </SettingsControlRow>
+        </SettingsRow>
       </SettingsSection>
     </div>
   );

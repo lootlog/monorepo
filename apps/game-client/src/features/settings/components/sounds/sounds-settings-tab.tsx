@@ -1,7 +1,7 @@
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Accordion } from "@/components/ui/accordion";
-import { Loader2, MapPin, Play } from "lucide-react";
+import { MapPin, Play } from "lucide-react";
 import { CategoryAccordionItem } from "./category-accordion-item";
 import { MasterVolumeControl } from "./master-volume-control";
 import { CategoryVolumeControl } from "./category-volume-control";
@@ -29,7 +29,6 @@ export function SoundsSettingsTab() {
     isLoading,
     gameInterface,
     updateSettings,
-    isPending,
     masterVolume,
     setMasterVolume,
     soundsMuted,
@@ -59,14 +58,8 @@ export function SoundsSettingsTab() {
     <SettingsTabLayout
       title={t("sounds.title")}
       description={t("sounds.description")}
-      className="ll:relative"
     >
-      {isPending ? (
-        <div className="ll:absolute ll:top-2 ll:right-2">
-          <Loader2 className="ll:size-4 ll:animate-spin ll:text-primary" />
-        </div>
-      ) : null}
-      <div className="ll:flex ll:flex-col ll:gap-4 ll:pb-6 ll:pr-1">
+      <div className="ll:flex ll:flex-col ll:gap-[var(--ll-settings-space-lg)]">
         <MasterVolumeControl
           isMuted={soundsMuted}
           volume={masterVolume}
@@ -86,7 +79,7 @@ export function SoundsSettingsTab() {
             title={t("sounds.categories.pings.label")}
             description={t("sounds.categories.pings.description")}
           >
-            <div className="ll:flex ll:items-center ll:gap-2">
+            <div className="ll:flex ll:items-center ll:gap-2 ll:px-2">
               <CategoryVolumeControl
                 icon=<MapPin className="ll:size-4" />
                 label={t("sounds.categories.pings.label")}
@@ -145,7 +138,7 @@ export function SoundsSettingsTab() {
           <Accordion
             type="single"
             collapsible
-            className="ll:flex ll:w-full ll:flex-col ll:gap-2"
+            className="ll:flex ll:w-full ll:flex-col ll:gap-1 ll:px-2 ll:pt-1"
           >
             {categories.map((category) => {
               const configKey = `${category.id}Config` as const;

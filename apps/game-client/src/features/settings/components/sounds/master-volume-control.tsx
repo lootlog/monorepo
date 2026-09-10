@@ -1,5 +1,4 @@
-import { SettingsPanel } from "@/components/settings/settings-panel";
-import { Button } from "@/components/ui/button";
+import { SettingsRow } from "@/components/settings/settings-row";
 import { Slider } from "@/components/ui/slider";
 import {
   Tooltip,
@@ -27,52 +26,53 @@ export const MasterVolumeControl: FC<MasterVolumeControlProps> = ({
 }) => {
   const { t } = useTranslation();
 
+  const muteLabel = isMuted
+    ? t("common:actions.unmute")
+    : t("common:actions.mute");
+
   return (
-    <SettingsPanel className="ll:flex ll:items-center ll:gap-3">
+    <SettingsRow
+      controlId="sound-master-volume"
+      label={t("settings.sounds.masterVolume")}
+      controlClassName="ll:w-52 ll:gap-2"
+    >
       <Tooltip>
         <TooltipTrigger asChild>
-          <span className="ll:flex ll:items-center">
-            <Volume2 className="ll:size-4" />
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>{t("settings.sounds.masterVolume")}</TooltipContent>
-      </Tooltip>
-      <span className="ll:text-sm ll:w-28 ll:text-left">
-        {t("settings.sounds.masterVolume")}
-      </span>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
+          <button
             type="button"
+            aria-label={muteLabel}
+            aria-pressed={isMuted}
             onClick={onMuteToggle}
-            className="ll:p-1 ll:size-6"
+            className="ll-custom-cursor-pointer ll:flex ll:size-5 ll:shrink-0 ll:items-center ll:justify-center ll:rounded-sm ll:border-0 ll:bg-transparent ll:p-0 ll:text-gray-300 ll:hover:bg-white/5 ll:hover:text-gray-100 ll:focus-visible:outline-2 ll:focus-visible:outline-ring"
           >
             {isMuted ? (
-              <VolumeX className="ll:size-4 ll:text-red-400" />
+              <VolumeX
+                className="ll:size-4 ll:text-red-400"
+                aria-hidden="true"
+              />
             ) : (
-              <Volume2 className="ll:size-4" />
+              <Volume2 className="ll:size-4" aria-hidden="true" />
             )}
-          </Button>
+          </button>
         </TooltipTrigger>
-        <TooltipContent>
-          {isMuted ? t("common:actions.unmute") : t("common:actions.mute")}
-        </TooltipContent>
+        <TooltipContent>{muteLabel}</TooltipContent>
       </Tooltip>
-      <div className="ll:flex-1">
+      <div className="ll:min-w-0 ll:flex-1">
         <Slider
+          aria-label={t("settings.sounds.masterVolume")}
           min={0}
           max={1}
           step={0.01}
           value={[volume]}
           onValueChange={onVolumeChange}
           onValueCommit={onVolumeCommit}
-          formatValue={(v) => `${Math.round(v * 100)}%`}
+          formatValue={(value) => `${Math.round(value * 100)}%`}
           showEndpoints={false}
         />
       </div>
-      <span className="ll:text-xs ll:text-muted-foreground ll:w-10 ll:text-right">
+      <span className="ll:w-9 ll:shrink-0 ll:text-right ll:text-[11px] ll:tabular-nums ll:text-muted-foreground">
         {Math.round(volume * 100)}%
       </span>
-    </SettingsPanel>
+    </SettingsRow>
   );
 };

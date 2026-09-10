@@ -1,4 +1,4 @@
-import { SettingsControlRow } from "@/components/settings/settings-control-row";
+import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Button } from "@/components/ui/button";
@@ -109,10 +109,11 @@ export const HotkeysSettingsTab = () => {
       title={t("settings.hotkeys.title")}
       description={t("settings.hotkeys.description")}
     >
-      <div className="ll:flex ll:flex-col ll:gap-4">
-        {categories.map(([category, actions]) => (
+      <div className="ll:flex ll:flex-col ll:gap-[var(--ll-settings-space-lg)]">
+        {categories.map(([category, actions], index) => (
           <SettingsSection
             key={category}
+            controlId={index === 0 ? "hotkeys" : undefined}
             title={t(HOTKEY_CATEGORY_KEYS[category])}
           >
             {actions.map((config) => {
@@ -124,7 +125,7 @@ export const HotkeysSettingsTab = () => {
               const isCapturing = capturingAction === config.action;
 
               return (
-                <SettingsControlRow
+                <SettingsRow
                   key={config.action}
                   label={t(config.labelKey)}
                   description={t(config.descriptionKey)}
@@ -161,13 +162,13 @@ export const HotkeysSettingsTab = () => {
                       {captureError}
                     </p>
                   ) : null}
-                </SettingsControlRow>
+                </SettingsRow>
               );
             })}
           </SettingsSection>
         ))}
         <SettingsSection title={t("settings.hotkeys.resetTitle")}>
-          <SettingsControlRow
+          <SettingsRow
             label={t("settings.hotkeys.restoreDefaultsLabel")}
             description={t("settings.hotkeys.restoreDefaultsDescription")}
             controlClassName="ll:w-28"
@@ -179,7 +180,7 @@ export const HotkeysSettingsTab = () => {
             >
               {t("settings.hotkeys.restoreButton")}
             </Button>
-          </SettingsControlRow>
+          </SettingsRow>
         </SettingsSection>
       </div>
     </SettingsTabLayout>

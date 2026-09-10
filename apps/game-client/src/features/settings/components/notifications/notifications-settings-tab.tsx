@@ -1,3 +1,4 @@
+import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import {
   NotificationCategoryTabs,
@@ -27,7 +28,9 @@ export const NotificationsSettingsTab = () => {
       description={t("notifications.description")}
       contentClassName="ll:gap-3"
     >
-      <NotificationCategoryTabs categories={categories} />
+      <SettingsSection controlId="notification-rules">
+        <NotificationCategoryTabs categories={categories} />
+      </SettingsSection>
     </SettingsTabLayout>
   );
 };

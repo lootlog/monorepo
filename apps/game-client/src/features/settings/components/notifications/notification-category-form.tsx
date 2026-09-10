@@ -1,4 +1,4 @@
-import { SettingsControlRow } from "@/components/settings/settings-control-row";
+import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import {
   SettingsGuildSelectionGrid,
@@ -232,7 +232,7 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
           const isHighlightField = field.key === "highlight";
 
           return (
-            <SettingsControlRow
+            <SettingsRow
               key={field.key}
               disabled={isDisabled}
               label={field.label}
@@ -250,10 +250,10 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
                   />
                 )}
               />
-            </SettingsControlRow>
+            </SettingsRow>
           );
         })}
-        <SettingsControlRow
+        <SettingsRow
           disabled={!watchShow}
           label={t("settings.notifications.autoHideLabel")}
           description={t("settings.notifications.autoHideDescription")}
@@ -284,7 +284,7 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
               },
             })}
           />
-        </SettingsControlRow>
+        </SettingsRow>
       </div>
 
       <SettingsSection title={t("settings.notifications.serversTitle")}>

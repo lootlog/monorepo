@@ -33,6 +33,7 @@ export function DetectorRoutingSettingsTabForm() {
   return (
     <form className="ll:flex ll:flex-col ll:gap-3 ll:py-1">
       <SettingsSection
+        controlId="detector-routing"
         title={translations.sectionTitle}
         description={translations.sectionDescription}
         actions={

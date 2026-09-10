@@ -146,11 +146,6 @@
       "showNpcLevel": "Poziom NPC",
       "showNpcLocationAndCoordinates": "Lokacja i koordynaty NPC"
     },
-    "save": {
-      "saving": "Zapisywanie…",
-      "saved": "Zapisano",
-      "error": "Nie udało się zapisać wyglądu czatu. Przywrócono ustawienia z serwera."
-    },
     "preview": {
       "ariaLabel": "Podgląd wyglądu czatu",
       "label": "Podgląd",
@@ -172,7 +167,6 @@
     "default": "Kolor domyślny",
     "overridden": "Kolor użytkownika",
     "saving": "Zapisywanie…",
-    "saveError": "Nie udało się zapisać kolorów NPC.",
     "picker": "Wybierz kolor",
     "hex": "Kolor HEX",
     "editColor": "Edytuj kolor NPC",
@@ -596,7 +590,20 @@
     "npcMessages": {
       "title": "Wiadomości NPC w chacie",
       "description": "Wyłącz typy NPC, których wiadomości nie chcesz widzieć w chacie. Wyłączone typy nie pojawiają się w chacie i nie wywołują powiadomień o wzmiankach."
-    },
-    "saveError": "Nie udało się zapisać filtrów chatu."
+    }
+  },
+  "saveStatus": {
+    "saving": "Zapisywanie…",
+    "saved": "Zapisano",
+    "error": "Błąd zapisu",
+    "retry": "Ponów"
+  },
+  "recent": {
+    "title": "Ostatnio zmieniane",
+    "description": "Ustawienia, które ostatnio zmieniałeś. Kliknij, aby do nich wrócić.",
+    "clear": "Wyczyść"
+  },
+  "nav": {
+    "subsections": "Sekcje ustawień"
   }
 }

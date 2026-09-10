@@ -9,7 +9,8 @@ const { buildMetadata, buildTimestamp, commitSha } = vi.hoisted(() => ({
 }));
 
 // eslint-disable-next-line anti-slop/no-module-mocking -- Vite hard-defines these build metadata literals before execution; stubEnv cannot vary the missing-SHA boundary.
-vi.mock("@/config/app", () => ({
+vi.mock(import("@/config/app"), async (importOriginal) => ({
+  ...(await importOriginal()),
   APP_ENVIRONMENT: "production",
   BUILD_TIMESTAMP: buildTimestamp,
   get COMMIT_SHA() {

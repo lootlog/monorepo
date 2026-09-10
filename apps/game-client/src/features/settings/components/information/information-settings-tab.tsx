@@ -1,4 +1,4 @@
-import { SettingsControlRow } from "@/components/settings/settings-control-row";
+import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import {
@@ -45,13 +45,16 @@ export const InformationSettingsTab = () => {
       title={t("settings.information.title")}
       description={t("settings.information.description")}
     >
-      <SettingsSection title={t("settings.information.buildDetailsTitle")}>
+      <SettingsSection
+        controlId="build-information"
+        title={t("settings.information.buildDetailsTitle")}
+      >
         {metadataRows.map((row) => (
-          <SettingsControlRow key={row.label} label={row.label}>
+          <SettingsRow key={row.label} label={row.label}>
             <span className="ll:block ll:max-w-64 ll:select-text ll:break-all ll:text-right ll:font-mono ll:text-[11px] ll:text-gray-200">
               {row.value}
             </span>
-          </SettingsControlRow>
+          </SettingsRow>
         ))}
       </SettingsSection>
     </SettingsTabLayout>

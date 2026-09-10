@@ -1,7 +1,8 @@
-import { SettingsControlRow } from "@/components/settings/settings-control-row";
+import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Switch } from "@/components/ui/switch";
+import { recordRecentlyChanged } from "@/features/settings/recently-changed.store";
 import { useSettingsStore } from "@/store/settings.store";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
@@ -33,19 +34,24 @@ export const GeneralSettingsTab: FC = () => {
       description={t("settings.general.description")}
     >
       <SettingsSection title={t("settings.general.behaviorTitle")}>
-        <SettingsControlRow
+        <SettingsRow
+          controlId="allow-world-selection"
           label={t("settings.general.allowWorldSelectionLabel")}
           description={t("settings.general.allowWorldSelectionDescription")}
         >
           <Switch
             checked={allowWorldSelection}
-            onCheckedChange={toggleAllowWorldSelection}
+            onCheckedChange={() => {
+              recordRecentlyChanged("allow-world-selection");
+              toggleAllowWorldSelection();
+            }}
             id="allow-world-selection"
           />
-        </SettingsControlRow>
+        </SettingsRow>
         {gameInterface === "ni" ? (
           <>
-            <SettingsControlRow
+            <SettingsRow
+              controlId="map-pings"
               label={t("settings.general.mapPingsLabel")}
               description={t("settings.general.mapPingsDescription")}
             >
@@ -54,13 +60,15 @@ export const GeneralSettingsTab: FC = () => {
                 disabled={
                   !accountPreferences || updateAccountPreferences.isPending
                 }
-                onCheckedChange={(enabled) =>
-                  updateAccountPreferences.mutate({ pings: { enabled } })
-                }
+                onCheckedChange={(enabled) => {
+                  recordRecentlyChanged("map-pings");
+                  updateAccountPreferences.mutate({ pings: { enabled } });
+                }}
                 id="map-pings"
               />
-            </SettingsControlRow>
-            <SettingsControlRow
+            </SettingsRow>
+            <SettingsRow
+              controlId="air-tags"
               label={t("settings.general.airTagsLabel")}
               description={t("settings.general.airTagsDescription")}
             >
@@ -69,24 +77,29 @@ export const GeneralSettingsTab: FC = () => {
                 disabled={
                   !accountPreferences || updateAccountPreferences.isPending
                 }
-                onCheckedChange={(enabled) =>
-                  updateAccountPreferences.mutate({ airTags: { enabled } })
-                }
+                onCheckedChange={(enabled) => {
+                  recordRecentlyChanged("air-tags");
+                  updateAccountPreferences.mutate({ airTags: { enabled } });
+                }}
                 id="air-tags"
               />
-            </SettingsControlRow>
+            </SettingsRow>
           </>
         ) : null}
-        <SettingsControlRow
+        <SettingsRow
+          controlId="animation-effects"
           label={t("settings.general.animationEffectsLabel")}
           description={t("settings.general.animationEffectsDescription")}
         >
           <Switch
             checked={animationEffectsEnabled}
-            onCheckedChange={toggleAnimationEffects}
+            onCheckedChange={() => {
+              recordRecentlyChanged("animation-effects");
+              toggleAnimationEffects();
+            }}
             id="animation-effects"
           />
-        </SettingsControlRow>
+        </SettingsRow>
       </SettingsSection>
     </SettingsTabLayout>
   );

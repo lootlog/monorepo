@@ -54,7 +54,10 @@ export const HiddenTimersTab = () => {
           </div>
         ) : null}
       </SettingsSection>
-      <SettingsSection title={t("settings.hiddenTimers.listTitle")}>
+      <SettingsSection
+        controlId="hidden-timers-list"
+        title={t("settings.hiddenTimers.listTitle")}
+      >
         <HiddenTimers guildId={selectedGuildId} />
       </SettingsSection>
     </SettingsTabLayout>

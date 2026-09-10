@@ -1,5 +1,5 @@
 import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
-import { SettingsControlRow } from "@/components/settings/settings-control-row";
+import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Button } from "@/components/ui/button";
@@ -159,7 +159,7 @@ export const LogsSettingsTab: FC = () => {
       }
     >
       <SettingsSection title={t("settings.logs.consoleDebugTitle")}>
-        <SettingsControlRow
+        <SettingsRow
           label={t("settings.logs.lootDebugLoggingLabel")}
           description={t("settings.logs.lootDebugLoggingDescription")}
         >
@@ -168,10 +168,11 @@ export const LogsSettingsTab: FC = () => {
             id="loot-debug-logging"
             onCheckedChange={setLootDebugLoggingEnabled}
           />
-        </SettingsControlRow>
+        </SettingsRow>
       </SettingsSection>
 
       <SettingsSection
+        controlId="logs-filters"
         title={t("settings.logs.filtersTitle")}
         description={t("settings.logs.filtersDescription")}
       >
