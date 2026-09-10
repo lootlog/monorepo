@@ -112,7 +112,14 @@ const setup = async (rooms: ActivePartyGatheringSummary[] = []) => {
   act(() => harness.setSessionDiscordId("current-discord"));
   harness.open();
   await harness.join();
-  await waitFor(() => expect(discovery).toHaveBeenCalled());
+  await waitFor(() => {
+    expect(discovery).toHaveBeenCalled();
+    expect(
+      harness.queryClient.isFetching({
+        queryKey: ACTIVE_GATHERINGS_QUERY_KEY,
+      }),
+    ).toBe(0);
+  });
   const refresh = () =>
     act(async () => {
       await harness.queryClient.invalidateQueries({
@@ -487,7 +494,7 @@ it("keeps full discovery counts after joining despite a private projection and m
   });
   const harness = await setup([gathering]);
   expect(
-    screen.getByLabelText("W grupie: 8/10", { exact: false }),
+    await screen.findByLabelText("W grupie: 8/10", { exact: false }),
   ).toBeVisible();
   harness.mutation.mockImplementation(async () =>
     Response.json(createChatReadyRoom({ world: "pandora" })),
@@ -495,7 +502,7 @@ it("keeps full discovery counts after joining despite a private projection and m
   fireEvent.click(screen.getByRole("button", { name: "Zgłoś się" }));
   await screen.findByRole("button", { name: "Wycofaj zgłoszenie" });
   expect(
-    screen.getByLabelText("W grupie: 8/10", { exact: false }),
+    await screen.findByLabelText("W grupie: 8/10", { exact: false }),
   ).toBeVisible();
   expect(
     screen.getByRole("button", { name: "Wycofaj zgłoszenie" }),
@@ -510,7 +517,7 @@ it("keeps full discovery counts after joining despite a private projection and m
   );
   await harness.refresh();
   expect(
-    screen.getByLabelText("W grupie: 9/10", { exact: false }),
+    await screen.findByLabelText("W grupie: 9/10", { exact: false }),
   ).toBeVisible();
 
   harness.discovery.mockImplementation(async () => Response.json([]));
