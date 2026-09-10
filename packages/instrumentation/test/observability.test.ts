@@ -1,5 +1,13 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
-import { ConfigProvider, Effect, Fiber, Layer, Schema, Tracer } from "effect";
+import {
+  Cause,
+  ConfigProvider,
+  Effect,
+  Fiber,
+  Layer,
+  Schema,
+  Tracer,
+} from "effect";
 import {
   HttpRouter,
   HttpServer,
@@ -47,6 +55,38 @@ beforeEach(() => {
 afterEach(() => logOutput.mockRestore());
 
 describe("observability contract", () => {
+  test("local HTTP failures have a readable error level and multiline cause", async () => {
+    await Effect.runPromise(
+      Effect.log(Cause.die(new Error("undeclared Redis key"))).pipe(
+        Effect.annotateLogs({
+          "http.method": "POST",
+          "http.url": "/messaging",
+          "http.status": 500,
+        }),
+        Effect.provide(
+          makeObservabilityLayer(
+            Effect.succeed({
+              serviceName: "api",
+              serviceNamespace: "lootlog-test",
+              environment: "local",
+            }),
+          ).pipe(
+            Layer.provide(
+              ConfigProvider.layer(ConfigProvider.fromEnvRecord({})),
+            ),
+          ),
+        ),
+      ),
+    );
+    const output = logOutput.mock.calls
+      .map((parts) => parts.join(" "))
+      .join("\n");
+    expect(output).toContain("ERROR");
+    expect(output).toContain("Error: undeclared Redis key\n");
+    expect(output).toContain("/messaging");
+    expect(output).not.toContain('"level":"info"');
+  });
+
   test("exports seconds histograms and idle heartbeat with resource identity, only when metrics are enabled", async () => {
     const requests: Array<{ path: string; body: unknown }> = [];
     const server = Bun.serve({

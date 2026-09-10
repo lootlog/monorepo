@@ -4,12 +4,16 @@ import {
   Formatter,
   Inspectable,
   Logger,
+  References,
   Schema,
   type Tracer,
 } from "effect";
 
 const isLogContext = Schema.is(Schema.Struct({ context: Schema.String }));
 const isLogMessage = Schema.is(Schema.Struct({ message: Schema.String }));
+const isHttpServerError = Schema.is(
+  Schema.Number.check(Schema.isBetween({ minimum: 500, maximum: 599 })),
+);
 
 // Promise-based adapters run outside an Effect fiber, but belong to its span.
 export const logSpanContext = new AsyncLocalStorage<
@@ -18,6 +22,22 @@ export const logSpanContext = new AsyncLocalStorage<
 
 export const currentLogSpan = () =>
   Fiber.getCurrent()?.currentSpan ?? logSpanContext.getStore();
+
+export const makeLocalLogger = () => {
+  const pretty = Logger.consolePretty();
+  return Logger.make((options) => {
+    const status = options.fiber.getRef(References.CurrentLogAnnotations)[
+      "http.status"
+    ];
+    return pretty.log({
+      ...options,
+      logLevel:
+        options.logLevel === "Info" && isHttpServerError(status)
+          ? "Error"
+          : options.logLevel,
+    });
+  });
+};
 
 export const makeJsonLogger = (config: {
   readonly serviceName: string;

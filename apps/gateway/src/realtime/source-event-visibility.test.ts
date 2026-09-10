@@ -309,3 +309,41 @@ test("NPC gathering updates retain source tier and level restrictions after sign
   expect(canReadSourceEvent(session, update(150))).toBe(true);
   expect(canReadSourceEvent(session, update(250))).toBe(false);
 });
+
+test("gathering organizers retain their own NPC updates with sending permission", () => {
+  const update = (
+    organizerDiscordId = "member",
+    guildIds = ["organization"],
+  ): Event => ({
+    v: 1,
+    type: "party-ready-room.updated",
+    data: {
+      organizationId: "organization",
+      payload: {
+        type: "UPSERT",
+        projection: {
+          organizerDiscordId,
+          guildIds,
+          npc: { type: "TITAN", lvl: 0 },
+        },
+      },
+    },
+  });
+  for (const permission of [
+    Permission.LOOTLOG_NOTIFICATIONS_SEND,
+    Permission.OWNER,
+    Permission.LOOTLOG_MANAGE,
+  ]) {
+    const session = reader([role([permission], 100, 200)]);
+    expect(canReadSourceEvent(session, update())).toBe(true);
+    expect(canReadSourceEvent(session, update("another-organizer"))).toBe(
+      false,
+    );
+    expect(
+      canReadSourceEvent(session, update("member", ["another-organization"])),
+    ).toBe(false);
+    session.guilds = [];
+    expect(canReadSourceEvent(session, update())).toBe(false);
+  }
+  expect(canReadSourceEvent(reader([role([])]), update())).toBe(false);
+});

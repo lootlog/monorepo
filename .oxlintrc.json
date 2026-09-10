@@ -161,7 +161,7 @@
         "anti-slop-effect/no-service-constructor-imports": [
           "error",
           {
-            "nonServiceImports": ["makeJsonLogger"]
+            "nonServiceImports": ["makeJsonLogger", "makeLocalLogger"]
           }
         ]
       }
