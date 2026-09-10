@@ -48,8 +48,11 @@ export const CAT_THEME_VARIANTS = [
 ] as const;
 
 export type ThemeId = (typeof THEME_IDS)[number];
+
 export type ResolvedThemeId = (typeof THEME_CLASS_IDS)[number];
+
 export type CatThemeVariant = (typeof CAT_THEME_VARIANTS)[number];
+
 export type ThemeFamily = "standard" | "rukia" | "rias" | "cat";
 
 export interface ThemePreview {
@@ -60,7 +63,9 @@ export interface ThemePreview {
 }
 
 export const DEFAULT_THEME_ID: ThemeId = "default";
+
 export const DEFAULT_CAT_THEME_VARIANT: CatThemeVariant = "cat-pink";
+
 export const THEME_STORAGE_KEY = "lootlog-theme";
 
 export const THEME_CATALOG: ThemePreview[] = [

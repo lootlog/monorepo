@@ -48,6 +48,7 @@ export function createLootAccessFingerprint(
   input: LootAccessFingerprintInput,
 ): string {
   const permissions = [...new Set(input.permissions)].sort();
+
   const roles = input.roles
     .map((role) => ({
       id: role.id,

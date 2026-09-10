@@ -11,6 +11,7 @@ import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
 import { ChatFiltersSettings } from "./chat-filters-settings";
 
 let harness: ReturnType<typeof createGuildPreferencesTest>;
+
 const patchRequest = vi.fn<typeof fetch>();
 
 const settingsDocuments: SettingsDocumentsResponseDtoOutput = {

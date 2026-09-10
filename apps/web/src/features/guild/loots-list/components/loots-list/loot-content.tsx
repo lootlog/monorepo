@@ -4,6 +4,7 @@ import type { ItemsByPlayer } from "./build-loot-presentation";
 import type { Loot, Item } from "@/lib/loots/loot-types";
 import type { WatchedItemScope } from "@/features/user/notifications/types/watched-item-scope";
 import type { ReactNode } from "react";
+
 export const LootContent = ({
   sortedPlayers,
   itemsByPlayer,
@@ -24,6 +25,7 @@ export const LootContent = ({
   renderItem?: (item: Item) => ReactNode;
 }) => {
   const selectedNames = new Set(selectedPlayerNames);
+
   return (
     <div className="flex flex-row justify-between gap-4 py-2 border-t border-border/30 -mx-4 px-4 flex-1">
       <div className="flex flex-row items-start gap-2 flex-wrap">

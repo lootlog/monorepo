@@ -45,11 +45,13 @@ const applyChatCacheOperations = (
             operation.message,
           );
         }
+
         break;
       case "delete":
         if (nextMessages) {
           nextMessages = removeChatMessage(nextMessages, operation.messageId);
         }
+
         break;
       case "clear":
         nextMessages = [];
@@ -70,6 +72,7 @@ export const createChatCacheBatcher = (queryClient: QueryClient) => {
       cancelAnimationFrame(frameId);
       frameId = null;
     }
+
     if (timeoutId !== null) {
       window.clearTimeout(timeoutId);
       timeoutId = null;
@@ -79,6 +82,7 @@ export const createChatCacheBatcher = (queryClient: QueryClient) => {
   const flush = () => {
     if (queuedOperations.length === 0) {
       cancelScheduledFlush();
+
       return;
     }
 
@@ -90,6 +94,7 @@ export const createChatCacheBatcher = (queryClient: QueryClient) => {
     for (const { operation } of acceptedOperations) {
       const guildId = getOperationGuildId(operation);
       const guildOperations = operationsByGuildId.get(guildId);
+
       if (guildOperations) {
         guildOperations.push(operation);
       } else {
@@ -114,6 +119,7 @@ export const createChatCacheBatcher = (queryClient: QueryClient) => {
     if (frameId === null) {
       frameId = requestAnimationFrame(flush);
     }
+
     if (timeoutId === null) {
       timeoutId = window.setTimeout(flush, CHAT_CACHE_FLUSH_TIMEOUT_MS);
     }
@@ -130,6 +136,7 @@ export const createChatCacheBatcher = (queryClient: QueryClient) => {
         ({ operation }) =>
           !discardedGuildIds.has(getOperationGuildId(operation)),
       );
+
       if (queuedOperations.length === 0) cancelScheduledFlush();
     },
     discardOutsideGuilds(guildIds: readonly string[]) {
@@ -137,6 +144,7 @@ export const createChatCacheBatcher = (queryClient: QueryClient) => {
       queuedOperations = queuedOperations.filter(({ operation }) =>
         accessibleGuildIds.has(getOperationGuildId(operation)),
       );
+
       if (queuedOperations.length === 0) {
         cancelScheduledFlush();
       }

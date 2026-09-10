@@ -16,6 +16,7 @@ afterEach(() => {
 afterAll(async () => {
   const { authClient } = await import("@/lib/auth-client");
   const session = authClient.$store?.atoms?.session;
+
   if (session) cleanStores(session);
 });
 

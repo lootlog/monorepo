@@ -64,14 +64,17 @@ export const MapCard = ({
 }: MapCardProps) => {
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
+
   const [pendingAction, setPendingAction] = useState<
     "assign" | "unassign" | null
   >(null);
+
   const changeAssignment = async (action: "assign" | "unassign") => {
     await (action === "assign"
       ? onSelfAssignClick?.(map.id)
       : onSelfUnassignClick?.(map.id));
   };
+
   const runAssignment = async (action: "assign" | "unassign") => {
     if (pendingAction) return;
     setPendingAction(action);
@@ -89,6 +92,7 @@ export const MapCard = ({
 
   const isActionDisabled = Boolean(pendingAction || actionsDisabled);
   const isAssignDisabled = !isAssignmentEnabled || isActionDisabled;
+
   const effectiveStyle = isWindowActive(windowStatus)
     ? style
     : WINDOW_CLOSED_STYLE;
@@ -96,13 +100,17 @@ export const MapCard = ({
   const hasPlayersToShow = playersOnMap.length > 0;
   const manageActionLabel = t("events.maps.manageShort");
   const assignmentTooltipContent = getAssignmentTooltipContent();
+
   function getAssignmentTooltipContent() {
     if (isAssignmentEnabled) return t("events.maps.assignSelf");
+
     if (assignmentDisabledMessage) return assignmentDisabledMessage;
+
     if (countdownTime)
       return t("events.maps.assignmentDisabledWithTime", {
         time: countdownTime,
       });
+
     return t("events.maps.assignmentDisabled");
   }
 
@@ -110,12 +118,14 @@ export const MapCard = ({
     if (!isAssignmentEnabled || pendingAction || actionsDisabled) return;
 
     const target = event.target;
+
     if (target instanceof Element && target.closest("[data-map-row-actions]")) {
       return;
     }
 
     if (isAssignedToMe) {
       void runAssignment("unassign");
+
       return;
     }
 
@@ -183,13 +193,16 @@ export const MapCard = ({
               <div className="flex shrink-0 -space-x-1.5">
                 {displayedAssignedMembers.map((member) => {
                   const memberPlayers = presenceData?.get(member.userId) ?? [];
+
                   const playerOnThisMap = memberPlayers.find(
                     (player) => player.mapName === map.mapName,
                   );
+
                   const isOnMap = Boolean(playerOnThisMap);
                   const isAfk = playerOnThisMap?.isAfk ?? false;
 
                   let avatarBorderClassName = "border-background";
+
                   if (isWindowActive(windowStatus) && isOnMap && !isAfk) {
                     avatarBorderClassName = "border-green-500";
                   } else if (isWindowActive(windowStatus) && isAfk) {

@@ -15,6 +15,7 @@ import { useHiddenNpcTypes } from "./use-hidden-npc-types";
 const chatQueryKey = getSettingsDocumentsControllerGetPreferencesQueryKey({
   domains: "chat",
 });
+
 const settingsDocuments: SettingsDocumentsResponseDtoOutput = {
   domains: {
     chat: {
@@ -34,8 +35,10 @@ describe("useHiddenNpcTypes", () => {
     const resolvers: Array<(value: Response) => void> = [];
     harness.request.mockImplementation((_input, init) => {
       patchBodies.push(String(init?.body));
+
       return new Promise<Response>((resolve) => resolvers.push(resolve));
     });
+
     const respond = (body: string) =>
       resolvers.shift()?.(
         Response.json(
@@ -49,6 +52,7 @@ describe("useHiddenNpcTypes", () => {
     const settingsPanel = renderHook(() => useHiddenNpcTypes(), {
       wrapper: harness.wrapper,
     });
+
     const contextMenu = renderHook(() => useHiddenNpcTypes(), {
       wrapper: harness.wrapper,
     });

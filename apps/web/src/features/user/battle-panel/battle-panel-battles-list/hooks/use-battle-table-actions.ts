@@ -34,6 +34,7 @@ export const useBattleTableActions = ({
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [, copy] = useCopyToClipboard();
+
   const {
     handleShare,
     handleCopyLink,
@@ -41,19 +42,25 @@ export const useBattleTableActions = ({
     isPending,
     pendingAction,
   } = useBattleSharing();
+
   const { mutateAsync: updateBattle } = useBattlesControllerUpdateBattle();
   const { mutateAsync: deleteBattleAsync } = useBattlesControllerDeleteBattle();
+
   const [pendingOperation, setPendingOperation] = useState<
     "share" | "delete" | "singleDelete" | null
   >(null);
+
   const operationBusy = useRef(false);
+
   const [singleDeleteBattle, setSingleDeleteBattle] = useState<Battle | null>(
     null,
   );
+
   const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
 
   const isDeletePending =
     pendingOperation === "delete" || pendingOperation === "singleDelete";
+
   const isBulkBusy = pendingOperation !== null;
   const isRowActionBusy = isPending || isBulkBusy;
 
@@ -102,16 +109,19 @@ export const useBattleTableActions = ({
           privateBattles.map((battle) => battle.id),
         );
       }
+
       if (results.some((result) => result.status === "rejected")) {
         toast.error(t("battlePanel.toasts.bulkBattleShareError"), {
           duration: 3000,
         });
+
         return;
       }
     } catch {
       toast.error(t("battlePanel.toasts.bulkBattleShareError"), {
         duration: 3000,
       });
+
       return;
     }
 
@@ -119,12 +129,14 @@ export const useBattleTableActions = ({
       const links = selectedBattles
         .map((battle) => composeBattleUrl(battle.id))
         .join(", ");
+
       const copied = await copy(links);
 
       if (!copied) {
         toast.error(t("battlePanel.toasts.linkCopyError"), {
           duration: 3000,
         });
+
         return;
       }
 
@@ -156,20 +168,25 @@ export const useBattleTableActions = ({
           }),
         ),
       );
+
       await invalidateBattleVisibilityQueries(
         selectedBattles.map((battle) => battle.id),
       );
       results.forEach((result, index) => {
         const battle = selectedBattles[index];
+
         if (result.status === "fulfilled" && battle)
           removeBattleFromSelection(battle.id);
       });
+
       if (results.some((result) => result.status === "rejected")) {
         toast.error(t("battlePanel.toasts.bulkBattleDeleteError"), {
           duration: 3000,
         });
+
         return;
       }
+
       toast.success(
         t("battlePanel.toasts.bulkBattlesDeleted", {
           count: selectedBattles.length,
@@ -189,6 +206,7 @@ export const useBattleTableActions = ({
 
   const deleteSingleBattle = async () => {
     if (!singleDeleteBattle) return;
+
     try {
       await deleteBattleAsync({
         pathParams: { battleId: singleDeleteBattle.id },
@@ -218,8 +236,10 @@ export const useBattleTableActions = ({
         setPendingOperation(null);
       });
   };
+
   const handleBulkShare = () => runOperation("share", shareSelectedBattles);
   const handleBulkDelete = () => runOperation("delete", deleteSelectedBattles);
+
   const handleSingleDelete = () =>
     runOperation("singleDelete", deleteSingleBattle);
 

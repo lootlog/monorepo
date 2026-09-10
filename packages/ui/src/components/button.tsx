@@ -23,6 +23,7 @@ function Button({
   }) {
   const hasIndicator = loading !== undefined || icon !== undefined;
   const expandsForSpinner = loading !== undefined && !icon;
+
   const indicator = (
     <span
       aria-hidden="true"

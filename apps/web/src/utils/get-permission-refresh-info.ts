@@ -6,7 +6,9 @@ export type PermissionRefreshInfo = {
 };
 
 const UP_TO_DATE_TEXT = "Uprawnienia są aktualne";
+
 const REFRESH_AVAILABLE_TEXT = "Odśwież swoje uprawnienia";
+
 const MINUTE_IN_MS = 1000 * 60;
 
 const createPermissionRefreshInfo = (
@@ -32,6 +34,7 @@ export const getPermissionRefreshInfo = (
   }
 
   const nextRefreshTimestamp = updatedAtTimestamp + REFRESH_PERMISSIONS_TTL;
+
   const minutesUntilRefresh = Math.ceil(
     (nextRefreshTimestamp - currentTimestamp) / MINUTE_IN_MS,
   );

@@ -6,9 +6,11 @@ export const NOTIFICATION_TYPES = [
   "message",
   "party-gathering",
 ] as const;
+
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 
 export type DetectorNpcType = "ELITE2" | "HERO" | "COLOSSUS" | "TITAN";
+
 export const DETECTOR_NPC_TYPES = [
   "ELITE2",
   "HERO",

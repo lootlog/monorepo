@@ -29,6 +29,7 @@ const getNotificationJobPayload = (
   job: NonNullable<NotificationJobDetailDialogProps["job"]>,
 ) => {
   const payload = job.payloadSnapshot;
+
   return {
     message: payload?.message ?? payload?.content ?? undefined,
     npcName: payload?.npcName ?? undefined,

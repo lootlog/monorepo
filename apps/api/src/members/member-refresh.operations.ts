@@ -57,20 +57,24 @@ export const makeMemberRefresh = (
     const lockOwner = `request:${options.guildId}:${yield* Clock.currentTimeMillis}:${Math.random()
       .toString(36)
       .slice(2)}`;
+
     const nextRefreshAt = yield* ports.nextRefreshAt(options.userId);
     const locked = yield* scheduler.isUserRefreshLocked(options.userId);
+
     if (
       (nextRefreshAt &&
         nextRefreshAt.getTime() > (yield* Clock.currentTimeMillis)) ||
       locked
     ) {
       const scheduled = yield* queueMemberRefresh(options);
+
       if (nextRefreshAt) {
         yield* ports.recordMetric({
           outcome: "rate_limited",
           reason: options.reason,
         });
       }
+
       return {
         member: null,
         status: nextRefreshAt
@@ -83,12 +87,15 @@ export const makeMemberRefresh = (
           new Date(yield* Clock.currentTimeMillis),
       };
     }
+
     const acquired = yield* scheduler.acquireUserRefreshLock(
       options.userId,
       lockOwner,
     );
+
     if (!acquired) {
       const scheduled = yield* queueMemberRefresh(options);
+
       return {
         member: null,
         status: MEMBER_DISCORD_SYNC_STATUS.QUEUED,
@@ -96,8 +103,10 @@ export const makeMemberRefresh = (
         nextRefreshAt: scheduled.nextRefreshAt,
       };
     }
+
     const execute = Effect.gen(function* () {
       const blockedUntil = yield* ports.nextRefreshAt(options.userId);
+
       if (
         blockedUntil &&
         blockedUntil.getTime() > (yield* Clock.currentTimeMillis)
@@ -107,6 +116,7 @@ export const makeMemberRefresh = (
           outcome: "rate_limited",
           reason: options.reason,
         });
+
         return {
           member: null,
           status: MEMBER_DISCORD_SYNC_STATUS.RATE_LIMITED,
@@ -114,35 +124,41 @@ export const makeMemberRefresh = (
           nextRefreshAt: scheduled.nextRefreshAt ?? blockedUntil,
         } satisfies MemberRefreshAttempt;
       }
+
       const syncResult = yield* ports.syncMember({
         discordId: options.discordId,
         guildId: options.guildId,
         userId: options.userId,
         throwOnUnexpectedError: options.throwOnUnexpectedError,
       });
+
       if (
         syncResult.status === MEMBER_DISCORD_SYNC_STATUS.RATE_LIMITED ||
         (!syncResult.member &&
           isRetryableMemberRefreshStatus(syncResult.status))
       ) {
         const scheduled = yield* queueMemberRefresh(options);
+
         if (syncResult.status === MEMBER_DISCORD_SYNC_STATUS.RATE_LIMITED) {
           yield* ports.recordMetric({
             outcome: "rate_limited",
             reason: options.reason,
           });
         }
+
         return {
           ...syncResult,
           refreshQueued: scheduled.queued,
           nextRefreshAt: scheduled.nextRefreshAt ?? syncResult.nextRefreshAt,
         } satisfies MemberRefreshAttempt;
       }
+
       return {
         ...syncResult,
         refreshQueued: false,
       } satisfies MemberRefreshAttempt;
     });
+
     return yield* execute.pipe(
       Effect.ensuring(
         scheduler

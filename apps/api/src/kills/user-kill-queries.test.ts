@@ -12,6 +12,7 @@ import {
 describe("user kill queries Effect module", () => {
   it("returns a cached overview without touching Drizzle", async () => {
     const boundary = await createDatabaseBoundary();
+
     try {
       const expected = {
         overview: {
@@ -21,13 +22,17 @@ describe("user kill queries Effect module", () => {
         },
         topNpcs: [],
       };
+
       let observedKey = "";
+
       const cache: KillQueryCache = {
         getOrSet: (key, schema) => {
           observedKey = key;
+
           return Effect.sync(() => Schema.decodeUnknownSync(schema)(expected));
         },
       };
+
       const queries = makeUserKillQueries(boundary.database, cache, logger);
 
       await expect(
@@ -41,10 +46,12 @@ describe("user kill queries Effect module", () => {
 
   it("maps a cache failure to the typed module error", async () => {
     const boundary = await createDatabaseBoundary();
+
     try {
       const cache: KillQueryCache = {
         getOrSet: () => Effect.fail(new Error("redis unavailable")),
       };
+
       const queries = makeUserKillQueries(boundary.database, cache, logger);
 
       await expect(

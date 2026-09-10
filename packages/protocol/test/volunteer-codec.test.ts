@@ -24,5 +24,6 @@ test("preserves private volunteer identity and character metadata", () => {
       },
     },
   } satisfies ServerEvent;
+
   expect(decodeRealtimeFrame(encodeRealtimeFrame(frame))).toEqual(frame);
 });

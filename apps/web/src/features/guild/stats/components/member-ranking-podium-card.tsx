@@ -43,10 +43,12 @@ export const MemberRankingPodiumCard: React.FC<
   MemberRankingPodiumCardProps
 > = ({ data, isLoading, guildId, hasActiveFilters = false }) => {
   const { t } = useTranslation();
+
   const [selectedNpcType, setSelectedNpcType] = useLocalStorage<NpcType>(
     STORAGE_KEY,
     "ELITE2",
   );
+
   const { data: guildMembers } = useMembersControllerGetGuildMemberReferences(
     { guildId: guildId ?? "" },
     {
@@ -93,6 +95,7 @@ export const MemberRankingPodiumCard: React.FC<
       ?.flatMap((member) => {
         const typeParticipations =
           member.participationsByType[selectedNpcType] ?? 0;
+
         return typeParticipations > 0
           ? [{ ...member, typeParticipations }]
           : [];
@@ -111,6 +114,7 @@ export const MemberRankingPodiumCard: React.FC<
               value={selectedNpcType}
               onValueChange={(value) => {
                 const npcType = findNpcType(value);
+
                 if (npcType) setSelectedNpcType(npcType);
               }}
               items={TRACKABLE_NPC_TYPES.map((type) => ({
@@ -147,6 +151,7 @@ export const MemberRankingPodiumCard: React.FC<
               <div className="flex items-end justify-center gap-2">
                 {([2, 1, 3] as const).map((position) => {
                   const member = sortedByType[position - 1];
+
                   return (
                     <StatsPodiumSlot
                       key={position}

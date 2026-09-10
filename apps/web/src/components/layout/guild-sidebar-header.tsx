@@ -26,6 +26,7 @@ import { useQueryClient } from "@tanstack/react-query";
 export const GuildSidebarHeader = ({ guildId }: { guildId?: string }) => {
   const queryClient = useQueryClient();
   const hasGuildId = Boolean(guildId);
+
   const { data: guild } = useGuildsControllerGetGuildById(
     { guildId: guildId ?? "" },
     {
@@ -38,6 +39,7 @@ export const GuildSidebarHeader = ({ guildId }: { guildId?: string }) => {
       },
     },
   );
+
   const { data: member } = useMembersControllerGetMe(
     { guildId: guildId ?? "" },
     {
@@ -50,6 +52,7 @@ export const GuildSidebarHeader = ({ guildId }: { guildId?: string }) => {
       },
     },
   );
+
   const refreshMember = useMembersControllerRefreshMe({
     mutation: {
       onSuccess: async (_, variables) => {
@@ -73,6 +76,7 @@ export const GuildSidebarHeader = ({ guildId }: { guildId?: string }) => {
       },
     },
   });
+
   const { isRukiaTheme, isRiasTheme } = useThemeMeta();
   const currentTimestamp = useMinuteTimestamp();
 

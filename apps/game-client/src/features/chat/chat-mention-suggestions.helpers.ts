@@ -22,6 +22,7 @@ export type ChatMentionSuggestion = {
 };
 
 type ChatMentionSuggestionEntry = Omit<ChatMentionSuggestion, "kind">;
+
 const MAX_SUGGESTIONS_PER_KIND = 5;
 
 const sortMentionSuggestionEntries = ({
@@ -41,6 +42,7 @@ const sortMentionSuggestionEntries = ({
 
     const leftStartsWithQuery =
       left.normalizedLabel.startsWith(normalizedQuery);
+
     const rightStartsWithQuery =
       right.normalizedLabel.startsWith(normalizedQuery);
 
@@ -65,6 +67,7 @@ const getMentionSuggestionEntries = <T>({
     string,
     ChatMentionSuggestionEntry
   >();
+
   const iterableValues = Array.isArray(values) ? values : [];
 
   iterableValues.forEach((value) => {
@@ -232,6 +235,7 @@ export const applyChatMentionSuggestion = ({
   const displayLabel = getChatMentionSuggestionDisplayLabel(suggestion);
   const insertText = hasTrailingWhitespace ? displayLabel : `${displayLabel} `;
   const nextMessage = `${message.slice(0, mention.start)}${insertText}${message.slice(mention.end)}`;
+
   const nextCaretIndex =
     mention.start + insertText.length + (hasTrailingWhitespace ? 1 : 0);
 

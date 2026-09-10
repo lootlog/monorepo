@@ -32,6 +32,7 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
 }) => {
   const { t } = useTranslation("timers");
   const [open, setOpen] = useState(false);
+
   const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds({
     query: {
       queryKey: getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
@@ -41,6 +42,7 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
   });
 
   const guildEntries = timer.mergedGuildIds ?? [];
+
   const uniqueGuildIds = Array.from(
     new Set(guildEntries.map((entry) => entry.guildId)),
   );
@@ -52,6 +54,7 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
       staleTime: 5 * 60 * 1000,
     })),
   });
+
   const permissionsLoading = permissionsQueries.some(
     (query) => query.isPending,
   );
@@ -60,9 +63,12 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
     const accessPolicy = createAccessPolicy({
       capabilities: permissionsQueries[index]?.data ?? [],
     });
+
     const canDelete = accessPolicy.allowsAny(REQUIRED_DELETE_PERMISSIONS);
     const entry = guildEntries.find((e) => e.guildId === guildId);
+
     if (!canDelete || !entry?.timerKey) return [];
+
     return [
       {
         guildId,
@@ -88,6 +94,7 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
 
   if (guildsWithPermissions.length === 1) {
     const guild = guildsWithPermissions[0];
+
     return (
       <ContextMenuItem
         className="ll:text-red-300 ll:hover:bg-red-500/20 ll:data-[highlighted]:bg-red-500/20 ll:focus-visible:bg-red-500/20"
@@ -125,6 +132,7 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
           </p>
           {guildsWithPermissions.map((guild) => {
             const guildData = guilds?.find((g) => g.id === guild.guildId);
+
             return (
               <Button
                 type="button"

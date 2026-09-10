@@ -7,12 +7,15 @@ import { usePartyFinderStore } from "@/store/party-finder.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { createChatReadyRoom } from "@/features/chat/chat-test-fixtures";
 import { PartyFinder } from "./party-finder";
+
 let restore = () => {};
+
 afterEach(() => {
   restore();
   usePartyFinderStore.getState().clearReadyRooms();
   useWindowsStore.getState().setOpen("party-finder", false);
 });
+
 it("does not expose management to a participant with a previously open window", () => {
   setTestRuntimeGame({
     hero: { accountId: "account-1", characterId: "101" },
@@ -29,6 +32,7 @@ it("does not expose management to a participant with a previously open window", 
   expect(screen.queryByText("Party finder")).not.toBeInTheDocument();
   client.clear();
 });
+
 it("shows and cancels an owned gathering after switching character and world without offering game invitations", async () => {
   const requests: Request[] = [];
   restore = configureApiClients({
@@ -36,6 +40,7 @@ it("shows and cancels an owned gathering after switching character and world wit
       baseUrl: "https://api.test",
       fetch: (input, init) => {
         requests.push(new Request(input, init));
+
         return Promise.resolve(
           Response.json({
             schemaVersion: 3,
@@ -75,9 +80,11 @@ it("shows and cancels an owned gathering after switching character and world wit
     participants: {},
     ownedParticipantIds: [],
   });
+
   const client = new QueryClient({
     defaultOptions: { mutations: { retry: false }, queries: { retry: false } },
   });
+
   render(
     <QueryClientProvider client={client}>
       <PartyFinder />
@@ -92,6 +99,7 @@ it("shows and cancels an owned gathering after switching character and world wit
   );
   await waitFor(() => expect(requests).toHaveLength(1));
   const request = requests[0];
+
   if (!request) throw new Error("Expected cancellation request");
   expect(new URL(request.url).pathname).toBe(
     "/messaging/party-gathering/room/cancel",

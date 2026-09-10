@@ -36,6 +36,7 @@ const town = (id: number): NonNullable<GameEvent["town"]> => ({
   x: 32,
   y: 32,
 });
+
 const npcEvent: GameEvent = {
   npcs: [{ id: 500, tpl: 900, x: 12, y: 18, icon: { id: 44 } }],
   npc_tpls: [
@@ -51,6 +52,7 @@ const npcEvent: GameEvent = {
   ],
   icons: [{ id: 44, icon: "npc.gif" }],
 };
+
 beforeEach(() => {
   queryClient.clear();
   npcsDetectionProcessor.cleanup();
@@ -66,6 +68,7 @@ beforeEach(() => {
   detector.HERO.detect = true;
   detector.HERO.notifySound = false;
   detector.HERO.autoSend = false;
+
   const preferences: UserGameAccountPreferences = {
     accountId: "202",
     detector,
@@ -78,16 +81,19 @@ beforeEach(() => {
     hasStoredAirTags: false,
     hasStoredPreferences: true,
   };
+
   queryClient.setQueryData(
     getUserGameAccountPreferencesQueryKey("202"),
     preferences,
   );
 });
+
 afterEach(() => {
   queryClient.clear();
   npcsDetectionProcessor.cleanup();
   vi.restoreAllMocks();
 });
+
 it("ignores unrelated packets without changing existing feature state", () => {
   useDialogStore
     .getState()
@@ -102,6 +108,7 @@ it("ignores unrelated packets without changing existing feature state", () => {
   expect(useDialogStore.getState()).toBe(before);
   expect(useNpcDetectorStore.getState().npcs).toEqual([]);
 });
+
 it("routes dialog context and NPC detections through their real processors", () => {
   const dispatcher = new EventDispatcher();
   dispatcher.handleEvent({ d: ["dialog", "npc", "7"] });
@@ -122,6 +129,7 @@ it("routes dialog context and NPC detections through their real processors", () 
   ]);
   expect(useDialogStore.getState().npcContext?.npcId).toBe(7);
 });
+
 it("clears the previous map before processing NPCs from the same packet", () => {
   const dispatcher = new EventDispatcher();
   dispatcher.handleEvent({ town: town(1) });
@@ -140,15 +148,18 @@ it("clears the previous map before processing NPCs from the same packet", () => 
   dispatcher.handleEvent({ town: town(3) });
   expect(useNpcDetectorStore.getState().npcs).toEqual([]);
 });
+
 it("continues to later packet facts when an observer throws during map cleanup", () => {
   const dispatcher = new EventDispatcher();
   dispatcher.handleEvent({ town: town(1) });
   dispatcher.handleEvent(npcEvent);
   const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
+
   const unsubscribe = useNpcDetectorStore.subscribe(() => {
     unsubscribe();
     throw new Error("observer failed");
   });
+
   expect(() =>
     dispatcher.handleEvent({ ...npcEvent, town: town(2) }),
   ).not.toThrow();
@@ -160,6 +171,7 @@ it("continues to later packet facts when an observer throws during map cleanup",
     { id: 500, nick: "Tanroth" },
   ]);
 });
+
 it("bootstraps detector features from normalized NPCs without replacing domain snapshots", () => {
   const npc = normalizeNpc({
     id: 500,
@@ -173,6 +185,7 @@ it("bootstraps detector features from normalized NPCs without replacing domain s
     wt: 85,
     type: 2,
   });
+
   if (!npc) throw new Error("Expected a valid runtime NPC");
   useNpcsStore.getState().replaceNpcs([npc]);
   const before = useNpcsStore.getState();
@@ -182,17 +195,21 @@ it("bootstraps detector features from normalized NPCs without replacing domain s
   ]);
   expect(useNpcsStore.getState()).toBe(before);
 });
+
 it("sends loot distribution updates over HTTP and clears the pending loot only after success", async () => {
   const requests: Request[] = [];
+
   const restore = configureApiClients({
     main: {
       baseUrl: "https://api.example.test",
       fetch: (input, init) => {
         requests.push(new Request(input, init));
+
         return Promise.resolve(Response.json({}));
       },
     },
   });
+
   onTestFinished(restore);
   useLootStore.getState().setLastLootId(123);
   new EventDispatcher().handleEvent({

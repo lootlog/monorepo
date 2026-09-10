@@ -15,32 +15,44 @@ import { groupFeedItems } from "./live-feed-state";
 
 export function DashboardLiveFeed() {
   const { t } = useTranslation();
+
   const { state, paused, setPaused, setAtTop, applyPending, refresh } =
     useLiveFeed();
+
   const scroller = useRef<HTMLDivElement>(null);
   const top = useRef<HTMLDivElement>(null);
   const now = useMinuteTimestamp();
+
   const handleVisibility = useEffectEvent((visible: boolean) =>
     setAtTop(visible),
   );
+
   useEffect(() => {
     const target = top.current;
+
     if (!target || typeof IntersectionObserver === "undefined") return;
+
     const observer = new IntersectionObserver((entries) => {
       const entry = entries[0];
+
       if (entry) handleVisibility(entry.isIntersecting);
     });
+
     observer.observe(target);
+
     return () => observer.disconnect();
   }, []);
   const animatedKeys = new Set(state.animatedKeys);
+
   const items = state.items?.filter(
     (item) => new Date(item.occurredAt).getTime() >= now - 86_400_000,
   );
+
   const showPending = () => {
     applyPending();
     scroller.current?.scrollTo({ top: 0, behavior: "auto" });
   };
+
   return (
     <SectionCard className="@container/feed h-[36rem] min-w-0 overflow-hidden @3xl/dashboard:h-full @3xl/dashboard:min-h-0 @3xl/dashboard:col-start-1 @3xl/dashboard:row-start-1">
       <SectionCardHeader

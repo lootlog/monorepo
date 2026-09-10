@@ -32,6 +32,7 @@ export const Route = createFileRoute("/_authenticated/@me/battle-panel/abyss")({
       }
 
       const search = loadBattlePanelAbyssSearch(location.searchStr);
+
       const characterId = await ensureBattlePanelCharacterId({
         queryClient: context.queryClient,
         characterId: normalizeBattlePanelCharacterId(search.characterId),
@@ -45,10 +46,13 @@ export const Route = createFileRoute("/_authenticated/@me/battle-panel/abyss")({
         context.queryClient,
         getBattlesControllerGetAbyssSeasonsQueryOptions({ characterId }),
       );
+
       const selectedSeason =
         seasons.find((season) => season.id === search.seasonId) ?? seasons[0];
+
       const startDate = search.startDate ?? selectedSeason?.startedAt;
       const endDate = search.endDate ?? selectedSeason?.endedAt;
+
       const baseParams = {
         characterId,
         period: "all" as const,

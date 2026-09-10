@@ -69,6 +69,7 @@ class RabbitMQClient {
       if (this.channel) {
         await this.channel.close();
       }
+
       if (this.connection) {
         await this.connection.close();
       }
@@ -98,5 +99,6 @@ export const createRabbitMQClient = async (): Promise<RabbitMQClient> => {
 
   const client = new RabbitMQClient();
   await client.connect(uri);
+
   return client;
 };

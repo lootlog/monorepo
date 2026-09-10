@@ -9,11 +9,14 @@ import { usePartyStore } from "@/store/party.store";
 import { useGlobalStore } from "@/store/global.store";
 
 const observeParty = vi.fn<(request: Request) => Promise<Response>>();
+
 let restoreClient = () => {};
+
 afterEach(() => {
   restoreClient();
   vi.unstubAllGlobals();
 });
+
 const projection = {
   schemaVersion: 3,
   notificationId: "room-1",

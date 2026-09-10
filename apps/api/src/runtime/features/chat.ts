@@ -7,8 +7,10 @@ export const chatData = Layer.unwrap(
   Effect.gen(function* () {
     const redis = yield* ApiRedis;
     const rabbit = yield* RabbitMessaging;
+
     const attempt = <A>(operation: () => PromiseLike<A>) =>
       Effect.tryPromise({ try: operation, catch: (error) => error });
+
     return makeChatDataLayer(
       {
         rpush: (key, value) => attempt(() => redis.rpush(key, value)),

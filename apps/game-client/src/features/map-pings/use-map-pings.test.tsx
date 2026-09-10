@@ -37,6 +37,7 @@ const preferences = (
   hasStoredAirTags: true,
   hasStoredPreferences: true,
 });
+
 const remotePing = () => ({
   v: 1 as const,
   type: "map-ping.received" as const,
@@ -51,6 +52,7 @@ const remotePing = () => ({
     createdAt: Date.now(),
   },
 });
+
 const setup = async ({
   enabled = true,
   connected = true,
@@ -58,16 +60,21 @@ const setup = async ({
   oldInterface = false,
 } = {}) => {
   const test = createRealtimeTest();
+
   const preferenceKey = getUsersControllerGetUserGameAccountPreferencesQueryKey(
     { accountId: "1" },
   );
+
   test.queryClient.setQueryData(preferenceKey, preferences(enabled));
   useGlobalStore.setState({ gameState: { gameInitialized: joined } });
+
   if (oldInterface) {
     const game = useGameStore.getState().game;
+
     if (!game) throw new Error("Missing game");
     useGameStore.getState().replaceGame({ ...game, interface: "si" });
   }
+
   useSettingsStore.setState({ soundsMuted: false, masterVolume: 1 });
   const play = vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
   vi.spyOn(HTMLMediaElement.prototype, "load").mockImplementation(() => {});
@@ -91,8 +98,10 @@ const setup = async ({
     new DOMRect(0, 0, 640, 640),
   );
   const view = renderHook(() => useMapPings(), { wrapper: test.wrapper });
+
   if (connected) {
     test.open();
+
     if (joined) {
       await act(async () => {
         await vi.waitFor(() => {
@@ -103,9 +112,11 @@ const setup = async ({
           )
             throw new Error("Waiting for automatic join");
         });
+
         const request = test.wire.frames.find(
           (frame) => "type" in frame && frame.type === "session.join",
         );
+
         if (!request || !("requestId" in request) || !request.requestId)
           throw new Error("Missing join request");
         test.wire.receive({
@@ -117,6 +128,7 @@ const setup = async ({
       });
     }
   }
+
   const sound: SoundSettingsResponseDto = {
     userId: "user",
     masterVolume: 1,
@@ -130,20 +142,26 @@ const setup = async ({
     createdAt: "2026-01-01",
     updatedAt: "2026-01-01",
   };
+
   test.queryClient.setQueryData(
     getSoundSettingsControllerGetSettingsQueryKey(),
     sound,
   );
+
   const event = (outside = false) => {
     const element = outside ? document.createElement("div") : canvas;
+
     const mouse = new MouseEvent("mousedown", {
       button: 1,
       clientX: 400,
       clientY: 272,
     });
+
     element.dispatchEvent(mouse);
+
     return mouse;
   };
+
   const tap = () => {
     let started = false;
     act(() => {
@@ -152,14 +170,18 @@ const setup = async ({
         new MouseEvent("mouseup", { button: 1 }),
       );
     });
+
     return started;
   };
+
   const pingRequests = () =>
     test.wire.frames.filter(
       (frame) => "type" in frame && frame.type === "map-ping.send",
     );
+
   const setEnabled = (value: boolean) =>
     test.queryClient.setQueryData(preferenceKey, preferences(value));
+
   return {
     ...test,
     ...view,
@@ -173,6 +195,7 @@ const setup = async ({
     canvas,
   };
 };
+
 afterEach(() => {
   mapPingController.unregister();
   mapPingInteractionController.cancel();
@@ -269,6 +292,7 @@ describe("useMapPings", () => {
     const test = await setup();
     test.tap();
     const request = test.pingRequests()[0];
+
     if (!request || !("requestId" in request) || !request.requestId)
       throw new Error("Missing ping request");
     const requestId = request.requestId;
@@ -309,9 +333,11 @@ describe("useMapPings", () => {
     const bytes = encodeRealtimeFrame(remotePing());
     const text = new TextDecoder().decode(bytes);
     const marker = new TextEncoder().encode("attention");
+
     const offset = bytes.findIndex((_, index) =>
       marker.every((byte, j) => bytes[index + j] === byte),
     );
+
     expect(text).toContain("attention");
     expect(offset).toBeGreaterThanOrEqual(0);
     bytes.set(new TextEncoder().encode("bad-value"), offset);

@@ -17,17 +17,20 @@ export const mergeSoundSettingsPatches = (
   for (const configKey of SOUND_CONFIG_KEYS) {
     const currentConfig = current[configKey];
     const incomingConfig = incoming[configKey];
+
     if (!currentConfig && !incomingConfig) {
       continue;
     }
 
     const entries = new Map(Object.entries(currentConfig ?? {}));
+
     for (const [key, partialConfig] of Object.entries(incomingConfig ?? {})) {
       entries.set(key, {
         ...entries.get(key),
         ...partialConfig,
       });
     }
+
     merged[configKey] = Object.fromEntries(entries);
   }
 

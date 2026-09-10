@@ -67,8 +67,10 @@ export const useNpcsStore = create<NpcsState>()((set, get) => ({
   applyNpcBatch: ({ removeIds = [], upserts = [] }) =>
     set((state) => {
       let nextNpcsById: Record<number, NpcSnapshot> | undefined;
+
       const getMutableNpcs = () => {
         nextNpcsById ??= { ...state.npcsById };
+
         return nextNpcsById;
       };
 
@@ -80,6 +82,7 @@ export const useNpcsStore = create<NpcsState>()((set, get) => ({
 
       for (const npc of upserts) {
         const currentNpc = (nextNpcsById ?? state.npcsById)[npc.id];
+
         if (currentNpc && areNpcSnapshotsEqual(currentNpc, npc)) {
           continue;
         }

@@ -29,6 +29,7 @@ export function DetectorRoutingSettingsTabForm() {
     toggleGuild,
     addRoutingRule,
   } = useDetectorRoutingForm();
+
   return (
     <form className="ll:flex ll:flex-col ll:gap-3 ll:py-1">
       <SettingsSection

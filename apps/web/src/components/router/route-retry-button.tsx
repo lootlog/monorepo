@@ -11,6 +11,7 @@ export const RouteRetryButton = ({ onRetry }: RouteRetryButtonProps) => {
   const { t } = useTranslation();
   const [isPending, setIsPending] = useState(false);
   const busy = useRef(false);
+
   const retry = async () => {
     if (busy.current) return;
     busy.current = true;

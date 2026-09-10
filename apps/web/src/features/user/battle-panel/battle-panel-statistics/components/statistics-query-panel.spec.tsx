@@ -16,6 +16,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import { StatisticsQueryPanel } from "./statistics-query-panel";
 
 await initializeTestTranslations();
+
 afterEach(cleanup);
 
 function Panel({ fetchData }: { fetchData: () => Promise<string> }) {
@@ -24,6 +25,7 @@ function Panel({ fetchData }: { fetchData: () => Promise<string> }) {
     queryFn: fetchData,
     retry: false,
   });
+
   return (
     <StatisticsQueryPanel query={query}>
       <p>{query.data ?? "loading"}</p>
@@ -33,10 +35,12 @@ function Panel({ fetchData }: { fetchData: () => Promise<string> }) {
 
 it("shows a failed panel and retries it instead of rendering missing data", async () => {
   const client = new QueryClient();
+
   const fetchData = vi
     .fn<() => Promise<string>>()
     .mockRejectedValueOnce(new Error("offline"))
     .mockResolvedValue("loaded");
+
   render(
     <QueryClientProvider client={client}>
       <Panel fetchData={fetchData} />

@@ -24,9 +24,11 @@ const ACTIVITY_LOGS_PAGE_LIMIT = 20;
 
 export const ActivityLogsList = () => {
   const { t } = useTranslation();
+
   const { guildId } = useParams({
     from: "/_authenticated/$guildId/activity-logs",
   });
+
   const themedKey = useThemedKey();
   const { filters } = useActivityLogsFilters();
   const scrollElementRef = useRef<HTMLDivElement>(null);
@@ -70,6 +72,7 @@ export const ActivityLogsList = () => {
   });
 
   const virtualItems = virtualizer.getVirtualItems();
+
   const activityLogsResetKey = JSON.stringify({
     filters,
     guildId,

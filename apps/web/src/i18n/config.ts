@@ -86,5 +86,6 @@ export function loadAuthenticatedTranslations() {
       authenticatedTranslations = undefined;
       throw cause;
     });
+
   return authenticatedTranslations;
 }

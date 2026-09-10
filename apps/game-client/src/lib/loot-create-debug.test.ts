@@ -29,6 +29,7 @@ describe("loot create debug logging", () => {
     const consoleLogSpy = vi
       .spyOn(console, "log")
       .mockImplementation(() => undefined);
+
     useSettingsStore.getState().setLootDebugLoggingEnabled(true);
 
     logLootCreateDebug("request-prepared", {
@@ -60,7 +61,9 @@ describe("loot create debug logging", () => {
     const consoleLogSpy = vi
       .spyOn(console, "log")
       .mockImplementation(() => undefined);
+
     useSettingsStore.getState().setLootDebugLoggingEnabled(true);
+
     const payload = {
       source: "FIGHT",
       mapPlayersSnapshot: [{ name: "Observer" }],

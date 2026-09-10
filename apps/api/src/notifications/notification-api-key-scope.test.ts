@@ -50,6 +50,7 @@ const identity = {
 
 test("keys cannot inspect or mutate multi-organization rules, watched items or shared targets outside their scope", async () => {
   const boundary = await createDatabaseBoundary();
+
   try {
     const database = boundary.database;
     await boundary.run(
@@ -108,6 +109,7 @@ test("keys cannot inspect or mutate multi-organization rules, watched items or s
       }),
     );
     const cancel = mock(() => Effect.void);
+
     const rules = makeNotificationRuleOperations(database, {
       ensureGuildPermissions: () => Effect.void,
       rebuildJobs: () => Effect.void,
@@ -116,20 +118,24 @@ test("keys cannot inspect or mutate multi-organization rules, watched items or s
       createTestJob: () => Effect.succeed(null),
       enqueueJob: () => Effect.void,
     });
+
     const targets = makeNotificationUserTargets(database, {
       cancel,
       create: () => Effect.succeed(null),
       enqueue: () => Effect.void,
     });
+
     const watched = makeNotificationWatchedItems(
       database,
       { list: () => Effect.succeed([]) },
       { cancel },
     );
+
     const run = <A, E>(effect: Effect.Effect<A, E>) =>
       boundary.run(
         effect.pipe(Effect.provideService(ForwardAuthIdentity, identity)),
       );
+
     expect(
       (await run(rules.listUser("discord-1"))).map((rule) => rule.id).sort(),
     ).toEqual([1, 3]);
@@ -180,6 +186,7 @@ test("keys cannot inspect or mutate multi-organization rules, watched items or s
 
 test("user job history checks original snapshot scopes even if its rule is now personal", async () => {
   const boundary = await createDatabaseBoundary();
+
   try {
     const database = boundary.database;
     await boundary.run(
@@ -211,14 +218,17 @@ test("user job history checks original snapshot scopes even if its rule is now p
         }),
       ]),
     );
+
     const jobs = makeNotificationJobOperations(database, {
       cancel: () => Effect.void,
     });
+
     const result = await boundary.run(
       jobs
         .listUser("discord-1")
         .pipe(Effect.provideService(ForwardAuthIdentity, identity)),
     );
+
     expect(result.history.map((job) => job.id)).toEqual(["personal"]);
     expect(
       (await boundary.run(jobs.listUser("discord-1"))).history,
@@ -230,6 +240,7 @@ test("user job history checks original snapshot scopes even if its rule is now p
 
 test("new user event rules keep the effective key organizations when their filters change", async () => {
   const boundary = await createDatabaseBoundary();
+
   try {
     const database = boundary.database;
     await boundary.run(
@@ -242,6 +253,7 @@ test("new user event rules keep the effective key organizations when their filte
         .insert(notificationTargetTable)
         .values(createNotificationTargetFixture({ ownerId: "discord-1" })),
     );
+
     const rules = makeNotificationRuleOperations(database, {
       ensureGuildPermissions: () => Effect.void,
       rebuildJobs: () => Effect.void,
@@ -250,6 +262,7 @@ test("new user event rules keep the effective key organizations when their filte
       createTestJob: () => Effect.succeed(null),
       enqueueJob: () => Effect.void,
     });
+
     const created = await boundary.run(
       rules
         .createUser("discord-1", {
@@ -259,12 +272,15 @@ test("new user event rules keep the effective key organizations when their filte
         })
         .pipe(Effect.provideService(ForwardAuthIdentity, identity)),
     );
+
     expect(created.filters).toEqual({ itemIds: [10], guildIds: ["1"] });
+
     const updated = await boundary.run(
       rules
         .updateUser("discord-1", created.id, { itemIds: [20] })
         .pipe(Effect.provideService(ForwardAuthIdentity, identity)),
     );
+
     expect(updated.filters).toEqual({ itemIds: [20], guildIds: ["1"] });
   } finally {
     await boundary.dispose();
@@ -273,6 +289,7 @@ test("new user event rules keep the effective key organizations when their filte
 
 test("job history follows the original loot NPC policy and archival state", async () => {
   const boundary = await createDatabaseBoundary();
+
   try {
     const database = boundary.database;
     await boundary.run(
@@ -350,15 +367,18 @@ test("job history follows the original loot NPC policy and archival state", asyn
         }),
       ),
     );
+
     const jobs = makeNotificationJobOperations(database, {
       cancel: () => Effect.void,
     });
+
     const list = () =>
       boundary.run(
         jobs
           .listUser("discord-1")
           .pipe(Effect.provideService(ForwardAuthIdentity, identity)),
       );
+
     expect((await list()).history).toEqual([]);
     await boundary.run(
       database
@@ -381,14 +401,17 @@ test("job history follows the original loot NPC policy and archival state", asyn
 
 test("personal API keys cannot cancel Organization reservation reminders through rules or shared targets", async () => {
   const boundary = await createDatabaseBoundary();
+
   try {
     const database = boundary.database;
+
     const reminder = createNotificationRuleFixture({
       id: 7,
       ownerId: "discord-1",
       name: "__system:reservation-reminder__",
       filters: null,
     });
+
     await boundary.run(
       database.insert(notificationRuleTable).values([
         reminder,
@@ -438,10 +461,12 @@ test("personal API keys cannot cancel Organization reservation reminders through
       ]),
     );
     const removeFromQueue = mock(() => Effect.void);
+
     const scheduler = makeNotificationJobScheduler(database, {
       remove: removeFromQueue,
       add: () => Effect.void,
     });
+
     const rules = makeNotificationRuleOperations(database, {
       ensureGuildPermissions: () => Effect.die("Unexpected guild operation"),
       rebuildJobs: () => Effect.die("Unexpected job rebuild"),
@@ -450,17 +475,21 @@ test("personal API keys cannot cancel Organization reservation reminders through
       createTestJob: scheduler.create,
       enqueueJob: scheduler.enqueue,
     });
+
     const targets = makeNotificationUserTargets(database, scheduler);
+
     const personalIdentity = {
       ...identity,
       apiKey: { ...identity.apiKey, organizationIds: [] },
     };
+
     const run = <A, E>(effect: Effect.Effect<A, E>) =>
       boundary.run(
         effect.pipe(
           Effect.provideService(ForwardAuthIdentity, personalIdentity),
         ),
       );
+
     // The reported exploit must fail before touching either persistence or the queue.
     await expect(run(rules.deleteUser("discord-1", 7))).rejects.toBeInstanceOf(
       PermissionDeniedError,
@@ -543,9 +572,11 @@ test("personal API keys cannot cancel Organization reservation reminders through
         }),
       ),
     ).rejects.toBeInstanceOf(PermissionDeniedError);
+
     const persistedRules = await boundary.run(
       database.select().from(notificationRuleTable),
     );
+
     expect(persistedRules).toHaveLength(3);
     expect(persistedRules.find(({ id }) => id === 8)?.name).toBe(
       "Personal message",

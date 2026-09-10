@@ -28,14 +28,17 @@ const configuration = Effect.succeed({
   serviceNamespace: "lootlog-test",
   environment: "test",
 });
+
 const observability = (env: Record<string, string>) =>
   makeObservabilityLayer(configuration).pipe(
     Layer.provide(ConfigProvider.layer(ConfigProvider.fromEnvRecord(env))),
   );
+
 const attribute = (key: string, value: string) => ({
   key,
   value: { stringValue: value },
 });
+
 const LogEntry = Schema.Struct({
   message: Schema.String,
   level: Schema.String,
@@ -47,11 +50,15 @@ const LogEntry = Schema.Struct({
   span_id: Schema.optional(Schema.String),
   details: Schema.Unknown,
 });
+
 const decodeLog = Schema.decodeUnknownSync(Schema.fromJsonString(LogEntry));
+
 let logOutput: ReturnType<typeof spyOn<typeof console, "log">>;
+
 beforeEach(() => {
   logOutput = spyOn(console, "log").mockImplementation(() => {});
 });
+
 afterEach(() => logOutput.mockRestore());
 
 describe("observability contract", () => {
@@ -78,9 +85,11 @@ describe("observability contract", () => {
         ),
       ),
     );
+
     const output = logOutput.mock.calls
       .map((parts) => parts.join(" "))
       .join("\n");
+
     expect(output).toContain("ERROR");
     expect(output).toContain("Error: undeclared Redis key\n");
     expect(output).toContain("/messaging");
@@ -89,6 +98,7 @@ describe("observability contract", () => {
 
   test("exports seconds histograms and idle heartbeat with resource identity, only when metrics are enabled", async () => {
     const requests: Array<{ path: string; body: unknown }> = [];
+
     const server = Bun.serve({
       hostname: "127.0.0.1",
       port: 0,
@@ -97,9 +107,11 @@ describe("observability contract", () => {
           path: new URL(request.url).pathname,
           body: await request.json(),
         });
+
         return Response.json({});
       },
     });
+
     try {
       const run = (env: Record<string, string>) =>
         Effect.runPromise(
@@ -129,6 +141,7 @@ describe("observability contract", () => {
             ),
           ),
         );
+
       await run({});
       expect(requests).toHaveLength(0);
       await run({ OTEL_METRICS_EXPORTER: "otlp" });
@@ -200,11 +213,13 @@ describe("observability contract", () => {
 
   test("writes one JSON log per entry and preserves Promise adapter span context", async () => {
     logOutput.mockImplementation(() => {});
+
     const parent = Tracer.externalSpan({
       traceId: "11111111111111111111111111111111",
       spanId: "2222222222222222",
       sampled: true,
     });
+
     await Effect.runPromise(
       Effect.gen(function* () {
         yield* installScopedLogRunner;
@@ -251,6 +266,7 @@ describe("observability contract", () => {
 
   test("isolates concurrent Promise logs and restores nested and absent spans", async () => {
     const expected = new Map<string, { traceId: string; spanId: string }>();
+
     const logFromPromise = (message: string) =>
       Effect.gen(function* () {
         const span = yield* Effect.currentSpan;
@@ -262,6 +278,7 @@ describe("observability contract", () => {
           );
         });
       });
+
     await Effect.runPromise(
       Effect.gen(function* () {
         yield* installScopedLogRunner;
@@ -287,11 +304,13 @@ describe("observability contract", () => {
     );
     const entries = logOutput.mock.calls.map(([line]) => decodeLog(line));
     expect(entries).toHaveLength(7);
+
     for (const entry of entries) {
       const span = expected.get(entry.message);
       expect(entry.trace_id).toBe(span?.traceId);
       expect(entry.span_id).toBe(span?.spanId);
     }
+
     for (const name of ["first", "second"]) {
       expect(expected.get(`${name}-parent-before`)).toEqual(
         expected.get(`${name}-parent-after`),
@@ -300,6 +319,7 @@ describe("observability contract", () => {
         expected.get(`${name}-parent-before`)?.spanId,
       );
     }
+
     expect(expected.get("first-child")?.traceId).not.toBe(
       expected.get("second-child")?.traceId,
     );
@@ -308,14 +328,17 @@ describe("observability contract", () => {
   test("HTTP propagates incoming trace context and logs correlate with exported spans", async () => {
     logOutput.mockImplementation(() => {});
     const payloads: unknown[] = [];
+
     const server = Bun.serve({
       hostname: "127.0.0.1",
       port: 0,
       async fetch(request) {
         payloads.push(await request.json());
+
         return Response.json({});
       },
     });
+
     const boundary = HttpRouter.toWebHandler(
       HttpRouter.add(
         "GET",
@@ -334,6 +357,7 @@ describe("observability contract", () => {
               },
             }),
           );
+
           return HttpServerResponse.empty({
             headers: { "x-response-secret": "response-secret" },
           });
@@ -350,6 +374,7 @@ describe("observability contract", () => {
       ),
       { middleware: httpServerMetrics },
     );
+
     try {
       const response = await boundary.handler(
         new Request(
@@ -363,16 +388,19 @@ describe("observability contract", () => {
           },
         ),
       );
+
       expect(response.status).toBe(204);
       await new Promise<void>((resolve) => setImmediate(resolve));
     } finally {
       await boundary.dispose();
       await server.stop(true);
     }
+
     const entry = decodeLog(logOutput.mock.calls[0]?.[0]);
     expect(entry.trace_id).toBe("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
     const exported = JSON.stringify(payloads);
     const logs = JSON.stringify(logOutput.mock.calls);
+
     for (const secret of [
       "oauth-secret",
       "state-secret",
@@ -384,6 +412,7 @@ describe("observability contract", () => {
       expect(exported).not.toContain(secret);
       expect(logs).not.toContain(secret);
     }
+
     expect(exported).toContain('"adapter.operation"');
     expect(exported).toContain('"http.request.method"');
     expect(exported).toContain('"http.response.status_code"');
@@ -414,15 +443,19 @@ describe("observability contract", () => {
   });
   test("samples roots at 10% and inherits sampled and unsampled parents", async () => {
     const payloads: unknown[] = [];
+
     const server = Bun.serve({
       hostname: "127.0.0.1",
       port: 0,
       async fetch(request) {
         payloads.push(await request.json());
+
         return Response.json({});
       },
     });
+
     const random = spyOn(Math, "random").mockReturnValue(0.5);
+
     try {
       await Effect.runPromise(
         Effect.gen(function* () {
@@ -467,8 +500,10 @@ describe("observability contract", () => {
         ),
       );
       const serialized = JSON.stringify(payloads);
+
       for (const name of ["sampled-child", "sampled-root", "parent-sampled"])
         expect(serialized).toContain(`"name":"${name}"`);
+
       for (const name of ["dropped-child", "dropped-root", "parent-unsampled"])
         expect(serialized).not.toContain(`"name":"${name}"`);
     } finally {

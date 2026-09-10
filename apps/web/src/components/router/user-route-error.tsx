@@ -13,9 +13,11 @@ import { useRouteErrorRetry } from "./use-route-error-retry";
 
 export const UserRouteError = ({ error, reset }: ErrorComponentProps) => {
   const { t } = useTranslation();
+
   const normalizedStatus = normalizeRouteErrorStatus(
     getRouteErrorStatus(error),
   );
+
   const handleRetry = useRouteErrorRetry(reset);
 
   return (

@@ -9,7 +9,9 @@ import { createDetectorSettings } from "@/lib/game-account-preferences";
 import { createGameAccountPreferences } from "@/test/game-account-preferences-fixtures";
 import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
+
 let harness: ReturnType<typeof createGuildPreferencesTest>;
+
 const render = () =>
   renderUi(<DetectorRoutingSettingsTabForm />, { wrapper: harness.wrapper });
 
@@ -68,10 +70,12 @@ describe("DetectorRoutingSettingsTabForm", () => {
     harness = createGuildPreferencesTest();
     setTestRuntimeGame({ hero: { accountId: "202" } });
     harness.queryClient.setQueryData(harness.guildsKey, guilds);
+
     const preferencesKey =
       getUsersControllerGetUserGameAccountPreferencesQueryKey({
         accountId: "202",
       });
+
     harness.queryClient.setQueryData(
       preferencesKey,
       createGameAccountPreferences("202", {

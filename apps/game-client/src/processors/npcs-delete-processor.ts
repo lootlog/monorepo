@@ -21,13 +21,16 @@ export class NpcsDeleteProcessor {
     const world = game?.world ?? "unknown";
     const npcDetectorStore = useNpcDetectorStore.getState();
     const notificationsStore = useNotificationsStore.getState();
+
     const deletedNpcs = event.npcs_del.map((deletion) => ({
       data: ingress?.npcsById[deletion.id],
       deletion,
     }));
+
     const deletedNpcIds = event.npcs_del.map((deletion) => deletion.id);
     npcDetectorStore.removeNpc(deletedNpcIds);
     notificationsStore.removeNotificationsByNpcIds(deletedNpcIds, world);
+
     let timerContext: {
       accountId: string;
       characterId: string;
@@ -38,19 +41,23 @@ export class NpcsDeleteProcessor {
 
     const getTimerContext = () => {
       if (timerContext) return timerContext;
+
       if (!game) return null;
 
       const accountId = game.hero.accountId;
       const characterId = game.hero.characterId;
       const map = game.map;
+
       const lootlogCharacterConfigQueryKey =
         getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
           accountId,
         });
+
       const charactersConfig =
         queryClient.getQueryData<UserLootlogConfigAccountResponseDtoOutput>(
           lootlogCharacterConfigQueryKey,
         );
+
       const characterConfig = charactersConfig?.[characterId];
 
       timerContext = {
@@ -74,14 +81,17 @@ export class NpcsDeleteProcessor {
       }
 
       const context = getTimerContext();
+
       if (!context) return;
       const elite2Name = SpecialE2.get(String(context.mapId)) || data.name;
+
       const npcType = getNpcTypeByWt(
         NpcType,
         data.weight,
         data.profession,
         data.type,
       );
+
       const npcName = npcType === NpcType.ELITE2 ? elite2Name : data.name;
 
       if (context.catchingGuildIds.length === 0) {

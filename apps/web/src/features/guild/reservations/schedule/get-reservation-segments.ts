@@ -10,12 +10,14 @@ const assignOverlapLanes = (
       left.segmentStart.getTime() - right.segmentStart.getTime() ||
       left.segmentEnd.getTime() - right.segmentEnd.getTime(),
   );
+
   const result: ReservationSegment[] = [];
   let groupStart = 0;
 
   while (groupStart < sorted.length) {
     let groupEnd = groupStart + 1;
     let latestEnd = sorted[groupStart]?.segmentEnd.getTime() ?? 0;
+
     while (
       groupEnd < sorted.length &&
       (sorted[groupEnd]?.segmentStart.getTime() ?? 0) < latestEnd
@@ -29,13 +31,17 @@ const assignOverlapLanes = (
 
     const group = sorted.slice(groupStart, groupEnd);
     const laneEnds: number[] = [];
+
     const withLanes = group.map((segment) => {
       const start = segment.segmentStart.getTime();
       let lane = laneEnds.findIndex((end) => end <= start);
+
       if (lane === -1) lane = laneEnds.length;
       laneEnds[lane] = segment.segmentEnd.getTime();
+
       return { ...segment, lane };
     });
+
     const laneCount = Math.max(1, laneEnds.length);
     result.push(...withLanes.map((segment) => ({ ...segment, laneCount })));
     groupStart = groupEnd;
@@ -55,6 +61,7 @@ export function getReservationSegments(
   weekEnd.setDate(weekEnd.getDate() + DAYS.length + overscanDays);
 
   const segments: ReservationSegment[] = [];
+
   for (const reservation of reservations) {
     if (reservation.endsAt <= visibleStart || reservation.startsAt >= weekEnd) {
       continue;
@@ -79,12 +86,16 @@ export function getReservationSegments(
         reservation.startsAt > dayStart
           ? new Date(reservation.startsAt)
           : dayStart;
+
       const segmentEnd =
         reservation.endsAt < dayEnd ? new Date(reservation.endsAt) : dayEnd;
+
       const startHour =
         (segmentStart.getTime() - dayStart.getTime()) / 3_600_000;
+
       const durationHours =
         (segmentEnd.getTime() - segmentStart.getTime()) / 3_600_000;
+
       if (durationHours <= 0) continue;
 
       segments.push({

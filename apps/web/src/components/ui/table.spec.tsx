@@ -19,6 +19,7 @@ describe("Table expanded detail surface", () => {
     );
 
     const table = container.querySelector("table");
+
     const detailRow = container.querySelector(
       'tr[data-state="expanded-detail"]',
     );

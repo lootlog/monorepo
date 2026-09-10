@@ -5,5 +5,6 @@ export const resolveBetterAuthBaseURL = (appUrl: string): string => {
   baseURL.pathname = `${baseURL.pathname.replace(/\/+$/u, "")}${BETTER_AUTH_INTERNAL_PATH}`;
   baseURL.search = "";
   baseURL.hash = "";
+
   return baseURL.toString();
 };

@@ -11,6 +11,7 @@ const GameCharacterClan = Schema.Struct({
     ),
   ),
 });
+
 export const GameCharacter = Schema.Struct({
   lvl: FiniteNumber,
   nick: NonEmptyString.check(

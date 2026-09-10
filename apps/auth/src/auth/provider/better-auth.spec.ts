@@ -10,10 +10,13 @@ describe("Better Auth logging", () => {
       { logger: betterAuthLogger },
       { disableTestUser: true },
     );
+
     const entries: Array<{ level: string; message: unknown }> = [];
+
     const logger = Logger.make(({ logLevel, message }) => {
       entries.push({ level: logLevel, message });
     });
+
     await Effect.runPromise(
       Effect.gen(function* () {
         yield* installScopedLogRunner;
@@ -23,6 +26,7 @@ describe("Better Auth logging", () => {
               "http://localhost:3000/api/auth/callback/discord?error=private-oauth-token",
             ),
           );
+
           expect(response.status).toBe(302);
           expect(response.headers.get("location")).toContain("state_not_found");
           const context = await auth.$context;

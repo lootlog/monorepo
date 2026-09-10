@@ -9,6 +9,7 @@ import {
 describe("loot allocation Effect module", () => {
   it("rejects an unauthorized allocation before cache or RabbitMQ", async () => {
     let externalCalls = 0;
+
     const operations = makeLootAllocationOperations({
       persistence: {
         findAuthorizedLoot: () => Effect.succeed(null),
@@ -20,12 +21,14 @@ describe("loot allocation Effect module", () => {
       cache: {
         deleteByPattern: () => {
           externalCalls += 1;
+
           return Effect.void;
         },
       },
       publisher: {
         publish: () => {
           externalCalls += 1;
+
           return Effect.void;
         },
       },

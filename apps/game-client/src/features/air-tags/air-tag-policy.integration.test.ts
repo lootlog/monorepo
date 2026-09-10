@@ -36,6 +36,7 @@ it("keeps authorized air targets while coalescing grants and excludes revoked ta
     map: { id: 12, name: "Torneg", visibility: 30 },
     world: "fobos",
   });
+
   const makePolicy = (ids: string[]) =>
     createAccessPolicySnapshot(
       ids.map((id) => ({
@@ -50,12 +51,14 @@ it("keeps authorized air targets while coalescing grants and excludes revoked ta
       })),
       "user",
     );
+
   const initial = makePolicy(["guild-1"]);
   const expanded = makePolicy(["guild-1", "guild-2"]);
   const expandedAgain = makePolicy(["guild-1", "guild-2", "guild-3"]);
   const restricted = makePolicy(["guild-2"]);
   const test = createAirTagTest();
   const { runtime } = test;
+
   try {
     runtime.handlePermissionsUpdated({
       accessPolicy: initial,

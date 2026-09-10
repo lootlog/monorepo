@@ -37,19 +37,23 @@ export const KillDetailSummary = ({
   respawnComparedToMaxPercentage,
 }: KillDetailSummaryProps) => {
   const { t } = useTranslation();
+
   const overdueDurationText =
     kill.resolvedAfterMaxSpawnTimeMs !== null &&
     kill.resolvedAfterMaxSpawnTimeMs !== undefined &&
     kill.resolvedAfterMaxSpawnTimeMs > 0
       ? formatDurationHuman(Math.round(kill.resolvedAfterMaxSpawnTimeMs / 1000))
       : null;
+
   const scoringModeLabel = t(
     eventConfig.scoringMode === "SIMPLE"
       ? "events.scoring.modeSimpleTitle"
       : "events.scoring.modeAdvancedTitle",
   );
+
   let respawnComparisonText: string | null = null;
   let respawnDeltaText: string | null = null;
+
   if (overdueDurationText) {
     respawnComparisonText = t("events.killDetail.overdueBy", {
       duration: overdueDurationText,
@@ -61,6 +65,7 @@ export const KillDetailSummary = ({
     });
     respawnDeltaText = `−${fasterThanMaxText}`;
   }
+
   const respawnMetricLabel = [
     `${t("events.killDetail.respawnTime")}: ${respawnDurationText}`,
     respawnComparisonText,
@@ -73,11 +78,13 @@ export const KillDetailSummary = ({
     "d MMMM yyyy, HH:mm:ss",
     { locale: pl },
   );
+
   const formattedMaxSpawn = format(
     new Date(kill.maxSpawnTimeAtKill),
     "d MMMM yyyy, HH:mm:ss",
     { locale: pl },
   );
+
   const formattedKillTime = format(
     new Date(kill.killedAt),
     "d MMMM yyyy, HH:mm:ss",

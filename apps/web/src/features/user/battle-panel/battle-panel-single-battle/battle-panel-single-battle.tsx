@@ -14,12 +14,16 @@ export const BattlePanelSingleBattle = () => {
   const { battleId } = useParams({
     from: "/_authenticated/@me/battle-panel/battles_/$battleId",
   });
+
   const { data: battle } = useBattlesControllerGetBattle({ battleId });
+
   const { data: rawBattle } = useBattlesControllerGetBattleRawData({
     battleId,
   });
+
   const { data: timeline, isPending: isTimelinePending } =
     useBattlesControllerGetBattleTimeline({ battleId });
+
   const shouldShowRecentOpponentBattles =
     getRecentOpponentBattleContext(battle) !== null;
 

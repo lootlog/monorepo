@@ -31,6 +31,7 @@ export const UserSidebarNav = () => {
   const { t } = useTranslation();
   const matches = useMatches();
   const navigation = resolveAppNavigation({ matches });
+
   const menuItems: MenuItem[] = navigation.sidebarItems.map((item) => ({
     active: item.active,
     available: true,

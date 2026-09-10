@@ -12,6 +12,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import { WatchedItemSelector } from "./watched-item-selector";
 
 await initializeTestTranslations();
+
 afterEach(cleanup);
 
 it("distinguishes an item-search outage from a successful empty search and recovers", async () => {
@@ -28,9 +29,11 @@ it("distinguishes an item-search outage from a successful empty search and recov
     onSearchChange: vi.fn(),
     onSelect: vi.fn(),
   };
+
   const { rerender } = render(
     <WatchedItemSelector {...props} errorMessage="Wyszukiwarka niedostępna" />,
   );
+
   fireEvent.click(screen.getByRole("combobox"));
   await waitFor(() =>
     expect(screen.getByRole("alert").textContent).toBe(

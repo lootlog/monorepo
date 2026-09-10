@@ -13,6 +13,7 @@ export const replaceRoleMentions = (text: string, roles: GuildRole[]) => {
       const role = roleById.get(roleId);
       const name = role ? `@${role.name}` : `@${roleId}`;
       const color = role ? (getCustomRoleCssColor(role.color) ?? "") : "";
+
       return `[${name}](${ROLE_LINK_PREFIX}${color})`;
     })
     .replace(/@(everyone|here)/g, (_match, keyword: string) => {
@@ -27,6 +28,7 @@ export const previewMarkdownComponents: Components = {
   a: ({ href, children, node: _node, ...props }) => {
     if (href?.startsWith(ROLE_LINK_PREFIX)) {
       const color = href.slice(ROLE_LINK_PREFIX.length) || null;
+
       return (
         <span
           style={{
@@ -41,6 +43,7 @@ export const previewMarkdownComponents: Components = {
         </span>
       );
     }
+
     return (
       <TextLink {...props} href={href} className="text-[length:inherit]">
         {children}

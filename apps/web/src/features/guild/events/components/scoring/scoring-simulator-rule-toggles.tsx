@@ -20,6 +20,7 @@ export function ScoringSimulatorRuleToggles({
   const { t } = useTranslation();
   const ruleIdPrefix = useId();
   const appliedRuleIds = new Set(appliedRules.map((rule) => rule.ruleId));
+
   return (
     <div>
       <p className="text-[10px] uppercase tracking-[0.18em] font-semibold text-muted-foreground mb-2">
@@ -29,6 +30,7 @@ export function ScoringSimulatorRuleToggles({
         {rules.map((rule) => {
           const isActive = overrides[rule.id] ?? rule.enabled !== false;
           const fired = appliedRuleIds.has(rule.id);
+
           return (
             <div
               key={rule.id}

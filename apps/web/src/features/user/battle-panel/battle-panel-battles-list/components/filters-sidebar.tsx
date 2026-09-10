@@ -81,6 +81,7 @@ export const FiltersSidebar = ({
     handleMatchmakingToggle,
     handleWorldChange,
   } = createBattleFilterHandlers(filters, onFiltersChange);
+
   const { t } = useTranslation();
   const selectedCharacterIds = new Set(filters.characterId);
   const characterListId = useId();
@@ -88,10 +89,12 @@ export const FiltersSidebar = ({
 
   const { data: worldsResponse } = useBattlesControllerGetUserWorlds();
   const worlds = worldsResponse?.worlds ?? [];
+
   const battleTypes = [
     { value: "solo" as const, label: t("battlePanel.filters.types.solo") },
     { value: "group" as const, label: t("battlePanel.filters.types.group") },
   ];
+
   const battleResults = [
     { value: "won" as const, label: t("battlePanel.filters.results.won") },
     { value: "lost" as const, label: t("battlePanel.filters.results.lost") },

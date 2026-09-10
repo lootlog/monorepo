@@ -8,6 +8,7 @@ export const ApplicationErrorKind = {
   INVALID_REQUEST: "invalid-request",
   NOT_FOUND: "not-found",
 } as const;
+
 type ApplicationErrorKind =
   (typeof ApplicationErrorKind)[keyof typeof ApplicationErrorKind];
 

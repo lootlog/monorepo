@@ -4,6 +4,7 @@ import {
 } from "@lootlog/schema/permissions";
 
 export const Capability = CapabilityValues;
+
 export type Capability = CapabilityName;
 
 export type AccessPolicySnapshot = {
@@ -16,6 +17,7 @@ export interface AccessPolicy {
 }
 
 const ALL_CAPABILITIES = Object.values(Capability);
+
 const EFFECTIVE_CAPABILITIES = new WeakMap<
   AccessPolicy,
   readonly Capability[]
@@ -33,6 +35,7 @@ export function createAccessPolicy(
   });
 
   EFFECTIVE_CAPABILITIES.set(accessPolicy, [...capabilities]);
+
   return accessPolicy;
 }
 
@@ -44,6 +47,7 @@ export function getEffectiveCapabilities(
   accessPolicy: AccessPolicy,
 ): Capability[] {
   const capabilities = EFFECTIVE_CAPABILITIES.get(accessPolicy);
+
   if (!capabilities) {
     throw new TypeError(
       "Only policies created by createAccessPolicy can be serialized",

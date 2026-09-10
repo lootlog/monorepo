@@ -8,6 +8,7 @@ import {
 } from "#src/runtime/auth/forward-auth-identity";
 
 const USER_ID_HEADER = "x-auth-user-id";
+
 const DISCORD_ID_HEADER = "x-auth-discord-id";
 
 export const readForwardAuthIdentity = (
@@ -18,7 +19,9 @@ export const readForwardAuthIdentity = (
 
   if (!userId || !discordId) return undefined;
   const apiKey = readApiKeyAccess(headers);
+
   if (apiKey === null) return undefined;
+
   return apiKey === undefined
     ? { userId, discordId }
     : { userId, discordId, apiKey };
@@ -28,6 +31,7 @@ export const forwardAuthMiddleware = BearerSecurityMiddleware.of({
   bearer: (httpEffect) =>
     Effect.flatMap(HttpServerRequest.HttpServerRequest, (request) => {
       const identity = readForwardAuthIdentity(request.headers);
+
       if (identity === undefined) {
         return Effect.succeed(HttpServerResponse.empty({ status: 401 }));
       }

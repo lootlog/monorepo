@@ -73,6 +73,7 @@ export const LootsFiltersSidebar = (
     hasActiveFilters,
     clearFilters,
   } = useLootFiltersSidebar(props);
+
   return (
     <>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

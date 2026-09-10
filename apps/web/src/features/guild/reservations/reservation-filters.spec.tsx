@@ -19,6 +19,7 @@ describe("ReservationFilters", () => {
 
     expect(group).toBeTruthy();
     expect(screen.getAllByRole("button")).toHaveLength(4);
+
     const activeFilter = screen.getByRole("button", {
       name: "reservations.filters.all",
     });

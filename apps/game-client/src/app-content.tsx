@@ -52,6 +52,7 @@ export const AppContent = () => {
   usePartyReadyRoomObserver();
 
   const { ConflictDialog } = useTimerSettingsSync();
+
   const gameInitialized = useGlobalStore((state) =>
     Boolean(state.gameState.gameInitialized),
   );

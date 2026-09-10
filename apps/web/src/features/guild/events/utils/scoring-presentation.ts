@@ -15,15 +15,19 @@ export const getScoringBreakdown = ({
   const manualAdjustmentPoints = rawManualAdjustmentPoints ?? 0;
   const bonusBreakdown = normalizeBonusBreakdown(rawBonusBreakdown);
   const autoTotalPoints = points - manualAdjustmentPoints;
+
   const fallbackBonusPoints =
     Math.round(Math.max(0, autoTotalPoints - basePoints) * 10_000) / 10_000;
+
   const bonusPoints =
     bonusBreakdown.length > 0
       ? Math.round(
           bonusBreakdown.reduce((sum, item) => sum + item.points, 0) * 10_000,
         ) / 10_000
       : fallbackBonusPoints;
+
   const capReduction = Math.max(0, basePoints + bonusPoints - autoTotalPoints);
+
   return {
     basePoints,
     bonusBreakdown,
@@ -67,6 +71,7 @@ export const getScoringItems = ({
       valueClassName: "text-cyan-400",
     });
   }
+
   if (bonusBreakdown.length === 0 && bonusPoints > 0) {
     items.push({
       label: t("events.kills.pointsTooltip.bonusTotal"),
@@ -74,6 +79,7 @@ export const getScoringItems = ({
       valueClassName: "text-cyan-400",
     });
   }
+
   if (capReduction > 0) {
     items.push({
       label: t("events.kills.pointsTooltip.capReduction"),
@@ -81,6 +87,7 @@ export const getScoringItems = ({
       valueClassName: "text-amber-400",
     });
   }
+
   if (manualAdjustmentPoints !== 0) {
     items.push({
       label: t("events.kills.pointsTooltip.manualAdjustment"),
@@ -91,5 +98,6 @@ export const getScoringItems = ({
       valueClassName: "text-amber-400",
     });
   }
+
   return items;
 };

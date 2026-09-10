@@ -70,6 +70,7 @@ export class EventDispatcher {
     ingress?: RuntimeEventEnvelope["ingress"],
   ): void {
     const event = fact.event;
+
     if (fact.kind === "chat") {
       runSafe("chat", () => this.chat.handle(event));
     }
@@ -127,6 +128,7 @@ export class EventDispatcher {
   cleanup(): void {
     const releasedActiveProcessor = this.releaseProcessor?.() ?? false;
     this.releaseProcessor = null;
+
     if (releasedActiveProcessor) {
       this.npcsDetection.cleanup();
     }

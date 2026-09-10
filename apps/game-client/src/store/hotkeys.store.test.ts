@@ -52,6 +52,7 @@ it("upgrades unassigned quick actions while preserving custom bindings and avoid
     ctrl: false,
     alt: false,
   };
+
   const custom = {
     type: "keyboard",
     key: "J",
@@ -59,6 +60,7 @@ it("upgrades unassigned quick actions while preserving custom bindings and avoid
     ctrl: false,
     alt: false,
   };
+
   const occupied = {
     type: "keyboard",
     key: "P",
@@ -66,6 +68,7 @@ it("upgrades unassigned quick actions while preserving custom bindings and avoid
     ctrl: false,
     alt: true,
   };
+
   const migrated = migrateHotkeysState(
     {
       bindings: {
@@ -76,6 +79,7 @@ it("upgrades unassigned quick actions while preserving custom bindings and avoid
     },
     6,
   );
+
   expect(migrated.bindings["chat-help"]).toEqual({
     ...empty,
     key: "H",
@@ -103,10 +107,12 @@ it("adds unassigned party creation to version 7 without replacing custom binding
     ctrl: false,
     shift: false,
   };
+
   const migrated = migrateHotkeysState(
     { bindings: { "chat-help": custom } },
     7,
   );
+
   expect(migrated.bindings["chat-help"]).toEqual(custom);
   expect(migrated.bindings["create-party-gathering"]).toEqual({
     type: "keyboard",

@@ -41,6 +41,7 @@ export const getActionRequestSummary = (action: LoggedAction) => {
   const successCount = action.requests.filter(
     (request) => request.status === "success",
   ).length;
+
   const failureCount = action.requests.length - successCount;
 
   return {
@@ -65,6 +66,7 @@ export const matchesActionFilters = (
   }
 
   const normalizedSearchTerm = searchTerm.trim().toLocaleLowerCase("pl");
+
   if (!normalizedSearchTerm) {
     return true;
   }

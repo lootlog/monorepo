@@ -19,17 +19,25 @@ import {
 } from "../rabbit/events.js";
 
 export const REALTIME_PROTOCOL_VERSION = 1;
+
 // Offered alongside v1 by clients that understand feed events; never selected as the wire protocol.
 export const REALTIME_FEED_CAPABILITY = "lootlog.feed.v1";
+
 export const REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY =
   "lootlog.notification-volunteer.v1";
+
 export const REALTIME_SUBPROTOCOL = "lootlog.realtime.v1";
+
 export const REALTIME_JSON_SUBPROTOCOL = "lootlog.realtime.json.v1";
+
 export const PRESENCE_HEARTBEAT_INTERVAL_MS = 25_000;
+
 export const PRESENCE_EXPIRY_MS = 60_000;
 
 const RequestId = NonEmptyString;
+
 const Revision = NonNegativeInt;
+
 const Timestamp = NonNegativeInt;
 
 export const RealtimeLogicalTopic = Schema.Literals([
@@ -46,6 +54,7 @@ export const RealtimeLogicalTopic = Schema.Literals([
   "map.pings",
   "party.ready-room",
 ]);
+
 export type RealtimeLogicalTopic = typeof RealtimeLogicalTopic.Type;
 
 export const SubscriptionScope = Schema.Struct({
@@ -55,10 +64,13 @@ export const SubscriptionScope = Schema.Struct({
   world: Schema.optional(NonEmptyString),
   mapId: Schema.optional(NonNegativeInt),
 });
+
 export type SubscriptionScope = typeof SubscriptionScope.Type;
 
 export const PresencePlatform = Schema.Literals(["game", "web-app"]);
+
 export const PresenceStatus = Schema.Literals(["online", "offline"]);
+
 export const PresenceConfidence = Schema.Literals(["verified", "reported"]);
 
 export const PresenceClan = Schema.Struct({
@@ -97,12 +109,14 @@ export const BasicPresence = Schema.Struct({
   lastSeen: Timestamp,
   character: Schema.optional(PresenceCharacter),
 });
+
 export type BasicPresence = typeof BasicPresence.Type;
 
 export const PresenceWithLocation = Schema.Struct({
   ...BasicPresence.fields,
   location: PrecisePresenceLocation,
 });
+
 export type PresenceWithLocation = typeof PresenceWithLocation.Type;
 
 export const PublishedPresence = Schema.Struct({
@@ -162,14 +176,17 @@ export const SessionJoinCommand = command(
     margonemAccountProof: Schema.optional(Schema.Unknown),
   }),
 );
+
 export const HeartbeatCommand = command(
   "presence.heartbeat",
   Schema.Struct({ sessionId: NonEmptyString }),
 );
+
 export const PresencePublishCommand = command(
   "presence.publish",
   PublishedPresence,
 );
+
 export const PresenceFetchCommand = command(
   "presence.fetch",
   Schema.Struct({
@@ -177,18 +194,22 @@ export const PresenceFetchCommand = command(
     world: Schema.optional(NonEmptyString),
   }),
 );
+
 export const SubscribeCommand = command(
   "subscription.subscribe",
   SubscriptionScope,
 );
+
 export const UnsubscribeCommand = command(
   "subscription.unsubscribe",
   SubscriptionScope,
 );
+
 export const MapPingCommand = command(
   "map-ping.send",
   MapPingSendPayloadSchema,
 );
+
 export const AirTagSubscriptionCommand = command(
   "air-tag.subscription",
   Schema.Struct({
@@ -197,6 +218,7 @@ export const AirTagSubscriptionCommand = command(
     expectedMapId: Schema.optional(NonNegativeInt),
   }),
 );
+
 export const AirTagObservationCommand = command(
   "air-tag.observation",
   AirTagObservationBatchSchema,
@@ -209,6 +231,7 @@ export const AirTagRejectCode = Schema.Literals([
   "rate-limited",
   "temporarily-unavailable",
 ]);
+
 export const AirTagSubscriptionAck = Schema.Union([
   Schema.Struct({
     status: Schema.Literal("accepted"),
@@ -221,6 +244,7 @@ export const AirTagSubscriptionAck = Schema.Union([
     code: AirTagRejectCode,
   }),
 ]);
+
 export const AirTagObservationAck = Schema.Union([
   Schema.Struct({
     status: Schema.Literal("accepted"),
@@ -233,6 +257,7 @@ export const AirTagObservationAck = Schema.Union([
     retryAfterMs: Schema.optional(NonNegativeInt),
   }),
 ]);
+
 export { MapPingAckSchema };
 
 export const ClientCommand = Schema.Union([
@@ -246,6 +271,7 @@ export const ClientCommand = Schema.Union([
   AirTagSubscriptionCommand,
   AirTagObservationCommand,
 ]);
+
 export type ClientCommand = typeof ClientCommand.Type;
 
 export const RealtimeError = Schema.Struct({
@@ -255,6 +281,7 @@ export const RealtimeError = Schema.Struct({
   retryAfterMs: Schema.optional(NonNegativeInt),
   details: Schema.optional(Schema.Record(Schema.String, Schema.Unknown)),
 });
+
 export type RealtimeError = typeof RealtimeError.Type;
 
 export const Response = Schema.Union([
@@ -271,6 +298,7 @@ export const Response = Schema.Union([
     error: RealtimeError,
   }),
 ]);
+
 export type Response = typeof Response.Type;
 
 const serverEvent = <
@@ -349,6 +377,7 @@ export const ServerEvent = Schema.Union([
     }),
   ),
 ]);
+
 export type ServerEvent = typeof ServerEvent.Type;
 
 export const RealtimeFrame = Schema.Union([
@@ -356,17 +385,22 @@ export const RealtimeFrame = Schema.Union([
   Response,
   ServerEvent,
 ]);
+
 export type RealtimeFrame = typeof RealtimeFrame.Type;
 
 export const decodeClientCommand = Schema.decodeUnknownSync(ClientCommand);
+
 export const decodeResponse = Schema.decodeUnknownSync(Response);
+
 export const decodeServerEvent = Schema.decodeUnknownSync(ServerEvent);
+
 export const decodeRealtimeFrame = Schema.decodeUnknownSync(RealtimeFrame);
 
 // Discriminate an already decoded frame without parsing its payload a second time.
 const serverEventTypes = new Set<string>(
   ServerEvent.members.map((member) => member.fields.type.literal),
 );
+
 export const isServerEventFrame = (
   frame: RealtimeFrame,
 ): frame is ServerEvent => "type" in frame && serverEventTypes.has(frame.type);

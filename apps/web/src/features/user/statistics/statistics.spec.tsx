@@ -21,7 +21,9 @@ import "@/i18n/config";
 import { ThemeContext } from "@/contexts/theme-context";
 import { Statistics } from "./statistics";
 import { parseStatisticsSearch } from "./statistics-search";
+
 afterEach(cleanup);
+
 function renderStatistics(
   url: string,
   response?: UserKillAnalyticsResponseDtoOutput,
@@ -35,12 +37,15 @@ function renderStatistics(
           const url = new URL(
             input instanceof Request ? input.url : input.toString(),
           );
+
           if (url.pathname.endsWith("/analytics")) {
             requests.push(url);
+
             return response
               ? Promise.resolve(Response.json(response))
               : new Promise<Response>(() => {});
           }
+
           return Promise.resolve(
             Response.json({
               overview: {
@@ -56,22 +61,26 @@ function renderStatistics(
     }),
   );
   const root = createRootRoute();
+
   const auth = createRoute({
     getParentRoute: () => root,
     id: "_authenticated",
   });
+
   const route = createRoute({
     getParentRoute: () => auth,
     path: "@me/statistics",
     validateSearch: parseStatisticsSearch,
     component: Statistics,
   });
+
   const router = createRouter({
     routeTree: root.addChildren([auth.addChildren([route])]),
     history: createMemoryHistory({
       initialEntries: [url],
     }),
   });
+
   const queryClient = new QueryClient();
   onTestFinished(() => queryClient.clear());
   render(
@@ -88,6 +97,7 @@ function renderStatistics(
       </ThemeContext.Provider>
     </QueryClientProvider>,
   );
+
   return { router, requests };
 }
 
@@ -95,6 +105,7 @@ it("restores URL filters, keeps them while changing tabs, and fetches the select
   const { router, requests } = renderStatistics(
     "/@me/statistics?tab=activity&days=90&world=pandora",
   );
+
   await screen.findByRole("heading", { level: 1, name: "Statystyki" });
   await waitFor(() => expect(requests).toHaveLength(1));
   expect(requests[0]?.searchParams.get("days")).toBe("90");
@@ -180,6 +191,7 @@ it("does not present unavailable dated history as zero kills", async () => {
       partial: true,
     },
   };
+
   renderStatistics("/@me/statistics", response);
   await screen.findByRole("heading", { level: 1, name: "Statystyki" });
   expect(await screen.findByText("Brak danych")).toBeTruthy();

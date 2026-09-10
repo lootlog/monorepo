@@ -23,11 +23,15 @@ import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { useChatStore } from "@/store/chat.store";
 
 const request = vi.fn<typeof fetch>();
+
 let queryClient: QueryClient;
+
 let restoreApi: () => void;
+
 const wrapper = ({ children }: { children: ReactNode }) => (
   <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
 );
+
 beforeEach(() => {
   vi.spyOn(toast, "error").mockImplementation(() => "error");
   vi.spyOn(toast, "warning").mockImplementation(() => "warning");
@@ -50,6 +54,7 @@ beforeEach(() => {
     main: { baseUrl: "https://api.example.test", fetch: request },
   });
 });
+
 afterEach(() => {
   restoreApi();
   queryClient.clear();

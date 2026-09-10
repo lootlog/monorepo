@@ -8,6 +8,7 @@ import {
 describe("party ready room contracts", () => {
   it("validates character identity and strips unknown nested fields when applying", () => {
     const decode = Schema.decodeUnknownSync(ApplyToPartyReadyRoomRequest);
+
     const character = {
       lvl: 100,
       nick: "Player",
@@ -17,6 +18,7 @@ describe("party ready room contracts", () => {
       icon: "icon",
       clan: { id: 1, name: "Clan" },
     };
+
     expect(
       decode({
         world: "world",

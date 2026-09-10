@@ -28,6 +28,7 @@ export const useUpdateUserPreferences = () => {
       usersControllerUpdateUserPreferences(payload),
     onMutate: async (payload) => {
       await queryClient.cancelQueries({ queryKey });
+
       const previousData =
         queryClient.getQueryData<UserPreferencesResponseDtoOutput>(queryKey);
 

@@ -14,6 +14,7 @@ describe("timer failure classification", () => {
       message: "EXISTING_TIMER",
       timerId: "timer-1",
     });
+
     expect(toTimersDataFailure(failure)).toBe(failure);
     const invalid = new InvalidRequestError({ message: "SPAWN_TIME_IN_PAST" });
     expect(toTimersDataFailure(invalid)).toBe(invalid);

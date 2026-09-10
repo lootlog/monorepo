@@ -1,4 +1,5 @@
 import type { Battle, BattleWarrior } from "@/lib/api/battlelog-types";
+
 export const createBattleWarrior = (
   overrides: Partial<BattleWarrior> = {},
 ): BattleWarrior => ({
@@ -88,6 +89,7 @@ export const createBattleWarrior = (
   ph: 0,
   ...overrides,
 });
+
 export const createBattle = (overrides: Partial<Battle> = {}): Battle => ({
   id: "battle-1",
   createdAt: "2026-01-01T00:00:00.000Z",

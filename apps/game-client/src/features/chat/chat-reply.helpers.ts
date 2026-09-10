@@ -3,7 +3,9 @@ import type { ChatMessageResponseDtoOutput } from "@lootlog/client/main";
 import type { ChatReplyDraft } from "@/store/chat.store";
 
 const MAX_REPLY_SNIPPET_LENGTH = 72;
+
 const ELLIPSIS = "...";
+
 type ReplyableChatMessageType =
   | typeof MessageType.NORMAL
   | typeof MessageType.NOTIFICATION;
@@ -50,12 +52,16 @@ export const resolveChatReplyNames = (
       ),
     ]),
   );
+
   return messages.map((message) => {
     if (!message.replyTo) return message;
+
     const name = namesByGuild
       .get(message.guildId)
       ?.get(message.replyTo.messageId);
+
     if (!name || name === message.replyTo.senderNick) return message;
+
     return { ...message, replyTo: { ...message.replyTo, senderNick: name } };
   });
 };

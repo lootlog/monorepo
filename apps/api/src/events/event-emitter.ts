@@ -31,6 +31,7 @@ export type EventEmitRoutingKey = keyof EventEmitPayloads;
 
 export const makeEventEmitter = (amqpConnection: AmqpPublisher) => {
   const logger = new Logger("EventEmitter");
+
   const emit = <K extends EventEmitRoutingKey>(
     routingKey: K,
     payload: EventEmitPayloads[K],

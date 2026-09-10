@@ -33,6 +33,7 @@ type PartialBattleHpTimelineSettingsData = Partial<{
 
 export const BATTLE_HP_TIMELINE_SETTINGS_STORAGE_KEY =
   "lootlog-battle-hp-timeline-settings-v1";
+
 export const LEGACY_BATTLE_HP_TIMELINE_LAYERS_STORAGE_KEY =
   "lootlog-battle-timeline-layers-v2";
 
@@ -45,6 +46,7 @@ const storedLayers = z.record(
   z.string(),
   z.boolean().optional().catch(undefined),
 );
+
 const storedSettings = z.object({
   heightMode: z.enum(["default", "expanded"]).optional().catch(undefined),
   isChartHidden: z.boolean().optional().catch(undefined),
@@ -53,10 +55,13 @@ const storedSettings = z.object({
 
 const readLegacyLayerConfig = () => {
   if (typeof localStorage === "undefined") return;
+
   const value = localStorage.getItem(
     LEGACY_BATTLE_HP_TIMELINE_LAYERS_STORAGE_KEY,
   );
+
   if (!value) return;
+
   try {
     return storedLayers.safeParse(JSON.parse(value)).data;
   } catch {

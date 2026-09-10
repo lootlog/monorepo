@@ -4,6 +4,7 @@ import { cn } from "cn";
 
 export function LiveFeedSkeleton() {
   const { t } = useTranslation();
+
   return (
     <div role="status" aria-label={t("common.loading")}>
       <div
@@ -12,6 +13,7 @@ export function LiveFeedSkeleton() {
       >
         {Array.from({ length: 8 }, (_, index) => {
           const hasLoot = index % 3 === 0;
+
           return (
             <div
               key={index}

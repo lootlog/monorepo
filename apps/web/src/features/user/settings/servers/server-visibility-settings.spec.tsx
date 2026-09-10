@@ -28,7 +28,9 @@ import {
 import { ServerVisibilitySettings } from "./server-visibility-settings";
 
 let requests: Request[];
+
 let client: QueryClient;
+
 const renderSettings = () =>
   render(
     <QueryClientProvider client={client}>
@@ -60,15 +62,18 @@ describe("ServerVisibilitySettings", () => {
       defaultOptions: { queries: { staleTime: Infinity, retry: false } },
     });
     onTestFinished(() => client.clear());
+
     const guilds = ["Alpha", "Beta", "Gamma"].map((name, index) => ({
       id: `guild-${index + 1}`,
       name,
       icon: null,
     }));
+
     let preferences = createUserPreferences({
       guildsOrder: ["guild-2", "guild-1"],
       hiddenGuildIds: ["guild-2", "temporarily-unavailable"],
     });
+
     client.setQueryData(
       getUsersControllerGetCurrentUserGuildsQueryKey(),
       guilds,
@@ -84,13 +89,17 @@ describe("ServerVisibilitySettings", () => {
           baseUrl: "https://api.test",
           fetch: async (input, init) => {
             const request = new Request(input, init);
+
             if (request.method === "PATCH") {
               requests.push(request.clone());
+
               const update = z
                 .object({ hiddenGuildIds: z.array(z.string()) })
                 .parse(await request.json());
+
               preferences = { ...preferences, ...update };
             }
+
             return Response.json(preferences);
           },
         },

@@ -4,13 +4,17 @@ import { z } from "zod";
 z.config({ jitless: true });
 
 export const EXTENSION_CHANNEL = "lootlog.extension.v1";
+
 export const MAX_MESSAGE_LENGTH = 20 * 1024 * 1024;
+
 export const MAX_PENDING_REQUESTS = 64;
+
 export const REQUEST_TIMEOUT_MS = 30_000;
 
 const SerializedMessageSchema = z.string().max(MAX_MESSAGE_LENGTH);
 
 const id = z.string().min(1).max(80);
+
 export const ExtensionRequestSchema = z.discriminatedUnion("type", [
   z.strictObject({
     type: z.literal("http"),
@@ -28,6 +32,7 @@ export const ExtensionRequestSchema = z.discriminatedUnion("type", [
   z.strictObject({ type: z.literal("release"), id }),
   z.strictObject({ type: z.literal("command"), id, command: z.unknown() }),
 ]);
+
 export type ExtensionRequest = z.infer<typeof ExtensionRequestSchema>;
 
 export const ExtensionMessageSchema = z.discriminatedUnion("type", [
@@ -56,11 +61,14 @@ export const ExtensionMessageSchema = z.discriminatedUnion("type", [
   }),
   z.object({ type: z.literal("event"), event: z.unknown() }),
 ]);
+
 export type ExtensionMessage = z.infer<typeof ExtensionMessageSchema>;
 
 export function decodeMessage(value: unknown): unknown {
   const parsed = SerializedMessageSchema.safeParse(value);
+
   if (!parsed.success) throw new Error("Invalid extension message");
+
   return JSON.parse(parsed.data);
 }
 
@@ -68,7 +76,9 @@ export function encodeMessage(
   value: ExtensionRequest | ExtensionMessage,
 ): string {
   const serialized = JSON.stringify(value);
+
   if (serialized.length > MAX_MESSAGE_LENGTH)
     throw new Error("Extension message too large");
+
   return serialized;
 }

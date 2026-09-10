@@ -12,5 +12,6 @@ export async function initializeTestTranslations(
     resources: { pl: { translation: translations } },
     interpolation: { escapeValue: false },
   });
+
   return instance;
 }

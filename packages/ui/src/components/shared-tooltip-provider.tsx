@@ -40,6 +40,7 @@ type SharedTooltipContextValue = {
 type SharedTooltipController = SharedTooltipContextValue;
 
 const SHARED_TOOLTIP_OPEN_DELAY = 100;
+
 const SHARED_TOOLTIP_CLOSE_DELAY = 50;
 
 const SharedTooltipContext = createContext<SharedTooltipContextValue | null>(
@@ -75,6 +76,7 @@ function SharedTooltipRoot({
   const [tooltipState, setTooltipState] = useState<SharedTooltipState>(
     createClosedTooltipState,
   );
+
   const tooltipStateRef = useRef(tooltipState);
   const showTimeoutRef = useRef<number | null>(null);
   const hideTimeoutRef = useRef<number | null>(null);
@@ -125,6 +127,7 @@ function SharedTooltipRoot({
         if (tooltipStateRef.current.open) {
           clearShowTimeout();
           setTooltipState(nextTooltipState);
+
           return;
         }
 
@@ -232,6 +235,7 @@ function SharedTooltipRoot({
 
 export function SharedTooltipProvider({ children }: PropsWithChildren) {
   const controllerRef = useRef<SharedTooltipController | null>(null);
+
   const [contextValue] = useState<SharedTooltipContextValue>(() => ({
     hideTooltip: () => controllerRef.current?.hideTooltip(),
     showTooltip: (content, triggerRect, options) =>

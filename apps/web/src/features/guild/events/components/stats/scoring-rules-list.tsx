@@ -19,6 +19,7 @@ export const ScoringRulesList = ({
   t,
 }: ScoringRulesListProps) => {
   const highlightedIds = new Set(highlightedRuleIds);
+
   return (
     <ul
       className="divide-y divide-border/60"

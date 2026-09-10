@@ -52,6 +52,7 @@ export const StatsPodiumSlot: React.FC<StatsPodiumSlotProps> = ({
         roles: [{ position: 0, color: guildMember.color }],
       }
     : undefined;
+
   const memberColor = useMemberColor(adaptedMember);
 
   if (!member) {

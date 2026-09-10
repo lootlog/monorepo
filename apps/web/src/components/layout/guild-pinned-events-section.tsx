@@ -23,6 +23,7 @@ export const GuildPinnedEventsSection = ({
       },
     },
   );
+
   const pinnedActiveEvents = pinnedEvents?.map(({ event }) => event) ?? [];
   const hasPinnedEvents = pinnedActiveEvents.length > 0;
 

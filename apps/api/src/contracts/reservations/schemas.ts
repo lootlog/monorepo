@@ -13,6 +13,7 @@ const ReservationAuthor = Schema.Struct({
   displayName: Schema.String,
   avatarUrl: Schema.Union([Schema.String, Schema.Null]),
 });
+
 const ReservationSourceOrganization = Schema.Struct({
   name: Schema.String,
   iconUrl: Schema.Union([Schema.String, Schema.Null]),
@@ -23,6 +24,7 @@ const ReservationSourceOrganization = Schema.Struct({
     }),
   ),
 });
+
 const ReservationLimit = Schema.Number.check(
   Schema.isInt().annotate({ expected: "an integer" }),
 )
@@ -43,6 +45,7 @@ const ReservationEditingLimits = Schema.Struct({
   reservationTimeGranularityMinutes: ReservationLimit,
   reservationMaxAdvanceDays: ReservationLimit,
 });
+
 const reservationFields = {
   id: SafeInteger,
   spotId: Schema.String,
@@ -94,6 +97,7 @@ export const ReservationSpotsResponse = Schema.Array(
     ]),
   }),
 ).annotate({ identifier: "ReservationSpotsResponseDto" });
+
 export type ReservationSpotsResponse = typeof ReservationSpotsResponse.Type;
 
 export const ReservationWindowResponse = Schema.Struct({
@@ -103,6 +107,7 @@ export const ReservationWindowResponse = Schema.Struct({
     to: DateTimeString,
   }),
 }).annotate({ identifier: "ReservationWindowResponseDto" });
+
 export type ReservationWindowResponse = typeof ReservationWindowResponse.Type;
 
 export const CreateReservationRequest = Schema.Struct({
@@ -119,16 +124,19 @@ export const CreateReservationRequest = Schema.Struct({
     Schema.Union([Schema.Literals([0, 5, 15, 30]), Schema.Null]),
   ),
 }).annotate({ identifier: "CreateReservationDto" });
+
 export type CreateReservationRequest = typeof CreateReservationRequest.Type;
 
 export const ReservationResponse = Schema.Struct(reservationFields).annotate({
   identifier: "ReservationResponseDto",
 });
+
 export type ReservationResponse = typeof ReservationResponse.Type;
 
 export const MyReservationsResponse = Schema.Struct({
   items: Schema.Array(Schema.Struct(reservationFields)),
 }).annotate({ identifier: "MyReservationsResponseDto" });
+
 export type MyReservationsResponse = typeof MyReservationsResponse.Type;
 
 export const UpdateReservationRequest = Schema.Struct({
@@ -154,11 +162,13 @@ export const UpdateReservationRequest = Schema.Struct({
     }),
   )
   .annotate({ identifier: "UpdateReservationDto" });
+
 export type UpdateReservationRequest = typeof UpdateReservationRequest.Type;
 
 export const OrganizationReservationParams = Schema.Struct({
   guildId: Schema.String,
 });
+
 export type OrganizationReservationParams =
   typeof OrganizationReservationParams.Type;
 
@@ -166,18 +176,21 @@ export const ReservationSpotParams = Schema.Struct({
   spotId: Schema.String,
   guildId: Schema.String,
 });
+
 export type ReservationSpotParams = typeof ReservationSpotParams.Type;
 
 export const ReservationWindowQuery = Schema.Struct({
   from: DateTimeWithOffsetString,
   to: DateTimeWithOffsetString,
 });
+
 export type ReservationWindowQuery = typeof ReservationWindowQuery.Type;
 
 export const OrganizationReservationParamsWithId = Schema.Struct({
   reservationId: FiniteNumber,
   guildId: Schema.String,
 });
+
 export type OrganizationReservationParamsWithId =
   typeof OrganizationReservationParamsWithId.Type;
 
@@ -186,9 +199,11 @@ export const MyReservationsQuery = Schema.Struct({
     Schema.Literals(["upcoming", "past"]).annotate({ default: "upcoming" }),
   ),
 });
+
 export type MyReservationsQuery = typeof MyReservationsQuery.Type;
 
 export const ReservationParams = Schema.Struct({
   reservationId: FiniteNumber,
 });
+
 export type ReservationParams = typeof ReservationParams.Type;

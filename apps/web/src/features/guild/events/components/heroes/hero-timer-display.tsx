@@ -32,6 +32,7 @@ function formatNegativeElapsed(ms: number): string {
   if (hours > 0) {
     return `-${hours}:${pad(minutes)}:${pad(seconds)}`;
   }
+
   return `-${minutes}:${pad(seconds)}`;
 }
 

@@ -19,24 +19,31 @@ import { StatisticsQueryState } from "@/features/user/statistics/statistics-quer
 
 export function DashboardActivity() {
   const { t } = useTranslation();
+
   const [storedMode, setMode] = useLocalStorage<string>(
     "lootlog:dashboard:activity-mode",
     "online",
   );
+
   const mode = storedMode === "kills" ? "kills" : "online";
   const [range] = useState(() => calendarRange(new Date(), 112));
+
   const calendarStyle: CSSProperties & { "--activity-weeks": number } = {
     containerType: "inline-size",
     "--activity-weeks": Math.ceil((112 + calendarOffset(range.from)) / 7),
   };
+
   const online = useUsersActivityControllerGetOnline(range, {
     query: { enabled: mode === "online", staleTime: 60_000 },
   });
+
   const kills = useKillsControllerGetUserKillActivity(undefined, {
     query: { enabled: mode === "kills", staleTime: 60_000 },
   });
+
   const isInRange = ({ date }: { date: string }) =>
     date >= range.from && date <= range.to;
+
   return (
     <SectionCard className="w-full" style={calendarStyle}>
       <SectionCardHeader

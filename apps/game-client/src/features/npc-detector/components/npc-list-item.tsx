@@ -35,8 +35,10 @@ import { NPC_DETECTOR_CLOCK_INTERVAL_MS } from "@/features/npc-detector/hooks/us
 import { NPC_NOTIFICATION_COOLDOWN_MS } from "@/features/npc-detector/hooks/use-npc-list-lifecycle";
 
 const MESSAGE_BUTTON_COOLDOWN_RING_RADIUS = 11;
+
 const MESSAGE_BUTTON_COOLDOWN_RING_CIRCUMFERENCE =
   2 * Math.PI * MESSAGE_BUTTON_COOLDOWN_RING_RADIUS;
+
 const ACTION_BUTTON_CLASS_NAME = "ll:size-7 ll:px-0";
 
 type NpcListItemProps = {
@@ -122,22 +124,26 @@ export const NpcListItem = ({
   npcTypeColors,
 }: NpcListItemProps) => {
   const { t } = useTranslation("npcDetector");
+
   const {
     isCreatingNpcPartyGathering,
     isSendingNpcNotification,
     startNpcNotification,
     startNpcPartyGathering,
   } = orchestration;
+
   const messageButtonCooldownTimeLeftMs = Math.max(
     0,
     (notificationCooldownEndsAt ??
       notificationCooldownCurrentTimeMs + NPC_NOTIFICATION_COOLDOWN_MS) -
       notificationCooldownCurrentTimeMs,
   );
+
   const messageButtonCooldownSecondsLeft = Math.max(
     1,
     Math.ceil(messageButtonCooldownTimeLeftMs / 1000),
   );
+
   const messageButtonCooldownRingOffset = animationEffectsEnabled
     ? MESSAGE_BUTTON_COOLDOWN_RING_CIRCUMFERENCE *
       (1 - messageButtonCooldownTimeLeftMs / NPC_NOTIFICATION_COOLDOWN_MS)
@@ -145,10 +151,12 @@ export const NpcListItem = ({
 
   const npcType = getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type);
   const settingsByNpcType = getDetectorNpcSettings(detectorSettings, npcType);
+
   const { guildIds: resolvedGuildIds, world } = resolveNpcNotificationRouting({
     routingRules: detectorSettings.routingRules,
     npcLevel: npc.lvl,
   });
+
   const key = npcType;
   const repeatDetectionFlashFrames = getRepeatDetectionFlashFrames(key);
 
@@ -167,6 +175,7 @@ export const NpcListItem = ({
   const handleSendNotification = async (npc: GameNpcWithLocation) => {
     if (resolvedGuildIds.length === 0) {
       showRuntimeMessage(t("actions.noMatchingGuilds"));
+
       return;
     }
 
@@ -195,6 +204,7 @@ export const NpcListItem = ({
   const handleGatherParty = async (npc: GameNpcWithLocation) => {
     if (resolvedGuildIds.length === 0) {
       showRuntimeMessage(t("actions.noMatchingGuilds"));
+
       return;
     }
 
@@ -222,13 +232,16 @@ export const NpcListItem = ({
     settingsByNpcType?.highlight,
     npcTypeColors,
   );
+
   const borderColor = getBorderColor(
     key,
     settingsByNpcType?.highlight,
     npcTypeColors,
   );
+
   const shouldPlayDetectionAnimation =
     animationEffectsEnabled && detectionAnimationCycle !== null;
+
   const content = (
     <>
       {animationEffectsEnabled ? (
@@ -385,11 +398,13 @@ export const NpcListItem = ({
       </div>
     </>
   );
+
   const className = cn(
     "ll:relative ll:overflow-hidden ll:flex ll:items-center ll:py-1 ll:gap-2 ll:px-2",
     "ll:border ll:rounded-sm",
     "ll:transition-[background-color] ll:duration-300",
   );
+
   const style = { background, borderColor };
 
   return (
@@ -404,4 +419,5 @@ export const NpcListItem = ({
     </div>
   );
 };
+
 import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";

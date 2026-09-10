@@ -23,7 +23,9 @@ export const apiKeyEndpointPolicyLayer = (service: string) =>
     ApiKeyEndpointPolicy.of((httpEffect, { endpoint }) =>
       Effect.flatMap(HttpServerRequest.HttpServerRequest, ({ headers }) => {
         const access = readApiKeyAccess(headers);
+
         if (access === undefined) return httpEffect;
+
         if (
           access === null ||
           !headers["x-auth-user-id"] ||
@@ -36,11 +38,13 @@ export const apiKeyEndpointPolicyLayer = (service: string) =>
             ),
           );
         }
+
         const operation = Context.getOrElse(
           endpoint.annotations,
           OpenApi.Identifier,
           () => endpoint.identifier,
         );
+
         if (!apiKeyAllowsOperation(access, service, operation)) {
           return Effect.succeed(
             HttpServerResponse.jsonUnsafe(
@@ -49,6 +53,7 @@ export const apiKeyEndpointPolicyLayer = (service: string) =>
             ),
           );
         }
+
         return httpEffect;
       }),
     ),

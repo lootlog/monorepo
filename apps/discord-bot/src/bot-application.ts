@@ -52,6 +52,7 @@ const notificationQueue: RabbitQueueDefinition = {
 const decodeNotificationJson = Schema.decodeUnknownOption(
   Schema.fromJsonString(Schema.JsonObject),
 );
+
 const decodeSendCommand = Schema.decodeUnknownOption(
   DiscordNotificationSendCommandSchema,
   { onExcessProperty: "preserve" },
@@ -61,10 +62,13 @@ export const decodeNotificationCommand = (
   content: Uint8Array,
 ): DiscordNotificationSendCommand | undefined => {
   const decoded = decodeNotificationJson(new TextDecoder().decode(content));
-  if (decoded._tag === "None") return undefined;
+
+  if (Option.isNone(decoded)) return undefined;
   const input = { ...decoded.value };
+
   // Non-string content historically falls back to title/message in the delivery adapter.
   if (!Schema.is(Schema.String)(input.content)) delete input.content;
+
   return Option.getOrUndefined(decodeSendCommand(input));
 };
 
@@ -73,6 +77,7 @@ export interface BotServicesValue {
   readonly delivery: DiscordDelivery;
   readonly sync: DiscordSync;
 }
+
 export class BotServices extends Context.Service<
   BotServices,
   BotServicesValue
@@ -82,6 +87,7 @@ export class BotServices extends Context.Service<
     Effect.gen(function* () {
       const config = yield* BotConfig;
       const rabbit = yield* RabbitMessaging;
+
       const publisher: RabbitPublisher = {
         publish: (_exchange, routingKey, payload) =>
           rabbit.publish({
@@ -89,23 +95,28 @@ export class BotServices extends Context.Service<
             content: new TextEncoder().encode(JSON.stringify(payload)),
           }),
       };
+
       const client = yield* Effect.acquireRelease(
         Effect.tryPromise({
           try: async () => {
             const active = new Client({
               intents: [IntentsBitField.Flags.Guilds],
             });
+
             await active.login(Redacted.value(config.discordBotToken));
+
             return active;
           },
           catch: (cause) => cause,
         }),
         (active) => Effect.sync(() => active.destroy()),
       );
+
       const delivery = makeDiscordDelivery(publisher, client);
       const sync = makeDiscordSync(publisher, client);
       const runEvent = yield* FiberSet.makeRuntime<never, void, never>();
       registerDiscordEventHandlers(client, sync, runEvent);
+
       return BotServices.of({ client, delivery, sync });
     }),
   );
@@ -134,6 +145,7 @@ const BotHttpHandlers = HttpApiBuilder.group(
           "DiscordBotGetGuildChannels",
           Effect.fn("DiscordBotGetGuildChannels")(function* ({ params }) {
             const services = yield* BotServices;
+
             return yield* operation(
               "DiscordBotGetGuildChannels",
               services.sync.getGuildChannels(params.guildId),
@@ -144,6 +156,7 @@ const BotHttpHandlers = HttpApiBuilder.group(
           "DiscordBotRefreshGuildChannels",
           Effect.fn("DiscordBotRefreshGuildChannels")(function* ({ params }) {
             const services = yield* BotServices;
+
             return yield* operation(
               "DiscordBotRefreshGuildChannels",
               services.sync.refreshGuildChannels(params.guildId),
@@ -154,6 +167,7 @@ const BotHttpHandlers = HttpApiBuilder.group(
           "DiscordBotGetGuildSyncStatus",
           Effect.fn("DiscordBotGetGuildSyncStatus")(function* ({ params }) {
             const services = yield* BotServices;
+
             return yield* operation(
               "DiscordBotGetGuildSyncStatus",
               services.sync.getGuildSyncStatus(params.guildId),
@@ -176,6 +190,7 @@ export const makeBotHttpBoundary = (services: BotServicesValue) => {
     ),
     { disableLogger: true },
   );
+
   return {
     dispose: boundary.dispose,
     handler: boundary.handler,
@@ -195,12 +210,15 @@ export const BotConsumer = Layer.effectDiscard(
       (delivery) =>
         Effect.gen(function* () {
           const input = decodeNotificationCommand(delivery.content);
+
           if (!input) {
             yield* Effect.logError(
               "Discord notification delivery payload was invalid",
             );
+
             return;
           }
+
           yield* services.delivery.sendNotification(input);
         }),
     );
@@ -231,6 +249,7 @@ export const BotHttpServer = Layer.unwrap(
 const RabbitLive = Layer.unwrap(
   Effect.gen(function* () {
     const config = yield* BotConfig;
+
     return RabbitMessaging.layer({
       uri: Redacted.value(config.rabbitmqUri),
       connectionName: config.serviceName,

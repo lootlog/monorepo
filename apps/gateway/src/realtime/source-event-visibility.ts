@@ -29,11 +29,14 @@ const canReadLootSource = (
   const guild = session.guilds.find(
     (entry) => entry.guild.id === organizationId,
   );
+
   if (!guild) return false;
+
   const permissions =
     guild.guild.ownerId === session.discordId
       ? [Permission.OWNER]
       : guild.roles.flatMap((role) => role.permissions);
+
   // Kill aggregates allow administrators; loot visibility only bypasses for owners.
   if (
     allowAdministrator &&
@@ -43,6 +46,7 @@ const canReadLootSource = (
     )
   )
     return true;
+
   return canViewLoot({
     permissions,
     roles: guild.roles.map((role) => ({
@@ -61,9 +65,12 @@ export const canReadSourceEvent = (
   sourceNpcs: readonly LootVisibilityNpc[] = [],
 ): boolean => {
   if (!canReadApiKeyEvent(session, event)) return false;
+
   if (event.type === "notification.volunteer")
     return session.supportsNotificationVolunteer === true;
+
   if (!canReadNpcSourceEvent(session, event)) return false;
+
   switch (event.type) {
     case "loot.created":
     case "loot.share-updated":
@@ -76,6 +83,7 @@ export const canReadSourceEvent = (
     case "kills.changed":
     case "feed.entry":
       if (session.platform !== "web-app" || !session.supportsFeed) return false;
+
       return canReadLootSource(
         session,
         event.type === "feed.entry" ? event.data.guild.id : event.data.guildId,

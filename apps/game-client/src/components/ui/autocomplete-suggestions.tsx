@@ -38,6 +38,7 @@ export const AutocompleteSuggestions = <T,>({
   const { t } = useTranslation("common");
   const showLoading = useDelayedVisibility(isLoading);
   const hasResults = items.length > 0;
+
   const resolvedNoResultsMessage =
     noResultsMessage ?? t("autocomplete.noResults");
 
@@ -105,6 +106,7 @@ export const AutocompleteSuggestions = <T,>({
       >
         {items.map((item, index) => {
           const isSelected = index === selectedIndex;
+
           return (
             <button
               type="button"

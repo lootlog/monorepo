@@ -40,12 +40,17 @@ import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 const LOOTS_PAGE_LIMIT = 20;
+
 const LOOTS_QUERY_STALE_TIME_MS = 30_000;
+
 const GRID_COLUMNS = 2;
+
 const EMPTY_LOOTS: Loot[] = [];
+
 const EMPTY_GRID_ROWS: Loot[][] = [];
 
 type LootsInfiniteData = InfiniteData<Loot[]>;
+
 type LootFilters = ReturnType<typeof useLootsFilters>["filters"];
 
 const parseOptionalNumber = (value: string) =>
@@ -97,6 +102,7 @@ const includesAll = <T>(values: T[] | undefined, expected: T[]) => {
   }
 
   const valueSet = new Set(values);
+
   return expected.some((value) => valueSet.has(value));
 };
 
@@ -207,6 +213,7 @@ const lootMatchesParams = (
 
   if (params.search) {
     const search = params.search.trim().toLowerCase();
+
     const searchableValues = [
       loot.location,
       ...loot.items.map((item) => item.name),
@@ -244,6 +251,7 @@ const lootListQueryFilters = z.object({
 
 const lootMatchesQueryKey = (loot: Loot, queryKey: QueryKey): boolean => {
   const params = lootListQueryFilters.safeParse(queryKey[1]);
+
   return params.success && lootMatchesParams(loot, params.data);
 };
 
@@ -256,17 +264,20 @@ const upsertLootIntoInfiniteData = (
   }
 
   let found = false;
+
   const pages = data.pages.map((page) => {
     if (!page.some((pageLoot) => pageLoot.id === loot.id)) {
       return page;
     }
 
     found = true;
+
     return page.map((pageLoot) => (pageLoot.id === loot.id ? loot : pageLoot));
   });
 
   if (!found) {
     const [firstPage = [], ...restPages] = pages;
+
     return {
       ...data,
       pages: [[loot, ...firstPage], ...restPages],
@@ -295,6 +306,7 @@ const updateLootShareInInfiniteData = (
   }
 
   let changed = false;
+
   const pages = data.pages.map((page) =>
     page.map((loot) => {
       if (loot.id !== lootId) {
@@ -302,6 +314,7 @@ const updateLootShareInInfiniteData = (
       }
 
       changed = true;
+
       return { ...loot, lootShare };
     }),
   );
@@ -311,14 +324,17 @@ const updateLootShareInInfiniteData = (
 
 const useStableLootCollections = (pages: Loot[][] | undefined) => {
   const allLoots = pages?.flatMap((page) => page) ?? EMPTY_LOOTS;
+
   if (allLoots.length === 0) {
     return { allLoots, gridRows: EMPTY_GRID_ROWS };
   }
 
   const gridRows: Loot[][] = [];
+
   for (let index = 0; index < allLoots.length; index += GRID_COLUMNS) {
     gridRows.push(allLoots.slice(index, index + GRID_COLUMNS));
   }
+
   return { allLoots, gridRows };
 };
 
@@ -333,16 +349,20 @@ export const useLiveLootList = () => {
   const { filters, hasActiveFilters, clearFilters } = useLootsFilters();
   const [newLootIds, setNewLootIds] = useState<Record<number, boolean>>({});
   const newLootTimeoutsRef = useRef<Record<number, number>>({});
+
   const clearNewLootTimeouts = () => {
     Object.values(newLootTimeoutsRef.current).forEach(window.clearTimeout);
     newLootTimeoutsRef.current = {};
   };
+
   const clearNewLootMarkers = () => {
     clearNewLootTimeouts();
     setNewLootIds({});
   };
+
   const currentGuildId = getCurrentGuildId(guilds, guildId);
   const lootQueryParams = getLootQueryParams(filters, world);
+
   const {
     data: loots,
     fetchNextPage,
@@ -378,6 +398,7 @@ export const useLiveLootList = () => {
     staleTime: LOOTS_QUERY_STALE_TIME_MS,
     gcTime: LOOTS_QUERY_GC_TIME_MS,
   });
+
   const handleLootCreate = useEffectEvent(
     async (payload: GuildLootCreatedEventV2) => {
       if (!guildId || payload.guildId !== currentGuildId) {
@@ -385,6 +406,7 @@ export const useLiveLootList = () => {
       }
 
       let loot: Loot | null = null;
+
       try {
         loot = await lootsControllerFetchLootById({
           guildId,
@@ -406,9 +428,11 @@ export const useLiveLootList = () => {
         }
 
         patchedAnyQuery = true;
+
         if (!hasLootInInfiniteData(old, loot.id)) {
           insertedNewLoot = true;
         }
+
         return upsertLootIntoInfiniteData(old, loot);
       });
 
@@ -444,6 +468,7 @@ export const useLiveLootList = () => {
 
             const next = { ...prev };
             delete next[loot.id];
+
             return next;
           });
           delete newLootTimeoutsRef.current[loot.id];
@@ -451,6 +476,7 @@ export const useLiveLootList = () => {
       }
     },
   );
+
   const handleLootShareUpdate = useEffectEvent(
     (payload: GuildLootShareUpdatedEventV2) => {
       if (!guildId || payload.guildId !== currentGuildId) {
@@ -462,6 +488,7 @@ export const useLiveLootList = () => {
         if (hasLootInInfiniteData(old, payload.lootId)) {
           patchedAnyListQuery = true;
         }
+
         return updateLootShareInInfiniteData(
           old,
           payload.lootId,
@@ -481,6 +508,7 @@ export const useLiveLootList = () => {
           }
 
           patchedDetailQuery = true;
+
           return { ...old, lootShare: payload.lootShare };
         },
       );
@@ -512,6 +540,7 @@ export const useLiveLootList = () => {
     const onLootCreate = (payload: GuildLootCreatedEventV2) => {
       void handleLootCreate(payload);
     };
+
     const onLootShareUpdate = (payload: GuildLootShareUpdatedEventV2) => {
       handleLootShareUpdate(payload);
     };

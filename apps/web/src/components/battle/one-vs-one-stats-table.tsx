@@ -57,14 +57,17 @@ const formatValue = (
   if (formatter) {
     return formatter(value);
   }
+
   if (Number.isFinite(value)) {
     return Number(value).toLocaleString("pl-PL");
   }
+
   if (value === true || value === false) {
     return value
       ? (booleanLabels?.yes ?? "true")
       : (booleanLabels?.no ?? "false");
   }
+
   return String(value ?? 0);
 };
 
@@ -124,7 +127,9 @@ const getVisibleStats = ({
   const categoriesMap = new Map<string, BattleStatCategoryDefinition>(
     STAT_CATEGORIES.map((category) => [category.id, category]),
   );
+
   const allStatsMap = new Map<string, BattleStatDefinition>();
+
   for (const category of STAT_CATEGORIES) {
     for (const stat of category.stats) allStatsMap.set(String(stat.key), stat);
   }
@@ -133,23 +138,28 @@ const getVisibleStats = ({
     .map((categoryId) => {
       const customization = config.categories[categoryId];
       const categoryDefinition = categoriesMap.get(categoryId);
+
       if (!customization?.visible) return null;
 
       const orderedStats = customization.statOrder
         .map((statKey) => allStatsMap.get(statKey))
         .filter((stat): stat is BattleStatDefinition => stat !== undefined);
+
       const filteredStats =
         hideZeros && user && opponent
           ? orderedStats.filter((stat) => {
               const userValue = user[stat.key];
               const opponentValue = opponent[stat.key];
               const userNumber = Number.isFinite(userValue) ? userValue : 0;
+
               const opponentNumber = Number.isFinite(opponentValue)
                 ? opponentValue
                 : 0;
+
               return userNumber !== 0 || opponentNumber !== 0;
             })
           : orderedStats;
+
       if (filteredStats.length === 0) return null;
 
       return {
@@ -209,6 +219,7 @@ export function OneVsOneStatsTable({
   const [internalHideZeros, setInternalHideZeros] = useState(true);
   const [statSearchQuery, setStatSearchQuery] = useState("");
   const statsScrollViewportRef = useRef<HTMLDivElement>(null);
+
   const booleanLabels = {
     yes: t("common.boolean.yes"),
     no: t("common.boolean.no"),
@@ -216,6 +227,7 @@ export function OneVsOneStatsTable({
 
   const internalStatsCustomization = useStatsCustomization(STAT_CATEGORIES);
   const { config: internalConfig } = internalStatsCustomization;
+
   const {
     config,
     hideZeros,
@@ -234,6 +246,7 @@ export function OneVsOneStatsTable({
   const userWarrior = battle.warriors.find(
     (w) => w.originalId === battle.characterId,
   );
+
   const opponentWarrior = battle.warriors.find(
     (w) => w.originalId !== battle.characterId,
   );
@@ -244,6 +257,7 @@ export function OneVsOneStatsTable({
   useEffect(() => {
     const viewport = statsScrollViewportRef.current;
     const header = viewport?.querySelector("thead");
+
     if (!viewport || !header) return;
 
     const updateHeaderHeight = () => {
@@ -252,9 +266,11 @@ export function OneVsOneStatsTable({
         `${header.getBoundingClientRect().height}px`,
       );
     };
+
     updateHeaderHeight();
     const observer = new ResizeObserver(updateHeaderHeight);
     observer.observe(header);
+
     return () => {
       observer.disconnect();
       viewport.style.removeProperty("--scroll-fade-header-height");

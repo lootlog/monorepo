@@ -112,6 +112,7 @@ export class PublicOnlinePlayersController {
 
     const scope = this.getOrCreateScope(guildId, world);
     const result = await this.fetchScope(scope, false);
+
     return cloneResult(scope, result);
   }
 
@@ -121,10 +122,12 @@ export class PublicOnlinePlayersController {
     this.active = true;
     const socket = this.getSocket();
     const policy = this.getCurrentAccessPolicy();
+
     if (policy) {
       for (const scope of this.scopes.values())
         this.applyScopePolicy(scope, policy);
     }
+
     socket.on(
       GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
       this.handlePresenceUpdate,
@@ -150,6 +153,7 @@ export class PublicOnlinePlayersController {
     if (!this.active) return;
 
     this.active = false;
+
     if (this.policyRefreshTimer !== null) clearTimeout(this.policyRefreshTimer);
     this.policyRefreshTimer = null;
     this.pendingPolicyScopes.clear();
@@ -174,26 +178,34 @@ export class PublicOnlinePlayersController {
     const presence = normalizePresence(payload);
     const guildId = presence.guildId;
     const world = presence.player?.world;
+
     if (!guildId) return;
+
     const scopes = world
       ? [this.scopes.get(getScopeKey(guildId, world))]
       : presence.status === "offline" && presence.sessionId
         ? [...this.scopes.values()].filter((scope) => scope.guildId === guildId)
         : [];
+
     for (const scope of scopes) {
       if (!scope?.players) continue;
       const policy = this.getCurrentAccessPolicy();
+
       const organization = policy?.organizations.find(
         (entry) => entry.organizationId === guildId,
       );
+
       if (policy && !canReadPresence(organization)) {
         this.applyScopePolicy(scope, policy);
         continue;
       }
+
       const updated = applyPresenceUpdates(scope.players, [presence]);
+
       const players = policy
         ? filterPresenceByPolicy(updated, organization)
         : updated;
+
       if (players === scope.players) continue;
 
       scope.requestVersion += 1;
@@ -211,43 +223,55 @@ export class PublicOnlinePlayersController {
   ): void => {
     if (!payload?.accessPolicy) {
       this.accessPolicy = undefined;
+
       for (const [key, scope] of this.scopes) {
         this.pendingPolicyScopes.add(key);
         scope.requestVersion += 1;
         scope.players = {};
         this.publishScopeIfChanged(scope, { status: "success", players: {} });
       }
+
       this.schedulePolicyRefresh();
+
       return;
     }
+
     this.accessPolicy = payload.accessPolicy;
+
     const organizations = new Map(
       payload.accessPolicy.organizations.map((organization) => [
         organization.organizationId,
         organization,
       ]),
     );
+
     for (const [key, scope] of this.scopes) {
       const policy = organizations.get(scope.guildId);
+
       const changes =
         payload.changes?.filter(
           (change) =>
             change.organizationId === scope.guildId &&
             change.areas.includes("presence"),
         ) ?? [];
+
       if (policy && changes.length === 0) continue;
+
       if (!policy || changes.some((change) => change.restricted)) {
         this.applyScopePolicy(scope, payload.accessPolicy);
       }
+
       if (changes.some((change) => change.expanded))
         this.pendingPolicyScopes.add(key);
       else this.pendingPolicyScopes.delete(key);
     }
+
     this.schedulePolicyRefresh();
   };
 
   private getCurrentAccessPolicy(): AccessPolicySnapshot | undefined {
     const socket = this.getSocket();
+
     return socket.getAccessPolicy
       ? socket.getAccessPolicy()
       : this.accessPolicy;
@@ -260,7 +284,9 @@ export class PublicOnlinePlayersController {
     const policy = snapshot.organizations.find(
       (organization) => organization.organizationId === scope.guildId,
     );
+
     const allowed = canReadPresence(policy);
+
     if (allowed && (scope.players === undefined || scope.forbidden)) return;
     scope.requestVersion += 1;
     scope.forbidden = !allowed;
@@ -275,10 +301,13 @@ export class PublicOnlinePlayersController {
 
   private schedulePolicyRefresh(): void {
     if (this.policyRefreshTimer !== null) clearTimeout(this.policyRefreshTimer);
+
     if (this.pendingPolicyScopes.size === 0) {
       this.policyRefreshTimer = null;
+
       return;
     }
+
     this.policyRefreshTimer = setTimeout(() => {
       this.policyRefreshTimer = null;
       const keys = new Set(this.pendingPolicyScopes);
@@ -290,6 +319,7 @@ export class PublicOnlinePlayersController {
   private getOrCreateScope(guildId: string, world: string): TrackedScope {
     const key = getScopeKey(guildId, world);
     const existing = this.scopes.get(key);
+
     if (existing) return existing;
 
     const scope: TrackedScope = {
@@ -298,7 +328,9 @@ export class PublicOnlinePlayersController {
       resultJson: "",
       requestVersion: 0,
     };
+
     this.scopes.set(key, scope);
+
     return scope;
   }
 
@@ -307,6 +339,7 @@ export class PublicOnlinePlayersController {
     publishChanges: boolean,
   ): Promise<PublicOnlinePlayersResult> {
     this.pendingPolicyScopes.delete(getScopeKey(scope.guildId, scope.world));
+
     if (
       this.pendingPolicyScopes.size === 0 &&
       this.policyRefreshTimer !== null
@@ -314,7 +347,9 @@ export class PublicOnlinePlayersController {
       clearTimeout(this.policyRefreshTimer);
       this.policyRefreshTimer = null;
     }
+
     const policy = this.getCurrentAccessPolicy();
+
     if (
       policy &&
       !canReadPresence(
@@ -325,9 +360,12 @@ export class PublicOnlinePlayersController {
     ) {
       scope.forbidden = true;
       scope.players = {};
+
       return { status: "forbidden", code: "ONLINE_PLAYERS_ACCESS_DENIED" };
     }
+
     const requestVersion = ++scope.requestVersion;
+
     const response = await requestServerPresence(
       this.getSocket(),
       scope.guildId,
@@ -345,19 +383,24 @@ export class PublicOnlinePlayersController {
     }
 
     const currentPolicy = this.getCurrentAccessPolicy();
+
     const organization = currentPolicy?.organizations.find(
       (entry) => entry.organizationId === scope.guildId,
     );
+
     scope.forbidden =
       response.status === "forbidden" ||
       Boolean(currentPolicy && !canReadPresence(organization));
+
     const received =
       response.status === "success"
         ? normalizePresenceResponse(response.players)
         : {};
+
     scope.players = currentPolicy
       ? filterPresenceByPolicy(received, organization)
       : received;
+
     const result: PublicOnlinePlayersResult = scope.forbidden
       ? { status: "forbidden", code: "ONLINE_PLAYERS_ACCESS_DENIED" }
       : { status: "success", players: mapOnlinePlayers(scope.players) };
@@ -376,6 +419,7 @@ export class PublicOnlinePlayersController {
     result: PublicOnlinePlayersResult,
   ): void {
     const resultJson = JSON.stringify(result);
+
     if (resultJson === scope.resultJson) return;
 
     scope.resultJson = resultJson;
@@ -386,6 +430,7 @@ export class PublicOnlinePlayersController {
     keys?: ReadonlySet<string>,
   ): Promise<void> {
     const { connected, joined } = useGlobalStore.getState().socketState;
+
     if (!this.active || !connected || !joined) return;
 
     await Promise.allSettled(

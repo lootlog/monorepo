@@ -40,6 +40,7 @@ describe("web realtime handshake", () => {
         },
       );
       const { socket: client } = await import("./gateway-client");
+
       try {
         client.connect();
         expect(handshakes).toEqual([
@@ -86,10 +87,12 @@ it.each(["json", "messagepack"] as const)(
     const { socket: client } = await import("./gateway-client");
     const { GatewayEvent } = await import("@/config/gateway");
     const received = vi.fn();
+
     try {
       client.on(GatewayEvent.NOTIFICATIONS_VOLUNTEER, received);
       client.connect();
       dispatch?.(new Event("open"));
+
       const data = {
         notificationId: "notification",
         volunteer: {
@@ -99,6 +102,7 @@ it.each(["json", "messagepack"] as const)(
           lvl: 250,
         },
       };
+
       const frame = { v: 1, type: "notification.volunteer", data } as const;
       dispatch?.(
         new MessageEvent("message", {

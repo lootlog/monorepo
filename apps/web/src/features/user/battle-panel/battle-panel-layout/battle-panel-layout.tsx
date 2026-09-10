@@ -7,6 +7,7 @@ export const BattlePanelLayout = () => {
   const { t } = useTranslation();
   const { pathname } = useLocation();
   const normalizedPathname = pathname.replace(/\/$/, "");
+
   const showTopLevelNavigation =
     normalizedPathname === ROUTES.user.battlePanel.base ||
     normalizedPathname === ROUTES.user.battlePanel.statistics ||

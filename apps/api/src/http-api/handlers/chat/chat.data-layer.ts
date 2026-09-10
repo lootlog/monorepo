@@ -87,12 +87,14 @@ const ChatStoredMessageJson = Schema.fromJsonString(
     guildId: Schema.String,
   }),
 );
+
 const parseStored = Schema.decodeUnknownSync(ChatStoredMessageJson);
 
 const routingFor = (message: Pick<ChatStoredMessage, "type" | "npc">) => {
   const hasNpcRouting =
     message.type === MessageType.NPC ||
     (message.type === MessageType.PARTY_GATHERING && message.npc);
+
   return !hasNpcRouting || !message.npc
     ? { tier: "base" as const }
     : { tier: getNpcRoutingTier(message.npc), npcLevel: message.npc.lvl };
@@ -107,8 +109,11 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) =>
           .from(guildTable)
           .where(and(eq(guildTable.id, guildId), eq(guildTable.active, true)))
           .limit(1);
+
         const guild = guilds[0];
+
         if (!guild) return null;
+
         const roles = yield* database
           .select({ role: roleTable })
           .from(memberTable)
@@ -123,10 +128,12 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) =>
             ),
           )
           .pipe(Effect.map((rows) => rows.map(({ role }) => role)));
+
         const permissions =
           guild.ownerId === discordId
             ? Object.values(Permission)
             : roles.flatMap(({ permissions }) => permissions);
+
         const mayRead =
           createAccessPolicy({ capabilities: permissions }).allows(
             Capability.ADMIN,
@@ -134,6 +141,7 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) =>
           roles.some(({ permissions }) =>
             permissions.includes(Permission.LOOTLOG_CHAT_READ),
           );
+
         return mayRead
           ? ({ discordId, permissions, roles } satisfies ChatMessageViewer)
           : null;
@@ -145,6 +153,7 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) =>
           if (error instanceof Error && error.message.includes("WRONGTYPE")) {
             return redis.del(messageKey(guildId)).pipe(Effect.as([]));
           }
+
           return Effect.fail(error);
         }),
         Effect.map((elements) =>
@@ -175,11 +184,13 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) =>
                   ) {
                     return Effect.void;
                   }
+
                   const updated = {
                     ...message,
                     message: `${message.characterData.nick} zakończył zbieranie grupy`,
                     partyGathering: undefined,
                   };
+
                   return redis
                     .lset(
                       messageKey(guildId),
@@ -211,6 +222,7 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) =>
       service: ChatData.of({
         sendMessage: (discordId, guildId, payload) => {
           const data = payload;
+
           const message: ChatStoredMessage = {
             ...data,
             id: v6(),
@@ -218,6 +230,7 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) =>
             timestamp: new Date().toISOString(),
             guildId,
           };
+
           return redis.rpush(messageKey(guildId), JSON.stringify(message)).pipe(
             Effect.flatMap(() =>
               redis.ltrim(messageKey(guildId), -CHAT_MESSAGE_LIMIT, -1),
@@ -237,12 +250,16 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) =>
         getMessages: (discordId, guildId) =>
           Effect.gen(function* () {
             const messages = yield* rawMessages(guildId);
+
             if (messages.length === 0) return [];
             const currentViewer = yield* viewer(discordId, guildId);
+
             if (!currentViewer) return [];
+
             const visible = messages.filter((message) =>
               canViewerReadChatMessage(currentViewer, message),
             );
+
             return visible.map((message) => ({
               ...message,
               canDelete: canDeleteChatMessage(currentViewer, message),
@@ -253,6 +270,7 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) =>
         clearMessages: (discordId, guildId) =>
           Effect.gen(function* () {
             const currentViewer = yield* viewer(discordId, guildId);
+
             if (
               !currentViewer ||
               !createAccessPolicy({
@@ -263,10 +281,12 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) =>
                 new PermissionDeniedError("Only OWNER or ADMIN can clear chat"),
               );
             }
+
             yield* redis.del(messageKey(guildId));
             yield* events
               .publish(RabbitRoutingKey.GUILDS_CLEAR_MESSAGES, { guildId })
               .pipe(Effect.ignore);
+
             return { success: true };
           }).pipe(
             Effect.mapError((cause) => new ChatOperationError({ cause })),
@@ -274,16 +294,20 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) =>
         deleteMessage: (discordId, guildId, messageId) =>
           Effect.gen(function* () {
             const elements = yield* redis.lrange(messageKey(guildId), 0, -1);
+
             const target = elements.find(
               (element) => parseStored(element).id === messageId,
             );
+
             if (!target) {
               return yield* Effect.fail(
                 new ResourceNotFoundError("Message not found"),
               );
             }
+
             const message = parseStored(target);
             const currentViewer = yield* viewer(discordId, guildId);
+
             if (
               !currentViewer ||
               !canViewerReadChatMessage(currentViewer, message) ||
@@ -293,6 +317,7 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) =>
                 new PermissionDeniedError("Not allowed to manage this message"),
               );
             }
+
             yield* redis.lrem(messageKey(guildId), 1, target);
             yield* events
               .publish(RabbitRoutingKey.GUILDS_DELETE_MESSAGE, {
@@ -301,6 +326,7 @@ export const makeChatOperations = (redis: ChatRedis, events: ChatEvents) =>
                 routing: routingFor(message),
               })
               .pipe(Effect.ignore);
+
             return { success: true };
           }).pipe(
             Effect.mapError((cause) => new ChatOperationError({ cause })),

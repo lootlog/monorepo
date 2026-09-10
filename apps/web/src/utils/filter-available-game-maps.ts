@@ -6,6 +6,7 @@ export const filterAvailableGameMaps = <
   search: string,
 ): Map[] => {
   const normalizedSearch = search.toLowerCase();
+
   return (maps ?? [])
     .filter(
       (map) =>

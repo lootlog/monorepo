@@ -14,6 +14,7 @@ export const EventCoordinationSummaryCard = ({
 }: EventCoordinationSummaryCardProps) => {
   const { t } = useTranslation();
   const coveragePercentage = getCoveragePercentage(coordination.summary);
+
   const nextSpawnLabel = coordination.summary.nextSpawnAt
     ? new Date(coordination.summary.nextSpawnAt).toLocaleTimeString("pl-PL", {
         hour: "2-digit",

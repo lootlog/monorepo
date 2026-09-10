@@ -11,10 +11,15 @@ import {
 } from "@/store/character-tooltip-catching-guilds.store";
 
 export const CATCHING_GUILDS_BATCH_SIZE = 100;
+
 export const CATCHING_GUILDS_CACHE_TIME_MS = 60_000;
+
 export const CATCHING_GUILDS_REQUEST_TIMEOUT_MS = 5_000;
+
 export const CATCHING_GUILDS_RETRY_DELAY_MS = 300;
+
 export const CATCHING_GUILDS_FAILURE_TTL_MS = 5 * 60 * 1000;
+
 export const CATCHING_GUILDS_FAILURE_CAP = 500;
 
 type FailedActivation = {
@@ -110,9 +115,11 @@ export class CharacterTooltipCatchingGuildsCoordinator {
     this.queuedRequestKeys.clear();
     this.failedActivationByRequestKey.clear();
     this.visibleTargetsByRequestKey.clear();
+
     for (const abortController of this.activeAbortControllers) {
       abortController.abort();
     }
+
     this.activeAbortControllers.clear();
   }
 
@@ -120,6 +127,7 @@ export class CharacterTooltipCatchingGuildsCoordinator {
     if (active && !this.active) {
       this.activation += 1;
     }
+
     this.active = active;
     const visibleTargets = active ? targets : [];
     this.visibleTargetsByRequestKey = new Map(
@@ -134,6 +142,7 @@ export class CharacterTooltipCatchingGuildsCoordinator {
     if (!active) {
       this.queue = [];
       this.queuedRequestKeys.clear();
+
       return;
     }
 
@@ -147,6 +156,7 @@ export class CharacterTooltipCatchingGuildsCoordinator {
   prioritize(target: CharacterTooltipCatchingGuildsTarget): void {
     const store = useCharacterTooltipCatchingGuildsStore.getState();
     const entry = store.entriesByKey[target.key];
+
     if (entry?.requestKey !== target.requestKey) {
       store.setIdle(target);
     }
@@ -155,6 +165,7 @@ export class CharacterTooltipCatchingGuildsCoordinator {
       useCharacterTooltipCatchingGuildsStore.getState().entriesByKey[
         target.key
       ];
+
     if (
       currentEntry?.status === "success" &&
       currentEntry.fetchedAt !== undefined &&
@@ -178,6 +189,7 @@ export class CharacterTooltipCatchingGuildsCoordinator {
   private prepareTarget(target: CharacterTooltipCatchingGuildsTarget): void {
     const store = useCharacterTooltipCatchingGuildsStore.getState();
     let entry = store.entriesByKey[target.key];
+
     if (entry?.requestKey !== target.requestKey) {
       store.setIdle(target);
       entry =
@@ -197,6 +209,7 @@ export class CharacterTooltipCatchingGuildsCoordinator {
       entry?.status === "success" &&
       entry.fetchedAt !== undefined &&
       this.dependencies.now() - entry.fetchedAt < CATCHING_GUILDS_CACHE_TIME_MS;
+
     if (successIsFresh) {
       return;
     }
@@ -219,14 +232,18 @@ export class CharacterTooltipCatchingGuildsCoordinator {
     }
 
     const batch: CharacterTooltipCatchingGuildsTarget[] = [];
+
     while (this.queue.length > 0 && batch.length < CATCHING_GUILDS_BATCH_SIZE) {
       const target = this.queue.shift();
+
       if (!target) break;
 
       this.queuedRequestKeys.delete(target.requestKey);
+
       const visibleTarget = this.visibleTargetsByRequestKey.get(
         target.requestKey,
       );
+
       if (!visibleTarget) continue;
 
       batch.push(visibleTarget);
@@ -238,6 +255,7 @@ export class CharacterTooltipCatchingGuildsCoordinator {
 
     this.inFlight = true;
     const store = useCharacterTooltipCatchingGuildsStore.getState();
+
     for (const target of batch) {
       this.inFlightRequestKeys.add(target.requestKey);
       store.setLoading(target);
@@ -252,6 +270,7 @@ export class CharacterTooltipCatchingGuildsCoordinator {
       for (const target of batch) {
         this.inFlightRequestKeys.delete(target.requestKey);
       }
+
       this.inFlight = false;
       this.processQueue();
     });
@@ -266,20 +285,24 @@ export class CharacterTooltipCatchingGuildsCoordinator {
         batch.map(toRequestPlayer),
         lifecycleGeneration,
       );
+
       if (lifecycleGeneration !== this.lifecycleGeneration) {
         return;
       }
+
       const playersByRequestKey = new Map(
         response.players.map((player) => [
           `${player.userId}:${player.accountId}:${player.characterId}`,
           player,
         ]),
       );
+
       const store = useCharacterTooltipCatchingGuildsStore.getState();
       const fetchedAt = this.dependencies.now();
 
       for (const target of batch) {
         const player = playersByRequestKey.get(target.requestKey);
+
         if (!player) {
           this.recordFailedActivation(target.requestKey);
           store.setError(target);
@@ -295,6 +318,7 @@ export class CharacterTooltipCatchingGuildsCoordinator {
       }
 
       const store = useCharacterTooltipCatchingGuildsStore.getState();
+
       for (const target of batch) {
         this.recordFailedActivation(target.requestKey);
         store.setError(target);
@@ -318,9 +342,11 @@ export class CharacterTooltipCatchingGuildsCoordinator {
     }
 
     await this.dependencies.sleep(this.dependencies.retryDelayMs);
+
     if (lifecycleGeneration !== this.lifecycleGeneration) {
       throw new Error("Catching guilds coordinator lifecycle changed");
     }
+
     return this.fetchAttempt(players);
   }
 
@@ -329,6 +355,7 @@ export class CharacterTooltipCatchingGuildsCoordinator {
   ): Promise<UserLootlogPlayersCatchingGuildsResponseDtoOutput> {
     const abortController = new AbortController();
     this.activeAbortControllers.add(abortController);
+
     const timeoutId = globalThis.setTimeout(
       () => abortController.abort(),
       this.dependencies.requestTimeoutMs,

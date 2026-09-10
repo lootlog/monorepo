@@ -34,11 +34,14 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
 }) => {
   const { t } = useTranslation();
   const accountId = useGameStore((state) => state.game?.hero.accountId ?? "");
+
   const queryKey =
     getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
       accountId,
     });
+
   const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds();
+
   const { data: lootlogCharactersConfig, isPending: isLootlogConfigLoading } =
     useUserLootlogConfigControllerGetUserLootlogConfigByAccountId(
       { accountId },
@@ -51,19 +54,23 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
         },
       },
     );
+
   const {
     mutate: updateLootlogCharacterConfig,
     isPending: isUpdatingLootlogConfig,
   } = useUpdateLootlogCharactersConfig();
+
   const { control, reset, setValue, subscribe } = useForm<FormData>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
       catchingGuildIds: [],
     },
   });
+
   const configByCharacterId = lootlogCharactersConfig?.[characterId];
   const isInitializedRef = useRef(false);
   const isResettingRef = useRef(false);
+
   const selectedGuildIds =
     useWatch({ control, name: "catchingGuildIds" }) ?? [];
 
@@ -74,6 +81,7 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
     reset({
       catchingGuildIds: nextCatchingGuildIds,
     });
+
     const initializationTimeoutId = setTimeout(() => {
       isResettingRef.current = false;
       isInitializedRef.current = true;
@@ -90,6 +98,7 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
 
   useEffect(() => {
     let debounceTimerId: ReturnType<typeof setTimeout> | null = null;
+
     const unsubscribe = subscribe({
       formState: { values: true },
       callback: ({ values }) => {
@@ -114,6 +123,7 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
 
     return () => {
       unsubscribe();
+
       if (debounceTimerId) {
         clearTimeout(debounceTimerId);
       }
@@ -127,6 +137,7 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
 
   const handleGuildToggle = (guildId: string) => {
     const isSelected = selectedGuildIds.includes(guildId);
+
     const nextSelectedGuildIds = isSelected
       ? selectedGuildIds.filter((id) => id !== guildId)
       : [...selectedGuildIds, guildId];

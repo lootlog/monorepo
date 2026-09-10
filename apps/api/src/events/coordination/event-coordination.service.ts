@@ -21,6 +21,7 @@ import type { EventCoordinationStore } from "#src/events/coordination/event-coor
 type CoverageGapType = typeof eventMapCoverageGapTable.$inferSelect.gapType;
 
 type CoordinationPriority = "CRITICAL" | "WARNING" | "OK" | "IDLE";
+
 type RecommendedAction =
   | "CLOSE_WINDOW"
   | "ASSIGN_MAPS"
@@ -100,7 +101,9 @@ export const makeEventCoordination = (
         roles,
         getEffectiveCapabilities(accessPolicy),
       );
+
       const now = new Date(yield* Clock.currentTimeMillis);
+
       const [timers, activeGaps] = yield* Effect.all(
         [
           timersService.getTimersForEventHeroFilters(
@@ -116,9 +119,11 @@ export const makeEventCoordination = (
       const timersByKey = new Map(
         timers.map((timer) => [timer.timerKey, timer]),
       );
+
       const timersByNpcName = new Map(
         timers.map((timer) => [extractNpcName(timer.npc), timer]),
       );
+
       const activeGapsByHeroId = groupActiveGapsByHeroId(activeGaps);
 
       const heroes = visibleHeroes
@@ -126,40 +131,52 @@ export const makeEventCoordination = (
           const timer = findHeroTimer(hero, timersByKey, timersByNpcName);
           const status = getEventRespawnWindowStatus(timer, now);
           const heroActiveGaps = activeGapsByHeroId.get(hero.id) ?? [];
+
           const activeGapMapIds = new Set(
             heroActiveGaps.map((gap) => gap.mapId),
           );
+
           const uncoveredGapMapIds = new Set(
             heroActiveGaps
               .filter((gap) => gap.gapType === "UNCOVERED")
               .map((gap) => gap.mapId),
           );
+
           const totalMaps = hero.maps.length;
+
           const assignedMaps = hero.maps.filter(
             (map) => map.assignedMembers.length > 0,
           ).length;
+
           const unassignedMapIds = new Set(
             hero.maps
               .filter((map) => map.assignedMembers.length === 0)
               .map((map) => map.id),
           );
+
           const unassignedMapCount = Math.max(0, totalMaps - assignedMaps);
+
           const unassignedGapCount = heroActiveGaps.filter(
             (gap) => gap.gapType === "UNASSIGNED",
           ).length;
+
           const uncoveredGapCount = uncoveredGapMapIds.size;
+
           const unassignedMaps =
             status === "NONE"
               ? unassignedMapCount
               : Math.max(unassignedMapCount, unassignedGapCount);
+
           const uncoveredOrUnassignedMapIds = new Set([
             ...activeGapMapIds,
             ...unassignedMapIds,
           ]);
+
           const coveredMaps =
             status === "NONE"
               ? assignedMaps
               : Math.max(0, totalMaps - uncoveredOrUnassignedMapIds.size);
+
           const coverage = {
             totalMaps,
             assignedMaps,
@@ -168,6 +185,7 @@ export const makeEventCoordination = (
             uncoveredMaps: uncoveredGapCount,
             activeGapCount: heroActiveGaps.length,
           };
+
           const priority = getPriority(status, coverage);
           const recommendedAction = getRecommendedAction(status, coverage);
 
@@ -276,6 +294,7 @@ function extractNpcName(npc: unknown): string {
   }
 
   const name = npc.name;
+
   return typeof name === "string" ? name : "";
 }
 
@@ -371,23 +390,28 @@ function compareCoordinationHeroes(
 ) {
   const firstStatus = first.timer?.status ?? "NONE";
   const secondStatus = second.timer?.status ?? "NONE";
+
   const statusDiff =
     getCoordinationSortRank(first.priority, firstStatus) -
     getCoordinationSortRank(second.priority, secondStatus);
+
   if (statusDiff !== 0) {
     return statusDiff;
   }
 
   const priorityDiff =
     PRIORITY_RANK[first.priority] - PRIORITY_RANK[second.priority];
+
   if (priorityDiff !== 0) {
     return priorityDiff;
   }
 
   const firstSpawn =
     first.timer?.minSpawnTime.getTime() ?? Number.MAX_SAFE_INTEGER;
+
   const secondSpawn =
     second.timer?.minSpawnTime.getTime() ?? Number.MAX_SAFE_INTEGER;
+
   if (firstSpawn !== secondSpawn) {
     return firstSpawn - secondSpawn;
   }

@@ -24,6 +24,7 @@ const unique = (values: string[]): string[] => [
 const parseCard = (value: unknown): ReservationCatalogCard => {
   if (!isRecord(value)) throw new Error("Invalid reservation catalog card");
   const coercedLevel = Number(value.lvl);
+
   return {
     lvl: Number.isInteger(coercedLevel) && coercedLevel >= 0 ? coercedLevel : 0,
     images:
@@ -46,6 +47,7 @@ const CachedReservationSpot = Schema.Struct({
   images: Schema.mutable(Schema.Array(Schema.String)),
   maps: Schema.mutable(Schema.Array(Schema.String)),
 });
+
 const decodeCachedReservationSpots = Schema.decodeUnknownSync(
   Schema.mutable(Schema.Array(CachedReservationSpot)),
 );
@@ -55,18 +57,25 @@ export const parseReservationCatalogPayload = (
 ): ReservationSpot[] => {
   const decoded =
     typeof payload === "string" ? decodeJsonUnknown(payload) : payload;
+
   if (Array.isArray(decoded)) {
     const cachedSpots = decodeCachedReservationSpots(decoded);
+
     if (cachedSpots.length === 0) {
       throw new Error("Reservation catalog contains no valid spots");
     }
+
     return cachedSpots;
   }
+
   const record =
     isRecord(decoded) && isRecord(decoded.data) ? decoded.data : decoded;
+
   if (!isRecord(record)) throw new Error("Invalid reservation catalog payload");
+
   const spots = Object.entries(record).map(([name, entry]) => {
     const cards = (Array.isArray(entry) ? entry : [entry]).map(parseCard);
+
     return {
       id: normalizeReservationSpotId(name),
       name,
@@ -75,7 +84,9 @@ export const parseReservationCatalogPayload = (
       maps: unique(cards.flatMap((card) => card.maps)),
     } satisfies ReservationSpot;
   });
+
   const uniqueSpots = new Map<string, ReservationSpot>();
+
   for (const spot of spots) {
     const existing = uniqueSpots.get(spot.id);
     uniqueSpots.set(
@@ -90,8 +101,10 @@ export const parseReservationCatalogPayload = (
         : spot,
     );
   }
+
   if (uniqueSpots.size === 0) {
     throw new Error("Reservation catalog contains no valid spots");
   }
+
   return [...uniqueSpots.values()];
 };

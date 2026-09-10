@@ -24,6 +24,7 @@ const settings = {
 const createSegment = (dayIdx = 3): ReservationSegment => {
   const startsAt = new Date(2026, 0, 8, 10, 0);
   const endsAt = new Date(2026, 0, 8, 11, 0);
+
   return {
     id: `reservation-${dayIdx}`,
     dayIdx,
@@ -65,6 +66,7 @@ const createSegment = (dayIdx = 3): ReservationSegment => {
 
 const renderEmptySchedule = () => {
   const onRangeSelect = vi.fn();
+
   const { container } = render(
     <DesktopWeekSchedule
       weekStart={new Date(2026, 0, 5)}
@@ -74,11 +76,14 @@ const renderEmptySchedule = () => {
       onReservationSelect={vi.fn()}
     />,
   );
+
   const grid = container.querySelector(".grid");
   expect(grid).toBeInstanceOf(HTMLDivElement);
+
   if (!(grid instanceof HTMLDivElement)) {
     throw new TypeError("Expected the desktop schedule grid to render");
   }
+
   vi.spyOn(grid, "getBoundingClientRect").mockReturnValue(
     new DOMRect(
       0,
@@ -87,6 +92,7 @@ const renderEmptySchedule = () => {
       HEADER_HEIGHT + 24 * MIN_ROW_HEIGHT,
     ),
   );
+
   return { container, grid, onRangeSelect };
 };
 
@@ -99,6 +105,7 @@ const moveSelection = (
     clientX: LABEL_COLUMN_WIDTH + point.day * 100 + 10,
     clientY: HEADER_HEIGHT + (point.minutes / 60) * MIN_ROW_HEIGHT + 1,
   });
+
   fireEvent.pointerDown(grid, {
     button: 0,
     ...toPointerCoordinates(start),
@@ -140,8 +147,10 @@ describe("DesktopWeekSchedule", () => {
         onReservationSelect={vi.fn()}
       />,
     );
+
     const grid = container.querySelector(".grid");
     expect(grid).toBeInstanceOf(HTMLDivElement);
+
     if (!(grid instanceof HTMLDivElement)) return;
 
     vi.spyOn(grid, "getBoundingClientRect").mockReturnValue(
@@ -170,6 +179,7 @@ describe("DesktopWeekSchedule", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 0, 7, 12, 0));
     const onRangeSelect = vi.fn();
+
     const { container } = render(
       <DesktopWeekSchedule
         weekStart={new Date(2026, 0, 5)}
@@ -179,16 +189,19 @@ describe("DesktopWeekSchedule", () => {
         onReservationSelect={vi.fn()}
       />,
     );
+
     const grid = container.querySelector(".grid");
     const reservationBlock = container.querySelector(".reservation-card");
     expect(grid).toBeInstanceOf(HTMLDivElement);
     expect(reservationBlock).toBeInstanceOf(HTMLButtonElement);
+
     if (
       !(grid instanceof HTMLDivElement) ||
       !(reservationBlock instanceof HTMLButtonElement)
     ) {
       return;
     }
+
     vi.spyOn(grid, "getBoundingClientRect").mockReturnValue(
       new DOMRect(
         0,
@@ -225,6 +238,7 @@ describe("DesktopWeekSchedule", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 0, 4, 12, 0));
     const onRangeSelect = vi.fn();
+
     const renderSchedule = (segments: ReservationSegment[]) => (
       <DesktopWeekSchedule
         weekStart={new Date(2026, 0, 5)}
@@ -235,15 +249,18 @@ describe("DesktopWeekSchedule", () => {
         onReservationCancel={vi.fn()}
       />
     );
+
     const { container, rerender } = render(renderSchedule([createSegment()]));
     const grid = container.querySelector(".grid");
     const reservationBlock = container.querySelector(".reservation-card");
+
     if (
       !(grid instanceof HTMLDivElement) ||
       !(reservationBlock instanceof HTMLButtonElement)
     ) {
       throw new TypeError("Expected the desktop schedule grid to render");
     }
+
     vi.spyOn(grid, "getBoundingClientRect").mockReturnValue(
       new DOMRect(
         0,
@@ -291,10 +308,13 @@ describe("DesktopWeekSchedule", () => {
         onReservationSelect={vi.fn()}
       />,
     );
+
     const scrollViewport = container.querySelector(
       '[data-slot="scroll-area-viewport"]',
     );
+
     expect(scrollViewport).toBeInstanceOf(HTMLElement);
+
     if (!(scrollViewport instanceof HTMLElement)) return;
 
     expect(scrollTop).toHaveBeenCalledWith(nowTop - 200);

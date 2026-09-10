@@ -14,7 +14,9 @@ import { ThemeContext } from "@/contexts/theme-context";
 import { afterEach, expect, it, onTestFinished, vi } from "vitest";
 import "@/i18n/config";
 import { DashboardKillSummary } from "./dashboard-kill-summary";
+
 afterEach(cleanup);
+
 it("filters lifetime totals by world and carries the selection to statistics", async () => {
   const requests: URL[] = [];
   onTestFinished(
@@ -25,9 +27,12 @@ it("filters lifetime totals by world and carries the selection to statistics", a
           const url = new URL(
             input instanceof Request ? input.url : input.toString(),
           );
+
           requests.push(url);
+
           const worldTotal =
             url.searchParams.get("world") === "pandora" ? 12 : 42;
+
           const response: UserKillStatsResponseDtoOutput = {
             overview: {
               totalKills:
@@ -37,21 +42,25 @@ it("filters lifetime totals by world and carries the selection to statistics", a
             },
             topNpcs: [],
           };
+
           return Response.json(response);
         },
       },
     }),
   );
   const root = createRootRoute();
+
   const route = createRoute({
     getParentRoute: () => root,
     path: "/@me",
     component: DashboardKillSummary,
   });
+
   const router = createRouter({
     routeTree: root.addChildren([route]),
     history: createMemoryHistory({ initialEntries: ["/@me"] }),
   });
+
   const queryClient = new QueryClient();
   onTestFinished(() => queryClient.clear());
   render(
@@ -92,18 +101,22 @@ it("filters lifetime totals by world and carries the selection to statistics", a
   );
   await screen.findByText("42");
   fireEvent.click(screen.getByRole("combobox", { name: "Okres" }));
+
   const weekOption = await screen.findByRole("option", {
     name: "Ostatni tydzień",
   });
+
   fireEvent.pointerDown(weekOption, { pointerType: "mouse" });
   fireEvent.click(weekOption);
   expect(
     screen.getByRole("link", { name: /^Statystyki$/ }).getAttribute("href"),
   ).toContain("days=7");
   fireEvent.click(screen.getByRole("combobox", { name: "Okres" }));
+
   const dayOption = await screen.findByRole("option", {
     name: "Ostatnie 24 godziny",
   });
+
   fireEvent.pointerDown(dayOption, { pointerType: "mouse" });
   fireEvent.click(dayOption);
   await screen.findByText("3");

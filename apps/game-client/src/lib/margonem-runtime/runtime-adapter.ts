@@ -26,13 +26,17 @@ const getRuntimeWindow = (): RuntimeAdapterWindow => window;
 
 function requireRuntimeEngine(): Engine {
   const engine = getRuntimeWindow().Engine;
+
   if (!engine) throw new TypeError("Margonem Engine is not initialized");
+
   return engine;
 }
 
 function requireLegacyGame(): Game {
   const game = getRuntimeWindow().g;
+
   if (!game) throw new TypeError("Margonem legacy game is not initialized");
+
   return game;
 }
 
@@ -96,7 +100,9 @@ function normalizeOther(other: RuntimeOtherWrapper): RuntimeOther | null {
   const data = other.d ?? other;
   const characterId = String(data.id ?? "");
   const accountId = String(data.account ?? "");
+
   if (!characterId || !accountId) return null;
+
   return normalizeRuntimeOtherData(data);
 }
 
@@ -115,6 +121,7 @@ abstract class BaseRuntimeAdapter implements MargonemRuntimeAdapter {
 
   getGameSnapshot(): RuntimeGameSnapshot {
     const { hero, map, world } = this.getRawGame();
+
     const clan = hero.clan
       ? Object.freeze({
           id: hero.clan.id,
@@ -122,6 +129,7 @@ abstract class BaseRuntimeAdapter implements MargonemRuntimeAdapter {
           rank: hero.clan.rank,
         })
       : undefined;
+
     return Object.freeze({
       hero: Object.freeze({
         accountId: String(hero.account),
@@ -152,15 +160,19 @@ abstract class BaseRuntimeAdapter implements MargonemRuntimeAdapter {
 
   getNpc(id: number): RuntimeNpc | undefined {
     const npc = this.getRawNpc(id);
+
     return npc ? normalizeNpc(npc) : undefined;
   }
 
   getAllOthers(): Readonly<Record<string, RuntimeOther>> {
     const normalized: Record<string, RuntimeOther> = {};
+
     for (const [id, other] of Object.entries(this.getRawOthers())) {
       const value = normalizeOther(other);
+
       if (value) normalized[id] = value;
     }
+
     return Object.freeze(normalized);
   }
 
@@ -170,6 +182,7 @@ abstract class BaseRuntimeAdapter implements MargonemRuntimeAdapter {
 
   getOther(id: string): RuntimeOther | undefined {
     const raw = this.getRawOther(id);
+
     return raw ? (normalizeOther(raw) ?? undefined) : undefined;
   }
 
@@ -199,6 +212,7 @@ export class NiRuntimeAdapter extends BaseRuntimeAdapter {
 
   protected getRawGame() {
     const engine = requireRuntimeEngine();
+
     return {
       hero: engine.hero.d,
       map: engine.map.d,
@@ -208,6 +222,7 @@ export class NiRuntimeAdapter extends BaseRuntimeAdapter {
 
   protected getRawNpcs(): readonly GameNpc[] {
     const engine = requireRuntimeEngine();
+
     return Object.values(engine.npcs.check()).map((npc) => npc.d);
   }
 
@@ -225,7 +240,9 @@ export class NiRuntimeAdapter extends BaseRuntimeAdapter {
 
   protected getRawParty(): readonly RuntimePartyMember[] {
     const members = requireRuntimeEngine().party?.getMembers?.();
+
     if (!members) return [];
+
     return [...members.values()].map((member) =>
       Object.freeze({
         accountId: String(member.accountId),
@@ -253,10 +270,12 @@ export class SiRuntimeAdapter extends BaseRuntimeAdapter {
 
   protected getRawGame() {
     const { hero, map } = getRuntimeWindow();
+
     if (!hero || !map)
       throw new TypeError(
         "Margonem legacy character and map are not initialized",
       );
+
     return { hero, map, world: requireLegacyGame().worldConfig.getWorldName() };
   }
 

@@ -50,7 +50,9 @@ export class DiscordRestClientFactory {
         discordId,
         token.accessToken,
       );
+
       const cachedClient = this.restClients.get(cacheKey);
+
       if (cachedClient && cachedClient.expiresAt > now) {
         return cachedClient.rest;
       }

@@ -22,6 +22,7 @@ export const handleWebApiError = (
     context.url,
     window.location.origin,
   ).pathname.includes("/public/");
+
   if (
     !isPublicEndpoint &&
     (error.status === 401 || requiresReauthentication(error))
@@ -35,6 +36,7 @@ export const handleWebApiError = (
 
 export const configureWebApiClients = (): (() => void) => {
   const mainBaseUrl = API_URL ?? window.location.origin;
+
   const sharedConfiguration = {
     credentials: "include" as const,
     onError: handleWebApiError,

@@ -25,7 +25,9 @@ import { Toaster } from "sonner";
 import { ReservationsSchedule } from "./reservations-schedule";
 
 await initializeTestTranslations();
+
 const now = new Date(2026, 0, 1, 12, 7, 30);
+
 const settings = {
   reservationActiveLimitPerSpot: 3,
   reservationMaxAdvanceDays: 7,
@@ -33,6 +35,7 @@ const settings = {
   reservationMinDurationMinutes: 30,
   reservationTimeGranularityMinutes: 15,
 };
+
 const interval = (startsAt: Date, endsAt: Date, isCurrent = true, id = 1) => ({
   id,
   spotId: "driady",
@@ -54,18 +57,24 @@ const interval = (startsAt: Date, endsAt: Date, isCurrent = true, id = 1) => ({
   reminderMinutesBefore: null,
   editingConstraints: settings,
 });
+
 let restoreClient = () => {};
+
 let client: QueryClient;
+
 const nativeMatchMedia = window.matchMedia.bind(window);
+
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(now);
   vi.stubGlobal("matchMedia", (query: string) => {
     const result = nativeMatchMedia(query);
     Object.defineProperty(result, "matches", { value: true });
+
     return result;
   });
 });
+
 afterEach(() => {
   cleanup();
   client?.clear();
@@ -73,6 +82,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
   vi.useRealTimers();
 });
+
 const renderSchedule = async (
   availability: (request: Request) => Promise<Response>,
   calendarItems: ReturnType<typeof interval>[] = [],
@@ -98,24 +108,31 @@ const renderSchedule = async (
     async (input: string | URL | Request, init?: RequestInit) => {
       const request = new Request(input, init);
       const url = new URL(request.url);
+
       if (request.method === "POST") {
         writes.push(await request.text());
+
         return Response.json(
           interval(new Date(2026, 0, 1, 13), new Date(2026, 0, 1, 13, 30)),
         );
       }
+
       if (url.pathname.endsWith("/reservation-spots/driady/reservations")) {
         requests.push(url);
+
         if (
           url.searchParams.get("from") ===
           new Date(2026, 0, 1, 12, 15).toISOString()
         )
           return availability(request);
         calendarRequests += 1;
+
         if (calendarRequests > 1 && laterCalendar)
           return laterCalendar(request);
+
         return Response.json({ items: calendarItems });
       }
+
       if (url.pathname === "/guilds/guild-1")
         return Response.json({
           id: "guild-1",
@@ -123,29 +140,36 @@ const renderSchedule = async (
           ownerId: "owner",
           ...settings,
         });
+
       if (url.pathname.endsWith("/reservation-spots"))
         return Response.json([{ id: "driady", name: "Driady" }]);
+
       return Response.json([]);
     },
   );
   const root = createRootRoute();
+
   const authenticated = createRoute({
     getParentRoute: () => root,
     id: "_authenticated",
   });
+
   const guild = createRoute({
     getParentRoute: () => authenticated,
     path: "$guildId",
   });
+
   const reservations = createRoute({
     getParentRoute: () => guild,
     path: "reservations",
   });
+
   const route = createRoute({
     getParentRoute: () => reservations,
     path: "$reservationId",
     component: ReservationsSchedule,
   });
+
   const router = createRouter({
     routeTree: root.addChildren([
       authenticated.addChildren([
@@ -156,6 +180,7 @@ const renderSchedule = async (
       initialEntries: ["/guild-1/reservations/driady"],
     }),
   });
+
   await router.load();
   render(
     <QueryClientProvider client={client}>
@@ -174,19 +199,24 @@ const renderSchedule = async (
   );
   await screen.findByRole("heading", { name: "Driady" });
   await waitFor(() => expect(requests.length).toBeGreaterThan(0));
+
   return { requests, writes };
 };
+
 const action = () =>
   screen.getByRole<HTMLButtonElement>("button", {
     name: "reservations.schedule.header.findNearestSlot",
   });
+
 const swipe = async (direction: -1 | 1) => {
   const grid = document.querySelector(
     '[data-slot="mobile-day-current"] > .relative',
   );
+
   const surface = document.querySelector(
     '[data-slot="mobile-day-swipe-surface"]',
   );
+
   if (!(grid instanceof HTMLDivElement) || !(surface instanceof HTMLDivElement))
     throw new Error("Mobile schedule missing");
   vi.spyOn(surface, "getBoundingClientRect").mockReturnValue(
@@ -219,6 +249,7 @@ describe("ReservationsSchedule nearest free slot", () => {
         ],
       }),
     );
+
     fireEvent.click(action());
     await screen.findByRole("dialog");
     expect(requests[requests.length - 1]?.searchParams.get("from")).toBe(
@@ -254,6 +285,7 @@ describe("ReservationsSchedule nearest free slot", () => {
     let count = 0;
     await renderSchedule(() => {
       count += 1;
+
       return new Promise<Response>((resolve) => {
         resolveRequest = resolve;
       });
@@ -271,9 +303,11 @@ describe("ReservationsSchedule nearest free slot", () => {
     const { requests } = await renderSchedule(async () =>
       Response.json({ items: [] }),
     );
+
     const navigation = () =>
       document.querySelector('[data-slot="schedule-date-navigation"]')
         ?.textContent;
+
     const original = navigation();
     await swipe(1);
     expect(navigation()).toContain("2 sty");
@@ -283,6 +317,7 @@ describe("ReservationsSchedule nearest free slot", () => {
   });
   it("requests the adjacent week and keeps cached reservations until it arrives", async () => {
     let completeNextWeek: ((response: Response) => void) | undefined;
+
     const { requests } = await renderSchedule(
       async () => Response.json({ items: [] }),
       [interval(new Date(2026, 0, 5, 10), new Date(2026, 0, 5, 11))],
@@ -291,6 +326,7 @@ describe("ReservationsSchedule nearest free slot", () => {
           completeNextWeek = resolve;
         }),
     );
+
     await swipe(1);
     await swipe(1);
     await swipe(1);

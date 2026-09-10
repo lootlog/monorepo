@@ -44,6 +44,7 @@ const toScoringDefaults = (
   event: EventOverviewResponseDto,
 ): EventScoringFormData => {
   const scoringMode = normalizeEventScoringMode(event.scoringMode);
+
   return {
     scoringMode,
     scoringRules:
@@ -61,6 +62,7 @@ export const EventEditScoringPage = () => {
     guildId: guildId ?? "",
     eventId: eventId ?? "",
   };
+
   const hasEventRouteParams = Boolean(guildId && eventId);
 
   const {
@@ -73,6 +75,7 @@ export const EventEditScoringPage = () => {
       queryKey: getShowEventOverviewQueryKey(routeParams),
     },
   });
+
   if (isLoading) {
     return <EventEditSkeleton />;
   }
@@ -112,6 +115,7 @@ const EventEditScoringForm = ({
 }) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+
   const updateEvent = useUpdateEvent({
     mutation: {
       onSuccess: () => {
@@ -123,6 +127,7 @@ const EventEditScoringForm = ({
       },
     },
   });
+
   const recalculatePoints = useRecalculateEventPoints({
     mutation: {
       onSuccess: () => {
@@ -139,6 +144,7 @@ const EventEditScoringForm = ({
       },
     },
   });
+
   const form = useForm<EventScoringFormData>({
     defaultValues: toScoringDefaults(event),
   });
@@ -153,6 +159,7 @@ const EventEditScoringForm = ({
 
   const onSubmit = async (data: EventScoringFormData) => {
     const normalizedMode = normalizeEventScoringMode(data.scoringMode);
+
     const normalizedScoringRules =
       normalizedMode === "ADVANCED"
         ? normalizeEventScoringRules(data.scoringRules)
@@ -162,6 +169,7 @@ const EventEditScoringForm = ({
       const request: Parameters<typeof updateEvent.mutateAsync>[0]["data"] = {
         scoringMode: normalizedMode,
       };
+
       if (normalizedMode === "ADVANCED")
         request.scoringRules = normalizedScoringRules;
       await updateEvent.mutateAsync({

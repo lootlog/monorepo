@@ -46,6 +46,7 @@ export function ReservationForm({
     initialStartsAt,
     initialEndsAt,
   });
+
   if (
     previousRange.initialStartsAt !== initialStartsAt ||
     previousRange.initialEndsAt !== initialEndsAt
@@ -74,12 +75,15 @@ export function ReservationForm({
       toDate: endsAt,
       settings,
     });
+
     if (validationError) {
       toast.error(
         getReservationValidationMessage(validationError, t, settings),
       );
+
       return;
     }
+
     if (!startsAt || !endsAt) return;
 
     const normalizedComment = comment.trim();

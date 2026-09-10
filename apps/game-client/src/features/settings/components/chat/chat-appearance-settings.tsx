@@ -34,9 +34,11 @@ const METADATA_KEYS = [
 
 export const ChatAppearanceSettingsForm = () => {
   const { t } = useTranslation();
+
   const allowWorldSelection = useSettingsStore(
     (state) => state.allowWorldSelection ?? false,
   );
+
   const {
     draft,
     saving,
@@ -48,6 +50,7 @@ export const ChatAppearanceSettingsForm = () => {
   } = useChatAppearanceDraft();
 
   const activePreset = getChatAppearancePreset(draft);
+
   const visibleMetadataKeys = allowWorldSelection
     ? METADATA_KEYS
     : METADATA_KEYS.filter((key) => key !== "showGuildLabel");

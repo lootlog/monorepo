@@ -60,12 +60,15 @@ const loadChannels = (database: typeof ApiDatabase.Service, guildId: string) =>
 
 const syncStateWrite = (guildId: string, state: DiscordGuildSyncState) => {
   const now = new Date();
+
   const lastAttemptAt = state.lastAttemptAt
     ? new Date(state.lastAttemptAt)
     : null;
+
   const lastSuccessAt = state.lastSuccessAt
     ? new Date(state.lastSuccessAt)
     : lastAttemptAt;
+
   const values: Omit<
     typeof discordGuildSyncStateTable.$inferInsert,
     "guildId"
@@ -82,8 +85,10 @@ const syncStateWrite = (guildId: string, state: DiscordGuildSyncState) => {
 
     updatedAt: now,
   };
+
   if (state.status === DiscordGuildSyncStatus.SYNCED)
     values.lastSuccessAt = lastSuccessAt;
+
   return { now, lastSuccessAt, values, guildId };
 };
 
@@ -97,15 +102,19 @@ const reconcile = (
       .select({ channelId: discordGuildChannelSnapshotTable.channelId })
       .from(discordGuildChannelSnapshotTable)
       .where(eq(discordGuildChannelSnapshotTable.guildId, guildId));
+
     const nextIds = new Set(payload.channels.map(({ channelId }) => channelId));
+
     const removedIds = existing
       .map(({ channelId }) => channelId)
       .filter((channelId) => !nextIds.has(channelId));
 
     yield* database.transaction((transaction) => {
       const operations: Array<Effect.Effect<unknown, unknown>> = [];
+
       for (const channel of payload.channels) {
         const now = new Date();
+
         const values = {
           guildId,
           channelId: channel.channelId,
@@ -123,6 +132,7 @@ const reconcile = (
           lastSyncedAt: new Date(channel.lastSyncedAt),
           updatedAt: now,
         };
+
         operations.push(
           transaction
             .insert(discordGuildChannelSnapshotTable)
@@ -159,6 +169,7 @@ const reconcile = (
             ),
         );
       }
+
       if (removedIds.length > 0) {
         operations.push(
           transaction
@@ -171,6 +182,7 @@ const reconcile = (
             ),
         );
       }
+
       const state = syncStateWrite(guildId, payload.syncState);
       operations.push(
         transaction
@@ -186,8 +198,10 @@ const reconcile = (
             set: state.values,
           }),
       );
+
       return Effect.all(operations, { concurrency: 1, discard: true });
     });
+
     return removedIds;
   });
 
@@ -209,6 +223,7 @@ const recordFailure = (
       .from(guildTable)
       .where(eq(guildTable.id, guildId))
       .limit(1);
+
     if (!guild[0]) return;
     const now = new Date(yield* Clock.currentTimeMillis);
     yield* database
@@ -251,6 +266,7 @@ export const makeGuildDiscordSyncData = (
       .pipe(
         Effect.tapError((error) => recordFailure(database, guildId, error)),
       );
+
     const removedIds = yield* reconcile(database, guildId, payload);
     yield* Effect.forEach(
       removedIds,
@@ -262,6 +278,7 @@ export const makeGuildDiscordSyncData = (
         }),
       { concurrency: "unbounded", discard: true },
     );
+
     return (yield* loadState(database, guildId)) ?? payload.syncState;
   });
 
@@ -269,6 +286,7 @@ export const makeGuildDiscordSyncData = (
     guildId: string,
   ) {
     const current = yield* loadState(database, guildId);
+
     if (
       current &&
       (yield* Clock.currentTimeMillis) - current.updatedAt.getTime() <
@@ -280,6 +298,7 @@ export const makeGuildDiscordSyncData = (
         ),
       );
     }
+
     return yield* synchronize(guildId);
   });
 
@@ -287,6 +306,7 @@ export const makeGuildDiscordSyncData = (
     guildId: string,
   ) {
     const current = yield* loadState(database, guildId);
+
     if (!current) {
       return yield* synchronize(guildId).pipe(
         Effect.catch((error) =>
@@ -298,6 +318,7 @@ export const makeGuildDiscordSyncData = (
         ),
       );
     }
+
     if (
       current.status === DiscordGuildSyncStatus.NOT_FOUND ||
       current.status === DiscordGuildSyncStatus.FAILED ||
@@ -305,10 +326,12 @@ export const makeGuildDiscordSyncData = (
     ) {
       return current;
     }
+
     const stale =
       current.status === DiscordGuildSyncStatus.STALE ||
       (yield* Clock.currentTimeMillis) - current.updatedAt.getTime() >
         ports.staleAfterMs;
+
     return stale
       ? {
           ...current,
@@ -324,6 +347,7 @@ export const makeGuildDiscordSyncData = (
         (cause) => new AccountOrganizationOperationError({ cause }),
       ),
     );
+
   const handleSynced = Effect.fn("handleGuildChannelsSynced")(function* (
     event: { readonly guildId: string } & SyncPayload,
   ) {
@@ -422,6 +446,7 @@ export const makeGuildDiscordSyncData = (
             ),
             Effect.andThen(() => {
               const state = syncStateWrite(event.guildId, event.syncState);
+
               return transaction
                 .insert(discordGuildSyncStateTable)
                 .values({
@@ -449,6 +474,7 @@ export const makeGuildDiscordSyncData = (
       if (!(yield* guildExists(database, event.guildId))) return;
       yield* database.transaction((transaction) => {
         const state = syncStateWrite(event.guildId, event.syncState);
+
         return transaction
           .delete(discordGuildChannelSnapshotTable)
           .where(
@@ -503,10 +529,13 @@ export const makeGuildDiscordSyncData = (
     guildId: string,
   ) {
     let syncState = yield* get(guildId);
+
     if (syncState.status === DiscordGuildSyncStatus.STALE) {
       syncState = yield* synchronize(guildId);
     }
+
     const channels = yield* loadChannels(database, guildId);
+
     return {
       channels: channels.filter((channel) => channel.hasRequiredPermissions),
       syncState,

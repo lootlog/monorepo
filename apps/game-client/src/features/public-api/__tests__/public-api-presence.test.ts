@@ -14,7 +14,9 @@ import {
   createOnlinePresence,
   createPresenceSnapshot,
 } from "@/features/online-players/online-players-test-fixtures";
+
 const scope = { guildId: "guild-1", world: "alpha" };
+
 const policy = (permissions: Permission[]) =>
   createAccessPolicySnapshot(
     [
@@ -25,10 +27,12 @@ const policy = (permissions: Permission[]) =>
     ],
     "user",
   );
+
 const fullPermissions = [
   Permission.LOOTLOG_ONLINE_PLAYERS_READ,
   Permission.LOOTLOG_PRESENCE_LOCATION_READ,
 ];
+
 const permissionEvent = (
   accessPolicy: ReturnType<typeof policy>,
 ): ServerEvent => ({
@@ -36,6 +40,7 @@ const permissionEvent = (
   type: "permissions.updated",
   data: { organizationIds: ["guild-1"], subscriptionScopes: [], accessPolicy },
 });
+
 const delta = (
   presences: PresenceWithLocation[],
   organizationId = "guild-1",
@@ -48,6 +53,7 @@ const delta = (
     changes: presences.map((presence) => ({ action: "upsert", presence })),
   },
 });
+
 const remove = (
   sessionId: string,
   organizationId = "guild-1",
@@ -62,13 +68,18 @@ const remove = (
     ],
   },
 });
+
 const getApi = () => {
   const api = window.lootlogGameClientApi;
+
   if (!api) throw new Error("Public API was not registered");
+
   return api;
 };
+
 const listener = () =>
   vi.fn<(event: ApiEventMap["online-players:changed"]) => void>();
+
 describe("Public API presence over the realtime transport", () => {
   let harness: ReturnType<typeof createOnlinePlayersTest>;
   let teardown: () => void;
@@ -88,6 +99,7 @@ describe("Public API presence over the realtime transport", () => {
     vi.useRealTimers();
     vi.restoreAllMocks();
   });
+
   const prime = async () => {
     await getApi().getOnlinePlayers(scope);
     const received = listener();
@@ -95,19 +107,25 @@ describe("Public API presence over the realtime transport", () => {
     await vi.waitFor(() =>
       expect(harness.fetchPresence).toHaveBeenCalledTimes(2),
     );
+
     return { received, unsubscribe };
   };
+
   it("fetches grouped characters and retains location, AFK and session fields", async () => {
     const first = createOnlinePresence();
+
     if (!first.character) throw new Error("Expected game character");
+
     const second = createOnlinePresence({
       sessionId: "session-2",
       character: { ...first.character, characterId: "11" },
     });
+
     harness.fetchPresence.mockResolvedValue(
       createPresenceSnapshot([first, second]),
     );
     const result = await getApi().getOnlinePlayers(scope);
+
     if (result.status !== "success") throw new Error("Expected success");
     expect(result.players["discord-1"]).toHaveLength(2);
     expect(result.players["discord-1"]?.[0]).toMatchObject({
@@ -136,6 +154,7 @@ describe("Public API presence over the realtime transport", () => {
   it("returns independently cloned nested data", async () => {
     const first = await getApi().getOnlinePlayers(scope);
     const second = await getApi().getOnlinePlayers(scope);
+
     if (first.status !== "success" || second.status !== "success")
       throw new Error("Expected success");
     expect(first.players).not.toBe(second.players);
@@ -197,6 +216,7 @@ describe("Public API presence over the realtime transport", () => {
   });
   it("removes only the matching organization session when an offline frame omits world", async () => {
     const first = createOnlinePresence();
+
     if (!first.character) throw new Error("Expected game character");
     harness.fetchPresence.mockResolvedValue(
       createPresenceSnapshot([
@@ -233,11 +253,13 @@ describe("Public API presence over the realtime transport", () => {
     const { received } = await prime();
     harness.fetchPresence.mockRejectedValue(new Error("Access denied"));
     vi.useFakeTimers();
+
     const event: ServerEvent = {
       v: 1,
       type: "permissions.updated",
       data: { organizationIds: ["guild-1"], subscriptionScopes: [] },
     };
+
     await harness.receive(event, event);
     expect(harness.fetchPresence).toHaveBeenCalledTimes(2);
     await vi.advanceTimersByTimeAsync(5000);
@@ -277,10 +299,12 @@ describe("Public API presence over the realtime transport", () => {
     await harness.receive(
       permissionEvent(policy([Permission.LOOTLOG_ONLINE_PLAYERS_READ])),
     );
+
     const unsubscribeBasic = getApi().subscribe(
       "online-players:changed",
       received,
     );
+
     await vi.waitFor(() =>
       expect(harness.fetchPresence).toHaveBeenCalledTimes(3),
     );
@@ -293,6 +317,7 @@ describe("Public API presence over the realtime transport", () => {
       ]),
     );
     const basic = received.mock.calls.at(-1)?.[0];
+
     if (basic?.status !== "success")
       throw new Error("Expected restricted success");
     expect(basic.players["discord-1"]?.[0]?.mapName).toBeUndefined();
@@ -332,10 +357,12 @@ describe("Public API presence over the realtime transport", () => {
   it("keeps remaining subscribers active and stops delivery after the last unsubscribe", async () => {
     const { received, unsubscribe } = await prime();
     const second = listener();
+
     const unsubscribeSecond = getApi().subscribe(
       "online-players:changed",
       second,
     );
+
     unsubscribe();
     await harness.receive(delta([createOnlinePresence({ isAfk: true })]));
     expect(received).not.toHaveBeenCalled();

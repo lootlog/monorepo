@@ -5,6 +5,7 @@ import {
   FiniteNumber,
   JsonValue,
 } from "@lootlog/schema/http-scalars";
+
 const SoundConfiguration = JsonValue.annotate({
   identifier: "SoundSettingsResponseDto__schema0",
 });
@@ -22,7 +23,9 @@ export const SoundSettingsResponse = Schema.Struct({
   createdAt: DateTimeString,
   updatedAt: DateTimeString,
 }).annotate({ identifier: "SoundSettingsResponseDto" });
+
 export type SoundSettingsResponse = typeof SoundSettingsResponse.Type;
+
 const SoundVolume = FiniteNumber.check(
   Schema.isGreaterThanOrEqualTo(0).annotate({
     expected: "a value greater than or equal to 0",
@@ -42,6 +45,7 @@ const SoundUpdate = Schema.Struct({
     ]),
   ),
 });
+
 const SoundCategoryUpdates = Schema.Struct({
   ELITE2: Schema.optionalKey(SoundUpdate),
   HERO: Schema.optionalKey(SoundUpdate),
@@ -60,4 +64,5 @@ export const UpdateSoundSettingsRequest = Schema.Struct({
   detectorConfig: Schema.optionalKey(SoundCategoryUpdates),
   timersConfig: Schema.optionalKey(SoundCategoryUpdates),
 }).annotate({ identifier: "UpdateSoundSettingsDto" });
+
 export type UpdateSoundSettingsRequest = typeof UpdateSoundSettingsRequest.Type;

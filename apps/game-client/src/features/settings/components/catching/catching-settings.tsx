@@ -27,11 +27,14 @@ import { useTranslation } from "react-i18next";
 export const CatchingSettings = () => {
   const queryClient = useQueryClient();
   const accountId = useGameStore((state) => state.game?.hero.accountId ?? "");
+
   const queryKey =
     getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
       accountId,
     });
+
   const { data: characterList } = useCharacterList();
+
   const { data: lootlogCharactersConfig } =
     useUserLootlogConfigControllerGetUserLootlogConfigByAccountId(
       { accountId },
@@ -44,17 +47,21 @@ export const CatchingSettings = () => {
         },
       },
     );
+
   const initialCharacterId = useGameStore(
     (state) => state.game?.hero.characterId ?? "",
   );
+
   const [requestedCharacterId, setRequestedCharacterId] =
     useState(initialCharacterId);
+
   const selectionByCharacterIdRef = useRef<Record<string, string[]>>({});
   const { t } = useTranslation();
 
   const requestedCharacterExists = characterList?.some(
     (character) => String(character.id) === requestedCharacterId,
   );
+
   const selectedCharacterId = requestedCharacterExists
     ? requestedCharacterId
     : String(characterList?.[0]?.id ?? "");
@@ -85,6 +92,7 @@ export const CatchingSettings = () => {
       const successCount = results.filter(
         (result) => result.status === "fulfilled",
       ).length;
+
       const failureCount = results.length - successCount;
 
       return {
@@ -99,6 +107,7 @@ export const CatchingSettings = () => {
       const previousSelectionByCharacterId = {
         ...selectionByCharacterIdRef.current,
       };
+
       const previousData =
         queryClient.getQueryData<UserLootlogConfigAccountResponseDtoOutput>(
           queryKey,
@@ -150,6 +159,7 @@ export const CatchingSettings = () => {
     ) => {
       if (failureCount === 0) {
         toast.success(t("settings.catching.applySuccess"));
+
         return;
       }
 
@@ -164,6 +174,7 @@ export const CatchingSettings = () => {
 
       if (successCount === 0) {
         toast.error(t("settings.catching.applyNoneFailed"));
+
         return;
       }
 
@@ -197,6 +208,7 @@ export const CatchingSettings = () => {
     const targetCharacterIds = characterList.map((character) =>
       String(character.id),
     );
+
     const activeCharacterSelection =
       selectionByCharacterIdRef.current[selectedCharacterId] ??
       lootlogCharactersConfig?.[selectedCharacterId]?.catchingGuildIds ??

@@ -61,6 +61,7 @@ const setPath = (target: JsonRecord, path: string, value: unknown) => {
   }
 
   let currentTarget = target;
+
   for (const segment of segments) {
     const nestedValue = currentTarget[segment];
     const child = isRecord(nestedValue) ? nestedValue : {};
@@ -84,9 +85,11 @@ const unsetPath = (target: JsonRecord, path: string) => {
 
   for (const segment of segments) {
     const nestedValue = currentTarget[segment];
+
     if (!isRecord(nestedValue)) {
       return;
     }
+
     parents.push({ parent: currentTarget, segment });
     currentTarget = nestedValue;
   }
@@ -95,6 +98,7 @@ const unsetPath = (target: JsonRecord, path: string) => {
 
   for (const { parent, segment } of parents.reverse()) {
     const nestedValue = parent[segment];
+
     if (isRecord(nestedValue) && Object.keys(nestedValue).length === 0) {
       delete parent[segment];
     }
@@ -109,13 +113,16 @@ const collectLeafPaths = (
 
   for (const [key, nestedValue] of Object.entries(value)) {
     const path = prefix ? `${prefix}.${key}` : key;
+
     if (isRecord(nestedValue)) {
       const nestedPaths = collectLeafPaths(nestedValue, path);
+
       if (nestedPaths.length > 0) {
         paths.push(...nestedPaths);
         continue;
       }
     }
+
     paths.push({ path, value: nestedValue });
   }
 
@@ -130,6 +137,7 @@ const pathsOverlap = (leftPath: string, rightPath: string) =>
 const getFieldDefinition = (domain: SettingsDomain, path: string) => {
   const fields = SETTINGS_CATALOG[domain].fields;
   const exactDefinition = fields[path];
+
   if (exactDefinition) {
     return { definition: exactDefinition, fieldPath: path };
   }
@@ -155,6 +163,7 @@ export const resolveSettingsDomain = (
   const definition = SETTINGS_CATALOG[domain];
   const effective: JsonRecord = {};
   const sources: Record<string, SettingsValueSource> = {};
+
   const migratedLayers = layers.map((layer) => ({
     ...layer,
     overrides: migrateSettingsDocument(
@@ -178,6 +187,7 @@ export const resolveSettingsDomain = (
       }
 
       const candidateValue = getPath(layer.overrides, path);
+
       if (!fieldDefinition.isValid(candidateValue)) {
         continue;
       }
@@ -188,9 +198,11 @@ export const resolveSettingsDomain = (
   }
 
   const updatedValues = migratedLayers
-    .map((layer) => layer.updatedAt)
-    .filter((value): value is Date => value !== undefined)
+    .flatMap((layer) =>
+      layer.updatedAt === undefined ? [] : [layer.updatedAt],
+    )
     .sort((left, right) => left.getTime() - right.getTime());
+
   const updatedAt = updatedValues[updatedValues.length - 1];
 
   const resolution: SettingsDomainResolution = {
@@ -199,7 +211,9 @@ export const resolveSettingsDomain = (
     sources,
     schemaVersion: definition.schemaVersion,
   };
+
   if (updatedAt) return { ...resolution, updatedAt };
+
   return resolution;
 };
 
@@ -225,33 +239,40 @@ export const applySettingsPatch = ({
 
   for (const { path, value } of setEntries) {
     const fieldMatch = getFieldDefinition(domain, path);
+
     if (!fieldMatch) {
       throw new Error(`Unknown setting path: ${path}`);
     }
+
     if (!fieldMatch.definition.scopes.includes(scope.type)) {
       throw new Error(
         `Setting ${path} is not available for scope ${scope.type}`,
       );
     }
+
     if (
       fieldMatch.fieldPath === path &&
       !fieldMatch.definition.isValid(value)
     ) {
       throw new Error(`Invalid value for setting ${path}`);
     }
+
     setPath(nextOverrides, path, value);
   }
 
   for (const path of unset) {
     const fieldMatch = getFieldDefinition(domain, path);
+
     if (!fieldMatch) {
       throw new Error(`Unknown setting path: ${path}`);
     }
+
     if (!fieldMatch.definition.scopes.includes(scope.type)) {
       throw new Error(
         `Setting ${path} is not available for scope ${scope.type}`,
       );
     }
+
     unsetPath(nextOverrides, path);
   }
 

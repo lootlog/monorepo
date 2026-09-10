@@ -15,6 +15,7 @@ describe("reservation settings helpers", () => {
     reservationMaxAdvanceDays: 7,
     reservationActiveLimitPerSpot: 3,
   };
+
   const now = new Date(2026, 0, 1, 12, 0, 0, 0);
 
   it("snaps minutes down to the configured step", () => {

@@ -48,6 +48,7 @@ export class SettingsIdentity extends Context.Service<
 >()("@lootlog/api/http-api/settings/identity") {}
 
 type Operation = Effect.Effect<unknown, SettingsOperationError>;
+
 type SettingsDocumentsOperation = Effect.Effect<
   SettingsDocumentsResponse,
   SettingsOperationError
@@ -95,10 +96,12 @@ export class SettingsData extends Context.Service<
       const documents = makeSettingsDocuments(repository);
       const timer = makeTimerSettings(documents);
       const sound = makeSoundSettings(documents);
+
       const operation = <A, E>(effect: Effect.Effect<A, E>) =>
         effect.pipe(
           Effect.mapError((cause) => new SettingsOperationError({ cause })),
         );
+
       const settingsDocumentsResponse = (value: unknown) =>
         Schema.decodeUnknownEffect(
           Schema.toType(SettingsDocumentsResponseSchema),
@@ -156,6 +159,7 @@ const withIdentity = <A>(
     const identity = yield* SettingsIdentity;
     const userId = yield* identity.userId;
     const data = yield* SettingsData;
+
     return yield* operation(userId, data);
   }).pipe(
     Effect.withSpan(operationId, {

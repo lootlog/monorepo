@@ -6,4 +6,5 @@ export const UserFeedResponse = Schema.Struct({
   windowStart: Schema.String,
   items: Schema.Array(UserFeedItem),
 }).annotate({ identifier: "UserFeedResponseDto_Output" });
+
 export type UserFeedResponse = typeof UserFeedResponse.Type;

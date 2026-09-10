@@ -33,11 +33,14 @@ const sections = [
 
 export function PortalNav() {
   const [open, setOpen] = useState(false);
+
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
+
   const hydrated = useHydrated();
   const environment = hydrated ? getPortalEnvironment(location.hostname) : null;
+
   const activeSection =
     pathname
       .split("/")

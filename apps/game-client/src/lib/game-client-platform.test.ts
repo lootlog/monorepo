@@ -36,9 +36,12 @@ describe("game realtime handshake", () => {
           }
         },
       );
+
       const { createGameRealtimeClient } =
         await import("./game-client-platform");
+
       const client = createGameRealtimeClient();
+
       try {
         client.connect();
         expect(handshakes).toEqual([

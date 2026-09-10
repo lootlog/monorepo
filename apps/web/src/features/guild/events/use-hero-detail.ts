@@ -51,8 +51,10 @@ const getEventHero = (
   heroId: string | undefined,
 ) => {
   const heroBase = event?.heroNpcs?.find((hero) => hero.id === heroId);
+
   if (!heroBase) return undefined;
   const heroMapsData = eventMaps?.heroNpcs?.find((hero) => hero.id === heroId);
+
   return {
     ...heroBase,
     locations: heroMapsData?.locations ?? [],
@@ -69,14 +71,18 @@ const getHeroMapsView = (
     ...hero.locations.flatMap((location) => location.maps),
     ...hero.maps,
   ];
+
   const canShowCoverageCount =
     isWindowActive(windowStatus) && presenceData !== undefined;
+
   const coveredMapsCount = canShowCoverageCount
     ? allMaps.filter(
         (map) => getMapStatus(map, presenceData) === "ASSIGNED_PRESENT",
       ).length
     : 0;
+
   const assignedMembers = allMaps.flatMap((map) => map.assignedMembers);
+
   return {
     allMaps,
     totalMapsCount: allMaps.length,
@@ -164,14 +170,18 @@ const getHeroAssignmentAvailability = (
 export const useHeroDetail = () => {
   const { t } = useTranslation();
   const { guildId, eventId, heroId } = useParams({ strict: false });
+
   const {
     guildId: queryGuildId,
     eventId: queryEventId,
     heroId: queryHeroId,
   } = getHeroDetailRouteQuery(guildId, eventId, heroId);
+
   const queryClient = useQueryClient();
+
   const { hasGuildId, hasEventRouteParams, hasHeroRouteParams } =
     getHeroRouteAvailability(guildId, eventId, heroId);
+
   const { data: guild } = useGuildsControllerGetGuildById(
     {
       guildId: queryGuildId,
@@ -185,6 +195,7 @@ export const useHeroDetail = () => {
       },
     },
   );
+
   const [isClearingAssignments, setIsClearingAssignments] = useState(false);
   const [pendingAssignmentCount, setPendingAssignmentCount] = useState(0);
   const [mapManageOpen, setMapManageOpen] = useState(false);
@@ -194,6 +205,7 @@ export const useHeroDetail = () => {
   const [openWindowOpen, setOpenWindowOpen] = useState(false);
 
   const { data: accessPolicy } = useGuildPermissions();
+
   const { data: currentMember } = useMembersControllerGetMe(
     { guildId: queryGuildId },
     {
@@ -206,6 +218,7 @@ export const useHeroDetail = () => {
       },
     },
   );
+
   const assignMember = useEventsAssignmentControllerAssignMember({
     mutation: {
       onSuccess: (_data, variables) => {
@@ -218,6 +231,7 @@ export const useHeroDetail = () => {
       },
     },
   });
+
   const unassignMember = useEventsAssignmentControllerUnassignMember({
     mutation: {
       onSuccess: (_data, variables) => {
@@ -230,6 +244,7 @@ export const useHeroDetail = () => {
       },
     },
   });
+
   const selfAssignMember = useEventsAssignmentControllerSelfAssignMember({
     mutation: {
       onSuccess: (_data, variables) => {
@@ -242,6 +257,7 @@ export const useHeroDetail = () => {
       },
     },
   });
+
   const selfUnassignMember = useEventsAssignmentControllerSelfUnassignMember({
     mutation: {
       onSuccess: (_data, variables) => {
@@ -272,6 +288,7 @@ export const useHeroDetail = () => {
       },
     },
   });
+
   const openRespawnWindow = useEventsMonitoringControllerOpenRespawnWindow({
     mutation: {
       onSuccess: (_data, variables) => {
@@ -330,6 +347,7 @@ export const useHeroDetail = () => {
         },
       },
     );
+
   const { data: rankings = [] } = useListEventRanking(
     {
       guildId: queryGuildId,
@@ -345,6 +363,7 @@ export const useHeroDetail = () => {
       },
     },
   );
+
   const { data: eventMaps, isLoading: isMapsLoading } = useListEventMaps(
     {
       guildId: queryGuildId,
@@ -384,6 +403,7 @@ export const useHeroDetail = () => {
   const activeGapsMap = new Map(activeGaps.map((gap) => [gap.mapId, gap]));
 
   const hero = getEventHero(event, eventMaps, heroId);
+
   const heroTimer = findEventHeroTimer(timers, {
     heroNpcId: hero?.npcId,
     heroName: hero?.npcName,
@@ -400,6 +420,7 @@ export const useHeroDetail = () => {
     enabledAt: assignmentEnabledAt,
     reason: assignmentDisabledReason,
   } = getHeroAssignmentAvailability(event, heroTimer);
+
   const assignmentDisabledMessage = getAssignmentDisabledMessage(
     assignmentDisabledReason,
     t,
@@ -418,13 +439,17 @@ export const useHeroDetail = () => {
     coveredMapsCount,
     uniqueMembers,
   } = getHeroMapsView(hero, windowStatus, presenceData);
+
   const respawnAction = getRespawnActionView(Boolean(heroTimer), t);
   const RespawnActionIcon = respawnAction.Icon;
+
   const handleRespawnActionClick = () => {
     if (heroTimer) {
       setCloseWindowOpen(true);
+
       return;
     }
+
     setOpenWindowOpen(true);
   };
 
@@ -432,13 +457,16 @@ export const useHeroDetail = () => {
     if (!eventId) return;
 
     setPendingAssignmentCount((count) => count + 1);
+
     try {
       if (!assignmentAllowed) {
         const assignmentErrorCandidate = assignmentDisabledMessage;
         const assignmentErrorFallback = t("events.maps.assignError");
         toast.error(assignmentErrorCandidate ?? assignmentErrorFallback);
+
         return;
       }
+
       await selfAssignMember.mutateAsync({
         pathParams: {
           guildId: queryGuildId,
@@ -458,6 +486,7 @@ export const useHeroDetail = () => {
     if (!eventId) return;
 
     setPendingAssignmentCount((count) => count + 1);
+
     try {
       await selfUnassignMember.mutateAsync({
         pathParams: {
@@ -483,13 +512,16 @@ export const useHeroDetail = () => {
     if (!selectedMapId || !guildId || !eventId) return;
 
     setPendingAssignmentCount((count) => count + 1);
+
     try {
       if (!assignmentAllowed) {
         const assignmentErrorCandidate = assignmentDisabledMessage;
         const assignmentErrorFallback = t("events.maps.assignError");
         toast.error(assignmentErrorCandidate ?? assignmentErrorFallback);
+
         return;
       }
+
       await assignMember.mutateAsync({
         pathParams: {
           guildId,
@@ -512,6 +544,7 @@ export const useHeroDetail = () => {
     if (!selectedMapId || !guildId || !eventId) return;
 
     setPendingAssignmentCount((count) => count + 1);
+
     try {
       await unassignMember.mutateAsync({
         pathParams: {
@@ -549,6 +582,7 @@ export const useHeroDetail = () => {
           }),
         ),
       );
+
       if (results.some((result) => result.status === "rejected")) {
         toast.error(t("events.maps.clearAllError"));
       } else {

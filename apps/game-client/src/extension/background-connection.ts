@@ -19,14 +19,18 @@ export function createBackgroundConnection(
 ) {
   const pending = new Map<string, AbortController>();
   let disposed = false;
+
   const send = (message: ExtensionMessage) => {
     if (!disposed) postMessage(encodeMessage(message));
   };
+
   // Rejoining needs a fresh proof from the current game document, never the old proof.
   realtime.setReconnectHandler(async () => {});
+
   const unsubscribeEvents = realtime.subscribe((event) =>
     send({ type: "event", event }),
   );
+
   const unsubscribeState = realtime.subscribeState((state) =>
     send({ type: "state", state }),
   );
@@ -35,26 +39,35 @@ export function createBackgroundConnection(
     async receive(raw: unknown): Promise<void> {
       if (disposed) return;
       const parsed = ExtensionRequestSchema.safeParse(decodeMessage(raw));
+
       if (!parsed.success) throw new Error("Invalid extension request");
       const message = parsed.data;
+
       if (message.type === "cancel") {
         pending.get(message.id)?.abort();
+
         return;
       }
+
       if (pending.has(message.id)) return;
+
       if (pending.size >= MAX_PENDING_REQUESTS) {
         send({
           type: "error",
           id: message.id,
           message: "Too many pending extension requests",
         });
+
         return;
       }
+
       const controller = new AbortController();
       pending.set(message.id, controller);
       const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
       try {
         let result: unknown;
+
         switch (message.type) {
           case "http":
             result = await executeExtensionHttp(
@@ -76,6 +89,7 @@ export function createBackgroundConnection(
             result = await executeGameCommand(realtime, message.command);
             break;
         }
+
         if (!controller.signal.aborted)
           send({ type: "result", id: message.id, data: result ?? null });
       } catch (error) {
@@ -88,11 +102,13 @@ export function createBackgroundConnection(
                 ? error.message
                 : "Extension request failed",
           };
+
           if (error instanceof RealtimeRequestError) {
             response.code = error.code;
             response.retryable = error.retryable;
             response.retryAfterMs = error.retryAfterMs;
           }
+
           send(response);
         }
       } finally {
@@ -106,6 +122,7 @@ export function createBackgroundConnection(
       unsubscribeEvents();
       unsubscribeState();
       realtime.disconnect();
+
       for (const controller of pending.values()) controller.abort();
       pending.clear();
     },
@@ -114,7 +131,9 @@ export function createBackgroundConnection(
 
 function executeGameCommand(realtime: RealtimeClient, command: unknown) {
   const frame = decodeRealtimeFrame(command);
+
   if ("status" in frame) throw new Error("Expected a client command");
+
   switch (frame.type) {
     case "session.join":
       return realtime.join(frame.data);

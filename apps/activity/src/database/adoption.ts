@@ -52,9 +52,11 @@ type ActivitySchemaMetadata = {
     readonly retention: string | null;
   };
 };
+
 export const ACTIVITY_SCHEMA_FINGERPRINT = createHash("sha256")
   .update(stableJsonStringify(acceptedActivitySchemaMetadata))
   .digest("hex");
+
 export const isAcceptedActivitySchema = (
   metadata: ActivitySchemaMetadata,
 ): boolean =>
@@ -70,18 +72,23 @@ export const loadActivitySchemaMetadata = Effect.fn(
   "ActivityDatabase.loadMetadata",
 )(function* () {
   const sql = yield* PgClient.PgClient;
+
   const columns = yield* sql.unsafe<{ signature: string }>(
     `SELECT table_name || ':' || string_agg(column_name || '=' || udt_name || ',' || is_nullable || ',' || coalesce(column_default,''), ';' ORDER BY ordinal_position) AS signature FROM information_schema.columns WHERE table_schema=current_schema() AND table_name IN ('Activity','ActivityActorSnapshot','MemberActivitySession','MemberActivityStats') GROUP BY table_name ORDER BY table_name`,
   );
+
   const constraints = yield* sql.unsafe<{ signature: string }>(
     `SELECT conname || ':' || pg_get_constraintdef(oid, true) AS signature FROM pg_constraint WHERE connamespace=current_schema()::regnamespace AND conrelid::regclass::text IN ('"Activity"','"ActivityActorSnapshot"','"MemberActivitySession"','"MemberActivityStats"') ORDER BY conname`,
   );
+
   const enums = yield* sql.unsafe<{ signature: string }>(
     `SELECT t.typname || ':' || string_agg(e.enumlabel, ',' ORDER BY e.enumsortorder) AS signature FROM pg_type t JOIN pg_enum e ON e.enumtypid=t.oid WHERE t.typname IN ('ActivitySource','ActivityType') GROUP BY t.typname ORDER BY t.typname`,
   );
+
   const indexes = yield* sql.unsafe<{ signature: string }>(
     `SELECT indexname || ':' || replace(indexdef, ' ON '||quote_ident(current_schema())||'.', ' ON ') AS signature FROM pg_indexes WHERE schemaname=current_schema() AND tablename IN ('Activity','ActivityActorSnapshot','MemberActivitySession','MemberActivityStats') ORDER BY indexname`,
   );
+
   const timescale = yield* sql.unsafe<{
     hypertable: boolean;
     chunkInterval: string | null;
@@ -89,6 +96,7 @@ export const loadActivitySchemaMetadata = Effect.fn(
   }>(
     `SELECT EXISTS(SELECT 1 FROM timescaledb_information.hypertables WHERE hypertable_schema=current_schema() AND hypertable_name='Activity') AS hypertable, (SELECT time_interval::text FROM timescaledb_information.dimensions WHERE hypertable_schema=current_schema() AND hypertable_name='Activity' LIMIT 1) AS "chunkInterval", (SELECT config->>'drop_after' FROM timescaledb_information.jobs WHERE hypertable_schema=current_schema() AND hypertable_name='Activity' AND proc_name='policy_retention' LIMIT 1) AS retention`,
   );
+
   return {
     columns: columns.map((row) => row.signature),
     constraints: constraints.map((row) => row.signature),
@@ -103,6 +111,7 @@ export const verifyAndAdoptDatabase = Effect.fn(
 )(function* () {
   const sql = yield* PgClient.PgClient;
   const metadata = yield* loadActivitySchemaMetadata();
+
   if (!isAcceptedActivitySchema(metadata))
     return yield* new DatabaseAdoptionError({
       message:
@@ -111,9 +120,11 @@ export const verifyAndAdoptDatabase = Effect.fn(
   yield* sql.unsafe(
     `CREATE TABLE IF NOT EXISTS "__lootlog_drizzle_adoption" ("component" TEXT PRIMARY KEY, "fingerprint" TEXT NOT NULL, "adoptedAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   );
+
   const marker = yield* sql.unsafe<{ fingerprint: string }>(
     `SELECT fingerprint FROM "__lootlog_drizzle_adoption" WHERE component='activity'`,
   );
+
   if (
     marker.length > 0 &&
     marker[0]?.fingerprint !== ACTIVITY_SCHEMA_FINGERPRINT
@@ -121,6 +132,7 @@ export const verifyAndAdoptDatabase = Effect.fn(
     return yield* new DatabaseAdoptionError({
       message: "Activity database adoption marker has an unknown fingerprint",
     });
+
   if (marker.length === 0)
     yield* sql.unsafe(
       `INSERT INTO "__lootlog_drizzle_adoption" (component, fingerprint) VALUES ('activity', $1)`,

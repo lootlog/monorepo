@@ -15,6 +15,7 @@ const recurringRule: NotificationRecurringRule = {
 describe("notification job recurrence", () => {
   it("does not advance while the current cycle still has pending work", async () => {
     let advanced = false;
+
     const scheduleNext = makeNotificationJobRecurrence(
       {
         findRule: () => Effect.succeed(recurringRule),
@@ -23,6 +24,7 @@ describe("notification job recurrence", () => {
         advance: () =>
           Effect.sync(() => {
             advanced = true;
+
             return true;
           }),
       },

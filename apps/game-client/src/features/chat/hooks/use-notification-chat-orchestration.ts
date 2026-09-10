@@ -19,6 +19,7 @@ export class NotificationChatPublishError extends Error {
 export const useNotificationChatOrchestration = () => {
   const { mutateAsync: createNotificationAsync } =
     useMessagingControllerSendNotification();
+
   const [isCreatingNotificationMessage, setIsCreatingNotificationMessage] =
     useState(false);
 
@@ -38,7 +39,9 @@ export const useNotificationChatOrchestration = () => {
           world,
         },
       });
+
       const resolvedGuildIds = response.guildIds ?? guildIds;
+
       const result = await sendChatMessage(resolvedGuildIds).catch(
         (cause: unknown) => {
           throw new NotificationChatPublishError(cause);

@@ -9,6 +9,7 @@ import { ReservationOrganizationBadge } from "./reservation-organization-badge";
 afterEach(cleanup);
 
 beforeEach(simulateLoadedImages);
+
 afterEach(() => vi.restoreAllMocks());
 
 describe("ReservationOrganizationBadge", () => {

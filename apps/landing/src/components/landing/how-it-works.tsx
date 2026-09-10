@@ -17,6 +17,7 @@ const steps = [
 
 export function HowItWorks() {
   const { t } = useTranslation();
+
   return (
     <section
       id="workflow"

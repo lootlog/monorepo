@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Calendar, MapPin, Users, Package, Dot } from "lucide-react";
 import { LootMetaItem } from "./loot-meta-item";
+
 export const LootFooter = ({
   location,
   date,
@@ -13,6 +14,7 @@ export const LootFooter = ({
   itemsCount: number;
 }) => {
   const { t } = useTranslation();
+
   return (
     <div className="flex items-center justify-between gap-3 mt-auto border-t border-border/30 -mx-4 px-4 py-1">
       <div className="flex min-w-0 flex-1 items-center gap-0">

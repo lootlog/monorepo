@@ -28,6 +28,7 @@ export const buildKillQueryCacheKey = <Params extends object>(
 export const buildNpcLevelFilter = (minLvl?: number, maxLvl?: number) => {
   const normalizedMin = minLvl && minLvl > 0 ? minLvl : undefined;
   const normalizedMax = maxLvl && maxLvl > 0 ? maxLvl : undefined;
+
   return normalizedMin === undefined && normalizedMax === undefined
     ? {}
     : {
@@ -48,6 +49,7 @@ export const visibilityFilter = (
   roles: ReadonlyArray<KillQueryRole>,
 ): KillStatsFilter => {
   if (accessPolicy.allows(Capability.ADMIN)) return {};
+
   if (roles.length === 0) return { npcType: { in: [] } };
 
   return {

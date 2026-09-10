@@ -56,6 +56,7 @@ export const EventEditSettingsPage = () => {
     guildId: guildId ?? "",
     eventId: eventId ?? "",
   };
+
   const hasEventRouteParams = Boolean(guildId && eventId);
 
   const {
@@ -68,7 +69,9 @@ export const EventEditSettingsPage = () => {
       queryKey: getShowEventOverviewQueryKey(routeParams),
     },
   });
+
   const queryClient = useQueryClient();
+
   const updateEvent = useUpdateEvent({
     mutation: {
       onSuccess: () => {
@@ -105,6 +108,7 @@ export const EventEditSettingsPage = () => {
 
     if (data.endsAt && data.startsAt && data.endsAt <= data.startsAt) {
       toast.error(t("events.settings.endDateMustBeAfterStart"));
+
       return;
     }
 
@@ -112,24 +116,29 @@ export const EventEditSettingsPage = () => {
       const startsAt = fromDateTimeLocalValueToIso(data.startsAt);
       const endsAtIso = fromDateTimeLocalValueToIso(data.endsAt);
       let normalizedEndsAt: string | null | undefined;
+
       if (data.endsAt) {
         normalizedEndsAt = endsAtIso;
       } else if (event.endsAt) {
         normalizedEndsAt = null;
       }
+
       const normalizedAssignmentTimeoutMinutes = Number.isFinite(
         data.assignmentTimeoutMinutes,
       )
         ? Math.max(0, Math.round(data.assignmentTimeoutMinutes))
         : 5;
+
       const normalizedParticipationConfirmationMinutes = Number.isFinite(
         data.participationConfirmationMinutes,
       )
         ? Math.max(0, Math.round(data.participationConfirmationMinutes))
         : 0;
+
       const normalizedMapAssignmentCap = Number.isFinite(data.mapAssignmentCap)
         ? Math.max(0, Math.round(data.mapAssignmentCap))
         : 0;
+
       const normalizedName = data.name.trim();
 
       await updateEvent.mutateAsync({

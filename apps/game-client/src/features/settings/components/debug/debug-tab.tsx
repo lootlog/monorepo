@@ -20,6 +20,7 @@ const createBaseEvent = (): Pick<GameEvent, "d" | "e" | "ev"> => ({
 const createUniqueKillNpcEvent = (): GameEvent => {
   const uniqueId = Date.now();
   const npcId = -Math.floor(Math.random() * 100000);
+
   return {
     ...createBaseEvent(),
     f: {
@@ -286,6 +287,7 @@ type LogEntry = {
 
 export const DebugTab: FC = () => {
   const { t } = useTranslation();
+
   const eventLabels = {
     npcSpawn: t("settings.debug.events.npcSpawn"),
     npcDelete: t("settings.debug.events.npcDelete"),
@@ -296,9 +298,11 @@ export const DebugTab: FC = () => {
     lootFight: t("settings.debug.events.lootFight"),
     lootDialog: t("settings.debug.events.lootDialog"),
   } as const;
+
   const [rawJson, setRawJson] = useState<string>(() =>
     JSON.stringify(EVENT_TEMPLATES.npcSpawn.event, null, 2),
   );
+
   const [jsonError, setJsonError] = useState<string | null>(null);
   const [eventLog, setEventLog] = useState<LogEntry[]>([]);
   const game = useGameStore((s) => s.game);
@@ -337,6 +341,7 @@ export const DebugTab: FC = () => {
 
   const loadTemplate = (templateKey: keyof typeof EVENT_TEMPLATES) => {
     const template = EVENT_TEMPLATES[templateKey];
+
     if (template) {
       setRawJson(JSON.stringify(template.event, null, 2));
       setJsonError(null);

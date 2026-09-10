@@ -30,14 +30,17 @@ export const useNotifications = () => {
   const { connected, socket } = useSocket();
   const { presentNotifications } = useNotificationPresenter();
   const { data: sessionData } = useSession();
+
   const { accountId, isReady, settings } =
     useCurrentGameAccountNotificationSettings();
+
   const { isReady: areMutesReady, mutes } = useCurrentUserNotificationMutes();
   const world = useGameStore((state) => state.game?.world ?? "unknown");
   const settingsRef = useRef(settings);
   const mutesRef = useRef(mutes);
   const sessionDataRef = useRef(sessionData);
   const worldRef = useRef(world);
+
   const processNotificationsRef = useRef<
     (notifications: readonly Notification[]) => void
   >(() => undefined);
@@ -64,12 +67,14 @@ export const useNotifications = () => {
           const typeSettings = currentSettings[notificationSettingsKey];
 
           if (!typeSettings.show) return [];
+
           if (
             typeSettings.ignoreOtherWorlds &&
             data.world !== worldRef.current
           ) {
             return [];
           }
+
           if (!typeSettings.guildIds.includes(data.guildId)) return [];
         }
 

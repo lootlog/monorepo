@@ -15,18 +15,23 @@ import {
 } from "./live-feed-state";
 
 type FeedItem = UserFeedResponseDtoOutput["items"][number];
+
 export function useLiveFeed() {
   const { socket, connected } = useGateway();
   const queryClient = useQueryClient();
   const [state, dispatch] = useReducer(liveFeedReducer, initialLiveFeedState);
+
   const [paused, setStoredPaused] = useLocalStorage(
     "lootlog:dashboard:feed-paused",
     false,
   );
+
   const getPaused = useEffectEvent(() => paused);
+
   const controlsRef = useRef<
     { refresh: () => void; setPaused: (value: boolean) => void } | undefined
   >(undefined);
+
   // The callback-owned timer is replaced only after cancellation and cleared on cleanup.
   // eslint-disable-next-line react-doctor/effect-needs-cleanup -- Cleanup also removes every socket listener and invalidates pending fetches.
   useEffect(() => {
@@ -39,11 +44,13 @@ export function useLiveFeed() {
     let buffered: FeedItem[] = [];
     let accessRefreshTimer: ReturnType<typeof setTimeout> | undefined;
     const queryKey = getUsersControllerGetUserFeedQueryKey();
+
     const cancel = () => {
       generation += 1;
       fetching = false;
       void queryClient.cancelQueries({ queryKey });
     };
+
     const refresh = async (revalidateAccess = false) => {
       if (accessRefreshTimer !== undefined) return;
       revalidatingAccess ||= revalidateAccess;
@@ -51,12 +58,14 @@ export function useLiveFeed() {
       const requestedGeneration = generation;
       fetching = true;
       dispatch({ type: "refresh" });
+
       try {
         const data = await queryClient.fetchQuery({
           ...getUsersControllerGetUserFeedQueryOptions(),
           staleTime: 0,
           retry: false,
         });
+
         if (!disposed && requestedGeneration === generation) {
           dispatch({
             type: "received",
@@ -69,6 +78,7 @@ export function useLiveFeed() {
         if (!disposed && requestedGeneration === generation) {
           if (permissionsChanged) dispatch({ type: "clear" });
           dispatch({ type: "failed" });
+
           if (!permissionsChanged)
             for (const item of buffered) dispatch({ type: "entry", item });
         }
@@ -81,6 +91,7 @@ export function useLiveFeed() {
         }
       }
     };
+
     const handlePermissions = (payload?: {
       guilds: ReadonlyArray<{ guild: { id: string } }>;
     }) => {
@@ -105,20 +116,26 @@ export function useLiveFeed() {
         void refresh(true);
       }, 5000);
     };
+
     const handleConnect = () => {
       // Revalidate in place: a transport reconnect does not revoke access.
       if (!isPaused) void refresh();
     };
+
     const handleJoin = () => {
       // Pausing live updates does not pause source-access revalidation.
       void refresh(true);
     };
+
     const onEntry = (item: FeedItem) => {
       if (isPaused) return;
+
       if (accessRefreshTimer !== undefined) return;
+
       if (fetching) buffered = mergeFeedItems(buffered, [item]);
       else dispatch({ type: "entry", item });
     };
+
     controlsRef.current = {
       refresh: () => {
         if (!isPaused) void refresh();
@@ -126,6 +143,7 @@ export function useLiveFeed() {
       setPaused: (value) => {
         if (isPaused === value) return;
         isPaused = value;
+
         if (!value) void refresh();
         else if (!revalidatingAccess) cancel();
       },
@@ -135,6 +153,7 @@ export function useLiveFeed() {
     socket.on(GatewayEvent.JOIN, handleJoin);
     socket.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissions);
     void refresh();
+
     return () => {
       disposed = true;
       clearTimeout(accessRefreshTimer);
@@ -149,10 +168,12 @@ export function useLiveFeed() {
   useEffect(() => {
     controlsRef.current?.setPaused(paused);
   }, [paused]);
+
   const setPaused = (value: boolean) => {
     controlsRef.current?.setPaused(value);
     setStoredPaused(value);
   };
+
   return {
     state: { ...state, isFetching: !paused && state.isFetching },
     paused,

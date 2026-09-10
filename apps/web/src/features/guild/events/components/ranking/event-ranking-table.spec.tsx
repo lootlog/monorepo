@@ -21,7 +21,9 @@ const mocks = vi.hoisted(() => ({
 }));
 
 await initializeTestTranslations();
+
 const wrapper = await createOrganizationTestWrapper();
+
 const render = (element: ReactElement) => renderElement(element, { wrapper });
 
 describe("EventRankingTable", () => {
@@ -61,6 +63,7 @@ describe("EventRankingTable", () => {
     const ranking = createRanking({ id: "ranking-1", memberId: 1 });
     const queryClient = new QueryClient();
     let commitCount = 0;
+
     const createRankingTable = () => (
       <QueryClientProvider client={queryClient}>
         <Profiler id="ranking" onRender={() => (commitCount += 1)}>
@@ -68,6 +71,7 @@ describe("EventRankingTable", () => {
         </Profiler>
       </QueryClientProvider>
     );
+
     const { rerender } = render(createRankingTable());
     await act(() => Promise.resolve());
     const commitsAfterMount = commitCount;
@@ -103,6 +107,7 @@ describe("EventRankingTable", () => {
     const primaryLink = screen.getByRole("link", {
       name: "events.ranking.openMemberStats",
     });
+
     expect(primaryLink.getAttribute("href")).toBe(
       "/guild-1/events/event-1/members/1",
     );
@@ -177,6 +182,7 @@ describe("EventRankingTable", () => {
     );
 
     const section = container.querySelector("section");
+
     const killsHeader = screen.getByRole("columnheader", {
       name: "events.ranking.kills",
     });
@@ -194,6 +200,7 @@ describe("EventRankingTable", () => {
     );
 
     const memberName = screen.getByText("Member 1");
+
     const pointsValue = container.querySelector(
       "tbody td:last-child .font-bold",
     );
@@ -268,6 +275,7 @@ describe("EventRankingTable", () => {
     const linkedNumericCells = container.querySelectorAll(
       "tbody tr td:nth-child(3) a, tbody tr td:nth-child(4) a, tbody tr td:nth-child(5) a",
     );
+
     const pointsCell = container.querySelector("tbody tr td:nth-child(6)");
 
     expect(linkedNumericCells).toHaveLength(3);
@@ -352,6 +360,7 @@ describe("EventRankingTable", () => {
     const [historyButton] = screen.getAllByRole("button", {
       name: "events.points.history",
     });
+
     if (!historyButton) {
       throw new Error("Expected an edit history button");
     }

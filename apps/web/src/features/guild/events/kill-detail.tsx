@@ -25,6 +25,7 @@ const formatRespawnWindow = (minSpawn: string, maxSpawn: string): string => {
   const minDate = new Date(minSpawn);
   const maxDate = new Date(maxSpawn);
   const differenceSeconds = Math.max(0, differenceInSeconds(maxDate, minDate));
+
   return formatDurationHuman(differenceSeconds);
 };
 
@@ -33,19 +34,23 @@ export const KillDetail = () => {
   const { guildId, eventId, heroId, killId } = useParams({ strict: false });
   const { data: session } = useSession();
   const { data: accessPolicy } = useGuildPermissions();
+
   const canEditPoints =
     Boolean(accessPolicy?.allows(Permission.OWNER)) ||
     Boolean(accessPolicy?.allows(Permission.ADMIN));
+
   const queryGuildId = guildId ?? "";
   const queryEventId = eventId ?? "";
   const queryHeroId = heroId ?? "";
   const queryKillId = killId ?? "";
+
   const { data, isLoading, error } = useKillDetail({
     guildId: queryGuildId,
     eventId: queryEventId,
     heroId: queryHeroId,
     killId: queryKillId,
   });
+
   const { data: matchingLoots, isLoading: isLootsLoading } = useMatchingLoots({
     guildId: queryGuildId,
     world: data?.kill.heroNpc.event.world ?? "",
@@ -53,6 +58,7 @@ export const KillDetail = () => {
     npcName: data?.kill.heroNpc.npcName ?? "",
     enabled: Boolean(data),
   });
+
   const loots = matchingLoots ?? [];
 
   if (isLoading) {
@@ -118,57 +124,72 @@ export const KillDetail = () => {
 
   const { kill, eventConfig } = data;
   const participants = kill.points ?? [];
+
   const getMemberRoleColors = () => {
     const colors = new Map<number, string>();
+
     for (const participant of participants) {
       const roleColor = getCustomRoleCssColor(
         participant.member.roles?.[0]?.color,
       );
+
       if (roleColor) colors.set(participant.member.id, roleColor);
     }
+
     return colors;
   };
+
   const getHighlightedRuleIds = () => {
     const currentDiscordId = session?.user?.discordId;
+
     return Array.from(
       new Set(
         participants.flatMap((participant) => {
           if (participant.member.userId !== currentDiscordId) return [];
+
           const evaluatedRuleIds = getAppliedRuleIdsForParticipant({
             kill,
             participant,
             scoringRules: eventConfig.scoringRules,
             assignedMembersCount: participants.length,
           });
+
           const bonusBreakdownRuleIds = normalizeBonusBreakdown(
             participant.bonusBreakdown,
           )
             .map((bonus) => bonus.ruleId)
             .filter((ruleId): ruleId is string => ruleId.trim().length > 0);
+
           return [...evaluatedRuleIds, ...bonusBreakdownRuleIds];
         }),
       ),
     );
   };
+
   const getTimingViewModel = () => {
     const respawnDurationSeconds = kill.respawnDurationSeconds;
     const windowDurationSeconds = kill.windowDurationSeconds;
+
     const respawnDurationText =
       respawnDurationSeconds !== null && respawnDurationSeconds !== undefined
         ? formatDurationHuman(respawnDurationSeconds)
         : formatRespawnWindow(kill.minSpawnTimeAtKill, kill.killedAt);
+
     const windowDurationText =
       windowDurationSeconds !== null && windowDurationSeconds !== undefined
         ? formatDurationHuman(windowDurationSeconds)
         : formatRespawnWindow(kill.minSpawnTimeAtKill, kill.maxSpawnTimeAtKill);
+
     const hasDurations =
       windowDurationSeconds !== null &&
       windowDurationSeconds !== undefined &&
       respawnDurationSeconds !== null &&
       respawnDurationSeconds !== undefined;
+
     const fasterThanMaxSeconds = hasDurations
       ? Math.max(0, windowDurationSeconds - respawnDurationSeconds)
       : null;
+
     const respawnComparedToMaxPercentage =
       hasDurations && windowDurationSeconds > 0
         ? Math.max(
@@ -176,6 +197,7 @@ export const KillDetail = () => {
             Math.round((respawnDurationSeconds / windowDurationSeconds) * 100),
           )
         : null;
+
     return {
       respawnDurationText,
       windowDurationText,
@@ -188,8 +210,10 @@ export const KillDetail = () => {
       respawnComparedToMaxPercentage,
     };
   };
+
   const memberRoleColors = getMemberRoleColors();
   const highlightedRuleIds = getHighlightedRuleIds();
+
   const {
     respawnDurationText,
     windowDurationText,

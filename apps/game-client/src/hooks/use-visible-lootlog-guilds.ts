@@ -13,7 +13,9 @@ export const useVisibleLootlogGuilds = () => {
       staleTime: 1000 * 60 * 5,
     },
   });
+
   const preferencesQuery = useUserPreferences();
+
   const visibleGuilds = getVisibleLootlogGuilds(
     guildsQuery.data ?? [],
     preferencesQuery.data?.guildsOrder,

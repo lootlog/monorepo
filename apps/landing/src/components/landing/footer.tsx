@@ -5,6 +5,7 @@ import { links } from "@/src/config/links";
 
 export function LandingFooter() {
   const { t } = useTranslation();
+
   return (
     <footer className="bg-[var(--broadcast-ink)] py-8 text-[var(--broadcast-white)] sm:py-10">
       <div className="landing-container">

@@ -35,6 +35,7 @@ export const getAssignmentAvailability = ({
   }
 
   const nowTimestamp = now.getTime();
+
   if (nowTimestamp >= new Date(timer.maxSpawnTime).getTime()) {
     return {
       allowed: false,

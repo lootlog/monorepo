@@ -15,9 +15,11 @@ describe("Chat", () => {
     onTestFinished(() => {
       useChatStore.setState(useChatStore.getInitialState(), true);
     });
+
     const key = getChatControllerGetChatMessagesQueryKey({
       guildId: "guild-1",
     });
+
     harness.queryClient.setQueryData(key, []);
     const { container } = render(<Chat />, { wrapper: harness.wrapper });
     harness.open();

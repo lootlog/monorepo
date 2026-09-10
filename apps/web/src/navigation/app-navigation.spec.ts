@@ -34,6 +34,7 @@ describe("resolveAppNavigation", () => {
         }),
       ],
     });
+
     expect(navigation.breadcrumbs).toEqual([
       { label: "Statystyki", path: null },
     ]);

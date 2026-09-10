@@ -5,6 +5,7 @@ import {
 } from "./transport";
 
 export type ErrorType<TError> = ApiError<TError>;
+
 export type BodyType<TBody> = TBody;
 
 export function mainFetch<TData>(

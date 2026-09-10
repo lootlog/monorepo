@@ -20,11 +20,13 @@ export const publicSystemData = Layer.unwrap(
     const config = yield* ApiRuntimeConfig;
     const httpClient = yield* HttpClient.HttpClient;
     const repository = yield* PublicGuildStatsCardRepository;
+
     const cacheOperation = <A>(operation: () => PromiseLike<A>) =>
       Effect.tryPromise({
         try: operation,
         catch: (cause) => new PublicGuildStatsCardAdapterError({ cause }),
       });
+
     return PublicSystemData.layerServices({
       getMaps: makeMapsOperation({
         httpClient,

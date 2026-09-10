@@ -5,12 +5,14 @@ import { Effect, Schema } from "effect";
 import { stableJsonStringify } from "@lootlog/schema/stable-json";
 
 const EVENT_READ_CACHE_PREFIX = "event-read:v2";
+
 const EVENT_READ_CACHE_TTL_SECONDS = 10;
 
 export const makeEventReadCache = (
   redis: Pick<RedisService, "deleteByPattern" | "getOrSetJsonEffect">,
 ) => {
   const logger = new Logger("EventReadCache");
+
   const buildKey = <Params extends object>(
     guildId: string,
     eventSegment: string,
@@ -57,6 +59,7 @@ export const makeEventReadCache = (
       factory: () => Effect.Effect<S["Type"], E>,
     ): Effect.Effect<S["Type"], E> {
       const codec = makeJsonCodec(Schema.toType(schema), superjson);
+
       return redis.getOrSetJsonEffect({
         key,
         codec,

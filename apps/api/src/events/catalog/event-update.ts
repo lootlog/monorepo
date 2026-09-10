@@ -53,6 +53,7 @@ const updatedScoring = (
   const mode = normalizeEventScoringMode(
     requestedMode ?? normalizeEventScoringMode(currentMode),
   );
+
   const rules =
     requestedMode === undefined && requestedRules === undefined
       ? undefined
@@ -63,6 +64,7 @@ const updatedScoring = (
               DEFAULT_ADVANCED_EVENT_SCORING_RULES,
           )
         : null;
+
   return { mode, rules };
 };
 
@@ -94,10 +96,13 @@ export const makeEventUpdate =
               new EventUpdateError({ operation: "events.update.find", cause }),
           ),
         );
+
       const event = rows[0];
+
       if (!event) {
         return yield* Effect.fail(new ResourceNotFoundError("Event not found"));
       }
+
       const {
         heroNpcs,
         startsAt,
@@ -110,20 +115,25 @@ export const makeEventUpdate =
         rulebookMarkdown,
         ...updateData
       } = data;
+
       const nextStart = updatedDate(startsAt, event.startsAt);
       const nextEnd = updatedDate(endsAt, event.endsAt);
+
       if (nextEnd && nextStart && nextEnd <= nextStart) {
         return yield* Effect.fail(
           new InvalidRequestError("End date must be after start date"),
         );
       }
+
       const scoring = updatedScoring(
         event.scoringRules,
         event.scoringMode,
         scoringMode,
         scoringRules,
       );
+
       const referenceTime = new Date(yield* Clock.currentTimeMillis);
+
       const clearPins =
         !isEventActiveAt(event, referenceTime) ||
         !isEventActiveAt(
@@ -143,11 +153,13 @@ export const makeEventUpdate =
                 .delete(userPinnedEventTable)
                 .where(eq(userPinnedEventTable.eventId, eventId));
             }
+
             if (heroNpcs) {
               const existingHeroes = yield* transaction
                 .select()
                 .from(eventHeroNpcTable)
                 .where(eq(eventHeroNpcTable.eventId, eventId));
+
               if (
                 filterHeroesByLevel(
                   existingHeroes,
@@ -159,10 +171,12 @@ export const makeEventUpdate =
                   new ResourceNotFoundError("Hero not found"),
                 );
               }
+
               yield* transaction
                 .delete(eventHeroNpcTable)
                 .where(eq(eventHeroNpcTable.eventId, eventId));
             }
+
             yield* transaction
               .update(eventTable)
               .set({
@@ -189,6 +203,7 @@ export const makeEventUpdate =
                 updatedAt: new Date(yield* Clock.currentTimeMillis),
               })
               .where(eq(eventTable.id, eventId));
+
             for (const hero of heroNpcs ?? []) {
               const heroId = randomUUID();
               yield* transaction.insert(eventHeroNpcTable).values({
@@ -197,6 +212,7 @@ export const makeEventUpdate =
                 npcId: hero.npcId ?? null,
                 npcName: hero.npcName,
               });
+
               if (hero.maps.length > 0) {
                 yield* transaction.insert(eventMapTable).values(
                   hero.maps.map((map) => ({
@@ -236,6 +252,7 @@ export const makeEventUpdate =
         ],
         "Failed to invalidate event cache",
       );
+
       return attachComputedEventActive(
         {
           ...updated,

@@ -7,6 +7,7 @@ import {
 } from "@lootlog/schema/npc-appearance";
 
 const DARK_SURFACE_RGB = [3, 7, 18] as const;
+
 const MINIMUM_TEXT_CONTRAST = 3;
 
 export const normalizeAppearanceColor = (
@@ -18,17 +19,20 @@ export const normalizeAppearanceColor = (
 export const normalizeNpcTypeColors = (value: unknown): NpcTypeColors => {
   const candidate = isObjectRecord(value) && !Array.isArray(value) ? value : {};
   const colors: NpcTypeColors = { ...DEFAULT_NPC_TYPE_COLORS };
+
   for (const npcType of COMBAT_NPC_TYPES) {
     colors[npcType] = normalizeAppearanceColor(
       candidate[npcType],
       colors[npcType],
     );
   }
+
   return colors;
 };
 
 const hexToRgb = (color: string) => {
   const normalized = normalizeAppearanceColor(color, "#FFFFFF").slice(1);
+
   return [
     Number.parseInt(normalized.slice(0, 2), 16),
     Number.parseInt(normalized.slice(2, 4), 16),
@@ -46,6 +50,7 @@ type RgbColor = readonly [number, number, number];
 
 const toLinearColorChannel = (channel: number) => {
   const normalized = channel / 255;
+
   return normalized <= 0.04045
     ? normalized / 12.92
     : ((normalized + 0.055) / 1.055) ** 2.4;
@@ -55,17 +60,20 @@ const relativeLuminance = (rgb: RgbColor) => {
   const red = toLinearColorChannel(rgb[0]);
   const green = toLinearColorChannel(rgb[1]);
   const blue = toLinearColorChannel(rgb[2]);
+
   return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
 };
 
 const contrastRatio = (left: RgbColor, right: RgbColor) => {
   const lighter = Math.max(relativeLuminance(left), relativeLuminance(right));
   const darker = Math.min(relativeLuminance(left), relativeLuminance(right));
+
   return (lighter + 0.05) / (darker + 0.05);
 };
 
 const getReadableTextColor = (accent: string) => {
   const accentRgb = hexToRgb(accent);
+
   if (contrastRatio(accentRgb, DARK_SURFACE_RGB) >= MINIMUM_TEXT_CONTRAST) {
     return normalizeAppearanceColor(accent, "#FFFFFF");
   }
@@ -76,6 +84,7 @@ const getReadableTextColor = (accent: string) => {
       accentRgb[1] + (255 - accentRgb[1]) * whiteMix,
       accentRgb[2] + (255 - accentRgb[2]) * whiteMix,
     ] as const;
+
     if (contrastRatio(mixed, DARK_SURFACE_RGB) >= MINIMUM_TEXT_CONTRAST) {
       return toHex(mixed);
     }

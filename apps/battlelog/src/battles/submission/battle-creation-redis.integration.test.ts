@@ -67,15 +67,22 @@ const data: CreateBattleInput = {
     },
   ],
 };
+
 const userId = "lock-owner";
+
 const lockKey = `battle-submission:${createBattleSemanticFingerprint({ data: normalizeBattleSubmission(data), userId })}:lock`;
+
 let postgres: StartedPostgreSqlContainer;
+
 let redisContainer: StartedTestContainer;
+
 let pool: pg.Pool;
+
 let runtime: ManagedRuntime.ManagedRuntime<
   PgClient.PgClient | Redis.Redis,
   unknown
 >;
+
 let services: Awaited<ReturnType<typeof createServices>>;
 
 const createServices = () =>
@@ -83,19 +90,24 @@ const createServices = () =>
     Effect.gen(function* () {
       const database = yield* drizzleDatabaseEffect;
       const redisApi = yield* Redis.Redis;
+
       const redis = makeRedisStore(
         redisApi,
         (operation) => runtime.runPromise(operation),
         { prefix: "battlelock-test" },
       );
+
       const cache = makeBattleAnalyticsCache(redis);
+
       const analytics = makeBattleAnalytics(
         database,
         cache,
         makeBattleAnalyticsQuery(database, cache),
       );
+
       // R2 is the only fake boundary; database, Redis commands and Lua are real.
       const uploads = new Map<string, unknown>();
+
       const battles = makeBattles(
         database,
         {
@@ -121,6 +133,7 @@ const createServices = () =>
           waitTimeoutMs: 5_000,
         },
       );
+
       return {
         battles,
         redis,
@@ -141,10 +154,13 @@ beforeAll(async () => {
     .start();
   pool = new pg.Pool({ connectionString: postgres.getConnectionUri() });
   const migrations = new URL("../../../drizzle/", import.meta.url);
+
   for (const entry of (await readdir(migrations)).sort()) {
     const file = Bun.file(new URL(`${entry}/migration.sql`, migrations));
+
     if (await file.exists()) await pool.query(await file.text());
   }
+
   runtime = ManagedRuntime.make(
     Layer.merge(
       makePostgresLayer({ url: Redacted.make(postgres.getConnectionUri()) }),
@@ -173,17 +189,21 @@ beforeEach(async () => {
 
 const waitForLock = async () => {
   const deadline = Date.now() + 2_000;
+
   while (Date.now() < deadline) {
     const token = await services.redis.get(lockKey);
+
     if (token !== null) return token;
     await Bun.sleep(10);
   }
+
   throw new Error("Battle creation did not acquire its Redis lock");
 };
 
 it("renews the real Lua lock beyond its TTL while concurrent callers create one canonical battle", async () => {
   const blocker = await pool.connect();
   const creations: Promise<{ battleId: string }>[] = [];
+
   try {
     // Allow the submission lookup while holding INSERTs past the Redis lock TTL.
     await blocker.query("BEGIN; LOCK TABLE battles IN SHARE MODE");
@@ -230,7 +250,8 @@ it("renews the real Lua lock beyond its TTL while concurrent callers create one 
 
 it("does not renew or release another owner's real Redis lock after ownership changes", async () => {
   const blocker = await pool.connect();
-  let creation: Promise<unknown> | undefined;
+  let creation: Promise<Exit.Exit<unknown, unknown>> | undefined;
+
   try {
     // Allow the submission lookup while holding INSERTs past the Redis lock TTL.
     await blocker.query("BEGIN; LOCK TABLE battles IN SHARE MODE");
@@ -246,7 +267,7 @@ it("does not renew or release another owner's real Redis lock after ownership ch
       ),
     ).toBeGreaterThan(3_000);
     await blocker.query("COMMIT");
-    expect(await creation).toMatchObject({ _tag: "Failure" });
+    expect(Exit.isFailure(await creation)).toBe(true);
     expect(await services.redis.get(lockKey)).toBe("replacement-owner");
   } finally {
     await blocker.query("ROLLBACK");
@@ -257,6 +278,7 @@ it("does not renew or release another owner's real Redis lock after ownership ch
 
 it("invalidates only the user's cache generation and cannot restore a stale in-flight result", async () => {
   const decode = (text: string) => Number(text);
+
   const cached = (user: string, value: number) =>
     services.cache.getOrSetJson(
       user,
@@ -264,10 +286,12 @@ it("invalidates only the user's cache generation and cannot restore a stale in-f
       () => Effect.succeed(value),
       decode,
     );
+
   expect(await runtime.runPromise(cached("one", 1))).toBe(1);
   expect(await runtime.runPromise(cached("two", 2))).toBe(2);
   const { promise: started, resolve: begin } = Promise.withResolvers<void>();
   const { promise: result, resolve: finish } = Promise.withResolvers<number>();
+
   const oldRead = runtime.runPromise(
     services.cache.getOrSetJson(
       "one",
@@ -275,19 +299,25 @@ it("invalidates only the user's cache generation and cannot restore a stale in-f
       () =>
         Effect.tryPromise(async () => {
           begin();
+
           return await result;
         }),
       decode,
     ),
   );
+
   await started;
+
   const before = await runtime.runPromise(
     services.redisApi.send<string>("INFO", "commandstats"),
   );
+
   await runtime.runPromise(services.cache.invalidateUserAnalytics("one"));
+
   const after = await runtime.runPromise(
     services.redisApi.send<string>("INFO", "commandstats"),
   );
+
   expect(after.match(/cmdstat_scan:[^\r\n]*/)?.[0]).toBe(
     before.match(/cmdstat_scan:[^\r\n]*/)?.[0],
   );
@@ -323,6 +353,7 @@ it("aggregates battle summaries in SQL without losing flee PH, level filters or 
   await pool.query(
     `INSERT INTO user_characters (id, "userId", "characterId", name, world) VALUES ('uc', 'owner', 'hero', 'Hero', 'world')`,
   );
+
   const fixtures = [
     { id: "win", winningTeam: 1, losingTeam: 2, ph: 50 },
     { id: "loss", winningTeam: 2, losingTeam: 1, ph: 10 },
@@ -338,6 +369,7 @@ it("aggregates battle summaries in SQL without losing flee PH, level filters or 
     },
     { id: "team", winningTeam: 1, losingTeam: 2, ph: 99, type: "team" },
   ];
+
   for (const fixture of fixtures) {
     await pool.query(
       `INSERT INTO battles (id, "userId", "accountId", "characterId", world, duration, type, winner, loser, "winningTeam", "losingTeam", "hasFlee", statistics)
@@ -363,6 +395,7 @@ it("aggregates battle summaries in SQL without losing flee PH, level filters or 
       ],
     );
   }
+
   const filters = { characterId: "hero", minLevel: 80, maxLevel: 120 };
   expect(
     await runtime.runPromise(
@@ -407,8 +440,10 @@ it("aggregates battle summaries in SQL without losing flee PH, level filters or 
 
 it("reloads corrupted metadata cache and shares invalidation with analytics", async () => {
   await services.redis.set("battle-cache-generation:owner", "test-generation");
+
   const key =
     "battle-cache:v2:owner:test-generation:battle-characters:list:owner";
+
   await services.redis.set(key, "{broken-json", 300);
   expect(
     await runtime.runPromise(services.metadata.getUserCharacters("owner")),
@@ -427,6 +462,7 @@ it("reloads corrupted metadata cache and shares invalidation with analytics", as
 it("coalesces concurrent analytics fills and retries factory failures without caching them", async () => {
   let calls = 0;
   const cache = services.cache;
+
   const read = () =>
     cache.getOrSetJson(
       "burst",
@@ -435,13 +471,16 @@ it("coalesces concurrent analytics fills and retries factory failures without ca
         Effect.gen(function* () {
           calls++;
           yield* Effect.sleep("80 millis");
+
           return 42;
         }),
       Number,
     );
+
   const results = await Promise.all(
     Array.from({ length: 8 }, () => runtime.runPromise(read())),
   );
+
   expect(results).toEqual(Array(8).fill(42));
   expect(calls).toBe(1);
   const failure = { reason: "database failed" };
@@ -455,6 +494,7 @@ it("coalesces concurrent analytics fills and retries factory failures without ca
           () =>
             Effect.suspend(() => {
               failures++;
+
               return Effect.fail(failure);
             }),
           Number,
@@ -474,6 +514,7 @@ it("interrupts a coalesced analytics factory and permits a subsequent fill", asy
   const controller = new AbortController();
   const { promise: started, resolve: begin } = Promise.withResolvers<void>();
   const { promise: canceled, resolve: cancel } = Promise.withResolvers<void>();
+
   const reading = Effect.runPromiseExit(
     services.cache.getOrSetJson(
       "abort",
@@ -487,6 +528,7 @@ it("interrupts a coalesced analytics factory and permits a subsequent fill", asy
     ),
     { signal: controller.signal },
   );
+
   await started;
   controller.abort();
   expect(Exit.hasInterrupts(await reading)).toBe(true);

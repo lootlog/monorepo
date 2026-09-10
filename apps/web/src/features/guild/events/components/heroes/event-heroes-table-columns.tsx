@@ -73,6 +73,7 @@ export const createEventHeroesTableColumns = ({
         const totalMapsCount = getTotalMapsCount(hero);
         const killCount = stats?.killCount ?? 0;
         const npcProfession = stats?.npcProf?.charAt(0).toLowerCase() ?? "";
+
         const npcLevelAndProfession =
           hero.npcLvl === null || hero.npcLvl === undefined
             ? null

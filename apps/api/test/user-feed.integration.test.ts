@@ -30,21 +30,29 @@ import { applicationLogger } from "#src/shared/application-logger";
 import { PgDialect } from "drizzle-orm/pg-core";
 
 const client = new Client({ connectionString: requireIsolatedTestDatabase() });
+
 const runtime = ManagedRuntime.make(ApiDatabaseLive);
+
 let database: typeof ApiDatabase.Service;
+
 const now = new Date();
+
 const recent = new Date(Math.floor(now.getTime() / 60000) * 60000 - 120000);
+
 const run = runtime.runPromise.bind(runtime);
+
 const seed = async () => {
   const guildId = randomUUID(),
     owner = randomUUID(),
     reader = randomUUID();
+
   const [guild] = await run(
     database
       .insert(guildTable)
       .values({ id: guildId, name: "Feed org", ownerId: owner, updatedAt: now })
       .returning(),
   );
+
   const [member] = await run(
     database
       .insert(memberTable)
@@ -57,6 +65,7 @@ const seed = async () => {
       })
       .returning(),
   );
+
   const [role] = await run(
     database
       .insert(roleTable)
@@ -71,12 +80,15 @@ const seed = async () => {
       })
       .returning(),
   );
+
   if (!guild || !member || !role) throw new Error("Missing fixture");
   await run(
     database.insert(memberToRoleTable).values({ A: member.id, B: role.id }),
   );
+
   return { guild, owner, reader, member, role };
 };
+
 const kill = (
   guildId: string,
   overrides: Partial<typeof guildKillActivityTable.$inferInsert> = {},
@@ -157,11 +169,13 @@ describe("personal Organization activity feed", () => {
     const feed = await run(makeUserFeed(database)(owner));
     expect(feed.items).toHaveLength(40);
     expect(new Set(feed.items.map((item) => item.groupKey)).size).toBe(20);
+
     for (const item of feed.items) {
       expect(
         feed.items.filter((candidate) => candidate.groupKey === item.groupKey),
       ).toHaveLength(2);
     }
+
     await run(
       kill(guild.id, {
         npcId: 100,
@@ -174,9 +188,11 @@ describe("personal Organization activity feed", () => {
         occurredAt: new Date(recent.getTime() + 2000),
       }),
     );
+
     const distinct = (await run(makeUserFeed(database)(owner))).items.filter(
       (item) => item.npc?.id === 100,
     );
+
     expect(distinct).toHaveLength(2);
     expect(distinct[0]?.groupKey).not.toBe(distinct[1]?.groupKey);
   });
@@ -189,6 +205,7 @@ describe("personal Organization activity feed", () => {
         .set({ ownerId: owner })
         .where(eq(guildTable.id, other.guild.id)),
     );
+
     const loot = Schema.decodeUnknownSync(
       Schema.Array(Schema.Struct({ id: Schema.Number })),
     )(
@@ -199,11 +216,13 @@ describe("personal Organization activity feed", () => {
         )
       ).rows,
     )[0];
+
     if (!loot) throw new Error("Missing loot");
     await client.query(
       `INSERT INTO "OrganizationLootRecord" ("lootId","guildId","updatedAt") VALUES ($1,$2,now()),($1,$3,now())`,
       [loot.id, guild.id, other.guild.id],
     );
+
     const npc = Schema.decodeUnknownSync(
       Schema.Array(Schema.Struct({ id: Schema.Number })),
     )(
@@ -214,6 +233,7 @@ describe("personal Organization activity feed", () => {
         )
       ).rows,
     )[0];
+
     if (!npc) throw new Error("Missing NPC");
     await client.query(
       `INSERT INTO "LootNpc" ("lootId","npcSnapshotId") VALUES ($1,$2)`,
@@ -239,6 +259,7 @@ describe("personal Organization activity feed", () => {
       additionalItemsCount: 2,
       npc: { prof: "WARRIOR" },
     });
+
     if (ownerItems[0]?.type === "loot") {
       expect(ownerItems[0].items).toHaveLength(3);
       expect(ownerItems[0].summary?.items).toHaveLength(5);
@@ -265,11 +286,13 @@ describe("personal Organization activity feed", () => {
         lvl: 100,
         prof: expect.arrayContaining(["WARRIOR"]),
       });
+
       const published = await run(
         readPublishedFeedEntry(database, ownerItems[0].guild.id, {
           lootId: loot.id,
         }),
       );
+
       expect(published).toEqual(ownerItems[0]);
       expect(ownerItems[0].items[0]).toMatchObject({
         stat: "lvl=100;sa=10",
@@ -277,6 +300,7 @@ describe("personal Organization activity feed", () => {
         lvl: 100,
       });
     }
+
     expect(ownerItems[0]?.groupKey).toBe(ownerItems[1]?.groupKey);
     expect((await run(makeUserFeed(database)(reader))).items).toHaveLength(1);
     await client.query(`UPDATE "NpcSnapshot" SET type='HERO' WHERE id=$1`, [
@@ -309,7 +333,9 @@ describe("personal Organization activity feed", () => {
     );
     expect(messages).toHaveLength(1);
     const message = messages[0];
+
     if (!message) throw new Error("Missing publication");
+
     const payload = Schema.decodeUnknownSync(
       Schema.Struct({
         feedEntry: UserFeedItem,
@@ -318,6 +344,7 @@ describe("personal Organization activity feed", () => {
         ),
       }),
     )(JSON.parse(new TextDecoder().decode(message.content)));
+
     expect(payload.feedEntry).toEqual(
       (await run(makeUserFeed(database)(owner))).items[0],
     );
@@ -331,8 +358,10 @@ describe("personal Organization activity feed", () => {
     const id = randomUUID();
     await run(kill(guild.id, { id }));
     const messages: PublishOptions[] = [];
+
     const publish = (message: PublishOptions) => {
       messages.push(message);
+
       return Effect.fail(
         new MessagingError({
           operation: "publish",
@@ -341,6 +370,7 @@ describe("personal Organization activity feed", () => {
         }),
       );
     };
+
     await run(
       makeGuildKillActivityPublisher(database, { publish })({
         guildId: guild.id,
@@ -397,6 +427,7 @@ describe("personal Organization activity feed", () => {
     const seen = new Map<string, string>();
     const published = Promise.withResolvers<void>();
     let publicationCount = 0;
+
     const create = makeKillCreation(
       database,
       {
@@ -409,6 +440,7 @@ describe("personal Organization activity feed", () => {
           Effect.sync(() => {
             if (seen.has(key)) return false;
             seen.set(key, value);
+
             return true;
           }),
       },
@@ -417,6 +449,7 @@ describe("personal Organization activity feed", () => {
         publish: () => {
           publicationCount++;
           published.resolve();
+
           return Effect.fail(
             new MessagingError({
               operation: "publish",
@@ -427,20 +460,24 @@ describe("personal Organization activity feed", () => {
         },
       }),
     );
+
     const input = {
       world: "tempest",
       accountId: "1",
       characterId: "1",
       npc: { id: 123, name: "Hero", lvl: 100, wt: 80, prof: "p" },
     };
+
     await run(create(owner, input));
     await published.promise;
     await run(create(owner, input));
     expect(publicationCount).toBe(1);
+
     const acceptedSums = await client.query(
       `SELECT "uniqueKills" FROM "GuildKillSummary" WHERE "guildId"=$1`,
       [guild.id],
     );
+
     expect(acceptedSums.rows).toEqual([{ uniqueKills: 1 }]);
     expect((await run(makeUserFeed(database)(owner))).items[0]?.npc?.prof).toBe(
       "p",
@@ -459,6 +496,7 @@ describe("personal Organization activity feed", () => {
     await client.query(
       `CREATE TRIGGER reject_feed_test BEFORE INSERT ON "GuildKillActivity" FOR EACH ROW EXECUTE FUNCTION reject_feed_test()`,
     );
+
     try {
       await run(
         create(owner, {
@@ -466,10 +504,12 @@ describe("personal Organization activity feed", () => {
           npc: { ...input.npc, id: 456, name: "FAIL_FEED_TEST" },
         }),
       );
+
       const sums = await client.query(
         `SELECT "uniqueKills" FROM "GuildKillSummary" WHERE "guildId"=$1 AND "npcName"='FAIL_FEED_TEST'`,
         [guild.id],
       );
+
       expect(sums.rows).toEqual([]);
     } finally {
       await client.query(
@@ -486,6 +526,7 @@ describe("personal Organization activity feed", () => {
     );
     const feed = await run(makeUserFeed(database)(owner));
     expect(feed.items).toHaveLength(20);
+
     const expected = [99, ...Array.from({ length: 25 }, (_, i) => i + 1)]
       .map(
         (id) =>
@@ -494,6 +535,7 @@ describe("personal Organization activity feed", () => {
       .sort()
       .reverse()
       .slice(0, 20);
+
     expect(feed.items.map((item) => item.id)).toEqual(expected);
     expect(feed.items.find((item) => item.npc?.id === 99)).toMatchObject({
       type: "kill",
@@ -508,6 +550,7 @@ describe("personal Organization activity feed", () => {
       [randomUUID(), guild.id, other.guild.id],
     );
     await client.query(`ANALYZE "GuildKillActivity"`);
+
     const query = new PgDialect().sqlToQuery(
       userFeedSql(
         [{ guild, roles: [role] }],
@@ -515,10 +558,12 @@ describe("personal Organization activity feed", () => {
         new Date(Date.now() - 86400000).toISOString(),
       ),
     );
+
     const result = await client.query(
       `EXPLAIN (ANALYZE,BUFFERS,FORMAT JSON) ${query.sql}`,
       query.params,
     );
+
     const explain = Schema.decodeUnknownSync(
       Schema.Array(
         Schema.Struct({
@@ -531,9 +576,11 @@ describe("personal Organization activity feed", () => {
         }),
       ),
     )(result.rows)[0]?.["QUERY PLAN"][0];
+
     const storage = await client.query(
       `SELECT pg_total_relation_size('"GuildKillActivity"')::text AS bytes`,
     );
+
     process.stdout.write(
       `feed fixture270krows,90kscoped executionms ${explain?.["Execution Time"]}, storage ${JSON.stringify(storage.rows)}\n`,
     );

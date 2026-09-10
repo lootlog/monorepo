@@ -43,34 +43,45 @@ export function BattleHpTimelineChart({
   onTurnSelect,
 }: BattleHpTimelineChartProps) {
   const { t } = useTranslation();
+
   const isChartHidden = useBattleHpTimelineSettingsStore(
     (state) => state.isChartHidden,
   );
+
   const heightMode = useBattleHpTimelineSettingsStore(
     (state) => state.heightMode,
   );
+
   const toggleChartHidden = useBattleHpTimelineSettingsStore(
     (state) => state.toggleChartHidden,
   );
+
   const toggleHeightMode = useBattleHpTimelineSettingsStore(
     (state) => state.toggleHeightMode,
   );
+
   const { config, setLayerVisibility, resetLayers } =
     useBattleHpTimelineLayers();
+
   const isExpanded = heightMode === "expanded";
   const layerCounts = getBattleHpTimelineEventLayerCounts(timeline, warriors);
+
   const legendaryMarkerGroups = config.legendary
     ? buildLegendaryBonusMarkerGroups(timeline, warriors)
     : [];
+
   const legendaryLegendItems = getLegendaryBonusLegendItems(
     legendaryMarkerGroups,
   );
+
   const visibilityLabel = isChartHidden
     ? t("battlePanel.single.chart.showChart")
     : t("battlePanel.single.chart.hideChart");
+
   const heightLabel = isExpanded
     ? t("battlePanel.single.chart.defaultHeight")
     : t("battlePanel.single.chart.expandHeight");
+
   const VisibilityIcon = isChartHidden ? Eye : EyeOff;
   const HeightIcon = isExpanded ? ChevronsDownUp : ChevronsUpDown;
   const plotHeightClassName = isExpanded ? "h-72" : "h-36";

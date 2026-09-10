@@ -29,6 +29,7 @@ import {
 import { NotificationsList } from "./notifications-list";
 
 let test: ReturnType<typeof createNotificationTest>;
+
 const notification: StoredNotification = {
   createdAt: "2026-06-22T00:00:00.000Z",
   discordId: "discord-1",
@@ -73,6 +74,7 @@ describe("NotificationsList", () => {
 
   it("opens chat with the joined gathering after applying from a notification", async () => {
     const room = createChatReadyRoom({ world: "pandora" });
+
     const gathering: StoredNotification = {
       ...notification,
       notificationId: room.notificationId,
@@ -80,6 +82,7 @@ describe("NotificationsList", () => {
       character: room.organizerCharacter,
       world: room.world,
     };
+
     setTestRuntimeGame({
       hero: { accountId: "account-1", characterId: "101" },
     });
@@ -88,6 +91,7 @@ describe("NotificationsList", () => {
     useWindowsStore.getState().setOpen("chat", false);
     useNotificationsStore.setState({ notifications: [gathering] });
     const apply = vi.fn<typeof fetch>(async () => Response.json(room));
+
     const restoreApi = configureApiClients({
       main: {
         baseUrl: "https://api.test",
@@ -95,8 +99,10 @@ describe("NotificationsList", () => {
           const url = new URL(
             input instanceof Request ? input.url : String(input),
           );
+
           if (url.pathname.endsWith("/members/summary"))
             return Response.json([]);
+
           if (
             url.pathname ===
             `/messaging/party-gathering/${room.notificationId}/applications`
@@ -106,6 +112,7 @@ describe("NotificationsList", () => {
         },
       },
     });
+
     onTestFinished(restoreApi);
     render(<NotificationsList notifications={[gathering]} />, {
       wrapper: test.wrapper,
@@ -184,12 +191,14 @@ describe("NotificationsList", () => {
   it("finishes a CSS exit before manually removing the notification", () => {
     vi.useFakeTimers();
     useSettingsStore.setState({ animationEffectsEnabled: true });
+
     const second = {
       ...notification,
       notificationId: "second",
       listKey: "second",
       message: "Second",
     };
+
     useNotificationsStore.setState({ notifications: [notification, second] });
     render(<NotificationsList notifications={[notification, second]} />, {
       wrapper: test.wrapper,

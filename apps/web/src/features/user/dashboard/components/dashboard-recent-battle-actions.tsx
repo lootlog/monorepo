@@ -19,6 +19,7 @@ export function DashboardRecentBattleActions({
   actions: ReturnType<typeof useBattleTableActions>;
 }) {
   const { t } = useTranslation();
+
   const shareAction = battle.public
     ? {
         key: "copyLink",
@@ -30,6 +31,7 @@ export function DashboardRecentBattleActions({
         icon: Share2,
         onClick: () => actions.handleShare(battle.id),
       };
+
   const buttons = [
     shareAction,
     ...(battle.public
@@ -47,6 +49,7 @@ export function DashboardRecentBattleActions({
       onClick: () => actions.setSingleDeleteBattle(battle),
     },
   ];
+
   return (
     <div className="flex shrink-0 items-center gap-0.5 pr-2">
       <Separator

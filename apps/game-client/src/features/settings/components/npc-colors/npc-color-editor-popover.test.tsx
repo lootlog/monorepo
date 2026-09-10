@@ -38,6 +38,7 @@ describe("NpcColorEditorPopover", () => {
   it("restores the saved color when Escape closes the popover", () => {
     const onDraftChange =
       vi.fn<ComponentProps<typeof NpcColorEditorPopover>["onDraftChange"]>();
+
     const onOpenChange =
       vi.fn<ComponentProps<typeof NpcColorEditorPopover>["onOpenChange"]>();
 

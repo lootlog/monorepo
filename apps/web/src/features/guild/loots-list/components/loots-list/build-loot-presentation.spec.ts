@@ -15,6 +15,7 @@ const firstItem = {
   lvl: 100,
   prof: [],
 } satisfies LootPresentationData["items"][number];
+
 const firstPlayer = {
   id: "first",
   name: "First",
@@ -25,6 +26,7 @@ const firstPlayer = {
   accountId: null,
   hpp: null,
 } satisfies LootPresentationData["players"][number];
+
 const loot = {
   items: [firstItem, { ...firstItem, id: 2, hid: "shield" }],
   players: [firstPlayer, { ...firstPlayer, id: "second", name: "Second" }],
@@ -53,6 +55,7 @@ describe("loot presentation ownership", () => {
       players: [firstPlayer],
       lootShare: {},
     });
+
     expect(result.itemsByPlayer.first).toEqual(loot.items);
     expect(result.unassignedItems).toEqual([]);
   });

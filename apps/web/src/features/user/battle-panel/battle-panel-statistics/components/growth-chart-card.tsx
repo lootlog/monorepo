@@ -76,6 +76,7 @@ export function GrowthChartCard<TData extends { date: string }>({
                         const point = chartData.find(
                           (entry) => entry === properties.payload,
                         );
+
                         return [
                           point ? tooltipValue(point[dataKey], point) : "",
                           "",

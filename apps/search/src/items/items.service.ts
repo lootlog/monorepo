@@ -21,6 +21,7 @@ type SearchItemsResponse = {
 };
 
 type IndexItem = IndexItemsCommand["items"][number];
+
 type IndexedItem = IndexItem & {
   uid: string;
   worlds: string[];
@@ -119,7 +120,9 @@ export const makeItemsModule = (
     };
 
     if (facets && facets.length > 0) query.facets = facets;
+
     if (filters.length > 0) query.filter = filters.join(" AND ");
+
     if (sort && sort.length > 0) query.sort = sort;
 
     return yield* attemptMeilisearch("search.items", () =>
@@ -135,6 +138,7 @@ export const makeItemsModule = (
             "Items index settings are stale, retrying search without stat attribute",
             { error },
           );
+
           return attemptMeilisearch("search.items.fallback", () =>
             index.search(searchTerm, {
               ...query,
@@ -144,11 +148,14 @@ export const makeItemsModule = (
             Effect.map(mapSearchResponse),
             Effect.catch((fallbackError) => {
               logger.error("Items search error", { error: fallbackError });
+
               return Effect.fail(fallbackError);
             }),
           );
         }
+
         logger.error("Items search error", { error });
+
         return Effect.fail(error);
       }),
     );
@@ -165,6 +172,7 @@ export const makeItemsModule = (
       search,
       world,
     });
+
     return response.hits;
   });
 
@@ -175,11 +183,13 @@ export const makeItemsModule = (
 
     const validItems = data.items.filter((item) => {
       const worlds = itemWorlds(item);
+
       return item.id && item.name && worlds.length > 0;
     });
 
     if (validItems.length === 0) {
       logger.warn("No valid items to index (missing required fields)");
+
       return;
     }
 
@@ -191,8 +201,10 @@ export const makeItemsModule = (
 
     const itemsById = mergeItemsById(validItems);
     const worldsById = new Map<string, string[]>();
+
     for (let offset = 0; offset < itemsById.length; offset += 100) {
       const batch = itemsById.slice(offset, offset + 100);
+
       const stored = yield* attemptMeilisearch(
         "search.items.existing-worlds",
         () =>
@@ -202,10 +214,12 @@ export const makeItemsModule = (
             limit: batch.length,
           }),
       );
+
       for (const item of stored.results) {
         worldsById.set(item.uid, item.worlds ?? []);
       }
     }
+
     const itemsWithSearchFields = itemsById.map(
       ({ world: _world, ...item }) => ({
         ...item,

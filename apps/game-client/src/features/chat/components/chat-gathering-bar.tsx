@@ -38,6 +38,7 @@ export function selectFeaturedGathering(
         (candidate) => candidate.notificationId === frozen.notificationId,
       ) ?? null
     );
+
   return candidates[0] ?? null;
 }
 
@@ -55,6 +56,7 @@ export function ChatGatheringBar({
   const { t } = useTranslation("chat");
   const discovery = useActivePartyGatherings();
   const level = useGameStore((state) => state.game?.hero.level ?? 0);
+
   const scopeKey = useGameStore((state) =>
     getHiddenPartyGatheringsScopeKey({
       userId: discovery.userId,
@@ -63,15 +65,19 @@ export function ChatGatheringBar({
       characterId: state.game?.hero.characterId,
     }),
   );
+
   const hiddenByScope = useHiddenPartyGatheringsStore(
     (state) => state.hiddenByScope,
   );
+
   const identity = getCurrentReadyRoomCharacterIdentity();
+
   const room = usePartyFinderStore(
     (state) =>
       selectOwnedReadyRoom(state) ??
       selectReadyRoomForCharacter(state, identity),
   );
+
   const roomId = room?.notificationId;
   const isOrganizer = room?.viewer === "ORGANIZER";
   const queryClient = useQueryClient();
@@ -82,17 +88,22 @@ export function ChatGatheringBar({
 
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
+
   const [frozen, setFrozen] = useState<ActivePartyGatheringSummary | null>(
     null,
   );
+
   const barRef = useRef<HTMLDivElement>(null);
   const hiddenTriggerRef = useRef<HTMLButtonElement>(null);
   const pendingRef = useRef(false);
+
   const application = useMutation({
     mutationFn: (target: ActivePartyGatheringSummary) => {
       const character = buildCurrentCharacterPayload();
+
       if (!character || target.world !== useGameStore.getState().game?.world)
         throw new Error("Character changed");
+
       return partyReadyRoomControllerApply(
         { notificationId: target.notificationId },
         { world: target.world, character },
@@ -109,20 +120,26 @@ export function ChatGatheringBar({
       });
     },
   });
+
   const eligibleGatherings = discovery.data.filter(
     (candidate) =>
       level >= (candidate.minLvl ?? 0) &&
       level <= (candidate.maxLvl ?? Infinity),
   );
+
   const hiddenIds = scopeKey ? hiddenByScope[scopeKey] : undefined;
+
   const hidden = (candidate: ActivePartyGatheringSummary) =>
     (hiddenIds?.[candidate.notificationId] ?? 0) > discovery.observedAt;
+
   const candidates = eligibleGatherings.filter(
     (candidate) => !hidden(candidate) && candidate.notificationId !== roomId,
   );
+
   const hiddenGatherings = eligibleGatherings.filter(hidden);
   const locked = hovered || focused || application.isPending;
   const target = selectFeaturedGathering(candidates, locked ? frozen : null);
+
   const apply = (
     candidate: ActivePartyGatheringSummary,
     allowHidden = false,
@@ -141,6 +158,7 @@ export function ChatGatheringBar({
     setFrozen(candidate);
     application.mutate(candidate);
   };
+
   const hideGathering = (candidate: ActivePartyGatheringSummary) => {
     if (!scopeKey || pendingRef.current || roomId === candidate.notificationId)
       return;
@@ -151,16 +169,20 @@ export function ChatGatheringBar({
         candidate.notificationId,
         Date.parse(candidate.expiresAt),
       );
+
     if (target?.notificationId === candidate.notificationId) setFrozen(null);
     requestAnimationFrame(() => hiddenTriggerRef.current?.focus());
   };
+
   useEffect(() => {
     const join = () => {
       if (!isVisible || !barRef.current?.getClientRects().length) return;
+
       if (room) {
         if (isOrganizer || withdrawingRef.current) return;
         setWithdrawFailed(false);
         const request = withdrawal.withdraw();
+
         if (!request) return;
         withdrawingRef.current = true;
         void request
@@ -172,25 +194,31 @@ export function ChatGatheringBar({
         apply(target);
       }
     };
+
     window.addEventListener("lootlog:join-visible-gathering", join);
+
     return () =>
       window.removeEventListener("lootlog:join-visible-gathering", join);
   });
   const hasError = discovery.isError;
+
   const {
     isError: applyError,
     variables: appliedTarget,
     reset: resetApplication,
   } = application;
+
   const appliedHidden = hiddenGatherings.some(
     (candidate) => candidate.notificationId === appliedTarget?.notificationId,
   );
+
   const applyFailed =
     applyError &&
     [
       appliedTarget.notificationId === target?.notificationId,
       appliedHidden,
     ].some(Boolean);
+
   useEffect(() => {
     if (
       applyError &&
@@ -205,12 +233,14 @@ export function ChatGatheringBar({
     target?.notificationId,
     appliedHidden,
   ]);
+
   const showBar = [
     participantRoom,
     candidates.length,
     hasError,
     applyFailed,
   ].some(Boolean);
+
   return children(
     showBar && (
       <div

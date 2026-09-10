@@ -14,7 +14,9 @@ import { configureApiClients } from "@lootlog/client/transport";
 import { useChatGuildData } from "./use-chat-guild-data";
 
 const historyRequests = vi.fn<(guildId: string) => Promise<Response>>();
+
 let restoreApi: () => void;
+
 beforeEach(() => {
   restoreApi = configureApiClients({
     main: {
@@ -23,9 +25,11 @@ beforeEach(() => {
         const url = new URL(
           input instanceof Request ? input.url : String(input),
         );
+
         if (url.pathname.endsWith("/chat-messages")) {
           return await historyRequests(url.pathname.split("/")[2] ?? "");
         }
+
         if (url.pathname.endsWith("/members/summary")) return Response.json([]);
         throw new Error(`Unexpected HTTP request: ${url.pathname}`);
       },
@@ -43,6 +47,7 @@ describe("useChatGuildData", () => {
     for (const queryClient of queryClients) {
       queryClient.clear();
     }
+
     queryClients.length = 0;
     historyRequests.mockReset();
     restoreApi();
@@ -52,6 +57,7 @@ describe("useChatGuildData", () => {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     });
+
     queryClients.push(queryClient);
     let resolveRequest: (messages: ChatMessageType[]) => void = () => undefined;
     historyRequests.mockReturnValue(
@@ -59,9 +65,11 @@ describe("useChatGuildData", () => {
         resolveRequest = resolve;
       }).then((messages) => Response.json(messages)),
     );
+
     const wrapper = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
+
     const { result } = renderHook(
       () =>
         useChatGuildData({
@@ -75,10 +83,12 @@ describe("useChatGuildData", () => {
     await waitFor(() => {
       expect(historyRequests).toHaveBeenCalledTimes(1);
     });
+
     const socketMessage = createMessage(
       "message-2",
       "2026-01-01T10:02:00.000Z",
     );
+
     act(() => {
       updateChatMessagesCache({
         guildId: "guild-1",
@@ -101,15 +111,19 @@ describe("useChatGuildData", () => {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     });
+
     queryClients.push(queryClient);
+
     const chatQueryKey = getChatControllerGetChatMessagesQueryKey({
       guildId: "guild-1",
     });
+
     const initialMessage = createMessage(
       "message-1",
       "2026-01-01T10:01:00.000Z",
       "before reconnect",
     );
+
     queryClient.setQueryData(chatQueryKey, [initialMessage], { updatedAt: 1 });
     let resolveRequest: (messages: ChatMessageType[]) => void = () => undefined;
     historyRequests.mockReturnValue(
@@ -121,6 +135,7 @@ describe("useChatGuildData", () => {
     const wrapper = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
+
     const { result } = renderHook(
       () =>
         useChatGuildData({
@@ -134,15 +149,18 @@ describe("useChatGuildData", () => {
     await waitFor(() => {
       expect(historyRequests).toHaveBeenCalledTimes(1);
     });
+
     const socketUpdate = createMessage(
       "message-1",
       "2026-01-01T10:01:00.000Z",
       "updated over socket",
     );
+
     const socketMessage = createMessage(
       "message-3",
       "2026-01-01T10:03:00.000Z",
     );
+
     act(() => {
       queryClient.setQueryData(chatQueryKey, [socketUpdate, socketMessage]);
       resolveRequest([
@@ -170,6 +188,7 @@ describe("useChatGuildData", () => {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     });
+
     queryClients.push(queryClient);
     historyRequests.mockImplementation((guildId) => {
       if (guildId === "guild-2") {
@@ -182,9 +201,11 @@ describe("useChatGuildData", () => {
         Response.json([createMessage("message-1", "2026-01-01T10:01:00.000Z")]),
       );
     });
+
     const wrapper = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
+
     const { result } = renderHook(
       () =>
         useChatGuildData({
@@ -211,11 +232,14 @@ describe("useChatGuildData", () => {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     });
+
     queryClients.push(queryClient);
     historyRequests.mockRejectedValue(new Error("network"));
+
     const wrapper = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
+
     const { result } = renderHook(
       () =>
         useChatGuildData({

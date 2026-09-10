@@ -30,6 +30,7 @@ export function EditMyReservationDialog({
   const { t } = useTranslation();
   const isMobile = useIsMobile();
   const dialogOpen = open && reservation !== null;
+
   const form = reservation ? (
     <EditMyReservationForm
       key={reservation.id}

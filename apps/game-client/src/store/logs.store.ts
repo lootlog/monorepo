@@ -2,16 +2,21 @@ import { storageKey } from "@/lib/storage-key";
 import { create } from "zustand";
 
 export const LOGS_STORAGE_KEY = storageKey("ll:logs:state");
+
 export const LOGS_CAP = 200;
+
 export const LOGS_BYTE_CAP = 5 * 1024 * 1024;
 
 let nextLogSequence = 0;
 
 export type LogActionType = string;
+
 export type LogEntryStatus = "success" | "error" | "partial";
+
 export type LogRequestStatus = "success" | "error";
 
 type SerializablePrimitive = boolean | number | string | null;
+
 export type SerializableValue =
   | SerializablePrimitive
   | SerializableValue[]
@@ -80,6 +85,7 @@ clearPersistedLogsStorage();
 
 const createLogId = (): string => {
   nextLogSequence += 1;
+
   return `${Date.now()}-${nextLogSequence}`;
 };
 
@@ -103,6 +109,7 @@ const trimActionRequestsToFit = (
     const candidateRequestIndex = Math.floor(
       (minimumRequestIndex + maximumRequestIndex) / 2,
     );
+
     const candidate = {
       ...action,
       requests: action.requests.slice(candidateRequestIndex),
@@ -132,21 +139,25 @@ const withRetentionLimits = (actions: LoggedAction[]): LoggedAction[] => {
 
   for (let index = countCappedActions.length - 1; index >= 0; index -= 1) {
     const sourceAction = countCappedActions[index];
+
     if (!sourceAction) {
       continue;
     }
 
     const availableBytes = LOGS_BYTE_CAP - retainedBytes;
+
     const action =
       retainedActions.length === 0
         ? trimActionRequestsToFit(sourceAction, availableBytes)
         : sourceAction;
+
     if (!action) {
       return [];
     }
 
     const separatorBytes = retainedActions.length > 0 ? 1 : 0;
     const actionBytes = getSerializedByteLength(action);
+
     if (retainedBytes + separatorBytes + actionBytes > LOGS_BYTE_CAP) {
       break;
     }
@@ -162,6 +173,7 @@ export const useLogsStore = create<LogsState>()((set) => ({
   actions: [],
   appendAction: ({ actionType, payload, details }) => {
     const actionId = createLogId();
+
     const action: LoggedAction = {
       id: actionId,
       createdAt: new Date().toISOString(),

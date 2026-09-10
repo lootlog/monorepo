@@ -37,11 +37,14 @@ describe("AppBreadcrumbs", () => {
         />
       ),
     });
+
     const route = createRoute({ getParentRoute: () => root, path: "/$" });
+
     const router = createRouter({
       routeTree: root.addChildren([route]),
       history: createMemoryHistory({ initialEntries: ["/guild"] }),
     });
+
     await router.load();
     const { container } = render(<RouterProvider router={router} />);
 
@@ -60,6 +63,7 @@ describe("AppBreadcrumbs", () => {
     const breadcrumbItems = container.querySelectorAll(
       '[data-slot="breadcrumb-item"]',
     );
+
     expect(breadcrumbItems[0]?.className).toContain("2xl:inline-flex");
     expect(breadcrumbItems[2]?.className).toContain("xl:inline-flex");
     expect(breadcrumbItems[3]?.className).toContain("sm:inline-flex");

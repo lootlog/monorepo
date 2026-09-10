@@ -15,7 +15,7 @@ import {
   isServerEventFrame,
   type SubscriptionScope,
 } from "@lootlog/protocol/realtime";
-import { Effect, Schema } from "effect";
+import { Effect, Result, Schema } from "effect";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 import {
   type BackgroundTaskRunner,
@@ -35,25 +35,32 @@ import { canReadPreciseLocation } from "#src/realtime/subscription-policy";
 import { SubscriptionLimitExceeded } from "#src/realtime/realtime-errors";
 
 type Scope = typeof SubscriptionScope.Type;
+
 type Event = typeof ServerEvent.Type;
+
 type Response = typeof RealtimeResponse.Type;
 
 // ponytail: replay deduplication covers 10,000 events per live instance; use a durable inbox if retries must survive eviction or restarts.
 const MAX_DEDUPLICATION_ENTRIES = 10_000;
+
 const MAX_SUBSCRIPTIONS = 4_096;
+
 const MAX_SCOPE_BYTES = 1_024;
+
 const ConnectionRegistration = Schema.Struct({
   connectionId: Schema.String,
   instanceId: Schema.String,
   userId: Schema.String,
   discordId: Schema.String,
 });
+
 const decodeConnectionRegistration = Schema.decodeUnknownSync(
   Schema.fromJsonString(ConnectionRegistration),
 );
 
 const toBase64 = (bytes: Uint8Array): string =>
   Buffer.from(bytes).toString("base64");
+
 const fromBase64 = (value: string): Uint8Array => Buffer.from(value, "base64");
 
 export const getScopeKey = (scope: Scope): string =>
@@ -77,6 +84,7 @@ const getScopeAudienceKey = (scope: Scope): string =>
 // Four optional fields produce at most 16 exact/wildcard subscription keys.
 const matchingScopeAudienceKeys = (scope: Scope): string[] => {
   let keys: Array<Array<string | number | undefined>> = [[scope.topic]];
+
   for (const value of [
     scope.organizationId,
     scope.eventId,
@@ -92,6 +100,7 @@ const matchingScopeAudienceKeys = (scope: Scope): string[] => {
           ],
     );
   }
+
   return keys.map((key) => JSON.stringify(key));
 };
 
@@ -135,11 +144,14 @@ export class RealtimeHub {
 
   register(socket: GatewaySocket): void {
     const previous = this.sockets.get(socket.data.connectionId);
+
     if (previous) {
       for (const key of this.audienceKeys(previous.data))
         this.removeAudience(key, previous);
     }
+
     this.sockets.set(socket.data.connectionId, socket);
+
     for (const key of this.audienceKeys(socket.data))
       this.addAudience(key, socket);
     this.runBackground(
@@ -154,6 +166,7 @@ export class RealtimeHub {
   unregister(socket: GatewaySocket): void {
     if (this.sockets.get(socket.data.connectionId) !== socket) return;
     this.sockets.delete(socket.data.connectionId);
+
     for (const key of this.audienceKeys(socket.data))
       this.removeAudience(key, socket);
     this.runBackground(
@@ -177,13 +190,16 @@ export class RealtimeHub {
   subscribe(socket: GatewaySocket, scope: Scope): void {
     const key = getScopeKey(scope);
     const previous = socket.data.subscriptions.get(key);
+
     if (
       (!previous && socket.data.subscriptions.size >= MAX_SUBSCRIPTIONS) ||
       Buffer.byteLength(JSON.stringify(scope)) > MAX_SCOPE_BYTES
     )
       throw new SubscriptionLimitExceeded();
+
     if (previous) this.unsubscribe(socket, previous);
     socket.data.subscriptions.set(key, scope);
+
     if (this.sockets.get(socket.data.connectionId) === socket)
       this.addAudience(getScopeAudienceKey(scope), socket);
   }
@@ -191,12 +207,15 @@ export class RealtimeHub {
   unsubscribe(socket: GatewaySocket, scope: Scope): void {
     const key = getScopeKey(scope);
     const removed = socket.data.subscriptions.get(key);
+
     if (!removed) return;
     socket.data.subscriptions.delete(key);
+
     for (const subscription of socket.data.subscriptions.values()) {
       if (getScopeAudienceKey(subscription) === getScopeAudienceKey(removed))
         return;
     }
+
     this.removeAudience(getScopeAudienceKey(removed), socket);
   }
 
@@ -207,6 +226,7 @@ export class RealtimeHub {
     const replacements = new Map(
       scopes.map((scope) => [getScopeKey(scope), scope]),
     );
+
     if (
       replacements.size > MAX_SUBSCRIPTIONS ||
       scopes.some(
@@ -220,9 +240,11 @@ export class RealtimeHub {
       socket.close(1008, "subscription limit exceeded");
       throw new SubscriptionLimitExceeded();
     }
+
     for (const scope of socket.data.subscriptions.values())
       this.removeAudience(getScopeAudienceKey(scope), socket);
     socket.data.subscriptions.clear();
+
     for (const scope of replacements.values()) this.subscribe(socket, scope);
   }
 
@@ -256,12 +278,16 @@ export class RealtimeHub {
     const connectionIds = await this.redis.command.smembers(
       this.userConnectionsKey(userId),
     );
+
     if (connectionIds.length === 0) return [];
+
     const values = await this.redis.command.mget(
       connectionIds.map((id) => this.connectionKey(id)),
     );
+
     return values.flatMap((value) => {
       if (!value) return [];
+
       try {
         return [decodeConnectionRegistration(value)];
       } catch {
@@ -276,6 +302,7 @@ export class RealtimeHub {
 
   sendEvent(socket: GatewaySocket, event: Event): boolean {
     if (!canReadApiKeyEvent(socket.data, event)) return false;
+
     return this.sendFrame(socket, event);
   }
 
@@ -297,6 +324,7 @@ export class RealtimeHub {
       scope,
       frame: event,
     });
+
     this.deliver(message, bytes);
     // Retry federation even when this instance already delivered the publication.
     await this.redis.publish(message);
@@ -313,11 +341,13 @@ export class RealtimeHub {
     } = {},
   ): Promise<void> {
     if (scopes.length === 0) return;
+
     const { message, bytes } = this.createFederatedMessage({
       scopes,
       frame: event,
       ...options,
     });
+
     this.deliver(message, bytes);
     await this.redis.publish(message);
   }
@@ -327,6 +357,7 @@ export class RealtimeHub {
       userId,
       frame: event,
     });
+
     this.deliver(message, bytes);
     await this.redis.publish(message);
   }
@@ -336,6 +367,7 @@ export class RealtimeHub {
       discordId,
       frame: event,
     });
+
     this.deliver(message, bytes);
     await this.redis.publish(message);
   }
@@ -370,8 +402,10 @@ export class RealtimeHub {
     preciseEvent: Event,
   ): Promise<void> {
     const organizationId = scope.organizationId;
+
     if (!organizationId) return;
     const scopeKey = getScopeKey(scope);
+
     const messages = [
       this.createFederatedMessage({
         scopeKey,
@@ -388,6 +422,7 @@ export class RealtimeHub {
         frame: preciseEvent,
       }),
     ];
+
     for (const { message, bytes } of messages) {
       this.deliver(message, bytes);
       await this.redis.publish(message);
@@ -427,6 +462,7 @@ export class RealtimeHub {
     readonly frame: Event;
   }) {
     const bytes = encodeRealtimeFrame(options.frame);
+
     return {
       bytes,
       message: {
@@ -451,16 +487,20 @@ export class RealtimeHub {
 
   private receiveFederated(message: FederatedRealtimeMessage): void {
     if (message.sourceInstanceId === this.instanceId) return;
+
     if (message.control) {
       if (!this.remember(message.id)) return;
+
       for (const listener of this.permissionRebalanceListeners) {
         this.runBackground(
           "permissions.rebalance",
           listener(message.control.discordId, message.control.userId),
         );
       }
+
       return;
     }
+
     this.deliver(message);
   }
 
@@ -469,17 +509,22 @@ export class RealtimeHub {
     localBytes?: Uint8Array,
   ): void {
     if (!this.remember(message.id)) return;
+
     if (!message.frame) return;
+
     const decoded = tryDecodeRealtimeFrame(
       localBytes ?? fromBase64(message.frame),
     );
-    if (decoded._tag === "Failure") {
+
+    if (Result.isFailure(decoded)) {
       this.logger.warn(
         "Rejected malformed Redis federation frame",
         decoded.failure,
       );
+
       return;
     }
+
     if (!isServerEventFrame(decoded.success)) return;
     const frame = decoded.success;
     let jsonFrame: string | undefined;
@@ -489,8 +534,10 @@ export class RealtimeHub {
 
     for (const socket of this.candidates(message)) {
       if (!this.matchesRecipient(socket, message)) continue;
+
       if (socket.data.apiKeyAccess && frame.type === "map-ping.received") {
         const scopes = message.scopes ?? (message.scope ? [message.scope] : []);
+
         if (
           !scopes.length ||
           !scopes.every(
@@ -506,16 +553,21 @@ export class RealtimeHub {
         )
           continue;
       }
+
       if (!this.matchesPresenceAudience(socket, message)) continue;
+
       if (!canReadSourceEvent(socket.data, frame, message.sourceNpcs)) continue;
+
       if (frame.type === "chat.created") {
         this.send(socket, this.encodeChatEvent(socket.data, frame, chatFrames));
         continue;
       }
+
       const encoded =
         socket.data.frameEncoding === "json"
           ? (jsonFrame ??= JSON.stringify(frame))
           : (binaryFrame ??= encodeRealtimeFrame(frame));
+
       this.send(socket, encoded);
     }
   }
@@ -528,6 +580,7 @@ export class RealtimeHub {
     const permissions = chatMessagePermissions(session, event);
     const key = `${session.frameEncoding}:${permissions.canDelete}`;
     let encoded = frames.get(key);
+
     if (encoded === undefined) {
       const recipientFrame = withChatMessagePermissions(event, permissions);
       encoded =
@@ -536,6 +589,7 @@ export class RealtimeHub {
           : encodeRealtimeFrame(recipientFrame);
       frames.set(key, encoded);
     }
+
     return encoded;
   }
 
@@ -549,17 +603,21 @@ export class RealtimeHub {
 
   private addAudience(key: string, socket: GatewaySocket): void {
     let audience = this.audiences.get(key);
+
     if (!audience) {
       audience = new Set();
       this.audiences.set(key, audience);
     }
+
     audience.add(socket);
   }
 
   private removeAudience(key: string, socket: GatewaySocket): void {
     const audience = this.audiences.get(key);
+
     if (!audience) return;
     audience.delete(socket);
+
     if (audience.size === 0) this.audiences.delete(key);
   }
 
@@ -567,25 +625,35 @@ export class RealtimeHub {
     message: FederatedRealtimeMessage,
   ): Iterable<GatewaySocket> {
     const keys: string[] = [];
+
     if (message.userId !== undefined)
       keys.push(JSON.stringify(["user", message.userId]));
+
     if (message.discordId !== undefined)
       keys.push(JSON.stringify(["discord", message.discordId]));
     const scopes = message.scope ? [message.scope] : [];
+
     if (message.scopes) scopes.push(...message.scopes);
+
     for (const scope of scopes) {
       keys.push(...matchingScopeAudienceKeys(scope));
     }
+
     const [first, ...others] = keys.flatMap((key) => {
       const audience = this.audiences.get(key);
+
       return audience ? [audience] : [];
     });
+
     if (!first) return [];
+
     if (others.length === 0) return [...first];
     const candidates = new Set(first);
+
     for (const audience of others) {
       for (const socket of audience) candidates.add(socket);
     }
+
     return candidates;
   }
 
@@ -594,21 +662,25 @@ export class RealtimeHub {
     message: FederatedRealtimeMessage,
   ): boolean {
     if (socket.data.connectionId === message.excludeConnectionId) return false;
+
     if (
       message.recipientPlatform !== undefined &&
       socket.data.platform !== message.recipientPlatform
     )
       return false;
+
     if (
       message.recipientWorld !== undefined &&
       socket.data.presence?.character?.world !== message.recipientWorld
     )
       return false;
+
     if (
       message.recipientMapId !== undefined &&
       socket.data.presence?.location?.mapId !== message.recipientMapId
     )
       return false;
+
     return true;
   }
 
@@ -618,6 +690,7 @@ export class RealtimeHub {
   ): boolean {
     if (!message.presenceAudience || !message.organizationId) return true;
     const precise = canReadPreciseLocation(socket.data, message.organizationId);
+
     return message.presenceAudience === "precise" ? precise : !precise;
   }
 
@@ -625,10 +698,13 @@ export class RealtimeHub {
     if (this.seenEventIds.has(id)) return false;
     this.seenEventIds.add(id);
     this.seenEventOrder.push(id);
+
     if (this.seenEventOrder.length > MAX_DEDUPLICATION_ENTRIES) {
       const evicted = this.seenEventOrder.shift();
+
       if (evicted) this.seenEventIds.delete(evicted);
     }
+
     return true;
   }
 
@@ -644,19 +720,25 @@ export class RealtimeHub {
   private send(socket: GatewaySocket, data: string | Uint8Array): boolean {
     if (!hasValidApiKeyLease(socket.data)) {
       socket.close(1008, "API key authorization expired");
+
       return false;
     }
+
     if (socket.getBufferedAmount() > this.config.maxBackpressureBytes) {
       socket.data.backpressureStrikes += 1;
+
       if (
         socket.data.backpressureStrikes >= this.config.maxBackpressureStrikes
       ) {
         socket.close(1013, "backpressure limit exceeded");
       }
+
       return false;
     }
+
     socket.data.backpressureStrikes = 0;
     socket.send(data, true);
+
     return true;
   }
 }

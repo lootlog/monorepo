@@ -15,11 +15,13 @@ import { TimerHistoryPopover } from "./timer-history-popover";
 it("opens a timer's history from its context menu and restores the selected entry", async () => {
   const user = userEvent.setup();
   const fixture = createTimerHttpFixture();
+
   const timer = {
     ...createTimerFixture({ timerKey: fixture.history.timerKey }),
     minTimeLeft: 0,
     maxTimeLeft: 0,
   };
+
   const view = render(
     <QueryClientProvider client={fixture.queryClient}>
       <ContextMenu>
@@ -30,6 +32,7 @@ it("opens a timer's history from its context menu and restores the selected entr
       </ContextMenu>
     </QueryClientProvider>,
   );
+
   try {
     expect(fixture.requests).toHaveLength(0);
     await user.pointer({

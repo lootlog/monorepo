@@ -27,6 +27,7 @@ ${chalk.bold("Examples:")}
 ${chalk.bold("Global Options:")}
   -h, --help                     Show this help message
     `);
+
     return;
   }
 

@@ -44,5 +44,6 @@ export const isToday = (date: Date): boolean =>
 export const isYesterday = (date: Date): boolean => {
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
+
   return isSameLocalDay(date, yesterday);
 };

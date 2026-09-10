@@ -393,6 +393,7 @@ const MITIGATION_ACTIONS = new Set([
   "active_decblock_per-enemies",
   "alllowdmg",
 ]);
+
 const COUNTER_ACTIONS = new Set(["-contra"]);
 
 const ABSORB_GAIN_ACTIONS = new Set([
@@ -403,7 +404,9 @@ const ABSORB_GAIN_ACTIONS = new Set([
 ]);
 
 const MAGIC_ABSORB_GAIN_ACTIONS = new Set(["+absorbm", "+abmdest_per"]);
+
 const ABSORB_SPEND_ACTIONS = new Set(["-absorb"]);
+
 const MAGIC_ABSORB_SPEND_ACTIONS = new Set(["-absorbm"]);
 
 const CONTROL_ACTIONS = new Set([
@@ -443,8 +446,11 @@ const HEALING_ACTIONS = new Set([
 ]);
 
 const SPELL_ACTIONS = new Set(["tspell", "skillId", "+oth_dmg"]);
+
 const COMBO_ACTIONS = new Set(["combo", "combo-max"]);
+
 const OUTCOME_ACTIONS = new Set(["winner", "loser", "flee", "+ph"]);
+
 const MOVEMENT_ACTIONS = new Set(["step", "+swing"]);
 
 const LEGENDARY_ACTIONS = new Set([
@@ -502,12 +508,14 @@ const DAMAGE_ACTIONS = new Set([
   ...SPECIAL_DAMAGE_ACTIONS.keys(),
   ...PASSIVE_DAMAGE_ACTIONS,
 ]);
+
 const ABSORB_ACTIONS = new Set([
   ...ABSORB_GAIN_ACTIONS,
   ...MAGIC_ABSORB_GAIN_ACTIONS,
   ...ABSORB_SPEND_ACTIONS,
   ...MAGIC_ABSORB_SPEND_ACTIONS,
 ]);
+
 const ACTION_CATEGORY_SETS: ReadonlyArray<
   readonly [BattleActionCategory, ReadonlySet<string>]
 > = [
@@ -541,6 +549,7 @@ type DefenderActionContext = {
 };
 
 type WarriorActionHandler = (context: WarriorActionContext) => void;
+
 type DefenderActionHandler = (context: DefenderActionContext) => void;
 
 type TeamOutcomeMetrics = {
@@ -612,6 +621,7 @@ const addWarriorStat =
   ): WarriorActionHandler =>
   (context) => {
     const warrior = context[side];
+
     if (warrior) warrior[stat] += increment ?? context.value;
   };
 
@@ -627,6 +637,7 @@ const ATTACKER_ACTION_HANDLERS = new Map<string, WarriorActionHandler>(
     "+rage": addWarriorStat("attacker", "rageDamageDealt"),
     "+taken_dmg": ({ attacker, defender, value }) => {
       attacker.stigmaDamageDealt += value;
+
       if (defender) defender.stigmaDamageTaken += value;
     },
     "+pierce": addWarriorStat("attacker", "armorPierces", 1),
@@ -839,6 +850,7 @@ export class BattleProcessor {
           : null,
         actions: actions.map((action) => {
           const [actionType = "", param = ""] = action.split("=");
+
           return { actionType, param };
         }),
       };
@@ -861,13 +873,16 @@ export class BattleProcessor {
       }
 
       const tspellAction = move.actions.find((a) => a.actionType === "tspell");
+
       const skillIdAction = move.actions.find(
         (a) => a.actionType === "skillId",
       );
+
       const hasStepAction = move.actions.some((a) => a.actionType === "step");
 
       if (hasStepAction && move.attackerId) {
         const attacker = this.warriors.get(move.attackerId);
+
         if (attacker) {
           attacker.turns++;
           attacker.steps++;
@@ -889,6 +904,7 @@ export class BattleProcessor {
     if (tspellAction) {
       if (move.attackerId && move.defenderId) {
         const attacker = this.warriors.get(move.attackerId);
+
         if (attacker) {
           attacker.turns++;
           attacker.spellsUsed++;
@@ -912,13 +928,16 @@ export class BattleProcessor {
       } else {
         if (move.attackerId && move.defenderId) {
           const attacker = this.warriors.get(move.attackerId);
+
           if (attacker) {
             attacker.turns++;
             attacker.normalAttacks++;
           }
         }
+
         this.remainingFollowUpAttacks = 0;
       }
+
       this.lastAttackerId = move.attackerId;
     }
   }
@@ -926,16 +945,21 @@ export class BattleProcessor {
   private updateHpTracking(move: ParsedMove) {
     if (move.attackerId && move.attackerHpPercentage !== null) {
       const attacker = this.warriors.get(move.attackerId);
+
       if (attacker && move.attackerHpPercentage <= 0) {
         attacker.isDead = true;
       }
+
       this.lastHp.set(move.attackerId, move.attackerHpPercentage);
     }
+
     if (move.defenderId && move.defenderHpPercentage !== null) {
       const defender = this.warriors.get(move.defenderId);
+
       if (defender && move.defenderHpPercentage <= 0) {
         defender.isDead = true;
       }
+
       this.lastHp.set(move.defenderId, move.defenderHpPercentage);
     }
   }
@@ -967,6 +991,7 @@ export class BattleProcessor {
       Record<string, BattleTimelineWarriorCumulative>
     >((acc, [warriorId, stats]) => {
       acc[warriorId] = copyTimelineStats(stats);
+
       return acc;
     }, {});
 
@@ -1033,6 +1058,7 @@ export class BattleProcessor {
       const category = this.getActionCategory(actionType);
       const handled = category !== "unknown";
       const value = this.parseActionValue(param);
+
       const context: TimelineActionContext = {
         actionType,
         param,
@@ -1074,19 +1100,29 @@ export class BattleProcessor {
     accumulator: TimelineActionAccumulator,
   ): void {
     if (this.processTimelineDamage(context, accumulator)) return;
+
     if (this.processTimelineHealing(context, accumulator)) return;
+
     if (this.processTimelineMitigation(context, accumulator)) return;
+
     if (this.processTimelineCounter(context, accumulator)) return;
+
     if (this.processTimelineAbsorb(context, accumulator)) return;
+
     if (this.processTimelineControl(context, accumulator)) return;
+
     if (this.processTimelineResource(context, accumulator)) return;
+
     if (this.processTimelineOtherDamage(context, accumulator)) return;
+
     if (this.processTimelineCombo(context, accumulator)) return;
+
     if (this.processTimelineOutcomeMarker(context, accumulator)) return;
 
     if (context.actionType === "txt" && context.param.includes("utrata tury")) {
       accumulator.flags.add("stun");
     }
+
     if (context.handled) accumulator.labels.add(context.actionType);
   }
 
@@ -1095,8 +1131,11 @@ export class BattleProcessor {
     accumulator: TimelineActionAccumulator,
   ): boolean {
     if (this.processTimelineDamageDealt(context, accumulator)) return true;
+
     if (this.processTimelineDamageTaken(context, accumulator)) return true;
+
     if (this.processTimelineSpecialDamage(context, accumulator)) return true;
+
     return this.processTimelinePassiveDamage(context, accumulator);
   }
 
@@ -1105,6 +1144,7 @@ export class BattleProcessor {
     accumulator: TimelineActionAccumulator,
   ): boolean {
     if (!DAMAGE_DEALT_ACTIONS.get(context.actionType)) return false;
+
     if (!accumulator.hasActualDamage && context.actorId) {
       this.addTimelineDelta(
         accumulator.byWarrior,
@@ -1114,7 +1154,9 @@ export class BattleProcessor {
       );
       accumulator.damage += context.value;
     }
+
     accumulator.flags.add("damage");
+
     return true;
   }
 
@@ -1123,6 +1165,7 @@ export class BattleProcessor {
     accumulator: TimelineActionAccumulator,
   ): boolean {
     if (!DAMAGE_TAKEN_ACTIONS.get(context.actionType)) return false;
+
     if (context.actorId) {
       this.addTimelineDelta(
         accumulator.byWarrior,
@@ -1131,6 +1174,7 @@ export class BattleProcessor {
         context.value,
       );
     }
+
     if (context.targetId) {
       this.addTimelineDelta(
         accumulator.byWarrior,
@@ -1138,6 +1182,7 @@ export class BattleProcessor {
         "damageTaken",
         context.value,
       );
+
       if (context.actionType === "-dmga" || context.actionType === "-dmgo") {
         this.addMechanic(
           context.targetId,
@@ -1146,8 +1191,10 @@ export class BattleProcessor {
         );
       }
     }
+
     accumulator.damage += context.value;
     accumulator.flags.add("damage");
+
     return true;
   }
 
@@ -1156,7 +1203,9 @@ export class BattleProcessor {
     accumulator: TimelineActionAccumulator,
   ): boolean {
     const action = SPECIAL_DAMAGE_ACTIONS.get(context.actionType);
+
     if (!action) return false;
+
     if (context.actorId) {
       this.addTimelineDelta(
         accumulator.byWarrior,
@@ -1165,6 +1214,7 @@ export class BattleProcessor {
         context.value,
       );
     }
+
     if (context.targetId && action.targetTakesDamage) {
       this.addTimelineDelta(
         accumulator.byWarrior,
@@ -1173,8 +1223,10 @@ export class BattleProcessor {
         context.value,
       );
     }
+
     accumulator.damage += context.value;
     accumulator.flags.add("damage");
+
     return true;
   }
 
@@ -1183,6 +1235,7 @@ export class BattleProcessor {
     accumulator: TimelineActionAccumulator,
   ): boolean {
     if (!PASSIVE_DAMAGE_ACTIONS.has(context.actionType)) return false;
+
     if (context.actorId) {
       this.addTimelineDelta(
         accumulator.byWarrior,
@@ -1192,8 +1245,10 @@ export class BattleProcessor {
       );
       this.addMechanic(context.actorId, "effectDamageTaken", context.value);
     }
+
     accumulator.damage += context.value;
     accumulator.flags.add("effectDamage");
+
     return true;
   }
 
@@ -1202,12 +1257,15 @@ export class BattleProcessor {
     accumulator: TimelineActionAccumulator,
   ): boolean {
     if (!HEALING_ACTIONS.has(context.actionType)) return false;
+
     const healsTarget =
       context.actionType === "heal_target" ||
       context.actionType === "legbon_lastheal";
+
     const healedWarriorId = healsTarget
       ? (context.targetId ?? context.actorId)
       : context.actorId;
+
     if (context.actorId) {
       this.addTimelineDelta(
         accumulator.byWarrior,
@@ -1215,10 +1273,12 @@ export class BattleProcessor {
         "healingDone",
         context.value,
       );
+
       if (context.actionType === "heal_target") {
         this.addMechanic(context.actorId, "targetHealing", context.value);
       }
     }
+
     if (healedWarriorId) {
       this.addTimelineDelta(
         accumulator.byWarrior,
@@ -1227,8 +1287,10 @@ export class BattleProcessor {
         context.value,
       );
     }
+
     accumulator.healing += context.value;
     accumulator.flags.add("healing");
+
     return true;
   }
 
@@ -1238,6 +1300,7 @@ export class BattleProcessor {
   ): boolean {
     if (!MITIGATION_ACTIONS.has(context.actionType)) return false;
     const defenderId = context.targetId ?? context.actorId;
+
     if (defenderId) {
       this.addTimelineDelta(
         accumulator.byWarrior,
@@ -1247,8 +1310,10 @@ export class BattleProcessor {
       );
       this.addMechanic(defenderId, "mitigationEvents", 1);
     }
+
     accumulator.mitigation += context.value;
     accumulator.flags.add(this.getMitigationFlag(context.actionType));
+
     return true;
   }
 
@@ -1258,6 +1323,7 @@ export class BattleProcessor {
   ): boolean {
     if (!COUNTER_ACTIONS.has(context.actionType)) return false;
     accumulator.flags.add("counter");
+
     return true;
   }
 
@@ -1273,8 +1339,10 @@ export class BattleProcessor {
         "absorptionGained",
         accumulator,
       );
+
       return true;
     }
+
     if (MAGIC_ABSORB_GAIN_ACTIONS.has(context.actionType)) {
       this.applyTimelineAbsorb(
         context.actorId ?? context.targetId,
@@ -1283,8 +1351,10 @@ export class BattleProcessor {
         "magicAbsorptionGained",
         accumulator,
       );
+
       return true;
     }
+
     if (ABSORB_SPEND_ACTIONS.has(context.actionType)) {
       this.applyTimelineAbsorb(
         context.targetId ?? context.actorId,
@@ -1294,8 +1364,10 @@ export class BattleProcessor {
         accumulator,
       );
       accumulator.mitigation += context.value;
+
       return true;
     }
+
     if (MAGIC_ABSORB_SPEND_ACTIONS.has(context.actionType)) {
       this.applyTimelineAbsorb(
         context.targetId ?? context.actorId,
@@ -1305,8 +1377,10 @@ export class BattleProcessor {
         accumulator,
       );
       accumulator.mitigation += context.value;
+
       return true;
     }
+
     return false;
   }
 
@@ -1340,6 +1414,7 @@ export class BattleProcessor {
       );
       this.addMechanic(warriorId, mechanicsField, value);
     }
+
     accumulator.flags.add("absorb");
   }
 
@@ -1348,6 +1423,7 @@ export class BattleProcessor {
     accumulator: TimelineActionAccumulator,
   ): boolean {
     if (!CONTROL_ACTIONS.has(context.actionType)) return false;
+
     if (context.actorId) {
       this.addTimelineDelta(
         accumulator.byWarrior,
@@ -1357,6 +1433,7 @@ export class BattleProcessor {
       );
       this.addMechanic(context.actorId, "controlApplied", 1);
     }
+
     if (context.targetId) {
       this.addTimelineDelta(
         accumulator.byWarrior,
@@ -1366,9 +1443,11 @@ export class BattleProcessor {
       );
       this.addMechanic(context.targetId, "controlTaken", 1);
     }
+
     accumulator.flags.add(
       context.actionType.includes("freeze") ? "freeze" : "stun",
     );
+
     return true;
   }
 
@@ -1379,9 +1458,11 @@ export class BattleProcessor {
     if (!RESOURCE_ACTIONS.has(context.actionType)) return false;
 
     const appliesPressure = this.isResourcePressureAction(context.actionType);
+
     const resourceTargetId = appliesPressure
       ? context.targetId
       : context.actorId;
+
     if (context.actorId && appliesPressure) {
       this.applyTimelineResourcePressure(
         context.actorId,
@@ -1390,6 +1471,7 @@ export class BattleProcessor {
         accumulator,
       );
     }
+
     if (resourceTargetId) {
       this.addTimelineDelta(
         accumulator.byWarrior,
@@ -1398,7 +1480,9 @@ export class BattleProcessor {
         this.getResourceDirection(context.actionType, context.value),
       );
     }
+
     accumulator.flags.add("resource");
+
     return true;
   }
 
@@ -1415,6 +1499,7 @@ export class BattleProcessor {
       value,
     );
     const pressureField = this.getResourcePressureField(actionType);
+
     if (pressureField) {
       this.addTimelineDelta(
         accumulator.byWarrior,
@@ -1423,8 +1508,10 @@ export class BattleProcessor {
         value,
       );
     }
+
     this.trackResourcePressure(actorId, actionType, value);
     accumulator.resourcePressure += value;
+
     if (pressureField === "energyPressure") {
       accumulator.energyPressure += value;
     } else if (pressureField === "manaPressure") {
@@ -1441,6 +1528,7 @@ export class BattleProcessor {
       actionType === "en-regen" ||
       actionType === "+energy" ||
       actionType === "+engback";
+
     return restoresResource ? value : -value;
   }
 
@@ -1449,8 +1537,10 @@ export class BattleProcessor {
     accumulator: TimelineActionAccumulator,
   ): boolean {
     if (context.actionType !== "+oth_dmg") return false;
+
     const effectiveTargetId =
       this.getTargetIdFromActionParam(context.param) ?? context.targetId;
+
     if (context.actorId) {
       this.addTimelineDelta(
         accumulator.byWarrior,
@@ -1459,6 +1549,7 @@ export class BattleProcessor {
         context.value,
       );
     }
+
     if (effectiveTargetId) {
       this.addTimelineDelta(
         accumulator.byWarrior,
@@ -1467,8 +1558,10 @@ export class BattleProcessor {
         context.value,
       );
     }
+
     accumulator.damage += context.value;
     accumulator.flags.add("damage");
+
     return true;
   }
 
@@ -1477,10 +1570,13 @@ export class BattleProcessor {
     accumulator: TimelineActionAccumulator,
   ): boolean {
     if (!COMBO_ACTIONS.has(context.actionType)) return false;
+
     if (context.actionType === "combo-max" && context.actorId) {
       this.trackComboMax(context.actorId, context.value);
     }
+
     accumulator.flags.add("combo");
+
     return true;
   }
 
@@ -1490,12 +1586,16 @@ export class BattleProcessor {
   ): boolean {
     if (context.actionType === "+ph") {
       accumulator.flags.add("ph");
+
       return true;
     }
+
     if (context.actionType === "flee") {
       accumulator.flags.add("flee");
+
       return true;
     }
+
     return false;
   }
 
@@ -1545,6 +1645,7 @@ export class BattleProcessor {
     return Array.from(this.warriors.keys()).reduce<Record<string, number>>(
       (acc, warriorId) => {
         acc[warriorId] = this.timelineHp.get(warriorId) ?? 100;
+
         return acc;
       },
       {},
@@ -1568,6 +1669,7 @@ export class BattleProcessor {
           entry.count > 0
             ? Math.round((entry.total / entry.count) * 100) / 100
             : 0;
+
         return acc;
       },
       {},
@@ -1581,6 +1683,7 @@ export class BattleProcessor {
     return Object.entries(current).reduce<Record<string, number>>(
       (acc, [team, hp]) => {
         acc[team] = Math.round((hp - (previous[team] ?? hp)) * 100) / 100;
+
         return acc;
       },
       {},
@@ -1603,15 +1706,20 @@ export class BattleProcessor {
     score += Math.min(10, Math.round(params.resourcePressure / 100));
 
     if (params.flags.has("kill")) score += 50;
+
     if (params.flags.has("flee")) score += 40;
+
     if (params.flags.has("stun") || params.flags.has("freeze")) score += 20;
+
     if (params.flags.has("absorb")) score += 12;
+
     if (params.flags.has("ph")) score += 10;
 
     const biggestTeamSwing = Math.max(
       0,
       ...Object.values(params.teamHpDelta).map((value) => Math.abs(value)),
     );
+
     score += Math.min(20, Math.round(biggestTeamSwing));
 
     return Math.min(100, score);
@@ -1625,17 +1733,27 @@ export class BattleProcessor {
     flags: Set<string>;
   }): string {
     if (params.flags.has("kill")) return "kill";
+
     if (params.flags.has("flee")) return "flee";
+
     if (params.flags.has("freeze")) return "freeze";
+
     if (params.flags.has("stun")) return "control";
+
     if (params.healing >= 500) return "bigHealing";
+
     if (params.mitigation >= 500 || params.flags.has("absorb")) {
       return "mitigation";
     }
+
     if (params.damage >= 1000) return "bigDamage";
+
     if (params.resourcePressure > 0) return "resourcePressure";
+
     if (params.flags.has("combo")) return "combo";
+
     if (params.flags.has("ph")) return "ph";
+
     return "tempo";
   }
 
@@ -1652,8 +1770,10 @@ export class BattleProcessor {
       if (this.processOutcomeAction(actionType, param)) {
         continue;
       }
+
       if (actionType === "+ph") {
         const warrior = this.warriors.get(battleMeta.characterId);
+
         if (warrior) warrior.ph = +param;
       }
 
@@ -1666,6 +1786,7 @@ export class BattleProcessor {
 
       const value = this.parseActionValue(param);
       const damageDealtStat = DAMAGE_DEALT_ACTIONS.get(actionType);
+
       if (damageDealtStat) {
         attacker.damageDealt += value;
         attacker[damageDealtStat] += value;
@@ -1673,14 +1794,17 @@ export class BattleProcessor {
       }
 
       const damageTakenStat = DAMAGE_TAKEN_ACTIONS.get(actionType);
+
       if (damageTakenStat) {
         attacker.damageDealtAfterDefensive += value;
+
         if (defender && move.defenderId) {
           defender.damageTaken += value;
           defender[damageTakenStat] += value;
           defender.flatDamageTaken += value;
           defenderTakenDamage += value;
         }
+
         continue;
       }
 
@@ -1693,6 +1817,7 @@ export class BattleProcessor {
         defender,
         attackerId: move.attackerId,
       });
+
       if (!handledSpecialAction) {
         ATTACKER_ACTION_HANDLERS.get(actionType)?.({
           attacker,
@@ -1721,12 +1846,16 @@ export class BattleProcessor {
   private processOutcomeAction(actionType: string, param: string): boolean {
     if (actionType === "winner") {
       this.battleOutcome.winner = param;
+
       return true;
     }
+
     if (actionType === "loser") {
       this.battleOutcome.loser = param;
+
       return true;
     }
+
     return false;
   }
 
@@ -1734,16 +1863,19 @@ export class BattleProcessor {
     if (param.includes("utrata tury")) {
       const warriorName = param.split(" - ")[0]?.trim();
       const warrior = warriorName ? this.findWarrior(warriorName) : null;
+
       if (warrior) {
         warrior.turns++;
         warrior.turnsLost++;
       }
+
       return;
     }
 
     if (param.includes("poddał walkę")) {
       const warriorName = param.split(" poddał walkę")[0]?.trim();
       const warrior = warriorName ? this.findWarrior(warriorName) : null;
+
       if (warrior) warrior.surrendered = true;
     }
   }
@@ -1772,12 +1904,14 @@ export class BattleProcessor {
           context.value,
         );
       }
+
       return true;
     }
 
     if (context.actionType === "flee") {
       context.attacker.fled = true;
       this.battleOutcome.hasFlee = true;
+
       return true;
     }
 
@@ -1785,6 +1919,7 @@ export class BattleProcessor {
       if (context.attackerId) {
         this.trackComboMax(context.attackerId, context.value);
       }
+
       return true;
     }
 
@@ -1801,8 +1936,10 @@ export class BattleProcessor {
     attacker.trueDamageDealt += damage;
 
     const parts = param.split(",");
+
     if (parts.length >= 3) {
       const targetNameWithHp = parts[2]?.trim();
+
       if (!targetNameWithHp) {
         return;
       }
@@ -1813,10 +1950,12 @@ export class BattleProcessor {
       const targetName = targetNamePart.trim();
 
       const found = this.findWarrior(targetName, true);
+
       if (found) {
         const [targetWarriorId, targetWarrior] = found;
         targetWarrior.damageTaken += damage;
         targetWarrior.trueDamageTaken += damage;
+
         if (targetHp !== null) {
           this.tryCalculateMaxHp(targetWarriorId, damage, targetHp);
         }
@@ -1835,12 +1974,14 @@ export class BattleProcessor {
     attacker.damageTaken += damage;
     attacker.trueDamageTaken += damage;
     attacker.reflectedDamageTaken += damage;
+
     if (defender) defender.reflectedDamage += damage;
   }
 
   private initializeBattleWarriors(events: BattlePayload["events"]): void {
     for (const event of events) {
       if (!event.f?.w) continue;
+
       for (const [id, warriorData] of Object.entries(event.f.w)) {
         if (!this.warriors.has(id)) {
           this.warriors.set(id, this.createWarrior(warriorData));
@@ -1916,20 +2057,26 @@ export class BattleProcessor {
   private parseActionValue(param: string): number {
     const [firstParam = ""] = param.split(",");
     const value = Number.parseInt(firstParam, 10);
+
     return Number.isNaN(value) ? 0 : Math.abs(value);
   }
 
   private getMitigationFlag(actionType: string): string {
     if (actionType === "-evade") return "evade";
+
     if (actionType === "-parry") return "parry";
+
     if (actionType === "-arrowblock") return "arrowBlock";
+
     if (actionType === "-pierceb") return "pierceBlock";
+
     return "block";
   }
 
   private getTargetIdFromActionParam(param: string): string | null {
     const parts = param.split(",");
     const targetNameWithHp = parts[2]?.trim();
+
     if (!targetNameWithHp) {
       return null;
     }
@@ -1937,6 +2084,7 @@ export class BattleProcessor {
     const [targetNamePart = ""] = targetNameWithHp.split("(");
     const targetName = targetNamePart.trim();
     const found = targetName ? this.findWarrior(targetName, true) : null;
+
     return found?.[0] ?? null;
   }
 
@@ -1950,6 +2098,7 @@ export class BattleProcessor {
     }
 
     const mechanics = this.warriorMechanics.get(move.attackerId);
+
     if (!mechanics) {
       return;
     }
@@ -1961,6 +2110,7 @@ export class BattleProcessor {
 
     if (currentSpell) {
       currentSpell.casts++;
+
       return;
     }
 
@@ -1974,6 +2124,7 @@ export class BattleProcessor {
 
   private trackComboMax(warriorId: string, value: number): void {
     const mechanics = this.warriorMechanics.get(warriorId);
+
     if (!mechanics) {
       return;
     }
@@ -1997,6 +2148,7 @@ export class BattleProcessor {
     value: number,
   ): void {
     const mechanics = this.warriorMechanics.get(warriorId);
+
     if (!mechanics) {
       return;
     }
@@ -2024,12 +2176,14 @@ export class BattleProcessor {
     value: number,
   ): void {
     const mechanics = this.warriorMechanics.get(warriorId);
+
     if (!mechanics) {
       return;
     }
 
     mechanics.resourcePressure += value;
     const pressureField = this.getResourcePressureField(actionType);
+
     if (pressureField) {
       mechanics[pressureField] += value;
     }
@@ -2053,10 +2207,12 @@ export class BattleProcessor {
       .sort((a, b) => b.count - a.count);
 
     const totalActions = actions.reduce((sum, action) => sum + action.count, 0);
+
     const handledActions = actions.reduce(
       (sum, action) => sum + (action.handled ? action.count : 0),
       0,
     );
+
     const unhandledActions = totalActions - handledActions;
 
     return {
@@ -2194,6 +2350,7 @@ export class BattleProcessor {
     for (const event of events) {
       if (event.match_summary) {
         const summary = event.match_summary;
+
         return {
           difficultyRank: summary.difficulty_rank,
           result: summary.result,
@@ -2257,6 +2414,7 @@ export class BattleProcessor {
         matchedTeams.push(warrior.team);
         continue;
       }
+
       if (normalizedNames.has(this.normalize(warrior.name))) {
         matchedTeams.push(warrior.team);
       }
@@ -2266,9 +2424,12 @@ export class BattleProcessor {
 
     const counts = matchedTeams.reduce<Record<number, number>>((acc, team) => {
       addTeamMetric(acc, team, 1);
+
       return acc;
     }, {});
+
     const [topEntry] = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+
     return topEntry ? Number(topEntry[0]) : null;
   }
 
@@ -2300,11 +2461,13 @@ export class BattleProcessor {
       if (losingTeam === null) {
         return this.resolveOutcomeFromMetrics(this.collectTeamOutcomeMetrics());
       }
+
       return {
         winningTeam: this.getDefaultOpposingTeam(losingTeam),
         losingTeam,
       };
     }
+
     return {
       winningTeam,
       losingTeam: this.getDefaultOpposingTeam(winningTeam),
@@ -2325,20 +2488,25 @@ export class BattleProcessor {
     if (aliveOne !== aliveTwo) {
       return this.outcomeFromComparison(aliveOne > aliveTwo);
     }
+
     if (hpOne !== hpTwo) {
       return this.outcomeFromComparison(hpOne > hpTwo);
     }
+
     if (dealtOne !== dealtTwo) {
       return this.outcomeFromComparison(dealtOne > dealtTwo);
     }
+
     if (takenOne !== takenTwo) {
       return this.outcomeFromComparison(takenOne < takenTwo);
     }
+
     return { winningTeam: teamOne, losingTeam: teamTwo };
   }
 
   private outcomeFromComparison(teamOneWins: boolean): OutcomeTeams {
     const winningTeam = teamOneWins ? 1 : 2;
+
     return {
       winningTeam,
       losingTeam: this.getDefaultOpposingTeam(winningTeam),
@@ -2374,6 +2542,7 @@ export class BattleProcessor {
       if (warrior.ph !== 0) {
         const isWinning = warrior.team === this.battleOutcome.winningTeam;
         const isLosing = warrior.team === this.battleOutcome.losingTeam;
+
         if ((isLosing && warrior.ph > 0) || (isWinning && warrior.ph < 0)) {
           warrior.ph = -warrior.ph;
         }
@@ -2411,12 +2580,15 @@ export class BattleProcessor {
     hpAfter: number | null,
   ): void {
     const warrior = this.warriors.get(warriorId);
+
     if (!warrior || damageReceived <= 0 || hpAfter === null) return;
 
     const hpBefore = this.lastHp.get(warriorId);
+
     if (hpBefore === undefined || hpBefore === hpAfter) return;
 
     const hpDrop = hpBefore - hpAfter;
+
     if (hpDrop <= 0) return;
 
     const calculatedMaxHp = Math.round(damageReceived / (hpDrop / 100));
@@ -2438,12 +2610,16 @@ export class BattleProcessor {
       format?: (value: number) => string,
     ): StatisticEntry | null => {
       if (warriors.length === 0) return null;
+
       const top = warriors.reduce((best, current) => {
         const bestValue = getValue(best);
         const currentValue = getValue(current);
+
         return currentValue > bestValue ? current : best;
       });
+
       const value = getValue(top);
+
       return value > 0
         ? {
             warriorId: top.originalId,

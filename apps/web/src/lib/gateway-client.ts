@@ -26,6 +26,7 @@ type Listener = (...arguments_: never[]) => void;
 const toLegacyPlayer = (presence: BasicPresence | PresenceWithLocation) => {
   if (!presence.character) return undefined;
   const location = "location" in presence ? presence.location : undefined;
+
   return {
     ...presence.character,
     lvl: String(presence.character.lvl),
@@ -53,17 +54,22 @@ export interface PlayerPresence {
   updatedAt: number;
   sessionId: string;
 }
+
 type ForbiddenPresence = {
   status: "forbidden";
   code: "ONLINE_PLAYERS_ACCESS_DENIED";
 };
+
 export type PlayerPresenceResponse =
   | { status: "success"; players: Record<string, PlayerPresence[]> }
   | ForbiddenPresence;
+
 export type WebPresenceResponse =
   | { status: "success"; sessions: Record<string, { sessionId: string }[]> }
   | ForbiddenPresence;
+
 type PresenceRequest = { guildId?: string; world?: string };
+
 type EmitArguments =
   | [event: GatewayEvent.JOIN, payload?: PresenceRequest]
   | [
@@ -87,12 +93,15 @@ const groupPresence = <TValue>(
   ) => TValue | undefined,
 ) => {
   const grouped: Record<string, TValue[]> = {};
+
   for (const presence of presences) {
     if (presence.platform !== platform) continue;
     const value = toValue(presence);
+
     if (!value) continue;
     (grouped[presence.discordId ?? presence.userId] ??= []).push(value);
   }
+
   return grouped;
 };
 
@@ -138,6 +147,7 @@ export class GatewayClient {
     this.realtime.subscribeState((state) => {
       const connected =
         state === "connected" || state === "joining" || state === "ready";
+
       if (connected === this.wasConnected) return;
       this.wasConnected = connected;
       this.listeners.emit(
@@ -160,11 +170,13 @@ export class GatewayClient {
 
   on(event: GatewayEvent, listener: Listener): this {
     this.listeners.add(event, listener);
+
     return this;
   }
 
   off(event: GatewayEvent, listener: Listener): this {
     this.listeners.delete(event, listener);
+
     return this;
   }
 
@@ -175,8 +187,10 @@ export class GatewayClient {
   emit(...[event, payload, acknowledgement]: EmitArguments): this {
     if (event === GatewayEvent.JOIN) {
       void this.realtime.join({}).catch(() => undefined);
+
       return this;
     }
+
     if (!payload?.guildId) return this;
     void this.realtime
       .request("presence.fetch", {
@@ -185,6 +199,7 @@ export class GatewayClient {
       })
       .then((response) => {
         const { presences } = decodePresenceSnapshot(response);
+
         if (event === GatewayEvent.MEMBER_WEB_PRESENCE_FETCH) {
           acknowledgement?.({
             status: "success",
@@ -205,6 +220,7 @@ export class GatewayClient {
           code: "ONLINE_PLAYERS_ACCESS_DENIED",
         }),
       );
+
     return this;
   }
 
@@ -218,13 +234,16 @@ export class GatewayClient {
           })
           .catch(() => undefined);
       }
+
       this.listeners.emit(GatewayEvent.JOIN, {
         status: "success",
         guildsCount: event.data.organizationIds.length,
         guildIds: [...event.data.organizationIds],
       });
+
       return;
     }
+
     if (event.type === "permissions.updated") {
       if (event.data.organizationIds.length > 0) {
         void this.realtime
@@ -234,18 +253,23 @@ export class GatewayClient {
           })
           .catch(() => undefined);
       }
+
       this.listeners.emit(GatewayEvent.PERMISSIONS_UPDATED, {
         guilds: event.data.organizationIds.map((id) => ({ guild: { id } })),
         featureRooms: event.data.subscriptionScopes.map((scope) => scope.topic),
       });
+
       return;
     }
+
     if (event.type === "presence.snapshot") {
       for (const presence of event.data.presences) {
         this.dispatchPresence(event.data.organizationId, presence, false);
       }
+
       return;
     }
+
     if (event.type === "presence.delta") {
       for (const change of event.data.changes) {
         if (change.action === "upsert") {
@@ -262,9 +286,12 @@ export class GatewayClient {
           );
         }
       }
+
       return;
     }
+
     const legacyEvent = serverEventNames[event.type];
+
     if (legacyEvent)
       this.listeners.emit(legacyEvent, unwrapOrganizationEvent(event));
   }
@@ -281,10 +308,13 @@ export class GatewayClient {
       status: disconnected ? "offline" : presence.status,
       disconnected,
     };
+
     if (presence.platform === "web-app") {
       this.listeners.emit(GatewayEvent.MEMBER_WEB_PRESENCE_UPDATE, base);
+
       return;
     }
+
     this.listeners.emit(GatewayEvent.EVENT_PRESENCE_UPDATE, {
       ...base,
       player: toLegacyPlayer(presence),
@@ -303,6 +333,7 @@ export class GatewayClient {
       status: "offline",
       disconnected: true,
     };
+
     this.listeners.emit(GatewayEvent.MEMBER_WEB_PRESENCE_UPDATE, payload);
     this.listeners.emit(GatewayEvent.EVENT_PRESENCE_UPDATE, payload);
   }

@@ -137,6 +137,7 @@ describe("battle warrior stats", () => {
         spellsUsedMap: { Freeze: 4 },
       },
     });
+
     const warrior = inflateBattleWarrior(row);
 
     expect(warrior.damageDealt).toBe(999);
@@ -154,6 +155,7 @@ describe("battle warrior stats", () => {
         damageDealt: 777,
       },
     });
+
     const warrior = inflateBattleWarrior(row);
 
     expect(warrior.name).toBe("ColumnName");
@@ -168,6 +170,7 @@ it("falls back for malformed stored spell counts", () => {
   const stats = buildBattleWarriorStats({
     spellsUsedMap: { Fireball: "invalid" },
   });
+
   expect(stats.spellsUsedMap).toEqual({});
   expect(stats.damageDealt).toBe(0);
   expect(stats.isDead).toBe(false);

@@ -36,6 +36,7 @@ export const TimerColorQuickPopover: FC<TimerColorQuickPopoverProps> = ({
   ) => {
     if (!HEX_COLOR_PATTERN.test(value)) {
       setDraft(data);
+
       return;
     }
 
@@ -103,6 +104,7 @@ export const TimerColorQuickPopover: FC<TimerColorQuickPopoverProps> = ({
                         commitHex(field, event.currentTarget.value);
                         event.currentTarget.blur();
                       }
+
                       if (event.key === "Escape") {
                         setDraft(data);
                         onOpenChange(false);
@@ -132,6 +134,7 @@ export const TimerColorQuickPopover: FC<TimerColorQuickPopoverProps> = ({
                     ...draft,
                     backgroundAlpha: value[0],
                   };
+
                   setDraft(nextDraft);
                   onCommit(nextDraft);
                 }}

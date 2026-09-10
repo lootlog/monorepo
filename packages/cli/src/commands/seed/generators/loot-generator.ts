@@ -117,8 +117,10 @@ export class LootGenerator {
 
   private getRandomItems(count: number): ItemData[] {
     const result: ItemData[] = [];
+
     for (let i = 0; i < count; i++) {
       const item = this.items[crypto.randomInt(0, this.items.length)];
+
       if (item) {
         result.push({
           ...item,
@@ -126,25 +128,31 @@ export class LootGenerator {
         });
       }
     }
+
     return result;
   }
 
   private getRandomNpc(): NpcData {
     const npc = this.npcs[crypto.randomInt(0, this.npcs.length)];
+
     if (!npc) {
       throw new Error("No NPCs available");
     }
+
     return npc;
   }
 
   private getRandomPlayers(count: number): GeneratedPlayer[] {
     const result: GeneratedPlayer[] = [];
+
     for (let i = 0; i < count; i++) {
       const player = this.players[crypto.randomInt(0, this.players.length)];
+
       if (player) {
         result.push(player);
       }
     }
+
     return result;
   }
 
@@ -156,11 +164,14 @@ export class LootGenerator {
     const random = crypto.randomInt(0, totalWeight);
 
     let cumulativeWeight = 0;
+
     for (let i = 0; i < rarities.length; i++) {
       const weight = weights[i];
       const rarity = rarities[i];
+
       if (weight !== undefined && rarity !== undefined) {
         cumulativeWeight += weight;
+
         if (random < cumulativeWeight) {
           return rarity;
         }
@@ -176,14 +187,17 @@ export class LootGenerator {
 
     const source =
       lootSources[crypto.randomInt(0, lootSources.length)] ?? "FIGHT";
+
     const world = worlds[crypto.randomInt(0, worlds.length)] ?? "gordion";
 
     const itemsConfig =
       source === "FIGHT" ? itemsPerLoot.fight : itemsPerLoot.dialog;
+
     const playersConfig =
       source === "FIGHT" ? playersPerLoot.fight : playersPerLoot.dialog;
 
     const itemCount = crypto.randomInt(itemsConfig.min, itemsConfig.max + 1);
+
     const playerCount = crypto.randomInt(
       playersConfig.min,
       playersConfig.max + 1,
@@ -208,11 +222,14 @@ export class LootGenerator {
     items.forEach((item) => {
       const randomPlayer =
         mappedPlayers[crypto.randomInt(0, mappedPlayers.length)];
+
       if (randomPlayer) {
         const playerId = `${randomPlayer.characterId}${randomPlayer.accountId}`;
+
         if (!lootShare[playerId]) {
           lootShare[playerId] = [];
         }
+
         lootShare[playerId].push(item.hid);
       }
     });

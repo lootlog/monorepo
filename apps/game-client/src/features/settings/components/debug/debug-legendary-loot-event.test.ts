@@ -42,12 +42,15 @@ const lootRequests = () =>
 describe("debug legendary loot event", () => {
   beforeEach(() => {
     requests.length = 0;
+
     const fetch: typeof globalThis.fetch = (input, init) => {
       requests.push(new Request(input, init));
+
       return Promise.resolve(
         Response.json({ id: 999, submittedGuilds: [], rejectedGuilds: [] }),
       );
     };
+
     onTestFinished(
       configureApiClients({
         main: { baseUrl: "https://api.example.test", fetch },
@@ -140,9 +143,11 @@ describe("debug legendary loot event", () => {
     dispatcher.handleEvent(createDebugLegendaryLootEvent(game));
 
     await vi.waitFor(() => expect(lootRequests()).toHaveLength(2));
+
     const [first, second] = await Promise.all(
       lootRequests().map((request) => request.json()),
     );
+
     expect(first?.loots[0]?.hid).toEqual(expect.any(String));
     expect(second?.loots[0]?.hid).toEqual(expect.any(String));
     expect(first?.loots[0]?.hid).not.toBe(second?.loots[0]?.hid);

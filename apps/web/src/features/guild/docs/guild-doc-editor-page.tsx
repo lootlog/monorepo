@@ -59,9 +59,11 @@ export const GuildDocEditorPage = () => {
     moveDocumentToTrash,
     documentQuery,
   } = useGuildDocDraft();
+
   if (documentQuery.isLoading) {
     return <GuildDocEditorSkeleton />;
   }
+
   if (documentQuery.isError || !document) {
     return (
       <div className="flex h-full min-h-0 flex-col bg-background">
@@ -78,6 +80,7 @@ export const GuildDocEditorPage = () => {
       </div>
     );
   }
+
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
       <ScrollArea className="min-h-0 flex-1">

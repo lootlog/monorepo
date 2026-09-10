@@ -88,6 +88,7 @@ describe("useLogsStore", () => {
     }
 
     const actions = useLogsStore.getState().actions;
+
     const serializedBytes = new TextEncoder().encode(
       JSON.stringify(actions),
     ).byteLength;

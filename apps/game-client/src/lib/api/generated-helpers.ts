@@ -23,8 +23,11 @@ export type GuildIdentity = Pick<
 >;
 
 const EMPTY_GUILD_IDS: string[] = [];
+
 const EMPTY_GUILD_NAMES_BY_ID: Record<string, string> = {};
+
 const guildIdsCache = new WeakMap<GuildIdentity[], string[]>();
+
 const guildNamesByIdCache = new WeakMap<
   GuildIdentity[],
   Record<string, string>
@@ -39,6 +42,7 @@ const getNumber = (value: unknown, fallback = 0) => {
 
   if (typeof value === "string") {
     const parsed = Number(value);
+
     return Number.isNaN(parsed) ? fallback : parsed;
   }
 
@@ -53,10 +57,12 @@ export const getGuildIds = (guilds?: GuildIdentity[]) => {
   if (!guilds) return EMPTY_GUILD_IDS;
 
   const cachedGuildIds = guildIdsCache.get(guilds);
+
   if (cachedGuildIds) return cachedGuildIds;
 
   const guildIds = guilds.map((guild) => guild.id);
   guildIdsCache.set(guilds, guildIds);
+
   return guildIds;
 };
 
@@ -64,16 +70,20 @@ export const getGuildNamesById = (guilds?: GuildIdentity[]) => {
   if (!guilds) return EMPTY_GUILD_NAMES_BY_ID;
 
   const cachedGuildNamesById = guildNamesByIdCache.get(guilds);
+
   if (cachedGuildNamesById) return cachedGuildNamesById;
 
   const guildNamesById = guilds.reduce<Record<string, string>>(
     (result, guild) => {
       result[guild.id] = guild.name;
+
       return result;
     },
     {},
   );
+
   guildNamesByIdCache.set(guilds, guildNamesById);
+
   return guildNamesById;
 };
 
@@ -83,6 +93,7 @@ export const mapGuildMembersByUserId = (
   return members.reduce<Record<string, MemberSummaryResponseDtoOutput>>(
     (result, member) => {
       result[member.userId] = member;
+
       return result;
     },
     {},
@@ -178,6 +189,7 @@ export const buildCurrentCharacterPayload = ():
   | CreatePartyGatheringDtoCharacter
   | undefined => {
   const hero = useGameStore.getState().game?.hero;
+
   if (!hero) return undefined;
 
   return {
@@ -193,6 +205,7 @@ export const buildCurrentCharacterPayload = ():
 
 export const buildCurrentTimerActorCharacterPayload = () => {
   const hero = useGameStore.getState().game?.hero;
+
   if (!hero) return undefined;
 
   return {
@@ -207,6 +220,7 @@ export const buildCurrentTimerActorCharacterPayload = () => {
 
 export const buildChatCharacterData = () => {
   const hero = useGameStore.getState().game?.hero;
+
   if (!hero) return undefined;
 
   return {

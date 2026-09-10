@@ -75,6 +75,7 @@ const makeTimer = (overrides?: Partial<Timer>): Timer => ({
 
 const getPublicApi = () => {
   const publicApi = window.lootlogGameClientApi;
+
   if (!publicApi) {
     throw new Error("Public API was not registered");
   }
@@ -128,10 +129,12 @@ describe("Public API", () => {
 
     it("keeps backing subscriptions idle until the first listener", () => {
       teardown();
+
       const querySubscribeSpy = vi.spyOn(
         queryClient.getQueryCache(),
         "subscribe",
       );
+
       const storeSubscribeSpy = vi.spyOn(useGlobalStore, "subscribe");
       teardown = bootstrapPublicApi(queryClient);
 
@@ -142,10 +145,12 @@ describe("Public API", () => {
         "guilds:changed",
         vi.fn<() => void>(),
       );
+
       const unsubscribeTimers = getPublicApi().subscribe(
         "timers:changed",
         vi.fn<() => void>(),
       );
+
       const unsubscribeReady = getPublicApi().subscribe(
         "ready",
         vi.fn<() => void>(),
@@ -155,10 +160,12 @@ describe("Public API", () => {
       expect(storeSubscribeSpy).toHaveBeenCalledOnce();
 
       unsubscribeGuilds();
+
       const unsubscribeGuildsAgain = getPublicApi().subscribe(
         "guilds:changed",
         vi.fn<() => void>(),
       );
+
       expect(querySubscribeSpy).toHaveBeenCalledOnce();
 
       unsubscribeGuildsAgain();
@@ -169,6 +176,7 @@ describe("Public API", () => {
         "guilds:changed",
         vi.fn<() => void>(),
       );
+
       expect(querySubscribeSpy).toHaveBeenCalledTimes(2);
       unsubscribeAfterIdle();
     });
@@ -238,9 +246,11 @@ describe("Public API", () => {
 
     it("returns mapped timers with ISO dates", () => {
       queryClient.setQueryData(queryKeys.timers("tempest"), [makeTimer()]);
+
       const result = getPublicApi().getTimers({
         world: "tempest",
       });
+
       expect(result).toHaveLength(1);
       expect(result?.[0].minSpawnTime).toBe("2026-01-01T12:00:00.000Z");
       expect(result?.[0].maxSpawnTime).toBe("2026-01-01T13:00:00.000Z");
@@ -280,6 +290,7 @@ describe("Public API", () => {
     it("emits when guilds data changes", () => {
       const listener =
         vi.fn<(payload: ApiEventMap["guilds:changed"]) => void>();
+
       getPublicApi().subscribe("guilds:changed", listener);
 
       queryClient.setQueryData(queryKeys.guilds(), [makeGuild()]);
@@ -293,6 +304,7 @@ describe("Public API", () => {
     it("does not emit for unrelated query updates", () => {
       const listener =
         vi.fn<(payload: ApiEventMap["guilds:changed"]) => void>();
+
       getPublicApi().subscribe("guilds:changed", listener);
 
       queryClient.setQueryData(
@@ -308,6 +320,7 @@ describe("Public API", () => {
     it("deduplicates identical data", () => {
       const listener =
         vi.fn<(payload: ApiEventMap["guilds:changed"]) => void>();
+
       getPublicApi().subscribe("guilds:changed", listener);
 
       const guilds = [makeGuild()];
@@ -322,6 +335,7 @@ describe("Public API", () => {
     it("emits with world and guildId", () => {
       const listener =
         vi.fn<(payload: ApiEventMap["timers:changed"]) => void>();
+
       getPublicApi().subscribe("timers:changed", listener);
 
       queryClient.setQueryData(queryKeys.timers("tempest"), [makeTimer()]);
@@ -338,6 +352,7 @@ describe("Public API", () => {
     it("emits separately per guild", () => {
       const listener =
         vi.fn<(payload: ApiEventMap["timers:changed"]) => void>();
+
       getPublicApi().subscribe("timers:changed", listener);
 
       queryClient.setQueryData(queryKeys.timers("tempest"), [
@@ -369,15 +384,18 @@ describe("Public API", () => {
       const calls = listener.mock.calls;
       const guild2Call = calls.find(([event]) => event.guildId === "guild-2");
       expect(guild2Call).toBeDefined();
+
       if (!guild2Call) {
         throw new Error("Expected a timers update for guild-2");
       }
+
       expect(guild2Call[0].timers).toEqual([]);
     });
 
     it("forgets timer deduplication state when a world query is removed", () => {
       const listener =
         vi.fn<(payload: ApiEventMap["timers:changed"]) => void>();
+
       const queryKey = queryKeys.timers("tempest");
       getPublicApi().subscribe("timers:changed", listener);
 
@@ -393,6 +411,7 @@ describe("Public API", () => {
     it("emits on connected change", () => {
       const listener =
         vi.fn<(payload: ApiEventMap["socket:state-changed"]) => void>();
+
       getPublicApi().subscribe("socket:state-changed", listener);
 
       useGlobalStore.getState().setSocketState({ connected: true });
@@ -406,6 +425,7 @@ describe("Public API", () => {
     it("emits on joinedGuilds change", () => {
       const listener =
         vi.fn<(payload: ApiEventMap["socket:state-changed"]) => void>();
+
       getPublicApi().subscribe("socket:state-changed", listener);
 
       useGlobalStore.getState().setSocketState({ joinedGuilds: ["g1", "g2"] });
@@ -419,6 +439,7 @@ describe("Public API", () => {
     it("stops receiving events after unsubscribe", () => {
       const listener =
         vi.fn<(payload: ApiEventMap["guilds:changed"]) => void>();
+
       const unsub = getPublicApi().subscribe("guilds:changed", listener);
 
       unsub();

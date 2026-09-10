@@ -25,6 +25,7 @@ async function scrapePage(page: number): Promise<ScrapedItem[]> {
 
   try {
     const response = await fetch(url);
+
     if (!response.ok) {
       throw new Error(`Failed to fetch page ${page}: ${response.statusText}`);
     }
@@ -43,22 +44,22 @@ async function scrapePage(page: number): Promise<ScrapedItem[]> {
         const json = JSON.parse(itemData);
         const hid = uuidv7();
 
-        return [
-          ...acc,
-          {
-            hid,
-            id: json.id,
-            icon: json.icon,
-            pr: json.pr,
-            prc: "zl",
-            st: 0,
-            stat: json.stat,
-            name: json.name,
-            cl: json.cl,
-          },
-        ];
+        acc.push({
+          hid,
+          id: json.id,
+          icon: json.icon,
+          pr: json.pr,
+          prc: "zl",
+          st: 0,
+          stat: json.stat,
+          name: json.name,
+          cl: json.cl,
+        });
+
+        return acc;
       } catch (error) {
         console.warn(`Failed to parse item data on page ${page}:`, error);
+
         return acc;
       }
     }, []);
@@ -66,6 +67,7 @@ async function scrapePage(page: number): Promise<ScrapedItem[]> {
     return items;
   } catch (error) {
     console.error(`Error scraping page ${page}:`, error);
+
     return [];
   }
 }
@@ -97,6 +99,7 @@ export async function scrapeItems(
 
       const fs = await import("node:fs/promises");
       const existingData = await fs.readFile(fullPath, "utf-8");
+
       return JSON.parse(existingData);
     }
   }

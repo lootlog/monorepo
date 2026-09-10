@@ -53,6 +53,7 @@ const rabbitRetryPolicy = (
   retryRoutingKey,
   deadLetterRoutingKey,
 });
+
 const decodeRabbitText = (delivery: RabbitDelivery): string =>
   new TextDecoder().decode(delivery.content);
 
@@ -73,16 +74,20 @@ export const RabbitConsumers = Layer.effectDiscard(
     const guildSync = yield* GuildDiscordSync;
     const { removal } = yield* MemberServices;
     const { tracking } = yield* EventsServices;
+
     const { scheduler, matching, store, targets, delivery, rebuild } =
       yield* NotificationsServices;
+
     const adapter = <A>(operation: () => PromiseLike<A>) =>
       Effect.tryPromise({ try: operation, catch: (cause) => cause });
+
     const guildLifecycle = makeGuildLifecycle(database, {
       clearCachePattern: (pattern) =>
         adapter(() => redis.deleteByPattern(pattern)),
       clearCacheKey: (key) => adapter(() => redis.del(key)),
       notifyMembersRemoved: (members) => removal.notifyMembersRemoved(members),
     });
+
     const notificationEvents = makeNotificationsEvents({
       store,
       matching,
@@ -112,6 +117,7 @@ export const RabbitConsumers = Layer.effectDiscard(
           }).pipe(
             Effect.flatMap((payload) => {
               const result = handler(payload, delivery);
+
               return Effect.isEffect(result)
                 ? result.pipe(Effect.asVoid)
                 : Effect.tryPromise({
@@ -271,31 +277,38 @@ export const BullWorkers = Layer.effectDiscard(
   Effect.gen(function* () {
     const config = yield* ApiRuntimeConfig;
     const rabbit = yield* RabbitMessaging;
+
     const { refreshMember, scheduler, diagnostics, sync } =
       yield* MemberServices;
+
     const { kills } = yield* EventsServices;
     const { dispatch } = yield* NotificationsServices;
     const database = yield* ApiDatabase;
     const runWorker = yield* FiberSet.makeRuntimePromise();
+
     const processMemberRefresh = makeMemberRefreshProcessor({
       scheduler,
       diagnostics,
       sync,
     });
+
     const processBulkRefresh = makeMemberBulkRefreshProcessor(
       database,
       rabbit,
       refreshMember,
     );
+
     const eventHeroKill = makeEventHeroKillProcessor(
       applicationLogger,
       kills,
       runWorker,
     );
+
     const notifications = makeNotificationDispatchProcessor(
       { dispatch },
       applicationLogger,
     );
+
     const connection = { url: redisUrl(config.redis) };
     yield* Effect.acquireRelease(
       Effect.sync(() => {
@@ -326,9 +339,11 @@ export const BullWorkers = Layer.effectDiscard(
             { connection, prefix: "{bull}" },
           ),
         ];
+
         workers[2]?.on("failed", (job, error) => {
           if (job) eventHeroKill.onFailed(job, error);
         });
+
         return workers;
       }),
       (workers) =>

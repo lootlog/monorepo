@@ -5,17 +5,21 @@ import { AuthService, HttpResponseError } from "#src/auth/auth-service";
 import { AuthApi } from "#src/http-api/auth-api";
 
 const NonEmptyTrimmedString = Schema.Trim.check(Schema.isMinLength(1));
+
 export const IdpTokenRequest = Schema.Struct({
   userId: NonEmptyTrimmedString,
   discordId: NonEmptyTrimmedString,
 });
+
 const responseHeaders = (
   headers: Readonly<Record<string, string | undefined>>,
 ) => {
   const result = new Headers();
+
   for (const [name, value] of Object.entries(headers)) {
     if (value !== undefined) result.set(name, value);
   }
+
   return result;
 };
 
@@ -40,22 +44,26 @@ const toHttpResponse = <A, R>(
 const verify = Effect.fn("AuthController_verify")(function* () {
   const auth = yield* AuthService;
   const headers = yield* requestHeaders;
+
   const identity = yield* auth.verifyRequestIdentity({
     headers,
     authorizationHeader: headers.get("authorization") ?? undefined,
     authDiscordId: headers.get("x-auth-discord-id") ?? undefined,
     authUserId: headers.get("x-auth-user-id") ?? undefined,
   });
+
   return { identity, body: { status: "OK" as const } };
 });
 
 const getScopes = Effect.fn("AuthController_getScopes")(function* () {
   const auth = yield* AuthService;
+
   return yield* auth.getCurrentUserScopes(yield* requestHeaders);
 });
 
 const getIdpToken = Effect.fn("AuthController_getIdpToken")(function* () {
   const auth = yield* AuthService;
+
   const decoded = yield* HttpServerRequest.schemaBodyJson(IdpTokenRequest, {
     onExcessProperty: "error",
   }).pipe(
@@ -71,6 +79,7 @@ const getIdpToken = Effect.fn("AuthController_getIdpToken")(function* () {
         }),
     ),
   );
+
   return yield* auth.getIdpTokenResponse(
     decoded,
     (yield* requestHeaders).get("authorization") ?? undefined,

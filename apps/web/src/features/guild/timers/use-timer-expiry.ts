@@ -19,14 +19,18 @@ export function useTimerExpiry(
     const currentTime = Date.now();
     const expired = new Map<string, string>();
     let hasNewExpiry = false;
+
     for (const timer of timers ?? []) {
       if (Date.parse(timer.maxSpawnTime) > currentTime) continue;
       expired.set(timer.timerKey, timer.maxSpawnTime);
+
       if (expiredRef.current.get(timer.timerKey) !== timer.maxSpawnTime) {
         hasNewExpiry = true;
       }
     }
+
     expiredRef.current = expired;
+
     if (hasNewExpiry && guildId && world) {
       void queryClient.invalidateQueries({
         queryKey: getTimersControllerGetTimersQueryKey({ guildId }, { world }),
@@ -37,7 +41,9 @@ export function useTimerExpiry(
 
   useEffect(() => {
     expiredRef.current.clear();
+
     if (!hasTimers || !guildId || !world) return;
+
     return subscribeToSecondClock(() => tick());
   }, [guildId, world, hasTimers]);
 }

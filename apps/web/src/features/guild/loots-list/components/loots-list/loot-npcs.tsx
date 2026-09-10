@@ -25,7 +25,9 @@ const NPC_TYPE_PRIORITY = {
 
 // NPC types that get special badges
 const SPECIAL_NPC_TYPES = ["TITAN", "COLOSSUS", "HERO", "EVENT_HERO"] as const;
+
 const DEFAULT_NPC_TYPE = "COMMON";
+
 type LootNpcType = keyof typeof NPC_TYPE_PRIORITY;
 
 // Get badge styling based on NPC type
@@ -58,6 +60,7 @@ export const LootNpcs: FC<LootNpcsProps> = ({
   showIcon = false,
 }) => {
   const { t } = useTranslation();
+
   const sortedNpcs = [...npcs].sort(
     (a, b) =>
       NPC_TYPE_PRIORITY[normalizeNpcType(b.type)] -
@@ -66,6 +69,7 @@ export const LootNpcs: FC<LootNpcsProps> = ({
 
   const firstNpc = sortedNpcs[0];
   const firstNpcType = firstNpc ? normalizeNpcType(firstNpc.type) : undefined;
+
   const specialNpcType =
     firstNpcType && isSpecialNpcType(firstNpcType) ? firstNpcType : undefined;
 

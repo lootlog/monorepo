@@ -57,10 +57,13 @@ export const StatsCustomizationModal = ({
 }: StatsCustomizationModalProps) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
+
   const [localCategoryOrder, setLocalCategoryOrder] = useState(
     config.categoryOrder,
   );
+
   const [isDragging, setIsDragging] = useState(false);
+
   const defaultCategoriesById = new Map<string, BattleStatCategoryDefinition>(
     defaultCategories.map((category) => [category.id, category]),
   );
@@ -79,11 +82,14 @@ export const StatsCustomizationModal = ({
 
   const configOrderKey = config.categoryOrder.join(":");
   const localOrderKey = localCategoryOrder.join(":");
+
   const displayedCategoryOrder =
     isDragging || localOrderKey !== configOrderKey
       ? localCategoryOrder
       : config.categoryOrder;
+
   const triggerLabel = t("battleUi.customization.open");
+
   const triggerButton = (
     <Button
       variant="outline"

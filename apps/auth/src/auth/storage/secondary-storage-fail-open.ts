@@ -24,6 +24,7 @@ export function createFailOpenSecondaryStorage(
         return await storage.get(key);
       } catch (error) {
         onError("get", error);
+
         return null;
       }
     },
@@ -32,6 +33,7 @@ export function createFailOpenSecondaryStorage(
         return await storage.getAndDelete(key);
       } catch (error) {
         onError("getAndDelete", error);
+
         return null;
       }
     },
@@ -40,6 +42,7 @@ export function createFailOpenSecondaryStorage(
         return await storage.increment(key, ttl);
       } catch (error) {
         onError("increment", error);
+
         return 1;
       }
     },

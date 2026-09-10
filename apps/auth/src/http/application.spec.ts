@@ -23,6 +23,7 @@ const makeRuntime = (
       }),
     ),
   );
+
   const getSession = mock((_context: { headers: Headers }) =>
     Promise.resolve(
       authenticated
@@ -33,6 +34,7 @@ const makeRuntime = (
         : null,
     ),
   );
+
   const auth = {
     api: {
       getSession,
@@ -48,6 +50,7 @@ const makeRuntime = (
     handler: betterAuthHandler,
     options: { baseURL: "http://localhost/api/auth/idp" },
   } satisfies typeof BetterAuthRuntime.Service;
+
   const service = createAuthService({
     auth,
     appUrl: "http://localhost:3000",
@@ -55,6 +58,7 @@ const makeRuntime = (
       idpTokenSecret === null ? undefined : Redacted.make(idpTokenSecret),
     findDiscordAccountId: () => Effect.succeed("account-row-1"),
   });
+
   const boundary = HttpRouter.toWebHandler(
     AuthRoutes.pipe(
       Layer.provideMerge(Layer.succeed(AuthService, service)),
@@ -77,6 +81,7 @@ const makeRuntime = (
     ),
     { disableLogger: true },
   );
+
   const run = boundary.handler;
 
   return {
@@ -89,6 +94,7 @@ const makeRuntime = (
 };
 
 const runtime = makeRuntime();
+
 afterAll(() => runtime.dispose());
 
 describe("Auth HttpApi contract", () => {
@@ -98,10 +104,12 @@ describe("Auth HttpApi contract", () => {
     { cookie: "session=valid" },
     { "x-auth-user-id": "user-1", "x-auth-discord-id": "discord-1" },
   ];
+
   it.each(unauthorizedHeaders)(
     "rejects non-service callers before retrieving provider credentials: %j",
     async (headers) => {
       const caller = makeRuntime();
+
       try {
         const response = await caller.run(
           new Request("http://localhost/auth/idp-token", {
@@ -113,6 +121,7 @@ describe("Auth HttpApi contract", () => {
             }),
           }),
         );
+
         expect(response.status).toBe(401);
         expect(caller.getAccessToken).not.toHaveBeenCalled();
       } finally {
@@ -125,6 +134,7 @@ describe("Auth HttpApi contract", () => {
     "fails closed when the IDP service secret is missing or empty: %s",
     async (secret) => {
       const caller = makeRuntime(true, secret);
+
       try {
         const response = await caller.run(
           new Request("http://localhost/auth/idp-token", {
@@ -139,6 +149,7 @@ describe("Auth HttpApi contract", () => {
             }),
           }),
         );
+
         expect(response.status).toBe(401);
         expect(caller.getAccessToken).not.toHaveBeenCalled();
       } finally {
@@ -171,6 +182,7 @@ describe("Auth HttpApi contract", () => {
           }),
         }),
       );
+
       expect(response.status).toBe(400);
     },
   );
@@ -186,6 +198,7 @@ describe("Auth HttpApi contract", () => {
         }),
       }),
     );
+
     expect(response.status).toBe(404);
   });
 
@@ -200,12 +213,15 @@ describe("Auth HttpApi contract", () => {
         headers: { cookie: "local.session_token=test-session" },
       }),
     );
+
     expect(response.status).toBe(200);
     expect(response.headers.get("x-auth-user-id")).toBe("user-1");
     expect(response.headers.get("x-auth-discord-id")).toBe("discord-1");
     expect(await response.json()).toEqual({ status: "OK" });
+
     const getSessionHeaders =
       runtime.getSession.mock.calls.at(-1)?.[0]?.headers;
+
     expect(getSessionHeaders?.get("cookie")).toBe(
       "local.session_token=test-session",
     );
@@ -215,6 +231,7 @@ describe("Auth HttpApi contract", () => {
     const response = await runtime.run(
       new Request("http://localhost/auth/realtime-ticket", { method: "POST" }),
     );
+
     expect(response.status).toBe(404);
   });
 
@@ -222,12 +239,14 @@ describe("Auth HttpApi contract", () => {
     "rejects missing or invalid sessions without identity headers: %s",
     async (cookie) => {
       const anonymous = makeRuntime(false);
+
       try {
         const response = await anonymous.run(
           new Request("http://localhost/auth/verify", {
             headers: cookie ? { cookie } : {},
           }),
         );
+
         expect(response.status).toBe(401);
         expect(response.headers.get("x-auth-user-id")).toBeNull();
         expect(response.headers.get("x-auth-discord-id")).toBeNull();
@@ -245,6 +264,7 @@ describe("Auth HttpApi contract", () => {
           headers: { [header]: "spoofed", cookie: "session=valid" },
         }),
       );
+
       expect(response.status).toBe(401);
       expect(response.headers.get("x-auth-user-id")).toBeNull();
       expect(response.headers.get("x-auth-discord-id")).toBeNull();
@@ -256,6 +276,7 @@ describe("Auth HttpApi contract", () => {
       "http://auth:4001/idp/callback/discord?code=test&state=state",
       { headers: { cookie: "oauth_state=test" } },
     );
+
     const response = await runtime.run(request);
 
     expect(response.status).toBe(201);
@@ -271,6 +292,7 @@ describe("Auth HttpApi contract", () => {
       "http://auth:4001/idp/callback/discord?code=test",
       { headers: { "x-forwarded-proto": "https, http" } },
     );
+
     expect(
       normalizeBetterAuthRequest(request, "https://auth.example.test/idp").url,
     ).toBe("https://auth.example.test/idp/callback/discord?code=test");
@@ -285,6 +307,7 @@ describe("Auth HttpApi contract", () => {
       },
       body: JSON.stringify({ provider: "discord", disableRedirect: true }),
     });
+
     const normalized = normalizeBetterAuthRequest(
       request,
       "https://auth.example.test/idp",
@@ -301,10 +324,12 @@ describe("Auth HttpApi contract", () => {
     const betterAuthBaseURL = resolveBetterAuthBaseURL(
       "http://localhost/api/auth",
     );
+
     const auth = betterAuth({
       baseURL: betterAuthBaseURL,
       secret: "auth-route-test-secret-with-at-least-32-characters",
     });
+
     const request = normalizeBetterAuthRequest(
       new Request("http://auth:4001/idp/get-session"),
       betterAuthBaseURL,
@@ -328,6 +353,7 @@ describe("Auth HttpApi contract", () => {
         body: JSON.stringify({ userId: " user-1 ", discordId: " discord-1 " }),
       }),
     );
+
     expect(accepted.status).toBe(200);
     expect(accepted.headers.get("cache-control")).toBe("no-store");
     expect(await accepted.json()).toMatchObject({
@@ -349,9 +375,12 @@ describe("Auth HttpApi contract", () => {
         }),
       }),
     );
+
     expect(rejected.status).toBe(400);
+
     const responses =
       OpenApi.fromApi(AuthApi).paths["/auth/idp-token"]?.post?.responses;
+
     expect(
       responses?.[rejected.status]?.content?.["application/json"]?.schema,
     ).toBeDefined();

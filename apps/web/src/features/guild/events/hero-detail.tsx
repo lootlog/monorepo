@@ -30,8 +30,11 @@ const getMapCoverageCountClassName = (
   totalMapsCount: number,
 ) => {
   if (!canShowCoverageCount) return "text-muted-foreground";
+
   if (coveredMapsCount === totalMapsCount) return "text-green-500";
+
   if (coveredMapsCount > 0) return "text-yellow-500";
+
   return "text-destructive";
 };
 
@@ -48,6 +51,7 @@ import { useHeroDetail } from "./use-hero-detail";
 
 export const HeroDetail = () => {
   const model = useHeroDetail();
+
   if (model.status === "loading") {
     return (
       <div className="flex items-center justify-center h-64">
@@ -55,8 +59,10 @@ export const HeroDetail = () => {
       </div>
     );
   }
+
   if (model.status === "missing") {
     const { t, queryGuildId, queryEventId } = model;
+
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4 max-h-full overflow-y-auto [justify-content:safe_center]">
         <AlertCircle className="w-12 h-12 text-destructive" />
@@ -70,6 +76,7 @@ export const HeroDetail = () => {
       </div>
     );
   }
+
   const {
     hero,
     event,

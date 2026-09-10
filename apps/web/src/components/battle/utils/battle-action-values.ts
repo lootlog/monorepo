@@ -28,6 +28,7 @@ export function getBattleActionValues(
   mode: "generic" | "spell" | "attack" = "generic",
 ) {
   const presentation = getBattleActionPresentation(action);
+
   const values = {
     name: attacker?.name,
     defenderName: defender?.name,
@@ -38,8 +39,11 @@ export function getBattleActionValues(
     hp: roundHpPercentage(event.attackerHpPercentage),
     defenderHp: roundHpPercentage(event.defenderHpPercentage),
   };
+
   if (mode === "generic") Object.assign(values, { v1: 0 });
+
   if (mode !== "spell") Object.assign(values, presentation.values);
+
   return Object.assign(values, getDynamicBattleValues(action.value));
 }
 
@@ -56,6 +60,7 @@ export function groupBattleAttackDamage(
     dmgc: "",
     thirdatt: "",
   };
+
   const negativeDamage = {
     dmgd: "",
     dmgf: "",
@@ -66,6 +71,7 @@ export function groupBattleAttackDamage(
     dmgc: "",
     thirdatt: "",
   };
+
   const otherActions: { type: string; value: string }[] = [];
 
   actions.forEach((action) => {
@@ -111,6 +117,7 @@ export function groupBattleAttackDamage(
     positiveDamage.dmgo ||
     positiveDamage.thirdatt ||
     positiveDamage.dmgc;
+
   const hasNegativeDamage =
     negativeDamage.dmgd ||
     negativeDamage.dmgf ||

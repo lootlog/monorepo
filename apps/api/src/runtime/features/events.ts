@@ -63,12 +63,14 @@ export class EventTimers extends Context.Service<
   EventTimers,
   EventTimersPort
 >()("@lootlog/api/http-api/EventTimers") {}
+
 export const eventTimersLive = Layer.effect(
   EventTimers,
   Effect.gen(function* () {
     const redis = yield* ApiRedis;
     const rabbit = yield* RabbitMessaging;
     const database = yield* ApiDatabase;
+
     return makeEventTimersPort({
       logger: applicationLogger,
       store: makeEventTimerStore(database),
@@ -78,15 +80,18 @@ export const eventTimersLive = Layer.effect(
     });
   }),
 );
+
 interface EventsServicesValue {
   readonly layer: ReturnType<typeof eventDataLayer>;
   readonly kills: EventKills;
   readonly tracking: EventPresenceTracking;
 }
+
 export class EventsServices extends Context.Service<
   EventsServices,
   EventsServicesValue
 >()("@lootlog/api/http-api/EventsServices") {}
+
 export const eventsServicesLive = Layer.effect(
   EventsServices,
   Effect.gen(function* () {
@@ -96,31 +101,37 @@ export const eventsServicesLive = Layer.effect(
     const config = yield* ApiRuntimeConfig;
     const timers = yield* EventTimers;
     const { loots } = yield* RecordsServices;
+
     const queueOptions = {
       connection: { url: redisUrl(config.redis) },
       prefix: "{bull}",
     } as const;
+
     const queues = yield* Effect.acquireRelease(
       Effect.sync(() => ({
         respawn: new Queue(RESPAWN_WINDOW_QUEUE, queueOptions),
       })),
       ({ respawn }) => Effect.tryPromise(() => respawn.close()),
     );
+
     const amqp = makeAmqpAdapter(rabbit);
     const readCache = makeEventReadCache(redis);
     const emitter = makeEventEmitter(amqp);
     const summary = makeEventSummary(makeEventSummaryStore(database));
+
     const tracking = makeEventPresenceTracking(
       database,
       timers,
       new RedlockService(redis),
       emitter,
     );
+
     const points = makeEventPoints(
       makeEventPointsStore(database),
       emitter,
       readCache,
     );
+
     const kill = makeEventKills(
       makeEventKillStore(database),
       makeActiveEventHeroStore(database),
@@ -133,28 +144,35 @@ export const eventsServicesLive = Layer.effect(
       timers,
       queues.respawn,
     );
+
     const respawn = makeEventRespawn(
       makeEventRespawnStore(database),
       readCache,
       timers,
     );
+
     const wrapped = makeEventWrapped(
       makeEventWrappedStore(database),
       redis,
       loots,
     );
+
     const coordination = makeEventCoordination(
       makeEventCoordinationStore(database),
       timers,
     );
+
     const presenceStats = makeEventPresenceStats(database, readCache);
     const rankingRead = makeEventRankingRead(database, readCache);
+
     const catalogRead = makeEventsCatalogRead(
       database,
       redis,
       applicationLogger,
     );
+
     const eventAccess = makeEventAccess(database);
+
     const layer = eventDataLayer({
       assignment: makeEventsAssignment(
         eventAccess,
@@ -316,9 +334,11 @@ export const eventsServicesLive = Layer.effect(
         makeEventHeroSummary(database, redis, timers, applicationLogger),
       ),
     });
+
     return { kills: kill, layer, tracking };
   }),
 );
+
 export const eventsData = Layer.unwrap(
   Effect.map(EventsServices, ({ layer }) => layer),
 );

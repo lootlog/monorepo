@@ -153,11 +153,17 @@ const ATTACK_ACTION_TYPES = [
 const OUTCOME_ACTION_TYPES = ["winner", "loser", "flee"] as const;
 
 export type SystemActionType = (typeof SYSTEM_ACTION_TYPES)[number];
+
 export type SpellActionType = (typeof SPELL_ACTION_TYPES)[number];
+
 export type BuffActionType = (typeof BUFF_ACTION_TYPES)[number];
+
 export type PassiveActionType = (typeof PASSIVE_ACTION_TYPES)[number];
+
 export type AttackActionType = (typeof ATTACK_ACTION_TYPES)[number];
+
 export type OutcomeActionType = (typeof OUTCOME_ACTION_TYPES)[number];
+
 export const isSystemAction = (
   actionType: string,
 ): actionType is SystemActionType =>
@@ -189,6 +195,7 @@ export const isSpellActionInContext = (
   if (actionType === "+oth_dmg") {
     return actionsList.includes("tspell");
   }
+
   return isSpellAction(actionType);
 };
 
@@ -199,9 +206,11 @@ export const isAttackActionInContext = (
   if (actionType === "+oth_dmg") {
     return !actionsList.includes("tspell");
   }
+
   if (actionType === "-poison_lowdmg_per") {
     return !actionsList.some((action) => isPassiveAction(action));
   }
+
   return isAttackAction(actionType);
 };
 
@@ -212,5 +221,6 @@ export const isPassiveActionInContext = (
   if (actionType === "-poison_lowdmg_per") {
     return actionsList.some((action) => isPassiveAction(action));
   }
+
   return isPassiveAction(actionType);
 };

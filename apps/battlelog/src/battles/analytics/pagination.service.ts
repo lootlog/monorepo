@@ -38,15 +38,19 @@ export const makeBattlePagination = (drizzle: BattlePaginationDatabase) => {
 
   const decodeCursor = (cursor: string): DecodedCursor | null => {
     const separatorIndex = cursor.indexOf("_");
+
     if (separatorIndex === -1) {
       return null;
     }
+
     const timestamp = cursor.slice(0, separatorIndex);
     const id = cursor.slice(separatorIndex + 1);
     const createdAt = new Date(timestamp);
+
     if (Number.isNaN(createdAt.getTime())) {
       return null;
     }
+
     return { createdAt, id };
   };
 
@@ -65,6 +69,7 @@ export const makeBattlePagination = (drizzle: BattlePaginationDatabase) => {
         where: {
           RAW: (table: typeof battles) => {
             const base = whereBuilder(table);
+
             return buildCursorWhere(table, base, decodedCursor, options);
           },
         },
@@ -77,10 +82,12 @@ export const makeBattlePagination = (drizzle: BattlePaginationDatabase) => {
       const items = hasNext ? results.slice(0, size) : results;
 
       let nextCursor: string | undefined;
+
       if (hasNext && items.length > 0) {
         const lastItem = items[items.length - 1];
         nextCursor = encodeCursor(lastItem.createdAt, lastItem.id);
       }
+
       const previousCursor = yield* getPreviousCursor(
         whereBuilder,
         decodedCursor,
@@ -89,9 +96,11 @@ export const makeBattlePagination = (drizzle: BattlePaginationDatabase) => {
 
       let total: number | undefined;
       const countStartTime = yield* Clock.currentTimeMillis;
+
       if (includeTotal) {
         total = yield* getEstimatedCount(whereBuilder(battles));
       }
+
       const countFinishedAt = yield* Clock.currentTimeMillis;
       const countTime = countFinishedAt - countStartTime;
 
@@ -135,6 +144,7 @@ export const makeBattlePagination = (drizzle: BattlePaginationDatabase) => {
 
     const { createdAt, id } = decoded;
     const cmp = options.sortOrder === "desc" ? lt : gt;
+
     const cursorCondition = or(
       cmp(table.createdAt, createdAt),
       and(eq(table.createdAt, createdAt), cmp(table.id, id)),
@@ -155,10 +165,12 @@ export const makeBattlePagination = (drizzle: BattlePaginationDatabase) => {
 
       const size = options.size ?? 20;
       const reverseOrder = options.sortOrder === "asc" ? "desc" : "asc";
+
       const previousWindow = yield* drizzle.query.battles.findMany({
         where: {
           RAW: (table: typeof battles) => {
             const base = whereBuilder(table);
+
             return buildPreviousCursorWhere(table, base, decoded, options);
           },
         },
@@ -171,6 +183,7 @@ export const makeBattlePagination = (drizzle: BattlePaginationDatabase) => {
       }
 
       const previousBoundary = previousWindow[size];
+
       if (!previousBoundary) {
         return undefined;
       }
@@ -187,6 +200,7 @@ export const makeBattlePagination = (drizzle: BattlePaginationDatabase) => {
     const { createdAt, id } = decoded;
     const createdAtComparator = options.sortOrder === "desc" ? gt : lt;
     const idComparator = options.sortOrder === "desc" ? gte : lte;
+
     const previousCursorCondition = or(
       createdAtComparator(table.createdAt, createdAt),
       and(eq(table.createdAt, createdAt), idComparator(table.id, id)),
@@ -205,9 +219,11 @@ export const makeBattlePagination = (drizzle: BattlePaginationDatabase) => {
     }
 
     const decoded = decodeCursor(cursor);
+
     if (!decoded) {
       logger.warn(`Invalid cursor format: ${cursor}`);
     }
+
     return decoded;
   };
 
@@ -219,7 +235,9 @@ export const makeBattlePagination = (drizzle: BattlePaginationDatabase) => {
             FROM pg_class
             WHERE relname = 'battles'
           `);
+
         const row = result[0];
+
         return Number(row?.estimated_count ?? 0);
       }
 
@@ -227,10 +245,12 @@ export const makeBattlePagination = (drizzle: BattlePaginationDatabase) => {
         .select({ count: count() })
         .from(battles)
         .where(where);
+
       return result[0]?.count ?? 0;
     }).pipe(
       Effect.catch((error) => {
         logger.warn("Failed to get estimated count, falling back", error);
+
         return drizzle
           .select({ count: count() })
           .from(battles)

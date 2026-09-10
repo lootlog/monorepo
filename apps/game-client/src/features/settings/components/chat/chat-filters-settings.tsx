@@ -29,6 +29,7 @@ export const ChatFiltersSettings = () => {
           {CHAT_NPC_TYPES.map((npcType) => {
             const label = t(`common:npcTypes.${npcType.toLowerCase()}`);
             const controlId = `chat-npc-message-type-${npcType.toLowerCase()}`;
+
             return (
               <SettingsControlRow
                 key={npcType}

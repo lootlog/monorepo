@@ -35,6 +35,7 @@ describe("chat reply helpers", () => {
 
 it("resolves historical quote names from Discord within the source organization and preserves unavailable snapshots", () => {
   const original = createChatMessage();
+
   const reply = createChatMessage({
     id: "reply",
     replyTo: {
@@ -44,7 +45,9 @@ it("resolves historical quote names from Discord within the source organization 
       type: "NORMAL",
     },
   });
+
   const other = createChatMessage({ ...reply, guildId: "other" });
+
   const resolved = resolveChatReplyNames(
     [reply, other],
     { "guild-1": [original, reply] },
@@ -53,6 +56,7 @@ it("resolves historical quote names from Discord within the source organization 
       other: { "sender-1": { name: "OtherDiscordName" } },
     },
   );
+
   expect(resolved[0]?.replyTo?.senderNick).toBe("DiscordName");
   expect(resolved[1]?.replyTo?.senderNick).toBe("GameHero");
   expect(reply.replyTo?.senderNick).toBe("GameHero");

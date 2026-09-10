@@ -53,9 +53,11 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
   filtersVisible,
 }) => {
   const { t } = useTranslation("onlinePlayers");
+
   const characterId = useGameStore(
     (state) => state.game?.hero.characterId ?? "",
   );
+
   const defaultWorld = useGameStore((state) => state.game?.world ?? "unknown");
 
   const { allowWorldSelection, guildIdByCharId, worldByGuildId } =
@@ -66,8 +68,10 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
         worldByGuildId: state.worldByGuildId,
       })),
     );
+
   const guildId = guildIdByCharId[characterId];
   const world = guildId ? worldByGuildId[guildId] : undefined;
+
   const {
     accessState,
     error,
@@ -78,10 +82,13 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
     retry,
     stale,
   } = usePlayersPresence(guildId, world ?? defaultWorld);
+
   const filtersByGuildId = useOnlinePlayersStore(
     (state) => state.filtersByGuildId,
   );
+
   const setFilters = useOnlinePlayersStore((state) => state.setFilters);
+
   const { data: guildMembers } = useGuildMembersSummary(
     { guildId: guildId ?? "" },
     {
@@ -91,10 +98,13 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
       },
     },
   );
+
   const [searchQuery, setSearchQuery] = useState("");
+
   const filters = guildId
     ? (filtersByGuildId[guildId] ?? DEFAULT_ONLINE_PLAYERS_FILTERS)
     : DEFAULT_ONLINE_PLAYERS_FILTERS;
+
   const areFiltersActive = areOnlinePlayerFiltersActive(searchQuery, filters);
 
   const handleMinLvlChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -137,8 +147,10 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
       selectedProfession: profession,
     });
   };
+
   const handleResetFilters = () => {
     setSearchQuery("");
+
     if (!guildId) return;
 
     setFilters(guildId, { ...DEFAULT_ONLINE_PLAYERS_FILTERS });
@@ -166,9 +178,11 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
       title={t("emptyState.notFoundTitle")}
     />
   );
+
   const noPlayersEmptyState = (
     <EmptyState icon={UsersRound} title={t("emptyState.noPlayersTitle")} />
   );
+
   let listContent: ReactNode;
 
   if (accessState === "forbidden") {

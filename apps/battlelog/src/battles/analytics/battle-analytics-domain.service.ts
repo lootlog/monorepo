@@ -139,6 +139,7 @@ export const battleAnalyticsDomain = {
       battle,
       characterIds,
     );
+
     if (!opponentWarrior) {
       return false;
     }

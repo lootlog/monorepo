@@ -106,17 +106,21 @@ export const makeReservationSharingDataLayer = (
               eq(reservationShareInvitationTable.tokenHash, hashToken(token)),
             )
             .limit(1);
+
           const row = rows[0];
+
           if (!row) {
             return yield* Effect.fail(
               new ResourceNotFoundError({ code: "INVITATION_NOT_FOUND" }),
             );
           }
+
           if (row.invitation.acceptedAt) {
             return yield* Effect.fail(
               new ResourceConflictError({ code: "INVITATION_ALREADY_USED" }),
             );
           }
+
           if (
             row.invitation.revokedAt ||
             row.invitation.expiresAt <= new Date(yield* Clock.currentTimeMillis)
@@ -125,6 +129,7 @@ export const makeReservationSharingDataLayer = (
               new ResourceGoneError({ code: "INVITATION_EXPIRED" }),
             );
           }
+
           return { ...row.invitation, sourceGuild: row.sourceGuild };
         });
 
@@ -141,6 +146,7 @@ export const makeReservationSharingDataLayer = (
           operation(
             Effect.gen(function* () {
               const now = new Date(yield* Clock.currentTimeMillis);
+
               const [shares, pendingInvitations] = yield* Effect.all(
                 [
                   findActiveShares(guildId),
@@ -162,6 +168,7 @@ export const makeReservationSharingDataLayer = (
                 ],
                 { concurrency: "unbounded" },
               );
+
               const guildIds = [
                 ...new Set(
                   shares.flatMap((share) => [
@@ -170,6 +177,7 @@ export const makeReservationSharingDataLayer = (
                   ]),
                 ),
               ];
+
               const guilds =
                 guildIds.length === 0
                   ? []
@@ -177,16 +185,20 @@ export const makeReservationSharingDataLayer = (
                       .select()
                       .from(guildTable)
                       .where(inArray(guildTable.id, guildIds));
+
               const guildById = new Map(
                 guilds.map((guild) => [guild.id, guild]),
               );
+
               return {
                 shares: shares.flatMap((share) => {
                   const partnerId =
                     share.firstGuildId === guildId
                       ? share.secondGuildId
                       : share.firstGuildId;
+
                   const partner = guildById.get(partnerId);
+
                   return partner
                     ? [
                         {
@@ -216,9 +228,11 @@ export const makeReservationSharingDataLayer = (
           operation(
             Effect.gen(function* () {
               const token = randomBytes(32).toString("base64url");
+
               const expiresAt = new Date(
                 (yield* Clock.currentTimeMillis) + INVITATION_TTL_MS,
               );
+
               const rows = yield* database
                 .insert(reservationShareInvitationTable)
                 .values({
@@ -230,12 +244,15 @@ export const makeReservationSharingDataLayer = (
                   updatedAt: new Date(yield* Clock.currentTimeMillis),
                 })
                 .returning();
+
               const invitation = rows[0];
+
               if (!invitation) {
                 return yield* Effect.fail(
                   new Error("Reservation invitation insert returned no row"),
                 );
               }
+
               return {
                 id: invitation.id,
                 invitePath: `/reservation-sharing/invitations/${token}`,
@@ -252,6 +269,7 @@ export const makeReservationSharingDataLayer = (
           operation(
             Effect.gen(function* () {
               const now = new Date(yield* Clock.currentTimeMillis);
+
               const rows = yield* database
                 .update(reservationShareInvitationTable)
                 .set({ revokedAt: now, updatedAt: now })
@@ -264,6 +282,7 @@ export const makeReservationSharingDataLayer = (
                   ),
                 )
                 .returning({ id: reservationShareInvitationTable.id });
+
               if (rows.length === 0) {
                 return yield* Effect.fail(
                   new ResourceNotFoundError({ code: "INVITATION_NOT_FOUND" }),
@@ -288,7 +307,9 @@ export const makeReservationSharingDataLayer = (
                   ),
                 )
                 .limit(1);
+
               const share = shares[0];
+
               if (!share) {
                 return yield* Effect.fail(
                   new ResourceNotFoundError({
@@ -296,6 +317,7 @@ export const makeReservationSharingDataLayer = (
                   }),
                 );
               }
+
               const now = new Date(yield* Clock.currentTimeMillis);
               yield* database
                 .update(reservationShareTable)
@@ -315,6 +337,7 @@ export const makeReservationSharingDataLayer = (
           operation(
             Effect.gen(function* () {
               const invitation = yield* findUsableInvitation(token);
+
               const [guilds, existingPartnerIds] = yield* Effect.all(
                 [
                   administrativeGuilds(discordId),
@@ -324,6 +347,7 @@ export const makeReservationSharingDataLayer = (
                 ],
                 { concurrency: "unbounded" },
               );
+
               return {
                 sourceOrganization: {
                   name: invitation.sourceGuild.name,
@@ -345,9 +369,11 @@ export const makeReservationSharingDataLayer = (
             Effect.gen(function* () {
               const invitation = yield* findUsableInvitation(token);
               const guilds = yield* administrativeGuilds(discordId);
+
               const targetGuild = guilds.find(
                 (guild) => guild.id === payload.targetGuildId,
               );
+
               if (!targetGuild) {
                 return yield* Effect.fail(
                   new ResourceNotFoundError({
@@ -355,6 +381,7 @@ export const makeReservationSharingDataLayer = (
                   }),
                 );
               }
+
               if (targetGuild.id === invitation.sourceGuildId) {
                 return yield* Effect.fail(
                   new ResourceConflictError({
@@ -362,13 +389,16 @@ export const makeReservationSharingDataLayer = (
                   }),
                 );
               }
+
               const [firstGuildId, secondGuildId] = orderGuildPair(
                 invitation.sourceGuildId,
                 targetGuild.id,
               );
+
               const result = yield* database.transaction((transaction) =>
                 Effect.gen(function* () {
                   const acceptedAt = new Date(yield* Clock.currentTimeMillis);
+
                   const claimed = yield* transaction
                     .update(reservationShareInvitationTable)
                     .set({
@@ -389,7 +419,9 @@ export const makeReservationSharingDataLayer = (
                       ),
                     )
                     .returning({ id: reservationShareInvitationTable.id });
+
                   if (claimed.length === 0) return { kind: "expired" } as const;
+
                   const existing = yield* transaction
                     .select()
                     .from(reservationShareTable)
@@ -400,10 +432,13 @@ export const makeReservationSharingDataLayer = (
                       ),
                     )
                     .limit(1);
+
                   if (existing[0] && !existing[0].revokedAt) {
                     return { kind: "exists" } as const;
                   }
+
                   const now = new Date(yield* Clock.currentTimeMillis);
+
                   const rows = yield* transaction
                     .insert(reservationShareTable)
                     .values({
@@ -427,16 +462,19 @@ export const makeReservationSharingDataLayer = (
                       },
                     })
                     .returning();
+
                   return rows[0]
                     ? ({ kind: "accepted", share: rows[0] } as const)
                     : ({ kind: "insert-failed" } as const);
                 }),
               );
+
               if (result.kind === "expired") {
                 return yield* Effect.fail(
                   new ResourceGoneError({ code: "INVITATION_EXPIRED" }),
                 );
               }
+
               if (result.kind === "exists") {
                 return yield* Effect.fail(
                   new ResourceConflictError({
@@ -444,15 +482,18 @@ export const makeReservationSharingDataLayer = (
                   }),
                 );
               }
+
               if (result.kind === "insert-failed") {
                 return yield* Effect.fail(
                   new Error("Reservation share insert returned no row"),
                 );
               }
+
               yield* publishSharingChanged(invitation.sourceGuildId, [
                 invitation.sourceGuildId,
                 targetGuild.id,
               ]);
+
               return {
                 id: result.share.id,
                 partner: {

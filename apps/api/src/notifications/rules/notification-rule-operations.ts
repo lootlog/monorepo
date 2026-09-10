@@ -40,8 +40,11 @@ import {
 } from "#src/shared/http/http-errors";
 
 const TEST_LIMIT = 10;
+
 const TEST_WINDOW_MS = 15 * 60_000;
+
 const MAX_NPCS_PER_RULE = 5;
+
 const USER_RULE_LIMIT = 50;
 
 export interface NotificationRuleDependencies {
@@ -88,6 +91,7 @@ export const makeNotificationRuleOperations = (
     Effect.gen(function* () {
       const organizations = yield* notificationApiKeyOrganizations(database);
       const organizationIds = organizations?.map((guild) => guild.id);
+
       const loadedRows = yield* database
         .select()
         .from(notificationRuleTable)
@@ -101,12 +105,15 @@ export const makeNotificationRuleOperations = (
           desc(notificationRuleTable.enabled),
           desc(notificationRuleTable.updatedAt),
         );
+
       const ruleRows = yield* notificationRulesInApiKeyScope(
         database,
         loadedRows,
         organizationIds,
       );
+
       const ruleIds = ruleRows.map(({ id }) => id);
+
       const links =
         ruleIds.length === 0
           ? []
@@ -124,12 +131,15 @@ export const makeNotificationRuleOperations = (
                 ),
               )
               .where(inArray(notificationRuleTargetTable.ruleId, ruleIds));
+
       const targetsByRule = new Map<number, typeof links>();
+
       for (const link of links) {
         const targets = targetsByRule.get(link.link.ruleId) ?? [];
         targets.push(link);
         targetsByRule.set(link.link.ruleId, targets);
       }
+
       return ruleRows.map((rule) => ({
         ...rule,
         filters:
@@ -170,10 +180,13 @@ export const makeNotificationRuleOperations = (
   const usageResponse = (targetIds: number[], usage: Map<number, Date[]>) => {
     const worst = targetIds.reduce<readonly Date[]>((current, targetId) => {
       const candidate = usage.get(targetId) ?? [];
+
       return candidate.length > current.length ? candidate : current;
     }, []);
+
     const used = worst.length;
     const oldest = worst[0];
+
     return {
       limit: TEST_LIMIT,
       used,
@@ -209,6 +222,7 @@ export const makeNotificationRuleOperations = (
       ],
       { concurrency: 3 },
     );
+
     const targetIds = [
       ...new Set(
         loadedRules.flatMap((rule) =>
@@ -216,7 +230,9 @@ export const makeNotificationRuleOperations = (
         ),
       ),
     ];
+
     const usage = yield* testUsage(targetIds);
+
     return {
       items: loadedRules.map((rule) => ({
         ...rule,
@@ -280,6 +296,7 @@ export const makeNotificationRuleOperations = (
     loadRules(ownerType, ownerId).pipe(
       Effect.flatMap((rules) => {
         const rule = rules.find((candidate) => candidate.id === ruleId);
+
         return rule
           ? Effect.succeed(rule)
           : Effect.fail(
@@ -303,6 +320,7 @@ export const makeNotificationRuleOperations = (
           ),
         );
       }
+
       const rows = yield* database
         .select({ id: notificationTargetTable.id })
         .from(notificationTargetTable)
@@ -314,6 +332,7 @@ export const makeNotificationRuleOperations = (
             eq(notificationTargetTable.active, true),
           ),
         );
+
       if (rows.length !== targetIds.length) {
         return yield* Effect.fail(
           new InvalidRequestError(
@@ -321,6 +340,7 @@ export const makeNotificationRuleOperations = (
           ),
         );
       }
+
       return [...targetIds];
     }).pipe(
       Effect.mapError((cause) =>
@@ -347,7 +367,9 @@ export const makeNotificationRuleOperations = (
             eq(notificationRuleTable.ownerId, ownerId),
           ),
         );
+
       const ruleCount = counts[0]?.value ?? 0;
+
       if (ownerType === NotificationOwnerType.USER) {
         if (ruleCount >= USER_RULE_LIMIT) {
           return yield* Effect.fail(
@@ -358,19 +380,24 @@ export const makeNotificationRuleOperations = (
             }),
           );
         }
+
         return;
       }
+
       const guilds = yield* database
         .select({ notificationRuleLimit: guildTable.notificationRuleLimit })
         .from(guildTable)
         .where(eq(guildTable.id, ownerId))
         .limit(1);
+
       const guild = guilds[0];
+
       if (!guild) {
         return yield* Effect.fail(
           new ResourceNotFoundError(NotificationError.GUILD_NOT_FOUND),
         );
       }
+
       if (ruleCount >= guild.notificationRuleLimit) {
         return yield* Effect.fail(
           new ResourceConflictError({
@@ -388,16 +415,20 @@ export const makeNotificationRuleOperations = (
     data: CreateNotificationRuleRequest,
   ) {
     yield* ensureRuleLimit(ownerType, ownerId);
+
     const targetIds = yield* validateTargetIds(
       ownerType,
       ownerId,
       data.targetIds,
     );
+
     const values = yield* Effect.try({
       try: () => createNotificationRuleValues(ownerType, ownerId, data),
       catch: (cause) => cause,
     });
+
     const organizations = yield* notificationApiKeyOrganizations(database);
+
     if (
       organizations &&
       ownerType === NotificationOwnerType.USER &&
@@ -412,14 +443,18 @@ export const makeNotificationRuleOperations = (
         guildIds: organizations.map((guild) => guild.id),
       };
     }
+
     const now = new Date(yield* Clock.currentTimeMillis);
+
     const rule = yield* database.transaction((transaction) =>
       Effect.gen(function* () {
         const rows = yield* transaction
           .insert(notificationRuleTable)
           .values({ ...values, createdAt: now, updatedAt: now })
           .returning();
+
         const created = rows[0];
+
         if (!created) return yield* Effect.die("Rule insert returned no row");
         yield* requireNotificationRuleApiKeyScope(transaction, created);
         yield* transaction
@@ -428,12 +463,15 @@ export const makeNotificationRuleOperations = (
             targetIds.map((targetId) => ({ ruleId: created.id, targetId })),
           )
           .onConflictDoNothing();
+
         return created;
       }),
     );
+
     if (ownerType === NotificationOwnerType.GUILD) {
       yield* dependencies.rebuildJobs(rule.id);
     }
+
     return yield* loadRule(ownerType, ownerId, rule.id);
   });
 
@@ -444,14 +482,18 @@ export const makeNotificationRuleOperations = (
     data: UpdateNotificationRuleRequest,
   ) {
     const existing = yield* findRule(ownerType, ownerId, ruleId);
+
     const targetIds = data.targetIds
       ? yield* validateTargetIds(ownerType, ownerId, data.targetIds)
       : null;
+
     const values = yield* Effect.try({
       try: () => updateNotificationRuleValues(ownerType, existing, data),
       catch: (cause) => cause,
     });
+
     const organizations = yield* notificationApiKeyOrganizations(database);
+
     if (
       organizations &&
       ownerType === NotificationOwnerType.USER &&
@@ -460,9 +502,11 @@ export const makeNotificationRuleOperations = (
       const existingGuildIds = parseNotificationFilters(
         existing.filters,
       ).guildIds;
+
       const guildIds = existingGuildIds?.length
         ? existingGuildIds
         : organizations.map((guild) => guild.id);
+
       if (guildIds.length === 0)
         return yield* new PermissionDeniedError(
           "Notification rule requires an accessible API key organization",
@@ -472,6 +516,7 @@ export const makeNotificationRuleOperations = (
         guildIds,
       };
     }
+
     yield* requireNotificationRuleApiKeyScope(database, {
       ...existing,
       ...values,
@@ -485,6 +530,7 @@ export const makeNotificationRuleOperations = (
             updatedAt: new Date(yield* Clock.currentTimeMillis),
           })
           .where(eq(notificationRuleTable.id, ruleId));
+
         if (targetIds) {
           yield* transaction
             .delete(notificationRuleTargetTable)
@@ -496,9 +542,11 @@ export const makeNotificationRuleOperations = (
         }
       }),
     );
+
     if (ownerType === NotificationOwnerType.GUILD) {
       yield* dependencies.rebuildJobs(ruleId);
     }
+
     return yield* loadRule(ownerType, ownerId, ruleId);
   });
 
@@ -512,6 +560,7 @@ export const makeNotificationRuleOperations = (
     yield* database
       .delete(notificationRuleTable)
       .where(eq(notificationRuleTable.id, ruleId));
+
     return { success: true as const };
   });
 
@@ -522,6 +571,7 @@ export const makeNotificationRuleOperations = (
     yield* dependencies.ensureGuildPermissions(guildId);
     const rules = yield* loadRules(NotificationOwnerType.GUILD, guildId);
     const rule = rules.find((candidate) => candidate.id === ruleId);
+
     if (!rule) {
       return yield* Effect.fail(
         new ResourceNotFoundError(
@@ -529,6 +579,7 @@ export const makeNotificationRuleOperations = (
         ),
       );
     }
+
     if (!rule.enabled) {
       return yield* Effect.fail(
         new ResourceConflictError(
@@ -536,9 +587,11 @@ export const makeNotificationRuleOperations = (
         ),
       );
     }
+
     const activeTargets = rule.targets
       .map(({ target }) => target)
       .filter((target) => target.active && target.canSend);
+
     if (activeTargets.length === 0) {
       return yield* Effect.fail(
         new ResourceConflictError(
@@ -546,15 +599,19 @@ export const makeNotificationRuleOperations = (
         ),
       );
     }
+
     const usage = yield* testUsage(activeTargets.map(({ id }) => id));
+
     const sendableTargets = activeTargets.filter(
       ({ id }) => (usage.get(id)?.length ?? 0) < TEST_LIMIT,
     );
+
     if (sendableTargets.length === 0) {
       const worst = usageResponse(
         activeTargets.map(({ id }) => id),
         usage,
       );
+
       return yield* Effect.fail(
         new ResourceConflictError({
           message: NotificationError.TEST_TRIGGER_LIMIT_REACHED_FOR_RULE,
@@ -564,8 +621,10 @@ export const makeNotificationRuleOperations = (
         }),
       );
     }
+
     const scheduledFor = new Date(yield* Clock.currentTimeMillis);
     const sourceEventId = `test:${rule.id}:${randomUUID()}`;
+
     const jobs = yield* Effect.forEach(
       sendableTargets,
       (target) =>
@@ -595,13 +654,16 @@ export const makeNotificationRuleOperations = (
           ),
       { concurrency: "unbounded" },
     );
+
     const created = jobs.filter(
       (job): job is { readonly id: string } => job !== null,
     );
+
     yield* Effect.forEach(created, ({ id }) => dependencies.enqueueJob(id, 0), {
       concurrency: "unbounded",
       discard: true,
     });
+
     if (created.length === 0) {
       return yield* Effect.fail(
         new ResourceConflictError(
@@ -609,6 +671,7 @@ export const makeNotificationRuleOperations = (
         ),
       );
     }
+
     return { success: true as const };
   });
 

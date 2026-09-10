@@ -3,7 +3,9 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, expect, it } from "vitest";
 import "@/i18n/config";
 import { StatisticsNpcTable } from "./statistics-npc-table";
+
 afterEach(cleanup);
+
 it("keeps live total and aligned comparison distinct without inventing growth percentages", () => {
   render(
     <StatisticsNpcTable

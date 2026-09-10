@@ -42,6 +42,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   isHidden = false,
 }) => {
   const world = useGameStore((state) => state.game?.world ?? "unknown");
+
   const {
     customColors,
     defaultColorNames,

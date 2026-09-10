@@ -22,9 +22,11 @@ export function createItemStatsHash(stats: string): string {
     .split(";")
     .filter((entry) => {
       const [key] = entry.split("=");
+
       return Boolean(key) && !SNAPSHOT_HASH_IGNORED_KEYS.has(key ?? "");
     })
     .sort()
     .join(";");
+
   return createHash("sha256").update(normalized).digest("hex");
 }

@@ -59,16 +59,19 @@ export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
 }) => {
   const { t } = useTranslation();
   const { npcTypeColors } = useNpcTypeColors();
+
   const {
     accountId,
     isFetched,
     settings: accountSettings,
   } = useCurrentGameAccountDetectorSettings();
+
   const updateUserGameAccountPreferences =
     useUpdateUserGameAccountPreferences(accountId);
 
   const currentCategorySettings = accountSettings[categoryKey];
   const textColor = getTextColor(categoryKey, true, npcTypeColors);
+
   const toggleFields: Array<{
     key: keyof DetectorTypeSettings;
     label: string;
@@ -85,6 +88,7 @@ export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
       label: t("settings.detector.toggles.notifySound"),
     },
   ];
+
   const debouncedUpdate = useDebouncedCallback(
     (
       payload: Parameters<typeof updateUserGameAccountPreferences.mutate>[0],

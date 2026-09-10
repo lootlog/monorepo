@@ -6,6 +6,7 @@ import { AuthService } from "./auth.service.js";
 
 test("Discord token retrieval authenticates the API service without forwarding user credentials", async () => {
   let authorization: string | undefined;
+
   const service = new AuthService(
     applicationLogger,
     {
@@ -17,6 +18,7 @@ test("Discord token retrieval authenticates the API service without forwarding u
     httpClientFromResponses((request) => {
       authorization = request.headers.authorization;
       expect(request.url).toBe("http://auth.test/auth/idp-token");
+
       return Effect.succeed(
         Response.json({
           accessToken: "provider-token",
@@ -28,6 +30,7 @@ test("Discord token retrieval authenticates the API service without forwarding u
     new URL("http://auth.test"),
     Redacted.make("idp-test-secret"),
   );
+
   await expect(
     Effect.runPromise(service.getIdpToken("user", "discord")),
   ).resolves.toMatchObject({ accessToken: "provider-token" });
@@ -61,9 +64,11 @@ for (const [status, body, expected] of [
       new URL("http://auth.test"),
       Redacted.make("rejected-service-secret"),
     );
+
     const error = await Effect.runPromise(
       Effect.flip(service.getIdpToken("user", "discord")),
     );
+
     expect(error.name).toBe(expected);
   });
 }

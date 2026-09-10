@@ -49,18 +49,21 @@ export const LootTimelineChart: React.FC<LootTimelineChartProps> = ({
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
+
     if (period === "24h" || period === "3d") {
       return date.toLocaleTimeString("pl-PL", {
         hour: "2-digit",
         minute: "2-digit",
       });
     }
+
     if (period === "7d" || period === "14d" || period === "30d") {
       return date.toLocaleDateString("pl-PL", {
         day: "2-digit",
         month: "2-digit",
       });
     }
+
     return date.toLocaleDateString("pl-PL", {
       day: "2-digit",
       month: "2-digit",
@@ -128,9 +131,11 @@ export const LootTimelineChart: React.FC<LootTimelineChartProps> = ({
                     const item = chartData.find(
                       (point) => point === payload[0]?.payload,
                     );
+
                     if (!item) return "";
                     const fullDate = item.fullDate;
                     const date = new Date(fullDate);
+
                     return date.toLocaleDateString("pl-PL", {
                       weekday: "short",
                       day: "numeric",

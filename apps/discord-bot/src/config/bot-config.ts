@@ -8,6 +8,7 @@ export interface BotConfigValue {
   readonly discordBotToken: Redacted.Redacted<string>;
   readonly rabbitmqUri: Redacted.Redacted<string>;
 }
+
 export class BotConfig extends Context.Service<BotConfig, BotConfigValue>()(
   "@lootlog/discord-bot/BotConfig",
 ) {
@@ -26,6 +27,7 @@ export class BotConfig extends Context.Service<BotConfig, BotConfigValue>()(
         discordBotToken: Config.redacted("DISCORD_BOT_TOKEN"),
         rabbitmqUri: Config.redacted("RABBITMQ_URI"),
       });
+
       return BotConfig.of(value);
     }),
   );

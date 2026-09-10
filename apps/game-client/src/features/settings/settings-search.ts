@@ -45,6 +45,7 @@ const isSingleEditApart = (left: string, right: string): boolean => {
     }
 
     const [firstIndex, secondIndex] = differentIndexes;
+
     return (
       secondIndex === firstIndex + 1 &&
       left[firstIndex] === right[secondIndex] &&
@@ -54,6 +55,7 @@ const isSingleEditApart = (left: string, right: string): boolean => {
 
   const [shorter, longer] =
     left.length < right.length ? [left, right] : [right, left];
+
   let shorterIndex = 0;
   let longerIndex = 0;
   let edits = 0;
@@ -80,15 +82,17 @@ const getMatchScore = (
   item: SettingsSearchItem,
   normalizedQuery: string,
 ): number | undefined => {
-  const searchableValues = [
+  const searchableValues: string[] = [];
+
+  for (const value of [
     item.label,
     item.subsectionLabel,
     item.categoryLabel,
     item.description,
     ...(item.keywords ?? []),
-  ]
-    .filter((value): value is string => Boolean(value))
-    .map(normalizeSearchText);
+  ]) {
+    if (value) searchableValues.push(normalizeSearchText(value));
+  }
 
   if (searchableValues.some((value) => value === normalizedQuery)) {
     return 0;
@@ -103,6 +107,7 @@ const getMatchScore = (
   }
 
   const queryTokens = normalizedQuery.split(/\s+/);
+
   const searchableTokens = searchableValues.flatMap((value) =>
     value.split(/\s+/),
   );
@@ -138,19 +143,18 @@ export const searchSettings = (
     return [];
   }
 
-  return items
-    .map((item) => ({ item, score: getMatchScore(item, normalizedQuery) }))
-    .filter(
-      (
-        match,
-      ): match is {
-        item: SettingsSearchItem;
-        score: number;
-      } => match.score !== undefined,
-    )
-    .sort(
-      (left, right) =>
-        left.score - right.score || left.item.order - right.item.order,
-    )
-    .map(({ item }) => item);
+  const matches: { item: SettingsSearchItem; score: number }[] = [];
+
+  for (const item of items) {
+    const score = getMatchScore(item, normalizedQuery);
+
+    if (score !== undefined) matches.push({ item, score });
+  }
+
+  matches.sort(
+    (left, right) =>
+      left.score - right.score || left.item.order - right.item.order,
+  );
+
+  return matches.map(({ item }) => item);
 };

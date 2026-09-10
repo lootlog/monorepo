@@ -30,6 +30,7 @@ class TestWebSocket implements RealtimeWebSocket {
         "Invalid WebSocket close code",
         "InvalidAccessError",
       );
+
     if (this.readyState === 3) return;
     this.readyState = 3;
     this.dispatch("close");
@@ -70,12 +71,15 @@ const respondToLastRequest = (
   data: unknown = undefined,
 ): void => {
   const lastRequest = socket.sent.at(-1);
+
   if (!(lastRequest instanceof Uint8Array))
     throw new Error("Expected a binary request frame");
   const request = decodeRealtimeFrame(lastRequest);
+
   if (!("requestId" in request) || !request.requestId) {
     throw new Error("Expected a request frame");
   }
+
   socket.message(
     encodeRealtimeFrame({
       v: 1,
@@ -97,14 +101,18 @@ const flushMessages = async (): Promise<void> => {
 
 const socketAt = (sockets: TestWebSocket[], index: number): TestWebSocket => {
   const socket = sockets[index];
+
   if (!socket) throw new Error(`Expected socket at index ${index}`);
+
   return socket;
 };
 
 const frameAt = (socket: TestWebSocket, index: number) => {
   const bytes = socket.sent[index];
+
   if (!(bytes instanceof Uint8Array))
     throw new Error(`Expected binary frame at index ${index}`);
+
   return decodeRealtimeFrame(bytes);
 };
 
@@ -115,6 +123,7 @@ describe("RealtimeClient", () => {
     const sockets: TestWebSocket[] = [];
     const states: string[] = [];
     const events: string[] = [];
+
     const client = new RealtimeClient({
       url: "https://gateway.example.test?token=forbidden",
       path: "/ws",
@@ -122,9 +131,11 @@ describe("RealtimeClient", () => {
         expect(url).toBe("wss://gateway.example.test/ws");
         const socket = new TestWebSocket();
         sockets.push(socket);
+
         return socket;
       },
     });
+
     client.subscribeState((state) => states.push(state));
     client.subscribe((event) => events.push(event.type));
 
@@ -167,6 +178,7 @@ describe("RealtimeClient", () => {
   it("rejoins and restores logical subscriptions after jittered reconnect", async () => {
     vi.useFakeTimers();
     const sockets: TestWebSocket[] = [];
+
     const client = new RealtimeClient({
       url: "https://gateway.example.test",
       reconnectBaseDelayMs: 1_000,
@@ -174,9 +186,11 @@ describe("RealtimeClient", () => {
       webSocketFactory: () => {
         const socket = new TestWebSocket();
         sockets.push(socket);
+
         return socket;
       },
     });
+
     client.connect();
     socketAt(sockets, 0).open();
     const joined = client.join(joinData);
@@ -188,6 +202,7 @@ describe("RealtimeClient", () => {
       topic: "organization.chat",
       organizationId: "org-1",
     });
+
     respondToLastRequest(socketAt(sockets, 0));
     await flushMessages();
     await subscribed;
@@ -215,6 +230,7 @@ describe("RealtimeClient", () => {
   it("runs the reconnect handler and heartbeats the restored presence session", async () => {
     vi.useFakeTimers();
     const sockets: TestWebSocket[] = [];
+
     const client = new RealtimeClient({
       url: "https://gateway.example.test",
       reconnectBaseDelayMs: 1_000,
@@ -222,13 +238,16 @@ describe("RealtimeClient", () => {
       webSocketFactory: () => {
         const socket = new TestWebSocket();
         sockets.push(socket);
+
         return socket;
       },
     });
+
     const restoreSession = async () => {
       await client.join(joinData);
       await client.request("presence.publish", { organizationIds: ["org-1"] });
     };
+
     client.setReconnectHandler(restoreSession);
     client.connect();
     const first = socketAt(sockets, 0);
@@ -262,6 +281,7 @@ describe("RealtimeClient", () => {
   it("backs off when sockets open but session joins keep failing", async () => {
     vi.useFakeTimers();
     const sockets: TestWebSocket[] = [];
+
     const client = new RealtimeClient({
       url: "https://gateway.example.test",
       reconnectBaseDelayMs: 1_000,
@@ -269,6 +289,7 @@ describe("RealtimeClient", () => {
       webSocketFactory: () => {
         const socket = new TestWebSocket();
         sockets.push(socket);
+
         return socket;
       },
     });
@@ -298,6 +319,7 @@ describe("RealtimeClient", () => {
     vi.useFakeTimers();
     const sockets: TestWebSocket[] = [];
     const protocolsSeen: Array<string[] | undefined> = [];
+
     const client = new RealtimeClient({
       url: "https://gateway.example.test?ticket=must-be-removed",
       reconnectBaseDelayMs: 1_000,
@@ -308,9 +330,11 @@ describe("RealtimeClient", () => {
         protocolsSeen.push(protocols);
         const socket = new TestWebSocket();
         sockets.push(socket);
+
         return socket;
       },
     });
+
     client.connect();
     await flushMessages();
     expect(protocolsSeen[0]).toEqual([
@@ -331,10 +355,12 @@ describe("RealtimeClient", () => {
   it("closes malformed frames with a browser-permitted code and reconnects", async () => {
     vi.useFakeTimers();
     const socket = new TestWebSocket();
+
     const client = new RealtimeClient({
       url: "https://gateway.example.test",
       webSocketFactory: () => socket,
     });
+
     client.connect();
     socket.open();
     socket.message("unexpected text instead of MessagePack");
@@ -346,12 +372,14 @@ describe("RealtimeClient", () => {
 
   it("uses readable JSON frames when requested", async () => {
     const sockets: TestWebSocket[] = [];
+
     const client = new RealtimeClient({
       url: "https://gateway.example.test",
       frameEncoding: "json",
       webSocketFactory: () => {
         const socket = new TestWebSocket();
         sockets.push(socket);
+
         return socket;
       },
     });
@@ -383,14 +411,17 @@ describe("RealtimeClient", () => {
   it("stops heartbeats after an empty presence publication clears the session", async () => {
     vi.useFakeTimers();
     const sockets: TestWebSocket[] = [];
+
     const client = new RealtimeClient({
       url: "https://gateway.example.test",
       webSocketFactory: () => {
         const socket = new TestWebSocket();
         sockets.push(socket);
+
         return socket;
       },
     });
+
     client.connect();
     const socket = socketAt(sockets, 0);
     socket.open();
@@ -402,6 +433,7 @@ describe("RealtimeClient", () => {
     const published = client.request("presence.publish", {
       organizationIds: ["org-1"],
     });
+
     respondToLastRequest(socket, { sessionId: "session-1" });
     await flushMessages();
     await published;

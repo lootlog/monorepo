@@ -50,10 +50,12 @@ const person = (
     },
     location: { map },
   });
+
 const initialPresences = () => [
   person("Hero", 123, "w", "10"),
   person("Scout", 80, "h", "11", "discord-1", "Torneg"),
 ];
+
 const preferences: UserPreferencesResponseDtoOutput = {
   userId: "user",
   guildsOrder: [],
@@ -102,6 +104,7 @@ describe("OnlinePlayersList", () => {
       true,
     );
   });
+
   const setMembers = (members: MemberSummaryResponseDtoOutput[]) => {
     for (const guildId of ["guild-1", "guild-2"])
       harness.queryClient.setQueryData(
@@ -109,6 +112,7 @@ describe("OnlinePlayersList", () => {
         members,
       );
   };
+
   const render = async (ui: ReactElement, waitForData = true) => {
     const view = renderUi(ui, { wrapper: harness.wrapper });
     harness.open();
@@ -131,10 +135,12 @@ describe("OnlinePlayersList", () => {
         "user",
       ),
     );
+
     if (waitForData)
       await act(async () => {
         await Promise.resolve();
       });
+
     return view;
   };
 
@@ -192,9 +198,11 @@ describe("OnlinePlayersList", () => {
     harness.fetchPresence.mockResolvedValue(
       createPresenceSnapshot([person(name, 123, "w", "10", "discord-1", map)]),
     );
+
     const { container } = await render(
       <OnlinePlayersList viewMode="accounts" filtersVisible />,
     );
+
     const playerName = await screen.findByText(`${name} (123w)`);
     const viewport = container.querySelector("[data-ll-scroll-area-viewport]");
     expect(viewport?.firstElementChild).toHaveStyle({
@@ -251,9 +259,11 @@ describe("OnlinePlayersList", () => {
         { ...person("Afk Hero", 123, "w", "10"), isAfk: true },
       ]),
     );
+
     const { container } = await render(
       <OnlinePlayersList viewMode="members" filtersVisible />,
     );
+
     await screen.findByText("(1) Discord User");
     expect(container.querySelector(".lucide-triangle-alert")).not.toBeNull();
   });

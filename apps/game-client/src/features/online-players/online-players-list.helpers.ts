@@ -14,8 +14,11 @@ export type GuildMembersByUserId = Record<
 >;
 
 export const MIN_ONLINE_PLAYER_LEVEL = 0;
+
 export const MAX_ONLINE_PLAYER_LEVEL = 500;
+
 export const ALL_PROFESSIONS_VALUE = "all";
+
 export const PROFESSION_OPTIONS = ["p", "w", "h", "m", "b", "t"] as const;
 
 export type ProfessionFilterValue =
@@ -76,6 +79,7 @@ export const comparePlayerPresencesByLevel = (
   }
 
   if (!firstPlayer) return 1;
+
   if (!secondPlayer) return -1;
 
   const levelDiff = secondPlayer.lvl - firstPlayer.lvl;
@@ -101,6 +105,7 @@ const matchesPresenceFilters = (
 
   const matchesLevel =
     player.lvl >= filters.minLvl && player.lvl <= filters.maxLvl;
+
   const matchesProfession =
     filters.selectedProfession === ALL_PROFESSIONS_VALUE ||
     player.prof === filters.selectedProfession;
@@ -143,6 +148,7 @@ export const getFilteredMemberEntries = (
 
     if (query) {
       const memberName = guildMembers?.[discordId]?.name?.toLowerCase() ?? "";
+
       if (!memberName.includes(query) && !hasMatchingCharacter) {
         continue;
       }
@@ -162,6 +168,7 @@ export const getFilteredMemberEntries = (
 
       const firstMemberName =
         guildMembers?.[firstDiscordId]?.name ?? firstDiscordId;
+
       const secondMemberName =
         guildMembers?.[secondDiscordId]?.name ?? secondDiscordId;
 
@@ -191,6 +198,7 @@ export const getFilteredAccountEntries = (
 
       if (query) {
         const playerName = presence.player.name.toLowerCase();
+
         const locationName = (
           presence.player.location?.map ??
           presence.mapName ??

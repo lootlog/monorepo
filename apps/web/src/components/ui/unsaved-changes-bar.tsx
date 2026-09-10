@@ -26,6 +26,7 @@ export const UnsavedChangesBar: FC<UnsavedChangesBarProps> = ({
 
   const effectiveUnsavedChangesLabel =
     unsavedChangesLabel ?? t("common.unsavedChanges");
+
   const effectiveResetLabel = resetLabel ?? t("common.reset");
   const effectiveSaveLabel = saveLabel ?? t("common.save");
 

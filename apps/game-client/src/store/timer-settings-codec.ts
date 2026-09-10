@@ -8,6 +8,7 @@ const generalConfig = z.looseObject({
   countdownMode: z.enum(["min", "max"]).optional(),
   compactView: z.boolean().optional(),
 });
+
 const displayConfig = z.looseObject({
   showType: z.boolean().optional(),
   showLevel: z.boolean().optional(),
@@ -15,11 +16,14 @@ const displayConfig = z.looseObject({
   minColumnWidth: z.number().optional(),
   singleTimerDisplayMode: z.enum(["column", "row"]).optional(),
 });
+
 const stringLists = z.record(z.string(), z.array(z.string()));
+
 const color = z.object({
   borderColor: z.string(),
   backgroundColor: z.string(),
 });
+
 const persistedTimerSettings = z.object({
   updatedAt: z.number().optional().catch(undefined),
   generalConfig: generalConfig.optional().catch(undefined),
@@ -64,5 +68,6 @@ const persistedTimerSettings = z.object({
 
 export const decodeTimerSettings = (value: unknown) => {
   const result = persistedTimerSettings.safeParse(value);
+
   return result.success ? result.data : {};
 };

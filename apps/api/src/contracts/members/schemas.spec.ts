@@ -14,6 +14,7 @@ test("member responses preserve nullable lookup and its extensible JSON fields",
     updatedAt: "2026-09-04T12:00:00Z",
     extra: { nested: [null, true, "value"] },
   } as const;
+
   const decode = Schema.decodeUnknownSync(NullableMemberResponse);
   expect(decode(null)).toBeNull();
   expect(decode(member)).toEqual(member);

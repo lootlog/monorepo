@@ -18,6 +18,7 @@ type Props = {
 export const LiveFeedKillRow = ({ item, now, organizations }: Props) => {
   const { t } = useTranslation();
   const guildId = item.guild.vanityUrl ?? item.guild.id;
+
   return (
     <div className="group relative flex flex-col gap-0 px-4 pt-2 pb-1 transition-colors hover:bg-muted/20">
       <div className="-mx-4 -mt-2 flex flex-wrap items-center px-4 py-2 justify-between gap-x-3 gap-y-2">

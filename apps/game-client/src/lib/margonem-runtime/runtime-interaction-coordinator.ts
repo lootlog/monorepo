@@ -9,9 +9,11 @@ export class RuntimeInteractionCoordinator {
     this.unsubscribe = margonemRuntimeBridge.subscribeIntent((intent) => {
       if (intent.type !== "talk") return;
       const existing = useDialogStore.getState().npcContext;
+
       if (existing?.npcId === intent.npcId && existing.npc && !intent.npc) {
         return;
       }
+
       useDialogStore.getState().setNpcContext({
         npc: intent.npc,
         npcId: intent.npcId,

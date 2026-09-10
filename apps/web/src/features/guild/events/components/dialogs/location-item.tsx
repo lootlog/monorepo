@@ -29,6 +29,7 @@ export const LocationItem = ({
   onDragEnd,
 }: LocationItemProps) => {
   const { t } = useTranslation();
+
   return (
     <Reorder.Item
       value={location}
@@ -51,6 +52,7 @@ export const LocationItem = ({
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.nativeEvent.isComposing)
               handleUpdateLocation();
+
             if (e.key === "Escape") setEditingLocation(null);
           }}
           onBlur={handleUpdateLocation}

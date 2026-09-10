@@ -30,9 +30,11 @@ export const MapTemplatesSettings = () => {
   const { t } = useTranslation();
   const guildId = useGuildId();
   const queryClient = useQueryClient();
+
   const { data: templates, isLoading } = useMapTemplatesControllerGetTemplates({
     guildId: guildId ?? "",
   });
+
   const deleteTemplate = useMapTemplatesControllerDeleteTemplate({
     mutation: {
       onSuccess: async () => {
@@ -49,8 +51,10 @@ export const MapTemplatesSettings = () => {
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+
   const [editingTemplate, setEditingTemplate] =
     useState<MapTemplateResponseDto | null>(null);
+
   const [expandedTemplates, setExpandedTemplates] = useState<
     Record<string, boolean>
   >({});

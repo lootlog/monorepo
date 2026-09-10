@@ -6,18 +6,22 @@ import { useGameStore } from "@/store/game.store";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { createTimerHttpFixture } from "@/features/timers/timer-http-fixtures";
 import { useUpdateLootlogCharactersConfig } from "./use-update-lootlog-characters-config";
+
 it("waits for canonical identity before submitting character config", async () => {
   const fixture = createTimerHttpFixture(() => Response.json({}));
   onTestFinished(fixture.cleanup);
   useGameStore.getState().clearGame();
+
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={fixture.queryClient}>
       {children}
     </QueryClientProvider>
   );
+
   const { result } = renderHook(() => useUpdateLootlogCharactersConfig(), {
     wrapper,
   });
+
   await expect(
     act(() =>
       result.current.mutateAsync({ catchingGuildIds: [], characterId: "101" }),

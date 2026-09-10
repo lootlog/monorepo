@@ -62,6 +62,7 @@ export function HeadToHeadPageVariant({
     activeFilterChips,
     applyFilterState,
   } = useHeadToHeadPage({ columns, matchmaking, showPhFilter });
+
   const filtersContent = (
     <HeadToHeadFiltersPanel
       characterId={currentCharacterId}
@@ -82,6 +83,7 @@ export function HeadToHeadPageVariant({
       onWarriorToggle={handleWarriorToggle}
     />
   );
+
   const toolbar = (
     <HeadToHeadFilterToolbar
       characterId={currentCharacterId}
@@ -104,6 +106,7 @@ export function HeadToHeadPageVariant({
       showPhFilter={showPhFilter}
     />
   );
+
   const paginationFooter = (
     <BattlePanelPaginationFooter
       hasPrev={Boolean(data?.pagination?.hasPrev)}
@@ -122,6 +125,7 @@ export function HeadToHeadPageVariant({
     if (isLoading) {
       return <TableRowsSkeleton trailingColumns={trailingSkeletonColumns} />;
     }
+
     if (isError) {
       return (
         <BattlePanelEmptyState
@@ -134,6 +138,7 @@ export function HeadToHeadPageVariant({
         />
       );
     }
+
     if (!data || data.records.length === 0) {
       return (
         <BattlePanelEmptyState
@@ -143,6 +148,7 @@ export function HeadToHeadPageVariant({
         />
       );
     }
+
     if (isMobile) {
       return (
         <div className="grid gap-2 p-3">
@@ -157,6 +163,7 @@ export function HeadToHeadPageVariant({
         </div>
       );
     }
+
     return (
       <Table className="border-b">
         <TanStackTableHeader

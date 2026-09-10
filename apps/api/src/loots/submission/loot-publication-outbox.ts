@@ -30,11 +30,14 @@ const RabbitPublication = Schema.Union([
     data: Schema.Array(Schema.Unknown),
   }),
 ]);
+
 const CachePublication = Schema.Struct({ kind: Schema.Literal("cache") });
+
 export const LootPublicationPayload = Schema.Union([
   RabbitPublication,
   CachePublication,
 ]);
+
 export type LootPublication = {
   readonly organizationIds: string[];
   readonly payload: typeof LootPublicationPayload.Type;
@@ -49,6 +52,7 @@ export const makeLootPublicationDispatcher = (
   // ponytail: one delivery holds one DB transaction; use leased batches if measured throughput requires it.
   const dispatchOne = (attempted: number[]) => {
     let selectedId: number | undefined;
+
     return database
       .transaction((transaction) =>
         Effect.gen(function* () {
@@ -66,11 +70,14 @@ export const makeLootPublicationDispatcher = (
             )
             .limit(1)
             .for("update", { skipLocked: true });
+
           if (!row) return undefined;
           selectedId = row.id;
+
           const payload = yield* Schema.decodeUnknownEffect(
             LootPublicationPayload,
           )(row.payload);
+
           const records = yield* transaction
             .select({ guildId: organizationLootRecordTable.guildId })
             .from(organizationLootRecordTable)
@@ -84,7 +91,9 @@ export const makeLootPublicationDispatcher = (
                 isNull(organizationLootRecordTable.archivedAt),
               ),
             );
+
           const organizationIds = records.map(({ guildId }) => guildId);
+
           if (organizationIds.length > 0) {
             if (payload.kind === "cache") {
               yield* invalidateCaches(organizationIds);
@@ -94,17 +103,21 @@ export const makeLootPublicationDispatcher = (
                 RabbitRoutingKey.NOTIFICATIONS_LOOT_CREATED
                   ? { ...payload.data, guildIds: organizationIds }
                   : payload.data;
+
               if (payload.routingKey === RabbitRoutingKey.GUILDS_LOOTS_CREATE) {
                 const feedEntry = yield* readPublishedFeedEntry(
                   transaction,
                   payload.data.guildId,
                   { lootId: payload.data.lootId },
                 );
+
                 const publishedData = feedEntry
                   ? { ...payload.data, feedEntry }
                   : { ...payload.data };
+
                 data = publishedData;
               }
+
               yield* rabbit.publish({
                 exchange: "default",
                 routingKey: payload.routingKey,
@@ -113,9 +126,11 @@ export const makeLootPublicationDispatcher = (
               });
             }
           }
+
           yield* transaction
             .delete(lootPublicationOutboxTable)
             .where(eq(lootPublicationOutboxTable.id, row.id));
+
           return row.id;
         }).pipe(Effect.timeout("10 seconds")),
       )
@@ -125,6 +140,7 @@ export const makeLootPublicationDispatcher = (
             ? Effect.fail(error)
             : Effect.gen(function* () {
                 const publicationId = selectedId;
+
                 if (publicationId === undefined) return undefined;
                 yield* database
                   .update(lootPublicationOutboxTable)
@@ -135,6 +151,7 @@ export const makeLootPublicationDispatcher = (
                 yield* Effect.logError(
                   "Loot publication remains pending after delivery failure",
                 ).pipe(Effect.annotateLogs({ publicationId }));
+
                 return publicationId;
               }),
         ),
@@ -143,8 +160,10 @@ export const makeLootPublicationDispatcher = (
 
   return Effect.fn("LootPublicationOutbox.dispatch")(function* () {
     const attempted: number[] = [];
+
     for (let processed = 0; processed < 100; processed++) {
       const id = yield* dispatchOne(attempted);
+
       if (id === undefined) break;
       attempted.push(id);
     }

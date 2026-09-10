@@ -2,9 +2,13 @@ import { randomBytes } from "node:crypto";
 import type { EnvVariable } from "../types.js";
 
 const PASSWORD_LENGTH = 32;
+
 const SECRET_KEY_LENGTH = 64;
+
 const DEFAULT_POSTGRESQL_HOST = "localhost";
+
 const DEFAULT_RABBITMQ_HOST = "localhost";
+
 const DEFAULT_RABBITMQ_PORT = "5672";
 
 const generatePassword = (): string => {
@@ -258,6 +262,7 @@ const deriveAuthPostgresValue = (
   sharedValues: Map<string, string>,
 ): string | null => {
   const credentials = getDatabaseCredentials(sharedValues, "users");
+
   const postgresValuesByKey = new Map(
     Object.entries({
       POSTGRESQL_HOST: DEFAULT_POSTGRESQL_HOST,
@@ -281,8 +286,10 @@ export const enhanceVariablesWithDerivedValues = (
 
     if (variable.key === "RABBITMQ_URI") {
       const user = sharedValues.get("RABBITMQ_DEFAULT_USER") ?? "rabbitmq_user";
+
       const password =
         sharedValues.get("RABBITMQ_DEFAULT_PASS") ?? "rabbitmq_password";
+
       return {
         ...variable,
         value: buildRabbitMQUri(user, password),
@@ -316,6 +323,7 @@ export const enhanceVariablesWithDerivedValues = (
       variable.key,
       sharedValues,
     );
+
     if (envFileName === "apps/auth" && authPostgresValue !== null) {
       return {
         ...variable,

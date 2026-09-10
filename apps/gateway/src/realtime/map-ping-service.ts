@@ -15,7 +15,9 @@ import type { GatewaySocket } from "#src/realtime/session";
 import { canSubscribe } from "#src/realtime/subscription-policy";
 
 const RATE_LIMIT = 5;
+
 const RATE_LIMIT_WINDOW_MS = 15_000;
+
 const RATE_LIMIT_SCRIPT = `
 local time = redis.call("TIME")
 local now = (tonumber(time[1]) * 1000) + math.floor(tonumber(time[2]) / 1000)
@@ -57,7 +59,9 @@ export class MapPingService {
     if (!this.hasValidPayload(payload)) {
       return { status: "rejected", code: "invalid-payload" };
     }
+
     const context = this.getContext(socket, payload.expectedMapId);
+
     if (!context) return { status: "rejected", code: "invalid-context" };
 
     const scopes = socket.data.guilds.flatMap(({ guild }) => {
@@ -67,15 +71,19 @@ export class MapPingService {
         world: context.world,
         mapId: context.mapId,
       };
+
       return canSubscribe(socket.data, scope) ? [scope] : [];
     });
+
     if (scopes.length === 0) return { status: "rejected", code: "forbidden" };
 
     const pingId = crypto.randomUUID();
     const rateLimit = await this.consumeRateLimit(socket.data.userId, pingId);
+
     if (!rateLimit)
       return { status: "rejected", code: "temporarily-unavailable" };
     const [accepted, createdAt, retryAfterMs] = rateLimit;
+
     if (accepted !== 1) {
       return { status: "rejected", code: "rate-limited", retryAfterMs };
     }
@@ -90,6 +98,7 @@ export class MapPingService {
       sender: { characterId: context.characterId, name: context.name },
       createdAt,
     };
+
     try {
       await this.hub.publishToScopes(
         scopes,
@@ -103,13 +112,16 @@ export class MapPingService {
       );
     } catch (error) {
       this.logger.warn("Failed to route map ping", error);
+
       return { status: "rejected", code: "temporarily-unavailable" };
     }
+
     return { status: "accepted", pingId };
   }
 
   private getContext(socket: GatewaySocket, expectedMapId: number) {
     const presence = socket.data.presence;
+
     if (
       socket.data.platform !== "game" ||
       !presence?.character?.world ||
@@ -118,6 +130,7 @@ export class MapPingService {
       presence.location?.mapId !== expectedMapId
     )
       return null;
+
     return {
       world: presence.character.world,
       mapId: expectedMapId,
@@ -148,12 +161,15 @@ export class MapPingService {
         RATE_LIMIT,
         pingId,
       );
+
       if (!Array.isArray(result)) return null;
+
       return Schema.decodeUnknownSync(
         Schema.Tuple([Schema.Number, Schema.Number, Schema.Number]),
       )(result.map(Number));
     } catch (error) {
       this.logger.warn("Failed to apply map ping rate limit", error);
+
       return null;
     }
   }

@@ -3,9 +3,12 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import "@/i18n/config";
 import { StatisticsQueryState } from "./statistics-query-state";
+
 afterEach(cleanup);
+
 it("shows pending, preserves stale data on failed refresh and offers retry", () => {
   const refetch = vi.fn();
+
   const { rerender } = render(
     <StatisticsQueryState
       query={{
@@ -19,6 +22,7 @@ it("shows pending, preserves stale data on failed refresh and offers retry", () 
       <p>42 bicia</p>
     </StatisticsQueryState>,
   );
+
   expect(screen.getByRole("status")).toBeTruthy();
   expect(screen.queryByText("42 bicia")).toBeNull();
   rerender(

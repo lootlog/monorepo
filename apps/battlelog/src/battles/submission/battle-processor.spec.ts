@@ -826,6 +826,7 @@ describe("BattleProcessor", () => {
 
       const result = processor.processBattle(battleData);
       const mage = result.warriors.find((w) => w.name === "Mage");
+
       const mechanics = result.warriorMechanics.find(
         (w) => w.warriorId === "1",
       );
@@ -983,9 +984,11 @@ describe("BattleProcessor", () => {
       const result = processor.processBattle(battleData);
       const attacker = result.warriors.find((w) => w.name === "Attacker");
       const defender = result.warriors.find((w) => w.name === "Defender");
+
       const attackerMechanics = result.warriorMechanics.find(
         (w) => w.warriorId === "1",
       );
+
       const defenderMechanics = result.warriorMechanics.find(
         (w) => w.warriorId === "2",
       );
@@ -1040,9 +1043,11 @@ describe("BattleProcessor", () => {
 
       const result = processor.processBattle(battleData);
       const defender = result.warriors.find((w) => w.name === "Defender");
+
       const defenderMechanics = result.warriorMechanics.find(
         (w) => w.warriorId === "2",
       );
+
       const flags = result.battleTimeline[0]?.flags ?? [];
 
       expect(defender?.evasions).toBe(1);
@@ -1098,9 +1103,11 @@ describe("BattleProcessor", () => {
       const result = processor.processBattle(battleData);
       const turn = result.battleTimeline[0];
       const defender = result.warriors.find((w) => w.name === "Defender");
+
       const defenderMechanics = result.warriorMechanics.find(
         (w) => w.warriorId === "2",
       );
+
       const counterAction = turn?.actions.find(
         (action) => action.actionType === "-contra",
       );
@@ -1152,9 +1159,11 @@ describe("BattleProcessor", () => {
       const turn = result.battleTimeline[0];
       const attackerDelta = turn?.deltas.byWarrior["1"];
       const defenderDelta = turn?.deltas.byWarrior["2"];
+
       const attackerMechanics = result.warriorMechanics.find(
         (warrior) => warrior.warriorId === "1",
       );
+
       const energyDestroyAction = turn?.actions.find(
         (action) => action.actionType === "-endest",
       );
@@ -1210,9 +1219,11 @@ describe("BattleProcessor", () => {
 
       const result = processor.processBattle(battleData);
       const turn = result.battleTimeline[0];
+
       const rageAction = turn?.actions.find(
         (action) => action.actionType === "+rage",
       );
+
       const stigmaAction = turn?.actions.find(
         (action) => action.actionType === "+taken_dmg",
       );
@@ -1262,12 +1273,15 @@ describe("BattleProcessor", () => {
 
       const result = processor.processBattle(battleData);
       const turn = result.battleTimeline[0];
+
       const reductionAction = turn?.actions.find(
         (action) => action.actionType === "-redacdmg_per",
       );
+
       const woundAction = turn?.actions.find(
         (action) => action.actionType === "+of_wound",
       );
+
       const critSpeedAction = turn?.actions.find(
         (action) => action.actionType === "+critsa_per",
       );

@@ -68,6 +68,7 @@ export function MobileDayPreview({
 
       {daySegments.map((segment) => {
         const laneFraction = segment.lane / segment.laneCount;
+
         return (
           <ReservationBlock
             key={segment.id}

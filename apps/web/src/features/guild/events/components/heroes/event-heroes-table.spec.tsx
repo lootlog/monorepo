@@ -37,10 +37,13 @@ async function render(element: ReactNode) {
       },
     }),
   );
+
   const router = createOrganizationTestRouter(
     <QueryClientProvider client={queryClient}>{element}</QueryClientProvider>,
   );
+
   await router.load();
+
   return renderElement(<RouterProvider router={router} />);
 }
 
@@ -154,9 +157,11 @@ describe("EventHeroesTable", () => {
       "events.heroes.columns.kills",
       "events.heroes.columns.actions",
     ]);
+
     const actionsHeader = screen.getByRole("columnheader", {
       name: "events.heroes.columns.actions",
     });
+
     expect(actionsHeader.querySelector(".sr-only")).toBeTruthy();
 
     expect(screen.getByText("Potulny Berserker (284w)")).toBeTruthy();

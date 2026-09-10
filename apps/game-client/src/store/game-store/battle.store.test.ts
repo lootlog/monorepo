@@ -6,9 +6,11 @@ describe("battle capture accumulator", () => {
   it("accumulates in O(1) without publishing every event", () => {
     useBattleStore.getState().clearEvents();
     let publications = 0;
+
     const unsubscribe = useBattleStore.subscribe(() => {
       publications += 1;
     });
+
     const event = { f: { m: ["turn"] } };
 
     for (let index = 0; index < MAX_BATTLE_CAPTURE_EVENTS; index += 1) {
@@ -88,6 +90,7 @@ describe("battle capture accumulator", () => {
 
   it("publishes a multi-field battle transition exactly once", () => {
     let publications = 0;
+
     const unsubscribe = useBattleStore.subscribe(() => {
       publications += 1;
     });

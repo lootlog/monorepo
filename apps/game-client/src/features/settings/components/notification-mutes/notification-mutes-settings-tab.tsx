@@ -39,6 +39,7 @@ export const NotificationMutesSettingsTab = () => {
     .sort((left, right) =>
       left.displayName.localeCompare(right.displayName, "pl"),
     );
+
   const sortedNpcs = [...mutes.npcs]
     .filter((npc) => {
       if (!normalizedNpcSearch) {

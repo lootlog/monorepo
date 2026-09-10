@@ -6,6 +6,7 @@ import type { MapManageDialogProps } from "./use-map-manage-dialog";
 import { MapChip } from "./map-chip";
 
 import type { LocationData } from "./map-manage-dialog.types";
+
 interface AssignedEventMapsProps {
   maps: MapManageDialogProps["hero"]["maps"];
   locations: LocationData[];
@@ -14,6 +15,7 @@ interface AssignedEventMapsProps {
   onDelete: (mapId: string) => void;
   onLocationChange: (mapId: string, locationId: string | null) => void;
 }
+
 export function AssignedEventMaps({
   maps,
   locations,
@@ -23,9 +25,11 @@ export function AssignedEventMaps({
   onLocationChange,
 }: AssignedEventMapsProps) {
   const { t } = useTranslation();
+
   const totalMapsCount =
     maps.length +
     locations.reduce((count, location) => count + location.maps.length, 0);
+
   const groups = [
     ...locations.map((location) => ({
       key: `location:${location.id}`,
@@ -40,6 +44,7 @@ export function AssignedEventMaps({
       unassigned: true,
     },
   ];
+
   return (
     <div className="space-y-2">
       <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">

@@ -8,6 +8,7 @@ import {
 } from "./chat.store";
 
 beforeEach(() => useChatStore.setState(useChatStore.getInitialState(), true));
+
 const reply = (guildId: string): ChatReplyDraft => ({
   guildId,
   messageId: "message",
@@ -15,6 +16,7 @@ const reply = (guildId: string): ChatReplyDraft => ({
   senderNick: "Player",
   type: "NOTIFICATION",
 });
+
 describe("organization composer state", () => {
   it("preserves the prior per-character top selector and routes reply focus through that selector", () => {
     setTestRuntimeGame({
@@ -23,9 +25,11 @@ describe("organization composer state", () => {
         characterId: "migration-character",
       },
     });
+
     const key = storageKey(
       "ll:chat:selected-guild:migration-account:migration-character",
     );
+
     localStorage.setItem(key, JSON.stringify("old-organization"));
     expect(getSelectedChatGuildId()).toBe("old-organization");
     useChatStore.getState().setSelectedInputGuildIds(["command-target"]);

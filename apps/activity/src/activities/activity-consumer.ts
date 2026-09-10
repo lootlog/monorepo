@@ -30,6 +30,7 @@ const mainQueue = (
   deadLetterExchange: RabbitExchange.RETRY,
   deadLetterRoutingKey: retryRoutingKey,
 });
+
 export const activityQueues = [
   mainQueue(
     "activity-log-create",
@@ -69,19 +70,25 @@ const decodeJson = (delivery: RabbitDelivery) =>
       ),
     catch: (cause) => cause,
   });
+
 const retryCount = (delivery: RabbitDelivery): number => {
   const death = delivery.properties.headers?.["x-death"];
+
   if (!Array.isArray(death) || death.length === 0) return 0;
+
   const entry = Schema.decodeUnknownOption(
     Schema.Struct({ count: Schema.Number }),
   )(death[0]);
+
   return Option.getOrElse(
     Option.map(entry, ({ count }) => count),
     () => 0,
   );
 };
+
 const header = (delivery: RabbitDelivery, name: string): string | undefined => {
   const value = delivery.properties.headers?.[name];
+
   return Option.getOrUndefined(
     Schema.decodeUnknownOption(Schema.String)(
       Array.isArray(value) ? value[0] : value,
@@ -94,6 +101,7 @@ export const ActivityConsumers = Layer.effectDiscard(
     const rabbit = yield* RabbitMessaging;
     const repository = yield* ActivityRepository;
     const config = yield* ActivityConfig;
+
     const publishDlq = (
       delivery: RabbitDelivery,
       routingKey:
@@ -130,6 +138,7 @@ export const ActivityConsumers = Layer.effectDiscard(
             }),
           ),
         );
+
     yield* rabbit.consume(
       {
         queue: "activity-log-create",
@@ -139,7 +148,8 @@ export const ActivityConsumers = Layer.effectDiscard(
       (delivery) =>
         Effect.gen(function* () {
           const decoded = decodeJson(delivery);
-          if (decoded._tag === "Failure") {
+
+          if (Result.isFailure(decoded)) {
             yield* publishDlq(
               delivery,
               RabbitRoutingKey.ACTIVITY_LOG_CREATE_DLQ,
@@ -148,9 +158,12 @@ export const ActivityConsumers = Layer.effectDiscard(
                 "x-error-type": "permanent",
               },
             );
+
             return;
           }
+
           const input = decoded.success;
+
           if (
             !verifyActivityEventSignature({
               payload: input,
@@ -166,9 +179,12 @@ export const ActivityConsumers = Layer.effectDiscard(
                 "x-signature-error": "Invalid activity event signature",
               },
             );
+
             return;
           }
+
           let dto;
+
           try {
             dto = decodeCreateActivity(input);
           } catch {
@@ -180,16 +196,20 @@ export const ActivityConsumers = Layer.effectDiscard(
                 "x-error-type": "permanent",
               },
             );
+
             return;
           }
+
           if (retryCount(delivery) >= 3) {
             yield* publishDlq(
               delivery,
               RabbitRoutingKey.ACTIVITY_LOG_CREATE_DLQ,
               {},
             );
+
             return;
           }
+
           yield* repository.create(dto);
         }),
     );
@@ -202,7 +222,8 @@ export const ActivityConsumers = Layer.effectDiscard(
       (delivery) =>
         Effect.gen(function* () {
           const decoded = decodeJson(delivery);
-          if (decoded._tag === "Failure") {
+
+          if (Result.isFailure(decoded)) {
             yield* publishDlq(
               delivery,
               RabbitRoutingKey.GUILDS_MEMBERS_REMOVE_DLQ,
@@ -211,10 +232,13 @@ export const ActivityConsumers = Layer.effectDiscard(
                 "x-error-type": "permanent",
               },
             );
+
             return;
           }
+
           const input = decoded.success;
           let dto;
+
           try {
             dto = decodeGuildMemberRemoved(input);
           } catch {
@@ -226,16 +250,20 @@ export const ActivityConsumers = Layer.effectDiscard(
                 "x-error-type": "permanent",
               },
             );
+
             return;
           }
+
           if (retryCount(delivery) >= 3) {
             yield* publishDlq(
               delivery,
               RabbitRoutingKey.GUILDS_MEMBERS_REMOVE_DLQ,
               {},
             );
+
             return;
           }
+
           yield* repository.clearActiveSessionsForMember({
             guildId: dto.guildId,
             discordId: dto.discordId,

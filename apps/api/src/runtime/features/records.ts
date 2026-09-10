@@ -38,10 +38,12 @@ interface RecordsServicesValue {
     typeof makeLootPublicationDispatcher
   >;
 }
+
 export class RecordsServices extends Context.Service<
   RecordsServices,
   RecordsServicesValue
 >()("@lootlog/api/http-api/RecordsServices") {}
+
 export const recordsServicesLive = Layer.effect(
   RecordsServices,
   Effect.gen(function* () {
@@ -51,6 +53,7 @@ export const recordsServicesLive = Layer.effect(
     const postgres = yield* PgClient.PgClient;
     const lootStats = new LootStatsService(makeLootStatsQuery(postgres), redis);
     const redlock = new RedlockService(redis).createInstance();
+
     const dispatchLootPublications = makeLootPublicationDispatcher(
       database,
       rabbit,
@@ -68,6 +71,7 @@ export const recordsServicesLive = Layer.effect(
           { concurrency: "unbounded", discard: true },
         ),
     );
+
     const acceptance = makeLootSubmissionAcceptance(
       makeLootSubmissionAcceptancePersistence(database),
       {
@@ -82,10 +86,12 @@ export const recordsServicesLive = Layer.effect(
                     message: "Lock acquisition failed for createLoot",
                     resource,
                   });
+
                   return new DependencyUnavailableError(
                     "Failed to acquire loot lock",
                   );
                 }
+
                 return cause;
               },
             }),
@@ -95,6 +101,7 @@ export const recordsServicesLive = Layer.effect(
           ),
       },
     );
+
     const loots = makeLootsOperations({
       persistence: makeLootPersistence(database),
       query: makeLootQueryOperations(makeLootQueryPersistence(database)),
@@ -102,7 +109,9 @@ export const recordsServicesLive = Layer.effect(
       redis,
       logger: applicationLogger,
     });
+
     const killStatsPersistence = makeKillStatsPersistence(database);
+
     const killQueryCache: KillQueryCache = {
       getOrSet: (key, schema, factory, ttlSeconds) =>
         redis.getOrSetJsonEffect({
@@ -114,6 +123,7 @@ export const recordsServicesLive = Layer.effect(
             applicationLogger.warn("Kill statistics cache unavailable", error),
         }),
     };
+
     return {
       dispatchLootPublications,
       loots,
@@ -184,6 +194,7 @@ export const recordsServicesLive = Layer.effect(
     };
   }),
 );
+
 export const recordsData = Layer.unwrap(
   Effect.map(RecordsServices, ({ layer }) => layer),
 );

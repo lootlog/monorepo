@@ -13,6 +13,7 @@ const ENERGY_PARTICLE_SVG =
 
 export function RiasMagicCardOverlay() {
   const id = React.useId();
+
   return (
     <CardParticleOverlay
       slot="rias-magic-card-overlay"

@@ -12,6 +12,7 @@ import { GenericContainer, type StartedTestContainer } from "testcontainers";
 import { RabbitMessaging } from "../src/messaging.ts";
 
 let rabbit: StartedTestContainer;
+
 let rabbitUri: string;
 
 describe("RabbitMessaging real broker integration", () => {
@@ -32,6 +33,7 @@ describe("RabbitMessaging real broker integration", () => {
     const mainQueue = `lootlog-rewrite-main-${suffix}`;
     const retryQueue = `lootlog-rewrite-retry-${suffix}`;
     const deadLetterQueue = `lootlog-rewrite-dlq-${suffix}`;
+
     const queues: RabbitQueueDefinition[] = [
       {
         name: mainQueue,
@@ -50,12 +52,15 @@ describe("RabbitMessaging real broker integration", () => {
         routingKey: RabbitRoutingKey.GUILDS_LOOTS_CREATE_DLQ,
       }),
     ];
+
     const seenMainDeliveries: Array<{
       redelivered: boolean;
       retryCount: unknown;
     }> = [];
+
     const inspection = await amqp.connect(rabbitUri);
     const channel = await inspection.createChannel();
+
     try {
       await Effect.runPromise(
         Effect.scoped(
@@ -91,6 +96,7 @@ describe("RabbitMessaging real broker integration", () => {
                 const queue = yield* Effect.promise(() =>
                   channel.checkQueue(deadLetterQueue),
                 );
+
                 if (queue.messageCount === 1) break;
                 yield* Effect.sleep("25 millis");
               }
@@ -121,6 +127,7 @@ describe("RabbitMessaging real broker integration", () => {
       await channel.close();
       await inspection.close();
     }
+
     expect(seenMainDeliveries).toEqual([
       { redelivered: false, retryCount: undefined },
       { redelivered: false, retryCount: 1 },
@@ -133,6 +140,7 @@ describe("RabbitMessaging real broker integration", () => {
     const seen: string[] = [];
     const inspection = await amqp.connect(rabbitUri);
     const channel = await inspection.createChannel();
+
     try {
       await Effect.runPromise(
         Effect.scoped(
@@ -153,6 +161,7 @@ describe("RabbitMessaging real broker integration", () => {
                 Effect.gen(function* () {
                   const payload = new TextDecoder().decode(delivery.content);
                   seen.push(payload);
+
                   if (payload === "checkpoint") {
                     yield* Deferred.succeed(started, undefined);
                     yield* Deferred.await(release);
@@ -181,6 +190,7 @@ describe("RabbitMessaging real broker integration", () => {
               },
               () => Deferred.succeed(unrelated, undefined).pipe(Effect.asVoid),
             );
+
             for (const payload of ["checkpoint", "healthy"])
               yield* messaging.publish({
                 routingKey: RabbitRoutingKey.USERS_ONLINE_CHECKPOINT_V1,
@@ -234,6 +244,7 @@ describe("RabbitMessaging real broker integration", () => {
 
   test("broker cancellation of a subscription fails the application", async () => {
     const queue = `consumer-cancel-${crypto.randomUUID()}`;
+
     const failure = await Effect.runPromise(
       Effect.gen(function* () {
         const messaging = yield* RabbitMessaging;
@@ -265,6 +276,7 @@ describe("RabbitMessaging real broker integration", () => {
         Effect.timeout("10 seconds"),
       ),
     );
+
     expect(failure.message).toContain("consumer cancelled by broker");
   }, 15_000);
 
@@ -287,6 +299,7 @@ describe("RabbitMessaging real broker integration", () => {
         Effect.timeout("10 seconds"),
       ),
     );
+
     expect(failure.operation).toBe("connect");
   }, 15_000);
 });

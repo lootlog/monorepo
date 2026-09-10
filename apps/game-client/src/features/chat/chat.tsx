@@ -24,24 +24,31 @@ export const Chat = () => {
   const accountId = useGameStore((state) => state.game?.hero.accountId ?? "");
   const gameInterface = useGameStore((state) => state.game?.interface);
   const selectedGuildId = useChatStore(getSelectedChatGuildId);
+
   const setSelectedGuildId = useChatStore(
     (state) => state.setSelectedChatGuildId,
   );
+
   const [readStates, setReadStates] = useState<Record<string, ChatReadState>>(
     {},
   );
+
   const [positions] = useState(() => new Map<string, ChatScrollPosition>());
   const readState = readStates[accountId] ?? {};
+
   const setReadState = (update: (state: ChatReadState) => ChatReadState) =>
     setReadStates((current) => {
       const before = current[accountId] ?? {};
       const after = update(before);
+
       return before === after ? current : { ...current, [accountId]: after };
     });
+
   const integrated = useIntegratedChatHost(
     CHAT_INTEGRATION_ENABLED && isIntegratedMode && gameInterface === "ni",
     t("integration.tab"),
   );
+
   const isVisible = integrated.target ? integrated.visible : open;
   const { shouldRender } = useWindowPresence(open);
   const { hiddenNpcTypes } = useChatSettingsDocuments();
@@ -53,10 +60,12 @@ export const Chat = () => {
     onRemoteMessage: (message) => {
       if (isHiddenNpcChatMessage(message, hiddenNpcTypeSet)) return;
       const heroName = useGameStore.getState().game?.hero.name ?? "";
+
       const attention =
         hasCurrentUserMention(message.message, {
           currentUserNames: [heroName],
         }) || Boolean(heroName && message.replyTo?.senderNick === heroName);
+
       setReadState((current) =>
         receiveChatMessage(current, message, attention),
       );
@@ -64,6 +73,7 @@ export const Chat = () => {
   });
 
   if (!integrated.target && !shouldRender) return null;
+
   const view = (
     <ChatView
       isOpen={isVisible}
@@ -78,7 +88,9 @@ export const Chat = () => {
       }}
     />
   );
+
   if (!integrated.target) return view;
+
   return createPortal(
     <div
       className={`${getLootlogHostPortalThemeClassName()} ll:flex ll:size-full ll:min-h-0 ll:flex-col ll:bg-background ll:text-foreground`}

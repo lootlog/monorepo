@@ -20,6 +20,7 @@ export class ActivityPublisher {
     organizationIds = session.guilds.map(({ guild }) => guild.id),
   ): Effect.Effect<void> {
     const { config, messaging } = this;
+
     return Effect.gen(function* () {
       const timestamp = yield* Clock.currentTimeMillis;
       yield* Effect.forEach(
@@ -27,7 +28,9 @@ export class ActivityPublisher {
         (guildId) => {
           const player =
             session.platform === "game" ? session.character : undefined;
+
           if (session.platform === "game" && !player) return Effect.void;
+
           const payload = {
             userId: session.userId,
             guildId,
@@ -53,10 +56,12 @@ export class ActivityPublisher {
               : undefined,
             idempotencyKey: `${type.toLowerCase()}_${session.connectionId}_${guildId}_${timestamp}`,
           };
+
           const signature = signActivityEvent(
             payload,
             Redacted.value(config.activityEventSignatureSecret),
           );
+
           return messaging
             .publish({
               routingKey: RabbitRoutingKey.ACTIVITY_LOG_CREATE,

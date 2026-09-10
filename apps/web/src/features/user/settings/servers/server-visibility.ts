@@ -14,9 +14,11 @@ export const filterGuildsByVisibility = <Guild extends GuildIdentity>(
 
   return guilds.filter((guild) => {
     const isHidden = hiddenGuildIdSet.has(guild.id);
+
     if (visibility === "visible" && isHidden) {
       return false;
     }
+
     if (visibility === "hidden" && !isHidden) {
       return false;
     }

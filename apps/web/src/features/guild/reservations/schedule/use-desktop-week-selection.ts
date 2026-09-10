@@ -33,10 +33,12 @@ export function useDesktopWeekSelection({
   const nowRef = useRef<HTMLDivElement>(null);
   const contextMenuOpenRef = useRef(false);
   const suppressSelectionRef = useRef(false);
+
   const [selection, setSelection] = useState<{
     anchor: SelectionPoint;
     current: SelectionPoint;
   } | null>(null);
+
   const [isPointerOverUnavailableSlot, setIsPointerOverUnavailableSlot] =
     useState(false);
 
@@ -44,21 +46,27 @@ export function useDesktopWeekSelection({
     event: React.PointerEvent<HTMLDivElement>,
   ): SelectionPoint | null => {
     const grid = gridRef.current;
+
     if (!grid) return null;
     const rect = grid.getBoundingClientRect();
     const x = event.clientX - rect.left - LABEL_COLUMN_WIDTH;
     const y = event.clientY - rect.top - HEADER_HEIGHT;
+
     if (x < 0 || y < 0) return null;
     const dayWidth = (rect.width - LABEL_COLUMN_WIDTH) / DAYS.length;
+
     const day = Math.min(
       DAYS.length - 1,
       Math.max(0, Math.floor(x / dayWidth)),
     );
+
     const rawMinutes = (y / MIN_ROW_HEIGHT) * 60;
+
     const minutes = Math.min(
       24 * 60 - minuteStep,
       Math.max(0, Math.floor(rawMinutes / minuteStep) * minuteStep),
     );
+
     return { day, minutes };
   };
 
@@ -66,6 +74,7 @@ export function useDesktopWeekSelection({
     const date = new Date(weekStart);
     date.setDate(date.getDate() + point.day);
     date.setHours(0, point.minutes, 0, 0);
+
     return date;
   };
 
@@ -81,11 +90,13 @@ export function useDesktopWeekSelection({
     const startsAt = first < second ? first : second;
     const lastStart = first < second ? second : first;
     const endsAt = new Date(lastStart.getTime() + minuteStep * 60_000);
+
     return { startsAt, endsAt };
   };
 
   const selectionStyles = (() => {
     const range = getSelectionRange();
+
     if (!range) return [];
     const styles: Array<React.CSSProperties & { day: number }> = [];
     let dayStart = new Date(range.startsAt);
@@ -94,19 +105,24 @@ export function useDesktopWeekSelection({
     while (dayStart < range.endsAt) {
       const nextDayStart = new Date(dayStart);
       nextDayStart.setDate(nextDayStart.getDate() + 1);
+
       const segmentStart =
         range.startsAt > dayStart ? range.startsAt : dayStart;
+
       const segmentEnd =
         range.endsAt < nextDayStart ? range.endsAt : nextDayStart;
+
       const day = differenceInCalendarDays(dayStart, weekStart);
 
       if (day >= 0 && day < DAYS.length && segmentStart < segmentEnd) {
         const startMinutes =
           segmentStart.getHours() * 60 + segmentStart.getMinutes();
+
         const endMinutes =
           segmentEnd >= nextDayStart
             ? 24 * 60
             : segmentEnd.getHours() * 60 + segmentEnd.getMinutes();
+
         const dayFraction = day / DAYS.length;
         styles.push({
           day,
@@ -125,13 +141,16 @@ export function useDesktopWeekSelection({
 
   const finishSelection = () => {
     const range = getSelectionRange();
+
     if (!range) return;
     setSelection(null);
+
     if (!isReservationStartSelectable(range.startsAt)) return;
     onRangeSelect(range);
   };
 
   const now = new Date();
+
   const nowDay = Math.floor(
     (new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() -
       new Date(
@@ -141,13 +160,16 @@ export function useDesktopWeekSelection({
       ).getTime()) /
       86_400_000,
   );
+
   const nowTop =
     HEADER_HEIGHT +
     ((now.getHours() * 60 + now.getMinutes()) / 60) * MIN_ROW_HEIGHT;
+
   const isNowVisible = nowDay >= 0 && nowDay < DAYS.length;
 
   useEffect(() => {
     const nowIndicator = nowRef.current;
+
     if (!isNowVisible || !nowIndicator) return;
     scrollViewportToNowIndicator(nowIndicator);
   }, [isNowVisible]);

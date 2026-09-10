@@ -10,6 +10,7 @@ import type { ChatStoredMessage } from "#src/chat/chat-stored-message";
 import type { ChatMessageViewer } from "#src/chat/chat-message-viewer";
 
 type NpcData = NonNullable<ChatStoredMessage["npc"]>;
+
 type Role = {
   permissions: Permission[];
   lvlRangeFrom: number;
@@ -43,6 +44,7 @@ export const canViewChatMessage = (
 
   if (isNpcScopedMessage(data)) {
     const npc = data.npc;
+
     if (!npc) return false;
 
     return hasNpcTierPermission(npc, roles);

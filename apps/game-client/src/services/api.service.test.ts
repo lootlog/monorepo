@@ -30,11 +30,14 @@ describe("api.service logging", () => {
     const consoleLogSpy = vi
       .spyOn(console, "log")
       .mockImplementation(() => undefined);
+
     useSettingsStore.getState().setLootDebugLoggingEnabled(true);
+
     const debugContext = {
       attemptId: "attempt-fight-1",
       source: "fight" as const,
     };
+
     const payload = {
       world: "pandora",
       source: "FIGHT",
@@ -45,6 +48,7 @@ describe("api.service logging", () => {
       accountId: "10",
       characterId: "20",
     };
+
     const responseData = {
       id: 77,
       submittedGuilds: [
@@ -61,6 +65,7 @@ describe("api.service logging", () => {
         },
       ],
     };
+
     http.mockResolvedValueOnce(Response.json(responseData));
 
     const response = await createLoot(payload, debugContext);
@@ -132,11 +137,14 @@ describe("api.service logging", () => {
     const consoleLogSpy = vi
       .spyOn(console, "log")
       .mockImplementation(() => undefined);
+
     useSettingsStore.getState().setLootDebugLoggingEnabled(true);
+
     const debugContext = {
       attemptId: "attempt-dialog-1",
       source: "dialog" as const,
     };
+
     const apiError = {
       message: "Request failed",
       status: 400,
@@ -201,14 +209,18 @@ describe("api.service logging", () => {
 
   it("logs every createLoot retry with the same correlation context", async () => {
     vi.useFakeTimers();
+
     const consoleLogSpy = vi
       .spyOn(console, "log")
       .mockImplementation(() => undefined);
+
     useSettingsStore.getState().setLootDebugLoggingEnabled(true);
+
     const debugContext = {
       attemptId: "attempt-fight-retry",
       source: "fight" as const,
     };
+
     const payload = {
       world: "pandora",
       source: "FIGHT",
@@ -219,16 +231,19 @@ describe("api.service logging", () => {
       accountId: "10",
       characterId: "20",
     };
+
     const retryableError = {
       message: "Temporary failure",
       status: 500,
       data: { message: "retry" },
     };
+
     const responseData = {
       id: 88,
       submittedGuilds: [],
       rejectedGuilds: [],
     };
+
     http
       .mockResolvedValueOnce(
         Response.json(retryableError.data, { status: retryableError.status }),
@@ -276,6 +291,7 @@ describe("api.service logging", () => {
       status: 500,
       data: { message: "upstream failed" },
     };
+
     http.mockResolvedValueOnce(
       Response.json(apiError.data, { status: apiError.status }),
     );

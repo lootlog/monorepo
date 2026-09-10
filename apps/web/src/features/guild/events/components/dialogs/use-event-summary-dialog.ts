@@ -28,6 +28,7 @@ export function useEventSummaryDialog({
   const [selection, setSelection] = useState({ id: "opening", index: 0 });
   const currentSlideId = selection.id;
   const [direction, setDirection] = useState<1 | -1>(1);
+
   const { data, isLoading, isFetching, error, refetch } = useShowEventWrapped(
     { guildId, eventId },
     {
@@ -41,14 +42,18 @@ export function useEventSummaryDialog({
   const resolveSlideState = () => {
     const deck = data ? buildWrappedDeck(buildWrappedQualityModel(data)) : null;
     const slides = deck?.mode === "presentation" ? deck.slides : [];
+
     const matchingIndex = slides.findIndex(
       (slide) => slide.id === currentSlideId,
     );
+
     const activeIndex =
       matchingIndex >= 0
         ? matchingIndex
         : Math.min(selection.index, Math.max(slides.length - 1, 0));
+
     const activeSlide = slides[activeIndex];
+
     return {
       deck,
       slides,
@@ -57,15 +62,18 @@ export function useEventSummaryDialog({
       isFinalSlide: activeSlide?.kind === "finale",
     };
   };
+
   const { deck, slides, activeIndex, activeSlide, isFinalSlide } =
     resolveSlideState();
 
   // This state drives the render-time slide reset when reopening; changing it to a ref would lose the committed reopen transition.
   // eslint-disable-next-line react-doctor/rerender-state-only-in-handlers
   const [wasOpen, setWasOpen] = useState(open);
+
   const synchronizeSlide = () => {
     if (wasOpen !== open) {
       setWasOpen(open);
+
       if (open) {
         setDirection(1);
         setSelection({ id: "opening", index: 0 });
@@ -77,6 +85,7 @@ export function useEventSummaryDialog({
       setSelection({ id: activeSlide.id, index: activeIndex });
     }
   };
+
   synchronizeSlide();
 
   const advanceAutomatically = () => {
@@ -105,6 +114,7 @@ export function useEventSummaryDialog({
 
   const selectSlide = (index: number) => {
     const nextSlide = slides[index];
+
     if (!nextSlide || index === activeIndex) {
       return;
     }
@@ -121,6 +131,7 @@ export function useEventSummaryDialog({
 
     const handleKeyDown = (keyboardEvent: KeyboardEvent) => {
       const target = keyboardEvent.target;
+
       if (
         target instanceof HTMLElement &&
         target.closest("button, a, input, textarea, select, [contenteditable]")
@@ -148,6 +159,7 @@ export function useEventSummaryDialog({
     };
 
     window.addEventListener("keydown", handleKeyDown);
+
     return () => window.removeEventListener("keydown", handleKeyDown);
   });
 
@@ -155,11 +167,14 @@ export function useEventSummaryDialog({
     if (activeSlide?.kind === "fact") {
       return t(`events.summaryDialog.facts.${activeSlide.id}.label`);
     }
+
     if (activeSlide) {
       return t(`events.summaryDialog.${activeSlide.kind}ProgressLabel`);
     }
+
     return "";
   };
+
   const activeSlideLabel = getActiveSlideLabel();
 
   return {

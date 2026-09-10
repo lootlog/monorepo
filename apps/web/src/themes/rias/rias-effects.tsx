@@ -113,6 +113,7 @@ const MagicCircle = ({
   delay: number;
 }) => {
   const prefersReducedMotion = usePrefersReducedMotion();
+
   return (
     <m.div
       key={String(prefersReducedMotion)}
@@ -237,6 +238,7 @@ const floatingParticles = Array.from({ length: 12 }, (_, index) => ({
 // Floating destruction particles for global overlay
 const FloatingParticles = () => {
   const prefersReducedMotion = usePrefersReducedMotion();
+
   return (
     <>
       {floatingParticles.map((p) => (
@@ -277,6 +279,7 @@ const FloatingParticles = () => {
 // Ambient magic circle watermark
 const AmbientMagicCircle = () => {
   const prefersReducedMotion = usePrefersReducedMotion();
+
   return (
     <m.div
       key={String(prefersReducedMotion)}
@@ -360,6 +363,7 @@ const DestructionEdgeGlow = () => (
 // Second ambient magic circle - top left, counter-rotating
 const AmbientMagicCircleTopLeft = () => {
   const prefersReducedMotion = usePrefersReducedMotion();
+
   return (
     <m.div
       key={String(prefersReducedMotion)}
@@ -416,6 +420,7 @@ const AmbientMagicCircleTopLeft = () => {
 // Pulsating Power of Destruction vignette - breathing crimson edges
 const DestructionVignette = () => {
   const prefersReducedMotion = usePrefersReducedMotion();
+
   return (
     <m.div
       key={String(prefersReducedMotion)}
@@ -437,6 +442,7 @@ const DestructionVignette = () => {
 // Drifting destruction energy blobs - dark crimson masses flowing across the screen
 const DestructionFlow = () => {
   const prefersReducedMotion = usePrefersReducedMotion();
+
   return (
     <>
       {[

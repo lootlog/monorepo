@@ -21,7 +21,7 @@
       "source": "dmmulroy/anti-slop",
       "sourceType": "github",
       "skillPath": "skills/install-anti-slop/SKILL.md",
-      "computedHash": "91e871213a7fcd86f68c288480cc80c9d5ec440aa9a77d0185321667c8f42ab7"
+      "computedHash": "4031728fbe75bdcad6ee3208fd52b5d66e167b056fefee1fa9758e9a6cb9c0c8"
     },
     "refactor": {
       "source": "github/awesome-copilot",

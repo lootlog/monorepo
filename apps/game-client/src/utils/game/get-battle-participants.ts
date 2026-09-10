@@ -63,6 +63,7 @@ export const getBattleParticipants = (
         location: game?.map.name ?? "",
         type: npcData.type,
       });
+
       return;
     }
 

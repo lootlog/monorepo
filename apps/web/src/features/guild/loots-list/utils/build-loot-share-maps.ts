@@ -2,6 +2,7 @@ import { LOOT_SHARE_COLOR_PALETTE } from "@/features/guild/loots-list/constants/
 import type { Loot } from "@/lib/loots/loot-types";
 
 export type LootPlayerColorMap = Record<string, { color: string; idx: number }>;
+
 export type LootItemOwnerMap = Record<string, string | undefined>;
 
 export const buildLootPlayerColorMap = (
@@ -10,7 +11,9 @@ export const buildLootPlayerColorMap = (
   players.reduce<LootPlayerColorMap>((acc, player, idx) => {
     const color =
       LOOT_SHARE_COLOR_PALETTE[idx % LOOT_SHARE_COLOR_PALETTE.length] ?? "";
+
     acc[player.id] = { color, idx };
+
     return acc;
   }, {});
 

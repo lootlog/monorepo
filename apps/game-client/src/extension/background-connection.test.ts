@@ -45,8 +45,10 @@ class Socket implements RealtimeWebSocket {
   }
   respond(data: unknown) {
     const bytes = this.sent.at(-1);
+
     if (bytes === undefined) throw new Error("No request sent");
     const frame = decodeRealtimeFrame(bytes);
+
     if (!("requestId" in frame) || !frame.requestId)
       throw new Error("Expected request ID");
     this.target.dispatchEvent(
@@ -63,6 +65,7 @@ class Socket implements RealtimeWebSocket {
 }
 
 const cleanups: Array<() => void> = [];
+
 afterEach(() => {
   for (const cleanup of cleanups.splice(0)) cleanup();
   vi.restoreAllMocks();
@@ -71,15 +74,20 @@ afterEach(() => {
 function setup() {
   const socket = new Socket();
   const factory = vi.fn<() => Socket>(() => socket);
+
   const realtime = new RealtimeClient({
     url: "https://gateway.lootlog.pl",
     webSocketFactory: factory,
   });
+
   const messages: ReturnType<typeof ExtensionMessageSchema.parse>[] = [];
+
   const connection = createBackgroundConnection(realtime, (raw) =>
     messages.push(ExtensionMessageSchema.parse(decodeMessage(raw))),
   );
+
   cleanups.push(() => connection.dispose());
+
   return {
     socket,
     messages,
@@ -96,6 +104,7 @@ describe("background connection", () => {
     await bridge.receive({ type: "connect", id: "connect" });
     await vi.waitFor(() => expect(bridge.factory).toHaveBeenCalledOnce());
     bridge.socket.open();
+
     const join = bridge.receive({
       type: "command",
       id: "join",
@@ -108,8 +117,10 @@ describe("background connection", () => {
         },
       },
     });
+
     bridge.socket.respond({ organizationIds: ["organization"] });
     await join;
+
     const presence = bridge.receive({
       type: "command",
       id: "presence",
@@ -119,6 +130,7 @@ describe("background connection", () => {
         data: { organizationId: "organization", world: "jaruna" },
       },
     });
+
     bridge.socket.respond({ presences: [] });
     await presence;
     expect(bridge.messages).toContainEqual({
@@ -174,6 +186,7 @@ describe("background connection", () => {
     let requestSignal: AbortSignal | null | undefined;
     vi.spyOn(globalThis, "fetch").mockImplementation((_input, init) => {
       requestSignal = init?.signal;
+
       return new Promise((_resolve, reject) =>
         requestSignal?.addEventListener(
           "abort",
@@ -182,6 +195,7 @@ describe("background connection", () => {
         ),
       );
     });
+
     const pending = bridge.receive({
       type: "http",
       id: "pending",
@@ -192,6 +206,7 @@ describe("background connection", () => {
         body: "{}",
       },
     });
+
     bridge.connection.dispose();
     await pending;
     expect(requestSignal?.aborted).toBe(true);
@@ -205,9 +220,11 @@ describe("background connection", () => {
   it("executes a pending mutation ID only once", async () => {
     const bridge = setup();
     const response = Promise.withResolvers<Response>();
+
     const fetcher = vi
       .spyOn(globalThis, "fetch")
       .mockReturnValue(response.promise);
+
     const request: ExtensionRequest = {
       type: "http",
       id: "same",
@@ -218,6 +235,7 @@ describe("background connection", () => {
         body: "{}",
       },
     };
+
     const first = bridge.receive(request);
     await bridge.receive(request);
     response.resolve(Response.json({ id: 1 }));

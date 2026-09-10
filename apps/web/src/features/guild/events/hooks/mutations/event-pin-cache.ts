@@ -38,5 +38,6 @@ export const restorePinnedEvent = (
     0,
     pinnedEvent,
   );
+
   return restoredPinnedEvents;
 };

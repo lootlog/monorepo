@@ -106,6 +106,7 @@ export const makeLootQueryPersistence = (
       .from(lootTable)
       .where(inArray(lootTable.id, [...ids]))
       .orderBy(desc(lootTable.id));
+
   const selectRecords = (guildId: string, ids: ReadonlyArray<number>) =>
     database
       .select()
@@ -117,6 +118,7 @@ export const makeLootQueryPersistence = (
           inArray(organizationLootRecordTable.lootId, [...ids]),
         ),
       );
+
   const selectItems = (ids: ReadonlyArray<number>) =>
     database
       .select({
@@ -131,6 +133,7 @@ export const makeLootQueryPersistence = (
       )
       .where(inArray(lootItemTable.lootId, [...ids]))
       .orderBy(asc(lootItemTable.id));
+
   const selectPlayers = (ids: ReadonlyArray<number>) =>
     database
       .select({
@@ -146,6 +149,7 @@ export const makeLootQueryPersistence = (
       )
       .where(inArray(lootPlayerTable.lootId, [...ids]))
       .orderBy(asc(lootPlayerTable.id));
+
   const selectNpcs = (ids: ReadonlyArray<number>) =>
     database
       .select({ lootId: lootNpcTable.lootId, npcSnapshot: npcSnapshotTable })
@@ -156,6 +160,7 @@ export const makeLootQueryPersistence = (
       )
       .where(inArray(lootNpcTable.lootId, [...ids]))
       .orderBy(asc(lootNpcTable.id));
+
   const selectSubmissions = (guildId: string, ids: ReadonlyArray<number>) =>
     database
       .select({
@@ -183,6 +188,7 @@ export const makeLootQueryPersistence = (
           inArray(organizationLootRecordTable.lootId, [...ids]),
         ),
       );
+
   const selectMapPlayers = (guildId: string, ids: ReadonlyArray<number>) =>
     database
       .select({
@@ -242,6 +248,7 @@ export const makeLootQueryPersistence = (
 
   const hydrate = (guildId: string, lootIds: ReadonlyArray<number>) => {
     if (lootIds.length === 0) return Effect.succeed([]);
+
     return protect(
       "loots.query.hydrate",
       Effect.all(
@@ -272,26 +279,33 @@ export const makeLootQueryPersistence = (
               values: ReadonlyArray<Value>,
             ) => {
               const result = new Map<number, Value[]>();
+
               for (const value of values) {
                 const group = result.get(value.lootId);
+
                 if (group) group.push(value);
                 else result.set(value.lootId, [value]);
               }
+
               return result;
             };
+
             const itemsByLoot = byLoot(items);
             const playersByLoot = byLoot(players);
             const mapPlayersByLoot = byLoot(mapPlayers);
             const npcsByLoot = byLoot(npcs);
             const submissionsByLoot = byLoot(submissions);
+
             const recordsByLoot = new Map(
               records.map((record) => [record.lootId, record] as const),
             );
+
             const commentsByRecord = new Map(
               commentCounts.map(
                 (entry) => [entry.recordId, entry.count] as const,
               ),
             );
+
             return loots.map((loot) => ({
               ...loot,
               mapPlayersSnapshot:
@@ -367,8 +381,10 @@ export const makeLootQueryPersistence = (
   }) =>
     Effect.gen(function* () {
       const [lootId] = yield* findIds({ ...options, limit: 1 });
+
       if (lootId === undefined) return null;
       const [loot] = yield* hydrate(options.guildId, [lootId]);
+
       return loot ?? null;
     });
 
@@ -385,7 +401,9 @@ export const makeLootQueryPersistence = (
         filters: { hid: options.hid, world: options.world },
         limit: 1,
       });
+
       if (lootId === undefined) return null;
+
       const rows = yield* protect(
         "loots.query.resolve-item",
         database
@@ -404,6 +422,7 @@ export const makeLootQueryPersistence = (
           .orderBy(asc(lootItemTable.id))
           .limit(1),
       );
+
       return rows[0] ?? null;
     });
 
@@ -411,17 +430,21 @@ export const makeLootQueryPersistence = (
   const readVisibleSummaries = (ids: ReadonlyArray<number>) =>
     Effect.gen(function* () {
       if (ids.length === 0) return new Map<number, LootSummary>();
+
       const [loots, items, players, npcs] = yield* Effect.all([
         selectLoots(ids),
         selectItems(ids),
         selectPlayers(ids),
         selectNpcs(ids),
       ]);
+
       const summaries = new Map<number, LootSummary>();
+
       for (const loot of loots) {
         const lootShare = yield* Schema.decodeUnknownEffect(LootShareResponse)(
           loot.lootShare,
         );
+
         summaries.set(loot.id, {
           location: loot.location,
           lootShare,
@@ -432,6 +455,7 @@ export const makeLootQueryPersistence = (
           npcs: npcs.filter((npc) => npc.lootId === loot.id).map(mapNpc),
         });
       }
+
       return summaries;
     });
 

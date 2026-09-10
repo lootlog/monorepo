@@ -92,19 +92,25 @@ const resolveChatAsyncState = ({
   visibleGuildCount,
 }: ChatAsyncStateInput) => {
   const guildsLoaded = visibleGuildCount !== undefined;
+
   const waitingForGuildSelection =
     guildsLoaded && visibleGuildCount > 0 && !selectedGuildId;
+
   const initialLoading = guildsLoaded
     ? waitingForGuildSelection || chatInitialLoading
     : guildsLoading || preferencesLoading || chatInitialLoading;
+
   const initialError = guildsLoaded
     ? chatInitialError
     : (guildsError ?? preferencesError);
+
   const partialError =
     (guildsLoaded && Boolean(guildsError)) || failedGuildCount > 0;
+
   const refreshing = guildsLoaded
     ? guildsFetching || (hasMessagesResponse && chatRefreshing)
     : hasMessagesResponse && chatRefreshing;
+
   const stale = hasMessagesResponse && (!connected || !joined);
 
   return {
@@ -143,36 +149,47 @@ export const ChatView = ({
 }: ChatViewProps) => {
   const { t } = useTranslation("chat");
   const { connected, joined } = useSocket();
+
   const {
     areVisibleGuildsResolved,
     guildsQuery,
     preferencesQuery: preferences,
     visibleGuilds: resolvedVisibleGuilds,
   } = useVisibleLootlogGuilds();
+
   const { npcTypeColors } = useNpcTypeColors();
+
   const chatAppearance =
     preferences.data?.chatAppearance ?? CHAT_APPEARANCE_READABLE_PRESET;
+
   const filtersVisible = useChatStore((state) => state.filtersVisible);
   const chatFilter = useChatStore((state) => state.chatFilter);
   const gameInterface = useGameStore((state) => state.game?.interface);
+
   const currentCharacterNick = useGameStore(
     (state) => state.game?.hero.name ?? "",
   );
+
   const characterId = useGameStore(
     (state) => state.game?.hero.characterId ?? "",
   );
+
   const world = useGameStore((state) => state.game?.world ?? "");
+
   const {
     error: guildsError,
     isFetching: guildsFetching,
     isLoading: guildsLoading,
     refetch: refetchGuilds,
   } = guildsQuery;
+
   const visibleGuilds = areVisibleGuildsResolved
     ? resolvedVisibleGuilds
     : undefined;
+
   const { effectiveSelectedGuildId, resolvedComposeGuildId } =
     resolveChatGuildTargets(selectedGuildId, visibleGuilds);
+
   const {
     failedGuildIds,
     hasMessagesResponse,
@@ -193,6 +210,7 @@ export const ChatView = ({
   // oxlint-disable-next-line react-doctor/no-pass-data-to-parent
   useEffect(() => {
     const next = getNextSelectedGuildId(selectedGuildId, visibleGuilds);
+
     if (next !== undefined) setSelectedGuildId(next);
   }, [selectedGuildId, setSelectedGuildId, visibleGuilds]);
   const { hiddenNpcTypes } = useChatSettingsDocuments();
@@ -211,6 +229,7 @@ export const ChatView = ({
         messagesByGuildId: hasMessagesResponse ? messagesByGuildId : {},
         hasAttention: (guildId, message) => {
           const context = mentionContextsByGuildId[guildId];
+
           const repliesToMe = Boolean(
             message.replyTo &&
             context?.currentUserNames?.some(
@@ -219,6 +238,7 @@ export const ChatView = ({
                 normalizeChatMentionName(message.replyTo?.senderNick ?? ""),
             ),
           );
+
           return repliesToMe || hasCurrentUserMention(message.message, context);
         },
       }),
@@ -235,17 +255,21 @@ export const ChatView = ({
 
   const guildNamesById = getGuildNamesById(visibleGuilds);
   const unread = getChatUnreadSummary(readState, effectiveSelectedGuildId);
+
   const unreadCountByGuildId = Object.fromEntries(
     (visibleGuilds ?? []).map((guild) => {
       const summary = getChatUnreadSummary(readState, guild.id);
+
       return [guild.id, summary.attention];
     }),
   );
+
   const effectiveFilter = !filtersVisible
     ? "all"
     : chatFilter === "npc" || chatFilter === "party"
       ? "reports"
       : chatFilter;
+
   const currentMessages = resolveChatReplyNames(
     getCurrentChatMessages(
       messagesByGuildId,
@@ -256,11 +280,15 @@ export const ChatView = ({
     messagesByGuildId,
     membersByGuildId,
   );
+
   const currentRenderableMessages = getChatRenderableMessages(currentMessages);
+
   const selectedMessageGroups = groupDuplicateChatMessages(
     getMessagesForSelectedGuild(messagesByGuildId, effectiveSelectedGuildId),
   );
+
   const positionKey = `${world}:${characterId}:${effectiveSelectedGuildId}:${effectiveFilter}`;
+
   const {
     initialError,
     initialLoading,
@@ -283,11 +311,14 @@ export const ChatView = ({
     selectedGuildId,
     visibleGuildCount: visibleGuilds?.length,
   });
+
   const retryChatData = () => {
     if (guildsError) void refetchGuilds();
+
     if (preferences.error) void preferences.refetch();
     retryFailed();
   };
+
   const handleReplyToMessage = (message: ChatMessageType) => {
     if (!canReplyToChatMessage(message)) return;
     useChatStore.getState().setReplyDraft({
@@ -300,6 +331,7 @@ export const ChatView = ({
       type: message.type,
     });
   };
+
   const actions = (
     <ChatWindowActions
       integrated={embedded}
@@ -310,6 +342,7 @@ export const ChatView = ({
       }}
     />
   );
+
   const content = (
     <ChatGatheringBar isVisible={isOpen}>
       {(gatheringBar, hiddenGatherings, ownGathering) => (
@@ -401,7 +434,9 @@ export const ChatView = ({
       )}
     </ChatGatheringBar>
   );
+
   if (embedded) return content;
+
   return (
     <DraggableWindow
       isOpen={isOpen}

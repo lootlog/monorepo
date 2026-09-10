@@ -15,6 +15,7 @@ export function SettingsSearchResults({
   onOpen,
 }: Props) {
   const { t } = useTranslation();
+
   return (
     <div
       role="listbox"
@@ -28,8 +29,10 @@ export function SettingsSearchResults({
       ) : null}
       {results.map((result, index) => {
         const previousResult = results[index - 1];
+
         const startsDomain =
           !previousResult || previousResult.categoryId !== result.categoryId;
+
         const startsSubsection =
           startsDomain || previousResult.subsectionId !== result.subsectionId;
 

@@ -25,6 +25,7 @@ export const useWrappedAutoplay = ({
     slideId: activeSlideId,
     value: 0,
   });
+
   const [isUserPaused, setIsUserPaused] = useState(false);
   const [isInteractionPaused, setIsInteractionPaused] = useState(false);
   const elapsedMillisecondsRef = useRef(0);
@@ -37,28 +38,35 @@ export const useWrappedAutoplay = ({
   useEffect(() => {
     if (!interactionEnabled) {
       setIsInteractionPaused(false);
+
       return;
     }
 
     const stage = stageRef.current;
+
     if (!stage) {
       return;
     }
 
     const activeReasons = new Set<string>();
+
     const updateInteractionState = () => {
       setIsInteractionPaused(activeReasons.size > 0);
     };
+
     const addReason = (reason: string) => {
       activeReasons.add(reason);
       updateInteractionState();
     };
+
     const removeReason = (reason: string) => {
       activeReasons.delete(reason);
       updateInteractionState();
     };
+
     const handleSelectionChange = () => {
       const selection = document.getSelection();
+
       const selectionInsideStage =
         selection !== null &&
         !selection.isCollapsed &&
@@ -67,19 +75,23 @@ export const useWrappedAutoplay = ({
 
       if (selectionInsideStage) {
         addReason("selection");
+
         return;
       }
 
       removeReason("selection");
     };
+
     const handleVisibilityChange = () => {
       if (document.hidden) {
         addReason("visibility");
+
         return;
       }
 
       removeReason("visibility");
     };
+
     const handleFocusOut = () => {
       requestAnimationFrame(() => {
         if (!stage.contains(document.activeElement)) {
@@ -87,6 +99,7 @@ export const useWrappedAutoplay = ({
         }
       });
     };
+
     const handlePointerEnter = () => addReason("pointer");
     const handlePointerLeave = () => removeReason("pointer");
     const handleFocusIn = () => addReason("focus");
@@ -137,6 +150,7 @@ export const useWrappedAutoplay = ({
         elapsedMillisecondsRef.current = 0;
         setSlideProgress({ slideId: activeSlideId, value: 0 });
         advance();
+
         return;
       }
 
@@ -144,6 +158,7 @@ export const useWrappedAutoplay = ({
     };
 
     animationFrameId = requestAnimationFrame(updateProgress);
+
     return () => cancelAnimationFrame(animationFrameId);
   }, [activeSlideId, enabled, isInteractionPaused, isUserPaused]);
 

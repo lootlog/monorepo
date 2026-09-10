@@ -16,6 +16,7 @@ const Switch = React.forwardRef<HTMLElement, BaseSwitch.Root.Props>(
     </BaseSwitch.Root>
   ),
 );
+
 Switch.displayName = "Switch";
 
 export { Switch };

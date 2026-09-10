@@ -15,6 +15,7 @@ const BOOLEAN_STATS_KEYS = new Set<BattleWarriorStatsKey>([
 type BattleWarriorStatsSource = Partial<
   Pick<BattleWarrior, BattleWarriorStatsKey>
 >;
+
 type BattleWarriorStatsFallback = (
   key: BattleWarriorStatsKey,
 ) => BattleWarriorStats[BattleWarriorStatsKey];
@@ -40,7 +41,9 @@ function getDefaultStatValue(key: BattleWarriorStatsKey) {
 const decodeSpells = Schema.decodeUnknownOption(
   Schema.Record(Schema.String, Schema.Number),
 );
+
 const decodeBoolean = Schema.decodeUnknownOption(Schema.Boolean);
+
 const decodeNumber = Schema.decodeUnknownOption(Schema.Number);
 
 function normalizeBattleWarriorStats(
@@ -49,12 +52,16 @@ function normalizeBattleWarriorStats(
 ): BattleWarriorStats {
   const entries = BATTLE_WARRIOR_STATS_KEYS.map((key) => {
     const fallback = () => getFallback(key);
+
     if (key === "spellsUsedMap")
       return [key, Option.getOrElse(decodeSpells(source[key]), fallback)];
+
     if (BOOLEAN_STATS_KEYS.has(key))
       return [key, Option.getOrElse(decodeBoolean(source[key]), fallback)];
+
     return [key, Option.getOrElse(decodeNumber(source[key]), fallback)];
   });
+
   // SAFETY: Every key in the stats type is enumerated once; key-specific schemas validate values, and both private fallback callers supply the corresponding stat's default or legacy value. Object.fromEntries loses that key/value correlation.
   return Object.fromEntries(entries) as BattleWarriorStats;
 }
@@ -84,6 +91,7 @@ export function inflateBattleWarrior(
     statsVersion: _statsVersion,
     ...warriorWithoutStorageFields
   } = warrior;
+
   const legacyStats = buildBattleWarriorStats(warriorWithoutStorageFields);
 
   return {

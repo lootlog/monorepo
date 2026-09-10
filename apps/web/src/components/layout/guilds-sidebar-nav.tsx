@@ -59,9 +59,11 @@ export const GuildsSidebarNav: FC = () => {
   const { setOpenMobile } = useSidebar();
   const matches = useMatches();
   const navigation = resolveAppNavigation({ matches, accessPolicy });
+
   const eventsNavigationItem = navigation.sidebarItems.find(
     ({ id }) => id === "organization-events",
   );
+
   const activeEventsGuildId = eventsNavigationItem?.visible
     ? (guildId ?? "")
     : "";
@@ -88,8 +90,10 @@ export const GuildsSidebarNav: FC = () => {
       },
     },
   );
+
   const activeEventCount = activeEvents?.length ?? 0;
   const hasActiveEvents = activeEventCount > 0;
+
   const menuItems: MenuItem[] = navigation.sidebarItems.map((item) => ({
     active: item.active,
     available: true,
@@ -111,6 +115,7 @@ export const GuildsSidebarNav: FC = () => {
   const handleItemClick = () => {
     setOpenMobile(false);
   };
+
   const sidebarHeader = <GuildSidebarHeader guildId={guildId} />;
 
   return (

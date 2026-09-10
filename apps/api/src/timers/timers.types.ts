@@ -8,10 +8,15 @@ import type {
 } from "#src/database/drizzle/schema";
 
 export type Guild = typeof guildTable.$inferSelect;
+
 export type Member = typeof memberTable.$inferSelect;
+
 export type PlayerSnapshot = typeof playerSnapshotTable.$inferSelect;
+
 export type Role = typeof roleTable.$inferSelect;
+
 export type Timer = typeof timerTable.$inferSelect;
+
 export type TimerHistoryEntry = typeof timerHistoryEntryTable.$inferSelect;
 
 export const TimerHistoryAction = {

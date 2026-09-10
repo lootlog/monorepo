@@ -48,14 +48,17 @@ export function BattleHpTimelineDialog({
   onTurnSelect,
 }: BattleHpTimelineDialogProps) {
   const { t } = useTranslation();
+
   const legendaryMarkerCount = buildLegendaryBonusMarkerGroups(
     timeline,
     warriors,
   ).reduce((count, group) => count + group.bonuses.length, 0);
+
   const layerCounts = {
     ...getBattleHpTimelineEventLayerCounts(timeline, warriors),
     legendary: legendaryMarkerCount,
   };
+
   const openLabel = t("battlePanel.single.chart.openDialog");
 
   return (

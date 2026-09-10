@@ -9,6 +9,7 @@ import { TimersFilters } from "./timers-filters";
 
 const resetStore = () =>
   useTimersStore.setState(useTimersStore.getInitialState(), true);
+
 beforeEach(() => {
   resetStore();
   useTimersStore.setState({
@@ -34,6 +35,7 @@ beforeEach(() => {
     colorFiltersEnabled: true,
   });
 });
+
 afterEach(resetStore);
 
 describe("timers controls", () => {
@@ -59,6 +61,7 @@ describe("timers controls", () => {
       useTimersStore.getState().timersFilters["guild-1"].selectedNpcTypes,
     ).toEqual([]);
     const custom = screen.getAllByRole("button").at(-1);
+
     if (!custom) throw new Error("Expected custom color trigger");
     await user.hover(custom);
     expect(await screen.findByText("Custom One")).toBeVisible();
@@ -98,6 +101,7 @@ describe("timers controls", () => {
     const toggleColorFiltersEnabled = vi.fn<() => void>();
     const setTimersSortOrder = vi.fn<(order: "asc" | "desc") => void>();
     const setShowHiddenTimers = vi.fn<(show: boolean) => void>();
+
     const actions = (underBag: boolean) => (
       <TimersActions
         underBag={underBag}
@@ -111,6 +115,7 @@ describe("timers controls", () => {
         setShowHiddenTimers={setShowHiddenTimers}
       />
     );
+
     const view = render(actions(false));
     await user.tab();
     expect(

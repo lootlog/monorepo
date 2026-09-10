@@ -18,6 +18,7 @@ class MemoryRedis {
   ): Promise<string | null> {
     if (options.includes("NX") && this.values.has(key)) return null;
     this.values.set(key, value);
+
     return "OK";
   }
 
@@ -37,19 +38,23 @@ class MemoryRedis {
       outboxMember,
       publish,
     ] = parameters.map(String);
+
     if (this.values.get(pending!) !== value) {
       // SAFETY: PresenceStore only invokes its numeric offline-claim script through this fake.
       return 0 as A;
     }
+
     this.values.delete(pending!);
     this.sets.get(pendingIndex!)?.delete(pendingMember!);
     this.sets.get(characterIndex!)?.delete(pendingMember!);
+
     if (publish === "1") {
       this.values.set(outbox!, value!);
       const set = this.sets.get(outboxIndex!) ?? new Set<string>();
       set.add(outboxMember!);
       this.sets.set(outboxIndex!, set);
     }
+
     // SAFETY: The successful offline-claim script returns the numeric literal 1.
     return 1 as A;
   }
@@ -60,7 +65,9 @@ class MemoryRedis {
 
   async del(...keys: string[]): Promise<number> {
     let count = 0;
+
     for (const key of keys) if (this.values.delete(key)) count += 1;
+
     return count;
   }
 
@@ -68,15 +75,20 @@ class MemoryRedis {
     const set = this.sets.get(key) ?? new Set<string>();
     this.sets.set(key, set);
     const size = set.size;
+
     for (const member of members) set.add(member);
+
     return set.size - size;
   }
 
   async srem(key: string, ...members: string[]): Promise<number> {
     const set = this.sets.get(key);
+
     if (!set) return 0;
     let count = 0;
+
     for (const member of members) if (set.delete(member)) count += 1;
+
     return count;
   }
 
@@ -91,6 +103,7 @@ class MemoryRedis {
   async incr(key: string): Promise<number> {
     const value = Number(this.values.get(key) ?? 0) + 1;
     this.values.set(key, String(value));
+
     return value;
   }
 }
@@ -173,17 +186,20 @@ const secondGuild = (permissions: Permission[]) => ({
 describe("PresenceStore", () => {
   test("batches map metadata while ignoring missing, malformed and other-map sessions", async () => {
     const redis = new MemoryRedis();
+
     const store = new PresenceStore(
       { command: redis },
       new RecordingHub(),
       () => 10_000,
     );
+
     for (let index = 0; index < 5; index++) {
       const data = {
         ...session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]),
         connectionId: `session-${index}`,
         discordId: `discord-${index}`,
       };
+
       await Effect.runPromise(
         store.publish(socket(data), {
           organizationIds: ["organization-1"],
@@ -197,6 +213,7 @@ describe("PresenceStore", () => {
         }),
       );
     }
+
     redis.values.delete("presence:metadata:organization-1:session-2");
     redis.values.set("presence:metadata:organization-1:session-3", "invalid");
     const get = spyOn(redis, "get");
@@ -244,6 +261,7 @@ describe("PresenceStore", () => {
         "organization-1",
       ),
     );
+
     const precise = await Effect.runPromise(
       store.snapshot(
         session([
@@ -253,6 +271,7 @@ describe("PresenceStore", () => {
         "organization-1",
       ),
     );
+
     expect(basic.presences[0]).toMatchObject({
       userId: "user-1",
       discordId: "discord-1",
@@ -276,12 +295,14 @@ describe("PresenceStore", () => {
     );
     now = 61_001;
     await Effect.runPromise(store.sweepExpired());
+
     const snapshot = await Effect.runPromise(
       store.snapshot(
         session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]),
         "organization-1",
       ),
     );
+
     expect(snapshot.presences).toEqual([]);
     expect(snapshot.revision).toBe(2);
     expect(hub.events).toHaveLength(1);
@@ -299,12 +320,14 @@ describe("PresenceStore", () => {
     const hub = new RecordingHub();
     const coverage = new RecordingCoverage();
     const publisher = socket(session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]));
+
     const store = new PresenceStore(
       { command: redis },
       hub,
       () => 10_000,
       coverage,
     );
+
     await Effect.runPromise(
       store.publish(publisher, {
         organizationIds: ["organization-1"],
@@ -344,12 +367,15 @@ describe("PresenceStore", () => {
       const redis = new MemoryRedis();
       const hub = new RecordingHub();
       const coverage = new RecordingCoverage();
+
       const publisher = socket(
         session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]),
       );
+
       publisher.data.guilds.push(
         secondGuild([Permission.LOOTLOG_ONLINE_PLAYERS_READ]),
       );
+
       const store = new PresenceStore(
         { command: redis },
         hub,
@@ -368,10 +394,12 @@ describe("PresenceStore", () => {
         "organization-1",
         "organization-2",
       ]);
+
       for (const organizationId of ["organization-1", "organization-2"]) {
         const snapshot = await Effect.runPromise(
           store.snapshot(publisher.data, organizationId),
         );
+
         expect(snapshot.presences).toHaveLength(1);
         expect(coverage.events).toContainEqual({
           guildId: organizationId,
@@ -381,6 +409,7 @@ describe("PresenceStore", () => {
           isAfk: false,
         });
       }
+
       expect(hub.presenceEvents).toHaveLength(2);
       expect(
         await Effect.runPromise(
@@ -409,6 +438,7 @@ describe("PresenceStore", () => {
       "organization-1",
       "organization-2",
     ]);
+
     for (const [index, organizationId] of [
       "organization-1",
       "organization-2",
@@ -419,11 +449,13 @@ describe("PresenceStore", () => {
           [organizationId],
         );
       }
+
       // A rolling deployment can leave records from the previous gateway in Redis.
       await redis.set(
         `presence:${organizationId}:session-1`,
         JSON.stringify(publisher.data.presence),
       );
+
       for (const permissions of [
         [Permission.LOOTLOG_ONLINE_PLAYERS_READ],
         [
@@ -432,11 +464,14 @@ describe("PresenceStore", () => {
         ],
       ]) {
         const viewer = session(permissions);
+
         if (organizationId === "organization-2")
           viewer.guilds = [secondGuild(permissions)];
+
         const snapshot = await Effect.runPromise(
           store.snapshot(viewer, organizationId),
         );
+
         expect(snapshot.presences[0]?.organizationIds).toEqual([
           organizationId,
         ]);
@@ -448,15 +483,18 @@ describe("PresenceStore", () => {
     "publishes coverage for a newly added organization on map %s",
     async (map) => {
       const coverage = new RecordingCoverage();
+
       const store = new PresenceStore(
         { command: new MemoryRedis() },
         new RecordingHub(),
         () => 10_000,
         coverage,
       );
+
       const publisher = socket(
         session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]),
       );
+
       await Effect.runPromise(
         store.publish(publisher, {
           organizationIds: [],
@@ -499,12 +537,14 @@ describe("PresenceStore", () => {
       secondGuild([Permission.LOOTLOG_ONLINE_PLAYERS_READ]),
     );
     const publisher = socket(publisherData);
+
     const store = new PresenceStore(
       { command: redis },
       hub,
       () => 10_000,
       coverage,
     );
+
     await Effect.runPromise(
       store.publish(publisher, {
         organizationIds: ["organization-1", "organization-2"],
@@ -513,6 +553,7 @@ describe("PresenceStore", () => {
     );
 
     const retainedGuild = publisher.data.guilds[0];
+
     if (!retainedGuild) throw new Error("Expected the retained organization");
     publisher.data.guilds = [retainedGuild];
     await Effect.runPromise(store.heartbeat(publisher, "session-1"));
@@ -520,6 +561,7 @@ describe("PresenceStore", () => {
     expect(publisher.data.presence?.organizationIds).toEqual([
       "organization-1",
     ]);
+
     const revokedSnapshot = await Effect.runPromise(
       store.snapshot(
         {
@@ -529,6 +571,7 @@ describe("PresenceStore", () => {
         "organization-2",
       ),
     );
+
     expect(revokedSnapshot.presences).toEqual([]);
     expect(coverage.events).toContainEqual({
       guildId: "organization-2",
@@ -567,17 +610,22 @@ describe("PresenceStore", () => {
 
 test("expiry cleanup resumes after a transient Redis failure", async () => {
   let attempts = 0;
+
   class RecoveringRedis extends MemoryRedis {
     override async smembers(key: string) {
       attempts++;
+
       if (attempts === 1) throw new Error("Redis temporarily unavailable");
+
       return super.smembers(key);
     }
   }
+
   const store = new PresenceStore(
     { command: new RecoveringRedis() },
     new RecordingHub(),
   );
+
   await Effect.runPromise(
     Effect.gen(function* () {
       yield* store.runExpirySweep().pipe(Effect.forkScoped);
@@ -603,6 +651,7 @@ describe("game character offline grace", () => {
     const hub = new RecordingHub();
     let now = 0;
     const events: unknown[] = [];
+
     const makeStore = () =>
       new PresenceStore(
         { command: redis },
@@ -615,16 +664,19 @@ describe("game character offline grace", () => {
             events.push(event);
           }),
       );
+
     const first = makeStore();
     const game = socket({ ...session([]), character });
     await Effect.runPromise(first.publish(game, { organizationIds: [] }));
     await Effect.runPromise(first.disconnect(game.data));
+
     const web = socket({
       ...session([]),
       connectionId: "web",
       platform: "web-app",
       character,
     });
+
     await Effect.runPromise(first.publish(web, { organizationIds: [] }));
     now = 9_999;
     await Effect.runPromise(makeStore().sweepOffline());
@@ -649,6 +701,7 @@ describe("game character offline grace", () => {
     const redis = new MemoryRedis();
     let now = 0;
     const events: unknown[] = [];
+
     const store = new PresenceStore(
       { command: redis },
       new RecordingHub(),
@@ -660,15 +713,18 @@ describe("game character offline grace", () => {
           events.push(event);
         }),
     );
+
     const first = socket({ ...session([]), character });
     await Effect.runPromise(store.publish(first, { organizationIds: [] }));
     await Effect.runPromise(store.disconnect(first.data));
     now = 5_000;
+
     const second = socket({
       ...session([]),
       connectionId: "second",
       character,
     });
+
     await Effect.runPromise(store.publish(second, { organizationIds: [] }));
     now = 6_000;
     await Effect.runPromise(store.disconnect(second.data));
@@ -684,6 +740,7 @@ describe("game character offline grace", () => {
     const redis = new MemoryRedis();
     let now = 0;
     const events: Array<{ disconnectedAt: number }> = [];
+
     const makeStore = () =>
       new PresenceStore(
         { command: redis },
@@ -696,6 +753,7 @@ describe("game character offline grace", () => {
             events.push(event);
           }),
       );
+
     const game = socket({ ...session([]), character });
     await Effect.runPromise(makeStore().publish(game, { organizationIds: [] }));
     redis.values.delete("presence:organization-1:session-1");
@@ -711,6 +769,7 @@ describe("game character offline grace", () => {
     const redis = new MemoryRedis();
     let now = 0;
     const events: unknown[] = [];
+
     const store = new PresenceStore(
       { command: redis },
       new RecordingHub(),
@@ -722,6 +781,7 @@ describe("game character offline grace", () => {
           events.push(event);
         }),
     );
+
     const abandoned = socket({ ...session([]), character });
     await Effect.runPromise(store.publish(abandoned, { organizationIds: [] }));
     now = PRESENCE_EXPIRY_MS + 5_000;
@@ -740,6 +800,7 @@ describe("game character offline grace", () => {
 
   test("reconnect between the presence check and atomic departure decision cancels departure", async () => {
     let reconnect: (() => Promise<void>) | undefined;
+
     class ReconnectingRedis extends MemoryRedis {
       override async eval<A>(
         script: string,
@@ -749,12 +810,15 @@ describe("game character offline grace", () => {
         const operation = reconnect;
         reconnect = undefined;
         await operation?.();
+
         return super.eval<A>(script, numberOfKeys, ...parameters);
       }
     }
+
     const redis = new ReconnectingRedis();
     let now = 0;
     const events: unknown[] = [];
+
     const store = new PresenceStore(
       { command: redis },
       new RecordingHub(),
@@ -766,6 +830,7 @@ describe("game character offline grace", () => {
           events.push(event);
         }),
     );
+
     const game = socket({ ...session([]), character });
     await Effect.runPromise(store.publish(game, { organizationIds: [] }));
     await Effect.runPromise(store.disconnect(game.data));
@@ -778,6 +843,7 @@ describe("game character offline grace", () => {
         ),
       );
     };
+
     await Effect.runPromise(store.sweepOffline());
     expect(events).toEqual([]);
   });
@@ -785,6 +851,7 @@ describe("game character offline grace", () => {
   test("failed publication remains durable after the departure decision", async () => {
     const redis = new MemoryRedis();
     let now = 0;
+
     const store = new PresenceStore(
       { command: redis },
       new RecordingHub(),
@@ -793,12 +860,14 @@ describe("game character offline grace", () => {
       undefined,
       () => Effect.fail(new Error("Rabbit unavailable")),
     );
+
     const game = socket({ ...session([]), character });
     await Effect.runPromise(store.publish(game, { organizationIds: [] }));
     await Effect.runPromise(store.disconnect(game.data));
     now = 10_000;
     await Effect.runPromise(store.sweepOffline().pipe(Effect.flip));
     const events: unknown[] = [];
+
     const recovered = new PresenceStore(
       { command: redis },
       new RecordingHub(),
@@ -810,6 +879,7 @@ describe("game character offline grace", () => {
           events.push(event);
         }),
     );
+
     await Effect.runPromise(recovered.sweepOffline());
     expect(events).toHaveLength(1);
   });
@@ -818,6 +888,7 @@ describe("game character offline grace", () => {
     const redis = new MemoryRedis();
     let now = 0;
     const events: Array<{ characterId: string }> = [];
+
     const store = new PresenceStore(
       { command: redis },
       new RecordingHub(),
@@ -829,6 +900,7 @@ describe("game character offline grace", () => {
           events.push(event);
         }),
     );
+
     const game = socket({ ...session([]), character });
     await Effect.runPromise(store.publish(game, { organizationIds: [] }));
     game.data.character = { ...character, characterId: "other-character" };
@@ -842,6 +914,7 @@ describe("game character offline grace", () => {
     const redis = new MemoryRedis();
     let now = 0;
     const events: unknown[] = [];
+
     const store = new PresenceStore(
       { command: redis },
       new RecordingHub(),
@@ -853,12 +926,15 @@ describe("game character offline grace", () => {
           events.push(event);
         }),
     );
+
     const first = socket({ ...session([]), character });
+
     const second = socket({
       ...session([]),
       connectionId: "second",
       character,
     });
+
     await Effect.runPromise(store.publish(first, { organizationIds: [] }));
     await Effect.runPromise(store.publish(second, { organizationIds: [] }));
     await Effect.runPromise(store.disconnect(first.data));

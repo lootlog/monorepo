@@ -18,6 +18,7 @@ export const mapMemberWebPresenceByDiscordId = (
 
   for (const [discordId, memberSessions] of Object.entries(sessions ?? {})) {
     const sessionIds = new Set<string>();
+
     for (const { sessionId } of memberSessions) {
       if (sessionId.length > 0) sessionIds.add(sessionId);
     }
@@ -43,6 +44,7 @@ export const applyMemberWebPresenceUpdate = (
 
   if (status === "offline") {
     const existingSessions = nextPresenceByDiscordId.get(discordId);
+
     if (!existingSessions) {
       return nextPresenceByDiscordId;
     }

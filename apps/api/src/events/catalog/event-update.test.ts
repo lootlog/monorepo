@@ -38,6 +38,7 @@ describe("event update Effect module", () => {
     },
   ])("$name", async ({ data, rejects }) => {
     const boundary = await createDatabaseBoundary();
+
     try {
       const database = boundary.database;
       const startsAt = new Date("2026-09-02T10:00:00.000Z");
@@ -70,6 +71,7 @@ describe("event update Effect module", () => {
         }),
       );
       const logger = { warn: () => undefined };
+
       const catalog = makeEventsCatalogRead(
         database,
         {
@@ -78,13 +80,16 @@ describe("event update Effect module", () => {
         },
         logger,
       );
+
       const updateEvent = makeEventUpdate(
         database,
         { deleteByPattern: () => Promise.resolve(0) },
         catalog,
         logger,
       );
+
       const request = Schema.decodeUnknownSync(UpdateEventRequest)(data);
+
       const result = boundary.run(
         updateEvent(
           { id: "guild-1" },
@@ -96,6 +101,7 @@ describe("event update Effect module", () => {
           }),
         ),
       );
+
       if (rejects) {
         await expect(result).rejects.toBeInstanceOf(
           "heroNpcs" in data ? ResourceNotFoundError : InvalidRequestError,
@@ -105,12 +111,15 @@ describe("event update Effect module", () => {
         expect(updated.endsAt).toBeNull();
         expect(updated.heroNpcs).toEqual([]);
       }
+
       expect(
         await boundary.run(database.select().from(eventHeroNpcTable)),
       ).toHaveLength(1);
+
       const rows = await boundary.run(
         database.select().from(eventTable).where(eq(eventTable.id, "event-1")),
       );
+
       expect(rows).toHaveLength(1);
       expect(rows[0]?.startsAt).toEqual(startsAt);
       expect(rows[0]?.endsAt).toEqual(rejects ? endsAt : null);

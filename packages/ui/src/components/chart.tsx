@@ -120,6 +120,7 @@ const resolveIndicatorColor = (
   item: ChartPayloadItem,
 ): string | number | undefined => {
   const fill = item.payload?.fill;
+
   return (
     color ||
     (typeof fill === "string" || typeof fill === "number" ? fill : undefined) ||
@@ -174,6 +175,7 @@ function ChartTooltipContent({
     const [item] = payload;
     const key = `${labelKey || item?.dataKey || item?.name || "value"}`;
     const itemConfig = getPayloadConfigFromPayload(config, item, key);
+
     const value =
       !labelKey && typeof label === "string"
         ? config[label]?.label || label
@@ -215,6 +217,7 @@ function ChartTooltipContent({
           const key = resolveTooltipItemKey(nameKey, item);
           const itemConfig = getPayloadConfigFromPayload(config, item, key);
           const indicatorColor = resolveIndicatorColor(color, item);
+
           const indicatorStyle: CSSPropertiesWithVariables = {
             "--color-bg": indicatorColor,
             "--color-border": indicatorColor,
@@ -279,6 +282,7 @@ function ChartTooltipContent({
               )}
             </div>,
           );
+
           return items;
         }, [])}
       </div>
@@ -351,14 +355,18 @@ function getPayloadConfigFromPayload(
   key: string,
 ) {
   if (!isObjectRecord(payload)) return undefined;
+
   const nestedPayload = isObjectRecord(payload.payload)
     ? payload.payload
     : undefined;
+
   const directKey = payload[key];
   const nestedKey = nestedPayload?.[key];
   let configLabelKey = key;
+
   if (typeof directKey === "string") configLabelKey = directKey;
   else if (typeof nestedKey === "string") configLabelKey = nestedKey;
+
   return configLabelKey in config ? config[configLabelKey] : config[key];
 }
 

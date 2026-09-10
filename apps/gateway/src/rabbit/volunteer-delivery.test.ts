@@ -17,6 +17,7 @@ describe("volunteer delivery", () => {
       string,
       (delivery: RabbitDelivery) => Effect.Effect<void, unknown>
     >();
+
     const messaging: RabbitMessagingService = {
       publish: () => Effect.void,
       ack: () => Effect.void,
@@ -24,9 +25,11 @@ describe("volunteer delivery", () => {
       consume: (options, handler) =>
         Effect.sync(() => {
           handlers.set(options.queue, handler);
+
           return { consumerTag: options.queue, cancel: Effect.void };
         }),
     };
+
     const hub = new RealtimeHub(
       {
         maxBackpressureBytes: 1024,
@@ -35,11 +38,14 @@ describe("volunteer delivery", () => {
       { ...unusedFederationStore, publish: () => Promise.resolve() },
       () => {},
     );
+
     const targets = ["organizer", "other-member", "legacy-organizer"].map(
       (connectionId) => {
         const discordId =
           connectionId === "legacy-organizer" ? "organizer" : connectionId;
+
         const frames: Uint8Array[] = [];
+
         const session: SessionData = {
           discordId,
           userId: discordId,
@@ -53,21 +59,26 @@ describe("volunteer delivery", () => {
           confidence: "reported",
           backpressureStrikes: 0,
         };
+
         hub.register({
           data: session,
           getBufferedAmount: () => 0,
           send: (frame: Uint8Array) => {
             frames.push(frame);
+
             return frame.byteLength;
           },
           close: () => {},
         });
+
         return frames;
       },
     );
+
     const unexpected = () => {
       throw new Error("Unexpected control call");
     };
+
     const bridge = new RabbitBridge(
       messaging,
       hub,
@@ -75,6 +86,7 @@ describe("volunteer delivery", () => {
       { coverageForMap: unexpected },
       { publish: unexpected },
     );
+
     const character = {
       nick: "Volunteer",
       lvl: 250,
@@ -84,11 +96,13 @@ describe("volunteer delivery", () => {
       icon: "icon.gif",
       clan: { id: 1, name: "Clan" },
     };
+
     await Effect.runPromise(
       Effect.scoped(
         Effect.gen(function* () {
           yield* bridge.start();
           const handle = handlers.get("gateway-guilds-notifications-volunteer");
+
           if (!handle) throw new Error("Missing volunteer consumer");
           yield* handle(
             createRabbitDelivery(

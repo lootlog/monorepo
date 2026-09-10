@@ -6,6 +6,7 @@ import { ActivityConfig } from "#src/config/activity-config";
 export type ActivityDatabaseValue = Effect.Success<
   ReturnType<typeof makeWithDefaults>
 >;
+
 export class ActivityDatabase extends Context.Service<
   ActivityDatabase,
   ActivityDatabaseValue
@@ -16,6 +17,7 @@ export class ActivityDatabase extends Context.Service<
 export const PgClientLive = Layer.unwrap(
   Effect.gen(function* () {
     const config = yield* ActivityConfig;
+
     return makePostgresLayer({
       url: config.databaseUrl,
       applicationName: config.serviceName,

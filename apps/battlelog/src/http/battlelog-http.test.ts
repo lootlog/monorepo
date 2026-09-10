@@ -16,7 +16,9 @@ const boundary = makeBattlelogTestBoundary(
   ),
   Redacted.make("cleanup-test-secret"),
 );
+
 const handler = boundary.handler;
+
 afterAll(() => boundary.dispose());
 
 describe("Battlelog HTTP boundary", () => {
@@ -57,6 +59,7 @@ for (const [method, path] of [
         body: "{",
       }),
     );
+
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({
       error: "Bad Request",
@@ -74,11 +77,13 @@ it("rejects personal-data and write grants before executing battle operations", 
     personalData: false,
     expiresAt: null,
   };
+
   const keyHeaders = {
     "x-auth-user-id": "user",
     "x-auth-discord-id": "discord",
     "x-auth-api-key-access": JSON.stringify(access),
   };
+
   expect(
     (
       await handler(
@@ -123,6 +128,7 @@ it("rejects personal-data and write grants before executing battle operations", 
 
 it("only queues account cleanup for an authenticated service caller", async () => {
   const queued: unknown[] = [];
+
   const cleanup = makeBattlelogTestBoundary(
     makeBattlelogOperations(unusedBattles, unusedBattleAnalytics, {
       add: async (...args) => {
@@ -131,6 +137,7 @@ it("only queues account cleanup for an authenticated service caller", async () =
     }),
     Redacted.make("cleanup-test-secret"),
   );
+
   try {
     const unauthorizedHeaders: Record<string, string>[] = [
       {},
@@ -138,6 +145,7 @@ it("only queues account cleanup for an authenticated service caller", async () =
       { "x-auth-user-id": "victim", "x-auth-discord-id": "discord" },
       { cookie: "session=valid" },
     ];
+
     for (const headers of unauthorizedHeaders) {
       const response = await cleanup.handler(
         new Request("http://battlelog.test/internal/delete-user-data", {
@@ -146,9 +154,12 @@ it("only queues account cleanup for an authenticated service caller", async () =
           body: JSON.stringify({ userId: "victim" }),
         }),
       );
+
       expect(response.status).toBe(401);
     }
+
     expect(queued).toEqual([]);
+
     const response = await cleanup.handler(
       new Request("http://battlelog.test/internal/delete-user-data", {
         method: "POST",
@@ -159,6 +170,7 @@ it("only queues account cleanup for an authenticated service caller", async () =
         body: JSON.stringify({ userId: "victim" }),
       }),
     );
+
     expect(response.status).toBe(201);
     expect(queued).toHaveLength(1);
     expect(queued[0]).toEqual(expect.arrayContaining([{ userId: "victim" }]));
@@ -175,6 +187,7 @@ it("fails closed when no cleanup credential is configured", async () => {
       unusedDeleteQueue,
     ),
   );
+
   try {
     const response = await unconfigured.handler(
       new Request("http://battlelog.test/internal/delete-user-data", {
@@ -186,6 +199,7 @@ it("fails closed when no cleanup credential is configured", async () => {
         body: JSON.stringify({ userId: "victim" }),
       }),
     );
+
     expect(response.status).toBe(401);
   } finally {
     await unconfigured.dispose();

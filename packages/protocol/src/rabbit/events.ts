@@ -17,9 +17,11 @@ export const GameCharacterOffline = Schema.Struct({
   organizationIds: Schema.Array(NonEmptyString),
   disconnectedAt: NonNegativeInt,
 });
+
 export type GameCharacterOffline = typeof GameCharacterOffline.Type;
 
 const NullableString = Schema.NullOr(Schema.String);
+
 const NullableNumber = Schema.NullOr(Schema.Number);
 
 const GuildRole = Schema.Struct({
@@ -46,8 +48,11 @@ export const GuildUpdated = Schema.Struct({
 });
 
 export const GuildDeleted = Schema.Struct({ guildId: NonEmptyString });
+
 export type GuildCreated = typeof GuildCreated.Type;
+
 export type GuildUpdated = typeof GuildUpdated.Type;
+
 export type GuildDeleted = typeof GuildDeleted.Type;
 
 export const GuildRoleChanged = Schema.Struct({
@@ -59,7 +64,9 @@ export const GuildRoleDeleted = Schema.Struct({
   guildId: NonEmptyString,
   id: NonEmptyString,
 });
+
 export type GuildRoleChanged = typeof GuildRoleChanged.Type;
+
 export type GuildRoleDeleted = typeof GuildRoleDeleted.Type;
 
 export const GuildMemberChanged = Schema.Struct({
@@ -171,6 +178,7 @@ export const GuildKillsAcceptedV1 = Schema.Struct({
   world: NonEmptyString,
   npc: Schema.Struct({ type: NpcTypeSchema, lvl: NonNegativeInt }),
 });
+
 export type GuildKillsAcceptedV1 = typeof GuildKillsAcceptedV1.Type;
 
 export const GuildLootCreatedEventV2 = Schema.Struct({
@@ -180,12 +188,14 @@ export const GuildLootCreatedEventV2 = Schema.Struct({
   lootId: NonNegativeInt,
   npcs: Schema.Array(GuildLootEventNpc),
 });
+
 export type GuildLootCreatedEventV2 = typeof GuildLootCreatedEventV2.Type;
 
 export const GuildLootShareUpdatedEventV2 = Schema.Struct({
   ...GuildLootCreatedEventV2.fields,
   lootShare: Schema.Record(Schema.String, Schema.Array(Schema.String)),
 });
+
 export type GuildLootShareUpdatedEventV2 =
   typeof GuildLootShareUpdatedEventV2.Type;
 
@@ -197,6 +207,7 @@ export const ReservationChangedEventV2 = Schema.Struct({
   reservationId: Schema.NullOr(NonNegativeInt),
   spotId: Schema.NullOr(Schema.String),
 });
+
 export type ReservationChangedEventV2 = typeof ReservationChangedEventV2.Type;
 
 export const EventScope = Schema.Struct({
@@ -301,6 +312,7 @@ export const UserOnlineCheckpointV1 = Schema.Struct({
     { expected: "ordered confirmed interval timestamps" },
   ),
 );
+
 export type UserOnlineCheckpointV1 = typeof UserOnlineCheckpointV1.Type;
 
 /** Published only after the durable publisher has drained its pending checkpoints. */
@@ -310,12 +322,14 @@ export const UserOnlineHealthV1 = Schema.Struct({
   observedAt: DateTimeWithOffsetString,
   status: Schema.Literals(["healthy", "degraded"]),
 });
+
 export type UserOnlineHealthV1 = typeof UserOnlineHealthV1.Type;
 
 export const UserOnlineEventV1 = Schema.Union([
   UserOnlineCheckpointV1,
   UserOnlineHealthV1,
 ]);
+
 export type UserOnlineEventV1 = typeof UserOnlineEventV1.Type;
 
 export const canonicalRabbitEventSchemas = {
@@ -387,10 +401,13 @@ export const decodeRabbitEvent = <
   input: unknown,
 ): CanonicalRabbitEvent<RoutingKey> => {
   const eventSchema = canonicalRabbitEventSchemas[routingKey];
+
   if (eventSchema === undefined) {
     throw new Error(`No RabbitMQ event schema for routing key: ${routingKey}`);
   }
+
   Schema.decodeUnknownSync(eventSchema)(input);
+
   // SAFETY: the routing key's schema just validated its encoded input. Return
   // that original input to preserve wire extension fields and object identity.
   return input as CanonicalRabbitEvent<RoutingKey>;

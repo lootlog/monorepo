@@ -36,6 +36,7 @@ type HealthEntry = {
   readonly status: "up" | "down";
   readonly message?: string;
 };
+
 export interface ActivityHealthValue {
   readonly check: () => Effect.Effect<{
     readonly status: "ok" | "error";
@@ -44,6 +45,7 @@ export interface ActivityHealthValue {
     readonly details: Record<string, HealthEntry>;
   }>;
 }
+
 export class ActivityHealth extends Context.Service<
   ActivityHealth,
   ActivityHealthValue
@@ -54,6 +56,7 @@ export class ActivityHealth extends Context.Service<
       const sql = yield* PgClient.PgClient;
       const config = yield* ActivityConfig;
       const apiHttpClient = yield* ApiHttpClient;
+
       const checkOne = (name: string, check: () => Promise<boolean>) =>
         Effect.tryPromise({ try: check, catch: (cause) => cause }).pipe(
           Effect.timeout("3 seconds"),
@@ -69,8 +72,10 @@ export class ActivityHealth extends Context.Service<
             attributes: { adapter: name, retryCount: 0 },
           }),
         );
+
       const check = Effect.fn("HealthzController_check")(function* () {
         const memory = process.memoryUsage();
+
         const entries = yield* Effect.all(
           [
             sql`SELECT 1`.pipe(
@@ -105,18 +110,23 @@ export class ActivityHealth extends Context.Service<
             ] as const),
             checkOne("storage", async () => {
               const stats = await statfs("/");
+
               return 1 - Number(stats.bavail) / Number(stats.blocks) <= 0.9;
             }),
           ],
           { concurrency: "unbounded" },
         );
+
         const details = Object.fromEntries(entries);
+
         const error = Object.fromEntries(
           entries.filter(([, entry]) => entry.status === "down"),
         );
+
         const info = Object.fromEntries(
           entries.filter(([, entry]) => entry.status === "up"),
         );
+
         return Object.keys(error).length === 0
           ? { status: "ok" as const, info, error: null, details }
           : {
@@ -126,6 +136,7 @@ export class ActivityHealth extends Context.Service<
               details,
             };
       });
+
       return ActivityHealth.of({ check });
     }),
   );
@@ -150,6 +161,7 @@ const authorize = Effect.fn("Activity.authorize")(function* (
   const permissions = yield* Permissions;
   const discordId = request.headers["x-auth-discord-id"];
   const userId = request.headers["x-auth-user-id"];
+
   if (!discordId || !userId) return yield* fail(401, "Unauthorized");
 
   const guildId = yield* permissions.resolveGuildId(guildIdentifier).pipe(
@@ -161,10 +173,13 @@ const authorize = Effect.fn("Activity.authorize")(function* (
         }),
     ),
   );
+
   if (!guildId) return yield* fail(403, "Insufficient permissions");
   const apiKey = readApiKeyAccess(request.headers);
+
   if (apiKey === null || !apiKeyAllowsOrganization(apiKey, guildId))
     return yield* fail(403, "Insufficient permissions");
+
   const capabilities = yield* permissions
     .getUserGuildPermissions(discordId, userId, guildId)
     .pipe(
@@ -176,9 +191,11 @@ const authorize = Effect.fn("Activity.authorize")(function* (
           }),
       ),
     );
+
   if (!createAccessPolicy({ capabilities }).allows(required)) {
     return yield* fail(403, "Insufficient permissions");
   }
+
   return guildId;
 });
 
@@ -199,6 +216,7 @@ const jsonOperation = <A, R>(effect: Effect.Effect<A, unknown, R>) =>
     Effect.catch((error) => {
       const failure =
         error instanceof ActivityHttpFailure ? error : repositoryFailure(error);
+
       return Effect.succeed(
         HttpServerResponse.jsonUnsafe(
           { message: failure.message, statusCode: failure.status },
@@ -233,8 +251,10 @@ export const ActivityHandlers = Layer.mergeAll(
         Effect.gen(function* () {
           const request = yield* HttpServerRequest.HttpServerRequest;
           const userId = request.headers["x-auth-user-id"];
+
           if (!userId) return yield* fail(401, "Unauthorized");
           const repository = yield* OnlineRepository;
+
           return yield* repository.find(userId, query);
         }),
       ),
@@ -259,6 +279,7 @@ export const ActivityHandlers = Layer.mergeAll(
           Effect.gen(function* () {
             const guildId = yield* authorize(params.guildId, Permission.ADMIN);
             const repository = yield* ActivityRepository;
+
             return yield* repository.findMany(activityQuery(query, guildId));
           }),
         ),
@@ -268,11 +289,13 @@ export const ActivityHandlers = Layer.mergeAll(
           Effect.gen(function* () {
             const guildId = yield* authorize(params.guildId, Permission.ADMIN);
             const repository = yield* ActivityRepository;
+
             const suggestions = yield* repository.suggestActorNames(
               guildId,
               query.search,
               query.limit ?? 10,
             );
+
             return { suggestions };
           }),
         ),
@@ -282,11 +305,13 @@ export const ActivityHandlers = Layer.mergeAll(
           Effect.gen(function* () {
             const guildId = yield* authorize(params.guildId, Permission.ADMIN);
             const repository = yield* ActivityRepository;
+
             const worlds = yield* repository.suggestWorlds(
               guildId,
               query.search,
               query.limit ?? 20,
             );
+
             return { worlds };
           }),
         ),
@@ -296,11 +321,13 @@ export const ActivityHandlers = Layer.mergeAll(
           Effect.gen(function* () {
             const guildId = yield* authorize(params.guildId, Permission.ADMIN);
             const repository = yield* ActivityRepository;
+
             const suggestions = yield* repository.suggestClanNames(
               guildId,
               query.search,
               query.limit ?? 10,
             );
+
             return { suggestions };
           }),
         ),
@@ -310,6 +337,7 @@ export const ActivityHandlers = Layer.mergeAll(
           Effect.gen(function* () {
             const guildId = yield* authorize(params.guildId, Permission.ADMIN);
             const repository = yield* ActivityRepository;
+
             return yield* repository.findMany(
               activityQuery(query, guildId, params.userId),
             );
@@ -321,6 +349,7 @@ export const ActivityHandlers = Layer.mergeAll(
           Effect.gen(function* () {
             const guildId = yield* authorize(params.guildId, Permission.ADMIN);
             const repository = yield* ActivityRepository;
+
             return yield* repository.memberStats(guildId);
           }),
         ),
@@ -330,6 +359,7 @@ export const ActivityHandlers = Layer.mergeAll(
           Effect.gen(function* () {
             const guildId = yield* authorize(params.guildId, Permission.ADMIN);
             const repository = yield* ActivityRepository;
+
             return yield* repository.findOne(params.id, guildId);
           }),
         ),
@@ -339,6 +369,7 @@ export const ActivityHandlers = Layer.mergeAll(
           Effect.gen(function* () {
             const guildId = yield* authorize(params.guildId, Permission.OWNER);
             const repository = yield* ActivityRepository;
+
             return {
               count: yield* repository.deleteOne(params.id, guildId),
             };

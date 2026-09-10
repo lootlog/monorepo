@@ -38,10 +38,12 @@ it.each(["success", "legacy", "policy", "player"])(
   async (mode) => {
     const rejectPublication = mode !== "success";
     const listeners = new Map<string, (event: { data?: unknown }) => void>();
+
     const send = vi.fn<RealtimeWebSocket["send"]>((bytes) => {
       if (!(bytes instanceof Uint8Array))
         throw new Error("Expected binary frame");
       const frame = decodeRealtimeFrame(bytes);
+
       if (!("requestId" in frame) || !frame.requestId)
         throw new Error("Expected request frame");
       const requestId = frame.requestId;
@@ -64,6 +66,7 @@ it.each(["success", "legacy", "policy", "player"])(
         }),
       );
     });
+
     const wire: RealtimeWebSocket = {
       readyState: 1,
       binaryType: "arraybuffer",
@@ -75,15 +78,19 @@ it.each(["success", "legacy", "policy", "player"])(
         listeners.get("close")?.({});
       },
     };
+
     const realtime = new RealtimeClient({
       url: "https://gateway.example.test",
       webSocketFactory: () => wire,
     });
+
     const restorePlatform = configureGameClientPlatform({
       fetch: globalThis.fetch,
       createRealtime: () => realtime,
     });
+
     const previousGame = useGameStore.getState().game;
+
     try {
       useGameStore.getState().replaceGame({
         hero: {
@@ -115,8 +122,10 @@ it.each(["success", "legacy", "policy", "player"])(
       activeFacade.connect();
       listeners.get("open")?.({});
       expect(activeFacade.connected).toBe(true);
+
       const { createAccessPolicySnapshot } =
         await import("@lootlog/protocol/realtime/access-policy");
+
       listeners.get("message")?.({
         data: encodeRealtimeFrame({
           v: 1,
@@ -141,16 +150,19 @@ it.each(["success", "legacy", "policy", "player"])(
       });
       await vi.waitFor(() => expect(send).toHaveBeenCalledOnce());
       const bytes = send.mock.calls[0]?.[0];
+
       if (!(bytes instanceof Uint8Array))
         throw new Error("Expected presence publication");
       expect(decodeRealtimeFrame(bytes)).toMatchObject({
         type: "presence.publish",
         data: { organizationIds: ["organization-1"] },
       });
+
       if (mode === "player") {
         const { GatewayEvent } = await import("@/config/gateway");
         activeFacade.emit(GatewayEvent.PLAYER_PRESENCE_UPDATE, { isAfk: true });
       }
+
       await vi.waitFor(() =>
         expect(send).toHaveBeenCalledTimes(mode === "player" ? 2 : 1),
       );
@@ -164,6 +176,7 @@ it.each(["success", "legacy", "policy", "player"])(
 
 it("dispatches private volunteer frames to the legacy volunteer listener", async () => {
   const listeners = new Map<string, (event: { data?: unknown }) => void>();
+
   const realtime = new RealtimeClient({
     url: "https://gateway.example.test",
     webSocketFactory: () => ({
@@ -174,23 +187,28 @@ it("dispatches private volunteer frames to the legacy volunteer listener", async
       close: () => {},
     }),
   });
+
   const restore = configureGameClientPlatform({
     fetch: globalThis.fetch,
     createRealtime: () => realtime,
   });
+
   const { GatewayEvent } = await import("@/config/gateway");
   disposeSocket();
   const socket = getSocket();
+
   const received =
     vi.fn<
       (
         data: Extract<ServerEvent, { type: "notification.volunteer" }>["data"],
       ) => void
     >();
+
   try {
     socket.on(GatewayEvent.NOTIFICATIONS_VOLUNTEER, received);
     socket.connect();
     listeners.get("open")?.({});
+
     const data = {
       notificationId: "notification",
       volunteer: {
@@ -200,6 +218,7 @@ it("dispatches private volunteer frames to the legacy volunteer listener", async
         lvl: 250,
       },
     };
+
     listeners.get("message")?.({
       data: encodeRealtimeFrame({ v: 1, type: "notification.volunteer", data }),
     });
@@ -214,8 +233,10 @@ describe("access policy synchronization", () => {
   it("applies the first policy before join and suppresses duplicate rebalance and reconnect refreshes", async () => {
     const { createAccessPolicySnapshot } =
       await import("@lootlog/protocol/realtime/access-policy");
+
     const { GatewayEvent } = await import("@/config/gateway");
     const { Permission } = await import("@lootlog/schema/permissions");
+
     let policy = createAccessPolicySnapshot(
       [
         {
@@ -231,20 +252,25 @@ describe("access policy synchronization", () => {
       ],
       "user",
     );
+
     let includePolicy = true;
     let denyJoin = false;
     const listeners = new Map<string, (event: { data?: unknown }) => void>();
     const received: string[] = [];
+
     const policies = vi.fn<() => void>(() => {
       received.push("policy");
     });
+
     const send = vi.fn<RealtimeWebSocket["send"]>((bytes) => {
       if (!(bytes instanceof Uint8Array))
         throw new Error("Expected binary frame");
       const frame = decodeRealtimeFrame(bytes);
+
       if (!("requestId" in frame) || !frame.requestId)
         throw new Error("Expected request");
       const requestId = frame.requestId;
+
       if (denyJoin) {
         queueMicrotask(() => {
           listeners.get("message")?.({
@@ -271,8 +297,10 @@ describe("access policy synchronization", () => {
             }),
           });
         });
+
         return;
       }
+
       queueMicrotask(() =>
         listeners.get("message")?.({
           data: encodeRealtimeFrame({
@@ -288,6 +316,7 @@ describe("access policy synchronization", () => {
         }),
       );
     });
+
     const realtime = new RealtimeClient({
       url: "https://gateway.example.test",
       webSocketFactory: () => ({
@@ -298,12 +327,15 @@ describe("access policy synchronization", () => {
         close: () => listeners.get("close")?.({}),
       }),
     });
+
     const restore = configureGameClientPlatform({
       fetch: globalThis.fetch,
       createRealtime: () => realtime,
     });
+
     disposeSocket();
     const socket = getSocket();
+
     const joinData = {
       accountId: "20",
       characterId: "10",
@@ -313,6 +345,7 @@ describe("access policy synchronization", () => {
       icon: "hero.gif",
       prof: "w",
     };
+
     const proof = {
       userId: "20",
       characterId: "10",
@@ -321,6 +354,7 @@ describe("access policy synchronization", () => {
       validatedString: "proof",
       signatureBase64: "signature",
     };
+
     try {
       socket.on(GatewayEvent.PERMISSIONS_UPDATED, policies);
       socket.on(GatewayEvent.JOIN, () => received.push("join"));
@@ -330,6 +364,7 @@ describe("access policy synchronization", () => {
       expect(received).toEqual(["policy", "join"]);
       expect(socket.getAccessPolicy()).toEqual(policy);
       const requestsAfterJoin = send.mock.calls.length;
+
       for (let i = 0; i < 10; i += 1) {
         listeners.get("message")?.({
           data: encodeRealtimeFrame({
@@ -343,6 +378,7 @@ describe("access policy synchronization", () => {
           }),
         });
       }
+
       await Promise.resolve();
       expect(policies).toHaveBeenCalledOnce();
       expect(send).toHaveBeenCalledTimes(requestsAfterJoin);
@@ -365,9 +401,11 @@ describe("access policy synchronization", () => {
       expect(socket.getAccessPolicy()).toBeUndefined();
       expect(received.slice(-2)).toEqual(["policy", "join"]);
       denyJoin = true;
+
       const joinsBeforeDenial = received.filter(
         (event) => event === "join",
       ).length;
+
       await expect(socket.join(joinData, proof)).rejects.toThrow(
         "No organizations",
       );

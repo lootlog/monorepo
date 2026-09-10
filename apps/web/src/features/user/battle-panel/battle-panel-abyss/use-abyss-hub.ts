@@ -32,6 +32,7 @@ import { startTransition, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
 const ABYSS_PERIOD: Period = "all";
+
 const PAGE_SIZE = 20;
 
 const isAbyssTab = (value: string): value is AbyssTab =>
@@ -53,6 +54,7 @@ const getAbyssSeasonSelection = ({
 }) => {
   const selectedSeason =
     seasons.find((season) => season.id === seasonId) ?? seasons[0];
+
   return {
     selectedSeason,
     startDate: startDate ?? selectedSeason?.startedAt,
@@ -62,16 +64,21 @@ const getAbyssSeasonSelection = ({
 
 export function useAbyssHub() {
   const { t } = useTranslation();
+
   const { data: charactersResponse, isLoading: isLoadingCharacters } =
     useBattlesControllerGetUserCharacters();
+
   const characters = charactersResponse?.characters;
+
   const [queryState, setQueryState] = useQueryStates(
     battlePanelAbyssSearchParsers,
   );
+
   const resolvePageState = () => {
     const currentCharacterId = normalizeBattlePanelCharacterId(
       queryState.characterId,
     );
+
     return {
       pageIndex: getBattlePanelPageIndex(queryState.page),
       activeTab: queryState.tab,
@@ -82,6 +89,7 @@ export function useAbyssHub() {
       cursor: queryState.cursor ?? undefined,
     };
   };
+
   const {
     pageIndex,
     activeTab,
@@ -95,6 +103,7 @@ export function useAbyssHub() {
   useEffect(() => {
     if (!isLoadingCharacters && characters?.length && !currentCharacterId) {
       const firstCharacterId = characters[0]?.id;
+
       if (firstCharacterId) {
         void setQueryState({
           characterId: firstCharacterId,
@@ -124,11 +133,13 @@ export function useAbyssHub() {
     startDate: queryState.startDate,
     endDate: queryState.endDate,
   });
+
   const isStatsEnabled = Boolean(selectedCharacterId);
   const isBattlesTab = activeTab === "battles";
   const isAnalyticsTab = activeTab === "analytics";
   const enableAnalyticsQueries = isStatsEnabled && isAnalyticsTab;
   const enableBattlesQuery = isStatsEnabled && isBattlesTab;
+
   const abyssStatsParams = {
     characterId: selectedCharacterId,
     period: ABYSS_PERIOD,
@@ -138,6 +149,7 @@ export function useAbyssHub() {
     endDate,
     matchmaking: true,
   };
+
   const dashboardParams = {
     cursor,
     size: PAGE_SIZE,
@@ -158,6 +170,7 @@ export function useAbyssHub() {
           getBattlesControllerGetProfessionWinRateQueryKey(abyssStatsParams),
       },
     });
+
   const { data: streakData, isLoading: isStreakLoading } =
     useBattlesControllerGetCurrentStreak(abyssStatsParams, {
       query: {
@@ -166,6 +179,7 @@ export function useAbyssHub() {
           getBattlesControllerGetCurrentStreakQueryKey(abyssStatsParams),
       },
     });
+
   const { data: durationData, isLoading: isDurationLoading } =
     useBattlesControllerGetBattleDuration(abyssStatsParams, {
       query: {
@@ -174,6 +188,7 @@ export function useAbyssHub() {
           getBattlesControllerGetBattleDurationQueryKey(abyssStatsParams),
       },
     });
+
   const { data: combatProfile, isLoading: isCombatProfileLoading } =
     useBattlesControllerGetCombatProfile(abyssStatsParams, {
       query: {
@@ -182,6 +197,7 @@ export function useAbyssHub() {
           getBattlesControllerGetCombatProfileQueryKey(abyssStatsParams),
       },
     });
+
   const { data: ratingGrowthData, isLoading: isRatingGrowthLoading } =
     useBattlesControllerGetRatingGrowth(abyssStatsParams, {
       query: {
@@ -189,6 +205,7 @@ export function useAbyssHub() {
         queryKey: getBattlesControllerGetRatingGrowthQueryKey(abyssStatsParams),
       },
     });
+
   const { data: ratingDeltaData, isLoading: isRatingDeltaLoading } =
     useBattlesControllerGetRatingDeltaByOpponent(abyssStatsParams, {
       query: {
@@ -199,6 +216,7 @@ export function useAbyssHub() {
           ),
       },
     });
+
   const { data: battlesResponse, isLoading: isBattlesLoading } =
     useBattlesControllerGetDashboardBattles(dashboardParams, {
       query: {
@@ -223,6 +241,7 @@ export function useAbyssHub() {
   const handleSeasonChange = (seasonId: string | null) => {
     if (seasonId === null) return;
     const nextSeason = seasons.find((season) => season.id === seasonId);
+
     if (!nextSeason) {
       return;
     }

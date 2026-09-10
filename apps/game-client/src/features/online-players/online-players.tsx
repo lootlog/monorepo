@@ -12,6 +12,7 @@ export const OnlinePlayers = () => {
   const viewMode = useOnlinePlayersStore((state) => state.viewMode);
   const filtersVisible = useOnlinePlayersStore((state) => state.filtersVisible);
   const setViewMode = useOnlinePlayersStore((state) => state.setViewMode);
+
   const toggleFiltersVisible = useOnlinePlayersStore(
     (state) => state.toggleFiltersVisible,
   );

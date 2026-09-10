@@ -1,4 +1,5 @@
 import { createTranslationLookup } from "@lootlog/ui/i18n/translation-lookup";
+
 const messages = {
   meta: {
     title: "Lootlog Wiki",
@@ -179,8 +180,10 @@ const translations = createTranslationLookup(messages);
 
 function resolveMessage(path: string): string {
   const value = translations.get(path);
+
   if (value === undefined)
     throw new Error(`Missing translation for key: ${path}`);
+
   return value;
 }
 
@@ -196,6 +199,7 @@ export function t(
 
   return template.replace(/{{\s*(\w+)\s*}}/g, (_match, variableName) => {
     const value = variables[variableName];
+
     return value === undefined ? "" : String(value);
   });
 }

@@ -23,6 +23,7 @@ test("OpenAPI component aliases retain nested references and extension data", ()
       },
     },
   };
+
   const result = transformOpenApiDocument(document);
   expect(result.components?.schemas?.Consumer).toEqual({
     anyOf: [

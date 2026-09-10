@@ -63,7 +63,9 @@ export const RawBattleDataSchema = Schema.Struct({
     ),
   }),
 });
+
 export type RawBattleData = typeof RawBattleDataSchema.Type;
+
 export const decodeRawBattleDataJson = Schema.decodeUnknownSync(
   Schema.fromJsonString(RawBattleDataSchema),
 );

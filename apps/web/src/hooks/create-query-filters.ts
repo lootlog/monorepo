@@ -11,7 +11,9 @@ export const createQueryFilters = <T extends UseQueryStatesKeysMap>(
 
     const hasActiveFilters = Object.values(filters).some((value) => {
       if (Array.isArray(value)) return value.length > 0;
+
       if (value === "") return false;
+
       return value !== null && value !== undefined;
     });
 

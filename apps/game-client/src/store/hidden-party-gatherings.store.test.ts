@@ -6,14 +6,18 @@ import {
 } from "./hidden-party-gatherings.store";
 
 const now = Date.parse("2026-09-10T12:00:00.000Z");
+
 const expiresAt = now + 60_000;
+
 const storageName = storageKey("ll:hidden-party-gatherings:state");
+
 const identity = {
   userId: "user",
   world: "world",
   accountId: "account",
   characterId: "character",
 };
+
 const scopeKey = getHiddenPartyGatheringsScopeKey(identity);
 
 beforeEach(() => {
@@ -55,6 +59,7 @@ describe("hidden party gatherings", () => {
   it("isolates the user, world, account and character and ignores incomplete identities", () => {
     const state = useHiddenPartyGatheringsStore.getState();
     state.hide(scopeKey, "gathering", expiresAt);
+
     for (const field of [
       "userId",
       "world",
@@ -65,11 +70,13 @@ describe("hidden party gatherings", () => {
         ...identity,
         [field]: "other",
       });
+
       expect(state.isHidden(otherScope, "gathering")).toBe(false);
       expect(
         getHiddenPartyGatheringsScopeKey({ ...identity, [field]: undefined }),
       ).toBeNull();
     }
+
     state.hide(null, "gathering", expiresAt);
     expect(state.isHidden(null, "gathering")).toBe(false);
     expect(

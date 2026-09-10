@@ -18,7 +18,9 @@ import {
 } from "@lootlog/client/main";
 import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
 import { useSettingsStore } from "@/store/settings.store";
+
 let harness: ReturnType<typeof createGuildPreferencesTest>;
+
 const patchRequest = vi.fn<typeof fetch>();
 
 const settingsDocuments: SettingsDocumentsResponseDtoOutput = {
@@ -56,6 +58,7 @@ describe("ChatAppearanceSettingsForm", () => {
 
   it("shows the guild label option only when world selection is allowed", () => {
     const queryClient = harness.queryClient;
+
     const { rerender } = render(
       <QueryClientProvider client={queryClient}>
         <ChatAppearanceSettingsForm />
@@ -102,6 +105,7 @@ describe("ChatAppearanceSettingsForm", () => {
 
     const slider = screen.getByRole("slider", { name: "Skala tekstu" });
     const sliderControl = slider.parentElement?.parentElement;
+
     if (!sliderControl) throw new Error("Expected slider control");
     vi.spyOn(sliderControl, "getBoundingClientRect").mockReturnValue(
       new DOMRect(0, 0, 100, 8),

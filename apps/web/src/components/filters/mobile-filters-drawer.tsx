@@ -36,6 +36,7 @@ export const MobileFiltersDrawer = ({
   childrenClassName,
 }: MobileFiltersDrawerProps) => {
   const isPresetTrigger = trigger === "floating" || trigger === "inline";
+
   const triggerClassName =
     trigger === "floating"
       ? "fixed bottom-4 right-4 size-14 rounded-full shadow-lg z-20"

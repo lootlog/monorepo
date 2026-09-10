@@ -47,23 +47,31 @@ export function DocumentTitleUpdater({
   const matches = useMatches();
   const guildId = getGuildIdFromMatches(matches);
   const battleId = getBattleIdFromMatches(matches);
+
   const guildQueryKey = guildId
     ? getGuildsControllerGetGuildByIdQueryKey({ guildId })
     : undefined;
+
   const battleQueryKey = battleId
     ? getBattlesControllerGetBattleQueryKey({ battleId })
     : undefined;
+
   const guildQueryKeyHash = guildQueryKey ? JSON.stringify(guildQueryKey) : "";
+
   const battleQueryKeyHash = battleQueryKey
     ? JSON.stringify(battleQueryKey)
     : "";
+
   const [, setCacheVersion] = useState(0);
+
   const cachedGuildName = guildQueryKey
     ? queryClient.getQueryData<CachedGuild>(guildQueryKey)?.name
     : undefined;
+
   const cachedBattle = battleQueryKey
     ? queryClient.getQueryData<Battle>(battleQueryKey)
     : undefined;
+
   const title = resolveAppNavigation({
     matches,
     currentBattle: cachedBattle,

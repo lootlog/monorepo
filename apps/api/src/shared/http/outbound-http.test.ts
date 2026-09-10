@@ -17,8 +17,10 @@ const response = (body: Uint8Array<ArrayBuffer>) => new Response(body);
 describe("outboundHttpRequest", () => {
   it("retries idempotent transport failures", async () => {
     let attempt = 0;
+
     const get = vi.fn(() => {
       attempt += 1;
+
       return attempt === 1
         ? Effect.fail(new Error("transport"))
         : Effect.succeed(response(new Uint8Array([1])));
@@ -63,6 +65,7 @@ describe("outboundHttpRequest", () => {
 
   it("propagates interruption to the active request", async () => {
     let interrupted = false;
+
     const get = vi.fn(() =>
       Effect.never.pipe(
         Effect.onInterrupt(() =>
@@ -72,9 +75,11 @@ describe("outboundHttpRequest", () => {
         ),
       ),
     );
+
     const fiber = Effect.runFork(
       outboundHttpRequest(httpClientFromResponses(get), request),
     );
+
     while (get.mock.calls.length === 0) await Promise.resolve();
 
     await Effect.runPromise(Fiber.interrupt(fiber));

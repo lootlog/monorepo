@@ -74,12 +74,14 @@ export const getSuggestionPosition = (
   editorSurface: HTMLDivElement | null,
 ): SuggestionPosition => {
   const selection = window.getSelection();
+
   if (!selection || selection.rangeCount === 0 || !editorSurface) {
     return { bottom: 8, left: 16, top: 8 };
   }
 
   const rangeRect = selection.getRangeAt(0).getBoundingClientRect();
   const editorSurfaceRect = editorSurface.getBoundingClientRect();
+
   return {
     bottom: rangeRect.bottom - editorSurfaceRect.top + 8,
     left: rangeRect.left - editorSurfaceRect.left,
@@ -94,6 +96,7 @@ export const buildSuggestion = (
   type: "mention" | "variable",
 ): ActiveSuggestion => {
   const query = match[1] ?? "";
+
   return {
     left: position.left,
     query,
@@ -108,12 +111,15 @@ export const getActiveTemplateSuggestion = (
   position: SuggestionPosition,
 ): ActiveSuggestion => {
   const variableMatch = /\{\{([a-zA-Z]*)$/.exec(textBeforeCursor);
+
   if (variableMatch)
     return buildSuggestion(variableMatch, 2, position, "variable");
 
   const mentionMatch = /@([^\s@<>]*)$/.exec(textBeforeCursor);
+
   if (mentionMatch)
     return buildSuggestion(mentionMatch, 1, position, "mention");
+
   return null;
 };
 
@@ -128,20 +134,25 @@ export const readTemplateEditorState = ({
 }) => {
   onChange(serializeTemplateEditorValue());
   const selection = $getSelection();
+
   if (!$isRangeSelection(selection)) {
     setActiveSuggestion(null);
+
     return;
   }
 
   const anchorNode = selection.anchor.getNode();
+
   if (!$isTextNode(anchorNode)) {
     setActiveSuggestion(null);
+
     return;
   }
 
   const textBeforeCursor = anchorNode
     .getTextContent()
     .slice(0, selection.anchor.offset);
+
   setActiveSuggestion(
     getActiveTemplateSuggestion(
       textBeforeCursor,

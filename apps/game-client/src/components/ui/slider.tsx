@@ -24,7 +24,9 @@ function getInitialSliderValue(
   defaultValue: SliderProps["defaultValue"],
 ) {
   if (Array.isArray(value)) return value[0] ?? 0;
+
   if (Array.isArray(defaultValue)) return defaultValue[0] ?? 0;
+
   return 0;
 }
 
@@ -48,7 +50,9 @@ const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
     const [internalValue, setInternalValue] = React.useState<number>(() =>
       getInitialSliderValue(value, defaultValue),
     );
+
     const [dragging, setDragging] = React.useState(false);
+
     const pointerGesture = React.useRef<{
       originX: number;
       originY: number;
@@ -59,6 +63,7 @@ const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
     React.useEffect(() => {
       const handlePointerMove = (event: PointerEvent) => {
         const gesture = pointerGesture.current;
+
         if (
           !gesture ||
           event.pointerId !== gesture.pointerId ||
@@ -71,6 +76,7 @@ const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
 
         setDragging(true);
       };
+
       const endDragging = (event: PointerEvent) => {
         if (
           pointerGesture.current &&
@@ -78,12 +84,15 @@ const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
         ) {
           return;
         }
+
         pointerGesture.current = null;
         setDragging(false);
       };
+
       window.addEventListener("pointermove", handlePointerMove);
       window.addEventListener("pointerup", endDragging);
       window.addEventListener("pointercancel", endDragging);
+
       return () => {
         window.removeEventListener("pointermove", handlePointerMove);
         window.removeEventListener("pointerup", endDragging);
@@ -103,6 +112,7 @@ const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
     const displayValue = formatValue ? formatValue(currentValue) : currentValue;
     const min = props.min ?? 0;
     const max = props.max ?? 100;
+
     const renderEndpoint = (endpoint: number, type: "min" | "max") =>
       formatEndpoint ? formatEndpoint(endpoint, type) : endpoint;
 
@@ -124,15 +134,18 @@ const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
             onPointerDown={(event) => {
               const eventTarget =
                 event.target instanceof Element ? event.target : null;
+
               const startedOnThumb = Boolean(
                 eventTarget?.closest('[data-slot="slider-thumb"]'),
               );
+
               pointerGesture.current = {
                 originX: event.clientX,
                 originY: event.clientY,
                 pointerId: event.pointerId,
                 startedOnThumb,
               };
+
               if (startedOnThumb) {
                 setDragging(true);
               }
@@ -166,6 +179,7 @@ const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
     );
   },
 );
+
 Slider.displayName = "Slider";
 
 export { Slider };

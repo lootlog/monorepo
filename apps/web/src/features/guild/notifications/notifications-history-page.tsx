@@ -20,6 +20,7 @@ export const NotificationsHistoryPage = () => {
   const { t } = useTranslation();
   const guildId = useGuildId();
   const hasGuildId = Boolean(guildId);
+
   const { data, isLoading } = useNotificationsGuildControllerGetGuildJobs(
     { guildId: guildId ?? "" },
     {
@@ -31,11 +32,13 @@ export const NotificationsHistoryPage = () => {
       },
     },
   );
+
   const [selectedJob, setSelectedJob] = useState<
     NotificationJobsResponseDto["history"][number] | null
   >(null);
 
   const historyJobs = data?.history ?? [];
+
   const openJobDetails = (
     job: NotificationJobsResponseDto["history"][number],
   ) => {

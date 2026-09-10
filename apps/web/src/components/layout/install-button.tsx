@@ -11,6 +11,7 @@ import { useGlobalContext } from "@/hooks/context/use-global-context";
 
 export const InstallButton: FC = () => {
   const { t } = useTranslation();
+
   const {
     installAddonModal: { dispatch },
   } = useGlobalContext();

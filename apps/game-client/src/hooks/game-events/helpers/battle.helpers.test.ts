@@ -30,6 +30,7 @@ describe("mergeBattleWarriorPatches", () => {
       "102": createWarrior(102, "Ally", 1),
       "-501": createWarrior(-501, "Boss", 2),
     };
+
     const patches = {
       "101": { hpp: 75 },
       "-501": { hpp: 0 },

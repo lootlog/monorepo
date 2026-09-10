@@ -17,11 +17,13 @@ const createSettingsDocumentsMock = (
   effective: Record<string, typeof Schema.Json.Type> = {},
 ) => {
   let currentEffective = effective;
+
   const getPreferences = vi.fn(() =>
     Effect.succeed({
       domains: { sounds: createResolution(currentEffective) },
     }),
   );
+
   const patchPreferences = vi.fn<
     Parameters<typeof makeSoundSettings>[0]["patchPreferences"]
   >((_userId, payload) => {
@@ -70,6 +72,7 @@ describe("sound settings Effect module", () => {
     const settingsDocuments = createSettingsDocumentsMock({
       notificationsVolume: 0.5,
     });
+
     const service = makeSoundSettings(settingsDocuments);
 
     await Effect.runPromise(
@@ -103,6 +106,7 @@ describe("sound settings Effect module", () => {
         },
       },
     });
+
     const service = makeSoundSettings(settingsDocuments);
 
     await Effect.runPromise(
@@ -142,6 +146,7 @@ describe("sound settings Effect module", () => {
         },
       },
     });
+
     const service = makeSoundSettings(settingsDocuments);
 
     await Effect.runPromise(

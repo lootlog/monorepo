@@ -53,6 +53,7 @@ const TimerItem: FC<TimerItemProps> = ({
   if (timeLeftMilliseconds <= 0) return null;
 
   const isCloseToRespawn = timeLeftMilliseconds < 60000;
+
   const minimumSpawnTimeLabel = format(
     new Date(timer.minSpawnTime),
     "HH:mm:ss",
@@ -60,6 +61,7 @@ const TimerItem: FC<TimerItemProps> = ({
       locale: pl,
     },
   );
+
   const maximumSpawnTimeLabel = format(
     new Date(timer.maxSpawnTime),
     "HH:mm:ss",
@@ -166,6 +168,7 @@ export const EventTimersList: FC<EventTimersListProps> = ({
   const heroIdByNpcId = new Map(
     event.heroNpcs?.map((heroNpc) => [heroNpc.npcId, heroNpc.id]) ?? [],
   );
+
   const activeTimers: Array<
     (typeof timers)[number] & { heroId?: string; maxSpawnTimestamp: number }
   > = [];

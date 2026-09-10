@@ -6,7 +6,9 @@ import { useWindowsStore } from "@/store/windows.store";
 import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
 import { createSoundSettings } from "@/test/sound-settings-fixtures";
 import { getSoundSettingsControllerGetSettingsQueryKey } from "@lootlog/client/main";
+
 let harness: ReturnType<typeof createGuildPreferencesTest>;
+
 const render = () => renderUi(<SettingsTabs />, { wrapper: harness.wrapper });
 
 import { SettingsTabs } from "./settings-tabs";

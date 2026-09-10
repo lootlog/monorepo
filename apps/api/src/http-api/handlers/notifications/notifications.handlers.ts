@@ -29,7 +29,9 @@ import { LootlogApi } from "../../lootlog-api.js";
 import { NotificationOperations } from "./notifications.data-layer.js";
 
 type Guild = typeof guildTable.$inferSelect;
+
 type Role = typeof roleTable.$inferSelect;
+
 type NotificationEndpointIdentifier =
   keyof typeof LootlogApi.groups.notifications.endpoints;
 
@@ -102,7 +104,9 @@ const operationFailure = (cause: unknown): NotificationsHttpFailure => {
   ) {
     return cause;
   }
+
   if (cause instanceof ApplicationError) return cause;
+
   return new NotificationsDataError({ cause });
 };
 
@@ -130,6 +134,7 @@ const toHttpResponse = <A, R>(
 
 const integerParameter = (value: unknown, key: string) => {
   const parsed = typeof value === "number" ? value : Number(value);
+
   return Number.isSafeInteger(parsed) && parsed >= 0
     ? Effect.succeed(parsed)
     : Effect.fail(
@@ -175,6 +180,7 @@ export const NotificationsHandlers = HttpApiBuilder.group(
                 code: "ORGANIZATION_SCOPE_REQUIRED",
               }),
             );
+
       return toHttpResponse(
         Effect.flatMap(caller, (authorized) =>
           operation(endpoint, run(authorized)),

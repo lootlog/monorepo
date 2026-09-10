@@ -11,6 +11,7 @@ import {
 import { createAirTagTest } from "./air-tag-test";
 import { airTagReceiveController } from "./air-tag-receive-controller";
 import { useAirTags } from "./use-air-tags";
+
 const settings = (
   enabled: boolean,
 ): UserGameAccountPreferencesResponseDtoOutput => ({
@@ -25,6 +26,7 @@ const settings = (
   hasStoredAirTags: true,
   hasStoredPreferences: true,
 });
+
 const update = {
   v: 1 as const,
   type: "air-tag.updated" as const,

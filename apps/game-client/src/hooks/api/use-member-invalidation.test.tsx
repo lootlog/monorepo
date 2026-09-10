@@ -4,22 +4,28 @@ import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
 import { createChatMember } from "@/features/chat/chat-test-fixtures";
 import { getGuildMembersSummaryQueryKey } from "./guild-members-summary-query";
 import { useMemberInvalidation } from "./use-member-invalidation";
+
 const setup = () => {
   const fixture = createGuildPreferencesTest();
   fixture.request.mockImplementation(() => Promise.resolve(Response.json([])));
+
   for (const guildId of ["guild-1", "guild-2"])
     fixture.queryClient.setQueryData(
       getGuildMembersSummaryQueryKey({ guildId }),
       [],
     );
+
   return fixture;
 };
+
 it("refetches a missing member again after the member disappears", async () => {
   const fixture = setup();
+
   const { rerender } = renderHook(
     ({ memberIds }) => useMemberInvalidation("guild-1", memberIds),
     { wrapper: fixture.wrapper, initialProps: { memberIds: ["member-1"] } },
   );
+
   await waitFor(() => expect(fixture.request).toHaveBeenCalledTimes(1));
   rerender({ memberIds: ["member-1"] });
   expect(fixture.request).toHaveBeenCalledTimes(1);
@@ -40,8 +46,10 @@ it("refetches a missing member again after the member disappears", async () => {
   rerender({ memberIds: ["member-1"] });
   await waitFor(() => expect(fixture.request).toHaveBeenCalledTimes(2));
 });
+
 it("resets checked identities when organization context changes or disappears", async () => {
   const fixture = setup();
+
   const { rerender } = renderHook<
     void,
     { guildId: string | undefined; memberIds: string[] }
@@ -49,6 +57,7 @@ it("resets checked identities when organization context changes or disappears", 
     wrapper: fixture.wrapper,
     initialProps: { guildId: "guild-1", memberIds: ["member-1"] },
   });
+
   await waitFor(() => expect(fixture.request).toHaveBeenCalledTimes(1));
   rerender({ guildId: "guild-2", memberIds: ["member-1"] });
   await waitFor(() => expect(fixture.request).toHaveBeenCalledTimes(2));

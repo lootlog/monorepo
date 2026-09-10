@@ -77,6 +77,7 @@ class MargonemRendererRuntimeAdapter implements RendererRuntimeAdapter {
 
   getMapGeometry(): RuntimeMapGeometry | null {
     const map = this.runtimeWindow.Engine?.map;
+
     if (!map) return null;
 
     return {
@@ -90,6 +91,7 @@ class MargonemRendererRuntimeAdapter implements RendererRuntimeAdapter {
   getHandheldMiniMap(): RuntimeHandheldMiniMap | null {
     const miniMapWindow =
       this.runtimeWindow.Engine?.miniMapController?.handHeldMiniMapController?.getHandHeldMiniMapWindow?.();
+
     if (!miniMapWindow) return null;
 
     return {
@@ -110,11 +112,14 @@ class MargonemRendererRuntimeAdapter implements RendererRuntimeAdapter {
   subscribeDraw(callback: () => void): (() => void) | null {
     const event = this.runtimeWindow.Engine?.apiData?.CALL_DRAW_ADD_TO_RENDERER;
     const api = this.runtimeWindow.API;
+
     if (!event || !api) return null;
 
     api.addCallbackToEvent(event, callback);
+
     return () => {
       const currentApi = this.runtimeWindow.API;
+
       if (!currentApi) return;
       currentApi.removeCallbackFromEvent(event, callback);
     };

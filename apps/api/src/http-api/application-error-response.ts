@@ -8,7 +8,9 @@ import {
 export const applicationErrorResponse = (cause: unknown) => {
   if (!Schema.is(ApplicationError)(cause)) return Effect.die(cause);
   const status = applicationErrorStatus(cause);
+
   if (status === 500) return Effect.die(cause);
+
   if (status >= 500) {
     return Effect.succeed(
       HttpServerResponse.jsonUnsafe(
@@ -17,7 +19,9 @@ export const applicationErrorResponse = (cause: unknown) => {
       ),
     );
   }
+
   const response = cause.getResponse();
   const body = typeof response === "string" ? { message: response } : response;
+
   return Effect.succeed(HttpServerResponse.jsonUnsafe(body, { status }));
 };

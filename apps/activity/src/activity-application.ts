@@ -17,6 +17,7 @@ import { Permissions } from "#src/activities/activity-permissions";
 const RabbitLive = Layer.unwrap(
   Effect.gen(function* () {
     const config = yield* ActivityConfig;
+
     return RabbitMessaging.layer({
       uri: Redacted.value(config.rabbitmqUri),
       connectionName: config.serviceName,
@@ -24,21 +25,26 @@ const RabbitLive = Layer.unwrap(
     });
   }),
 ).pipe(Layer.provide(ActivityConfig.layer));
+
 const RepositoryLive = ActivityRepository.layer.pipe(
   Layer.provide(ActivityDatabase.layer),
   Layer.provide(PgClientLive),
 );
+
 const HealthLive = ActivityHealth.layer.pipe(
   Layer.provide(ApiHttpClient.layer),
   Layer.provide(PgClientLive),
 );
+
 const PermissionsLive = Permissions.live.pipe(
   Layer.provide(ApiHttpClient.layer),
   Layer.provide(ActivityConfig.layer),
 );
+
 const DatabaseAdoption = Layer.effectDiscard(verifyAndAdoptDatabase()).pipe(
   Layer.provide(PgClientLive),
 );
+
 const DatabaseServices = Layer.mergeAll(
   OnlineRepository.layer.pipe(Layer.provide(PgClientLive)),
   RepositoryLive,

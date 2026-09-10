@@ -12,6 +12,7 @@ export function useCompactScheduleLayout() {
 
   useLayoutEffect(() => {
     const container = containerRef.current;
+
     if (!container) return;
 
     const updateLayout = () => {
@@ -24,6 +25,7 @@ export function useCompactScheduleLayout() {
 
     if (typeof ResizeObserver === "undefined") {
       window.addEventListener("resize", updateLayout);
+
       return () => window.removeEventListener("resize", updateLayout);
     }
 

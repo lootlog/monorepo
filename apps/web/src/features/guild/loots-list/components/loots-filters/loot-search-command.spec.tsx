@@ -20,6 +20,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { LootSearchCommand } from "./loot-search-command";
 
 await initializeTestTranslations();
+
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
@@ -36,19 +37,24 @@ describe("LootSearchCommand search failures", () => {
         JSON.stringify("test-world"),
       );
       vi.stubGlobal("localStorage", storage);
+
       const client = new QueryClient({
         defaultOptions: { queries: { retry: false, gcTime: 0 } },
       });
+
       const restore = configureApiClients({
         search: { baseUrl: "https://search.test" },
       });
+
       const fetch = vi.fn(async () =>
         Response.json(
           { _tag: "SearchUnavailable", message: "Search unavailable" },
           { status: 503 },
         ),
       );
+
       vi.stubGlobal("fetch", fetch);
+
       if (withCachedResults) {
         client.setQueryData(
           getAllControllerSearchAllQueryKey({
@@ -70,7 +76,9 @@ describe("LootSearchCommand search failures", () => {
           },
         );
       }
+
       const previousSkipAnimations = MotionGlobalConfig.skipAnimations;
+
       try {
         MotionGlobalConfig.skipAnimations = true;
         render(

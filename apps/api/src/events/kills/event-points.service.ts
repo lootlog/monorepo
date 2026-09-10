@@ -65,6 +65,7 @@ type ExistingRankingSnapshot = {
   manualAdjustmentPoints: number;
   pointsModified: boolean;
 };
+
 type EventKillPoint = typeof eventKillPointTable.$inferSelect;
 
 export const makeEventPoints = (
@@ -76,16 +77,19 @@ export const makeEventPoints = (
     params: CalculateMemberPointsParams,
   ): CalculatedMemberPoints {
     const scoringMode = normalizeEventScoringMode(params.scoringMode);
+
     const scoringRules =
       scoringMode === "ADVANCED"
         ? normalizeEventScoringRules(
             params.scoringRules ?? DEFAULT_ADVANCED_EVENT_SCORING_RULES,
           )
         : DEFAULT_ADVANCED_EVENT_SCORING_RULES;
+
     const normalizedRespawnStartTime =
       params.respawnStartTime > params.killTime
         ? params.killTime
         : params.respawnStartTime;
+
     const respawnProgressPercentage = calculateRespawnProgressPercentage({
       killTime: params.killTime,
       respawnStartTime: normalizedRespawnStartTime,
@@ -155,6 +159,7 @@ export const makeEventPoints = (
     computedTotalPoints: number;
   }): number {
     const { existingRanking, computedTotalPoints } = params;
+
     if (!existingRanking) {
       return 0;
     }
@@ -183,6 +188,7 @@ export const makeEventPoints = (
       params.minSpawnTimeAtKill > params.killedAt
         ? params.killedAt
         : params.minSpawnTimeAtKill;
+
     const trackingWindowDurationSeconds = Math.max(
       0,
       Math.floor(
@@ -212,6 +218,7 @@ export const makeEventPoints = (
     }
 
     const maxRespawnTime = params.maxRespawnTime;
+
     const fullWindowMs =
       maxRespawnTime.getTime() - params.respawnStartTime.getTime();
 
@@ -270,6 +277,7 @@ export const makeEventPoints = (
 
     const trackingDurationSeconds =
       calculateTrackingDurationSeconds(trackingIntervals);
+
     const trackingDurationPercentage = calculateTrackingDurationPercentage({
       trackingDurationSeconds,
       killedAt: params.killTime,
@@ -295,11 +303,14 @@ export const makeEventPoints = (
       }
 
       const scoringMode = normalizeEventScoringMode(event.scoringMode);
+
       const scoringRules =
         scoringMode === "ADVANCED"
           ? normalizeEventScoringRules(event.scoringRules)
           : null;
+
       const existingRankings = yield* repository.findRankings(eventId);
+
       const existingRankingsByKey = new Map(
         existingRankings.map((ranking) => [
           createRankingKey({
@@ -322,6 +333,7 @@ export const makeEventPoints = (
       );
 
       const heroMapIdsByKillId = new Map<string, Set<string>>();
+
       for (const [killId, points] of killPointsByKillId) {
         const first = points[0];
         heroMapIdsByKillId.set(
@@ -331,6 +343,7 @@ export const makeEventPoints = (
       }
 
       const assignedMembersCountByKillId = new Map<string, number>();
+
       for (const [killId, points] of killPointsByKillId) {
         const uniqueMembers = new Set(points.map((p) => p.memberId));
         assignedMembersCountByKillId.set(killId, uniqueMembers.size);
@@ -343,15 +356,19 @@ export const makeEventPoints = (
           ),
         ),
       );
+
       const allMemberIds = Array.from(
         new Set(killPoints.map((point) => point.memberId)),
       );
+
       const latestKillTime = new Date(
         Math.max(...killPoints.map((point) => point.kill.killedAt.getTime())),
       );
+
       const windowSummaries = yield* repository.findWindowSummaries(
         Array.from(new Set(killPoints.map((point) => point.kill.id))),
       );
+
       const windowOpenedAtByKillId = new Map(
         windowSummaries.flatMap((summary) =>
           summary.killId
@@ -359,6 +376,7 @@ export const makeEventPoints = (
             : [],
         ),
       );
+
       const earliestOverlapWindowStart = new Date(
         Math.min(
           ...killPoints.map((point) =>
@@ -389,19 +407,24 @@ export const makeEventPoints = (
       const recalculatedKillPoints = killPoints.map((killPoint) => {
         const assignedMembersCount =
           assignedMembersCountByKillId.get(killPoint.killId) ?? 1;
+
         const trackingWindowStartTime = resolveEventWindowStart({
           killedAt: killPoint.kill.killedAt,
           minSpawnTimeAtKill: killPoint.kill.minSpawnTimeAtKill,
         });
+
         const trackingMetrics = calculateTrackingMetricsForKill({
           assignments: assignmentsByMember.get(killPoint.memberId) ?? [],
           heroMapIds: heroMapIdsByKillId.get(killPoint.killId) ?? new Set(),
           killTime: killPoint.kill.killedAt,
           respawnStartTime: trackingWindowStartTime,
         });
+
         const trackingDurationSeconds = trackingMetrics.trackingDurationSeconds;
+
         const trackingDurationPercentage =
           trackingMetrics.trackingDurationPercentage;
+
         const memberState = getMemberKillState({
           assignments: assignmentsByMember.get(killPoint.memberId) ?? [],
           heroMapIds: heroMapIdsByKillId.get(killPoint.killId) ?? new Set(),
@@ -428,6 +451,7 @@ export const makeEventPoints = (
             afkPercentage: killPoint.afkPercentage,
             wasPresent: killPoint.wasPresent,
           });
+
         const effectivePoints = roundPointsValue(
           totalPoints + killPoint.manualAdjustmentPoints,
         );
@@ -463,6 +487,7 @@ export const makeEventPoints = (
           afkSum: number;
         }
       >();
+
       const manualAdjustmentRankingKeys = new Set<string>();
 
       for (const recalculatedKillPoint of recalculatedKillPoints) {
@@ -480,7 +505,9 @@ export const makeEventPoints = (
           memberId: recalculatedKillPoint.memberId,
           heroNpcName: recalculatedKillPoint.heroNpcName,
         });
+
         const existing = rankingMap.get(key);
+
         const rankingTrackingDurationSeconds =
           getTrackingDurationSecondsForRanking({
             trackingDurationSeconds:
@@ -509,6 +536,7 @@ export const makeEventPoints = (
           });
         }
       }
+
       const processedRankingKeys = new Set<string>();
 
       const killPointUpdates = recalculatedKillPoints.map(
@@ -517,6 +545,7 @@ export const makeEventPoints = (
           data: recalculatedKillPoint.updateData,
         }),
       );
+
       const rankingUpdates: Parameters<
         EventPointsStore["applyRecalculation"]
       >[1] = [];
@@ -526,11 +555,14 @@ export const makeEventPoints = (
           memberId: ranking.memberId,
           heroNpcName: ranking.heroNpcName,
         });
+
         const existingRanking = existingRankingsByKey.get(rankingKey);
+
         const manualAdjustmentPoints = resolveManualAdjustmentPoints({
           existingRanking,
           computedTotalPoints: ranking.totalPoints,
         });
+
         const persistedRankingData = {
           totalPoints: roundPointsValue(
             ranking.totalPoints + manualAdjustmentPoints,
@@ -612,15 +644,18 @@ export const makeEventPoints = (
     getKey: (value: Value) => Key,
   ): Map<Key, Value[]> {
     const grouped = new Map<Key, Value[]>();
+
     for (const value of values) {
       const key = getKey(value);
       const group = grouped.get(key);
+
       if (group) {
         group.push(value);
       } else {
         grouped.set(key, [value]);
       }
     }
+
     return grouped;
   }
 
@@ -648,6 +683,7 @@ export const makeEventPoints = (
       }
 
       const assignmentEnd = assignment.unassignedAt ?? params.killTime;
+
       if (assignmentEnd < params.respawnStartTime) {
         continue;
       }
@@ -722,6 +758,7 @@ export const makeEventPoints = (
       const logs = yield* repository.findPresenceLogs(mapIds, memberIds, since);
 
       const windowEnd = until ?? new Date(yield* Clock.currentTimeMillis);
+
       const aggregatedStatsByMemberId = new Map<number, PresenceLogAggregation>(
         memberIds.map((memberId) => [
           memberId,
@@ -735,15 +772,18 @@ export const makeEventPoints = (
 
       for (const log of logs) {
         const currentStats = aggregatedStatsByMemberId.get(log.memberId);
+
         if (!currentStats) {
           continue;
         }
 
         const effectiveStart =
           since && log.startedAt < since ? since : log.startedAt;
+
         const endTime = log.endedAt
           ? new Date(Math.min(log.endedAt.getTime(), windowEnd.getTime()))
           : windowEnd;
+
         const duration = endTime.getTime() - effectiveStart.getTime();
 
         if (duration > 0) {
@@ -754,6 +794,7 @@ export const makeEventPoints = (
           }
 
           const mapName = mapNamesById.get(log.mapId);
+
           if (mapName) {
             currentStats.mapName = mapName;
           }
@@ -764,6 +805,7 @@ export const makeEventPoints = (
         const aggregatedStats = aggregatedStatsByMemberId.get(memberId);
         const totalTimeMs = aggregatedStats?.totalTimeMs ?? 0;
         const afkTimeMs = aggregatedStats?.afkTimeMs ?? 0;
+
         const afkPercentage =
           totalTimeMs > 0 ? (afkTimeMs / totalTimeMs) * 100 : 0;
 
@@ -792,6 +834,7 @@ export const makeEventPoints = (
       repository.findPresenceLogs(mapIds, [memberId], since),
       (logs) => {
         const windowEnd = until ?? new Date();
+
         const mapStats = new Map<
           string,
           { presenceTimeMs: number; afkTimeMs: number }
@@ -803,13 +846,16 @@ export const makeEventPoints = (
 
         for (const log of logs) {
           const stats = mapStats.get(log.mapId);
+
           if (!stats) continue;
 
           const effectiveStart =
             since && log.startedAt < since ? since : log.startedAt;
+
           const endTime = log.endedAt
             ? new Date(Math.min(log.endedAt.getTime(), windowEnd.getTime()))
             : windowEnd;
+
           const duration = endTime.getTime() - effectiveStart.getTime();
 
           if (duration > 0) {
@@ -844,6 +890,7 @@ export const makeEventPoints = (
       repository.findPresenceLogs(mapIds, memberIds, since),
       (logs) => {
         const windowEnd = until ?? new Date();
+
         const memberMapStats = new Map<
           string,
           {
@@ -856,6 +903,7 @@ export const makeEventPoints = (
 
         for (const log of logs) {
           const key = `${log.memberId}:${log.mapId}`;
+
           if (!memberMapStats.has(key)) {
             memberMapStats.set(key, {
               memberId: log.memberId,
@@ -866,17 +914,21 @@ export const makeEventPoints = (
           }
 
           const stats = memberMapStats.get(key);
+
           if (!stats) continue;
 
           const effectiveStart =
             since && log.startedAt < since ? since : log.startedAt;
+
           const endTime = log.endedAt
             ? new Date(Math.min(log.endedAt.getTime(), windowEnd.getTime()))
             : windowEnd;
+
           const duration = endTime.getTime() - effectiveStart.getTime();
 
           if (duration > 0) {
             stats.presenceTimeMs += duration;
+
             if (log.isAfk) {
               stats.afkTimeMs += duration;
             }
@@ -918,6 +970,7 @@ export const makeEventPoints = (
               getTrackingDurationSecondsForRanking({
                 trackingDurationSeconds: killPoint.trackingDurationSeconds,
               });
+
             const existing = yield* repository.findRankingByKey(
               eventId,
               killPoint.memberId,
@@ -926,6 +979,7 @@ export const makeEventPoints = (
 
             if (existing) {
               const newTotalKills = existing.totalKills + 1;
+
               const newAvgAfk =
                 (existing.avgAfkPercentage * existing.totalKills +
                   killPoint.afkPercentage) /
@@ -939,6 +993,7 @@ export const makeEventPoints = (
                 existing.pointsModified ||
                   killPoint.manualAdjustmentPoints !== 0,
               );
+
               return;
             }
 

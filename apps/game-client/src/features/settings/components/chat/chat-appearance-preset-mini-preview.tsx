@@ -14,6 +14,7 @@ type ChatAppearancePresetMiniPreviewProps = {
 };
 
 const PREVIEW_TIMESTAMP = "2026-07-24T19:37:00.000Z";
+
 const PREVIEW_NPC_ICON = "tyt/maddok-tytan2.gif";
 
 const createNpcPreviewMessage = (
@@ -57,6 +58,7 @@ export const ChatAppearancePresetMiniPreview = ({
 }: ChatAppearancePresetMiniPreviewProps) => {
   const { t } = useTranslation();
   const playerName = t("settings.chat.preview.player");
+
   const npcMessage = createNpcPreviewMessage(
     t("settings.chat.preview.npc"),
     t("settings.chat.preview.location"),

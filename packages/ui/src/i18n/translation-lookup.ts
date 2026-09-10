@@ -7,8 +7,10 @@ export function createTranslationLookup(
   prefix = "",
 ): Map<string, string> {
   const translations = new Map<string, string>();
+
   for (const [key, value] of Object.entries(tree)) {
     const path = prefix ? `${prefix}.${key}` : key;
+
     if (value instanceof Object) {
       for (const [nestedPath, message] of createTranslationLookup(value, path))
         translations.set(nestedPath, message);
@@ -16,5 +18,6 @@ export function createTranslationLookup(
       translations.set(path, value);
     }
   }
+
   return translations;
 }

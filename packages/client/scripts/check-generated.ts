@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
 
 const repositoryRoot = resolve("../..");
+
 const trackedOutputs = [
   "apps/activity/openapi.yaml",
   "apps/api/openapi.yaml",
@@ -12,6 +13,7 @@ const trackedOutputs = [
   "apps/search/openapi.yaml",
   "packages/client/src/generated",
 ];
+
 const result = spawnSync(
   "git",
   [

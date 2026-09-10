@@ -86,6 +86,7 @@ const services = (
 describe("Docs HttpApi handlers", () => {
   it("encodes service timestamps before generated HTTP validation", async () => {
     const createdAt = new Date("2026-09-01T10:00:00.000Z");
+
     const service: DocsService = {
       createDocument: () =>
         Effect.succeed({ ...document, createdAt, updatedAt: createdAt }),
@@ -122,12 +123,14 @@ describe("Docs HttpApi handlers", () => {
             makeAuthorization({
               requireGuild: (requirement) => {
                 authorizationCalls.push(requirement);
+
                 return Effect.succeed(caller);
               },
             }),
             makeData({
               create: (receivedCaller, receivedPayload) => {
                 dataCalls.push({ receivedCaller, receivedPayload });
+
                 return Effect.succeed(document);
               },
             }),
@@ -154,6 +157,7 @@ describe("Docs HttpApi handlers", () => {
       status: 401,
       code: "AUTHENTICATION_REQUIRED",
     });
+
     let dataAccessed = false;
 
     const error = await Effect.runPromise(
@@ -165,6 +169,7 @@ describe("Docs HttpApi handlers", () => {
               makeData({
                 get: () => {
                   dataAccessed = true;
+
                   return Effect.die("must not run");
                 },
               }),
@@ -183,6 +188,7 @@ describe("Docs HttpApi handlers", () => {
       status: 403,
       code: "ORGANIZATION_ACCESS_DENIED",
     });
+
     const requestedGuilds: string[] = [];
     let dataAccessed = false;
 
@@ -194,12 +200,14 @@ describe("Docs HttpApi handlers", () => {
               makeAuthorization({
                 requireGuild: (requirement) => {
                   requestedGuilds.push(requirement.guildId);
+
                   return Effect.fail(denied);
                 },
               }),
               makeData({
                 get: () => {
                   dataAccessed = true;
+
                   return Effect.die("must not run");
                 },
               }),
@@ -241,6 +249,7 @@ describe("Docs HttpApi handlers", () => {
 
   it("scopes history to both Organization and document", async () => {
     const calls: unknown[] = [];
+
     const history = {
       items: [
         {
@@ -265,6 +274,7 @@ describe("Docs HttpApi handlers", () => {
             makeData({
               history: (receivedCaller, documentId) => {
                 calls.push({ guildId: receivedCaller.guild.id, documentId });
+
                 return Effect.succeed(history);
               },
             }),
@@ -287,6 +297,7 @@ describe("Docs HttpApi handlers", () => {
             makeAuthorization({
               requireGuild: (requirement) => {
                 authorizationCalls.push(requirement);
+
                 return Effect.succeed(caller);
               },
             }),

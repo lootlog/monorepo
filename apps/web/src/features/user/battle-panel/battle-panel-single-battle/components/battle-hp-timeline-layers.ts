@@ -84,10 +84,11 @@ export const BATTLE_HP_TIMELINE_EVENT_LAYER_DEFINITIONS =
 // SAFETY: The definitions contain every BattleHpTimelineLayerKey; the reduction fills each key before exposing the result.
 export const DEFAULT_BATTLE_HP_TIMELINE_LAYER_CONFIG =
   BATTLE_HP_TIMELINE_LAYER_DEFINITIONS.reduce<BattleHpTimelineLayerConfig>(
-    (config, definition) => ({
-      ...config,
-      [definition.key]: definition.key === "legendary",
-    }),
+    (config, definition) => {
+      config[definition.key] = definition.key === "legendary";
+
+      return config;
+    },
     {} as BattleHpTimelineLayerConfig,
   );
 
@@ -96,10 +97,11 @@ export const BATTLE_HP_TIMELINE_LAYER_DEFINITION_BY_KEY =
   BATTLE_HP_TIMELINE_LAYER_DEFINITIONS.reduce<
     Record<BattleHpTimelineLayerKey, BattleHpTimelineLayerDefinition>
   >(
-    (definitions, definition) => ({
-      ...definitions,
-      [definition.key]: definition,
-    }),
+    (definitions, definition) => {
+      definitions[definition.key] = definition;
+
+      return definitions;
+    },
     {} as Record<BattleHpTimelineLayerKey, BattleHpTimelineLayerDefinition>,
   );
 

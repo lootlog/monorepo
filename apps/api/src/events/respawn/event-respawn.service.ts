@@ -14,11 +14,13 @@ export const makeEventRespawn = (
   const load = (guildId: string, eventId: string, heroId: string) =>
     Effect.gen(function* () {
       const hero = yield* repository.findHero(guildId, eventId, heroId);
+
       if (!hero) {
         return yield* Effect.fail(new ResourceNotFoundError("Hero not found"));
       }
 
       const now = new Date(yield* Clock.currentTimeMillis);
+
       const timer = yield* timers.getEventRespawnTimer({
         guildId,
         world: hero.event.world,
@@ -38,6 +40,7 @@ export const makeEventRespawn = (
 
       const minSpawnTime = new Date(timer.minSpawnTime);
       const maxSpawnTime = new Date(timer.maxSpawnTime);
+
       if (now < minSpawnTime) {
         return {
           hasTimer: false,
@@ -47,6 +50,7 @@ export const makeEventRespawn = (
           overdueMs: null,
         };
       }
+
       if (now < maxSpawnTime) {
         return {
           hasTimer: true,
@@ -56,6 +60,7 @@ export const makeEventRespawn = (
           overdueMs: null,
         };
       }
+
       return {
         hasTimer: true,
         windowStatus: "OVERDUE" as const,
@@ -73,6 +78,7 @@ export const makeEventRespawn = (
         "hero-respawn-config",
         { heroId },
       );
+
       return eventReadCache
         .getOrSet(cacheKey, HeroRespawnConfigResponse, () =>
           load(guildId, eventId, heroId),

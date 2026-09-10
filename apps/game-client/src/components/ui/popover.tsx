@@ -98,7 +98,9 @@ export const preservePopoverOnMenuPress =
       details.event.target.closest('[role="menu"]')
     ) {
       details.cancel();
+
       return;
     }
+
     onOpenChange(open, details);
   };

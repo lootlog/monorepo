@@ -5,6 +5,7 @@ import { RiasMagicCardOverlay } from "@lootlog/ui/components/rias-magic-card-ove
 
 export function ThemeDecoration() {
   const theme = useDecorationTheme();
+
   switch (theme) {
     case "cat":
       return <CatPawOverlay />;

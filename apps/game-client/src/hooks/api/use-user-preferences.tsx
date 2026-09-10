@@ -41,6 +41,7 @@ export const useUpdateUserPreferences = () => {
       }
 
       const previousMutes = cloneNotificationMutes(previousData.mutes);
+
       const nextMutes = payload.mutes
         ? {
             players: payload.mutes.players

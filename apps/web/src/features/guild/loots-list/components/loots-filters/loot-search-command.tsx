@@ -60,6 +60,7 @@ export const LootSearchCommand = (
     open,
     handleOpenChange,
   } = useLootSearchCommand(props);
+
   const dialogContent = (
     <>
       <CommandInput

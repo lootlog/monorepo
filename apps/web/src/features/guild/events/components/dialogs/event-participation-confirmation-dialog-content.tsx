@@ -37,6 +37,7 @@ export const EventParticipationConfirmationDialogContent = ({
     handleConfirmAll,
     sortedExpiredItems,
   } = useParticipationConfirmation({ guildId, eventId });
+
   if (!open) {
     return null;
   }
@@ -47,8 +48,10 @@ export const EventParticipationConfirmationDialogContent = ({
       onOpenChange={(nextOpen, eventDetails) => {
         if (!nextOpen && eventDetails.reason === "outside-press") {
           eventDetails.cancel();
+
           return;
         }
+
         handleOpenChange(nextOpen);
       }}
     >
@@ -78,6 +81,7 @@ export const EventParticipationConfirmationDialogContent = ({
                   <div className="space-y-2">
                     {sortedItems.map((item) => {
                       const deadline = new Date(item.confirmationDeadlineAt);
+
                       const remaining = formatDistanceToNowStrict(deadline, {
                         addSuffix: true,
                         locale: pl,
@@ -177,6 +181,7 @@ export const EventParticipationConfirmationDialogContent = ({
                   <div className="space-y-2">
                     {sortedExpiredItems.map((item) => {
                       const deadline = new Date(item.confirmationDeadlineAt);
+
                       return (
                         <div
                           key={item.killId}

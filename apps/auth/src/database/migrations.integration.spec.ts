@@ -22,6 +22,7 @@ const baselinePath = fileURLToPath(
     import.meta.url,
   ),
 );
+
 const betterAuth17Path = fileURLToPath(
   new URL(
     "../../drizzle/20260902062446_aberrant_martin_li/migration.sql",
@@ -47,9 +48,11 @@ describe("Better Auth 1.7 PostgreSQL migration", () => {
 
   it("serializes concurrent pod migrations without duplicate tracking or partial DDL", async () => {
     const databaseUri = await createDatabase(postgres, "concurrent_migrations");
+
     const connections = await Promise.all(
       Array.from({ length: 3 }, () => makeConnection(databaseUri)),
     );
+
     try {
       await Promise.all(
         connections.map(({ db, client }) =>
@@ -57,17 +60,22 @@ describe("Better Auth 1.7 PostgreSQL migration", () => {
         ),
       );
       const connection = connections[0];
+
       if (!connection) throw new Error("Missing test connection");
       expect(
         await Effect.runPromise(planAuthMigration(connection.client)),
       ).toMatchObject({ status: "up-to-date", pendingMigrations: 0 });
+
       const result = await connection.pool.query(
         "SELECT count(*)::int AS count, count(DISTINCT hash)::int AS unique_count FROM drizzle.__drizzle_migrations",
       );
+
       expect(result.rows).toEqual([{ count: 4, unique_count: 4 }]);
+
       const table = await connection.pool.query(
         "SELECT to_regclass('public.apikey') AS name",
       );
+
       expect(table.rows).toEqual([{ name: "apikey" }]);
     } finally {
       await Promise.all(connections.map(({ close }) => close()));
@@ -76,6 +84,7 @@ describe("Better Auth 1.7 PostgreSQL migration", () => {
 
   it("creates a fresh 1.7 schema and can run again", async () => {
     const connection = await makeConnection(postgres.getConnectionUri());
+
     try {
       expect(
         await Effect.runPromise(planAuthMigration(connection.client)),
@@ -108,6 +117,7 @@ describe("Better Auth 1.7 PostgreSQL migration", () => {
   it("adds the Better Auth 1.7 JWKS metadata columns to an existing schema", async () => {
     const databaseUri = await createDatabase(postgres, "auth_v17_jwks");
     const connection = await makeConnection(databaseUri);
+
     try {
       await installCanonicalLegacySchema(connection.pool);
       await connection.pool.query(await fs.readFile(betterAuth17Path, "utf8"));
@@ -154,6 +164,7 @@ describe("Better Auth 1.7 PostgreSQL migration", () => {
   it("backfills a populated canonical 1.6 schema", async () => {
     const databaseUri = await createDatabase(postgres, "auth_v16");
     const connection = await makeConnection(databaseUri);
+
     try {
       await installCanonicalLegacySchema(connection.pool);
       await insertUser(connection.pool, "user-1", "discord-1");
@@ -185,6 +196,7 @@ describe("Better Auth 1.7 PostgreSQL migration", () => {
   it("upgrades the imported production shape without changing identities or UTC instants", async () => {
     const databaseUri = await createDatabase(postgres, "auth_imported_v16");
     const connection = await makeConnection(databaseUri);
+
     try {
       await installImportedLegacySchema(connection.pool);
       await insertUser(connection.pool, "user-1", "discord-a", {
@@ -298,6 +310,7 @@ describe("Better Auth 1.7 PostgreSQL migration", () => {
       cases.map(async ({ database, code, corrupt }) => {
         const databaseUri = await createDatabase(postgres, database);
         const connection = await makeConnection(databaseUri);
+
         try {
           await installCanonicalLegacySchema(connection.pool);
           await insertUser(connection.pool, "user-1", "discord-1");
@@ -312,6 +325,7 @@ describe("Better Auth 1.7 PostgreSQL migration", () => {
           const plan = await Effect.runPromise(
             planAuthMigration(connection.client),
           );
+
           expect(plan.status).toBe("blocked");
           expect(plan.integrityViolations).toContainEqual({ code, count: 1 });
           await expect(
@@ -330,6 +344,7 @@ describe("Better Auth 1.7 PostgreSQL migration", () => {
   it("blocks an unknown schema before the first write", async () => {
     const databaseUri = await createDatabase(postgres, "auth_unknown");
     const connection = await makeConnection(databaseUri);
+
     try {
       await installCanonicalLegacySchema(connection.pool);
       await connection.pool.query(`DROP INDEX "account_userId_idx"`);
@@ -362,9 +377,11 @@ async function makeConnection(connectionString: string) {
       ),
     ),
   );
+
   const pool = await runtime.runPromise(PostgresPool);
   const client = await runtime.runPromise(PgClient.PgClient);
   const db = await runtime.runPromise(AuthDatabase);
+
   return { pool, client, db, close: () => runtime.dispose() };
 }
 
@@ -375,12 +392,15 @@ async function createDatabase(
   const admin = new pg.Client({
     connectionString: postgres.getConnectionUri(),
   });
+
   await admin.connect();
+
   try {
     await admin.query(`CREATE DATABASE ${database}`);
   } finally {
     await admin.end();
   }
+
   return new URL(`/${database}`, postgres.getConnectionUri()).toString();
 }
 
@@ -470,6 +490,7 @@ async function readStableIdentities(pool: pg.Pool) {
     ),
     pool.query(`SELECT "id", "userId" FROM "session" ORDER BY "id"`),
   ]);
+
   return {
     users: users.rows,
     accounts: accounts.rows,
@@ -497,5 +518,6 @@ async function expectIssuerAndTrackingToBeAbsent(pool: pg.Pool) {
           AND table_name = '__drizzle_migrations'
       ) AS "trackingTables"
   `);
+
   expect(result.rows[0]).toEqual({ issuerColumns: "0", trackingTables: "0" });
 }

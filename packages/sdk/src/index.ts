@@ -16,6 +16,7 @@ export type LootlogApiOptions = {
 export function configureLootlogApi(options: LootlogApiOptions): () => void {
   if (!options.apiKey.trim()) throw new TypeError("apiKey must not be empty");
   const prefix = options.environment === "development" ? "dev-" : "";
+
   const configuration = (
     service: "main" | "activity" | "battlelog" | "search",
   ): ApiServiceConfig => ({
@@ -26,6 +27,7 @@ export function configureLootlogApi(options: LootlogApiOptions): () => void {
     fetch: options.fetch,
     getHeaders: () => ({ "X-Api-Key": options.apiKey }),
   });
+
   return configureApiClients({
     main: configuration("main"),
     activity: configuration("activity"),

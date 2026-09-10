@@ -39,6 +39,7 @@ export const Capability = {
 export type Capability = (typeof Capability)[keyof typeof Capability];
 
 export const Permission = Capability;
+
 export type Permission = Capability;
 
 export interface UserGuildPermissionsRole {
@@ -59,17 +60,21 @@ export interface UserGuildPermissionsDto {
 }
 
 export const CapabilitySchema = Schema.Literals(Object.values(Capability));
+
 export const PermissionSchema = CapabilitySchema;
+
 export const UserGuildPermissionsRoleSchema = Schema.Struct({
   id: Schema.NonEmptyString,
   lvlRangeFrom: Schema.Int,
   lvlRangeTo: Schema.Int,
   permissions: Schema.Array(PermissionSchema),
 });
+
 export const UserGuildPermissionsGuildSchema = Schema.Struct({
   id: Schema.NonEmptyString,
   ownerId: Schema.NonEmptyString,
 });
+
 export const UserGuildPermissionsDtoSchema = Schema.Struct({
   guild: UserGuildPermissionsGuildSchema,
   roles: Schema.Array(UserGuildPermissionsRoleSchema),

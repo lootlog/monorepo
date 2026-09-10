@@ -16,6 +16,7 @@ import {
 } from "./members.handlers.js";
 
 const identity = { userId: "user-a", discordId: "discord-admin" };
+
 const access = {
   ...identity,
   guildId: "guild-a",
@@ -89,11 +90,13 @@ const provideServices = (
 describe("Members HttpApi handlers", () => {
   it("returns the authenticated member through the generated response schema", async () => {
     const calls: unknown[] = [];
+
     const layer = provideServices(
       makeAuthorization(),
       makeData({
         getMe: (current, guildId, refresh) => {
           calls.push({ current, guildId, refresh });
+
           return Effect.succeed(member);
         },
       }),
@@ -115,12 +118,15 @@ describe("Members HttpApi handlers", () => {
       status: 403,
       code: "MEMBER_ADMIN_REQUIRED",
     });
+
     let dataCalled = false;
+
     const layer = provideServices(
       makeAuthorization({ requireGuild: () => Effect.fail(denied) }),
       makeData({
         refreshMember: () => {
           dataCalled = true;
+
           return Effect.succeed(member);
         },
       }),
@@ -143,12 +149,15 @@ describe("Members HttpApi handlers", () => {
       status: 404,
       code: "MEMBER_NOT_FOUND",
     });
+
     let dataCalled = false;
+
     const layer = provideServices(
       makeAuthorization({ requireGuild: () => Effect.fail(hidden) }),
       makeData({
         deactivateMember: () => {
           dataCalled = true;
+
           return Effect.succeed(member);
         },
       }),
@@ -169,20 +178,24 @@ describe("Members HttpApi handlers", () => {
   it("uses canonical Organization scope for refresh and deactivate mutations", async () => {
     const authorizationCalls: unknown[] = [];
     const mutationCalls: unknown[] = [];
+
     const layer = provideServices(
       makeAuthorization({
         requireGuild: (options) => {
           authorizationCalls.push(options);
+
           return Effect.succeed(access);
         },
       }),
       makeData({
         refreshMember: (guildId, discordId) => {
           mutationCalls.push({ kind: "refresh", guildId, discordId });
+
           return Effect.succeed(member);
         },
         deactivateMember: (guildId, discordId) => {
           mutationCalls.push({ kind: "deactivate", guildId, discordId });
+
           return Effect.succeed({ ...member, active: false });
         },
       }),
@@ -193,6 +206,7 @@ describe("Members HttpApi handlers", () => {
         Effect.provide(layer),
       ),
     );
+
     const deactivated = await Effect.runPromise(
       deactivateGuildMember("guild-alias", "discord-member").pipe(
         Effect.provide(layer),

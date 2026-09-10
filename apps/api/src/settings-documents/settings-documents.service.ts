@@ -59,12 +59,14 @@ const getContextScopes = (
   context: Omit<SettingsContext, "domains">,
 ): Effect.Effect<SettingsScope[], SettingsRequestError> => {
   let characterScopeId = context.characterScopeId;
+
   if (!characterScopeId && context.characterId) {
     if (!context.gameAccountId) {
       return Effect.fail(
         requestError(400, "Character settings require a game account context"),
       );
     }
+
     characterScopeId = getCharacterSettingsScopeId(
       context.gameAccountId,
       context.characterId,
@@ -94,6 +96,7 @@ const getContextFromOperations = (
   operations: PatchSettingsDocuments["operations"],
 ): SettingsContext => {
   const scopes = new Map<SettingsScopeType, string>();
+
   for (const operation of operations) {
     scopes.set(operation.scope.type, operation.scope.id);
   }
@@ -119,21 +122,25 @@ const validateOperationUniqueness = (
 
     for (const operation of operations) {
       const operationKey = getOperationKey(operation);
+
       if (operationKeys.has(operationKey)) {
         return yield* requestError(
           400,
           `Duplicate settings operation: ${operationKey}`,
         );
       }
+
       operationKeys.add(operationKey);
 
       const existingScopeId = scopeIds.get(operation.scope.type);
+
       if (existingScopeId && existingScopeId !== operation.scope.id) {
         return yield* requestError(
           400,
           `A settings batch cannot contain multiple ${operation.scope.type} scopes`,
         );
       }
+
       scopeIds.set(operation.scope.type, operation.scope.id);
     }
   });
@@ -145,6 +152,7 @@ const validateScopes = (
 ): Effect.Effect<void, SettingsDocumentsFailure> =>
   Effect.gen(function* () {
     const access = yield* requestApiKeyAccess;
+
     for (const scope of scopes) {
       if (scope.type === "USER" && scope.id !== userId) {
         return yield* requestError(
@@ -152,6 +160,7 @@ const validateScopes = (
           "Cannot access another user's settings",
         );
       }
+
       if (scope.type === "GUILD") {
         if (access && !access.organizationIds.includes(scope.id)) {
           return yield* requestError(
@@ -159,10 +168,12 @@ const validateScopes = (
             "Guild settings are outside the API key scope",
           );
         }
+
         const isMember = yield* repository.hasActiveGuildMembership(
           userId,
           scope.id,
         );
+
         if (!isMember) {
           return yield* requestError(403, "Guild settings are not accessible");
         }
@@ -180,11 +191,13 @@ export const makeSettingsDocuments = (
     Effect.gen(function* () {
       const scopes = yield* getContextScopes(userId, context);
       yield* validateScopes(repository, userId, scopes);
+
       const documents = yield* repository.findDocuments(
         userId,
         context.domains,
         scopes,
       );
+
       const domains: SettingsDocumentsResponse["domains"] = {};
 
       for (const domain of context.domains) {
@@ -195,6 +208,7 @@ export const makeSettingsDocuments = (
               candidate.scopeType === scope.type &&
               candidate.scopeId === scope.id,
           );
+
           return document
             ? [
                 {
@@ -208,6 +222,7 @@ export const makeSettingsDocuments = (
               ]
             : [];
         });
+
         domains[domain] = resolveSettingsDomain(domain, layers);
       }
 
@@ -222,9 +237,11 @@ export const makeSettingsDocuments = (
       yield* validateOperationUniqueness(payload.operations);
       const scopes = payload.operations.map((operation) => operation.scope);
       yield* validateScopes(repository, userId, scopes);
+
       const sortedOperations = [...payload.operations].sort((left, right) =>
         getOperationKey(left).localeCompare(getOperationKey(right)),
       );
+
       yield* repository
         .applyOperations(userId, sortedOperations)
         .pipe(
@@ -234,6 +251,7 @@ export const makeSettingsDocuments = (
               : error,
           ),
         );
+
       return yield* getPreferences(
         userId,
         getContextFromOperations(payload.operations),
@@ -247,6 +265,7 @@ export const makeSettingsDocuments = (
       const domains = [
         ...new Set(domainsValue.split(",").map((item) => item.trim())),
       ];
+
       return domains.length === 0 || !domains.every(isSettingsDomain)
         ? Effect.fail(requestError(400, "Unknown settings domain"))
         : Effect.succeed(domains);

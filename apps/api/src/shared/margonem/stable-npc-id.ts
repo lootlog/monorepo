@@ -22,13 +22,16 @@ export const getStableNpcId = (
     const length = Math.min(safeName.length, MAX_NPC_NAME_LENGTH);
 
     let hash = 0;
+
     for (let i = 0; i < length; i++) {
       const char = safeName.charCodeAt(i);
       hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
+
     // Ensure it's negative and distinct from real IDs
     return -Math.abs(hash || 1);
   }
+
   return Math.abs(npcId);
 };

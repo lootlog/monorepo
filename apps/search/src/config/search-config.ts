@@ -30,6 +30,7 @@ export class SearchConfig extends Context.Service<
         meilisearchApiKey: Config.redacted("MEILISEARCH_API_KEY"),
         rabbitmqUri: Config.redacted("RABBITMQ_URI"),
       });
+
       return SearchConfig.of(value);
     }),
   );

@@ -16,6 +16,7 @@ export type BattleLogSearchMatch = {
 export type BattleLogSearchDirection = "previous" | "next";
 
 const DIACRITICS_REGEX = /\p{Diacritic}/gu;
+
 const POLISH_CHARACTER_REPLACEMENTS = new Map([
   ["Ł", "L"],
   ["ł", "l"],
@@ -165,6 +166,7 @@ export const findBattleLogSearchMatches = ({
     }
 
     const normalizedRawText = normalizeBattleLogSearchText(entry.rawText);
+
     const normalizedVisibleText = normalizeBattleLogSearchText(
       entry.visibleText ?? "",
     );

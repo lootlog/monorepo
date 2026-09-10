@@ -13,15 +13,20 @@ export const chatMessagePermissions = (
   const guild = session.guilds.find(
     (entry) => entry.guild.id === event.data.organizationId,
   );
+
   const permissions = guild?.roles.flatMap((role) => role.permissions) ?? [];
+
   if (guild?.guild.ownerId === session.discordId)
     permissions.push(Permission.OWNER);
+
   const payload = Schema.decodeUnknownOption(
     Schema.Struct({ senderId: Schema.String }),
   )(event.data.payload);
+
   if (Option.isNone(payload)) return { canDelete: false };
   const viewer = { discordId: session.discordId, permissions };
   const message = { senderId: payload.value.senderId };
+
   return {
     canDelete: canDeleteChatMessage(viewer, message),
   };

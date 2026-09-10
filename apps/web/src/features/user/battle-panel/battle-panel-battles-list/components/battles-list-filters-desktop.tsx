@@ -49,10 +49,12 @@ export const BattlesListFiltersDesktop = ({
   onMaxLevelChange,
 }: BattlesListFiltersDesktopProps) => {
   const { t } = useTranslation();
+
   const battleTypes = [
     { value: "solo" as const, label: t("battlePanel.filters.types.solo") },
     { value: "group" as const, label: t("battlePanel.filters.types.group") },
   ];
+
   const battleResults = [
     { value: "won" as const, label: t("battlePanel.filters.results.won") },
     { value: "lost" as const, label: t("battlePanel.filters.results.lost") },

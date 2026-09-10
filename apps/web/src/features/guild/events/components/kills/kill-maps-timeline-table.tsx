@@ -62,6 +62,7 @@ export const KillMapsTimelineTable = ({
       header: t("events.killDetail.mapCoverage.columns.map"),
       cell: ({ row }) => {
         const map = row.original;
+
         const diagnostics = getKillMapTimelineDiagnostics(
           map,
           startTime,

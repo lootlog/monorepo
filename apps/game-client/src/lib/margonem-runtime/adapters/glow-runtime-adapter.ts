@@ -3,7 +3,9 @@ import type { Other, OtherHandle } from "@lootlog/margonem/others";
 import type { CharacterTooltipCatchingGuildsEntry } from "@/store/character-tooltip-catching-guilds.store";
 
 export const LOOTLOG_OTHER_GLOW_BLUE = "#3ed1de";
+
 export const LOOTLOG_OTHER_GLOW_RED_ORANGE = "#ff5a2f";
+
 export const LOOTLOG_OTHER_GLOW_UNKNOWN = "#e879f9";
 
 export function getLootlogOtherGlowColor(
@@ -90,6 +92,7 @@ function isNativeOtherGlowDrawable(drawable: unknown): boolean {
   }
 
   const master = drawable.master;
+
   if (!isObject(master)) return false;
 
   return (
@@ -151,21 +154,27 @@ class LootlogOtherGlow {
 
     const runtimeWindow = getRuntimeWindow();
     const engine = runtimeWindow.Engine;
+
     if (!this.maskLoaded || !this.createMaskColor() || !engine?.map) return;
 
     const mapOffset = engine.map.offset ?? [0, 0];
     const mapShift = engine.mapShift?.getShift?.() ?? [0, 0];
+
     const left = Math.round(
       this.rx * 32 + 16 - this.fw / 2 - mapOffset[0] - mapShift[0],
     );
+
     const top = this.ry * 32 - this.fh + 32 - mapOffset[1] - mapShift[1];
     const waterPosition = Math.round(this.rx) + Math.round(this.ry) * 256;
+
     const topModified = Math.round(
       engine.map.water?.[waterPosition]
         ? top + (this.master.waterTopModify ?? 0)
         : top,
     );
+
     const drawMask = this.drawMask;
+
     if (!drawMask) return;
 
     const clipImage = engine.map.clipObject?.(
@@ -177,6 +186,7 @@ class LootlogOtherGlow {
 
     if (!clipImage) {
       ctx.drawImage(drawMask, left, topModified, this.fw, this.fh);
+
       return;
     }
 
@@ -195,11 +205,13 @@ class LootlogOtherGlow {
 
   private createImage(): void {
     const imgLoader = getRuntimeWindow().Engine?.imgLoader;
+
     const beforeOnload = (image: HTMLImageElement) => {
       this.fw = (this.master.fw ?? 32) + 4;
       this.fh = (this.master.fh ?? 48) + 4;
       this.mask = image;
     };
+
     const afterOnload = (image: HTMLImageElement) => {
       this.mask = image;
       this.maskLoaded = true;
@@ -208,6 +220,7 @@ class LootlogOtherGlow {
 
     if (imgLoader?.onload) {
       imgLoader.onload(MASK_PATH, false, beforeOnload, afterOnload);
+
       return;
     }
 
@@ -216,6 +229,7 @@ class LootlogOtherGlow {
       beforeOnload(image);
       afterOnload(image);
     };
+
     image.src = MASK_PATH;
   }
 
@@ -226,6 +240,7 @@ class LootlogOtherGlow {
 
     const canvas = document.createElement("canvas");
     const context = canvas.getContext("2d");
+
     if (!context) return null;
 
     canvas.width = this.fw;
@@ -254,6 +269,7 @@ class LootlogOtherGlowManager {
     if (this.cleanupDrawableListPatch) return;
 
     const others = getRuntimeWindow().Engine?.others;
+
     if (!others?.getDrawableList) return;
 
     this.originalGetDrawableList = others.getDrawableList;
@@ -268,6 +284,7 @@ class LootlogOtherGlowManager {
 
       return [...baseDrawableList, ...this.glowsByCharacterId.values()];
     };
+
     this.cleanupDrawableListPatch = () => {
       if (this.originalGetDrawableList) {
         others.getDrawableList = this.originalGetDrawableList;
@@ -307,6 +324,7 @@ class LootlogOtherGlowManager {
       existingGlow.updateColor(color);
       this.patchOtherUpdate(runtimeOther);
       existingGlow.update();
+
       return;
     }
 
@@ -319,6 +337,7 @@ class LootlogOtherGlowManager {
 
   removeGlow(characterId: string): void {
     const glow = this.glowsByCharacterId.get(characterId);
+
     if (!glow) return;
 
     this.restoreOtherUpdate(glow.master);
@@ -345,6 +364,7 @@ class LootlogOtherGlowManager {
 
   getGlowPosition(characterId: string): { x?: number; y?: number } | undefined {
     const glow = this.glowsByCharacterId.get(characterId);
+
     if (!glow) return undefined;
 
     return {
@@ -369,6 +389,7 @@ class LootlogOtherGlowManager {
     getDrawableList?: () => unknown[];
   }): unknown[] {
     const drawables = this.originalGetDrawableList?.call(others) ?? [];
+
     if (!this.nativeGlowSuppressed) {
       return drawables;
     }
@@ -386,9 +407,11 @@ class LootlogOtherGlowManager {
     if (this.originalOtherUpdates.has(other) || !other.update) return;
 
     const originalUpdate = other.update;
+
     const updateGlowForOther = (updatedOther: RuntimeOther) => {
       this.updateGlowForOther(updatedOther);
     };
+
     this.originalOtherUpdates.set(other, originalUpdate);
     other.update = function lootlogOtherUpdatePatch(...args) {
       const result = originalUpdate.apply(this, args);
@@ -400,6 +423,7 @@ class LootlogOtherGlowManager {
 
   private restoreOtherUpdate(other: RuntimeOther): void {
     const originalUpdate = this.originalOtherUpdates.get(other);
+
     if (!originalUpdate) return;
 
     other.update = originalUpdate;
@@ -408,6 +432,7 @@ class LootlogOtherGlowManager {
 
   private updateGlowForOther(other: RuntimeOther): void {
     const glow = this.glowsByCharacterId.get(String(other.d.id));
+
     if (!glow) return;
 
     glow.master = other;

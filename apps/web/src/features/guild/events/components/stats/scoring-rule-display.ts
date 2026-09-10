@@ -17,19 +17,23 @@ export const getScoringRuleAction = (
       points: action.points,
     });
   }
+
   if (action.type === "ADD_BONUS") {
     return t("events.scoring.actionSummary.bonusPoints", {
       points: action.points,
     });
   }
+
   return formatScoringAction(action, t);
 };
 
 export const getScoringRuleName = (rule: EventScoringRule, t: TFunction) => {
   if (rule.name) return rule.name;
+
   if (rule.action.type === "ADD_BONUS") {
     return t("events.scoring.unnamedBonus");
   }
+
   return rule.id;
 };
 

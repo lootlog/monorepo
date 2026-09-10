@@ -47,6 +47,7 @@ type EventDetailHero = EventHeroNpc & {
 };
 
 type EventOverview = EventOverviewResponseDto;
+
 type Translator = ReturnType<typeof useTranslation>["t"];
 
 const getEventHeroes = (
@@ -56,8 +57,10 @@ const getEventHeroes = (
   const heroMapsById = new Map(
     (eventMaps?.heroNpcs ?? []).map((hero) => [hero.id, hero]),
   );
+
   return (event?.heroNpcs ?? []).map((hero) => {
     const mapsData = heroMapsById.get(hero.id);
+
     return {
       ...hero,
       locations: mapsData?.locations ?? [],
@@ -71,6 +74,7 @@ const getEventDateRangeLabel = (
   t: Translator,
 ) => {
   if (!event) return "";
+
   const start = format(
     new Date(event.startsAt || event.createdAt),
     "d MMM yyyy",
@@ -78,9 +82,11 @@ const getEventDateRangeLabel = (
       locale: pl,
     },
   );
+
   const end = event.endsAt
     ? format(new Date(event.endsAt), "d MMM yyyy", { locale: pl })
     : t("events.ongoing");
+
   return `${start} - ${end}`;
 };
 
@@ -102,6 +108,7 @@ const getEventStatusView = (
 ) => {
   const status = event ? getEventStatusAtTimestamp(event, timestamp) : "ended";
   let pinActionLabel = t("events.pinEvent");
+
   if (status !== "active") {
     pinActionLabel = t("events.pinUnavailable");
   } else if (eventIsPinned) {
@@ -117,6 +124,7 @@ const getEventStatusView = (
       statusVariant: "outline" as const,
     };
   }
+
   if (status === "active") {
     return {
       status,
@@ -126,6 +134,7 @@ const getEventStatusView = (
       statusVariant: "default" as const,
     };
   }
+
   return {
     status,
     isActive: false,
@@ -137,6 +146,7 @@ const getEventStatusView = (
 
 const getEventScoring = (event: EventOverview | undefined) => {
   const scoringMode = normalizeEventScoringMode(event?.scoringMode);
+
   return {
     scoringMode,
     scoringRules:
@@ -171,17 +181,21 @@ const getEventHeroTimerQuery = (world: string | null | undefined) => ({
 export const useEventDetail = () => {
   const { t } = useTranslation();
   const { guildId, eventId } = useParams({ strict: false });
+
   const { guildId: queryGuildId, eventId: queryEventId } = getEventRouteQuery(
     guildId,
     eventId,
   );
+
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
   const {
     togglePin,
     isPinned,
     isPending: isPinPending,
   } = useToggleEventPin(queryGuildId);
+
   const currentTimestamp = useMinuteTimestamp();
   const hasEventRouteParams = Boolean(guildId && eventId);
   const eventIsPinned = getEventPinnedState(eventId, isPinned);
@@ -205,6 +219,7 @@ export const useEventDetail = () => {
       },
     },
   );
+
   const {
     data: eventMaps,
     isLoading: isMapsLoading,
@@ -262,6 +277,7 @@ export const useEventDetail = () => {
       },
     },
   );
+
   const { data: rankings = [], error: rankingError } = useListEventRanking(
     {
       guildId: queryGuildId,
@@ -277,6 +293,7 @@ export const useEventDetail = () => {
       },
     },
   );
+
   const updateEvent = useUpdateEvent({
     mutation: {
       onSuccess: () => {
@@ -288,6 +305,7 @@ export const useEventDetail = () => {
       },
     },
   });
+
   const deleteHero = useEventsAssignmentControllerDeleteHero({
     mutation: {
       onSuccess: () => {
@@ -299,6 +317,7 @@ export const useEventDetail = () => {
       },
     },
   });
+
   const deleteEvent = useDeleteEvent({
     mutation: {
       onSuccess: () => {
@@ -320,6 +339,7 @@ export const useEventDetail = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [rulesDialogOpen, setRulesDialogOpen] = useState(false);
   const [summaryDialogOpen, setSummaryDialogOpen] = useState(false);
+
   const [selectedHero, setSelectedHero] = useState<EventDetailHero | null>(
     null,
   );
@@ -328,6 +348,7 @@ export const useEventDetail = () => {
   const { scoringMode, scoringRules } = getEventScoring(event);
   const eventDateRangeLabel = getEventDateRangeLabel(event, t);
   const { canManage, canDeleteEvent } = getEventAccess(accessPolicy);
+
   const {
     isActive: isEventActive,
     pinActionLabel,
@@ -381,6 +402,7 @@ export const useEventDetail = () => {
   const openEventStatusDialog = () => {
     if (isEventActive) {
       setEndDialogOpen(true);
+
       return;
     }
 

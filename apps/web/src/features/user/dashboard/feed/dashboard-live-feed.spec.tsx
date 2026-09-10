@@ -21,22 +21,29 @@ import "@/i18n/config";
 import { DashboardLiveFeed } from "./dashboard-live-feed";
 import { feedResponse, feedKill } from "./live-feed-test-data";
 import { GatewayEvent } from "@/config/gateway";
+
 const mocks = {
   request: vi.fn<() => Promise<ReturnType<typeof feedResponse>>>(),
 };
+
 let gateway: ReturnType<typeof createTestGateway>;
+
 function deliverLifecycleEvent(
   event: GatewayEvent,
   organizationIds = [feedKill.guild.id],
 ) {
   if (event === GatewayEvent.CONNECT) {
     gateway.setConnectionState("ready");
+
     return;
   }
+
   if (event === GatewayEvent.DISCONNECT) {
     gateway.setConnectionState("disconnected");
+
     return;
   }
+
   if (event === GatewayEvent.JOIN) {
     gateway.deliver({
       v: 1,
@@ -47,18 +54,23 @@ function deliverLifecycleEvent(
         subscriptionScopes: [],
       },
     });
+
     return;
   }
+
   if (event === GatewayEvent.PERMISSIONS_UPDATED) {
     gateway.deliver({
       v: 1,
       type: "permissions.updated",
       data: { organizationIds, subscriptionScopes: [] },
     });
+
     return;
   }
+
   throw new Error("Unexpected gateway lifecycle event");
 }
+
 beforeEach(() => {
   vi.useFakeTimers();
   vi.setSystemTime(new Date("2026-09-06T12:01:00Z"));
@@ -75,12 +87,14 @@ beforeEach(() => {
   mocks.request.mockReset();
   vi.stubGlobal("localStorage", new MemoryStorage());
 });
+
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
   vi.useRealTimers();
   vi.restoreAllMocks();
 });
+
 it("keeps focused visible rows and scroll position until the reader applies a grouped update", async () => {
   vi.stubGlobal("localStorage", new MemoryStorage());
   vi.useFakeTimers();
@@ -89,10 +103,12 @@ it("keeps focused visible rows and scroll position until the reader applies a gr
     .mockResolvedValueOnce(feedResponse())
     .mockResolvedValueOnce(feedResponse(4));
   const root = createRootRoute({ component: DashboardLiveFeed });
+
   const router = createRouter({
     routeTree: root,
     history: createMemoryHistory({ initialEntries: ["/"] }),
   });
+
   const queryClient = new QueryClient();
   onTestFinished(() => queryClient.clear());
   const GatewayWrapper = gateway.wrapper;
@@ -106,9 +122,11 @@ it("keeps focused visible rows and scroll position until the reader applies a gr
   await act(() => vi.advanceTimersByTimeAsync(0));
   const link = screen.getByRole("link", { name: "Bicie: Heros" });
   link.focus();
+
   const scroller = screen
     .getByRole("region", { name: "Feed aktywności" })
     .querySelector<HTMLElement>('[data-slot="scroll-area-viewport"]');
+
   if (!scroller) throw new Error("Feed scroll region missing");
   scroller.scrollTop = 120;
   fireEvent.scroll(scroller);
@@ -154,10 +172,12 @@ it("adds organization copies to one row and preserves that row during an HTTP re
         }),
     );
   const root = createRootRoute({ component: DashboardLiveFeed });
+
   const router = createRouter({
     routeTree: root,
     history: createMemoryHistory({ initialEntries: ["/"] }),
   });
+
   const queryClient = new QueryClient();
   onTestFinished(() => queryClient.clear());
   const GatewayWrapper = gateway.wrapper;
@@ -172,6 +192,7 @@ it("adds organization copies to one row and preserves that row during an HTTP re
   const link = screen.getByRole("link", { name: "Bicie: Heros" });
   const row = link.closest("li");
   const item = response.items[0];
+
   if (!item) throw new Error("Missing fixture");
   act(() =>
     gateway.deliver({
@@ -190,6 +211,7 @@ it("adds organization copies to one row and preserves that row during an HTTP re
     row,
   );
   link.focus();
+
   for (const event of [
     GatewayEvent.JOIN,
     GatewayEvent.DISCONNECT,
@@ -203,6 +225,7 @@ it("adds organization copies to one row and preserves that row during an HTTP re
     expect(document.activeElement).toBe(link);
     expect(screen.queryByRole("status", { name: "Ładowanie..." })).toBeNull();
   }
+
   expect(screen.getByRole("link", { name: "Bicie: Heros" }).closest("li")).toBe(
     row,
   );
@@ -233,10 +256,12 @@ it("keeps the same focused row throughout debounced permission revalidation", as
         }),
     );
   const root = createRootRoute({ component: DashboardLiveFeed });
+
   const router = createRouter({
     routeTree: root,
     history: createMemoryHistory({ initialEntries: ["/"] }),
   });
+
   const queryClient = new QueryClient();
   onTestFinished(() => queryClient.clear());
   const GatewayWrapper = gateway.wrapper;
@@ -252,6 +277,7 @@ it("keeps the same focused row throughout debounced permission revalidation", as
   const row = link.closest("li");
   link.focus();
   const source = feedResponse().items[0];
+
   if (!source) throw new Error("Missing fixture");
   act(() =>
     gateway.deliver({
@@ -268,6 +294,7 @@ it("keeps the same focused row throughout debounced permission revalidation", as
   expect(
     screen.getByRole("link", { name: "Odebrana organizacja" }),
   ).toBeTruthy();
+
   for (let index = 0; index < 3; index += 1) {
     act(() => deliverLifecycleEvent(GatewayEvent.PERMISSIONS_UPDATED));
     expect(
@@ -280,6 +307,7 @@ it("keeps the same focused row throughout debounced permission revalidation", as
     ).toBe(row);
     expect(document.activeElement).toBe(link);
   }
+
   expect(mocks.request).toHaveBeenCalledTimes(1);
   await act(() => vi.advanceTimersByTimeAsync(4000));
   expect(mocks.request).toHaveBeenCalledTimes(2);

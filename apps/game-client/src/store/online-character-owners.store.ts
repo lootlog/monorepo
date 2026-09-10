@@ -59,6 +59,7 @@ function toOwner(
   guildMembersByUserId?: GuildMembersByUserId,
 ): OnlineCharacterOwner | null {
   const player = presence.player;
+
   if (!player?.accountId || !player.characterId) {
     return null;
   }
@@ -101,6 +102,7 @@ export const useOnlineCharacterOwnersStore =
         ) {
           return state;
         }
+
         return { ownersByCharacterKey: {}, status: "idle" };
       }),
     getOwner: (accountId, characterId) =>
@@ -110,6 +112,7 @@ export const useOnlineCharacterOwnersStore =
     removePresence: (presence) =>
       set((state) => {
         const player = presence.player;
+
         if (!player?.accountId || !player.characterId) {
           const ownersByCharacterKey = Object.fromEntries(
             Object.entries(state.ownersByCharacterKey).filter(
@@ -131,10 +134,12 @@ export const useOnlineCharacterOwnersStore =
           player.accountId,
           player.characterId,
         );
+
         if (!state.ownersByCharacterKey[key]) return state;
 
         const { [key]: _removed, ...ownersByCharacterKey } =
           state.ownersByCharacterKey;
+
         return { ownersByCharacterKey };
       }),
     setError: () => set({ ownersByCharacterKey: {}, status: "error" }),
@@ -164,6 +169,7 @@ export const useOnlineCharacterOwnersStore =
     upsertPresence: (presence, guildMembersByUserId) =>
       set((state) => {
         const owner = toOwner(presence, guildMembersByUserId);
+
         if (!owner) return state;
 
         return {

@@ -76,6 +76,7 @@ describe("timer-helpers", () => {
       type: "member",
       name: "Alice",
     };
+
     const timer = createTimer({
       member: singleMember,
       members: [

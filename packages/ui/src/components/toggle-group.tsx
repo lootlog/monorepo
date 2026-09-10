@@ -35,6 +35,7 @@ function ToggleGroup({
     orientation?: "horizontal" | "vertical";
   }) {
   const style: CSSPropertiesWithVariables = { "--gap": spacing };
+
   return (
     <ToggleGroupPrimitive
       data-slot="toggle-group"

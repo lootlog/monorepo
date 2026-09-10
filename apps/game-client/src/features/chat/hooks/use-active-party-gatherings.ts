@@ -9,6 +9,7 @@ import { useVisibleLootlogGuilds } from "@/hooks/use-visible-lootlog-guilds";
 import { useSession } from "@/hooks/auth/use-session";
 
 export const ACTIVE_GATHERINGS_QUERY_KEY = ["active-party-gatherings"];
+
 export function useActivePartyGatherings() {
   const [now, setNow] = useState(Date.now);
   const world = useGameStore((state) => state.game?.world ?? "");
@@ -16,6 +17,7 @@ export function useActivePartyGatherings() {
   const { data: session } = useSession();
   const { visibleGuilds, areVisibleGuildsResolved } = useVisibleLootlogGuilds();
   const queryClient = useQueryClient();
+
   const query = useQuery({
     queryKey: [...ACTIVE_GATHERINGS_QUERY_KEY, session?.user?.id, world],
     queryFn: ({ signal }) =>
@@ -29,19 +31,24 @@ export function useActivePartyGatherings() {
     refetchInterval: 30_000,
     staleTime: 0,
   });
+
   // Cleanup removes every listener with the same event and handler, including the events loop.
   // oxlint-disable-next-line react-doctor/effect-needs-cleanup
   useEffect(() => {
     if (!connected || !joined || !socket) return;
+
     const reconcile = () => {
       void queryClient.invalidateQueries({
         queryKey: ACTIVE_GATHERINGS_QUERY_KEY,
       });
     };
+
     const permissionsChanged = () => {
       void queryClient.resetQueries({ queryKey: ACTIVE_GATHERINGS_QUERY_KEY });
     };
+
     reconcile();
+
     const events = [
       GatewayEvent.CHAT_MESSAGE_UPDATE,
       GatewayEvent.CHAT_MESSAGE_DELETE,
@@ -49,6 +56,7 @@ export function useActivePartyGatherings() {
       GatewayEvent.PARTY_GATHERING_SEND,
       GatewayEvent.PARTY_GATHERING_CANCEL,
     ];
+
     const newGathering = (payload: {
       type?: string;
       isGatheringParty?: boolean;
@@ -59,13 +67,17 @@ export function useActivePartyGatherings() {
       )
         reconcile();
     };
+
     socket.on(GatewayEvent.NOTIFICATION, newGathering);
     socket.on(GatewayEvent.CHAT_MESSAGE, newGathering);
+
     for (const event of events) socket.on(event, reconcile);
     socket.on(GatewayEvent.PERMISSIONS_UPDATED, permissionsChanged);
+
     return () => {
       socket.off(GatewayEvent.NOTIFICATION, newGathering);
       socket.off(GatewayEvent.CHAT_MESSAGE, newGathering);
+
       for (const event of events) socket.off(event, reconcile);
       socket.off(GatewayEvent.PERMISSIONS_UPDATED, permissionsChanged);
     };
@@ -74,21 +86,28 @@ export function useActivePartyGatherings() {
     const nextExpiry = Math.min(
       ...(query.data ?? []).flatMap((room) => {
         const expiry = Date.parse(room.expiresAt);
+
         return expiry > Date.now() ? [expiry] : [];
       }),
     );
+
     if (!Number.isFinite(nextExpiry)) return;
+
     const timer = window.setTimeout(
       () => setNow(Date.now()),
       Math.max(0, nextExpiry - Date.now()),
     );
+
     return () => window.clearTimeout(timer);
   }, [query.data, now]);
+
   const accessDenied =
     isApiError(query.error) &&
     (query.error.status === 401 || query.error.status === 403);
+
   const enabledIds = new Set(visibleGuilds.map((guild) => guild.id));
   const observedAt = Math.max(now, query.dataUpdatedAt, query.errorUpdatedAt);
+
   return {
     ...query,
     userId: session?.user.id,

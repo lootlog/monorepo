@@ -34,13 +34,19 @@ export const HEAD_TO_HEAD_SORT_BY_VALUES = [
 ] as const;
 
 const SORT_ORDER_VALUES = ["asc", "desc"] as const;
+
 const ABYSS_TAB_VALUES = ["battles", "analytics", "seasons"] as const;
+
 const BATTLE_TYPE_VALUES = ["solo", "group"] as const;
+
 const BATTLE_RESULT_VALUES = ["won", "lost", "flee"] as const;
 
 export type AbyssTab = (typeof ABYSS_TAB_VALUES)[number];
+
 type BattlePanelBattleResult = (typeof BATTLE_RESULT_VALUES)[number];
+
 type BattlePanelBattleType = (typeof BATTLE_TYPE_VALUES)[number];
+
 type BattlePanelBattlesRouteSearch = Partial<{
   cursor: string;
   page: number;
@@ -55,7 +61,9 @@ type BattlePanelBattlesRouteSearch = Partial<{
   minLevel: number;
   maxLevel: number;
 }>;
+
 export type HeadToHeadSortBy = (typeof HEAD_TO_HEAD_SORT_BY_VALUES)[number];
+
 export type Period = (typeof PERIOD_VALUES)[number];
 
 const battlePanelBaseSearchParsers = {
@@ -146,6 +154,7 @@ const routeSearchStrings = z
           .map((part) => part.trim())
           .filter(Boolean) ?? [],
     );
+
     return parts.length ? parts : undefined;
   });
 
@@ -154,6 +163,7 @@ const routeSearchLiterals = <Value extends string>(allowed: readonly Value[]) =>
     const selected = values?.filter((value): value is Value =>
       allowed.some((candidate) => candidate === value),
     );
+
     return selected?.length ? selected : undefined;
   });
 
@@ -162,6 +172,7 @@ const routeSearchInteger = z
     z.number(),
     routeSearchString.transform((value) => {
       const parsed = value ? Number.parseInt(value, 10) : Number.NaN;
+
       return Number.isNaN(parsed) ? undefined : parsed;
     }),
   ])
@@ -172,7 +183,9 @@ const routeSearchBoolean = z
     z.boolean(),
     routeSearchString.transform((value) => {
       if (value === "true") return true;
+
       if (value === "false") return false;
+
       return undefined;
     }),
   ])
@@ -197,18 +210,31 @@ const battlePanelBattlesRouteSearch = z
   .catch({})
   .transform((input): BattlePanelBattlesRouteSearch => {
     const search: BattlePanelBattlesRouteSearch = {};
+
     if (input.cursor !== undefined) search.cursor = input.cursor;
+
     if (input.page !== undefined) search.page = input.page;
+
     if (input.world !== undefined) search.world = input.world;
+
     if (input.type !== undefined) search.type = input.type;
+
     if (input.search !== undefined) search.search = input.search;
+
     if (input.result !== undefined) search.result = input.result;
+
     if (input.ph !== undefined) search.ph = input.ph;
+
     if (input.startDate !== undefined) search.startDate = input.startDate;
+
     if (input.endDate !== undefined) search.endDate = input.endDate;
+
     if (input.characterId !== undefined) search.characterId = input.characterId;
+
     if (input.minLevel !== undefined) search.minLevel = input.minLevel;
+
     if (input.maxLevel !== undefined) search.maxLevel = input.maxLevel;
+
     return search;
   });
 

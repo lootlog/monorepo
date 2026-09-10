@@ -46,6 +46,7 @@ const bundleUrl = "$GAME_CLIENT_LOCAL_BUNDLE_URL$";
         reportFailure(
           `Local bundle request failed with HTTP ${response.status} (${bundleUrl}).`,
         );
+
         return;
       }
 
@@ -54,12 +55,14 @@ const bundleUrl = "$GAME_CLIENT_LOCAL_BUNDLE_URL$";
       const bundleObjectUrl = URL.createObjectURL(
         new Blob([response.responseText], { type: "text/javascript" }),
       );
+
       const script = document.createElement("script");
       script.src = bundleObjectUrl;
       script.onload = () => {
         URL.revokeObjectURL(bundleObjectUrl);
         script.remove();
       };
+
       script.onerror = () => {
         URL.revokeObjectURL(bundleObjectUrl);
         script.remove();
@@ -67,6 +70,7 @@ const bundleUrl = "$GAME_CLIENT_LOCAL_BUNDLE_URL$";
           "The local bundle was downloaded but could not be executed.",
         );
       };
+
       (document.head ?? document.documentElement).append(script);
     },
   });

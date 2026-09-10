@@ -35,6 +35,7 @@ export const TimersFooter: FC<TimersFooterProps> = ({
   world,
 }) => {
   const { t } = useTranslation("timers");
+
   return (
     <div className="ll:flex ll:items-center ll:pt-1 ll:pb-0.5 ll:px-1 ll:h-6 ll:w-full ll:box-border ll:relative">
       <TimersColorStatistics colorStatistics={colorStatistics} />

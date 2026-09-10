@@ -35,39 +35,49 @@ import { MemberDeactivationButton } from "@/features/guild/settings/members/comp
 const MemberSettingsDetailPageContent = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+
   const { guildId, memberId } = useParams({
     from: "/_authenticated/$guildId/settings/members_/$memberId",
   });
+
   const { data: members } = useMembersControllerGetGuildMembers(
     { guildId },
     {
       includeInactive: true,
     },
   );
+
   const { data: guild } = useGuildsControllerGetGuildById({ guildId });
   const { data: accessPolicy } = useGuildPermissions();
   const resolvedGuildId = guild?.id ?? undefined;
+
   const { data: memberActivityStats } = useQuery(
     memberActivityStatsQueryOptions(resolvedGuildId),
   );
+
   const memberGamePresenceByDiscordId = useMemberGamePresence(resolvedGuildId);
   const memberWebPresenceByDiscordId = useMemberWebPresence(resolvedGuildId);
+
   const memberActivityStatsByDiscordIdAndSource = useMemo(
     () => mapMemberActivityStatsByDiscordIdAndSource(memberActivityStats),
     [memberActivityStats],
   );
+
   const queryMember = useMemo(
     () => members?.find((member) => String(member.id) === memberId) ?? null,
     [memberId, members],
   );
+
   const [updatedMember, setUpdatedMember] = useState<GuildMember | null>(null);
   const member = updatedMember ?? queryMember;
+
   const canManageMembers = Boolean(
     accessPolicy?.allows(Permission.ADMIN) ||
     accessPolicy?.allows(Permission.OWNER),
   );
 
   const [previousMemberId, setPreviousMemberId] = useState(memberId);
+
   if (previousMemberId !== memberId) {
     setPreviousMemberId(memberId);
     setUpdatedMember(null);
@@ -83,6 +93,7 @@ const MemberSettingsDetailPageContent = () => {
   const handleMemberUpdated = (nextMember: GuildMember | null) => {
     if (!nextMember) {
       handleBack();
+
       return;
     }
 

@@ -65,28 +65,36 @@ export const BattleLog: FC<BattleLogProps> = ({
   const [activeSearchMatchIndex, setActiveSearchMatchIndex] = useState(-1);
   const listViewportRef = useRef<HTMLDivElement>(null);
   const turnFocusHandlerRef = useRef(onTurnFocus ?? onTurnSelect);
+
   const userTeam = warriors.find(
     (warrior) => warrior.originalId === rawBattle.characterId,
   )?.team;
+
   const events = getDisplayBattleEvents(rawBattle);
+
   // Keep the index outside the virtualizer component: its mutable API opts that
   // component out of React Compiler caching.
   const warriorsMap = new Map(
     warriors.map((warrior) => [warrior.originalId, warrior]),
   );
+
   const normalizedQuery = normalizeBattleLogSearchText(deferredQuery);
   const hasSearch = normalizedQuery.length > 0;
+
   const searchEntries = hasSearch
     ? events.map((event, eventIndex) => {
         const turn = eventIndex + 1;
+
         const attacker =
           event.attackerId === null || event.attackerId === undefined
             ? undefined
             : warriorsMap.get(event.attackerId);
+
         const defender =
           event.defenderId === null || event.defenderId === undefined
             ? undefined
             : warriorsMap.get(event.defenderId);
+
         return {
           turn,
           rawText: normalizeBattleLogSearchText(
@@ -98,6 +106,7 @@ export const BattleLog: FC<BattleLogProps> = ({
         };
       })
     : [];
+
   const deferredMatches = normalizedQuery
     ? searchEntries.flatMap((entry) =>
         entry.rawText.includes(normalizedQuery) ||
@@ -106,7 +115,9 @@ export const BattleLog: FC<BattleLogProps> = ({
           : [],
       )
     : [];
+
   const searchMatchTurns = deferredQuery === searchQuery ? deferredMatches : [];
+
   const currentMatchIndex =
     searchMatchTurns.length > 0
       ? Math.max(
@@ -114,6 +125,7 @@ export const BattleLog: FC<BattleLogProps> = ({
           Math.min(activeSearchMatchIndex, searchMatchTurns.length - 1),
         )
       : -1;
+
   const activeSearchTurn = searchMatchTurns[currentMatchIndex] ?? null;
 
   useEffect(() => {
@@ -153,6 +165,7 @@ export const BattleLog: FC<BattleLogProps> = ({
       }),
     );
   };
+
   const battleLogList = (
     <BattleLogList
       events={events}

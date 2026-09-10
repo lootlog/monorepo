@@ -1,5 +1,5 @@
 import { describe, expect, it, mock } from "bun:test";
-import { Effect, Fiber } from "effect";
+import { Effect, Fiber, Result } from "effect";
 import { TestClock } from "effect/testing";
 import { makeMemberRefreshProcessor } from "./member-refresh.processor.js";
 import type { MemberSyncResult } from "./member.types.js";
@@ -13,6 +13,7 @@ const job = {
     reason: "MANUAL",
   },
 };
+
 const makeDependencies = () => ({
   scheduler: {
     acquireUserRefreshLock: mock((_userId: string, _owner: string) =>
@@ -54,11 +55,13 @@ describe("member refresh processor", () => {
     dependencies.scheduler.acquireUserRefreshLock.mockReturnValue(
       Effect.succeed(false),
     );
+
     const result = await Effect.runPromise(
       Effect.result(makeMemberRefreshProcessor(dependencies)(job)),
     );
+
+    expect(Result.isFailure(result)).toBe(true);
     expect(result).toMatchObject({
-      _tag: "Failure",
       failure: new Error("MEMBER_REFRESH_LOCKED"),
     });
     expect(dependencies.sync.syncMemberFromDiscord).not.toHaveBeenCalled();
@@ -76,11 +79,13 @@ describe("member refresh processor", () => {
         nextRefreshAt: null,
       }),
     );
+
     const result = await Effect.runPromise(
       Effect.result(makeMemberRefreshProcessor(dependencies)(job)),
     );
+
+    expect(Result.isFailure(result)).toBe(true);
     expect(result).toMatchObject({
-      _tag: "Failure",
       failure: new Error("MEMBER_REFRESH_RATE_LIMITED"),
     });
     expect(dependencies.scheduler.releaseUserRefreshLock).toHaveBeenCalledWith(
@@ -106,9 +111,11 @@ describe("member refresh processor", () => {
     );
     await Effect.gen(function* () {
       yield* TestClock.setTime(now);
+
       const fiber = yield* makeMemberRefreshProcessor(dependencies)(job).pipe(
         Effect.forkScoped,
       );
+
       yield* Effect.yieldNow;
       expect(dependencies.sync.syncMemberFromDiscord).not.toHaveBeenCalled();
       yield* TestClock.adjust("1 minute");

@@ -137,6 +137,7 @@ export const buildKillStatsCondition = (
 
 const memberColumns = (bucket: boolean): FilterColumns => {
   const table = bucket ? npcKillStatsBucketTable : npcKillStatsTable;
+
   return {
     guildId: table.guildId,
     userId: table.userId,
@@ -152,6 +153,7 @@ const memberColumns = (bucket: boolean): FilterColumns => {
 
 const guildColumns = (bucket: boolean): FilterColumns => {
   const table = bucket ? guildKillSummaryBucketTable : guildKillSummaryTable;
+
   return {
     guildId: table.guildId,
     npcId: table.npcId,
@@ -171,7 +173,9 @@ export class KillStatsPersistenceError extends TaggedErrorClass<KillStatsPersist
 type MemberStat =
   | typeof npcKillStatsTable.$inferSelect
   | typeof npcKillStatsBucketTable.$inferSelect;
+
 type Member = typeof memberTable.$inferSelect;
+
 type MemberSummary = Pick<Member, "id" | "name" | "avatar" | "userId">;
 
 export const makeKillStatsPersistence = (
@@ -257,6 +261,7 @@ export const makeKillStatsPersistence = (
           ),
       );
     }
+
     if (bucket) {
       return protect(
         "kills.stats.member-list",
@@ -266,6 +271,7 @@ export const makeKillStatsPersistence = (
           .where(buildKillStatsCondition(memberColumns(true), filter)),
       );
     }
+
     if (includeMember) {
       return protect(
         "kills.stats.member-list",
@@ -284,6 +290,7 @@ export const makeKillStatsPersistence = (
           ),
       );
     }
+
     return protect(
       "kills.stats.member-list",
       database
@@ -313,6 +320,7 @@ export const makeKillStatsPersistence = (
     limit: number,
   ) => {
     const table = bucket ? guildKillSummaryBucketTable : guildKillSummaryTable;
+
     const ranked = database
       .selectDistinctOn([table.npcId], {
         npcId: table.npcId,
@@ -330,11 +338,14 @@ export const makeKillStatsPersistence = (
       .where(buildKillStatsCondition(guildColumns(bucket), filter))
       .orderBy(table.npcId, desc(table.npcLvl), table.id)
       .as("ranked");
+
     const query = database
       .select()
       .from(ranked)
       .orderBy(desc(ranked.uniqueKills), ranked.npcId);
+
     const sqlLimit = Math.trunc(limit);
+
     return protect(
       "kills.stats.top-npcs",
       Number.isSafeInteger(sqlLimit) && sqlLimit >= 0
@@ -349,6 +360,7 @@ export const makeKillStatsPersistence = (
     limit: number,
   ) => {
     const table = bucket ? npcKillStatsBucketTable : npcKillStatsTable;
+
     const grouped = database
       .select({
         npcType: table.npcType,
@@ -368,7 +380,9 @@ export const makeKillStatsPersistence = (
       .where(buildKillStatsCondition(memberColumns(bucket), filter))
       .groupBy(table.npcType, table.memberId, memberTable.id)
       .as("ranked");
+
     const sqlLimit = Math.trunc(limit);
+
     return protect(
       "kills.stats.top-members",
       database
@@ -390,6 +404,7 @@ export const makeKillStatsPersistence = (
   ) => {
     const table = bucket ? npcKillStatsBucketTable : npcKillStatsTable;
     const participationCount = sum(table.memberKills).mapWith(Number);
+
     return protect(
       "kills.stats.npc-killers",
       database
@@ -413,6 +428,7 @@ export const makeKillStatsPersistence = (
 
   const findMemberNpcMetadata = (filter: KillStatsFilter, bucket: boolean) => {
     const table = bucket ? npcKillStatsBucketTable : npcKillStatsTable;
+
     return protect(
       "kills.stats.npc-metadata",
       database
@@ -435,6 +451,7 @@ export const makeKillStatsPersistence = (
 
   const groupMemberStats = (filter: KillStatsFilter, bucket: boolean) => {
     const table = bucket ? npcKillStatsBucketTable : npcKillStatsTable;
+
     return protect(
       "kills.stats.member-groups",
       database
@@ -460,6 +477,7 @@ export const makeKillStatsPersistence = (
 
   const groupGuildSummaries = (filter: KillStatsFilter, bucket: boolean) => {
     const table = bucket ? guildKillSummaryBucketTable : guildKillSummaryTable;
+
     return protect(
       "kills.stats.guild-groups",
       database

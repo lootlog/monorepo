@@ -25,6 +25,7 @@ import {
 } from "./timers.handlers.js";
 
 const now = new Date("2026-09-02T12:00:00.000Z");
+
 const guild = {
   id: "guild-a",
   name: "Guild A",
@@ -141,10 +142,12 @@ const provideServices = (
 describe("Timers HttpApi handlers", () => {
   it("passes policy and roles to the visibility-aware service and decodes wire dates", async () => {
     const calls: TimersGuildAccess[] = [];
+
     const layer = provideServices(
       makeData({
         getGuildTimers: (receivedAccess) => {
           calls.push(receivedAccess);
+
           return Effect.succeed([storedTimer]);
         },
       }),
@@ -168,6 +171,7 @@ describe("Timers HttpApi handlers", () => {
       accessPolicy: TimersGuildAccess["accessPolicy"];
       roles: TimersGuildAccess["roles"];
     }> = [];
+
     const layer = provideServices(
       makeData({
         getHistory: (receivedAccess) => {
@@ -176,6 +180,7 @@ describe("Timers HttpApi handlers", () => {
             accessPolicy: receivedAccess.accessPolicy,
             roles: receivedAccess.roles,
           });
+
           // The timer module applies per-NPC visibility and returns no entries
           // for this level-restricted role.
           return Effect.succeed([]);
@@ -204,16 +209,20 @@ describe("Timers HttpApi handlers", () => {
       status: 403,
       code: "LOOTLOG_TIMERS_WRITE_REQUIRED",
     });
+
     let dataCalled = false;
+
     const layer = provideServices(
       makeData({
         createManual: () => {
           dataCalled = true;
+
           return Effect.succeed(storedTimer);
         },
       }),
       makeAuthorization({ requireGuild: () => Effect.fail(denied) }),
     );
+
     const payload: CreateManualTimerRequest = {
       name: "Test boss",
       minSeconds: 60,
@@ -233,10 +242,12 @@ describe("Timers HttpApi handlers", () => {
 
   it("rejects cross-Organization access before querying scoped data", async () => {
     let dataCalled = false;
+
     const layer = provideServices(
       makeData({
         searchNpcs: () => {
           dataCalled = true;
+
           return Effect.succeed([]);
         },
       }),
@@ -259,7 +270,9 @@ describe("Timers HttpApi handlers", () => {
       guildId: string;
       capability: string;
     }> = [];
+
     const mutationCalls: Array<unknown> = [];
+
     const layer = provideServices(
       makeData({
         reset: (current, timerIdentifier, payload) => {
@@ -270,6 +283,7 @@ describe("Timers HttpApi handlers", () => {
             timerIdentifier,
             payload,
           ]);
+
           return Effect.succeed(storedTimer);
         },
         delete: (current, timerIdentifier, world) => {
@@ -280,6 +294,7 @@ describe("Timers HttpApi handlers", () => {
             timerIdentifier,
             world,
           ]);
+
           return Effect.succeed(undefined);
         },
         restore: (current, historyEntryId) => {
@@ -289,6 +304,7 @@ describe("Timers HttpApi handlers", () => {
             current.guild.id,
             historyEntryId,
           ]);
+
           return Effect.succeed(storedTimer);
         },
         createManual: (current, payload) => {
@@ -298,17 +314,21 @@ describe("Timers HttpApi handlers", () => {
             current.guild.id,
             payload,
           ]);
+
           return Effect.succeed(storedTimer);
         },
       }),
       makeAuthorization({
         requireGuild: (options) => {
           authorizationCalls.push(options);
+
           return Effect.succeed(access);
         },
       }),
     );
+
     const resetPayload: ResetTimerRequest = { world: "Aldous" };
+
     const manualPayload: CreateManualTimerRequest = {
       name: "Test boss",
       minSeconds: 60,

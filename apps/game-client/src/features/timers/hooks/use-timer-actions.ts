@@ -17,6 +17,7 @@ export const useTimerActions = (
   timersGrouping = false,
 ) => {
   const t = getFixedT("timers");
+
   const {
     hideTimer,
     revealTimer,
@@ -44,6 +45,7 @@ export const useTimerActions = (
         ) ?? false,
     })),
   );
+
   const getResetTimerErrorMessage = (cause: unknown) => {
     const apiMessage = getApiErrorStringField(cause, "message");
 
@@ -53,6 +55,7 @@ export const useTimerActions = (
 
     return t("messages.resetFailed", { name: timer.npc.name });
   };
+
   const getDeleteTimerErrorMessage = (cause: unknown) => {
     const apiMessage = getApiErrorStringField(cause, "message");
 
@@ -88,8 +91,10 @@ export const useTimerActions = (
 
     if (isPinned) {
       unpinTimer(settingsKey, timer.npc.name);
+
       return;
     }
+
     pinTimer(settingsKey, timer.npc.name);
   };
 
@@ -104,6 +109,7 @@ export const useTimerActions = (
   const handleToggleAlwaysVisibleExpiredTimer = () => {
     if (isAlwaysVisibleExpiredTimer) {
       hideExpiredTimerAlways(timer.world, timer.timerKey);
+
       return;
     }
 
@@ -191,4 +197,5 @@ export const useTimerActions = (
     handleDeleteTimer,
   };
 };
+
 import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";

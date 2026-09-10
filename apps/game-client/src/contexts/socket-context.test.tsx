@@ -31,6 +31,7 @@ const setup = () => {
   });
   render(<div />, { wrapper: test.wrapper });
   test.open();
+
   return test;
 };
 
@@ -52,9 +53,11 @@ describe("SocketProvider", () => {
         ),
       ).toBe(true),
     );
+
     const command = test.wire.frames.find(
       (frame) => "type" in frame && frame.type === "session.join",
     );
+
     if (
       !command ||
       !("requestId" in command) ||

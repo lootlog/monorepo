@@ -88,6 +88,7 @@ export class MapTemplatesData extends Context.Service<
     Effect.map(ApiDatabase, (database) => {
       const persistenceError = (cause: unknown) =>
         new MapTemplatesPersistenceError({ cause });
+
       return MapTemplatesData.of({
         findMany: (guildId) =>
           database
@@ -166,9 +167,11 @@ export const getMapTemplates = Effect.fn("getMapTemplates")(function* (
   guildId: string,
 ) {
   const access = yield* authorize(guildId, Permission.LOOTLOG_ACCESS);
+
   const templates = yield* Effect.flatMap(MapTemplatesData, (data) =>
     data.findMany(access.guildId),
   );
+
   return yield* Effect.forEach(templates, decodeStoredTemplate);
 });
 
@@ -177,9 +180,11 @@ export const createMapTemplate = Effect.fn("createMapTemplate")(function* (
   payload: CreateMapTemplate,
 ) {
   const access = yield* authorize(guildId, Permission.LOOTLOG_MANAGE);
+
   const template = yield* Effect.flatMap(MapTemplatesData, (data) =>
     data.create(access.guildId, payload),
   );
+
   return yield* decodeStoredTemplate(template);
 });
 
@@ -189,15 +194,18 @@ export const updateMapTemplate = Effect.fn("updateMapTemplate")(function* (
   payload: CreateMapTemplate,
 ) {
   const access = yield* authorize(guildId, Permission.LOOTLOG_MANAGE);
+
   const template = yield* Effect.flatMap(MapTemplatesData, (data) =>
     data.update(access.guildId, templateId, payload),
   );
+
   if (template === null) {
     return yield* new MapTemplateNotFound({
       status: 404,
       code: "MAP_TEMPLATE_NOT_FOUND",
     });
   }
+
   return yield* decodeStoredTemplate(template);
 });
 
@@ -206,15 +214,18 @@ export const deleteMapTemplate = Effect.fn("deleteMapTemplate")(function* (
   templateId: string,
 ) {
   const access = yield* authorize(guildId, Permission.LOOTLOG_MANAGE);
+
   const deleted = yield* Effect.flatMap(MapTemplatesData, (data) =>
     data.delete(access.guildId, templateId),
   );
+
   if (!deleted) {
     return yield* new MapTemplateNotFound({
       status: 404,
       code: "MAP_TEMPLATE_NOT_FOUND",
     });
   }
+
   return { status: "OK" as const };
 });
 

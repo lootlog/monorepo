@@ -20,6 +20,7 @@ export const NotificationsRulesCard = ({
   actionsDisabled,
 }: NotificationsRulesCardProps) => {
   const { t } = useTranslation();
+
   const hasInactiveTargets = rules.some((rule) =>
     rule.targets.some(({ target }) => !target.active),
   );

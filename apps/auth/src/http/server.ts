@@ -22,8 +22,10 @@ const makeBetterAuthHandler = (auth: typeof BetterAuthRuntime.Service) =>
   Effect.fn("BetterAuth.rawHandler")(
     function* (request: HttpServerRequest.HttpServerRequest) {
       const webRequest = yield* HttpServerRequest.toWeb(request);
+
       if (new URL(webRequest.url).pathname.includes("/api-key/"))
         return HttpServerResponse.empty({ status: 404 });
+
       const response = yield* Effect.tryPromise({
         try: () =>
           auth.handler(
@@ -31,6 +33,7 @@ const makeBetterAuthHandler = (auth: typeof BetterAuthRuntime.Service) =>
           ),
         catch: (cause) => cause,
       });
+
       return HttpServerResponse.fromWeb(response);
     },
     Effect.catchCause(() =>
@@ -53,6 +56,7 @@ const betterAuthMethods = [
   "DELETE",
   "OPTIONS",
 ] as const;
+
 // oxlint-disable-next-line react-hooks/rules-of-hooks -- Effect router constructor, not React.
 const BetterAuthRawRoutes = HttpRouter.use((router) =>
   Effect.gen(function* () {

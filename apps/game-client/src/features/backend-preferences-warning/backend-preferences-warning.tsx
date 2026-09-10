@@ -12,27 +12,35 @@ import { useTranslation } from "react-i18next";
 const dismissedSchema = z.boolean();
 
 const STORAGE_KEY = storageKey("ll:backend-preferences-warning-dismissed");
+
 const WINDOW_WIDTH = 430;
+
 const WINDOW_HEIGHT = 250;
 
 export const BackendPreferencesWarning: FC = () => {
   const { t } = useTranslation(["backendPreferencesWarning", "common"]);
+
   const gameInitialized = useGlobalStore(
     (state) => state.gameState.gameInitialized,
   );
+
   const open = useWindowsStore(
     (state) => state["backend-preferences-warning"].open,
   );
+
   const position = useWindowsStore(
     (state) => state["backend-preferences-warning"].position,
   );
+
   const setOpen = useWindowsStore((state) => state.setOpen);
   const setPosition = useWindowsStore((state) => state.setPosition);
+
   const [dismissed, setDismissed] = useLocalStorage<boolean>(
     STORAGE_KEY,
     false,
     dismissedSchema,
   );
+
   const centerX = Math.round((window.innerWidth - WINDOW_WIDTH) / 2);
   const centerY = Math.round((window.innerHeight - WINDOW_HEIGHT) / 2);
   const isPositionReady = position.x === centerX && position.y === centerY;

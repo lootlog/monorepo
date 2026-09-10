@@ -20,6 +20,7 @@ it("expires only the disconnected character's existing gathering or application 
   const disconnectedAt = Date.parse("2026-09-10T10:00:00Z");
   const createdAt = new Date(disconnectedAt - 60_000).toISOString();
   const newerAt = new Date(disconnectedAt + 1).toISOString();
+
   const character = {
     accountId: "account",
     characterId: "character",
@@ -28,6 +29,7 @@ it("expires only the disconnected character's existing gathering or application 
     prof: "w",
     icon: "icon",
   };
+
   const base: ReadyRoomAggregate = {
     schemaVersion: 3,
     notificationId: "owned",
@@ -42,6 +44,7 @@ it("expires only the disconnected character's existing gathering or application 
     expiresAt: new Date(disconnectedAt + 600_000).toISOString(),
     participants: {},
   };
+
   const applicant = {
     participantId: "application",
     discordId: "owner",
@@ -50,6 +53,7 @@ it("expires only the disconnected character's existing gathering or application 
     createdAt,
     updatedAt: createdAt,
   };
+
   const rooms: ReadyRoomAggregate[] = [
     base,
     { ...base, notificationId: "wrong-world", world: "other" },
@@ -81,6 +85,7 @@ it("expires only the disconnected character's existing gathering or application 
       },
     },
   ];
+
   const untouched = structuredClone(rooms.slice(1, -1));
   rooms.push({
     ...base,
@@ -91,11 +96,13 @@ it("expires only the disconnected character's existing gathering or application 
   let conflictDelivered = false;
   const cancellations: unknown[] = [];
   const updates: unknown[] = [];
+
   const redis: ReadyRoomRedis = {
     getJson: (key, schema) => {
       const room = rooms.find((candidate) =>
         key.endsWith(`:${candidate.notificationId}`),
       );
+
       return room
         ? Schema.decodeUnknownEffect(schema)(room)
         : Effect.succeed(null);
@@ -111,9 +118,11 @@ it("expires only the disconnected character's existing gathering or application 
         const next = Schema.decodeUnknownSync(
           Schema.fromJsonString(PartyReadyRoomAggregateSchema),
         )(String(args[1]));
+
         const index = rooms.findIndex(
           (room) => room.notificationId === next.notificationId,
         );
+
         if (
           next.notificationId === "rejoined-during-cleanup" &&
           !conflictDelivered
@@ -123,14 +132,19 @@ it("expires only the disconnected character's existing gathering or application 
             ...next,
             participants: { application: { ...applicant, createdAt: newerAt } },
           };
+
           return Effect.succeed(["CONFLICT"]);
         }
+
         rooms[index] = next;
+
         return Effect.succeed(["COMMITTED"]);
       }
+
       return Effect.succeed(rooms.map((room) => room.notificationId));
     },
   };
+
   const layer = makeReadyRoomDataLayer(
     redis,
     {
@@ -147,6 +161,7 @@ it("expires only the disconnected character's existing gathering or application 
     },
     () => disconnectedAt + 10_000,
   ).pipe(Layer.provide(Layer.succeed(ApiDatabase, boundary.database)));
+
   const offline = Effect.flatMap(ReadyRoomData, (data) =>
     data.characterOffline(
       decodeRabbitEventJson(
@@ -162,6 +177,7 @@ it("expires only the disconnected character's existing gathering or application 
       ),
     ),
   ).pipe(Effect.provide(layer));
+
   try {
     await Effect.runPromise(offline);
     expect(rooms[0]).toMatchObject({ status: "CANCELLED", revision: 2 });

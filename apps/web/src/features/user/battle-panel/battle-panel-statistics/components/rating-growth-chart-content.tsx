@@ -16,6 +16,7 @@ interface RatingGrowthChartProps {
 
 export function RatingGrowthChart({ data, isLoading }: RatingGrowthChartProps) {
   const { t } = useTranslation();
+
   const chartData = data.map((point) => ({
     date: new Date(point.date).toLocaleDateString("pl-PL", {
       day: "2-digit",

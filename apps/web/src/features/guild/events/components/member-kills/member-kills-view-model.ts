@@ -30,6 +30,7 @@ export const getMemberKillScoringViewModel = (
   t: TFunction,
 ) => {
   const point = kill.memberPoint;
+
   const scoring = getScoringBreakdown({
     points: point?.points ?? 0,
     basePoints: point?.basePoints ?? 0,
@@ -54,6 +55,7 @@ export const getMemberKillScoringViewModel = (
     scoringItems: getScoringItems({ ...scoring, t, formatPoints }),
   };
 };
+
 import type { TFunction } from "i18next";
 import type { EventMemberKill } from "../../hooks/queries/use-event-member-kill-history";
 import { formatDurationHuman } from "../../utils/format-duration";

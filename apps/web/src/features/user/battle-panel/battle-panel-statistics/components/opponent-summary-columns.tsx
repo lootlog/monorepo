@@ -13,6 +13,7 @@ type OpponentSummary = {
   wins: number;
   losses: number;
 };
+
 export const getOpponentSummaryColumns = <Record extends OpponentSummary>(
   t: (key: string) => string,
 ): ColumnDef<typeof coreTableFeatures, Record>[] => [

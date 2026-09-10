@@ -9,6 +9,7 @@ type Props = {
   label: string;
   onTurnSelect: (turn: number) => void;
 };
+
 export function BattleHpTimelineEventMarker({ group, ...props }: Props) {
   return (
     <BattleHpTimelineMarkerGroup

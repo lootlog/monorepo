@@ -11,13 +11,16 @@ describe("scoring presentation", () => {
       manualAdjustmentPoints: 0.5,
       bonusBreakdown: [{ ruleId: "bonus", ruleName: "Bonus", points: 1.2 }],
     });
+
     expect(scoring.bonusPoints).toBe(1.2);
     expect(scoring.capReduction).toBeCloseTo(0.4);
+
     const items = getScoringItems({
       ...scoring,
       t: (key) => key,
       formatPoints,
     });
+
     expect(items.map((item) => item.value)).toEqual([
       "1",
       "+1.20",

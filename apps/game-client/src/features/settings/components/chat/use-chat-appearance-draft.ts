@@ -28,31 +28,40 @@ export function useChatAppearanceDraft() {
   const { t } = useTranslation();
   const preferences = useUserPreferences();
   const settingsDocuments = useAppearanceSettingsDocuments();
+
   const npcTypeColors = getNpcTypeColorsFromSettingsDocuments(
     settingsDocuments.data,
   );
+
   const queryClient = useQueryClient();
+
   const serverDraft = getChatAppearanceFromSettingsDocuments(
     settingsDocuments.data,
   );
+
   const [draftState, setDraftState] = useState({
     source: settingsDocuments.data,
     value: serverDraft,
   });
+
   const draft =
     draftState.source === settingsDocuments.data
       ? draftState.value
       : serverDraft;
+
   const setDraft = (nextDraft: ChatAppearanceSettings) => {
     setDraftState({ source: settingsDocuments.data, value: nextDraft });
   };
+
   const mutationQueue = useRef(initialQueue);
   const queueFailed = useRef(false);
   const queueGeneration = useRef(0);
   const pendingMutations = useRef(0);
+
   const latestDraft = useRef<ChatAppearanceSettings>(
     CHAT_APPEARANCE_READABLE_PRESET,
   );
+
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -125,13 +134,16 @@ export function useChatAppearanceDraft() {
                 },
               ],
             });
+
           const hasQueuedMutation = pendingMutations.current > 1;
+
           const nextSettingsDocuments = hasQueuedMutation
             ? updateChatAppearanceInSettingsDocuments(
                 updatedSettingsDocuments,
                 latestDraft.current,
               )
             : updatedSettingsDocuments;
+
           const nextAppearance = hasQueuedMutation
             ? latestDraft.current
             : getChatAppearanceFromSettingsDocuments(updatedSettingsDocuments);
@@ -155,13 +167,16 @@ export function useChatAppearanceDraft() {
         } catch {
           queueFailed.current = true;
           queueGeneration.current += 1;
+
           const [, settingsRefetchResult] = await Promise.all([
             preferences.refetch(),
             settingsDocuments.refetch(),
           ]);
+
           const serverAppearance = getChatAppearanceFromSettingsDocuments(
             settingsRefetchResult.data,
           );
+
           latestDraft.current = serverAppearance;
           setDraft(serverAppearance);
           toast.error(t("settings.chat.save.error"));
@@ -169,6 +184,7 @@ export function useChatAppearanceDraft() {
       })
       .finally(() => {
         pendingMutations.current -= 1;
+
         if (pendingMutations.current === 0) {
           setSaving(false);
         }
@@ -185,6 +201,7 @@ export function useChatAppearanceDraft() {
       preset === "readable"
         ? CHAT_APPEARANCE_READABLE_PRESET
         : CHAT_APPEARANCE_COMPACT_PRESET;
+
     updateDraft(nextSettings);
     commit(nextSettings);
   };

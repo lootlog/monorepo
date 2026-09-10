@@ -167,12 +167,15 @@ export const makeLootSubmissionAcceptancePersistence = (
 
   findLootlogConfigs: (guildIds) => {
     if (guildIds.length === 0) return Effect.succeed([]);
+
     return Effect.gen(function* () {
       const configs = yield* database
         .select()
         .from(lootlogConfigTable)
         .where(inArray(lootlogConfigTable.id, guildIds));
+
       if (configs.length === 0) return [];
+
       const npcs = yield* database
         .select()
         .from(lootlogConfigNpcTable)
@@ -183,6 +186,7 @@ export const makeLootSubmissionAcceptancePersistence = (
           ),
         )
         .orderBy(desc(lootlogConfigNpcTable.id));
+
       return configs.map((config) => ({
         ...config,
         npcs: npcs.filter(
@@ -231,6 +235,7 @@ export const makeLootSubmissionAcceptancePersistence = (
 
   findExistingRecords: (lootId, guildIds) => {
     if (guildIds.length === 0) return Effect.succeed([]);
+
     return Effect.all(
       {
         records: database
@@ -274,16 +279,19 @@ export const makeLootSubmissionAcceptancePersistence = (
           number,
           Array<{ memberId: number }>
         >();
+
         for (const submission of submissions) {
           const recordSubmissions =
             submissionsByRecordId.get(submission.organizationLootRecordId) ??
             [];
+
           recordSubmissions.push({ memberId: submission.memberId });
           submissionsByRecordId.set(
             submission.organizationLootRecordId,
             recordSubmissions,
           );
         }
+
         return records.map((record) => ({
           guildId: record.guildId,
           archivedAt: record.archivedAt,
@@ -302,9 +310,11 @@ export const makeLootSubmissionAcceptancePersistence = (
     const guildIds = [
       ...new Set(submissions.map(({ guildId }) => guildId)),
     ].sort();
+
     return database.transaction((transaction) =>
       Effect.gen(function* () {
         const now = new Date(yield* Clock.currentTimeMillis);
+
         if (guildIds.length > 0) {
           yield* transaction
             .insert(organizationLootRecordTable)
@@ -322,6 +332,7 @@ export const makeLootSubmissionAcceptancePersistence = (
               ],
             });
         }
+
         const records =
           guildIds.length === 0
             ? []
@@ -338,6 +349,7 @@ export const makeLootSubmissionAcceptancePersistence = (
                     inArray(organizationLootRecordTable.guildId, guildIds),
                   ),
                 );
+
         const snapshotGuildIds = mapPlayersSnapshot
           ? yield* captureLootMapPlayers(
               transaction,
@@ -347,24 +359,29 @@ export const makeLootSubmissionAcceptancePersistence = (
               now,
             )
           : [];
+
         const recordIdByGuildId = new Map(
           records.map((record) => [record.guildId, record.id]),
         );
+
         const rows = submissions.map((submission) => {
           const organizationLootRecordId = recordIdByGuildId.get(
             submission.guildId,
           );
+
           if (organizationLootRecordId === undefined) {
             throw new DependencyUnavailableError(
               "Failed to resolve Organization Loot record",
             );
           }
+
           return {
             organizationLootRecordId,
             memberId: submission.memberId,
             updatedAt: now,
           };
         });
+
         if (rows.length > 0) {
           yield* transaction
             .insert(lootSubmissionTable)
@@ -376,6 +393,7 @@ export const makeLootSubmissionAcceptancePersistence = (
               ],
             });
         }
+
         const intents = publications([
           ...new Set([
             ...records
@@ -384,11 +402,13 @@ export const makeLootSubmissionAcceptancePersistence = (
             ...snapshotGuildIds,
           ]),
         ]);
+
         if (intents.length > 0) {
           yield* transaction
             .insert(lootPublicationOutboxTable)
             .values(intents.map((intent) => ({ ...intent, lootId })));
         }
+
         return records;
       }),
     );
@@ -398,6 +418,7 @@ export const makeLootSubmissionAcceptancePersistence = (
     database.transaction((transaction) =>
       Effect.gen(function* () {
         const now = new Date(yield* Clock.currentTimeMillis);
+
         const createdLoots = yield* transaction
           .insert(lootTable)
           .values({
@@ -410,7 +431,9 @@ export const makeLootSubmissionAcceptancePersistence = (
             updatedAt: now,
           })
           .returning({ id: lootTable.id });
+
         const loot = createdLoots[0];
+
         if (!loot) {
           return yield* Effect.fail(
             new DependencyUnavailableError("Failed to create loot"),
@@ -435,6 +458,7 @@ export const makeLootSubmissionAcceptancePersistence = (
               target: [itemSnapshotTable.itemId, itemSnapshotTable.statsHash],
             })
             .returning({ id: itemSnapshotTable.id });
+
           const existing = inserted[0]
             ? inserted
             : yield* transaction
@@ -447,12 +471,15 @@ export const makeLootSubmissionAcceptancePersistence = (
                   ),
                 )
                 .limit(1);
+
           const snapshot = existing[0];
+
           if (!snapshot) {
             return yield* Effect.fail(
               new DependencyUnavailableError("Failed to resolve item snapshot"),
             );
           }
+
           yield* transaction.insert(lootItemTable).values({
             lootId: loot.id,
             itemSnapshotId: snapshot.id,
@@ -469,7 +496,9 @@ export const makeLootSubmissionAcceptancePersistence = (
             data.mapPlayersSnapshot ?? [],
           ),
         ]);
+
         const playerSnapshots = resolvedSnapshots.slice(0, data.players.length);
+
         if (playerSnapshots.length > 0) {
           yield* transaction.insert(lootPlayerTable).values(
             playerSnapshots.map((snapshot, index) => ({
@@ -488,6 +517,7 @@ export const makeLootSubmissionAcceptancePersistence = (
               target: [npcSnapshotTable.npcId, npcSnapshotTable.name],
             })
             .returning({ id: npcSnapshotTable.id });
+
           const existing = inserted[0]
             ? inserted
             : yield* transaction
@@ -500,12 +530,15 @@ export const makeLootSubmissionAcceptancePersistence = (
                   ),
                 )
                 .limit(1);
+
           const snapshot = existing[0];
+
           if (!snapshot) {
             return yield* Effect.fail(
               new DependencyUnavailableError("Failed to resolve NPC snapshot"),
             );
           }
+
           yield* transaction.insert(lootNpcTable).values({
             lootId: loot.id,
             npcSnapshotId: snapshot.id,
@@ -525,6 +558,7 @@ export const makeLootSubmissionAcceptancePersistence = (
             id: organizationLootRecordTable.id,
             guildId: organizationLootRecordTable.guildId,
           });
+
         if (data.mapPlayersSnapshot) {
           yield* captureLootMapPlayers(
             transaction,
@@ -534,19 +568,23 @@ export const makeLootSubmissionAcceptancePersistence = (
             now,
           );
         }
+
         const recordIdByGuildId = new Map(
           records.map((record) => [record.guildId, record.id]),
         );
+
         yield* transaction.insert(lootSubmissionTable).values(
           data.submissions.map((submission) => {
             const organizationLootRecordId = recordIdByGuildId.get(
               submission.guildId,
             );
+
             if (organizationLootRecordId === undefined) {
               throw new DependencyUnavailableError(
                 "Failed to resolve Organization Loot record",
               );
             }
+
             return {
               organizationLootRecordId,
               memberId: submission.memberId,
@@ -555,11 +593,13 @@ export const makeLootSubmissionAcceptancePersistence = (
           }),
         );
         const intents = publications(loot.id);
+
         if (intents.length > 0) {
           yield* transaction
             .insert(lootPublicationOutboxTable)
             .values(intents.map((intent) => ({ ...intent, lootId: loot.id })));
         }
+
         return loot.id;
       }),
     ),

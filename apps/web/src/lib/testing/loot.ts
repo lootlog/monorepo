@@ -1,4 +1,5 @@
 import type { Loot } from "@/lib/loots/loot-types";
+
 export function createLoot(id = 1): Loot {
   return {
     id,

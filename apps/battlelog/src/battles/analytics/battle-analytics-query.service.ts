@@ -23,6 +23,7 @@ import type { DrizzleDatabase } from "#src/database/database";
 import { battleWarriors, battles } from "#src/database/schema";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+
 const decodeCharacterIdsJson = Schema.decodeUnknownSync(
   Schema.fromJsonString(Schema.mutable(Schema.Array(Schema.String))),
 );
@@ -97,6 +98,7 @@ export const makeBattleAnalyticsQuery = (
     ]);
 
     const days = periodDays.get(period);
+
     return days === undefined
       ? undefined
       : new Date(Date.now() - days * DAY_MS);
@@ -116,8 +118,11 @@ export const makeBattleAnalyticsQuery = (
   const getDateRangeFilter = (query: DateRangeQuery): AnalyticsDateRange => {
     if (query.startDate || query.endDate) {
       const range: AnalyticsDateRange = {};
+
       if (query.startDate) range.startDate = new Date(query.startDate);
+
       if (query.endDate) range.endDate = new Date(query.endDate);
+
       return range;
     }
 
@@ -210,6 +215,7 @@ export const makeBattleAnalyticsQuery = (
       )
       .limit(1)
       .as("analytics_user");
+
     const opponent = drizzle
       .select({ prof: battleWarriors.prof, lvl: battleWarriors.lvl })
       .from(battleWarriors)
@@ -221,6 +227,7 @@ export const makeBattleAnalyticsQuery = (
       )
       .limit(1)
       .as("analytics_opponent");
+
     const where = and(
       buildAnalyticsWhere(battles, {
         userId,
@@ -238,6 +245,7 @@ export const makeBattleAnalyticsQuery = (
         ? lte(opponent.lvl, query.maxLevel)
         : undefined,
     );
+
     return { user, opponent, where };
   };
 
@@ -251,6 +259,7 @@ export const makeBattleAnalyticsQuery = (
       query,
       characterIds,
     );
+
     const [result] = yield* drizzle
       .select({
         wins: sql<number>`count(*) filter (where not ${battles.hasFlee} and ${user.team} = ${battles.winningTeam})`.mapWith(
@@ -266,9 +275,11 @@ export const makeBattleAnalyticsQuery = (
       .innerJoinLateral(user, sql`true`)
       .leftJoinLateral(opponent, sql`true`)
       .where(where);
+
     const wins = result?.wins ?? 0;
     const losses = result?.losses ?? 0;
     const totalBattles = wins + losses;
+
     return {
       wins,
       losses,
@@ -290,14 +301,17 @@ export const makeBattleAnalyticsQuery = (
       characterIds,
       false,
     );
+
     const wins =
       sql<number>`count(*) filter (where ${user.team} = ${battles.winningTeam})`.mapWith(
         Number,
       );
+
     const losses =
       sql<number>`count(*) filter (where ${user.team} <> ${battles.winningTeam} and ${user.team} = ${battles.losingTeam})`.mapWith(
         Number,
       );
+
     const rows = yield* drizzle
       .select({ prof: opponent.prof, wins, losses })
       .from(battles)
@@ -306,8 +320,10 @@ export const makeBattleAnalyticsQuery = (
       .where(where)
       .groupBy(opponent.prof)
       .orderBy(desc(sql`${wins} + ${losses}`));
+
     return rows.map(({ prof, wins, losses }) => {
       const totalBattles = wins + losses;
+
       return {
         prof,
         wins,

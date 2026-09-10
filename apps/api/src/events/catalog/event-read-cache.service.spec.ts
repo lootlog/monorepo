@@ -14,7 +14,9 @@ describe("EventReadCache", () => {
     nested: Schema.Struct({ minSpawnTime: Schema.Date }),
     entries: Schema.Array(Schema.Struct({ startedAt: Schema.Date })),
   });
+
   let stored: string | null = null;
+
   const redis = {
     getOrSetJsonEffect<T, E>(
       options: Omit<RedisGetOrSetJsonBestEffortOptions<T>, "factory"> & {
@@ -50,11 +52,13 @@ describe("EventReadCache", () => {
       nested: { minSpawnTime: new Date("2026-06-19T11:00:00.000Z") },
       entries: [{ startedAt: new Date("2026-06-19T13:00:00.000Z") }],
     };
+
     await Effect.runPromise(
       service.getOrSet("event-read:test", NestedDates, () =>
         Effect.succeed(value),
       ),
     );
+
     const result = await Effect.runPromise(
       service.getOrSet("event-read:test", NestedDates, () =>
         Effect.die("cache miss"),
@@ -92,11 +96,13 @@ describe("EventReadCache", () => {
       ],
       nextCursor: null,
     };
+
     await Effect.runPromise(
       service.getOrSet("event-read:test", EventKillHistoryResponse, () =>
         Effect.succeed(value),
       ),
     );
+
     const result = await Effect.runPromise(
       service.getOrSet("event-read:test", EventKillHistoryResponse, () =>
         Effect.die("cache miss"),

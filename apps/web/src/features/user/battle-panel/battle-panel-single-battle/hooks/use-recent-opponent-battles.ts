@@ -8,6 +8,7 @@ import { getRecentOpponentBattleContext } from "../components/recent-opponent-ba
 
 export const useRecentOpponentBattles = (battle: Battle | undefined) => {
   const context = getRecentOpponentBattleContext(battle);
+
   const query = useQuery({
     queryKey: [
       "recent-opponent-battles",
@@ -35,7 +36,9 @@ export const useRecentOpponentBattles = (battle: Battle | undefined) => {
     enabled: context !== null,
     placeholderData: undefined,
   });
+
   const battles = query.data?.battles ?? [];
+
   const battleDetailsQueries = useQueries({
     queries: battles.map((recentBattle) =>
       getBattlesControllerGetBattleQueryOptions({
@@ -43,6 +46,7 @@ export const useRecentOpponentBattles = (battle: Battle | undefined) => {
       }),
     ),
   });
+
   const battleDetailsById = battleDetailsQueries.reduce<
     Record<string, Battle | undefined>
   >((detailsById, detailQuery, index) => {
@@ -53,6 +57,7 @@ export const useRecentOpponentBattles = (battle: Battle | undefined) => {
     }
 
     detailsById[recentBattle.battleId] = detailQuery.data;
+
     return detailsById;
   }, {});
 

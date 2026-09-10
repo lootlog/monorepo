@@ -16,13 +16,19 @@ export interface AuthMigrationClient {
 }
 
 const migrationsSchema = "drizzle";
+
 const migrationsTable = "__drizzle_migrations";
+
 const authTableNames = ["user", "session", "account", "verification", "jwks"];
+
 const preJwksMetadataMigrationCount = 2;
+
 const preApiKeyMigrationCount = 3;
+
 const migrationsFolder = fileURLToPath(
   new URL("../../drizzle", import.meta.url),
 );
+
 const finalIndexNames = [
   "account_issuer_accountId_uidx",
   "account_userId_idx",
@@ -187,6 +193,7 @@ const legacyTimestampColumns = new Set([
 export const AUTH_SCHEMA_FINGERPRINT_IMPORTED_V1_6: ReadonlyArray<SchemaColumn> =
   AUTH_SCHEMA_FINGERPRINT_V1_6.map((schemaColumn) => {
     const identity = `${schemaColumn.tableName}.${schemaColumn.columnName}`;
+
     return {
       ...schemaColumn,
       dataType: legacyTimestampColumns.has(identity)
@@ -367,11 +374,14 @@ function readLocalMigrations(): LocalMigration[] {
       directory,
       "migration.sql",
     );
+
     if (!fs.existsSync(migrationPath)) {
       throw new Error(`Missing auth migration at ${migrationPath}`);
     }
+
     const sqlContent = fs.readFileSync(migrationPath, "utf8");
     const timestamp = directory.slice(0, 14);
+
     const createdAt = Date.UTC(
       Number(timestamp.slice(0, 4)),
       Number(timestamp.slice(4, 6)) - 1,
@@ -428,6 +438,7 @@ const readTrackedMigrations = Effect.fn("readTrackedMigrations")(function* (
     FROM ${migrationsSchema}.${migrationsTable}
     ORDER BY created_at, id
   `);
+
   return result.map(({ hash }) => hash);
 });
 
@@ -624,6 +635,7 @@ const readCount = Effect.fn("readCount")(function* (
   sql: string,
 ) {
   const result = yield* client.unsafe<{ count: string }>(sql);
+
   return Number(result[0]?.count ?? "0");
 });
 
@@ -724,6 +736,7 @@ function blockedPlanError(plan: AuthMigrationPlan) {
   const violationCodes = plan.integrityViolations
     .map(({ code, count }) => `${code}=${count}`)
     .join(", ");
+
   return new Error(
     `Auth migration preflight is blocked for source ${plan.source}: ${violationCodes || "UNKNOWN_SCHEMA=1"}. No database changes were applied.`,
   );
@@ -759,6 +772,7 @@ export const planAuthMigration = Effect.fn("planAuthMigration")(function* (
       trackedHashes,
       localMigrations,
     );
+
     return {
       status: migrationTrackingMatches ? "ready" : "blocked",
       source: "fresh",
@@ -797,6 +811,7 @@ export const planAuthMigration = Effect.fn("planAuthMigration")(function* (
     readAuthIndexes(client),
     readAuthForeignKeys(client),
   ]);
+
   const schema = { columns, indexes, foreignKeys };
 
   let source: AuthMigrationPlan["source"];
@@ -853,6 +868,7 @@ export const planAuthMigration = Effect.fn("planAuthMigration")(function* (
   const hasIssuer =
     source === "better-auth-1.7" ||
     source === "better-auth-1.7-pre-jwks-metadata";
+
   const [userCount, accountCount, sessionCount, dataViolations] =
     yield* Effect.all([
       readCount(client, `SELECT COUNT(*)::text AS count FROM "user"`),
@@ -860,6 +876,7 @@ export const planAuthMigration = Effect.fn("planAuthMigration")(function* (
       readCount(client, `SELECT COUNT(*)::text AS count FROM "session"`),
       readIntegrityViolations(client, hasIssuer),
     ]);
+
   const integrityViolations = hasCompatibleMigrationTracking(
     source,
     trackedHashes,
@@ -870,16 +887,21 @@ export const planAuthMigration = Effect.fn("planAuthMigration")(function* (
         ...dataViolations,
         { code: "MIGRATION_TRACKING_MISMATCH", count: 1 } as const,
       ];
+
   const existingIndexNames = new Set(
     expectedIndexes.map(({ indexName }) => indexName),
   );
+
   const missingIndexes = finalIndexNames.filter(
     (indexName) => !existingIndexNames.has(indexName),
   );
+
   const isImported = source === "better-auth-1.6-imported";
+
   const apiKeyTables = yield* client.unsafe<{ present: boolean }>(
     `SELECT to_regclass('public.apikey') IS NOT NULL AS present`,
   );
+
   const hasApiKeys = apiKeyTables[0]?.present === true;
 
   return {
@@ -965,17 +987,21 @@ export const initializeAuthMigrations = Effect.fn("initializeAuthMigrations")(
     }
 
     const localMigrations = readLocalMigrations();
+
     if (
       plan.source === "better-auth-1.6" ||
       plan.source === "better-auth-1.6-imported"
     ) {
       const baselineMigration = localMigrations[0];
+
       if (!baselineMigration) {
         return yield* Effect.fail(
           new Error("Missing Better Auth 1.6 baseline migration."),
         );
       }
+
       yield* markMigrationsAsApplied(client, [baselineMigration]);
+
       return;
     }
 
@@ -984,6 +1010,7 @@ export const initializeAuthMigrations = Effect.fn("initializeAuthMigrations")(
         client,
         localMigrations.slice(0, preJwksMetadataMigrationCount),
       );
+
       return;
     }
 
@@ -1011,6 +1038,7 @@ export const runAuthMigrations = Effect.fn("runAuthMigrations")(function* (
         "SELECT pg_advisory_xact_lock(hashtext('lootlog'), hashtext('auth-migrations'))",
       );
       const preflightPlan = yield* planAuthMigration(client);
+
       if (preflightPlan.status === "blocked") {
         return yield* Effect.fail(blockedPlanError(preflightPlan));
       }

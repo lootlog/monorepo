@@ -26,10 +26,15 @@ type NpcsListProps = {
 };
 
 const NPC_ROW_HEIGHT_PX = 50;
+
 const NPC_ROW_GAP_PX = 4;
+
 const NPC_LIST_PADDING_TOP_PX = 4;
+
 const NPC_ROW_STRIDE_PX = NPC_ROW_HEIGHT_PX + NPC_ROW_GAP_PX;
+
 const NPC_LIST_OVERSCAN = 4;
+
 const NPC_LIST_FALLBACK_HEIGHT_PX = 320;
 
 type NpcListViewport = {
@@ -44,10 +49,12 @@ export const NpcsList: FC<NpcsListProps> = ({
 }) => {
   const scrollViewportRef = useRef<HTMLDivElement | null>(null);
   const listContentRef = useRef<HTMLUListElement | null>(null);
+
   const [viewport, setViewport] = useState<NpcListViewport>({
     height: NPC_LIST_FALLBACK_HEIGHT_PX,
     scrollTop: 0,
   });
+
   const {
     activeDetectionAnimations,
     clearDetectionAnimation,
@@ -67,14 +74,18 @@ export const NpcsList: FC<NpcsListProps> = ({
       setNpcStates: state.setNpcStates,
     })),
   );
+
   const animationEffectsEnabled = useSettingsStore(
     (state) => state.animationEffectsEnabled,
   );
+
   const hasActivePartyGathering = usePartyFinderStore(
     (state) => selectOwnedReadyRoom(state) !== null,
   );
+
   const setOpen = useWindowsStore((state) => state.setOpen);
   const orchestration = usePartyGatheringOrchestration();
+
   const { currentTimeMs, notificationDeadlineByNpcId } = useNpcListLifecycle({
     activeDetectionAnimations,
     clearDetectionAnimation,
@@ -84,6 +95,7 @@ export const NpcsList: FC<NpcsListProps> = ({
 
   useLayoutEffect(() => {
     const scrollViewport = scrollViewportRef.current;
+
     if (!scrollViewport) return;
 
     const updateViewport = () => {
@@ -114,6 +126,7 @@ export const NpcsList: FC<NpcsListProps> = ({
       typeof ResizeObserver === "undefined"
         ? null
         : new ResizeObserver(updateViewport);
+
     resizeObserver?.observe(scrollViewport);
 
     if (!resizeObserver) {
@@ -137,6 +150,7 @@ export const NpcsList: FC<NpcsListProps> = ({
 
   const itemCount = npcs?.length ?? 0;
   const viewportHeight = viewport.height || NPC_LIST_FALLBACK_HEIGHT_PX;
+
   const firstVisibleIndex =
     itemCount === 0
       ? 0
@@ -150,18 +164,22 @@ export const NpcsList: FC<NpcsListProps> = ({
             ),
           ),
         );
+
   const visibleItemCount = Math.ceil(viewportHeight / NPC_ROW_STRIDE_PX) + 1;
   const startIndex = Math.max(0, firstVisibleIndex - NPC_LIST_OVERSCAN);
+
   const endIndex = Math.min(
     itemCount,
     firstVisibleIndex + visibleItemCount + NPC_LIST_OVERSCAN,
   );
+
   const totalHeight =
     itemCount === 0
       ? 0
       : NPC_LIST_PADDING_TOP_PX +
         itemCount * NPC_ROW_STRIDE_PX -
         NPC_ROW_GAP_PX;
+
   const visibleNpcs = npcs?.slice(startIndex, endIndex) ?? [];
 
   const { exitingNpcRows, setExitingNpcRows } = useNpcListExitingRows({

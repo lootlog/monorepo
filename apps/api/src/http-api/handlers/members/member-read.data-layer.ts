@@ -44,6 +44,7 @@ export interface MemberReadCache {
 
 const snapshotKey = (accountId: number, characterId: number) =>
   `${accountId}:${characterId}`;
+
 const summaryPermissions = new Set<Permission>([
   Permission.OWNER,
   Permission.ADMIN,
@@ -53,6 +54,7 @@ const summaryPermissions = new Set<Permission>([
 const parseCharacterRef = (accountId: string, characterId: string) => {
   const parsedAccountId = Number(accountId);
   const parsedCharacterId = Number(characterId);
+
   return Number.isInteger(parsedAccountId) &&
     Number.isInteger(parsedCharacterId) &&
     parsedAccountId > 0 &&
@@ -69,6 +71,7 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
         effect.pipe(
           Effect.mapError((cause) => new MembersOperationError({ cause })),
         );
+
       const membersWithRoles = (guildId: string, includeInactive: boolean) =>
         Effect.gen(function* () {
           const members = yield* database
@@ -82,8 +85,10 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
               ),
             )
             .orderBy(asc(memberTable.name));
+
           return yield* hydrateMemberRoles(database, members);
         });
+
       const cached = <S extends Schema.ConstraintDecoder<unknown>, A>(
         key: string,
         ttl: number,
@@ -145,9 +150,12 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
                     ),
                   )
                   .limit(1);
+
                 const ownerId = owners[0]?.ownerId;
+
                 if (!ownerId) return [];
                 const members = yield* membersWithRoles(guildId, false);
+
                 return members
                   .filter(
                     (member) =>
@@ -185,12 +193,15 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
                     ),
                   )
                   .limit(1);
+
                 const member = members[0];
+
                 if (!member) {
                   return yield* Effect.fail(
                     new ResourceNotFoundError("Member not found"),
                   );
                 }
+
                 const configs = yield* database
                   .select()
                   .from(userCharactersLootlogSettingsTable)
@@ -201,6 +212,7 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
                     asc(userCharactersLootlogSettingsTable.accountId),
                     asc(userCharactersLootlogSettingsTable.characterId),
                   );
+
                 const references = [
                   ...new Map(
                     configs
@@ -221,6 +233,7 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
                       ]),
                   ).values(),
                 ];
+
                 const snapshots =
                   references.length === 0
                     ? []
@@ -250,24 +263,30 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
                           ),
                         )
                         .orderBy(desc(playerSnapshotTable.createdAt));
+
                 const latest = new Map<string, (typeof snapshots)[number]>();
+
                 for (const snapshot of snapshots) {
                   const key = snapshotKey(
                     snapshot.accountId,
                     snapshot.characterId,
                   );
+
                   if (!latest.has(key)) latest.set(key, snapshot);
                 }
+
                 const characters = configs.map((config) => {
                   const reference = parseCharacterRef(
                     config.accountId,
                     config.characterId,
                   );
+
                   const snapshot = reference
                     ? latest.get(
                         snapshotKey(reference.accountId, reference.characterId),
                       )
                     : undefined;
+
                   return {
                     accountId: config.accountId,
                     characterId: config.characterId,
@@ -282,6 +301,7 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
                       : ("invalid_character_ref" as const),
                   };
                 });
+
                 return {
                   memberUserId: member.userId,
                   guildId,
@@ -304,6 +324,7 @@ export const MemberRefreshJobDataLive = Layer.effect(
   Effect.gen(function* () {
     const database = yield* ApiDatabase;
     const config = yield* ApiRuntimeConfig;
+
     const withCooldown = (job: typeof memberRefreshJobTable.$inferSelect) => ({
       ...job,
       nextAvailableAt: new Date(
@@ -311,10 +332,12 @@ export const MemberRefreshJobDataLive = Layer.effect(
           getAdminBulkRefreshRateLimit(config.environment),
       ),
     });
+
     const operation = <A, E>(effect: Effect.Effect<A, E>) =>
       effect.pipe(
         Effect.mapError((cause) => new MembersOperationError({ cause })),
       );
+
     return MemberRefreshJobData.of({
       getLatestRefreshJob: (guildId) =>
         operation(
@@ -341,7 +364,9 @@ export const MemberRefreshJobDataLive = Layer.effect(
                 ),
               )
               .limit(1);
+
             const job = rows[0];
+
             return job
               ? withCooldown(job)
               : yield* Effect.fail(

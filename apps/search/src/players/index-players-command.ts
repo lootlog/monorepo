@@ -1,4 +1,5 @@
 import { Schema } from "effect";
+
 export const IndexPlayer = Schema.Struct({
   id: Schema.String,
   name: Schema.String,
@@ -9,9 +10,12 @@ export const IndexPlayer = Schema.Struct({
   accountId: Schema.Number,
   world: Schema.String,
 });
+
 export const IndexPlayersPayload = Schema.Array(IndexPlayer);
+
 export type IndexPlayersCommand = {
   readonly players: typeof IndexPlayersPayload.Type;
 };
+
 export const decodeIndexPlayersPayload =
   Schema.decodeUnknownSync(IndexPlayersPayload);

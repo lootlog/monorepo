@@ -27,6 +27,7 @@ export function RecentOpponentBattlesList({
   className,
 }: RecentOpponentBattlesListProps) {
   const { t } = useTranslation();
+
   const { battleDetailsById, battles, context, isError, isLoading } =
     useRecentOpponentBattles(battle);
 
@@ -62,22 +63,29 @@ export function RecentOpponentBattlesList({
         ) : (
           battles.map((recentBattle) => {
             const result = getPlayerVsPlayerBattleResult(recentBattle);
+
             const exactTime = format(
               new Date(recentBattle.createdAt),
               "dd.MM.yyyy HH:mm",
             );
+
             const relativeTime = getRelativeTime(recentBattle.createdAt);
             const battleDetails = battleDetailsById[recentBattle.battleId];
+
             const detailedOpponentWarrior = battleDetails?.warriors.find(
               (warrior) => warrior.originalId === context.opponentId,
             );
+
             const detailedUserWarrior = battleDetails?.warriors.find(
               (warrior) => warrior.originalId === context.characterId,
             );
+
             const opponentWarriorForTags =
               detailedOpponentWarrior ?? recentBattle.opponentWarrior;
+
             const userWarriorForTags =
               detailedUserWarrior ?? recentBattle.userWarrior;
+
             const isCurrentBattle = recentBattle.battleId === battle?.id;
 
             return (

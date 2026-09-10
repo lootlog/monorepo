@@ -49,8 +49,11 @@ import { LootlogApi } from "../../lootlog-api.js";
 import { EventOperations } from "./events.data-layer.js";
 
 type Guild = typeof guildTable.$inferSelect;
+
 type Member = typeof memberTable.$inferSelect;
+
 type Role = typeof roleTable.$inferSelect;
+
 type EventEndpointIdentifier = keyof typeof LootlogApi.groups.events.endpoints;
 
 export interface AuthorizedEventCaller {
@@ -111,18 +114,22 @@ const read = {
   capabilities: [Permission.LOOTLOG_EVENTS_READ],
   mode: "all",
 } as const;
+
 const write = {
   capabilities: [Permission.LOOTLOG_EVENTS_WRITE],
   mode: "all",
 } as const;
+
 const manage = {
   capabilities: [Permission.LOOTLOG_EVENTS_MANAGE],
   mode: "all",
 } as const;
+
 const owner = {
   capabilities: [Permission.OWNER, Permission.ADMIN],
   mode: "any",
 } as const;
+
 const timers = {
   capabilities: [Permission.LOOTLOG_TIMERS_READ],
   mode: "all",
@@ -132,6 +139,7 @@ const operationIds = operationIdentifiers(LootlogApi.groups.events.endpoints);
 
 const operationFailure = (cause: unknown): EventsHttpFailure => {
   if (cause instanceof EventTimersError) return operationFailure(cause.cause);
+
   if (
     cause instanceof EventsAccessDenied ||
     cause instanceof EventsBadRequest ||
@@ -140,7 +148,9 @@ const operationFailure = (cause: unknown): EventsHttpFailure => {
   ) {
     return cause;
   }
+
   if (cause instanceof ApplicationError) return cause;
+
   return new EventsDataError({ cause });
 };
 
@@ -196,6 +206,7 @@ export const EventsHandlers = HttpApiBuilder.group(
                 code: "ORGANIZATION_SCOPE_REQUIRED",
               }),
             );
+
       return toHttpResponse(
         Effect.flatMap(caller, (value) => operation(endpoint, run(value))),
       );

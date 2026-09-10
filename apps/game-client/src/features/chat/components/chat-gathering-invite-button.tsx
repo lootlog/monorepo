@@ -16,16 +16,20 @@ export function ChatGatheringInviteButton({
   onErrorChange: (failed: boolean) => void;
 }) {
   const { t } = useTranslation("chat");
+
   const { inviteParticipants, canInviteParticipants } =
     useReadyRoomInvitations();
+
   const inFlight = useRef(false);
   const [pending, setPending] = useState(false);
   const label = t(pending ? "gatherings.inviting" : "gatherings.invite");
+
   const invite = async () => {
     if (inFlight.current || !canInviteParticipants()) return;
     inFlight.current = true;
     setPending(true);
     onErrorChange(false);
+
     try {
       await inviteParticipants();
     } catch {
@@ -35,6 +39,7 @@ export function ChatGatheringInviteButton({
       setPending(false);
     }
   };
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>

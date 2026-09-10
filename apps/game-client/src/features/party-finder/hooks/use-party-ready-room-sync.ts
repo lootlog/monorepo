@@ -15,28 +15,35 @@ export function usePartyReadyRoomSync(): void {
   const world = useGameStore((state) => state.game?.world);
   const characterId = useGameStore((state) => state.game?.hero.characterId);
   const { socket } = useSocket();
+
   const applyAuthoritativeSync = usePartyFinderStore(
     (state) => state.applyAuthoritativeSync,
   );
+
   const setReadyRoomsSynchronized = usePartyFinderStore(
     (state) => state.setReadyRoomsSynchronized,
   );
+
   // Cleanup cancels the latest timer; disposed and aborted guards prevent pending requests from scheduling another.
   // oxlint-disable-next-line react-doctor/effect-needs-cleanup
   useEffect(() => {
     setReadyRoomsSynchronized(false);
+
     if (!joined) return;
     let controller: AbortController | undefined;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let disposed = false;
+
     const synchronize = () => {
       controller?.abort();
       clearTimeout(timer);
       const request = new AbortController();
       controller = request;
+
       const baseline = captureReadyRoomSyncBaseline(
         usePartyFinderStore.getState(),
       );
+
       void partyReadyRoomControllerList({ signal: request.signal })
         .then((projections) => {
           if (disposed || request.signal.aborted) return;
@@ -59,12 +66,15 @@ export function usePartyReadyRoomSync(): void {
             timer = setTimeout(synchronize, 30_000);
         });
     };
+
     const permissionsChanged = () => {
       usePartyFinderStore.getState().clearReadyRooms();
       synchronize();
     };
+
     synchronize();
     socket?.on(GatewayEvent.PERMISSIONS_UPDATED, permissionsChanged);
+
     return () => {
       disposed = true;
       controller?.abort();

@@ -28,6 +28,7 @@ export const EventRankingPoints = ({
 }: EventRankingPointsProps) => {
   const { t } = useTranslation();
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+
   const pointsValue = (
     <>
       <span className="text-sm font-bold text-primary tabular-nums @md/ranking:text-base">

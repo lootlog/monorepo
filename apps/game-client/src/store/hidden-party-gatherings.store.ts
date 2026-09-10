@@ -38,6 +38,7 @@ export const getHiddenPartyGatheringsScopeKey = (scope: {
   characterId: string | null | undefined;
 }): string | null => {
   const parts = [scope.userId, scope.world, scope.accountId, scope.characterId];
+
   return parts.every(Boolean) ? JSON.stringify(parts) : null;
 };
 
@@ -48,9 +49,11 @@ const activeHiddenGatherings = (
   return Object.fromEntries(
     Object.entries(hiddenByScope).flatMap(([scopeKey, entries]) => {
       if (!scopeKey) return [];
+
       const active = Object.entries(entries).filter(
         ([id, expiry]) => id && expiry > now,
       );
+
       return active.length ? [[scopeKey, Object.fromEntries(active)]] : [];
     }),
   );
@@ -63,6 +66,7 @@ export const useHiddenPartyGatheringsStore =
         hiddenByScope: {},
         hide: (scopeKey, notificationId, expiresAt) => {
           const now = Date.now();
+
           if (
             !scopeKey ||
             !notificationId ||
@@ -71,11 +75,13 @@ export const useHiddenPartyGatheringsStore =
           ) {
             return;
           }
+
           set((state) => {
             const hiddenByScope = activeHiddenGatherings(
               state.hiddenByScope,
               now,
             );
+
             return {
               hiddenByScope: {
                 ...hiddenByScope,
@@ -94,11 +100,15 @@ export const useHiddenPartyGatheringsStore =
               state.hiddenByScope,
               Date.now(),
             );
+
             const entries = hiddenByScope[scopeKey];
+
             if (entries) {
               delete entries[notificationId];
+
               if (!Object.keys(entries).length) delete hiddenByScope[scopeKey];
             }
+
             return { hiddenByScope };
           });
         },

@@ -10,15 +10,18 @@ import { useNotificationsStore } from "@/store/notifications.store";
 import { useWindowsStore } from "@/store/windows.store";
 
 let test: ReturnType<typeof createNotificationTest>;
+
 let presentNotifications:
   | ((requests: readonly NotificationPresentationRequest[]) => void)
   | undefined;
 
 const NotificationPresentationProbe = () => {
   const presenter = useNotificationPresenter().presentNotifications;
+
   const notificationCount = useNotificationsStore(
     (state) => state.notifications.length,
   );
+
   const open = useWindowsStore((state) => state.notifications.open);
 
   useEffect(() => {
@@ -46,11 +49,13 @@ describe("useNotificationPresenter React batching", () => {
 
   it("commits the notification and window stores together", () => {
     let updateCommits = 0;
+
     const onRender: ProfilerOnRenderCallback = (_id, phase) => {
       if (phase === "update") {
         updateCommits += 1;
       }
     };
+
     render(
       <Profiler id="notification-presentation" onRender={onRender}>
         <NotificationPresentationProbe />

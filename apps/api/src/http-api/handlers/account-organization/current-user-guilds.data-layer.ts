@@ -64,6 +64,7 @@ export interface CurrentUserGuildPorts {
 
 const fallbackEligible = (error: unknown) => {
   if (!(error instanceof ApplicationError)) return false;
+
   return (
     error.kind === ApplicationErrorKind.RATE_LIMITED ||
     error.kind === ApplicationErrorKind.TIMEOUT ||
@@ -88,6 +89,7 @@ export const makeCurrentUserGuilds = (
   const readMembers = (discordId: string, guildIds: ReadonlyArray<string>) =>
     Effect.gen(function* () {
       if (guildIds.length === 0) return [];
+
       const members = yield* database
         .select()
         .from(memberTable)
@@ -97,6 +99,7 @@ export const makeCurrentUserGuilds = (
             inArray(memberTable.guildId, [...guildIds]),
           ),
         );
+
       return yield* hydrateMemberRoles(database, members);
     });
 
@@ -111,6 +114,7 @@ export const makeCurrentUserGuilds = (
           const order = new Map(
             (rows[0]?.guildsOrder ?? []).map((id, index) => [id, index]),
           );
+
           return [...summaries].sort(
             (left, right) =>
               (order.get(left.id) ?? Number.MAX_SAFE_INTEGER) -
@@ -124,6 +128,7 @@ export const makeCurrentUserGuilds = (
   ) {
     if (yield* requestApiKeyAccess)
       return yield* ports.accessibleFallback(identity);
+
     const discordGuilds = yield* ports.freshDiscordGuilds(identity).pipe(
       Effect.map((guilds) => ({ kind: "discord" as const, guilds })),
       Effect.catch((error) =>
@@ -140,6 +145,7 @@ export const makeCurrentUserGuilds = (
           : Effect.fail(error),
       ),
     );
+
     if (discordGuilds.kind === "fallback") return discordGuilds.guilds;
     const apiGuilds = discordGuilds.guilds;
     const discordGuildIds = apiGuilds.map(({ id }) => id);
@@ -147,26 +153,34 @@ export const makeCurrentUserGuilds = (
       ...identity,
       activeDiscordGuildIds: discordGuildIds,
     });
+
     if (discordGuildIds.length === 0) return [];
+
     const guilds = yield* database
       .select()
       .from(guildTable)
       .where(inArray(guildTable.id, discordGuildIds))
       .pipe(Effect.map((rows) => rows.filter(({ active }) => active)));
+
     let members = yield* readMembers(
       identity.discordId,
       guilds.map(({ id }) => id),
     );
+
     const memberByGuild = new Map(
       members.map((member) => [member.guildId, member]),
     );
+
     const staleThreshold =
       (yield* Clock.currentTimeMillis) - getMemberCacheSoftTtl(environment);
+
     const discordById = new Map(apiGuilds.map((guild) => [guild.id, guild]));
+
     const candidates = guilds
       .flatMap((guild) => {
         const member = memberByGuild.get(guild.id);
         const lastSync = member?.lastDiscordSyncAt ?? member?.updatedAt;
+
         if (
           member?.active &&
           lastSync &&
@@ -174,16 +188,20 @@ export const makeCurrentUserGuilds = (
         ) {
           return [];
         }
+
         const hasAccess = Boolean(
           member?.active &&
           member.roles.some((role) =>
             role.permissions.includes(Permission.LOOTLOG_ACCESS),
           ),
         );
+
         const discordGuild = discordById.get(guild.id);
+
         const privileged = Boolean(
           discordGuild && (discordGuild.owner || discordAdmin(discordGuild)),
         );
+
         return [
           {
             guildId: guild.id,
@@ -195,7 +213,9 @@ export const makeCurrentUserGuilds = (
         (left, right) =>
           left.rank - right.rank || left.guildId.localeCompare(right.guildId),
       );
+
     let immediate = 0;
+
     for (const candidate of candidates) {
       if (immediate < 2) {
         const refreshed = yield* ports.refreshMember({
@@ -204,6 +224,7 @@ export const makeCurrentUserGuilds = (
           priority: MEMBER_REFRESH_PRIORITY.CONNECT,
           reason: "guild-connect",
         });
+
         if (!refreshed.refreshQueued) immediate += 1;
       } else {
         yield* ports.queueMember({
@@ -214,19 +235,23 @@ export const makeCurrentUserGuilds = (
         });
       }
     }
+
     if (candidates.length > 0) {
       members = yield* readMembers(
         identity.discordId,
         guilds.map(({ id }) => id),
       );
     }
+
     const refreshedByGuild = new Map(
       members.map((member) => [member.guildId, member]),
     );
+
     const summaries = guilds.map((guild): GuildSummary => {
       const member = refreshedByGuild.get(guild.id);
       const owner = guild.ownerId === identity.discordId;
       const lastSync = member?.lastDiscordSyncAt ?? member?.updatedAt;
+
       return {
         id: guild.id,
         name: guild.name,
@@ -246,6 +271,7 @@ export const makeCurrentUserGuilds = (
         ),
       };
     });
+
     return yield* sort(identity.userId, summaries);
   });
 

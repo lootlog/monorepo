@@ -7,6 +7,7 @@ import { Schema } from "effect";
 import { createRabbitMQClient } from "../../rabbitmq/client.js";
 
 const __filename = fileURLToPath(import.meta.url);
+
 const __dirname = path.dirname(__filename);
 
 const EventFixture = Schema.Struct({
@@ -14,10 +15,13 @@ const EventFixture = Schema.Struct({
   routingKey: Schema.String,
   payload: Schema.Json,
 });
+
 type EventFixture = typeof EventFixture.Type;
+
 export const parseEventFixture = Schema.decodeUnknownSync(
   Schema.fromJsonString(EventFixture),
 );
+
 const parsePayload = Schema.decodeUnknownSync(
   Schema.fromJsonString(Schema.Json),
 );
@@ -254,9 +258,11 @@ const publishNonInteractive = async (
       if (!fixture) {
         console.error(chalk.red(`\n❌ Event '${args.event}' not found\n`));
         console.log(chalk.gray("Available events:"));
+
         for (const name of fixtures.keys()) {
           console.log(chalk.cyan(`  - ${name}`));
         }
+
         console.log();
         process.exit(1);
       }
@@ -303,6 +309,7 @@ const publishNonInteractive = async (
 export const publish = async (args: string[]): Promise<void> => {
   if (args.includes("--help") || args.includes("-h")) {
     showHelp();
+
     return;
   }
 

@@ -5,6 +5,7 @@ import { EventKillHistoryResponse } from "#src/events/kills/event-kill-response.
 describe("EventKillHistoryResponseDto", () => {
   it("encodes cached map data dates as ISO strings", () => {
     const assignedAt = new Date("2026-06-19T10:00:00.000Z");
+
     const encoded = Schema.encodeSync(EventKillHistoryResponse)({
       data: [
         {

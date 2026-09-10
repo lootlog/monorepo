@@ -17,6 +17,7 @@ type DragInfo = {
 };
 
 const DEFAULT_STATE: Position = { x: 0, y: 0 };
+
 const DEFAULT_DRAG_INFO: DragInfo = {
   offsetX: 0,
   offsetY: 0,
@@ -25,10 +26,12 @@ const DEFAULT_DRAG_INFO: DragInfo = {
 };
 
 let dragSessionCounter = 0;
+
 let activeDragSessionId: number | null = null;
 
 const getNextDragSessionId = () => {
   dragSessionCounter += 1;
+
   return dragSessionCounter;
 };
 
@@ -116,27 +119,32 @@ export const useDrag = ({
 
     finalPositionRef.current = nextPosition;
     pendingPositionRef.current = nextPosition;
+
     if (positionFrameRef.current !== null) return;
 
     positionFrameRef.current = window.requestAnimationFrame(() => {
       positionFrameRef.current = null;
       const pendingPosition = pendingPositionRef.current;
       pendingPositionRef.current = null;
+
       if (!pendingPosition) return;
 
       if (isDraggingRef.current) {
         const draggableElement = ref.current;
+
         if (!draggableElement) return;
         const dragOriginPosition = dragOriginPositionRef.current;
         const translateX = pendingPosition.x - dragOriginPosition.x;
         const translateY = pendingPosition.y - dragOriginPosition.y;
         draggableElement.style.transform = `translate3d(${translateX}px, ${translateY}px, 0)`;
+
         return;
       }
 
       setFinalPosition(pendingPosition);
     });
   };
+
   const queuePositionRef = useRef(queuePosition);
 
   useEffect(() => {
@@ -145,28 +153,35 @@ export const useDrag = ({
 
   const finishDrag = () => {
     activePointerIdRef.current = null;
+
     if (
       dragSessionRef.current !== null &&
       dragSessionRef.current === activeDragSessionId
     ) {
       activeDragSessionId = null;
     }
+
     dragSessionRef.current = null;
+
     if (!isDraggingRef.current) return;
 
     isDraggingRef.current = false;
+
     if (positionFrameRef.current !== null) {
       window.cancelAnimationFrame(positionFrameRef.current);
       positionFrameRef.current = null;
     }
+
     const stoppedPosition =
       pendingPositionRef.current ?? finalPositionRef.current;
+
     pendingPositionRef.current = null;
     finalPositionRef.current = stoppedPosition;
     setFinalPosition(stoppedPosition);
     onDragStopRef.current(stoppedPosition);
     setIsDragging(false);
   };
+
   const finishDragRef = useRef(finishDrag);
 
   useEffect(() => {
@@ -176,6 +191,7 @@ export const useDrag = ({
   const startDrag = (x: number, y: number) => {
     if (isLockedRef.current) return false;
     const draggableElement = ref.current;
+
     if (!draggableElement) return false;
     const { width, height } = draggableElement.getBoundingClientRect();
     const sessionId = getNextDragSessionId();
@@ -193,18 +209,25 @@ export const useDrag = ({
     draggableElement.style.willChange = "transform";
     hasDragStylesRef.current = true;
     setIsDragging(true);
+
     return true;
   };
 
   const handlePointerDown = (evt: ReactPointerEvent<HTMLElement>) => {
     if (isLockedRef.current) return;
+
     if (!evt.isPrimary || evt.button !== 0) return;
+
     if (!(evt.target instanceof HTMLElement)) return;
+
     if (evt.target.getAttribute("data-state") === "input") return;
+
     if (evt.target.getAttribute("data-slot") === "hidden") return;
+
     if (evt.target.closest("[data-ll-draggable='false']")) return;
 
     const scale = evt.pointerType === "touch" ? getRuntimeUiScale() : 1;
+
     if (!startDrag(evt.clientX * scale, evt.clientY * scale)) return;
 
     activePointerIdRef.current = evt.pointerId;
@@ -216,17 +239,21 @@ export const useDrag = ({
       if (positionFrameRef.current !== null) {
         window.cancelAnimationFrame(positionFrameRef.current);
       }
+
       if (dragSessionRef.current === activeDragSessionId) {
         activeDragSessionId = null;
       }
+
       activePointerIdRef.current = null;
       dragSessionRef.current = null;
       isDraggingRef.current = false;
       const draggableElement = ref.current;
+
       if (draggableElement && hasDragStylesRef.current) {
         draggableElement.style.transform = "";
         draggableElement.style.willChange = "";
       }
+
       hasDragStylesRef.current = false;
     },
     [ref],
@@ -235,6 +262,7 @@ export const useDrag = ({
   useLayoutEffect(() => {
     if (isDragging || !hasDragStylesRef.current) return;
     const draggableElement = ref.current;
+
     if (!draggableElement) return;
 
     draggableElement.style.transform = "";
@@ -250,20 +278,25 @@ export const useDrag = ({
       if (timeoutId !== undefined) {
         clearTimeout(timeoutId);
       }
+
       timeoutId = window.setTimeout(() => {
         if (isLockedRef.current) return;
         const draggableElement = ref.current;
+
         if (!draggableElement) return;
         const { width, height } = draggableElement.getBoundingClientRect();
         const previousPosition = finalPositionRef.current;
+
         const x = Math.min(
           Math.max(0, previousPosition.x),
           window.innerWidth - width,
         );
+
         const y = Math.min(
           Math.max(0, previousPosition.y),
           window.innerHeight - height,
         );
+
         if (x === previousPosition.x && y === previousPosition.y) return;
 
         const nextPosition = { x, y };
@@ -274,8 +307,10 @@ export const useDrag = ({
     };
 
     window.addEventListener("resize", handleResize);
+
     return () => {
       window.removeEventListener("resize", handleResize);
+
       if (timeoutId !== undefined) {
         clearTimeout(timeoutId);
       }
@@ -284,17 +319,22 @@ export const useDrag = ({
 
   useEffect(() => {
     if (!isDragging) return;
+
     if (isLocked) {
       finishDragRef.current();
+
       return;
     }
 
     const handlePointerMove = (evt: PointerEvent) => {
       if (evt.pointerId !== activePointerIdRef.current) return;
+
       if (evt.pointerType === "mouse" && (evt.buttons & 1) === 0) {
         finishDragRef.current();
+
         return;
       }
+
       if (
         dragSessionRef.current === null ||
         dragSessionRef.current !== activeDragSessionId
@@ -312,18 +352,23 @@ export const useDrag = ({
         evt.clientY * scale - offsetY,
       );
     };
+
     const handlePointerEnd = (evt: PointerEvent) => {
       if (evt.pointerId === activePointerIdRef.current) {
         finishDragRef.current();
       }
     };
+
     const handleGlobalPointerDown = (evt: PointerEvent) => {
       const draggableElement = ref.current;
+
       if (!draggableElement || !(evt.target instanceof Node)) return;
+
       if (!draggableElement.contains(evt.target)) {
         finishDragRef.current();
       }
     };
+
     const handleWindowBlur = () => {
       finishDragRef.current();
     };
@@ -351,13 +396,16 @@ export const useDrag = ({
 
   const recalculate = (width?: number, height?: number) => {
     const draggableElement = ref.current;
+
     if (!draggableElement) return;
+
     const {
       top,
       left,
       width: renderedWidth,
       height: renderedHeight,
     } = draggableElement.getBoundingClientRect();
+
     queuePositionRef.current(
       width ?? renderedWidth,
       height ?? renderedHeight,

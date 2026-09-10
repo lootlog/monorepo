@@ -42,6 +42,7 @@ export const GuildNavItem: FC<GuildNavItemProps> = ({
 }) => {
   const { isRukiaTheme } = useThemeMeta();
   const { t } = useTranslation();
+
   const isActive =
     currentGuildId === guild.id || currentGuildId === guild.vanityUrl;
 
@@ -49,6 +50,7 @@ export const GuildNavItem: FC<GuildNavItemProps> = ({
     if (isDragging) {
       event.preventDefault();
       event.stopPropagation();
+
       return;
     }
 

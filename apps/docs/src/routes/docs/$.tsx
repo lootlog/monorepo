@@ -39,6 +39,7 @@ const loadStaticPage = createServerFn({ method: "GET" })
     }
 
     const { description, title } = page.data;
+
     if (!description || !title) {
       throw new Error(`Documentation page lacks metadata: ${page.path}`);
     }
@@ -89,12 +90,14 @@ function DocsRoute() {
   const { toc } = use(page.load());
   const MDX = page.body;
   const chapter = getChapterBySlug(slugs);
+
   const layoutStyle: DocsLayoutStyle = {
     "--fd-header-height": "72px",
     gridTemplate: `"header header header"
 "sidebar toc-popover toc"
 "sidebar main toc" 1fr / var(--fd-sidebar-col) minmax(0, 1fr) var(--fd-toc-width)`,
   };
+
   const chapterStyle: ChapterStyle = {
     "--active-chapter-color": chapter.color,
   };

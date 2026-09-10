@@ -9,11 +9,15 @@ import {
 } from "./use-notification-chat-orchestration";
 
 const fetchRequest = vi.fn<typeof fetch>();
+
 let queryClient: QueryClient;
+
 let restoreApi: () => void;
+
 const wrapper = ({ children }: { children: ReactNode }) => (
   <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
 );
+
 afterEach(() => {
   restoreApi();
   queryClient.clear();
@@ -38,13 +42,17 @@ describe("useNotificationChatOrchestration", () => {
       guildIds: string[];
       notificationId: string;
     }>();
+
     const chatDeferred = Promise.withResolvers<string>();
+
     const sendChatMessage = vi.fn<(guildIds: string[]) => Promise<string>>(
       () => chatDeferred.promise,
     );
+
     fetchRequest.mockReturnValue(
       notificationDeferred.promise.then((body) => Response.json(body)),
     );
+
     const { result } = renderHook(() => useNotificationChatOrchestration(), {
       wrapper,
     });
@@ -52,6 +60,7 @@ describe("useNotificationChatOrchestration", () => {
     let operation:
       | ReturnType<typeof result.current.startNotificationMessage<string>>
       | undefined;
+
     act(() => {
       operation = result.current.startNotificationMessage({
         guildIds: ["guild-1"],
@@ -73,9 +82,11 @@ describe("useNotificationChatOrchestration", () => {
 
     await act(async () => {
       chatDeferred.resolve("sent");
+
       if (!operation) {
         throw new Error("Expected notification operation");
       }
+
       await operation;
     });
     expect(result.current.isCreatingNotificationMessage).toBe(false);
@@ -83,6 +94,7 @@ describe("useNotificationChatOrchestration", () => {
 
   it("unlocks after notification creation fails", async () => {
     fetchRequest.mockRejectedValue(new Error("unavailable"));
+
     const { result } = renderHook(() => useNotificationChatOrchestration(), {
       wrapper,
     });
@@ -105,9 +117,11 @@ describe("useNotificationChatOrchestration", () => {
     fetchRequest.mockResolvedValue(
       Response.json({ guildIds: ["guild-1"], notificationId: "sent" }),
     );
+
     const { result } = renderHook(() => useNotificationChatOrchestration(), {
       wrapper,
     });
+
     await act(async () => {
       await expect(
         result.current.startNotificationMessage({

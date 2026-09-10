@@ -12,6 +12,7 @@ it("updates the spawn window and warning colors, and clamps an expired countdown
   vi.useFakeTimers();
   vi.setSystemTime("2026-09-05T12:00:00Z");
   const now = Date.now();
+
   const { unmount } = render(
     <TimerCountdown minSpawnTime={now + 1000} maxSpawnTime={now + 32_000} />,
   );
@@ -38,9 +39,11 @@ it("uses an updated spawn window when a timer is reset", () => {
   vi.useFakeTimers();
   vi.setSystemTime("2026-09-05T12:00:00Z");
   const now = Date.now();
+
   const { rerender } = render(
     <TimerCountdown minSpawnTime={now - 1000} maxSpawnTime={now + 10_000} />,
   );
+
   expect(screen.getByText("00:00:10").className).toContain("text-red-500");
   act(() => vi.advanceTimersByTime(1000));
   rerender(

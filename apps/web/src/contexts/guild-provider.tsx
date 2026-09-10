@@ -13,8 +13,10 @@ type GuildContextProviderContentProps = Props & {
 
 const getStoredWorld = (guildId: string | undefined): string => {
   if (!guildId) return "";
+
   try {
     const stored = localStorage.getItem(`lootlog:guild:${guildId}:world`);
+
     return stored ? JSON.parse(stored) : "";
   } catch {
     return "";
@@ -23,6 +25,7 @@ const getStoredWorld = (guildId: string | undefined): string => {
 
 const saveWorld = (guildId: string | undefined, world: string) => {
   if (!guildId) return;
+
   try {
     localStorage.setItem(
       `lootlog:guild:${guildId}:world`,

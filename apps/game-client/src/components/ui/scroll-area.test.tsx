@@ -10,6 +10,7 @@ afterEach(() => {
 describe("ScrollArea", () => {
   it("keeps root props separate from the scrollable viewport", () => {
     const viewportRef = createRef<HTMLDivElement>();
+
     const { container } = render(
       <ScrollArea
         ref={viewportRef}
@@ -45,9 +46,11 @@ describe("ScrollArea", () => {
       const { container } = render(
         <ScrollArea orientation={orientation}>Content</ScrollArea>,
       );
+
       const viewport = container.querySelector(
         "[data-ll-scroll-area-viewport]",
       );
+
       const content = viewport?.firstElementChild;
 
       expect(content).toHaveStyle({ minWidth: "fit-content" });
@@ -69,11 +72,14 @@ describe("ScrollArea", () => {
 
     const root = screen.getByTestId("root");
     const viewport = container.querySelector("[data-ll-scroll-area-viewport]");
+
     const horizontalScrollbar = await waitFor(() => {
       const scrollbar = Array.from(root.children).find(
         (element) => element.getAttribute("data-orientation") === "horizontal",
       );
+
       expect(scrollbar).toBeDefined();
+
       return scrollbar;
     });
 
@@ -101,9 +107,12 @@ describe("ScrollArea", () => {
       const elements = Array.from(root.children).filter((element) =>
         element.hasAttribute("data-orientation"),
       );
+
       expect(elements).toHaveLength(2);
+
       return elements;
     });
+
     expect(viewport).toHaveStyle({
       overflowX: "scroll",
       overflowY: "scroll",
@@ -116,7 +125,9 @@ describe("ScrollArea", () => {
     const { container } = render(
       <ScrollArea orientation="horizontal">Content</ScrollArea>,
     );
+
     const viewport = container.querySelector("[data-ll-scroll-area-viewport]");
+
     if (!(viewport instanceof HTMLDivElement))
       throw new Error("Missing scroll viewport");
     Object.defineProperties(viewport, {
@@ -149,7 +160,9 @@ describe("ScrollArea", () => {
     const { container } = render(
       <ScrollArea orientation="horizontal">Content</ScrollArea>,
     );
+
     const viewport = container.querySelector("[data-ll-scroll-area-viewport]");
+
     if (!(viewport instanceof HTMLDivElement))
       throw new Error("Missing scroll viewport");
     Object.defineProperties(viewport, {
@@ -170,7 +183,9 @@ describe("ScrollArea", () => {
     const { container } = render(
       <ScrollArea orientation="horizontal">Content</ScrollArea>,
     );
+
     const viewport = container.querySelector("[data-ll-scroll-area-viewport]");
+
     if (!(viewport instanceof HTMLDivElement))
       throw new Error("Missing scroll viewport");
     Object.defineProperties(viewport, {
@@ -197,13 +212,17 @@ describe("ScrollArea", () => {
     );
 
     const root = screen.getByTestId("root");
+
     const scrollbar = await waitFor(() => {
       const element = Array.from(root.children).find(
         (child) => child.getAttribute("data-orientation") === "vertical",
       );
+
       expect(element).toBeDefined();
+
       if (!(element instanceof HTMLElement))
         throw new Error("Missing scrollbar");
+
       return element;
     });
 

@@ -16,5 +16,6 @@ const errorKeys = new Map([
 export const getGuildSettingsErrorMessage = (cause: unknown, t: TFunction) => {
   const message = getApiErrorMessage(cause);
   const key = message ? errorKeys.get(message) : undefined;
+
   return key ? t(key) : undefined;
 };

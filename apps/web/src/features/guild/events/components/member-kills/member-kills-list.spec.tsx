@@ -12,6 +12,7 @@ import { MemberKillsList } from "./member-kills-list";
 await initializeTestTranslations();
 
 const wrapper = await createOrganizationTestWrapper();
+
 const renderList = (ui: ReactNode) => render(ui, { wrapper });
 
 afterEach(() => {
@@ -31,6 +32,7 @@ describe("MemberKillsList", () => {
       resetKey: "all",
       scrollElement: document.createElement("div"),
     };
+
     const { rerender } = renderList(
       <MemberKillsList {...commonProps} isLoading hasError={false} />,
     );
@@ -57,6 +59,7 @@ describe("MemberKillsList", () => {
       resetKey: "all",
       scrollElement: document.createElement("div"),
     };
+
     const { rerender } = renderList(
       <MemberKillsList {...commonProps} allKills={[]} isLoading />,
     );

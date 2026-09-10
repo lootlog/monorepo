@@ -58,12 +58,15 @@ export const usePlayersPresence = (
 ): PlayersPresenceState => {
   const scopeKey =
     selectedGuildId && world ? JSON.stringify([selectedGuildId, world]) : null;
+
   const [presenceResource, setPresenceResource] = useState(() =>
     createEmptyPresenceResource(scopeKey),
   );
+
   const [requestVersion, setRequestVersion] = useState(0);
   const { joined, connected, socket } = useSocket();
   const policy = socket?.getAccessPolicy?.();
+
   const forbidden =
     policy &&
     !canReadPresence(
@@ -71,16 +74,19 @@ export const usePlayersPresence = (
         (organization) => organization.organizationId === selectedGuildId,
       ),
     );
+
   let visiblePresenceResource =
     presenceResource.scopeKey === scopeKey
       ? presenceResource
       : createEmptyPresenceResource(scopeKey);
+
   if (forbidden)
     visiblePresenceResource = {
       ...createEmptyPresenceResource(scopeKey),
       accessState: "forbidden",
       loaded: true,
     };
+
   const setOnlinePlayers: Dispatch<SetStateAction<PlayerPresenceResponse>> = (
     update,
   ) => {
@@ -89,13 +95,16 @@ export const usePlayersPresence = (
         currentResource.scopeKey === scopeKey
           ? currentResource
           : createEmptyPresenceResource(scopeKey);
+
       const nextOnlinePlayers =
         typeof update === "function"
           ? update(scopedResource.onlinePlayers)
           : update;
+
       return { ...scopedResource, onlinePlayers: nextOnlinePlayers };
     });
   };
+
   const updateOnlinePlayersForCurrentScope = useEffectEvent(
     (update: (current: PlayerPresenceResponse) => PlayerPresenceResponse) => {
       setPresenceResource((currentResource) => {
@@ -103,6 +112,7 @@ export const usePlayersPresence = (
           currentResource.scopeKey === scopeKey
             ? currentResource
             : createEmptyPresenceResource(scopeKey);
+
         return {
           ...scopedResource,
           onlinePlayers: update(scopedResource.onlinePlayers),
@@ -115,9 +125,11 @@ export const usePlayersPresence = (
   const worldRef = useRef(world);
   const visibleScopeRef = useRef({ guildId: selectedGuildId, world });
   const requestIdRef = useRef(0);
+
   const policyRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
+
   const presenceUpdateControllerRef = useRef<{
     pendingUpdates: Map<string, PlayerPresence>;
     frame: number | null;
@@ -131,6 +143,7 @@ export const usePlayersPresence = (
     worldRef.current = world;
     const presenceUpdateController = presenceUpdateControllerRef.current;
     presenceUpdateController.pendingUpdates.clear();
+
     if (presenceUpdateController.frame !== null) {
       window.cancelAnimationFrame(presenceUpdateController.frame);
       presenceUpdateController.frame = null;
@@ -141,6 +154,7 @@ export const usePlayersPresence = (
     if (!selectedGuildId || !world) {
       requestIdRef.current += 1;
       visibleScopeRef.current = { guildId: selectedGuildId, world };
+
       return;
     }
 
@@ -164,6 +178,7 @@ export const usePlayersPresence = (
     }
 
     const policy = socket.getAccessPolicy?.();
+
     if (
       policy &&
       !canReadPresence(
@@ -174,6 +189,7 @@ export const usePlayersPresence = (
     ) {
       return;
     }
+
     const currentRequestId = ++requestIdRef.current;
     visibleScopeRef.current = { guildId: selectedGuildId, world };
 
@@ -190,6 +206,7 @@ export const usePlayersPresence = (
             loading: false,
             error: new Error("Online players response was empty"),
           }));
+
           return;
         }
 
@@ -199,6 +216,7 @@ export const usePlayersPresence = (
             accessState: "forbidden",
             loaded: true,
           });
+
           return;
         }
 
@@ -238,19 +256,23 @@ export const usePlayersPresence = (
     ) => {
       const normalizedPresence = normalizePresence(data);
       const snapshot = socket.getAccessPolicy?.();
+
       const organization = snapshot?.organizations.find(
         (entry) => entry.organizationId === selectedGuildIdRef.current,
       );
+
       const allowedPresence = snapshot
         ? filterPresenceByPolicy(
             { [normalizedPresence.discordId]: [normalizedPresence] },
             organization,
           )[normalizedPresence.discordId]?.[0]
         : normalizedPresence;
+
       if (!allowedPresence) {
         updateOnlinePlayersForCurrentScope((previous) =>
           filterPresenceByPolicy(previous, organization),
         );
+
         return;
       }
 
@@ -269,10 +291,12 @@ export const usePlayersPresence = (
         normalizedPresence.status === "offline" && normalizedPresence.sessionId
           ? `session:${normalizedPresence.sessionId}`
           : getPresenceKey(normalizedPresence);
+
       const presenceKey = `${normalizedPresence.discordId}:${updateKey}`;
       // Keep coalesced updates in receive order relative to session removals.
       presenceUpdateController.pendingUpdates.delete(presenceKey);
       presenceUpdateController.pendingUpdates.set(presenceKey, allowedPresence);
+
       if (presenceUpdateController.frame !== null) return;
 
       presenceUpdateController.frame = window.requestAnimationFrame(() => {
@@ -282,6 +306,7 @@ export const usePlayersPresence = (
         updateOnlinePlayersForCurrentScope((previous) => {
           const next = applyPresenceUpdates(previous, updates);
           const currentPolicy = socket.getAccessPolicy?.();
+
           return currentPolicy
             ? filterPresenceByPolicy(
                 next,
@@ -302,10 +327,12 @@ export const usePlayersPresence = (
 
     return () => {
       presenceUpdateController.pendingUpdates.clear();
+
       if (presenceUpdateController.frame !== null) {
         window.cancelAnimationFrame(presenceUpdateController.frame);
         presenceUpdateController.frame = null;
       }
+
       socket.off(
         GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
         handleOnlinePlayersPresenceUpdate,
@@ -319,6 +346,7 @@ export const usePlayersPresence = (
         currentResource.scopeKey === scopeKey
           ? currentResource
           : createEmptyPresenceResource(scopeKey);
+
       return {
         ...scopedResource,
         accessState: "allowed",
@@ -328,6 +356,7 @@ export const usePlayersPresence = (
     });
     setRequestVersion((version) => version + 1);
   };
+
   const schedulePolicyRefresh = () => {
     if (policyRefreshTimerRef.current !== null)
       clearTimeout(policyRefreshTimerRef.current);
@@ -336,6 +365,7 @@ export const usePlayersPresence = (
       retry();
     }, 5_000);
   };
+
   const handlePermissionsUpdated = useEffectEvent(
     (payload: PermissionsUpdatedPayload) => {
       if (!payload.accessPolicy) {
@@ -343,18 +373,23 @@ export const usePlayersPresence = (
         presenceUpdateControllerRef.current.pendingUpdates.clear();
         setPresenceResource(createEmptyPresenceResource(scopeKey));
         schedulePolicyRefresh();
+
         return;
       }
+
       const policy = payload.accessPolicy.organizations.find(
         (organization) => organization.organizationId === selectedGuildId,
       );
+
       const changes =
         payload.changes?.filter(
           (change) =>
             change.organizationId === selectedGuildId &&
             change.areas.includes("presence"),
         ) ?? [];
+
       if (policy && changes.length === 0) return;
+
       if (!policy || changes.some((change) => change.restricted)) {
         requestIdRef.current += 1;
         presenceUpdateControllerRef.current.pendingUpdates.clear();
@@ -366,10 +401,12 @@ export const usePlayersPresence = (
           onlinePlayers: filterPresenceByPolicy(current.onlinePlayers, policy),
         }));
       }
+
       if (policyRefreshTimerRef.current !== null) {
         clearTimeout(policyRefreshTimerRef.current);
         policyRefreshTimerRef.current = null;
       }
+
       if (joined && connected && changes.some((change) => change.expanded)) {
         schedulePolicyRefresh();
       }
@@ -383,6 +420,7 @@ export const usePlayersPresence = (
 
     return () => {
       socket.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
+
       if (policyRefreshTimerRef.current !== null) {
         clearTimeout(policyRefreshTimerRef.current);
         policyRefreshTimerRef.current = null;

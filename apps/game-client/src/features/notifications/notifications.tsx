@@ -14,23 +14,31 @@ export const Notifications = () => {
   const { npcTypeColors } = useNpcTypeColors();
   useNotifications();
   const open = useWindowsStore((state) => state.notifications.open);
+
   const defaultWindowHeight = useWindowsStore(
     (state) => state.notifications.size.height,
   );
+
   const storedMaxContentHeight = useWindowsStore(
     (state) => state.notifications.maxContentHeight,
   );
+
   const setOpen = useWindowsStore((state) => state.setOpen);
+
   const setMaxContentHeight = useWindowsStore(
     (state) => state.setMaxContentHeight,
   );
+
   const clearNotifications = useNotificationsStore(
     (state) => state.clearNotifications,
   );
+
   const [isMaxHeightAdjustmentArmed, setIsMaxHeightAdjustmentArmed] =
     useState(false);
+
   const resolvedMaxContentHeight =
     storedMaxContentHeight ?? defaultWindowHeight;
+
   const { notifications: filteredNotifications, settings } =
     useVisibleNotifications({
       autoCleanup: true,

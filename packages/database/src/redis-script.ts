@@ -10,6 +10,7 @@ export class RedisScriptCache {
   get<TResult>(script: string, numberOfKeys: number) {
     const key = `${numberOfKeys}:${script}`;
     let descriptor = this.scripts.get(key);
+
     if (descriptor === undefined) {
       descriptor = Redis.script(
         (...parameters: ReadonlyArray<unknown>) => parameters,
@@ -17,6 +18,7 @@ export class RedisScriptCache {
       );
       this.scripts.set(key, descriptor);
     }
+
     return descriptor.withReturnType<TResult>();
   }
 }

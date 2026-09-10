@@ -15,16 +15,20 @@ import { getAirTagEffectiveRelation } from "@lootlog/domain/air-tag";
 import { airTagReceiveController } from "./air-tag-receive-controller";
 
 export const AIR_TAG_TARGET_TTL_MS = 10_000;
+
 export const AIR_TAG_FADE_START_MS = 3_000;
 
 const THREAT_COLOR = "#ff4d5e";
+
 const NEUTRAL_COLOR = "#38bdf8";
+
 const translateSettings = getFixedT("settings");
 
 type MapSize = { x: number; y: number };
 
 export const getAirTagMarkerAlpha = (ageMs: number): number => {
   if (ageMs <= AIR_TAG_FADE_START_MS) return 1;
+
   if (ageMs >= AIR_TAG_TARGET_TTL_MS) return 0;
 
   return (
@@ -64,6 +68,7 @@ export class AirTagRenderer {
       this.refreshDrawRegistration,
     );
     this.refreshDrawRegistration();
+
     return true;
   }
 
@@ -82,9 +87,11 @@ export class AirTagRenderer {
       this.frameTime,
       AIR_TAG_TARGET_TTL_MS,
     );
+
     if (this.frameTargets.length === 0) {
       this.cancelExpiry();
       this.detachDrawRegistration();
+
       return;
     }
 
@@ -96,9 +103,11 @@ export class AirTagRenderer {
           AIR_TAG_TARGET_TTL_MS,
         ) === AIR_TAG_CLAN_ENEMY_RELATION,
     );
+
     if (hasClanEnemy) {
       this.renderer.addDrawable(this.drawable);
     }
+
     this.drawHandheldMiniMap();
   };
 
@@ -106,9 +115,11 @@ export class AirTagRenderer {
     const geometry = this.renderer.getMapGeometry();
     const offset = geometry?.offset;
     const size = geometry?.size;
+
     if (!offset || !size) return;
 
     const tileSize = geometry.tileSize;
+
     for (const target of this.frameTargets) {
       if (
         getAirTagEffectiveRelation(
@@ -133,6 +144,7 @@ export class AirTagRenderer {
     const context = miniMap?.context;
     const margin = miniMap?.margin;
     const normalSize = miniMap?.normalSize;
+
     if (!size || !context || !margin || !normalSize || normalSize <= 0) {
       return;
     }
@@ -140,6 +152,7 @@ export class AirTagRenderer {
     // The preceding guard excludes missing, zero, and negative normalSize values.
     // oxlint-disable-next-line react-doctor/no-arithmetic-on-optional-chained-operand
     const radius = Math.min(5, Math.max(2.5, normalSize * 0.9));
+
     for (const target of this.frameTargets) {
       if (!this.isWithinMap(target, size)) continue;
 
@@ -148,11 +161,13 @@ export class AirTagRenderer {
         this.frameTime,
         AIR_TAG_TARGET_TTL_MS,
       );
+
       const color =
         relation === AIR_TAG_ENEMY_RELATION ||
         relation === AIR_TAG_CLAN_ENEMY_RELATION
           ? THREAT_COLOR
           : NEUTRAL_COLOR;
+
       const x = getMiniMapCanvasCoordinate(target.x, normalSize, margin.left);
       const y = getMiniMapCanvasCoordinate(target.y, normalSize, margin.top);
       const alpha = getAirTagMarkerAlpha(this.frameTime - target.observedAt);
@@ -179,9 +194,11 @@ export class AirTagRenderer {
     const ageMs = Math.max(0, this.frameTime - target.observedAt);
     const alpha = getAirTagMarkerAlpha(ageMs);
     const ageSeconds = Math.floor(ageMs / 1_000);
+
     const targetLabel = target.clan
       ? `${target.nickname} · ${target.clan.name}`
       : target.nickname;
+
     const seenLabel = translateSettings("airTags.seenSeconds", {
       seconds: ageSeconds,
     });
@@ -224,27 +241,33 @@ export class AirTagRenderer {
       this.now(),
       AIR_TAG_TARGET_TTL_MS,
     );
+
     if (targets.length === 0) {
       this.cancelExpiry();
       this.detachDrawRegistration();
+
       return;
     }
 
     this.scheduleExpiry(targets);
+
     if (this.unsubscribeDraw) return;
     this.unsubscribeDraw = this.renderer.subscribeDraw(this.handleDrawFrame);
   };
 
   private scheduleExpiry(targets: readonly AirTagTarget[]): void {
     this.cancelExpiry();
+
     if (!this.enabled || targets.length === 0) return;
 
     const now = this.now();
+
     const nearestExpiryAt = targets.reduce(
       (earliestExpiryAt, target) =>
         Math.min(earliestExpiryAt, target.observedAt + AIR_TAG_TARGET_TTL_MS),
       Number.POSITIVE_INFINITY,
     );
+
     this.expiryTimeoutId = window.setTimeout(
       () => {
         this.expiryTimeoutId = null;

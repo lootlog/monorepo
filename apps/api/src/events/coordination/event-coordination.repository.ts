@@ -23,8 +23,11 @@ export const makeEventCoordinationStore = (
         .from(eventTable)
         .where(and(eq(eventTable.id, eventId), eq(eventTable.guildId, guildId)))
         .limit(1);
+
       const event = events[0];
+
       if (!event) return null;
+
       const [heroes, maps, assignments] = yield* Effect.all(
         [
           database
@@ -58,6 +61,7 @@ export const makeEventCoordinationStore = (
         ],
         { concurrency: "unbounded" },
       );
+
       return {
         ...event,
         heroNpcs: heroes.map((hero) => ({
@@ -85,6 +89,7 @@ export const makeEventCoordinationStore = (
     if (heroIds.length === 0) {
       return Effect.succeed([]);
     }
+
     return Effect.map(
       database
         .select({ gap: eventMapCoverageGapTable, map: eventMapTable })

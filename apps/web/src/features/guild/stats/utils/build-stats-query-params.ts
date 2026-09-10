@@ -11,6 +11,7 @@ import type {
 import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
 
 export const DEFAULT_MEMBER_KILLS_LIMIT = 40;
+
 const DEFAULT_NPC_KILLERS_LIMIT = 50;
 
 const withDefinedEntries = <T extends Record<string, unknown>>(params: T) => {

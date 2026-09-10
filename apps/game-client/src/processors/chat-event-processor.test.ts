@@ -82,6 +82,7 @@ describe("ChatEventProcessor", () => {
     const consoleWarnSpy = vi
       .spyOn(console, "warn")
       .mockImplementation(() => undefined);
+
     useLootStore.setState({ lastLootId: 55 });
     fetchImplementation.mockRejectedValue(new Error("request failed"));
     processor.handle(createChatEvent("Podział łupów: zwycięstwo"));

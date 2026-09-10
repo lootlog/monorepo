@@ -27,11 +27,14 @@ const NPC_TYPE_ORDER: NpcType[] = [
 
 export const useStatsRankingModel = () => {
   const { t } = useTranslation();
+
   const { guildId } = useParams({
     from: "/_authenticated/$guildId/stats/ranking",
   });
+
   const navigate = useNavigate();
   const [cursor, setCursor] = useState(0);
+
   const {
     settings,
     debouncedMinLvl,
@@ -41,7 +44,9 @@ export const useStatsRankingModel = () => {
     setMaxLvl,
     setPeriod,
   } = useStatsSettings("ranking");
+
   const [searchQuery, setSearchQuery] = useState("");
+
   const killStatsParams = buildGuildKillStatsParams({
     world: settings.world ?? undefined,
     minLvl: debouncedMinLvl,
@@ -87,9 +92,11 @@ export const useStatsRankingModel = () => {
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
+
     searchTimeoutRef.current = setTimeout(() => {
       setSearchQuery(value);
       setCursor(0);
@@ -97,19 +104,23 @@ export const useStatsRankingModel = () => {
   };
 
   const memberRanking = data?.memberRanking ?? [];
+
   const filteredRanking = searchQuery
     ? memberRanking.filter((member) =>
         member.memberName?.toLowerCase().includes(searchQuery.toLowerCase()),
       )
     : memberRanking;
+
   const hasActiveFilters =
     Boolean(settings.world) ||
     Boolean(settings.minLvl) ||
     Boolean(settings.maxLvl) ||
     settings.period !== "all" ||
     Boolean(searchQuery);
+
   const total = filteredRanking.length;
   const paginatedData = filteredRanking.slice(cursor, cursor + ITEMS_PER_PAGE);
+
   const { hasNext, hasPrev, handleNextPage, handlePreviousPage } =
     getOffsetPagination(cursor, total, ITEMS_PER_PAGE, setCursor);
 

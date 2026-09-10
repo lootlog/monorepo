@@ -27,11 +27,13 @@ import { useRef, useState } from "react";
 const FormSchema = z.object({
   message: z.string().min(1).max(CHAT_INPUT_MAX_LENGTH),
 });
+
 type FormData = z.infer<typeof FormSchema>;
 
 export const CommandWindow = () => {
   const reportSendError = useChatSendError();
   const { t } = useTranslation("command");
+
   const { selectedInputGuildIds, setSelectedInputGuildIds } = useChatStore(
     useShallow((state) => ({
       selectedInputGuildIds: state.selectedInputGuildIds,
@@ -42,12 +44,15 @@ export const CommandWindow = () => {
   const characterId = useGameStore(
     (state) => state.game?.hero.characterId ?? "",
   );
+
   const accountId = useGameStore((state) => state.game?.hero.accountId ?? "");
   const heroName = useGameStore((state) => state.game?.hero.name ?? "");
   const heroLevel = useGameStore((state) => state.game?.hero.level ?? 0);
+
   const heroProfession = useGameStore(
     (state) => state.game?.hero.profession ?? "",
   );
+
   const heroIcon = useGameStore((state) => state.game?.hero.icon ?? "");
   const world = useGameStore((state) => state.game?.world ?? "unknown");
 
@@ -76,6 +81,7 @@ export const CommandWindow = () => {
 
   const onSubmit = async (data: FormData) => {
     if (!characterId || !world || selectedInputGuildIds.length <= 0) return;
+
     if (submissionInProgressRef.current) return;
 
     submissionInProgressRef.current = true;
@@ -85,9 +91,11 @@ export const CommandWindow = () => {
       if (data.message.startsWith("/grp")) {
         const description =
           data.message.slice("/grp".length).trim() || undefined;
+
         await handlePartyCommand(description, selectedInputGuildIds);
         setValue("message", "");
         setOpen("command", false);
+
         return;
       }
 
@@ -134,6 +142,7 @@ export const CommandWindow = () => {
       setOpen("command", false);
     } catch (error) {
       reportSendError(error);
+
       if (error instanceof NotificationChatPublishError) {
         setValue("message", "");
         setOpen("command", false);
@@ -184,11 +193,14 @@ export const CommandWindow = () => {
                 autoCapitalize="off"
                 onKeyDown={(e) => {
                   if (suggestions.handleKeyDown(e)) return;
+
                   if (e.key === "Escape") {
                     setValue("message", "");
                     setOpen("command", false);
+
                     return;
                   }
+
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
                     e.currentTarget.form?.requestSubmit();

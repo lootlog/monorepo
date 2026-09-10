@@ -37,6 +37,7 @@ const getExpirationTimeMs = (
   timeoutSeconds: number,
 ) => {
   if (timeoutSeconds <= 0) return null;
+
   return notification.receivedAtMs + timeoutSeconds * 1000;
 };
 
@@ -131,6 +132,7 @@ export const useVisibleNotifications = ({
         removeNotifications: state.removeNotifications,
       })),
     );
+
   const { settings } = useCurrentGameAccountNotificationSettings();
   const world = useGameStore((state) => state.game?.world ?? "unknown");
   const removeRef = useRef(removeNotifications);
@@ -169,6 +171,7 @@ export const useVisibleNotifications = ({
     const nearestExpirationTimeMs = Math.min(
       ...scheduledExpirations.map((entry) => entry.expirationTimeMs),
     );
+
     const timeoutId = window.setTimeout(
       () => {
         const currentTimeMs = Date.now();

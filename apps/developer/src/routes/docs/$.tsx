@@ -12,23 +12,29 @@ import {
 import { use } from "react";
 import { docs, source } from "~/lib/source";
 import { portalText } from "~/lib/translations";
+
 const loadPage = createServerFn({ method: "GET" })
   .validator((slugs: string[]) => slugs)
   .handler(async ({ data }) => {
     const page = source.getPage(data);
+
     if (!page) throw notFound();
+
     return {
       path: page.path,
       title: page.data.title,
       pageTree: await source.serializePageTree(source.getPageTree()),
     };
   });
+
 export const Route = createFileRoute("/docs/$")({
   loader: async ({ params }) => {
     const data = await loadPage({
       data: params._splat?.split("/").filter(Boolean) ?? [],
     });
+
     await docs.getPage(data.path)?.preload();
+
     return data;
   },
   head: ({ loaderData }) => ({
@@ -36,12 +42,15 @@ export const Route = createFileRoute("/docs/$")({
   }),
   component: Documentation,
 });
+
 function Documentation() {
   const { pageTree, path } = useFumadocsLoader(Route.useLoaderData());
   const page = docs.getPage(path);
+
   if (!page) throw notFound();
   const { toc } = use(page.load());
   const MDX = page.body;
+
   return (
     <DocsLayout
       tree={pageTree}

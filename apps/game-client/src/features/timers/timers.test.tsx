@@ -18,10 +18,12 @@ const createVisibleTimer = () =>
     minSpawnTime: "2099-04-22T10:00:00.000Z",
     maxSpawnTime: "2099-04-22T10:05:00.000Z",
   });
+
 afterEach(() => {
   vi.restoreAllMocks();
   vi.useRealTimers();
 });
+
 const mountTimers = (
   setup: (
     fixture: ReturnType<typeof createTimerViewFixture>,
@@ -29,17 +31,21 @@ const mountTimers = (
 ) => {
   const fixture = createTimerViewFixture([createVisibleTimer()]);
   setup(fixture);
+
   const view = render(
     <QueryClientProvider client={fixture.queryClient}>
       <Timers />
     </QueryClientProvider>,
   );
+
   onTestFinished(() => {
     view.unmount();
     fixture.cleanup();
   });
+
   return { ...fixture, view };
 };
+
 it("deduplicates timers and shows the same visible state in the regular and under-bag surfaces", () => {
   const fixture = mountTimers((value) =>
     value.queryClient.setQueryData(queryKeys.timers("gefion"), [
@@ -47,6 +53,7 @@ it("deduplicates timers and shows the same visible state in the regular and unde
       { ...createVisibleTimer(), updatedAt: "2099-04-22T09:59:01.000Z" },
     ]),
   );
+
   expect(screen.getAllByText(/\[H\] Tanroth/)).toHaveLength(1);
   expect(
     within(fixture.gameColumn).queryByText(/\[H\] Tanroth/),
@@ -59,6 +66,7 @@ it("deduplicates timers and shows the same visible state in the regular and unde
   expect(within(fixture.gameColumn).getByText(/\[H\] Tanroth/)).toBeVisible();
   expect(screen.getAllByText(/\[H\] Tanroth/)).toHaveLength(1);
 });
+
 it("opens add timer with the selected guild without changing the saved creation preference", async () => {
   const user = userEvent.setup();
   mountTimers(() =>
@@ -75,6 +83,7 @@ it("opens add timer with the selected guild without changing the saved creation 
     { "101": ["guild-2"] },
   );
 });
+
 it("recovers from empty filters without erasing the user's saved hidden timers", async () => {
   const user = userEvent.setup();
   mountTimers(() =>
@@ -94,16 +103,20 @@ it("recovers from empty filters without erasing the user's saved hidden timers",
   });
   expect(screen.getByText(/\[H\] Tanroth/)).toBeVisible();
 });
+
 it("retries a failed world request and displays the recovered timer", async () => {
   const user = userEvent.setup();
   const requests: Request[] = [];
+
   const fixture = mountTimers((value) => {
     value.queryClient.removeQueries({ queryKey: queryKeys.timers("gefion") });
+
     const restore = configureApiClients({
       main: {
         baseUrl: "https://api.example.test",
         fetch: (input, init) => {
           requests.push(new Request(input, init));
+
           return Promise.resolve(
             requests.length === 1
               ? Response.json({ message: "offline" }, { status: 503 })
@@ -122,8 +135,10 @@ it("retries a failed world request and displays the recovered timer", async () =
         },
       },
     });
+
     onTestFinished(restore);
   });
+
   expect(
     await screen.findByText("Nie udało się załadować timerów"),
   ).toBeVisible();
@@ -137,6 +152,7 @@ it("retries a failed world request and displays the recovered timer", async () =
   ).toBe(true);
   await waitFor(() => expect(fixture.queryClient.isFetching()).toBe(0));
 });
+
 it("uses the game world under the NI bag when world selection is disabled", () => {
   const fixture = mountTimers((value) => {
     setTestRuntimeGame({ interface: "ni", world: "pandora" });
@@ -147,6 +163,7 @@ it("uses the game world under the NI bag when world selection is disabled", () =
       generalConfig: { ...state.generalConfig, timersUnderBag: true },
     }));
   });
+
   expect(within(fixture.gameColumn).getByText(/\[H\] Tanroth/)).toBeVisible();
   expect(
     fixture.queryClient
@@ -161,11 +178,13 @@ it("uses the game world under the NI bag when world selection is disabled", () =
       ?.getObserversCount(),
   ).toBe(0);
 });
+
 it.each(["filtered", "closed"] as const)(
   "does not start countdown work when timers are %s",
   (state) => {
     vi.useFakeTimers();
     const intervals = vi.spyOn(globalThis, "setInterval");
+
     const fixture = mountTimers(() => {
       if (state === "closed")
         useWindowsStore.getState().setOpen("timers", false);
@@ -175,6 +194,7 @@ it.each(["filtered", "closed"] as const)(
           generalConfig: { ...value.generalConfig, timersUnderBag: true },
         }));
     });
+
     expect(intervals).not.toHaveBeenCalled();
     expect(screen.queryByText(/\[H\] Tanroth/)).not.toBeInTheDocument();
     expect(

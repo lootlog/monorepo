@@ -10,8 +10,11 @@ export const OpenApiDocumentSchema = Schema.Struct({
     Schema.Record(Schema.String, Schema.Record(Schema.String, Schema.Json)),
   ),
 });
+
 export type OpenApiDocument = typeof OpenApiDocumentSchema.Type;
+
 export type JsonValue = typeof Schema.Json.Type;
+
 export const decodeOpenApiDocument = Schema.decodeUnknownSync(
   OpenApiDocumentSchema,
   { onExcessProperty: "preserve" },

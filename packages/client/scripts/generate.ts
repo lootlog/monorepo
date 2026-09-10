@@ -5,6 +5,7 @@ import { checkOpenApi } from "./check-openapi";
 import { fixGeneratedOutput } from "./fix-generated-output";
 
 const services = ["activity", "auth", "battlelog", "main", "search"] as const;
+
 const generatedRoot = resolve("src/generated");
 
 const run = (command: string, arguments_: string[]) => {
@@ -25,7 +26,9 @@ const run = (command: string, arguments_: string[]) => {
 };
 
 checkOpenApi();
+
 rmSync(generatedRoot, { force: true, recursive: true });
+
 mkdirSync(generatedRoot, { recursive: true });
 
 for (const service of services) {

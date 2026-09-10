@@ -31,9 +31,11 @@ export const MemberSummaryStrip = ({
   contextStats,
 }: MemberSummaryStripProps) => {
   const { t } = useTranslation();
+
   const avatarUrl = member
     ? getDiscordAvatarUrl(member.userId, member.avatar ?? null, 96)
     : undefined;
+
   const metrics = [
     {
       label: t("events.kills.kpiKills"),

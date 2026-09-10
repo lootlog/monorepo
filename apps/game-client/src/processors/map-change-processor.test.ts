@@ -25,6 +25,7 @@ const createMapChangeEvent = (id: number, name: string): GameEvent => ({
     y: 0,
   },
 });
+
 const npc = {
   id: 101,
   location: "Torneg",
@@ -39,6 +40,7 @@ const npc = {
   x: 10,
   y: 10,
 };
+
 const ping = {
   pingId: "ping",
   world: "fobos",
@@ -49,6 +51,7 @@ const ping = {
   sender: { characterId: "2", name: "Other" },
   createdAt: Date.now(),
 };
+
 const beginPing = () =>
   mapPingInteractionController.begin({
     identity: { kind: "mouse", button: 1 },
@@ -56,6 +59,7 @@ const beginPing = () =>
     origin: { x: 100, y: 100 },
     tile: { x: 1, y: 2 },
   });
+
 const completePing = () =>
   mapPingInteractionController.complete({ kind: "mouse", button: 1 });
 

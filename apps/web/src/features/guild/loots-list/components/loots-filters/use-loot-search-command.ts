@@ -55,10 +55,12 @@ export const useLootSearchCommand = ({
       },
     },
   );
+
   const searchResults = searchResultsQuery.data;
   const isSearchLoading = searchResultsQuery.isLoading;
 
   const isHid = !!parsedHid;
+
   const hidLootQueryParams:
     | LootsControllerFetchLootsByGuildIdParams
     | undefined = parsedHid
@@ -68,6 +70,7 @@ export const useLootSearchCommand = ({
         limit: 1,
       }
     : undefined;
+
   const {
     data: hidItem,
     isError: isHidError,
@@ -91,6 +94,7 @@ export const useLootSearchCommand = ({
         },
         hidLootQueryParams,
       );
+
       const firstLoot = response[0];
 
       return (
@@ -143,6 +147,7 @@ export const useLootSearchCommand = ({
   const npcResults = searchResults?.npcs ?? [];
   const itemResults = searchResults?.items ?? [];
   const playerResults = searchResults?.players ?? [];
+
   const hasSearchResults = anyTrue(
     npcResults.length > 0,
     itemResults.length > 0,
@@ -157,6 +162,7 @@ export const useLootSearchCommand = ({
       allTrue(isSearchLoading, Boolean(debouncedSearch), !hasSearchResults),
     ),
   );
+
   const showHidNotFound = allTrue(
     isHid,
     isHidFetched,
@@ -164,6 +170,7 @@ export const useLootSearchCommand = ({
     !isHidError,
     !hidItem,
   );
+
   const showSearchResults = allTrue(
     !isHidInput,
     trimmedSearch.length >= 2,
@@ -172,6 +179,7 @@ export const useLootSearchCommand = ({
     !searchResultsQuery.isError,
     Boolean(hasSearchResults),
   );
+
   const showNoResults = allTrue(
     !isHidInput,
     trimmedSearch.length >= 2,
@@ -180,6 +188,7 @@ export const useLootSearchCommand = ({
     !searchResultsQuery.isError,
     !hasSearchResults,
   );
+
   const showSearchError = allTrue(
     !isHidInput,
     trimmedSearch.length >= 2,
@@ -189,6 +198,7 @@ export const useLootSearchCommand = ({
 
   const handleOpenChange = (nextOpen: boolean) => {
     onOpenChange(nextOpen);
+
     if (!nextOpen) {
       setSearchQuery("");
     }

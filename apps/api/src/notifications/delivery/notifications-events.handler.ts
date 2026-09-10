@@ -1,4 +1,4 @@
-import { Effect } from "effect";
+import { Effect, Result } from "effect";
 import type {
   DiscordGuildChannelDeletedEvent,
   DiscordNotificationDeliveryResultEvent,
@@ -56,10 +56,11 @@ export const makeNotificationsEvents = (options: {
           if (!options.matching.matchesTimerRule(rule.filters, event.npcId)) {
             return Effect.void;
           }
+
           return options.rebuild.rebuildTimer(rule.id, event).pipe(
             Effect.result,
             Effect.tap((result) =>
-              result._tag === "Failure"
+              Result.isFailure(result)
                 ? Effect.sync(() =>
                     options.logger.error(
                       `Failed to rebuild timer jobs for rule ${rule.id}: ${causeMessage(result.failure)}`,
@@ -85,7 +86,7 @@ export const makeNotificationsEvents = (options: {
         .pipe(
           Effect.result,
           Effect.tap((result) =>
-            result._tag === "Failure"
+            Result.isFailure(result)
               ? Effect.sync(() =>
                   options.logger.error(
                     `Failed to cancel pending jobs for deleted timer ${event.timerKey}: ${causeMessage(result.failure)}`,
@@ -103,42 +104,52 @@ export const makeNotificationsEvents = (options: {
         event.itemIds,
         event.world,
       );
+
       const guilds = yield* options.findGuilds(event.guildIds).pipe(
         Effect.withSpan("notifications.guilds.findMany", {
           attributes: { adapter: "notifications.guilds", retryCount: 0 },
         }),
       );
+
       const guildNames = new Map(guilds.map((guild) => [guild.id, guild.name]));
+
       const visibilityNpcs = event.npcs.map((npc) => ({
         type: npc.type,
         level: npc.lvl,
       }));
+
       const memberships = yield* options.matching.activeMemberships(
         watchedItems
           .map((item) => item.notificationRule?.ownerId)
           .filter((ownerId): ownerId is string => typeof ownerId === "string"),
         event.guildIds,
       );
+
       yield* Effect.forEach(
         watchedItems,
         (watchedItem) => {
           const process = Effect.gen(function* () {
             const rule = watchedItem.notificationRule;
+
             if (
               !rule ||
               !options.matching.matchesLootRule(rule.filters, event)
             ) {
               return;
             }
+
             const matchingGuildIds = options.matching.matchingLootGuildIds(
               rule.filters,
               event.guildIds,
             );
+
             const ownerMemberships = memberships.get(rule.ownerId) ?? [];
+
             const visibleGuildIds = matchingGuildIds.filter((guildId) => {
               const membership = ownerMemberships.find(
                 (candidate) => candidate.guildId === guildId,
               );
+
               return Boolean(
                 membership &&
                 options.matching.canRolesViewLoot(
@@ -148,12 +159,14 @@ export const makeNotificationsEvents = (options: {
                 ),
               );
             });
+
             if (visibleGuildIds.length === 0) return;
             yield* Effect.forEach(
               rule.targets,
               ({ target }) => {
                 if (!target.active || !target.canSend) return Effect.void;
                 const title = WATCHED_ITEM_DROPPED_TITLE;
+
                 const message = watchedItemDroppedMessage(
                   event.world,
                   visibleGuildIds
@@ -162,6 +175,7 @@ export const makeNotificationsEvents = (options: {
                     .join(", "),
                   watchedItem.itemName,
                 );
+
                 return options.scheduler
                   .create({
                     notificationRule: rule,
@@ -189,6 +203,7 @@ export const makeNotificationsEvents = (options: {
               { concurrency: "unbounded", discard: true },
             );
           });
+
           return process.pipe(
             Effect.tapError((cause) =>
               Effect.sync(() =>

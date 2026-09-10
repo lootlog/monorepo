@@ -60,16 +60,20 @@ export const DetectorRoutingRuleCard: FC<DetectorRoutingRuleCardProps> = ({
   translations,
 }) => {
   const selectedGuildIdSet = new Set(selectedGuildIds);
+
   const selectedGuilds =
     guilds?.filter((guild) => selectedGuildIdSet.has(guild.id)) ?? [];
+
   const visiblePreviewGuilds = selectedGuilds.slice(
     0,
     VISIBLE_PREVIEW_GUILDS_COUNT,
   );
+
   const hiddenPreviewGuildsCount = Math.max(
     selectedGuildIds.length - visiblePreviewGuilds.length,
     0,
   );
+
   const toggleOpen = () => {
     onOpenChange(!isOpen);
   };

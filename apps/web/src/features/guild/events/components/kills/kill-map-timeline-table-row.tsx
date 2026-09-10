@@ -40,6 +40,7 @@ export const KillMapTimelineTableRow = ({
   const diagnostics = getKillMapTimelineDiagnostics(map, startTime, endTime);
   const summaryLabelId = `map-${map.mapId}-summary`;
   const detailId = `map-${map.mapId}-details`;
+
   return (
     <Fragment>
       <TableRow

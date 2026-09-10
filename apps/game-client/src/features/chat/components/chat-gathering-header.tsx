@@ -14,19 +14,24 @@ export function ChatGatheringHeader({ organizerDiscordId, guildIds }: Props) {
   const { visibleGuilds } = useVisibleLootlogGuilds();
   const selectedGuildId = useChatStore(getSelectedChatGuildId);
   const gatheringGuildIds = new Set(guildIds);
+
   const gatheringGuilds = visibleGuilds.filter((guild) =>
     gatheringGuildIds.has(guild.id),
   );
+
   const guildId =
     gatheringGuilds.find((guild) => guild.id === selectedGuildId)?.id ??
     gatheringGuilds[0]?.id ??
     "";
+
   const { data: members } = useGuildMembersSummary(
     { guildId },
     { query: { enabled: Boolean(guildId && organizerDiscordId) } },
   );
+
   const member = members?.find((entry) => entry.userId === organizerDiscordId);
   const color = useMemberColor(member);
+
   return (
     <span className="ll:min-h-[18px] ll:min-w-0 ll:[overflow-wrap:anywhere] ll:text-[12px] ll:leading-[18px]">
       <span className="ll:font-semibold" style={{ color: `#${color}` }}>

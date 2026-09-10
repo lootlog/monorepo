@@ -76,6 +76,7 @@ export const CreateGuildModal: FC = () => {
           <div className="flex flex-col">
             {filteredGuilds?.map((guild, index) => {
               const avatarSrc = getGuildIconById(guild.id, guild.icon ?? null);
+
               return (
                 <div
                   key={guild.id}

@@ -21,6 +21,7 @@ export const useGameAccountPreferencesSyncStatus =
   (): GameAccountPreferencesSyncStatus => {
     const { accountId, isLoading, isFetching, isError, error, dataUpdatedAt } =
       useCurrentGameAccountPreferences();
+
     const mutationKey = accountId
       ? getUpdateUserGameAccountPreferencesMutationKey(accountId)
       : ["update-user-game-account-preferences", "disabled"];
@@ -28,6 +29,7 @@ export const useGameAccountPreferencesSyncStatus =
     const pendingMutationsCount = useIsMutating({
       mutationKey,
     });
+
     const mutations = useMutationState<{
       status: "idle" | "pending" | "success" | "error";
       error: Error | null;
@@ -102,7 +104,9 @@ export const useGameAccountPreferencesSyncIndicator = () => {
   useEffect(() => {
     if (status === "error" || status === "idle") return;
     const timeoutId = window.setTimeout(() => setVisibleStatus(status), 100);
+
     return () => window.clearTimeout(timeoutId);
   }, [status]);
+
   return status === "error" || status === "idle" ? status : visibleStatus;
 };

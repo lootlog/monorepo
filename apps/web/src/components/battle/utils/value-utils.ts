@@ -21,6 +21,7 @@ export const roundHpPercentage = (
 
   const strValue = String(value);
   const hasPercent = strValue.includes("%");
+
   const numericValue = Number.parseFloat(
     strValue.replace(/%/g, "").replace(",", "."),
   );
@@ -40,6 +41,7 @@ export const roundHpPercentage = (
 export const transformAndRoundEnergyMana = (value: string): string => {
   const strValue = value.replace(",", ".");
   const numValue = Number.parseFloat(strValue);
+
   if (Number.isNaN(numValue)) return value;
 
   return Math.round(numValue * -1).toString();
@@ -50,5 +52,6 @@ export const processDamageValue = (
   prefix: string = "",
 ): string => {
   const rounded = roundValue(value);
+
   return ` ${prefix}${rounded}`;
 };

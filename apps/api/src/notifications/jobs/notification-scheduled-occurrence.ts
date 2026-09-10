@@ -18,6 +18,7 @@ export const scheduleNotificationOccurrence = (
     rule.targets,
     ({ target }) => {
       if (!target.active || !target.canSend) return Effect.void;
+
       return scheduler
         .create({
           notificationRule: rule,

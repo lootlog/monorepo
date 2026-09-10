@@ -9,6 +9,7 @@ export const discoverEnvFiles = async (
   const envFiles: EnvFile[] = [];
 
   const rootSamplePath = path.join(rootPath, ".env.example");
+
   if (existsSync(rootSamplePath)) {
     envFiles.push({
       path: path.join(rootPath, ".env"),
@@ -31,7 +32,9 @@ export const discoverEnvFiles = async (
 
   return envFiles.sort((a, b) => {
     if (a.name === "root") return -1;
+
     if (b.name === "root") return 1;
+
     return a.name.localeCompare(b.name);
   });
 };
@@ -66,6 +69,7 @@ export const parseEnvFile = (content: string): EnvVariable[] => {
     }
 
     const equalIndex = line.indexOf("=");
+
     if (equalIndex === -1) {
       variables.push({
         key: "",

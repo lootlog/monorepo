@@ -1,4 +1,4 @@
-import { Schema } from "effect";
+import { Match, Schema } from "effect";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 
 export class SessionNotJoined extends TaggedErrorClass<SessionNotJoined>()(
@@ -71,30 +71,42 @@ export const isCommandFailure = (error: unknown): error is CommandFailure =>
   error instanceof RealtimeStoreError ||
   error instanceof RealtimeDependencyError;
 
-export const commandFailureDetails = (error: CommandFailure) => {
-  switch (error._tag) {
-    case "SubscriptionLimitExceeded":
-      return { message: "subscription limit exceeded", retryable: false };
-    case "SessionNotJoined":
-      return { message: "session.join is required", retryable: false };
-    case "OrganizationAccessDenied":
-      return { message: "organization access denied", retryable: false };
-    case "GameCharacterRequired":
-      return { message: "game sessions require a character", retryable: false };
-    case "NoAuthorizedOrganizations":
-      return { message: "no authorized organizations", retryable: false };
-    case "PresenceSessionMismatch":
-      return {
-        message: "heartbeat session does not match the connection",
-        retryable: false,
-      };
-    case "PresenceNotPublished":
-      return {
-        message: "presence no longer has an authorized organization",
-        retryable: false,
-      };
-    case "RealtimeStoreError":
-    case "RealtimeDependencyError":
-      return { message: "command temporarily unavailable", retryable: true };
-  }
-};
+export const commandFailureDetails = (error: CommandFailure) =>
+  Match.valueTags(error, {
+    SubscriptionLimitExceeded: () => ({
+      message: "subscription limit exceeded",
+      retryable: false,
+    }),
+    SessionNotJoined: () => ({
+      message: "session.join is required",
+      retryable: false,
+    }),
+    OrganizationAccessDenied: () => ({
+      message: "organization access denied",
+      retryable: false,
+    }),
+    GameCharacterRequired: () => ({
+      message: "game sessions require a character",
+      retryable: false,
+    }),
+    NoAuthorizedOrganizations: () => ({
+      message: "no authorized organizations",
+      retryable: false,
+    }),
+    PresenceSessionMismatch: () => ({
+      message: "heartbeat session does not match the connection",
+      retryable: false,
+    }),
+    PresenceNotPublished: () => ({
+      message: "presence no longer has an authorized organization",
+      retryable: false,
+    }),
+    RealtimeStoreError: () => ({
+      message: "command temporarily unavailable",
+      retryable: true,
+    }),
+    RealtimeDependencyError: () => ({
+      message: "command temporarily unavailable",
+      retryable: true,
+    }),
+  });

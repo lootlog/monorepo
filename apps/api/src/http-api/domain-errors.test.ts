@@ -31,11 +31,13 @@ import {
 import { NotificationOperations } from "./handlers/notifications/notifications.data-layer.js";
 
 const identity = { userId: "user-1", discordId: "discord-1" };
+
 const platform = Layer.mergeAll(
   Path.layer,
   Etag.layerWeak,
   HttpPlatform.layer,
 ).pipe(Layer.provideMerge(FileSystem.layerNoop({})));
+
 const bearer = Layer.succeed(
   BearerSecurityMiddleware,
   BearerSecurityMiddleware.of({
@@ -45,6 +47,7 @@ const bearer = Layer.succeed(
 );
 
 const unexpected = () => Effect.die("Unexpected operation");
+
 const unusedEvents = {
   assignment: {
     assignMember: unexpected,
@@ -107,6 +110,7 @@ const unusedEvents = {
     updateKillPoint: unexpected,
   },
 } satisfies EventOperations["Service"];
+
 const unusedNotifications = {
   guildTargets: {
     available: unexpected,
@@ -147,6 +151,7 @@ const unusedNotifications = {
     remove: unexpected,
   },
 } satisfies NotificationOperations["Service"];
+
 const unusedTimers = {
   getAll: unexpected,
   getRecentHistory: unexpected,
@@ -180,6 +185,7 @@ describe("domain errors across the HTTP boundary", () => {
             Effect.provide(bearer),
             Effect.provide(apiKeyEndpointPolicyLayer("main")),
           );
+
           const response =
             yield* client.notifications.NotificationsUserControllerTriggerUserTargetTest(
               {
@@ -187,6 +193,7 @@ describe("domain errors across the HTTP boundary", () => {
                 responseMode: "response-only",
               },
             );
+
           return { status: response.status, text: yield* response.text };
         }),
       ).pipe(
@@ -208,12 +215,14 @@ describe("domain errors across the HTTP boundary", () => {
         Effect.provide(platform),
       ),
     );
+
     expect(result.status).toBe(409);
     expect(JSON.parse(result.text)).toEqual(body);
   });
 
   it("keeps a timer lock race a conflict through the event endpoint", async () => {
     const body = { message: "TIMER_RACE_CONDITION" };
+
     const result = await Effect.runPromise(
       Effect.scoped(
         Effect.gen(function* () {
@@ -222,6 +231,7 @@ describe("domain errors across the HTTP boundary", () => {
             Effect.provide(bearer),
             Effect.provide(apiKeyEndpointPolicyLayer("main")),
           );
+
           const response =
             yield* client.events.EventsMonitoringControllerCloseRespawnWindow({
               params: {
@@ -232,6 +242,7 @@ describe("domain errors across the HTTP boundary", () => {
               payload: {},
               responseMode: "response-only",
             });
+
           return { status: response.status, text: yield* response.text };
         }),
       ).pipe(
@@ -264,12 +275,14 @@ describe("domain errors across the HTTP boundary", () => {
         Effect.provide(platform),
       ),
     );
+
     expect(result.status).toBe(409);
     expect(JSON.parse(result.text)).toEqual(body);
   });
   it("preserves the reason when restoring a timer conflicts", async () => {
     const body = { message: "EXISTING_TIMER" };
     const failure = toTimersDataFailure(new ResourceConflictError(body));
+
     const services = Layer.mergeAll(
       Layer.succeed(TimersAuthorization, {
         identity: Effect.succeed(identity),
@@ -286,6 +299,7 @@ describe("domain errors across the HTTP boundary", () => {
         restore: () => Effect.fail(failure),
       }),
     );
+
     const result = await Effect.runPromise(
       Effect.scoped(
         Effect.gen(function* () {
@@ -296,15 +310,18 @@ describe("domain errors across the HTTP boundary", () => {
             Effect.provide(bearer),
             Effect.provide(apiKeyEndpointPolicyLayer("main")),
           );
+
           const response =
             yield* client.timers.TimersControllerRestoreTimerFromHistory({
               params: { guildId: "guild-1", historyEntryId: "1" },
               responseMode: "response-only",
             });
+
           return { status: response.status, text: yield* response.text };
         }),
       ).pipe(Effect.provide(services), Effect.provide(platform)),
     );
+
     expect(result.status).toBe(409);
     expect(JSON.parse(result.text)).toEqual(body);
   });

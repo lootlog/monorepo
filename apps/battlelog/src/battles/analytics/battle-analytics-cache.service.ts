@@ -11,7 +11,9 @@ import { type Cause, Effect, Exit } from "effect";
 import { stableJsonStringify } from "@lootlog/schema/stable-json";
 
 const ANALYTICS_CACHE_PREFIX = "analytics";
+
 const ANALYTICS_CACHE_TTL_SECONDS = 5 * 60;
+
 const CACHE_GENERATION_SCRIPT = `
 local generation = redis.call("GET", KEYS[1])
 if not generation then
@@ -64,13 +66,16 @@ export const makeBattleAnalyticsCache = (redisService: RedisStore) => {
       }).pipe(
         Effect.catch((error) => {
           logger.warn("Battle analytics cache unavailable", error);
+
           return Effect.succeed(undefined);
         }),
       );
+
       if (generation === undefined) return yield* factory();
       const versionedKey = `battle-cache:v2:${encodeURIComponent(userId)}:${generation}:${cacheKey}`;
       const context = yield* Effect.context();
       let failure: Cause.Cause<unknown> | undefined;
+
       return yield* Effect.tryPromise({
         try: (signal) =>
           redisService.getOrSetJsonBestEffort<T>({
@@ -82,10 +87,12 @@ export const makeBattleAnalyticsCache = (redisService: RedisStore) => {
                 Effect.suspend(factory),
                 { signal },
               );
+
               if (Exit.isFailure(exit)) {
                 failure = exit.cause;
                 throw exit.cause;
               }
+
               return exit.value;
             },
             onError: (error) =>
@@ -110,6 +117,7 @@ export const makeBattleAnalyticsCache = (redisService: RedisStore) => {
           `Failed to invalidate analytics cache for user ${userId}:`,
           error,
         );
+
         return Effect.void;
       }),
       Effect.withSpan("BattleAnalyticsCache_invalidateUser", {

@@ -29,9 +29,11 @@ export function Statistics() {
   const { t } = useTranslation();
   const search = useSearch({ from: "/_authenticated/@me/statistics" });
   const navigate = useNavigate({ from: "/@me/statistics" });
+
   const update = (changes: Partial<StatisticsSearch>) => {
     void navigate({ search: (current) => ({ ...current, ...changes }) });
   };
+
   const analytics = useKillsControllerGetUserKillAnalytics(
     {
       days: ({ 7: "7", 30: "30", 90: "90", 365: "365" } as const)[search.days],
@@ -39,12 +41,16 @@ export function Statistics() {
     },
     { query: { staleTime: 30_000 } },
   );
+
   const lifetime = useKillsControllerGetUserKillStats(undefined, {
     query: { staleTime: 60_000 },
   });
+
   const worlds = Object.keys(lifetime.data?.overview.killsByWorld ?? {});
+
   if (search.world && !worlds.includes(search.world)) worlds.push(search.world);
   const data = analytics.data;
+
   return (
     <ScrollArea className="h-full min-h-0">
       <div className="min-w-0 space-y-3 p-3">

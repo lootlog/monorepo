@@ -19,6 +19,7 @@ export class LootPersistenceError extends TaggedErrorClass<LootPersistenceError>
 ) {}
 
 type PersistenceFailure = PermissionDeniedError | LootPersistenceError;
+
 type PersistenceEffect<A> = Effect.Effect<A, PersistenceFailure>;
 
 export interface LootPersistence {
@@ -63,6 +64,7 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
   ) =>
     Effect.gen(function* () {
       const memberIds = [...new Set(rows.map(({ member }) => member.id))];
+
       const roles =
         memberIds.length === 0
           ? []
@@ -75,15 +77,18 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
               .innerJoin(roleTable, eq(roleTable.id, memberToRoleTable.B))
               .where(inArray(memberToRoleTable.A, memberIds))
               .orderBy(desc(roleTable.position));
+
       const rolesByMember = new Map<
         number,
         Array<{ readonly color: number | null }>
       >();
+
       for (const role of roles) {
         const memberRoles = rolesByMember.get(role.memberId) ?? [];
         memberRoles.push({ color: role.color });
         rolesByMember.set(role.memberId, memberRoles);
       }
+
       return rows.map(({ comment, member }) => ({
         ...comment,
         member: {
@@ -111,8 +116,11 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
                 ),
               )
               .limit(1);
+
             const actor = actors[0];
+
             if (!actor) return false;
+
             const archived = yield* transaction
               .update(organizationLootRecordTable)
               .set({
@@ -128,6 +136,7 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
                 ),
               )
               .returning({ id: organizationLootRecordTable.id });
+
             return archived.length > 0;
           }),
         ),
@@ -159,7 +168,9 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
               ),
             )
             .orderBy(desc(lootCommentTable.createdAt));
+
           const comments = yield* attachMembers(rows);
+
           return comments.map((comment) => ({
             id: comment.id,
             lootId,
@@ -189,12 +200,15 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
                   ),
                 )
                 .limit(1);
+
               const record = records[0];
+
               if (!record) {
                 return yield* Effect.fail(
                   new PermissionDeniedError(ErrorKey.CANT_CREATE_COMMENT),
                 );
               }
+
               const members = yield* transaction
                 .select()
                 .from(memberTable)
@@ -205,7 +219,9 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
                   ),
                 )
                 .limit(1);
+
               const member = members[0];
+
               if (!member) {
                 return yield* Effect.fail(
                   new LootPersistenceError({
@@ -214,6 +230,7 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
                   }),
                 );
               }
+
               const comments = yield* transaction
                 .insert(lootCommentTable)
                 .values({
@@ -223,7 +240,9 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
                   updatedAt: new Date(yield* Clock.currentTimeMillis),
                 })
                 .returning();
+
               const comment = comments[0];
+
               if (!comment) {
                 return yield* Effect.fail(
                   new LootPersistenceError({
@@ -232,11 +251,14 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
                   }),
                 );
               }
+
               return { comment, member };
             }),
           );
+
           const comments = yield* attachMembers([created]);
           const comment = comments[0];
+
           if (!comment) {
             return yield* Effect.fail(
               new LootPersistenceError({
@@ -245,6 +267,7 @@ export const makeLootPersistence = (database: Database): LootPersistence => {
               }),
             );
           }
+
           return {
             id: comment.id,
             lootId: options.lootId,

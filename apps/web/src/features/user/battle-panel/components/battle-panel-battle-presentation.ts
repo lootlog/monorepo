@@ -8,6 +8,7 @@ import type { BattleResultStatusValue } from "./battle-result-status";
 export const getBattleTeams = (battle: Battle) => {
   const attackingTeam = battle.warriors.filter((warrior) => warrior.team === 1);
   const defendingTeam = battle.warriors.filter((warrior) => warrior.team === 2);
+
   const userWarrior = battle.warriors.find(
     (warrior) => warrior.originalId === battle.characterId,
   );

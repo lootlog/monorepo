@@ -29,6 +29,7 @@ describe("RuntimeInteractionCoordinator", () => {
     vi.spyOn(margonemRuntimeBridge, "subscribeIntent").mockImplementation(
       (handler) => {
         intentHandler = handler;
+
         return unsubscribe;
       },
     );
@@ -54,6 +55,7 @@ describe("RuntimeInteractionCoordinator", () => {
     vi.spyOn(margonemRuntimeBridge, "subscribeIntent").mockImplementation(
       (handler) => {
         intentHandler = handler;
+
         return vi.fn<() => void>();
       },
     );
@@ -75,6 +77,7 @@ describe("RuntimeInteractionCoordinator", () => {
     vi.spyOn(margonemRuntimeBridge, "subscribeIntent").mockImplementation(
       (handler) => {
         intentHandler = handler;
+
         return vi.fn<() => void>();
       },
     );

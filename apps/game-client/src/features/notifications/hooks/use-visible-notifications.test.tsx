@@ -8,6 +8,7 @@ import {
 import { useVisibleNotifications } from "./use-visible-notifications";
 
 let test: ReturnType<typeof createNotificationTest>;
+
 const createStoredNotification = (
   overrides?: Partial<StoredNotification>,
 ): StoredNotification => ({

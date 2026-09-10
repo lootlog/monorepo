@@ -80,6 +80,7 @@ describe("traffic splitter", () => {
       const upstreamFetch = vi.fn<UpstreamFetch>((request) =>
         Promise.resolve(Response.json({ url: request.url })),
       );
+
       const request = new Request("https://dev.lootlog.pl/assets/legacy.js", {
         headers: { referer },
       });
@@ -109,6 +110,7 @@ describe("traffic splitter", () => {
       const upstreamFetch = vi.fn<UpstreamFetch>((request) =>
         Promise.resolve(Response.json({ url: request.url })),
       );
+
       const assetUrl = "https://dev.lootlog.pl/assets/entry.css?theme=dark";
 
       const redirectResponse = await routeRequest(
@@ -118,6 +120,7 @@ describe("traffic splitter", () => {
         environment,
         upstreamFetch,
       );
+
       const taggedAssetUrl = `https://dev.lootlog.pl/__legacy-assets/${alias}/assets/entry.css?theme=dark`;
 
       expect(redirectResponse.status).toBe(307);
@@ -166,8 +169,10 @@ describe("traffic splitter", () => {
     "recovers the $alias origin from an untagged cached legacy parent",
     async ({ alias, upstreamOrigin }) => {
       const parentPath = "/assets/cached-parent.css?version=1";
+
       const upstreamFetch = vi.fn<UpstreamFetch>((request) => {
         const requestOrigin = new URL(request.url).origin;
+
         const contentType =
           request.method === "HEAD" && requestOrigin === upstreamOrigin
             ? "text/css"
@@ -219,6 +224,7 @@ describe("traffic splitter", () => {
   it("keeps an untagged cached Web parent on the Web origin", async () => {
     const parentPath = "/assets/cached-web.js";
     const childPath = "/assets/web-chunk.js";
+
     const upstreamFetch = vi.fn<UpstreamFetch>((request) => {
       if (request.method === "HEAD") {
         if (new URL(request.url).origin === environment.DOCS_ORIGIN) {
@@ -244,6 +250,7 @@ describe("traffic splitter", () => {
     );
 
     expect(response.status).toBe(200);
+
     const forwardedRequests = upstreamFetch.mock.calls.map(([request]) => ({
       method: request.method,
       url: request.url,
@@ -267,6 +274,7 @@ describe("traffic splitter", () => {
     const upstreamFetch = vi.fn<UpstreamFetch>((request) =>
       Promise.resolve(Response.json({ url: request.url })),
     );
+
     const incomingRequest = new Request(
       `https://dev.lootlog.pl${pathname}?source=dev`,
     );
@@ -286,9 +294,11 @@ describe("traffic splitter", () => {
       headers: { "x-upstream": "web" },
       status: 202,
     });
+
     const upstreamFetch = vi.fn<UpstreamFetch>(() =>
       Promise.resolve(upstreamResponse),
     );
+
     const request = new Request(
       "https://dev.lootlog.pl/@me?returnTo=%2Fsettings",
       {

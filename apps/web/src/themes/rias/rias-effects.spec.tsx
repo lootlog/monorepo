@@ -29,6 +29,7 @@ describe("GremoryCircle motion preferences", () => {
       addListener: () => {},
       removeListener: () => {},
     }));
+
     const { container, getByRole } = render(
       <LazyMotion features={domMax}>
         <GremoryCircle isActive>
@@ -36,6 +37,7 @@ describe("GremoryCircle motion preferences", () => {
         </GremoryCircle>
       </LazyMotion>,
     );
+
     const input = getByRole("textbox");
     fireEvent.change(input, { target: { value: "Unchanged" } });
     const animatedDecoration = container.querySelector("svg")?.parentElement;

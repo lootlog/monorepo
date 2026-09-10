@@ -13,6 +13,7 @@ export const TranslatedItemStat: FC<TranslatedItemStatProps> = ({
   displayValue,
 }) => {
   const { t } = useTranslation();
+
   if (!displayValue.key) {
     return null;
   }

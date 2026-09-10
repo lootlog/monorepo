@@ -52,20 +52,25 @@ import { portalText as t } from "~/lib/translations";
 
 export function KeyManager() {
   const [keys, setKeys] = useState<ApiKey[]>([]);
+
   const [organizations, setOrganizations] = useState<
     { id: string; name: string }[]
   >([]);
+
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">(
     "loading",
   );
+
   const [attempt, setAttempt] = useState(0);
   const [observedAt, setObservedAt] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [scopeInvalid, setScopeInvalid] = useState(false);
   const scopeErrorId = scopeInvalid ? "key-scope-error" : undefined;
+
   const [refreshState, setRefreshState] = useState<
     "ready" | "loading" | "error"
   >("ready");
+
   const [createOpen, setCreateOpen] = useState(false);
   const createTrigger = useRef<HTMLButtonElement>(null);
   const [pending, setPending] = useState(false);
@@ -75,11 +80,14 @@ export function KeyManager() {
   const secretHeading = useRef<HTMLHeadingElement>(null);
   const nameInput = useRef<HTMLInputElement>(null);
   const scopeFields = useRef<HTMLFieldSetElement>(null);
+
   const activeKeys = keys.filter((key) =>
     isApiKeyActive(key, observedAt),
   ).length;
+
   async function refresh() {
     setRefreshState("loading");
+
     try {
       setKeys(keyListSchema.parse(await keyRequest()).keys);
       setObservedAt(Date.now());
@@ -88,6 +96,7 @@ export function KeyManager() {
       setRefreshState("error");
     }
   }
+
   useEffect(() => {
     const controller = new AbortController();
     void Promise.all([
@@ -97,6 +106,7 @@ export function KeyManager() {
         { credentials: "include", signal: controller.signal },
       ).then((response) => {
         if (!response.ok) throw new Error("Organization request failed");
+
         return response.json();
       }),
     ])
@@ -110,18 +120,22 @@ export function KeyManager() {
       .catch(() => {
         if (!controller.signal.aborted) setLoadState("error");
       });
+
     return () => controller.abort();
   }, [attempt]);
   useEffect(() => {
     if (secret) secretHeading.current?.focus();
   }, [secret]);
+
   async function create(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
     if (pending || secret) return;
     const form = event.currentTarget;
     const data = new FormData(form);
     const organizationIds = data.getAll("organizationIds");
     const personalData = data.has("personalData");
+
     if (!organizationIds.length && !personalData) {
       setScopeInvalid(true);
       requestAnimationFrame(() => {
@@ -129,14 +143,18 @@ export function KeyManager() {
           ?.querySelector<HTMLElement>('[role="checkbox"]')
           ?.focus();
       });
+
       return;
     }
+
     setScopeInvalid(false);
     setPending(true);
     setError(null);
     setCopyState("");
+
     try {
       const days = data.get("expiresIn");
+
       const result = createdKeySchema.parse(
         await keyRequest("", {
           method: "POST",
@@ -149,6 +167,7 @@ export function KeyManager() {
           }),
         }),
       );
+
       setSecret(result.key);
       setCreateOpen(false);
       form.reset();
@@ -160,6 +179,7 @@ export function KeyManager() {
       setPending(false);
     }
   }
+
   async function copy() {
     try {
       await navigator.clipboard.writeText(secret ?? "");
@@ -168,6 +188,7 @@ export function KeyManager() {
       setCopyState(t.copyFailed);
     }
   }
+
   return (
     <div className="flex flex-col gap-10">
       {secret && (

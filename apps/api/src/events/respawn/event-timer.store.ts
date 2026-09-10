@@ -12,6 +12,7 @@ type TimerWrite = Omit<
   typeof timerTable.$inferInsert,
   "createdAt" | "updatedAt"
 >;
+
 type TimerPatch = Partial<Omit<TimerWrite, "guildId" | "world" | "timerKey">>;
 
 export class EventTimerStoreFailure extends TaggedErrorClass<EventTimerStoreFailure>()(
@@ -56,6 +57,7 @@ export const makeEventTimerStore = (database: ApiDatabaseValue) => {
         .pipe(
           Effect.map((rows) => {
             const row = rows[0];
+
             return row
               ? {
                   ...row.timer,
@@ -69,6 +71,7 @@ export const makeEventTimerStore = (database: ApiDatabaseValue) => {
 
   const upsertTimer = (create: TimerWrite, update: TimerPatch) => {
     const now = new Date();
+
     return operation(
       "eventTimerStore.upsert",
       database
@@ -82,6 +85,7 @@ export const makeEventTimerStore = (database: ApiDatabaseValue) => {
     ).pipe(
       Effect.flatMap((rows) => {
         const row = rows[0];
+
         return row
           ? findTimer(row.guildId, row.world, row.timerKey).pipe(
               Effect.map((timer) => timer ?? row),
@@ -141,6 +145,7 @@ export const makeEventTimerStore = (database: ApiDatabaseValue) => {
     maxSpawnTime: timerTable.maxSpawnTime,
     npc: timerTable.npc,
   };
+
   const findEventHeroTimersByKeys = (
     guildId: string,
     world: string,
@@ -159,6 +164,7 @@ export const makeEventTimerStore = (database: ApiDatabaseValue) => {
           ),
         ),
     ).pipe(Effect.map((timers) => timers));
+
   const findEventHeroTimersByNames = (
     guildId: string,
     world: string,

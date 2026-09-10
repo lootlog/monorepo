@@ -44,11 +44,14 @@ export const GeneralForm = () => {
   const { t } = useTranslation();
   const guildId = useGuildId();
   const queryClient = useQueryClient();
+
   const { data: guild } = useGuildsControllerGetGuildById({
     guildId: guildId ?? "",
   });
+
   const { mutate: updateGuildConfig, isPending } =
     useGuildsControllerUpdateGuildConfig();
+
   const navigate = useNavigate();
 
   const form = useForm<GeneralFormValues>({
@@ -74,6 +77,7 @@ export const GeneralForm = () => {
 
     if (RESTRICTED_NAMES.includes(values.vanityUrl)) {
       toast.error(t("settings.general.vanityUrl.restricted"));
+
       return;
     }
 
@@ -100,6 +104,7 @@ export const GeneralForm = () => {
               invalidateUsersControllerGetCurrentUserGuilds(queryClient),
             ]);
           }
+
           toast.success(t("settings.general.toasts.updateSuccess"));
           navigate({
             to: "/$guildId/settings",

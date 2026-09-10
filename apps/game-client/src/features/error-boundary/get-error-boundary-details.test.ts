@@ -25,6 +25,7 @@ describe("getErrorBoundaryDetails", () => {
       { name: 12, message: "  Failure  ", stack: "  Frame  " },
       translations,
     );
+
     expect(details).toEqual({
       name: "Unknown error",
       message: "Failure",

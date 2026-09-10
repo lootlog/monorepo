@@ -80,6 +80,7 @@ const normalizeRoutingRules = (
     const minLevel = Math.min(normalizedMinLevel, normalizedMaxLevel);
     const maxLevel = Math.max(normalizedMinLevel, normalizedMaxLevel);
     const world = normalizeRoutingRuleText(rule.world);
+
     const normalizedGuildIds = availableGuildIds.filter(
       (guildId, index, ids) => {
         return (
@@ -155,16 +156,22 @@ export function useDetectorRoutingForm() {
     isFetched,
     settings: accountSettings,
   } = useCurrentGameAccountDetectorSettings();
+
   const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds();
+
   const updateUserGameAccountPreferences =
     useUpdateUserGameAccountPreferences(accountId);
+
   const translations = getDetectorRoutingSettingsTranslations();
 
   const currentRoutingRules = accountSettings.routingRules;
+
   const [deferredSyncField, setDeferredSyncField] = useState<string | null>(
     null,
   );
+
   const [openRuleIds, setOpenRuleIds] = useState<string[]>([]);
+
   const debouncedUpdate = useDebouncedCallback(
     (
       payload: Parameters<typeof updateUserGameAccountPreferences.mutate>[0],
@@ -181,6 +188,7 @@ export function useDetectorRoutingForm() {
         routingRules: cloneRoutingRules(currentRoutingRules),
       },
     });
+
   const { fields, append, remove } = useFieldArray({
     control,
     name: "routingRules",
@@ -191,6 +199,7 @@ export function useDetectorRoutingForm() {
     const nextFormValues = {
       routingRules: cloneRoutingRules(currentRoutingRules),
     };
+
     const currentFormValues = getValues().routingRules ?? [];
 
     if (areRoutingRulesEqual(currentFormValues, currentRoutingRules)) {
@@ -207,9 +216,11 @@ export function useDetectorRoutingForm() {
   const watchedData = useWatch({ control });
   const routingRules = watchedData.routingRules ?? [];
   const availableRuleIds = new Set(routingRules.map((rule) => rule.id));
+
   const visibleOpenRuleIds = new Set(
     openRuleIds.filter((ruleId) => availableRuleIds.has(ruleId)),
   );
+
   const availableGuildIds = guilds?.map((guild) => guild.id) ?? [];
   const availableGuildIdsJson = JSON.stringify(availableGuildIds);
 
@@ -261,6 +272,7 @@ export function useDetectorRoutingForm() {
     }
 
     const selectedGuildIds = routingRules[ruleIndex]?.guildIds ?? [];
+
     const normalizedGuildIds = toggleAvailableGuild(
       guilds,
       selectedGuildIds,
@@ -284,6 +296,7 @@ export function useDetectorRoutingForm() {
       toggleOpenRuleId(currentOpenRuleIds, nextRule.id, true),
     );
   };
+
   return {
     guilds,
     translations,

@@ -25,8 +25,10 @@ export function useSelectedLootlogGuildInitialization(): void {
   const gameInitialized = useGlobalStore(
     (state) => state.gameState.gameInitialized,
   );
+
   const characterId = useCurrentCharacterId();
   const queryEnabled = gameInitialized && Boolean(characterId);
+
   const { data: guilds, isFetched: areGuildsFetched } =
     useUsersControllerGetCurrentUserAccessibleGuilds({
       query: {
@@ -34,8 +36,10 @@ export function useSelectedLootlogGuildInitialization(): void {
         enabled: queryEnabled,
       },
     });
+
   const { data: userPreferences, isFetched: areUserPreferencesFetched } =
     useUserPreferences(queryEnabled);
+
   const ensureGuildId = useSettingsStore((state) => state.ensureGuildId);
 
   useEffect(() => {
@@ -54,6 +58,7 @@ export function useSelectedLootlogGuildInitialization(): void {
       userPreferences?.guildsOrder,
       userPreferences?.hiddenGuildIds,
     ).map((guild) => guild.id);
+
     ensureGuildId(characterId, orderedGuildIds);
   }, [
     areGuildsFetched,

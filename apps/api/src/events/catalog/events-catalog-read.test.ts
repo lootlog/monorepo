@@ -29,7 +29,9 @@ describe("event catalog read Effect module", () => {
       active: true,
       heroNpcs: [],
     };
+
     const cacheRead = mock(() => undefined);
+
     const redis = {
       getOrSetJsonEffect<T, E>(
         options: Omit<RedisGetOrSetJsonBestEffortOptions<T>, "factory"> & {
@@ -37,16 +39,20 @@ describe("event catalog read Effect module", () => {
         },
       ) {
         cacheRead();
+
         return Effect.succeed(
           options.codec.parse(superjson.stringify(cachedEvent)),
         );
       },
     };
+
     const boundary = await createDatabaseBoundary();
+
     try {
       const logger = { warn: mock(() => undefined) };
 
       const catalog = makeEventsCatalogRead(boundary.database, redis, logger);
+
       const result = await boundary.run(
         catalog.getEvent(
           { id: "guild-1" },

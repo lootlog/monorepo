@@ -72,6 +72,7 @@ export const NotificationMuteMenu: FC<NotificationMuteMenuProps> = ({
 
     if (!mutedNpc) {
       handleOpenChange(false);
+
       return;
     }
 

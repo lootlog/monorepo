@@ -4,6 +4,7 @@ import { canDeleteChatMessage } from "./chat-message-permissions.js";
 
 test("chat deletion permits authors with write capability and administrators", () => {
   const message = { senderId: "author" };
+
   for (const viewer of [
     { discordId: "author", permissions: [], remove: false },
     {

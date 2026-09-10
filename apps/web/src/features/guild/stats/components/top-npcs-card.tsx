@@ -47,10 +47,12 @@ export const TopNpcsCard: React.FC<TopNpcsCardProps> = ({
 }) => {
   const { t } = useTranslation();
   const guildId = useGuildId();
+
   const [selectedNpcType, setSelectedNpcType] = useLocalStorage<NpcType>(
     STORAGE_KEY,
     "ELITE2",
   );
+
   const topNpcsParams = buildGuildTopNpcsParams({
     limit: 5,
     npcType: selectedNpcType,
@@ -106,6 +108,7 @@ export const TopNpcsCard: React.FC<TopNpcsCardProps> = ({
   }
 
   const topNpcs = data?.topNpcs?.slice(0, 5) ?? [];
+
   const hasActiveFilters =
     Boolean(world) ||
     Boolean(minLvl) ||
@@ -127,6 +130,7 @@ export const TopNpcsCard: React.FC<TopNpcsCardProps> = ({
               value={selectedNpcType}
               onValueChange={(value) => {
                 const npcType = findNpcType(value);
+
                 if (npcType) setSelectedNpcType(npcType);
               }}
               items={TRACKABLE_NPC_TYPES.map((type) => ({

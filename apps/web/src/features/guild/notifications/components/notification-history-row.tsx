@@ -12,6 +12,7 @@ import {
 } from "../utils/notification-settings.utils";
 
 type Job = NotificationJobsResponseDto["history"][number];
+
 export function NotificationHistoryRow({
   job,
   openJobDetails,
@@ -22,6 +23,7 @@ export function NotificationHistoryRow({
   compact?: boolean;
 }) {
   const { t } = useTranslation();
+
   return (
     <div
       role="button"

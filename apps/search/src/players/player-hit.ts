@@ -1,4 +1,5 @@
 import { Schema } from "effect";
+
 export const PlayerHit = Schema.Struct({
   id: Schema.String,
   name: Schema.String,
@@ -9,4 +10,5 @@ export const PlayerHit = Schema.Struct({
   accountId: Schema.Number,
   world: Schema.String,
 });
+
 export type PlayerHit = typeof PlayerHit.Type;

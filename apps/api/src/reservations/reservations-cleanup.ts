@@ -11,10 +11,12 @@ export const makeReservationsCleanup = (
     if (!options.enabled) return;
     const cutoff = new Date(yield* Clock.currentTimeMillis);
     cutoff.setDate(cutoff.getDate() - options.retentionDays);
+
     const deleted = yield* database
       .delete(reservationTable)
       .where(lt(reservationTable.endsAt, cutoff))
       .returning({ id: reservationTable.id });
+
     yield* Effect.logInfo("Expired reservations deleted").pipe(
       Effect.annotateLogs({ deleted: deleted.length, cutoff }),
     );

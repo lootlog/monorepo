@@ -25,6 +25,7 @@ function Tooltip(props: BaseTooltip.Root.Props) {
   const tooltip = <BaseTooltip.Root disableHoverablePopup {...props} />;
 
   if (hasProvider) return tooltip;
+
   return <TooltipProvider>{tooltip}</TooltipProvider>;
 }
 

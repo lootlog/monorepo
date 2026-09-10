@@ -42,10 +42,12 @@ const getResizeCursor = ({
 const getTouchByIdentifier = (touchList: TouchList, identifier: number) => {
   for (let i = 0; i < touchList.length; i += 1) {
     const touch = touchList.item(i);
+
     if (touch && touch.identifier === identifier) {
       return touch;
     }
   }
+
   return null;
 };
 
@@ -79,6 +81,7 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
   const { t } = useTranslation("common");
   const keyboardResizing = useRef(false);
   const activeTouchIdRef = useRef<number | null>(null);
+
   const cursor = getResizeCursor({
     allowHorizontalResize,
     allowVerticalResize,
@@ -94,14 +97,17 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
 
     const startX = e.clientX;
     const startY = e.clientY;
+
     const startWidth =
       e.currentTarget.parentElement?.parentElement?.offsetWidth ?? minWidth;
+
     const startHeight =
       e.currentTarget.parentElement?.parentElement?.offsetHeight ?? minHeight;
 
     const handleMouseMove = (e: MouseEvent) => {
       if (!isWindowResizeSessionActive(sessionId)) return;
       const scale = getRuntimeUiScale();
+
       const { width: scaledViewportWidth, height: scaledViewportHeight } =
         getScaledViewportSize(scale);
 
@@ -114,12 +120,14 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
             Math.min(maxWidth ?? scaledViewportWidth, startWidth + deltaX),
           )
         : startWidth;
+
       const newHeight = allowVerticalResize
         ? Math.max(
             minHeight,
             Math.min(maxHeight ?? scaledViewportHeight, startHeight + deltaY),
           )
         : startHeight;
+
       onResize({ width: newWidth, height: newHeight });
     };
 
@@ -146,6 +154,7 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
   const handleTouchStart = (e: React.TouchEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
     if (e.touches.length > 1) return;
     cancelWindowResizeSession();
 
@@ -156,21 +165,26 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
     activeTouchIdRef.current = touch.identifier;
     const startX = touch.pageX - window.scrollX;
     const startY = touch.pageY - window.scrollY;
+
     const startWidth =
       e.currentTarget.parentElement?.parentElement?.offsetWidth ?? minWidth;
+
     const startHeight =
       e.currentTarget.parentElement?.parentElement?.offsetHeight ?? minHeight;
 
     const handleTouchMove = (e: TouchEvent) => {
       if (!isWindowResizeSessionActive(sessionId)) return;
       const activeTouchId = activeTouchIdRef.current;
+
       const touch =
         activeTouchId === null
           ? e.touches[0]
           : getTouchByIdentifier(e.touches, activeTouchId);
+
       if (!touch) return;
       e.preventDefault();
       const scale = getRuntimeUiScale();
+
       const { width: scaledViewportWidth, height: scaledViewportHeight } =
         getScaledViewportSize(scale);
 
@@ -185,12 +199,14 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
             Math.min(maxWidth ?? scaledViewportWidth, startWidth + deltaX),
           )
         : startWidth;
+
       const newHeight = allowVerticalResize
         ? Math.max(
             minHeight,
             Math.min(maxHeight ?? scaledViewportHeight, startHeight + deltaY),
           )
         : startHeight;
+
       onResize({ width: newWidth, height: newHeight });
     };
 
@@ -212,13 +228,16 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
     const handleTouchEnd = (e: TouchEvent) => {
       if (!isWindowResizeSessionActive(sessionId)) return;
       const activeTouchId = activeTouchIdRef.current;
+
       if (activeTouchId !== null) {
         const activeTouchStillPresent = hasTouchIdentifier(
           e.touches,
           activeTouchId,
         );
+
         if (activeTouchStillPresent) return;
       }
+
       finishTouchResize();
     };
 
@@ -236,17 +255,21 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
     event: React.KeyboardEvent<HTMLButtonElement>,
   ) => {
     const delta = KEYBOARD_RESIZE_DELTAS.get(event.key);
+
     if (!delta) return;
     const horizontal = allowHorizontalResize && delta.x !== 0;
     const vertical = allowVerticalResize && delta.y !== 0;
+
     if (!horizontal && !vertical) return;
     event.preventDefault();
     event.stopPropagation();
+
     if (!keyboardResizing.current) {
       cancelWindowResizeSession();
       keyboardResizing.current = true;
       onResizeStart();
     }
+
     const root = event.currentTarget.parentElement?.parentElement;
     const width = root?.offsetWidth ?? minWidth;
     const height = root?.offsetHeight ?? minHeight;
@@ -268,6 +291,7 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
         : height,
     });
   };
+
   const finishKeyboardResize = () => {
     if (!keyboardResizing.current) return;
     keyboardResizing.current = false;

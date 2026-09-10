@@ -39,7 +39,9 @@ const createLootEvent = (
   },
   loot: { source, states: { [id]: 1 } },
 });
+
 const createBattleLootEvent = () => createLootEvent("fight");
+
 const createRuntimeNpc = (id = 501, name = "Kliknięty NPC") => ({
   id,
   templateId: id,
@@ -52,6 +54,7 @@ const createRuntimeNpc = (id = 501, name = "Kliknięty NPC") => ({
   weight: 90,
   level: 240,
 });
+
 const setDialogNpcContext = (
   npcId: number,
   npc: ReturnType<typeof createRuntimeNpc> | null = null,
@@ -59,12 +62,15 @@ const setDialogNpcContext = (
   useDialogStore
     .getState()
     .setNpcContext({ npcId, npc, source: "talk-request" });
+
 const createFixture = () => {
   const processor = new LootEventProcessor();
   const requests: Request[] = [];
   let status = 200;
+
   const fetch: typeof globalThis.fetch = (input, init) => {
     requests.push(new Request(input, init));
+
     return Promise.resolve(
       Response.json(
         { id: 999, submittedGuilds: [], rejectedGuilds: [] },
@@ -72,16 +78,19 @@ const createFixture = () => {
       ),
     );
   };
+
   onTestFinished(
     configureApiClients({
       main: { baseUrl: "https://api.example.test", fetch },
     }),
   );
+
   return {
     processor,
     requests,
     payload: async (index = 0) => {
       await waitFor(() => expect(requests.length).toBeGreaterThan(index));
+
       return requests[index].json();
     },
     fail: () => {
@@ -92,6 +101,7 @@ const createFixture = () => {
     },
   };
 };
+
 beforeEach(() => {
   useBattleStore.setState({
     battleWarriors: {
@@ -130,7 +140,9 @@ beforeEach(() => {
   });
   useSettingsStore.getState().setLootDebugLoggingEnabled(false);
 });
+
 afterEach(() => vi.restoreAllMocks());
+
 it("captures map characters and the hero once for a legendary elite II loot", async () => {
   const fixture = createFixture();
   useOthersStore.getState().replaceOthers({
@@ -172,6 +184,7 @@ it("captures map characters and the hero once for a legendary elite II loot", as
     ],
   });
 });
+
 it.each([
   ["heroic", 20],
   ["legendary", 80],
@@ -188,10 +201,12 @@ it.each([
   fixture.processor.handleLootFromBattle(createLootEvent("fight", rarity));
   expect(await fixture.payload()).not.toHaveProperty("mapPlayersSnapshot");
 });
+
 it.each(["invalid player", "different map epoch", "uninitialized list"])(
   "omits an inconsistent map snapshot: %s",
   async (reason) => {
     const fixture = createFixture();
+
     if (reason !== "uninitialized list")
       useOthersStore.getState().replaceOthers({
         "303": {
@@ -204,6 +219,7 @@ it.each(["invalid player", "different map epoch", "uninitialized list"])(
         },
       });
     const mapEpoch = useOthersStore.getState().mapEpoch;
+
     if (reason === "different map epoch")
       useOthersStore.setState({ mapEpoch: mapEpoch + 1 });
     fixture.processor.handleLootFromBattle(createBattleLootEvent());
@@ -211,6 +227,7 @@ it.each(["invalid player", "different map epoch", "uninitialized list"])(
     expect(await fixture.payload()).not.toHaveProperty("mapPlayersSnapshot");
   },
 );
+
 it("ignores absent items and the wrong source", () => {
   const fixture = createFixture();
   fixture.processor.handleLootFromBattle({});
@@ -219,6 +236,7 @@ it("ignores absent items and the wrong source", () => {
   expect(fixture.requests).toHaveLength(0);
   expect(useLootStore.getState().lastLootId).toBe(44);
 });
+
 it.each([
   "missing-battle-warriors",
   "missing-fight-data",
@@ -228,9 +246,12 @@ it.each([
   const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
   useSettingsStore.getState().setLootDebugLoggingEnabled(true);
   const event = createBattleLootEvent();
+
   if (reason === "missing-battle-warriors")
     useBattleStore.setState({ battleWarriors: {} });
+
   if (reason === "missing-fight-data") delete event.f;
+
   if (reason === "empty-parsed-loots") event.item = {};
   fixture.processor.handleLootFromBattle(event);
   expect(fixture.requests).toHaveLength(0);
@@ -242,6 +263,7 @@ it.each([
     reason === "missing-battle-warriors" ? 44 : null,
   );
 });
+
 it("sends parsed battle participants and loot then stores the accepted id", async () => {
   const fixture = createFixture();
   const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
@@ -268,6 +290,7 @@ it("sends parsed battle participants and loot then stores the accepted id", asyn
     }),
   );
 });
+
 it("submits different loot effects that share an event id", async () => {
   const fixture = createFixture();
   fixture.processor.handleLootFromBattle({
@@ -282,18 +305,21 @@ it("submits different loot effects that share an event id", async () => {
   expect(await fixture.payload(1)).toMatchObject({ loots: [{ id: 2 }] });
   expect(fixture.requests).toHaveLength(2);
 });
+
 it("ignores dialog loot without a tracked NPC", () => {
   const fixture = createFixture();
   fixture.processor.handleDialogLoot(createLootEvent("dialog"));
   expect(fixture.requests).toHaveLength(0);
   expect(useLootStore.getState().lastLootId).toBe(44);
 });
+
 it.each(["context snapshot", "ingress snapshot", "canonical store"])(
   "attributes dialog loot through %s after unrelated NPC deletion",
   async (source) => {
     const fixture = createFixture();
     const npc = createRuntimeNpc();
     setDialogNpcContext(501, source === "context snapshot" ? npc : null);
+
     if (source === "canonical store")
       useNpcsStore.getState().replaceNpcs([npc]);
     fixture.processor.handleDialogLoot(
@@ -314,6 +340,7 @@ it.each(["context snapshot", "ingress snapshot", "canonical store"])(
     await waitFor(() => expect(useLootStore.getState().lastLootId).toBe(999));
   },
 );
+
 it.each([
   { id: 279097, lvl: 300, name: "Zamrożony czarodziej" },
   { id: 501, lvl: 0, name: "Nieznany dialog" },
@@ -328,6 +355,7 @@ it.each([
     });
   },
 );
+
 it("reports missing dialog snapshot with the event's deleted NPC ids", () => {
   const fixture = createFixture();
   setDialogNpcContext(501);
@@ -351,6 +379,7 @@ it("reports missing dialog snapshot with the event's deleted NPC ids", () => {
     }),
   );
 });
+
 it("retains dialog context through empty loot and consumes it after one valid loot", async () => {
   const fixture = createFixture();
   setDialogNpcContext(501, createRuntimeNpc());
@@ -365,6 +394,7 @@ it("retains dialog context through empty loot and consumes it after one valid lo
   expect(fixture.requests).toHaveLength(1);
   expect(useDialogStore.getState().npcContext).toBeNull();
 });
+
 it.each(["fight", "dialog"] as const)(
   "logs actual HTTP rejection for %s loot",
   async (source) => {
@@ -375,6 +405,7 @@ it.each(["fight", "dialog"] as const)(
     useSettingsStore.getState().setLootDebugLoggingEnabled(true);
     setDialogNpcContext(501, createRuntimeNpc());
     const event = createLootEvent(source);
+
     if (source === "fight") fixture.processor.handleLootFromBattle(event);
     else fixture.processor.handleDialogLoot(event);
     await waitFor(() =>
@@ -395,19 +426,23 @@ it.each(["fight", "dialog"] as const)(
     );
     fixture.succeed();
     setDialogNpcContext(501, createRuntimeNpc());
+
     if (source === "fight") {
       fixture.processor.handleLootFromBattle(event);
     } else {
       fixture.processor.handleDialogLoot(event);
     }
+
     await fixture.payload(1);
     await waitFor(() => expect(useLootStore.getState().lastLootId).toBe(999));
   },
 );
+
 it("uses same-event map, hero and membership updates and freezes them before the next event", async () => {
   const fixture = createFixture();
   useOthersStore.getState().replaceOthers({});
   const projection = new RuntimeStateProjection();
+
   const event = {
     ...createBattleLootEvent(),
     town: {
@@ -445,6 +480,7 @@ it("uses same-event map, hero and membership updates and freezes them before the
       },
     },
   } satisfies GameEvent;
+
   const envelope = projection.captureIngress({
     raw: event,
     facts: parseRuntimeFacts(event),
@@ -452,6 +488,7 @@ it("uses same-event map, hero and membership updates and freezes them before the
     sequence: 1,
     ingress: { game: null, intent: null, npcsById: {}, othersById: {} },
   });
+
   projection.apply(envelope);
   fixture.processor.handleLootFromBattle(event, envelope.ingress);
   useOthersStore.getState().removeOther("303");

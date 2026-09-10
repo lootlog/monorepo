@@ -10,6 +10,7 @@ export const AnimationEffectsRootClass = () => {
 
   useEffect(() => {
     const root = document.getElementById("lootlog-root");
+
     if (!root) return;
 
     root.classList.toggle(REDUCED_MOTION_CLASS_NAME, !animationEffectsEnabled);

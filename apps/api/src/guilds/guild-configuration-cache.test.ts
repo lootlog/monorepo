@@ -9,6 +9,7 @@ import {
 const memoryCache = () => {
   const values = new Map<string, string>();
   const deleted: string[] = [];
+
   return {
     values,
     deleted,
@@ -41,12 +42,14 @@ describe("guild configuration cache", () => {
 
   it("writes the same guild snapshot under ID and vanity while preserving all fields", async () => {
     const cache = memoryCache();
+
     const guild = {
       id: "guild",
       vanityUrl: "vanity",
       name: "Group",
       active: true,
     };
+
     await Effect.runPromise(
       writeGuildConfigurationCache(cache, guild, "unbounded"),
     );

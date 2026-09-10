@@ -23,6 +23,7 @@ export function LiveFeedCompactRow({
   const { t } = useTranslation();
   const visibleOrganizations = organizations ?? [item.guild];
   const guildId = item.guild.vanityUrl ?? item.guild.id;
+
   return (
     <div className="p-3">
       <div className="flex items-start gap-3">

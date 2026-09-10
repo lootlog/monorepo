@@ -149,9 +149,11 @@ export const activeReadyRooms = Effect.fn("activeReadyRooms")(function* (
 ) {
   const current = yield* identity;
   const guildIds = yield* accessibleGuildIds(current.discordId, true);
+
   const value = yield* data((service) =>
     service.active(current, guildIds, world),
   );
+
   return yield* decode(ActivePartyGatheringsResponse, value);
 });
 
@@ -159,6 +161,7 @@ export const listReadyRooms = Effect.fn("listReadyRooms")(function* () {
   const current = yield* identity;
   const guildIds = yield* accessibleGuildIds(current.discordId);
   const value = yield* data((service) => service.list(current, guildIds));
+
   return yield* decode(PartyReadyRoomsResponse, value);
 });
 
@@ -167,18 +170,22 @@ export const createReadyRoom = Effect.fn("createReadyRoom")(function* (
 ) {
   const current = yield* identity;
   const accessible = yield* accessibleGuildIds(current.discordId);
+
   const guildIds = payload.guildIds.filter((guildId) =>
     accessible.includes(guildId),
   );
+
   if (guildIds.length === 0) {
     return yield* new ReadyRoomAccessDenied({
       status: 403,
       code: "FORBIDDEN",
     });
   }
+
   const value = yield* data((service) =>
     service.create(current, guildIds, payload),
   );
+
   return yield* decode(PartyReadyRoomResponse, value);
 });
 
@@ -187,9 +194,11 @@ export const getReadyRoom = Effect.fn("getReadyRoom")(function* (
 ) {
   const current = yield* identity;
   const guildIds = yield* accessibleGuildIds(current.discordId);
+
   const value = yield* data((service) =>
     service.get(current, notificationId, guildIds),
   );
+
   return yield* decode(PartyReadyRoomResponse, value);
 });
 
@@ -199,9 +208,11 @@ export const applyToReadyRoom = Effect.fn("applyToReadyRoom")(function* (
 ) {
   const current = yield* identity;
   const guildIds = yield* accessibleGuildIds(current.discordId);
+
   const value = yield* data((service) =>
     service.apply(current, notificationId, guildIds, payload),
   );
+
   return yield* decode(PartyReadyRoomResponse, value);
 });
 
@@ -209,9 +220,11 @@ export const withdrawFromReadyRoom = Effect.fn("withdrawFromReadyRoom")(
   function* (notificationId: string, payload: PartyParticipantIdentity) {
     const current = yield* identity;
     yield* assertVisible(current, notificationId);
+
     const value = yield* data((service) =>
       service.withdraw(current, notificationId, payload),
     );
+
     return yield* decode(PartyReadyRoomUpdateResponse, value);
   },
 );
@@ -222,9 +235,11 @@ export const removeFromReadyRoom = Effect.fn("removeFromReadyRoom")(function* (
 ) {
   const current = yield* identity;
   yield* assertVisible(current, notificationId);
+
   const value = yield* data((service) =>
     service.remove(current, notificationId, payload),
   );
+
   return yield* decode(PartyReadyRoomUpdateResponse, value);
 });
 
@@ -233,9 +248,11 @@ export const resolveReadyRoomInvitationTargets = Effect.fn(
 )(function* (notificationId: string, payload: ResolvePartyInvitationsRequest) {
   const current = yield* identity;
   yield* assertVisible(current, notificationId);
+
   const value = yield* data((service) =>
     service.resolveInvitationTargets(current, notificationId, payload),
   );
+
   return yield* decode(PartyInvitationTargetsResponse, value);
 });
 
@@ -243,9 +260,11 @@ export const observeReadyRoomParty = Effect.fn("observeReadyRoomParty")(
   function* (notificationId: string, payload: ObservePartyRequest) {
     const current = yield* identity;
     yield* assertVisible(current, notificationId);
+
     const value = yield* data((service) =>
       service.observeParty(current, notificationId, payload),
     );
+
     return yield* decode(PartyReadyRoomResponse, value);
   },
 );
@@ -256,9 +275,11 @@ export const cancelReadyRoom = Effect.fn("cancelReadyRoom")(function* (
 ) {
   const current = yield* identity;
   yield* assertVisible(current, notificationId);
+
   const value = yield* data((service) =>
     service.cancel(current, notificationId, payload),
   );
+
   return yield* decode(PartyReadyRoomUpdateResponse, value);
 });
 

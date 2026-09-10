@@ -4,13 +4,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createNativeRuntime } from "@/test/native-runtime";
 import { useGameStore } from "@/store/game.store";
 import { useGlobalStore } from "@/store/global.store";
+
 vi.stubGlobal("Engine", createNativeRuntime());
+
 const { useInit } = await import("./use-init");
 
 beforeEach(() => {
   useGlobalStore.getState().setGameState({ gameInitialized: false });
   useGameStore.getState().clearGame();
 });
+
 afterEach(() => vi.unstubAllGlobals());
 
 describe("useInit", () => {

@@ -23,6 +23,7 @@ export const useEventKillHistory = ({
   > = {
     limit: String(limit),
   };
+
   if (heroId) baseParams.heroId = heroId;
 
   return useCursorInfiniteQuery({

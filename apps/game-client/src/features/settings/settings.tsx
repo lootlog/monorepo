@@ -7,9 +7,11 @@ import { useTranslation } from "react-i18next";
 export const Settings = () => {
   const open = useWindowsStore((state) => state.settings.open);
   const size = useWindowsStore((state) => state.settings.size);
+
   const hasDefinedPosition = useWindowsStore(
     (state) => state.settings.hasDefinedPosition,
   );
+
   const setOpen = useWindowsStore((state) => state.setOpen);
   const setPosition = useWindowsStore((state) => state.setPosition);
   const { t } = useTranslation();

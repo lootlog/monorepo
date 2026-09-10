@@ -21,6 +21,7 @@ export const Route = createFileRoute(
       }
 
       const search = loadBattlePanelPlayerVsPlayerSearch(location.searchStr);
+
       const characterId =
         (await ensureBattlePanelCharacterId({
           queryClient: context.queryClient,

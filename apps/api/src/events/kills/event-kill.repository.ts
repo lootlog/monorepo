@@ -32,7 +32,9 @@ import {
 } from "#src/database/drizzle/schema";
 
 type Database = ApiDatabaseValue;
+
 type KillPointInsert = Omit<typeof eventKillPointTable.$inferInsert, "id">;
+
 const MapPresenceSnapshot = Schema.Array(
   Schema.Struct({
     mapId: Schema.String,
@@ -41,10 +43,12 @@ const MapPresenceSnapshot = Schema.Array(
     afkTimeSeconds: Schema.Number,
   }),
 );
+
 const decodeMapPresence = Schema.decodeUnknownSync(
   Schema.NullOr(MapPresenceSnapshot),
   { onExcessProperty: "preserve" },
 );
+
 const GapTimelineSnapshot = Schema.Array(
   Schema.Struct({
     mapId: Schema.String,
@@ -55,9 +59,11 @@ const GapTimelineSnapshot = Schema.Array(
     durationSeconds: Schema.Number,
   }),
 );
+
 const decodeGapTimeline = Schema.decodeUnknownSync(GapTimelineSnapshot, {
   onExcessProperty: "preserve",
 });
+
 const normalizePointJson = <T extends typeof eventKillPointTable.$inferSelect>(
   point: T,
 ) => ({
@@ -65,6 +71,7 @@ const normalizePointJson = <T extends typeof eventKillPointTable.$inferSelect>(
   bonusBreakdown: point.bonusBreakdown,
   mapPresenceData: decodeMapPresence(point.mapPresenceData),
 });
+
 const normalizeEventJson = <T extends typeof eventTable.$inferSelect>(
   event: T,
 ) => ({ ...event, scoringRules: event.scoringRules });
@@ -87,13 +94,16 @@ export const makeEventKillStore = (database: ApiDatabaseValue) => {
           )
           .limit(1),
       );
+
       if (!rows[0]) return null;
+
       const heroes = yield* run((database) =>
         database
           .select()
           .from(eventHeroNpcTable)
           .where(eq(eventHeroNpcTable.eventId, eventId)),
       );
+
       return { ...rows[0], heroNpcs: heroes };
     });
   }
@@ -101,8 +111,10 @@ export const makeEventKillStore = (database: ApiDatabaseValue) => {
   function findEventWithHeroStats(guildId: string, eventId: string) {
     return Effect.gen(function* () {
       const event = yield* findEventWithHeroes(guildId, eventId);
+
       if (!event) return null;
       const heroIds = event.heroNpcs.map(({ id }) => id);
+
       const counts =
         heroIds.length === 0
           ? []
@@ -116,6 +128,7 @@ export const makeEventKillStore = (database: ApiDatabaseValue) => {
                 .where(inArray(eventHeroKillTable.heroNpcId, heroIds))
                 .groupBy(eventHeroKillTable.heroNpcId),
             );
+
       return {
         ...event,
         heroNpcs: event.heroNpcs.map((hero) => ({
@@ -132,6 +145,7 @@ export const makeEventKillStore = (database: ApiDatabaseValue) => {
 
   function findNpcStats(guildId: string, world: string, npcIds: number[]) {
     if (npcIds.length === 0) return Effect.succeed([]);
+
     return run((database) =>
       database
         .selectDistinctOn([npcKillStatsTable.npcId], {
@@ -172,8 +186,10 @@ export const makeEventKillStore = (database: ApiDatabaseValue) => {
         .where(eq(eventMapTable.heroNpcId, heroNpcId)),
     );
   }
+
   function findMapsForHeroes(heroIds: string[]) {
     if (heroIds.length === 0) return Effect.succeed([]);
+
     return run((database) =>
       database
         .select()
@@ -195,6 +211,7 @@ export const makeEventKillStore = (database: ApiDatabaseValue) => {
       params.memberIds?.length === 0
     )
       return Effect.succeed([]);
+
     return run((database) =>
       database
         .select()
@@ -253,6 +270,7 @@ export const makeEventKillStore = (database: ApiDatabaseValue) => {
       database.transaction((transaction) =>
         Effect.gen(function* () {
           const killId = randomUUID();
+
           const killRows = yield* transaction
             .insert(eventHeroKillTable)
             .values({
@@ -265,6 +283,7 @@ export const makeEventKillStore = (database: ApiDatabaseValue) => {
               isManualClose: params.isManualClose,
             })
             .returning();
+
           const assignments =
             params.mapIds.length === 0
               ? []
@@ -291,11 +310,14 @@ export const makeEventKillStore = (database: ApiDatabaseValue) => {
                     ),
                   )
                   .orderBy(asc(eventMapAssignmentHistoryTable.assignedAt));
+
           const points = yield* buildPoints(assignments, killId);
+
           if (points.length > 0)
             yield* transaction
               .insert(eventKillPointTable)
               .values(points.map((point) => ({ ...point, id: randomUUID() })));
+
           if (params.mapIds.length > 0) {
             yield* transaction
               .delete(eventMapToMemberTable)
@@ -310,10 +332,12 @@ export const makeEventKillStore = (database: ApiDatabaseValue) => {
                 ),
               );
           }
+
           const createdPoints = yield* transaction
             .select()
             .from(eventKillPointTable)
             .where(eq(eventKillPointTable.killId, killId));
+
           return {
             kill: killRows[0],
             points: createdPoints,
@@ -340,6 +364,7 @@ export const makeEventKillStore = (database: ApiDatabaseValue) => {
         .limit(1),
     ).pipe(Effect.map((rows) => rows[0]?.hero ?? null));
   }
+
   function findEvent(guildId: string, eventId: string) {
     return run((database) =>
       database
@@ -349,6 +374,7 @@ export const makeEventKillStore = (database: ApiDatabaseValue) => {
         .limit(1),
     ).pipe(Effect.map((rows) => rows[0] ?? null));
   }
+
   function findMember(guildId: string, memberId: number) {
     return run((database) =>
       database
@@ -400,6 +426,7 @@ export const makeEventKillStore = (database: ApiDatabaseValue) => {
           .orderBy(desc(eventHeroKillTable.killedAt))
           .limit(params.limit),
       );
+
       return yield* Effect.forEach(
         rows,
         ({ kill, hero }) =>
@@ -479,10 +506,13 @@ export const makeEventKillStore = (database: ApiDatabaseValue) => {
           )
           .limit(1),
       );
+
       const row = rows[0];
+
       if (!row) return null;
       const points = yield* findKillPoints(killId);
       const memberIds = points.map(({ memberId }) => memberId);
+
       const roles =
         memberIds.length === 0
           ? []
@@ -498,6 +528,7 @@ export const makeEventKillStore = (database: ApiDatabaseValue) => {
                 .where(inArray(memberToRoleTable.A, memberIds))
                 .orderBy(desc(roleTable.position)),
             );
+
       return {
         ...row.kill,
         heroNpc: { ...row.hero, event: normalizeEventJson(row.event) },
@@ -525,6 +556,7 @@ export const makeEventKillStore = (database: ApiDatabaseValue) => {
 
   function findWindowSummaries(killIds: string[]) {
     if (killIds.length === 0) return Effect.succeed([]);
+
     return run((database) =>
       database
         .select()
@@ -532,6 +564,7 @@ export const makeEventKillStore = (database: ApiDatabaseValue) => {
         .where(inArray(eventRespawnWindowSummaryTable.killId, killIds)),
     );
   }
+
   function findWindowSummary(killId: string) {
     return run((database) =>
       database
@@ -557,6 +590,7 @@ export const makeEventKillStore = (database: ApiDatabaseValue) => {
     overlapStart: Date;
   }) {
     if (params.mapIds.length === 0) return Effect.succeed([]);
+
     return run((database) =>
       database
         .select({

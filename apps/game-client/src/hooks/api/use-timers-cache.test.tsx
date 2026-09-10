@@ -27,6 +27,7 @@ describe("useTimersCache", () => {
     const fetchTimers = vi
       .fn<() => Promise<Timer[]>>()
       .mockResolvedValue([createTimer({ timerKey: "server-timer" })]);
+
     const { result } = renderHook(() => useTimersCache(), { wrapper });
 
     result.current.upsertTimer(createTimer({ timerKey: "socket-timer" }));
@@ -43,9 +44,11 @@ describe("useTimersCache", () => {
 
   it("keeps an unseen timer list fetchable after an incremental removal", async () => {
     const serverTimers = [createTimer({ timerKey: "server-timer" })];
+
     const fetchTimers = vi
       .fn<() => Promise<Timer[]>>()
       .mockResolvedValue(serverTimers);
+
     const { result } = renderHook(() => useTimersCache(), { wrapper });
 
     result.current.removeTimer({

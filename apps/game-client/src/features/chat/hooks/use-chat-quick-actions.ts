@@ -22,19 +22,25 @@ export const useChatQuickActions = () => {
   const reportSendError = useChatSendError();
   const { visibleGuilds, areVisibleGuildsResolved } = useVisibleLootlogGuilds();
   const { mutateAsync: send, isPending } = useChatControllerSendChatMessage();
+
   const { startNotificationMessage, isCreatingNotificationMessage } =
     useNotificationChatOrchestration();
+
   const sendPosition = async (guildId = getSelectedChatGuildId()) => {
     if (pendingActions.has("position")) return;
+
     if (!guildId || !visibleGuilds.some((guild) => guild.id === guildId))
       return;
     const characterData = buildChatCharacterData();
     const location = getChatAlarmLocation();
+
     if (!characterData || !location) {
       return;
     }
+
     const prefix = `${characterData.nick}(${characterData.lvl}${characterData.prof}), `;
     const coordinates = ` (${location.x}, ${location.y})`;
+
     const message =
       prefix +
       location.map.slice(
@@ -42,12 +48,15 @@ export const useChatQuickActions = () => {
         Math.max(0, CHAT_INPUT_MAX_LENGTH - prefix.length - coordinates.length),
       ) +
       coordinates;
+
     pendingActions.add("position");
+
     try {
       const result = await send({
         pathParams: { guildId },
         data: { message, type: MessageType.NORMAL, characterData },
       });
+
       updateChatMessagesCache({
         guildId,
         queryClient,
@@ -59,35 +68,46 @@ export const useChatQuickActions = () => {
       pendingActions.delete("position");
     }
   };
+
   const sendHelp = async (selectedGuildId = getSelectedChatGuildId()) => {
     if (pendingActions.has("help")) return;
     const game = useGameStore.getState().game;
     const characterData = buildChatCharacterData();
     const location = getChatAlarmLocation();
+
     if (!game || !characterData || !location) {
       return;
     }
+
     const guildId = selectedGuildId;
+
     if (!areVisibleGuildsResolved) {
       return;
     }
+
     if (!guildId || !visibleGuilds.some((guild) => guild.id === guildId)) {
       return;
     }
+
     const enemyText =
       location.enemyCount === undefined
         ? ""
         : t("quickActions.enemyCount", { count: location.enemyCount });
+
     const fixedText =
       t("quickActions.helpMessage", { map: "", x: location.x, y: location.y }) +
       enemyText;
+
     const map = location.map.slice(
       0,
       Math.max(0, CHAT_INPUT_MAX_LENGTH - fixedText.length),
     );
+
     const message =
       t("quickActions.helpMessage", { ...location, map }) + enemyText;
+
     pendingActions.add("help");
+
     try {
       const { result } = await startNotificationMessage({
         guildIds: [guildId],
@@ -99,6 +119,7 @@ export const useChatQuickActions = () => {
             data: { message, type: MessageType.NOTIFICATION, characterData },
           }),
       });
+
       updateChatMessagesCache({
         guildId,
         queryClient,
@@ -110,6 +131,7 @@ export const useChatQuickActions = () => {
       pendingActions.delete("help");
     }
   };
+
   return {
     sendPosition,
     sendHelp,

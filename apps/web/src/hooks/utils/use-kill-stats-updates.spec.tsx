@@ -10,6 +10,7 @@ import { createTestGateway } from "@/lib/testing/gateway";
 import { useKillStatsUpdates } from "./use-kill-stats-updates";
 
 const clients: QueryClient[] = [];
+
 afterEach(() => {
   cleanup();
   clients.forEach((client) => client.clear());
@@ -20,9 +21,11 @@ afterEach(() => {
 
 it("coalesces kill hints, refreshes active statistics without attributing kills, and leaves feed untouched", async () => {
   vi.useFakeTimers();
+
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
+
   clients.push(client);
   const gateway = createTestGateway();
   gateway.request.mockResolvedValue(undefined);
@@ -32,20 +35,25 @@ it("coalesces kill hints, refreshes active statistics without attributing kills,
   const analytics = ["/users/@me/stats/kills/analytics", { days: "30" }];
   const npcs = ["/users/@me/kills/npcs"];
   const feed = ["/users/@me/feed"];
+
   for (const key of [totals, activity, analytics, npcs, feed])
     client.setQueryData(key, 10);
   const queryFn = vi.fn().mockResolvedValue(10);
+
   const observer = new QueryObserver(client, {
     queryKey: totals,
     queryFn,
     staleTime: Infinity,
   });
+
   const unsubscribe = observer.subscribe(() => {});
+
   const { unmount } = renderHook(() => useKillStatsUpdates(socket), {
     wrapper: ({ children }) => (
       <QueryClientProvider client={client}>{children}</QueryClientProvider>
     ),
   });
+
   act(() => {
     for (let i = 0; i < 20; i++)
       gateway.deliver({
@@ -58,6 +66,7 @@ it("coalesces kill hints, refreshes active statistics without attributing kills,
   await act(() => vi.advanceTimersByTimeAsync(1_000));
   expect(queryFn).toHaveBeenCalledTimes(1);
   expect(client.getQueryData(totals)).toBe(10);
+
   for (const key of [activity, analytics, npcs])
     expect(client.getQueryState(key)?.isInvalidated).toBe(true);
   expect(client.getQueryState(feed)?.isInvalidated).toBe(false);

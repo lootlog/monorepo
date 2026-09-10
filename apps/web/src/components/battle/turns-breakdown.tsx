@@ -10,6 +10,7 @@ interface TurnsBreakdownProps {
 
 export const TurnsBreakdown: FC<TurnsBreakdownProps> = ({ warrior }) => {
   const { t } = useTranslation();
+
   const turnsBreakdown = [
     {
       type: t("battleUi.breakdowns.turns.totalTurns"),

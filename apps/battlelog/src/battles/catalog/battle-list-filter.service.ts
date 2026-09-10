@@ -106,9 +106,11 @@ export const makeBattleListFilter = (drizzle: BattleListFilterDatabase) => {
     }
 
     const phConditions: (SQL | undefined)[] = [gt(battleWarriors.ph, 0)];
+
     if (characterIds.length) {
       phConditions.push(inArray(battleWarriors.originalId, characterIds));
     }
+
     conditions.push(warriorExists(battlesRef, ...phConditions));
   };
 
@@ -143,11 +145,13 @@ export const makeBattleListFilter = (drizzle: BattleListFilterDatabase) => {
   const buildFilterConditions = (query: BattleListQuery, userId?: string) =>
     Effect.gen(function* () {
       let characterIds = query.characterId ?? [];
+
       if (query.result?.length && !characterIds.length && userId) {
         const userChars = yield* drizzle.query.userCharacters.findMany({
           where: { userId },
           columns: { characterId: true },
         });
+
         characterIds = userChars.map((character) => character.characterId);
       }
 
@@ -155,7 +159,9 @@ export const makeBattleListFilter = (drizzle: BattleListFilterDatabase) => {
         const conditions: (SQL | undefined)[] = [];
 
         if (query.world) conditions.push(eq(battlesRef.world, query.world));
+
         if (query.userId) conditions.push(eq(battlesRef.userId, query.userId));
+
         if (query.public !== undefined)
           conditions.push(eq(battlesRef.public, query.public));
 
@@ -170,6 +176,7 @@ export const makeBattleListFilter = (drizzle: BattleListFilterDatabase) => {
         if (query.type?.length) {
           const hasSolo = query.type.includes("solo");
           const hasGroup = query.type.includes("group");
+
           if (hasSolo && !hasGroup) {
             conditions.push(eq(battlesRef.type, "1v1"));
           } else if (hasGroup && !hasSolo) {

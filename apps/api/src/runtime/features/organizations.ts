@@ -42,10 +42,12 @@ import {
 import { MemberServices, membersData } from "#src/runtime/features/members";
 
 type GuildDiscordSyncValue = ReturnType<typeof makeGuildDiscordSyncData>;
+
 export class GuildDiscordSync extends Context.Service<
   GuildDiscordSync,
   GuildDiscordSyncValue
 >()("@lootlog/api/http-api/GuildDiscordSync") {}
+
 export const guildDiscordSyncLive = Layer.effect(
   GuildDiscordSync,
   Effect.gen(function* () {
@@ -53,10 +55,12 @@ export const guildDiscordSyncLive = Layer.effect(
     const rabbit = yield* RabbitMessaging;
     const httpClient = yield* HttpClient.HttpClient;
     const config = yield* ApiRuntimeConfig;
+
     const discordBot = makeDiscordBotClient(
       httpClient,
       config.discordBotServiceUrl,
     );
+
     return makeGuildDiscordSyncData(database, {
       staleAfterMs: 900 * 1000,
       refresh: (guildId) => discordBot.refreshGuildChannels(guildId),
@@ -69,23 +73,29 @@ export const guildDiscordSyncLive = Layer.effect(
     });
   }),
 );
+
 export const organizationContextLookup = Layer.unwrap(
   Effect.map(ApiRedis, (redis) => {
     const attempt = <A>(operation: () => PromiseLike<A>) =>
       Effect.tryPromise({ try: operation, catch: (error) => error });
+
     const cache: OrganizationContextCache = {
       get: (key) => attempt(() => redis.get(key)),
       set: (key, value, ttl) => attempt(() => redis.set(key, value, ttl)),
       del: (key) => attempt(() => redis.del(key)),
     };
+
     return OrganizationContextLookup.layerDatabase(cache);
   }),
 ).pipe(Layer.provide(membersData));
+
 type AccountOrganizationOperationsValue = AccountOrganizationData["Service"];
+
 export class AccountOrganizationOperations extends Context.Service<
   AccountOrganizationOperations,
   AccountOrganizationOperationsValue
 >()("@lootlog/api/http-api/AccountOrganizationOperations") {}
+
 export const accountOrganizationOperationsLive = Layer.effect(
   AccountOrganizationOperations,
   Effect.gen(function* () {
@@ -96,8 +106,10 @@ export const accountOrganizationOperationsLive = Layer.effect(
     const httpClient = yield* HttpClient.HttpClient;
     const database = yield* ApiDatabase;
     const config = yield* ApiRuntimeConfig;
+
     const cacheAttempt = <A>(operation: () => PromiseLike<A>) =>
       Effect.tryPromise({ try: operation, catch: (cause) => cause });
+
     const deleteAccount = makeUserAccountDeletion(database, {
       cleanupBattlelog: (userId) =>
         outboundHttpRequest(httpClient, {
@@ -124,6 +136,7 @@ export const accountOrganizationOperationsLive = Layer.effect(
                 new Error(`Request failed with status ${response.status}`),
               );
             }
+
             return Effect.try(() =>
               JSON.parse(new TextDecoder().decode(response.body)),
             );
@@ -146,10 +159,13 @@ export const accountOrganizationOperationsLive = Layer.effect(
           content: new TextEncoder().encode(JSON.stringify(payload)),
         }),
     });
+
     const preferences = makeUserPreferencesData(database);
+
     const getManageableUserGuilds = makeManageableGuilds(
       ({ userId, discordId }) => discord.getUserGuilds(userId, discordId),
     );
+
     const getUserGuildsWithPermissions = makeUserGuildPermissions(database, {
       getJson: (key, schema) =>
         Effect.tryPromise({
@@ -162,6 +178,7 @@ export const accountOrganizationOperationsLive = Layer.effect(
           catch: (error) => error,
         }),
     });
+
     const getCurrentUserAccessibleGuilds = makeAccessibleGuilds(
       database,
       {
@@ -180,6 +197,7 @@ export const accountOrganizationOperationsLive = Layer.effect(
       },
       config.environment,
     );
+
     const getUserGuilds = makeUserGuildList(
       database,
       {
@@ -208,6 +226,7 @@ export const accountOrganizationOperationsLive = Layer.effect(
       },
       config.environment,
     );
+
     const getCurrentUserGuilds = makeCurrentUserGuilds(
       database,
       {
@@ -227,6 +246,7 @@ export const accountOrganizationOperationsLive = Layer.effect(
       },
       config.environment,
     );
+
     return AccountOrganizationOperations.of({
       deleteAccount,
       ...discordSync,
@@ -239,12 +259,14 @@ export const accountOrganizationOperationsLive = Layer.effect(
     });
   }),
 );
+
 export const accountOrganizationData = Layer.effect(
   AccountOrganizationData,
   Effect.map(AccountOrganizationOperations, (operations) =>
     AccountOrganizationData.of(operations),
   ),
 );
+
 export const internalGuildsData = Layer.unwrap(
   Effect.map(ApiRedis, (redis) => {
     const cacheOperation = <A>(operation: () => PromiseLike<A>) =>
@@ -252,6 +274,7 @@ export const internalGuildsData = Layer.unwrap(
         try: operation,
         catch: (cause) => new InternalGuildsOperationError({ cause }),
       });
+
     const cache: InternalGuildsCache = {
       get: (key) => cacheOperation(() => redis.get(key)),
       getJson: (key, schema) =>
@@ -262,13 +285,16 @@ export const internalGuildsData = Layer.unwrap(
         cacheOperation(() => redis.setJson(key, value, ttl)),
       del: (key) => cacheOperation(() => redis.del(key)).pipe(Effect.asVoid),
     };
+
     return InternalGuildsData.layerDatabase(cache);
   }),
 );
+
 export const rolesData = Layer.unwrap(
   Effect.gen(function* () {
     const redis = yield* ApiRedis;
     const rabbit = yield* RabbitMessaging;
+
     return RolesData.layerDatabase(
       {
         deleteByPattern: (pattern) =>
@@ -291,6 +317,7 @@ export const rolesData = Layer.unwrap(
     );
   }),
 );
+
 export const guildConfigurationData = Layer.unwrap(
   Effect.map(ApiRedis, (redis) =>
     GuildConfigurationData.layerDatabase({

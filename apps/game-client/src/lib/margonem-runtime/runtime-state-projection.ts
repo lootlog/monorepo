@@ -59,6 +59,7 @@ type Dependencies = {
 };
 
 const EMPTY_NPCS: Readonly<Record<number, RuntimeNpc>> = Object.freeze({});
+
 const EMPTY_OTHERS: Readonly<Record<string, RuntimeOther>> = Object.freeze({});
 
 function deletesOther(entry: OtherEntry): boolean {
@@ -86,6 +87,7 @@ function resolveClan(
   if (heroPatch && "clan" in heroPatch) {
     return heroPatch.clan ? Object.freeze({ ...heroPatch.clan }) : undefined;
   }
+
   return currentClan;
 }
 
@@ -178,6 +180,7 @@ function normalizeParty(event: NonNullable<GameEvent["party"]>) {
   return Object.freeze(
     Object.values(event.members ?? {}).map<RuntimePartyMember>((member) => {
       const characterId = String(member.id);
+
       return Object.freeze({
         accountId: String(member.account),
         characterId,
@@ -198,8 +201,11 @@ function resolveNpcLevel(
   heroLevel: number | undefined,
 ): number | undefined {
   const explicitLevel = entry.lvl ?? entry.level;
+
   if (explicitLevel !== undefined) return explicitLevel;
+
   if (template?.elasticLevelFactor === 0) return heroLevel;
+
   return template?.level;
 }
 
@@ -222,15 +228,18 @@ export class RuntimeStateProjection {
       useOthersStore.getState().replaceOthers(snapshot.others);
       usePartyStore.getState().replaceParty(snapshot.party);
       useFriendsStore.getState().replaceFriends(snapshot.friends, 0);
+
       return true;
     } catch {
       this.clearStores();
+
       return false;
     }
   }
 
   captureIngress(envelope: RuntimeEventEnvelope): RuntimeEventEnvelope {
     const event = envelope.raw;
+
     if (!event) return envelope;
 
     const needsGame = envelope.facts.some(
@@ -240,22 +249,30 @@ export class RuntimeStateProjection {
         fact.kind === "npc-delete" ||
         (fact.kind === "battle" && event.f?.endBattle === 1),
     );
+
     const npcsById: Record<number, RuntimeNpc> = {};
+
     for (const deletion of event.npcs_del ?? []) {
       const npc = useNpcsStore.getState().getNpc(deletion.id);
+
       if (npc) npcsById[deletion.id] = npc;
     }
+
     const dialogNpcId = Number(
       Array.isArray(event.d) ? event.d[2] : Number.NaN,
     );
+
     if (Number.isSafeInteger(dialogNpcId) && dialogNpcId > 0) {
       const npc = useNpcsStore.getState().getNpc(dialogNpcId);
+
       if (npc) npcsById[dialogNpcId] = npc;
     }
 
     const othersById: Record<string, RuntimeOther> = {};
+
     for (const warriorId of Object.keys(event.f?.w ?? {})) {
       const other = useOthersStore.getState().getOther(warriorId);
+
       if (other) othersById[warriorId] = other;
     }
 
@@ -275,10 +292,12 @@ export class RuntimeStateProjection {
 
   apply(envelope: RuntimeEventEnvelope): void {
     const event = envelope.raw;
+
     if (!event) return;
 
     const currentGame = useGameStore.getState().game;
     const mapChanged = event.town !== undefined;
+
     if (mapChanged) {
       this.icons.clear();
       this.npcTemplates.clear();
@@ -295,12 +314,15 @@ export class RuntimeStateProjection {
     if (event.other || mapChanged) {
       this.applyOthers(event.other ?? {}, mapChanged);
     }
+
     if (event.npcs || event.npcs_del || mapChanged) {
       this.applyNpcs(event, mapChanged);
     }
+
     if (event.party) {
       usePartyStore.getState().replaceParty(normalizeParty(event.party));
     }
+
     if (event.friends !== undefined || event.friends_max !== undefined) {
       this.applyFriends(event);
     }
@@ -316,6 +338,7 @@ export class RuntimeStateProjection {
     for (const template of event.npc_tpls ?? []) {
       this.npcTemplates.set(template.id, Object.freeze({ ...template }));
     }
+
     for (const icon of event.icons ?? []) this.icons.set(icon.id, icon.icon);
   }
 
@@ -325,6 +348,7 @@ export class RuntimeStateProjection {
   ): void {
     const removeIds: string[] = [];
     const upserts: Record<string, RuntimeOther> = {};
+
     const handleUpserts: Record<
       string,
       NonNullable<ReturnType<MargonemRuntimeAdapter["getOtherHandle"]>>
@@ -335,11 +359,14 @@ export class RuntimeStateProjection {
         removeIds.push(characterId);
         continue;
       }
+
       if (!createsOther(entry)) continue;
 
       upserts[characterId] = normalizeOtherFromEvent(characterId, entry);
+
       try {
         const handle = this.adapter.getOtherHandle(characterId);
+
         if (handle) handleUpserts[characterId] = handle;
       } catch {
         // The normalized event remains authoritative; handles are UI integration only.
@@ -349,6 +376,7 @@ export class RuntimeStateProjection {
     if (mapChanged) {
       runtimeOtherHandles.replace(handleUpserts);
       useOthersStore.getState().replaceOthers(upserts, true);
+
       return;
     }
 
@@ -363,13 +391,16 @@ export class RuntimeStateProjection {
 
     for (const rawNpc of event.npcs ?? []) {
       const npc = this.composeNpc(rawNpc, heroLevel);
+
       if (npc) upserts.push(npc);
     }
 
     if (mapChanged) {
       useNpcsStore.getState().replaceNpcs(upserts, true);
+
       return;
     }
+
     useNpcsStore.getState().applyNpcBatch({ removeIds, upserts });
   }
 
@@ -384,10 +415,12 @@ export class RuntimeStateProjection {
     const profession = valueOrCurrent(entry.prof, template?.prof);
     const type = valueOrCurrent(entry.type, template?.type);
     const level = resolveNpcLevel(entry, template, heroLevel);
+
     const weight = valueOrCurrent(
       entry.wt,
       valueOrCurrent(entry.warrior_type, template?.warrior_type),
     );
+
     const { x, y } = entry;
 
     if (
@@ -428,11 +461,13 @@ export class RuntimeStateProjection {
   // before game storage; ingress can contain either that reference or the string.
   private resolveNpcIcon(icon: AppliedNpcEntry["icon"]): string | undefined {
     if (typeof icon === "string") return icon;
+
     return this.icons.get(getOptionalProperty(icon, "id") ?? -1);
   }
 
   private applyFriends(event: GameEvent): void {
     const current = useFriendsStore.getState();
+
     const friends = event.friends
       ? parseFriendsListFromEvent(event.friends).map((friend) =>
           Object.freeze({
@@ -446,6 +481,7 @@ export class RuntimeStateProjection {
           }),
         )
       : current.friends;
+
     current.replaceFriends(friends, event.friends_max ?? current.friendsMax);
   }
 

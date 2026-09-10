@@ -49,15 +49,19 @@ export function Reservations() {
   const { t } = useTranslation();
   const guildId = useGuildId() ?? "";
   const [searchValue, setSearchValue] = useState("");
+
   const [filter, setFilter] = useLocalStorage<ReservationFilter>(
     "reservations-filter",
     "all",
   );
+
   const { viewMode, setViewMode } = useViewMode("reservations-view-mode");
+
   const spotsQuery = useListReservationSpots(
     { guildId },
     { query: { enabled: Boolean(guildId), staleTime: 30_000 } },
   );
+
   const spotsQueryKey = getListReservationSpotsQueryKey({ guildId });
 
   const updatePinnedState = (spotId: string, isPinned: boolean) => {
@@ -71,9 +75,12 @@ export function Reservations() {
     mutation: {
       onMutate: async ({ pathParams }) => {
         await queryClient.cancelQueries({ queryKey: spotsQueryKey });
+
         const previous =
           queryClient.getQueryData<ReservationSpotsResponseDto>(spotsQueryKey);
+
         updatePinnedState(pathParams.spotId, true);
+
         return { previous };
       },
       onError: (_error, _variables, context) => {
@@ -84,13 +91,17 @@ export function Reservations() {
         queryClient.invalidateQueries({ queryKey: spotsQueryKey }),
     },
   });
+
   const unpinMutation = useUnpinReservationSpot<unknown, PinMutationContext>({
     mutation: {
       onMutate: async ({ pathParams }) => {
         await queryClient.cancelQueries({ queryKey: spotsQueryKey });
+
         const previous =
           queryClient.getQueryData<ReservationSpotsResponseDto>(spotsQueryKey);
+
         updatePinnedState(pathParams.spotId, false);
+
         return { previous };
       },
       onError: (_error, _variables, context) => {
@@ -103,6 +114,7 @@ export function Reservations() {
   });
 
   const normalizedSearch = searchValue.trim();
+
   const sortedSpots = getVisibleReservationSpots(
     spotsQuery.data ?? [],
     searchValue,

@@ -55,6 +55,7 @@ const createDatabaseFixture = () => {
       }),
     },
   };
+
   return mockDrizzleService;
 };
 
@@ -72,12 +73,15 @@ const createRedisFixture = () => {
       codec,
     }: RedisGetOrSetJsonBestEffortOptions<T>): Promise<T> => {
       const cached = await mockRedisService.get(key);
+
       if (cached !== null) return codec.parse(cached);
       const result = await factory();
       await mockRedisService.set(key, JSON.stringify(result), 300);
+
       return result;
     },
   };
+
   return mockRedisService;
 };
 
@@ -172,6 +176,7 @@ describe("battle analytics", () => {
         winRatio: 60,
         totalPH: 100,
       });
+
       redisService.get.mockResolvedValue(cachedData);
 
       const result = await Effect.runPromise(
@@ -193,6 +198,7 @@ describe("battle analytics", () => {
         winRatio: 0,
         totalPH: 0,
       });
+
       redisService.get.mockResolvedValue(cachedData);
 
       await Effect.runPromise(
@@ -217,6 +223,7 @@ describe("battle analytics", () => {
         winRatio: 0,
         totalPH: 0,
       });
+
       redisService.get.mockResolvedValue(cachedData);
 
       await Effect.runPromise(
@@ -274,6 +281,7 @@ describe("battle analytics", () => {
       const cachedData = JSON.stringify([
         { prof: "mage", wins: 5, losses: 3, totalBattles: 8, winRate: 62.5 },
       ]);
+
       redisService.get.mockResolvedValue(cachedData);
 
       const result = await Effect.runPromise(
@@ -306,6 +314,7 @@ describe("battle analytics", () => {
         current: { type: "wins", count: 3 },
         longest: { wins: 5, losses: 2 },
       });
+
       redisService.get.mockResolvedValue(cachedData);
 
       const result = await Effect.runPromise(
@@ -375,6 +384,7 @@ describe("battle analytics", () => {
         fastest: { duration: 100, battleId: "b-1" },
         longest: { duration: 1000, battleId: "b-2" },
       });
+
       redisService.get.mockResolvedValue(cachedData);
 
       const result = await Effect.runPromise(
@@ -444,6 +454,7 @@ describe("battle analytics", () => {
           battleId: "b-1",
         },
       ]);
+
       redisService.get.mockResolvedValue(cachedData);
 
       const result = await Effect.runPromise(
@@ -562,6 +573,7 @@ describe("battle analytics", () => {
           },
         ],
       };
+
       const newerLossBattle = {
         ...mockBattle,
         id: "b-2",
@@ -639,6 +651,7 @@ describe("battle analytics", () => {
           battleId: "b-1",
         },
       ]);
+
       redisService.get.mockResolvedValue(cachedData);
 
       const result = await Effect.runPromise(
@@ -823,6 +836,7 @@ describe("battle analytics", () => {
           lastBattleDate: "2024-01-01T00:00:00.000Z",
         },
       ]);
+
       redisService.get.mockResolvedValue(cachedData);
 
       const result = await Effect.runPromise(
@@ -872,6 +886,7 @@ describe("battle analytics", () => {
         queryService,
         "buildAnalyticsWhere",
       ).mockReturnValue(undefined);
+
       drizzleService.db.query.userCharacters.findFirst.mockReturnValue(
         Effect.succeed(mockUserCharacter),
       );
@@ -984,6 +999,7 @@ describe("battle analytics", () => {
         queryService,
         "buildAnalyticsWhere",
       ).mockReturnValue(undefined);
+
       drizzleService.db.query.userCharacters.findFirst.mockReturnValue(
         Effect.succeed(mockUserCharacter),
       );
