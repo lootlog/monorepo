@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import {
   act,
   fireEvent,
@@ -32,6 +33,11 @@ import { ChatInput } from "./chat-input";
 beforeEach(() =>
   setTestRuntimeGame({ world: "tempest", hero: { name: "CurrentHero" } }),
 );
+
+beforeEach(() => {
+  vi.spyOn(toast, "error").mockImplementation(() => "error");
+  vi.spyOn(toast, "warning").mockImplementation(() => "warning");
+});
 
 const sendRequest = vi.fn<typeof fetch>();
 const notificationRequest = vi.fn<typeof fetch>();
@@ -694,6 +700,11 @@ describe("ChatInput", () => {
 
     await waitFor(() => expect(notificationRequest).toHaveBeenCalledTimes(1));
     expect(sendRequest).not.toHaveBeenCalled();
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        "Wysyłasz zbyt szybko. Spróbuj ponownie za chwilę.",
+      ),
+    );
     expect(editor.textContent).toBe("!alarm");
   });
 
@@ -811,6 +822,9 @@ describe("ChatInput", () => {
     await waitFor(() => {
       expect(editor).toHaveFocus();
     });
+    expect(toast.error).toHaveBeenCalledWith(
+      "Nie udało się wysłać wiadomości na czat",
+    );
     expect(editor.textContent).toBe("hello");
   });
 });

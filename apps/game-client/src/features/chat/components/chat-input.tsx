@@ -1,3 +1,4 @@
+import { useChatSendError } from "@/features/chat/hooks/use-chat-send-error";
 import { inputVariantClasses, type InputVariant } from "@/components/ui/input";
 import { ChatQuickActionStrip } from "./chat-quick-action-strip";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
@@ -228,6 +229,7 @@ export const ChatInput: FC<ChatInputProps> = ({
   const { t } = useTranslation("chat");
   const { t: tCommand } = useTranslation("command");
   const queryClient = useQueryClient();
+  const reportSendError = useChatSendError();
   const replyDraft = useChatStore(
     (state) => state.replyDraftsByGuild[selectedGuildId ?? ""],
   );
@@ -642,6 +644,7 @@ export const ChatInput: FC<ChatInputProps> = ({
       resetInputState();
       focusEditorCaret(0);
     } catch (error) {
+      reportSendError(error);
       if (error instanceof NotificationChatPublishError) {
         resetInputState();
       }

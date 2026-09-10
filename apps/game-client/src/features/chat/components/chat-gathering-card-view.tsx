@@ -42,7 +42,7 @@ export function ChatGatheringCardView({
         </div>
       </div>
       <div className="ll:mt-[-2px]">
-        <ChatGatheringDetails {...details} showNpcIcon={false} />
+        <ChatGatheringDetails {...details} />
       </div>
     </div>
   );

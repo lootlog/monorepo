@@ -241,7 +241,7 @@ it.each(["ORGANIZER", "PARTICIPANT"] as const)(
   },
 );
 
-it("counts organizer applicants without adding the organizer and opens management", async () => {
+it("shows actual party size independently of applications and opens management", async () => {
   await setup();
   const room = {
     ...readyRoomOrganizerFixture,

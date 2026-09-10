@@ -37,7 +37,6 @@ export function ChatOwnGatheringBar({
     <ChatGatheringInviteButton onErrorChange={setInviteFailed} />
   ) : (
     <ChatGatheringJoinButton
-      fill
       pending={withdrawal.isWithdrawing}
       disabled={!withdrawal.participant}
       status={

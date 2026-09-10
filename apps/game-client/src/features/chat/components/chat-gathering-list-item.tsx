@@ -33,7 +33,7 @@ export function ChatGatheringListItem({
         </div>
         <ChatGatheringCounters partyMemberCount={gathering.partyMemberCount} />
       </div>
-      <ChatGatheringDetails {...gathering} showNpcIcon={false} />
+      <ChatGatheringDetails {...gathering} />
       <div className="ll:mt-1 ll:flex ll:items-center ll:justify-between ll:gap-2">
         {hidden ? (
           <Button

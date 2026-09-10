@@ -94,7 +94,6 @@ export function ChatAvailableGatherings({
                 onHide={() => onHide(candidate)}
               />
               control=<ChatGatheringJoinButton
-                fill
                 pending={pending}
                 disabled={stale || Boolean(room) || hasOwnGathering}
                 featured={

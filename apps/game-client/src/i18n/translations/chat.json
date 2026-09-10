@@ -24,20 +24,13 @@
     "showInChat": "Pokaż w czacie",
     "visibleInChat": "Widoczna w czacie",
     "options": "Opcje zbiórki",
-    "inviteShort": "Zaproś",
     "more": "+{{count}} pozostałe zbiórki",
     "collapse": "Zwiń pozostałe",
-    "time": "[{{time}}]",
     "noDescription": "Brak opisu",
     "title": "Party finder",
     "ownTitle": "Party finder",
     "counts": "({{inParty}}/10)",
-    "countsLabel": "{{inParty}} · {{applicants}}",
-    "titleWithOrganizer": "{{organizer}}",
-    "titleWithOrganizerStats": "{{organizer}} ({{lvl}}{{prof}})",
-    "applicantCount": "Zgłoszeni: {{count}}",
     "partyMemberCount": "W grupie: {{count}}/10",
-    "applicantCountUnknown": "Liczba zgłoszonych niedostępna",
     "partyMemberCountUnknown": "Liczba osób w grupie niedostępna",
     "shortcutUnset": "Skrót nieustawiony",
     "hide": "Ukryj zbiórkę",
@@ -102,8 +95,6 @@
   },
   "input": {
     "suggestionKeyboardHint": "↑ ↓ wybór · Enter zatwierdź · Esc zamknij",
-    "recipient": "Do:",
-    "chooseRecipient": "Wybierz organizację",
     "placeholder": "Wiadomość...",
     "pending": "Wysyłanie wiadomości",
     "clearChatConfirm": {
@@ -118,8 +109,6 @@
     },
     "mentionSuggestions": {
       "title": "Wspomnij osobę lub rolę",
-      "roles": "Role",
-      "members": "Nicki",
       "loading": "Ładowanie mentionów...",
       "noResults": "Brak pasujących mentionów"
     }
@@ -146,6 +135,7 @@
     "showProfile": "Pokaż profil"
   },
   "errors": {
+    "rateLimited": "Wysyłasz zbyt szybko. Spróbuj ponownie za chwilę.",
     "sendFailed": "Nie udało się wysłać wiadomości na czat",
     "clearFailed": "Nie udało się wyczyścić czatu",
     "deleteFailed": "Nie udało się usunąć wiadomości"
@@ -177,7 +167,7 @@
       },
       "join-party-gathering": {
         "label": "Zgłoś się do zbiórki",
-        "description": "Zgłasza do zbiórki widocznej na pasku czatu."
+        "description": "Zgłasza do zbiórki widocznej na pasku czatu. Ponowne użycie wycofuje zgłoszenie."
       }
     },
     "positionSent": "Wysłano pozycję"
