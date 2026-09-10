@@ -1,7 +1,26 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { createNotificationTest } from "../notification-test";
 import { getUsersControllerGetCurrentUserAccessibleGuildsQueryKey } from "@lootlog/client/main";
-import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
+import {
+  beforeEach,
+  afterEach,
+  describe,
+  expect,
+  it,
+  onTestFinished,
+  vi,
+} from "vitest";
+import { configureApiClients } from "@lootlog/client/transport";
+import { createChatReadyRoom } from "@/features/chat/chat-test-fixtures";
+import { usePartyFinderStore } from "@/store/party-finder.store";
+import { useWindowsStore } from "@/store/windows.store";
+import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { useSettingsStore } from "@/store/settings.store";
 import {
   type StoredNotification,
@@ -45,8 +64,65 @@ describe("NotificationsList", () => {
         useNotificationsStore.getInitialState(),
         true,
       );
+      usePartyFinderStore.getState().clearReadyRooms();
+      useWindowsStore.getState().setOpen("party-finder", false);
+      useWindowsStore.getState().setOpen("chat", false);
     });
     vi.useRealTimers();
+  });
+
+  it("opens chat with the joined gathering after applying from a notification", async () => {
+    const room = createChatReadyRoom({ world: "pandora" });
+    const gathering: StoredNotification = {
+      ...notification,
+      notificationId: room.notificationId,
+      type: "party-gathering",
+      character: room.organizerCharacter,
+      world: room.world,
+    };
+    setTestRuntimeGame({
+      hero: { accountId: "account-1", characterId: "101" },
+    });
+    useWindowsStore.getState().setOpen("notifications", true);
+    useWindowsStore.getState().setOpen("party-finder", false);
+    useWindowsStore.getState().setOpen("chat", false);
+    useNotificationsStore.setState({ notifications: [gathering] });
+    const apply = vi.fn<typeof fetch>(async () => Response.json(room));
+    const restoreApi = configureApiClients({
+      main: {
+        baseUrl: "https://api.test",
+        fetch: async (input, init) => {
+          const url = new URL(
+            input instanceof Request ? input.url : String(input),
+          );
+          if (url.pathname.endsWith("/members/summary"))
+            return Response.json([]);
+          if (
+            url.pathname ===
+            `/messaging/party-gathering/${room.notificationId}/applications`
+          )
+            return apply(input, init);
+          throw new Error(`Unexpected request: ${url.pathname}`);
+        },
+      },
+    });
+    onTestFinished(restoreApi);
+    render(<NotificationsList notifications={[gathering]} />, {
+      wrapper: test.wrapper,
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Idę" }));
+
+    await waitFor(() =>
+      expect(useWindowsStore.getState().chat.open).toBe(true),
+    );
+    expect(useWindowsStore.getState()["party-finder"].open).toBe(false);
+    expect(useWindowsStore.getState().notifications.open).toBe(false);
+    expect(
+      usePartyFinderStore.getState().projections[room.notificationId],
+    ).toEqual(room);
+    expect(useNotificationsStore.getState().notifications).toEqual([]);
+    expect(apply).toHaveBeenCalledTimes(1);
   });
 
   it("uses a CSS-only entry animation without whole-list layout animation", () => {

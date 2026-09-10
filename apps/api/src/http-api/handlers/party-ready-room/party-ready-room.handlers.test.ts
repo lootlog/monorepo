@@ -221,6 +221,8 @@ it("returns active discovery summaries for the requested world without participa
                 {
                   notificationId: "room-a",
                   organizerName: "Hero",
+                  applicantCount: 3,
+                  inPartyCount: 1,
                   guildIds: ["guild-visible"],
                   world,
                   createdAt: projection.createdAt,
@@ -240,6 +242,8 @@ it("returns active discovery summaries for the requested world without participa
     {
       notificationId: "room-a",
       organizerName: "Hero",
+      applicantCount: 3,
+      inPartyCount: 1,
       guildIds: ["guild-visible"],
       world: "Fobos",
       createdAt: projection.createdAt,

@@ -6,6 +6,7 @@
   "type": "module",
   "exports": {
     "./globals.css": "./src/styles/globals.css",
+    "./scroll-fade.css": "./src/styles/scroll-fade.css",
     "./components.json": "./components.json",
     "./lib/*": "./src/lib/*.ts",
     "./components/*": "./src/components/*.tsx",

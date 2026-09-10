@@ -1,4 +1,5 @@
 import {
+  act,
   fireEvent,
   render as renderUi,
   screen,
@@ -109,9 +110,21 @@ describe("PartyGatheringCard", () => {
     );
   });
 
-  it("keeps the organizer tooltip after the gathering ends", async () => {
+  it("keeps the organizer tooltip and stops accepting signup after the gathering ends", async () => {
     const user = userEvent.setup();
-    render(
+    const { rerender } = render(
+      <PartyGatheringCard
+        all={false}
+        guildName="Guild"
+        isMsgYesterday={false}
+        member={member}
+        message={makeMessage()}
+      />,
+    );
+    expect(
+      screen.getByRole("button", { name: "Dołącz do grupy" }),
+    ).toBeEnabled();
+    rerender(
       <PartyGatheringCard
         all={false}
         guildName="Guild"
@@ -125,6 +138,10 @@ describe("PartyGatheringCard", () => {
     expect(await screen.findByRole("tooltip")).toHaveTextContent(
       "Leader (200w)",
     );
+    expect(
+      screen.queryByRole("button", { name: "Dołącz do grupy" }),
+    ).toBeNull();
+    expect(fetchRequest).not.toHaveBeenCalled();
   });
 
   it("applies to the Ready Room from the explicit join click", async () => {
@@ -197,6 +214,65 @@ describe("PartyGatheringCard", () => {
     ).toBeDisabled();
   });
 
+  it("keeps a successful signup read-only while the participant status changes", async () => {
+    const participant = {
+      participantId: "participant",
+      discordId: "current-user",
+      character: {
+        accountId: "202",
+        characterId: "101",
+        nick: "Tester",
+        lvl: 230,
+        prof: "w",
+        icon: "hero.gif",
+      },
+      partyPresence: "OUTSIDE" as const,
+      createdAt: "2026-07-21T10:00:00.000Z",
+      updatedAt: "2026-07-21T10:00:00.000Z",
+    };
+    const projection = createChatReadyRoom({
+      notificationId: "notification-1",
+      world: "tempest",
+      participants: { participant },
+    });
+    fetchRequest.mockResolvedValueOnce(Response.json(projection));
+    const user = userEvent.setup();
+    render(
+      <PartyGatheringCard
+        all={false}
+        guildName="Guild"
+        isMsgYesterday={false}
+        message={makeMessage()}
+      />,
+    );
+
+    await user.tab();
+    await user.keyboard("{Enter}");
+    const status = await screen.findByRole("button", {
+      name: "Zapisano do grupy",
+    });
+    expect(status).toBeDisabled();
+    await user.click(status);
+    expect(
+      usePartyFinderStore.getState().projections["notification-1"],
+    ).toEqual(projection);
+    expect(fetchRequest).toHaveBeenCalledOnce();
+
+    act(() =>
+      usePartyFinderStore.getState().mergeProjection({
+        ...projection,
+        revision: projection.revision + 1,
+        participants: {
+          participant: { ...participant, partyPresence: "IN_PARTY" },
+        },
+      }),
+    );
+    expect(
+      await screen.findByRole("button", { name: "W grupie" }),
+    ).toBeDisabled();
+    expect(fetchRequest).toHaveBeenCalledOnce();
+  });
+
   it("allows another character with the same nickname to apply", () => {
     render(
       <PartyGatheringCard
@@ -246,6 +322,25 @@ describe("PartyGatheringCard", () => {
       screen.getByRole("button", { name: "Wymagany poziom 180-230" }),
     ).toBeDisabled();
     expect(fetchRequest).not.toHaveBeenCalled();
+  });
+
+  it("explains a blocked signup from the keyboard without submitting it", async () => {
+    setTestRuntimeGame({ world: "pandora" });
+    const user = userEvent.setup();
+    render(
+      <PartyGatheringCard
+        all={false}
+        guildName="Guild"
+        isMsgYesterday={false}
+        message={makeMessage()}
+      />,
+    );
+
+    await user.tab();
+    expect(await screen.findByRole("tooltip")).toHaveTextContent("Inny świat");
+    await user.keyboard("{Enter} ");
+    expect(fetchRequest).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Inny świat" })).toBeDisabled();
   });
 
   it("shows a failed signup and clears the error on retry and room change", async () => {

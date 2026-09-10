@@ -6,6 +6,11 @@ import { HttpApi, HttpApiBuilder } from "effect/unstable/httpapi";
 import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { guildTable } from "#src/database/drizzle/schema";
+import { PartyReadyRoomAggregateSchema } from "@lootlog/schema/party-ready-room";
+import {
+  COMMIT_READY_ROOM_SCRIPT,
+  EXIT_READY_ROOM_PARTICIPANT_SCRIPT,
+} from "#src/messaging/ready-room/ready-room-redis-scripts";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import type { ReadyRoomAggregate } from "#src/messaging/ready-room/ready-room.types";
 import { createDatabaseBoundary } from "../../../../test/database-fixtures.js";
@@ -53,6 +58,36 @@ it("encodes minimal and NPC discovery summaries without leaking hidden Organizat
       minLvl: 1,
       maxLvl: 500,
       npc: { name: "NPC", location: "Map", lvl: 100, type: "HERO" },
+      participants: {
+        organizer: {
+          participantId: "organizer",
+          discordId: "owner",
+          character: base.organizerCharacter,
+          partyPresence: "IN_PARTY",
+          createdAt: base.createdAt,
+          updatedAt: base.updatedAt,
+        },
+        alternate: {
+          participantId: "alternate",
+          discordId: "owner",
+          character: { ...base.organizerCharacter, characterId: "3" },
+          partyPresence: "OUTSIDE",
+          createdAt: base.createdAt,
+          updatedAt: base.updatedAt,
+        },
+        other: {
+          participantId: "other",
+          discordId: "other",
+          character: {
+            ...base.organizerCharacter,
+            accountId: "4",
+            characterId: "5",
+          },
+          partyPresence: "OUTSIDE",
+          createdAt: base.createdAt,
+          updatedAt: base.updatedAt,
+        },
+      },
     },
     {
       ...base,
@@ -79,7 +114,22 @@ it("encodes minimal and NPC discovery summaries without leaking hidden Organizat
         ? Schema.decodeUnknownEffect(schema)(room)
         : Effect.succeed(null);
     },
-    eval: () => Effect.succeed(rooms.map((room) => room.notificationId)),
+    eval: (script, _keys, args) => {
+      if (
+        script === COMMIT_READY_ROOM_SCRIPT ||
+        script === EXIT_READY_ROOM_PARTICIPANT_SCRIPT
+      ) {
+        const next = Schema.decodeUnknownSync(
+          Schema.fromJsonString(PartyReadyRoomAggregateSchema),
+        )(String(args[1]));
+        const index = rooms.findIndex(
+          (room) => room.notificationId === next.notificationId,
+        );
+        rooms[index] = next;
+        return Effect.succeed(["COMMITTED"]);
+      }
+      return Effect.succeed(rooms.map((room) => room.notificationId));
+    },
   };
   const services = Layer.mergeAll(
     makeReadyRoomDataLayer(
@@ -128,6 +178,8 @@ it("encodes minimal and NPC discovery summaries without leaking hidden Organizat
     const summary = {
       notificationId: "minimal",
       organizerName: "Author",
+      applicantCount: 0,
+      inPartyCount: 0,
       guildIds: ["visible"],
       world: "experimental",
       createdAt: base.createdAt,
@@ -138,6 +190,7 @@ it("encodes minimal and NPC discovery summaries without leaking hidden Organizat
       {
         ...summary,
         notificationId: "npc",
+        applicantCount: 2,
         description: "",
         minLvl: 1,
         maxLvl: 500,
@@ -158,6 +211,68 @@ it("encodes minimal and NPC discovery summaries without leaking hidden Organizat
         },
       },
     ]);
+    const observation = await boundary.handler(
+      new Request(
+        "http://api.test/messaging/party-gathering/npc/party-observation",
+        {
+          method: "POST",
+          headers: {
+            authorization: "Bearer test",
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            organizerAccountId: "1",
+            organizerCharacterId: "2",
+            memberCharacterIds: ["2", "3", "unregistered-party-member"],
+          }),
+        },
+      ),
+    );
+    expect(observation.status).toBe(201);
+    const afterObservation = await boundary.handler(
+      new Request(
+        "http://api.test/messaging/party-gathering/active?world=experimental",
+        { headers: { authorization: "Bearer test" } },
+      ),
+    );
+    expect(await afterObservation.json()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          notificationId: "npc",
+          applicantCount: 2,
+          inPartyCount: 1,
+        }),
+      ]),
+    );
+    const withdrawal = await boundary.handler(
+      new Request(
+        "http://api.test/messaging/party-gathering/npc/applications/me",
+        {
+          method: "DELETE",
+          headers: {
+            authorization: "Bearer test",
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({ participantId: "alternate" }),
+        },
+      ),
+    );
+    expect(withdrawal.status).toBe(200);
+    const afterWithdrawal = await boundary.handler(
+      new Request(
+        "http://api.test/messaging/party-gathering/active?world=experimental",
+        { headers: { authorization: "Bearer test" } },
+      ),
+    );
+    expect(await afterWithdrawal.json()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          notificationId: "npc",
+          applicantCount: 1,
+          inPartyCount: 0,
+        }),
+      ]),
+    );
   } finally {
     await boundary.dispose();
     await databaseBoundary.dispose();

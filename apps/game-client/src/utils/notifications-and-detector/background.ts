@@ -76,3 +76,12 @@ export const getSubtleBackgroundColor = (
   npcTypeColors?: NpcTypeColors,
 ) =>
   `color-mix(in srgb, ${getBackgroundColor(key, true, npcTypeColors)} 37.5%, transparent)`;
+
+export const getPartyGatheringBackgroundColor = (
+  npcType: string | undefined,
+  npcTypeColors?: NpcTypeColors,
+) =>
+  getSubtleBackgroundColor(
+    isCombatNpcType(npcType) ? npcType : "party-gathering",
+    npcTypeColors,
+  );

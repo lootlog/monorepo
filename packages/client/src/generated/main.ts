@@ -6072,6 +6072,16 @@ export type ActivePartyGatheringSummaryNpc = {
 export interface ActivePartyGatheringSummary {
   notificationId: string;
   organizerName: string;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  applicantCount: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  inPartyCount: number;
   guildIds: string[];
   world: string;
   description?: string;

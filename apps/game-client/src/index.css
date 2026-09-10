@@ -2,6 +2,7 @@
 @import "tailwindcss/utilities.css" prefix(ll);
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "@lootlog/ui/scroll-fade.css";
 @source "src/**/*.{ts,tsx}";
 
 @variant dark (:is(#lootlog-root.dark-theme, .ll-theme-boundary.dark-theme) *);

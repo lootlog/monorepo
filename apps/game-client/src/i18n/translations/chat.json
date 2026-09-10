@@ -21,6 +21,13 @@
     "title": "Party finder",
     "applicantCount": "Zgłoszeni: {{count}}",
     "inPartyCount": "W grupie: {{count}} ze zgłoszonych",
+    "applicantCountUnknown": "Liczba zgłoszonych niedostępna",
+    "inPartyCountUnknown": "Liczba zgłoszonych w grupie niedostępna",
+    "shortcutUnset": "Skrót nieustawiony",
+    "hide": "Ukryj zbiórkę",
+    "hidden": "Ukryte zbiórki ({{count}})",
+    "restore": "Przywróć zbiórkę",
+    "restoreNamed": "Przywróć zbiórkę: {{name}}",
     "invite": "Zaproś zgłoszonych",
     "inviting": "Wysyłanie zaproszeń…",
     "inviteFailed": "Nie udało się wysłać zaproszeń",
@@ -122,6 +129,8 @@
     "showProfile": "Pokaż profil"
   },
   "partyGathering": {
+    "title": "Zbiórka",
+    "ended": "Zbiórka zakończona",
     "otherWorld": "Inny świat",
     "joinFailed": "Nie udało się dołączyć do grupy. Spróbuj ponownie.",
     "levelRange": "Poziom: {{min}} - {{max}}",

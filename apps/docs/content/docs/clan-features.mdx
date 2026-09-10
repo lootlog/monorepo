@@ -114,31 +114,44 @@ Zgłoszenia NPC zajmują pełną szerokość wiersza i mają subtelne tło zgodn
 z ustawieniami **Wygląd → Kolory NPC**, tak jak pasek Party findera.
 Nie mają przycisków tworzenia grupy ani przygotowania komunikatu.
 
+Aktywna zbiórka w historii czatu ma nagłówek **Zbiórka**. Jej tło obejmuje
+cały wiersz, tak jak przy zgłoszeniach NPC. Ikona postaci z plusem pozwala
+zgłosić chęć udziału. Po zakończeniu wpis pokazuje tylko **Zbiórka zakończona**.
+
 Pasek nad polem pisania pokazuje najnowszą dostępną zbiórkę ze wszystkich
 włączonych organizacji na bieżącym świecie. Jest niezależny od historii
 wiadomości i filtra rozmowy. Zbiórki są pobierane również po wejściu do gry
 i ponownym połączeniu. **Pozostałe zbiórki** otwierają listę innych zgłoszeń.
 Tło zbiórki NPC korzysta z ustawień **Wygląd → Kolory NPC**. Dla zbiórki
 bez rozpoznanej kategorii NPC pasek używa koloru **Grupa** z powiadomień.
+Pole pisania ma ten sam kolor co widoczny pasek, również podczas pisania.
 Nazwa NPC pozostaje jasna. Pasek mieści się nad
 odpowiedzią i nie przesuwa pola pisania. Informacje mogą zajmować kilka linii.
 Stan aktywnej zbiórki jest widoczny w panelu czatu; szybki dostęp nie dodaje
 osobnej zielonej ikony.
-Panel **Party finder** oddziela cel i opis zbiórki od wymaganego poziomu.
+Pasek zbiórki oddziela cel i opis od wymaganego poziomu.
 Zbiórki NPC pokazują również grafikę potwora, jeśli zapisano ją przy zgłoszeniu.
 Obok grafiki widać nazwę, poziom i dostępną profesję, a niżej lokację oraz
 współrzędne, jeśli zostały podane.
-Organizator widzi w nagłówku dwie ikony z liczbami: zgłoszone postacie oraz
+W nagłówku widać dwie ikony z liczbami: zgłoszone postacie oraz
 zgłoszeni obecni w grupie. Podpowiedzi wyjaśniają znaczenie liczników;
-liczniki nie doliczają organizatora ani osób spoza zbiórki. Uczestnik widzi
-status swojej bieżącej postaci.
+liczniki nie doliczają postaci organizatora ani osób spoza zbiórki.
+Są widoczne również przed zgłoszeniem i po nim. Uczestnik dodatkowo widzi
+status swojej bieżącej postaci na przycisku zgłoszenia. Zielony znacznik
+potwierdza zgłoszenie, a podpowiedź informuje też o obecności w grupie.
+Jego liczniki odświeżają się wraz z listą
+zbiórek, co 30 sekund oraz po obsługiwanych zdarzeniach. Brak dostępnej
+wartości oznacza kreska „—”.
 Ikona **Zaproś zgłoszonych** zaprasza osoby pozostające poza grupą. Przy NPC
 znajduje się po prawej stronie jego danych. Bez NPC jest obok opisu lub
 zakresu poziomów; tylko pusta zbiórka ma tę akcję w nagłówku.
 Zapraszanie działa na postaci organizatora po synchronizacji zbiórki.
 Wysłanie zaproszenia nie oznacza, że dana osoba już dołączyła do grupy.
-Ikona **Zarządzaj** w prawym górnym rogu otwiera okno organizowania grupy.
-Obok organizator ma **Anuluj zbiórkę**, a uczestnik **Wycofaj zgłoszenie**.
+Organizator ma ikonę **Zarządzaj** w prawym górnym rogu. Otwiera ona okno
+organizowania grupy, dostępne tylko dla organizatora. Obok znajduje się
+**Anuluj zbiórkę**. Uczestnik sprawdza swój status w czacie i wycofuje
+zgłoszenie, klikając ponownie zaznaczony przycisk zgłoszenia.
+Zgłoszenie z powiadomienia otwiera czat z paskiem tej zbiórki.
 Ikony akcji pokazują podpowiedzi po najechaniu lub ustawieniu fokusu.
 
 Jeśli odświeżenie się nie powiedzie, ostatnia lista pozostaje widoczna jako
@@ -146,10 +159,26 @@ nieaktualna. Przycisk **Odśwież** ponawia pobranie; zgłaszanie jest niedostę
 do czasu potwierdzenia danych. Błędy zgłoszenia, wycofania i anulowania są
 pokazywane osobno. Odświeżanie nie ponawia tych akcji automatycznie.
 
+Ikona postaci z plusem **Zgłoś się** znajduje się obok szczegółów zbiórki, a przy pustej zbiórce
+w nagłówku. Podpowiedź głównej ikony pokazuje aktualny skrót do zgłoszenia
+albo informację **Skrót nieustawiony**. Ikony przy pozostałych zbiórkach
+dotyczą tych konkretnych zbiórek; skrót zgłasza tylko do głównej.
 **Zgłoś się** zapisuje postać jako chętną, ale nie rezerwuje miejsca w grupie
 Margonem. Organizator wybiera osoby i wysyła zaproszenia. Po zgłoszeniu
-możesz je wycofać. Nowa zbiórka nie podmienia przycisku, gdy pasek jest
+możesz je wycofać. Lista pozostałych zbiórek pozostaje dostępna, a zgłoszenie
+do kolejnej wymaga wycofania obecnego. Nowa zbiórka nie podmienia przycisku, gdy pasek jest
 pod kursorem lub ma fokus klawiatury.
+
+Przed zgłoszeniem możesz wybrać ikonę **Ukryj zbiórkę**. Ukrywa tylko tę
+zbiórkę do jej zakończenia, także po odświeżeniu strony. Ustawienie jest
+zapisywane lokalnie, osobno dla konta Lootlog, świata i postaci. Nowe zbiórki
+tego samego organizatora nadal się pojawiają. Ukrywanie nie wysyła zgłoszenia
+ani nie wycofuje już wysłanego.
+Pasek wybiera kolejną dostępną zbiórkę; gdy nie ma następnej, znika, a pole
+pisania wraca do zwykłego tła. Skrót do zgłaszania pomija ukryte zbiórki.
+Przycisk **Ukryte zbiórki** w prawym górnym rogu czatu otwiera listę, z której
+możesz przywrócić pojedynczą zbiórkę, jeśli nadal trwa i masz do niej dostęp.
+Przycisk pojawia się tylko wtedy, gdy masz ukryte zbiórki.
 
 Własną zbiórkę możesz zobaczyć i anulować również po zmianie postaci lub
 świata, jeśli zachowujesz wymagany dostęp do organizacji. Zaproszenia

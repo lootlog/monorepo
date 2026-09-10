@@ -38,6 +38,7 @@ const ScrollArea = React.forwardRef<
         <ScrollAreaPrimitive.Viewport
           ref={ref}
           data-slot="scroll-area-viewport"
+          data-scroll-fade-viewport={scrollFade ? "" : undefined}
           className={cn(
             "focus-visible:ring-ring/50 focus-visible:ring-[3px] size-full rounded-[inherit] transition-[color,box-shadow] outline-none",
             scrollFade &&
@@ -47,7 +48,13 @@ const ScrollArea = React.forwardRef<
           )}
           onScroll={onScroll}
         >
-          {children}
+          {scrollFade ? (
+            <ScrollAreaPrimitive.Content>
+              {children}
+            </ScrollAreaPrimitive.Content>
+          ) : (
+            children
+          )}
         </ScrollAreaPrimitive.Viewport>
         {orientation !== "horizontal" && <ScrollBar />}
         {orientation !== "vertical" && <ScrollBar orientation="horizontal" />}

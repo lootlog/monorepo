@@ -5,11 +5,29 @@ import { configureApiClients } from "@lootlog/client/transport";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 import { useWindowsStore } from "@/store/windows.store";
+import { createChatReadyRoom } from "@/features/chat/chat-test-fixtures";
 import { PartyFinder } from "./party-finder";
 let restore = () => {};
 afterEach(() => {
   restore();
   usePartyFinderStore.getState().clearReadyRooms();
+  useWindowsStore.getState().setOpen("party-finder", false);
+});
+it("does not expose management to a participant with a previously open window", () => {
+  setTestRuntimeGame({
+    hero: { accountId: "account-1", characterId: "101" },
+  });
+  usePartyFinderStore.getState().mergeProjection(createChatReadyRoom());
+  useWindowsStore.getState().setOpen("party-finder", true);
+  const client = new QueryClient();
+  render(
+    <QueryClientProvider client={client}>
+      <PartyFinder />
+    </QueryClientProvider>,
+  );
+
+  expect(screen.queryByText("Party finder")).not.toBeInTheDocument();
+  client.clear();
 });
 it("shows and cancels an owned gathering after switching character and world without offering game invitations", async () => {
   const requests: Request[] = [];

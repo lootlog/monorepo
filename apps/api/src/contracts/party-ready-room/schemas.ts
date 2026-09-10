@@ -9,6 +9,7 @@ import {
   DateTimeString,
   FiniteNumber,
   NonEmptyString,
+  NonNegativeSafeInteger,
   PositiveSafeInteger,
 } from "@lootlog/schema/http-scalars";
 
@@ -218,6 +219,8 @@ export const ActivePartyGatheringsQuery = Schema.Struct({
 export const ActivePartyGatheringSummary = Schema.Struct({
   notificationId: Schema.String,
   organizerName: Schema.String,
+  applicantCount: NonNegativeSafeInteger,
+  inPartyCount: NonNegativeSafeInteger,
   guildIds: Schema.Array(Schema.String),
   world: Schema.String,
   description: Schema.optionalKey(Schema.String),
