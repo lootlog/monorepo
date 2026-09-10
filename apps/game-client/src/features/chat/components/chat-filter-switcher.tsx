@@ -21,7 +21,7 @@ export function ChatFilterSwitcher({ value, onValueChange, unread }: Props) {
   ] as const;
 
   return (
-    <div className="ll:flex ll:shrink-0 ll:items-center ll:gap-1 ll:border-solid ll:border-y ll:border-x-0 ll:border-gray-400/40">
+    <div className="ll:flex ll:shrink-0 ll:items-center ll:gap-1 ll:border-y ll:border-x-0 ll:border-gray-400/40">
       <ToggleGroup
         value={[value]}
         onValueChange={(values) => {
@@ -30,7 +30,7 @@ export function ChatFilterSwitcher({ value, onValueChange, unread }: Props) {
           if (option) onValueChange(option.value);
         }}
         aria-label={t("filters.label")}
-        className="ll:grid ll:grid-cols-3 ll:min-w-0 ll:flex-1 ll:h-7 ll:box-border ll:rounded-none ll:border-0 ll:bg-black/20 ll:p-0"
+        className="ll:grid ll:grid-cols-3 ll:min-w-0 ll:flex-1 ll:h-7 ll:rounded-none ll:border-0 ll:bg-black/20 ll:p-0"
       >
         {options.map((option) => (
           <Toggle

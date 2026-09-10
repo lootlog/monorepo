@@ -32,12 +32,12 @@ export const HiddenTimers: FC<HiddenTimersProps> = ({ guildId }) => {
   return (
     <div className="ll:flex ll:flex-col ll:gap-2">
       {uniqueHiddenTimers && uniqueHiddenTimers.length > 0 && (
-        <span className="ll:grid ll:w-full ll:grid-cols-2 ll:gap-2 ll:box-border">
+        <span className="ll:grid ll:w-full ll:grid-cols-2 ll:gap-2">
           {sortedHiddenTimers.map((timer) => {
             return (
               <SettingsPanel key={timer} className="ll:px-2 ll:py-1.5">
                 <Tile className="ll:border-none ll:bg-transparent ll:px-0 ll:hover:bg-transparent">
-                  <span className="ll:flex ll:w-full ll:items-center ll:justify-between ll:px-1 ll:box-border">
+                  <span className="ll:flex ll:w-full ll:items-center ll:justify-between ll:px-1">
                     <span className="ll:min-w-0 ll:truncate ll:text-[12px] ll:text-white">
                       {timer}
                     </span>

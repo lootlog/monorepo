@@ -19,7 +19,7 @@ export const EmptyState: FC<EmptyStateProps> = ({
     <div
       aria-live="polite"
       className={cn(
-        "ll:box-border ll:flex ll:h-full ll:min-h-20 ll:w-full ll:flex-col ll:items-center ll:justify-center ll:px-4 ll:py-3 ll:text-center",
+        "ll:flex ll:h-full ll:min-h-20 ll:w-full ll:flex-col ll:items-center ll:justify-center ll:px-4 ll:py-3 ll:text-center",
         className,
       )}
       role="status"

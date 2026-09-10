@@ -67,8 +67,8 @@ export const ChatMentionSuggestions: FC<ChatMentionSuggestionsProps> = ({
   );
 
   return (
-    <div className="ll:absolute ll:bottom-full ll:inset-x-0 ll:z-50 ll:w-full ll:overflow-hidden ll:border-solid ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40 ll:bg-[#171719]">
-      <div className="ll:flex ll:items-center ll:justify-between ll:border-solid ll:border-x-0 ll:border-t-0 ll:border-b ll:border-gray-400/20 ll:px-2 ll:py-1 ll:text-[10px] ll:text-neutral-400">
+    <div className="ll:absolute ll:bottom-full ll:inset-x-0 ll:z-50 ll:w-full ll:overflow-hidden ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40 ll:bg-[#171719]">
+      <div className="ll:flex ll:items-center ll:justify-between ll:border-x-0 ll:border-t-0 ll:border-b ll:border-gray-400/20 ll:px-2 ll:py-1 ll:text-[10px] ll:text-neutral-400">
         <span>{title}</span>
         <span>{suggestions.length}</span>
       </div>
@@ -168,7 +168,7 @@ export const ChatMentionSuggestions: FC<ChatMentionSuggestionsProps> = ({
           </div>
         </ScrollArea>
       )}
-      <div className="ll:border-solid ll:border-x-0 ll:border-b-0 ll:border-t ll:border-gray-400/20 ll:px-2 ll:py-1 ll:text-[9px] ll:text-neutral-400">
+      <div className="ll:border-x-0 ll:border-b-0 ll:border-t ll:border-gray-400/20 ll:px-2 ll:py-1 ll:text-[9px] ll:text-neutral-400">
         {t("input.suggestionKeyboardHint")}
       </div>
     </div>

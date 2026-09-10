@@ -53,7 +53,7 @@ export const SettingsNav: FC<SettingsNavProps> = ({
   if (compact) {
     return (
       <div
-        className="ll:flex ll:h-full ll:w-9 ll:shrink-0 ll:flex-col ll:items-center ll:gap-0.5 ll:border-solid ll:border-0 ll:border-r ll:border-gray-400/30 ll:bg-black/15 ll:px-1 ll:py-1"
+        className="ll:flex ll:h-full ll:w-9 ll:shrink-0 ll:flex-col ll:items-center ll:gap-0.5 ll:border-0 ll:border-r ll:border-gray-400/30 ll:bg-black/15 ll:px-1 ll:py-1"
         onKeyDown={moveRailFocus}
       >
         <button

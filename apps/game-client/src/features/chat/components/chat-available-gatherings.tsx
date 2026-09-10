@@ -55,7 +55,7 @@ export function ChatAvailableGatherings({
   const currentRoom = room && (
     <li
       key={room.notificationId}
-      className="ll:min-w-0 ll:border-solid ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40 ll:first:border-t-0"
+      className="ll:min-w-0 ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40 ll:first:border-t-0"
     >
       <div className={room.viewer === "ORGANIZER" ? "ll:px-1.5 ll:py-0.5" : ""}>
         <ChatOwnGatheringBar room={room} summary={roomSummary} />
@@ -86,7 +86,7 @@ export function ChatAvailableGatherings({
         return (
           <li
             key={candidate.notificationId}
-            className="ll:min-w-0 ll:border-solid ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40 ll:first:border-t-0"
+            className="ll:min-w-0 ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40 ll:first:border-t-0"
           >
             <ChatGatheringCardView
               organizerDiscordId={candidate.organizerDiscordId}
@@ -116,7 +116,7 @@ export function ChatAvailableGatherings({
           <Button
             type="button"
             variant="ghost"
-            className="ll:w-full ll:h-7 ll:gap-1 ll:rounded-none ll:border-0 ll:border-t ll:border-solid ll:border-gray-400/20 ll:text-[10px]"
+            className="ll:w-full ll:h-7 ll:gap-1 ll:rounded-none ll:border-0 ll:border-t ll:border-gray-400/20 ll:text-[10px]"
             aria-expanded={expanded}
             onClick={() => setExpanded(!expanded)}
           >

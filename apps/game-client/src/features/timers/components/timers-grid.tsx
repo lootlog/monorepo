@@ -69,7 +69,7 @@ export const TimersGrid: FC<TimersGridProps> = ({
   return (
     <TimerClockProvider>
       <span
-        className="ll:grid ll:gap-0.5 ll:box-border ll:w-full"
+        className="ll:grid ll:gap-0.5 ll:w-full"
         style={{
           gridTemplateColumns: `repeat(auto-fit, minmax(${minColumnWidth}px, 1fr))`,
         }}

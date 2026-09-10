@@ -31,7 +31,7 @@ export const ChatReplyPreview: FC<ChatReplyPreviewProps> = ({
   return (
     <div
       className={cn(
-        "ll:flex ll:w-full ll:min-w-0 ll:max-w-full ll:box-border ll:items-start ll:justify-between ll:gap-[var(--ll-chat-space-lg)] ll:overflow-hidden ll:rounded-none ll:border-0 ll:text-gray-100 ll:p-0 ll:bg-zinc-800/70",
+        "ll:flex ll:w-full ll:min-w-0 ll:max-w-full ll:items-start ll:justify-between ll:gap-[var(--ll-chat-space-lg)] ll:overflow-hidden ll:rounded-none ll:border-0 ll:text-gray-100 ll:p-0 ll:bg-zinc-800/70",
         compact
           ? "ll:not-italic ll:text-[length:var(--ll-chat-detail-font-size,10px)] ll:leading-[var(--ll-chat-detail-line-height,13px)]"
           : "ll:italic",

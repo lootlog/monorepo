@@ -297,7 +297,7 @@ export const ChatTranscript = ({
           render=<MessageScroller.Content />
           role="list"
           aria-live="off"
-          className="ll-chat-message-list ll:flex ll:h-max ll:min-h-full ll:w-full ll:min-w-0 ll:flex-col ll:box-border"
+          className="ll-chat-message-list ll:flex ll:h-max ll:min-h-full ll:w-full ll:min-w-0 ll:flex-col"
           style={getChatDensityStyle(appearance.fontScalePercent)}
         >
           {renderables.map((row) => (

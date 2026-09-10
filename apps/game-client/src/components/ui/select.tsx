@@ -41,7 +41,7 @@ const SelectTrigger = React.forwardRef<
   <BaseSelect.Trigger
     ref={ref}
     className={cn(
-      "ll:flex ll:h-6 ll:w-full ll:min-w-0 ll:items-center ll:justify-between ll:gap-1 ll:rounded-sm ll:border ll:border-solid ll:border-border ll:bg-transparent ll:px-1.5 ll:text-xs ll:text-white ll:box-border ll:outline-none ll:data-[disabled]:cursor-not-allowed ll:data-[disabled]:opacity-50 ll:focus-visible:border-ring ll:focus-visible:ring-ring/50 ll:focus-visible:ring-[3px] ll:[&>span]:min-w-0 ll:[&>span]:truncate ll:[&>span]:text-left ll:[&>span[data-placeholder]]:text-gray-400 ll-custom-cursor-pointer",
+      "ll:flex ll:h-6 ll:w-full ll:min-w-0 ll:items-center ll:justify-between ll:gap-1 ll:rounded-sm ll:border ll:border-border ll:bg-transparent ll:px-1.5 ll:text-xs ll:text-white ll:outline-none ll:data-[disabled]:cursor-not-allowed ll:data-[disabled]:opacity-50 ll:focus-visible:border-ring ll:focus-visible:ring-ring/50 ll:focus-visible:ring-[3px] ll:[&>span]:min-w-0 ll:[&>span]:truncate ll:[&>span]:text-left ll:[&>span[data-placeholder]]:text-gray-400 ll-custom-cursor-pointer",
       className,
     )}
     {...props}
@@ -119,7 +119,7 @@ const SelectContent = React.forwardRef<HTMLDivElement, SelectContentProps>(
         <BaseSelect.Popup
           ref={ref}
           className={cn(
-            "ll:z-[500] ll:max-h-[var(--available-height)] ll:min-w-[8rem] ll:overflow-y-auto ll:overflow-x-hidden ll:rounded-sm ll:border ll:border-solid ll:border-border ll:bg-black/90 ll:text-white ll:box-border ll:shadow-md ll:origin-[var(--transform-origin)] ll:animate-in ll:fade-in-0 ll:zoom-in-95 data-[ending-style]:ll:animate-out data-[ending-style]:ll:fade-out-0 data-[ending-style]:ll:zoom-out-95 data-[side=bottom]:ll:slide-in-from-top-2 data-[side=left]:ll:slide-in-from-right-2 data-[side=right]:ll:slide-in-from-left-2 data-[side=top]:ll:slide-in-from-bottom-2",
+            "ll:z-[500] ll:max-h-[var(--available-height)] ll:min-w-[8rem] ll:overflow-y-auto ll:overflow-x-hidden ll:rounded-sm ll:border ll:border-border ll:bg-black/90 ll:text-white ll:shadow-md ll:origin-[var(--transform-origin)] ll:animate-in ll:fade-in-0 ll:zoom-in-95 data-[ending-style]:ll:animate-out data-[ending-style]:ll:fade-out-0 data-[ending-style]:ll:zoom-out-95 data-[side=bottom]:ll:slide-in-from-top-2 data-[side=left]:ll:slide-in-from-right-2 data-[side=right]:ll:slide-in-from-left-2 data-[side=top]:ll:slide-in-from-bottom-2",
             position === "popper" &&
               "data-[side=bottom]:ll:translate-y-1 data-[side=left]:ll:-translate-x-1 data-[side=right]:ll:translate-x-1 data-[side=top]:ll:-translate-y-1 ll:min-w-[var(--anchor-width)]",
             className,
@@ -127,7 +127,7 @@ const SelectContent = React.forwardRef<HTMLDivElement, SelectContentProps>(
           {...props}
         >
           <SelectScrollUpButton />
-          <BaseSelect.List className="ll:flex ll:w-full ll:min-w-[var(--anchor-width)] ll:flex-col ll:gap-1 ll:box-border ll:p-1">
+          <BaseSelect.List className="ll:flex ll:w-full ll:min-w-[var(--anchor-width)] ll:flex-col ll:gap-1 ll:p-1">
             {children}
           </BaseSelect.List>
           <SelectScrollDownButton />
@@ -144,7 +144,7 @@ const SelectItem = React.forwardRef<HTMLElement, BaseSelect.Item.Props>(
     <BaseSelect.Item
       ref={ref}
       className={cn(
-        "ll:relative ll:flex ll:h-6 ll:w-full ll:select-none ll:items-center ll:rounded-sm ll:border ll:border-solid ll:border-border ll:bg-transparent ll:py-1 ll:pl-2 ll:pr-7 ll:text-[11px] ll:text-white ll:box-border ll:outline-none ll:transition-colors ll:hover:bg-gray-400/30 ll:data-[selected]:bg-gray-400/30 ll:data-[highlighted]:bg-gray-400/30 ll-custom-cursor-pointer data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+        "ll:relative ll:flex ll:h-6 ll:w-full ll:select-none ll:items-center ll:rounded-sm ll:border ll:border-border ll:bg-transparent ll:py-1 ll:pl-2 ll:pr-7 ll:text-[11px] ll:text-white ll:outline-none ll:transition-colors ll:hover:bg-gray-400/30 ll:data-[selected]:bg-gray-400/30 ll:data-[highlighted]:bg-gray-400/30 ll-custom-cursor-pointer data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         className,
       )}
       {...props}

@@ -152,7 +152,7 @@ export const NpcColorEditorPopover: FC<NpcColorEditorPopoverProps> = ({
               </strong>
             </div>
             <div
-              className="ll:rounded-sm ll:border ll:border-solid ll:px-2 ll:py-1 ll:text-xs ll:text-white"
+              className="ll:rounded-sm ll:border ll:px-2 ll:py-1 ll:text-xs ll:text-white"
               style={{
                 borderColor: surfaceColors.border,
                 backgroundColor: surfaceColors.background,
@@ -161,7 +161,7 @@ export const NpcColorEditorPopover: FC<NpcColorEditorPopoverProps> = ({
               {t("settings.npcColors.notificationPreview")}
             </div>
             <div
-              className="ll:rounded-sm ll:border ll:border-solid ll:px-2 ll:py-1 ll:text-xs ll:text-white"
+              className="ll:rounded-sm ll:border ll:px-2 ll:py-1 ll:text-xs ll:text-white"
               style={{
                 borderColor: surfaceColors.border,
                 backgroundColor: surfaceColors.background,

@@ -64,7 +64,7 @@ export function ChatInput(props: ChatInputProps) {
       )}
     >
       {replyDraft && (
-        <div className="ll:border-solid ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40">
+        <div className="ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40">
           <ChatReplyPreview
             variant="compact"
             reply={replyDraft}
@@ -89,7 +89,7 @@ export function ChatInput(props: ChatInputProps) {
       />
       <div
         className={cn("ll:flex ll:items-center ll:gap-1", {
-          "ll:border-solid ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40 ll:pl-1":
+          "ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40 ll:pl-1":
             variant === "borderless",
         })}
       >

@@ -112,9 +112,7 @@ export const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
             <ChevronsUpDown className="ll:h-4 ll:w-4 ll:shrink-0 ll:opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent
-          className={cn("ll:p-0 ll:box-border ll:w-full", contentClassName)}
-        >
+        <PopoverContent className={cn("ll:p-0 ll:w-full", contentClassName)}>
           <Command className="ll:bg-transparent ll:w-full">
             <CommandInput placeholder={searchPlaceholder} />
             <CommandList className="ll:max-h-none ll:overflow-visible">

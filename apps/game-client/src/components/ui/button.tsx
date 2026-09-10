@@ -15,7 +15,7 @@ type ButtonProps = ComponentProps<"button"> & {
 const BUTTON_VARIANT_CLASS_NAMES: Record<ButtonVariant, string> = {
   default: "ll:border-border ll:bg-secondary ll:text-white ll:hover:bg-accent",
   ghost: "ll:border-border ll:bg-transparent ll:text-white ll:hover:bg-white/8",
-  menu: "ll:text-[11px] ll:font-semibold ll:box-border ll:border-0 ll:h-auto ll:min-h-6 ll:px-2 ll:py-1.5 ll:bg-transparent ll:text-popover-foreground ll:hover:bg-muted ll:focus-visible:bg-muted ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:disabled:bg-transparent ll:disabled:text-muted-foreground ll:disabled:opacity-50",
+  menu: "ll:text-[11px] ll:font-semibold ll:border-0 ll:h-auto ll:min-h-6 ll:px-2 ll:py-1.5 ll:bg-transparent ll:text-popover-foreground ll:hover:bg-muted ll:focus-visible:bg-muted ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:disabled:bg-transparent ll:disabled:text-muted-foreground ll:disabled:opacity-50",
   destructive:
     "ll:border-red-500/60 ll:bg-transparent ll:text-red-400 ll:hover:bg-red-500/10 ll:hover:text-red-300",
 };

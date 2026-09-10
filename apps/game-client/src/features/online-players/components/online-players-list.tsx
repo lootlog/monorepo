@@ -199,7 +199,7 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
 
     listContent =
       onlinePlayersList.length > 0 ? (
-        <ScrollArea className="ll:h-full ll:w-full ll:box-border">
+        <ScrollArea className="ll:h-full ll:w-full">
           {onlinePlayersList.map(([discordId, presences]) => (
             <OnlinePlayersListEntry
               key={discordId}
@@ -223,7 +223,7 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
 
     listContent =
       onlineAccountsList.length > 0 ? (
-        <ScrollArea className="ll:h-full ll:w-full ll:box-border">
+        <ScrollArea className="ll:h-full ll:w-full">
           {onlineAccountsList.map(({ discordId, presence }) => (
             <OnlinePlayersAccountListEntry
               key={`${presence.player?.accountId}-${presence.player?.characterId}`}
@@ -279,7 +279,7 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
             />
           </>
         )}
-        <div className="ll:flex ll:min-h-0 ll:flex-1 ll:w-full ll:box-border ll:mt-1">
+        <div className="ll:flex ll:min-h-0 ll:flex-1 ll:w-full ll:mt-1">
           <AsyncContent
             error={!hasLoaded ? error : null}
             errorLabel={t("states.loadError")}

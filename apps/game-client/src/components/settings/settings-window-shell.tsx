@@ -40,13 +40,13 @@ export const SettingsWindowShell: FC<SettingsWindowShellProps> = ({
       <>
         {nav}
         {searchOverlayOpen ? (
-          <div className="ll:absolute ll:inset-y-0 ll:left-9 ll:z-30 ll:flex ll:w-52 ll:flex-col ll:gap-1 ll:border-solid ll:border-0 ll:border-r ll:border-gray-400/40 ll:bg-gray-900/95 ll:p-1 ll:shadow-2xl">
+          <div className="ll:absolute ll:inset-y-0 ll:left-9 ll:z-30 ll:flex ll:w-52 ll:flex-col ll:gap-1 ll:border-0 ll:border-r ll:border-gray-400/40 ll:bg-gray-900/95 ll:p-1 ll:shadow-2xl">
             {search}
           </div>
         ) : null}
       </>
     ) : (
-      <div className="ll:flex ll:h-full ll:min-h-0 ll:w-44 ll:shrink-0 ll:flex-col ll:gap-1 ll:border-solid ll:border-0 ll:border-r ll:border-gray-400/30 ll:bg-black/15 ll:p-1">
+      <div className="ll:flex ll:h-full ll:min-h-0 ll:w-44 ll:shrink-0 ll:flex-col ll:gap-1 ll:border-0 ll:border-r ll:border-gray-400/30 ll:bg-black/15 ll:p-1">
         {search}
         <ScrollArea className="ll:min-h-0 ll:flex-1">{nav}</ScrollArea>
       </div>

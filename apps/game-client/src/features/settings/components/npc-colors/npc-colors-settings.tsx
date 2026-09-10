@@ -113,7 +113,7 @@ export const NpcColorsSettings = () => {
               >
                 <button
                   type="button"
-                  className="ll:flex ll:h-9 ll:min-w-0 ll:items-center ll:gap-2 ll:rounded-sm ll:border ll:border-solid ll:border-gray-500/40 ll:bg-gray-900/50 ll:px-2 ll:text-left ll:text-xs ll:text-white ll:outline-none focus-visible:ll:ring-1 focus-visible:ll:ring-ring ll-custom-cursor-pointer"
+                  className="ll:flex ll:h-9 ll:min-w-0 ll:items-center ll:gap-2 ll:rounded-sm ll:border ll:border-gray-500/40 ll:bg-gray-900/50 ll:px-2 ll:text-left ll:text-xs ll:text-white ll:outline-none focus-visible:ll:ring-1 focus-visible:ll:ring-ring ll-custom-cursor-pointer"
                   style={{
                     borderColor:
                       openType === npcType ? surfaceColors.border : undefined,
@@ -125,7 +125,7 @@ export const NpcColorsSettings = () => {
                   aria-label={`${t("settings.npcColors.editColor")}: ${npcTypeLabel}`}
                 >
                   <span
-                    className="ll:size-4 ll:shrink-0 ll:rounded-sm ll:border ll:border-solid"
+                    className="ll:size-4 ll:shrink-0 ll:rounded-sm ll:border"
                     style={{
                       backgroundColor: draft[npcType],
                       borderColor: draft[npcType],

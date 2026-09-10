@@ -39,7 +39,7 @@ export const SettingsSection: FC<SettingsSectionProps> = ({
       )}
     >
       {hasHeader ? (
-        <div className="ll:flex ll:items-end ll:justify-between ll:gap-2 ll:border-solid ll:border-0 ll:border-b ll:border-gray-400/30 ll:px-2 ll:pb-1">
+        <div className="ll:flex ll:items-end ll:justify-between ll:gap-2 ll:border-0 ll:border-b ll:border-gray-400/30 ll:px-2 ll:pb-1">
           <div className="ll:min-w-0 ll:flex-1">
             {title ? (
               <h3 className="ll:m-0 ll:text-[length:var(--ll-settings-label-font-size)] ll:font-semibold ll:uppercase ll:tracking-wide ll:text-muted-foreground">
