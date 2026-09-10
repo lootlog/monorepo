@@ -46,7 +46,7 @@ export const SettingsWindowShell: FC<SettingsWindowShellProps> = ({
         ) : null}
       </>
     ) : (
-      <div className="ll:flex ll:h-full ll:min-h-0 ll:w-40 ll:shrink-0 ll:flex-col ll:gap-1 ll:border-0 ll:border-r ll:border-gray-400/30 ll:bg-black/15 ll:p-1">
+      <div className="ll:flex ll:h-full ll:min-h-0 ll:w-42 ll:shrink-0 ll:flex-col ll:gap-1 ll:border-0 ll:border-r ll:border-gray-400/30 ll:bg-black/15 ll:p-1">
         {search}
         <ScrollArea className="ll:min-h-0 ll:flex-1">{nav}</ScrollArea>
       </div>
