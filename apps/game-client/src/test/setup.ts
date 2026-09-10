@@ -1,10 +1,22 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
-import { afterEach, vi } from "vitest";
+import { cleanStores } from "nanostores";
+import { afterAll, afterEach, vi } from "vitest";
 import "@/i18n/config";
 
 afterEach(() => {
   cleanup();
+});
+
+// nanostores unmounts the better-auth session atom one second after its last
+// listener leaves, and that cleanup touches `window`. Unmount it synchronously
+// while the DOM environment still exists so the delayed timer has nothing to do.
+// The client is imported lazily so test files keep control over when the
+// platform modules load and how they are mocked.
+afterAll(async () => {
+  const { authClient } = await import("@/lib/auth-client");
+  const session = authClient.$store?.atoms?.session;
+  if (session) cleanStores(session);
 });
 
 Object.defineProperty(window, "matchMedia", {
