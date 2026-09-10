@@ -24,7 +24,10 @@ export class TimerSettingsGroup extends HttpApiGroup.make("timer-settings").add(
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "TimerSettingsController_getGlobalSettings")
     .annotate(OpenApi.Summary, "Get global timer settings")
-    .annotate(OpenApi.Description, "Retrieve user global timer settings"),
+    .annotate(
+      OpenApi.Description,
+      "Retrieve user global timer settings. Deprecated: use GET/PATCH /preferences (settings documents).",
+    ),
   HttpApiEndpoint.patch(
     "TimerSettingsControllerUpdateGlobalSettings",
     "/timer-settings",
@@ -40,7 +43,10 @@ export class TimerSettingsGroup extends HttpApiGroup.make("timer-settings").add(
       "TimerSettingsController_updateGlobalSettings",
     )
     .annotate(OpenApi.Summary, "Update global timer settings")
-    .annotate(OpenApi.Description, "Update user global timer settings"),
+    .annotate(
+      OpenApi.Description,
+      "Update user global timer settings. Deprecated: use GET/PATCH /preferences (settings documents).",
+    ),
   HttpApiEndpoint.get(
     "TimerSettingsControllerGetGuildSettings",
     "/timer-settings/guilds/:guildId",
@@ -57,7 +63,7 @@ export class TimerSettingsGroup extends HttpApiGroup.make("timer-settings").add(
     .annotate(OpenApi.Summary, "Get guild-specific timer settings")
     .annotate(
       OpenApi.Description,
-      "Retrieve user timer settings for a specific guild",
+      "Retrieve user timer settings for a specific guild. Deprecated: use GET/PATCH /preferences (settings documents).",
     ),
   HttpApiEndpoint.patch(
     "TimerSettingsControllerUpdateGuildSettings",
@@ -76,7 +82,7 @@ export class TimerSettingsGroup extends HttpApiGroup.make("timer-settings").add(
     .annotate(OpenApi.Summary, "Update guild-specific timer settings")
     .annotate(
       OpenApi.Description,
-      "Update user timer settings for a specific guild",
+      "Update user timer settings for a specific guild. Deprecated: use GET/PATCH /preferences (settings documents).",
     ),
   HttpApiEndpoint.post(
     "TimerSettingsControllerMigrateSettings",
@@ -94,6 +100,6 @@ export class TimerSettingsGroup extends HttpApiGroup.make("timer-settings").add(
     .annotate(OpenApi.Summary, "Migrate localStorage settings to backend")
     .annotate(
       OpenApi.Description,
-      "Migrate timer settings from localStorage to backend with conflict resolution",
+      "Migrate timer settings from localStorage to backend with conflict resolution. Deprecated: use GET/PATCH /preferences (settings documents).",
     ),
 ) {}

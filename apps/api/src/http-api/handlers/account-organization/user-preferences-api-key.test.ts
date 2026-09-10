@@ -5,10 +5,28 @@ import { createGuildFixture } from "../../../../test/organization-fixtures.js";
 import {
   guildTable,
   userSettingsTable,
-  userGameAccountSettingsTable,
+  userSettingDocumentTable,
 } from "#src/database/drizzle/schema";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
+import { SettingsDocumentsRepository } from "#src/settings-documents/settings-documents.repository";
+import { makeSettingsDocuments } from "#src/settings-documents/settings-documents.service";
 import { makeUserPreferencesData } from "./user-preferences.data-layer.js";
+
+const makeData = (
+  boundary: Awaited<ReturnType<typeof createDatabaseBoundary>>,
+) =>
+  boundary
+    .run(
+      Effect.service(SettingsDocumentsRepository).pipe(
+        Effect.provide(SettingsDocumentsRepository.layerDatabase),
+      ),
+    )
+    .then((repository) =>
+      makeUserPreferencesData(
+        boundary.database,
+        makeSettingsDocuments(repository),
+      ),
+    );
 
 test("key preferences hide unselected organizations and reject destructive routing replacements", async () => {
   const boundary = await createDatabaseBoundary();
@@ -32,7 +50,7 @@ test("key preferences hide unselected organizations and reject destructive routi
         updatedAt: new Date(0),
       }),
     );
-    const data = makeUserPreferencesData(boundary.database);
+    const data = await makeData(boundary);
     await boundary.run(
       data.updateUserGameAccountPreferences("user-1", "account", {
         detector: {
@@ -105,11 +123,17 @@ test("key preferences hide unselected organizations and reject destructive routi
     expect(stored[0]?.guildsOrder).toEqual(["1", "2"]);
 
     const gameStored = await boundary.run(
-      boundary.database.select().from(userGameAccountSettingsTable),
+      boundary.database.select().from(userSettingDocumentTable),
     );
 
-    expect(gameStored[0]?.settings).toMatchObject({
-      detector: { routingRules: [{ id: "both" }, { id: "one" }] },
+    expect(gameStored).toHaveLength(1);
+    expect(gameStored[0]).toMatchObject({
+      domain: "gameData",
+      scopeType: "GAME_ACCOUNT",
+      scopeId: "account",
+      overrides: {
+        detector: { routingRules: [{ id: "both" }, { id: "one" }] },
+      },
     });
   } finally {
     await boundary.dispose();

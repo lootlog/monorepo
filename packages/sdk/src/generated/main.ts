@@ -12379,7 +12379,7 @@ export const getUsersControllerGetUserGameAccountPreferencesUrl = ({ accountId }
 }
 
 /**
- * Retrieve account-scoped game preferences for a specific Margonem account
+ * Retrieve account-scoped game preferences for a specific Margonem account. Deprecated: use GET/PATCH /preferences (settings documents).
  * @summary Get user game account preferences
  */
 export const usersControllerGetUserGameAccountPreferences = async ({ accountId }: UsersControllerGetUserGameAccountPreferencesPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<UserGameAccountPreferencesResponseDtoOutput> => {
@@ -12404,7 +12404,7 @@ export const getUsersControllerUpdateUserGameAccountPreferencesUrl = ({ accountI
 }
 
 /**
- * Update account-scoped game preferences for a specific Margonem account
+ * Update account-scoped game preferences for a specific Margonem account. Deprecated: use GET/PATCH /preferences (settings documents).
  * @summary Update user game account preferences
  */
 export const usersControllerUpdateUserGameAccountPreferences = async ({ accountId }: UsersControllerUpdateUserGameAccountPreferencesPathParameters,
@@ -15229,7 +15229,7 @@ export const getSoundSettingsControllerGetSettingsUrl = () => {
 }
 
 /**
- * Retrieve user sound settings
+ * Retrieve user sound settings. Deprecated: use GET/PATCH /preferences (settings documents).
  * @summary Get sound settings
  */
 export const soundSettingsControllerGetSettings = async ( options?: Parameters<typeof mainFetch>[1]): Promise<SoundSettingsResponseDto> => {
@@ -15254,7 +15254,7 @@ export const getSoundSettingsControllerUpdateSettingsUrl = () => {
 }
 
 /**
- * Update user sound settings
+ * Update user sound settings. Deprecated: use GET/PATCH /preferences (settings documents).
  * @summary Update sound settings
  */
 export const soundSettingsControllerUpdateSettings = async (updateSoundSettingsDto: UpdateSoundSettingsDto, options?: Parameters<typeof mainFetch>[1]): Promise<SoundSettingsResponseDto> => {

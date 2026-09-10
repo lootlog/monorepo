@@ -12,6 +12,13 @@ import {
   isHexAppearanceColor,
 } from "@lootlog/schema/npc-appearance";
 import { NpcTypeSchema } from "@lootlog/schema/npc-type";
+import type {
+  AirTagPreferences,
+  DetectorSettings,
+  MapPingPreferences,
+  NotificationsSettings,
+} from "@lootlog/schema/account-preferences";
+import type { NotificationMutes } from "@lootlog/schema/user-preferences";
 
 export const SETTINGS_DOMAINS = [
   "general",
@@ -67,8 +74,8 @@ export interface SettingsDomainResolution {
   updatedAt?: string;
 }
 
-export interface SettingsFieldDefinition {
-  defaultValue: unknown;
+export interface SettingsFieldDefinition<TValue = unknown> {
+  defaultValue: TValue;
   persistence: "SERVER_DOCUMENT";
   scopes: readonly SettingsScopeType[];
   isValid: (value: unknown) => boolean;
@@ -99,16 +106,60 @@ const isNumberInRange = (minimum: number, maximum: number) =>
 const isOneOf = <TValue extends string>(values: readonly TValue[]) =>
   Schema.is(Schema.Literals(values));
 
-const field = (
-  defaultValue: SettingsFieldDefinition["defaultValue"],
+const field = <TValue>(
+  defaultValue: TValue,
   scopes: readonly SettingsScopeType[],
   isValid: SettingsFieldDefinition["isValid"],
-): SettingsFieldDefinition => ({
+): SettingsFieldDefinition<TValue> => ({
   defaultValue,
   persistence: "SERVER_DOCUMENT",
   scopes,
   isValid,
 });
+
+// Legacy preference documents are backfilled from lenient storage, so these
+// validators only guard the shape; leaf normalization stays with the consumers.
+type JsonValue = typeof Schema.Json.Type;
+
+// Opaque documents keep JSON values; owning features parse them at their boundary.
+export type OpaqueSettingsRecord = Record<string, JsonValue>;
+
+const UnknownRecord = Schema.Record(Schema.String, Schema.Unknown);
+
+const isEnabledFlagRecord = Schema.is(
+  Schema.Struct({ enabled: Schema.optionalKey(Schema.Boolean) }),
+);
+
+const isDetectorSettingsRecord = Schema.is(
+  Schema.Struct({
+    routingRules: Schema.optionalKey(Schema.Array(UnknownRecord)),
+    ELITE2: Schema.optionalKey(UnknownRecord),
+    HERO: Schema.optionalKey(UnknownRecord),
+    COLOSSUS: Schema.optionalKey(UnknownRecord),
+    TITAN: Schema.optionalKey(UnknownRecord),
+  }),
+);
+
+const isNotificationsPresentationRecord = Schema.is(
+  Schema.Record(Schema.String, UnknownRecord),
+);
+
+const isNotificationMutesRecord = Schema.is(
+  Schema.Struct({
+    players: Schema.optionalKey(Schema.Array(UnknownRecord)),
+    npcs: Schema.optionalKey(Schema.Array(UnknownRecord)),
+  }),
+);
+
+const isHotkeyBindingsRecord = Schema.is(
+  Schema.Record(Schema.String, UnknownRecord),
+);
+
+const isBattlePanelRecord = Schema.is(
+  Schema.Struct({
+    isBattleCollectionEnabled: Schema.optionalKey(Schema.Boolean),
+  }),
+);
 
 const userScopes = ["USER"] as const;
 
@@ -271,20 +322,44 @@ export const SETTINGS_CATALOG = {
     schemaVersion: 1,
     migrations: [],
     fields: {
-      pings: field({}, accountScopes, isRecord),
-      detector: field({}, accountScopes, isRecord),
-      airTags: field({}, accountScopes, isRecord),
-      catching: field({}, characterScopes, isRecord),
-      battlePanel: field({}, characterScopes, isRecord),
-      lootlog: field({}, characterScopes, isRecord),
+      pings: field<Partial<MapPingPreferences>>(
+        {},
+        accountScopes,
+        isEnabledFlagRecord,
+      ),
+      detector: field<Partial<DetectorSettings>>(
+        {},
+        accountScopes,
+        isDetectorSettingsRecord,
+      ),
+      airTags: field<Partial<AirTagPreferences>>(
+        {},
+        accountScopes,
+        isEnabledFlagRecord,
+      ),
+      catching: field<OpaqueSettingsRecord>({}, characterScopes, isRecord),
+      battlePanel: field<{ isBattleCollectionEnabled?: boolean }>(
+        {},
+        characterScopes,
+        isBattlePanelRecord,
+      ),
+      lootlog: field<OpaqueSettingsRecord>({}, characterScopes, isRecord),
     },
   },
   notifications: {
     schemaVersion: 1,
     migrations: [],
     fields: {
-      presentation: field({}, accountScopes, isRecord),
-      mutes: field({ players: [], npcs: [] }, userScopes, isRecord),
+      presentation: field<Partial<NotificationsSettings>>(
+        {},
+        accountScopes,
+        isNotificationsPresentationRecord,
+      ),
+      mutes: field<NotificationMutes>(
+        { players: [], npcs: [] },
+        userScopes,
+        isNotificationMutesRecord,
+      ),
     },
   },
   sounds: {
@@ -304,7 +379,11 @@ export const SETTINGS_CATALOG = {
     schemaVersion: 1,
     migrations: [],
     fields: {
-      hotkeys: field({}, userScopes, isRecord),
+      hotkeys: field<OpaqueSettingsRecord>(
+        {},
+        userScopes,
+        isHotkeyBindingsRecord,
+      ),
     },
   },
 } as const satisfies Record<SettingsDomain, SettingsDomainDefinition>;
@@ -348,6 +427,17 @@ export type ServerSettingsCatalogKey = {
     string
   >}`;
 }[SettingsDomain];
+
+export type SettingsCatalogValue<TKey extends ServerSettingsCatalogKey> =
+  TKey extends `${infer TDomain extends SettingsDomain}.${infer TField}`
+    ? TField extends keyof (typeof SETTINGS_CATALOG)[TDomain]["fields"]
+      ? (typeof SETTINGS_CATALOG)[TDomain]["fields"][TField] extends SettingsFieldDefinition<
+          infer TValue
+        >
+        ? TValue
+        : never
+      : never
+    : never;
 
 export type DeviceSettingsCatalogKey =
   `device.${keyof typeof DEVICE_SETTINGS_CATALOG}`;
