@@ -1,12 +1,7 @@
-import { X } from "lucide-react";
+import { EyeOff } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { CHAT_GATHERING_ACTION_CLASS } from "../chat.constants";
+import { ChatGatheringMenu } from "./chat-gathering-menu";
 
 export function ChatGatheringHideButton({
   pending,
@@ -19,20 +14,18 @@ export function ChatGatheringHideButton({
   const label = t("gatherings.hide");
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          type="button"
-          variant="destructive"
-          className={`${CHAT_GATHERING_ACTION_CLASS} ll:w-6`}
-          aria-label={label}
-          disabled={pending}
-          onClick={onHide}
-        >
-          <X size={14} aria-hidden="true" />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent side="top">{label}</TooltipContent>
-    </Tooltip>
+    <ChatGatheringMenu>
+      <Button
+        type="button"
+        variant="menu"
+        aria-label={label}
+        disabled={pending}
+        onClick={onHide}
+        className="ll:w-full ll:justify-start ll:gap-2"
+      >
+        <EyeOff size={16} aria-hidden />
+        {label}
+      </Button>
+    </ChatGatheringMenu>
   );
 }

@@ -1,4 +1,5 @@
 import { Schema } from "effect";
+import { NonNegativeSafeInteger } from "./http-scalars.js";
 
 export const PARTY_READY_ROOM_STATUSES = ["ACTIVE", "CANCELLED"] as const;
 
@@ -46,6 +47,7 @@ export interface PartyReadyRoomProjectionBase {
   description?: string;
   minLvl?: number;
   maxLvl?: number;
+  partyMemberCount?: number;
   status: "ACTIVE";
   revision: number;
   createdAt: string;
@@ -135,6 +137,7 @@ export const PartyReadyRoomAggregateSchema = Schema.Struct({
   description: Schema.optionalKey(Schema.String),
   minLvl: Schema.optionalKey(Schema.Number),
   maxLvl: Schema.optionalKey(Schema.Number),
+  partyMemberCount: Schema.optionalKey(NonNegativeSafeInteger),
   status: Schema.Literals(PARTY_READY_ROOM_STATUSES),
   revision: Schema.Number,
   createdAt: Schema.String,

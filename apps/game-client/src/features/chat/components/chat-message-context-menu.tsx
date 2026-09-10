@@ -53,7 +53,7 @@ export const ChatMessageContextMenu: FC<ChatMessageContextMenuProps> = ({
   const isNewInterface = gameInterface === "ni";
 
   return (
-    <ContextMenuContent className="ll:w-48 ll:flex ll:flex-col">
+    <ContextMenuContent className="ll:w-44 ll:flex ll:flex-col">
       <ContextMenuItem onClick={() => void copyChatText(message.message)}>
         <Copy
           aria-hidden="true"

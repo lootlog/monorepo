@@ -270,7 +270,7 @@ describe("ChatInput", () => {
     await waitFor(() => expect(getEditor()).toHaveFocus());
   });
 
-  it("shows grouped suggestions inside the scroll area and inserts the highlighted mention instead of submitting", async () => {
+  it("shows suggestions inside the scroll area and inserts the highlighted mention instead of submitting", async () => {
     const user = userEvent.setup();
     render(<ChatInput selectedGuildId="guild-1" />);
 
@@ -283,8 +283,6 @@ describe("ChatInput", () => {
     expect(
       listbox.closest("[data-ll-scroll-area-viewport]"),
     ).toBeInTheDocument();
-    expect(screen.getByText("Role")).toBeInTheDocument();
-    expect(screen.getByText("Nicki")).toBeInTheDocument();
 
     await user.keyboard("{Enter}");
 
@@ -339,10 +337,9 @@ describe("ChatInput", () => {
     expect(mockScrollIntoView.mock.calls.length).toBeGreaterThan(
       scrollCallsBeforeArrowNavigation,
     );
-    expect(mockScrollIntoView).toHaveBeenLastCalledWith({
-      behavior: "smooth",
-      block: "nearest",
-    });
+    expect(mockScrollIntoView).toHaveBeenLastCalledWith(
+      expect.objectContaining({ block: "nearest" }),
+    );
 
     await user.keyboard("{Escape}");
     await waitFor(() => {

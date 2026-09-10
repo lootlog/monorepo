@@ -28,7 +28,16 @@ organizer character, even if explicitly registered; `inPartyCount` includes only
 registered characters observed in the party, not unrelated party members.
 Only visible gatherings expose these totals, and participant projections remain
 private. Deploy this additive API response before the updated game client; the
-counters require no persistence migration or WebSocket contract change.
+legacy counters require no persistence migration.
+
+The optional `partyMemberCount` reports the total deduplicated character IDs from
+an organizer observation, including the organizer and unregistered party members.
+It is absent until the first observation. It is persisted in the aggregate and
+included in both private projections and visible discovery summaries. Observed
+total changes publish updates to all current room recipients even when applicant
+presence is unchanged. The legacy `inPartyCount` keeps its registered-character
+meaning for existing clients. Deploy the additive API and gateway schemas before
+the game client; drain old API writers because they can discard the new field.
 
 ## Deployment
 
@@ -82,3 +91,18 @@ sequence above.
 - Run `bun run client:generate` and review the additive OpenAPI/client changes.
   Run `bun run client:check` on the committed result; its generated-file check
   rejects any uncommitted generated outputs, even when regeneration is stable.
+
+Generic gathering creation publishes `guilds.party-gathering` for each authorized Organization after persistence, in addition to the private organizer update. This lets viewers refresh discovery without a chat message or a page reload.
+
+Cancellation publishes `guilds.party-gathering.cancel` to every source Organization after successful termination, independently of chat messages and participant-only updates. Discovery viewers can therefore remove the gathering without reloading.
+
+Game-client disconnection uses a gateway-owned 10-second reconnect grace period.
+The gateway persists pending deadlines, cancels them on renewed character presence,
+and publishes `game.character.offline` after verifying no matching game session
+remains. The API consumes this fact and cancels the matching organizer's active
+room or removes only the matching participant. World, character, source
+Organization, and creation-time checks prevent delayed events from affecting a
+new gathering or application. Duplicate facts do not advance terminal state.
+Deploy the API consumer before the gateway publisher; no HTTP contract changes
+are required. The timer starts when the gateway detects disconnection, so network
+failures can take longer to detect than an ordinary browser close.

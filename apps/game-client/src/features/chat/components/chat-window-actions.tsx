@@ -45,12 +45,18 @@ export const ChatWindowActions = ({
           <button
             type="button"
             style={style}
-            className="ll-custom-cursor-pointer ll:flex ll:size-5 ll:items-center ll:justify-center ll:rounded-sm ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:focus-visible:outline-2 ll:focus-visible:outline-ring"
+            className="ll-custom-cursor-pointer ll:relative ll:flex ll:size-5 ll:items-center ll:justify-center ll:rounded-sm ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:focus-visible:outline-2 ll:focus-visible:outline-ring"
             aria-label={filterLabel}
             aria-pressed={filtersVisible}
             onClick={toggleFiltersVisible}
           >
             <ListFilter size={14} aria-hidden="true" />
+            {filtersVisible && (
+              <span
+                aria-hidden="true"
+                className="ll:absolute ll:right-0 ll:bottom-0 ll:size-1.5 ll:rounded-full ll:bg-purple-400"
+              />
+            )}
           </button>
         </TooltipTrigger>
         <TooltipContent side="top">{filterLabel}</TooltipContent>

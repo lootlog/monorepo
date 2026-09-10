@@ -13,6 +13,20 @@ const createRoom = vi.fn<(request: Request) => Promise<Response>>();
 const sendChat = vi.fn<(request: Request) => Promise<Response>>();
 const getRoom = vi.fn<(request: Request) => Promise<Response>>();
 const notify = vi.fn<(request: Request) => Promise<Response>>();
+const npc = {
+  id: 1,
+  nick: "Hydra",
+  lvl: 250,
+  prof: "m",
+  icon: "hydra.gif",
+  tpl: 1,
+  x: 1,
+  y: 2,
+  type: 2,
+  wt: 80,
+  location: "Ithan",
+  notificationSent: false,
+};
 let restoreClient = () => {};
 let queryClient: QueryClient;
 function Wrapper({ children }: PropsWithChildren) {
@@ -97,7 +111,7 @@ describe("usePartyGatheringOrchestration", () => {
       },
     );
   });
-  it("uses the Ready Room organizer when publishing a chat gathering", async () => {
+  it("creates a gathering without publishing a chat message or opening Party Finder when requested", async () => {
     const { result } = renderHook(() => usePartyGatheringOrchestration(), {
       wrapper: Wrapper,
     });
@@ -109,20 +123,12 @@ describe("usePartyGatheringOrchestration", () => {
       }),
     );
     expect(useWindowsStore.getState()["party-finder"].open).toBe(false);
-    expect(await sendChat.mock.calls[0]?.[0].json()).toMatchObject({
-      partyGathering: { discordId: "organizer-1", notificationId: "room-1" },
-    });
+    expect(usePartyFinderStore.getState().projections["room-1"]).toEqual(
+      projection,
+    );
+    expect(sendChat).not.toHaveBeenCalled();
   });
-  it("keeps the committed gathering open before and after chat publishing fails", async () => {
-    let wasOpenWhenPublishing = false;
-    sendChat.mockImplementation(() => {
-      wasOpenWhenPublishing =
-        useWindowsStore.getState()["party-finder"].open &&
-        !useWindowsStore.getState()["create-party-gathering"].open;
-      return Promise.resolve(
-        Response.json({ message: "Chat unavailable" }, { status: 503 }),
-      );
-    });
+  it("opens the committed gathering and closes its creation window", async () => {
     const { result } = renderHook(() => usePartyGatheringOrchestration(), {
       wrapper: Wrapper,
     });
@@ -133,8 +139,10 @@ describe("usePartyGatheringOrchestration", () => {
         closeCreateWindow: true,
       }),
     );
-    expect(wasOpenWhenPublishing).toBe(true);
     expect(useWindowsStore.getState()["party-finder"].open).toBe(true);
+    expect(useWindowsStore.getState()["create-party-gathering"].open).toBe(
+      false,
+    );
     expect(usePartyFinderStore.getState().projections["room-1"]).toEqual(
       projection,
     );
@@ -189,34 +197,44 @@ describe("usePartyGatheringOrchestration", () => {
     expect(useWindowsStore.getState()["party-finder"].open).toBe(true);
     expect(sendChat).not.toHaveBeenCalled();
   });
-  it("publishes an NPC gathering without opening Party Finder when requested", async () => {
+  it("creates an NPC gathering without publishing a chat message or opening Party Finder when requested", async () => {
     const { result } = renderHook(() => usePartyGatheringOrchestration(), {
       wrapper: Wrapper,
     });
     await act(() =>
       result.current.startNpcPartyGathering({
         openPartyFinder: false,
-        npc: {
-          id: 1,
-          nick: "Hydra",
-          lvl: 250,
-          prof: "m",
-          icon: "hydra.gif",
-          tpl: 1,
-          x: 1,
-          y: 2,
-          type: 2,
-          wt: 80,
-          location: "Ithan",
-          notificationSent: false,
-        },
+        npc,
         guildIds: ["guild-1"],
         world: "tempest",
       }),
     );
     expect(useWindowsStore.getState()["party-finder"].open).toBe(false);
-    expect(await sendChat.mock.calls[0]?.[0].json()).toMatchObject({
-      partyGathering: { discordId: "organizer-1", notificationId: "room-1" },
+    expect(usePartyFinderStore.getState().projections["room-1"]).toEqual(
+      projection,
+    );
+    expect(sendChat).not.toHaveBeenCalled();
+  });
+  it("still publishes ordinary NPC notifications to chat", async () => {
+    const { result } = renderHook(() => usePartyGatheringOrchestration(), {
+      wrapper: Wrapper,
     });
+    await act(() =>
+      result.current.startNpcNotification({
+        npc,
+        guildIds: ["guild-1"],
+        world: "tempest",
+      }),
+    );
+    expect(await notify.mock.calls[0]?.[0].json()).toMatchObject({
+      npc: { name: "Hydra" },
+      world: "tempest",
+    });
+    expect(sendChat).toHaveBeenCalledTimes(1);
+    expect(await sendChat.mock.calls[0]?.[0].json()).toMatchObject({
+      type: "NPC",
+      npc: { name: "Hydra", world: "tempest" },
+    });
+    expect(usePartyFinderStore.getState().projections).toEqual({});
   });
 });

@@ -603,3 +603,10 @@ describe("chat helpers", () => {
     expect(removeChatMessage(messages, "message-1")).toEqual([]);
   });
 });
+
+it("excludes legacy party cards from every chat filter", () => {
+  const legacy = makeChatMessage({ type: MessageType.PARTY_GATHERING });
+  for (const filter of ["all", "normal", "npc", "party", "reports"] as const) {
+    expect(filterChatMessages([legacy], filter)).toEqual([]);
+  }
+});

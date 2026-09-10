@@ -16,13 +16,29 @@
     "missingLocation": "Zgłoszenie nie zawiera pełnej lokalizacji"
   },
   "gatherings": {
-    "publicationFailed": "Zbiórka została utworzona, ale nie udało się opublikować wiadomości na czacie.",
+    "listTitle": "Zbiórki",
+    "closeList": "Zamknij listę zbiórek",
+    "activeTab": "Aktywne ({{count}})",
+    "hiddenTab": "Ukryte ({{count}})",
+    "emptyList": "Brak zbiórek w tej zakładce",
+    "showInChat": "Pokaż w czacie",
+    "visibleInChat": "Widoczna w czacie",
+    "options": "Opcje zbiórki",
+    "inviteShort": "Zaproś",
+    "more": "+{{count}} pozostałe zbiórki",
+    "collapse": "Zwiń pozostałe",
+    "time": "[{{time}}]",
+    "noDescription": "Brak opisu",
     "title": "Party finder",
-    "titleWithOrganizer": "Party finder · {{organizer}}",
+    "ownTitle": "Party finder",
+    "counts": "({{inParty}}/10)",
+    "countsLabel": "{{inParty}} · {{applicants}}",
+    "titleWithOrganizer": "{{organizer}}",
+    "titleWithOrganizerStats": "{{organizer}} ({{lvl}}{{prof}})",
     "applicantCount": "Zgłoszeni: {{count}}",
-    "inPartyCount": "W grupie: {{count}} ze zgłoszonych",
+    "partyMemberCount": "W grupie: {{count}}/10",
     "applicantCountUnknown": "Liczba zgłoszonych niedostępna",
-    "inPartyCountUnknown": "Liczba zgłoszonych w grupie niedostępna",
+    "partyMemberCountUnknown": "Liczba osób w grupie niedostępna",
     "shortcutUnset": "Skrót nieustawiony",
     "hide": "Ukryj zbiórkę",
     "hidden": "Ukryte zbiórki ({{count}})",
@@ -33,7 +49,7 @@
     "inviteFailed": "Nie udało się wysłać zaproszeń",
     "inParty": "W grupie",
     "level": "Poziom: {{min}}–{{max}}",
-    "manage": "Zarządzaj",
+    "manage": "Lista chętnych",
     "applied": "Zgłoszono",
     "cancel": "Anuluj zbiórkę",
     "withdraw": "Wycofaj zgłoszenie",
@@ -85,6 +101,7 @@
     "yesterday": "Wczoraj"
   },
   "input": {
+    "suggestionKeyboardHint": "↑ ↓ wybór · Enter zatwierdź · Esc zamknij",
     "recipient": "Do:",
     "chooseRecipient": "Wybierz organizację",
     "placeholder": "Wiadomość...",
@@ -96,9 +113,11 @@
       "cancel": "Anuluj"
     },
     "commandSuggestions": {
+      "title": "Wybierz komendę",
       "noResults": "Brak pasujących komend"
     },
     "mentionSuggestions": {
+      "title": "Wspomnij osobę lub rolę",
       "roles": "Role",
       "members": "Nicki",
       "loading": "Ładowanie mentionów...",
@@ -126,21 +145,6 @@
     "inviteParty": "Zaproś do drużyny",
     "showProfile": "Pokaż profil"
   },
-  "partyGathering": {
-    "title": "Zbiórka",
-    "ended": "Zbiórka zakończona",
-    "otherWorld": "Inny świat",
-    "joinFailed": "Nie udało się dołączyć do grupy. Spróbuj ponownie.",
-    "levelRange": "Poziom: {{min}} - {{max}}",
-    "volunteering": "Zgłaszanie...",
-    "requiredLevel": "Wymagany poziom {{min}}-{{max}}",
-    "joinParty": "Dołącz do grupy",
-    "joined": "Zapisano do grupy",
-    "joinedElsewhere": "Zapisano do innej grupy",
-    "registration": {
-      "organizer": "Zapisano do grupy: {{organizer}}"
-    }
-  },
   "errors": {
     "sendFailed": "Nie udało się wysłać wiadomości na czat",
     "clearFailed": "Nie udało się wyczyścić czatu",
@@ -152,7 +156,7 @@
     "help": "Pomoc",
     "position": "Pozycja",
     "helpMessage": "Potrzebuję pomocy! {{map}} ({{x}}, {{y}}).",
-    "enemyCount": " Wykryci wrogowie: {{count}}.",
+    "enemyCount": " Wrogowie: {{count}}.",
     "helpSent": "Wysłano wezwanie pomocy",
     "partialDelivery": "Powiadomienie wysłano, ale nie udało się zapisać go w czacie. Nie wysyłaj ponownie.",
     "runtimeUnavailable": "Dane gry nie są jeszcze dostępne",

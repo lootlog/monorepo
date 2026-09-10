@@ -15,6 +15,7 @@ import { PartyReadyRoomAggregateSchema } from "@lootlog/schema/party-ready-room"
 import { Permission } from "@lootlog/schema/permissions";
 import {
   COMMIT_READY_ROOM_SCRIPT,
+  CREATE_READY_ROOM_SCRIPT,
   EXIT_READY_ROOM_PARTICIPANT_SCRIPT,
   TERMINATE_READY_ROOM_SCRIPT,
 } from "#src/messaging/ready-room/ready-room-redis-scripts";
@@ -120,6 +121,8 @@ it("lets senders discover and cancel their own NPC gatherings outside read filte
       npc: { name: "Training NPC", location: "Map", lvl: 0, type: "TITAN" },
     },
   ];
+  const gatheringEvents: unknown[] = [];
+  const cancellationEvents: unknown[] = [];
   const redis: ReadyRoomRedis = {
     getJson: (key, schema) => {
       const room = rooms.find((room) =>
@@ -130,6 +133,14 @@ it("lets senders discover and cancel their own NPC gatherings outside read filte
         : Effect.succeed(null);
     },
     eval: (script, _keys, args) => {
+      if (script === CREATE_READY_ROOM_SCRIPT) {
+        rooms.push(
+          Schema.decodeUnknownSync(
+            Schema.fromJsonString(PartyReadyRoomAggregateSchema),
+          )(String(args[1])),
+        );
+        return Effect.succeed(["CREATED"]);
+      }
       if (
         script === TERMINATE_READY_ROOM_SCRIPT ||
         script === COMMIT_READY_ROOM_SCRIPT ||
@@ -152,6 +163,14 @@ it("lets senders discover and cancel their own NPC gatherings outside read filte
       redis,
       {
         publish: () => Effect.void,
+        publishCancellation: (payload) =>
+          Effect.sync(() => {
+            cancellationEvents.push(payload);
+          }),
+        publishGathering: (payload) =>
+          Effect.sync(() => {
+            gatheringEvents.push(payload);
+          }),
         endPartyGatheringMessages: () => Effect.void,
       },
       clock,
@@ -223,6 +242,9 @@ it("lets senders discover and cancel their own NPC gatherings outside read filte
     const summary = {
       notificationId: "minimal",
       organizerName: "Author",
+      organizerDiscordId: "owner",
+      organizerLvl: 100,
+      organizerProf: "w",
       applicantCount: 0,
       inPartyCount: 0,
       guildIds: ["visible"],
@@ -261,6 +283,27 @@ it("lets senders discover and cancel their own NPC gatherings outside read filte
         npc: { name: "Training NPC", location: "Map", lvl: 0, type: "TITAN" },
       },
     ]);
+    const emptyObservation = await boundary.handler(
+      new Request(
+        "http://api.test/messaging/party-gathering/minimal/party-observation",
+        {
+          method: "POST",
+          headers: {
+            authorization: "Bearer test",
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            organizerAccountId: "1",
+            organizerCharacterId: "2",
+            memberCharacterIds: [],
+          }),
+        },
+      ),
+    );
+    expect(emptyObservation.status).toBe(201);
+    expect(await emptyObservation.json()).toEqual(
+      expect.objectContaining({ partyMemberCount: 0, revision: 2 }),
+    );
     const observation = await boundary.handler(
       new Request(
         "http://api.test/messaging/party-gathering/npc/party-observation",
@@ -273,12 +316,43 @@ it("lets senders discover and cancel their own NPC gatherings outside read filte
           body: JSON.stringify({
             organizerAccountId: "1",
             organizerCharacterId: "2",
-            memberCharacterIds: ["2", "3", "unregistered-party-member"],
+            memberCharacterIds: ["2", "3", "unregistered-party-member", "3"],
           }),
         },
       ),
     );
     expect(observation.status).toBe(201);
+    expect(await observation.json()).toEqual(
+      expect.objectContaining({ partyMemberCount: 3, revision: 2 }),
+    );
+    for (const [members, total, revision] of [
+      [["2", "3", "outsider-a", "outsider-b"], 4, 3],
+      [["outsider-b", "3", "2", "outsider-a", "2"], 4, 3],
+      [["2", "5", "outsider-a", "outsider-b"], 4, 4],
+      [["2", "3", "outsider-a", "outsider-b"], 4, 5],
+    ] as const) {
+      const response = await boundary.handler(
+        new Request(
+          "http://api.test/messaging/party-gathering/npc/party-observation",
+          {
+            method: "POST",
+            headers: {
+              authorization: "Bearer test",
+              "content-type": "application/json",
+            },
+            body: JSON.stringify({
+              organizerAccountId: "1",
+              organizerCharacterId: "2",
+              memberCharacterIds: members,
+            }),
+          },
+        ),
+      );
+      expect(response.status).toBe(201);
+      expect(await response.json()).toEqual(
+        expect.objectContaining({ partyMemberCount: total, revision }),
+      );
+    }
     const afterObservation = await boundary.handler(
       new Request(
         "http://api.test/messaging/party-gathering/active?world=experimental",
@@ -291,6 +365,7 @@ it("lets senders discover and cancel their own NPC gatherings outside read filte
           notificationId: "npc",
           applicantCount: 2,
           inPartyCount: 1,
+          partyMemberCount: 4,
         }),
       ]),
     );
@@ -320,6 +395,7 @@ it("lets senders discover and cancel their own NPC gatherings outside read filte
           notificationId: "npc",
           applicantCount: 1,
           inPartyCount: 0,
+          partyMemberCount: 4,
         }),
       ]),
     );
@@ -364,6 +440,10 @@ it("lets senders discover and cancel their own NPC gatherings outside read filte
       ),
     );
     expect(cancel.status).toBe(201);
+    expect(cancellationEvents).toEqual([
+      { notificationId: "own-filtered", guildId: "visible" },
+      { notificationId: "own-filtered", guildId: "hidden" },
+    ]);
     expect(await cancel.json()).toMatchObject({
       type: "REMOVE",
       notificationId: "own-filtered",
@@ -371,6 +451,32 @@ it("lets senders discover and cancel their own NPC gatherings outside read filte
     expect(
       rooms.find((room) => room.notificationId === "own-filtered")?.status,
     ).toBe("CANCELLED");
+    const created = await boundary.handler(
+      new Request("http://api.test/messaging/party-gathering", {
+        method: "POST",
+        headers: {
+          authorization: "Bearer test",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          guildIds: ["visible"],
+          world: base.world,
+          character: base.organizerCharacter,
+        }),
+      }),
+    );
+    expect(created.status).toBe(201);
+    const createdRoom = await created.json();
+    expect(gatheringEvents).toEqual([
+      {
+        notificationId: createdRoom.notificationId,
+        guildId: "visible",
+        discordId: caller.discordId,
+        character: base.organizerCharacter,
+        world: base.world,
+        createdAt: createdRoom.createdAt,
+      },
+    ]);
   } finally {
     await boundary.dispose();
     await databaseBoundary.dispose();

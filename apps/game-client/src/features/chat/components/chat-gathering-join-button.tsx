@@ -9,10 +9,23 @@ import {
 import { formatBinding, useHotkeysStore } from "@/store/hotkeys.store";
 import { CHAT_GATHERING_ACTION_CLASS } from "../chat.constants";
 
+const getTooltipLabel = (
+  label: string,
+  statusLabel: string | undefined,
+  shortcut: string,
+  featured: boolean,
+  customLabel?: string,
+) => {
+  if (customLabel) return customLabel;
+  if (statusLabel) return `${statusLabel} · ${label}`;
+  return featured ? `${label} (${shortcut})` : label;
+};
+
 export function ChatGatheringJoinButton({
   pending,
   disabled,
   featured = false,
+  fill = false,
   status,
   label: customLabel,
   onClick,
@@ -20,6 +33,7 @@ export function ChatGatheringJoinButton({
   pending: boolean;
   disabled: boolean;
   featured?: boolean;
+  fill?: boolean;
   status?: "applied" | "inParty";
   label?: string;
   onClick: () => void;
@@ -45,14 +59,18 @@ export function ChatGatheringJoinButton({
     <Tooltip>
       <TooltipTrigger asChild>
         <span
-          className="ll:inline-flex ll:shrink-0 ll:rounded-sm ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:focus-visible:-outline-offset-2"
+          className={`ll:inline-flex ll:shrink-0 ll:rounded-sm ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:focus-visible:-outline-offset-2 ${fill ? "ll:absolute ll:inset-0 ll:z-1" : ""}`}
           tabIndex={buttonDisabled ? 0 : undefined}
           aria-label={buttonDisabled ? label : undefined}
         >
           <Button
             type="button"
             variant="ghost"
-            className={`${CHAT_GATHERING_ACTION_CLASS} ll:w-6 ${status ? "ll:bg-emerald-500/20 ll:text-emerald-300" : ""}`}
+            className={
+              fill
+                ? "ll:size-full ll:rounded ll:border-0 ll:bg-transparent ll:hover:bg-transparent ll:[&_svg]:hidden ll:focus-visible:outline-2 ll:focus-visible:outline-ring"
+                : `${CHAT_GATHERING_ACTION_CLASS} ll:w-6 ${status ? "ll:bg-emerald-500/20 ll:text-emerald-300" : ""}`
+            }
             aria-label={label}
             aria-description={statusLabel}
             aria-busy={pending}
@@ -61,25 +79,20 @@ export function ChatGatheringJoinButton({
           >
             {pending ? (
               <LoaderCircle
-                size={14}
+                size={16}
                 aria-hidden="true"
                 className="ll:animate-spin ll:motion-reduce:animate-none"
               />
             ) : status ? (
-              <StatusIcon size={14} aria-hidden="true" />
+              <StatusIcon size={16} aria-hidden="true" />
             ) : (
-              <UserPlus size={14} aria-hidden="true" />
+              <UserPlus size={16} aria-hidden="true" />
             )}
           </Button>
         </span>
       </TooltipTrigger>
       <TooltipContent side="top">
-        {customLabel ??
-          (statusLabel
-            ? `${statusLabel} · ${label}`
-            : featured
-              ? `${label} (${shortcut})`
-              : label)}
+        {getTooltipLabel(label, statusLabel, shortcut, featured, customLabel)}
       </TooltipContent>
     </Tooltip>
   );

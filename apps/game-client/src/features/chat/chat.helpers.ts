@@ -155,9 +155,12 @@ export const filterChatMessages = (
   messages: ChatMessageType[],
   chatFilter: ChatFilter,
 ) => {
-  if (chatFilter === "all") return messages;
+  const supportedMessages = messages.filter(
+    (message) => message.type !== MessageType.PARTY_GATHERING,
+  );
+  if (chatFilter === "all") return supportedMessages;
 
-  return messages.filter((message) => {
+  return supportedMessages.filter((message) => {
     switch (chatFilter) {
       case "normal":
         return (
@@ -167,12 +170,9 @@ export const filterChatMessages = (
       case "npc":
         return message.type === MessageType.NPC;
       case "party":
-        return message.type === MessageType.PARTY_GATHERING;
+        return message.type === MessageType.NPC;
       case "reports":
-        return (
-          message.type === MessageType.NPC ||
-          message.type === MessageType.PARTY_GATHERING
-        );
+        return message.type === MessageType.NPC;
       default:
         return true;
     }
@@ -410,7 +410,6 @@ export const updateChatMessage = (
       ? {
           ...message,
           message: messageBody,
-          partyGathering: undefined,
         }
       : message,
   );

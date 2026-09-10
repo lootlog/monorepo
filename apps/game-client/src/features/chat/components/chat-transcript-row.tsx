@@ -5,10 +5,6 @@ import type { ChatTranscriptProps } from "./chat-transcript";
 import { ChatDateDivider } from "./chat-date-divider";
 import { ChatMessage } from "./chat-message";
 import { ChatNpcMessage } from "./chat-npc-message";
-import { getPartyGatheringBackgroundColor } from "@/utils/notifications-and-detector/background";
-import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
-import { NpcType } from "@/api/npcs.api";
-import { MessageType } from "@/api/chat.api";
 
 type Props = Pick<
   ChatTranscriptProps,
@@ -34,20 +30,6 @@ export function ChatTranscriptRow({
 }: Props) {
   const messageGap = (appearance ?? CHAT_APPEARANCE_READABLE_PRESET)
     .messageGapPx;
-  const gatheringMessage =
-    row.kind === "message" &&
-    row.message.type === MessageType.PARTY_GATHERING &&
-    row.message.partyGathering
-      ? row.message
-      : undefined;
-  const npc = gatheringMessage?.npc;
-  const gatheringBackground = gatheringMessage
-    ? getPartyGatheringBackgroundColor(
-        npc ? getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type) : undefined,
-        npcTypeColors,
-      )
-    : undefined;
-
   return (
     <MessageScroller.Item
       messageId={row.kind === "date-divider" ? undefined : row.message.id}
@@ -55,9 +37,7 @@ export function ChatTranscriptRow({
       data-chat-highlighted={highlighted || undefined}
       role="listitem"
       style={{
-        backgroundColor: highlighted
-          ? "rgba(255, 255, 255, 0.18)"
-          : gatheringBackground,
+        backgroundColor: highlighted ? "rgba(255, 255, 255, 0.18)" : undefined,
         paddingBlockStart:
           row.kind === "npc-group" ? messageGap : messageGap / 2,
         paddingBlockEnd: row.kind === "npc-group" ? 0 : messageGap / 2,

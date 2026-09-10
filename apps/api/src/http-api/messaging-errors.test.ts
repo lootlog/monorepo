@@ -83,6 +83,7 @@ const services = Layer.mergeAll(
     list: unused,
     apply: unused,
     withdraw: unused,
+    characterOffline: () => Effect.void,
     remove: unused,
     resolveInvitationTargets: unused,
     observeParty: unused,

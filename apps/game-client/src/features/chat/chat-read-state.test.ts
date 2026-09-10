@@ -104,3 +104,13 @@ describe("chat read state", () => {
     expect(getChatUnreadSummary(read, "b").ids.has(copy.id)).toBe(true);
   });
 });
+
+it("does not create unread badges for retired gathering messages", () => {
+  expect(
+    receiveChatMessage(
+      {},
+      createChatMessage({ type: "PARTY_GATHERING" }),
+      true,
+    ),
+  ).toEqual({});
+});

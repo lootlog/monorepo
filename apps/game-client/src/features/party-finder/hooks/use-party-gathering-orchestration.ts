@@ -1,6 +1,4 @@
-import { getFixedT } from "@/i18n/get-fixed-t";
-import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
-import { MessageType, type SendChatMessageOptions } from "@/api/chat.api";
+import { MessageType } from "@/api/chat.api";
 import { ActivePartyGatheringError } from "@/features/party-finder/active-party-gathering-error";
 import { useSendChatMessage } from "@/hooks/api/use-send-chat-message";
 import {
@@ -10,12 +8,8 @@ import {
 } from "@lootlog/client/main";
 
 import { decodePartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
-import {
-  buildChatCharacterData,
-  buildCurrentCharacterPayload,
-} from "@/lib/api/generated-helpers";
+import { buildCurrentCharacterPayload } from "@/lib/api/generated-helpers";
 import { getApiErrorStringField, isApiError } from "@lootlog/client/transport";
-import { useGameStore } from "@/store/game.store";
 import {
   selectOwnedReadyRoom,
   usePartyFinderStore,
@@ -56,7 +50,6 @@ type FinalizePartyGatheringOptions = {
   guildIds: string[];
   closeCreateWindow?: boolean;
   openPartyFinder?: boolean;
-  chatMessageOptions: SendChatMessageOptions;
 };
 
 const getActivePartyGatheringNotificationId = (cause: unknown) => {
@@ -67,7 +60,6 @@ const getActivePartyGatheringNotificationId = (cause: unknown) => {
 };
 
 export const usePartyGatheringOrchestration = () => {
-  const heroName = useGameStore((state) => state.game?.hero.name ?? "");
   const [isCreatingPartyGathering, setIsCreatingPartyGathering] =
     useState(false);
   const [isCreatingNpcPartyGathering, setIsCreatingNpcPartyGathering] =
@@ -105,21 +97,13 @@ export const usePartyGatheringOrchestration = () => {
     return notificationId;
   };
 
-  const finalizePartyGathering = async ({
+  const finalizePartyGathering = ({
     notificationId,
     guildIds,
     closeCreateWindow,
-    chatMessageOptions,
     openPartyFinder: shouldOpen = true,
   }: FinalizePartyGatheringOptions) => {
     if (shouldOpen) openPartyFinder(closeCreateWindow);
-
-    try {
-      await sendChatMessageAsync(chatMessageOptions);
-    } catch {
-      // The Ready Room is committed; retrying creation would duplicate the user action.
-      showRuntimeMessage(getFixedT("chat")("gatherings.publicationFailed"));
-    }
 
     return {
       notificationId,
@@ -136,11 +120,10 @@ export const usePartyGatheringOrchestration = () => {
     closeCreateWindow = false,
     openPartyFinder: shouldOpen = true,
   }: StartPartyGatheringOptions): Promise<
-    Awaited<ReturnType<typeof finalizePartyGathering>> | undefined
+    ReturnType<typeof finalizePartyGathering> | undefined
   > => {
     const character = buildCurrentCharacterPayload();
-    const characterData = buildChatCharacterData();
-    if (!character || !characterData) return Promise.resolve(undefined);
+    if (!character) return Promise.resolve(undefined);
 
     const ownedReadyRoom = selectOwnedReadyRoom(usePartyFinderStore.getState());
     if (ownedReadyRoom) {
@@ -173,25 +156,11 @@ export const usePartyGatheringOrchestration = () => {
       mergeProjection(projection);
       const resolvedGuildIds = projection.guildIds;
 
-      return await finalizePartyGathering({
+      return finalizePartyGathering({
         notificationId: projection.notificationId,
         guildIds: resolvedGuildIds,
         closeCreateWindow,
         openPartyFinder: shouldOpen,
-        chatMessageOptions: {
-          message: heroName,
-          guildIds: resolvedGuildIds,
-          type: MessageType.PARTY_GATHERING,
-          characterData,
-          partyGathering: {
-            notificationId: projection.notificationId,
-            discordId: projection.organizerDiscordId,
-            description,
-            minLvl,
-            maxLvl,
-            world,
-          },
-        },
       });
     };
 
@@ -206,7 +175,7 @@ export const usePartyGatheringOrchestration = () => {
     world,
     openPartyFinder: shouldOpen = true,
   }: StartNpcPartyGatheringOptions): Promise<
-    Awaited<ReturnType<typeof finalizePartyGathering>> | undefined
+    ReturnType<typeof finalizePartyGathering> | undefined
   > => {
     const ownedReadyRoom = selectOwnedReadyRoom(usePartyFinderStore.getState());
     if (ownedReadyRoom) {
@@ -242,24 +211,9 @@ export const usePartyGatheringOrchestration = () => {
       );
       mergeProjection(projection);
 
-      const chatMessageOptions = buildNpcChatMessagePayload({
-        world,
-        npc,
-        guildIds: resolvedGuildIds,
-        messageType: MessageType.PARTY_GATHERING,
-        message: `${npc.nick} (${npc.lvl}${npc.prof ?? ""})`,
-        partyGathering: {
-          notificationId: response.notificationId,
-          discordId: projection.organizerDiscordId,
-          world,
-        },
-      });
-      if (!chatMessageOptions) return;
-
-      return await finalizePartyGathering({
+      return finalizePartyGathering({
         notificationId: response.notificationId,
         guildIds: resolvedGuildIds,
-        chatMessageOptions,
         openPartyFinder: shouldOpen,
       });
     };

@@ -49,29 +49,6 @@ describe("ChatMessage", () => {
     expect(screen.getByText("Member:")).toBeInTheDocument();
   });
 
-  it("renders the party card for party gathering messages", () => {
-    setTestRuntimeGame({ world: "tempest" });
-    render(
-      <ChatMessage
-        all={false}
-        guildName="Guild"
-        member={member}
-        message={makeChatMessage({
-          type: MessageType.PARTY_GATHERING,
-          partyGathering: {
-            notificationId: "notification-1",
-            discordId: "discord-1",
-            world: "tempest",
-          },
-        })}
-      />,
-    );
-
-    expect(
-      screen.getByRole("button", { name: "Dołącz do grupy" }),
-    ).toBeInTheDocument();
-  });
-
   it("renders nothing without guild name", () => {
     const { container } = render(
       <ChatMessage all={false} member={member} message={makeChatMessage()} />,

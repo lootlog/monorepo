@@ -309,8 +309,8 @@ export const ChatView = ({
     />
   );
   const content = (
-    <ChatGatheringBar isVisible={isOpen} npcTypeColors={npcTypeColors}>
-      {(backgroundColor, gatheringBar, hiddenGatherings) => (
+    <ChatGatheringBar isVisible={isOpen}>
+      {(gatheringBar, hiddenGatherings, ownGathering) => (
         <div className="ll:flex ll:size-full ll:min-h-0 ll:flex-col">
           <div className="ll:flex ll:shrink-0 ll:items-center ll:gap-1 ll:p-1">
             <GuildSwitcher
@@ -341,6 +341,7 @@ export const ChatView = ({
               unread={unread}
             />
           )}
+          <div className="ll:relative ll:shrink-0 ll:z-10">{gatheringBar}</div>
           <div
             className={`ll:relative ll:min-h-0 ll:flex-1 ll:overflow-hidden ${!filtersVisible ? "ll:border-solid ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40" : ""}`}
           >
@@ -367,6 +368,8 @@ export const ChatView = ({
                 kind="loading"
                 label={t("states.refreshing")}
               />
+            </div>
+            <div className="ll:absolute ll:right-2 ll:bottom-2 ll:z-20">
               {hiddenGatherings}
             </div>
             <AsyncContent
@@ -411,7 +414,7 @@ export const ChatView = ({
             </AsyncContent>
           </div>
           <div className="ll:shrink-0">
-            {gatheringBar}
+            {ownGathering}
             <div>
               {!resolvedComposeGuildId && (
                 <p className="ll:text-[10px] ll:text-muted-foreground">
@@ -420,7 +423,6 @@ export const ChatView = ({
               )}
               <ChatInput
                 variant="borderless"
-                backgroundColor={backgroundColor}
                 selectedGuildId={resolvedComposeGuildId || undefined}
               />
             </div>

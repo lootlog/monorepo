@@ -27,7 +27,7 @@ export function ChatFilterSwitcher({ value, onValueChange, unread }: Props) {
           if (option) onValueChange(option.value);
         }}
         aria-label={t("filters.label")}
-        className="ll:grid ll:grid-cols-3 ll:min-w-0 ll:flex-1 ll:h-7 ll:box-border ll:rounded-[4px] ll:border ll:border-solid ll:border-border ll:bg-black/20 ll:p-px"
+        className="ll:grid ll:grid-cols-3 ll:min-w-0 ll:flex-1 ll:h-7 ll:box-border ll:rounded-none ll:border-0 ll:bg-black/20 ll:p-0"
       >
         {options.map((option) => (
           <Toggle
@@ -35,7 +35,7 @@ export function ChatFilterSwitcher({ value, onValueChange, unread }: Props) {
             value={option.value}
             aria-label={t(`filters.${option.value}`)}
             className={cn(
-              "ll:relative ll:flex ll:min-w-0 ll:h-full ll:items-center ll:justify-center ll:gap-1 ll:rounded-[2px] ll:border-0 ll:px-1 ll:py-0 ll:text-[11px] ll:leading-none ll:font-semibold ll:cursor-pointer ll:transition-none ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:focus-visible:-outline-offset-2",
+              "ll:relative ll:flex ll:min-w-0 ll:h-full ll:items-center ll:justify-center ll:gap-1 ll:rounded-none ll:border-0 ll:px-1 ll:py-0 ll:text-[11px] ll:leading-none ll:font-semibold ll:cursor-pointer ll:transition-none ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:focus-visible:-outline-offset-2",
               value === option.value
                 ? "ll:bg-white/10 ll:text-gray-100"
                 : "ll:bg-transparent ll:text-muted-foreground ll:hover:bg-white/5",

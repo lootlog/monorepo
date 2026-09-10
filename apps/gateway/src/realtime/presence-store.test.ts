@@ -552,3 +552,150 @@ test("expiry cleanup resumes after a transient Redis failure", async () => {
     }).pipe(Effect.scoped, Effect.provide(TestClock.layer())),
   );
 });
+
+describe("game character offline grace", () => {
+  const character = {
+    name: "Player",
+    characterId: "character-1",
+    accountId: "account-1",
+    world: "world-1",
+    lvl: 100,
+    prof: "w",
+    icon: "player.gif",
+  };
+
+  test("publishes only after ten seconds, survives a new store instance and ignores web presence", async () => {
+    const redis = new MemoryRedis();
+    const hub = new RecordingHub();
+    let now = 0;
+    const events: unknown[] = [];
+    const makeStore = () =>
+      new PresenceStore(
+        { command: redis },
+        hub,
+        () => now,
+        undefined,
+        undefined,
+        (event) =>
+          Effect.sync(() => {
+            events.push(event);
+          }),
+      );
+    const first = makeStore();
+    const game = socket({ ...session([]), character });
+    await Effect.runPromise(first.publish(game, { organizationIds: [] }));
+    await Effect.runPromise(first.disconnect(game.data));
+    const web = socket({
+      ...session([]),
+      connectionId: "web",
+      platform: "web-app",
+      character,
+    });
+    await Effect.runPromise(first.publish(web, { organizationIds: [] }));
+    now = 9_999;
+    await Effect.runPromise(makeStore().sweepOffline());
+    expect(events).toEqual([]);
+    now = 10_000;
+    await Effect.runPromise(makeStore().sweepOffline());
+    expect(events).toEqual([
+      {
+        userId: "user-1",
+        discordId: "discord-1",
+        world: "world-1",
+        characterId: "character-1",
+        organizationIds: ["organization-1"],
+        disconnectedAt: 0,
+      },
+    ]);
+    await Effect.runPromise(makeStore().sweepOffline());
+    expect(events).toHaveLength(1);
+  });
+
+  test("refresh cancels the previous deadline and a later exit gets a full grace period", async () => {
+    const redis = new MemoryRedis();
+    let now = 0;
+    const events: unknown[] = [];
+    const store = new PresenceStore(
+      { command: redis },
+      new RecordingHub(),
+      () => now,
+      undefined,
+      undefined,
+      (event) =>
+        Effect.sync(() => {
+          events.push(event);
+        }),
+    );
+    const first = socket({ ...session([]), character });
+    await Effect.runPromise(store.publish(first, { organizationIds: [] }));
+    await Effect.runPromise(store.disconnect(first.data));
+    now = 5_000;
+    const second = socket({
+      ...session([]),
+      connectionId: "second",
+      character,
+    });
+    await Effect.runPromise(store.publish(second, { organizationIds: [] }));
+    now = 6_000;
+    await Effect.runPromise(store.disconnect(second.data));
+    now = 10_000;
+    await Effect.runPromise(store.sweepOffline());
+    expect(events).toEqual([]);
+    now = 16_000;
+    await Effect.runPromise(store.sweepOffline());
+    expect(events).toHaveLength(1);
+  });
+
+  test("changing game character expires the old character while the new one stays online", async () => {
+    const redis = new MemoryRedis();
+    let now = 0;
+    const events: Array<{ characterId: string }> = [];
+    const store = new PresenceStore(
+      { command: redis },
+      new RecordingHub(),
+      () => now,
+      undefined,
+      undefined,
+      (event) =>
+        Effect.sync(() => {
+          events.push(event);
+        }),
+    );
+    const game = socket({ ...session([]), character });
+    await Effect.runPromise(store.publish(game, { organizationIds: [] }));
+    game.data.character = { ...character, characterId: "other-character" };
+    await Effect.runPromise(store.publish(game, { organizationIds: [] }));
+    now = 10_000;
+    await Effect.runPromise(store.sweepOffline());
+    expect(events.map((event) => event.characterId)).toEqual(["character-1"]);
+  });
+
+  test("another live game connection keeps the character online", async () => {
+    const redis = new MemoryRedis();
+    let now = 0;
+    const events: unknown[] = [];
+    const store = new PresenceStore(
+      { command: redis },
+      new RecordingHub(),
+      () => now,
+      undefined,
+      undefined,
+      (event) =>
+        Effect.sync(() => {
+          events.push(event);
+        }),
+    );
+    const first = socket({ ...session([]), character });
+    const second = socket({
+      ...session([]),
+      connectionId: "second",
+      character,
+    });
+    await Effect.runPromise(store.publish(first, { organizationIds: [] }));
+    await Effect.runPromise(store.publish(second, { organizationIds: [] }));
+    await Effect.runPromise(store.disconnect(first.data));
+    now = 10_000;
+    await Effect.runPromise(store.sweepOffline());
+    expect(events).toEqual([]);
+  });
+});

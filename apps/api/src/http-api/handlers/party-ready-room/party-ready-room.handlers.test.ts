@@ -65,6 +65,7 @@ const makeData = (overrides: Partial<ReadyRoomData["Service"]> = {}) =>
     get: () => Effect.succeed(projection),
     apply: () => Effect.succeed(projection),
     withdraw: () => Effect.succeed(update),
+    characterOffline: () => Effect.void,
     remove: () => Effect.succeed(update),
     resolveInvitationTargets: () => Effect.succeed({ targets: [] }),
     observeParty: () => Effect.succeed(projection),
@@ -221,6 +222,7 @@ it("returns active discovery summaries for the requested world without participa
                 {
                   notificationId: "room-a",
                   organizerName: "Hero",
+                  organizerDiscordId: "organizer-discord",
                   applicantCount: 3,
                   inPartyCount: 1,
                   guildIds: ["guild-visible"],
@@ -228,7 +230,6 @@ it("returns active discovery summaries for the requested world without participa
                   createdAt: projection.createdAt,
                   expiresAt: projection.expiresAt,
                   participants: { private: { discordId: "not-public" } },
-                  organizerDiscordId: "not-public",
                 },
               ]);
             },
@@ -242,6 +243,7 @@ it("returns active discovery summaries for the requested world without participa
     {
       notificationId: "room-a",
       organizerName: "Hero",
+      organizerDiscordId: "organizer-discord",
       applicantCount: 3,
       inPartyCount: 1,
       guildIds: ["guild-visible"],
