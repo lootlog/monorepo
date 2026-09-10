@@ -7,7 +7,7 @@ import {
 } from "@lootlog/client/main";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { useDebounceValue } from "usehooks-ts";
+import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
 
 import {
   getAllControllerSearchAllQueryKey,
@@ -32,7 +32,7 @@ export const useLootSearchCommand = ({
 }: LootSearchCommandProps) => {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearch] = useDebounceValue(searchQuery, 200);
+  const debouncedSearch = useDebounce(searchQuery, 200);
   const { world } = useGuildContext();
   const guildId = useGuildId();
   const { setFilters } = useLootsFilters();
