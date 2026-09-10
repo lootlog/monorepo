@@ -43,7 +43,6 @@
     "@lootlog/protocol": "workspace:*",
     "@lootlog/schema": "workspace:*",
     "@lootlog/ui": "workspace:*",
-    "@radix-ui/react-slot": "^1.3.3",
     "@shadcn/react": "^0.3.1",
     "@tanstack/react-query": "catalog:",
     "better-auth": "1.7.2",
