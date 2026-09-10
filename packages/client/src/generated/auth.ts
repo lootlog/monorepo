@@ -39,6 +39,18 @@ export type AuthControllerVerify200 = {
   status: AuthControllerVerify200Status;
 };
 
+export type AuthControllerVerify401 = {
+  message: string;
+};
+
+export type AuthControllerVerify429 = {
+  message: string;
+};
+
+export type AuthControllerVerify503 = {
+  message: string;
+};
+
 export type AuthControllerGetIdpTokenBody = {
   userId: string;
   discordId: string;
@@ -48,6 +60,327 @@ export type AuthControllerGetIdpToken200 = {
   accessToken: string;
   expiresIn: number;
   scopes: string[];
+};
+
+export type AuthControllerGetIdpToken400 = {
+  message: string;
+  error: string;
+  statusCode: 400;
+} | {
+  error: string;
+};
+
+export type AuthControllerGetIdpToken401 = {
+  message: string;
+  statusCode: 401;
+} | {
+  error: string;
+};
+
+export type ApiKeysListApiKeys200KeysItemMode = typeof ApiKeysListApiKeys200KeysItemMode[keyof typeof ApiKeysListApiKeys200KeysItemMode];
+
+
+export const ApiKeysListApiKeys200KeysItemMode = {
+  read: 'read',
+  'read-write': 'read-write',
+} as const;
+
+export type ApiKeysListApiKeys200KeysItem = {
+  /**
+     * @maxItems 100
+     * @items.pattern ^\d{1,20}$
+     */
+  organizationIds: string[];
+  mode: ApiKeysListApiKeys200KeysItemMode;
+  personalData: boolean;
+  id: string;
+  name: string;
+  /** @nullable */
+  start: string | null;
+  createdAt: string;
+  /** @nullable */
+  expiresAt: string | null;
+};
+
+export type ApiKeysListApiKeys200 = {
+  keys: ApiKeysListApiKeys200KeysItem[];
+};
+
+export type ApiKeysListApiKeys400 = {
+  message: string;
+};
+
+export type ApiKeysListApiKeys401 = {
+  message: string;
+};
+
+export type ApiKeysListApiKeys403 = {
+  message: string;
+};
+
+export type ApiKeysListApiKeys404 = {
+  message: string;
+};
+
+export type ApiKeysListApiKeys409 = {
+  message: string;
+};
+
+export type ApiKeysListApiKeys429 = {
+  message: string;
+};
+
+export type ApiKeysListApiKeys503 = {
+  message: string;
+};
+
+export type ApiKeysCreateApiKeyBodyMode = typeof ApiKeysCreateApiKeyBodyMode[keyof typeof ApiKeysCreateApiKeyBodyMode];
+
+
+export const ApiKeysCreateApiKeyBodyMode = {
+  read: 'read',
+  'read-write': 'read-write',
+} as const;
+
+/**
+ * @nullable
+ */
+export type ApiKeysCreateApiKeyBodyExpiresIn = typeof ApiKeysCreateApiKeyBodyExpiresIn[keyof typeof ApiKeysCreateApiKeyBodyExpiresIn] | null;
+
+
+export const ApiKeysCreateApiKeyBodyExpiresIn = {
+  NUMBER_2592000: 2592000,
+  NUMBER_7776000: 7776000,
+  NUMBER_31536000: 31536000,
+} as const;
+
+export type ApiKeysCreateApiKeyBody = {
+  /**
+     * @maxItems 100
+     * @items.pattern ^\d{1,20}$
+     */
+  organizationIds: string[];
+  mode: ApiKeysCreateApiKeyBodyMode;
+  personalData: boolean;
+  name: string;
+  /** @nullable */
+  expiresIn: ApiKeysCreateApiKeyBodyExpiresIn;
+};
+
+export type ApiKeysCreateApiKey200Mode = typeof ApiKeysCreateApiKey200Mode[keyof typeof ApiKeysCreateApiKey200Mode];
+
+
+export const ApiKeysCreateApiKey200Mode = {
+  read: 'read',
+  'read-write': 'read-write',
+} as const;
+
+export type ApiKeysCreateApiKey200 = {
+  /**
+     * @maxItems 100
+     * @items.pattern ^\d{1,20}$
+     */
+  organizationIds: string[];
+  mode: ApiKeysCreateApiKey200Mode;
+  personalData: boolean;
+  id: string;
+  name: string;
+  /** @nullable */
+  start: string | null;
+  createdAt: string;
+  /** @nullable */
+  expiresAt: string | null;
+  key: string;
+};
+
+export type ApiKeysCreateApiKey400 = {
+  message: string;
+};
+
+export type ApiKeysCreateApiKey401 = {
+  message: string;
+};
+
+export type ApiKeysCreateApiKey403 = {
+  message: string;
+};
+
+export type ApiKeysCreateApiKey404 = {
+  message: string;
+};
+
+export type ApiKeysCreateApiKey409 = {
+  message: string;
+};
+
+export type ApiKeysCreateApiKey429 = {
+  message: string;
+};
+
+export type ApiKeysCreateApiKey503 = {
+  message: string;
+};
+
+export type ApiKeysRenameApiKeyPathParameters = {
+ id: string,
+ }
+export type ApiKeysRenameApiKeyBody = {
+  name: string;
+};
+
+export type ApiKeysRenameApiKey200Mode = typeof ApiKeysRenameApiKey200Mode[keyof typeof ApiKeysRenameApiKey200Mode];
+
+
+export const ApiKeysRenameApiKey200Mode = {
+  read: 'read',
+  'read-write': 'read-write',
+} as const;
+
+export type ApiKeysRenameApiKey200 = {
+  /**
+     * @maxItems 100
+     * @items.pattern ^\d{1,20}$
+     */
+  organizationIds: string[];
+  mode: ApiKeysRenameApiKey200Mode;
+  personalData: boolean;
+  id: string;
+  name: string;
+  /** @nullable */
+  start: string | null;
+  createdAt: string;
+  /** @nullable */
+  expiresAt: string | null;
+};
+
+export type ApiKeysRenameApiKey400 = {
+  message: string;
+};
+
+export type ApiKeysRenameApiKey401 = {
+  message: string;
+};
+
+export type ApiKeysRenameApiKey403 = {
+  message: string;
+};
+
+export type ApiKeysRenameApiKey404 = {
+  message: string;
+};
+
+export type ApiKeysRenameApiKey409 = {
+  message: string;
+};
+
+export type ApiKeysRenameApiKey429 = {
+  message: string;
+};
+
+export type ApiKeysRenameApiKey503 = {
+  message: string;
+};
+
+export type ApiKeysDeleteApiKeyPathParameters = {
+ id: string,
+ }
+export type ApiKeysDeleteApiKey200 = {
+  success: true;
+};
+
+export type ApiKeysDeleteApiKey400 = {
+  message: string;
+};
+
+export type ApiKeysDeleteApiKey401 = {
+  message: string;
+};
+
+export type ApiKeysDeleteApiKey403 = {
+  message: string;
+};
+
+export type ApiKeysDeleteApiKey404 = {
+  message: string;
+};
+
+export type ApiKeysDeleteApiKey409 = {
+  message: string;
+};
+
+export type ApiKeysDeleteApiKey429 = {
+  message: string;
+};
+
+export type ApiKeysDeleteApiKey503 = {
+  message: string;
+};
+
+export type ApiKeysApiKeyStatusesBody = {
+  /**
+     * @maxItems 100
+     * @items.minLength 1
+     */
+  keyIds: string[];
+};
+
+export type ApiKeysApiKeyStatuses200KeysItem = {
+  /** @minLength 1 */
+  keyId: string;
+  valid: false;
+} | {
+  /** @minLength 1 */
+  keyId: string;
+  valid: true;
+  access: {
+  /**
+     * @maxItems 100
+     * @items.pattern ^\d{1,20}$
+     */
+  organizationIds: string[];
+  mode: 'read' | 'read-write';
+  personalData: boolean;
+  /** @minLength 1 */
+  keyId: string;
+  /** @nullable */
+  expiresAt: string | null;
+};
+  /** @minLength 1 */
+  userId: string;
+  /** @minLength 1 */
+  discordId: string;
+};
+
+export type ApiKeysApiKeyStatuses200 = {
+  keys: ApiKeysApiKeyStatuses200KeysItem[];
+};
+
+export type ApiKeysApiKeyStatuses400 = {
+  message: string;
+};
+
+export type ApiKeysApiKeyStatuses401 = {
+  message: string;
+};
+
+export type ApiKeysApiKeyStatuses403 = {
+  message: string;
+};
+
+export type ApiKeysApiKeyStatuses404 = {
+  message: string;
+};
+
+export type ApiKeysApiKeyStatuses409 = {
+  message: string;
+};
+
+export type ApiKeysApiKeyStatuses429 = {
+  message: string;
+};
+
+export type ApiKeysApiKeyStatuses503 = {
+  message: string;
 };
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -245,7 +578,7 @@ export const getAuthControllerVerifyQueryKey = () => {
     }
 
 
-export const getAuthControllerVerifyQueryOptions = <TData = Awaited<ReturnType<typeof authControllerVerify>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerVerify>>, TError, TData>>, request?: SecondParameter<typeof authFetch>}
+export const getAuthControllerVerifyQueryOptions = <TData = Awaited<ReturnType<typeof authControllerVerify>>, TError = ErrorType<AuthControllerVerify401 | AuthControllerVerify429 | AuthControllerVerify503>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerVerify>>, TError, TData>>, request?: SecondParameter<typeof authFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -264,10 +597,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type AuthControllerVerifyQueryResult = NonNullable<Awaited<ReturnType<typeof authControllerVerify>>>
-export type AuthControllerVerifyQueryError = ErrorType<unknown>
+export type AuthControllerVerifyQueryError = ErrorType<AuthControllerVerify401 | AuthControllerVerify429 | AuthControllerVerify503>
 
 
-export function useAuthControllerVerify<TData = Awaited<ReturnType<typeof authControllerVerify>>, TError = ErrorType<unknown>>(
+export function useAuthControllerVerify<TData = Awaited<ReturnType<typeof authControllerVerify>>, TError = ErrorType<AuthControllerVerify401 | AuthControllerVerify429 | AuthControllerVerify503>>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerVerify>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof authControllerVerify>>,
@@ -277,7 +610,7 @@ export function useAuthControllerVerify<TData = Awaited<ReturnType<typeof authCo
       >, request?: SecondParameter<typeof authFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useAuthControllerVerify<TData = Awaited<ReturnType<typeof authControllerVerify>>, TError = ErrorType<unknown>>(
+export function useAuthControllerVerify<TData = Awaited<ReturnType<typeof authControllerVerify>>, TError = ErrorType<AuthControllerVerify401 | AuthControllerVerify429 | AuthControllerVerify503>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerVerify>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof authControllerVerify>>,
@@ -287,7 +620,7 @@ export function useAuthControllerVerify<TData = Awaited<ReturnType<typeof authCo
       >, request?: SecondParameter<typeof authFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useAuthControllerVerify<TData = Awaited<ReturnType<typeof authControllerVerify>>, TError = ErrorType<unknown>>(
+export function useAuthControllerVerify<TData = Awaited<ReturnType<typeof authControllerVerify>>, TError = ErrorType<AuthControllerVerify401 | AuthControllerVerify429 | AuthControllerVerify503>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerVerify>>, TError, TData>>, request?: SecondParameter<typeof authFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -295,7 +628,7 @@ export function useAuthControllerVerify<TData = Awaited<ReturnType<typeof authCo
  * @summary Verify request identity
  */
 
-export function useAuthControllerVerify<TData = Awaited<ReturnType<typeof authControllerVerify>>, TError = ErrorType<unknown>>(
+export function useAuthControllerVerify<TData = Awaited<ReturnType<typeof authControllerVerify>>, TError = ErrorType<AuthControllerVerify401 | AuthControllerVerify429 | AuthControllerVerify503>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerVerify>>, TError, TData>>, request?: SecondParameter<typeof authFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -310,7 +643,7 @@ export function useAuthControllerVerify<TData = Awaited<ReturnType<typeof authCo
 /**
  * @summary Verify request identity
  */
-export const prefetchAuthControllerVerifyQuery = async <TData = Awaited<ReturnType<typeof authControllerVerify>>, TError = ErrorType<unknown>>(
+export const prefetchAuthControllerVerifyQuery = async <TData = Awaited<ReturnType<typeof authControllerVerify>>, TError = ErrorType<AuthControllerVerify401 | AuthControllerVerify429 | AuthControllerVerify503>>(
  queryClient: QueryClient,  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerVerify>>, TError, TData>>, request?: SecondParameter<typeof authFetch>}
 
   ): Promise<QueryClient> => {
@@ -507,6 +840,7 @@ export const getAuthControllerGetIdpTokenUrl = () => {
 }
 
 /**
+ * Internal API caller only. Requires the AUTH_IDP_TOKEN_SECRET bearer credential; user sessions and forwarded identity headers do not authorize this operation.
  * @summary Issue an IDP token for a user account
  */
 export const authControllerGetIdpToken = async (authControllerGetIdpTokenBody: AuthControllerGetIdpTokenBody, options?: Parameters<typeof authFetch>[1]): Promise<AuthControllerGetIdpToken200> => {
@@ -530,7 +864,7 @@ return authFetch<AuthControllerGetIdpToken200>(getAuthControllerGetIdpTokenUrl()
 
 
 
-export const getAuthControllerGetIdpTokenMutationOptions = <TError = ErrorType<unknown>,
+export const getAuthControllerGetIdpTokenMutationOptions = <TError = ErrorType<AuthControllerGetIdpToken400 | AuthControllerGetIdpToken401>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authControllerGetIdpToken>>, TError,AuthControllerGetIdpTokenMutationVariables, TContext>, request?: SecondParameter<typeof authFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof authControllerGetIdpToken>>, TError,AuthControllerGetIdpTokenMutationVariables, TContext> => {
 
@@ -559,13 +893,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type AuthControllerGetIdpTokenMutationResult = NonNullable<Awaited<ReturnType<typeof authControllerGetIdpToken>>>
     export type AuthControllerGetIdpTokenMutationBody = BodyType<AuthControllerGetIdpTokenBody>
-    export type AuthControllerGetIdpTokenMutationError = ErrorType<unknown>
+    export type AuthControllerGetIdpTokenMutationError = ErrorType<AuthControllerGetIdpToken400 | AuthControllerGetIdpToken401>
     export type AuthControllerGetIdpTokenMutationVariables = {data: BodyType<AuthControllerGetIdpTokenBody>}
 
     /**
  * @summary Issue an IDP token for a user account
  */
-export const useAuthControllerGetIdpToken = <TError = ErrorType<unknown>,
+export const useAuthControllerGetIdpToken = <TError = ErrorType<AuthControllerGetIdpToken400 | AuthControllerGetIdpToken401>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authControllerGetIdpToken>>, TError,AuthControllerGetIdpTokenMutationVariables, TContext>, request?: SecondParameter<typeof authFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof authControllerGetIdpToken>>,
@@ -574,4 +908,412 @@ export const useAuthControllerGetIdpToken = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getAuthControllerGetIdpTokenMutationOptions(options), queryClient);
+    }
+
+export const getApiKeysListApiKeysUrl = () => {
+
+
+
+
+  return `/auth/api-keys`
+}
+
+export const apiKeysListApiKeys = async ( options?: Parameters<typeof authFetch>[1]): Promise<ApiKeysListApiKeys200> => {
+
+  return authFetch<ApiKeysListApiKeys200>(getApiKeysListApiKeysUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getApiKeysListApiKeysQueryKey = () => {
+    return [
+    `/auth/api-keys`
+    ] as const;
+    }
+
+
+export const getApiKeysListApiKeysQueryOptions = <TData = Awaited<ReturnType<typeof apiKeysListApiKeys>>, TError = ErrorType<ApiKeysListApiKeys400 | ApiKeysListApiKeys401 | ApiKeysListApiKeys403 | ApiKeysListApiKeys404 | ApiKeysListApiKeys409 | ApiKeysListApiKeys429 | ApiKeysListApiKeys503>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof apiKeysListApiKeys>>, TError, TData>>, request?: SecondParameter<typeof authFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getApiKeysListApiKeysQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof apiKeysListApiKeys>>> = ({ signal }) => apiKeysListApiKeys({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof apiKeysListApiKeys>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ApiKeysListApiKeysQueryResult = NonNullable<Awaited<ReturnType<typeof apiKeysListApiKeys>>>
+export type ApiKeysListApiKeysQueryError = ErrorType<ApiKeysListApiKeys400 | ApiKeysListApiKeys401 | ApiKeysListApiKeys403 | ApiKeysListApiKeys404 | ApiKeysListApiKeys409 | ApiKeysListApiKeys429 | ApiKeysListApiKeys503>
+
+
+export function useApiKeysListApiKeys<TData = Awaited<ReturnType<typeof apiKeysListApiKeys>>, TError = ErrorType<ApiKeysListApiKeys400 | ApiKeysListApiKeys401 | ApiKeysListApiKeys403 | ApiKeysListApiKeys404 | ApiKeysListApiKeys409 | ApiKeysListApiKeys429 | ApiKeysListApiKeys503>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof apiKeysListApiKeys>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof apiKeysListApiKeys>>,
+          TError,
+          Awaited<ReturnType<typeof apiKeysListApiKeys>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useApiKeysListApiKeys<TData = Awaited<ReturnType<typeof apiKeysListApiKeys>>, TError = ErrorType<ApiKeysListApiKeys400 | ApiKeysListApiKeys401 | ApiKeysListApiKeys403 | ApiKeysListApiKeys404 | ApiKeysListApiKeys409 | ApiKeysListApiKeys429 | ApiKeysListApiKeys503>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof apiKeysListApiKeys>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof apiKeysListApiKeys>>,
+          TError,
+          Awaited<ReturnType<typeof apiKeysListApiKeys>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useApiKeysListApiKeys<TData = Awaited<ReturnType<typeof apiKeysListApiKeys>>, TError = ErrorType<ApiKeysListApiKeys400 | ApiKeysListApiKeys401 | ApiKeysListApiKeys403 | ApiKeysListApiKeys404 | ApiKeysListApiKeys409 | ApiKeysListApiKeys429 | ApiKeysListApiKeys503>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof apiKeysListApiKeys>>, TError, TData>>, request?: SecondParameter<typeof authFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useApiKeysListApiKeys<TData = Awaited<ReturnType<typeof apiKeysListApiKeys>>, TError = ErrorType<ApiKeysListApiKeys400 | ApiKeysListApiKeys401 | ApiKeysListApiKeys403 | ApiKeysListApiKeys404 | ApiKeysListApiKeys409 | ApiKeysListApiKeys429 | ApiKeysListApiKeys503>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof apiKeysListApiKeys>>, TError, TData>>, request?: SecondParameter<typeof authFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getApiKeysListApiKeysQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const prefetchApiKeysListApiKeysQuery = async <TData = Awaited<ReturnType<typeof apiKeysListApiKeys>>, TError = ErrorType<ApiKeysListApiKeys400 | ApiKeysListApiKeys401 | ApiKeysListApiKeys403 | ApiKeysListApiKeys404 | ApiKeysListApiKeys409 | ApiKeysListApiKeys429 | ApiKeysListApiKeys503>>(
+ queryClient: QueryClient,  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof apiKeysListApiKeys>>, TError, TData>>, request?: SecondParameter<typeof authFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getApiKeysListApiKeysQueryOptions(options)
+
+  await queryClient.prefetchQuery(queryOptions);
+
+  return queryClient;
+}
+
+export const invalidateApiKeysListApiKeys = async (
+ queryClient: QueryClient,  options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getApiKeysListApiKeysQueryKey() }, options);
+
+  return queryClient;
+}
+
+export const useSetApiKeysListApiKeysQueryData = () => {
+  const queryClient = useQueryClient();
+  return (updater: Awaited<ReturnType<typeof apiKeysListApiKeys>> | undefined | ((old: Awaited<ReturnType<typeof apiKeysListApiKeys>> | undefined) => Awaited<ReturnType<typeof apiKeysListApiKeys>> | undefined)) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof apiKeysListApiKeys>>>({ queryKey: getApiKeysListApiKeysQueryKey() }, updater);
+  };
+}
+
+export const useGetApiKeysListApiKeysQueryData = () => {
+  const queryClient = useQueryClient();
+  return () =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof apiKeysListApiKeys>>>(getApiKeysListApiKeysQueryKey());
+}
+
+
+
+export const getApiKeysCreateApiKeyUrl = () => {
+
+
+
+
+  return `/auth/api-keys`
+}
+
+export const apiKeysCreateApiKey = async (apiKeysCreateApiKeyBody: ApiKeysCreateApiKeyBody, options?: Parameters<typeof authFetch>[1]): Promise<ApiKeysCreateApiKey200> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+return authFetch<ApiKeysCreateApiKey200>(getApiKeysCreateApiKeyUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(apiKeysCreateApiKeyBody)
+  }
+);}
+
+
+
+
+
+export const getApiKeysCreateApiKeyMutationOptions = <TError = ErrorType<ApiKeysCreateApiKey400 | ApiKeysCreateApiKey401 | ApiKeysCreateApiKey403 | ApiKeysCreateApiKey404 | ApiKeysCreateApiKey409 | ApiKeysCreateApiKey429 | ApiKeysCreateApiKey503>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof apiKeysCreateApiKey>>, TError,ApiKeysCreateApiKeyMutationVariables, TContext>, request?: SecondParameter<typeof authFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof apiKeysCreateApiKey>>, TError,ApiKeysCreateApiKeyMutationVariables, TContext> => {
+
+const mutationKey = ['apiKeysCreateApiKey'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof apiKeysCreateApiKey>>, ApiKeysCreateApiKeyMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  apiKeysCreateApiKey(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ApiKeysCreateApiKeyMutationResult = NonNullable<Awaited<ReturnType<typeof apiKeysCreateApiKey>>>
+    export type ApiKeysCreateApiKeyMutationBody = BodyType<ApiKeysCreateApiKeyBody>
+    export type ApiKeysCreateApiKeyMutationError = ErrorType<ApiKeysCreateApiKey400 | ApiKeysCreateApiKey401 | ApiKeysCreateApiKey403 | ApiKeysCreateApiKey404 | ApiKeysCreateApiKey409 | ApiKeysCreateApiKey429 | ApiKeysCreateApiKey503>
+    export type ApiKeysCreateApiKeyMutationVariables = {data: BodyType<ApiKeysCreateApiKeyBody>}
+
+    export const useApiKeysCreateApiKey = <TError = ErrorType<ApiKeysCreateApiKey400 | ApiKeysCreateApiKey401 | ApiKeysCreateApiKey403 | ApiKeysCreateApiKey404 | ApiKeysCreateApiKey409 | ApiKeysCreateApiKey429 | ApiKeysCreateApiKey503>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof apiKeysCreateApiKey>>, TError,ApiKeysCreateApiKeyMutationVariables, TContext>, request?: SecondParameter<typeof authFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof apiKeysCreateApiKey>>,
+        TError,
+        ApiKeysCreateApiKeyMutationVariables,
+        TContext
+      > => {
+      return useMutation(getApiKeysCreateApiKeyMutationOptions(options), queryClient);
+    }
+
+export const getApiKeysRenameApiKeyUrl = ({ id }: ApiKeysRenameApiKeyPathParameters,) => {
+
+
+
+
+  return `/auth/api-keys/${id}`
+}
+
+export const apiKeysRenameApiKey = async ({ id }: ApiKeysRenameApiKeyPathParameters,
+    apiKeysRenameApiKeyBody: ApiKeysRenameApiKeyBody, options?: Parameters<typeof authFetch>[1]): Promise<ApiKeysRenameApiKey200> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+return authFetch<ApiKeysRenameApiKey200>(getApiKeysRenameApiKeyUrl({ id }),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(apiKeysRenameApiKeyBody)
+  }
+);}
+
+
+
+
+
+export const getApiKeysRenameApiKeyMutationOptions = <TError = ErrorType<ApiKeysRenameApiKey400 | ApiKeysRenameApiKey401 | ApiKeysRenameApiKey403 | ApiKeysRenameApiKey404 | ApiKeysRenameApiKey409 | ApiKeysRenameApiKey429 | ApiKeysRenameApiKey503>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof apiKeysRenameApiKey>>, TError,ApiKeysRenameApiKeyMutationVariables, TContext>, request?: SecondParameter<typeof authFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof apiKeysRenameApiKey>>, TError,ApiKeysRenameApiKeyMutationVariables, TContext> => {
+
+const mutationKey = ['apiKeysRenameApiKey'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof apiKeysRenameApiKey>>, ApiKeysRenameApiKeyMutationVariables> = (props) => {
+          const {pathParams,data} = props ?? {};
+
+          return  apiKeysRenameApiKey(pathParams,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ApiKeysRenameApiKeyMutationResult = NonNullable<Awaited<ReturnType<typeof apiKeysRenameApiKey>>>
+    export type ApiKeysRenameApiKeyMutationBody = BodyType<ApiKeysRenameApiKeyBody>
+    export type ApiKeysRenameApiKeyMutationError = ErrorType<ApiKeysRenameApiKey400 | ApiKeysRenameApiKey401 | ApiKeysRenameApiKey403 | ApiKeysRenameApiKey404 | ApiKeysRenameApiKey409 | ApiKeysRenameApiKey429 | ApiKeysRenameApiKey503>
+    export type ApiKeysRenameApiKeyMutationVariables = {pathParams: ApiKeysRenameApiKeyPathParameters;data: BodyType<ApiKeysRenameApiKeyBody>}
+
+    export const useApiKeysRenameApiKey = <TError = ErrorType<ApiKeysRenameApiKey400 | ApiKeysRenameApiKey401 | ApiKeysRenameApiKey403 | ApiKeysRenameApiKey404 | ApiKeysRenameApiKey409 | ApiKeysRenameApiKey429 | ApiKeysRenameApiKey503>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof apiKeysRenameApiKey>>, TError,ApiKeysRenameApiKeyMutationVariables, TContext>, request?: SecondParameter<typeof authFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof apiKeysRenameApiKey>>,
+        TError,
+        ApiKeysRenameApiKeyMutationVariables,
+        TContext
+      > => {
+      return useMutation(getApiKeysRenameApiKeyMutationOptions(options), queryClient);
+    }
+
+export const getApiKeysDeleteApiKeyUrl = ({ id }: ApiKeysDeleteApiKeyPathParameters,) => {
+
+
+
+
+  return `/auth/api-keys/${id}`
+}
+
+export const apiKeysDeleteApiKey = async ({ id }: ApiKeysDeleteApiKeyPathParameters, options?: Parameters<typeof authFetch>[1]): Promise<ApiKeysDeleteApiKey200> => {
+
+  return authFetch<ApiKeysDeleteApiKey200>(getApiKeysDeleteApiKeyUrl({ id }),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getApiKeysDeleteApiKeyMutationOptions = <TError = ErrorType<ApiKeysDeleteApiKey400 | ApiKeysDeleteApiKey401 | ApiKeysDeleteApiKey403 | ApiKeysDeleteApiKey404 | ApiKeysDeleteApiKey409 | ApiKeysDeleteApiKey429 | ApiKeysDeleteApiKey503>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof apiKeysDeleteApiKey>>, TError,ApiKeysDeleteApiKeyMutationVariables, TContext>, request?: SecondParameter<typeof authFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof apiKeysDeleteApiKey>>, TError,ApiKeysDeleteApiKeyMutationVariables, TContext> => {
+
+const mutationKey = ['apiKeysDeleteApiKey'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof apiKeysDeleteApiKey>>, ApiKeysDeleteApiKeyMutationVariables> = (props) => {
+          const {pathParams} = props ?? {};
+
+          return  apiKeysDeleteApiKey(pathParams,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ApiKeysDeleteApiKeyMutationResult = NonNullable<Awaited<ReturnType<typeof apiKeysDeleteApiKey>>>
+
+    export type ApiKeysDeleteApiKeyMutationError = ErrorType<ApiKeysDeleteApiKey400 | ApiKeysDeleteApiKey401 | ApiKeysDeleteApiKey403 | ApiKeysDeleteApiKey404 | ApiKeysDeleteApiKey409 | ApiKeysDeleteApiKey429 | ApiKeysDeleteApiKey503>
+    export type ApiKeysDeleteApiKeyMutationVariables = {pathParams: ApiKeysDeleteApiKeyPathParameters}
+
+    export const useApiKeysDeleteApiKey = <TError = ErrorType<ApiKeysDeleteApiKey400 | ApiKeysDeleteApiKey401 | ApiKeysDeleteApiKey403 | ApiKeysDeleteApiKey404 | ApiKeysDeleteApiKey409 | ApiKeysDeleteApiKey429 | ApiKeysDeleteApiKey503>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof apiKeysDeleteApiKey>>, TError,ApiKeysDeleteApiKeyMutationVariables, TContext>, request?: SecondParameter<typeof authFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof apiKeysDeleteApiKey>>,
+        TError,
+        ApiKeysDeleteApiKeyMutationVariables,
+        TContext
+      > => {
+      return useMutation(getApiKeysDeleteApiKeyMutationOptions(options), queryClient);
+    }
+
+export const getApiKeysApiKeyStatusesUrl = () => {
+
+
+
+
+  return `/auth/internal/api-keys/status`
+}
+
+export const apiKeysApiKeyStatuses = async (apiKeysApiKeyStatusesBody: ApiKeysApiKeyStatusesBody, options?: Parameters<typeof authFetch>[1]): Promise<ApiKeysApiKeyStatuses200> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+return authFetch<ApiKeysApiKeyStatuses200>(getApiKeysApiKeyStatusesUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(apiKeysApiKeyStatusesBody)
+  }
+);}
+
+
+
+
+
+export const getApiKeysApiKeyStatusesMutationOptions = <TError = ErrorType<ApiKeysApiKeyStatuses400 | ApiKeysApiKeyStatuses401 | ApiKeysApiKeyStatuses403 | ApiKeysApiKeyStatuses404 | ApiKeysApiKeyStatuses409 | ApiKeysApiKeyStatuses429 | ApiKeysApiKeyStatuses503>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof apiKeysApiKeyStatuses>>, TError,ApiKeysApiKeyStatusesMutationVariables, TContext>, request?: SecondParameter<typeof authFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof apiKeysApiKeyStatuses>>, TError,ApiKeysApiKeyStatusesMutationVariables, TContext> => {
+
+const mutationKey = ['apiKeysApiKeyStatuses'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof apiKeysApiKeyStatuses>>, ApiKeysApiKeyStatusesMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  apiKeysApiKeyStatuses(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ApiKeysApiKeyStatusesMutationResult = NonNullable<Awaited<ReturnType<typeof apiKeysApiKeyStatuses>>>
+    export type ApiKeysApiKeyStatusesMutationBody = BodyType<ApiKeysApiKeyStatusesBody>
+    export type ApiKeysApiKeyStatusesMutationError = ErrorType<ApiKeysApiKeyStatuses400 | ApiKeysApiKeyStatuses401 | ApiKeysApiKeyStatuses403 | ApiKeysApiKeyStatuses404 | ApiKeysApiKeyStatuses409 | ApiKeysApiKeyStatuses429 | ApiKeysApiKeyStatuses503>
+    export type ApiKeysApiKeyStatusesMutationVariables = {data: BodyType<ApiKeysApiKeyStatusesBody>}
+
+    export const useApiKeysApiKeyStatuses = <TError = ErrorType<ApiKeysApiKeyStatuses400 | ApiKeysApiKeyStatuses401 | ApiKeysApiKeyStatuses403 | ApiKeysApiKeyStatuses404 | ApiKeysApiKeyStatuses409 | ApiKeysApiKeyStatuses429 | ApiKeysApiKeyStatuses503>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof apiKeysApiKeyStatuses>>, TError,ApiKeysApiKeyStatusesMutationVariables, TContext>, request?: SecondParameter<typeof authFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof apiKeysApiKeyStatuses>>,
+        TError,
+        ApiKeysApiKeyStatusesMutationVariables,
+        TContext
+      > => {
+      return useMutation(getApiKeysApiKeyStatusesMutationOptions(options), queryClient);
     }

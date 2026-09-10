@@ -14,6 +14,8 @@ const compatibilityBoolean = (name: string) =>
   );
 
 export interface ApiConfiguration {
+  readonly authIdpTokenSecret?: Redacted.Redacted<string>;
+  readonly battlelogCleanupSecret?: Redacted.Redacted<string>;
   readonly environment: RuntimeEnvironment;
   readonly port: number;
   readonly serviceName: string;
@@ -51,6 +53,8 @@ export interface ApiConfiguration {
 
 /** The complete API environment contract, decoded by Effect Config. */
 export const apiConfiguration = Config.all({
+  authIdpTokenSecret: optionalRedacted("AUTH_IDP_TOKEN_SECRET"),
+  battlelogCleanupSecret: optionalRedacted("BATTLELOG_CLEANUP_SECRET"),
   environment: Config.literals(
     [
       RuntimeEnvironment.LOCAL,

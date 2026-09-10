@@ -1,5 +1,8 @@
 {
   "plugins": ["react", "typescript", "unicorn", "vitest"],
+  "categories": {
+    "correctness": "error"
+  },
   "ignorePatterns": [
     ".agent/**",
     ".agents/**",
@@ -21,7 +24,8 @@
     "**/.source",
     "**/*.tsbuildinfo",
     ".agents/skills/**/scripts/**",
-    "packages/client/src/generated/**"
+    "packages/client/src/generated/**",
+    "packages/sdk/src/generated/**"
   ],
   "jsPlugins": [
     {

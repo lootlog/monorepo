@@ -1,4 +1,5 @@
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
+import { apiKeyCacheSuffix } from "#src/runtime/auth/organization-scope";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
@@ -35,7 +36,7 @@ export const makeUserGuildPermissions = (
   const operation = Effect.fn("getUserGuildsWithPermissions")(function* (
     identity: AuthenticatedIdentity,
   ) {
-    const cacheKey = `user:${identity.userId}:discord:${identity.discordId}:guild-permissions`;
+    const cacheKey = `user:${identity.userId}:discord:${identity.discordId}:guild-permissions${yield* apiKeyCacheSuffix}`;
     const cached = yield* cache.getJson(
       cacheKey,
       UserOrganizationPermissionsResponse,

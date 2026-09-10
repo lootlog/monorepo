@@ -1,3 +1,6 @@
+import { ApiKeyService } from "#src/auth/api-key-service";
+import { hasServiceAuthorization } from "@lootlog/protocol/http/service-auth";
+import type { ApiKeyAccess } from "@lootlog/schema/api-key-access";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { APIError } from "better-auth/api";
 import { and, eq } from "drizzle-orm";
@@ -11,6 +14,7 @@ import {
   Option,
   Predicate,
   Schema,
+  type Redacted,
 } from "effect";
 import { AppConfig } from "#src/config/env";
 import { AuthDatabase } from "#src/database/drizzle";
@@ -20,6 +24,7 @@ import {
   type AppUserSession,
 } from "#src/auth/provider/better-auth";
 export interface VerifiedIdentity {
+  readonly apiKeyAccess?: ApiKeyAccess;
   readonly userId: string;
   readonly discordId: string;
 }
@@ -117,8 +122,14 @@ export const normalizeScopes = Function.compose(
 export const createAuthService = ({
   auth,
   appUrl,
+  idpTokenSecret,
   findDiscordAccountId,
+  verifyApiKey,
 }: {
+  readonly idpTokenSecret?: Redacted.Redacted<string>;
+  readonly verifyApiKey?: (
+    key: string,
+  ) => Effect.Effect<VerifiedIdentity, HttpResponseError>;
   readonly auth: AuthProvider;
   readonly appUrl: string;
   readonly findDiscordAccountId: (
@@ -206,6 +217,11 @@ export const createAuthService = ({
         return yield* unauthorized();
       }
 
+      if (headers.has("x-api-key")) {
+        const key = headers.get("x-api-key")?.trim();
+        if (!key || !verifyApiKey) return yield* unauthorized();
+        return yield* verifyApiKey(key);
+      }
       const session = yield* getSession(headers);
       const verifiedIdentity = yield* buildVerifiedIdentityFromRequest(
         session,
@@ -216,7 +232,8 @@ export const createAuthService = ({
         return yield* unauthorized();
       }
 
-      return verifiedIdentity;
+      const identity: VerifiedIdentity = verifiedIdentity;
+      return identity;
     },
   );
 
@@ -320,7 +337,10 @@ export const createAuthService = ({
   );
 
   const getIdpTokenResponse = Effect.fn("AuthService.getIdpTokenResponse")(
-    function* (request: AccessTokenRequest) {
+    function* (request: AccessTokenRequest, authorizationHeader?: string) {
+      if (!hasServiceAuthorization(authorizationHeader, idpTokenSecret)) {
+        return yield* unauthorized();
+      }
       const result = yield* Effect.result(
         getDiscordAccessTokenOrThrow(request, {
           missing: new HttpResponseError({
@@ -382,13 +402,16 @@ export class AuthService extends Context.Service<
     AuthService,
     Effect.gen(function* () {
       const auth = yield* BetterAuthRuntime;
+      const apiKeys = yield* ApiKeyService;
       const config = yield* AppConfig;
       const database = yield* AuthDatabase;
 
       return AuthService.of(
         createAuthService({
           auth,
+          verifyApiKey: apiKeys.verify,
           appUrl: config.appUrl,
+          idpTokenSecret: config.idpTokenSecret,
           findDiscordAccountId: (request) =>
             database
               .select({ id: authAccounts.id })

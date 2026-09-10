@@ -10,7 +10,7 @@ import {
 } from "@lootlog/client/main";
 
 import type { Timer } from "@/api";
-import type { ApiEventMap } from "../types";
+import type { ApiEventMap } from "@lootlog/game-client-api";
 
 const makeGuild = (
   overrides?: Partial<GuildResponseDtoOutput>,

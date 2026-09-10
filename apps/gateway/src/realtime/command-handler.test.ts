@@ -5,9 +5,9 @@ import {
   createAccessPolicySnapshot,
 } from "@lootlog/protocol/realtime/access-policy";
 import { describe, expect, test } from "bun:test";
-import { encode } from "@msgpack/msgpack";
+import { decode, encode } from "@msgpack/msgpack";
 import { Permission } from "@lootlog/schema/permissions";
-import { Effect } from "effect";
+import { Effect, Predicate } from "effect";
 import { CommandHandler } from "./command-handler.js";
 import { canReadSourceEvent } from "./source-event-visibility.js";
 import {
@@ -17,7 +17,8 @@ import {
 import { makeGuildStore, type GuildStore } from "#src/guilds/guild-store";
 import type { ActivityPublisher } from "#src/rabbit/activity-publisher";
 import type { PresenceStore } from "#src/realtime/presence-store";
-import type { RealtimeHub } from "#src/realtime/realtime-hub";
+import { RealtimeHub } from "#src/realtime/realtime-hub";
+import { unusedFederationStore } from "../../test/realtime-fixtures.js";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
 import type { UserGuildData } from "#src/guilds/guild";
 
@@ -173,6 +174,94 @@ const setup = (guildStore?: GuildStore) => {
 };
 
 describe("CommandHandler session lifecycle", () => {
+  test.each(["json", "msgpack"] as const)(
+    "rejects subscription exhaustion through %s commands while allowing unsubscribe",
+    async (frameEncoding) => {
+      const hub = new RealtimeHub(
+        { maxBackpressureBytes: 1_024, maxBackpressureStrikes: 3 },
+        unusedFederationStore,
+      );
+      const { guilds, presence, activity } = setup();
+      const handler = new CommandHandler(
+        guilds,
+        {
+          verify: () =>
+            Effect.succeed({ valid: false, reason: "not supplied" }),
+        },
+        presence,
+        hub,
+        activity,
+        { send: () => Promise.reject(new Error("Unexpected map ping")) },
+        {
+          updateSubscription: () =>
+            Promise.reject(new Error("Unexpected air tag subscription")),
+          publishObservations: () =>
+            Promise.reject(new Error("Unexpected air tag observation")),
+        },
+      );
+      const responses: unknown[] = [];
+      const target = makeSocket();
+      const socket: GatewaySocket = {
+        ...target.socket,
+        data: {
+          ...target.socket.data,
+          frameEncoding: frameEncoding === "json" ? "json" : undefined,
+          joined: true,
+        },
+        send: (data) => {
+          if (Predicate.isString(data)) responses.push(JSON.parse(data));
+          else if (data instanceof Uint8Array) responses.push(decode(data));
+          else throw new Error("Unexpected frame encoding");
+          return 0;
+        },
+      };
+      for (let index = 0; index < 4_096; index += 1)
+        hub.subscribe(socket, {
+          topic: "party.ready-room",
+          eventId: String(index),
+        });
+      for (const [requestId, type, eventId] of [
+        ["over-capacity", "subscription.subscribe", "extra"],
+        ["oversized", "subscription.subscribe", "ą".repeat(512)],
+        ["replacement", "subscription.subscribe", "0"],
+        ["unsubscribe", "subscription.unsubscribe", "0"],
+        ["new-slot", "subscription.subscribe", "extra"],
+      ]) {
+        const command = {
+          v: 1,
+          requestId,
+          type,
+          data: { topic: "party.ready-room", eventId },
+        };
+        await Effect.runPromise(
+          handler.handle(
+            socket,
+            frameEncoding === "json"
+              ? JSON.stringify(command)
+              : Buffer.from(encode(command)),
+          ),
+        );
+      }
+      expect(responses).toEqual([
+        ...["over-capacity", "oversized"].map((requestId) => ({
+          v: 1,
+          requestId,
+          status: "error",
+          error: {
+            code: "COMMAND_REJECTED",
+            message: "subscription limit exceeded",
+            retryable: false,
+          },
+        })),
+        ...["replacement", "unsubscribe", "new-slot"].map((requestId) =>
+          expect.objectContaining({ requestId, status: "success" }),
+        ),
+      ]);
+      expect(socket.data.subscriptions.size).toBe(4_096);
+      expect(target.closes).toEqual([]);
+    },
+  );
+
   test("accepts readable JSON commands for local diagnostic sockets", async () => {
     const { handler, hub } = setup();
     const target = makeSocket();
@@ -812,4 +901,100 @@ test("client NPC policy decisions match gateway source filtering across roles an
       }
     }
   }
+});
+
+test("API key joins and rebalances preserve each key's organization scope without creating player activity", async () => {
+  const { handler, guilds, hub, activity, presence } = setup();
+  const { socket } = makeSocket();
+  const other = makeSocket().socket;
+  guilds.guilds = [
+    guild(),
+    { ...guild(), guild: { id: "organization-2", ownerId: "owner" } },
+  ];
+  socket.data.apiKeyAccess = {
+    keyId: "k1",
+    organizationIds: ["organization-1"],
+    mode: "read",
+    personalData: false,
+    expiresAt: null,
+  };
+  socket.data.apiKeyLeaseExpiresAt = Date.now() + 60_000;
+  other.data.apiKeyAccess = {
+    ...socket.data.apiKeyAccess,
+    keyId: "k2",
+    organizationIds: ["organization-2"],
+  };
+  other.data.apiKeyLeaseExpiresAt = Date.now() + 60_000;
+  hub.sockets.push(socket, other);
+  for (const target of [socket, other])
+    await Effect.runPromise(
+      handler.handle(
+        target,
+        Buffer.from(
+          encode({ v: 1, requestId: "join", type: "session.join", data: {} }),
+        ),
+      ),
+    );
+  expect(socket.data.guilds.map(({ guild }) => guild.id)).toEqual([
+    "organization-1",
+  ]);
+  expect(other.data.guilds.map(({ guild }) => guild.id)).toEqual([
+    "organization-2",
+  ]);
+  expect(
+    [...socket.data.subscriptions.values()].every(
+      (scope) => scope.organizationId === "organization-1",
+    ),
+  ).toBe(true);
+  await Effect.runPromise(
+    handler.rebalanceUser(socket.data.discordId, socket.data.userId),
+  );
+  expect(socket.data.guilds.map(({ guild }) => guild.id)).toEqual([
+    "organization-1",
+  ]);
+  expect(other.data.guilds.map(({ guild }) => guild.id)).toEqual([
+    "organization-2",
+  ]);
+  expect(activity.calls).toEqual([]);
+  expect(presence.reconciled).toEqual([]);
+});
+
+test("API key sockets reject presence writes and expired leases before dispatch", async () => {
+  const { handler, hub } = setup();
+  const { socket, closes } = makeSocket();
+  socket.data.apiKeyAccess = {
+    keyId: "k",
+    organizationIds: ["organization-1"],
+    mode: "read-write",
+    personalData: true,
+    expiresAt: null,
+  };
+  socket.data.apiKeyLeaseExpiresAt = Date.now() + 60_000;
+  await Effect.runPromise(
+    handler.handle(
+      socket,
+      Buffer.from(
+        encode({
+          v: 1,
+          requestId: "heartbeat",
+          type: "presence.heartbeat",
+          data: { sessionId: "session-1" },
+        }),
+      ),
+    ),
+  );
+  expect(hub.responses).toContainEqual(
+    expect.objectContaining({ requestId: "heartbeat", status: "error" }),
+  );
+  socket.data.apiKeyLeaseExpiresAt = 0;
+  await Effect.runPromise(
+    handler.handle(
+      socket,
+      Buffer.from(
+        encode({ v: 1, requestId: "join", type: "session.join", data: {} }),
+      ),
+    ),
+  );
+  expect(closes).toEqual([1008]);
+  expect(socket.data.joined).toBe(false);
 });

@@ -5,6 +5,7 @@ import { parse } from "yaml";
 import {
   assertVerifiedPersonalAddition,
   normalizeAllowedChanges,
+  normalizeApiKeyErrors,
   normalizeOpenApiRepresentation,
 } from "./check-openapi-parity.js";
 
@@ -15,6 +16,53 @@ const httpErrorResponse = {
     },
   },
 };
+
+test.each([
+  ["auth", "/auth/idp-token"],
+  ["battlelog", "/internal/delete-user-data"],
+] as const)(
+  "%s service-auth exception rejects loss of its credential header or denial response",
+  (service, path) => {
+    const document = decodeOpenApiDocument(
+      parse(
+        readFileSync(
+          new URL(`../../../apps/${service}/openapi.yaml`, import.meta.url),
+          "utf8",
+        ),
+      ),
+    );
+    const raw = document.paths?.[path]?.post;
+    if (!raw) throw new Error("Missing service operation");
+    const operation =
+      service === "battlelog" ? normalizeApiKeyErrors(raw, undefined) : raw;
+    if (!isJsonObject(operation) || !isJsonObject(operation.responses))
+      throw new Error("Missing service responses");
+    const responses = operation.responses;
+    expect(
+      normalizeAllowedChanges(service, `POST ${path}`, operation),
+    ).not.toHaveProperty("responses.401");
+    expect(() =>
+      normalizeAllowedChanges(service, `POST ${path}`, {
+        ...operation,
+        parameters: [],
+      }),
+    ).toThrow("service authorization header");
+    expect(() =>
+      normalizeAllowedChanges(service, `POST ${path}`, {
+        ...operation,
+        responses: { ...responses, "401": {} },
+      }),
+    ).toThrow("service authentication error");
+    if (service === "auth") {
+      expect(() =>
+        normalizeAllowedChanges(service, `POST ${path}`, {
+          ...operation,
+          responses: { ...responses, "400": {} },
+        }),
+      ).toThrow("IDP request error");
+    }
+  },
+);
 
 test("verified HTTP errors restore previous empty responses and remove only added statuses", () => {
   expect(
@@ -365,4 +413,37 @@ test("group fight ingestion pins its authenticated request and acceptance status
       }),
     ).toThrow("contract changed");
   }
+});
+
+test("API key errors retain domain alternatives and reject removed domain contracts", () => {
+  const keyError = {
+    type: "object",
+    properties: { message: { type: "string" } },
+    required: ["message"],
+  };
+  const domain = { $ref: "#/components/schemas/HttpErrorResponse" };
+  const response = (
+    schema:
+      | typeof keyError
+      | typeof domain
+      | { anyOf: (typeof keyError | typeof domain)[] },
+  ) => ({ content: { "application/json": { schema } } });
+  const previous = { responses: { "403": response(domain) } };
+  expect(
+    normalizeApiKeyErrors(
+      {
+        responses: {
+          "403": response({ anyOf: [domain, keyError] }),
+          "429": response(keyError),
+        },
+      },
+      previous,
+    ),
+  ).toEqual(previous);
+  expect(() =>
+    normalizeApiKeyErrors(
+      { responses: { "403": response(keyError) } },
+      previous,
+    ),
+  ).toThrow("replaced an existing 403");
 });

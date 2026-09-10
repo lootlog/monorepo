@@ -1,8 +1,7 @@
 import { isRecord, isObjectRecord } from "@lootlog/schema/records";
-import { activeGuildMemberJoin } from "#src/members/member-access-query";
+import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import {
   and,
-  arrayOverlaps,
   desc,
   eq,
   gt,
@@ -14,7 +13,7 @@ import {
   sql,
 } from "drizzle-orm";
 import { Effect } from "effect";
-import { Capability } from "@lootlog/domain/access-policy";
+import { canViewTimer } from "./timer-selection.js";
 import { canViewNpcTimer } from "@lootlog/domain/npc-permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -22,7 +21,6 @@ import {
   memberToRoleTable,
   playerSnapshotTable,
   roleTable,
-  guildTable,
   timerTable,
   userSettingDocumentTable,
 } from "#src/database/drizzle/schema";
@@ -163,13 +161,8 @@ export const makeGuildTimerList = (
         );
       }),
     );
-    const administrative = access.accessPolicy.allows(Capability.ADMIN);
     return timers
-      .filter(
-        (timer) =>
-          administrative ||
-          canViewNpcTimer(parseTimerNpc(timer.npc), access.roles),
-      )
+      .filter((timer) => canViewTimer(access, timer))
       .map(mapTimerResponse);
   });
   return (access: TimersGuildAccess, world?: string) =>
@@ -181,24 +174,11 @@ export const makeAllTimerList = (database: typeof ApiDatabase.Service) => {
     identity: { readonly userId: string; readonly discordId: string },
     world?: string,
   ) {
-    const guildRows = yield* database
-      .selectDistinct({ guild: guildTable })
-      .from(guildTable)
-      .leftJoin(memberTable, activeGuildMemberJoin(identity.discordId))
-      .leftJoin(memberToRoleTable, eq(memberToRoleTable.A, memberTable.id))
-      .leftJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
-      .where(
-        and(
-          eq(guildTable.active, true),
-          or(
-            eq(guildTable.ownerId, identity.discordId),
-            arrayOverlaps(roleTable.permissions, [
-              Permission.LOOTLOG_TIMERS_READ,
-              Permission.ADMIN,
-            ]),
-          ),
-        ),
-      );
+    const guildRows = yield* selectAccessibleGuilds(
+      database,
+      identity.discordId,
+      [Permission.LOOTLOG_TIMERS_READ, Permission.ADMIN],
+    );
     if (guildRows.length === 0) {
       return yield* Effect.fail(new PermissionDeniedError());
     }

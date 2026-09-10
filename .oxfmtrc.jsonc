@@ -18,6 +18,5 @@
     "**/routeTree.gen.ts",
     "apps/docs/wrangler.jsonc",
     "**/generated/**",
-    "**/prisma/generated/**",
   ],
 }

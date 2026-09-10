@@ -1,3 +1,4 @@
+import { canReadApiKeyEvent } from "#src/realtime/api-key-event-visibility";
 import type { LootVisibilityNpc } from "@lootlog/domain/loot-visibility";
 import {
   chatMessagePermissions,
@@ -25,8 +26,13 @@ import type {
   FederatedRealtimeMessage,
   RedisGatewayStore,
 } from "#src/platform/redis-store";
-import type { GatewaySocket, SessionData } from "#src/realtime/session";
+import {
+  hasValidApiKeyLease,
+  type GatewaySocket,
+  type SessionData,
+} from "#src/realtime/session";
 import { canReadPreciseLocation } from "#src/realtime/subscription-policy";
+import { SubscriptionLimitExceeded } from "#src/realtime/realtime-errors";
 
 type Scope = typeof SubscriptionScope.Type;
 type Event = typeof ServerEvent.Type;
@@ -34,6 +40,8 @@ type Response = typeof RealtimeResponse.Type;
 
 // ponytail: replay deduplication covers 10,000 events per live instance; use a durable inbox if retries must survive eviction or restarts.
 const MAX_DEDUPLICATION_ENTRIES = 10_000;
+const MAX_SUBSCRIPTIONS = 4_096;
+const MAX_SCOPE_BYTES = 1_024;
 const ConnectionRegistration = Schema.Struct({
   connectionId: Schema.String,
   instanceId: Schema.String,
@@ -169,6 +177,11 @@ export class RealtimeHub {
   subscribe(socket: GatewaySocket, scope: Scope): void {
     const key = getScopeKey(scope);
     const previous = socket.data.subscriptions.get(key);
+    if (
+      (!previous && socket.data.subscriptions.size >= MAX_SUBSCRIPTIONS) ||
+      Buffer.byteLength(JSON.stringify(scope)) > MAX_SCOPE_BYTES
+    )
+      throw new SubscriptionLimitExceeded();
     if (previous) this.unsubscribe(socket, previous);
     socket.data.subscriptions.set(key, scope);
     if (this.sockets.get(socket.data.connectionId) === socket)
@@ -191,10 +204,26 @@ export class RealtimeHub {
     socket: GatewaySocket,
     scopes: ReadonlyArray<Scope>,
   ): void {
+    const replacements = new Map(
+      scopes.map((scope) => [getScopeKey(scope), scope]),
+    );
+    if (
+      replacements.size > MAX_SUBSCRIPTIONS ||
+      scopes.some(
+        (scope) => Buffer.byteLength(JSON.stringify(scope)) > MAX_SCOPE_BYTES,
+      )
+    ) {
+      // Reconciliation must never retain subscriptions revoked by a permission change.
+      for (const scope of socket.data.subscriptions.values())
+        this.removeAudience(getScopeAudienceKey(scope), socket);
+      socket.data.subscriptions.clear();
+      socket.close(1008, "subscription limit exceeded");
+      throw new SubscriptionLimitExceeded();
+    }
     for (const scope of socket.data.subscriptions.values())
       this.removeAudience(getScopeAudienceKey(scope), socket);
     socket.data.subscriptions.clear();
-    for (const scope of scopes) this.subscribe(socket, scope);
+    for (const scope of replacements.values()) this.subscribe(socket, scope);
   }
 
   async refreshRegistry(session: SessionData): Promise<void> {
@@ -246,6 +275,7 @@ export class RealtimeHub {
   }
 
   sendEvent(socket: GatewaySocket, event: Event): boolean {
+    if (!canReadApiKeyEvent(socket.data, event)) return false;
     return this.sendFrame(socket, event);
   }
 
@@ -459,6 +489,23 @@ export class RealtimeHub {
 
     for (const socket of this.candidates(message)) {
       if (!this.matchesRecipient(socket, message)) continue;
+      if (socket.data.apiKeyAccess && frame.type === "map-ping.received") {
+        const scopes = message.scopes ?? (message.scope ? [message.scope] : []);
+        if (
+          !scopes.length ||
+          !scopes.every(
+            (scope) =>
+              scope.organizationId !== undefined &&
+              socket.data.apiKeyAccess?.organizationIds.includes(
+                scope.organizationId,
+              ) &&
+              socket.data.guilds.some(
+                ({ guild }) => guild.id === scope.organizationId,
+              ),
+          )
+        )
+          continue;
+      }
       if (!this.matchesPresenceAudience(socket, message)) continue;
       if (!canReadSourceEvent(socket.data, frame, message.sourceNpcs)) continue;
       if (frame.type === "chat.created") {
@@ -595,6 +642,10 @@ export class RealtimeHub {
   }
 
   private send(socket: GatewaySocket, data: string | Uint8Array): boolean {
+    if (!hasValidApiKeyLease(socket.data)) {
+      socket.close(1008, "API key authorization expired");
+      return false;
+    }
     if (socket.getBufferedAmount() > this.config.maxBackpressureBytes) {
       socket.data.backpressureStrikes += 1;
       if (

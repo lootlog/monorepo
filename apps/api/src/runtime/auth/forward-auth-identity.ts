@@ -1,8 +1,10 @@
-import { Context, Effect } from "effect";
+import { Context, Effect, Option } from "effect";
+import type { ApiKeyAccess } from "@lootlog/schema/api-key-access";
 
 export interface ForwardAuthIdentityValue {
   readonly userId: string;
   readonly discordId: string;
+  readonly apiKey?: ApiKeyAccess;
 }
 
 /** Request-scoped identity asserted by the first-party auth proxy. */
@@ -16,5 +18,11 @@ export class ForwardAuthIdentity extends Context.Service<
 // deliberately keep this middleware-provided requirement ambient.
 export const requestScopedIdentity = Effect.map(
   ForwardAuthIdentity,
-  ({ discordId, userId }) => ({ discordId, userId }),
-) as Effect.Effect<{ readonly discordId: string; readonly userId: string }>;
+  (identity) => identity,
+) as Effect.Effect<ForwardAuthIdentityValue>;
+
+/** Background jobs have no request identity and retain their own domain scope. */
+export const requestApiKeyAccess = Effect.map(
+  Effect.serviceOption(ForwardAuthIdentity),
+  (identity) => Option.getOrUndefined(identity)?.apiKey,
+);

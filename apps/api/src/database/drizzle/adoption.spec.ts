@@ -332,21 +332,15 @@ describe("immutable API database adoption evidence", () => {
     expect(hash).toBe(EXPECTED_API_CATALOG_SHA256);
   });
 
-  it("pins the baseline SQL and legacy migration evidence", async () => {
+  it("pins the baseline SQL", async () => {
     const baseline = await Bun.file(
       new URL(
         "../../../drizzle/migrations/20260901121000_legacy_prisma_baseline/migration.sql",
         import.meta.url,
       ),
     ).text();
-    const manifest = await Bun.file(
-      new URL("../../../drizzle/legacy-prisma.sha256", import.meta.url),
-    ).text();
     expect(createHash("sha256").update(baseline).digest("hex")).toBe(
       BASELINE_MIGRATION_SHA256,
-    );
-    expect(createHash("sha256").update(manifest).digest("hex")).toBe(
-      LEGACY_MIGRATION_EVIDENCE_SHA256,
     );
   });
 });

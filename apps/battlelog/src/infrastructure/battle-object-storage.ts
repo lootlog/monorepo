@@ -1,6 +1,7 @@
 import type { RawBattleData } from "#src/battles/battle-service";
 import {
   S3Client,
+  S3ServiceException,
   PutObjectCommand,
   GetObjectCommand,
   DeleteObjectCommand,
@@ -56,6 +57,7 @@ export const makeBattleObjectStorage = (
           Bucket: config.bucketName,
           Key: key,
           Body: compressedData,
+          IfNoneMatch: "*",
           ContentType: "application/json",
           ContentEncoding: "gzip",
           Metadata: {
@@ -70,6 +72,11 @@ export const makeBattleObjectStorage = (
           `Battle data uploaded successfully for battle ${battleId} (compressed: ${jsonString.length} -> ${compressedData.length} bytes)`,
         );
       } catch (error) {
+        if (
+          error instanceof S3ServiceException &&
+          error.$metadata.httpStatusCode === 412
+        )
+          return;
         logger.error(`Failed to upload battle data for ${battleId}:`, error);
         throw error;
       }

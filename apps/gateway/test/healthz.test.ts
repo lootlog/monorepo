@@ -7,6 +7,7 @@ import {
   ManagedRuntime,
   Metric,
   Schema,
+  Redacted,
 } from "effect";
 import { makeObservabilityLayer } from "@lootlog/instrumentation/observability";
 import { makeGatewayAuth } from "../src/auth/auth-service.js";
@@ -328,4 +329,58 @@ describe("gateway HTTP boundary", () => {
     expect(upgradeOptions?.data.frameEncoding).toBe("json");
     expect(upgradeOptions?.headers).toBeUndefined();
   });
+});
+
+test("server API key upgrades allow absent Origin while preserving session and attacker Origin rejection", async () => {
+  const keyAuth = makeGatewayAuth({
+    allowedWebOrigins: new Set(["https://lootlog.example"]),
+    allowedExtensionOrigins: new Set(),
+    authUrl: "http://auth.internal",
+    apiKeyStatusSecret: Redacted.make("test"),
+  });
+  const fetch = createGatewayFetch({ ...application, auth: keyAuth });
+  const headers = {
+    "x-auth-user-id": "u",
+    "x-auth-discord-id": "d",
+    "x-auth-api-key-access": JSON.stringify({
+      keyId: "key",
+      organizationIds: ["123"],
+      mode: "read",
+      personalData: false,
+      expiresAt: null,
+    }),
+  };
+  let upgraded = false;
+  expect(
+    await fetch(new Request("https://gateway.example/ws", { headers }), {
+      upgrade: (_request, options) => {
+        upgraded = true;
+        expect(options.data.platform).toBe("web-app");
+        expect(options.data.apiKeyAccess?.organizationIds).toEqual(["123"]);
+        expect(options.data.supportsNotificationVolunteer).toBe(false);
+        return true;
+      },
+    }),
+  ).toBeUndefined();
+  expect(upgraded).toBe(true);
+  expect(
+    (
+      await fetch(
+        new Request("https://gateway.example/ws", {
+          headers: { ...headers, origin: "https://attacker.example" },
+        }),
+        server,
+      )
+    )?.status,
+  ).toBe(403);
+  expect(
+    (
+      await fetch(
+        new Request("https://gateway.example/ws", {
+          headers: { "x-auth-user-id": "u", "x-auth-discord-id": "d" },
+        }),
+        server,
+      )
+    )?.status,
+  ).toBe(403);
 });

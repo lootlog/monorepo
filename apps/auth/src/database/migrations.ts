@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { migrate } from "drizzle-orm/effect-postgres/migrator";
 import { Effect } from "effect";
+import type { SqlClient } from "effect/unstable/sql/SqlClient";
 import type { SqlError } from "effect/unstable/sql/SqlError";
 import type { AuthDatabaseValue } from "./drizzle.js";
 
@@ -18,6 +19,7 @@ const migrationsSchema = "drizzle";
 const migrationsTable = "__drizzle_migrations";
 const authTableNames = ["user", "session", "account", "verification", "jwks"];
 const preJwksMetadataMigrationCount = 2;
+const preApiKeyMigrationCount = 3;
 const migrationsFolder = fileURLToPath(
   new URL("../../drizzle", import.meta.url),
 );
@@ -457,7 +459,7 @@ function hasCompatibleMigrationTracking(
   if (source === "better-auth-1.7") {
     return matchesSchemaPart(
       trackedHashes,
-      localMigrations.map(({ hash }) => hash),
+      localMigrations.slice(0, trackedHashes.length).map(({ hash }) => hash),
     );
   }
 
@@ -730,12 +732,13 @@ function blockedPlanError(plan: AuthMigrationPlan) {
 function getPlanStatus(
   source: AuthMigrationPlan["source"],
   integrityViolations: ReadonlyArray<AuthMigrationViolation>,
+  hasApiKeys: boolean,
 ): AuthMigrationPlan["status"] {
   if (integrityViolations.length > 0) {
     return "blocked";
   }
 
-  if (source === "better-auth-1.7") {
+  if (source === "better-auth-1.7" && hasApiKeys) {
     return "up-to-date";
   }
 
@@ -874,13 +877,19 @@ export const planAuthMigration = Effect.fn("planAuthMigration")(function* (
     (indexName) => !existingIndexNames.has(indexName),
   );
   const isImported = source === "better-auth-1.6-imported";
+  const apiKeyTables = yield* client.unsafe<{ present: boolean }>(
+    `SELECT to_regclass('public.apikey') IS NOT NULL AS present`,
+  );
+  const hasApiKeys = apiKeyTables[0]?.present === true;
 
   return {
-    status: getPlanStatus(source, integrityViolations),
+    status: getPlanStatus(source, integrityViolations, hasApiKeys),
     source,
     pendingMigrations:
       source === "better-auth-1.7"
-        ? 0
+        ? hasApiKeys
+          ? 0
+          : localMigrationCount - preApiKeyMigrationCount
         : Math.max(
             localMigrationCount -
               (source === "better-auth-1.7-pre-jwks-metadata"
@@ -979,25 +988,40 @@ export const initializeAuthMigrations = Effect.fn("initializeAuthMigrations")(
     }
 
     if (plan.source === "better-auth-1.7") {
-      yield* markMigrationsAsApplied(client, localMigrations);
+      yield* markMigrationsAsApplied(
+        client,
+        localMigrations.slice(
+          0,
+          localMigrations.length - plan.pendingMigrations,
+        ),
+      );
     }
   },
 );
 
 export const runAuthMigrations = Effect.fn("runAuthMigrations")(function* (
   database: AuthDatabaseValue,
-  client: AuthMigrationClient,
+  client: AuthMigrationClient & Pick<SqlClient, "withTransaction">,
 ) {
-  const preflightPlan = yield* planAuthMigration(client);
-  if (preflightPlan.status === "blocked") {
-    return yield* Effect.fail(blockedPlanError(preflightPlan));
-  }
+  return yield* client.withTransaction(
+    Effect.gen(function* () {
+      // Hold one database-scoped lock through preflight, tracking, DDL and final verification.
+      // Drizzle shares this client's transaction context; its migration transaction is a savepoint.
+      yield* client.unsafe(
+        "SELECT pg_advisory_xact_lock(hashtext('lootlog'), hashtext('auth-migrations'))",
+      );
+      const preflightPlan = yield* planAuthMigration(client);
+      if (preflightPlan.status === "blocked") {
+        return yield* Effect.fail(blockedPlanError(preflightPlan));
+      }
 
-  yield* initializeAuthMigrations(client, preflightPlan);
-  yield* migrate(database, {
-    migrationsFolder,
-    migrationsSchema,
-    migrationsTable,
-  });
-  yield* assertAuthSchemaFingerprint(client);
+      yield* initializeAuthMigrations(client, preflightPlan);
+      yield* migrate(database, {
+        migrationsFolder,
+        migrationsSchema,
+        migrationsTable,
+      });
+      yield* assertAuthSchemaFingerprint(client);
+    }),
+  );
 });

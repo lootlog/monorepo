@@ -1,7 +1,10 @@
-import { activeGuildMemberJoin } from "#src/members/member-access-query";
+import { selectAccessibleGuilds } from "#src/members/member-access-query";
+import {
+  requestApiKeyAccess,
+  requestScopedIdentity,
+} from "#src/runtime/auth/forward-auth-identity";
 import { randomUUID } from "node:crypto";
 
-import { and, arrayOverlaps, eq, or } from "drizzle-orm";
 import { Effect, Layer } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
 import type {
@@ -10,12 +13,7 @@ import type {
   PartyReadyRoomUpdateEnvelope,
 } from "@lootlog/schema/party-ready-room";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import {
-  guildTable,
-  memberTable,
-  memberToRoleTable,
-  roleTable,
-} from "#src/database/drizzle/schema";
+
 import {
   createReadyRoomClientUpdate,
   createReadyRoomProjection,
@@ -174,20 +172,35 @@ export const makeReadyRoomDataLayer = (
         );
       const getLive = (notificationId: string) =>
         repository.get(notificationId).pipe(
-          Effect.flatMap((aggregate) => {
-            if (!aggregate || Date.parse(aggregate.expiresAt) <= clock()) {
-              return Effect.fail(
-                new ResourceNotFoundError({ code: "ROOM_EXPIRED" }),
-              );
-            }
-            return aggregate.status === "ACTIVE"
-              ? Effect.succeed(aggregate)
-              : Effect.fail(
-                  new InvalidEntityError({
-                    code: "INVALID_STATE_TRANSITION",
-                  }),
+          Effect.flatMap((aggregate) =>
+            Effect.gen(function* () {
+              if (!aggregate || Date.parse(aggregate.expiresAt) <= clock()) {
+                return yield* Effect.fail(
+                  new ResourceNotFoundError({ code: "ROOM_EXPIRED" }),
                 );
-          }),
+              }
+              if (yield* requestApiKeyAccess) {
+                const identity = yield* requestScopedIdentity;
+                const accessible = yield* accessibleGuildIds(
+                  identity.discordId,
+                );
+                if (
+                  !aggregate.guildIds.every((id) => accessible.includes(id))
+                ) {
+                  return yield* Effect.fail(
+                    new PermissionDeniedError({ code: "FORBIDDEN" }),
+                  );
+                }
+              }
+              return yield* aggregate.status === "ACTIVE"
+                ? Effect.succeed(aggregate)
+                : Effect.fail(
+                    new InvalidEntityError({
+                      code: "INVALID_STATE_TRANSITION",
+                    }),
+                  );
+            }),
+          ),
         );
       const assertOrganizer = (
         aggregate: ReadyRoomAggregate,
@@ -218,22 +231,9 @@ export const makeReadyRoomDataLayer = (
       };
 
       const accessibleGuildIds = (discordId: string) =>
-        database
-          .selectDistinct({ id: guildTable.id })
-          .from(guildTable)
-          .leftJoin(memberTable, activeGuildMemberJoin(discordId))
-          .leftJoin(memberToRoleTable, eq(memberToRoleTable.A, memberTable.id))
-          .leftJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
-          .where(
-            and(
-              eq(guildTable.active, true),
-              or(
-                eq(guildTable.ownerId, discordId),
-                arrayOverlaps(roleTable.permissions, [...readyRoomPermissions]),
-              ),
-            ),
-          )
-          .pipe(Effect.map((guilds) => guilds.map(({ id }) => id)));
+        selectAccessibleGuilds(database, discordId, readyRoomPermissions).pipe(
+          Effect.map((rows) => rows.map(({ guild }) => guild.id)),
+        );
 
       const joinWithRetry = (
         discordId: string,
@@ -509,28 +509,36 @@ export const makeReadyRoomDataLayer = (
           ),
         list: (identity, guildIds) =>
           operation(
-            repository.findForUser(identity.discordId).pipe(
-              Effect.map((aggregates) =>
-                [
-                  ...new Map(
-                    aggregates.map((item) => [item.notificationId, item]),
-                  ).values(),
-                ].flatMap((aggregate) => {
-                  const live =
-                    aggregate.status === "ACTIVE" &&
-                    Date.parse(aggregate.expiresAt) > clock();
-                  const sharesGuild = guildIds.some((id) =>
-                    aggregate.guildIds.includes(id),
-                  );
-                  if (!live || !sharesGuild) return [];
-                  const projection = createReadyRoomProjection(
-                    aggregate,
-                    identity.discordId,
-                  );
-                  return projection ? [projection] : [];
-                }),
-              ),
-            ),
+            Effect.gen(function* () {
+              const apiKey = yield* requestApiKeyAccess;
+              return yield* repository.findForUser(identity.discordId).pipe(
+                Effect.map((aggregates) =>
+                  [
+                    ...new Map(
+                      aggregates.map((item) => [item.notificationId, item]),
+                    ).values(),
+                  ].flatMap((aggregate) => {
+                    const live =
+                      aggregate.status === "ACTIVE" &&
+                      Date.parse(aggregate.expiresAt) > clock();
+                    const sharesGuild = guildIds.some((id) =>
+                      aggregate.guildIds.includes(id),
+                    );
+                    if (!live || !sharesGuild) return [];
+                    if (
+                      apiKey &&
+                      !aggregate.guildIds.every((id) => guildIds.includes(id))
+                    )
+                      return [];
+                    const projection = createReadyRoomProjection(
+                      aggregate,
+                      identity.discordId,
+                    );
+                    return projection ? [projection] : [];
+                  }),
+                ),
+              );
+            }),
           ),
         get: (identity, notificationId, guildIds) =>
           operation(

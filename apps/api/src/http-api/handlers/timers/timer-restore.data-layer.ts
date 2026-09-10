@@ -1,3 +1,4 @@
+import { canViewTimer } from "./timer-selection.js";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { Clock, Effect } from "effect";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
@@ -58,7 +59,7 @@ export const makeRestoreTimer = (
           )
           .limit(1);
         const entry = historyRows[0];
-        if (!entry) {
+        if (!entry || !canViewTimer(access, entry)) {
           return yield* Effect.fail(
             new ResourceNotFoundError({
               message: ErrorKey.TIMER_HISTORY_ENTRY_NOT_FOUND,
@@ -90,6 +91,13 @@ export const makeRestoreTimer = (
             ),
           )
           .limit(1);
+        if (existingRows.some((timer) => !canViewTimer(access, timer))) {
+          return yield* Effect.fail(
+            new ResourceNotFoundError({
+              message: ErrorKey.TIMER_HISTORY_ENTRY_NOT_FOUND,
+            }),
+          );
+        }
         if (existingRows[0]?.deletedAt === null) {
           return yield* Effect.fail(
             new ResourceConflictError({ message: ErrorKey.EXISTING_TIMER }),

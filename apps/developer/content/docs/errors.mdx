@@ -1,0 +1,17 @@
+---
+title: Errors and limits
+description: Distinguish access denials, rate limits, and service outages.
+---
+
+| Status | Integration action                                                                              |
+| ------ | ----------------------------------------------------------------------------------------------- |
+| `400`  | Correct the input to match the operation's schema                                               |
+| `401`  | Check the secret, expiration, and environment; do not retry automatically                       |
+| `403`  | Check the key's scope and the user's current permissions                                        |
+| `404`  | The resource does not exist or is not visible; do not treat this as confirmation that it exists |
+| `429`  | Wait for the duration specified by `Retry-After` before retrying                                |
+| `5xx`  | The service is unavailable; show an error state and retry reads cautiously                      |
+
+The initial limit is 120 requests per minute per key. Operation-specific limits still apply. Do not bypass them by creating additional keys.
+
+Do not turn a failed data fetch into an empty list. Keep the last result marked as stale, or show that data is unavailable. For writes, losing the response does not prove that the operation failed.

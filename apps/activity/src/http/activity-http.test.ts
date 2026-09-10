@@ -54,8 +54,7 @@ const makeBoundary = (capabilities: Permission[]) => {
       Layer.succeed(
         Permissions,
         Permissions.of({
-          resolveGuildId: (id) =>
-            Effect.succeed(id === "vanity" ? "guild-id" : id),
+          resolveGuildId: (id) => Effect.succeed(id === "vanity" ? "123" : id),
           getUserGuildPermissions: () => Effect.succeed(capabilities),
         }),
       ),
@@ -94,7 +93,7 @@ describe("Activity HttpApi contract", () => {
     );
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
-      data: [{ guildId: "guild-id" }],
+      data: [{ guildId: "123" }],
       hasMore: false,
     });
     await boundary.dispose();
@@ -245,3 +244,48 @@ for (const failure of ["status", "transport", "invalid-body"] as const) {
     }
   });
 }
+
+it("restricts API keys after canonical organization resolution and before writes", async () => {
+  const boundary = makeBoundary([Permission.OWNER, Permission.ADMIN]);
+  const access = {
+    keyId: "key",
+    organizationIds: ["123"],
+    mode: "read",
+    personalData: false,
+    expiresAt: null,
+  };
+  const keyHeaders = {
+    ...headers,
+    "x-auth-api-key-access": JSON.stringify(access),
+  };
+  try {
+    const allowed = await boundary.handler(
+      new Request("https://activity/guilds/vanity/activity-logs", {
+        headers: keyHeaders,
+      }),
+    );
+    expect(allowed.status).toBe(200);
+    expect(await allowed.json()).toMatchObject({ data: [{ guildId: "123" }] });
+    const denied = await boundary.handler(
+      new Request("https://activity/guilds/456/activity-logs", {
+        headers: keyHeaders,
+      }),
+    );
+    expect(denied.status).toBe(403);
+    const write = await boundary.handler(
+      new Request("https://activity/guilds/123/activity-logs/a", {
+        method: "DELETE",
+        headers: keyHeaders,
+      }),
+    );
+    expect(write.status).toBe(403);
+    const personal = await boundary.handler(
+      new Request("https://activity/users/@me/activity/online", {
+        headers: keyHeaders,
+      }),
+    );
+    expect(personal.status).toBe(403);
+  } finally {
+    await boundary.dispose();
+  }
+});

@@ -77,7 +77,10 @@ export const battles = pgTable(
       table.semanticFingerprint,
       table.createdAt,
     ),
-    uniqueIndex("battles_submissionId_key").on(table.submissionId),
+    uniqueIndex("battles_userId_submissionId_key").on(
+      table.userId,
+      table.submissionId,
+    ),
     index("battles_public_createdAt_idx").on(table.public, table.createdAt),
     index("battles_id_idx").on(table.id),
   ],

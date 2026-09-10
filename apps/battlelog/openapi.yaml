@@ -14,6 +14,39 @@ paths:
       responses:
         "200":
           description: API is healthy
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
       description: Check the health status of the API
       summary: Health check
   /battles:
@@ -72,6 +105,39 @@ paths:
                   - error
                   - message
                   - statusCode
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
       summary: Create a battle
       requestBody:
         content:
@@ -204,6 +270,39 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BattlesListResponseDto_Output"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
       summary: Get authenticated user battles
   /battles/@me/characters:
     get:
@@ -220,6 +319,39 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BattleCharactersResponseDto_Output"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
       summary: Get authenticated user battle characters
   /battles/@me/analytics:
     get:
@@ -295,6 +427,39 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BattleAnalyticsResponseDto_Output"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
       summary: Get authenticated user battle analytics
   /battles/@me/abyss/seasons:
     get:
@@ -323,6 +488,39 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/AbyssSeasonResponseDto_Output"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
       summary: Get authenticated user Abyss seasons
   /battles/@me/statistics/combat-profile:
     get:
@@ -450,6 +648,39 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CombatProfileResponseDto_Output"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
       summary: Get combat profile statistics
   /battles/@me/statistics/profession-win-rate:
     get:
@@ -579,6 +810,39 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/ProfessionWinRateResponseDto_Output"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
       summary: Get profession win rate statistics
   /battles/@me/statistics/head-to-head:
     get:
@@ -706,6 +970,39 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HeadToHeadPaginatedResponseDto_Output"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
       summary: Get head-to-head statistics
   /battles/@me/statistics/streak:
     get:
@@ -833,6 +1130,39 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StreakResponseDto_Output"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
       summary: Get current battle streak statistics
   /battles/@me/statistics/duration:
     get:
@@ -960,6 +1290,39 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BattleDurationStatsResponseDto_Output"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
       summary: Get battle duration statistics
   /battles/@me/statistics/ph-growth:
     get:
@@ -1089,6 +1452,39 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/PhGrowthDataPointResponseDto_Output"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
       summary: Get PH growth statistics
   /battles/@me/statistics/rating-growth:
     get:
@@ -1218,6 +1614,39 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/RatingGrowthDataPointResponseDto_Output"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
       summary: Get rating growth statistics
   /battles/@me/statistics/rating-delta-by-opponent:
     get:
@@ -1347,6 +1776,39 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/RatingDeltaByOpponentResponseDto_Output"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
       summary: Get rating delta by opponent statistics
   /battles/@me/statistics/player-vs-player:
     get:
@@ -1484,6 +1946,39 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PlayerVsPlayerPaginatedResponseDto_Output"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
       summary: Get player-vs-player battles
   /battles/@me/warriors/search:
     get:
@@ -1505,6 +2000,39 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BattleWarriorsSearchResponseDto_Output"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
       summary: Search warriors for authenticated user
   /battles/@me/worlds:
     get:
@@ -1521,6 +2049,39 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BattleUserWorldsResponseDto_Output"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
       summary: Get worlds used by authenticated user battles
   /battles/{battleId}/timeline:
     get:
@@ -1542,8 +2103,41 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BattleTimelineResponseDto_Output"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
         "404":
           description: Battle not found
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
       summary: Get computed battle timeline
   /battles/{battleId}:
     get:
@@ -1565,8 +2159,41 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BattleResponseDto_Output"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
         "404":
           description: Battle not found
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
       summary: Get a single battle
     patch:
       tags:
@@ -1628,8 +2255,41 @@ paths:
                   - error
                   - message
                   - statusCode
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
         "404":
           description: Battle not found
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
       summary: Update battle visibility
       requestBody:
         content:
@@ -1656,8 +2316,41 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BattleDeletedResponseDto_Output"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
         "404":
           description: Battle not found
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
       summary: Delete a battle
   /battles/{battleId}/raw:
     get:
@@ -1679,8 +2372,41 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BattleRawResponseDto_Output"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
         "404":
           description: Battle not found
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
       summary: Get raw battle payload
   /battles/public/{battleId}:
     get:
@@ -1700,8 +2426,41 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BattleResponseDto_Output"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
         "404":
           description: Public battle not found
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
       summary: Get a public battle
   /battles/public/{battleId}/raw:
     get:
@@ -1721,8 +2480,41 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BattleRawResponseDto_Output"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
         "404":
           description: Public battle not found
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
       summary: Get raw payload for a public battle
   /battles/public/{battleId}/timeline:
     get:
@@ -1742,15 +2534,54 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BattleTimelineResponseDto_Output"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
         "404":
           description: Public battle not found
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
       summary: Get computed timeline for a public battle
   /internal/delete-user-data:
     post:
       tags:
         - internal
       operationId: InternalController_deleteUserData
-      parameters: []
+      parameters:
+        - name: authorization
+          in: header
+          schema:
+            nullable: true
+            type: string
+          required: false
       responses:
         "201":
           description: ""
@@ -1799,6 +2630,55 @@ paths:
                   - error
                   - message
                   - statusCode
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - type: object
+                    properties:
+                      error:
+                        type: string
+                      message:
+                        type: string
+                      statusCode:
+                        type: number
+                        enum:
+                          - 401
+                    required:
+                      - error
+                      - message
+                      - statusCode
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+      description: Internal API caller only. Requires the BATTLELOG_CLEANUP_SECRET bearer credential; user sessions and forwarded identity headers do not authorize this operation.
       summary: Queue battle data deletion for a user
       requestBody:
         content:

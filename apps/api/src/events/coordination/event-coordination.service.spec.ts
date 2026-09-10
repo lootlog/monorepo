@@ -1,3 +1,4 @@
+import { Capability, createAccessPolicy } from "@lootlog/domain/access-policy";
 import {
   afterEach,
   beforeEach,
@@ -69,13 +70,46 @@ describe("EventCoordination", () => {
     findEvent.mockReturnValue(Effect.succeed(null));
 
     await expect(
-      Effect.runPromise(service.getCoordination(guildId, eventId)),
+      Effect.runPromise(
+        service.getCoordination(
+          guildId,
+          eventId,
+          [],
+          createAccessPolicy({ capabilities: [Capability.ADMIN] }),
+        ),
+      ),
     ).rejects.toThrow(ResourceNotFoundError);
+  });
+
+  it("excludes hidden heroes and their maps from coordination totals", async () => {
+    const result = await Effect.runPromise(
+      service.getCoordination(
+        guildId,
+        eventId,
+        [],
+        createAccessPolicy({
+          capabilities: [Capability.LOOTLOG_EVENTS_MANAGE],
+        }),
+      ),
+    );
+    expect(result.heroes).toEqual([]);
+    expect(result.summary).toMatchObject({
+      criticalCount: 0,
+      warningCount: 0,
+      coveredMaps: 0,
+      totalMaps: 0,
+      nextSpawnAt: null,
+    });
   });
 
   it("marks heroes without timers as idle and uses assigned maps as coverage", async () => {
     const result = await Effect.runPromise(
-      service.getCoordination(guildId, eventId),
+      service.getCoordination(
+        guildId,
+        eventId,
+        [],
+        createAccessPolicy({ capabilities: [Capability.ADMIN] }),
+      ),
     );
 
     expect(result.assignmentTimeoutMinutes).toBe(7);
@@ -131,7 +165,12 @@ describe("EventCoordination", () => {
     );
 
     const result = await Effect.runPromise(
-      service.getCoordination(guildId, eventId),
+      service.getCoordination(
+        guildId,
+        eventId,
+        [],
+        createAccessPolicy({ capabilities: [Capability.ADMIN] }),
+      ),
     );
 
     expect(result.summary.criticalCount).toBe(1);
@@ -173,7 +212,12 @@ describe("EventCoordination", () => {
     );
 
     const result = await Effect.runPromise(
-      service.getCoordination(guildId, eventId),
+      service.getCoordination(
+        guildId,
+        eventId,
+        [],
+        createAccessPolicy({ capabilities: [Capability.ADMIN] }),
+      ),
     );
 
     expect(result.heroes[0]).toMatchObject({
@@ -197,7 +241,12 @@ describe("EventCoordination", () => {
     );
 
     const result = await Effect.runPromise(
-      service.getCoordination(guildId, eventId),
+      service.getCoordination(
+        guildId,
+        eventId,
+        [],
+        createAccessPolicy({ capabilities: [Capability.ADMIN] }),
+      ),
     );
 
     expect(result.summary.warningCount).toBe(1);
@@ -221,7 +270,12 @@ describe("EventCoordination", () => {
     );
 
     const result = await Effect.runPromise(
-      service.getCoordination(guildId, eventId),
+      service.getCoordination(
+        guildId,
+        eventId,
+        [],
+        createAccessPolicy({ capabilities: [Capability.ADMIN] }),
+      ),
     );
 
     expect(result.heroes[0]).toMatchObject({
@@ -281,7 +335,12 @@ describe("EventCoordination", () => {
     );
 
     const result = await Effect.runPromise(
-      service.getCoordination(guildId, eventId),
+      service.getCoordination(
+        guildId,
+        eventId,
+        [],
+        createAccessPolicy({ capabilities: [Capability.ADMIN] }),
+      ),
     );
 
     expect(result.heroes[0]).toMatchObject({
@@ -339,7 +398,12 @@ describe("EventCoordination", () => {
     );
 
     const result = await Effect.runPromise(
-      service.getCoordination(guildId, eventId),
+      service.getCoordination(
+        guildId,
+        eventId,
+        [],
+        createAccessPolicy({ capabilities: [Capability.ADMIN] }),
+      ),
     );
 
     expect(result.heroes.map((hero) => hero.heroId)).toEqual([

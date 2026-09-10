@@ -9,6 +9,7 @@
     "./air-tag": "./src/air-tag.ts",
     "./chat-message-permissions": "./src/chat-message-permissions.ts",
     "./chat-appearance": "./src/chat-appearance.ts",
+    "./event-hero-visibility": "./src/event-hero-visibility.ts",
     "./loot-visibility": "./src/loot-visibility.ts",
     "./npc-appearance": "./src/npc-appearance.ts",
     "./npc-permissions": "./src/npc-permissions.ts",

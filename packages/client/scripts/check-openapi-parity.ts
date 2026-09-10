@@ -1,3 +1,4 @@
+import { authApiAdditions } from "./auth-api-additions.js";
 import {
   decodeOpenApiDocument,
   isJsonArray,
@@ -427,10 +428,13 @@ const services = [
   { baseline: "search", current: "search" },
 ] as const;
 
-const readBaseline = (service: string): OpenApiDocument => {
+const readBaseline = (
+  service: string,
+  revision = BASELINE_SHA,
+): OpenApiDocument => {
   const result = spawnSync(
     "git",
-    ["show", `${BASELINE_SHA}:apps/${service}/openapi.yaml`],
+    ["show", `${revision}:apps/${service}/openapi.yaml`],
     { cwd: repositoryRoot, encoding: "utf8" },
   );
   if (result.error) throw result.error;
@@ -706,13 +710,128 @@ const normalizeManageableOrganizationResponse = (
   return operation;
 };
 
+const normalizeServiceAuthentication = (
+  service: string,
+  operationKey: string,
+  operation: JsonValue,
+): JsonValue => {
+  let normalized = operation;
+  // Verified by Auth application and Battlelog HTTP service-credential tests.
+  if (
+    (service === "auth" && operationKey === "POST /auth/idp-token") ||
+    (service === "battlelog" &&
+      operationKey === "POST /internal/delete-user-data")
+  ) {
+    const authorizationParameter = [
+      {
+        name: "authorization",
+        in: "header",
+        required: false,
+        schema: { nullable: true, type: "string" },
+      },
+    ];
+    if (
+      !isJsonObject(normalized) ||
+      JSON.stringify(
+        normalizeOpenApiRepresentation(normalized.parameters ?? null),
+      ) !==
+        JSON.stringify(normalizeOpenApiRepresentation(authorizationParameter))
+    )
+      throw new Error(
+        `${operationKey} must declare the service authorization header`,
+      );
+    const properties = {
+      message: { type: "string" },
+      statusCode: { type: "number", enum: [401] },
+    };
+    const unauthorizedSchema = {
+      type: "object",
+      properties:
+        service === "battlelog"
+          ? { error: { type: "string" }, ...properties }
+          : properties,
+      required:
+        service === "battlelog"
+          ? ["error", "message", "statusCode"]
+          : ["message", "statusCode"],
+    };
+    assertErrorResponse(
+      normalized,
+      operationKey,
+      "401",
+      "service authentication error",
+      service === "auth"
+        ? {
+            anyOf: [
+              unauthorizedSchema,
+              {
+                type: "object",
+                properties: { error: { type: "string" } },
+                required: ["error"],
+              },
+            ],
+          }
+        : unauthorizedSchema,
+    );
+    normalized = removeResponseStatus({ ...normalized, parameters: [] }, "401");
+    if (service === "auth") {
+      assertErrorResponse(
+        normalized,
+        operationKey,
+        "400",
+        "IDP request error",
+        {
+          anyOf: [
+            {
+              type: "object",
+              properties: {
+                message: { type: "string" },
+                error: { type: "string" },
+                statusCode: { type: "number", enum: [400] },
+              },
+              required: ["message", "error", "statusCode"],
+            },
+            {
+              type: "object",
+              properties: { error: { type: "string" } },
+              required: ["error"],
+            },
+          ],
+        },
+      );
+      normalized = removeResponseStatus(normalized, "400");
+    }
+  }
+  return normalized;
+};
+
 export const normalizeAllowedChanges = (
   service: string,
   operationKey: string,
   operation: JsonValue,
   schemas?: Record<string, JsonValue>,
 ): JsonValue => {
-  let normalized = operation;
+  let normalized = normalizeServiceAuthentication(
+    service,
+    operationKey,
+    operation,
+  );
+  if (service === "auth" && operationKey === "GET /auth/verify") {
+    for (const status of ["401", "429", "503"]) {
+      assertErrorResponse(
+        normalized,
+        operationKey,
+        status,
+        "API key verification error",
+        {
+          type: "object",
+          properties: { message: { type: "string" } },
+          required: ["message"],
+        },
+      );
+      normalized = removeResponseStatus(normalized, status);
+    }
+  }
   if (service === "api" && operationKey === "GET /guilds/@me/manageable") {
     normalized = normalizeManageableOrganizationResponse(normalized, schemas);
   }
@@ -817,6 +936,7 @@ const PERSONAL_ANALYTICS_ADDITIONS = new Map<
   Partial<Record<string, JsonValue>>
 >(
   Object.entries({
+    auth: authApiAdditions,
     activity: {
       "GET /users/@me/activity/online": {
         operationId: "UsersActivityController_getOnline",
@@ -1081,7 +1201,10 @@ export const assertVerifiedPersonalAddition = (
       `Unverified personal API addition: ${service} ${operationKey}`,
     );
   }
-  const { tags: _tags, summary: _summary, ...contract } = operation;
+  const keyNormalized =
+    service === "auth" ? operation : normalizeApiKeyErrors(operation, expected);
+  if (!isJsonObject(keyNormalized)) throw new Error("Invalid operation");
+  const { tags: _tags, summary: _summary, ...contract } = keyNormalized;
   if (
     JSON.stringify(normalizeOpenApiRepresentation(contract)) !==
     JSON.stringify(normalizeOpenApiRepresentation(expected))
@@ -1100,12 +1223,95 @@ export const assertVerifiedPersonalAddition = (
   }
 };
 
+// Verified by credential boundary tests in all four services. Preserve every
+// previous response; only the exact middleware error alternative is permitted.
+export const normalizeApiKeyErrors = (
+  operation: JsonValue,
+  previous: JsonValue | undefined,
+): JsonValue => {
+  if (!isJsonObject(operation) || !isJsonObject(operation.responses))
+    return operation;
+  const responses = { ...operation.responses };
+  const previousResponses =
+    isJsonObject(previous) && isJsonObject(previous.responses)
+      ? previous.responses
+      : {};
+  for (const status of ["401", "403", "429"]) {
+    const response = responses[status];
+    if (!isJsonObject(response) || !isJsonObject(response.content)) continue;
+    const media = response.content["application/json"];
+    if (!isJsonObject(media) || !isJsonObject(media.schema)) continue;
+    const schema = media.schema;
+    const alternatives = isJsonArray(schema.anyOf) ? schema.anyOf : [schema];
+    const remaining = alternatives.filter((alternative) => {
+      if (!isJsonObject(alternative)) return true;
+      const { additionalProperties, ...errorContract } = alternative;
+      return (
+        (additionalProperties !== undefined &&
+          additionalProperties !== false) ||
+        JSON.stringify(normalizeOpenApiRepresentation(errorContract)) !==
+          JSON.stringify(
+            normalizeOpenApiRepresentation({
+              type: "object",
+              properties: { message: { type: "string" } },
+              required: ["message"],
+            }),
+          )
+      );
+    });
+    if (remaining.length === alternatives.length) continue;
+    if (remaining.length === 0) {
+      if (previousResponses[status] === undefined) delete responses[status];
+      else {
+        const previousResponse = previousResponses[status];
+        if (
+          isJsonObject(previousResponse) &&
+          previousResponse.content !== undefined &&
+          JSON.stringify(normalizeOpenApiRepresentation(previousResponse)) !==
+            JSON.stringify(normalizeOpenApiRepresentation(response))
+        ) {
+          throw new Error(
+            `API key errors replaced an existing ${status} response`,
+          );
+        }
+        responses[status] = previousResponse;
+      }
+    } else {
+      responses[status] = {
+        ...response,
+        content: {
+          ...response.content,
+          "application/json": {
+            ...media,
+            schema:
+              remaining.length === 1 && remaining[0] !== undefined
+                ? remaining[0]
+                : { anyOf: remaining },
+          },
+        },
+      };
+    }
+  }
+  return { ...operation, responses };
+};
+
 if (import.meta.main) {
   const changedOperations: string[] = [];
   for (const service of services) {
     const baseline = operations(readBaseline(service.baseline));
     const currentDocument = readCurrent(service.current);
     const current = operations(currentDocument);
+    if (service.current !== "auth") {
+      const beforeKeys = operations(
+        readBaseline(
+          service.current,
+          "f44143e3396fd68ff6c947b728984d90f0602a0b",
+        ),
+      );
+      for (const [key, operation] of current) {
+        current.set(key, normalizeApiKeyErrors(operation, beforeKeys.get(key)));
+      }
+    }
 
     const additions = [...current.keys()].filter((key) => !baseline.has(key));
     const removals = [...baseline.keys()].filter((key) => !current.has(key));

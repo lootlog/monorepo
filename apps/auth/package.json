@@ -28,10 +28,12 @@
     "db:studio": "bunx drizzle-kit studio"
   },
   "dependencies": {
+    "@better-auth/api-key": "1.7.2",
     "@effect/platform-bun": "catalog:",
     "@effect/sql-pg": "catalog:",
     "@lootlog/database": "workspace:*",
     "@lootlog/instrumentation": "workspace:*",
+    "@lootlog/protocol": "workspace:*",
     "@lootlog/schema": "workspace:*",
     "better-auth": "1.7.2",
     "drizzle-orm": "catalog:",
