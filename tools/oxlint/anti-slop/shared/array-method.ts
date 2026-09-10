@@ -1,4 +1,7 @@
-import type { ESTree, Scope, SourceCode, Variable } from "@oxlint/plugins";
+import { resolveVariable } from "./scope.ts";
+import { createTypeAliasEnvironment, hasVisibleTypeBinding } from "./type-alias-resolution.ts";
+
+import type { ESTree, SourceCode, Variable } from "@oxlint/plugins";
 
 /** Unwrap syntax-only wrappers when inspecting array methods and accumulator references. */
 export function unwrapArrayExpression(node: ESTree.Node): ESTree.Node {
@@ -18,14 +21,7 @@ export function unwrapArrayExpression(node: ESTree.Node): ESTree.Node {
 /** Resolve a local binding by scope, not by identifier spelling. */
 export function resolveArrayBinding(sourceCode: SourceCode, node: ESTree.Node): Variable | null {
   node = unwrapArrayExpression(node);
-  if (node.type !== "Identifier") return null;
-  let scope: Scope | null = sourceCode.getScope(node);
-  while (scope !== null) {
-    const variable = scope.set.get(node.name);
-    if (variable !== undefined) return variable;
-    scope = scope.upper;
-  }
-  return null;
+  return node.type === "Identifier" ? resolveVariable(sourceCode, node) : null;
 }
 
 /** Read static method names, including computed string literals, without evaluating expressions. */
@@ -44,16 +40,24 @@ export function arrayMethodTarget(
   return null;
 }
 
-function isArrayAnnotation(type: ESTree.TSType): boolean {
+function enclosingProgram(node: ESTree.Node): ESTree.Program {
+  let current: ESTree.Node = node;
+  while (current.type !== "Program") current = current.parent;
+  return current;
+}
+
+function isArrayAnnotation(sourceCode: SourceCode, type: ESTree.TSType): boolean {
   if (type.type === "TSArrayType" || type.type === "TSTupleType") return true;
-  if (type.type === "TSParenthesizedType") return isArrayAnnotation(type.typeAnnotation);
+  if (type.type === "TSParenthesizedType") return isArrayAnnotation(sourceCode, type.typeAnnotation);
   if (type.type === "TSTypeOperator" && type.operator === "readonly") {
-    return isArrayAnnotation(type.typeAnnotation);
+    return isArrayAnnotation(sourceCode, type.typeAnnotation);
   }
-  return (
-    type.type === "TSTypeReference" && type.typeName.type === "Identifier" &&
-    (type.typeName.name === "Array" || type.typeName.name === "ReadonlyArray")
-  );
+  if (type.type !== "TSTypeReference" || type.typeName.type !== "Identifier") return false;
+  const name = type.typeName.name;
+  if (name !== "Array" && name !== "ReadonlyArray") return false;
+  // A local import, alias, class, or type parameter named Array is not native-array evidence.
+  const environment = createTypeAliasEnvironment(enclosingProgram(type), sourceCode.visitorKeys);
+  return !hasVisibleTypeBinding(name, type, environment);
 }
 
 /** Recognize local array evidence; unknown receivers and iterator pipelines are deliberately excluded. */
@@ -79,7 +83,7 @@ export function isKnownArrayExpression(
   if (variable.references.some(reference => reference.isWrite() && !reference.init)) return false;
   for (const identifier of variable.identifiers) {
     const annotation = identifier.typeAnnotation?.typeAnnotation;
-    if (annotation !== undefined) return isArrayAnnotation(annotation);
+    if (annotation !== undefined) return isArrayAnnotation(sourceCode, annotation);
   }
   for (const definition of variable.defs) {
     if (

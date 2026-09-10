@@ -81,7 +81,10 @@ reviewed three-way merge, never a directory replacement.
   `rules/no-reflect-apply.ts`, `rules/no-runtime-typeof.ts`,
   `rules/no-shape-in-symbol-names.ts`, `rules/no-unknown-parameters.ts`,
   `rules/no-unknown-returns.ts`, `rules/no-unsafe-dictionary-type.ts`, and
-  `shared/function-parameters.ts`; the local `*.test.ts` suites and
+  `shared/function-parameters.ts`; `shared/array-method.ts` reuses
+  `resolveVariable` from `shared/scope.ts` and ignores `Array`/`ReadonlyArray`
+  annotations shadowed by a local import, alias, class, or type parameter;
+  the local `*.test.ts` suites and
   `shared/lint-fixture.ts`; `rules/require-readable-spacing-cli.node-test.ts`
   spawns the repository's `node_modules/.bin/oxlint` instead of `pnpm exec`.
 - Deferred: none. The next update should diff against `c44ef22`.
