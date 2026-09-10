@@ -1,6 +1,6 @@
 import type { ReservationSettings } from "@lootlog/domain/reservations";
 import { differenceInCalendarDays } from "date-fns";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   DAYS,
   HEADER_HEIGHT,
@@ -8,6 +8,7 @@ import {
   MIN_ROW_HEIGHT,
 } from "./constants";
 import { isReservationStartSelectable } from "./reservation-settings";
+import { scrollViewportToNowIndicator } from "./scroll-viewport-to-now-indicator";
 import type { ReservationRange, ReservationSegment } from "./types";
 
 export type DesktopWeekScheduleProps = {
@@ -29,6 +30,7 @@ export function useDesktopWeekSelection({
 }: DesktopWeekScheduleProps) {
   const minuteStep = settings.reservationTimeGranularityMinutes;
   const gridRef = useRef<HTMLDivElement>(null);
+  const nowRef = useRef<HTMLDivElement>(null);
   const contextMenuOpenRef = useRef(false);
   const suppressSelectionRef = useRef(false);
   const [selection, setSelection] = useState<{
@@ -142,9 +144,18 @@ export function useDesktopWeekSelection({
   const nowTop =
     HEADER_HEIGHT +
     ((now.getHours() * 60 + now.getMinutes()) / 60) * MIN_ROW_HEIGHT;
+  const isNowVisible = nowDay >= 0 && nowDay < DAYS.length;
+
+  useEffect(() => {
+    const nowIndicator = nowRef.current;
+    if (!isNowVisible || !nowIndicator) return;
+    scrollViewportToNowIndicator(nowIndicator);
+  }, [isNowVisible]);
 
   return {
     gridRef,
+    nowRef,
+    isNowVisible,
     isPointerOverUnavailableSlot,
     contextMenuOpenRef,
     suppressSelectionRef,

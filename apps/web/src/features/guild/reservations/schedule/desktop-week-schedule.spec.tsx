@@ -221,6 +221,86 @@ describe("DesktopWeekSchedule", () => {
     expect(onRangeSelect).not.toHaveBeenCalled();
   });
 
+  it("keeps range selection working after a reservation with an open context menu is removed", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 0, 4, 12, 0));
+    const onRangeSelect = vi.fn();
+    const renderSchedule = (segments: ReservationSegment[]) => (
+      <DesktopWeekSchedule
+        weekStart={new Date(2026, 0, 5)}
+        segments={segments}
+        settings={settings}
+        onRangeSelect={onRangeSelect}
+        onReservationSelect={vi.fn()}
+        onReservationCancel={vi.fn()}
+      />
+    );
+    const { container, rerender } = render(renderSchedule([createSegment()]));
+    const grid = container.querySelector(".grid");
+    const reservationBlock = container.querySelector(".reservation-card");
+    if (
+      !(grid instanceof HTMLDivElement) ||
+      !(reservationBlock instanceof HTMLButtonElement)
+    ) {
+      throw new TypeError("Expected the desktop schedule grid to render");
+    }
+    vi.spyOn(grid, "getBoundingClientRect").mockReturnValue(
+      new DOMRect(
+        0,
+        0,
+        LABEL_COLUMN_WIDTH + 700,
+        HEADER_HEIGHT + 24 * MIN_ROW_HEIGHT,
+      ),
+    );
+
+    fireEvent.contextMenu(reservationBlock);
+    expect(
+      document.querySelector('[data-slot="context-menu-content"]'),
+    ).not.toBeNull();
+
+    rerender(renderSchedule([]));
+    expect(container.querySelector(".reservation-card")).toBeNull();
+
+    moveSelection(
+      grid,
+      { day: 0, minutes: 10 * 60 },
+      { day: 0, minutes: 10 * 60 + 45 },
+    );
+    fireEvent.pointerUp(grid, { pointerId: 1, pointerType: "mouse" });
+
+    expect(onRangeSelect).toHaveBeenCalledWith({
+      startsAt: new Date(2026, 0, 5, 10, 0),
+      endsAt: new Date(2026, 0, 5, 11, 0),
+    });
+  });
+
+  it("centers the current time marker in the viewport on mount", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 0, 7, 12, 0));
+    vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(400);
+    const nowTop = HEADER_HEIGHT + 12 * MIN_ROW_HEIGHT;
+    vi.spyOn(HTMLElement.prototype, "offsetTop", "get").mockReturnValue(nowTop);
+    const scrollTop = vi.spyOn(HTMLElement.prototype, "scrollTop", "set");
+
+    const { container } = render(
+      <DesktopWeekSchedule
+        weekStart={new Date(2026, 0, 5)}
+        segments={[]}
+        settings={settings}
+        onRangeSelect={vi.fn()}
+        onReservationSelect={vi.fn()}
+      />,
+    );
+    const scrollViewport = container.querySelector(
+      '[data-slot="scroll-area-viewport"]',
+    );
+    expect(scrollViewport).toBeInstanceOf(HTMLElement);
+    if (!(scrollViewport instanceof HTMLElement)) return;
+
+    expect(scrollTop).toHaveBeenCalledWith(nowTop - 200);
+    expect(scrollTop.mock.instances).toContain(scrollViewport);
+  });
+
   it("selects the maximum allowed range across midnight", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 0, 4, 12, 0));
