@@ -43,7 +43,7 @@ export const SettingsSearchField: FC<SettingsSearchFieldProps> = ({
       aria-activedescendant={value ? activeOptionId : undefined}
       autoComplete="off"
       spellCheck={false}
-      className="ll:h-7 ll:w-full ll:rounded-sm ll:border-0 ll:bg-black/25 ll:pl-6 ll:pr-6 ll:text-[11px] ll:text-gray-100 ll:outline-none ll:placeholder:text-muted-foreground ll:focus-visible:ring-1 ll:focus-visible:ring-inset ll:focus-visible:ring-ring"
+      className="ll:h-7 ll:w-full ll:rounded-md ll:border ll:border-input ll:bg-transparent ll:dark:bg-input/30 ll:pl-6 ll:pr-6 ll:text-xs ll:text-foreground ll:outline-none ll:transition-[color,box-shadow] ll:placeholder:text-muted-foreground ll:focus-visible:border-ring ll:focus-visible:ring-[3px] ll:focus-visible:ring-ring/50"
     />
     {value ? (
       <button
