@@ -8,12 +8,14 @@ import {
 import { LootNpcs } from "./loot-npcs";
 import { LootContent } from "./loot-content";
 import { LootFooter } from "./loot-footer";
+const EMPTY_NAMES: string[] = [];
+
 export const LootPresentation = ({
   loot,
   headerActions,
   onShowPlayerLoots,
-  selectedPlayerNames = [],
-  selectedItemNames = [],
+  selectedPlayerNames = EMPTY_NAMES,
+  selectedItemNames = EMPTY_NAMES,
   renderItem,
 }: {
   loot: LootPresentationData;

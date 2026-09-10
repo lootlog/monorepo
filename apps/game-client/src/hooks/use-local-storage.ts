@@ -31,42 +31,43 @@ const readStoredValue = <T extends typeof JsonValue.Type>(
   }
 };
 
+type StorageState<T extends typeof JsonValue.Type> = {
+  key: string;
+  shouldPersist: boolean;
+  value: T | undefined;
+};
+type StorageAction<T extends typeof JsonValue.Type> =
+  | { key: string; type: "hydrate"; value: T | undefined }
+  | { type: "remove" }
+  | { type: "set"; value: SetStateAction<T | undefined> };
+const reduceStorageState = <T extends typeof JsonValue.Type>(
+  state: StorageState<T>,
+  action: StorageAction<T>,
+): StorageState<T> => {
+  if (action.type === "hydrate") {
+    return {
+      key: action.key,
+      shouldPersist: false,
+      value: action.value,
+    };
+  }
+  if (action.type === "remove") {
+    return { ...state, shouldPersist: true, value: undefined };
+  }
+
+  const nextValue =
+    typeof action.value === "function"
+      ? action.value(state.value)
+      : action.value;
+  return { ...state, shouldPersist: true, value: nextValue };
+};
+
 export function useLocalStorage<T extends typeof JsonValue.Type>(
   key: string,
   initialValue: T | undefined,
   schema: ZodType<T>,
 ): UseLocalStorageReturn<T> {
-  type StorageState = {
-    key: string;
-    shouldPersist: boolean;
-    value: T | undefined;
-  };
-  type StorageAction =
-    | { key: string; type: "hydrate"; value: T | undefined }
-    | { type: "remove" }
-    | { type: "set"; value: SetStateAction<T | undefined> };
-  const reduceStorageState = (
-    state: StorageState,
-    action: StorageAction,
-  ): StorageState => {
-    if (action.type === "hydrate") {
-      return {
-        key: action.key,
-        shouldPersist: false,
-        value: action.value,
-      };
-    }
-    if (action.type === "remove") {
-      return { ...state, shouldPersist: true, value: undefined };
-    }
-
-    const nextValue =
-      typeof action.value === "function"
-        ? action.value(state.value)
-        : action.value;
-    return { ...state, shouldPersist: true, value: nextValue };
-  };
-  const [storageState, dispatch] = useReducer(reduceStorageState, {
+  const [storageState, dispatch] = useReducer(reduceStorageState<T>, {
     key,
     shouldPersist: false,
     value: readStoredValue(key, initialValue, schema),

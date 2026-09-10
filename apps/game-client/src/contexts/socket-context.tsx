@@ -179,6 +179,8 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   }, [socket]);
 
   return (
+    // Vite React Compiler caches this object by its fields (vite.shared.ts enables compiler: true).
+    // oxlint-disable-next-line react-doctor/jsx-no-constructed-context-values
     <SocketContext.Provider value={{ socket, connected, joined, joinedGuilds }}>
       {children}
     </SocketContext.Provider>

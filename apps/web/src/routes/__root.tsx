@@ -7,8 +7,8 @@ import {
   Outlet,
 } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect } from "react";
-import { GlobalContextProvider } from "@/contexts/global-context";
-import { ThemeProvider } from "@/contexts/theme-context";
+import { GlobalContextProvider } from "@/contexts/global-provider";
+import { ThemeProvider } from "@/contexts/theme-provider";
 import type { RouterContext } from "@/App";
 import { DocumentTitleUpdater } from "@/components/router/document-title-updater";
 import { RootRouteError } from "@/components/router/root-route-error";

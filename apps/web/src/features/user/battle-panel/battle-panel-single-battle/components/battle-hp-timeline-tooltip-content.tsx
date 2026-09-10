@@ -1,3 +1,4 @@
+/* eslint-disable react-doctor/no-array-index-as-key -- A turn contains an immutable ordered bonus log; repeated activations can have the same bonus and recipient, so occurrence indices preserve distinct entries. */
 import {
   useLayoutEffect,
   useState,

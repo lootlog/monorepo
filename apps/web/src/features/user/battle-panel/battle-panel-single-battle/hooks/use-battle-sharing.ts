@@ -14,6 +14,10 @@ import { useCopyToClipboard } from "usehooks-ts";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 
+const composeBattleUrl = (battleId: string) => {
+  return `${BATTLELOG_PUBLIC_URL}/battles/${battleId}`;
+};
+
 export const useBattleSharing = () => {
   const queryClient = useQueryClient();
   const { mutateAsync: editBattle } = useBattlesControllerUpdateBattle();
@@ -24,10 +28,6 @@ export const useBattleSharing = () => {
   const busy = useRef(false);
   const [, copy] = useCopyToClipboard();
   const { t } = useTranslation();
-
-  const composeBattleUrl = (battleId: string) => {
-    return `${BATTLELOG_PUBLIC_URL}/battles/${battleId}`;
-  };
 
   const handleCopy = async (url: string) => {
     try {

@@ -7,7 +7,7 @@ import {
   render,
   screen,
   waitFor,
-} from "@testing-library/react";
+} from "@testing-library/react/pure";
 import {
   afterEach,
   beforeEach,
@@ -30,7 +30,7 @@ import { z } from "zod";
 import { createUserPreferences } from "@/lib/testing/preferences";
 import { createOrganizationTestWrapper } from "@/lib/testing/router";
 import { createTestGateway } from "@/lib/testing/gateway";
-import { GlobalContextProvider } from "@/contexts/global-context";
+import { GlobalContextProvider } from "@/contexts/global-provider";
 import { ThemeContext } from "@/contexts/theme-context";
 import { sessionQueryOptions } from "@/hooks/auth/use-session-query";
 import { GuildsSelector } from "./guilds-selector";
@@ -98,6 +98,8 @@ beforeEach(() => {
     }),
   );
 });
+// Keep the Toaster mounted until its exit callbacks finish; automatic RTL cleanup
+// would unmount it before this asynchronous teardown can drain those callbacks.
 afterEach(async () => {
   await waitFor(() => {
     if (client.isMutating() || client.isFetching())

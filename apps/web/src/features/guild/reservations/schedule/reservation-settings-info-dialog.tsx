@@ -23,6 +23,14 @@ type ReservationSettingsInfoDialogProps = {
   settings: ReservationSettings;
 };
 
+const failureReasons = [
+  "tooShort",
+  "tooLong",
+  "maxAdvance",
+  "activeLimit",
+  "overlap",
+] as const;
+
 export const ReservationSettingsInfoDialog = ({
   open,
   onOpenChange,
@@ -82,14 +90,6 @@ export const ReservationSettingsInfoDialog = ({
       ),
     },
   ];
-
-  const failureReasons = [
-    "tooShort",
-    "tooLong",
-    "maxAdvance",
-    "activeLimit",
-    "overlap",
-  ] as const;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

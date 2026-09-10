@@ -1,8 +1,6 @@
 import { PlayerTile } from "@/components/battle";
-import {
-  BattleDamageTags,
-  type BattleDamageTagWarrior,
-} from "@/features/user/battle-panel/components/battle-damage-tags";
+import { BattleDamageTags } from "@/features/user/battle-panel/components/battle-damage-tags";
+import type { BattleDamageTagWarrior } from "@/features/user/battle-panel/components/battle-damage-tag-data";
 import { cn } from "cn";
 
 type BattlePanelPvpWarriorSummaryData = BattleDamageTagWarrior & {

@@ -73,9 +73,9 @@ export const NpcsForm: FC<NpcsFormProps> = ({ npc }) => {
       {
         pathParams: { guildId: guildId ?? "", npcId: npc.id.toString() },
         data: {
-          allowedRarities: NPC_RARITY_CONFIG.filter(
-            ({ key }) => values[key],
-          ).map(({ key }) => key),
+          allowedRarities: NPC_RARITY_CONFIG.flatMap(({ key }) =>
+            values[key] ? [key] : [],
+          ),
         },
       },
       {

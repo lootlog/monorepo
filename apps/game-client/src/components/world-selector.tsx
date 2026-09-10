@@ -100,30 +100,47 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
   const worldGroups = useMemo<ComboboxGroup[]>(() => {
     if (!worlds || worlds.length === 0) return [];
 
+    const availableWorlds = new Set(worlds);
     const recent =
-      recentWorlds
-        ?.filter((w) => worlds.includes(w))
-        .map((w) => ({
-          value: w,
-          label: w.charAt(0).toUpperCase() + w.slice(1),
-        })) ?? [];
+      recentWorlds?.flatMap((w) =>
+        availableWorlds.has(w)
+          ? [
+              {
+                value: w,
+                label: w.charAt(0).toUpperCase() + w.slice(1),
+              },
+            ]
+          : [],
+      ) ?? [];
 
     const recentValues = new Set(recent.map((w) => w.value));
-    const rest = worlds
-      .filter((w) => !recentValues.has(w))
-      .map((w) => ({
-        value: w,
-        label: w.charAt(0).toUpperCase() + w.slice(1),
-      }));
+    const rest = worlds.flatMap((w) =>
+      recentValues.has(w)
+        ? []
+        : [
+            {
+              value: w,
+              label: w.charAt(0).toUpperCase() + w.slice(1),
+            },
+          ],
+    );
 
     const groups: ComboboxGroup[] = [];
 
     if (recent.length > 0) {
-      groups.push({ label: t("worldSelector.recent"), options: recent });
+      groups.push({
+        id: "recent",
+        label: t("worldSelector.recent"),
+        options: recent,
+      });
     }
 
     if (rest.length > 0) {
-      groups.push({ label: t("worldSelector.allWorlds"), options: rest });
+      groups.push({
+        id: "all",
+        label: t("worldSelector.allWorlds"),
+        options: rest,
+      });
     }
 
     return groups;

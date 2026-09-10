@@ -4,7 +4,7 @@ import { GuildMultiSelector } from "@/components/guild-multi-selector";
 import { getCreatePartyGatheringErrorMessage } from "@/features/party-finder/get-create-party-gathering-error-message";
 import { usePartyGatheringOrchestration } from "@/features/party-finder/hooks/use-party-gathering-orchestration";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
@@ -36,6 +36,7 @@ type FormSchema = ReturnType<typeof createFormSchema>;
 type FormData = z.output<FormSchema>;
 
 export const CreatePartyGatheringForm = () => {
+  const formId = useId();
   const { t } = useTranslation("partyFinder");
   const [selectedGuildIds, setSelectedGuildIds] = useState<string[]>([]);
   const { isCreatingPartyGathering, startPartyGathering } =
@@ -89,10 +90,14 @@ export const CreatePartyGatheringForm = () => {
       />
 
       <div>
-        <label className="ll:text-[11px] ll:text-gray-300 ll:mb-1 ll:block">
+        <label
+          htmlFor={`${formId}-description`}
+          className="ll:text-[11px] ll:text-gray-300 ll:mb-1 ll:block"
+        >
           {t("form.descriptionLabel")}
         </label>
         <Input
+          id={`${formId}-description`}
           {...register("description")}
           placeholder={t("form.descriptionPlaceholder")}
           maxLength={200}
@@ -106,10 +111,14 @@ export const CreatePartyGatheringForm = () => {
 
       <div className="ll:flex ll:gap-2">
         <div className="ll:flex-1">
-          <label className="ll:text-[11px] ll:text-gray-300 ll:mb-1 ll:block">
+          <label
+            htmlFor={`${formId}-minLvl`}
+            className="ll:text-[11px] ll:text-gray-300 ll:mb-1 ll:block"
+          >
             {t("form.minLvlLabel")}
           </label>
           <Input
+            id={`${formId}-minLvl`}
             {...register("minLvl")}
             type="number"
             min={1}
@@ -118,10 +127,14 @@ export const CreatePartyGatheringForm = () => {
           />
         </div>
         <div className="ll:flex-1">
-          <label className="ll:text-[11px] ll:text-gray-300 ll:mb-1 ll:block">
+          <label
+            htmlFor={`${formId}-maxLvl`}
+            className="ll:text-[11px] ll:text-gray-300 ll:mb-1 ll:block"
+          >
             {t("form.maxLvlLabel")}
           </label>
           <Input
+            id={`${formId}-maxLvl`}
             {...register("maxLvl")}
             type="number"
             min={1}

@@ -49,7 +49,8 @@ export const LocationItem = ({
           className="h-6 text-xs flex-1"
           autoFocus
           onKeyDown={(e) => {
-            if (e.key === "Enter") handleUpdateLocation();
+            if (e.key === "Enter" && !e.nativeEvent.isComposing)
+              handleUpdateLocation();
             if (e.key === "Escape") setEditingLocation(null);
           }}
           onBlur={handleUpdateLocation}

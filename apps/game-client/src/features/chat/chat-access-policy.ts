@@ -109,9 +109,9 @@ export const applyChatAccessPolicy = (
   ).filter((change) => change.areas.includes("chat"));
   state.policy = policy;
   const restrictedGuilds = new Set(
-    changes
-      .filter((change) => change.restricted)
-      .map((change) => change.organizationId),
+    changes.flatMap((change) =>
+      change.restricted ? [change.organizationId] : [],
+    ),
   );
   const organizations = new Map(
     policy.organizations.map((organization) => [
@@ -135,21 +135,19 @@ export const applyChatAccessPolicy = (
     queryClient.getQueryCache().findAll({ predicate: shouldReconcile }),
   );
   const affected = (query: Query) => affectedQueries.has(query);
-  const interruptedUnloadedGuilds = [...affectedQueries]
-    .filter(
-      (query) =>
-        query.state.data === undefined &&
-        query.state.fetchStatus === "fetching",
+  const interruptedUnloadedGuilds: string[] = [];
+  for (const query of affectedQueries) {
+    if (
+      query.state.data !== undefined ||
+      query.state.fetchStatus !== "fetching"
     )
-    .map(getChatMessagesQueryGuildId)
-    .filter((guildId): guildId is string => {
-      if (!guildId) return false;
-      const organization = organizations.get(guildId);
-      return (
-        organization !== undefined &&
-        canReadPolicyNpc(organization, "chat", null)
-      );
-    });
+      continue;
+    const guildId = getChatMessagesQueryGuildId(query);
+    if (!guildId) continue;
+    const organization = organizations.get(guildId);
+    if (organization && canReadPolicyNpc(organization, "chat", null))
+      interruptedUnloadedGuilds.push(guildId);
+  }
   // Cancellation reverts synchronously; prune after it so late responses cannot restore revoked rows.
   void queryClient.cancelQueries({ predicate: affected });
   queryClient.setQueriesData<ChatMessage[]>(

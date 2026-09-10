@@ -1,5 +1,6 @@
+/* eslint-disable react-doctor/no-scale-from-zero -- These zero-scale elements are intentional point-origin decorative particles and SVG crystals, never text or controls; the rule explicitly permits point-origin illustration effects. */
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
-import { motion } from "framer-motion";
+import * as m from "framer-motion/m";
 import { useState, type ReactNode } from "react";
 
 // SVG filter for destruction energy glow
@@ -64,7 +65,7 @@ const DestructionParticle = ({
   isVisible: boolean;
   delay: number;
 }) => (
-  <motion.div
+  <m.div
     className="absolute pointer-events-none"
     style={{
       left: x,
@@ -94,7 +95,7 @@ const DestructionParticle = ({
         boxShadow: "0 0 6px rgba(200, 30, 60, 0.5)",
       }}
     />
-  </motion.div>
+  </m.div>
 );
 
 // Small magic circle SVG element
@@ -113,7 +114,7 @@ const MagicCircle = ({
 }) => {
   const prefersReducedMotion = usePrefersReducedMotion();
   return (
-    <motion.div
+    <m.div
       key={String(prefersReducedMotion)}
       className="absolute pointer-events-none"
       style={{
@@ -162,7 +163,7 @@ const MagicCircle = ({
         />
         <circle cx="12" cy="12" r="2" fill="rgba(200, 30, 60, 0.3)" />
       </svg>
-    </motion.div>
+    </m.div>
   );
 };
 
@@ -173,9 +174,9 @@ const DestructionRunes = ({ isVisible }: { isVisible: boolean }) => (
       { x: "12%", y: "75%", size: 10, delay: 0.1, rotate: 15 },
       { x: "78%", y: "22%", size: 9, delay: 0.25, rotate: -10 },
       { x: "45%", y: "15%", size: 8, delay: 0.35, rotate: 25 },
-    ].map((rune, i) => (
-      <motion.div
-        key={i}
+    ].map((rune) => (
+      <m.div
+        key={`${rune.x}:${rune.y}`}
         className="absolute pointer-events-none"
         style={{
           left: rune.x,
@@ -206,7 +207,7 @@ const DestructionRunes = ({ isVisible }: { isVisible: boolean }) => (
           />
           <circle cx="8" cy="8" r="1.5" fill="rgba(200, 30, 60, 0.25)" />
         </svg>
-      </motion.div>
+      </m.div>
     ))}
   </>
 );
@@ -239,7 +240,7 @@ const FloatingParticles = () => {
   return (
     <>
       {floatingParticles.map((p) => (
-        <motion.div
+        <m.div
           key={`${p.id}-${prefersReducedMotion}`}
           className="absolute pointer-events-none"
           style={{
@@ -277,7 +278,7 @@ const FloatingParticles = () => {
 const AmbientMagicCircle = () => {
   const prefersReducedMotion = usePrefersReducedMotion();
   return (
-    <motion.div
+    <m.div
       key={String(prefersReducedMotion)}
       className="absolute pointer-events-none"
       style={{
@@ -338,7 +339,7 @@ const AmbientMagicCircle = () => {
           fill="rgba(200, 30, 60, 0.1)"
         />
       </svg>
-    </motion.div>
+    </m.div>
   );
 };
 
@@ -360,7 +361,7 @@ const DestructionEdgeGlow = () => (
 const AmbientMagicCircleTopLeft = () => {
   const prefersReducedMotion = usePrefersReducedMotion();
   return (
-    <motion.div
+    <m.div
       key={String(prefersReducedMotion)}
       className="absolute pointer-events-none"
       style={{
@@ -408,7 +409,7 @@ const AmbientMagicCircleTopLeft = () => {
           fill="rgba(200, 30, 60, 0.05)"
         />
       </svg>
-    </motion.div>
+    </m.div>
   );
 };
 
@@ -416,7 +417,7 @@ const AmbientMagicCircleTopLeft = () => {
 const DestructionVignette = () => {
   const prefersReducedMotion = usePrefersReducedMotion();
   return (
-    <motion.div
+    <m.div
       key={String(prefersReducedMotion)}
       className="absolute inset-0 pointer-events-none"
       animate={{ opacity: [0.3, 0.55, 0.3] }}
@@ -460,9 +461,9 @@ const DestructionFlow = () => {
           duration: 45,
           delay: 12,
         },
-      ].map((blob, i) => (
-        <motion.div
-          key={`${i}-${prefersReducedMotion}`}
+      ].map((blob) => (
+        <m.div
+          key={`${blob.size}:${prefersReducedMotion}`}
           className="absolute pointer-events-none"
           style={{
             left: 0,
@@ -511,7 +512,7 @@ const DestructionFlow = () => {
 
 // Global ambient destruction overlay for the entire app
 export const GlobalDestructionOverlay = () => (
-  <motion.div
+  <m.div
     className="fixed inset-0 pointer-events-none z-50 overflow-hidden"
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
@@ -524,7 +525,7 @@ export const GlobalDestructionOverlay = () => (
     <AmbientMagicCircle />
     <AmbientMagicCircleTopLeft />
     <FloatingParticles />
-  </motion.div>
+  </m.div>
 );
 
 // Gremory wrapper for circular elements (like avatars)
@@ -546,13 +547,13 @@ export const GremoryCircle = ({
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Static shadows crossfade without repainting the shadow geometry. */}
-      <motion.div
+      <m.div
         className="absolute inset-0 rounded-xl pointer-events-none"
         style={{ boxShadow: "0 0 8px 2px rgba(200, 30, 60, 0.25)" }}
         animate={{ opacity: isAnimating ? 1 : 0 }}
         transition={{ duration: 0.3 }}
       />
-      <motion.div
+      <m.div
         key={`glow-${prefersReducedMotion}`}
         className="absolute inset-0 rounded-xl pointer-events-none"
         style={{ boxShadow: "0 0 16px 4px rgba(200, 30, 60, 0.45)" }}
@@ -568,7 +569,7 @@ export const GremoryCircle = ({
 
       {/* Rotating mini magic circle on hover */}
       {isAnimating && (
-        <motion.div
+        <m.div
           key={`rotation-${prefersReducedMotion}`}
           className="absolute -inset-1 pointer-events-none"
           animate={{ rotate: 360 }}
@@ -589,7 +590,7 @@ export const GremoryCircle = ({
               strokeDasharray="3 5"
             />
           </svg>
-        </motion.div>
+        </m.div>
       )}
 
       <div className="relative z-10">{children}</div>
@@ -627,7 +628,7 @@ export const GremoryButton = ({
           {/* Destruction energy texture - hover only */}
           {!isActive && (
             <>
-              <motion.div
+              <m.div
                 className={`absolute inset-0 ${rounded} pointer-events-none overflow-hidden`}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: subtle ? 0.1 : 0.2 }}
@@ -641,16 +642,16 @@ export const GremoryButton = ({
                     background: "rgba(200, 30, 60, 0.5)",
                   }}
                 />
-              </motion.div>
+              </m.div>
 
-              <motion.div
+              <m.div
                 className={`absolute inset-0 ${rounded} pointer-events-none overflow-hidden`}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <motion.div
+                <m.div
                   className="absolute inset-0"
                   style={{
                     background:
@@ -664,15 +665,15 @@ export const GremoryButton = ({
                   exit={{ scale: 0.8, opacity: 0 }}
                   transition={{ duration: 0.5, ease: "easeOut" }}
                 />
-              </motion.div>
+              </m.div>
             </>
           )}
 
           <DestructionRunes isVisible />
 
-          {buttonParticlePositions.map((p, index) => (
+          {buttonParticlePositions.map((p) => (
             <DestructionParticle
-              key={index}
+              key={`${p.x}:${p.y}`}
               x={p.x}
               y={p.y}
               size={p.size}
@@ -681,9 +682,9 @@ export const GremoryButton = ({
             />
           ))}
 
-          {buttonMagicCirclePositions.map((mc, index) => (
+          {buttonMagicCirclePositions.map((mc) => (
             <MagicCircle
-              key={index}
+              key={`${mc.x}:${mc.y}`}
               x={mc.x}
               y={mc.y}
               size={mc.size}
@@ -693,7 +694,7 @@ export const GremoryButton = ({
           ))}
 
           {/* Crimson glow border */}
-          <motion.div
+          <m.div
             className={`absolute inset-0 ${rounded} pointer-events-none`}
             initial={{ opacity: 0 }}
             animate={{
@@ -708,10 +709,10 @@ export const GremoryButton = ({
           {/* Active state: crimson shimmer + border */}
           {isActive && !subtle && (
             <>
-              <motion.div
+              <m.div
                 className={`absolute inset-0 ${rounded} pointer-events-none overflow-hidden`}
               >
-                <motion.div
+                <m.div
                   key={String(prefersReducedMotion)}
                   className="absolute inset-0"
                   style={{
@@ -730,8 +731,8 @@ export const GremoryButton = ({
                         }
                   }
                 />
-              </motion.div>
-              <motion.div
+              </m.div>
+              <m.div
                 className={`absolute inset-0 ${rounded} pointer-events-none border border-red-400/25`}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -742,7 +743,7 @@ export const GremoryButton = ({
 
           {/* Active burst */}
           {isActive && !subtle && (
-            <motion.div
+            <m.div
               className={`absolute inset-0 ${rounded} pointer-events-none`}
               style={{
                 background:
@@ -819,9 +820,9 @@ export const DestructionOverlay = ({
 
       <DestructionRunes isVisible />
 
-      {buttonMagicCirclePositions.map((mc, index) => (
+      {buttonMagicCirclePositions.map((mc) => (
         <MagicCircle
-          key={index}
+          key={`${mc.x}:${mc.y}`}
           x={mc.x}
           y={mc.y}
           size={mc.size}
@@ -830,9 +831,9 @@ export const DestructionOverlay = ({
         />
       ))}
 
-      {buttonParticlePositions.map((p, index) => (
+      {buttonParticlePositions.map((p) => (
         <DestructionParticle
-          key={index}
+          key={`${p.x}:${p.y}`}
           x={p.x}
           y={p.y}
           size={p.size}

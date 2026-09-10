@@ -1,17 +1,14 @@
-import { TextLink } from "@lootlog/ui/components/text-link";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { SectionCard } from "@/components/common/section-card/section-card";
 import { PageHeader } from "@/components/common/page-header";
-import { getOffsetPagination } from "./utils/offset-pagination";
-import { useState } from "react";
-import { useTranslation } from "react-i18next";
-import { Link, useParams } from "@tanstack/react-router";
-import { Users } from "lucide-react";
+import { SectionCard } from "@/components/common/section-card/section-card";
+import { PodiumRankIcon } from "@/components/ui/podium-rank-icon";
+import { SearchInput } from "@/components/ui/search-input";
+import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
 } from "@lootlog/ui/components/avatar";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
   Table,
   TableBody,
@@ -20,171 +17,46 @@ import {
   TableHeader,
   TableRow,
 } from "@lootlog/ui/components/table";
-import { Skeleton } from "@lootlog/ui/components/skeleton";
-import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
-import { SearchInput } from "@/components/ui/search-input";
-import { PodiumRankIcon } from "@/components/ui/podium-rank-icon";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import { TextLink } from "@lootlog/ui/components/text-link";
+import { Link } from "@tanstack/react-router";
+import { Users } from "lucide-react";
+import { MemberNameWithColor } from "./components/member-name-with-color";
+import { StatsDetailLoading } from "./components/stats-detail-loading";
+import { useNpcKillersPage } from "./use-npc-killers-page";
 
-import { NpcTile } from "@/components/tiles/npc-tile";
 import { WorldSwitcher } from "@/components/common/world-switcher";
+import { NpcTile } from "@/components/tiles/npc-tile";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { cn } from "cn";
-import {
-  getKillsControllerGetNpcKillersQueryKey,
-  useKillsControllerGetNpcKillers,
-  getMembersControllerGetGuildMemberReferencesQueryKey,
-  useMembersControllerGetGuildMemberReferences,
-  type MemberReferenceResponseDtoOutput as GuildMember,
-} from "@lootlog/client/main";
-import { useStatsSettings } from "./hooks/use-stats-settings";
-import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { NpcKillersFiltersMobile } from "./components/npc-killers-filters-mobile";
-import { buildNpcKillersParams } from "./utils/build-stats-query-params";
 
-import {
-  KillStatsPeriodSelect,
-  type KillStatsPeriod,
-} from "@/features/kills/components/kill-stats-period-select";
-
-const ITEMS_PER_PAGE = 20;
-
-type MemberNameWithColorProps = {
-  name: string;
-  member?: GuildMember;
-};
-
-const MemberNameWithColor: React.FC<MemberNameWithColorProps> = ({
-  name,
-  member,
-}) => {
-  const adaptedMember = member
-    ? {
-        roles: [{ position: 0, color: member.color }],
-      }
-    : undefined;
-  const color = useMemberColor(adaptedMember);
-  return (
-    <span className="font-medium" style={{ color }}>
-      {name}
-    </span>
-  );
-};
+import { KillStatsPeriodSelect } from "@/features/kills/components/kill-stats-period-select";
 
 export const NpcKillersPage: React.FC = () => {
-  const { t } = useTranslation();
-  const { npcId, guildId } = useParams({
-    from: "/_authenticated/$guildId/stats/npcs/$npcId",
-  });
-
-  const [cursor, setCursor] = useState(0);
-  const [search, setSearch] = useState("");
-  const { settings, setWorld, setPeriod } = useStatsSettings("npc-killers");
-  const npcKillersParams = buildNpcKillersParams({
-    world: settings.world ?? undefined,
-    period: settings.period,
-  });
-  const { data, isLoading } = useKillsControllerGetNpcKillers(
-    {
-      guildId,
-      npcId,
-    },
-    npcKillersParams,
-    {
-      query: {
-        enabled: Boolean(guildId && npcId),
-        queryKey: getKillsControllerGetNpcKillersQueryKey(
-          {
-            guildId,
-            npcId,
-          },
-          npcKillersParams,
-        ),
-      },
-    },
-  );
-  const { data: guildMembers } = useMembersControllerGetGuildMemberReferences(
-    { guildId },
-    {
-      includeInactive: true,
-    },
-    {
-      query: {
-        enabled: Boolean(guildId),
-        queryKey: getMembersControllerGetGuildMemberReferencesQueryKey(
-          { guildId },
-          { includeInactive: true },
-        ),
-      },
-    },
-  );
-
-  const handleWorldChange = (value: string | null) => {
-    setWorld(value);
-    setCursor(0);
-  };
-
-  const handlePeriodChange = (value: KillStatsPeriod) => {
-    setPeriod(value);
-    setCursor(0);
-  };
-
-  const membersMap = new Map(guildMembers?.map((m) => [m.userId, m]) ?? []);
-
-  const killers = data?.killers ?? [];
-  const filteredKillers = search
-    ? killers.filter((k) =>
-        k.memberName.toLowerCase().includes(search.toLowerCase()),
-      )
-    : killers;
-  const hasActiveFilters =
-    Boolean(settings.world) || settings.period !== "all" || Boolean(search);
-  const total = filteredKillers.length;
-  const paginatedKillers = filteredKillers.slice(
+  const {
+    isLoading,
+    data,
+    t,
+    killers,
+    search,
+    handleSearchChange,
+    settings,
+    handleWorldChange,
+    handlePeriodChange,
+    filteredKillers,
+    hasActiveFilters,
+    paginatedKillers,
     cursor,
-    cursor + ITEMS_PER_PAGE,
-  );
-  const { hasNext, hasPrev, handleNextPage, handlePreviousPage } =
-    getOffsetPagination(cursor, total, ITEMS_PER_PAGE, setCursor);
-
-  const handleSearchChange = (value: string) => {
-    setSearch(value);
-    setCursor(0);
-  };
-
+    guildId,
+    membersMap,
+    total,
+    hasPrev,
+    hasNext,
+    handlePreviousPage,
+    handleNextPage,
+  } = useNpcKillersPage();
   if (isLoading) {
-    return (
-      <div className="flex flex-col h-full min-h-0 bg-background">
-        <div className="px-3 py-3 flex flex-col gap-4">
-          <SectionCard>
-            <SectionCardContent className="flex flex-col gap-3">
-              <div className="flex items-center gap-3">
-                <Skeleton className="h-10 w-10 rounded" />
-                <div className="flex flex-col gap-2 flex-1">
-                  <Skeleton className="h-4 w-40" />
-                  <Skeleton className="h-3 w-24" />
-                </div>
-              </div>
-            </SectionCardContent>
-          </SectionCard>
-          <SectionCard className="flex-1 min-h-0 flex flex-col overflow-hidden">
-            <div>
-              {Array.from({ length: 10 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="flex h-14 items-center gap-4 border-b border-border px-4"
-                >
-                  <Skeleton className="h-4 w-8" />
-                  <Skeleton className="h-8 w-8 rounded-full" />
-                  <Skeleton className="h-4 flex-1" />
-                  <Skeleton className="h-4 w-16" />
-                </div>
-              ))}
-            </div>
-          </SectionCard>
-        </div>
-      </div>
-    );
+    return <StatsDetailLoading entity="npc" />;
   }
 
   const npc = data?.npc;

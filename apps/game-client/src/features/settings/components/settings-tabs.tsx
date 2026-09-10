@@ -1,3 +1,4 @@
+import { SettingsSearchResults } from "./settings-search-results";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BattlePanelSettingsTab } from "@/features/settings/components/battle-panel/battle-panel-settings-tab";
@@ -222,7 +223,11 @@ export const SettingsTabs = () => {
       return;
     }
 
-    if (event.key === "Enter" && results[selectedResultIndex]) {
+    if (
+      event.key === "Enter" &&
+      !event.nativeEvent.isComposing &&
+      results[selectedResultIndex]
+    ) {
       event.preventDefault();
       openSearchResult(results[selectedResultIndex]);
     }
@@ -262,51 +267,12 @@ export const SettingsTabs = () => {
       </div>
       <ScrollArea className="ll:min-h-0 ll:flex-1">
         {query ? (
-          <div
-            role="listbox"
-            aria-label={t("settings.search.results")}
-            className="ll:flex ll:flex-col ll:gap-0.5"
-          >
-            {results.length === 0 ? (
-              <p className="ll:m-0 ll:px-2 ll:py-3 ll:text-[11px] ll:text-gray-400">
-                {t("settings.search.empty")}
-              </p>
-            ) : null}
-            {results.map((result, index) => {
-              const previousResult = results[index - 1];
-              const startsDomain =
-                !previousResult ||
-                previousResult.categoryId !== result.categoryId;
-              const startsSubsection =
-                startsDomain ||
-                previousResult.subsectionId !== result.subsectionId;
-
-              return (
-                <div key={result.controlId}>
-                  {startsDomain ? (
-                    <div className="ll:mt-2 ll:px-2 ll:text-[10px] ll:font-semibold ll:uppercase ll:text-gray-400">
-                      {result.categoryLabel}
-                    </div>
-                  ) : null}
-                  {startsSubsection ? (
-                    <div className="ll:px-2 ll:pt-1 ll:text-[11px] ll:font-semibold ll:text-gray-200">
-                      {result.subsectionLabel}
-                    </div>
-                  ) : null}
-                  <button
-                    type="button"
-                    role="option"
-                    aria-selected={index === selectedResultIndex}
-                    onMouseEnter={() => setSelectedResultIndex(index)}
-                    onClick={() => openSearchResult(result)}
-                    className="ll:mt-0.5 ll:w-full ll:rounded-md ll:border-0 ll:bg-transparent ll:px-3 ll:py-1.5 ll:text-left ll:text-[11px] ll:text-white/80 ll-custom-cursor-pointer ll:hover:bg-blue-500/15 ll:aria-selected:bg-blue-500/25 ll:aria-selected:text-white"
-                  >
-                    {result.label}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
+          <SettingsSearchResults
+            results={results}
+            selectedResultIndex={selectedResultIndex}
+            onSelectIndex={setSelectedResultIndex}
+            onOpen={openSearchResult}
+          />
         ) : (
           <TabsList className="ll:flex ll:w-full ll:flex-col ll:items-stretch ll:gap-1">
             {visibleDomains.map((domain) => {

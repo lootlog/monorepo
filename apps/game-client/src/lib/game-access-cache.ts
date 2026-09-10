@@ -49,14 +49,14 @@ const reconcileTimers = (
   const timerChanges =
     changes?.filter((change) => change.areas.includes("timers")) ?? [];
   const restricted = new Set(
-    timerChanges
-      .filter((change) => change.restricted)
-      .map((change) => change.organizationId),
+    timerChanges.flatMap((change) =>
+      change.restricted ? [change.organizationId] : [],
+    ),
   );
   const expanded = new Set(
-    timerChanges
-      .filter((change) => change.expanded)
-      .map((change) => change.organizationId),
+    timerChanges.flatMap((change) =>
+      change.expanded ? [change.organizationId] : [],
+    ),
   );
   for (const query of queryClient.getQueryCache().getAll()) {
     const scope = timerScope(query);
@@ -149,18 +149,17 @@ const reconcileOrganizations = (
     queryClient.setQueryData<UserCurrentGuildResponseDtoOutput[]>(
       guildsKey,
       (guilds) =>
-        guilds
-          ?.filter((guild) => organizations.has(guild.id))
-          .map((guild) => {
-            const organization = organizations.get(guild.id);
-            const hasLootlogAccess =
-              organization?.permissions.includes(Permission.LOOTLOG_ACCESS) ??
-              false;
-            return guild.hasLootlogAccess === hasLootlogAccess &&
-              !guild.isAccessDataStale
-              ? guild
-              : { ...guild, hasLootlogAccess, isAccessDataStale: false };
-          }),
+        guilds?.flatMap((guild) => {
+          if (!organizations.has(guild.id)) return [];
+          const organization = organizations.get(guild.id);
+          const hasLootlogAccess =
+            organization?.permissions.includes(Permission.LOOTLOG_ACCESS) ??
+            false;
+          return guild.hasLootlogAccess === hasLootlogAccess &&
+            !guild.isAccessDataStale
+            ? guild
+            : { ...guild, hasLootlogAccess, isAccessDataStale: false };
+        }),
     );
     if (
       !initial &&

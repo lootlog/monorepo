@@ -12,9 +12,11 @@ interface MultipliersCardProps {
   t: TFunction;
 }
 
+const EMPTY_RULE_IDS: string[] = [];
+
 export const MultipliersCard = ({
   eventConfig,
-  highlightedRuleIds = [],
+  highlightedRuleIds = EMPTY_RULE_IDS,
   t,
 }: MultipliersCardProps) => {
   const rules = eventConfig.scoringRules?.rules ?? [];

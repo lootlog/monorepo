@@ -7,10 +7,7 @@ import { Button } from "@lootlog/ui/components/button";
 import { Card, CardContent, CardHeader } from "@lootlog/ui/components/card";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { Input } from "@lootlog/ui/components/input";
-import {
-  ItemRarity,
-  resolveItemRarity,
-} from "@lootlog/ui/components/item-image";
+import { ItemRarity, resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
 import { ItemTile } from "@lootlog/ui/components/item-tile";
 import { Label } from "@lootlog/ui/components/label";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";

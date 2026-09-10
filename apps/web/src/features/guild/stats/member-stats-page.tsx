@@ -1,21 +1,31 @@
-import { findNpcType } from "@/constants/npc";
-import { TextLink } from "@lootlog/ui/components/text-link";
-import { SectionCard } from "@/components/common/section-card/section-card";
 import { PageHeader } from "@/components/common/page-header";
+import { SectionCard } from "@/components/common/section-card/section-card";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { StatsNpcTypeSelect } from "./components/stats-npc-type-select";
-import { useState } from "react";
-import { useTranslation } from "react-i18next";
-import { Link, useParams } from "@tanstack/react-router";
+import { TextLink } from "@lootlog/ui/components/text-link";
+import { Link } from "@tanstack/react-router";
 import { Users } from "lucide-react";
+import { StatsDetailLoading } from "./components/stats-detail-loading";
+import { StatsNpcTypeSelect } from "./components/stats-npc-type-select";
+import { useMemberStatsPage } from "./use-member-stats-page";
 
-import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
+import { WorldSwitcher } from "@/components/common/world-switcher";
+import { NpcTile } from "@/components/tiles/npc-tile";
+import { PodiumRankIcon } from "@/components/ui/podium-rank-icon";
+import { SearchInput } from "@/components/ui/search-input";
+import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
+import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
+import type {
+  MemberKillsResponseDtoOutput,
+  NpcType,
+} from "@lootlog/client/main";
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
 } from "@lootlog/ui/components/avatar";
 import { Badge } from "@lootlog/ui/components/badge";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
 import {
   Table,
   TableBody,
@@ -24,37 +34,13 @@ import {
   TableHeader,
   TableRow,
 } from "@lootlog/ui/components/table";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Skeleton } from "@lootlog/ui/components/skeleton";
-import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
-import { SearchInput } from "@/components/ui/search-input";
-import { PodiumRankIcon } from "@/components/ui/podium-rank-icon";
-import { NpcTile } from "@/components/tiles/npc-tile";
-import { WorldSwitcher } from "@/components/common/world-switcher";
-import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { cn } from "cn";
-import {
-  useKillsControllerGetMemberKills,
-  type NpcType,
-  type MemberKillsResponseDtoOutput,
-  useMembersControllerGetGuildMemberReferences,
-} from "@lootlog/client/main";
 
-import { useStatsSettings } from "./hooks/use-stats-settings";
-import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { LevelFilters } from "./components/level-filters";
 import { NpcStatsFiltersMobile } from "./components/npc-stats-filters-mobile";
+import type { useStatsSettings } from "./hooks/use-stats-settings";
 
-import {
-  buildMemberKillsParams,
-  DEFAULT_MEMBER_KILLS_LIMIT,
-} from "./utils/build-stats-query-params";
-import {
-  KillStatsPeriodSelect,
-  type KillStatsPeriod,
-} from "@/features/kills/components/kill-stats-period-select";
-
-const ITEMS_PER_PAGE = DEFAULT_MEMBER_KILLS_LIMIT;
+import { KillStatsPeriodSelect } from "@/features/kills/components/kill-stats-period-select";
 
 const NPC_TYPE_ORDER: NpcType[] = [
   "TITAN",
@@ -68,33 +54,6 @@ const NPC_TYPE_ORDER: NpcType[] = [
 ];
 
 type StatsSettings = ReturnType<typeof useStatsSettings>["settings"];
-
-const getNpcTypeFilter = (npcType: StatsSettings["npcType"]) =>
-  npcType && npcType !== "ALL" ? [npcType] : undefined;
-
-const getMemberKillsQueryParams = ({
-  settings,
-  debouncedSearch,
-  debouncedMinLvl,
-  debouncedMaxLvl,
-  cursor,
-}: {
-  settings: StatsSettings;
-  debouncedSearch: string;
-  debouncedMinLvl: number | undefined;
-  debouncedMaxLvl: number | undefined;
-  cursor: number;
-}) =>
-  buildMemberKillsParams({
-    world: settings.world ?? undefined,
-    npcTypes: getNpcTypeFilter(settings.npcType),
-    search: debouncedSearch || undefined,
-    limit: ITEMS_PER_PAGE,
-    cursor,
-    minLvl: debouncedMinLvl,
-    maxLvl: debouncedMaxLvl,
-    period: settings.period,
-  });
 
 const hasMemberStatsFilters = (
   settings: StatsSettings,
@@ -117,135 +76,29 @@ const getMemberStatsResponseView = (
 });
 
 export const MemberStatsPage: React.FC = () => {
-  const { t } = useTranslation();
-  const { memberId, guildId } = useParams({
-    from: "/_authenticated/$guildId/stats/members/$memberId",
-  });
-
-  const [cursor, setCursor] = useState(0);
-  const [search, setSearch] = useState("");
-  const debouncedSearch = useDebounce(search, 500);
   const {
+    member,
+    isLoading,
+    t,
+    data,
     settings,
-    debouncedMinLvl,
-    debouncedMaxLvl,
-    setWorld,
-    setMinLvl,
-    setMaxLvl,
-    setNpcType,
-    setPeriod,
-  } = useStatsSettings("member");
-  const { data, isLoading } = useKillsControllerGetMemberKills(
-    {
-      guildId,
-      memberId,
-    },
-    getMemberKillsQueryParams({
-      settings,
-      debouncedSearch,
-      debouncedMinLvl,
-      debouncedMaxLvl,
-      cursor,
-    }),
-  );
-  const { data: guildMembers } = useMembersControllerGetGuildMemberReferences(
-    { guildId },
-    {
-      includeInactive: true,
-    },
-  );
-
-  const handleWorldChange = (value: string | null) => {
-    setWorld(value);
-    setCursor(0);
-  };
-
-  const handleNpcTypeChange = (value: string | null) => {
-    if (value === null) return;
-    const npcType = findNpcType(value);
-    if (value !== "ALL" && !npcType) return;
-    setNpcType(npcType ?? "ALL");
-    setCursor(0);
-  };
-
-  const handleMinLvlChange = (value: string) => {
-    setMinLvl(value);
-    setCursor(0);
-  };
-
-  const handleMaxLvlChange = (value: string) => {
-    setMaxLvl(value);
-    setCursor(0);
-  };
-
-  const handlePeriodChange = (value: KillStatsPeriod) => {
-    setPeriod(value);
-    setCursor(0);
-  };
-
-  const handleSearchChange = (value: string) => {
-    setSearch(value);
-    setCursor(0);
-  };
-
-  const handleNextPage = () => {
-    if (data?.pagination?.hasNext) {
-      setCursor(cursor + ITEMS_PER_PAGE);
-    }
-  };
-
-  const handlePreviousPage = () => {
-    if (cursor > 0) {
-      setCursor(Math.max(0, cursor - ITEMS_PER_PAGE));
-    }
-  };
-
-  const guildMember = guildMembers?.find(
-    (m) => m.userId === data?.member?.memberUserId,
-  );
-  const adaptedMember = guildMember
-    ? {
-        roles: [{ position: 0, color: guildMember.color }],
-      }
-    : undefined;
-  const memberColor = useMemberColor(adaptedMember);
-
-  const member = data?.member;
-
+    debouncedSearch,
+    cursor,
+    memberColor,
+    search,
+    handleSearchChange,
+    handleWorldChange,
+    handleNpcTypeChange,
+    handleMinLvlChange,
+    handleMaxLvlChange,
+    handlePeriodChange,
+    guildId,
+    handlePreviousPage,
+    handleNextPage,
+  } = useMemberStatsPage();
   if (!member) {
     if (isLoading) {
-      return (
-        <div className="flex flex-col h-full min-h-0 bg-background">
-          <div className="px-3 py-3 flex flex-col gap-4">
-            <SectionCard>
-              <SectionCardContent className="flex flex-col gap-3">
-                <div className="flex items-center gap-3">
-                  <Skeleton className="h-12 w-12 rounded-full" />
-                  <div className="flex flex-col gap-2 flex-1">
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-3 w-48" />
-                  </div>
-                </div>
-              </SectionCardContent>
-            </SectionCard>
-            <SectionCard className="flex-1 min-h-0 flex flex-col overflow-hidden">
-              <div>
-                {Array.from({ length: 10 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="flex h-14 items-center gap-4 border-b border-border px-4"
-                  >
-                    <Skeleton className="h-4 w-8" />
-                    <Skeleton className="h-8 w-8 rounded-full" />
-                    <Skeleton className="h-4 flex-1" />
-                    <Skeleton className="h-4 w-16" />
-                  </div>
-                ))}
-              </div>
-            </SectionCard>
-          </div>
-        </div>
-      );
+      return <StatsDetailLoading entity="member" />;
     }
     return (
       <div className="h-full flex flex-col items-center justify-center">

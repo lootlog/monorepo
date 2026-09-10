@@ -78,9 +78,9 @@ it("does not replay entry animation when virtualization remounts an existing row
   );
   viewport.scrollTop = 100 * 54;
   fireEvent.scroll(viewport);
-  expect(
-    screen.getByText("NPC 100").closest('[role="listitem"]'),
-  ).not.toHaveClass("ll-npc-list-enter");
+  expect(screen.getByText("NPC 100").closest("li")).not.toHaveClass(
+    "ll-npc-list-enter",
+  );
 });
 it("animates retained rows from their previous positions after detections reorder the list", () => {
   const animate = vi.fn<HTMLElement["animate"]>(() => {

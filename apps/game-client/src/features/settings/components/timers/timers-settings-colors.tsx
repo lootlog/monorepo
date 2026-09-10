@@ -85,8 +85,9 @@ export const TimersSettingsColors: FC = () => {
   } = useTimersStore();
   const { t } = useTranslation();
   const [openPopover, setOpenPopover] = useState<string | null>(null);
+  const hiddenColorIds = new Set(hiddenDefaultColors);
   const visibleDefaultColors = Object.keys(TIMERS_COLORS).filter(
-    (colorId) => !hiddenDefaultColors.includes(colorId),
+    (colorId) => !hiddenColorIds.has(colorId),
   );
 
   const getEditData = (selection: TimerColorSelection) =>

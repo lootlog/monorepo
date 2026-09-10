@@ -81,6 +81,8 @@ function ToggleGroup<Value extends string>(props: ToggleGroupProps<Value>) {
     setRefValue(providedRef, element);
   };
 
+  // Both observers disconnect and the pending frame is cancelled below, including work scheduled by their callbacks.
+  // oxlint-disable-next-line react-doctor/effect-needs-cleanup
   React.useLayoutEffect(() => {
     const root = rootRef.current;
     if (!root || props.type === "multiple") {
@@ -141,6 +143,8 @@ function ToggleGroup<Value extends string>(props: ToggleGroupProps<Value>) {
     "data-variant": variant,
   };
   const content = (
+    // Vite React Compiler caches this object by its fields (vite.shared.ts enables compiler: true).
+    // oxlint-disable-next-line react-doctor/jsx-no-constructed-context-values
     <ToggleGroupContext.Provider value={{ variant, size, type: props.type }}>
       {children}
     </ToggleGroupContext.Provider>

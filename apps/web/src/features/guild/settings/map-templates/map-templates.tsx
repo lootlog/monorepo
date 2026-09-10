@@ -178,9 +178,9 @@ export const MapTemplatesSettings = () => {
                   <CollapsibleContent>
                     <SectionCardContent>
                       <div className="flex flex-wrap gap-2">
-                        {template.maps.map((map, idx) => (
+                        {template.maps.map((map) => (
                           <span
-                            key={idx}
+                            key={map.id}
                             className="inline-flex items-center gap-1.5 px-2 py-1 bg-primary/10 text-primary text-xs rounded"
                           >
                             <MapPin className="w-3 h-3" />

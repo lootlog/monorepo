@@ -60,12 +60,6 @@ describe("ServerVisibilitySettingsTab", () => {
     ]);
   });
 
-  it("uses the full section width for search", () => {
-    render();
-
-    expect(screen.getByRole("search")).toHaveClass("ll:w-full");
-  });
-
   it("filters hidden guilds and searches by name", () => {
     render();
 

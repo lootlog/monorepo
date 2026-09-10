@@ -32,12 +32,13 @@ export function CookieConsent() {
   if (!isVisible) return null;
 
   return (
-    <div className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-50 animate-in fade-in slide-in-from-bottom-4 duration-300 sm:left-auto sm:right-6 sm:max-w-md">
-      <div
-        role="dialog"
+    <div className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-50 animate-in fade-in slide-in-from-bottom-4 duration-300 transition-[opacity,transform] motion-reduce:animate-none sm:left-auto sm:right-6 sm:max-w-md">
+      <dialog
+        open
+        aria-modal="false"
         aria-labelledby="cookie-consent-title"
         aria-describedby="cookie-consent-description"
-        className="rounded-2xl bg-[#0d1a2c] p-4 text-[#f7f8f2] ring-1 ring-inset ring-[#22334c] shadow-[16px_22px_56px_rgba(0,0,0,0.5)] sm:p-5"
+        className="static m-0 w-full max-w-none rounded-2xl border-0 bg-[#0d1a2c] p-4 text-[#f7f8f2] ring-1 ring-inset ring-[#22334c] shadow-[16px_22px_56px_rgba(0,0,0,0.5)] sm:p-5"
       >
         <div className="flex items-center justify-between gap-4 border-b-2 border-[#22334c] pb-3">
           <h2
@@ -72,7 +73,7 @@ export function CookieConsent() {
             {t("landing.cookieConsent.reject")}
           </Button>
         </div>
-      </div>
+      </dialog>
     </div>
   );
 }

@@ -5,10 +5,8 @@ import { toast } from "sonner";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
-import {
-  ItemImage,
-  resolveItemRarity,
-} from "@lootlog/ui/components/item-image";
+import { ItemImage } from "@lootlog/ui/components/item-image";
+import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
 import { ItemTile } from "@/components/tiles";
 import { getUserNotificationsErrorMessage } from "@/features/user/notifications/utils/get-user-notifications-error-message";
 import { useQueryClient } from "@tanstack/react-query";

@@ -10,15 +10,17 @@ export const stringifyLogValue = (value: SerializableValue): string => {
   return JSON.stringify(value, null, 2) ?? "";
 };
 
+const logTimestampFormatter = new Intl.DateTimeFormat("pl-PL", {
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+});
+
 export const formatLogTimestamp = (createdAt: string): string => {
-  return new Intl.DateTimeFormat("pl-PL", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  }).format(new Date(createdAt));
+  return logTimestampFormatter.format(new Date(createdAt));
 };
 
 export const getActionLabel = (actionType: string): string => {

@@ -10,7 +10,8 @@ import {
   type WindowStatus,
 } from "../../hooks/use-window-status";
 import type { CoverageGap } from "../../hooks/queries/use-map-coverage-timer";
-import { MapCard, getMapStatus, STATUS_STYLES } from "./map-card";
+import { MapCard } from "./map-card";
+import { getMapStatus, STATUS_STYLES } from "./map-status";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 
 interface EventMapGridProps {

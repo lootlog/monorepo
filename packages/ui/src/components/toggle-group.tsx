@@ -7,7 +7,7 @@ import { ToggleGroup as ToggleGroupPrimitive } from "@base-ui/react/toggle-group
 import type { VariantProps } from "class-variance-authority";
 
 import { cn } from "cn";
-import { toggleVariants } from "@lootlog/ui/components/toggle";
+import { toggleVariants } from "@lootlog/ui/lib/toggle-variants";
 
 const ToggleGroupContext = React.createContext<
   VariantProps<typeof toggleVariants> & {
@@ -51,6 +51,8 @@ function ToggleGroup({
       {...props}
     >
       <ToggleGroupContext.Provider
+        // React Compiler in the consuming web build caches these four scalar fields.
+        // oxlint-disable-next-line react-doctor/jsx-no-constructed-context-values
         value={{ variant, size, spacing, orientation }}
       >
         {children}

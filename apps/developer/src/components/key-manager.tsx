@@ -1,5 +1,6 @@
 import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
-import { Button, buttonVariants } from "@lootlog/ui/components/button";
+import { Button } from "@lootlog/ui/components/button";
+import { buttonVariants } from "@lootlog/ui/lib/button-variants";
 import {
   Card,
   CardContent,

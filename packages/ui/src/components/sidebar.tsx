@@ -128,6 +128,8 @@ function SidebarProvider({
     ...style,
   };
   return (
+    // React Compiler in the consuming web build caches this value by its fields.
+    // oxlint-disable-next-line react-doctor/context-provider-value-from-unmemoized-local-literal
     <SidebarContext.Provider value={contextValue}>
       <TooltipProvider delay={0}>
         <div
@@ -145,6 +147,10 @@ function SidebarProvider({
     </SidebarContext.Provider>
   );
 }
+
+const mobileStyle: CSSPropertiesWithVariables = {
+  "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
+};
 
 function Sidebar({
   side = "left",
@@ -176,9 +182,6 @@ function Sidebar({
   }
 
   if (isMobile) {
-    const mobileStyle: CSSPropertiesWithVariables = {
-      "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
-    };
     return (
       <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
         <SheetContent

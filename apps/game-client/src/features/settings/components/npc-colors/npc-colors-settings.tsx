@@ -29,6 +29,8 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { NpcColorEditorPopover } from "./npc-color-editor-popover";
 
+const initialQueue = Promise.resolve();
+
 export const NpcColorsSettings = () => {
   const { t } = useTranslation();
   const preferences = useUserPreferences();
@@ -47,7 +49,7 @@ export const NpcColorsSettings = () => {
       : serverDraft;
   const [openType, setOpenType] = useState<CombatNpcType | null>(null);
   const [saving, setSaving] = useState(false);
-  const queue = useRef(Promise.resolve());
+  const queue = useRef(initialQueue);
   const generation = useRef(0);
 
   const updateCache = (patch: Partial<NpcTypeColors>) => {

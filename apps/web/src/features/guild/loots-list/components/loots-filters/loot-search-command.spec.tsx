@@ -1,7 +1,7 @@
 import { createOrganizationTestWrapper } from "@/lib/testing/router";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { Storage as MemoryStorage } from "happy-dom";
-import { GuildContextProvider } from "@/contexts/guild.context";
+import { GuildContextProvider } from "@/contexts/guild-provider";
 // @vitest-environment happy-dom
 
 import { initializeTestTranslations } from "@/lib/testing/i18n";

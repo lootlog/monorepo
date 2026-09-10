@@ -1,6 +1,6 @@
 import { makeRuleId } from "../../utils/scoring-rule-templates";
 import { useEffect, useEffectEvent, useState } from "react";
-import { isEqual } from "lodash";
+import isEqual from "lodash/isEqual";
 import { useFieldArray, useWatch, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";

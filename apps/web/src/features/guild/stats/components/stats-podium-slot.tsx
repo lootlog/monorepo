@@ -23,6 +23,24 @@ type StatsPodiumSlotProps = {
   guildId?: string;
 };
 
+const heights = {
+  1: "h-44",
+  2: "h-36",
+  3: "h-32",
+};
+
+const podiumColors = {
+  1: "bg-yellow-500/20",
+  2: "bg-gray-400/20",
+  3: "bg-amber-700/20",
+};
+
+const textColors = {
+  1: "text-yellow-500",
+  2: "text-gray-400",
+  3: "text-amber-600",
+};
+
 export const StatsPodiumSlot: React.FC<StatsPodiumSlotProps> = ({
   member,
   position,
@@ -35,23 +53,6 @@ export const StatsPodiumSlot: React.FC<StatsPodiumSlotProps> = ({
       }
     : undefined;
   const memberColor = useMemberColor(adaptedMember);
-  const heights = {
-    1: "h-44",
-    2: "h-36",
-    3: "h-32",
-  };
-
-  const podiumColors = {
-    1: "bg-yellow-500/20",
-    2: "bg-gray-400/20",
-    3: "bg-amber-700/20",
-  };
-
-  const textColors = {
-    1: "text-yellow-500",
-    2: "text-gray-400",
-    3: "text-amber-600",
-  };
 
   if (!member) {
     return (

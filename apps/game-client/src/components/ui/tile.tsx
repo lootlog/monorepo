@@ -9,7 +9,6 @@ type TileProps = {
   customBorderColor?: string;
   customBackgroundColor?: string;
   className?: string;
-  onClick?: () => void;
   onDoubleClick?: () => void;
 };
 
@@ -39,7 +38,6 @@ export const Tile: FC<TileProps> = ({
   customBorderColor,
   customBackgroundColor,
   className = "",
-  onClick = () => {},
   onDoubleClick,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -64,14 +62,13 @@ export const Tile: FC<TileProps> = ({
     <span
       id={id}
       className={cn(
-        "ll-custom-cursor-pointer ll:w-full ll:flex ll:items-center ll:justify-center ll:border-solid ll:border-gray-400 ll:box-border ll:border ll:rounded-sm ll:py-0.5 ll:bg-gray-500/30 ll:transition-all",
+        "ll-custom-cursor-pointer ll:w-full ll:flex ll:items-center ll:justify-center ll:border-solid ll:border-gray-400 ll:box-border ll:border ll:rounded-sm ll:py-0.5 ll:bg-gray-500/30 ll:transition-colors ll:motion-reduce:transition-none",
         !customBackgroundColor && "ll:hover:bg-gray-400/30",
         borderColor,
         bgColor,
         className,
       )}
       style={Object.keys(customStyles).length > 0 ? customStyles : undefined}
-      onClick={onClick}
       onDoubleClick={onDoubleClick}
       onMouseEnter={() => customBackgroundColor && setIsHovered(true)}
       onMouseLeave={() => customBackgroundColor && setIsHovered(false)}

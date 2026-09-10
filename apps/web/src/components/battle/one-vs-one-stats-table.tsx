@@ -1,6 +1,5 @@
+import { useBattleStatsSearchScroll } from "./use-battle-stats-search-scroll";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { EyeOff, Eye } from "lucide-react";
-import { Button } from "@lootlog/ui/components/button";
 import { SectionCard as Card } from "@/components/common/section-card/section-card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
@@ -13,7 +12,7 @@ import {
 } from "@lootlog/ui/components/table";
 import type { Battle } from "@/lib/api/battlelog-types";
 import { useStatsCustomization } from "@/hooks/use-stats-customization";
-import { StatsCustomizationModal } from "./stats-customization/stats-customization-modal";
+import { BattleStatsCustomizationActions } from "./battle-stats-customization-actions";
 import { BattleStatsTableHeader } from "./battle-stats-table-header";
 import { useTranslation } from "react-i18next";
 import type {
@@ -23,16 +22,9 @@ import type {
   StatsCustomizationConfig,
 } from "@/types/stats-customization.types";
 import { cn } from "cn";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@lootlog/ui/components/tooltip";
 import { SearchInput } from "@/components/ui/search-input";
 import { STAT_CATEGORIES } from "./one-vs-one-stats-definitions";
 import { BATTLE_SURFACE_COLORS } from "./utils/battle-color-palette";
-
-const STAT_SEARCH_SCROLL_OFFSET_PX = 40;
 
 interface OneVsOneStatsTableProps {
   battle: Battle;
@@ -217,25 +209,13 @@ export function OneVsOneStatsTable({
   const [internalHideZeros, setInternalHideZeros] = useState(true);
   const [statSearchQuery, setStatSearchQuery] = useState("");
   const statsScrollViewportRef = useRef<HTMLDivElement>(null);
-  const statSearchAnimationFrameRef = useRef<number | null>(null);
   const booleanLabels = {
     yes: t("common.boolean.yes"),
     no: t("common.boolean.no"),
   };
 
   const internalStatsCustomization = useStatsCustomization(STAT_CATEGORIES);
-  const {
-    config: internalConfig,
-    updateCategoryOrder,
-    toggleCategoryVisibility,
-    updateCategoryName,
-    updateStatOrder,
-    addStatToCategory,
-    removeStatFromCategory,
-    addCategory,
-    removeCategory,
-    resetToDefaults,
-  } = internalStatsCustomization;
+  const { config: internalConfig } = internalStatsCustomization;
   const {
     config,
     hideZeros,
@@ -289,71 +269,17 @@ export function OneVsOneStatsTable({
     user,
   });
 
-  const scrollToStatSearchKey = (searchKey: string) => {
-    if (
-      statSearchAnimationFrameRef.current !== null &&
-      statSearchAnimationFrameRef.current !== undefined
-    ) {
-      cancelAnimationFrame(statSearchAnimationFrameRef.current);
-    }
-
-    statSearchAnimationFrameRef.current = requestAnimationFrame(() => {
-      statSearchAnimationFrameRef.current = null;
-
-      const matchingRow = Array.from(
-        statsScrollViewportRef.current?.querySelectorAll<HTMLElement>(
-          "[data-battle-stat-search-key]",
-        ) ?? [],
-      ).find((row) => row.dataset.battleStatSearchKey === searchKey);
-
-      if (!matchingRow || !statsScrollViewportRef.current) {
-        return;
-      }
-
-      const viewportRect =
-        statsScrollViewportRef.current.getBoundingClientRect();
-      const rowRect = matchingRow.getBoundingClientRect();
-      const scrollTop =
-        statsScrollViewportRef.current.scrollTop +
-        rowRect.top -
-        viewportRect.top -
-        STAT_SEARCH_SCROLL_OFFSET_PX;
-
-      statsScrollViewportRef.current.scrollTo({
-        top: Math.max(0, scrollTop),
-        behavior: "smooth",
-      });
-    });
-  };
-
-  useEffect(
-    () => () => {
-      if (
-        statSearchAnimationFrameRef.current === null ||
-        statSearchAnimationFrameRef.current === undefined
-      ) {
-        return;
-      }
-
-      cancelAnimationFrame(statSearchAnimationFrameRef.current);
-    },
-    [],
-  );
-
   const activeStatSearchKey = getMatchingStatSearchKey(
     statSearchQuery,
     visibleStats,
   );
 
-  useEffect(() => {
-    const matchingKey = activeStatSearchKey;
-
-    if (!matchingKey) {
-      return;
-    }
-
-    scrollToStatSearchKey(matchingKey);
-  }, [activeStatSearchKey, statSearchQuery, visibleStats]);
+  useBattleStatsSearchScroll({
+    viewportRef: statsScrollViewportRef,
+    searchKey: activeStatSearchKey,
+    searchQuery: statSearchQuery,
+    categories: visibleStats,
+  });
 
   if (!user || !opponent) {
     return (
@@ -384,71 +310,12 @@ export function OneVsOneStatsTable({
           />
           actions={
             headerActions ?? (
-              <>
-                <StatsCustomizationModal
-                  config={internalConfig}
-                  defaultCategories={STAT_CATEGORIES}
-                  onUpdateCategoryOrder={updateCategoryOrder}
-                  onToggleCategoryVisibility={toggleCategoryVisibility}
-                  onUpdateCategoryName={updateCategoryName}
-                  onUpdateStatOrder={updateStatOrder}
-                  onAddStatToCategory={addStatToCategory}
-                  onRemoveStatFromCategory={removeStatFromCategory}
-                  onAddCategory={addCategory}
-                  onRemoveCategory={removeCategory}
-                  onResetToDefaults={resetToDefaults}
-                  compactTrigger={compact}
-                />
-                {compact ? (
-                  <Tooltip>
-                    <TooltipTrigger
-                      render={
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => setHideZeros(!hideZeros)}
-                          aria-label={
-                            hideZeros
-                              ? t("battlePanel.single.statistics.showAll")
-                              : t("battlePanel.single.statistics.hideZeros")
-                          }
-                          className="size-8"
-                        >
-                          {hideZeros ? (
-                            <Eye className="h-4 w-4" />
-                          ) : (
-                            <EyeOff className="h-4 w-4" />
-                          )}
-                        </Button>
-                      }
-                    />
-                    <TooltipContent>
-                      {hideZeros
-                        ? t("battlePanel.single.statistics.showAll")
-                        : t("battlePanel.single.statistics.hideZeros")}
-                    </TooltipContent>
-                  </Tooltip>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setHideZeros(!hideZeros)}
-                    className="gap-2"
-                  >
-                    {hideZeros ? (
-                      <>
-                        <Eye className="h-4 w-4" />
-                        {t("battlePanel.single.statistics.showAll")}
-                      </>
-                    ) : (
-                      <>
-                        <EyeOff className="h-4 w-4" />
-                        {t("battlePanel.single.statistics.hideZeros")}
-                      </>
-                    )}
-                  </Button>
-                )}
-              </>
+              <BattleStatsCustomizationActions
+                customization={internalStatsCustomization}
+                compact={compact}
+                hideZeros={hideZeros}
+                setHideZeros={setHideZeros}
+              />
             )
           }
         />

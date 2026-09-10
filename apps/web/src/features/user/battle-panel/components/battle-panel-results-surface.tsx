@@ -23,9 +23,11 @@ type BattlePanelResultsSurfaceProps = {
   withHorizontalScroll?: boolean;
 };
 
+const EMPTY_CHIPS: NonNullable<BattlePanelResultsSurfaceProps["chips"]> = [];
+
 export const BattlePanelResultsSurface = ({
   title,
-  chips = [],
+  chips = EMPTY_CHIPS,
   children,
   clearFiltersLabel,
   footer,

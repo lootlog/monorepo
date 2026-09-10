@@ -462,8 +462,9 @@ export class AppSocket {
       return;
     }
     if (event.type === "permissions.updated") {
+      const joinedOrganizations = new Set(this.joinedOrganizationIds);
       const addedOrganization = event.data.organizationIds.some(
-        (id) => !this.joinedOrganizationIds.includes(id),
+        (id) => !joinedOrganizations.has(id),
       );
       this.joinedOrganizationIds = [...event.data.organizationIds];
       if (event.data.accessPolicy) {

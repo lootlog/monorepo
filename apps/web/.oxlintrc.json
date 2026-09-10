@@ -60,12 +60,12 @@
         "src/features/guild/events/hooks/utils/use-assignment-countdown.ts",
         "src/features/guild/events/hooks/utils/use-local-coverage-timer.ts",
         "src/features/guild/events/hooks/use-window-status.ts",
-        "src/features/user/battle-panel/battle-panel-single-battle/components/battle-detail-view.tsx",
+        "src/features/user/battle-panel/battle-panel-single-battle/components/use-battle-detail-view.ts",
         "src/features/guild/events/components/dialogs/event-summary/use-wrapped-autoplay.ts",
         "src/features/guild/events/hooks/socket/use-event-presence.ts",
         "src/features/guild/settings/members/use-member-presence.ts",
-        "src/contexts/gateway-context.tsx",
-        "src/contexts/theme-context.tsx"
+        "src/contexts/gateway-provider.tsx",
+        "src/contexts/theme-provider.tsx"
       ],
       "rules": {
         "react/set-state-in-effect": "off"

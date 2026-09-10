@@ -1,5 +1,5 @@
 import { animate, useReducedMotion } from "framer-motion";
-import { Link } from "@tanstack/react-router";
+import { Link, useHydrated } from "@tanstack/react-router";
 import { ArrowUpRight, Heart, Loader2, LogIn } from "lucide-react";
 import { useEffect, useState, type MouseEvent } from "react";
 import { useTranslation } from "react-i18next";
@@ -13,12 +13,16 @@ import { useMatchingBackgroundMask } from "@/src/hooks/use-matching-background-m
 import { MenuIcon } from "./menu-icon";
 import { LootlogMark } from "./lootlog-mark";
 
+const closeNavigation = (event: MouseEvent<HTMLAnchorElement>) => {
+  event.currentTarget.closest<HTMLElement>("[popover]")?.hidePopover();
+};
+
 export function LandingHeader() {
   const { t } = useTranslation();
   const session = useSession();
   const reducedMotion = useReducedMotion();
   const overlapRef = useMatchingBackgroundMask();
-  const [isClientReady, setIsClientReady] = useState(false);
+  const isClientReady = useHydrated();
   const isAuthenticated = !!session.data;
   const isLoading = !isClientReady || session.isPending;
   const [isSigningIn, setIsSigningIn] = useState(false);
@@ -31,12 +35,6 @@ export function LandingHeader() {
     updateScroll();
     window.addEventListener("scroll", updateScroll, { passive: true });
     return () => window.removeEventListener("scroll", updateScroll);
-  }, []);
-
-  useEffect(() => {
-    // Session UI intentionally stays in its loading state until hydration.
-    // oxlint-disable-next-line react/set-state-in-effect
-    setIsClientReady(true);
   }, []);
 
   const handleLoginAction = async () => {
@@ -58,10 +56,6 @@ export function LandingHeader() {
     } finally {
       setIsSigningIn(false);
     }
-  };
-
-  const closeNavigation = (event: MouseEvent<HTMLAnchorElement>) => {
-    event.currentTarget.closest<HTMLElement>("[popover]")?.hidePopover();
   };
 
   const navigationLinks = (

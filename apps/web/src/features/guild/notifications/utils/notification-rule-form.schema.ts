@@ -17,7 +17,7 @@ export const ALL_WORLDS_VALUE = "__all_worlds__";
 const createRuleFormSchema = (t: (key: string, options?: TOptions) => string) =>
   z.object({
     name: z.string(),
-    triggerType: z.nativeEnum(NotificationTriggerType),
+    triggerType: z.enum(NotificationTriggerType),
     world: z.string().optional(),
     npcIds: z.array(z.string()).optional(),
     manualNpcEntry: z.boolean().optional(),
@@ -26,12 +26,10 @@ const createRuleFormSchema = (t: (key: string, options?: TOptions) => string) =>
       .string()
       .trim()
       .min(1, t("settings.notifications.validation.templateRequired")),
-    scheduleAnchor: z.nativeEnum(NotificationScheduleAnchor).optional(),
+    scheduleAnchor: z.enum(NotificationScheduleAnchor).optional(),
     scheduleOffsetMinutes: z.string().optional(),
     scheduledAt: z.string().optional(),
-    scheduleIntervalType: z
-      .nativeEnum(NotificationScheduleIntervalType)
-      .optional(),
+    scheduleIntervalType: z.enum(NotificationScheduleIntervalType).optional(),
     scheduleIntervalValue: z.string().optional(),
     scheduleTimeOfDay: z.string().optional(),
     scheduleWeekday: z.string().optional(),

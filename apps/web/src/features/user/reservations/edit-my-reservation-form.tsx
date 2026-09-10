@@ -1,9 +1,9 @@
+import { ReservationFormFields } from "@/features/guild/reservations/schedule/reservation-form-fields";
 import {
-  ReservationFormFields,
   toReminderOffset,
-  type ReminderValue,
   toReminderValue,
-} from "@/features/guild/reservations/schedule/reservation-form-fields";
+  type ReminderValue,
+} from "@/features/guild/reservations/schedule/reservation-reminder";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -38,12 +38,14 @@ export function EditMyReservationForm({
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const initialStartsAt = new Date(reservation.startsAt);
-  const [startsAt, setStartsAt] = useState<Date | undefined>(initialStartsAt);
+  const [startsAt, setStartsAt] = useState<Date | undefined>(
+    () => new Date(reservation.startsAt),
+  );
   const [endsAt, setEndsAt] = useState<Date | undefined>(
-    new Date(reservation.endsAt),
+    () => new Date(reservation.endsAt),
   );
   const [comment, setComment] = useState(reservation.comment ?? "");
-  const [reminder, setReminder] = useState<ReminderValue>(
+  const [reminder, setReminder] = useState<ReminderValue>(() =>
     toReminderValue(reservation.reminderMinutesBefore),
   );
   const settings = resolveReservationSettings(reservation.editingConstraints);
