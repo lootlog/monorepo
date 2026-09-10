@@ -87,7 +87,7 @@ export const TimerHistoryListEntry: FC<TimerHistoryListEntryProps> = ({
         >
           <span
             className={cn(
-              "ll:box-border ll:flex ll:w-full ll:items-center ll:rounded-sm ll:bg-muted/50 ll:min-h-7 ll:py-1 ll:px-2 ll:justify-start ll:gap-1.5",
+              "ll:flex ll:w-full ll:items-center ll:rounded-sm ll:bg-muted/50 ll:min-h-7 ll:py-1 ll:px-2 ll:justify-start ll:gap-1.5",
               { "ll:py-1.5": rowLayout === "npcWithMember" },
             )}
           >
@@ -149,7 +149,7 @@ export const TimerHistoryListEntry: FC<TimerHistoryListEntryProps> = ({
       {tooltipOpen && (
         <TooltipContent
           side="right"
-          className="ll:w-72 ll:max-w-72 ll:overflow-hidden ll:rounded-lg ll:border ll:border-solid ll:border-white/50 ll:bg-popover ll:p-0 ll:text-popover-foreground ll:text-left ll:shadow-md"
+          className="ll:w-72 ll:max-w-72 ll:overflow-hidden ll:rounded-lg ll:border ll:border-white/50 ll:bg-popover ll:p-0 ll:text-popover-foreground ll:text-left ll:shadow-md"
         >
           <div className="ll:p-2">
             <div className="ll:flex ll:items-center ll:gap-2">

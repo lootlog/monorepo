@@ -41,7 +41,7 @@ export const TimerColorListItem: FC<TimerColorListItemProps> = ({
   const actionsPopoverKey = `${itemKey}:actions`;
 
   return (
-    <div className="ll:flex ll:min-w-0 ll:items-center ll:gap-1.5 ll:rounded-sm ll:border ll:border-solid ll:border-gray-500/40 ll:bg-black/15 ll:p-1.5">
+    <div className="ll:flex ll:min-w-0 ll:items-center ll:gap-1.5 ll:rounded-sm ll:border ll:border-gray-500/40 ll:bg-black/15 ll:p-1.5">
       <TimerColorQuickPopover
         data={data}
         open={openPopover === quickPopoverKey}

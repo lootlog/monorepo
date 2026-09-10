@@ -71,7 +71,7 @@ export function ChatHiddenGatherings({
             <X size={14} aria-hidden />
           </Button>
         </div>
-        <div className="ll:flex ll:border-solid ll:border-x-0 ll:border-y ll:border-gray-400/40">
+        <div className="ll:flex ll:border-x-0 ll:border-y ll:border-gray-400/40">
           {[false, true].map((isHidden) => (
             <Button
               key={String(isHidden)}

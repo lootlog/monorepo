@@ -24,7 +24,6 @@ describe("EmptyState", () => {
     const status = screen.getByRole("status");
     expect(status).toHaveClass(
       "ll:h-full",
-      "ll:box-border",
       "ll:flex-col",
       "ll:items-center",
       "ll:justify-center",

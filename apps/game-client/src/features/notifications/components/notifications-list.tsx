@@ -259,7 +259,7 @@ export const NotificationsList: FC<NotificationsListProps> = ({
   return (
     <ScrollArea
       ref={scrollViewportRef}
-      className="ll:h-full ll:max-h-[inherit] ll:w-full ll:box-border"
+      className="ll:h-full ll:max-h-[inherit] ll:w-full"
     >
       <div className="ll:flex ll:w-full ll:flex-col ll:gap-1 ll:pt-1">
         {renderedNotifications.map((notification) => {

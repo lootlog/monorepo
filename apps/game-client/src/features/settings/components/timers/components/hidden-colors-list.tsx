@@ -29,7 +29,7 @@ export const HiddenColorsList: FC<HiddenColorsListProps> = ({
         {hiddenColors.map((colorId) => (
           <div
             key={colorId}
-            className="ll:flex ll:items-center ll:gap-2 ll:rounded-sm ll:border ll:border-solid ll:border-accent-foreground/40 ll:bg-muted/40 ll:p-1.5 ll:opacity-70"
+            className="ll:flex ll:items-center ll:gap-2 ll:rounded-sm ll:border ll:border-accent-foreground/40 ll:bg-muted/40 ll:p-1.5 ll:opacity-70"
           >
             <div className="ll:flex-1 ll:flex ll:flex-col ll:justify-between ll:h-full">
               <span className="ll:text-xs ll:font-medium ll:truncate">

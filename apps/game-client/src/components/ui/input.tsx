@@ -3,7 +3,7 @@ import * as React from "react";
 import { cn } from "cn";
 
 export const inputVariantClasses = {
-  default: "ll:rounded-sm ll:border ll:border-solid ll:border-border",
+  default: "ll:rounded-sm ll:border ll:border-border",
   borderless: "ll:rounded-none ll:border-0 ll:shadow-none",
 };
 
@@ -26,7 +26,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           inputVariantClasses[variant],
           variant === "default" &&
             "ll:focus-visible:border-ring ll:focus-visible:ring-ring/50 ll:focus-visible:ring-[3px]",
-          "ll:text-white ll:box-border ll:text-xs",
+          "ll:text-white ll:text-xs",
           {
             "ll:!cursor-not-allowed": props.disabled,
           },

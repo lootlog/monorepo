@@ -14,7 +14,7 @@ export const UnderBagTimers: FC<PropsWithChildren> = ({ children }) => {
     <div
       className={cn(
         getLootlogHostPortalThemeClassName(),
-        "ll:pl-4 ll:py-1 ll:box-border ll:h-full ll:pr-1.5 ll:max-h-full ll:bg-black/70 ll:relative ll:flex ll:flex-col",
+        "ll:pl-4 ll:py-1 ll:h-full ll:pr-1.5 ll:max-h-full ll:bg-black/70 ll:relative ll:flex ll:flex-col",
       )}
       onWheel={(e) => e.stopPropagation()}
     >

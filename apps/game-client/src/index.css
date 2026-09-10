@@ -7,6 +7,18 @@
 
 @variant dark (:is(#lootlog-root.dark-theme, .ll-theme-boundary.dark-theme) *);
 
+/*
+ * Scoped stand-in for the Tailwind preflight, which cannot be loaded because
+ * it would restyle the game page. shadcn primitives assume border-box sizing
+ * and a solid zero-width border on every element.
+ */
+:is(#lootlog-root, .ll-theme-boundary) *,
+:is(#lootlog-root, .ll-theme-boundary) *::before,
+:is(#lootlog-root, .ll-theme-boundary) *::after {
+  box-sizing: border-box;
+  border: 0 solid;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -106,11 +118,6 @@ body :is(#lootlog-root, .ll-theme-boundary) [data-chat-viewport] * {
 body.si :is(#lootlog-root, .ll-theme-boundary) .ll-custom-cursor-pointer * {
   /* Needed because SI has * { cursor: default } */
   cursor: inherit;
-}
-
-body.si > #lootlog-root .checkbox-custom [type="checkbox"] + label {
-  /* SI-specific fix, this matches the NI color */
-  color: #bebebe;
 }
 
 #lootlog-root > * {

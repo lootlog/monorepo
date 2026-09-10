@@ -20,7 +20,7 @@ export const SettingsSubsectionBar: FC<SettingsSubsectionBarProps> = ({
   <div
     role="group"
     aria-label={label}
-    className="ll:flex ll:h-7 ll:shrink-0 ll:items-stretch ll:border-solid ll:border-y ll:border-x-0 ll:border-gray-400/40 ll:bg-black/20"
+    className="ll:flex ll:h-7 ll:shrink-0 ll:items-stretch ll:border-y ll:border-x-0 ll:border-gray-400/40 ll:bg-black/20"
   >
     {options.map((option) => (
       <button

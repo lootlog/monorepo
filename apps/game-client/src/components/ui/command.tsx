@@ -106,7 +106,7 @@ function CommandItem({
     <CommandPrimitive.Item
       data-slot="command-item"
       className={cn(
-        "data-[selected=true]:ll:bg-muted data-[selected=true]:ll:text-popover-foreground [&_svg:not([class*='text-'])]:ll:text-muted-foreground ll:relative ll:flex ll:cursor-default ll:items-center ll:gap-2 ll:rounded-sm ll:text-popover-foreground ll:box-border ll:min-h-6 ll:px-2 ll:py-1 ll:text-[11px] ll:font-semibold ll:outline-hidden ll:select-none data-[disabled=true]:ll:pointer-events-none data-[disabled=true]:ll:opacity-50 [&_svg]:ll:pointer-events-none [&_svg]:ll:shrink-0 [&_svg:not([class*='size-'])]:ll:size-4",
+        "data-[selected=true]:ll:bg-muted data-[selected=true]:ll:text-popover-foreground [&_svg:not([class*='text-'])]:ll:text-muted-foreground ll:relative ll:flex ll:cursor-default ll:items-center ll:gap-2 ll:rounded-sm ll:text-popover-foreground ll:min-h-6 ll:px-2 ll:py-1 ll:text-[11px] ll:font-semibold ll:outline-hidden ll:select-none data-[disabled=true]:ll:pointer-events-none data-[disabled=true]:ll:opacity-50 [&_svg]:ll:pointer-events-none [&_svg]:ll:shrink-0 [&_svg:not([class*='size-'])]:ll:size-4",
         className,
       )}
       {...props}

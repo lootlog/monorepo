@@ -37,7 +37,7 @@ export function ExtensionLogin() {
       <section
         aria-label={t("auth.extensionTitle")}
         aria-busy={checking}
-        className="ll:box-border ll:flex ll:h-full ll:min-h-0 ll:flex-col ll:justify-between ll:gap-3 ll:overflow-auto ll:p-3 ll:text-xs"
+        className="ll:flex ll:h-full ll:min-h-0 ll:flex-col ll:justify-between ll:gap-3 ll:overflow-auto ll:p-3 ll:text-xs"
       >
         <p role="status" className="ll:m-0 ll:text-gray-200 ll:leading-relaxed">
           {message}

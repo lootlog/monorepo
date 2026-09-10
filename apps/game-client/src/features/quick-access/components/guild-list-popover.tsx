@@ -78,7 +78,7 @@ export const GuildListPopover = () => {
             </Button>
 
             {guilds && guilds.length > 0 && (
-              <div className="ll:border-0 ll:border-t ll:border-solid ll:border-gray-400/40" />
+              <div className="ll:border-0 ll:border-t ll:border-gray-400/40" />
             )}
 
             {guilds && guilds.length > 0 ? (

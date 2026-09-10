@@ -248,7 +248,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
       <TooltipProvider>
         <div
           className={cn(
-            "ll:mt-1 ll:flex ll:h-7 ll:w-full ll:items-center ll:justify-between ll:box-border ll:rounded-sm ll:border ll:border-gray-700/90 ll:bg-gray-900/60 ll:pl-2 ll:pr-0.5",
+            "ll:mt-1 ll:flex ll:h-7 ll:w-full ll:items-center ll:justify-between ll:rounded-sm ll:border ll:border-gray-700/90 ll:bg-gray-900/60 ll:pl-2 ll:pr-0.5",
             className,
           )}
           role="status"

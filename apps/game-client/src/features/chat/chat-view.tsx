@@ -369,7 +369,7 @@ export const ChatView = ({
           )}
           <div className="ll:relative ll:shrink-0 ll:z-10">{gatheringBar}</div>
           <div
-            className={`ll:relative ll:min-h-0 ll:flex-1 ll:overflow-hidden ${!filtersVisible ? "ll:border-solid ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40" : ""}`}
+            className={`ll:relative ll:min-h-0 ll:flex-1 ll:overflow-hidden ${!filtersVisible ? "ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40" : ""}`}
           >
             <ChatConnectionStatus
               status={{

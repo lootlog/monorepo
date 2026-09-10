@@ -211,7 +211,7 @@ export const CommandWindow = () => {
                 disabled={isSubmitting}
                 value={messageValue}
                 onChange={(e) => setValue("message", e.target.value)}
-                className="ll:h-full ll:w-full ll:overflow-hidden ll:resize-none ll:outline-none ll:rounded-sm ll:border ll:border-gray-400 ll:bg-transparent ll:px-1 ll:py-1 ll:text-xs ll:text-white ll:placeholder:text-muted-foreground ll:box-border ll:transition-[color,box-shadow] ll:disabled:pointer-events-none ll:disabled:opacity-50"
+                className="ll:h-full ll:w-full ll:overflow-hidden ll:resize-none ll:outline-none ll:rounded-sm ll:border ll:border-gray-400 ll:bg-transparent ll:px-1 ll:py-1 ll:text-xs ll:text-white ll:placeholder:text-muted-foreground ll:transition-[color,box-shadow] ll:disabled:pointer-events-none ll:disabled:opacity-50"
               />
             </form>
           </div>

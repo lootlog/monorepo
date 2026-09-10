@@ -97,7 +97,7 @@ export function DraggableWindowFrame(props: DraggableWindowFrameProps) {
     >
       <div
         className={cn(
-          "ll:w-full ll:h-full ll:rounded-lg ll:shadow-[2px_2px_3px_3px_rgba(12,13,13,0.4)] ll:border-solid ll:border ll:border-white/50 ll:p-1 ll:relative ll:box-border ll:text-white ll:flex ll:flex-col",
+          "ll:w-full ll:h-full ll:rounded-lg ll:shadow-[2px_2px_3px_3px_rgba(12,13,13,0.4)] ll:border ll:border-white/50 ll:p-1 ll:relative ll:text-white ll:flex ll:flex-col",
           {
             "ll-window-preparing": animationPhase === "preparing",
             "ll-window-enter": animationPhase === "enter",

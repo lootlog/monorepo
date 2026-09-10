@@ -43,7 +43,7 @@ export function ChatTranscriptRow({
           row.kind === "npc-group" ? messageGap : messageGap / 2,
         paddingBlockEnd: row.kind === "npc-group" ? 0 : messageGap / 2,
       }}
-      className={`ll:min-w-0 ll:shrink-0 ll:pl-1.5 ll:pr-0.5 ll:box-border ll:odd:bg-white/5 ll:even:bg-black/25 ${row.kind !== "date-divider" ? "ll:odd:hover:bg-white/10 ll:even:hover:bg-white/10" : ""}`}
+      className={`ll:min-w-0 ll:shrink-0 ll:pl-1.5 ll:pr-0.5 ll:odd:bg-white/5 ll:even:bg-black/25 ${row.kind !== "date-divider" ? "ll:odd:hover:bg-white/10 ll:even:hover:bg-white/10" : ""}`}
     >
       {row.kind === "date-divider" ? (
         <ChatDateDivider timestamp={row.timestamp} />
