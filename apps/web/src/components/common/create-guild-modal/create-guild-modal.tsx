@@ -11,7 +11,7 @@ import { SearchInput } from "@/components/ui/search-input";
 import { useState, type FC } from "react";
 import { getGuildIconById } from "@/utils/get-guild-icon-by-id";
 import { buildDiscordBotInstallUrl } from "@/utils/build-discord-bot-install-url";
-import { useDebounceValue } from "usehooks-ts";
+import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
 import {
   Avatar,
   AvatarFallback,
@@ -31,7 +31,7 @@ const handleAddToGuild = (guildId: string) => {
 
 export const CreateGuildModal: FC = () => {
   const [searchValue, setSearchValue] = useState("");
-  const [debouncedValue] = useDebounceValue<string>(searchValue, 200);
+  const debouncedValue = useDebounce(searchValue, 200);
   const { createGuildModal } = useGlobalContext();
   const { t } = useTranslation();
 

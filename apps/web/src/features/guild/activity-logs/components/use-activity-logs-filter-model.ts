@@ -18,7 +18,7 @@ import {
 } from "../activity-logs.queries";
 
 import { useTranslation } from "react-i18next";
-import { useDebounceValue } from "usehooks-ts";
+import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
 
 type ActivityLogsFiltersSidebarProps = {
   className?: string;
@@ -36,8 +36,8 @@ export const useActivityLogsFilterModel = ({
   const { filters, setFilters, clearFilters, hasActiveFilters } =
     useActivityLogsFilters();
   const guildId = useGuildId();
-  const [debouncedNameSearch] = useDebounceValue(filters.name ?? "", 300);
-  const [debouncedClanSearch] = useDebounceValue(filters.clanName ?? "", 300);
+  const debouncedNameSearch = useDebounce(filters.name ?? "", 300);
+  const debouncedClanSearch = useDebounce(filters.clanName ?? "", 300);
   const trimmedNameSearch = debouncedNameSearch.trim();
   const trimmedClanSearch = debouncedClanSearch.trim();
   const { data: guild } = useGuildsControllerGetGuildById({

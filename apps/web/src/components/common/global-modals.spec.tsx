@@ -28,6 +28,8 @@ const ModalControls = () => (
 afterEach(() => {
   cleanup();
   vi.unstubAllEnvs();
+  vi.restoreAllMocks();
+  vi.useRealTimers();
 });
 
 it("opens deferred modals, restores focus and preserves create form state after closing", async () => {
@@ -108,6 +110,58 @@ it("opens deferred modals, restores focus and preserves create form state after 
     };
     await openAndCloseInstaller();
     await openAndCloseInstaller();
+  } finally {
+    cleanup();
+    client.clear();
+    restore();
+  }
+});
+
+it("cancels the pending guild search when the modal is unmounted", async () => {
+  const restore = configureApiClients({
+    main: {
+      baseUrl: "https://lootlog.test",
+      fetch: () => Promise.resolve(Response.json([])),
+    },
+  });
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: Infinity } },
+  });
+  try {
+    render(
+      <QueryClientProvider client={client}>
+        <GlobalContextProvider>
+          <ModalControls />
+        </GlobalContextProvider>
+      </QueryClientProvider>,
+    );
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: i18n.t("ui.tooltips.createLootlog"),
+        }),
+      );
+      await vi.dynamicImportSettled();
+    });
+    const dialog = await screen.findByRole("dialog", {
+      name: i18n.t("ui.modals.createLootlog.title"),
+    });
+    vi.useFakeTimers();
+    const schedule = vi.spyOn(globalThis, "setTimeout");
+    const cancel = vi.spyOn(globalThis, "clearTimeout");
+    fireEvent.change(
+      within(dialog).getByPlaceholderText(
+        i18n.t("ui.modals.createLootlog.searchPlaceholder"),
+      ),
+      { target: { value: "pending search" } },
+    );
+    const searchTimerIndex = schedule.mock.calls.findIndex(
+      ([, delay]) => delay === 200,
+    );
+    expect(searchTimerIndex).toBeGreaterThanOrEqual(0);
+    const searchTimer = schedule.mock.results[searchTimerIndex]?.value;
+    cleanup();
+    expect(cancel).toHaveBeenCalledWith(searchTimer);
   } finally {
     cleanup();
     client.clear();

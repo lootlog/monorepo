@@ -14,7 +14,8 @@ import {
   usePlayersControllerGetPlayers,
 } from "@lootlog/client/search";
 import { useState } from "react";
-import { useDebounceValue, useLocalStorage } from "usehooks-ts";
+import { useLocalStorage } from "usehooks-ts";
+import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
 import { useLootFilterOptions } from "./use-loot-filter-options";
 
 import { useLootsFilters } from "@/hooks/use-loots-filters";
@@ -140,12 +141,21 @@ export const useLootFiltersSidebar = ({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newFilterName, setNewFilterName] = useState("");
 
-  const [debouncedPlayersSearchValue, setDebouncedPlayersSearchValue] =
-    useDebounceValue("", DEFAULT_DEBOUNCE_MS);
-  const [debouncedNpcsSearchValue, setDebouncedNpcsSearchValue] =
-    useDebounceValue("", DEFAULT_DEBOUNCE_MS);
-  const [debouncedItemsSearchValue, setDebouncedItemsSearchValue] =
-    useDebounceValue("", DEFAULT_DEBOUNCE_MS);
+  const [playersSearchValue, setDebouncedPlayersSearchValue] = useState("");
+  const debouncedPlayersSearchValue = useDebounce(
+    playersSearchValue,
+    DEFAULT_DEBOUNCE_MS,
+  );
+  const [npcsSearchValue, setDebouncedNpcsSearchValue] = useState("");
+  const debouncedNpcsSearchValue = useDebounce(
+    npcsSearchValue,
+    DEFAULT_DEBOUNCE_MS,
+  );
+  const [itemsSearchValue, setDebouncedItemsSearchValue] = useState("");
+  const debouncedItemsSearchValue = useDebounce(
+    itemsSearchValue,
+    DEFAULT_DEBOUNCE_MS,
+  );
   const selectedPlayerNames = filters.players.join(",");
   const selectedNpcNames = filters.npcs.join(",");
   const playersSearchParams = getEntitySearchParams(
