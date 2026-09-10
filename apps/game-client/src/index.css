@@ -19,6 +19,12 @@
   border: 0 solid;
 }
 
+:where(#lootlog-root, .ll-theme-boundary)
+  :is(button, input, select, textarea, optgroup) {
+  font: inherit;
+  color: inherit;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -122,6 +128,11 @@ body.si :is(#lootlog-root, .ll-theme-boundary) .ll-custom-cursor-pointer * {
 
 #lootlog-root > * {
   pointer-events: auto;
+}
+
+#lootlog-root,
+.ll-theme-boundary {
+  color: var(--foreground);
 }
 
 #lootlog-root *,
