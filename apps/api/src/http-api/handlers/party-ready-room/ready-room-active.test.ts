@@ -1,4 +1,5 @@
 import { expect, it } from "bun:test";
+import { eq } from "drizzle-orm";
 import { BunHttpServer } from "@effect/platform-bun";
 import { Effect, Layer, Schema } from "effect";
 import { HttpRouter } from "effect/unstable/http";
@@ -121,6 +122,7 @@ it("lets senders discover and cancel their own NPC gatherings outside read filte
       npc: { name: "Training NPC", location: "Map", lvl: 0, type: "TITAN" },
     },
   ];
+  let closeDatabaseOnCommit = false;
   const gatheringEvents: unknown[] = [];
   const cancellationEvents: unknown[] = [];
   const redis: ReadyRoomRedis = {
@@ -153,7 +155,11 @@ it("lets senders discover and cancel their own NPC gatherings outside read filte
           (room) => room.notificationId === next.notificationId,
         );
         rooms[index] = next;
-        return Effect.succeed(["COMMITTED"]);
+        return closeDatabaseOnCommit
+          ? Effect.promise(() => databaseBoundary.dispose()).pipe(
+              Effect.as(["COMMITTED"]),
+            )
+          : Effect.succeed(["COMMITTED"]);
       }
       return Effect.succeed(rooms.map((room) => room.notificationId));
     },
@@ -219,10 +225,7 @@ it("lets senders discover and cancel their own NPC gatherings outside read filte
         guildId: "visible",
         name: "Sender",
         updatedAt: new Date(),
-        permissions: [
-          Permission.LOOTLOG_NOTIFICATIONS_SEND,
-          Permission.LOOTLOG_CHAT_READ,
-        ],
+        permissions: [Permission.LOOTLOG_NOTIFICATIONS_SEND],
         lvlRangeFrom: 200,
         lvlRangeTo: 500,
       }),
@@ -477,6 +480,60 @@ it("lets senders discover and cancel their own NPC gatherings outside read filte
         createdAt: createdRoom.createdAt,
       },
     ]);
+    rooms.push({
+      ...base,
+      notificationId: "read-only-discovery",
+      organizerDiscordId: "other",
+    });
+    await databaseBoundary.run(
+      databaseBoundary.database
+        .update(roleTable)
+        .set({ permissions: [Permission.LOOTLOG_CHAT_READ] })
+        .where(eq(roleTable.id, "sender")),
+    );
+    const readableGatherings = await boundary.handler(
+      new Request(
+        "http://api.test/messaging/party-gathering/active?world=experimental",
+        { headers: { authorization: "Bearer test" } },
+      ),
+    );
+    expect(readableGatherings.status).toBe(200);
+    expect(await readableGatherings.json()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          notificationId: "read-only-discovery",
+          guildIds: ["visible"],
+        }),
+      ]),
+    );
+    await databaseBoundary.run(
+      databaseBoundary.database
+        .update(roleTable)
+        .set({ permissions: [Permission.LOOTLOG_NOTIFICATIONS_SEND] })
+        .where(eq(roleTable.id, "sender")),
+    );
+    closeDatabaseOnCommit = true;
+    const committedObservation = await boundary.handler(
+      new Request(
+        "http://api.test/messaging/party-gathering/minimal/party-observation",
+        {
+          method: "POST",
+          headers: {
+            authorization: "Bearer test",
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            organizerAccountId: "1",
+            organizerCharacterId: "2",
+            memberCharacterIds: ["2"],
+          }),
+        },
+      ),
+    );
+    expect(committedObservation.status).toBe(201);
+    expect(await committedObservation.json()).toEqual(
+      expect.objectContaining({ partyMemberCount: 1, revision: 3 }),
+    );
   } finally {
     await boundary.dispose();
     await databaseBoundary.dispose();

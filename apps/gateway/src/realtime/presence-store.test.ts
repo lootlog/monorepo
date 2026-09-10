@@ -1,4 +1,5 @@
 import { describe, expect, spyOn, test } from "bun:test";
+import { PRESENCE_EXPIRY_MS } from "@lootlog/protocol/realtime";
 import { Permission } from "@lootlog/schema/permissions";
 import { Effect } from "effect";
 import { TestClock } from "effect/testing";
@@ -18,6 +19,39 @@ class MemoryRedis {
     if (options.includes("NX") && this.values.has(key)) return null;
     this.values.set(key, value);
     return "OK";
+  }
+
+  async eval<A>(
+    _script: string,
+    _numberOfKeys: number,
+    ...parameters: Array<string | number>
+  ): Promise<A> {
+    const [
+      pending,
+      outbox,
+      pendingIndex,
+      characterIndex,
+      outboxIndex,
+      value,
+      pendingMember,
+      outboxMember,
+      publish,
+    ] = parameters.map(String);
+    if (this.values.get(pending!) !== value) {
+      // SAFETY: PresenceStore only invokes its numeric offline-claim script through this fake.
+      return 0 as A;
+    }
+    this.values.delete(pending!);
+    this.sets.get(pendingIndex!)?.delete(pendingMember!);
+    this.sets.get(characterIndex!)?.delete(pendingMember!);
+    if (publish === "1") {
+      this.values.set(outbox!, value!);
+      const set = this.sets.get(outboxIndex!) ?? new Set<string>();
+      set.add(outboxMember!);
+      this.sets.set(outboxIndex!, set);
+    }
+    // SAFETY: The successful offline-claim script returns the numeric literal 1.
+    return 1 as A;
   }
 
   async get(key: string): Promise<string | null> {
@@ -643,6 +677,140 @@ describe("game character offline grace", () => {
     expect(events).toEqual([]);
     now = 16_000;
     await Effect.runPromise(store.sweepOffline());
+    expect(events).toHaveLength(1);
+  });
+
+  test("expired Redis presence still schedules departure from durable character metadata", async () => {
+    const redis = new MemoryRedis();
+    let now = 0;
+    const events: Array<{ disconnectedAt: number }> = [];
+    const makeStore = () =>
+      new PresenceStore(
+        { command: redis },
+        new RecordingHub(),
+        () => now,
+        undefined,
+        undefined,
+        (event) =>
+          Effect.sync(() => {
+            events.push(event);
+          }),
+      );
+    const game = socket({ ...session([]), character });
+    await Effect.runPromise(makeStore().publish(game, { organizationIds: [] }));
+    redis.values.delete("presence:organization-1:session-1");
+    now = PRESENCE_EXPIRY_MS + 10_000;
+    await Effect.runPromise(makeStore().sweepExpired());
+    await Effect.runPromise(makeStore().sweepOffline());
+    expect(events).toEqual([
+      expect.objectContaining({ disconnectedAt: PRESENCE_EXPIRY_MS }),
+    ]);
+  });
+
+  test("late expiry of an old session does not shorten the latest exit grace", async () => {
+    const redis = new MemoryRedis();
+    let now = 0;
+    const events: unknown[] = [];
+    const store = new PresenceStore(
+      { command: redis },
+      new RecordingHub(),
+      () => now,
+      undefined,
+      undefined,
+      (event) =>
+        Effect.sync(() => {
+          events.push(event);
+        }),
+    );
+    const abandoned = socket({ ...session([]), character });
+    await Effect.runPromise(store.publish(abandoned, { organizationIds: [] }));
+    now = PRESENCE_EXPIRY_MS + 5_000;
+    const fresh = socket({ ...session([]), connectionId: "fresh", character });
+    await Effect.runPromise(store.publish(fresh, { organizationIds: [] }));
+    now += 5_000;
+    await Effect.runPromise(store.disconnect(fresh.data));
+    now += 5_000;
+    await Effect.runPromise(store.sweepExpired());
+    await Effect.runPromise(store.sweepOffline());
+    expect(events).toEqual([]);
+    now += 5_000;
+    await Effect.runPromise(store.sweepOffline());
+    expect(events).toHaveLength(1);
+  });
+
+  test("reconnect between the presence check and atomic departure decision cancels departure", async () => {
+    let reconnect: (() => Promise<void>) | undefined;
+    class ReconnectingRedis extends MemoryRedis {
+      override async eval<A>(
+        script: string,
+        numberOfKeys: number,
+        ...parameters: Array<string | number>
+      ): Promise<A> {
+        const operation = reconnect;
+        reconnect = undefined;
+        await operation?.();
+        return super.eval<A>(script, numberOfKeys, ...parameters);
+      }
+    }
+    const redis = new ReconnectingRedis();
+    let now = 0;
+    const events: unknown[] = [];
+    const store = new PresenceStore(
+      { command: redis },
+      new RecordingHub(),
+      () => now,
+      undefined,
+      undefined,
+      (event) =>
+        Effect.sync(() => {
+          events.push(event);
+        }),
+    );
+    const game = socket({ ...session([]), character });
+    await Effect.runPromise(store.publish(game, { organizationIds: [] }));
+    await Effect.runPromise(store.disconnect(game.data));
+    now = 10_000;
+    reconnect = async () => {
+      await Effect.runPromise(
+        store.publish(
+          socket({ ...session([]), connectionId: "new", character }),
+          { organizationIds: [] },
+        ),
+      );
+    };
+    await Effect.runPromise(store.sweepOffline());
+    expect(events).toEqual([]);
+  });
+
+  test("failed publication remains durable after the departure decision", async () => {
+    const redis = new MemoryRedis();
+    let now = 0;
+    const store = new PresenceStore(
+      { command: redis },
+      new RecordingHub(),
+      () => now,
+      undefined,
+      undefined,
+      () => Effect.fail(new Error("Rabbit unavailable")),
+    );
+    const game = socket({ ...session([]), character });
+    await Effect.runPromise(store.publish(game, { organizationIds: [] }));
+    await Effect.runPromise(store.disconnect(game.data));
+    now = 10_000;
+    await Effect.runPromise(store.sweepOffline().pipe(Effect.flip));
+    const events: unknown[] = [];
+    const recovered = new PresenceStore(
+      { command: redis },
+      new RecordingHub(),
+      () => now,
+      undefined,
+      undefined,
+      (event) =>
+        Effect.sync(() => {
+          events.push(event);
+        }),
+    );
+    await Effect.runPromise(recovered.sweepOffline());
     expect(events).toHaveLength(1);
   });
 

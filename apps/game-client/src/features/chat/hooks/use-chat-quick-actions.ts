@@ -1,3 +1,4 @@
+import { useChatSendError } from "@/features/chat/hooks/use-chat-send-error";
 import { CHAT_INPUT_MAX_LENGTH } from "@/features/chat/chat.constants";
 import { useChatControllerSendChatMessage } from "@lootlog/client/main";
 import { useQueryClient } from "@tanstack/react-query";
@@ -18,6 +19,7 @@ const pendingActions = new Set<string>();
 export const useChatQuickActions = () => {
   const { t } = useTranslation("chat");
   const queryClient = useQueryClient();
+  const reportSendError = useChatSendError();
   const { visibleGuilds, areVisibleGuildsResolved } = useVisibleLootlogGuilds();
   const { mutateAsync: send, isPending } = useChatControllerSendChatMessage();
   const { startNotificationMessage, isCreatingNotificationMessage } =
@@ -51,8 +53,8 @@ export const useChatQuickActions = () => {
         queryClient,
         updater: (old) => upsertChatMessage(old, result),
       });
-    } catch {
-      // Keep drafts and existing state intact; failed actions are not retried.
+    } catch (error) {
+      reportSendError(error);
     } finally {
       pendingActions.delete("position");
     }
@@ -102,8 +104,8 @@ export const useChatQuickActions = () => {
         queryClient,
         updater: (old) => upsertChatMessage(old, result),
       });
-    } catch {
-      // Keep drafts and existing state intact; failed actions are not retried.
+    } catch (error) {
+      reportSendError(error);
     } finally {
       pendingActions.delete("help");
     }

@@ -50,7 +50,10 @@ export class ReadyRoomData extends Context.Service<
     readonly characterOffline: (
       event: typeof GameCharacterOffline.Type,
     ) => DataEffect;
-    readonly accessibleGuildIds: (discordId: string) => DataEffect;
+    readonly accessibleGuildIds: (
+      discordId: string,
+      includeReadable?: boolean,
+    ) => DataEffect;
     readonly create: (
       identity: ReadyRoomIdentity,
       guildIds: ReadonlyArray<string>,
@@ -115,8 +118,10 @@ const data = <A>(
   ) => Effect.Effect<A, ReadyRoomOperationError>,
 ) => Effect.flatMap(ReadyRoomData, operation);
 
-const accessibleGuildIds = (discordId: string) =>
-  data((service) => service.accessibleGuildIds(discordId)).pipe(
+const accessibleGuildIds = (discordId: string, includeReadable = false) =>
+  data((service) =>
+    service.accessibleGuildIds(discordId, includeReadable),
+  ).pipe(
     Effect.flatMap((value) =>
       Array.isArray(value)
         ? Effect.succeed(
@@ -143,7 +148,7 @@ export const activeReadyRooms = Effect.fn("activeReadyRooms")(function* (
   world: string,
 ) {
   const current = yield* identity;
-  const guildIds = yield* accessibleGuildIds(current.discordId);
+  const guildIds = yield* accessibleGuildIds(current.discordId, true);
   const value = yield* data((service) =>
     service.active(current, guildIds, world),
   );

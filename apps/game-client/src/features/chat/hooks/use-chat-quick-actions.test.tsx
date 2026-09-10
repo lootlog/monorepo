@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { useWindowsStore } from "@/store/windows.store";
 import userEvent from "@testing-library/user-event";
 import { ChatQuickActionStrip } from "../components/chat-quick-action-strip";
@@ -28,6 +29,8 @@ const wrapper = ({ children }: { children: ReactNode }) => (
   <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
 );
 beforeEach(() => {
+  vi.spyOn(toast, "error").mockImplementation(() => "error");
+  vi.spyOn(toast, "warning").mockImplementation(() => "warning");
   setTestRuntimeGame();
   useChatStore.setState(useChatStore.getInitialState(), true);
   queryClient = new QueryClient({
@@ -84,6 +87,9 @@ it("handles partial alarm delivery without retrying or changing a draft", async 
     .mockRejectedValueOnce(new Error("chat offline"));
   const { result } = renderHook(useChatQuickActions, { wrapper });
   await act(() => result.current.sendHelp());
+  expect(toast.warning).toHaveBeenCalledWith(
+    expect.stringContaining("Nie wysyłaj ponownie"),
+  );
   expect(request).toHaveBeenCalledTimes(2);
   expect(useChatStore.getState().draftsByGuild.a).toBe(
     "unfinished conversation",
@@ -195,4 +201,15 @@ it("disables gathering creation without a chat organization even when commands h
   expect(create).toBeDisabled();
   await user.click(create);
   expect(request).not.toHaveBeenCalled();
+});
+
+it("reports failed position delivery without retrying", async () => {
+  useChatStore.getState().setSelectedChatGuildId("a");
+  request.mockRejectedValue(new Error("offline"));
+  const { result } = renderHook(useChatQuickActions, { wrapper });
+  await act(() => result.current.sendPosition());
+  expect(request).toHaveBeenCalledTimes(1);
+  expect(toast.error).toHaveBeenCalledWith(
+    "Nie udało się wysłać wiadomości na czat",
+  );
 });
