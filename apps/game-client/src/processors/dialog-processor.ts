@@ -12,12 +12,14 @@ export class DialogProcessor {
 
     if (npcId && typeof npcId === "string") {
       const numericNpcId = Number(npcId);
+
       if (!Number.isSafeInteger(numericNpcId) || numericNpcId <= 0) {
         return;
       }
 
       const dialogStore = useDialogStore.getState();
       const existingContext = dialogStore.npcContext;
+
       if (existingContext?.npcId !== numericNpcId || !existingContext.npc) {
         const npc: NpcSnapshot | null =
           useNpcsStore.getState().getNpc(numericNpcId) ??
@@ -30,6 +32,7 @@ export class DialogProcessor {
           source: "dialog-event",
         });
       }
+
       logLootCreateDebug("dialog-npc-tracked", {
         dialog: event.d,
         npcId,

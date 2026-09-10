@@ -37,6 +37,7 @@ describe("auth Redis storage", () => {
         ),
       ),
     );
+
     try {
       const { secondaryStorage } = await runtime.runPromise(AuthRedisStorage);
       const key = `verification:${crypto.randomUUID()}`;

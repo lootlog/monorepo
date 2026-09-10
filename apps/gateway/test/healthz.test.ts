@@ -18,6 +18,7 @@ const auth = makeGatewayAuth({
   allowedWebOrigins: new Set(["https://lootlog.example"]),
   allowedExtensionOrigins: new Set(),
 });
+
 const application = {
   config: { websocketPath: "/ws", environment: "test" },
   runPromise: Effect.runPromise,
@@ -29,14 +30,17 @@ const server = { upgrade: () => false };
 describe("gateway HTTP boundary", () => {
   test("exports gateway server spans with parent context, status and no credentials", async () => {
     const payloads: unknown[] = [];
+
     const collector = Bun.serve({
       hostname: "127.0.0.1",
       port: 0,
       async fetch(request) {
         payloads.push(await request.json());
+
         return Response.json({});
       },
     });
+
     const runtime = ManagedRuntime.make(
       makeObservabilityLayer(
         Effect.succeed({
@@ -56,20 +60,25 @@ describe("gateway HTTP boundary", () => {
         ),
       ),
     );
+
     const tracedApplication = {
       ...application,
       runPromise: <A, E>(effect: Effect.Effect<A, E>) =>
         runtime.runPromise(effect),
     };
+
     const fetch = createGatewayFetch(tracedApplication);
+
     const traceparent =
       "00-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-bbbbbbbbbbbbbbbb-01";
+
     const authenticatedHeaders = {
       traceparent,
       origin: "https://classic.margonem.pl",
       "x-auth-user-id": "user-1",
       "x-auth-discord-id": "discord-1",
     };
+
     try {
       expect(
         await fetch(
@@ -126,6 +135,7 @@ describe("gateway HTTP boundary", () => {
       await runtime.dispose();
       await collector.stop(true);
     }
+
     const decode = Schema.decodeUnknownSync(
       Schema.Struct({
         resourceSpans: Schema.Array(
@@ -151,12 +161,15 @@ describe("gateway HTTP boundary", () => {
         ),
       }),
     );
+
     const spans = payloads.flatMap((payload) =>
       decode(payload).resourceSpans.flatMap((resource) =>
         resource.scopeSpans.flatMap((scope) => scope.spans),
       ),
     );
+
     expect(spans).toHaveLength(4);
+
     for (const span of spans) {
       expect(span).toMatchObject({
         traceId: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
@@ -168,6 +181,7 @@ describe("gateway HTTP boundary", () => {
         value: { stringValue: "/ws" },
       });
     }
+
     expect(
       spans.map(
         (span) =>
@@ -191,6 +205,7 @@ describe("gateway HTTP boundary", () => {
       "http.response.status_code": "500",
       "http.route": "/ws",
     });
+
     const before = await Effect.runPromise(Metric.value(counter));
     const failure = new Error("Upgrade unavailable");
     await expect(
@@ -218,6 +233,7 @@ describe("gateway HTTP boundary", () => {
       new Request("https://gateway.example/healthz"),
       server,
     );
+
     expect(response?.status).toBe(200);
     expect(await response?.json()).toEqual({ status: "ok" });
   });
@@ -227,6 +243,7 @@ describe("gateway HTTP boundary", () => {
       new Request("https://gateway.example/ws?ticket=secret"),
       server,
     );
+
     expect(response?.status).toBe(400);
   });
 
@@ -235,15 +252,18 @@ describe("gateway HTTP boundary", () => {
     { origin: "https://attacker.example", status: 403 },
   ])("rejects unauthorized upgrades: %j", async ({ origin, status }) => {
     let upgraded = false;
+
     const response = await createGatewayFetch(application)(
       new Request("https://gateway.example/ws", { headers: { origin } }),
       {
         upgrade: () => {
           upgraded = true;
+
           return true;
         },
       },
     );
+
     expect(response?.status).toBe(status);
     expect(upgraded).toBe(false);
   });
@@ -265,11 +285,13 @@ describe("gateway HTTP boundary", () => {
             };
           }
         | undefined;
+
       const authenticated = {
         config: { websocketPath: "/ws", environment: "test" },
         runPromise: Effect.runPromise,
         auth,
       };
+
       const request = new Request("https://gateway.example/ws", {
         headers: {
           origin: "https://classic.margonem.pl",
@@ -278,12 +300,15 @@ describe("gateway HTTP boundary", () => {
           "sec-websocket-protocol": `lootlog.realtime.v1${supportsFeed ? ", lootlog.feed.v1" : ""}${supportsNotificationVolunteer ? ", lootlog.notification-volunteer.v1" : ""}`,
         },
       });
+
       const response = await createGatewayFetch(authenticated)(request, {
         upgrade: (_request, options) => {
           upgradeOptions = options;
+
           return true;
         },
       });
+
       expect(response).toBeUndefined();
       expect(upgradeOptions?.data).toMatchObject({
         userId: "user-1",
@@ -306,11 +331,13 @@ describe("gateway HTTP boundary", () => {
           readonly headers?: HeadersInit;
         }
       | undefined;
+
     const authenticated = {
       config: { websocketPath: "/ws", environment: "local" },
       runPromise: Effect.runPromise,
       auth,
     };
+
     const request = new Request("https://gateway.example/ws", {
       headers: {
         origin: "https://classic.margonem.pl",
@@ -322,6 +349,7 @@ describe("gateway HTTP boundary", () => {
     await createGatewayFetch(authenticated)(request, {
       upgrade: (_request, options) => {
         upgradeOptions = options;
+
         return true;
       },
     });
@@ -338,7 +366,9 @@ test("server API key upgrades allow absent Origin while preserving session and a
     authUrl: "http://auth.internal",
     apiKeyStatusSecret: Redacted.make("test"),
   });
+
   const fetch = createGatewayFetch({ ...application, auth: keyAuth });
+
   const headers = {
     "x-auth-user-id": "u",
     "x-auth-discord-id": "d",
@@ -350,6 +380,7 @@ test("server API key upgrades allow absent Origin while preserving session and a
       expiresAt: null,
     }),
   };
+
   let upgraded = false;
   expect(
     await fetch(new Request("https://gateway.example/ws", { headers }), {
@@ -358,6 +389,7 @@ test("server API key upgrades allow absent Origin while preserving session and a
         expect(options.data.platform).toBe("web-app");
         expect(options.data.apiKeyAccess?.organizationIds).toEqual(["123"]);
         expect(options.data.supportsNotificationVolunteer).toBe(false);
+
         return true;
       },
     }),

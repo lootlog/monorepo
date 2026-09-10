@@ -5,26 +5,42 @@ import assert from "node:assert/strict";
 const { chromium } = await import(
   process.env.PLAYWRIGHT_MODULE ?? "playwright"
 );
+
 const browser = await chromium.launch({
   headless: true,
   channel: process.env.BROWSER_CHANNEL ?? "chrome",
 });
+
 const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+
 const base = process.env.PORTAL_URL ?? "http://localhost/developer";
+
 await page.context().grantPermissions(["clipboard-read", "clipboard-write"], {
   origin: new URL(base).origin,
 });
+
 const secret = "ll_test_secret_only_used_in_browser_regression";
+
 let keys = [];
+
 const createdRequests = [];
+
 let deletionAttempts = 0;
+
 let signedOut = false;
+
 let creationDisabled = true;
+
 let signInRequest;
+
 let failListRead = false;
+
 let listReads = 0;
+
 let renameAttempts = 0;
+
 let noOrganizations = false;
+
 const createdAt = new Date().toISOString();
 
 await page.route("**/api/**", async (route) => {
@@ -32,6 +48,7 @@ await page.route("**/api/**", async (route) => {
   const path = new URL(request.url()).pathname;
   let body;
   let status = 200;
+
   if (path.endsWith("/idp/sign-in/social")) {
     signInRequest = request.postDataJSON();
     status = 400;
@@ -78,10 +95,13 @@ await page.route("**/api/**", async (route) => {
         contentType: "application/json",
         body: JSON.stringify({ message: "API keys are disabled" }),
       });
+
       return;
     }
+
     const data = request.postDataJSON();
     createdRequests.push(data);
+
     const key = {
       id: `key-${createdRequests.length}`,
       start: "ll_test",
@@ -92,6 +112,7 @@ await page.route("**/api/**", async (route) => {
       organizationIds: data.organizationIds,
       personalData: data.personalData,
     };
+
     keys.push(key);
     body = { ...key, key: secret };
   } else if (path.includes("/auth/api-keys/") && request.method() === "PATCH") {
@@ -104,12 +125,14 @@ await page.route("**/api/**", async (route) => {
   ) {
     deletionAttempts++;
     status = deletionAttempts === 1 ? 500 : 200;
+
     if (status === 200) keys = [];
     body = {};
   } else {
     await route.abort();
     throw new Error(`Unexpected API request: ${request.method()} ${path}`);
   }
+
   await route.fulfill({
     status,
     contentType: "application/json",
@@ -134,12 +157,14 @@ async function retryListOnly() {
     0,
     "Stale rows must be hidden",
   );
+
   const before = {
     created: createdRequests.length,
     renamed: renameAttempts,
     deleted: deletionAttempts,
     reads: listReads,
   };
+
   failListRead = false;
   await page.getByRole("button", { name: "Refresh list", exact: true }).click();
   await page
@@ -175,10 +200,12 @@ try {
     .getByRole("alert")
     .filter({ hasText: "Select an Organization" })
     .waitFor();
+
   const scope = page.getByRole("checkbox", {
     name: "Test Organization",
     exact: true,
   });
+
   await page.waitForFunction(
     () =>
       document.activeElement?.getAttribute("aria-describedby") ===
@@ -291,10 +318,12 @@ try {
   await page
     .getByRole("button", { name: "Delete key: Renamed integration" })
     .click();
+
   const dialog = page.getByRole("alertdialog", {
     name: "Delete “Renamed integration”?",
     exact: true,
   });
+
   await dialog.getByRole("button", { name: "Delete key", exact: true }).click();
   await dialog.getByText(/The operation failed/).waitFor();
   assert.equal(deletionAttempts, 1);
@@ -314,11 +343,13 @@ try {
   await page.getByRole("button", { name: "Create key", exact: true }).click();
   const createPanel = page.getByRole("dialog");
   assert.ok(await createPanel.isVisible());
+
   const assertMobileFormFitsViewport = async (width) => {
     await page.setViewportSize({ width, height: 844 });
     await page.waitForFunction(() => {
       const panel = document.querySelector('[role="dialog"]');
       const bounds = panel?.getBoundingClientRect();
+
       return bounds && bounds.left >= 0 && bounds.right <= window.innerWidth;
     });
     const panelBounds = await createPanel.boundingBox();
@@ -329,6 +360,7 @@ try {
       `Mobile form stays within ${width}px viewport`,
     );
   };
+
   await assertMobileFormFitsViewport(320);
   await assertMobileFormFitsViewport(390);
   await page.locator("#key-name").fill("Personal integration");
@@ -337,10 +369,12 @@ try {
     .getByRole("button", { name: "Create key", exact: true })
     .click();
   await page.locator("#key-scope-error").waitFor();
+
   const personalScope = page.getByRole("checkbox", {
     name: "Access to my data",
     exact: true,
   });
+
   await page.waitForFunction(
     () =>
       document.activeElement?.getAttribute("aria-describedby") ===

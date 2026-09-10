@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNpcDetectorClock } from "./use-npc-detector-clock";
 
 export const NPC_NOTIFICATION_COOLDOWN_MS = 5000;
+
 export const NPC_DETECTION_ANIMATION_DURATION_MS = 1050;
 
 type UseNpcListLifecycleOptions = {
@@ -29,24 +30,32 @@ export const useNpcListLifecycle = ({
   const detectionDeadlineByNpcIdRef = useRef(
     new Map<number, DetectionAnimationDeadline>(),
   );
+
   const hasNotificationCooldown = npcs.some((npc) => npc.notificationSent);
+
   const hasDetectionAnimation =
     Object.keys(activeDetectionAnimations).length > 0;
+
   const currentTimeMs = useNpcDetectorClock(
     hasNotificationCooldown || hasDetectionAnimation,
   );
+
   const notificationNpcSignature = npcs
     .flatMap((npc) => (npc.notificationSent ? [npc.id] : []))
     .join(":");
+
   const [notificationDeadlineState, setNotificationDeadlineState] = useState(
     () => ({
       deadlines: new Map<number, number>(),
       signature: "",
     }),
   );
+
   let notificationDeadlineByNpcId = notificationDeadlineState.deadlines;
+
   if (notificationDeadlineState.signature !== notificationNpcSignature) {
     const nextDeadlines = new Map<number, number>();
+
     for (const npc of npcs) {
       if (!npc.notificationSent) continue;
       nextDeadlines.set(
@@ -55,6 +64,7 @@ export const useNpcListLifecycle = ({
           currentTimeMs + NPC_NOTIFICATION_COOLDOWN_MS,
       );
     }
+
     notificationDeadlineByNpcId = nextDeadlines;
     setNotificationDeadlineState({
       deadlines: nextDeadlines,

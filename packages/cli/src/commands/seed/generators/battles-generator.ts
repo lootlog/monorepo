@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
+
 const __dirname = path.dirname(__filename);
 
 const WarriorSnapshot = Schema.Struct({
@@ -15,6 +16,7 @@ const WarriorSnapshot = Schema.Struct({
   icon: Schema.String,
   team: Schema.Number,
 });
+
 const SampleBattle = Schema.Struct({
   accountId: Schema.String,
   characterId: Schema.String,
@@ -61,6 +63,7 @@ const SampleBattle = Schema.Struct({
     ),
   ),
 });
+
 export const parseSampleBattle = Schema.decodeUnknownSync(
   Schema.fromJsonString(SampleBattle),
   { onExcessProperty: "preserve" },
@@ -74,6 +77,7 @@ export class BattlesGenerator {
       __dirname,
       "../../../../../../example-data/sample-battlelog-payload.json",
     );
+
     const sampleData = await readFile(samplePath, "utf-8");
     this.samplePayload = parseSampleBattle(sampleData);
   }

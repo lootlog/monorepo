@@ -56,6 +56,7 @@ const discordHttpStatusPattern = /^DISCORD_HTTP_\d+$/;
 
 const normalizeDiscordStatus = (status: string | null | undefined) => {
   const normalizedStatus = status?.trim();
+
   return normalizedStatus ? normalizedStatus : null;
 };
 
@@ -101,6 +102,7 @@ export const getMemberDiscordSyncPresentation = (
   }
 
   const blockingCopyKey = blockingStatusCopyKeys.get(status);
+
   if (blockingCopyKey) {
     return {
       copyKey: blockingCopyKey,
@@ -111,6 +113,7 @@ export const getMemberDiscordSyncPresentation = (
   }
 
   const transientCopyKey = transientStatusCopyKeys.get(status);
+
   if (transientCopyKey) {
     return {
       copyKey: transientCopyKey,

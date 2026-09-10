@@ -8,6 +8,7 @@ import type {
   UpdateTimerSettingsPayload,
   CustomTimerColor,
 } from "@lootlog/schema/timer-settings";
+
 const syncGlobal = vi.fn<(payload: UpdateTimerSettingsPayload) => void>();
 
 import { NpcType } from "@/api/npcs.api";
@@ -113,6 +114,7 @@ describe("timers.store", () => {
       countdownMode: "min" as const,
       compactView: true,
     };
+
     const nextDisplayConfig = {
       showType: false,
       showLevel: true,

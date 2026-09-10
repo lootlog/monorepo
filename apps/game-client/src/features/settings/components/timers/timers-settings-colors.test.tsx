@@ -24,6 +24,7 @@ describe("TimersSettingsColors", () => {
     const colorTrigger = screen.getAllByRole("button", {
       name: /Edytuj kolor/i,
     })[0];
+
     expect(colorTrigger).toHaveClass(
       "ll:appearance-none",
       "ll:border-0",

@@ -15,8 +15,11 @@ import {
 export const MessageType = SendMessageDtoType;
 
 export type MessageType = (typeof MessageType)[keyof typeof MessageType];
+
 export type ChatCharacterData = SendMessageDtoCharacterData;
+
 export type ChatNpc = SendMessageDtoNpc;
+
 export type ChatMessage = ChatMessageResponseDtoOutput;
 
 export type SendChatMessageOptions = {
@@ -56,6 +59,7 @@ export async function sendChatMessage({
   const results = await Promise.allSettled(
     guildIds.map(async (guildId) => {
       const endpoint = `/guilds/${guildId}/chat-messages`;
+
       const payload = {
         message,
         type,
@@ -78,6 +82,7 @@ export async function sendChatMessage({
   const successCount = results.filter(
     (result) => result.status === "fulfilled",
   ).length;
+
   const failureCount = results.length - successCount;
 
   action.complete({

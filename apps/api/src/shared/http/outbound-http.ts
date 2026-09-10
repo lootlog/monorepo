@@ -1,5 +1,5 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { Effect, Schema } from "effect";
+import { Cause, Effect, Schema } from "effect";
 import { HttpBody } from "effect/unstable/http";
 import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
 
@@ -35,9 +35,11 @@ export const outboundHttpRequest = (
   request: OutboundHttpRequest,
 ): Effect.Effect<OutboundHttpResponse, OutboundHttpFailure> => {
   let retryCount = 0;
+
   const attempt = Effect.suspend(() => {
     const currentRetryCount = retryCount;
     retryCount += 1;
+
     const execute =
       request.method === "GET"
         ? httpClient.get(request.url.toString(), { headers: request.headers })
@@ -51,12 +53,13 @@ export const outboundHttpRequest = (
                   ),
             headers: request.headers,
           });
+
     return execute.pipe(
       Effect.timeout(request.timeout),
       Effect.mapError(
         (error) =>
           new OutboundHttpFailure({
-            reason: error._tag === "TimeoutError" ? "timeout" : "transport",
+            reason: Cause.isTimeoutError(error) ? "timeout" : "transport",
             retryable: request.method === "GET",
           }),
       ),
@@ -90,6 +93,7 @@ export const outboundHttpRequest = (
       }),
     );
   });
+
   return attempt.pipe(
     Effect.retry({
       times: request.retryTimes,

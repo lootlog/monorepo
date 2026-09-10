@@ -30,9 +30,11 @@ export const useMatchingLoots = ({
     }
 
     const killDate = new Date(killedAt);
+
     const min = new Date(
       killDate.getTime() - MATCHING_LOOTS_TIME_WINDOW_MS,
     ).toISOString();
+
     const max = new Date(
       killDate.getTime() + MATCHING_LOOTS_TIME_WINDOW_MS,
     ).toISOString();

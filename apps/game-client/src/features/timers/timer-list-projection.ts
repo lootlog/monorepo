@@ -126,6 +126,7 @@ const mergeTimers = (timers: Timer[]): TimerWithTimeLeft[] => {
       getTimerActorCharactersByMemberId(timer),
     );
     existingGroup.mergedGuildIds.push(getMergedGuildEntry(timer));
+
     if (maxSpawnTimeMs > existingGroup.maxSpawnTimeMs) {
       existingGroup.baseTimer = timer;
       existingGroup.maxSpawnTimeMs = maxSpawnTimeMs;
@@ -165,6 +166,7 @@ const filterExpiredTimers = (
     const alwaysVisibleTimerKeys = alwaysVisibleTimerKeysByWorld.get(
       timer.world,
     );
+
     if (!isManualTimer(timer) && alwaysVisibleTimerKeys?.has(timer.timerKey)) {
       return true;
     }
@@ -186,15 +188,18 @@ const filterTimers = (
 
   return timers.filter((timer) => {
     if (!context.isGrouping && timer.guildId !== context.guildId) return false;
+
     if (!filters.showHiddenTimers && hiddenTimerNames.has(timer.npc.name)) {
       return false;
     }
+
     if (
       normalizedSearchText &&
       !timer.npc.name.toLowerCase().includes(normalizedSearchText)
     ) {
       return false;
     }
+
     if (
       !selectedNpcTypes.has(timer.npc.type) &&
       timer.npc.lvl !== 0 &&
@@ -202,17 +207,20 @@ const filterTimers = (
     ) {
       return false;
     }
+
     if (
       timer.npc.lvl !== 0 &&
       (timer.npc.lvl < filters.minLvl || timer.npc.lvl > filters.maxLvl)
     ) {
       return false;
     }
+
     if (!preferences.colorFiltersEnabled || selectedColors.size === 0) {
       return true;
     }
 
     const timerColor = preferences.timersColors[timer.npc.name] ?? "white";
+
     return selectedColors.has(timerColor);
   });
 };
@@ -223,6 +231,7 @@ const sortTimers = (
 ): TimerWithTimeLeft[] => {
   const pinnedTimerNames = new Set(preferences.pinnedTimers);
   const spawnTimeByTimer = new Map<TimerWithTimeLeft, number>();
+
   for (const timer of timers) {
     spawnTimeByTimer.set(
       timer,
@@ -237,11 +246,14 @@ const sortTimers = (
     (firstTimer: TimerWithTimeLeft, secondTimer: TimerWithTimeLeft) => {
       const firstPinned = pinnedTimerNames.has(firstTimer.npc.name);
       const secondPinned = pinnedTimerNames.has(secondTimer.npc.name);
+
       if (firstPinned && !secondPinned) return -1;
+
       if (!firstPinned && secondPinned) return 1;
 
       const firstTime = spawnTimeByTimer.get(firstTimer);
       const secondTime = spawnTimeByTimer.get(secondTimer);
+
       if (firstTime === undefined || secondTime === undefined) return 0;
 
       return order === "asc" ? firstTime - secondTime : secondTime - firstTime;
@@ -250,6 +262,7 @@ const sortTimers = (
   const activeTimers: TimerWithTimeLeft[] = [];
   const expiredTimers: TimerWithTimeLeft[] = [];
   const expiredAtBottomThreshold = -preferences.removeTimerAfterMs;
+
   for (const timer of timers) {
     if (timer.maxTimeLeft <= expiredAtBottomThreshold) {
       expiredTimers.push(timer);
@@ -259,6 +272,7 @@ const sortTimers = (
   }
 
   const expiredSortOrder = preferences.sortOrder === "asc" ? "desc" : "asc";
+
   return [
     ...activeTimers.sort(sortByPinnedAndTime(preferences.sortOrder)),
     ...expiredTimers.sort(sortByPinnedAndTime(expiredSortOrder)),
@@ -267,6 +281,7 @@ const sortTimers = (
 
 const hasCustomNpcTypes = (selectedNpcTypes: NpcType[]): boolean => {
   const defaultNpcTypes = new Set(DEFAULT_TIMERS_FILTERS.selectedNpcTypes);
+
   return (
     selectedNpcTypes.length !== defaultNpcTypes.size ||
     !selectedNpcTypes.every((npcType) => defaultNpcTypes.has(npcType))
@@ -278,12 +293,14 @@ const areTimerFiltersActive = (
   hiddenTimersCount: number,
 ): boolean => {
   if (filters.searchText || hiddenTimersCount > 0) return true;
+
   if (
     filters.minLvl !== DEFAULT_TIMERS_FILTERS.minLvl ||
     filters.maxLvl !== DEFAULT_TIMERS_FILTERS.maxLvl
   ) {
     return true;
   }
+
   if (hasCustomNpcTypes(filters.selectedNpcTypes)) return true;
 
   return filters.selectedColors.length > 0;
@@ -314,6 +331,7 @@ const calculateColorStatistics = (
       total: 0,
     };
   }
+
   for (const color of Object.values(preferences.customColors)) {
     statistics[color.id] = {
       active: 0,
@@ -323,11 +341,14 @@ const calculateColorStatistics = (
       total: 0,
     };
   }
+
   for (const color of Object.values(preferences.timersColors)) {
     if (color && statistics[color]) statistics[color].total++;
   }
+
   for (const timer of timers) {
     const color = preferences.timersColors[timer.npc.name];
+
     if (color && statistics[color]) statistics[color].active++;
   }
 
@@ -340,6 +361,7 @@ const getDeduplicatedTimers = (timers: Timer[], isGrouping: boolean) => {
   if (isGrouping) return timers;
 
   const timersByCompositeKey = new Map<string, Timer>();
+
   for (const timer of timers) {
     timersByCompositeKey.set(
       `${timer.guildId}_${timer.world}_${timer.timerKey}`,
@@ -384,11 +406,13 @@ export const projectTimerList = ({
     timers,
     context.isGrouping,
   );
+
   const activeTimers = filterExpiredTimers(
     calculateTimerTimes(normalizedTimers, epoch),
     preferences.removeTimerAfterMs,
     preferences.alwaysVisibleExpiredTimers,
   );
+
   const sortedTimers = sortTimers(
     filterTimers(activeTimers, context, filters, preferences),
     preferences,

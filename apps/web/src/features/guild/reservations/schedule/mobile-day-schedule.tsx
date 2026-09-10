@@ -59,6 +59,7 @@ export function MobileDaySchedule({
     onReservationCancel,
     cancellingReservationId,
   });
+
   return (
     <div
       ref={swipeSurfaceRef}
@@ -115,8 +116,10 @@ export function MobileDaySchedule({
                   if (contextMenuOpenRef.current) {
                     suppressClickRef.current = true;
                     updateSelection(null);
+
                     return;
                   }
+
                   if (
                     suppressClickRef.current ||
                     event.pointerType === "touch" ||
@@ -125,11 +128,13 @@ export function MobileDaySchedule({
                   ) {
                     return;
                   }
+
                   const minutes = getMinutesFromClientY(
                     event.currentTarget,
                     event.clientY,
                     minuteStep,
                   );
+
                   if (
                     minutes === null ||
                     !isReservationStartSelectable(
@@ -138,6 +143,7 @@ export function MobileDaySchedule({
                   ) {
                     return;
                   }
+
                   event.currentTarget.setPointerCapture?.(event.pointerId);
                   suppressClickRef.current = true;
                   updateSelection({
@@ -150,12 +156,15 @@ export function MobileDaySchedule({
                 onPointerMove={(event) => {
                   if (event.pointerType === "touch") return;
                   const activeSelection = selectionRef.current;
+
                   if (activeSelection?.input !== "mouse") return;
+
                   const minutes = getMinutesFromClientY(
                     event.currentTarget,
                     event.clientY,
                     minuteStep,
                   );
+
                   if (minutes === null) return;
                   updateSelection({
                     ...activeSelection,
@@ -220,6 +229,7 @@ export function MobileDaySchedule({
 
                 {daySegments.map((segment) => {
                   const laneFraction = segment.lane / segment.laneCount;
+
                   return (
                     <ReservationBlock
                       key={segment.id}
@@ -227,8 +237,10 @@ export function MobileDaySchedule({
                       onSelect={() => {
                         if (suppressClickRef.current) {
                           suppressClickRef.current = false;
+
                           return;
                         }
+
                         onReservationSelect(segment.reservation.id);
                       }}
                       onCancel={
@@ -245,10 +257,12 @@ export function MobileDaySchedule({
                       }
                       onContextMenuOpenChange={(open) => {
                         contextMenuOpenRef.current = open;
+
                         if (open) resetSwipePosition(swipeX);
                       }}
                       onContextMenuOutsidePress={(event) => {
                         const grid = gridRef.current;
+
                         if (!grid || !isEventInsideElement(event, grid)) return;
                         suppressClickRef.current = true;
                         touchSessionRef.current = null;

@@ -24,19 +24,23 @@ class GatewayWebSocket extends EventTarget {
   send(data: string | Uint8Array) {
     const json = this.protocols.includes("lootlog.realtime.json.v1");
     expect(data).toEqual(json ? expect.any(String) : expect.any(Uint8Array));
+
     const request =
       data instanceof Uint8Array
         ? decodeRealtimeFrame(data)
         : parseRealtimeFrame(JSON.parse(data));
+
     if (!("requestId" in request) || !request.requestId) {
       throw new Error("Expected a realtime request");
     }
+
     const reply = {
       v: 1,
       requestId: request.requestId,
       status: "success",
       data: {},
     } as const;
+
     const event = {
       v: 1,
       type: "session.joined",
@@ -46,6 +50,7 @@ class GatewayWebSocket extends EventTarget {
         subscriptionScopes: [],
       },
     } as const;
+
     for (const frame of [reply, event]) {
       this.dispatchEvent(
         new MessageEvent("message", {
@@ -76,19 +81,23 @@ it.each([
   vi.stubEnv("MODE", mode);
   vi.stubEnv("VITE_GATEWAY_FRAME_ENCODING", encoding);
   vi.stubGlobal("WebSocket", GatewayWebSocket);
+
   const restore = configureApiClients({
     auth: {
       baseUrl: "http://auth.test",
       fetch: async () => Response.json({ ticket: "test-ticket", expiresAt: 1 }),
     },
   });
+
   const client = new GatewayClient();
   const joined = vi.fn();
   client.on(GatewayEvent.JOIN, joined);
+
   try {
     client.connect();
     await vi.waitFor(() => expect(GatewayWebSocket.instances).toHaveLength(1));
     const socket = GatewayWebSocket.instances[0];
+
     if (!socket) throw new Error("WebSocket was not created");
     expect(socket.protocols).toContain(protocol);
     socket.readyState = 1;

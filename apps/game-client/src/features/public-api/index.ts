@@ -22,6 +22,7 @@ declare global {
 
 export function bootstrapPublicApi(queryClient: QueryClient): () => void {
   const emitter = new Emitter<ApiEventMap>();
+
   const onlinePlayersController = new PublicOnlinePlayersController({
     publish: (event) => emitter.emit("online-players:changed", event),
   });
@@ -31,6 +32,7 @@ export function bootstrapPublicApi(queryClient: QueryClient): () => void {
     emitter,
     onlinePlayersController,
   );
+
   const listenerCounts = new Map<ApiEventName, number>();
 
   const api: LootlogGameClientApi = Object.freeze({
@@ -44,14 +46,17 @@ export function bootstrapPublicApi(queryClient: QueryClient): () => void {
       const data = queryClient.getQueryData<GuildResponseDtoOutput[]>(
         queryKeys.guilds(),
       );
+
       return mapGuilds(data);
     },
 
     getTimers(options?: { world?: string }) {
       if (!options?.world) return undefined;
+
       const data = queryClient.getQueryData<Timer[]>(
         queryKeys.timers(options.world),
       );
+
       return mapTimers(data);
     },
 
@@ -62,6 +67,7 @@ export function bootstrapPublicApi(queryClient: QueryClient): () => void {
     getSocketState(): PublicSocketState {
       const { connected, joined, joinedGuilds } =
         useGlobalStore.getState().socketState;
+
       return {
         connected,
         joined,
@@ -74,13 +80,16 @@ export function bootstrapPublicApi(queryClient: QueryClient): () => void {
       listener: (payload: ApiEventMap[E]) => void,
     ): () => void {
       const listenerCount = listenerCounts.get(eventName) ?? 0;
+
       if (listenerCount === 0) {
         subscriptions.activate(eventName);
       }
+
       listenerCounts.set(eventName, listenerCount + 1);
 
       const unsubscribeEmitter = emitter.on(eventName, listener);
       let active = true;
+
       return () => {
         if (!active) {
           return;
@@ -89,11 +98,14 @@ export function bootstrapPublicApi(queryClient: QueryClient): () => void {
         active = false;
         unsubscribeEmitter();
         const nextListenerCount = (listenerCounts.get(eventName) ?? 1) - 1;
+
         if (nextListenerCount === 0) {
           listenerCounts.delete(eventName);
           subscriptions.deactivate(eventName);
+
           return;
         }
+
         listenerCounts.set(eventName, nextListenerCount);
       };
     },

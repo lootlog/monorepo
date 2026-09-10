@@ -18,6 +18,7 @@ type SegmentRange = {
 
 export function DocsChapterRail({ activeChapterId }: DocsChapterRailProps) {
   const railRef = useRef<HTMLDivElement>(null);
+
   const [segmentRanges, setSegmentRanges] = useState<SegmentRange[] | null>(
     null,
   );
@@ -34,22 +35,26 @@ export function DocsChapterRail({ activeChapterId }: DocsChapterRailProps) {
       const sectionHeadings = Array.from(
         articleContent.querySelectorAll<HTMLElement>(".docs-body h2"),
       );
+
       const boundaryCount = docsChapters.length - 1;
 
       if (sectionHeadings.length < boundaryCount) {
         setSegmentRanges(null);
+
         return;
       }
 
       const articleRect = articleContent.getBoundingClientRect();
       const lastHeadingIndex = sectionHeadings.length - 1;
       const lastBoundaryIndex = boundaryCount - 1;
+
       const boundaries = Array.from(
         { length: boundaryCount },
         (_, boundaryIndex) => {
           const headingIndex = Math.round(
             (boundaryIndex * lastHeadingIndex) / lastBoundaryIndex,
           );
+
           const sectionHeading = sectionHeadings[headingIndex];
 
           if (!sectionHeading) return 0;
@@ -64,9 +69,11 @@ export function DocsChapterRail({ activeChapterId }: DocsChapterRailProps) {
           );
         },
       );
+
       const rangeStarts = [0, ...boundaries];
       const rangeEnds = [...boundaries, Math.round(articleRect.height)];
       const segmentGap = 5;
+
       const nextRanges = rangeStarts.map((top, index) => {
         const rangeEnd = rangeEnds[index] ?? top;
 
@@ -102,6 +109,7 @@ export function DocsChapterRail({ activeChapterId }: DocsChapterRailProps) {
       cancelAnimationFrame(animationFrameId);
       animationFrameId = requestAnimationFrame(measureSegments);
     };
+
     const resizeObserver = new ResizeObserver(scheduleMeasurement);
 
     resizeObserver.observe(articleContent);
@@ -124,6 +132,7 @@ export function DocsChapterRail({ activeChapterId }: DocsChapterRailProps) {
     >
       {docsChapters.map((chapter, index) => {
         const range = segmentRanges?.[index];
+
         const style: SegmentStyle = {
           "--segment-color": chapter.color,
           "--segment-height": range ? `${range.height}px` : undefined,

@@ -57,15 +57,19 @@ export function ReservationDetails({
   const { t } = useTranslation();
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
+
   const [lastReservation, setLastReservation] =
     useState<NormalizedReservation | null>(reservation);
+
   const displayedReservation = reservation ?? lastReservation;
+
   const organizationIconUrl = useReservationOrganizationIcon(
     displayedReservation?.sourceOrganization ?? {
       calendarPath: "",
       iconUrl: null,
     },
   );
+
   const deleteMutation = useDeleteReservation({
     mutation: {
       onSuccess: async () => {
@@ -88,12 +92,16 @@ export function ReservationDetails({
       <Dialog open={false} onOpenChange={onOpenChange} />
     );
   }
+
   const fallback =
     displayedReservation.author.displayName.charAt(0).toUpperCase() || "?";
+
   const title = t("reservations.details.title");
+
   const description = t("reservations.details.description", {
     spot: displayedReservation.spotName,
   });
+
   const content = (
     <div className="space-y-4 px-4 pb-4">
       <div className="flex min-w-0 items-center gap-3">
@@ -160,6 +168,7 @@ export function ReservationDetails({
       </dl>
     </div>
   );
+
   const footer = (
     <footer className="flex flex-col-reverse gap-2 border-t px-4 py-3 sm:flex-row sm:justify-end">
       <Button

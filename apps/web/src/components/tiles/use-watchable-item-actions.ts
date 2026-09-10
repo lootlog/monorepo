@@ -34,16 +34,21 @@ const getWatchableItemState = ({
   isItemWatchedInScope: (itemId: number, scope: WatchedItemScope) => boolean;
 }) => {
   const effectiveGuildId = watchContext.guildId || currentGuildId || "";
+
   const effectiveWatchContext = {
     guildId: effectiveGuildId,
     world: watchContext.world,
   };
+
   const isReady = state === "ready";
+
   const isWatched =
     isReady &&
     effectiveGuildId.length > 0 &&
     isItemWatchedInScope(itemId, effectiveWatchContext);
+
   const wouldCreate = isReady && !hasWatchedItem(itemId, watchContext.world);
+
   const limitReached =
     isReady && watchedItemsCount >= USER_WATCHED_ITEMS_LIMIT && wouldCreate;
 
@@ -70,6 +75,7 @@ export function useWatchableItemActions(
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const currentGuildId = useGuildId();
+
   const {
     state,
     hasActiveDm,
@@ -80,6 +86,7 @@ export function useWatchableItemActions(
     isItemWatchedInScope,
     getWatchedItemId,
   } = useGuildWatchedItems();
+
   const deleteWatchedItem = useNotificationsUserControllerDeleteWatchedItem({
     mutation: {
       onSuccess: async () => {
@@ -87,7 +94,9 @@ export function useWatchableItemActions(
       },
     },
   });
+
   const isRemovePending = deleteWatchedItem.isPending;
+
   const {
     effectiveGuildId,
     effectiveWatchContext,
@@ -108,6 +117,7 @@ export function useWatchableItemActions(
     watchContext,
     watchedItemsCount,
   });
+
   const formattedItemHid = formatItemHid(item.hid, watchContext.world);
 
   const openNotifications = () => {
@@ -142,6 +152,7 @@ export function useWatchableItemActions(
 
   const handleRemove = async () => {
     const watchedItemId = getWatchedItemId(item.id, effectiveWatchContext);
+
     if (!watchedItemId) return;
 
     const loadingToastId = toast.loading(
@@ -172,8 +183,10 @@ export function useWatchableItemActions(
 
   const handleQuickAdd = async () => {
     if (isQuickAddPending || isAddingThisItem) return;
+
     if (!effectiveGuildId) {
       toast.error(t("settings.userNotifications.quickAdd.scopeUnavailable"));
+
       return;
     }
 
@@ -183,12 +196,14 @@ export function useWatchableItemActions(
           limit: USER_WATCHED_ITEMS_LIMIT,
         }),
       );
+
       return;
     }
 
     const nextWatchedItemsCount = wouldCreateNewWatchedItem
       ? Math.min(watchedItemsCount + 1, USER_WATCHED_ITEMS_LIMIT)
       : watchedItemsCount;
+
     const loadingToastId = toast.loading(
       t("settings.userNotifications.quickAdd.toasts.adding", {
         itemName: item.name,

@@ -52,6 +52,7 @@ describe("timer settings Effect module", () => {
           ),
         ),
     };
+
     const service = makeTimerSettings(settingsDocumentsService);
 
     await expect(
@@ -67,6 +68,7 @@ describe("timer settings Effect module", () => {
 
   it("patches appearance and behavior atomically", async () => {
     const response = createResponse();
+
     const settingsDocumentsService = {
       parseDomains: () => {
         throw new Error("Unexpected domain parser");
@@ -74,6 +76,7 @@ describe("timer settings Effect module", () => {
       getPreferences: () => Effect.die("Unexpected preferences read"),
       patchPreferences: vi.fn(() => Effect.succeed(response)),
     };
+
     const service = makeTimerSettings(settingsDocumentsService);
 
     await Effect.runPromise(
@@ -118,6 +121,7 @@ describe("timer settings Effect module", () => {
           ),
         ),
     };
+
     const service = makeTimerSettings(settingsDocumentsService);
 
     await Effect.runPromise(

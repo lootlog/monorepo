@@ -22,6 +22,7 @@ import type {
 } from "@lootlog/domain/scoring";
 
 type ScoringFactor = EventScoringNumericFactor | EventScoringBooleanFactor;
+
 export const ScoringFactorSelect = ({
   value,
   onChange,
@@ -32,6 +33,7 @@ export const ScoringFactorSelect = ({
   factors: readonly ScoringFactor[];
 }) => {
   const { t } = useTranslation();
+
   return (
     <div className="flex items-center gap-1">
       <Select

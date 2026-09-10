@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 
 export const NotificationsSettingsTab = () => {
   const { t } = useTranslation(["settings", "common"]);
+
   const categories: NotificationCategoryTab[] = [
     { label: t("common:npcTypes.elite2"), key: NpcType.ELITE2 },
     { label: t("common:npcTypes.hero"), key: NpcType.HERO },

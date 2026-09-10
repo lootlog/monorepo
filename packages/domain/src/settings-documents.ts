@@ -46,6 +46,7 @@ export const getCharacterSettingsScopeId = (
 ) => `${gameAccountId}:${characterId}`;
 
 export type SettingsValueSource = "DEFAULT" | SettingsScope;
+
 export type SettingsPersistence = "SERVER_DOCUMENT" | "DEVICE";
 
 // Values arrive from versioned storage and are validated per catalog field before use.
@@ -85,11 +86,16 @@ export interface SettingsDomainDefinition {
 }
 
 const isBoolean = Schema.is(Schema.Boolean);
+
 const isString = Schema.is(Schema.String);
+
 const isStringArray = Schema.is(Schema.Array(Schema.String));
+
 const isNpcTypeArray = Schema.is(Schema.Array(NpcTypeSchema));
+
 const isNumberInRange = (minimum: number, maximum: number) =>
   Schema.is(Schema.Finite.check(Schema.isBetween({ minimum, maximum })));
+
 const isOneOf = <TValue extends string>(values: readonly TValue[]) =>
   Schema.is(Schema.Literals(values));
 
@@ -105,8 +111,11 @@ const field = (
 });
 
 const userScopes = ["USER"] as const;
+
 const accountScopes = ["USER", "GAME_ACCOUNT"] as const;
+
 const characterScopes = ["USER", "GAME_ACCOUNT", "CHARACTER"] as const;
+
 const guildScopes = ["USER", "GUILD"] as const;
 
 export const SETTINGS_CATALOG = {
@@ -353,6 +362,7 @@ export const migrateSettingsDocument = (
   fromVersion: number,
 ) => {
   const definition = SETTINGS_CATALOG[domain];
+
   if (fromVersion > definition.schemaVersion) {
     throw new Error(
       `Unsupported future settings schema version: ${fromVersion}`,
@@ -361,10 +371,12 @@ export const migrateSettingsDocument = (
 
   let migratedOverrides = structuredClone(overrides);
   let currentVersion = fromVersion;
+
   while (currentVersion < definition.schemaVersion) {
     const migration = definition.migrations.find(
       (candidate) => candidate.fromVersion === currentVersion,
     );
+
     if (!migration) {
       throw new Error(
         `Missing ${domain} settings migration from version ${currentVersion}`,
@@ -379,6 +391,7 @@ export const migrateSettingsDocument = (
 };
 
 export const isSettingsDomain = Schema.is(Schema.Literals(SETTINGS_DOMAINS));
+
 export const isSettingsScopeType = Schema.is(
   Schema.Literals(SETTINGS_SCOPE_TYPES),
 );

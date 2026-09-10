@@ -42,6 +42,7 @@ const decodeNotificationFilters = Schema.decodeUnknownSync(
   NotificationFiltersSchema,
   { onExcessProperty: "preserve" },
 );
+
 export const parseNotificationFilters = (
   filtersValue: JsonValue,
 ): NotificationFilters =>
@@ -51,26 +52,34 @@ export const notificationMatchingPolicy = {
   parseFilters: parseNotificationFilters,
   matchesTimerRule: (filtersValue: JsonValue, npcId: number) => {
     const filters = parseNotificationFilters(filtersValue);
+
     if (filters.npcId && filters.npcId !== npcId) return false;
+
     if (filters.npcIds?.length && !filters.npcIds.includes(npcId)) return false;
+
     return true;
   },
   matchesLootRule: (filtersValue: JsonValue, event: LootCreatedEvent) => {
     const filters = parseNotificationFilters(filtersValue);
+
     if (filters.itemId && !event.itemIds.includes(filters.itemId)) return false;
+
     if (
       filters.itemIds?.length &&
       !filters.itemIds.some((itemId) => event.itemIds.includes(itemId))
     ) {
       return false;
     }
+
     if (filters.world && filters.world !== event.world) return false;
+
     if (
       filters.guildIds?.length &&
       !filters.guildIds.some((guildId) => event.guildIds.includes(guildId))
     ) {
       return false;
     }
+
     return true;
   },
   matchingLootGuildIds: (
@@ -78,6 +87,7 @@ export const notificationMatchingPolicy = {
     guildIds: ReadonlyArray<string>,
   ) => {
     const filters = parseNotificationFilters(filtersValue);
+
     return filters.guildIds?.length
       ? guildIds.filter((guildId) => filters.guildIds.includes(guildId))
       : [];
@@ -106,7 +116,9 @@ export const selectNotificationMemberships = Effect.fn(
   const uniqueOwnerIds = [...new Set(ownerIds)];
   const uniqueGuildIds = [...new Set(guildIds)];
   const result = new Map<string, NotificationMemberRoleInfo[]>();
+
   if (uniqueOwnerIds.length === 0 || uniqueGuildIds.length === 0) return result;
+
   const memberships = yield* database
     .select({ member: memberTable, guildOwnerId: guildTable.ownerId })
     .from(memberTable)
@@ -118,7 +130,9 @@ export const selectNotificationMemberships = Effect.fn(
         eq(memberTable.active, true),
       ),
     );
+
   const memberIds = memberships.map(({ member }) => member.id);
+
   const roleRows =
     memberIds.length === 0
       ? []
@@ -127,6 +141,7 @@ export const selectNotificationMemberships = Effect.fn(
           .from(memberToRoleTable)
           .innerJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
           .where(inArray(memberToRoleTable.A, memberIds));
+
   for (const { member, guildOwnerId } of memberships) {
     const values = result.get(member.userId) ?? [];
     values.push({
@@ -143,6 +158,7 @@ export const selectNotificationMemberships = Effect.fn(
     });
     result.set(member.userId, values);
   }
+
   return result;
 });
 

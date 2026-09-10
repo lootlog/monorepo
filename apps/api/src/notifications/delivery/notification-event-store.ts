@@ -25,7 +25,9 @@ export const makeNotificationEventStore = (database: ApiDatabaseValue) => {
           > & { metadata: JsonValue | null };
         }>
       >();
+
       if (ruleIds.length === 0) return result;
+
       const rows = yield* database
         .select({
           link: notificationRuleTargetTable,
@@ -37,6 +39,7 @@ export const makeNotificationEventStore = (database: ApiDatabaseValue) => {
           eq(notificationRuleTargetTable.targetId, notificationTargetTable.id),
         )
         .where(inArray(notificationRuleTargetTable.ruleId, ruleIds));
+
       for (const { link, target } of rows) {
         const entries = result.get(link.ruleId) ?? [];
         entries.push({
@@ -45,6 +48,7 @@ export const makeNotificationEventStore = (database: ApiDatabaseValue) => {
         });
         result.set(link.ruleId, entries);
       }
+
       return result;
     });
 
@@ -69,6 +73,7 @@ export const makeNotificationEventStore = (database: ApiDatabaseValue) => {
   const watchedItemsForLoot = (itemIds: ReadonlyArray<number>, world: string) =>
     Effect.gen(function* () {
       if (itemIds.length === 0) return [];
+
       const rows = yield* database
         .select({ watchedItem: watchedItemTable, rule: notificationRuleTable })
         .from(watchedItemTable)
@@ -86,7 +91,9 @@ export const makeNotificationEventStore = (database: ApiDatabaseValue) => {
             eq(notificationRuleTable.world, world),
           ),
         );
+
       const targets = yield* targetsByRuleIds(rows.map(({ rule }) => rule.id));
+
       return rows
         .filter(({ rule }) => (targets.get(rule.id)?.length ?? 0) > 0)
         .map(({ watchedItem, rule }) => ({

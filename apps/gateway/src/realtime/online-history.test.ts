@@ -6,6 +6,7 @@ import { OnlineHistory } from "./online-history.js";
 test("a Redis outage reports degraded health through Rabbit without flooding it", async () => {
   const events: UserOnlineEventV1[] = [];
   let now = Date.parse("2026-09-06T12:00:00Z");
+
   const history = new OnlineHistory(
     { eval: async () => Promise.reject(new Error("Redis unavailable")) },
     (event) =>

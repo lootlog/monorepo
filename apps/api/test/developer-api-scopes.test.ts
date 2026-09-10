@@ -173,10 +173,12 @@ it("keeps timer/feed sources scoped across concurrent keys and membership loss",
       })),
     ),
   );
+
   const run = <A, E>(operation: Effect.Effect<A, E>) =>
     Effect.map(Effect.orDie(operation), (value) =>
       HttpServerResponse.jsonUnsafe(value),
     );
+
   const routes = HttpApiBuilder.layer(api).pipe(
     Layer.provide(
       HttpApiBuilder.group(api, "scope", (handlers) =>
@@ -220,7 +222,9 @@ it("keeps timer/feed sources scoped across concurrent keys and membership loss",
     Layer.provideMerge(Layer.succeed(ApiDatabase, database)),
     Layer.provide(HttpServer.layerServices),
   );
+
   const boundary = HttpRouter.toWebHandler(routes, { disableLogger: true });
+
   const headersFor = (id: string) => ({
     "x-auth-user-id": "user",
     "x-auth-discord-id": "discord",
@@ -232,6 +236,7 @@ it("keeps timer/feed sources scoped across concurrent keys and membership loss",
       expiresAt: null,
     }),
   });
+
   const request = (path: string, id: string, method = "GET") =>
     boundary.handler(
       new Request(`https://api.test${path}`, {
@@ -239,6 +244,7 @@ it("keeps timer/feed sources scoped across concurrent keys and membership loss",
         headers: headersFor(id),
       }),
     );
+
   try {
     for (const id of ["123", "456", "123"]) {
       const timers = await request("/timers", id);
@@ -248,8 +254,10 @@ it("keeps timer/feed sources scoped across concurrent keys and membership loss",
       expect(feed.status).toBe(200);
       expect(await feed.json()).toMatchObject({ items: [{ guild: { id } }] });
     }
+
     expect((await request("/write", "123", "POST")).status).toBe(403);
     expect((await request("/personal", "123")).status).toBe(403);
+
     for (const path of [
       "/preferences",
       "/timer-settings",
@@ -271,10 +279,12 @@ it("keeps timer/feed sources scoped across concurrent keys and membership loss",
             },
           }),
         );
+
         expect(response.status).toBe(403);
         expect(await response.text()).not.toContain("guildsOrder");
       }
     }
+
     expect(
       (
         await boundary.handler(

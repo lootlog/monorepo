@@ -12,20 +12,26 @@ export function DebugRuntimeState() {
   const { t } = useTranslation();
   const partyMembers = usePartyStore((s) => s.members);
   const othersById = useOthersStore((s) => s.othersById);
+
   const tooltipActiveOther = useCharacterTooltipCatchingGuildsStore(
     (s) => s.activeOther,
   );
+
   const tooltipActiveTarget = useCharacterTooltipCatchingGuildsStore(
     (s) => s.activeTarget,
   );
+
   const tooltipEntriesByKey = useCharacterTooltipCatchingGuildsStore(
     (s) => s.entriesByKey,
   );
+
   const tooltipIsShiftPressed = useCharacterTooltipCatchingGuildsStore(
     (s) => s.isShiftPressed,
   );
+
   const zoomFactor = getRuntimeZoomFactor();
   const tooltipActiveOtherData = tooltipActiveOther?.d;
+
   const debugOthers = Object.entries(othersById).map(([storeId, other]) => {
     const handle = runtimeOtherHandles.get(storeId);
     const data = handle && "d" in handle ? handle.d : undefined;

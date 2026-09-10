@@ -30,8 +30,10 @@ export class AuthRedisStorage extends Context.Service<
       const redis = yield* Redis.Redis;
       const fibers = yield* FiberSet.make<unknown, unknown>();
       const runPromise = yield* FiberSet.runtimePromise(fibers)<never>();
+
       const run = <A>(effect: Effect.Effect<A, Redis.RedisError>) =>
         runPromise(effect);
+
       const logRedisWarning = (message: string, cause: unknown) => {
         void runPromise(
           Effect.logWarning(message).pipe(
@@ -41,6 +43,7 @@ export class AuthRedisStorage extends Context.Service<
           ),
         );
       };
+
       const storage: SecondaryStorage = {
         get: (key) => run(redis.send("GET", `${AUTH_REDIS_KEY_PREFIX}${key}`)),
         getAndDelete: (key) =>

@@ -25,9 +25,11 @@ export const ItemTile: FC<ItemTileProps> = ({
   shareNickname,
 }) => {
   const { t } = useTranslation();
+
   const typeLabels = item.type
     ? { [item.type]: t(`itemType.${item.type}`) }
     : {};
+
   const labels = {
     obtainedBy: t("loots.list.obtainedBy"),
     rarity: {

@@ -8,6 +8,7 @@ import type { DocsRepositoryService } from "./docs.repository.js";
 import { makeDocsService } from "./docs.service.js";
 
 const content = { root: { children: [], type: "root", version: 1 } };
+
 const document = {
   deletedAt: null,
   deletedByMemberId: null,
@@ -152,6 +153,7 @@ describe("docs service", () => {
 
   it("rejects missing document history and keeps list responses free of content", async () => {
     const repository = makeRepository();
+
     const history = {
       id: "history-1",
       documentId: "doc-1",
@@ -163,6 +165,7 @@ describe("docs service", () => {
       actorMemberId: "discord-1",
       editedAt: document.updatedAt,
     };
+
     repository.listHistory.mockReturnValue(Effect.succeed([history]));
     const service = makeDocsService(repository);
     await expect(

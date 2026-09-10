@@ -5,6 +5,7 @@ import {
   mapMemberWebPresenceByDiscordId,
 } from "./member-web-presence.utils";
 import { useMemberPresence } from "./use-member-presence";
+
 export const useMemberWebPresence = (guildId: string | undefined) =>
   useMemberPresence({
     applyUpdate: applyMemberWebPresenceUpdate,

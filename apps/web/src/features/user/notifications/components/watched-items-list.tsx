@@ -45,12 +45,14 @@ export const WatchedItemsList = ({
               const selectedGuildIdsForItem = getWatchedItemGuildIds(
                 watchedItem.notificationRule?.filters ?? null,
               );
+
               const guildLabels = selectedGuildIdsForItem
                 .map(
                   (guildId) =>
                     guilds.find((guild) => guild.id === guildId)?.name,
                 )
                 .filter((label): label is string => Boolean(label));
+
               const missingGuildIds = selectedGuildIdsForItem.filter(
                 (guildId) => !guilds.some((guild) => guild.id === guildId),
               );

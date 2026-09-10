@@ -8,6 +8,7 @@ export const useSoundSettingsPatchQueue = (
   delay = 300,
 ) => {
   const pendingPatchRef = useRef<UpdateSoundSettingsDto>({});
+
   const flush = useDebouncedCallback(() => {
     const payload = pendingPatchRef.current;
     pendingPatchRef.current = {};

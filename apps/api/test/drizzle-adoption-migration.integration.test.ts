@@ -5,6 +5,7 @@ it("normalizes legacy NULL arrays before enforcing the Drizzle schema", async ()
   const client = new Client({
     connectionString: process.env.POSTGRESQL_CONNECTION_URI,
   });
+
   await client.connect();
 
   try {
@@ -50,6 +51,7 @@ it("normalizes legacy NULL arrays before enforcing the Drizzle schema", async ()
         import.meta.url,
       ),
     ).text();
+
     await client.query(migration);
 
     const values = await client.query(`
@@ -61,6 +63,7 @@ it("normalizes legacy NULL arrays before enforcing the Drizzle schema", async ()
         (SELECT "hiddenTimers" FROM "UserGuildTimerSettings" WHERE "userId" = 'review-user') AS "hiddenTimers",
         (SELECT "guildsOrder" FROM "UserSettings" WHERE "userId" = 'review-user') AS "guildsOrder"
     `);
+
     expect(values.rows[0]).toEqual({
       channelGranted: [],
       syncMissing: [],
@@ -89,6 +92,7 @@ it("normalizes legacy NULL arrays before enforcing the Drizzle schema", async ()
           ('UserSettings', 'guildsOrder')
         )
     `);
+
     expect(nullableColumns.rows[0]?.count).toBe("0");
   } finally {
     await client.end();

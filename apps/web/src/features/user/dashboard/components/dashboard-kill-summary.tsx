@@ -47,15 +47,18 @@ export function DashboardKillSummary() {
   const { t } = useTranslation();
   const [period, setPeriod] = useState<KillStatsPeriod>("all");
   const [world, setWorld] = useState<string | null>(null);
+
   const lifetime = useKillsControllerGetUserKillStats(undefined, {
     query: { staleTime: 60_000 },
   });
+
   const filtered = useKillsControllerGetUserKillStats(
     { world: world ?? undefined, period },
     {
       query: { enabled: world !== null || period !== "all", staleTime: 60_000 },
     },
   );
+
   const query = world === null && period === "all" ? lifetime : filtered;
   const worlds = Object.keys(lifetime.data?.overview.killsByWorld ?? {});
   const total = query.data?.overview.totalKills ?? 0;
@@ -77,6 +80,7 @@ export function DashboardKillSummary() {
       </dd>
     </dl>
   );
+
   return (
     <SectionCard className="@container/kill-summary shrink-0">
       <SectionCardHeader
@@ -132,6 +136,7 @@ export function DashboardKillSummary() {
             <dl className="grid grid-cols-2 gap-3 @min-[600px]/kill-summary:grid-cols-4">
               {categories.map(({ key, icon: Icon, color, surface }) => {
                 const value = query.data?.overview.killsByType[key] ?? 0;
+
                 return (
                   <div
                     key={key}

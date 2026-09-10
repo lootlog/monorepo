@@ -42,6 +42,7 @@ export const makeJsonCodec = <S extends Schema.ConstraintDecoder<unknown>>(
   schema: S,
 ): JsonCodec<S["Type"]> => {
   const decodeValue = Schema.decodeUnknownSync(schema);
+
   return {
     stringify: (value) => JSON.stringify(value),
     parse: (text) => decodeValue(decodeJsonUnknown(text)),
@@ -64,18 +65,22 @@ export const makeRedisStore = (
   const keyPrefix = prefix ?? "";
   const run = runEffect;
   const scripts = new RedisScriptCache();
+
   const prefixKey = (key: string): string =>
     keyPrefix ? `${keyPrefix}:${key}` : key;
 
   const redisStore = {
     async set(key: string, value: string, ttlSeconds?: number): Promise<void> {
       const prefixedKey = prefixKey(key);
+
       if (ttlSeconds !== undefined) {
         await run(
           redis.send("SET", prefixedKey, value, "EX", String(ttlSeconds)),
         );
+
         return;
       }
+
       await run(redis.send("SET", prefixedKey, value));
     },
 
@@ -85,12 +90,14 @@ export const makeRedisStore = (
 
     async getJson<T>(key: string, codec: JsonCodec<T>): Promise<T | null> {
       const cached = await redisStore.get(key);
+
       if (cached === null) return null;
 
       try {
         return codec.parse(cached);
       } catch {
         await run(redis.send("DEL", prefixKey(key)));
+
         return null;
       }
     },
@@ -118,10 +125,12 @@ export const makeRedisStore = (
       codec,
     }: RedisGetOrSetJsonOptions<T>): Promise<T> {
       const cached = await redisStore.getJson<T>(key, codec);
+
       if (cached !== null) return cached;
 
       const lockKey = `${key}:single-flight`;
       const lockToken = randomUUID();
+
       const lockAcquired = await redisStore.setNX(
         lockKey,
         lockToken,
@@ -130,21 +139,27 @@ export const makeRedisStore = (
 
       if (!lockAcquired) {
         const deadline = Date.now() + waitTimeoutMs;
+
         while (Date.now() < deadline) {
           await sleep(waitIntervalMs);
           const cachedAfterWait = await redisStore.getJson<T>(key, codec);
+
           if (cachedAfterWait !== null) return cachedAfterWait;
         }
+
         const value = await factory();
         await redisStore.setJson(key, value, ttlSeconds, codec);
+
         return value;
       }
 
       try {
         const cachedAfterLock = await redisStore.getJson<T>(key, codec);
+
         if (cachedAfterLock !== null) return cachedAfterLock;
         const value = await factory();
         await redisStore.setJson(key, value, ttlSeconds, codec);
+
         return value;
       } finally {
         try {
@@ -173,6 +188,7 @@ export const makeRedisStore = (
             try {
               const value = await options.factory();
               factoryResult = { value };
+
               return value;
             } catch (error) {
               factoryError = error;
@@ -183,7 +199,9 @@ export const makeRedisStore = (
       } catch (error) {
         if (factoryError !== undefined) throw factoryError;
         onError?.(error);
+
         if (factoryResult !== undefined) return factoryResult.value;
+
         return options.factory();
       }
     },
@@ -192,6 +210,7 @@ export const makeRedisStore = (
       const prefixedPattern = prefixKey(pattern);
       let cursor = "0";
       let deletedCount = 0;
+
       do {
         const [nextCursor, keys] = await run(
           redis.send<[string, string[]]>(
@@ -203,14 +222,18 @@ export const makeRedisStore = (
             "500",
           ),
         );
+
         cursor = nextCursor;
+
         for (let index = 0; index < keys.length; index += batchSize) {
           const batch = keys.slice(index, index + batchSize);
+
           if (batch.length > 0) {
             deletedCount += await run(redis.send<number>("DEL", ...batch));
           }
         }
       } while (cursor !== "0");
+
       return deletedCount;
     },
 
@@ -220,6 +243,7 @@ export const makeRedisStore = (
       ttlSeconds?: number,
     ): Promise<boolean> {
       const prefixedKey = prefixKey(key);
+
       if (ttlSeconds !== undefined) {
         return (
           (await run(
@@ -234,6 +258,7 @@ export const makeRedisStore = (
           )) === "OK"
         );
       }
+
       return (await run(redis.send<number>("SETNX", prefixedKey, value))) === 1;
     },
 
@@ -244,6 +269,7 @@ export const makeRedisStore = (
     ): Promise<TResult> {
       const prefixedKeys = keys.map((key) => prefixKey(key));
       const descriptor = scripts.get<TResult>(script, prefixedKeys.length);
+
       return run(redis.eval(descriptor)(...prefixedKeys, ...args.map(String)));
     },
 

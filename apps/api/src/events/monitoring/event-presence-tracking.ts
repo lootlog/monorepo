@@ -19,7 +19,9 @@ import { getSyntheticNpcId } from "#src/events/kills/get-synthetic-npc-id";
 import { buildTimerKey } from "#src/timers/timer-key";
 
 type GapType = typeof eventMapCoverageGapTable.$inferSelect.gapType;
+
 const UNASSIGNED: GapType = "UNASSIGNED";
+
 const UNCOVERED: GapType = "UNCOVERED";
 
 export const makeEventPresenceTracking = (
@@ -29,12 +31,14 @@ export const makeEventPresenceTracking = (
   publisher: EventEmitter,
 ) => {
   const redlock = redlockService.createInstance();
+
   const query = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
     effect.pipe(
       Effect.withSpan(operation, {
         attributes: { adapter: "events.presence.drizzle", retryCount: 0 },
       }),
     );
+
   const findOpenGap = (mapId: string, gapType: GapType) =>
     query(
       "events.presence.gap.find",
@@ -51,6 +55,7 @@ export const makeEventPresenceTracking = (
         .limit(1)
         .pipe(Effect.map((rows) => rows[0] ?? null)),
     );
+
   const openGap = (
     mapId: string,
     heroNpcId: string,
@@ -70,9 +75,11 @@ export const makeEventPresenceTracking = (
         }),
       );
     });
+
   const closeGap = (mapId: string, gapType: GapType) =>
     Effect.gen(function* () {
       const gap = yield* findOpenGap(mapId, gapType);
+
       if (!gap) return;
       const endedAt = new Date(yield* Clock.currentTimeMillis);
       yield* query(
@@ -88,17 +95,21 @@ export const makeEventPresenceTracking = (
           .where(eq(eventMapCoverageGapTable.id, gap.id)),
       );
     });
+
   const openUnassignedGap = (
     mapId: string,
     heroNpcId: string,
     startedAt?: Date,
   ) => openGap(mapId, heroNpcId, UNASSIGNED, startedAt);
+
   const openUncoveredGap = (
     mapId: string,
     heroNpcId: string,
     startedAt?: Date,
   ) => openGap(mapId, heroNpcId, UNCOVERED, startedAt);
+
   const closeUncoveredGap = (mapId: string) => closeGap(mapId, UNCOVERED);
+
   const closeAllGapsForHero = (heroNpcId: string) =>
     Effect.gen(function* () {
       const gaps = yield* query(
@@ -113,6 +124,7 @@ export const makeEventPresenceTracking = (
             ),
           ),
       );
+
       const endedAt = new Date(yield* Clock.currentTimeMillis);
       yield* query(
         "events.presence.gap.closeAll",
@@ -144,6 +156,7 @@ export const makeEventPresenceTracking = (
   ) =>
     Effect.gen(function* () {
       const referenceTime = new Date(yield* Clock.currentTimeMillis);
+
       const [memberRows, mapRows] = yield* Effect.all(
         [
           query(
@@ -195,8 +208,10 @@ export const makeEventPresenceTracking = (
         ],
         { concurrency: "unbounded" },
       );
+
       if (mapRows.length === 0) return;
       const mapIds = mapRows.map(({ map }) => map.id);
+
       const [assignmentRows, activeRows] = yield* Effect.all(
         [
           query(
@@ -225,6 +240,7 @@ export const makeEventPresenceTracking = (
         ],
         { concurrency: "unbounded" },
       );
+
       const timerKeys = yield* timers.getActiveTimerKeys(
         mapRows.map(({ hero, event }) => ({
           guildId,
@@ -234,6 +250,7 @@ export const makeEventPresenceTracking = (
         })),
         referenceTime,
       );
+
       const member = memberRows[0] ?? null;
       yield* Effect.forEach(
         mapRows.filter(({ hero, event }) =>
@@ -249,11 +266,13 @@ export const makeEventPresenceTracking = (
             const assigned = assignmentRows.some(
               ({ mapId }) => mapId === map.id,
             );
+
             const nonAfk = new Set(
               activeRows
                 .filter(({ mapId }) => mapId === map.id)
                 .map(({ memberId }) => memberId),
             );
+
             if (member) {
               const endedAt = new Date(yield* Clock.currentTimeMillis);
               yield* query(
@@ -269,6 +288,7 @@ export const makeEventPresenceTracking = (
                     ),
                   ),
               );
+
               if (hasPlayer) {
                 yield* query(
                   "events.presence.create",
@@ -279,13 +299,16 @@ export const makeEventPresenceTracking = (
                     isAfk,
                   }),
                 );
+
                 if (isAfk) nonAfk.delete(member.id);
                 else nonAfk.add(member.id);
               } else {
                 nonAfk.delete(member.id);
               }
             }
+
             if (!assigned) return;
+
             if (nonAfk.size === 0) yield* openUncoveredGap(map.id, hero.id);
             else yield* closeUncoveredGap(map.id);
             yield* publisher.emit(RoutingKey.EVENT_MAP_STATUS_UPDATE, {
@@ -311,6 +334,7 @@ export const makeEventPresenceTracking = (
       isAfk = false,
     ) {
       const lockKey = `presence:lock:${guildId}:${mapName}:${discordId}`;
+
       return redlock
         .using(
           [lockKey],

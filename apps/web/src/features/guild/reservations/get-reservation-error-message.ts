@@ -46,8 +46,10 @@ export const getReservationErrorMessage = (
   const result = reservationErrorBody.safeParse(
     isApiError(cause) ? cause.data : undefined,
   );
+
   const body = result.success ? result.data : undefined;
   const code = body?.code ?? getApiErrorMessage(cause);
+
   if (code && RESERVATION_ERROR_CODES.has(code)) {
     const details = new Map([
       ["ACTIVE_LIMIT_REACHED", body?.limit],
@@ -56,11 +58,15 @@ export const getReservationErrorMessage = (
       ["RESERVATION_TOO_FAR_IN_ADVANCE", body?.maximumDays],
       ["INVALID_TIME_GRID", body?.granularityMinutes],
     ]);
+
     const value = details.get(code);
+
     if (value !== undefined) {
       return t(`reservations.errors.${code}`, { context: "detailed", value });
     }
+
     return t(`reservations.errors.${code}`);
   }
+
   return t("reservations.errors.unknown");
 };

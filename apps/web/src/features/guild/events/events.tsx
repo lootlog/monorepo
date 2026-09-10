@@ -48,6 +48,7 @@ export const Events = () => {
     deleteEvent,
     error,
   } = useEventList();
+
   if (error) {
     const isForbidden = getApiErrorStatus(error) === 403;
 
@@ -68,6 +69,7 @@ export const Events = () => {
       </div>
     );
   }
+
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
       <h1 className="sr-only">{t("events.title")}</h1>
@@ -213,6 +215,7 @@ export const Events = () => {
         isPending={deleteEvent.isPending}
         onConfirm={async () => {
           if (!eventToDelete) return;
+
           try {
             await deleteEvent.mutateAsync({
               pathParams: {

@@ -12,8 +12,11 @@ import {
 } from "./map-ping-presentation";
 
 const MAIN_MAP_CANVAS_ID = "GAME_CANVAS";
+
 const HANDHELD_MINI_MAP_CANVAS_CLASS = "handheld-mini-map-canvas";
+
 const MAX_NETWORK_COORDINATE = 65_535;
+
 const MAX_ACTIVE_MAP_PINGS = 256;
 
 export type MapTile = { x: number; y: number };
@@ -47,6 +50,7 @@ const getCanvasPoint = (
   clientY: number,
 ) => {
   const bounds = canvas.getBoundingClientRect();
+
   if (bounds.width <= 0 || bounds.height <= 0) {
     return null;
   }
@@ -74,6 +78,7 @@ export const resolveMainMapTile = (
   geometry: MainMapGeometry,
 ): MapTile | null => {
   const point = getCanvasPoint(canvas, clientX, clientY);
+
   if (
     !point ||
     geometry.tileSize <= 0 ||
@@ -99,6 +104,7 @@ export const resolveHandheldMiniMapTile = (
   geometry: HandheldMiniMapGeometry,
 ): MapTile | null => {
   const point = getCanvasPoint(canvas, clientX, clientY);
+
   if (!point || geometry.normalSize <= 0) {
     return null;
   }
@@ -107,6 +113,7 @@ export const resolveHandheldMiniMapTile = (
   const mapY = point.y - geometry.margin.top;
   const mapWidth = geometry.size.x * geometry.normalSize;
   const mapHeight = geometry.size.y * geometry.normalSize;
+
   if (mapX < 0 || mapY < 0 || mapX >= mapWidth || mapY >= mapHeight) {
     return null;
   }
@@ -153,6 +160,7 @@ export class MapPingController {
     this.enabled = true;
     this.ensureDrawRegistration();
     this.scheduleExpiry();
+
     return true;
   }
 
@@ -184,6 +192,7 @@ export class MapPingController {
     });
     this.ensureDrawRegistration();
     this.scheduleExpiry();
+
     return id;
   }
 
@@ -205,16 +214,20 @@ export class MapPingController {
     });
     this.ensureDrawRegistration();
     this.scheduleExpiry();
+
     return true;
   }
 
   remove(id: string) {
     this.activePings.delete(id);
+
     if (this.activePings.size === 0) {
       this.cancelExpiry();
       this.detachDrawRegistration();
+
       return;
     }
+
     this.scheduleExpiry();
   }
 
@@ -227,12 +240,14 @@ export class MapPingController {
   resolveTile(canvas: HTMLCanvasElement, clientX: number, clientY: number) {
     const geometry = this.renderer.getMapGeometry();
     const size = geometry?.size;
+
     if (!geometry || !size) {
       return null;
     }
 
     if (canvas.id === MAIN_MAP_CANVAS_ID) {
       const offset = geometry.offset;
+
       if (!offset) {
         return null;
       }
@@ -251,6 +266,7 @@ export class MapPingController {
     const miniMap = this.renderer.getHandheldMiniMap();
     const margin = miniMap?.margin;
     const normalSize = miniMap?.normalSize;
+
     if (!margin || !normalSize) {
       return null;
     }
@@ -264,14 +280,17 @@ export class MapPingController {
 
   isTileValid(tile: MapTile) {
     const size = this.renderer.getMapGeometry()?.size;
+
     return Boolean(size && isTileWithinMap(tile, size));
   }
 
   private readonly handleDrawFrame = () => {
     this.pruneExpired();
+
     if (this.activePings.size === 0) {
       this.cancelExpiry();
       this.detachDrawRegistration();
+
       return;
     }
 
@@ -284,11 +303,13 @@ export class MapPingController {
     const geometry = this.renderer.getMapGeometry();
     const offset = geometry?.offset;
     const currentMapId = geometry?.id;
+
     if (!offset || currentMapId === undefined) {
       return;
     }
 
     const tileSize = geometry.tileSize;
+
     for (const ping of this.activePings.values()) {
       if (ping.mapId !== currentMapId) {
         continue;
@@ -306,6 +327,7 @@ export class MapPingController {
     const context = miniMap?.context;
     const margin = miniMap?.margin;
     const normalSize = miniMap?.normalSize;
+
     if (
       currentMapId === undefined ||
       !context ||
@@ -319,6 +341,7 @@ export class MapPingController {
     // The preceding guard excludes missing, zero, and negative normalSize values.
     // oxlint-disable-next-line react-doctor/no-arithmetic-on-optional-chained-operand
     const radius = Math.min(14, Math.max(6, normalSize * 1.75));
+
     for (const ping of this.activePings.values()) {
       if (ping.mapId !== currentMapId) {
         continue;
@@ -428,8 +451,10 @@ export class MapPingController {
 
   private pruneExpired() {
     const now = this.now();
+
     for (const [id, ping] of this.activePings) {
       const durationMs = getMapPingPresentation(ping.type).durationMs;
+
       if (now - ping.startedAt >= durationMs) {
         this.activePings.delete(id);
       }
@@ -445,6 +470,7 @@ export class MapPingController {
     }
 
     const oldestId = this.activePings.keys().next().value;
+
     if (oldestId !== undefined) {
       this.activePings.delete(oldestId);
     }
@@ -452,13 +478,16 @@ export class MapPingController {
 
   private scheduleExpiry(): void {
     this.cancelExpiry();
+
     if (!this.enabled || this.activePings.size === 0) return;
 
     const now = this.now();
     let nearestExpiryAt = Number.POSITIVE_INFINITY;
+
     for (const ping of this.activePings.values()) {
       const expiresAt =
         ping.startedAt + getMapPingPresentation(ping.type).durationMs;
+
       nearestExpiryAt = Math.min(nearestExpiryAt, expiresAt);
     }
 
@@ -466,10 +495,13 @@ export class MapPingController {
       () => {
         this.expiryTimeoutId = null;
         this.pruneExpired();
+
         if (this.activePings.size === 0) {
           this.detachDrawRegistration();
+
           return;
         }
+
         this.scheduleExpiry();
       },
       Math.max(0, Math.ceil(nearestExpiryAt - now)),

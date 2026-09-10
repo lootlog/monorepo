@@ -9,6 +9,7 @@ import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
 
 const CACHE_KEY = "reservations:catalog:v2";
+
 const CACHE_TTL_SECONDS = 60 * 60;
 
 export interface ReservationCatalogCache {
@@ -43,6 +44,7 @@ export const makeReservationCatalogAdapter = (options: {
             catch: (error) => error,
           });
         }
+
         return outboundHttpRequest(options.httpClient, {
           adapter: "reservation-catalog",
           method: "GET",
@@ -80,12 +82,14 @@ export const makeReservationCatalogAdapter = (options: {
       }),
     ),
   );
+
   return {
     getSpots,
     getSpot: (spotId) =>
       getSpots.pipe(
         Effect.flatMap((spots) => {
           const spot = spots.find((candidate) => candidate.id === spotId);
+
           return spot
             ? Effect.succeed(spot)
             : Effect.fail(

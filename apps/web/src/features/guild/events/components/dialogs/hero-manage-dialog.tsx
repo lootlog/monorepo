@@ -47,6 +47,7 @@ export const HeroManageDialog = ({
 }: HeroManageDialogProps) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+
   const addHero = useEventsAssignmentControllerAddHero({
     mutation: {
       onSuccess: () => {
@@ -54,6 +55,7 @@ export const HeroManageDialog = ({
       },
     },
   });
+
   const updateHero = useEventsAssignmentControllerUpdateHero({
     mutation: {
       onSuccess: () => {
@@ -61,6 +63,7 @@ export const HeroManageDialog = ({
       },
     },
   });
+
   const isEditing = !!hero;
   // @TODO - temprorarily enable hero name editing
   // const isHeroNameLocked = isEditing && hero?.npcId !== null;
@@ -108,9 +111,11 @@ export const HeroManageDialog = ({
         toast.success(t("events.heroes.updated"));
       } else {
         const npcIdNum = data.npcId ? Number(data.npcId) : undefined;
+
         const request: Parameters<typeof addHero.mutateAsync>[0]["data"] = {
           npcName: data.npcName,
         };
+
         if (npcIdNum) request.npcId = npcIdNum;
         await addHero.mutateAsync({
           pathParams: {
@@ -121,6 +126,7 @@ export const HeroManageDialog = ({
         });
         toast.success(t("events.heroes.added"));
       }
+
       onOpenChange(false);
     } catch (error) {
       toast.error(

@@ -19,16 +19,21 @@ const loadConfiguration = Effect.gen(function* () {
   const environment = yield* Config.string("ENV").pipe(
     Config.withDefault("local"),
   );
+
   const port = yield* Config.port("PORT");
+
   const serviceName = yield* Config.string("SERVICE_NAME").pipe(
     Config.withDefault("battlelog-service"),
   );
+
   const serviceNamespace = yield* Config.string("SERVICE_NAMESPACE").pipe(
     Config.withDefault("local"),
   );
+
   const postgresqlConnectionUri = yield* Config.redacted(
     "POSTGRESQL_CONNECTION_URI",
   );
+
   const redisHost = yield* Config.string("REDIS_HOST");
   const redisPort = yield* Config.port("REDIS_PORT");
   const redisPassword = yield* Config.redacted("REDIS_PASSWORD");
@@ -36,9 +41,11 @@ const loadConfiguration = Effect.gen(function* () {
   const r2AccessKeyId = yield* Config.redacted("R2_ACCESS_KEY_ID");
   const r2SecretAccessKey = yield* Config.redacted("R2_SECRET_ACCESS_KEY");
   const r2Endpoint = yield* Config.string("R2_ENDPOINT");
+
   const r2Region = yield* Config.string("R2_REGION").pipe(
     Config.withDefault("auto"),
   );
+
   const r2BucketName = yield* Config.string("R2_BUCKET_NAME");
 
   return {

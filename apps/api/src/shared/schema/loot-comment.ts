@@ -21,4 +21,5 @@ export const LootCommentResponse = Schema.Struct({
   createdAt: isoDatetimeCodec,
   updatedAt: isoDatetimeCodec,
 });
+
 export type LootCommentResponse = typeof LootCommentResponse.Type;

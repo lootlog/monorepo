@@ -13,6 +13,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 const directories: string[] = [];
+
 afterEach(async () => {
   await Promise.all(
     directories
@@ -61,15 +62,18 @@ async function repository() {
     path.join(client, "node_modules"),
     "dir",
   );
+
   const archive = path.join(
     client,
     ".output/lootlog-game-client-1.0.0-sources.zip",
   );
+
   const run = () =>
     spawnSync("bun", [path.join(client, "extension/package-sources.ts")], {
       cwd: client,
       encoding: "utf8",
     });
+
   return { root, client, archive, run };
 }
 
@@ -91,12 +95,17 @@ it.each(["untracked", "modified", "staged"])(
   "refuses %s source changes before writing an archive",
   async (state) => {
     const fixture = await repository();
+
     const file =
       state === "untracked" ? "debug.ts" : "extension/package-sources.ts";
+
     const target = path.join(fixture.client, file);
+
     const existing =
       state === "untracked" ? "" : await readFile(target, "utf8");
+
     await writeFile(target, existing + "\n// PRIVATE_FIXTURE_VALUE\n");
+
     if (state === "staged")
       execFileSync("git", ["add", "."], { cwd: fixture.root });
     const result = fixture.run();

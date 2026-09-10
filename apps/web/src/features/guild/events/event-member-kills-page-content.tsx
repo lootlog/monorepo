@@ -31,14 +31,17 @@ const buildStatsSummary = (
     (sum, ranking) => sum + ranking.totalKills,
     0,
   );
+
   const totalPoints = rankings.reduce(
     (sum, ranking) => sum + ranking.totalPoints,
     0,
   );
+
   const totalTimeSeconds = rankings.reduce(
     (sum, ranking) => sum + ranking.totalTimeSeconds,
     0,
   );
+
   const weightedAfkSum = rankings.reduce(
     (sum, ranking) => sum + ranking.avgAfkPercentage * ranking.totalKills,
     0,
@@ -86,12 +89,15 @@ export const EventMemberKillsPageContent = ({
   initialHeroId,
 }: EventMemberKillsPageContentProps) => {
   const { t } = useTranslation();
+
   const [selectedHeroId, setSelectedHeroId] = useState<string | undefined>(
     initialHeroId,
   );
+
   const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(
     null,
   );
+
   const hasEventRouteParams = Boolean(guildId && eventId);
   const queryGuildId = guildId ?? "";
   const queryEventId = eventId ?? "";
@@ -116,6 +122,7 @@ export const EventMemberKillsPageContent = ({
       },
     },
   );
+
   const {
     data: killsData,
     fetchNextPage,
@@ -130,6 +137,7 @@ export const EventMemberKillsPageContent = ({
     heroId: selectedHeroId,
     limit: 20,
   });
+
   const { data: rankings = [] } = useListEventRanking(
     {
       guildId: queryGuildId,
@@ -172,16 +180,20 @@ export const EventMemberKillsPageContent = ({
   const allKills = killsData?.pages.flatMap((page) => page.data) ?? [];
   const member = killsData?.pages[0]?.member;
   const memberIdNumber = Number.parseInt(queryMemberId, 10);
+
   const selectedHero = selectedHeroId
     ? heroes.find((hero) => hero.id === selectedHeroId)
     : undefined;
+
   const memberRankings = Number.isNaN(memberIdNumber)
     ? []
     : rankings.filter((ranking) => ranking.memberId === memberIdNumber);
+
   const contextStats = buildContextStats({
     memberRankings,
     selectedHero,
   });
+
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
       <EventParticipationConfirmationDialog

@@ -53,22 +53,28 @@ const makeClient = ({
   };
 } = {}) => {
   const queries: Query[] = [];
+
   const client: SqlTransactionClient = {
     async query(statement, values) {
       await Promise.resolve();
       queries.push({ statement, values });
+
       if (statement.includes("api-adoption:marker")) {
         return { rows: marker ? [marker] : [] };
       }
+
       if (statement.includes("api-adoption:migration-journal")) {
         return { rows: journal };
       }
+
       if (statement.includes("api-adoption:tables")) {
         return { rows: catalog.tables.map((name) => ({ name })) };
       }
+
       if (statement.includes("api-adoption:columns")) {
         return { rows: catalog.columns };
       }
+
       if (statement.includes("api-adoption:enums")) {
         const rows =
           catalog === EXPECTED_API_CATALOG
@@ -76,17 +82,22 @@ const makeClient = ({
             : catalog.enums.flatMap(({ name, values: enumValues }) =>
                 enumValues.map((value) => ({ name, value })),
               );
+
         return { rows };
       }
+
       if (statement.includes("api-adoption:indexes")) {
         return { rows: catalog.indexes.map((name) => ({ name })) };
       }
+
       if (statement.includes("api-adoption:constraints")) {
         return { rows: catalog.constraints.map((name) => ({ name })) };
       }
+
       return { rows: [] };
     },
   };
+
   return { client, queries };
 };
 
@@ -94,6 +105,7 @@ const hasBaselineInsert = (queries: ReadonlyArray<Query>) =>
   queries.some(({ statement }) =>
     statement.includes("INSERT INTO drizzle.__drizzle_migrations"),
   );
+
 const hasAdoptionMarkerInsert = (queries: ReadonlyArray<Query>) =>
   queries.some(({ statement }) =>
     statement.includes("INSERT INTO drizzle.__lootlog_adoption"),
@@ -107,12 +119,15 @@ describe("adoptExistingApiDatabase", () => {
       status: "adopted",
       fingerprint: EXPECTED_API_CATALOG_SHA256,
     });
+
     const enumTransitionIndex = queries.findIndex(({ statement }) =>
       statement.includes('ALTER TYPE "Permission" ADD VALUE'),
     );
+
     const baselineInsertIndex = queries.findIndex(({ statement }) =>
       statement.includes("INSERT INTO drizzle.__drizzle_migrations"),
     );
+
     expect(enumTransitionIndex).toBeGreaterThan(-1);
     expect(baselineInsertIndex).toBeGreaterThan(enumTransitionIndex);
     expect(hasBaselineInsert(queries)).toBe(true);
@@ -123,6 +138,7 @@ describe("adoptExistingApiDatabase", () => {
     const columns = EXPECTED_API_CATALOG.columns.map((column, index) =>
       index === 0 ? { ...column, formattedType: "character varying" } : column,
     );
+
     const { client, queries } = makeClient({
       catalog: { ...EXPECTED_API_CATALOG, columns },
     });
@@ -149,6 +165,7 @@ describe("adoptExistingApiDatabase", () => {
         ],
       },
     });
+
     await expect(adoptExistingApiDatabase(client)).rejects.toThrow(
       "Expected boolean",
     );
@@ -274,11 +291,13 @@ describe("immutable API database adoption evidence", () => {
       "UserGuildTimerSettings.pinnedTimers",
       "UserSettings.guildsOrder",
     ];
+
     expect(
       nullableColumns.map((name) => {
         const column = EXPECTED_API_CATALOG.columns.find(
           ({ tableName, columnName }) => `${tableName}.${columnName}` === name,
         );
+
         return [name, column?.isNullable];
       }),
     ).toEqual(nullableColumns.map((name) => [name, true]));
@@ -329,6 +348,7 @@ describe("immutable API database adoption evidence", () => {
     const hash = createHash("sha256")
       .update(JSON.stringify(EXPECTED_API_CATALOG))
       .digest("hex");
+
     expect(hash).toBe(EXPECTED_API_CATALOG_SHA256);
   });
 
@@ -339,6 +359,7 @@ describe("immutable API database adoption evidence", () => {
         import.meta.url,
       ),
     ).text();
+
     expect(createHash("sha256").update(baseline).digest("hex")).toBe(
       BASELINE_MIGRATION_SHA256,
     );

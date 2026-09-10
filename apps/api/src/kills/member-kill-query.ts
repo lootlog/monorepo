@@ -44,6 +44,7 @@ export const makeMemberKillQuery =
     const limit = query.limit ?? 20;
     const cursor = query.cursor ?? 0;
     const periodStart = getKillStatsPeriodStart(query.period);
+
     const filter = {
       guildId,
       memberId,
@@ -72,13 +73,17 @@ export const makeMemberKillQuery =
       schema: MemberKillsResponse,
       load: Effect.gen(function* () {
         const member = yield* persistence.findMember(guildId, memberId);
+
         if (!member) return null;
+
         const stats = yield* persistence.findMemberStats(
           filter,
           periodStart !== undefined,
         );
+
         const participationsByType: Record<string, number> = {};
         let totalParticipations = 0;
+
         const npcMap = new Map<
           number,
           {
@@ -102,7 +107,9 @@ export const makeMemberKillQuery =
         const allNpcs = Array.from(npcMap.values()).sort(
           (left, right) => right.totalKills - left.totalKills,
         );
+
         const total = allNpcs.length;
+
         return {
           member: {
             memberId: member.id,

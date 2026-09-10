@@ -13,6 +13,7 @@ type MutableOpenApiDocument = {
 const replaceSchemaRef = (value: unknown, fromRef: string, toRef: string) => {
   if (Array.isArray(value)) {
     value.forEach((item) => replaceSchemaRef(item, fromRef, toRef));
+
     return;
   }
 
@@ -70,7 +71,9 @@ const aliasJsonValueSchema = (document: MutableOpenApiDocument) => {
 
 export default function transformOpenApiDocument(inputDocument: unknown) {
   const parsed = decodeOpenApiDocument(sanitizeOpenApiDocument(inputDocument));
+
   if (!parsed.components?.schemas) return parsed;
+
   const document = {
     ...parsed,
     components: {

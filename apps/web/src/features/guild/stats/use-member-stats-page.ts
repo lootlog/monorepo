@@ -51,6 +51,7 @@ const getMemberKillsQueryParams = ({
 
 export function useMemberStatsPage() {
   const { t } = useTranslation();
+
   const { memberId, guildId } = useParams({
     from: "/_authenticated/$guildId/stats/members/$memberId",
   });
@@ -58,6 +59,7 @@ export function useMemberStatsPage() {
   const [cursor, setCursor] = useState(0);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
+
   const {
     settings,
     debouncedMinLvl,
@@ -68,6 +70,7 @@ export function useMemberStatsPage() {
     setNpcType,
     setPeriod,
   } = useStatsSettings("member");
+
   const { data, isLoading } = useKillsControllerGetMemberKills(
     {
       guildId,
@@ -81,6 +84,7 @@ export function useMemberStatsPage() {
       cursor,
     }),
   );
+
   const { data: guildMembers } = useMembersControllerGetGuildMemberReferences(
     { guildId },
     {
@@ -96,6 +100,7 @@ export function useMemberStatsPage() {
   const handleNpcTypeChange = (value: string | null) => {
     if (value === null) return;
     const npcType = findNpcType(value);
+
     if (value !== "ALL" && !npcType) return;
     setNpcType(npcType ?? "ALL");
     setCursor(0);
@@ -136,11 +141,13 @@ export function useMemberStatsPage() {
   const guildMember = guildMembers?.find(
     (m) => m.userId === data?.member?.memberUserId,
   );
+
   const adaptedMember = guildMember
     ? {
         roles: [{ position: 0, color: guildMember.color }],
       }
     : undefined;
+
   const memberColor = useMemberColor(adaptedMember);
 
   const member = data?.member;

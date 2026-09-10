@@ -64,6 +64,7 @@ describe("DialogProcessor", () => {
       weight: 90,
       level: 240,
     };
+
     useDialogStore.getState().setNpcContext({
       npcId: 404,
       npc: capturedNpc,
@@ -83,6 +84,7 @@ describe("DialogProcessor", () => {
     const consoleLogSpy = vi
       .spyOn(console, "log")
       .mockImplementation(() => undefined);
+
     useSettingsStore.getState().setLootDebugLoggingEnabled(true);
     const event = { d: ["show", "dialog", "404"] };
 

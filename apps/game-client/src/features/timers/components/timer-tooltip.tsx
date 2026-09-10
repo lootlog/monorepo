@@ -21,6 +21,7 @@ export const TimerTooltip: FC<TimerTooltipProps> = ({
   const { t } = useTranslation("timers");
   const levelSuffix = getLevelSuffix(timer.npc);
   const members = getTimerMembers(timer);
+
   const membersWithGuilds =
     members.length > 0
       ? getMembersWithGuilds(
@@ -29,6 +30,7 @@ export const TimerTooltip: FC<TimerTooltipProps> = ({
           timer.actorCharactersByMemberId,
         )
       : [];
+
   const firstMemberWithGuild = membersWithGuilds[0];
   const hiddenMembersCount = Math.max(membersWithGuilds.length - 1, 0);
 

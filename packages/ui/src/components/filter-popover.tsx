@@ -81,6 +81,7 @@ export function FilterPopover<T extends string = string>({
 
   const handleSelect = (optionValue: T) => {
     onValueChange(optionValue);
+
     if (!multiSelect) {
       setOpen(false);
     }
@@ -102,6 +103,7 @@ export function FilterPopover<T extends string = string>({
     const selectedOption = options.find(
       (opt) => opt.value === selectedValues[0],
     );
+
     return selectedOption?.label ?? placeholder;
   };
 

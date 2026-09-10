@@ -38,16 +38,21 @@ export function EditMyReservationForm({
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const initialStartsAt = new Date(reservation.startsAt);
+
   const [startsAt, setStartsAt] = useState<Date | undefined>(
     () => new Date(reservation.startsAt),
   );
+
   const [endsAt, setEndsAt] = useState<Date | undefined>(
     () => new Date(reservation.endsAt),
   );
+
   const [comment, setComment] = useState(reservation.comment ?? "");
+
   const [reminder, setReminder] = useState<ReminderValue>(() =>
     toReminderValue(reservation.reminderMinutesBefore),
   );
+
   const settings = resolveReservationSettings(reservation.editingConstraints);
 
   const updateMutation = useUpdateMyReservation({
@@ -68,18 +73,22 @@ export function EditMyReservationForm({
   const submit = () => {
     const keepsOriginalStart =
       startsAt?.getTime() === initialStartsAt.getTime();
+
     const validationError = validateReservationDateRange({
       fromDate: startsAt,
       toDate: endsAt,
       settings,
       allowPastStart: keepsOriginalStart,
     });
+
     if (validationError) {
       toast.error(
         getReservationValidationMessage(validationError, t, settings),
       );
+
       return;
     }
+
     if (!startsAt || !endsAt) return;
 
     updateMutation.mutate({
@@ -94,10 +103,12 @@ export function EditMyReservationForm({
   };
 
   const earliestAllowedStart = getReservationEarliestStartDate();
+
   const minStart =
     initialStartsAt < earliestAllowedStart
       ? initialStartsAt
       : earliestAllowedStart;
+
   const maxStart = getReservationLatestStartDate(settings);
 
   return (

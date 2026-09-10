@@ -13,6 +13,7 @@ export type UseUpdateLootlogCharacterSettings =
 export const useUpdateLootlogCharactersConfig = () => {
   const accountId = useGameStore((state) => state.game?.hero.accountId ?? null);
   const queryClient = useQueryClient();
+
   const queryKey = accountId
     ? getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
         accountId,

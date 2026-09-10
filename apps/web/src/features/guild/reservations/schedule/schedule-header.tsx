@@ -41,6 +41,7 @@ const compactValue = <Value,>(
 const getScheduleDateLabels = (date: Date, isCompact: boolean) => {
   const weekStart = startOfWeek(date, { weekStartsOn: 1 });
   const weekEnd = addDays(weekStart, 6);
+
   return {
     label: compactValue(
       isCompact,
@@ -73,16 +74,21 @@ export function ScheduleHeader({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [infoOpen, setInfoOpen] = useState(false);
+
   const { label, shortCompactLabel, compactTitle } = getScheduleDateLabels(
     date,
     isCompact,
   );
+
   const nearestFreeSlotLabel = t(
     "reservations.schedule.header.findNearestSlot",
   );
+
   const iconButtonClassName = compactValue(isCompact, "size-11", "size-8");
+
   const compactTitleFor = (key: string) =>
     compactValue(isCompact, t(key), undefined);
+
   const actionToolbar = (
     <div
       role="toolbar"

@@ -28,6 +28,7 @@ export const makeJsonCodec = <S extends Schema.ConstraintDecoder<unknown>>(
   },
 ): JsonCodec<S["Type"]> => {
   const decodeValue = Schema.decodeUnknownSync(schema);
+
   return {
     stringify: serialization.stringify,
     parse: (text) => decodeValue(serialization.parse(text)),
@@ -51,9 +52,13 @@ export interface RedisGetOrSetJsonBestEffortOptions<
 }
 
 const DEFAULT_SCAN_COUNT = 500;
+
 const DEFAULT_DELETE_BATCH_SIZE = 500;
+
 const DEFAULT_SINGLE_FLIGHT_LOCK_TTL_SECONDS = 10;
+
 const DEFAULT_SINGLE_FLIGHT_WAIT_TIMEOUT_MS = 2_000;
+
 const DEFAULT_SINGLE_FLIGHT_WAIT_INTERVAL_MS = 50;
 
 const RELEASE_LOCK_SCRIPT = `
@@ -67,14 +72,18 @@ return 0
 // their existing key and invalidation contracts.
 const readCacheScopes = (key: string): string[] => {
   const match = /^(timer:list|loots:list|loot-stats):([^:]+):/.exec(key);
+
   if (match) return [`${match[1]}:${match[2]}`];
+
   const kills =
     /^kill-stats:(user-[^:]+|guild-[^:]+|member-kills):([^:]+):/.exec(key);
+
   if (kills)
     return [
       `kill-stats:${kills[1]?.startsWith("user-") ? "user" : "guild"}:${kills[2]}`,
     ];
   const event = /^event-read:v2:([^:]+):([^:]+):/.exec(key);
+
   return event
     ? [`event-read:v2:${event[1]}`, `event-read:v2:${event[1]}:${event[2]}`]
     : [];
@@ -84,8 +93,10 @@ const readCacheScopePattern = (pattern: string): string | undefined => {
   const kills = /^kill-stats:(user-\*|guild-\*|member-kills):([^:*]+):\*$/.exec(
     pattern,
   );
+
   if (kills)
     return `kill-stats:${kills[1] === "user-*" ? "user" : "guild"}:${kills[2]}`;
+
   return /^(?:(?:timer:list|loots:list|loot-stats):[^:*]+|event-read:v2:[^:*]+(?::[^:*]+)?):\*$/.test(
     pattern,
   )
@@ -134,6 +145,7 @@ export class RedisService {
 
   async set(key: string, value: string, ttlSeconds?: number): Promise<void> {
     const prefixedKey = this.prefixKey(key);
+
     if (ttlSeconds) {
       await this.run(
         this.redis.send("SET", prefixedKey, value, "EX", String(ttlSeconds)),
@@ -158,6 +170,7 @@ export class RedisService {
       return codec.parse(cached);
     } catch {
       await this.del(key);
+
       return null;
     }
   }
@@ -181,15 +194,18 @@ export class RedisService {
     codec,
   }: RedisGetOrSetJsonOptions<T>): Promise<T> {
     const scopes = readCacheScopes(key);
+
     if (scopes.length > 0) {
       const generations = await this.eval<string[]>(
         READ_CACHE_GENERATIONS_SCRIPT,
         scopes.map((scope) => `cache-generation:v1:${scope}`),
         scopes.map(() => randomUUID()),
       );
+
       // Capture before loading: an invalidated in-flight fill stays unreachable.
       key = `read-cache:v1:${generations.join(":")}:${key}`;
     }
+
     const cached = await this.getJson<T>(key, codec);
 
     if (cached !== null) {
@@ -214,6 +230,7 @@ export class RedisService {
 
       const value = await factory();
       await this.setJson(key, value, ttlSeconds, codec);
+
       return value;
     }
 
@@ -226,6 +243,7 @@ export class RedisService {
 
       const value = await factory();
       await this.setJson(key, value, ttlSeconds, codec);
+
       return value;
     } finally {
       await this.releaseSingleFlightLock(lockKey, lockToken);
@@ -244,6 +262,7 @@ export class RedisService {
       try {
         const value = await options.factory();
         factoryResult = { value };
+
         return value;
       } catch (error) {
         factoryRejected = true;
@@ -281,6 +300,7 @@ export class RedisService {
       function* (this: RedisService) {
         const context = yield* Effect.context();
         let failure: Cause.Cause<E> | undefined;
+
         return yield* Effect.tryPromise({
           try: (signal) =>
             this.getOrSetJsonBestEffort({
@@ -290,10 +310,12 @@ export class RedisService {
                   options.factory,
                   { signal },
                 );
+
                 if (Exit.isFailure(exit)) {
                   failure = exit.cause;
                   throw exit.cause;
                 }
+
                 return exit.value;
               },
             }),
@@ -354,11 +376,14 @@ export class RedisService {
     batchSize = DEFAULT_DELETE_BATCH_SIZE,
   ): Promise<number> {
     const scope = readCacheScopePattern(pattern);
+
     if (scope !== undefined) {
       await this.set(`cache-generation:v1:${scope}`, randomUUID());
+
       // Entries expire by TTL; no keys are physically deleted on this path.
       return 0;
     }
+
     const prefixedPattern = this.prefixKey(pattern);
     let cursor = "0";
     let deletedCount = 0;
@@ -374,6 +399,7 @@ export class RedisService {
           String(DEFAULT_SCAN_COUNT),
         ),
       );
+
       cursor = nextCursor;
 
       for (let index = 0; index < matchedKeys.length; index += batchSize) {
@@ -396,6 +422,7 @@ export class RedisService {
     ttlSeconds?: number,
   ): Promise<boolean> {
     const prefixedKey = this.prefixKey(key);
+
     if (ttlSeconds) {
       const result = await this.run(
         this.redis.send(
@@ -407,11 +434,14 @@ export class RedisService {
           "NX",
         ),
       );
+
       return result === "OK";
     }
+
     const result = await this.run(
       this.redis.send<number>("SETNX", prefixedKey, value),
     );
+
     return result === 1;
   }
 
@@ -450,6 +480,7 @@ export class RedisService {
   ): Promise<TResult> {
     const prefixedKeys = keys.map((k) => this.prefixKey(k));
     const descriptor = this.scripts.get<TResult>(script, prefixedKeys.length);
+
     return await this.run(
       this.redis.eval(descriptor)(...prefixedKeys, ...args.map(String)),
     );
@@ -533,6 +564,7 @@ export class RedisService {
           String(DEFAULT_SCAN_COUNT),
         ),
       );
+
       cursor = nextCursor;
       keys.push(...matchedKeys);
     } while (cursor !== "0");

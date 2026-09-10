@@ -9,6 +9,7 @@ import { isThemeId } from "@/themes/resolver";
 
 export const AppearanceSettings: FC = () => {
   const { theme, setTheme } = useTheme();
+
   const { theme: themeParam } = useSearch({
     from: "/_authenticated/@me/settings/appearance",
   });
@@ -18,6 +19,7 @@ export const AppearanceSettings: FC = () => {
       setTheme(themeParam);
     }
   });
+
   useEffect(() => {
     applyThemeParam();
   }, [themeParam]);

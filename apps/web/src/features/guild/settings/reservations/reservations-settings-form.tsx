@@ -54,8 +54,10 @@ export const ReservationsSettingsForm = ({
   const { t } = useTranslation();
   const guildId = useGuildId();
   const queryClient = useQueryClient();
+
   const { mutate: updateGuildConfig, isPending } =
     useGuildsControllerUpdateGuildConfig();
+
   const settings = resolveReservationSettings(guild);
 
   const form = useForm<ReservationsSettingsFormValues>({
@@ -102,6 +104,7 @@ export const ReservationsSettingsForm = ({
               guildId,
             });
           }
+
           toast.success(t("settings.reservations.toasts.updateSuccess"));
           form.reset(values);
         },

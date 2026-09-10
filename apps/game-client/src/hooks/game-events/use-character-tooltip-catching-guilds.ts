@@ -26,17 +26,22 @@ export function useCharacterTooltipCatchingGuilds(): void {
   const isShiftPressed = useCharacterTooltipCatchingGuildsStore(
     (state) => state.isShiftPressed,
   );
+
   const selectedGuildId = useSelectedLootlogGuildId();
   const active = isShiftPressed && isConcreteLootlogGuildId(selectedGuildId);
+
   const activeOther = useCharacterTooltipCatchingGuildsStore((state) =>
     active ? state.activeOther : null,
   );
+
   const activeTarget = useCharacterTooltipCatchingGuildsStore((state) =>
     active ? state.activeTarget : null,
   );
+
   const activeEntry = useCharacterTooltipCatchingGuildsStore((state) =>
     activeTarget ? state.entriesByKey[activeTarget.key] : undefined,
   );
+
   const ownersByCharacterKey = useOnlineCharacterOwnersStore((state) =>
     active ? state.ownersByCharacterKey : EMPTY_OWNERS_BY_CHARACTER_KEY,
   );
@@ -57,15 +62,18 @@ export function useCharacterTooltipCatchingGuilds(): void {
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Shift") return;
+
       if (event.repeat) return;
 
       updateShiftPressed(true);
     };
+
     const handleKeyUp = (event: KeyboardEvent) => {
       if (event.key !== "Shift") return;
 
       updateShiftPressed(false);
     };
+
     const handleWindowBlur = () => {
       updateShiftPressed(false);
     };

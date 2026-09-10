@@ -13,7 +13,9 @@ import {
   createGuildPreferencesTest,
   createTestGuild,
 } from "@/test/guild-preferences-test";
+
 let harness: ReturnType<typeof createGuildPreferencesTest>;
+
 const render = () =>
   renderUi(<ServerVisibilitySettingsTab />, { wrapper: harness.wrapper });
 

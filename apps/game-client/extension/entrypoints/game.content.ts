@@ -17,11 +17,13 @@ export default defineContentScript({
     let transport: ReturnType<typeof connectPageTransport> | undefined;
     let runtime: GameClientRuntime | undefined;
     let disposed = false;
+
     const dispose = () => {
       if (disposed) return;
       disposed = true;
       window.removeEventListener("pagehide", dispose);
       let failure: { error: unknown } | undefined;
+
       for (const cleanup of [
         () => runtime?.dispose(),
         () => transport?.dispose(),
@@ -32,24 +34,32 @@ export default defineContentScript({
           failure ??= { error };
         }
       }
+
       if (failure) throw failure.error;
     };
 
     try {
       transport = connectPageTransport(dispose);
+
       if (disposed) {
         transport.dispose();
+
         return;
       }
+
       const runtimeWindow: Window & {
         __lootlogGameClientRuntime?: GameClientRuntime;
       } = window;
+
       runtimeWindow.__lootlogGameClientRuntime?.dispose();
       runtime = bootstrapGameClient(transport);
+
       if (disposed) {
         runtime.dispose();
+
         return;
       }
+
       window.addEventListener("pagehide", dispose, { once: true });
     } catch (error) {
       try {
@@ -57,6 +67,7 @@ export default defineContentScript({
       } catch {
         // Cleanup must not replace the error that prevented startup.
       }
+
       throw error;
     }
   },

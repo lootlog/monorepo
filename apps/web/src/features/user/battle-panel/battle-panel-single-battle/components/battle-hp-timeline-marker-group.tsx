@@ -26,6 +26,7 @@ export function BattleHpTimelineMarkerGroup({
   }
 
   const legendary = variant === "legendary";
+
   const markerOffsets = legendary
     ? [
         { x: 0, y: 0 },
@@ -37,6 +38,7 @@ export function BattleHpTimelineMarkerGroup({
         { x: -12, y: 9 },
         { x: 12, y: 9 },
       ];
+
   const singleHitRadius = legendary ? 16 : 17;
   const multipleHitRadius = legendary ? 25 : 27;
   const iconSize = legendary ? 12 : 11;

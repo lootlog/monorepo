@@ -80,18 +80,23 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
 }) => {
   const { t } = useTranslation();
   const { npcTypeColors } = useNpcTypeColors();
+
   const {
     accountId,
     isFetched,
     settings: accountSettings,
   } = useCurrentGameAccountNotificationSettings();
+
   const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds();
+
   const updateUserGameAccountPreferences =
     useUpdateUserGameAccountPreferences(accountId);
 
   const currentCategorySettings: NotificationSettings =
     accountSettings[categoryKey];
+
   const textColor = getTextColor(categoryKey, true, npcTypeColors);
+
   const toggleFields: Array<{
     key: keyof Pick<
       NotificationSettings,
@@ -110,9 +115,11 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
     },
     { key: "sound", label: t("settings.notifications.toggles.sound") },
   ];
+
   const [deferredSyncField, setDeferredSyncField] = useState<string | null>(
     null,
   );
+
   const debouncedUpdate = useDebouncedCallback(
     (
       payload: Parameters<typeof updateUserGameAccountPreferences.mutate>[0],
@@ -153,6 +160,7 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
     }
 
     const nextCategorySettings = getValues();
+
     if (
       areNotificationSettingsEqual(
         nextCategorySettings,
@@ -180,6 +188,7 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
     ) {
       return;
     }
+
     syncFromEffect();
   }, [
     accountId,
@@ -271,6 +280,7 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
                 }
 
                 const parsedValue = Number(value);
+
                 return Number.isNaN(parsedValue) ? 0 : parsedValue;
               },
             })}

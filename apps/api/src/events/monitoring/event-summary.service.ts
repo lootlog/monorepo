@@ -34,6 +34,7 @@ interface GapTimelineEntry {
 
 export const makeEventSummary = (repository: EventSummaryStore) => {
   const logger = new Logger("EventSummary");
+
   return {
     createWindowSummary(
       heroNpcId: string,
@@ -52,6 +53,7 @@ export const makeEventSummary = (repository: EventSummaryStore) => {
             message: "No maps for hero, skipping summary creation",
             heroNpcId,
           });
+
           return;
         }
 
@@ -87,9 +89,11 @@ export const makeEventSummary = (repository: EventSummaryStore) => {
             0,
             clippedEnd.getTime() - clippedStart.getTime(),
           );
+
           const durationSeconds = Math.round(durationMs / 1000);
 
           let stat = memberStatsMap.get(log.memberId);
+
           if (!stat) {
             stat = {
               memberId: log.member.id,
@@ -104,11 +108,13 @@ export const makeEventSummary = (repository: EventSummaryStore) => {
           }
 
           stat.timeSeconds += durationSeconds;
+
           if (log.isAfk) {
             stat.afkSeconds += durationSeconds;
           }
 
           const mapName = mapNameById.get(log.mapId);
+
           if (mapName && !stat.maps.includes(mapName)) {
             stat.maps.push(mapName);
           }
@@ -126,6 +132,7 @@ export const makeEventSummary = (repository: EventSummaryStore) => {
         ).sort((a, b) => b.timeSeconds - a.timeSeconds);
 
         const mapStatsMap = new Map<string, MapStat>();
+
         for (const map of maps) {
           mapStatsMap.set(map.id, {
             mapId: map.id,
@@ -151,6 +158,7 @@ export const makeEventSummary = (repository: EventSummaryStore) => {
           );
 
           const stat = mapStatsMap.get(log.mapId);
+
           if (stat) {
             stat.coverageSeconds += durationSeconds;
           }
@@ -180,6 +188,7 @@ export const makeEventSummary = (repository: EventSummaryStore) => {
           }
 
           const mapStat = mapStatsMap.get(gap.mapId);
+
           if (mapStat) {
             mapStat.gapSeconds += durationSeconds;
           }
@@ -239,6 +248,7 @@ export const makeEventSummary = (repository: EventSummaryStore) => {
               attributes: { adapter: "events.summary.drizzle", retryCount: 0 },
             }),
           );
+
         logger.log({
           message: "Created respawn window summary",
           heroNpcId,

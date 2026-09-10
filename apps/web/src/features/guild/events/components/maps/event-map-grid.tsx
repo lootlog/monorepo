@@ -76,11 +76,13 @@ const LocationSection = ({
 
   const canShowCoverageCount =
     isWindowActive(windowStatus) && presenceData !== undefined;
+
   const coveredCount = canShowCoverageCount
     ? maps.filter(
         (map) => getMapStatus(map, presenceData) === "ASSIGNED_PRESENT",
       ).length
     : 0;
+
   const handleExpandedChange = () => {
     setIsExpanded((currentExpanded) => !currentExpanded);
   };

@@ -28,12 +28,14 @@ export const logLootCreateDebug = (
   }
 
   let safeDetails = details;
+
   if (
     isObjectRecord(details.payload) &&
     "mapPlayersSnapshot" in details.payload
   ) {
     const { mapPlayersSnapshot: _mapPlayersSnapshot, ...payload } =
       details.payload;
+
     safeDetails = { ...details, payload };
   }
 

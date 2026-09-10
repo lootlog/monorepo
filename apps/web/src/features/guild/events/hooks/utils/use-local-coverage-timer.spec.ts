@@ -41,6 +41,7 @@ describe("useLocalCoverageTimer", () => {
       "UNCOVERED",
       "2026-08-12T12:05:00.000Z",
     );
+
     const { result, rerender } = renderHook(
       ({ status, activeGap }: { status: MapStatus; activeGap: CoverageGap }) =>
         useLocalCoverageTimer(status, activeGap),
@@ -70,6 +71,7 @@ describe("useLocalCoverageTimer", () => {
       "UNCOVERED",
       "2026-08-12T12:11:58.000Z",
     );
+
     rerender({ status: "ASSIGNED_ABSENT", activeGap: currentGap });
 
     expect(result.current.formattedDuration).toBe("00:00:04");
@@ -107,6 +109,7 @@ describe("useLocalCoverageTimer", () => {
       "UNCOVERED",
       "2026-08-12T12:05:00.000Z",
     );
+
     const { result, rerender } = renderHook(
       ({ status }: { status: MapStatus }) =>
         useLocalCoverageTimer(status, staleGap),
@@ -129,6 +132,7 @@ describe("useLocalCoverageTimer", () => {
     let currentTime = new Date("2026-08-12T12:10:00.000Z").getTime();
     vi.spyOn(Date, "now").mockImplementation(() => {
       currentTime += 1_000;
+
       return currentTime;
     });
 

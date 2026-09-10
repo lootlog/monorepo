@@ -13,6 +13,7 @@ import {
 import { RolesData } from "#src/http-api/handlers/organization-workspace/organization-workspace.operations";
 
 const runtime = ManagedRuntime.make(ApiDatabaseLive);
+
 afterAll(() => runtime.dispose());
 
 describe("Role policy rebalance against PostgreSQL", () => {
@@ -48,6 +49,7 @@ describe("Role policy rebalance against PostgreSQL", () => {
           },
           { id: otherRoleId, guildId, name: "Other", updatedAt },
         ]);
+
         const members = yield* db
           .insert(memberTable)
           .values([
@@ -83,6 +85,7 @@ describe("Role policy rebalance against PostgreSQL", () => {
             },
           ])
           .returning();
+
         yield* db.insert(memberToRoleTable).values(
           members.map((member) => ({
             A: member.id,
@@ -92,6 +95,7 @@ describe("Role policy rebalance against PostgreSQL", () => {
         const published: Array<typeof GuildMemberChanged.Type> = [];
         let cleared = false;
         let failDelivery = false;
+
         const layer = RolesData.layerDatabase(
           {
             deleteByPattern: () =>
@@ -103,12 +107,15 @@ describe("Role policy rebalance against PostgreSQL", () => {
             memberPolicyChanged: (member) =>
               Effect.gen(function* () {
                 expect(cleared).toBe(true);
+
                 if (failDelivery)
                   return yield* Effect.fail(new Error("broker unavailable"));
+
                 const [saved] = yield* db
                   .select()
                   .from(roleTable)
                   .where(eq(roleTable.id, roleId));
+
                 expect(saved?.permissions).toEqual([
                   Permission.LOOTLOG_TIMERS_READ,
                 ]);
@@ -116,15 +123,18 @@ describe("Role policy rebalance against PostgreSQL", () => {
               }),
           },
         );
+
         const update = (lvlRangeFrom: number, lvlRangeTo: number) =>
           Effect.gen(function* () {
             const roles = yield* RolesData;
+
             return yield* roles.updateRole("owner", guildId, roleId, {
               permissions: [Permission.LOOTLOG_TIMERS_READ],
               lvlRangeFrom,
               lvlRangeTo,
             });
           }).pipe(Effect.provide(layer));
+
         yield* update(0, 500);
         expect(published).toEqual([
           { guildId, discordId: "affected", userId: "internal-affected" },

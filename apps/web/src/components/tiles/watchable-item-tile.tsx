@@ -52,6 +52,7 @@ export const WatchableItemTile = ({
     handleQuickAdd,
     openNotifications,
   } = useWatchableItemActions(item, watchContext);
+
   const hasItemFilter = selectedItemNames.length > 0;
   const isItemSelected = selectedItemNames.includes(item.name);
 

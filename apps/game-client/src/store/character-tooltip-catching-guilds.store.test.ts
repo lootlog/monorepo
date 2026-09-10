@@ -61,6 +61,7 @@ describe("useCharacterTooltipCatchingGuildsStore retention", () => {
 
     const entries =
       useCharacterTooltipCatchingGuildsStore.getState().entriesByKey;
+
     expect(entries[expiredTarget.key]).toBeUndefined();
     expect(entries[visibleTarget.key]).toBeDefined();
     expect(entries[recentTarget.key]).toBeDefined();

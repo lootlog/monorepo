@@ -18,12 +18,15 @@ describe("HeroDetailResponsiveLayout", () => {
 
     const layout = container.querySelector("[data-hero-detail-layout]");
     const maps = container.querySelector('[data-hero-detail-slot="maps"]');
+
     const secondary = container.querySelector(
       '[data-hero-detail-slot="secondary"]',
     );
+
     const participants = container.querySelector(
       '[data-hero-detail-slot="participants"]',
     );
+
     const sidebar = container.querySelector(
       '[data-hero-detail-slot="sidebar"]',
     );

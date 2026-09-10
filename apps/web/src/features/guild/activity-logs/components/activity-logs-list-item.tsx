@@ -34,11 +34,14 @@ type Props = {
 export const ActivityLogsListItem: React.FC<Props> = ({ activity }) => {
   const [openItems, setOpenItems] = useState<string[]>([]);
   const guildId = useGuildId();
+
   const { data: members } = useMembersControllerGetGuildMemberReferences(
     { guildId: guildId || "" },
     { includeInactive: true },
   );
+
   const { t } = useTranslation();
+
   const activityTypeConfig = {
     CONNECT_EVENT: {
       icon: LogIn,
@@ -53,6 +56,7 @@ export const ActivityLogsListItem: React.FC<Props> = ({ activity }) => {
       bgColor: "bg-red-500/10",
     },
   } as const;
+
   const sourceConfigMap = {
     GAME: {
       icon: Gamepad2,
@@ -79,6 +83,7 @@ export const ActivityLogsListItem: React.FC<Props> = ({ activity }) => {
 
   const hasActorSnapshot =
     activity.actorSnapshot && activity.actorSnapshot.icon;
+
   const hasAdditionalData =
     activity.details && Object.keys(activity.details).length > 0;
 
@@ -94,6 +99,7 @@ export const ActivityLogsListItem: React.FC<Props> = ({ activity }) => {
 
   const renderActor = () => {
     const actor = activity.actorSnapshot;
+
     if (hasActorSnapshot && actor) {
       return (
         <div className="flex items-center gap-3 mb-3">
@@ -138,6 +144,7 @@ export const ActivityLogsListItem: React.FC<Props> = ({ activity }) => {
         </div>
       );
     }
+
     if (actor) {
       return (
         <div className="flex items-center gap-2 text-sm mb-2">
@@ -149,6 +156,7 @@ export const ActivityLogsListItem: React.FC<Props> = ({ activity }) => {
         </div>
       );
     }
+
     return null;
   };
 

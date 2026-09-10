@@ -68,6 +68,7 @@ export function DraggableWindowFrame(props: DraggableWindowFrameProps) {
     handleLockToggle,
     zIndex,
   } = useDraggableWindowFrame(props);
+
   return (
     // This container only stops click bubbling into Margonem; child controls own keyboard actions.
     // oxlint-disable-next-line react-doctor/click-events-have-key-events, react-doctor/no-static-element-interactions
@@ -113,9 +114,11 @@ export function DraggableWindowFrame(props: DraggableWindowFrameProps) {
         ref={windowBodyRef}
         onAnimationEnd={(event) => {
           if (event.currentTarget !== event.target) return;
+
           if (animationPhase !== "enter" && animationPhase !== "exit") return;
 
           const expectedAnimationName = `ll-window-${animationPhase}`;
+
           if (event.animationName !== expectedAnimationName) return;
 
           onWindowAnimationEnd();

@@ -30,10 +30,12 @@ export const useEventList = () => {
   const queryClient = useQueryClient();
   const { data: accessPolicy } = useGuildPermissions();
   const hasGuildId = Boolean(guildId);
+
   const listEventsQueryKey = getListEventsQueryKey(
     { guildId: guildId ?? "" },
     listEventsParams,
   );
+
   const deleteEvent = useDeleteEvent<
     unknown,
     EventListItemResponseDto[] | undefined
@@ -69,6 +71,7 @@ export const useEventList = () => {
       },
     },
   });
+
   const {
     togglePin,
     isPinned,
@@ -95,11 +98,14 @@ export const useEventList = () => {
   const canDeleteEvent =
     accessPolicy?.allows(Permission.ADMIN) ||
     accessPolicy?.allows(Permission.OWNER);
+
   const normalizedSearch = searchValue.trim().toLocaleLowerCase();
+
   const filteredEvents =
     events?.filter((event) =>
       event.name.toLocaleLowerCase().includes(normalizedSearch),
     ) ?? [];
+
   const hasEvents = (events?.length ?? 0) > 0;
   const hasFilteredEvents = filteredEvents.length > 0;
 

@@ -48,6 +48,7 @@ export function ReservationFormFields({
   const { t } = useTranslation();
   const commentId = useId();
   const targetsQuery = useNotificationsUserControllerGetUserTargets();
+
   const hasActiveDm = Boolean(
     targetsQuery.data?.some(
       (target) => target.targetType === "DM" && target.active && target.canSend,
@@ -59,6 +60,7 @@ export function ReservationFormFields({
         startsAt.getTime() + settings.reservationMinDurationMinutes * 60_000,
       )
     : minStart;
+
   const maxEnd = startsAt
     ? new Date(
         startsAt.getTime() + settings.reservationMaxDurationMinutes * 60_000,

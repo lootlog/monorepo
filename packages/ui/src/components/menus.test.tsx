@@ -86,10 +86,12 @@ describe("menus", () => {
   it("changes a select value with keyboard navigation", async () => {
     const onValueChange = vi.fn();
     const user = userEvent.setup();
+
     const items = [
       { label: "First", value: "first" },
       { label: "Second", value: "second" },
     ];
+
     render(
       <Select items={items} defaultValue="first" onValueChange={onValueChange}>
         <SelectTrigger>

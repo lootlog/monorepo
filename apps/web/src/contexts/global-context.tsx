@@ -1,4 +1,5 @@
 import { createContext, type Dispatch } from "react";
+
 export type CreateGuildModalAction =
   | {
       type: "OPEN";
@@ -23,4 +24,5 @@ export type GlobalContextProviderValue = {
 export const GlobalContext = createContext<
   GlobalContextProviderValue | undefined
 >(undefined);
+
 GlobalContext.displayName = "GlobalContext";

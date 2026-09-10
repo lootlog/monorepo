@@ -11,6 +11,7 @@ const CRYSTAL_SVG =
 
 export function RukiaFrostCardOverlay() {
   const id = React.useId();
+
   return (
     <CardParticleOverlay
       slot="rukia-frost-card-overlay"

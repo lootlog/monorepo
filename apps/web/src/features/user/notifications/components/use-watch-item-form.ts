@@ -52,6 +52,7 @@ const watchFormSchema = z
           message: "manualItemIdInvalid",
         });
       }
+
       if (!data.manualItemName.trim()) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -83,6 +84,7 @@ export function useWatchItemForm({
 }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+
   const createWatchedItem = useNotificationsUserControllerCreateWatchedItem({
     mutation: {
       onSuccess: async () => {
@@ -90,6 +92,7 @@ export function useWatchItemForm({
       },
     },
   });
+
   const [itemSearchValue, setItemSearchValue] = useState("");
 
   const form = useForm<WatchFormValues>({
@@ -114,20 +117,24 @@ export function useWatchItemForm({
       getGuildsControllerGetWorldsByGuildIdQueryOptions({ guildId }),
     ),
   });
+
   const worldOptions = [
     ...new Set(worldQueries.flatMap((query) => query.data ?? [])),
   ].sort();
+
   const itemSearchParams = {
     limit: 10,
     search: itemSearchValue,
     world: selectedWorld || undefined,
   };
+
   const itemSearchQuery = useItemsControllerGetItems(itemSearchParams, {
     query: {
       queryKey: getItemsControllerGetItemsQueryKey(itemSearchParams),
       enabled: itemSearchValue.length >= 2,
     },
   });
+
   const itemSearchResults = itemSearchQuery.data?.hits ?? [];
   const isItemsLoading = itemSearchQuery.isFetching;
 
@@ -136,6 +143,7 @@ export function useWatchItemForm({
     : (selectedItem?.id ?? null);
 
   const watchedItemsCount = watchedItems.length;
+
   const hasSelectedItemWatched =
     resolvedItemId !== null &&
     selectedWorld.length > 0 &&
@@ -144,6 +152,7 @@ export function useWatchItemForm({
         watchedItem.itemId === resolvedItemId &&
         watchedItem.world === selectedWorld,
     );
+
   const isWatchedItemLimitReached =
     watchedItemsCount >= USER_WATCHED_ITEMS_LIMIT && !hasSelectedItemWatched;
 
@@ -168,6 +177,7 @@ export function useWatchItemForm({
   const handleCreateWatchedItem = async (values: WatchFormValues) => {
     if (!hasActiveDm) {
       toast.error(t("settings.userNotifications.validation.dmRequired"));
+
       return;
     }
 
@@ -187,6 +197,7 @@ export function useWatchItemForm({
       (watchedItem) =>
         watchedItem.itemId === itemId && watchedItem.world === values.world,
     );
+
     const nextWatchedItemsCount = hasMatchingWatchedItem
       ? watchedItemsCount
       : Math.min(watchedItemsCount + 1, USER_WATCHED_ITEMS_LIMIT);
@@ -200,6 +211,7 @@ export function useWatchItemForm({
           limit: USER_WATCHED_ITEMS_LIMIT,
         }),
       );
+
       return;
     }
 

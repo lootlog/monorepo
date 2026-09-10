@@ -93,6 +93,7 @@ export const makeAccessibleGuilds = (
   ) {
     const cacheKey = `user:${identity.userId}:discord:${identity.discordId}:accessible-guilds${yield* apiKeyCacheSuffix}`;
     const cached = yield* ports.getCached(cacheKey);
+
     if (cached !== null) {
       yield* queue(
         identity,
@@ -104,6 +105,7 @@ export const makeAccessibleGuilds = (
           .map(({ id }) => id),
         "guild-access-cache-background",
       );
+
       return cached;
     }
 
@@ -111,8 +113,11 @@ export const makeAccessibleGuilds = (
       database,
       identity.discordId,
     );
+
     const guilds = guildRows.map(({ guild }) => guild);
+
     if (guilds.length === 0) return [];
+
     const members = yield* database
       .select()
       .from(memberTable)
@@ -125,6 +130,7 @@ export const makeAccessibleGuilds = (
           ),
         ),
       );
+
     const roles =
       members.length === 0
         ? []
@@ -139,6 +145,7 @@ export const makeAccessibleGuilds = (
               ),
             )
             .orderBy(desc(roleTable.position));
+
     const memberByGuild = new Map(
       members.map((member) => [
         member.guildId,
@@ -150,12 +157,15 @@ export const makeAccessibleGuilds = (
         },
       ]),
     );
+
     const staleThreshold =
       (yield* Clock.currentTimeMillis) - getMemberCacheSoftTtl(environment);
+
     const summaries = guilds
       .map((guild): GuildSummary => {
         const member = memberByGuild.get(guild.id);
         const owner = guild.ownerId === identity.discordId;
+
         const hasAccess = Boolean(
           owner ||
           (member?.active &&
@@ -163,7 +173,9 @@ export const makeAccessibleGuilds = (
               role.permissions.includes(Permission.LOOTLOG_ACCESS),
             )),
         );
+
         const lastSync = member?.lastDiscordSyncAt ?? member?.updatedAt;
+
         return {
           id: guild.id,
           name: guild.name,
@@ -177,6 +189,7 @@ export const makeAccessibleGuilds = (
         };
       })
       .filter(({ hasLootlogAccess }) => hasLootlogAccess);
+
     yield* queue(
       identity,
       summaries
@@ -188,20 +201,25 @@ export const makeAccessibleGuilds = (
         .map(({ id }) => id),
       "guild-access-background",
     );
+
     const orderRows = yield* database
       .select({ guildsOrder: userSettingsTable.guildsOrder })
       .from(userSettingsTable)
       .where(eq(userSettingsTable.userId, identity.userId))
       .limit(1);
+
     const order = new Map(
       (orderRows[0]?.guildsOrder ?? []).map((id, index) => [id, index]),
     );
+
     const result = [...summaries].sort(
       (left, right) =>
         (order.get(left.id) ?? Number.MAX_SAFE_INTEGER) -
         (order.get(right.id) ?? Number.MAX_SAFE_INTEGER),
     );
+
     yield* ports.setCached(cacheKey, result, CACHE_TTL_SECONDS);
+
     return result;
   });
 

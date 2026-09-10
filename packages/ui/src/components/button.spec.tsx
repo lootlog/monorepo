@@ -12,11 +12,13 @@ afterEach(cleanup);
 it("keeps its action name and blocks pointer and keyboard activation until loading ends", async () => {
   const user = userEvent.setup();
   const onClick = vi.fn<() => void>();
+
   const { rerender } = render(
     <Button loading onClick={onClick}>
       Save
     </Button>,
   );
+
   const button = screen.getByRole("button", { name: "Save" });
   expect(button).toHaveAttribute("aria-busy", "true");
   expect(button).toBeDisabled();
@@ -55,8 +57,10 @@ it("keeps icon-only buttons named while showing a decorative loading indicator",
 
 it("supports icon props and loading through nested Base UI render composition", async () => {
   const user = userEvent.setup();
+
   const onOpenChange =
     vi.fn<NonNullable<ComponentProps<typeof AlertDialog>["onOpenChange"]>>();
+
   const { rerender } = render(
     <AlertDialog onOpenChange={onOpenChange}>
       <Tooltip>
@@ -72,6 +76,7 @@ it("supports icon props and loading through nested Base UI render composition", 
       </Tooltip>
     </AlertDialog>,
   );
+
   const button = screen.getByRole("button", { name: "Save" });
   expect(button).toHaveAttribute("aria-busy", "true");
   await user.click(button);

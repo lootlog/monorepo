@@ -42,6 +42,7 @@ export const EventEditRulebookPage = () => {
     guildId: guildId ?? "",
     eventId: eventId ?? "",
   };
+
   const hasEventRouteParams = Boolean(guildId && eventId);
 
   const {
@@ -54,7 +55,9 @@ export const EventEditRulebookPage = () => {
       queryKey: getShowEventOverviewQueryKey(routeParams),
     },
   });
+
   const queryClient = useQueryClient();
+
   const updateEvent = useUpdateEvent({
     mutation: {
       onSuccess: () => {

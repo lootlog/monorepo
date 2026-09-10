@@ -45,6 +45,7 @@ export const BattlePanelSingleBattleActions: FC<
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+
   const {
     handleShare,
     handleCopyLink,
@@ -52,6 +53,7 @@ export const BattlePanelSingleBattleActions: FC<
     isPending,
     pendingAction,
   } = useBattleSharing();
+
   const { mutateAsync: deleteBattle } = useBattlesControllerDeleteBattle();
   const [isDeletePending, setIsDeletePending] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);

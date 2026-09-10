@@ -32,13 +32,16 @@ it("marks only the deepest matching section and keeps navigation within its base
       />
     ),
   });
+
   const route = createRoute({ getParentRoute: () => root, path: "$" });
+
   const router = createRouter({
     routeTree: root.addChildren([route]),
     history: createMemoryHistory({
       initialEntries: ["/organization/settings/roles/123"],
     }),
   });
+
   render(<RouterProvider router={router} />);
   const roles = await screen.findByRole("link", { name: "Role" });
   expect(roles.getAttribute("aria-current")).toBe("page");

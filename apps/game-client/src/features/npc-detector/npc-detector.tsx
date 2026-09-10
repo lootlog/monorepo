@@ -16,28 +16,37 @@ export const NpcDetector = () => {
   const { t } = useTranslation("npcDetector");
   const { npcTypeColors } = useNpcTypeColors();
   const open = useWindowsStore((state) => state["npc-detector"].open);
+
   const defaultWindowHeight = useWindowsStore(
     (state) => state["npc-detector"].size.height,
   );
+
   const storedMaxContentHeight = useWindowsStore(
     (state) => state["npc-detector"].maxContentHeight,
   );
+
   const setOpen = useWindowsStore((state) => state.setOpen);
+
   const setMaxContentHeight = useWindowsStore(
     (state) => state.setMaxContentHeight,
   );
+
   const { npcs, clearNpcs } = useNpcDetectorStore(
     useShallow((state) => ({
       npcs: state.npcs,
       clearNpcs: state.clearNpcs,
     })),
   );
+
   const { settings } = useCurrentGameAccountDetectorSettings();
+
   const [isMaxHeightAdjustmentArmed, setIsMaxHeightAdjustmentArmed] =
     useState(false);
+
   const [measuredMaxContentHeight, setMeasuredMaxContentHeight] = useState(
     storedMaxContentHeight ?? defaultWindowHeight,
   );
+
   const resolvedMaxContentHeight =
     storedMaxContentHeight ?? measuredMaxContentHeight;
 
@@ -49,6 +58,7 @@ export const NpcDetector = () => {
   const filteredNpcs = npcs.filter((npc) => {
     const npcType = getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type);
     const settingsByNpcType = getDetectorNpcSettings(settings, npcType);
+
     return settingsByNpcType?.notifyWindow && settingsByNpcType?.detect;
   });
 

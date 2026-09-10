@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 export const GeneralSettings = () => {
   const { t } = useTranslation();
   const guildId = useGuildId();
+
   const { data: guild } = useGuildsControllerGetGuildById({
     guildId: guildId ?? "",
   });

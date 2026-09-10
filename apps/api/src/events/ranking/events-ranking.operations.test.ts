@@ -28,6 +28,7 @@ const unexpected = () => Effect.die("Unexpected external operation");
 
 it("filters hero timers by NPC level before exposing their public projection", async () => {
   const boundary = await createDatabaseBoundary();
+
   try {
     const database = boundary.database;
     const now = new Date();
@@ -46,11 +47,13 @@ it("filters hero timers by NPC level before exposing their public projection", a
         updatedAt: now,
       }),
     );
+
     const heroes = [
       { npcId: 1, npcName: "Low", npcLvl: 50 },
       { npcId: 2, npcName: "High", npcLvl: 300 },
       { npcId: 3, npcName: "Unknown", npcLvl: null },
     ];
+
     await boundary.run(
       database.insert(eventHeroNpcTable).values(
         heroes.map((hero) => ({
@@ -75,6 +78,7 @@ it("filters hero timers by NPC level before exposing their public projection", a
         })),
       ),
     );
+
     const redis = new RedisService(
       {
         send: unexpected,
@@ -84,6 +88,7 @@ it("filters hero timers by NPC level before exposing their public projection", a
       {},
       Effect.runPromise,
     );
+
     const timers = makeEventTimersPort({
       store: makeEventTimerStore(database),
       redis,
@@ -91,12 +96,14 @@ it("filters hero timers by NPC level before exposing their public projection", a
       logger: applicationLogger,
       amqp: { publish: unexpected },
     });
+
     const summary = makeEventHeroSummary(
       database,
       redis,
       timers,
       applicationLogger,
     );
+
     const ranking = makeEventsRanking(
       { getRanking: unexpected, getEditHistories: unexpected },
       {
@@ -115,6 +122,7 @@ it("filters hero timers by NPC level before exposing their public projection", a
       { updateRanking: unexpected, updateKillPoint: unexpected },
       summary,
     );
+
     const visible = await boundary.run(
       ranking.getEventHeroTimers(
         { id: "guild-1" },
@@ -137,6 +145,7 @@ it("filters hero timers by NPC level before exposing their public projection", a
         createAccessPolicy({ capabilities: [Permission.LOOTLOG_EVENTS_READ] }),
       ),
     );
+
     expect(visible.map((timer) => timer.npc.name).sort()).toEqual([
       "Low",
       "Unknown",

@@ -25,6 +25,7 @@ export const LootComments: FC<LootCommentProps> = ({ lootId }) => {
   const guildId = useGuildId();
   const queryClient = useQueryClient();
   const [value, setValue] = useState("");
+
   const {
     data: comments,
     isLoading,
@@ -41,6 +42,7 @@ export const LootComments: FC<LootCommentProps> = ({ lootId }) => {
       },
     },
   );
+
   const { mutate: createComment, isPending } = useLootsControllerCreateComment({
     mutation: {
       onSuccess: async () => {
@@ -56,12 +58,15 @@ export const LootComments: FC<LootCommentProps> = ({ lootId }) => {
       },
     },
   });
+
   const normalizedValue = value.trim();
+
   const isSubmitDisabled =
     normalizedValue.length === 0 || value.length > MAX_LENGTH || isPending;
 
   const handleAddComment = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
     if (isSubmitDisabled || !guildId) {
       return;
     }

@@ -28,12 +28,16 @@ const ActualColumn = Schema.Struct({
   isNullable: Schema.Boolean,
   hasDefault: Schema.Boolean,
 });
+
 const EnumRow = Schema.Struct({ name: Schema.String, value: Schema.String });
+
 const NameRow = Schema.Struct({ name: Schema.String });
+
 const AdoptionMarker = Schema.Struct({
   fingerprint: Schema.String,
   migrationEvidenceHash: Schema.String,
 });
+
 const MigrationJournalRow = Schema.Struct({
   hash: Schema.String,
   createdAt: Schema.String,
@@ -82,6 +86,7 @@ const loadActualCatalog = async (client: SqlTransactionClient) => {
   );
 
   const tableNames = tables.rows.map(({ name }) => name).sort();
+
   const columns = await queryRows(
     client,
     ActualColumn,
@@ -121,7 +126,9 @@ const loadActualCatalog = async (client: SqlTransactionClient) => {
     ORDER BY enum_type.typname, enum_value.enumsortorder
   `,
   );
+
   const enumValues = new Map<string, string[]>();
+
   for (const row of enumRows.rows) {
     const values = enumValues.get(row.name) ?? [];
     values.push(row.value);
@@ -193,8 +200,11 @@ const assertKnownMarker = async (client: SqlTransactionClient) => {
     WHERE component = 'api'
   `,
   );
+
   const existing = marker.rows[0];
+
   if (!existing) return false;
+
   if (
     existing.fingerprint !== EXPECTED_API_CATALOG_SHA256 ||
     existing.migrationEvidenceHash !== LEGACY_MIGRATION_EVIDENCE_SHA256
@@ -204,6 +214,7 @@ const assertKnownMarker = async (client: SqlTransactionClient) => {
       existing.fingerprint,
     );
   }
+
   return true;
 };
 
@@ -218,8 +229,10 @@ const assertKnownMigrationJournal = async (client: SqlTransactionClient) => {
     ORDER BY id
   `,
   );
+
   if (journal.rows.length === 0) return;
   const baseline = journal.rows[0];
+
   if (
     journal.rows.length !== 1 ||
     baseline?.hash !== BASELINE_MIGRATION_SHA256 ||
@@ -274,6 +287,7 @@ export const adoptExistingApiDatabase = async (
   client: SqlTransactionClient,
 ): Promise<AdoptionResult> => {
   await client.query("BEGIN");
+
   try {
     await client.query(
       "SELECT pg_advisory_xact_lock(hashtext('lootlog:api:drizzle-adoption'))",
@@ -299,6 +313,7 @@ export const adoptExistingApiDatabase = async (
 
     if (await assertKnownMarker(client)) {
       await client.query("COMMIT");
+
       return {
         status: "already-adopted",
         fingerprint: EXPECTED_API_CATALOG_SHA256,
@@ -308,13 +323,16 @@ export const adoptExistingApiDatabase = async (
     await assertKnownMigrationJournal(client);
 
     const actualCatalog = await loadActualCatalog(client);
+
     if (actualCatalog.tables.length === 0) {
       await recordAdoptionMarker(client);
       await client.query("COMMIT");
+
       return { status: "empty" };
     }
 
     const actualFingerprint = hashCatalog(actualCatalog);
+
     if (actualFingerprint !== EXPECTED_API_CATALOG_SHA256) {
       throw new ApiDatabaseAdoptionError(
         "API database catalog does not match the accepted legacy schema; refusing Drizzle adoption.",
@@ -327,6 +345,7 @@ export const adoptExistingApiDatabase = async (
     );
     await recordAdoption(client);
     await client.query("COMMIT");
+
     return { status: "adopted", fingerprint: EXPECTED_API_CATALOG_SHA256 };
   } catch (error) {
     await client.query("ROLLBACK");

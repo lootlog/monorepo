@@ -42,6 +42,7 @@ export function BattleCharacterFilter({
   const { t } = useTranslation();
   const characterListId = useId();
   const selectedCharacterIds = new Set(selectedIds);
+
   return (
     <div className={cn("space-y-2", className)}>
       {showLabel && <Label>{t("battlePanel.filters.character")}</Label>}

@@ -8,8 +8,11 @@ import {
 import { getFixedT } from "@/i18n/get-fixed-t";
 
 export const LOG_VALUE_BYTE_CAP = 256 * 1024;
+
 export const LOG_VALUE_MAX_DEPTH = 10;
+
 export const LOG_VALUE_MAX_ARRAY_ITEMS = 1_000;
+
 export const LOG_VALUE_MAX_STRING_BYTES = 16 * 1024;
 
 type SerializationContext = {
@@ -109,6 +112,7 @@ const serializeTruncationMarker = (
     context,
     getUtf8ByteLength(JSON.stringify(marker)),
   );
+
   return marker;
 };
 
@@ -126,11 +130,13 @@ const serializeLogValueWithinBudget = (
       context,
       getUtf8ByteLength(JSON.stringify(value)),
     );
+
     return value;
   }
 
   if (typeof value === "string") {
     const valueBytes = getUtf8ByteLength(value);
+
     if (valueBytes > LOG_VALUE_MAX_STRING_BYTES) {
       return serializeTruncationMarker(context, "max-string-bytes", {
         originalBytes: valueBytes,
@@ -141,6 +147,7 @@ const serializeLogValueWithinBudget = (
       context,
       getUtf8ByteLength(JSON.stringify(value)),
     );
+
     return value;
   }
 
@@ -150,6 +157,7 @@ const serializeLogValueWithinBudget = (
       context,
       getUtf8ByteLength(JSON.stringify(serializedDate)),
     );
+
     return serializedDate;
   }
 
@@ -166,9 +174,11 @@ const serializeLogValueWithinBudget = (
     consumeSerializationBudget(context, 2);
 
     const hasOverflow = value.length > LOG_VALUE_MAX_ARRAY_ITEMS;
+
     const itemLimit = hasOverflow
       ? LOG_VALUE_MAX_ARRAY_ITEMS - 1
       : value.length;
+
     const serializedItems: SerializableValue[] = [];
 
     try {
@@ -176,6 +186,7 @@ const serializeLogValueWithinBudget = (
         if (index > 0) {
           consumeSerializationBudget(context, 1);
         }
+
         serializedItems.push(
           serializeLogValueWithinBudget(value[index], context, depth + 1),
         );
@@ -185,6 +196,7 @@ const serializeLogValueWithinBudget = (
         if (serializedItems.length > 0) {
           consumeSerializationBudget(context, 1);
         }
+
         serializedItems.push(
           serializeTruncationMarker(context, "max-array-items", {
             originalLength: value.length,
@@ -206,6 +218,7 @@ const serializeLogValueWithinBudget = (
     context.ancestors.add(value);
     consumeSerializationBudget(context, 2);
     const serializedRecord: Record<string, SerializableValue> = {};
+
     const serializableEntries = Object.entries(value).filter(
       ([, nestedValue]) => nestedValue !== undefined,
     );
@@ -215,6 +228,7 @@ const serializeLogValueWithinBudget = (
         if (index > 0) {
           consumeSerializationBudget(context, 1);
         }
+
         consumeSerializationBudget(
           context,
           getUtf8ByteLength(JSON.stringify(key)) + 1,
@@ -370,6 +384,7 @@ export const startLoggedAction = ({
     payload: serializeLogValue(payload),
     details: details ? serializeLogValue(details) : undefined,
   });
+
   return {
     actionId,
     actionType,
@@ -495,6 +510,7 @@ const runLoggedRequestWithRetry = <TResponse>({
       }
 
       await delayRetry(retry.getDelayMs(attempt, error));
+
       return runAttempt(attempt + 1);
     }
   };

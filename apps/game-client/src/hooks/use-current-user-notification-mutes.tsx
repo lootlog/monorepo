@@ -7,6 +7,7 @@ type EffectiveNotificationMutes = ReturnType<
 >;
 
 const emptyNotificationMutes = getEffectiveNotificationMutes(undefined);
+
 const notificationMutesCache = new WeakMap<
   object,
   EffectiveNotificationMutes
@@ -18,10 +19,12 @@ const getCachedEffectiveNotificationMutes = (
   if (!preferences) return emptyNotificationMutes;
 
   const cachedMutes = notificationMutesCache.get(preferences);
+
   if (cachedMutes) return cachedMutes;
 
   const mutes = getEffectiveNotificationMutes(preferences);
   notificationMutesCache.set(preferences, mutes);
+
   return mutes;
 };
 
@@ -29,6 +32,7 @@ export const useCurrentUserNotificationMutes = () => {
   const gameInitialized = useGlobalStore(
     (state) => state.gameState.gameInitialized,
   );
+
   const query = useUserPreferences(gameInitialized);
 
   return {

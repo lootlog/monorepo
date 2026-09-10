@@ -18,6 +18,7 @@ type StatisticsQueryStateProps = {
   centered?: boolean;
   errorMessage?: string;
 };
+
 export function StatisticsQueryState({
   query,
   children,
@@ -26,6 +27,7 @@ export function StatisticsQueryState({
   errorMessage,
 }: StatisticsQueryStateProps) {
   const { t } = useTranslation();
+
   if (query.isPending)
     return (
       loading ?? (
@@ -39,6 +41,7 @@ export function StatisticsQueryState({
         </div>
       )
     );
+
   return (
     <>
       {query.isError && (

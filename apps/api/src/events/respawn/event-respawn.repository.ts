@@ -20,6 +20,7 @@ export const makeEventRespawnStore = (database: ApiDatabaseValue) => ({
       .pipe(
         Effect.map((rows) => {
           const row = rows[0];
+
           return row ? { ...row.hero, event: row.event } : null;
         }),
         Effect.withSpan("events.respawn.findHero", {

@@ -23,6 +23,7 @@ const ContextMenuTrigger = React.forwardRef<
     </BaseContextMenu.Trigger>
   );
 });
+
 ContextMenuTrigger.displayName = "ContextMenuTrigger";
 
 type ContextMenuContentProps = BaseContextMenu.Popup.Props &
@@ -48,6 +49,7 @@ const ContextMenuContent = React.forwardRef<
     </BaseContextMenu.Positioner>
   </BaseContextMenu.Portal>
 ));
+
 ContextMenuContent.displayName = "ContextMenuContent";
 
 type ContextMenuItemProps = BaseContextMenu.Item.Props & {
@@ -67,6 +69,7 @@ const ContextMenuItem = React.forwardRef<HTMLElement, ContextMenuItemProps>(
       onClick={(event) => {
         onClick?.(event);
         onSelect?.(event);
+
         if (event.defaultPrevented) {
           event.preventBaseUIHandler();
         }
@@ -75,6 +78,7 @@ const ContextMenuItem = React.forwardRef<HTMLElement, ContextMenuItemProps>(
     />
   ),
 );
+
 ContextMenuItem.displayName = "ContextMenuItem";
 
 export { ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem };

@@ -15,6 +15,7 @@ import {
 
 const getSearchParamValues = (searchParams: URLSearchParams, key: string) => {
   const values = searchParams.getAll(key).filter(Boolean);
+
   return values.length > 0 ? values : undefined;
 };
 

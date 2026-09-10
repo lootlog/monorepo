@@ -23,11 +23,13 @@ type RawNpcHit = Omit<NpcHit, "margonemType" | "prof" | "type"> & {
 const normalizeNpcHit = (npc: RawNpcHit): NpcHit => {
   const prof = npc.prof ?? "";
   let margonemType = 0;
+
   if (Predicate.isNumber(npc.margonemType)) {
     margonemType = npc.margonemType;
   } else if (Predicate.isNumber(npc.type)) {
     margonemType = npc.type;
   }
+
   const type = Schema.is(NpcTypeSchema)(npc.type)
     ? npc.type
     : getNpcTypeByWt(npc.wt, prof, margonemType);
@@ -37,10 +39,13 @@ const normalizeNpcHit = (npc: RawNpcHit): NpcHit => {
 
 const uniqueNpcsByNameAndType = (npcs: ReadonlyArray<NpcHit>) => {
   const seenNpcKeys = new Set<string>();
+
   return npcs.filter((npc) => {
     const npcKey = `${npc.name}_${npc.type}`;
+
     if (seenNpcKeys.has(npcKey)) return false;
     seenNpcKeys.add(npcKey);
+
     return true;
   });
 };
@@ -53,6 +58,7 @@ export const makeNpcsModule = (meilisearch: Meilisearch, logger: AppLogger) => {
     world,
   }: NpcSearchQuery) {
     const index = meilisearch.index<RawNpcHit>(NPCS_INDEX);
+
     const { filter: searchFilter, searchTerm } =
       buildMeilisearchSearchTermFilter("name", search);
 
@@ -81,6 +87,7 @@ export const makeNpcsModule = (meilisearch: Meilisearch, logger: AppLogger) => {
     ).pipe(
       Effect.map((response) => {
         const hits = response.hits.map(normalizeNpcHit);
+
         return ids && ids.length > 0 ? hits : uniqueNpcsByNameAndType(hits);
       }),
       Effect.tapError((error) =>
@@ -102,6 +109,7 @@ export const makeNpcsModule = (meilisearch: Meilisearch, logger: AppLogger) => {
       logger.warn("No valid npcs to index (missing required fields)", {
         npcs: data.npcs,
       });
+
       return;
     }
 
@@ -109,6 +117,7 @@ export const makeNpcsModule = (meilisearch: Meilisearch, logger: AppLogger) => {
       const invalidNpcs = data.npcs.filter(
         (npc) => !npc.world || !npc.id || !npc.name,
       );
+
       logger.warn(
         `Skipped ${invalidNpcs.length} npcs due to missing required fields`,
         { invalidNpcs },

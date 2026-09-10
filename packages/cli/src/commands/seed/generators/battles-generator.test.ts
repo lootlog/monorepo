@@ -26,6 +26,7 @@ test("sample battle parsing retains moves, warriors and extension fields", () =>
       },
     ],
   };
+
   expect(parseSampleBattle(JSON.stringify(sample))).toEqual(sample);
   expect(() =>
     parseSampleBattle(

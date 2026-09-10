@@ -104,9 +104,11 @@ describe("Kills and Loots HttpApi handlers", () => {
       characterId: "character-1",
       world: "tempest",
     } satisfies CreateKillRequest;
+
     const created = {
       updated: 1,
     } satisfies CreateKillResponse;
+
     const calls: Array<{
       receivedCaller: AuthenticatedCaller;
       receivedPayload: CreateKillRequest;
@@ -120,6 +122,7 @@ describe("Kills and Loots HttpApi handlers", () => {
             makeData({
               createKill: (receivedCaller, receivedPayload) => {
                 calls.push({ receivedCaller, receivedPayload });
+
                 return Effect.succeed(created);
               },
             }),
@@ -139,6 +142,7 @@ describe("Kills and Loots HttpApi handlers", () => {
       status: 401,
       code: "AUTHENTICATION_REQUIRED",
     });
+
     let dataAccessed = false;
 
     const error = await Effect.runPromise(
@@ -189,6 +193,7 @@ describe("Kills and Loots HttpApi handlers", () => {
               makeData({
                 createLoot: () => {
                   dataAccessed = true;
+
                   return Effect.die("must not run");
                 },
               }),
@@ -207,10 +212,12 @@ describe("Kills and Loots HttpApi handlers", () => {
       guildId: string;
       capability: string;
     }> = [];
+
     const denied = new RecordsAccessDenied({
       status: 403,
       code: "LOOTS_READ_REQUIRED",
     });
+
     let dataAccessed = false;
 
     const error = await Effect.runPromise(
@@ -221,12 +228,14 @@ describe("Kills and Loots HttpApi handlers", () => {
               makeAuthorization({
                 requireGuild: (options) => {
                   authorizationCalls.push(options);
+
                   return Effect.fail(denied);
                 },
               }),
               makeData({
                 fetchLoots: () => {
                   dataAccessed = true;
+
                   return Effect.die("must not run");
                 },
               }),
@@ -248,6 +257,7 @@ describe("Kills and Loots HttpApi handlers", () => {
       status: 403,
       code: "ORGANIZATION_ACCESS_DENIED",
     });
+
     const requestedGuilds: string[] = [];
     let dataAccessed = false;
 
@@ -259,12 +269,14 @@ describe("Kills and Loots HttpApi handlers", () => {
               makeAuthorization({
                 requireGuild: ({ guildId }) => {
                   requestedGuilds.push(guildId);
+
                   return Effect.fail(denied);
                 },
               }),
               makeData({
                 fetchLoot: () => {
                   dataAccessed = true;
+
                   return Effect.die("must not run");
                 },
               }),
@@ -303,6 +315,7 @@ describe("Kills and Loots HttpApi handlers", () => {
     const payload = {
       content: "gg",
     } satisfies CreateLootCommentRequest;
+
     const created = {
       id: 1,
       lootId: 42,
@@ -312,6 +325,7 @@ describe("Kills and Loots HttpApi handlers", () => {
       createdAt: "2026-09-01T00:00:00.000Z",
       updatedAt: "2026-09-01T00:00:00.000Z",
     } satisfies LootCommentResponse;
+
     const authorizationCalls: string[] = [];
 
     const result = await Effect.runPromise(
@@ -321,6 +335,7 @@ describe("Kills and Loots HttpApi handlers", () => {
             makeAuthorization({
               requireGuild: (options) => {
                 authorizationCalls.push(options.capability);
+
                 return Effect.succeed(guildCaller);
               },
             }),
@@ -361,6 +376,7 @@ describe("Personal kill analytics authentication", () => {
       status: 401,
       code: "AUTHENTICATION_REQUIRED",
     });
+
     await Promise.all(
       [
         Effect.asVoid(getUserKillAnalytics({ days: 7 })),
@@ -379,6 +395,7 @@ describe("Personal kill analytics authentication", () => {
             ),
           ),
         );
+
         expect(error).toBe(denied);
       }),
     );
@@ -387,20 +404,25 @@ describe("Personal kill analytics authentication", () => {
     const reached = new RecordsDataError({
       cause: new Error("Test boundary reached"),
     });
+
     const received: unknown[] = [];
+
     const layer = services(
       makeAuthorization(),
       makeData({
         getUserKillAnalytics: (owner, query) => {
           received.push({ owner, query });
+
           return Effect.fail(reached);
         },
         getUserKillActivity: (owner, query) => {
           received.push({ owner, query });
+
           return Effect.fail(reached);
         },
       }),
     );
+
     await Promise.all(
       [
         getUserKillAnalytics({ days: 90, world: "tempest" }),

@@ -33,8 +33,10 @@ export class AirTagRuntime {
   configure(nextState: AirTagRuntimeState): void {
     const previousState = this.state;
     const wasPublishing = this.isPublishing(previousState);
+
     const nextEnabled =
       nextState.enabled && useGameStore.getState().game?.interface === "ni";
+
     this.state = { ...nextState, enabled: nextEnabled };
     const isPublishing = this.isPublishing(this.state);
 
@@ -58,19 +60,23 @@ export class AirTagRuntime {
     if (!nextEnabled) {
       airTagReceiveController.clear();
       airTagRenderer.unregister();
+
       return;
     }
 
     airTagRenderer.register();
+
     if (!isPublishing) {
       if (this.policyRefreshTimer !== null)
         clearTimeout(this.policyRefreshTimer);
       this.policyRefreshTimer = null;
+
       return;
     }
 
     if (!wasPublishing || !previousState.enabled) {
       const policy = getSocket().getAccessPolicy?.();
+
       if (policy) {
         this.allowedOrganizations = new Set(
           policy.organizations.flatMap((organization) =>
@@ -79,6 +85,7 @@ export class AirTagRuntime {
         );
         airTagReceiveController.retainOrganizations(this.allowedOrganizations);
       }
+
       this.subscribeCurrentMap(true, undefined, previousState.enabled);
     }
   }
@@ -100,22 +107,29 @@ export class AirTagRuntime {
       this.allowedOrganizations = undefined;
       airTagReceiveController.retainOrganizations();
       airTagReceiveController.clear();
+
       if (this.isPublishing(this.state)) this.schedulePolicySubscription();
+
       return;
     }
+
     const allowed = new Set(
       payload.accessPolicy.organizations.flatMap((organization) =>
         canReadPresence(organization) ? [organization.organizationId] : [],
       ),
     );
+
     const previous = this.allowedOrganizations;
     this.allowedOrganizations = allowed;
     airTagReceiveController.retainOrganizations(allowed);
+
     for (const organizationId of this.pendingOrganizations) {
       if (!allowed.has(organizationId))
         this.pendingOrganizations.delete(organizationId);
     }
+
     let addedOrganization = false;
+
     for (const organizationId of allowed) {
       const expanded = previous
         ? !previous.has(organizationId)
@@ -125,17 +139,21 @@ export class AirTagRuntime {
               change.areas.includes("presence") &&
               change.expanded,
           );
+
       if (expanded) {
         addedOrganization = true;
         this.pendingOrganizations.add(organizationId);
       }
     }
+
     if (this.pendingOrganizations.size === 0) {
       if (this.policyRefreshTimer !== null)
         clearTimeout(this.policyRefreshTimer);
       this.policyRefreshTimer = null;
+
       return;
     }
+
     if (this.isPublishing(this.state) && addedOrganization) {
       this.schedulePolicySubscription();
     }
@@ -151,12 +169,14 @@ export class AirTagRuntime {
     this.pendingOrganizations.clear();
     this.allowedOrganizations = undefined;
     airTagReceiveController.retainOrganizations();
+
     if (this.isPublishing(this.state)) {
       this.emitSubscription({
         requestId: crypto.randomUUID(),
         enabled: false,
       });
     }
+
     this.state = { enabled: false, connected: false, joined: false };
     this.currentMapId = null;
     this.currentMapName = null;
@@ -179,7 +199,9 @@ export class AirTagRuntime {
     preserveScopes = false,
   ): void {
     const map = mapOverride ?? this.getCurrentMap();
+
     if (!map || !this.isPublishing(this.state)) return;
+
     if (this.policyRefreshTimer !== null) clearTimeout(this.policyRefreshTimer);
     this.policyRefreshTimer = null;
     this.pendingOrganizations.clear();
@@ -187,6 +209,7 @@ export class AirTagRuntime {
     this.currentMapId = map.id;
     this.currentMapName = map.name;
     const socket = getSocket();
+
     if (updatePresence) {
       socket.emit(GatewayEvent.PLAYER_PRESENCE_UPDATE, {
         mapId: map.id,
@@ -236,6 +259,7 @@ export class AirTagRuntime {
 
   private getCurrentMap(): { id: number; name: string } | null {
     const map = useGameStore.getState().game?.map;
+
     if (!map || !Number.isInteger(map.id)) return null;
 
     return { id: map.id, name: map.name };

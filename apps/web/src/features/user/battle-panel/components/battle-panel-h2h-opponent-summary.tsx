@@ -26,6 +26,7 @@ export function BattlePanelH2hOpponentSummary({
     prof: record.opponentProf,
     icon: record.opponentIcon,
   };
+
   const userWarrior = record.lastBattleUserWarrior ?? {
     ...EMPTY_WARRIOR_DAMAGE_PROFILE,
     name: "",

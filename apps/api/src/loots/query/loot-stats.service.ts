@@ -75,6 +75,7 @@ export class LootStatsService {
 
   invalidateCache(guildIds: string[]) {
     const uniqueGuildIds = [...new Set(guildIds)];
+
     return Effect.all(
       uniqueGuildIds.map((guildId) =>
         Effect.tryPromise({
@@ -105,6 +106,7 @@ export class LootStatsService {
     excludeColossus?: boolean,
   ) {
     const permissions = getEffectiveCapabilities(accessPolicy);
+
     const cacheKey = this.buildCacheKey(
       guildId,
       permissions,
@@ -114,8 +116,10 @@ export class LootStatsService {
       npcTypes,
       excludeColossus,
     );
+
     const visibilityCondition = buildLootNpcVisibilitySql(permissions, roles);
     const dateFrom = this.getDateFromPeriod(period);
+
     const npcTypeFilter = npcTypes?.length
       ? npcTypes.filter((type): type is NpcType =>
           Object.values(NpcType).some((npcType) => npcType === type),
@@ -185,6 +189,7 @@ export class LootStatsService {
           ] as const,
           { concurrency: "unbounded" },
         );
+
         return {
           overview,
           byRarity,
@@ -195,6 +200,7 @@ export class LootStatsService {
         } satisfies LootStatsResponse;
       }.bind(this),
     );
+
     return this.redis
       .getOrSetJsonEffect({
         key: cacheKey,
@@ -229,10 +235,15 @@ export class LootStatsService {
         }),
       )
       .digest("base64url");
+
     const parts = ["loot-stats", guildId, accessFingerprint, period];
+
     if (world) parts.push(world);
+
     if (npcTypes?.length) parts.push(npcTypes.sort().join(","));
+
     if (excludeColossus) parts.push("no-colossus");
+
     return parts.join(":");
   }
 
@@ -244,20 +255,26 @@ export class LootStatsService {
   ) {
     const dateParamIndex = this.getDateFilterParamIndex();
     const worldParamIndex = this.getWorldFilterParamIndex(dateFrom);
+
     const npcTypesParamIndex = this.getNpcTypesFilterParamIndex(
       dateFrom,
       world,
     );
+
     const dateCondition = dateFrom
       ? `AND l."createdAt" >= $${dateParamIndex}`
       : "";
+
     const worldCondition = world ? `AND l.world = $${worldParamIndex}` : "";
+
     const npcTypeCondition = npcTypes?.length
       ? `AND ns.type = ANY($${npcTypesParamIndex}::text[])`
       : "";
+
     const excludeColossusCondition = excludeColossus
       ? `AND ns.type != 'COLOSSUS'`
       : "";
+
     const needsNpcFilter = !!(npcTypes?.length || excludeColossus);
 
     return {
@@ -302,9 +319,13 @@ export class LootStatsService {
     npcTypes?: NpcType[],
   ): (string | Date | string[])[] {
     const params: (string | Date | string[])[] = [guildId];
+
     if (dateFrom) params.push(dateFrom);
+
     if (world) params.push(world);
+
     if (npcTypes?.length) params.push(npcTypes);
+
     return params;
   }
 
@@ -312,6 +333,7 @@ export class LootStatsService {
     if (period === "all") return null;
 
     const now = new Date();
+
     const periodMap: Record<Exclude<Period, "all">, number> = {
       "24h": 1,
       "3d": 3,
@@ -323,6 +345,7 @@ export class LootStatsService {
     };
 
     const days = periodMap[period];
+
     return new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
   }
 
@@ -341,6 +364,7 @@ export class LootStatsService {
       excludeColossusCondition,
       needsNpcFilter,
     } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
+
     const params = this.buildFilterParams(guildId, dateFrom, world, npcTypes);
 
     return this.query<
@@ -391,6 +415,7 @@ export class LootStatsService {
     ).pipe(
       Effect.map((result): LootStatsOverview => {
         const row = result[0];
+
         return {
           totalLoots: Number(row?.total_loots ?? 0),
           totalItems: Number(row?.total_items ?? 0),
@@ -419,6 +444,7 @@ export class LootStatsService {
       excludeColossusCondition,
       needsNpcFilter,
     } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
+
     const params = this.buildFilterParams(guildId, dateFrom, world, npcTypes);
 
     return this.query<
@@ -465,6 +491,7 @@ export class LootStatsService {
       Effect.map((result): Partial<Record<ItemRarity, RarityStats>> => {
         const total = result.reduce((sum, row) => sum + Number(row.count), 0);
         const byRarity: Partial<Record<ItemRarity, RarityStats>> = {};
+
         for (const row of result) {
           const count = Number(row.count);
           byRarity[row.rarity] = {
@@ -473,6 +500,7 @@ export class LootStatsService {
               total > 0 ? Math.round((count / total) * 100 * 10) / 10 : 0,
           };
         }
+
         return byRarity;
       }),
     );
@@ -494,6 +522,7 @@ export class LootStatsService {
       excludeColossusCondition,
       needsNpcFilter,
     } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
+
     const truncUnit = this.getTimelineTruncUnit(period);
     const params = this.buildFilterParams(guildId, dateFrom, world, npcTypes);
 
@@ -545,17 +574,21 @@ export class LootStatsService {
           string,
           { total: number; byRarity: Partial<Record<ItemRarity, number>> }
         >();
+
         for (const row of result) {
           const date = row.date.toISOString();
           const entry = timelineMap.get(date) ?? { total: 0, byRarity: {} };
           const count = Number(row.count);
           entry.total += count;
+
           if (row.rarity) {
             entry.byRarity[row.rarity] =
               (entry.byRarity[row.rarity] ?? 0) + count;
           }
+
           timelineMap.set(date, entry);
         }
+
         return Array.from(timelineMap.entries()).map(([date, data]) => ({
           date,
           total: data.total,
@@ -598,8 +631,10 @@ export class LootStatsService {
       npcTypeCondition,
       excludeColossusCondition,
     } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
+
     const params: (string | Date | string[] | number)[] =
       this.buildFilterParams(guildId, dateFrom, world, npcTypes);
+
     const limitParamIndex = params.length + 1;
     params.push(limit);
 
@@ -686,8 +721,10 @@ export class LootStatsService {
       excludeColossusCondition,
       needsNpcFilter,
     } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
+
     const params: (string | Date | string[] | number)[] =
       this.buildFilterParams(guildId, dateFrom, world, npcTypes);
+
     const limitParamIndex = params.length + 1;
     params.push(limit);
 
@@ -796,8 +833,10 @@ export class LootStatsService {
       npcTypeCondition,
       excludeColossusCondition,
     } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
+
     const params: (string | Date | string[] | number)[] =
       this.buildFilterParams(guildId, dateFrom, world, npcTypes);
+
     const limitParamIndex = params.length + 1;
     params.push(limit);
 

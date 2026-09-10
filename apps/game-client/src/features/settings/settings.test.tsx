@@ -10,7 +10,9 @@ import { useWindowsStore } from "@/store/windows.store";
 import { Settings } from "./settings";
 
 import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
+
 let harness: ReturnType<typeof createGuildPreferencesTest>;
+
 const render = () => renderUi(<Settings />, { wrapper: harness.wrapper });
 
 describe("Settings", () => {
@@ -134,7 +136,9 @@ describe("Settings", () => {
     const windowElement = document.querySelector(
       '[data-ll-draggable-window="settings"]',
     );
+
     const windowBody = windowElement?.firstElementChild;
+
     if (!(windowBody instanceof HTMLElement)) {
       throw new Error("Expected settings window body");
     }

@@ -93,6 +93,7 @@ describe("createLootAccessFingerprint", () => {
         { ...baseRole, id: "hero", permissions: ["LOOTLOG_LOOTS_HEROES_READ"] },
       ],
     });
+
     const right = createLootAccessFingerprint({
       organizationId: "guild-1",
       permissions: ["ADMIN", "LOOTLOG_LOOTS_READ"],

@@ -1,5 +1,7 @@
 const MAX_PLAYER_NAME_LENGTH = 100;
+
 const MAX_ITEM_HEX_ID_LENGTH = 64;
+
 const MAX_ITEM_NAME_LENGTH = 200;
 
 export const LOOT_SHARE_MSG_REGEX = new RegExp(

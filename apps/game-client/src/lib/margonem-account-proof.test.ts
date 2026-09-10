@@ -12,6 +12,7 @@ describe("margonem-account-proof", () => {
       characterId: "10",
       clanId: 15191,
     });
+
     const tokenB = createMargonemAccountProofToken({
       socketId: "socket-1",
       accountId: "20",
@@ -45,6 +46,7 @@ describe("margonem-account-proof", () => {
     const fetchFn = vi.fn<typeof fetch>(
       (_input: RequestInfo | URL, init?: RequestInit) => {
         const body = init?.body;
+
         if (!(body instanceof URLSearchParams))
           throw new Error("Expected form body");
         const token = body.get("token") ?? "";
@@ -97,6 +99,7 @@ describe("margonem-account-proof", () => {
     const fetchFn = vi.fn<typeof fetch>(
       (_input: RequestInfo | URL, init?: RequestInit) => {
         const body = init?.body;
+
         if (!(body instanceof URLSearchParams))
           throw new Error("Expected form body");
         const token = body.get("token") ?? "";

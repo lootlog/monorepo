@@ -19,13 +19,17 @@ import { useTranslation } from "react-i18next";
 export const NpcSettingsDetailPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+
   const { guildId, npcId } = useParams({
     from: "/_authenticated/$guildId/settings/npcs_/$npcId",
   });
+
   const { data: config } = useLootlogConfigControllerGetLootlogConfig({
     guildId,
   });
+
   const npc = config?.npcs?.find((item) => String(item.id) === npcId) ?? null;
+
   const handleBack = () => {
     navigate({
       to: "/$guildId/settings/npcs",

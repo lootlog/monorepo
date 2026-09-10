@@ -13,8 +13,11 @@ import type { RedisStore } from "#src/infrastructure/redis-store";
 import { Redacted } from "effect";
 
 const CACHE_PREFIX = "battle:raw";
+
 const LRU_KEY = "battle:raw:lru";
+
 const MAX_CACHE_SIZE = 1000;
+
 const CACHE_TTL = 24 * 60 * 60;
 
 export const makeBattleObjectStorage = (
@@ -32,6 +35,7 @@ export const makeBattleObjectStorage = (
   config: R2Config,
 ) => {
   const logger = new Logger("BattleObjectStorage");
+
   const client = new S3Client({
     region: config.region,
     endpoint: config.endpoint,
@@ -90,9 +94,11 @@ export const makeBattleObjectStorage = (
         const cacheKey = `${CACHE_PREFIX}:${battleId}`;
 
         const cachedData = await redisStore.get(cacheKey);
+
         if (cachedData) {
           logger.debug(`Cache hit for battle ${battleId}`);
           await objectStorage.updateLRU(battleId);
+
           return decodeJson(cachedData);
         }
 
@@ -191,6 +197,7 @@ export const makeBattleObjectStorage = (
 
         if (count > MAX_CACHE_SIZE) {
           const toRemove = count - MAX_CACHE_SIZE;
+
           const oldestBattles = await redisStore.zrange(
             LRU_KEY,
             0,

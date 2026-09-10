@@ -87,12 +87,14 @@ export const EventKillsTable = (props: EventKillsTableProps) => {
   const isFetchingNextPage = historyProps?.isFetchingNextPage ?? false;
   const resetKey = historyProps?.resetKey;
   const scrollElement = historyProps?.scrollElement ?? null;
+
   const columns = createEventKillsTableColumns({
     eventId,
     guildId,
     isPreview,
     t,
   });
+
   const table = useTable({
     features: coreTableFeatures,
     columns,

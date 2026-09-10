@@ -43,6 +43,7 @@ describe("Effect Ready Room repository", () => {
       keys: ReadonlyArray<string>;
       arguments_: ReadonlyArray<string | number>;
     }> = [];
+
     const redis: ReadyRoomRedis = {
       getJson: () => Effect.succeed(null),
       eval: (
@@ -51,6 +52,7 @@ describe("Effect Ready Room repository", () => {
         arguments_: ReadonlyArray<string | number>,
       ) => {
         calls.push({ script, keys, arguments_ });
+
         return Effect.succeed(["CREATED"]);
       },
     };
@@ -77,9 +79,11 @@ describe("Effect Ready Room repository", () => {
       getJson: () => Effect.succeed(null),
       eval: (script: string) => {
         expect(script).toBe(COMMIT_READY_ROOM_SCRIPT);
+
         return Effect.succeed(["CONFLICT"]);
       },
     };
+
     const current = aggregate();
     const next = aggregate({ revision: 2 });
 
@@ -92,10 +96,12 @@ describe("Effect Ready Room repository", () => {
 
   test("does not execute Redis when the aggregate already expired", async () => {
     let evalCount = 0;
+
     const redis: ReadyRoomRedis = {
       getJson: () => Effect.succeed(null),
       eval: () => {
         evalCount += 1;
+
         return Effect.succeed([]);
       },
     };

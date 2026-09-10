@@ -23,6 +23,7 @@ import { useTranslation } from "react-i18next";
 export const GuildListPopover = () => {
   const { t } = useTranslation("quickAccess");
   const [open, setOpen] = useState(false);
+
   const { data: guilds, isLoading } =
     useUsersControllerGetCurrentUserAccessibleGuilds({
       query: {

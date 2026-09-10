@@ -12,9 +12,11 @@ afterEach(() => {
 
 it("keeps current presence visible while a permissions refetch is pending", async () => {
   const gateway = createTestGateway();
+
   let rejectRefresh = (_reason: Error): void => {
     throw new Error("Refresh has not started");
   };
+
   gateway.request
     .mockResolvedValueOnce({
       organizationId: "guild-1",
@@ -48,9 +50,11 @@ it("keeps current presence visible while a permissions refetch is pending", asyn
           rejectRefresh = reject;
         }),
     );
+
   const { result } = renderHook(() => useMemberGamePresence("guild-1"), {
     wrapper: gateway.wrapper,
   });
+
   await waitFor(() =>
     expect(isMemberOnlineInGame(result.current, "discord-1")).toBe(true),
   );

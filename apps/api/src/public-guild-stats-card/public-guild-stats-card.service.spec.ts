@@ -22,6 +22,7 @@ const makeRepository = () => ({
     () => Effect.die("Stats not configured"),
   ),
 });
+
 const makeCache = () => ({
   get: mock<PublicGuildStatsCardCache["get"]>(() => Effect.succeed(null)),
   set: mock<PublicGuildStatsCardCache["set"]>(() => Effect.void),
@@ -33,9 +34,11 @@ describe("public guild stats card Effect module", () => {
   const unavailableHttpClient = HttpClient.make(() =>
     Effect.die("HTTP must not run without a guild icon"),
   );
+
   let service: PublicGuildStatsCard;
   let repository: ReturnType<typeof makeRepository>;
   let redis: ReturnType<typeof makeCache>;
+
   const createService = (environment: RuntimeEnvironment) =>
     makePublicGuildStatsCard({
       repository,
@@ -43,6 +46,7 @@ describe("public guild stats card Effect module", () => {
       environment,
       image: new PublicGuildStatsCardImageAdapter(unavailableHttpClient),
     });
+
   beforeEach(() => {
     repository = makeRepository();
     redis = makeCache();
@@ -248,6 +252,7 @@ describe("public guild stats card Effect module", () => {
     const error = new PublicGuildStatsCardPersistenceError({
       cause: new Error("stats unavailable"),
     });
+
     redis.setNX.mockReturnValue(Effect.succeed(true));
     repository.findActiveGuild.mockReturnValue(
       Effect.succeed({

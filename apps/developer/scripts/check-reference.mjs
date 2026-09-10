@@ -5,16 +5,20 @@ import assert from "node:assert/strict";
 const { chromium } = await import(
   process.env.PLAYWRIGHT_MODULE ?? "playwright"
 );
+
 const browser = await chromium.launch({
   headless: true,
   channel: process.env.BROWSER_CHANNEL ?? "chrome",
 });
+
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+
 const base = process.env.PORTAL_URL ?? "http://localhost/developer";
 
 function position() {
   return page.evaluate(() => ({ hash: location.hash, y: scrollY }));
 }
+
 async function stable() {
   const before = await position();
   await page.waitForTimeout(1000);
@@ -22,6 +26,7 @@ async function stable() {
   assert.equal(after.hash, before.hash, "Reference hash must settle");
   assert.ok(Math.abs(after.y - before.y) < 2, "Reference scroll must settle");
 }
+
 async function noHorizontalOverflow() {
   assert.ok(
     await page.evaluate(
@@ -30,6 +35,7 @@ async function noHorizontalOverflow() {
     `No horizontal page overflow: ${page.url()}`,
   );
 }
+
 async function mobileNavigate(label, path) {
   await page.getByRole("button", { name: "Menu", exact: true }).click();
   const menu = page.getByRole("dialog", { name: "Lootlog Developers" });
@@ -80,6 +86,7 @@ try {
     0,
   );
   let selected = "Main API";
+
   // Each selection depends on the previous UI state.
   /* eslint-disable no-await-in-loop */
   for (const [title, slug] of [
@@ -98,6 +105,7 @@ try {
     await stable();
     selected = title;
   }
+
   /* eslint-enable no-await-in-loop */
   const referenceUrl = page.url();
   await page.getByRole("link", { name: "Docs", exact: true }).first().click();

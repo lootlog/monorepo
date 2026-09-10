@@ -3,6 +3,7 @@ import { API_URL, AUTH_API_URL, BATTLELOG_API_URL } from "@/config/api";
 import { executeExtensionHttp, MAX_EXTENSION_HTTP_BYTES } from "./http";
 
 const signal = () => new AbortController().signal;
+
 const request = (url = `${API_URL}/timers`, method = "GET") => ({
   url,
   method,
@@ -23,12 +24,15 @@ describe("extension HTTP boundary", () => {
       const fetcher = vi
         .fn<typeof fetch>()
         .mockResolvedValue(new Response('{"ok":true}'));
+
       const abortSignal = signal();
+
       const result = await executeExtensionHttp(
         request(url, method),
         abortSignal,
         fetcher,
       );
+
       expect(result.body).toBe('{"ok":true}');
       expect(fetcher).toHaveBeenCalledWith(
         url,
@@ -92,11 +96,13 @@ describe("extension HTTP boundary", () => {
         },
       ),
     );
+
     const result = await executeExtensionHttp(
       request(`${AUTH_API_URL}/idp/get-session`),
       signal(),
       fetcher,
     );
+
     expect(JSON.parse(result.body)).toEqual({
       user: { id: "user" },
       session: { id: "session", expiresAt: "tomorrow" },
@@ -111,6 +117,7 @@ describe("extension HTTP boundary", () => {
         headers: { "retry-after": "10" },
       }),
     );
+
     expect(
       await executeExtensionHttp(request(), signal(), fetcher),
     ).toMatchObject({
@@ -137,12 +144,14 @@ describe("extension HTTP boundary", () => {
 
   it("bounds streamed responses even without content-length", async () => {
     const cancel = vi.fn<() => void>();
+
     const body = new ReadableStream<Uint8Array>({
       start(controller) {
         controller.enqueue(new Uint8Array(MAX_EXTENSION_HTTP_BYTES + 1));
       },
       cancel,
     });
+
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(body));
     await expect(
       executeExtensionHttp(request(), signal(), fetcher),

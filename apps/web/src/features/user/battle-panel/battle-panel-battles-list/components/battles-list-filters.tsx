@@ -31,6 +31,7 @@ export const BattlesListFilters = ({
     handleMaxLevelChange,
     handleMatchmakingToggle,
   } = createBattleFilterHandlers(filters, onFiltersChange);
+
   const [typeOpenMobile, setTypeOpenMobile] = useState(false);
   const [resultOpenMobile, setResultOpenMobile] = useState(false);
   const [characterOpenMobile, setCharacterOpenMobile] = useState(false);
@@ -98,14 +99,17 @@ export const BattlesListFilters = ({
     "worldMobile",
     setWorldOpenMobile,
   );
+
   const handleTypeOpenMobile = createDebouncedHandler(
     "typeMobile",
     setTypeOpenMobile,
   );
+
   const handleResultOpenMobile = createDebouncedHandler(
     "resultMobile",
     setResultOpenMobile,
   );
+
   const handleCharacterOpenMobile = createDebouncedHandler(
     "characterMobile",
     setCharacterOpenMobile,

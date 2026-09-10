@@ -80,6 +80,7 @@ describe("Base UI disclosure components", () => {
 
   it("forwards viewport scroll events", () => {
     const handleScroll = vi.fn();
+
     const { container } = render(
       <ScrollArea aria-label="Scrollable content" onScroll={handleScroll}>
         <div>Long content</div>
@@ -89,6 +90,7 @@ describe("Base UI disclosure components", () => {
     const viewport = container.querySelector(
       '[data-slot="scroll-area-viewport"]',
     );
+
     if (!viewport) throw new Error("Scroll area viewport was not rendered.");
     fireEvent.scroll(viewport);
     expect(handleScroll).toHaveBeenCalledOnce();

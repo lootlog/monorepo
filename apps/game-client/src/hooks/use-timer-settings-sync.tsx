@@ -66,8 +66,10 @@ export const useTimerSettingsSync = () => {
   const [showConflict, setShowConflict] = useState(false);
   const [remoteUpdatedAt] = useState<Date>();
   const [localUpdatedAt] = useState<number>();
+
   const [localSnapshot, setLocalSnapshot] =
     useState<LocalSettingsSnapshot | null>(null);
+
   const isInitializedRef = useRef(false);
   const syncEnabled = useTimersStore((state) => state.syncEnabled);
 
@@ -76,11 +78,13 @@ export const useTimerSettingsSync = () => {
     isLoading,
     isFetching,
   } = useTimerSettings(syncEnabled ?? true);
+
   const { mutateAsync: migrateSettings } = useMigrateTimerSettings();
 
   useEffect(() => {
     if (syncEnabled === false) {
       isInitializedRef.current = false;
+
       return;
     }
 
@@ -121,6 +125,7 @@ export const useTimerSettingsSync = () => {
           conflictResolution: "local",
         });
         isInitializedRef.current = true;
+
         return;
       }
 
@@ -179,6 +184,7 @@ export const useTimerSettingsSync = () => {
         console.warn(
           "[TimerSync] Local snapshot is missing, cannot resolve conflict",
         );
+
         return;
       }
 

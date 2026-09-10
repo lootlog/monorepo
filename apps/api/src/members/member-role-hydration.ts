@@ -7,6 +7,7 @@ export const hydrateMemberRoles = Effect.fnUntraced(function* <
   Member extends { id: number },
 >(database: typeof ApiDatabase.Service, members: Member[]) {
   if (members.length === 0) return [];
+
   const roles = yield* database
     .select({ memberId: memberToRoleTable.A, role: roleTable })
     .from(memberToRoleTable)
@@ -18,6 +19,7 @@ export const hydrateMemberRoles = Effect.fnUntraced(function* <
       ),
     )
     .orderBy(desc(roleTable.position));
+
   return members.map((member) => ({
     ...member,
     roles: roles

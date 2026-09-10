@@ -41,6 +41,7 @@ const persistenceWith = (
 describe("event pins Effect module", () => {
   it("removes inactive pins before returning the active projection", async () => {
     const removeInactive = mock(() => Effect.void);
+
     const operations = makeEventsPins(
       persistenceWith({
         removeInactive,
@@ -64,6 +65,7 @@ describe("event pins Effect module", () => {
 
   it("fails closed for a missing event", async () => {
     const pin = mock(() => Effect.succeed(null));
+
     const operations = makeEventsPins(
       persistenceWith({ findEvent: () => Effect.succeed(null), pin }),
     );
@@ -78,6 +80,7 @@ describe("event pins Effect module", () => {
 
   it("removes an inactive pin and returns the established conflict", async () => {
     const remove = mock(() => Effect.void);
+
     const operations = makeEventsPins(
       persistenceWith({
         findEvent: () =>

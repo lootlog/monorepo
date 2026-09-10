@@ -8,7 +8,9 @@ import type {
 import { getNpcTypeByWt } from "./npc-type.js";
 
 const isNpcTypeEnum = Schema.is(NpcTypeSchema);
+
 const isNumericNpcType = Schema.is(Schema.Number);
+
 const HERO_ROUTING_NPC_TYPES = new Set<NpcTypeEnum>([
   NpcTypeEnum.HERO,
   NpcTypeEnum.EVENT_HERO,

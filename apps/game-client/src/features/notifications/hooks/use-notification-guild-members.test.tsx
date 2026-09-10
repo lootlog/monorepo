@@ -6,7 +6,9 @@ import type { StoredNotification } from "@/store/notifications.store";
 import { useNotificationGuildMembers } from "./use-notification-guild-members";
 
 let test: ReturnType<typeof createNotificationTest>;
+
 const requests = vi.fn<(request: Request) => Promise<Response>>();
+
 const createNotification = (
   notificationId: string,
   guildId: string,
@@ -29,6 +31,7 @@ describe("useNotificationGuildMembers", () => {
     requests.mockReset();
     requests.mockImplementation((request) => {
       const guildId = new URL(request.url).pathname.split("/")[2];
+
       return Promise.resolve(
         Response.json([
           {
@@ -43,12 +46,14 @@ describe("useNotificationGuildMembers", () => {
         ]),
       );
     });
+
     const restore = configureApiClients({
       main: {
         baseUrl: "https://api.example.test",
         fetch: (input, init) => requests(new Request(input, init)),
       },
     });
+
     onTestFinished(restore);
   });
   it("creates one query per unique guild and exposes member lookups", async () => {
@@ -84,6 +89,7 @@ describe("useNotificationGuildMembers", () => {
 
   it("keeps lookup references stable when query data is unchanged", async () => {
     const notifications = [createNotification("notification-1", "guild-1")];
+
     const { result, rerender } = renderHook(
       ({ currentNotifications }) =>
         useNotificationGuildMembers(currentNotifications),
@@ -92,6 +98,7 @@ describe("useNotificationGuildMembers", () => {
         initialProps: { currentNotifications: notifications },
       },
     );
+
     await waitFor(() =>
       expect(result.current["guild-1"]?.["member-guild-1"]).toBeDefined(),
     );
@@ -110,11 +117,13 @@ describe("useNotificationGuildMembers", () => {
       "guild-1",
       "missing-member",
     );
+
     const missingGuildTwoMember = createNotification(
       "notification-2",
       "guild-2",
       "missing-member",
     );
+
     const { result, rerender } = renderHook(
       ({ currentNotifications }) =>
         useNotificationGuildMembers(currentNotifications),
@@ -125,6 +134,7 @@ describe("useNotificationGuildMembers", () => {
         },
       },
     );
+
     await waitFor(() =>
       expect(result.current["guild-1"]?.["member-guild-1"]).toBeDefined(),
     );
@@ -147,11 +157,13 @@ describe("useNotificationGuildMembers", () => {
       "guild-1",
       "missing-member-1",
     );
+
     const secondMissingMember = createNotification(
       "notification-2",
       "guild-1",
       "missing-member-2",
     );
+
     const { result, rerender } = renderHook(
       ({ currentNotifications }) =>
         useNotificationGuildMembers(currentNotifications),
@@ -160,6 +172,7 @@ describe("useNotificationGuildMembers", () => {
         initialProps: { currentNotifications: [firstMissingMember] },
       },
     );
+
     await waitFor(() =>
       expect(result.current["guild-1"]?.["member-guild-1"]).toBeDefined(),
     );

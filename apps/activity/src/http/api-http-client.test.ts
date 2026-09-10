@@ -22,6 +22,7 @@ const runWith = (
       ),
     ),
   );
+
   return Effect.runPromise(
     Effect.flatMap(ApiHttpClient, (client) =>
       client.get(operationId, "https://api.internal/resource"),
@@ -35,6 +36,7 @@ describe("Activity API HttpClient", () => {
       if (fetchImplementation.mock.calls.length < 3) {
         return Promise.reject(new Error("connection reset"));
       }
+
       return Promise.resolve(
         new Response(JSON.stringify({ id: "guild-1" }), { status: 200 }),
       );
@@ -54,8 +56,13 @@ describe("Activity API HttpClient", () => {
       Promise.resolve(new Response(new Uint8Array(1024 * 1024 + 1))),
     );
 
-    await expect(runWith(fetchImplementation)).rejects.toMatchObject({
-      _tag: "ApiHttpClientFailure",
+    const error: unknown = await runWith(fetchImplementation).then(
+      () => undefined,
+      (cause: unknown) => cause,
+    );
+
+    expect(error).toBeInstanceOf(ApiHttpClientFailure);
+    expect(error).toMatchObject({
       reason: "response-too-large",
       retryable: false,
     } satisfies Partial<ApiHttpClientFailure>);

@@ -14,13 +14,17 @@ export const useRefreshJob = (
   const [jobStatus, setJobStatus] = useState<RefreshJobUpdate | null>(null);
   const { socket, connected } = useGateway();
   const currentRouteGuildId = useGuildId();
+
   const { data: guild } = useGuildsControllerGetGuildById({
     guildId: currentRouteGuildId ?? "",
   });
+
   useRefreshJobUpdates(guildId ? guild?.id : undefined, (data) => {
     if (!jobId || data.jobId === jobId) {
       setJobStatus(data);
+
       if (data.refreshedIds?.length) onRefreshedIds?.(data.refreshedIds);
+
       if (data.failedIds?.length) onFailedIds?.(data.failedIds);
     }
   });

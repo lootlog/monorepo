@@ -54,12 +54,14 @@ const getValue = (variables: EnvVariable[], key: string): string => {
 
 test("internal service credentials are generated once and reused by their callers", () => {
   const values = new Map<string, string>();
+
   for (const key of ["AUTH_IDP_TOKEN_SECRET", "BATTLELOG_CLEANUP_SECRET"]) {
     const receiver = generateEnvValues([envVariable(key, "")], values);
     const caller = generateEnvValues([envVariable(key, "")], values);
     assert.ok(getValue(receiver, key).length >= 32);
     assert.equal(getValue(caller, key), getValue(receiver, key));
   }
+
   assert.notEqual(
     values.get("AUTH_IDP_TOKEN_SECRET"),
     values.get("BATTLELOG_CLEANUP_SECRET"),
@@ -219,6 +221,7 @@ describe("environment value generation", () => {
       envVariable("LOCAL_PASSWORD", "placeholder"),
       envVariable("LOCAL_SECRET", "placeholder"),
     ];
+
     const generated = generateEnvValues(
       original,
       new Map([["REDIS_PASSWORD", ""]]),
@@ -243,8 +246,10 @@ const signatureKey = "ACTIVITY_EVENT_SIGNATURE_SECRET";
 
 const withEnvFixture = async (run: (root: string) => Promise<void>) => {
   const root = mkdtempSync(join(tmpdir(), "lootlog-env-"));
+
   try {
     writeFileSync(join(root, ".env.example"), `${signatureKey}=placeholder\n`);
+
     for (const app of ["activity", "gateway"]) {
       mkdirSync(join(root, "apps", app), { recursive: true });
       writeFileSync(
@@ -252,6 +257,7 @@ const withEnvFixture = async (run: (root: string) => Promise<void>) => {
         `${signatureKey}=placeholder\n`,
       );
     }
+
     await run(root);
   } finally {
     rmSync(root, { recursive: true, force: true });
@@ -309,6 +315,7 @@ describe("activity signing environment generation", () => {
           assert.ok(cause instanceof Error);
           assert.match(cause.message, /ACTIVITY_EVENT_SIGNATURE_SECRET/);
           assert.doesNotMatch(cause.message, /root-secret|gateway-secret/);
+
           return true;
         },
       );

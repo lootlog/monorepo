@@ -2,6 +2,7 @@ import { format } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { LABEL_COLUMN_WIDTH, MIN_ROW_HEIGHT } from "./constants";
 import { isReservationStartSelectable } from "./reservation-settings";
+
 export function MobileReservationHour({
   date,
   hour,
@@ -16,6 +17,7 @@ export function MobileReservationHour({
   const { t } = useTranslation();
   const startsAt = new Date(date);
   startsAt.setHours(hourIndex, 0, 0, 0);
+
   return (
     <div
       className="absolute inset-x-0 flex border-b"

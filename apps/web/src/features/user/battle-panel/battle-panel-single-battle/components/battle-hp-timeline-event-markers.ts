@@ -60,6 +60,7 @@ export const buildBattleHpTimelineEventMarkerGroups = (
   const teamByWarriorId = new Map(
     warriors.map((warrior) => [warrior.originalId, warrior.team]),
   );
+
   const groups = new Map<string, BattleHpTimelineEventMarkerGroup>();
 
   for (const turn of timeline) {
@@ -79,6 +80,7 @@ export const buildBattleHpTimelineEventMarkerGroups = (
 
       for (const entry of entries) {
         const groupKey = `${turn.turn}:${entry.team ?? "unknown"}`;
+
         const group = groups.get(groupKey) ?? {
           key: groupKey,
           turn: turn.turn,
@@ -125,6 +127,7 @@ export const getBattleHpTimelineEventLayerCounts = (
     warriors,
     layerConfig,
   );
+
   const counts: Partial<Record<BattleHpTimelineLayerKey, number>> = {};
 
   for (const group of groups) {

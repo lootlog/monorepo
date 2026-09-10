@@ -48,6 +48,7 @@ const setRefValue = <Value,>(
 ) => {
   if (typeof ref === "function") {
     ref(value);
+
     return;
   }
 
@@ -60,8 +61,10 @@ const updateToggleGroupIndicator = (root: HTMLElement) => {
   const activeItem = root.querySelector<HTMLElement>(
     '[data-slot="toggle-group-item"][data-pressed]',
   );
+
   if (!activeItem || activeItem.offsetWidth === 0) {
     root.removeAttribute("data-indicator-visible");
+
     return;
   }
 
@@ -76,6 +79,7 @@ const updateToggleGroupIndicator = (root: HTMLElement) => {
 function ToggleGroup<Value extends string>(props: ToggleGroupProps<Value>) {
   const { className, size, variant, children, ref: providedRef } = props;
   const rootRef = React.useRef<HTMLElement | null>(null);
+
   const setRootRef = (element: HTMLElement | null) => {
     rootRef.current = element;
     setRefValue(providedRef, element);
@@ -85,22 +89,28 @@ function ToggleGroup<Value extends string>(props: ToggleGroupProps<Value>) {
   // oxlint-disable-next-line react-doctor/effect-needs-cleanup
   React.useLayoutEffect(() => {
     const root = rootRef.current;
+
     if (!root || props.type === "multiple") {
       root?.removeAttribute("data-indicator-visible");
+
       return;
     }
 
     let animationFrame: number | undefined;
+
     const scheduleIndicatorUpdate = () => {
       if (animationFrame !== undefined) {
         cancelAnimationFrame(animationFrame);
       }
+
       animationFrame = requestAnimationFrame(() => {
         animationFrame = undefined;
         updateToggleGroupIndicator(root);
       });
     };
+
     const resizeObserver = new ResizeObserver(scheduleIndicatorUpdate);
+
     const observeItems = () => {
       for (const item of root.querySelectorAll(
         '[data-slot="toggle-group-item"]',
@@ -108,6 +118,7 @@ function ToggleGroup<Value extends string>(props: ToggleGroupProps<Value>) {
         resizeObserver.observe(item);
       }
     };
+
     const mutationObserver = new MutationObserver(() => {
       observeItems();
       scheduleIndicatorUpdate();
@@ -127,6 +138,7 @@ function ToggleGroup<Value extends string>(props: ToggleGroupProps<Value>) {
       if (animationFrame !== undefined) {
         cancelAnimationFrame(animationFrame);
       }
+
       mutationObserver.disconnect();
       resizeObserver.disconnect();
     };
@@ -142,6 +154,7 @@ function ToggleGroup<Value extends string>(props: ToggleGroupProps<Value>) {
     "data-type": props.type,
     "data-variant": variant,
   };
+
   const content = (
     // Vite React Compiler caches this object by its fields (vite.shared.ts enables compiler: true).
     // oxlint-disable-next-line react-doctor/jsx-no-constructed-context-values

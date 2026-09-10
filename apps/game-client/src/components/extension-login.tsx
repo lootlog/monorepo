@@ -16,7 +16,9 @@ export function ExtensionLogin() {
   if (session.data) return null;
 
   let message = t("auth.extensionDescription");
+
   if (session.error) message = t("auth.extensionError");
+
   if (checking) message = t("auth.extensionChecking");
 
   return (

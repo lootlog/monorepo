@@ -13,6 +13,7 @@ describe("useSoundSettingsPatchQueue", () => {
 
   it("flushes rapid sound changes as one merged request", () => {
     const updateSettings = vi.fn<(payload: UpdateSoundSettingsDto) => void>();
+
     const { result } = renderHook(() =>
       useSoundSettingsPatchQueue(updateSettings),
     );

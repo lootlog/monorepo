@@ -44,8 +44,10 @@ export const ManualPointsEditDialog = ({
   const commentInputId = useId();
 
   const [wasOpen, setWasOpen] = useState(open);
+
   if (wasOpen !== open) {
     setWasOpen(open);
+
     if (open) {
       setPointsDeltaValue("");
       setCommentValue("");
@@ -53,10 +55,12 @@ export const ManualPointsEditDialog = ({
   }
 
   const parsedPointsDelta = parseEditablePoints(pointsDeltaValue);
+
   const nextPoints =
     parsedPointsDelta === null
       ? currentPoints
       : Math.round((currentPoints + parsedPointsDelta) * 10000) / 10000;
+
   const isSubmitDisabled =
     parsedPointsDelta === null || parsedPointsDelta === 0 || isPending;
 
@@ -68,6 +72,7 @@ export const ManualPointsEditDialog = ({
     }
 
     if (parsedPointsDelta === null) return;
+
     try {
       await onSubmit({ pointsDelta: parsedPointsDelta, comment: commentValue });
       onOpenChange(false);

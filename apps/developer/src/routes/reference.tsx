@@ -29,6 +29,7 @@ export const Route = createFileRoute("/reference")({
   ssr: false,
   component: ReferencePage,
 });
+
 function ReferencePage() {
   return (
     <div className="reference-page">

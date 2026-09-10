@@ -25,6 +25,7 @@ export const selectAccessibleGuilds = (
 ) =>
   Effect.gen(function* () {
     const keyScope = yield* apiKeyOrganizationFilter(guildTable.id);
+
     return yield* database
       .selectDistinct({ guild: guildTable })
       .from(guildTable)

@@ -22,6 +22,7 @@ export const GuildDocEditorToolbar: React.FC = () => {
     handleLinkDialogOpenChange,
     submitLink,
   } = useGuildDocEditorToolbarModel();
+
   return (
     <>
       <div className="flex shrink-0 flex-wrap items-center gap-1 border-b border-border bg-muted/30 p-2">

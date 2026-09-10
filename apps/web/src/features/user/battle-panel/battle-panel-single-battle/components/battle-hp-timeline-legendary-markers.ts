@@ -191,6 +191,7 @@ const CHART_HIDDEN_LEGENDARY_BONUS_ACTIONS = new Set([
   "-legbon_facade",
   "legbon_holytouch_heal",
 ]);
+
 const DEFENDER_TEAM_LEGENDARY_BONUS_ACTIONS = new Set([
   "-legbon_cleanse",
   "-legbon_glare",
@@ -221,6 +222,7 @@ const getActionTeam = (
 ) => {
   if (DEFENDER_TEAM_LEGENDARY_BONUS_ACTIONS.has(action.actionType)) {
     const defenderTeam = getTargetWarriorTeam(action, teamByWarriorId);
+
     if (defenderTeam !== null) {
       return defenderTeam;
     }
@@ -232,6 +234,7 @@ const getActionTeam = (
       teamByWarriorId,
       teamByWarriorName,
     );
+
     if (healedWarriorTeam !== null) {
       return healedWarriorTeam;
     }
@@ -239,6 +242,7 @@ const getActionTeam = (
 
   if (action.actorId) {
     const actorTeam = teamByWarriorId.get(action.actorId);
+
     if (actorTeam !== undefined) {
       return actorTeam;
     }
@@ -257,6 +261,7 @@ const getActionRecipientName = (
 ) => {
   if (DEFENDER_TEAM_LEGENDARY_BONUS_ACTIONS.has(action.actionType)) {
     const targetName = getWarriorNameById(action.targetId, warriorById);
+
     if (targetName !== null) {
       return targetName;
     }
@@ -264,17 +269,20 @@ const getActionRecipientName = (
 
   if (action.actionType === "legbon_lastheal") {
     const lastHealWarriorName = getLastHealWarriorName(action);
+
     if (lastHealWarriorName !== null) {
       return lastHealWarriorName;
     }
 
     const targetName = getWarriorNameById(action.targetId, warriorById);
+
     if (targetName !== null) {
       return targetName;
     }
   }
 
   const actorName = getWarriorNameById(action.actorId, warriorById);
+
   if (actorName !== null) {
     return actorName;
   }
@@ -301,6 +309,7 @@ const getTargetWarriorTeam = (
 ) => {
   if (action.targetId) {
     const targetTeam = teamByWarriorId.get(action.targetId);
+
     if (targetTeam !== undefined) {
       return targetTeam;
     }
@@ -320,6 +329,7 @@ const getLastHealWarriorTeam = (
 ) => {
   const warriorName = getLastHealWarriorName(action);
   const normalizedWarriorName = warriorName?.toLowerCase() ?? "";
+
   const teamFromParam = normalizedWarriorName
     ? (teamByWarriorName.get(normalizedWarriorName) ?? null)
     : null;
@@ -330,6 +340,7 @@ const getLastHealWarriorTeam = (
 
   if (action.targetId) {
     const targetTeam = teamByWarriorId.get(action.targetId);
+
     if (targetTeam !== undefined) {
       return targetTeam;
     }
@@ -358,14 +369,17 @@ export const buildLegendaryBonusMarkerGroups = (
   const warriorById = new Map(
     warriors.map((warrior) => [warrior.originalId, warrior]),
   );
+
   const teamByWarriorId = new Map(
     warriors.map((warrior) => [warrior.originalId, warrior.team]),
   );
+
   const teamByWarriorName = new Map(
     warriors.flatMap((warrior) =>
       warrior.name ? [[warrior.name.toLowerCase(), warrior.team] as const] : [],
     ),
   );
+
   const groups = new Map<string, LegendaryBonusMarkerGroup>();
 
   for (const turn of timeline) {
@@ -379,12 +393,14 @@ export const buildLegendaryBonusMarkerGroups = (
       }
 
       const team = getActionTeam(action, teamByWarriorId, teamByWarriorName);
+
       if (team === null) {
         continue;
       }
 
       const key = `${turn.turn}:${team}`;
       const definition = getLegendaryBonusMarkerDefinition(action.actionType);
+
       const group = groups.get(key) ?? {
         key,
         turn: turn.turn,

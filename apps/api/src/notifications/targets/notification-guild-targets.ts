@@ -127,6 +127,7 @@ export const makeNotificationGuildTargets = (
         desc(notificationTargetTable.updatedAt),
       )
       .pipe(Effect.mapError(databaseFailure("notifications.targets.list")));
+
     return rows.map(mapNotificationTarget);
   });
 
@@ -141,6 +142,7 @@ export const makeNotificationGuildTargets = (
         ),
       );
     }
+
     if (!data.externalId) {
       return yield* Effect.fail(
         new InvalidRequestError(
@@ -148,10 +150,13 @@ export const makeNotificationGuildTargets = (
         ),
       );
     }
+
     const available = yield* channels.selectable(guildId);
+
     const selected = available.channels.find(
       (channel) => channel.channelId === data.externalId,
     );
+
     if (!selected) {
       return yield* Effect.fail(
         new InvalidRequestError(
@@ -159,7 +164,9 @@ export const makeNotificationGuildTargets = (
         ),
       );
     }
+
     const now = new Date(yield* Clock.currentTimeMillis);
+
     const rows = yield* database
       .insert(notificationTargetTable)
       .values({
@@ -196,7 +203,9 @@ export const makeNotificationGuildTargets = (
       })
       .returning()
       .pipe(Effect.mapError(databaseFailure("notifications.targets.create")));
+
     const target = rows[0];
+
     if (!target) {
       return yield* Effect.fail(
         new NotificationGuildTargetFailure({
@@ -205,6 +214,7 @@ export const makeNotificationGuildTargets = (
         }),
       );
     }
+
     return mapNotificationTarget(target);
   });
 
@@ -214,6 +224,7 @@ export const makeNotificationGuildTargets = (
     data: UpdateNotificationTargetRequest,
   ) {
     yield* find(guildId, targetId);
+
     const rows = yield* updateNotificationTarget(
       database,
       targetId,
@@ -221,7 +232,9 @@ export const makeNotificationGuildTargets = (
       guildId,
       data,
     ).pipe(Effect.mapError(databaseFailure("notifications.targets.update")));
+
     if (data.active === false) yield* jobs.cancel({ targetId });
+
     return rows[0] ? mapNotificationTarget(rows[0]) : null;
   });
 
@@ -234,7 +247,9 @@ export const makeNotificationGuildTargets = (
         .pipe(
           Effect.mapError(databaseFailure("notifications.targets.ruleLinks")),
         );
+
       const ruleIds = links.map(({ ruleId }) => ruleId);
+
       const counts =
         ruleIds.length === 0
           ? []
@@ -251,9 +266,11 @@ export const makeNotificationGuildTargets = (
                   databaseFailure("notifications.targets.ruleCounts"),
                 ),
               );
+
       const orphanedRuleIds = counts
         .filter(({ value }) => value === 1)
         .map(({ ruleId }) => ruleId);
+
       yield* jobs.cancel({ targetId });
       yield* Effect.forEach(
         orphanedRuleIds,
@@ -269,6 +286,7 @@ export const makeNotificationGuildTargets = (
             yield* transaction
               .delete(notificationTargetTable)
               .where(eq(notificationTargetTable.id, targetId));
+
             if (orphanedRuleIds.length > 0) {
               yield* transaction
                 .delete(notificationRuleTable)
@@ -282,6 +300,7 @@ export const makeNotificationGuildTargets = (
             attributes: { adapter: "notifications.drizzle", retryCount: 0 },
           }),
         );
+
       return { success: true as const };
     },
   );
@@ -291,6 +310,7 @@ export const makeNotificationGuildTargets = (
     targetId: number,
   ) {
     yield* find(guildId, targetId);
+
     return yield* removeById(targetId);
   });
 
@@ -315,6 +335,7 @@ export const makeNotificationGuildTargets = (
             databaseFailure("notifications.targets.findDeletedChannel"),
           ),
         );
+
       yield* Effect.forEach(rows, ({ id }) => removeById(id), {
         concurrency: 1,
         discard: true,

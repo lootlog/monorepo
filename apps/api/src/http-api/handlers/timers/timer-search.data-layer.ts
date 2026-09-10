@@ -15,6 +15,7 @@ const parseNpc = (
 ): { readonly lvl: number; readonly type: NpcType } | null => {
   if (!npc) return null;
   const schema = Schema.Struct({ lvl: Schema.Number, type: NpcTypeSchema });
+
   return Schema.decodeUnknownSync(
     typeof npc === "string" ? Schema.fromJsonString(schema) : schema,
   )(npc);
@@ -28,6 +29,7 @@ export const makeTimerSearch = (database: typeof ApiDatabase.Service) => {
     limit = 10,
   ) {
     const boundedLimit = Number(limit) || 10;
+
     const timers = yield* database
       .selectDistinctOn([timerTable.timerKey], {
         npc: timerTable.npc,
@@ -48,10 +50,13 @@ export const makeTimerSearch = (database: typeof ApiDatabase.Service) => {
       )
       .orderBy(timerTable.timerKey, desc(timerTable.updatedAt))
       .limit(boundedLimit);
+
     const projectSearchTimer = (timer: (typeof timers)[number]) => {
       const npc = parseNpc(timer.npc);
+
       if (!npc) return [];
       const source = isObjectRecord(timer.npc) ? timer.npc : {};
+
       return [
         {
           npcId: timer.npcId,
@@ -71,8 +76,10 @@ export const makeTimerSearch = (database: typeof ApiDatabase.Service) => {
         },
       ];
     };
+
     return timers.flatMap(projectSearchTimer);
   });
+
   return (guildId: string, world: string, search: string, limit?: number) =>
     operation(guildId, world, search, limit).pipe(
       Effect.mapError(toTimersDataFailure),

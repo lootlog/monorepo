@@ -33,11 +33,13 @@ describe("ready room projection decoding", () => {
     expect(() =>
       decodePartyReadyRoomProjection({ ...activeRoom, viewer: "ORGANIZER" }),
     ).toThrow();
+
     const room = {
       ...activeRoom,
       viewer: "ORGANIZER",
       ownedParticipantIds: [],
     } satisfies PartyReadyRoomOrganizerProjection;
+
     expect(decodePartyReadyRoomProjection(room)).toEqual(room);
   });
 
@@ -46,6 +48,7 @@ describe("ready room projection decoding", () => {
       ...activeRoom,
       viewer: "PARTICIPANT",
     } satisfies PartyReadyRoomParticipantProjection;
+
     expect(decodePartyReadyRoomProjection(room)).toEqual(room);
   });
 

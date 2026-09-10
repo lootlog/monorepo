@@ -69,6 +69,7 @@ export const NotificationFiltersSchema = Schema.Struct({
   itemId: Schema.optionalKey(Schema.NullOr(Schema.Number)),
   itemIds: Schema.optionalKey(Schema.mutable(Schema.Array(Schema.Number))),
 });
+
 export type NotificationFilters = typeof NotificationFiltersSchema.Type;
 
 export interface LootCreatedNotificationEventV2 {
@@ -187,6 +188,7 @@ export const DiscordNotificationSendCommandSchema = Schema.Struct({
     targetType: Schema.Literals(["CHANNEL", "DM"]),
   }),
 });
+
 export type DiscordNotificationSendCommand =
   typeof DiscordNotificationSendCommandSchema.Type;
 
@@ -204,19 +206,23 @@ export const NotificationOwnerTypeSchema = Schema.Literals([
   `${NotificationOwnerType.GUILD}`,
   `${NotificationOwnerType.USER}`,
 ]);
+
 export const NotificationProviderSchema = Schema.Literal(
   `${NotificationProvider.DISCORD}`,
 );
+
 export const NotificationTargetTypeSchema = Schema.Literals([
   `${NotificationTargetType.CHANNEL}`,
   `${NotificationTargetType.DM}`,
 ]);
+
 export const NotificationTriggerTypeSchema = Schema.Literals([
   `${NotificationTriggerType.TIMER_BEFORE_SPAWN}`,
   `${NotificationTriggerType.NPC_SPAWNED}`,
   `${NotificationTriggerType.WATCHED_ITEM_DROPPED}`,
   `${NotificationTriggerType.SCHEDULED_MESSAGE}`,
 ]);
+
 export const NotificationJobStatusSchema = Schema.Literals([
   `${NotificationJobStatus.PENDING}`,
   `${NotificationJobStatus.PROCESSING}`,
@@ -225,6 +231,7 @@ export const NotificationJobStatusSchema = Schema.Literals([
   `${NotificationJobStatus.BLOCKED}`,
   `${NotificationJobStatus.CANCELED}`,
 ]);
+
 export const DiscordGuildSyncStatusSchema = Schema.Literals([
   DiscordGuildSyncStatus.SYNCED,
   DiscordGuildSyncStatus.SYNCING,

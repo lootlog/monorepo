@@ -36,6 +36,7 @@ type NpcsTableProps = {
 export const NpcsTable = ({ guildId, isMobile, npcs }: NpcsTableProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+
   const openNpcDetails = (npc: LootlogConfigNpc) => {
     navigate({
       to: "/$guildId/settings/npcs/$npcId",
@@ -112,9 +113,11 @@ export const NpcsTable = ({ guildId, isMobile, npcs }: NpcsTableProps) => {
       <TableBody>
         {npcs.map((npc, index) => {
           const npcRouteParams = { guildId, npcId: String(npc.id) };
+
           const enabledRarities = NPC_RARITY_CONFIG.filter((rarity) =>
             npc.allowedRarities.includes(rarity.key),
           );
+
           const isLastNpc = index === npcs.length - 1;
 
           return (
@@ -128,6 +131,7 @@ export const NpcsTable = ({ guildId, isMobile, npcs }: NpcsTableProps) => {
               )}
               onClickCapture={(event) => {
                 const target = event.target;
+
                 if (
                   target instanceof Element &&
                   target.closest("button,a,[data-npc-row-action]")

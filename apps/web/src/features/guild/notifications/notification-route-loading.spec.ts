@@ -45,9 +45,11 @@ it.each([
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     });
+
     const restore = configureApiClients({
       main: { baseUrl: "https://api.test" },
     });
+
     const requests: string[] = [];
     vi.stubGlobal(
       "fetch",
@@ -55,21 +57,26 @@ it.each([
         requests.push(
           new URL(input instanceof Request ? input.url : input).pathname,
         );
+
         return Response.json([]);
       }),
     );
+
     try {
       const root = createRootRouteWithContext<RouterContext>()({});
+
       const route = createRoute({
         getParentRoute: () => root,
         path: "/$guildId/$ruleId",
         loader,
       });
+
       const router = createRouter({
         routeTree: root.addChildren([route]),
         context: { queryClient },
         history: createMemoryHistory({ initialEntries: ["/"] }),
       });
+
       await router.navigate({ href: "/42/rule" });
       expect(requests.sort()).toEqual(endpoints.sort());
     } finally {

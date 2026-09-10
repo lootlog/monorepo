@@ -15,6 +15,7 @@ export const Init: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const guildId = useGuildId();
+
   const { data: guildData } = useGuildsControllerGetGuildById(
     { guildId: guildId ?? "" },
     {

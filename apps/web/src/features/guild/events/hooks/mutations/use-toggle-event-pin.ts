@@ -25,6 +25,7 @@ export const useToggleEventPin = (guildId: string) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const pinnedEventsQueryKey = getListPinnedEventsQueryKey({ guildId });
+
   const { data: pinnedEvents = [] } = useListPinnedEvents(
     { guildId },
     {
@@ -40,6 +41,7 @@ export const useToggleEventPin = (guildId: string) => {
     mutation: {
       onMutate: async ({ pathParams }) => {
         await queryClient.cancelQueries({ queryKey: pinnedEventsQueryKey });
+
         return { eventId: pathParams.eventId };
       },
       onSuccess: (pinnedEvent) => {
@@ -68,10 +70,12 @@ export const useToggleEventPin = (guildId: string) => {
     mutation: {
       onMutate: async ({ pathParams }) => {
         await queryClient.cancelQueries({ queryKey: pinnedEventsQueryKey });
+
         const currentPinnedEvents =
           queryClient.getQueryData<PinnedEventResponseDto[]>(
             pinnedEventsQueryKey,
           ) ?? [];
+
         const removal = removePinnedEvent(
           currentPinnedEvents,
           pathParams.eventId,
@@ -86,6 +90,7 @@ export const useToggleEventPin = (guildId: string) => {
       },
       onError: (_error, _variables, context) => {
         const removedPinnedEvent = context?.removedPinnedEvent;
+
         if (removedPinnedEvent) {
           queryClient.setQueryData<PinnedEventResponseDto[]>(
             pinnedEventsQueryKey,
@@ -97,6 +102,7 @@ export const useToggleEventPin = (guildId: string) => {
               ),
           );
         }
+
         toast.error(t("events.unpinError"));
       },
       onSettled: () => {
@@ -110,6 +116,7 @@ export const useToggleEventPin = (guildId: string) => {
     select: (mutation) =>
       pinMutationVariables.safeParse(mutation.state.variables).data?.pathParams,
   });
+
   const pendingUnpinPaths = useMutationState({
     filters: { mutationKey: ["unpinEvent"], status: "pending" },
     select: (mutation) =>
@@ -118,6 +125,7 @@ export const useToggleEventPin = (guildId: string) => {
 
   const isPinned = (eventId: string) =>
     pinnedEvents.some(({ event }) => event.id === eventId);
+
   const isPending = (eventId: string) =>
     [...pendingPinPaths, ...pendingUnpinPaths].some(
       (pathParams) =>
@@ -131,6 +139,7 @@ export const useToggleEventPin = (guildId: string) => {
 
     if (isPinned(event.id)) {
       unpinEvent.mutate({ pathParams: { guildId, eventId: event.id } });
+
       return;
     }
 

@@ -18,10 +18,13 @@ export const useBattleTableSelection = ({
   );
 
   const battleIdsFingerprint = battles.map((battle) => battle.id).join(",");
+
   const selectedBattles = battles.filter((battle) =>
     selectedBattleIds.has(battle.id),
   );
+
   const visibleBattleIds = battles.map((battle) => battle.id);
+
   const {
     areAllSelectableRowsSelected,
     effectiveSelectionLimit,
@@ -35,6 +38,7 @@ export const useBattleTableSelection = ({
 
   const [previousBattleIds, setPreviousBattleIds] =
     useState(battleIdsFingerprint);
+
   if (previousBattleIds !== battleIdsFingerprint) {
     setPreviousBattleIds(battleIdsFingerprint);
     setSelectedBattleIds(new Set());
@@ -47,6 +51,7 @@ export const useBattleTableSelection = ({
       selectedBattleIds.size >= effectiveSelectionLimit
     ) {
       onSelectionLimitReached(effectiveSelectionLimit);
+
       return;
     }
 
@@ -55,10 +60,12 @@ export const useBattleTableSelection = ({
 
       if (checked) {
         nextSelection.add(battleId);
+
         return nextSelection;
       }
 
       nextSelection.delete(battleId);
+
       return nextSelection;
     });
   };
@@ -66,6 +73,7 @@ export const useBattleTableSelection = ({
   const handleHeaderSelectionChange = (checked: boolean) => {
     if (!checked || areAllSelectableRowsSelected) {
       setSelectedBattleIds(new Set());
+
       return;
     }
 
@@ -80,6 +88,7 @@ export const useBattleTableSelection = ({
     setSelectedBattleIds((currentSelection) => {
       const nextSelection = new Set(currentSelection);
       nextSelection.delete(battleId);
+
       return nextSelection;
     });
   };

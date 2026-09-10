@@ -25,6 +25,7 @@ function getErrorProperty(
 ): string | undefined {
   if (!isObjectRecord(cause)) return undefined;
   const parsed = ErrorTextSchema.safeParse(cause[key]);
+
   return parsed.success ? parsed.data : undefined;
 }
 
@@ -33,15 +34,19 @@ function stringifyUnknownError(
   fallbackMessage: string,
 ): string {
   const parsed = ErrorTextSchema.safeParse(cause);
+
   if (parsed.success) return parsed.data;
+
   if (!isObjectRecord(cause)) return fallbackMessage;
 
   try {
     const serializedError = JSON.stringify(cause, null, 2);
+
     if (serializedError) return serializedError;
   } catch {
     return fallbackMessage;
   }
+
   return fallbackMessage;
 }
 
@@ -50,10 +55,13 @@ export function getErrorBoundaryDetails(
   translations: ErrorBoundaryTranslations,
 ): ErrorBoundaryDetails {
   const name = getErrorProperty(cause, "name") ?? translations.unknownErrorName;
+
   const message =
     getErrorProperty(cause, "message") ??
     stringifyUnknownError(cause, translations.unknownErrorMessage);
+
   const stack = getErrorProperty(cause, "stack") ?? translations.missingStack;
+
   const clipboardText = [
     `${translations.errorNameLabel}: ${name}`,
     `${translations.errorMessageLabel}: ${message}`,

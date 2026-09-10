@@ -1,4 +1,5 @@
 import { t } from "@/i18n/messages";
+
 export function SearchResultsHeader({
   count,
   start,

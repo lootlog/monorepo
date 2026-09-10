@@ -9,6 +9,7 @@ export const PARTY_READY_ROOM_PARTY_PRESENCE_STATES = [
 ] as const;
 
 export type PartyReadyRoomStatus = (typeof PARTY_READY_ROOM_STATUSES)[number];
+
 export type PartyReadyRoomPartyPresenceState =
   (typeof PARTY_READY_ROOM_PARTY_PRESENCE_STATES)[number];
 
@@ -57,15 +58,19 @@ export interface PartyReadyRoomProjectionBase {
 
 export type PartyReadyRoomOrganizerProjection =
   typeof PartyReadyRoomOrganizerProjectionSchema.Type;
+
 export type PartyReadyRoomParticipantProjection =
   typeof PartyReadyRoomParticipantProjectionSchema.Type;
+
 export type PartyReadyRoomProjection =
   typeof PartyReadyRoomProjectionSchema.Type;
 
 export type PartyReadyRoomUpsertUpdate =
   typeof PartyReadyRoomUpsertUpdateSchema.Type;
+
 export type PartyReadyRoomRemoveUpdate =
   typeof PartyReadyRoomRemoveUpdateSchema.Type;
+
 export type PartyReadyRoomClientUpdate =
   typeof PartyReadyRoomClientUpdateSchema.Type;
 
@@ -124,6 +129,7 @@ export const PartyGatheringNpcSchema = Schema.Struct({
   x: Schema.optionalKey(Schema.Number),
   y: Schema.optionalKey(Schema.Number),
 });
+
 export type PartyGatheringNpc = typeof PartyGatheringNpcSchema.Type;
 
 export const PartyReadyRoomAggregateSchema = Schema.Struct({

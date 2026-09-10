@@ -58,11 +58,13 @@ const reservation: MyReservationsResponseDtoItemsItem = {
 };
 
 const RouterWrapper = await createOrganizationTestWrapper();
+
 const client = new QueryClient({
   defaultOptions: {
     queries: { staleTime: Infinity, retry: false, gcTime: Infinity },
   },
 });
+
 client.setQueryData(getUsersControllerGetCurrentUserGuildsQueryKey(), [
   {
     id: "guild-1",
@@ -75,6 +77,7 @@ client.setQueryData(getUsersControllerGetCurrentUserGuildsQueryKey(), [
     isAccessDataStale: false,
   },
 ]);
+
 const renderItem = (ui: ReactElement) =>
   render(ui, {
     wrapper: ({ children }) => (
@@ -83,7 +86,9 @@ const renderItem = (ui: ReactElement) =>
       </RouterWrapper>
     ),
   });
+
 beforeEach(simulateLoadedImages);
+
 afterEach(() => vi.restoreAllMocks());
 
 describe("MyReservationListItem", () => {

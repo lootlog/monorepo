@@ -12,6 +12,7 @@ test("event fixtures preserve arbitrary JSON payloads and validate routing metad
     const fixture = { exchange: "test", routingKey: "custom.test", payload };
     expect(parseEventFixture(JSON.stringify(fixture))).toEqual(fixture);
   }
+
   expect(() =>
     parseEventFixture('{"exchange":42,"routingKey":"x","payload":{}}'),
   ).toThrow();

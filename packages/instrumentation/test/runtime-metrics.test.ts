@@ -11,6 +11,7 @@ import {
 
 test("idle processes emit runtime measurements and stop sampling when their scope closes", async () => {
   const scope = Effect.runSync(Scope.make());
+
   try {
     await Effect.runPromise(startRuntimeMetrics.pipe(Scope.provide(scope)));
     expect(Effect.runSync(Metric.value(serviceUp)).value).toBe(1);
@@ -23,12 +24,14 @@ test("idle processes emit runtime measurements and stop sampling when their scop
     const before = Effect.runSync(Metric.value(processEventLoopDelay)).count;
     // The first CPU sample needs ten seconds plus any scheduler delay.
     const deadline = performance.now() + 13_000;
+
     while (
       Effect.runSync(Metric.value(processCpuUtilization)).value === 0 &&
       performance.now() < deadline
     ) {
       await Bun.sleep(100);
     }
+
     const delay = Effect.runSync(Metric.value(processEventLoopDelay));
     expect(delay.count).toBeGreaterThan(before);
     expect(delay.min).toBeGreaterThanOrEqual(0);
@@ -38,6 +41,7 @@ test("idle processes emit runtime measurements and stop sampling when their scop
   } finally {
     await Effect.runPromise(Scope.close(scope, Exit.void));
   }
+
   const stopped = Effect.runSync(Metric.value(processEventLoopDelay)).count;
   await Bun.sleep(1_100);
   expect(Effect.runSync(Metric.value(processEventLoopDelay)).count).toBe(

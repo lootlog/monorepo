@@ -11,8 +11,11 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
 const STORAGE_KEY = storageKey("ll-online-players-state");
+
 const DEFAULT_VIEW_MODE: OnlinePlayersViewMode = "accounts";
+
 const DEFAULT_FILTERS_VISIBLE = true;
+
 const VALID_PROFESSIONS: readonly ProfessionFilterValue[] = [
   ALL_PROFESSIONS_VALUE,
   ...PROFESSION_OPTIONS,
@@ -60,9 +63,11 @@ const sanitizeFiltersByGuildId = (
   }
 
   const entries: Array<[string, OnlinePlayersFiltersValue]> = [];
+
   for (const [guildId, filters] of Object.entries(filtersByGuildId)) {
     if (isOnlinePlayersFiltersValue(filters)) entries.push([guildId, filters]);
   }
+
   return Object.fromEntries(entries);
 };
 

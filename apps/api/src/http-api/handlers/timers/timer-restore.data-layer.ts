@@ -58,7 +58,9 @@ export const makeRestoreTimer = (
             ),
           )
           .limit(1);
+
         const entry = historyRows[0];
+
         if (!entry || !canViewTimer(access, entry)) {
           return yield* Effect.fail(
             new ResourceNotFoundError({
@@ -66,6 +68,7 @@ export const makeRestoreTimer = (
             }),
           );
         }
+
         if (
           entry.action !== TimerHistoryAction.DELETE ||
           entry.timerCreatedById === null ||
@@ -80,6 +83,7 @@ export const makeRestoreTimer = (
             }),
           );
         }
+
         const existingRows = yield* transaction
           .select()
           .from(timerTable)
@@ -91,6 +95,7 @@ export const makeRestoreTimer = (
             ),
           )
           .limit(1);
+
         if (existingRows.some((timer) => !canViewTimer(access, timer))) {
           return yield* Effect.fail(
             new ResourceNotFoundError({
@@ -98,12 +103,15 @@ export const makeRestoreTimer = (
             }),
           );
         }
+
         if (existingRows[0]?.deletedAt === null) {
           return yield* Effect.fail(
             new ResourceConflictError({ message: ErrorKey.EXISTING_TIMER }),
           );
         }
+
         const now = new Date(yield* Clock.currentTimeMillis);
+
         const restoredRows = yield* transaction
           .insert(timerTable)
           .values({
@@ -144,11 +152,14 @@ export const makeRestoreTimer = (
             },
           })
           .returning();
+
         const restored = restoredRows[0];
+
         if (!restored)
           return yield* Effect.die(
             new TimersInvariantViolation({ code: "RESTORE_NO_ROW" }),
           );
+
         const actors = yield* transaction
           .select()
           .from(memberTable)
@@ -159,7 +170,9 @@ export const makeRestoreTimer = (
             ),
           )
           .limit(1);
+
         const actor = actors[0];
+
         if (!actor)
           return yield* Effect.die(
             new TimersInvariantViolation({ code: "HISTORY_ACTOR_NOT_FOUND" }),
@@ -182,6 +195,7 @@ export const makeRestoreTimer = (
           timerActorCharacterSnapshotId: restored.actorCharacterSnapshotId,
           timerActorCharacterLvl: restored.actorCharacterLvl,
         });
+
         const staleHistory = yield* transaction
           .select({ id: timerHistoryEntryTable.id })
           .from(timerHistoryEntryTable)
@@ -197,6 +211,7 @@ export const makeRestoreTimer = (
             desc(timerHistoryEntryTable.id),
           )
           .offset(5);
+
         if (staleHistory.length > 0) {
           yield* transaction.delete(timerHistoryEntryTable).where(
             inArray(
@@ -205,11 +220,13 @@ export const makeRestoreTimer = (
             ),
           );
         }
+
         const creators = yield* transaction
           .select()
           .from(memberTable)
           .where(eq(memberTable.id, restored.createdById))
           .limit(1);
+
         const characters = restored.actorCharacterSnapshotId
           ? yield* transaction
               .select()
@@ -219,6 +236,7 @@ export const makeRestoreTimer = (
               )
               .limit(1)
           : [];
+
         return {
           ...restored,
           member: creators[0] ?? null,
@@ -226,6 +244,7 @@ export const makeRestoreTimer = (
         };
       }),
     );
+
     const response = mapTimerResponse(projection);
     yield* ports.invalidate(`timer:list:${access.guild.id}:*`);
     yield* ports.publish(RabbitRoutingKey.GUILDS_TIMERS_UPDATE, response);
@@ -233,8 +252,10 @@ export const makeRestoreTimer = (
       RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
       response,
     );
+
     return response;
   });
+
   return (access: TimersGuildAccess, historyEntryId: number) =>
     operation(access, historyEntryId).pipe(
       Effect.mapError(toTimersDataFailure),

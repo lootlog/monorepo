@@ -9,8 +9,10 @@ afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
 });
+
 it("keeps the last presence snapshot while permissions are rebalanced", async () => {
   const gateway = createTestGateway();
+
   const presence: PresenceWithLocation = {
     userId: "user-1",
     organizationIds: ["guild-1"],
@@ -31,6 +33,7 @@ it("keeps the last presence snapshot while permissions are rebalanced", async ()
     },
     location: { mapId: 2354, map: "Sala Mroźnych Szeptów", x: 0, y: 0 },
   };
+
   gateway.request
     .mockResolvedValueOnce({
       organizationId: "guild-1",
@@ -38,10 +41,12 @@ it("keeps the last presence snapshot while permissions are rebalanced", async ()
       presences: [presence],
     })
     .mockImplementationOnce(() => new Promise(() => undefined));
+
   const { result } = renderHook(
     () => useEventPresence({ guildId: "guild-1", world: "tempest" }),
     { wrapper: gateway.wrapper },
   );
+
   await waitFor(() =>
     expect(result.current.presenceData?.get("user-1")).toEqual([
       expect.objectContaining({
@@ -81,14 +86,17 @@ it.each([
         presences: [],
       })
       .mockImplementation(() => new Promise(() => undefined));
+
     const initialProps: Parameters<typeof useEventPresence>[0] = {
       guildId: "guild-1",
       world: "tempest",
     };
+
     const { result, rerender } = renderHook(useEventPresence, {
       initialProps,
       wrapper: gateway.wrapper,
     });
+
     await waitFor(() => expect(result.current.presenceData).toEqual(new Map()));
 
     rerender(nextScope);
@@ -101,20 +109,25 @@ it.each([
 it("ignores an outstanding response after leaving the presence scope", async () => {
   const gateway = createTestGateway();
   const resolveResponse = vi.fn<() => void>();
+
   const response = new Promise((resolve) => {
     resolveResponse.mockImplementation(() => {
       resolve({ organizationId: "guild-1", revision: 1, presences: [] });
     });
   });
+
   gateway.request.mockReturnValue(response);
+
   const initialProps: Parameters<typeof useEventPresence>[0] = {
     guildId: "guild-1",
     world: "tempest",
   };
+
   const { result, rerender } = renderHook(useEventPresence, {
     initialProps,
     wrapper: gateway.wrapper,
   });
+
   await waitFor(() => expect(gateway.request).toHaveBeenCalledTimes(1));
 
   rerender({ guildId: undefined, world: "tempest" });

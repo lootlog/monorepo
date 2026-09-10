@@ -28,9 +28,13 @@ const categorySettings: NotificationSettings = {
 };
 
 const mutes: NotificationMutes = { npcs: [], players: [] };
+
 const noop = () => undefined;
+
 const animationCancel = vi.fn<() => void>();
+
 type TestAnimation = { cancel: () => void; onfinish: null };
+
 const animate = vi.fn<
   (frames: Keyframe[], options: KeyframeAnimationOptions) => TestAnimation
 >(() => ({
@@ -94,6 +98,7 @@ describe("SingleNotification auto-hide perimeter", () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.useRealTimers();
+
     if (originalAnimate) {
       Object.defineProperty(SVGElement.prototype, "animate", originalAnimate);
     } else {

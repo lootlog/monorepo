@@ -10,6 +10,7 @@ export const getNotificationFieldVisibility = (
 ) => {
   const isScheduledMessage =
     triggerType === NotificationTriggerType.SCHEDULED_MESSAGE;
+
   const isRecurring =
     isScheduledMessage &&
     intervalType !== undefined &&

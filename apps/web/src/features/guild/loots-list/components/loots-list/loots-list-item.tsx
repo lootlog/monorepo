@@ -8,7 +8,9 @@ import { useThemeMeta } from "@/themes";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
 import { LootPresentation } from "./loot-presentation";
 import { LootHeaderActions } from "./loot-header-actions";
+
 type Props = { loot: Loot; isNew?: boolean; variant?: "card" | "embedded" };
+
 const animate = {
   opacity: 1,
   scale: 1,
@@ -23,6 +25,7 @@ export const LootsListItem = ({ loot, isNew, variant = "card" }: Props) => {
   const hasLegendaryItem = loot.items.some(
     (item) => item.rarity === ItemRarity.LEGENDARY,
   );
+
   let initialAnimation: false | { opacity: number; scale?: number } = false;
 
   if (isNew) {

@@ -38,9 +38,11 @@ const spawnWindow = (payload: CreateManualTimerRequest, now: Date) => {
   if (payload.customMinSpawnTime && payload.customMaxSpawnTime) {
     const minSpawnTime = new Date(payload.customMinSpawnTime);
     const maxSpawnTime = new Date(payload.customMaxSpawnTime);
+
     const midpointSeconds = Math.round(
       (maxSpawnTime.getTime() - minSpawnTime.getTime()) / 2000,
     );
+
     return {
       minSpawnTime,
       maxSpawnTime,
@@ -48,11 +50,14 @@ const spawnWindow = (payload: CreateManualTimerRequest, now: Date) => {
       latestRespawnRandomness: midpointSeconds > 0 ? 100 : 0,
     };
   }
+
   if (payload.minSeconds && payload.maxSeconds) {
     const averageSeconds = Math.round(
       (payload.minSeconds + payload.maxSeconds) / 2,
     );
+
     const varianceSeconds = payload.maxSeconds - averageSeconds;
+
     return {
       minSpawnTime: new Date(now.getTime() + payload.minSeconds * 1000),
       maxSpawnTime: new Date(now.getTime() + payload.maxSeconds * 1000),
@@ -63,6 +68,7 @@ const spawnWindow = (payload: CreateManualTimerRequest, now: Date) => {
           : 0,
     };
   }
+
   throw new InvalidRequestError({
     message:
       "Either minSeconds/maxSeconds or customMinSpawnTime/customMaxSpawnTime must be provided",
@@ -78,6 +84,7 @@ export const makeManualTimer = (
     payload: CreateManualTimerRequest,
   ) {
     const now = new Date(yield* Clock.currentTimeMillis);
+
     const window = yield* Effect.try({
       try: () => spawnWindow(payload, now),
       catch: (cause) =>
@@ -85,8 +92,10 @@ export const makeManualTimer = (
           ? cause
           : new InvalidRequestError({ message: "Invalid timer window" }),
     });
+
     const npcId = generateUniqueIntId();
     const timerKey = buildTimerKey(npcId, payload.name);
+
     const projection = yield* database.transaction((transaction) =>
       Effect.gen(function* () {
         const members = yield* transaction
@@ -99,7 +108,9 @@ export const makeManualTimer = (
             ),
           )
           .limit(1);
+
         const member = members[0];
+
         if (!member)
           return yield* Effect.die(
             new TimersMemberNotFound({
@@ -113,6 +124,7 @@ export const makeManualTimer = (
           payload.world,
           payload.actorCharacter,
         );
+
         const insertedTimers = yield* transaction
           .insert(timerTable)
           .values({
@@ -141,14 +153,18 @@ export const makeManualTimer = (
             updatedAt: now,
           })
           .returning();
+
         const timer = insertedTimers[0];
+
         if (!timer)
           return yield* Effect.die(
             new TimersInvariantViolation({ code: "MANUAL_INSERT_NO_ROW" }),
           );
+
         return { ...timer, member, actorCharacter };
       }),
     );
+
     const response = mapTimerResponse(projection);
     yield* ports.invalidate(`timer:list:${access.guild.id}:*`);
     yield* ports.publish(RabbitRoutingKey.GUILDS_TIMERS_UPDATE, response);
@@ -156,8 +172,10 @@ export const makeManualTimer = (
       RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
       response,
     );
+
     return response;
   });
+
   return (access: TimersGuildAccess, payload: CreateManualTimerRequest) =>
     operation(access, payload).pipe(Effect.mapError(toTimersDataFailure));
 };

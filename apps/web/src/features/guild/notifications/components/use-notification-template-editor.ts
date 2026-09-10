@@ -61,14 +61,18 @@ export const useNotificationTemplateEditor = ({
 }: NotificationTemplateEditorProps) => {
   const isScheduledMessage =
     triggerType === NotificationTriggerType.SCHEDULED_MESSAGE;
+
   const { t } = useTranslation();
   const [isPreviewVisible, setIsPreviewVisible] = useState(false);
+
   const [activeSuggestion, setActiveSuggestion] =
     useState<ActiveSuggestion>(null);
+
   const [highlightedSuggestion, setHighlightedSuggestion] = useState({
     identity: "",
     index: 0,
   });
+
   const editorRef = useRef<LexicalEditor | null>(null);
   const editorSurfaceRef = useRef<HTMLDivElement | null>(null);
 
@@ -94,6 +98,7 @@ export const useNotificationTemplateEditor = ({
 
         event.preventDefault();
         removeTemplateTokenNode(tokenNode);
+
         return true;
       },
       COMMAND_PRIORITY_HIGH,
@@ -101,9 +106,11 @@ export const useNotificationTemplateEditor = ({
   }, [disabled]);
 
   const suggestionItemRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
   const editorPlaceholder = t(
     "settings.notifications.templateEditor.placeholder",
   );
+
   const previewTemplateValues = createPreviewTemplateValues(t);
 
   const allVariableSuggestions: VariableSuggestion[] = [
@@ -191,9 +198,11 @@ export const useNotificationTemplateEditor = ({
     mentionSuggestions,
     variableSuggestions,
   );
+
   const activeSuggestionIdentity = activeSuggestion
     ? `${activeSuggestion.type}:${activeSuggestion.query}`
     : "";
+
   const highlightedSuggestionIndex =
     highlightedSuggestion.identity === activeSuggestionIdentity
       ? highlightedSuggestion.index
@@ -337,11 +346,13 @@ export const useNotificationTemplateEditor = ({
           currentSuggestion.identity === activeSuggestionIdentity
             ? currentSuggestion.index
             : 0;
+
         return {
           identity: activeSuggestionIdentity,
           index: (currentIndex + 1) % filteredSuggestions.length,
         };
       });
+
       return;
     }
 
@@ -353,6 +364,7 @@ export const useNotificationTemplateEditor = ({
           currentSuggestion.identity === activeSuggestionIdentity
             ? currentSuggestion.index
             : 0;
+
         return {
           identity: activeSuggestionIdentity,
           index:
@@ -360,12 +372,14 @@ export const useNotificationTemplateEditor = ({
             filteredSuggestions.length,
         };
       });
+
       return;
     }
 
     if (event.key === "Enter") {
       event.preventDefault();
       event.stopPropagation();
+
       const selectedSuggestion =
         filteredSuggestions[highlightedSuggestionIndex];
 
@@ -374,6 +388,7 @@ export const useNotificationTemplateEditor = ({
       }
 
       insertSuggestion(selectedSuggestion, activeSuggestion.replaceLength);
+
       return;
     }
 

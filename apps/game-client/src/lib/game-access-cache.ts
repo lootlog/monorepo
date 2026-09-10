@@ -15,21 +15,29 @@ import { Permission } from "@lootlog/schema/permissions";
 import type { PermissionsUpdatedPayload } from "@/lib/socket";
 
 const queryPathSchema = z.string();
+
 const guildQueryParamsSchema = z.object({ guildId: z.string() });
 
 type TimerRecord = { guildId: string; npc: { type: string; lvl: number } };
+
 const timerScope = (query: Query): string | null | undefined => {
   const [path, params] = query.queryKey;
+
   if (path === "/timers") return null;
+
   if (path === "/timers/history") {
     const parsedParams = guildQueryParamsSchema.safeParse(params);
+
     if (parsedParams.success) return parsedParams.data.guildId;
   }
+
   const parsedPath = queryPathSchema.safeParse(path);
+
   if (parsedPath.success)
     return /^\/guilds\/([^/]+)\/timers\/[^/]+\/history$/.exec(
       parsedPath.data,
     )?.[1];
+
   return undefined;
 };
 
@@ -46,27 +54,35 @@ const reconcileTimers = (
       organization,
     ]),
   );
+
   const timerChanges =
     changes?.filter((change) => change.areas.includes("timers")) ?? [];
+
   const restricted = new Set(
     timerChanges.flatMap((change) =>
       change.restricted ? [change.organizationId] : [],
     ),
   );
+
   const expanded = new Set(
     timerChanges.flatMap((change) =>
       change.expanded ? [change.organizationId] : [],
     ),
   );
+
   for (const query of queryClient.getQueryCache().getAll()) {
     const scope = timerScope(query);
+
     if (scope === undefined) continue;
+
     const canReadScope = policy.organizations.some(
       (organization) =>
         (scope === null || scope === organization.organizationId) &&
         organization.permissions.includes(Permission.LOOTLOG_TIMERS_READ),
     );
+
     if (!canReadScope) pendingQueries.delete(query);
+
     if (
       initial ||
       (scope === null ? restricted.size > 0 : restricted.has(scope))
@@ -81,17 +97,21 @@ const reconcileTimers = (
       void queryClient.cancelQueries({ queryKey: query.queryKey, exact: true });
       queryClient.setQueryData<TimerRecord[]>(query.queryKey, (rows) => {
         if (!rows) return [];
+
         const filtered = rows.filter((row) => {
           if (!initial && !restricted.has(row.guildId)) return true;
           const organization = organizations.get(row.guildId);
+
           return (
             organization !== undefined &&
             canReadPolicyNpc(organization, "timers", row.npc)
           );
         });
+
         return filtered.length === rows.length ? rows : filtered;
       });
     }
+
     if (
       !initial &&
       canReadScope &&
@@ -100,6 +120,7 @@ const reconcileTimers = (
       pendingQueries.add(query);
   }
 };
+
 const reconcileOrganizations = (
   queryClient: QueryClient,
   policy: AccessPolicySnapshot,
@@ -113,36 +134,47 @@ const reconcileOrganizations = (
       organization,
     ]),
   );
+
   const changedIds = new Set(changes?.map((change) => change.organizationId));
+
   if (initial) {
     for (const organization of policy.organizations)
       changedIds.add(organization.organizationId);
+
     for (const query of queryClient.getQueryCache().getAll()) {
       const path = queryPathSchema.safeParse(query.queryKey[0]);
+
       const id = path.success
         ? /^\/guilds\/([^/]+)\/permissions$/.exec(path.data)?.[1]
         : undefined;
+
       if (id) changedIds.add(id);
     }
   }
+
   for (const id of changedIds) {
     const queryKey = getGuildsControllerGetGuildPermissionsQueryKey({
       guildId: id,
     });
+
     void queryClient.cancelQueries({ queryKey });
     // The event contains the authoritative effective permissions; no HTTP roundtrip.
     queryClient.setQueryData(queryKey, [
       ...(organizations.get(id)?.permissions ?? []),
     ]);
   }
+
   const guildsKey = getUsersControllerGetCurrentUserAccessibleGuildsQueryKey();
+
   const membershipChanged = changes?.some((change) =>
     change.areas.includes("organization"),
   );
+
   if (initial || membershipChanged) {
     const activeQuery = queryClient
       .getQueryCache()
       .find({ queryKey: guildsKey });
+
     if (activeQuery?.state.fetchStatus === "fetching")
       pendingQueries.add(activeQuery);
     void queryClient.cancelQueries({ queryKey: guildsKey });
@@ -152,15 +184,18 @@ const reconcileOrganizations = (
         guilds?.flatMap((guild) => {
           if (!organizations.has(guild.id)) return [];
           const organization = organizations.get(guild.id);
+
           const hasLootlogAccess =
             organization?.permissions.includes(Permission.LOOTLOG_ACCESS) ??
             false;
+
           return guild.hasLootlogAccess === hasLootlogAccess &&
             !guild.isAccessDataStale
             ? guild
             : { ...guild, hasLootlogAccess, isAccessDataStale: false };
         }),
     );
+
     if (
       !initial &&
       changes?.some(
@@ -168,6 +203,7 @@ const reconcileOrganizations = (
       )
     ) {
       const query = queryClient.getQueryCache().find({ queryKey: guildsKey });
+
       if (query) pendingQueries.add(query);
     }
   }
@@ -178,9 +214,11 @@ export const createGameAccessCache = (queryClient: QueryClient) => {
   let currentPolicy: AccessPolicySnapshot | undefined;
   let refreshTimer: ReturnType<typeof setTimeout> | undefined;
   const pendingQueries = new Set<Query>();
+
   const scheduleRefresh = (immediate = false) => {
     if (pendingQueries.size === 0) return;
     clearTimeout(refreshTimer);
+
     const refresh = () => {
       refreshTimer = undefined;
       const pending = new Set(pendingQueries);
@@ -190,14 +228,18 @@ export const createGameAccessCache = (queryClient: QueryClient) => {
         { cancelRefetch: false },
       );
     };
+
     if (immediate) refresh();
     else refreshTimer = setTimeout(refresh, 5000);
   };
+
   return {
     apply(data: PermissionsUpdatedPayload) {
       const policy = data.accessPolicy;
+
       if (!policy) {
         currentPolicy = undefined;
+
         for (const query of queryClient.getQueryCache().getAll()) {
           if (timerScope(query) === undefined) continue;
           void queryClient.cancelQueries({
@@ -207,15 +249,20 @@ export const createGameAccessCache = (queryClient: QueryClient) => {
           queryClient.setQueryData(query.queryKey, []);
           pendingQueries.add(query);
         }
+
         scheduleRefresh();
+
         return;
       }
+
       if (currentPolicy?.version === policy.version) return;
       const initial = currentPolicy === undefined;
+
       const changes = diffAccessPolicies(
         currentPolicy ?? { version: "", organizations: [] },
         policy,
       );
+
       currentPolicy = policy;
       reconcileTimers(queryClient, policy, changes, initial, pendingQueries);
       reconcileOrganizations(

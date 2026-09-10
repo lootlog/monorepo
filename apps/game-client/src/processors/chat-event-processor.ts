@@ -8,6 +8,7 @@ export class ChatEventProcessor {
     if (!event.chat) return;
 
     const lootDistributionMessage = getLootDistributionMessage(event);
+
     if (!lootDistributionMessage) return;
 
     this.handleUpdateLoot(lootDistributionMessage);
@@ -15,6 +16,7 @@ export class ChatEventProcessor {
 
   private handleUpdateLoot(message: string): void {
     const lastLootId = useLootStore.getState().lastLootId;
+
     if (!lastLootId) return;
 
     updateLoot({ msg: message, id: lastLootId })

@@ -6,11 +6,16 @@ import { resolveNpcType } from "@lootlog/domain/npc-routing";
 import type { NpcTypeEnum } from "@lootlog/schema/npc-type";
 
 const CHAT_MESSAGE_DEDUPE_WINDOW_MS = 200;
+
 const CHAT_NPC_GROUP_WINDOW_MS = 60_000;
+
 export const CHAT_VISIBLE_MESSAGE_LIMIT = 500;
+
 const getChatMessageDayKey = (timestamp: string) => timestamp.slice(0, 10);
+
 const getChatMessageTimestamp = (timestamp: string) =>
   new Date(timestamp).getTime();
+
 const getChatMessageDedupeKey = (message: ChatMessageType) => {
   return `${message.message?.trim() ?? ""}_${message.senderId}_${message.npc?.id ?? ""}`;
 };
@@ -90,6 +95,7 @@ export type ChatMessageGroup = {
 
 export const groupDuplicateChatMessages = (messages: ChatMessageType[]) => {
   const unique: ChatMessageGroup[] = [];
+
   const groupsByDedupeKeyAndBucket = new Map<
     string,
     Map<number, { timestamp: number; group: ChatMessageGroup }[]>
@@ -101,17 +107,21 @@ export const groupDuplicateChatMessages = (messages: ChatMessageType[]) => {
     const bucket = Math.floor(timestamp / CHAT_MESSAGE_DEDUPE_WINDOW_MS);
     let duplicate: ChatMessageGroup | undefined;
     let groupsByBucket = groupsByDedupeKeyAndBucket.get(dedupeKey);
+
     if (!groupsByBucket) {
       groupsByBucket = new Map();
       groupsByDedupeKeyAndBucket.set(dedupeKey, groupsByBucket);
     }
+
     for (
       let comparedBucket = bucket - 1;
       comparedBucket <= bucket + 1;
       comparedBucket += 1
     ) {
       const comparedGroups = groupsByBucket.get(comparedBucket);
+
       if (!comparedGroups) continue;
+
       for (const candidate of comparedGroups) {
         if (
           Math.abs(candidate.timestamp - timestamp) <=
@@ -121,18 +131,22 @@ export const groupDuplicateChatMessages = (messages: ChatMessageType[]) => {
           break;
         }
       }
+
       if (duplicate) break;
     }
+
     if (duplicate) {
       duplicate.messageIds.push(message.id);
       continue;
     }
+
     const group = { message, messageIds: [message.id] };
     const bucketGroups = groupsByBucket.get(bucket) ?? [];
     bucketGroups.push({ timestamp, group });
     groupsByBucket.set(bucket, bucketGroups);
     unique.push(group);
   }
+
   return unique.sort(
     (first, second) =>
       getChatMessageTimestamp(first.message.timestamp) -
@@ -148,6 +162,7 @@ export const getVisibleChatMessageAliases = (
   visibleIds: readonly string[],
 ) => {
   const visible = new Set(visibleIds);
+
   return groups.flatMap((group) =>
     visible.has(group.message.id) ? group.messageIds : [],
   );
@@ -160,8 +175,10 @@ export const isHiddenNpcChatMessage = (
   hiddenNpcTypes: ReadonlySet<NpcTypeEnum>,
 ) => {
   if (hiddenNpcTypes.size === 0) return false;
+
   if (message.type !== MessageType.NPC || !message.npc) return false;
   const npcType = resolveNpcType(message.npc);
+
   return npcType !== null && hiddenNpcTypes.has(npcType);
 };
 
@@ -175,6 +192,7 @@ export const filterChatMessages = (
       message.type !== MessageType.PARTY_GATHERING &&
       !isHiddenNpcChatMessage(message, hiddenNpcTypes),
   );
+
   if (chatFilter === "all") return supportedMessages;
 
   return supportedMessages.filter((message) => {
@@ -235,6 +253,7 @@ export const getChatRenderableMessages = (
   messages: ChatMessageType[],
 ): ChatRenderableMessage[] => {
   const renderables: InternalRenderableMessage[] = [];
+
   const activeNpcGroups = new Map<
     string,
     Extract<InternalRenderableMessage, { kind: "npc-group" }>
@@ -313,6 +332,7 @@ export const getChatRenderableMessages = (
             messageIds: renderable.messageIds,
             message: renderable.message,
           };
+
     const currentTimestamp = publicRenderable.message.timestamp;
     const currentDayKey = getChatMessageDayKey(currentTimestamp);
 
@@ -356,6 +376,7 @@ export const mergeChatMessageHistories = (
     string,
     { message: ChatMessageType; insertionOrder: number }
   >();
+
   let nextInsertionOrder = 0;
 
   for (const message of cachedMessages) {

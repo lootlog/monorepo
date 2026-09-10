@@ -3,6 +3,7 @@ import type { MapTimelineData } from "../types/api";
 import { getKillMapTimelineDiagnostics } from "./kill-map-timeline-data";
 
 const startTime = new Date("2026-08-12T08:00:00.000Z");
+
 const endTime = new Date("2026-08-12T10:00:00.000Z");
 
 describe("getKillMapTimelineDiagnostics", () => {
@@ -90,6 +91,7 @@ describe("getKillMapTimelineDiagnostics", () => {
       startTime,
       endTime,
     );
+
     const reordered = getKillMapTimelineDiagnostics(
       createMap({
         gaps: [

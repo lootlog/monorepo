@@ -14,6 +14,7 @@ export function ScoringSimulatorResults({
 }) {
   const { t } = useTranslation();
   const isCapped = result.basePoints + result.bonusPoints > hardCapPoints;
+
   return (
     <div className="bg-muted/20 p-3">
       <SectionCardHeader

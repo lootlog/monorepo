@@ -5,7 +5,9 @@ const Count = FiniteNumber.check(
   Schema.isInt(),
   Schema.isGreaterThanOrEqualTo(0),
 );
+
 const NullableNumber = Schema.NullOr(FiniteNumber);
+
 const NullableString = Schema.NullOr(Schema.String);
 
 export const UserKillAnalyticsQuery = Schema.Struct({
@@ -14,12 +16,15 @@ export const UserKillAnalyticsQuery = Schema.Struct({
     Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(100)),
   ),
 });
+
 export type UserKillAnalyticsQuery = typeof UserKillAnalyticsQuery.Type;
+
 export const UserKillActivityQuery = Schema.Struct({
   world: Schema.optionalKey(
     Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(100)),
   ),
 });
+
 export type UserKillActivityQuery = typeof UserKillActivityQuery.Type;
 
 export const KillAnalyticsMeta = Schema.Struct({
@@ -36,18 +41,21 @@ export const KillAnalyticsMeta = Schema.Struct({
   untimedKills: Count,
   includesCurrentHour: Schema.Literal(true),
 });
+
 const DailyActivity = Schema.Struct({
   date: Schema.String,
   worlds: Schema.Array(Schema.String),
   kills: NullableNumber,
   partial: Schema.Boolean,
 });
+
 const PeriodRecord = Schema.Struct({
   startDate: Schema.String,
   endDate: Schema.String,
   kills: Count,
   partial: Schema.Boolean,
 });
+
 const NpcAnalytics = Schema.Struct({
   world: Schema.String,
   npcId: FiniteNumber,
@@ -66,10 +74,12 @@ const NpcAnalytics = Schema.Struct({
     Schema.Struct({ date: Schema.String, kills: NullableNumber }),
   ),
 });
+
 export const UserKillActivityResponse = Schema.Struct({
   meta: KillAnalyticsMeta,
   daily: Schema.Array(DailyActivity),
 }).annotate({ identifier: "UserKillActivityResponseDto_Output" });
+
 export type UserKillActivityResponse = typeof UserKillActivityResponse.Type;
 
 export const UserKillAnalyticsResponse = Schema.Struct({
@@ -126,4 +136,5 @@ export const UserKillAnalyticsResponse = Schema.Struct({
     }),
   ),
 }).annotate({ identifier: "UserKillAnalyticsResponseDto_Output" });
+
 export type UserKillAnalyticsResponse = typeof UserKillAnalyticsResponse.Type;

@@ -7,6 +7,7 @@ import { stringify } from "yaml";
 import { ActivityApi } from "#src/http-api/activity-api";
 
 const document = OpenApi.fromApi(ActivityApi);
+
 const boundedInteger = (
   minimum: number,
   maximum: number,
@@ -14,6 +15,7 @@ const boundedInteger = (
 ) => ({
   schema: { type: "integer", minimum, maximum, default: defaultValue },
 });
+
 preserveOpenApi30Contract(
   document,
   {
@@ -32,6 +34,7 @@ preserveOpenApi30Contract(
     "ActivitiesController_deleteActivity:404": "Activity not found",
   },
 );
+
 setOpenApiCompatibilityValue(
   document,
   [
@@ -49,6 +52,7 @@ setOpenApiCompatibilityValue(
   ],
   { redis: { status: "down", message: "Could not connect" } },
 );
+
 setOpenApiCompatibilityValue(
   document,
   [
@@ -69,11 +73,13 @@ setOpenApiCompatibilityValue(
     redis: { status: "down", message: "Could not connect" },
   },
 );
+
 for (const schemaName of [
   "PaginatedActivitiesResponseDto",
   "ActivityResponseDto",
 ] as const) {
   const prefix = ["components", "schemas", schemaName, "properties"];
+
   const detailsPath =
     schemaName === "PaginatedActivitiesResponseDto"
       ? [
@@ -85,8 +91,10 @@ for (const schemaName of [
           "additionalProperties",
         ]
       : [...prefix, "details", "additionalProperties"];
+
   setOpenApiCompatibilityValue(document, detailsPath, {});
 }
+
 await Bun.write(
   new URL("../../openapi.yaml", import.meta.url),
   stringify(document, { lineWidth: 0 }),

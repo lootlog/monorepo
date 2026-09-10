@@ -47,10 +47,13 @@ import type { ActiveEventHeroStore } from "#src/events/kills/active-event-hero.r
 import type { EventKillStore } from "#src/events/kills/event-kill.repository";
 
 type Event = typeof eventTable.$inferSelect;
+
 type EventHeroNpc = typeof eventHeroNpcTable.$inferSelect;
 
 const EVENT_KILL_LOCK_TTL_SECONDS = 30;
+
 const EVENT_KILL_DEDUP_TTL_SECONDS = 120;
+
 const EVENT_KILL_RECENT_DEDUP_TTL_SECONDS = 30;
 
 type MapPresenceEntry = {
@@ -105,6 +108,7 @@ export const makeEventKills = (
   respawnWindowQueue: Queue<AutoCloseRespawnWindowJobData>,
 ) => {
   const logger = new Logger("EventKills");
+
   const runPromiseAdapter = <A>(adapter: string, operation: () => Promise<A>) =>
     Effect.tryPromise({ try: operation, catch: (cause) => cause }).pipe(
       Effect.withSpan(`events.adapter.${adapter}`),
@@ -155,16 +159,19 @@ export const makeEventKills = (
     trackingWindowStartTime: Date;
   }) {
     const memberMapIds = new Map<number, Set<string>>();
+
     const memberAssignmentsHistory = new Map<
       number,
       MemberAssignmentHistoryEntry[]
     >();
+
     const memberTrackingIntervals = new Map<number, TrackingInterval[]>();
 
     for (const historyEntry of params.assignmentHistory) {
       if (!memberAssignmentsHistory.has(historyEntry.memberId)) {
         memberAssignmentsHistory.set(historyEntry.memberId, []);
       }
+
       memberAssignmentsHistory.get(historyEntry.memberId)?.push({
         mapId: historyEntry.mapId,
         assignedAt: historyEntry.assignedAt,
@@ -185,12 +192,14 @@ export const makeEventKills = (
       if (!memberMapIds.has(historyEntry.memberId)) {
         memberMapIds.set(historyEntry.memberId, new Set<string>());
       }
+
       memberMapIds.get(historyEntry.memberId)?.add(historyEntry.mapId);
 
       if (clippedTrackingInterval.end > clippedTrackingInterval.start) {
         if (!memberTrackingIntervals.has(historyEntry.memberId)) {
           memberTrackingIntervals.set(historyEntry.memberId, []);
         }
+
         memberTrackingIntervals
           .get(historyEntry.memberId)
           ?.push(clippedTrackingInterval);
@@ -247,6 +256,7 @@ export const makeEventKills = (
             },
           ]),
         );
+
         const presenceByMemberMapKey = new Map<
           string,
           MemberMapPresenceStatsEntry
@@ -309,10 +319,12 @@ export const makeEventKills = (
       const npcIds = event.heroNpcs.flatMap((hero) =>
         hero.npcId === null ? [] : [hero.npcId],
       );
+
       const npcStats =
         npcIds.length > 0
           ? yield* repository.findNpcStats(guildId, event.world, npcIds)
           : [];
+
       const npcProfById = new Map(
         npcStats.map((npcStat) => [npcStat.npcId, npcStat.npcProf]),
       );
@@ -342,6 +354,7 @@ export const makeEventKills = (
     return Effect.gen(function* () {
       const lockKey = getEventKillLockKey(guildId, world, npcId);
       const windowKey = getEventHeroKillWindowKey(timerData);
+
       const dedupKey = getEventKillDedupKey(
         guildId,
         world,
@@ -349,6 +362,7 @@ export const makeEventKills = (
         windowKey,
         isManualClose,
       );
+
       const recentDedupKey = isManualClose
         ? null
         : getEventKillRecentDedupKey(guildId, world, npcId);
@@ -356,6 +370,7 @@ export const makeEventKills = (
       const dedupHit = yield* runPromiseAdapter("redis.get", () =>
         redis.get(dedupKey),
       );
+
       if (dedupHit) {
         logger.debug({
           message: "Skipping duplicate event hero kill - dedup window active",
@@ -364,6 +379,7 @@ export const makeEventKills = (
           npcId,
           npcName,
         });
+
         return;
       }
 
@@ -371,6 +387,7 @@ export const makeEventKills = (
         const recentDedupHit = yield* runPromiseAdapter("redis.get", () =>
           redis.get(recentDedupKey),
         );
+
         if (recentDedupHit) {
           logger.debug({
             message: "Skipping duplicate event hero kill - recent kill active",
@@ -379,6 +396,7 @@ export const makeEventKills = (
             npcId,
             npcName,
           });
+
           return;
         }
       }
@@ -400,6 +418,7 @@ export const makeEventKills = (
           npcId,
           npcName,
         });
+
         return;
       }
 
@@ -407,6 +426,7 @@ export const makeEventKills = (
         const dedupHitAfterLock = yield* runPromiseAdapter("redis.get", () =>
           redis.get(dedupKey),
         );
+
         if (dedupHitAfterLock) {
           logger.debug({
             message:
@@ -416,6 +436,7 @@ export const makeEventKills = (
             npcId,
             npcName,
           });
+
           return;
         }
 
@@ -424,6 +445,7 @@ export const makeEventKills = (
             "redis.get",
             () => redis.get(recentDedupKey),
           );
+
           if (recentDedupHitAfterLock) {
             logger.debug({
               message:
@@ -433,6 +455,7 @@ export const makeEventKills = (
               npcId,
               npcName,
             });
+
             return;
           }
         }
@@ -454,6 +477,7 @@ export const makeEventKills = (
             Effect.gen(function* () {
               let { eventHero } = match;
               const { event } = match;
+
               const heroDedupKey = getEventKillHeroDedupKey(
                 guildId,
                 world,
@@ -466,6 +490,7 @@ export const makeEventKills = (
               const heroDedupHit = yield* runPromiseAdapter("redis.get", () =>
                 redis.get(heroDedupKey),
               );
+
               if (heroDedupHit) {
                 logger.debug({
                   message: "Skipping duplicate event hero kill for hero",
@@ -475,6 +500,7 @@ export const makeEventKills = (
                   heroId: eventHero.id,
                   eventId: event.id,
                 });
+
                 return;
               }
 
@@ -603,18 +629,23 @@ export const makeEventKills = (
       const killedAt = new Date(yield* Clock.currentTimeMillis);
       const minSpawnTimeAtKill = timerData.previousMinSpawnTime ?? killedAt;
       const maxSpawnTimeAtKill = timerData.previousMaxSpawnTime ?? killedAt;
+
       const effectiveKilledAt = getEffectiveWindowEndAt(
         killedAt,
         maxSpawnTimeAtKill,
       );
+
       const windowOpenedAt =
         timerData.windowOpenedAt ?? timerData.previousMinSpawnTime ?? killedAt;
+
       const scoringWindowStartTime =
         windowOpenedAt > effectiveKilledAt ? effectiveKilledAt : windowOpenedAt;
+
       const trackingWindowStartTime =
         minSpawnTimeAtKill > effectiveKilledAt
           ? effectiveKilledAt
           : minSpawnTimeAtKill;
+
       const trackingWindowDurationSeconds = Math.max(
         0,
         Math.floor(
@@ -679,6 +710,7 @@ export const makeEventKills = (
             });
 
             const assignedMemberIds = Array.from(memberMapIds.keys());
+
             if (assignedMemberIds.length === 0) {
               logger.log({
                 message: "No assignments for hero kill in current window",
@@ -700,11 +732,13 @@ export const makeEventKills = (
               const memberAssignedMapIds = Array.from(
                 memberMapIds.get(memberId) ?? [],
               );
+
               const presenceStats = presenceByMemberId.get(memberId) ?? {
                 timeOnMapSeconds: 0,
                 afkPercentage: 0,
                 wasPresent: false,
               };
+
               const mapPresenceData = buildMapPresenceData({
                 mapIds: memberAssignedMapIds,
                 mapNameById: mapIdToName,
@@ -714,6 +748,7 @@ export const makeEventKills = (
 
               const trackingIntervals =
                 memberTrackingIntervals.get(memberId) ?? [];
+
               const trackingDurationSeconds =
                 calculateTrackingDurationSeconds(trackingIntervals);
 
@@ -732,6 +767,7 @@ export const makeEventKills = (
 
               const memberAssignments =
                 memberAssignmentsHistory.get(memberId) ?? [];
+
               const { memberPresentAtKill, memberLeaveTime } =
                 getMemberKillState({
                   assignments: memberAssignments,
@@ -880,10 +916,12 @@ export const makeEventKills = (
 
   function resolveKillScoringConfig(event: Event, killedAt: Date) {
     const scoringMode = normalizeEventScoringMode(event.scoringMode);
+
     const scoringRules =
       scoringMode === "ADVANCED"
         ? normalizeEventScoringRules(event.scoringRules)
         : null;
+
     const confirmationMinutes = Math.max(
       0,
       event.participationConfirmationMinutes ?? 0,
@@ -910,6 +948,7 @@ export const makeEventKills = (
 
     for (const assignment of params.assignments) {
       if (assignment.assignedAt > params.killedAt) continue;
+
       if (
         !assignment.unassignedAt ||
         assignment.unassignedAt >= params.killedAt
@@ -917,6 +956,7 @@ export const makeEventKills = (
         memberPresentAtKill = true;
         continue;
       }
+
       if (
         assignment.unassignedAt >= params.trackingWindowStartTime &&
         assignment.unassignedAt < params.killedAt &&
@@ -965,12 +1005,15 @@ export const makeEventKills = (
 
     const hasMore = kills.length > limit;
     const paginatedKills = hasMore ? kills.slice(0, limit) : kills;
+
     const windowStartByKillId =
       yield* getEffectiveWindowStartByKillId(paginatedKills);
+
     const mapDataByKillMember = yield* buildKillPointMapDataByKillMember(
       paginatedKills,
       windowStartByKillId,
     );
+
     const data = paginatedKills.map((kill) => ({
       ...kill,
       points: kill.points.map((point) => ({
@@ -978,6 +1021,7 @@ export const makeEventKills = (
         mapData: mapDataByKillMember.get(`${kill.id}:${point.memberId}`) ?? [],
       })),
     }));
+
     const nextCursor = hasMore ? data[data.length - 1]?.id : null;
 
     return { data, nextCursor };
@@ -1103,14 +1147,18 @@ export const makeEventKills = (
 
       const hasMore = kills.length > limit;
       const paginatedKills = hasMore ? kills.slice(0, limit) : kills;
+
       const windowStartByKillId =
         yield* getEffectiveWindowStartByKillId(paginatedKills);
+
       const mapDataByKillMember = yield* buildKillPointMapDataByKillMember(
         paginatedKills,
         windowStartByKillId,
       );
+
       const data = paginatedKills.map(({ points, ...kill }) => {
         const latestPoint = points[0] ?? null;
+
         const normalizedMemberPoint = latestPoint
           ? normalizeKillPointTracking(
               latestPoint,
@@ -1118,6 +1166,7 @@ export const makeEventKills = (
               kill.minSpawnTimeAtKill,
             )
           : null;
+
         const memberPoint = normalizedMemberPoint
           ? {
               ...normalizedMemberPoint,
@@ -1133,6 +1182,7 @@ export const makeEventKills = (
           memberPoint,
         };
       });
+
       const nextCursor = hasMore ? data[data.length - 1]?.id : null;
 
       return { member, data, nextCursor };
@@ -1169,13 +1219,16 @@ export const makeEventKills = (
       }
 
       const heroMaps = yield* repository.findMaps(heroId);
+
       const effectiveKilledAt = getEffectiveWindowEndAt(
         kill.killedAt,
         kill.maxSpawnTimeAtKill,
       );
+
       const windowStartByKillId = yield* getEffectiveWindowStartByKillId([
         kill,
       ]);
+
       const overlapWindowStartTime =
         windowStartByKillId.get(kill.id) ??
         getTrackingWindowStartTime({
@@ -1185,13 +1238,16 @@ export const makeEventKills = (
 
       const mapIdToName = createMapNameLookup(heroMaps);
       const mapIds = heroMaps.map((m) => m.id);
+
       const memberIds = [
         ...new Set(kill.points.map((point) => point.memberId)),
       ];
+
       const trackingWindowStartTime = getTrackingWindowStartTime({
         killedAt: effectiveKilledAt,
         minSpawnTimeAtKill: kill.minSpawnTimeAtKill,
       });
+
       const normalizedPoints = kill.points.map((point) =>
         normalizeKillPointTracking(
           point,
@@ -1215,10 +1271,12 @@ export const makeEventKills = (
           unassignedAt: Date | null;
         }>
       >();
+
       for (const assignment of assignments) {
         if (!assignmentsByMember.has(assignment.memberId)) {
           assignmentsByMember.set(assignment.memberId, []);
         }
+
         assignmentsByMember.get(assignment.memberId)?.push({
           mapId: assignment.mapId,
           assignedAt: assignment.assignedAt,
@@ -1231,6 +1289,7 @@ export const makeEventKills = (
           normalizedPoints
             .filter((point) => {
               const storedMapPresence = point.mapPresenceData;
+
               return !(storedMapPresence && storedMapPresence.length > 0);
             })
             .map((point) => point.memberId),
@@ -1244,10 +1303,12 @@ export const makeEventKills = (
           overlapWindowStartTime,
           effectiveKilledAt,
         );
+
       const fallbackPresenceByMemberMap = new Map<
         string,
         { presenceTimeSeconds: number; afkTimeSeconds: number }
       >();
+
       for (const stat of fallbackPresenceStats) {
         fallbackPresenceByMemberMap.set(`${stat.memberId}:${stat.mapId}`, {
           presenceTimeSeconds: stat.presenceTimeSeconds,
@@ -1293,6 +1354,7 @@ export const makeEventKills = (
             windowStart: trackingWindowStartTime,
             windowEnd: effectiveKilledAt,
           });
+
           const assignmentDurationSeconds = clippedAssignmentInterval
             ? Math.round(
                 (clippedAssignmentInterval.end.getTime() -
@@ -1327,10 +1389,12 @@ export const makeEventKills = (
           minSpawnTimeAtKill: kill.minSpawnTimeAtKill,
         }),
       );
+
       const resolvedAfterMaxSpawnTimeMs = Math.max(
         0,
         kill.killedAt.getTime() - kill.maxSpawnTimeAtKill.getTime(),
       );
+
       const windowDurationSeconds = Math.max(
         0,
         getSpawnWindowDurationSeconds(
@@ -1338,9 +1402,11 @@ export const makeEventKills = (
           kill.maxSpawnTimeAtKill,
         ),
       );
+
       const scoringMode = normalizeEventScoringMode(
         kill.heroNpc.event.scoringMode,
       );
+
       const scoringRules =
         scoringMode === "ADVANCED"
           ? normalizeEventScoringRules(kill.heroNpc.event.scoringRules)
@@ -1383,6 +1449,7 @@ export const makeEventKills = (
       }
 
       const heroIds = [...new Set(kills.map((kill) => kill.heroNpcId))];
+
       const memberIds = [
         ...new Set(
           kills.flatMap((kill) => kill.points.map((point) => point.memberId)),
@@ -1396,6 +1463,7 @@ export const makeEventKills = (
       const maxKillTime = new Date(
         Math.max(...kills.map((kill) => kill.killedAt.getTime())),
       );
+
       const minTrackingWindowStart = new Date(
         Math.min(
           ...kills.map((kill) =>
@@ -1411,11 +1479,13 @@ export const makeEventKills = (
       );
 
       const heroMaps = (yield* repository.findMapsForHeroes(heroIds)) ?? [];
+
       if (heroMaps.length === 0) {
         return mapDataByKillMember;
       }
 
       const mapIdToName = createMapNameLookup(heroMaps);
+
       const assignments =
         (yield* repository.findAssignments({
           heroNpcIds: heroIds,
@@ -1433,6 +1503,7 @@ export const makeEventKills = (
           unassignedAt: Date | null;
         }>
       >();
+
       for (const assignment of assignments) {
         const key = `${assignment.heroNpcId}:${assignment.memberId}`;
         const current = assignmentsByHeroMember.get(key) ?? [];
@@ -1458,6 +1529,7 @@ export const makeEventKills = (
             assignmentsByHeroMember.get(
               `${kill.heroNpcId}:${point.memberId}`,
             ) ?? [];
+
           const presenceByMapId = getPresenceByMapId(point.mapPresenceData);
 
           const mapData = pointAssignments
@@ -1468,6 +1540,7 @@ export const makeEventKills = (
                 windowStart: overlapWindowStartTime,
                 windowEnd: kill.killedAt,
               });
+
               if (!clippedAssignmentInterval) {
                 return null;
               }
@@ -1477,6 +1550,7 @@ export const makeEventKills = (
                   clippedAssignmentInterval.start.getTime()) /
                   1000,
               );
+
               const presence = presenceByMapId.get(assignment.mapId);
 
               return {
@@ -1516,6 +1590,7 @@ export const makeEventKills = (
       const windowSummaries = yield* repository.findWindowSummaries(
         kills.map((kill) => kill.id),
       );
+
       const windowOpenedAtByKillId = new Map(
         windowSummaries.flatMap((summary) =>
           summary.killId
@@ -1546,6 +1621,7 @@ export const makeEventKills = (
       string,
       { presenceTimeSeconds: number; afkTimeSeconds: number }
     >();
+
     if (!Array.isArray(mapPresenceData)) {
       return presenceByMapId;
     }
@@ -1556,6 +1632,7 @@ export const makeEventKills = (
       }
 
       const parsedEntry = entry;
+
       if (
         typeof parsedEntry.mapId !== "string" ||
         parsedEntry.mapId.length < 1
@@ -1568,6 +1645,7 @@ export const makeEventKills = (
         Number.isFinite(parsedEntry.presenceTimeSeconds)
           ? Math.max(0, Math.round(parsedEntry.presenceTimeSeconds))
           : 0;
+
       const afkTimeSeconds =
         typeof parsedEntry.afkTimeSeconds === "number" &&
         Number.isFinite(parsedEntry.afkTimeSeconds)
@@ -1615,6 +1693,7 @@ export const makeEventKills = (
       const summary = yield* repository.findWindowSummary(killId);
 
       const summaryGaps = summary?.gapsTimeline ?? [];
+
       const scoringWindowStartTime =
         summary?.windowOpenedAt ?? kill.minSpawnTimeAtKill;
 
@@ -1633,6 +1712,7 @@ export const makeEventKills = (
           };
         }>
       >();
+
       const timelineAssignments = yield* repository.findTimelineAssignments({
         mapIds: maps.map((map) => map.id),
         killedAt: kill.killedAt,
@@ -1642,6 +1722,7 @@ export const makeEventKills = (
       for (const assignment of timelineAssignments) {
         const currentAssignments =
           assignmentsByMapId.get(assignment.mapId) ?? [];
+
         currentAssignments.push({
           memberId: assignment.memberId,
           assignedAt: assignment.assignedAt,
@@ -1709,6 +1790,7 @@ export const makeEventKills = (
       killedAt,
       minSpawnTimeAtKill,
     });
+
     const rawTrackingDurationSeconds = point.trackingDurationSeconds;
 
     if (
@@ -1727,10 +1809,12 @@ export const makeEventKills = (
       0,
       Math.round(rawTrackingDurationSeconds),
     );
+
     const clampedTrackingDurationSeconds = Math.min(
       sanitizedTrackingDurationSeconds,
       windowDurationSeconds,
     );
+
     const trackingDurationPercentage =
       windowDurationSeconds > 0
         ? Math.min(
@@ -1753,6 +1837,7 @@ export const makeEventKills = (
       const delayedJobs = yield* runPromiseAdapter("bull.respawn.getJobs", () =>
         respawnWindowQueue.getJobs(["delayed"]),
       );
+
       yield* Effect.forEach(
         delayedJobs.filter((job) => job.data.heroId === heroId),
         (job) =>

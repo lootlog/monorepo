@@ -93,7 +93,9 @@ export const BattleLogAttackActions: FC<BattleLogAttackActionsProps> = ({
                   "v",
                   <span className="font-semibold" />,
                 );
+
                 const actionPresentation = getBattleActionPresentation(action);
+
                 return (
                   <span key={sIndex}>
                     <Trans

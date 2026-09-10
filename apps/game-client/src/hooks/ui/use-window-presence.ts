@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useSettingsStore } from "@/store/settings.store";
 
 const WINDOW_EXIT_RETENTION_MS = 180;
+
 const WINDOW_ENTRY_RETENTION_MS = 240;
 
 export type WindowAnimationPhase = "enter" | "exit" | "open" | "preparing";
@@ -46,6 +47,7 @@ export const useWindowPresence = (isOpen: boolean) => {
   const animationEffectsEnabled = useSettingsStore(
     (state) => state.animationEffectsEnabled,
   );
+
   const [presenceState, setPresenceState] = useState<WindowPresenceState>({
     animationEffectsEnabled,
     entryAnimationCompleted: !animationEffectsEnabled,
@@ -53,7 +55,9 @@ export const useWindowPresence = (isOpen: boolean) => {
     isOpen,
     retainedForExit: isOpen,
   });
+
   let currentPresenceState = presenceState;
+
   if (
     presenceState.animationEffectsEnabled !== animationEffectsEnabled ||
     presenceState.isOpen !== isOpen
@@ -65,6 +69,7 @@ export const useWindowPresence = (isOpen: boolean) => {
     );
     setPresenceState(currentPresenceState);
   }
+
   const { entryAnimationCompleted, entryAnimationStarted, retainedForExit } =
     currentPresenceState;
 
@@ -108,6 +113,7 @@ export const useWindowPresence = (isOpen: boolean) => {
 
   const shouldRender = isOpen || (animationEffectsEnabled && retainedForExit);
   let phase: WindowAnimationPhase = "open";
+
   if (animationEffectsEnabled && !isOpen) {
     phase = "exit";
   } else if (animationEffectsEnabled && !entryAnimationCompleted) {
@@ -133,6 +139,7 @@ export const useWindowPresence = (isOpen: boolean) => {
         ...current,
         entryAnimationCompleted: true,
       }));
+
       return;
     }
 

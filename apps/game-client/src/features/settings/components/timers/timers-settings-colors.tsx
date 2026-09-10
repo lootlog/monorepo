@@ -38,6 +38,7 @@ const getTimerColorEditData = (
 ): ColorEditData => {
   if (selection.kind === "custom") {
     const color = customColors[selection.id];
+
     if (color) {
       return {
         name: color.name,
@@ -52,7 +53,9 @@ const getTimerColorEditData = (
     border: "#3B82F6",
     background: "#3B82F633",
   };
+
   const overridden = overriddenDefaultColors[selection.id];
+
   return {
     name:
       defaultColorNames[selection.id] ??
@@ -83,9 +86,11 @@ export const TimersSettingsColors: FC = () => {
     hiddenDefaultColors,
     restoreDefaultColor,
   } = useTimersStore();
+
   const { t } = useTranslation();
   const [openPopover, setOpenPopover] = useState<string | null>(null);
   const hiddenColorIds = new Set(hiddenDefaultColors);
+
   const visibleDefaultColors = Object.keys(TIMERS_COLORS).filter(
     (colorId) => !hiddenColorIds.has(colorId),
   );
@@ -104,6 +109,7 @@ export const TimersSettingsColors: FC = () => {
   ) => {
     if (selection.kind === "custom") {
       const currentColor = customColors[selection.id];
+
       if (!currentColor) return;
       updateCustomColor(selection.id, {
         ...currentColor,
@@ -112,6 +118,7 @@ export const TimersSettingsColors: FC = () => {
           data.backgroundAlpha,
         )}`,
       });
+
       return;
     }
 
@@ -125,8 +132,10 @@ export const TimersSettingsColors: FC = () => {
   const commitName = (selection: TimerColorSelection, name: string) => {
     if (selection.kind === "custom") {
       const currentColor = customColors[selection.id];
+
       if (!currentColor) return;
       updateCustomColor(selection.id, { ...currentColor, name });
+
       return;
     }
 
@@ -153,9 +162,11 @@ export const TimersSettingsColors: FC = () => {
               id: colorId,
               kind: "default",
             };
+
             const overridden = overriddenDefaultColors[colorId];
             const editData = getEditData(selection);
             const persistedName = defaultColorNames[colorId];
+
             const isModified =
               overridden !== undefined ||
               (persistedName !== undefined &&
@@ -219,6 +230,7 @@ export const TimersSettingsColors: FC = () => {
                 id: color.id,
                 kind: "custom",
               };
+
               return (
                 <TimerColorListItem
                   key={color.id}

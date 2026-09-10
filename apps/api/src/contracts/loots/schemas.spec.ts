@@ -35,7 +35,9 @@ describe("loot contracts", () => {
       npcLevelMin: 0,
       itemLevelMax: 500,
     };
+
     expect(Schema.decodeUnknownSync(LootsQuery)(query)).toEqual(query);
+
     for (const invalid of [
       { limit: 101 },
       { npcLevelMin: -1 },

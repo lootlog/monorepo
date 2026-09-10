@@ -159,6 +159,7 @@ const orDieHttpFailure = <A, R>(effect: Effect.Effect<A, MembersFailure, R>) =>
     MembersNotFound: emptyStatusResponse,
     MembersOperationError: (error) => {
       const status = applicationErrorStatusOrUndefined(error.cause);
+
       return status === undefined
         ? Effect.die(error.cause)
         : Effect.succeed(HttpServerResponse.empty({ status }));
@@ -180,6 +181,7 @@ const declaredEmptyError = <A, R>(
         : Effect.die(error),
     MembersOperationError: (error) => {
       const status = applicationErrorStatusOrUndefined(error.cause);
+
       return status !== undefined && statuses.includes(status)
         ? Effect.succeed(HttpServerResponse.empty({ status }))
         : Effect.die(error.cause);
@@ -191,9 +193,11 @@ export const getCurrentMember = Effect.fn("getCurrentMember")(function* (
   refresh = false,
 ) {
   const current = yield* identity;
+
   const value = yield* data((service) =>
     service.getMe(current, guildId, refresh),
   );
+
   return yield* decode(
     refresh ? NullableMemberResponse : NullableMemberResponse,
     value,
@@ -208,9 +212,11 @@ export const refreshGuildMember = Effect.fn("refreshGuildMember")(function* (
     Permission.ADMIN,
     Permission.OWNER,
   ]);
+
   const value = yield* data((service) =>
     service.refreshMember(access.guildId, discordId),
   );
+
   return yield* decode(NullableMemberResponse, value);
 });
 
@@ -220,9 +226,11 @@ export const deactivateGuildMember = Effect.fn("deactivateGuildMember")(
       Permission.ADMIN,
       Permission.OWNER,
     ]);
+
     const value = yield* data((service) =>
       service.deactivateMember(access.guildId, discordId),
     );
+
     return yield* decode(MemberResponse, value);
   },
 );
@@ -258,13 +266,16 @@ export const MembersHandlers = HttpApiBuilder.group(
         declaredEmptyError(
           Effect.gen(function* () {
             const guildId = yield* pathString(params.guildId, "guildId");
+
             const access = yield* requireGuild(guildId, [
               Permission.ADMIN,
               Permission.OWNER,
             ]);
+
             const value = yield* readData((service) =>
               service.getLootlogConfigSummary(access.guildId, params.discordId),
             );
+
             return yield* decode(MemberLootlogConfigSummaryResponse, value);
           }),
           [403, 404],
@@ -274,21 +285,25 @@ export const MembersHandlers = HttpApiBuilder.group(
         declaredEmptyError(
           Effect.gen(function* () {
             const guildId = yield* pathString(params.guildId, "guildId");
+
             const access = yield* requireGuild(guildId, [
               Permission.LOOTLOG_ACCESS,
             ]);
+
             if (query.includeInactive === true) {
               yield* requireGuild(guildId, [
                 Permission.ADMIN,
                 Permission.OWNER,
               ]);
             }
+
             const value = yield* readData((service) =>
               service.getGuildMembers(
                 access.guildId,
                 query.includeInactive === true,
               ),
             );
+
             return yield* decode(MembersResponse, value);
           }),
           [403, 404],
@@ -300,15 +315,18 @@ export const MembersHandlers = HttpApiBuilder.group(
           declaredEmptyError(
             Effect.gen(function* () {
               const guildId = yield* pathString(params.guildId, "guildId");
+
               const access = yield* requireGuild(guildId, [
                 Permission.LOOTLOG_ACCESS,
               ]);
+
               const value = yield* readData((service) =>
                 service.getGuildMemberReferences(
                   access.guildId,
                   query.includeInactive === true,
                 ),
               );
+
               return yield* decode(MemberReferencesResponse, value);
             }),
             [403, 404],
@@ -318,12 +336,15 @@ export const MembersHandlers = HttpApiBuilder.group(
         declaredEmptyError(
           Effect.gen(function* () {
             const guildId = yield* pathString(params.guildId, "guildId");
+
             const access = yield* requireGuild(guildId, [
               Permission.LOOTLOG_ACCESS,
             ]);
+
             const value = yield* readData((service) =>
               service.getGuildMembersSummary(access.guildId),
             );
+
             return yield* decode(MemberSummariesResponse, value);
           }),
           [403, 404],
@@ -333,13 +354,16 @@ export const MembersHandlers = HttpApiBuilder.group(
         declaredEmptyError(
           Effect.gen(function* () {
             const guildId = yield* pathString(params.guildId, "guildId");
+
             const access = yield* requireGuild(guildId, [
               Permission.ADMIN,
               Permission.OWNER,
             ]);
+
             const value = yield* data((service) =>
               service.refreshAllMembers(access.guildId, access.discordId),
             );
+
             return yield* decode(MemberRefreshJobResponse, value);
           }),
           [403, 404],
@@ -349,13 +373,16 @@ export const MembersHandlers = HttpApiBuilder.group(
         declaredEmptyError(
           Effect.gen(function* () {
             const guildId = yield* pathString(params.guildId, "guildId");
+
             const access = yield* requireGuild(guildId, [
               Permission.ADMIN,
               Permission.OWNER,
             ]);
+
             const value = yield* refreshJobData((service) =>
               service.getLatestRefreshJob(access.guildId),
             );
+
             return yield* decode(NullableMemberRefreshJobResponse, value);
           }),
           [403, 404],
@@ -365,13 +392,16 @@ export const MembersHandlers = HttpApiBuilder.group(
         declaredEmptyError(
           Effect.gen(function* () {
             const guildId = yield* pathString(params.guildId, "guildId");
+
             const access = yield* requireGuild(guildId, [
               Permission.ADMIN,
               Permission.OWNER,
             ]);
+
             const value = yield* refreshJobData((service) =>
               service.getRefreshJobStatus(access.guildId, params.jobId),
             );
+
             return yield* decode(MemberRefreshJobResponse, value);
           }),
           [403, 404],

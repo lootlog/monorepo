@@ -4,14 +4,17 @@ import { stringify } from "yaml";
 import { SearchApi } from "#src/http-api/search-api";
 
 const document = OpenApi.fromApi(SearchApi);
+
 const numberWithDefault = (defaultValue: number) => ({
   schema: { type: "number", default: defaultValue },
 });
+
 const formArray = (items: { type: "string" }) => ({
   schema: { type: "array", items },
   style: "form",
   explode: true,
 });
+
 preserveOpenApi30Contract(
   document,
   {
@@ -52,6 +55,7 @@ preserveOpenApi30Contract(
       "Aggregated search results across items, players, and NPCs",
   },
 );
+
 await Bun.write(
   new URL("../../openapi.yaml", import.meta.url),
   stringify(document, { lineWidth: 0 }),

@@ -56,6 +56,7 @@ interface GapSegment extends RawInterval {
 
 const toValidTimestamp = (value: string | Date): number | null => {
   const timestamp = value instanceof Date ? value.getTime() : Date.parse(value);
+
   return Number.isFinite(timestamp) ? timestamp : null;
 };
 
@@ -72,11 +73,13 @@ const clipInterval = (
 
   const startMs = Math.max(intervalStartMs, windowStartMs);
   const endMs = Math.min(intervalEndMs, windowEndMs);
+
   return endMs > startMs ? { startMs, endMs } : null;
 };
 
 const getGapId = (segment: GapSegment): string => {
   const sourceIds = [...segment.sourceIds].sort();
+
   return [
     segment.gapType,
     new Date(segment.startMs).toISOString(),
@@ -99,6 +102,7 @@ const normalizeGaps = (
       windowStartMs,
       windowEndMs,
     );
+
     if (!interval) continue;
 
     clippedGaps.push({
@@ -111,25 +115,31 @@ const normalizeGaps = (
   const boundaries = [
     ...new Set(clippedGaps.flatMap((gap) => [gap.startMs, gap.endMs])),
   ].sort((first, second) => first - second);
+
   const segments: GapSegment[] = [];
 
   for (let index = 0; index < boundaries.length - 1; index += 1) {
     const startMs = boundaries[index];
     const endMs = boundaries[index + 1];
+
     if (startMs === undefined || endMs === undefined) continue;
+
     const activeGaps = clippedGaps.filter(
       (gap) => gap.startMs < endMs && gap.endMs > startMs,
     );
+
     if (activeGaps.length === 0) continue;
 
     const gapType = activeGaps.some((gap) => gap.gapType === "UNASSIGNED")
       ? "UNASSIGNED"
       : "UNCOVERED";
+
     const sourceIds = new Set(
       activeGaps.flatMap((gap) =>
         gap.gapType === gapType ? [gap.sourceId] : [],
       ),
     );
+
     const previousSegment = segments[segments.length - 1];
 
     if (
@@ -137,9 +147,11 @@ const normalizeGaps = (
       previousSegment.endMs === startMs
     ) {
       previousSegment.endMs = endMs;
+
       for (const sourceId of sourceIds) {
         previousSegment.sourceIds.add(sourceId);
       }
+
       continue;
     }
 
@@ -166,6 +178,7 @@ const normalizeAssignmentPeriods = (
   for (const assignment of assignments) {
     const memberAssignments =
       assignmentsByMember.get(assignment.memberId) ?? [];
+
     memberAssignments.push(assignment);
     assignmentsByMember.set(assignment.memberId, memberAssignments);
   }
@@ -176,6 +189,7 @@ const normalizeAssignmentPeriods = (
     const sortedAssignments = [...memberAssignments].sort((first, second) =>
       first.assignedAt.localeCompare(second.assignedAt),
     );
+
     const intervals = sortedAssignments
       .map((assignment) =>
         clipInterval(
@@ -187,10 +201,12 @@ const normalizeAssignmentPeriods = (
       )
       .filter((interval): interval is RawInterval => interval !== null)
       .sort((first, second) => first.startMs - second.startMs);
+
     const mergedIntervals: RawInterval[] = [];
 
     for (const interval of intervals) {
       const previousInterval = mergedIntervals[mergedIntervals.length - 1];
+
       if (previousInterval && interval.startMs <= previousInterval.endMs) {
         previousInterval.endMs = Math.max(
           previousInterval.endMs,
@@ -204,7 +220,9 @@ const normalizeAssignmentPeriods = (
     if (mergedIntervals.length === 0) continue;
 
     const representative = sortedAssignments[0];
+
     if (!representative) continue;
+
     const periods = mergedIntervals.map((interval) => ({
       id: `${memberId}:${new Date(interval.startMs).toISOString()}:${new Date(interval.endMs).toISOString()}`,
       assignedAt: new Date(interval.startMs).toISOString(),
@@ -274,6 +292,7 @@ export const getKillMapTimelineDiagnostics = (
   }
 
   const totalSeconds = Math.round((windowEndMs - windowStartMs) / 1000);
+
   const coveredSeconds = Math.max(
     0,
     totalSeconds - uncoveredSeconds - unassignedSeconds,

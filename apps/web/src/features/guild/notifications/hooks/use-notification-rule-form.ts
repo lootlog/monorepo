@@ -105,6 +105,7 @@ const getRuleFormDefaultValues = (
 
   const triggerType =
     rule.triggerType ?? NotificationTriggerType.TIMER_BEFORE_SPAWN;
+
   const npcIds = getGuildNotificationRuleNpcIds(rule);
 
   return {
@@ -135,9 +136,11 @@ const getWorldOptions = (
   ruleWorld: string | null | undefined,
 ) => {
   const options = [...worlds];
+
   if (ruleWorld && !options.includes(ruleWorld)) {
     options.unshift(ruleWorld);
   }
+
   return options;
 };
 
@@ -146,12 +149,14 @@ const getNpcOptions = (
   t: (key: string) => string,
 ) => {
   const options = new Map<string, { value: string; label: string }>();
+
   for (const npc of npcs) {
     options.set(String(npc.id), {
       value: String(npc.id),
       label: `${npc.name} ${t(`npcType.${npc.type}`)} (#${npc.id})`,
     });
   }
+
   return Array.from(options.values());
 };
 
@@ -160,6 +165,7 @@ const useNotificationRuleData = (
   ruleId: string | undefined,
 ) => {
   const queryGuildId = guildId ?? "";
+
   const targetsQuery = useNotificationsGuildControllerGetGuildTargets(
     { guildId: queryGuildId },
     {
@@ -170,6 +176,7 @@ const useNotificationRuleData = (
       },
     },
   );
+
   const rulesQuery = useNotificationsGuildControllerGetGuildRules(
     { guildId: queryGuildId },
     {
@@ -180,12 +187,15 @@ const useNotificationRuleData = (
       },
     },
   );
+
   const { data: worlds = [] } = useGuildsControllerGetWorldsByGuildId({
     guildId: queryGuildId,
   });
+
   const { data: guildRoles = [] } = useRolesControllerGetGuildRoles({
     guildId: queryGuildId,
   });
+
   const rule = ruleId
     ? rulesQuery.data?.items.find((item) => String(item.id) === ruleId)
     : undefined;
@@ -210,8 +220,10 @@ export const useNotificationRuleForm = () => {
   const params = useParams({ strict: false });
   const ruleId = notificationRuleRouteParams.parse(params).ruleId;
   const isCreateMode = ruleId === undefined;
+
   const { targetsQuery, rulesQuery, worlds, guildRoles, rule, maxNpcCount } =
     useNotificationRuleData(guildId, ruleId);
+
   const targets = targetsQuery.data ?? [];
 
   const createRule = useNotificationsGuildControllerCreateGuildRule({
@@ -225,6 +237,7 @@ export const useNotificationRuleForm = () => {
       },
     },
   });
+
   const updateRule = useNotificationsGuildControllerUpdateGuildRule({
     mutation: {
       onSuccess: async () => {
@@ -236,18 +249,24 @@ export const useNotificationRuleForm = () => {
       },
     },
   });
+
   const [draftOptions, setDraftOptions] = useState<{
     rule: typeof rule;
     npcSearch: string;
     extraTargets: NotificationTargetResponseDto[];
   }>({ rule, npcSearch: "", extraTargets: [] });
+
   const npcSearch = draftOptions.rule === rule ? draftOptions.npcSearch : "";
+
   const extraTargets =
     draftOptions.rule === rule ? draftOptions.extraTargets : [];
+
   const setNpcSearch = (value: string) => {
     setDraftOptions({ rule, npcSearch: value, extraTargets });
   };
+
   const [formResetKey, setFormResetKey] = useState(0);
+
   const [isCreateTargetDialogOpen, setIsCreateTargetDialogOpen] =
     useState(false);
 
@@ -265,6 +284,7 @@ export const useNotificationRuleForm = () => {
   const contentTemplate = form.watch("contentTemplate");
   const watchedTriggerType = form.watch("triggerType");
   const watchedIntervalType = form.watch("scheduleIntervalType");
+
   const {
     isScheduledMessage,
     isRecurring,
@@ -273,26 +293,33 @@ export const useNotificationRuleForm = () => {
     showWeekdayField,
     showIntervalValueField,
   } = getNotificationFieldVisibility(watchedTriggerType, watchedIntervalType);
+
   const selectedWorld = form.watch("world");
   const isManualNpcEntry = form.watch("manualNpcEntry") ?? false;
   const selectedNpcIds = form.watch("npcIds") ?? [];
+
   const normalizedWorld =
     selectedWorld !== ALL_WORLDS_VALUE ? selectedWorld : undefined;
+
   const selectedNpcSearchParams = {
     ids: selectedNpcIds.map((npcId) => Number(npcId)),
     world: normalizedWorld,
   };
+
   const selectedNpcQuery = useNpcsControllerGetNpcs(selectedNpcSearchParams, {
     query: {
       queryKey: getNpcsControllerGetNpcsQueryKey(selectedNpcSearchParams),
       enabled: !isManualNpcEntry && selectedNpcIds.length > 0,
     },
   });
+
   const searchedNpcSearchParams = {
     search: npcSearch,
     world: normalizedWorld,
   };
+
   const hasNpcSearch = npcSearch.trim().length > 0;
+
   const searchedNpcQuery = useNpcsControllerGetNpcs(searchedNpcSearchParams, {
     query: {
       queryKey: getNpcsControllerGetNpcsQueryKey(searchedNpcSearchParams),
@@ -304,7 +331,9 @@ export const useNotificationRuleForm = () => {
     [...(selectedNpcQuery.data ?? []), ...(searchedNpcQuery.data ?? [])],
     t,
   );
+
   const activeNpcQuery = hasNpcSearch ? searchedNpcQuery : selectedNpcQuery;
+
   const targetOptions = mergedTargets.map((target) => ({
     value: String(target.id),
     label: getGuildNotificationTargetLabel(target),
@@ -378,6 +407,7 @@ export const useNotificationRuleForm = () => {
 
   const handleSubmit = async (values: RuleFormValues) => {
     const trimmedName = values.name.trim();
+
     const basePayload = {
       name: trimmedName.length > 0 ? trimmedName : null,
       contentTemplate: values.contentTemplate.trim(),
@@ -415,6 +445,7 @@ export const useNotificationRuleForm = () => {
             const npcFilterPayload = buildNotificationRuleNpcFilterPayload(
               getNotificationRuleNpcIdsForSubmit(values),
             );
+
             return {
               ...basePayload,
               world:

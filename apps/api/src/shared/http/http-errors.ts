@@ -5,6 +5,7 @@ const ApplicationErrorBody = Schema.Union([
   Schema.String,
   Schema.Record(Schema.String, Schema.Unknown),
 ]);
+
 type ApplicationErrorBody = typeof ApplicationErrorBody.Type;
 
 export const HttpStatus = {
@@ -34,6 +35,7 @@ export const ApplicationErrorKind = {
   RATE_LIMITED: "rate-limited",
   TIMEOUT: "timeout",
 } as const;
+
 export type ApplicationErrorKind =
   (typeof ApplicationErrorKind)[keyof typeof ApplicationErrorKind];
 
@@ -46,7 +48,9 @@ const errorMessage = (
   fallback: string,
 ): string => {
   if (typeof response === "string") return response;
+
   if (typeof response.message === "string") return response.message;
+
   return fallback;
 };
 
@@ -91,51 +95,61 @@ export class InvalidRequestError extends makeApplicationError(
   "Invalid request",
   HttpStatus.BAD_REQUEST,
 ) {}
+
 export class AuthenticationRequiredError extends makeApplicationError(
   ApplicationErrorKind.AUTHENTICATION_REQUIRED,
   "Authentication required",
   HttpStatus.UNAUTHORIZED,
 ) {}
+
 export class PermissionDeniedError extends makeApplicationError(
   ApplicationErrorKind.FORBIDDEN,
   "Permission denied",
   HttpStatus.FORBIDDEN,
 ) {}
+
 export class ResourceNotFoundError extends makeApplicationError(
   ApplicationErrorKind.NOT_FOUND,
   "Resource not found",
   HttpStatus.NOT_FOUND,
 ) {}
+
 export class ResourceConflictError extends makeApplicationError(
   ApplicationErrorKind.CONFLICT,
   "Resource conflict",
   HttpStatus.CONFLICT,
 ) {}
+
 export class ResourceGoneError extends makeApplicationError(
   ApplicationErrorKind.GONE,
   "Resource is gone",
   HttpStatus.GONE,
 ) {}
+
 export class InvalidEntityError extends makeApplicationError(
   ApplicationErrorKind.INVALID_ENTITY,
   "Invalid entity",
   HttpStatus.UNPROCESSABLE_ENTITY,
 ) {}
+
 export class RequestTimeoutError extends makeApplicationError(
   ApplicationErrorKind.TIMEOUT,
   "Request timed out",
   HttpStatus.REQUEST_TIMEOUT,
 ) {}
+
 export class RateLimitedError extends makeApplicationError(
   ApplicationErrorKind.RATE_LIMITED,
   "Request rate limited",
   HttpStatus.TOO_MANY_REQUESTS,
 ) {}
+
 export class DependencyUnavailableError extends makeApplicationError(
   ApplicationErrorKind.DEPENDENCY_UNAVAILABLE,
   "Dependency unavailable",
   HttpStatus.SERVICE_UNAVAILABLE,
 ) {}
+
 export class UnexpectedApplicationError extends makeApplicationError(
   ApplicationErrorKind.INTERNAL,
   "Unexpected application error",

@@ -16,6 +16,7 @@ it("advances with the latest committed callback without restarting the slide", (
   vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) => {
     const id = ++nextFrameId;
     frames.set(id, callback);
+
     return id;
   });
   vi.spyOn(window, "cancelAnimationFrame").mockImplementation((id) => {
@@ -25,6 +26,7 @@ it("advances with the latest committed callback without restarting the slide", (
   const firstAdvance = vi.fn<() => void>();
   const latestAdvance = vi.fn<() => void>();
   const stageRef = { current: null };
+
   const { rerender } = renderHook(
     ({ onAdvance }) =>
       useWrappedAutoplay({
@@ -52,11 +54,13 @@ it("advances with the latest committed callback before passive effects run", () 
   vi.spyOn(performance, "now").mockReturnValue(0);
   vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
     pendingFrame = callback;
+
     return 1;
   });
   vi.stubGlobal("cancelAnimationFrame", vi.fn());
   const firstAdvance = vi.fn();
   const nextAdvance = vi.fn();
+
   const { rerender } = renderHook(
     ({ onAdvance, finishFrame }) => {
       useWrappedAutoplay({
@@ -68,6 +72,7 @@ it("advances with the latest committed callback before passive effects run", () 
       });
       useLayoutEffect(() => {
         if (!finishFrame) return;
+
         if (!pendingFrame) throw new Error("Expected a scheduled frame");
         pendingFrame(8000);
       }, [finishFrame]);

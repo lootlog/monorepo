@@ -22,11 +22,17 @@ import type { AirTagScope, GatewaySocket } from "#src/realtime/session";
 import { canSubscribe } from "#src/realtime/subscription-policy";
 
 const TARGET_TTL_MS = 10_000;
+
 const IDLE_TTL_SECONDS = 20;
+
 const MAX_TARGETS = 100;
+
 const BROADCAST_INTERVAL_MS = 1_000;
+
 const BATCH_RATE_LIMIT = 15;
+
 const BATCH_RATE_WINDOW_MS = 3_000;
+
 const WORLD_PATTERN = /^[a-z0-9-]{1,64}$/i;
 
 const RATE_LIMIT_SCRIPT = `
@@ -166,10 +172,12 @@ interface MergeResult {
   acceptedTargets: number;
   updates: Array<{ revision: number; target: AirTagTarget }>;
 }
+
 interface ObservationBatch {
   readonly expectedMapId: number;
   readonly observations: ReadonlyArray<AirTagObservation>;
 }
+
 const MergeResultJson = Schema.fromJsonString(
   Schema.Struct({
     epochId: Schema.String,
@@ -180,6 +188,7 @@ const MergeResultJson = Schema.fromJsonString(
     ),
   }),
 );
+
 const SnapshotResultJson = Schema.fromJsonString(
   Schema.Struct({
     epochId: Schema.String,
@@ -226,31 +235,38 @@ export class AirTagService {
     payload: { requestId: string; enabled: boolean; expectedMapId?: number },
   ): Promise<AirTagSubscriptionAck> {
     this.clearSubscription(socket);
+
     if (!payload.enabled)
       return { status: "accepted", requestId: payload.requestId, scopes: [] };
     const context = this.getContext(socket, payload.expectedMapId);
+
     if (!context)
       return {
         status: "rejected",
         requestId: payload.requestId,
         code: "invalid-context",
       };
+
     const eligibleScopes = this.getEligibleScopes(
       socket,
       context.world,
       context.mapId,
     );
+
     if (eligibleScopes.length === 0)
       return {
         status: "rejected",
         requestId: payload.requestId,
         code: "forbidden",
       };
+
     try {
       const enabledScopes: AirTagScope[] = [];
+
       for (const scope of eligibleScopes) {
         if (!(await this.isDisabled(scope))) enabledScopes.push(scope);
       }
+
       if (enabledScopes.length === 0)
         return {
           status: "rejected",
@@ -258,15 +274,19 @@ export class AirTagService {
           code: "temporarily-unavailable",
         };
       socket.data.airTagScopes = enabledScopes;
+
       for (const scope of enabledScopes)
         this.hub.subscribe(socket, scope.subscription);
+
       const scopes = await Promise.all(
         enabledScopes.map((scope) => this.loadSnapshot(scope)),
       );
+
       return { status: "accepted", requestId: payload.requestId, scopes };
     } catch (error) {
       this.clearSubscription(socket);
       this.logger.warn("Failed to load air tag snapshots", error);
+
       return {
         status: "rejected",
         requestId: payload.requestId,
@@ -282,45 +302,58 @@ export class AirTagService {
     if (!this.hasValidBatch(payload))
       return { status: "rejected", code: "invalid-payload" };
     const context = this.getContext(socket, payload.expectedMapId);
+
     if (!context) return { status: "rejected", code: "invalid-context" };
+
     const scopes = socket.data.airTagScopes.filter(
       (scope) =>
         scope.world === context.world &&
         scope.mapId === context.mapId &&
         canSubscribe(socket.data, scope.subscription),
     );
+
     if (scopes.length === 0) return { status: "rejected", code: "forbidden" };
     const rateLimit = await this.consumeRateLimit(socket.data.userId);
+
     if (!rateLimit)
       return { status: "rejected", code: "temporarily-unavailable" };
+
     if (rateLimit[0] !== 1)
       return {
         status: "rejected",
         code: "rate-limited",
         retryAfterMs: rateLimit[1],
       };
+
     const observations = [
       ...new Map(
         payload.observations.map((item) => [item.targetId, item]),
       ).values(),
     ];
+
     const results = await Promise.allSettled(
       scopes.map(async (scope) => {
         if (await this.isDisabled(scope)) return null;
+
         return { scope, result: await this.merge(scope, observations) };
       }),
     );
+
     const successes = results.flatMap((result) =>
       result.status === "fulfilled" && result.value ? [result.value] : [],
     );
+
     for (const result of results)
       if (result.status === "rejected")
         this.logger.warn("Failed to merge air tag observations", result.reason);
+
     if (successes.length === 0)
       return { status: "rejected", code: "temporarily-unavailable" };
     let acceptedTargets = 0;
+
     for (const { scope, result } of successes) {
       acceptedTargets += result.acceptedTargets;
+
       for (const update of result.updates) {
         const event: AirTagUpdateEvent = {
           guildId: scope.guildId,
@@ -331,6 +364,7 @@ export class AirTagService {
           revision: update.revision,
           target: update.target,
         };
+
         await this.hub.publishToScopes(
           [scope.subscription],
           {
@@ -348,6 +382,7 @@ export class AirTagService {
         );
       }
     }
+
     return {
       status: "accepted",
       acceptedScopes: successes.length,
@@ -366,10 +401,13 @@ export class AirTagService {
     operation: () => Promise<T>,
   ): Promise<T> {
     const previous = this.subscriptionOperations.get(socket);
+
     const current = (previous ?? Promise.resolve())
       .catch(() => undefined)
       .then(operation);
+
     this.subscriptionOperations.set(socket, current);
+
     try {
       return await current;
     } finally {
@@ -381,6 +419,7 @@ export class AirTagService {
   private getContext(socket: GatewaySocket, expectedMapId: number | undefined) {
     const presence = socket.data.presence;
     const world = presence?.character?.world;
+
     if (
       socket.data.platform !== "game" ||
       expectedMapId === undefined ||
@@ -389,6 +428,7 @@ export class AirTagService {
       !WORLD_PATTERN.test(world)
     )
       return null;
+
     return { world, mapId: expectedMapId };
   }
 
@@ -404,6 +444,7 @@ export class AirTagService {
         world,
         mapId,
       };
+
       return canSubscribe(socket.data, subscription)
         ? [{ guildId: guild.id, world, mapId, subscription }]
         : [];
@@ -431,12 +472,15 @@ export class AirTagService {
         BATCH_RATE_LIMIT,
         crypto.randomUUID(),
       );
+
       if (!Array.isArray(result)) return null;
+
       return Schema.decodeUnknownSync(
         Schema.Tuple([Schema.Number, Schema.Number]),
       )(result.map(Number));
     } catch (error) {
       this.logger.warn("Failed to apply air tag rate limit", error);
+
       return null;
     }
   }
@@ -451,6 +495,7 @@ export class AirTagService {
 
   private keys(scope: AirTagScope): [string, string, string] {
     const hashTag = `{air-tag:${scope.guildId}:${scope.world}:${scope.mapId}}`;
+
     return [
       `${hashTag}:targets`,
       `${hashTag}:expirations`,
@@ -475,7 +520,9 @@ export class AirTagService {
       AIR_TAG_ENEMY_RELATION,
       AIR_TAG_CLAN_ENEMY_RELATION,
     );
+
     const parsed = Schema.decodeUnknownSync(MergeResultJson)(String(result));
+
     return { ...parsed, updates: [...parsed.updates] };
   }
 
@@ -487,9 +534,11 @@ export class AirTagService {
       crypto.randomUUID(),
       IDLE_TTL_SECONDS,
     );
+
     const snapshot = Schema.decodeUnknownSync(SnapshotResultJson)(
       String(result),
     );
+
     return {
       guildId: scope.guildId,
       world: scope.world,

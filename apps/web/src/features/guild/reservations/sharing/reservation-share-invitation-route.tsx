@@ -5,5 +5,6 @@ export function ReservationShareInvitationRoute() {
   const { token } = useParams({
     from: "/_authenticated/reservation-sharing/invitations/$token",
   });
+
   return <ReservationShareInvitation token={token} />;
 }

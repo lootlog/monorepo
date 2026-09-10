@@ -70,16 +70,19 @@ export function BattleHpTimelinePlot({
   const playerTeam = getBattleHpTimelinePlayerTeam(warriors, characterId);
   const team1Color = getBattleHpTimelineTeamColor(1, playerTeam);
   const team2Color = getBattleHpTimelineTeamColor(2, playerTeam);
+
   const team1Label = getBattleHpTimelineTeamLabel(
     warriors,
     1,
     t("battlePanel.single.chart.team", { team: 1 }),
   );
+
   const team2Label = getBattleHpTimelineTeamLabel(
     warriors,
     2,
     t("battlePanel.single.chart.team", { team: 2 }),
   );
+
   const chartConfig = {
     team1: {
       label: team1Label,
@@ -94,33 +97,40 @@ export function BattleHpTimelinePlot({
       color: BATTLE_HEX_COLORS.chart.momentum,
     },
   } satisfies ChartConfig;
+
   const tooltipLegendaryMarkerGroups = buildLegendaryBonusMarkerGroups(
     timeline,
     warriors,
     { includeChartHidden: true },
   );
+
   const allLegendaryMarkerGroups = buildLegendaryBonusMarkerGroups(
     timeline,
     warriors,
   );
+
   const legendaryBonusesByTurn =
     buildBattleHpTimelineTooltipLegendaryBonusesByTurn(
       tooltipLegendaryMarkerGroups,
     );
+
   const chartData = timeline.map((turn) =>
     buildBattleHpTimelineTooltipData(
       turn,
       legendaryBonusesByTurn.get(turn.turn) ?? [],
     ),
   );
+
   const legendaryMarkerGroups = layers.legendary
     ? allLegendaryMarkerGroups
     : [];
+
   const eventMarkerGroups = buildBattleHpTimelineEventMarkerGroups(
     timeline,
     warriors,
     layers,
   );
+
   const chartMargin = compact
     ? { left: -24, right: 16, top: 8, bottom: 6 }
     : { left: -12, right: 28, top: 22, bottom: 18 };
@@ -147,6 +157,7 @@ export function BattleHpTimelinePlot({
         .map((marker) => {
           const definition =
             BATTLE_HP_TIMELINE_LAYER_DEFINITION_BY_KEY[marker.key];
+
           const label = t(definition.labelKey);
 
           if (marker.count <= 1) {

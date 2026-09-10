@@ -7,10 +7,12 @@ import {
 describe("activity event signature", () => {
   it("keeps stable object-key ordering", () => {
     const secret = "test-secret";
+
     const signature = signActivityEvent(
       { guildId: "guild", details: { z: 1, a: 2 } },
       secret,
     );
+
     expect(
       verifyActivityEventSignature({
         payload: { details: { a: 2, z: 1 }, guildId: "guild" },

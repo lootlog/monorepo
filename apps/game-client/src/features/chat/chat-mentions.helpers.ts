@@ -53,6 +53,7 @@ export const getUniqueChatMentionNames = (values: string[]) => {
     }
 
     normalizedValues.add(normalizedValue);
+
     return true;
   });
 };
@@ -81,6 +82,7 @@ const getNormalizedMentionColorsByName = <T extends NamedMentionValue>(
       }
 
       result[normalizedName] = getDiscordColorHex(value.color);
+
       return result;
     },
     {},
@@ -125,6 +127,7 @@ const getMentionEntities = (context?: ChatMentionContext): MentionEntity[] => {
       existingEntity.isCurrentUserTarget =
         existingEntity.isCurrentUserTarget || isCurrentUserTarget;
       existingEntity.color = existingEntity.color ?? color;
+
       return;
     }
 

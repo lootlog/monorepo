@@ -1,7 +1,9 @@
 import { z } from "zod";
 import { createEmptyGuildDocumentContent } from "@lootlog/domain/guild-documents";
+
 export const EMPTY_GUILD_DOC_EDITOR_CONTENT: GuildDocEditorContent =
   createEmptyGuildDocumentContent();
+
 import type { GuildDocumentResponseDto } from "@lootlog/client/main";
 
 export type GuildDocEditorContent = Exclude<

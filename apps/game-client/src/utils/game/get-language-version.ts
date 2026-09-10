@@ -5,6 +5,7 @@ const EN_DOMAIN = "margonem.com";
 export const getLanguageVersion = (url: string): LanguageVersion => {
   try {
     const parsedUrl = new URL(url);
+
     if (parsedUrl.hostname === EN_DOMAIN) {
       return LanguageVersion.EN;
     }

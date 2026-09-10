@@ -43,24 +43,30 @@ export const useNpcDetectorStore = create<NpcDetectorState>()((set) => ({
   addNpc: (npc, options) =>
     set((state) => {
       const newNpcs = Array.isArray(npc) ? npc : [npc];
+
       if (newNpcs.length === 0) return state;
 
       const shouldAnimateIncoming = options?.highlightOnExisting ?? false;
+
       const detectionAnimationCycle = shouldAnimateIncoming
         ? state.latestDetectionAnimationCycle + 1
         : state.latestDetectionAnimationCycle;
+
       const npcById = new Map(
         state.npcs.map((currentNpc) => [currentNpc.id, currentNpc]),
       );
+
       const originalNpcIds = state.npcs.map((currentNpc) => currentNpc.id);
       const newNpcIds: number[] = [];
       const incomingNpcIds: number[] = [];
+
       const activeDetectionAnimations = shouldAnimateIncoming
         ? {}
         : state.activeDetectionAnimations;
 
       for (const incomingNpc of newNpcs) {
         const existingNpc = npcById.get(incomingNpc.id);
+
         if (!existingNpc) {
           newNpcIds.push(incomingNpc.id);
         }
@@ -70,22 +76,27 @@ export const useNpcDetectorStore = create<NpcDetectorState>()((set) => ({
           existingNpc ? { ...existingNpc, ...incomingNpc } : incomingNpc,
         );
         incomingNpcIds.push(incomingNpc.id);
+
         if (shouldAnimateIncoming) {
           activeDetectionAnimations[incomingNpc.id] = detectionAnimationCycle;
         }
       }
 
       let orderedNpcIds: number[];
+
       if (shouldAnimateIncoming) {
         const incomingNpcIdSet = new Set<number>();
         const frontNpcIds: number[] = [];
+
         for (let index = incomingNpcIds.length - 1; index >= 0; index -= 1) {
           const incomingNpcId = incomingNpcIds[index];
+
           if (incomingNpcIdSet.has(incomingNpcId)) continue;
 
           incomingNpcIdSet.add(incomingNpcId);
           frontNpcIds.push(incomingNpcId);
         }
+
         orderedNpcIds = [
           ...frontNpcIds,
           ...originalNpcIds.filter((npcId) => !incomingNpcIdSet.has(npcId)),
@@ -106,6 +117,7 @@ export const useNpcDetectorStore = create<NpcDetectorState>()((set) => ({
     set((state) => {
       const npcIds = new Set(Array.isArray(npcId) ? npcId : [npcId]);
       const hasNpcToRemove = state.npcs.some((npc) => npcIds.has(npc.id));
+
       const hasAnimationToRemove = [...npcIds].some(
         (currentNpcId) =>
           state.activeDetectionAnimations[currentNpcId] !== undefined,
@@ -132,6 +144,7 @@ export const useNpcDetectorStore = create<NpcDetectorState>()((set) => ({
       const npcs = state.npcs.map((n) =>
         n.id === npcId ? { ...n, ...npc } : n,
       );
+
       return { npcs };
     });
   },
@@ -142,12 +155,16 @@ export const useNpcDetectorStore = create<NpcDetectorState>()((set) => ({
       const updatesByNpcId = new Map(
         updates.map((update) => [update.npcId, update.npc]),
       );
+
       let changed = false;
+
       const npcs = state.npcs.map((npc) => {
         const update = updatesByNpcId.get(npc.id);
+
         if (!update) return npc;
 
         changed = true;
+
         return { ...npc, ...update };
       });
 
@@ -162,6 +179,7 @@ export const useNpcDetectorStore = create<NpcDetectorState>()((set) => ({
       const activeDetectionAnimations = {
         ...state.activeDetectionAnimations,
       };
+
       delete activeDetectionAnimations[npcId];
 
       return { activeDetectionAnimations };

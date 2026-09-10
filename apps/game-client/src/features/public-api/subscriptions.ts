@@ -21,6 +21,7 @@ const queryWorldSchema = z.object({ world: z.string().optional() });
 
 function getQueryWorld(query: Query): string | undefined {
   const params = queryWorldSchema.safeParse(query.queryKey[1]);
+
   return params.success ? params.data.world : undefined;
 }
 
@@ -41,14 +42,17 @@ export function setupSubscriptions(
     // SAFETY: this function only receives allTimers() cache matches; useTimers
     // populates them through fetchTimers and useTimersCache writes the same Timer[].
     const mapped = mapTimers(query.state.data as Timer[] | undefined);
+
     if (!mapped || !world) {
       return;
     }
 
     const worldCache = new Map<string, string>();
+
     for (const [guildId, timers] of groupTimersByGuild(mapped)) {
       worldCache.set(guildId, JSON.stringify(timers));
     }
+
     lastTimersJson.set(world, worldCache);
   };
 
@@ -57,12 +61,15 @@ export function setupSubscriptions(
       const guilds = queryClient.getQueryData<GuildResponseDtoOutput[]>(
         queryKeys.guilds(),
       );
+
       lastGuildsJson = JSON.stringify(mapGuilds(guilds));
+
       return;
     }
 
     if (eventName === "timers:changed") {
       lastTimersJson.clear();
+
       for (const query of queryClient
         .getQueryCache()
         .findAll({ queryKey: queryKeys.allTimers() })) {
@@ -84,10 +91,12 @@ export function setupSubscriptions(
         key[0] === queryKeys.timers()[0]
       ) {
         const world = getQueryWorld(event.query);
+
         if (world) {
           lastTimersJson.delete(world);
         }
       }
+
       return;
     }
 
@@ -104,8 +113,10 @@ export function setupSubscriptions(
       const data = event.query.state.data as
         | GuildResponseDtoOutput[]
         | undefined;
+
       const mapped = mapGuilds(data);
       const json = JSON.stringify(mapped);
+
       if (json !== lastGuildsJson) {
         lastGuildsJson = json;
         emitter.emit("guilds:changed", mapped);
@@ -120,21 +131,25 @@ export function setupSubscriptions(
       // SAFETY: the timer key check above selects fetchTimers/useTimersCache data.
       // QueryCache erases this association while notifying subscribers.
       const mapped = mapTimers(event.query.state.data as Timer[] | undefined);
+
       if (!mapped || !world) {
         return;
       }
 
       const grouped = groupTimersByGuild(mapped);
       let worldCache = lastTimersJson.get(world);
+
       if (!worldCache) {
         worldCache = new Map();
         lastTimersJson.set(world, worldCache);
       }
 
       const seenGuilds = new Set<string>();
+
       for (const [guildId, timers] of grouped) {
         seenGuilds.add(guildId);
         const json = JSON.stringify(timers);
+
         if (json !== worldCache.get(guildId)) {
           worldCache.set(guildId, json);
           emitter.emit("timers:changed", { world, guildId, timers });
@@ -177,9 +192,11 @@ export function setupSubscriptions(
       }
 
       activeEvents.add(eventName);
+
       if (eventName === "guilds:changed" || eventName === "timers:changed") {
         initializeQuerySnapshot(eventName);
         ensureQuerySubscription();
+
         return;
       }
 
@@ -187,6 +204,7 @@ export function setupSubscriptions(
         unsubscribeSocket = useGlobalStore.subscribe((state, prevState) => {
           const previousSocketState = prevState.socketState;
           const socketState = state.socketState;
+
           if (
             previousSocketState.connected !== socketState.connected ||
             previousSocketState.joined !== socketState.joined ||
@@ -199,11 +217,13 @@ export function setupSubscriptions(
             });
           }
         });
+
         return;
       }
 
       if (eventName === "online-players:changed") {
         onlinePlayersController.activate();
+
         return;
       }
 
@@ -225,23 +245,27 @@ export function setupSubscriptions(
       if (eventName === "guilds:changed") {
         lastGuildsJson = "";
         releaseQuerySubscriptionIfIdle();
+
         return;
       }
 
       if (eventName === "timers:changed") {
         lastTimersJson.clear();
         releaseQuerySubscriptionIfIdle();
+
         return;
       }
 
       if (eventName === "socket:state-changed") {
         unsubscribeSocket?.();
         unsubscribeSocket = null;
+
         return;
       }
 
       if (eventName === "online-players:changed") {
         onlinePlayersController.deactivate();
+
         return;
       }
 

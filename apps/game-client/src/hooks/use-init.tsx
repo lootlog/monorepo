@@ -20,6 +20,7 @@ export const useInit = () => {
       }
 
       const isGameLoaded = isMargonemRuntimeReady();
+
       if (!isGameLoaded) {
         return false;
       }

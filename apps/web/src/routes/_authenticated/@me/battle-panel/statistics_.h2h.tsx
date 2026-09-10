@@ -21,6 +21,7 @@ export const Route = createFileRoute(
       }
 
       const search = loadBattlePanelHeadToHeadSearch(location.searchStr);
+
       const characterId = await ensureBattlePanelCharacterId({
         queryClient: context.queryClient,
         characterId: normalizeBattlePanelCharacterId(search.characterId),

@@ -1,6 +1,6 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { APIGuildMember } from "discord-api-types/v10";
-import { Clock, Effect, Schema } from "effect";
+import { Clock, Effect, Result, Schema } from "effect";
 import {
   ApplicationError,
   ApplicationErrorKind,
@@ -55,7 +55,9 @@ export const makeMemberSync = (
         options.discordId,
         options.guildId,
       );
+
       if (!existing) return null;
+
       const member = yield* store.markSyncAttempt({
         userId: options.discordId,
         guildId: options.guildId,
@@ -64,6 +66,7 @@ export const makeMemberSync = (
         markSynced: options.markSynced ?? false,
         attemptedAt: new Date(yield* Clock.currentTimeMillis),
       });
+
       if (options.deactivate && existing.active) {
         yield* removal.notifyMemberRemoved({
           discordId: options.discordId,
@@ -71,6 +74,7 @@ export const makeMemberSync = (
           globalUserId: existing.globalUserId,
         });
       }
+
       return member;
     },
   );
@@ -82,10 +86,12 @@ export const makeMemberSync = (
     },
   ) {
     const syncTimestamp = new Date(yield* Clock.currentTimeMillis);
+
     const existingRoleIds = yield* store.findExistingRoleIds(
       discordMember.roles,
       discordMember.guildId,
     );
+
     const member = yield* store.upsertMemberWithRoles(
       discordMember.user.id,
       discordMember.guildId,
@@ -104,11 +110,13 @@ export const makeMemberSync = (
       },
       existingRoleIds,
     );
+
     yield* ports.invalidateMember({
       discordId: discordMember.user.id,
       guildId: discordMember.guildId,
       userId: discordMember.globalUserId,
     });
+
     return member;
   });
 
@@ -126,22 +134,26 @@ export const makeMemberSync = (
           discordId: options.discordId,
         }),
       );
-      if (result._tag === "Success") {
+
+      if (Result.isSuccess(result)) {
         const member = yield* createOrUpdateMember({
           ...result.success,
           guildId: options.guildId,
           globalUserId: options.userId,
         });
+
         return {
           member,
           status: MEMBER_DISCORD_SYNC_STATUS.SUCCESS,
           nextRefreshAt: null,
         } satisfies MemberSyncResult;
       }
+
       const error =
         result.failure instanceof DiscordOperationFailure
           ? result.failure.cause
           : result.failure;
+
       if (error instanceof ResourceNotFoundError) {
         const member = yield* markAttempt({
           discordId: options.discordId,
@@ -150,6 +162,7 @@ export const makeMemberSync = (
           deactivate: true,
           markSynced: true,
         });
+
         return {
           member,
           status: MEMBER_DISCORD_SYNC_STATUS.NOT_FOUND,
@@ -157,6 +170,7 @@ export const makeMemberSync = (
           nextRefreshAt: null,
         } satisfies MemberSyncResult;
       }
+
       if (
         error instanceof ApplicationError &&
         error.kind === ApplicationErrorKind.AUTHENTICATION_REQUIRED
@@ -166,6 +180,7 @@ export const makeMemberSync = (
           guildId: options.guildId,
           status: MEMBER_DISCORD_SYNC_STATUS.UNAUTHORIZED,
         });
+
         return {
           member,
           status: MEMBER_DISCORD_SYNC_STATUS.UNAUTHORIZED,
@@ -173,6 +188,7 @@ export const makeMemberSync = (
           nextRefreshAt: null,
         } satisfies MemberSyncResult;
       }
+
       if (
         error instanceof ApplicationError &&
         error.kind === ApplicationErrorKind.RATE_LIMITED
@@ -183,6 +199,7 @@ export const makeMemberSync = (
           guildId: options.guildId,
           status: MEMBER_DISCORD_SYNC_STATUS.RATE_LIMITED,
         });
+
         return {
           member: null,
           status: MEMBER_DISCORD_SYNC_STATUS.RATE_LIMITED,
@@ -190,6 +207,7 @@ export const makeMemberSync = (
           nextRefreshAt,
         } satisfies MemberSyncResult;
       }
+
       const status = getTransientMemberSyncStatus(error);
       logger.log({
         level:
@@ -206,6 +224,7 @@ export const makeMemberSync = (
         guildId: options.guildId,
         status,
       });
+
       if (options.throwOnUnexpectedError) {
         return yield* Effect.fail(
           new MemberSyncFailure({
@@ -214,6 +233,7 @@ export const makeMemberSync = (
           }),
         );
       }
+
       return {
         member: null,
         status,

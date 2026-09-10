@@ -30,6 +30,7 @@ import { useGuildId } from "@/hooks/context/use-guild-id";
 import { getReservationErrorMessage } from "@/features/guild/reservations/get-reservation-error-message";
 
 type CreatedInvitation = { id: string; inviteUrl: string };
+
 type InvitationLink = { invitePath: string } | { inviteUrl: string };
 
 function buildInvitationUrl(invitation: InvitationLink): string {
@@ -46,14 +47,19 @@ export function ReservationSharingSettings() {
   const queryClient = useQueryClient();
   const [isCopying, setIsCopying] = useState(false);
   const guildId = useGuildId() ?? "";
+
   const [createdInvitation, setCreatedInvitation] =
     useState<CreatedInvitation | null>(null);
+
   const queryKey = getListReservationSharesQueryKey({ guildId });
+
   const sharesQuery = useListReservationShares(
     { guildId },
     { query: { enabled: Boolean(guildId) } },
   );
+
   const refresh = () => queryClient.invalidateQueries({ queryKey });
+
   const createMutation = useCreateReservationShareInvitation({
     mutation: {
       onSuccess: async (invitation) => {
@@ -66,6 +72,7 @@ export function ReservationSharingSettings() {
       onError: (error) => toast.error(getReservationErrorMessage(error, t)),
     },
   });
+
   const revokeInvitationMutation = useRevokeReservationShareInvitation({
     mutation: {
       onSuccess: async (_data, variables) => {
@@ -77,6 +84,7 @@ export function ReservationSharingSettings() {
       onError: (error) => toast.error(getReservationErrorMessage(error, t)),
     },
   });
+
   const revokeShareMutation = useRevokeReservationShare({
     mutation: {
       onSuccess: refresh,
@@ -130,6 +138,7 @@ export function ReservationSharingSettings() {
                 onClick={() => {
                   if (isCopying) return;
                   setIsCopying(true);
+
                   return Promise.resolve()
                     .then(() =>
                       navigator.clipboard.writeText(

@@ -9,6 +9,7 @@ export const hasServiceAuthorization = (
   if (!secret || !Redacted.value(secret) || !authorization) return false;
   const expected = Buffer.from(`Bearer ${Redacted.value(secret)}`);
   const supplied = Buffer.from(authorization);
+
   return (
     supplied.length === expected.length && timingSafeEqual(supplied, expected)
   );

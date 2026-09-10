@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { encode } from "@msgpack/msgpack";
+import { Result } from "effect";
 import {
   decodePresenceSnapshot,
   isMapPingAcknowledgement,
@@ -31,12 +32,14 @@ describe("realtime MessagePack codec", () => {
         isAfk: false,
         lastSeen: 1_000,
       };
+
       const presence = includeLocation
         ? {
             ...basePresence,
             location: { map: "Kwieciste Przejście", mapId: 42, x: 4, y: 7 },
           }
         : basePresence;
+
       const frames = [
         {
           v: 1,
@@ -57,6 +60,7 @@ describe("realtime MessagePack codec", () => {
           },
         },
       ] satisfies RealtimeFrame[];
+
       for (const frame of frames) {
         expect(decodeRealtimeFrame(encode(frame))).toEqual(frame);
         expect(decodeRealtimeFrame(encodeRealtimeFrame(frame))).toEqual(frame);
@@ -81,6 +85,7 @@ describe("realtime MessagePack codec", () => {
       const identity = discordId
         ? { userId: "user-1", discordId }
         : { userId: "user-1" };
+
       const frame = {
         v: 1,
         type: "presence.delta",
@@ -131,6 +136,7 @@ describe("realtime MessagePack codec", () => {
         createdAt: 1_000,
       },
     } satisfies RealtimeFrame;
+
     expect(decodeRealtimeFrame(encodeRealtimeFrame(frame))).toEqual(frame);
   });
 
@@ -146,6 +152,7 @@ describe("realtime MessagePack codec", () => {
         ],
       },
     };
+
     expect(() => decodeRealtimeFrame(encode(invalid))).toThrow(
       RealtimeCodecError,
     );
@@ -161,6 +168,7 @@ describe("realtime MessagePack codec", () => {
       requestId: "request-1",
       data: { room: "private-room-name" },
     };
+
     expect(() => decodeRealtimeFrame(encode(unknownType))).toThrow(
       RealtimeCodecError,
     );
@@ -169,7 +177,8 @@ describe("realtime MessagePack codec", () => {
   test("returns typed failures for untrusted frames", () => {
     const result = tryDecodeRealtimeFrame(new Uint8Array([0xc1]));
     expect(result._tag).toBe("Failure");
-    if (result._tag === "Failure") {
+
+    if (Result.isFailure(result)) {
       expect(result.failure).toBeInstanceOf(RealtimeCodecError);
       expect(result.failure.operation).toBe("decode");
     }
@@ -199,6 +208,7 @@ test("realtime policy snapshots and legacy permission events share the v1 codec"
       },
     ],
   } as const;
+
   for (const includePolicy of [false, true]) {
     const baseData = {
       organizationIds: ["organization-1"],
@@ -206,7 +216,9 @@ test("realtime policy snapshots and legacy permission events share the v1 codec"
         { topic: "organization.timers", organizationId: "organization-1" },
       ],
     } as const;
+
     const data = includePolicy ? { ...baseData, accessPolicy } : baseData;
+
     const permissionData = includePolicy
       ? ({
           ...data,
@@ -220,6 +232,7 @@ test("realtime policy snapshots and legacy permission events share the v1 codec"
           ],
         } as const)
       : data;
+
     const frames = [
       {
         v: 1,
@@ -232,6 +245,7 @@ test("realtime policy snapshots and legacy permission events share the v1 codec"
         data: permissionData,
       },
     ] satisfies RealtimeFrame[];
+
     for (const frame of frames)
       expect(decodeRealtimeFrame(encodeRealtimeFrame(frame))).toEqual(frame);
   }
@@ -244,6 +258,7 @@ describe("presence request acknowledgement", () => {
       revision: 4,
       presences: [],
     };
+
     expect(decodePresenceSnapshot(snapshot)).toEqual(snapshot);
     expect(() =>
       decodePresenceSnapshot({ ...snapshot, presences: [{}] }),

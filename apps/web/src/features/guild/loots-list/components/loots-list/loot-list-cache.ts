@@ -16,6 +16,7 @@ export function patchActiveLootLists(
   ) => InfiniteData<Loot[]> | undefined,
 ) {
   const queryKey = [`/guilds/${guildId}/loots`];
+
   for (const [key] of queryClient.getQueriesData({
     queryKey,
     type: "active",
@@ -24,6 +25,7 @@ export function patchActiveLootLists(
       patch(data, key),
     );
   }
+
   // Keep loaded history, but refresh old filters when they are opened again.
   void queryClient.invalidateQueries({
     queryKey,

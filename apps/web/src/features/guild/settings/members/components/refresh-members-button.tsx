@@ -22,6 +22,7 @@ export const RefreshMembersButton = () => {
   const resolvedGuildId = getResolvedGuildId(guildId);
   const queryClient = useQueryClient();
   const { markAsRefreshed, markAsFailed } = useRefreshStatus();
+
   const latestRefreshJobQuery = useMembersControllerGetLatestRefreshJob(
     { guildId: resolvedGuildId },
     {
@@ -33,6 +34,7 @@ export const RefreshMembersButton = () => {
       },
     },
   );
+
   const refreshAllMembersMutation = useMembersControllerRefreshAllMembers({
     mutation: {
       onSuccess: (_data, variables) => {
@@ -59,6 +61,7 @@ export const RefreshMembersButton = () => {
       },
       onError: (error, variables) => {
         const message = getApiErrorMessage(error);
+
         if (message === "BULK_REFRESH_RATE_LIMIT_ACTIVE") {
           const currentGuildId = variables?.pathParams.guildId;
 
@@ -71,6 +74,7 @@ export const RefreshMembersButton = () => {
           }
 
           toast.error(t("settings.members.refreshRateLimit"));
+
           return;
         }
 

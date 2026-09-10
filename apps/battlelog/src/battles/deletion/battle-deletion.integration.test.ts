@@ -12,17 +12,21 @@ import { drizzleDatabaseEffect } from "#src/database/database";
 import { makeBattleDeletion } from "./battle-deletion.js";
 
 let postgres: StartedPostgreSqlContainer;
+
 let pool: pg.Pool;
 
 beforeAll(async () => {
   postgres = await new PostgreSqlContainer("postgres:17-alpine").start();
   pool = new pg.Pool({ connectionString: postgres.getConnectionUri() });
   const migrations = new URL("../../../drizzle/", import.meta.url);
+
   for (const entry of (await readdir(migrations)).sort()) {
     if (entry > "20260726194145_plain_gorgon") continue;
     const migration = Bun.file(new URL(`${entry}/migration.sql`, migrations));
+
     if (await migration.exists()) await pool.query(await migration.text());
   }
+
   for (const command of [
     ["bun", "scripts/migrate-init.ts"],
     ["bun", "src/database/migrate.ts"],
@@ -37,16 +41,20 @@ beforeAll(async () => {
       stdout: "pipe",
       stderr: "pipe",
     });
+
     const [exit, stdout, stderr] = await Promise.all([
       child.exited,
       new Response(child.stdout).text(),
       new Response(child.stderr).text(),
     ]);
+
     if (exit !== 0) throw new Error(`Migration failed: ${stdout}\n${stderr}`);
   }
+
   const tracked = await pool.query(
     "SELECT name FROM drizzle.__drizzle_migrations ORDER BY name",
   );
+
   expect(tracked.rows).toEqual(
     expect.arrayContaining([
       { name: "20260904192453_pending_object_deletions" },
@@ -90,12 +98,14 @@ for (const mode of ["single", "user"] as const) {
   it(`retains durable ${mode} deletion work across R2 failure and a restarted worker`, async () => {
     const removed: string[] = [];
     let fail = true;
+
     const storage = {
       deleteBattleData: async (id: string) => {
         if (fail && id === "one") throw new Error("R2 unavailable");
         removed.push(id);
       },
     };
+
     const analytics = { invalidateAnalyticsCache: () => Effect.void };
     await run(
       Effect.gen(function* () {
@@ -104,6 +114,7 @@ for (const mode of ["single", "user"] as const) {
           storage,
           analytics,
         );
+
         if (mode === "single") yield* deletion.deleteBattle("one");
         else yield* deletion.deleteUserBattles("owner");
         yield* deletion.drain;
@@ -123,6 +134,7 @@ for (const mode of ["single", "user"] as const) {
     ).toEqual(
       mode === "single" ? [{ id: "other" }, { id: "two" }] : [{ id: "other" }],
     );
+
     if (mode === "user")
       expect((await pool.query("SELECT * FROM user_characters")).rows).toEqual(
         [],
@@ -148,6 +160,7 @@ for (const mode of ["single", "user"] as const) {
           storage,
           analytics,
         );
+
         yield* restarted.drain;
         yield* restarted.drain;
       }),
@@ -163,6 +176,7 @@ it("rolls back database removal if durable cleanup cannot be recorded", async ()
   await pool.query(
     `ALTER TABLE battle_object_deletions ADD CONSTRAINT reject_cleanup CHECK (false)`,
   );
+
   try {
     await expect(
       run(
@@ -172,6 +186,7 @@ it("rolls back database removal if durable cleanup cannot be recorded", async ()
             { deleteBattleData: async () => {} },
             { invalidateAnalyticsCache: () => Effect.void },
           );
+
           yield* deletion.deleteUserBattles("owner");
         }),
       ),

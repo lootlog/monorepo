@@ -15,9 +15,13 @@ import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { makeDiscordSync } from "../src/bot/discord-sync.service.js";
 
 const guildId = "100000000000000001";
+
 const botId = "100000000000000002";
+
 const roleId = "100000000000000003";
+
 const channelId = "100000000000000004";
+
 const clients: Client[] = [];
 
 afterEach(async () => {
@@ -31,7 +35,9 @@ async function fixture(cacheMembers = true) {
       GuildMemberManager: cacheMembers ? 200 : 0,
     }),
   });
+
   clients.push(client);
+
   const role: Pick<
     APIRole,
     | "id"
@@ -52,6 +58,7 @@ async function fixture(cacheMembers = true) {
     managed: false,
     mentionable: false,
   };
+
   const user = {
     id: botId,
     username: "Bot",
@@ -59,6 +66,7 @@ async function fixture(cacheMembers = true) {
     avatar: null,
     bot: true,
   };
+
   const guild: Pick<
     APIGuild,
     "id" | "name" | "icon" | "owner_id" | "emojis" | "features"
@@ -71,6 +79,7 @@ async function fixture(cacheMembers = true) {
     emojis: [],
     features: [],
   };
+
   const channel: Pick<
     APITextChannel,
     | "id"
@@ -89,12 +98,17 @@ async function fixture(cacheMembers = true) {
     parent_id: null,
     permission_overwrites: [],
   };
+
   let channels = [channel];
   spyOn(client.rest, "get").mockImplementation(async (route) => {
     if (route === `/guilds/${guildId}`) return guild;
+
     if (route === `/guilds/${guildId}/roles/${roleId}`) return role;
+
     if (route === `/guilds/${guildId}/roles`) return [guild.roles[0], role];
+
     if (route === `/guilds/${guildId}/channels`) return channels;
+
     if (route === `/guilds/${guildId}/members/${botId}`)
       return {
         user,
@@ -104,6 +118,7 @@ async function fixture(cacheMembers = true) {
         mute: false,
         flags: 0,
       };
+
     if (route === `/users/${botId}`) return user;
     throw new Error(`Unexpected Discord REST route: ${route}`);
   });
@@ -112,6 +127,7 @@ async function fixture(cacheMembers = true) {
     configurable: true,
   });
   const events: { routingKey: string; payload: unknown }[] = [];
+
   const sync = makeDiscordSync(
     {
       publish: (_exchange, routingKey, payload) =>
@@ -129,6 +145,7 @@ async function fixture(cacheMembers = true) {
             RabbitRoutingKey.DISCORD_GUILD_CHANNEL_DELETED,
             RabbitRoutingKey.DISCORD_GUILD_CHANNELS_SYNC_FAILED,
           ].find((value) => value === routingKey);
+
           if (!key) throw new Error(`Unknown routing key: ${routingKey}`);
           events.push({
             routingKey,
@@ -138,14 +155,20 @@ async function fixture(cacheMembers = true) {
     },
     client,
   );
+
   const fetchGuild = () =>
     client.guilds.fetch({ guild: guildId, force: true, cache: false });
+
   const sdkGuild = await fetchGuild();
+
   const fetchChannel = async () => {
     const value = (await sdkGuild.channels.fetch()).get(channelId);
+
     if (!value) throw new Error("Missing channel");
+
     return value;
   };
+
   return {
     client,
     guild,
@@ -189,6 +212,7 @@ describe("Discord SDK to RabbitMQ contracts", () => {
 
   test("publishes rename, icon addition/removal and ownership changes", async () => {
     const f = await fixture();
+
     for (const icon of [null, "a_12345678901234567890123456789012", null]) {
       f.guild.name = "testowankox";
       f.guild.icon = icon;
@@ -205,6 +229,7 @@ describe("Discord SDK to RabbitMQ contracts", () => {
         },
       });
     }
+
     await Effect.runPromise(f.sync.handleGuildDelete(f.sdkGuild));
     expect(f.events.slice(-2)).toEqual([
       { routingKey: RabbitRoutingKey.GUILDS_DELETE, payload: { guildId } },
@@ -218,6 +243,7 @@ describe("Discord SDK to RabbitMQ contracts", () => {
   test("publishes role creation, edits, administrator removal and deletion", async () => {
     const f = await fixture();
     let previous = await f.sdkGuild.roles.fetch(roleId);
+
     if (!previous) throw new Error("Missing role");
     await Effect.runPromise(f.sync.handleGuildRoleCreate(previous));
     expect(f.events[0]?.payload).toEqual({
@@ -228,11 +254,13 @@ describe("Discord SDK to RabbitMQ contracts", () => {
       position: 1,
       admin: false,
     });
+
     for (const permissions of ["8", "0"]) {
       f.role.permissions = permissions;
       f.role.name = "Updated";
       f.role.color = 0xffffff;
       const updated = await f.sdkGuild.roles.fetch(roleId, { force: true });
+
       if (!updated) throw new Error("Missing role");
       await Effect.runPromise(f.sync.handleGuildRoleUpdate(previous, updated));
       expect(f.events.at(-2)?.payload).toEqual({
@@ -245,6 +273,7 @@ describe("Discord SDK to RabbitMQ contracts", () => {
       });
       previous = updated;
     }
+
     await Effect.runPromise(f.sync.handleGuildRoleDelete(previous));
     expect(f.events.at(-2)).toEqual({
       routingKey: RabbitRoutingKey.GUILDS_DELETE_ROLE,

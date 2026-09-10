@@ -26,6 +26,7 @@ export const makeMemberRefreshProcessor = ({
 }) => {
   const diagnostic = <A>(operation: () => Promise<A>) =>
     Effect.tryPromise({ try: operation, catch: (cause) => cause });
+
   return (job: {
     readonly id?: string | number;
     readonly timestamp?: number;
@@ -38,11 +39,13 @@ export const makeMemberRefreshProcessor = ({
   }) => {
     const lockOwner = `job:${job.id}`;
     const startedAt = job.timestamp ?? Date.now();
+
     return Effect.gen(function* () {
       const acquired = yield* scheduler.acquireUserRefreshLock(
         job.data.userId,
         lockOwner,
       );
+
       if (!acquired) {
         yield* diagnostic(() =>
           diagnostics.recordMemberRefreshMetric({
@@ -50,18 +53,22 @@ export const makeMemberRefreshProcessor = ({
             reason: "MEMBER_REFRESH_LOCKED",
           }),
         );
+
         return yield* Effect.fail(new Error("MEMBER_REFRESH_LOCKED"));
       }
+
       const process = Effect.gen(function* () {
         const nextRefreshAt = yield* scheduler.getNextRefreshAt(
           job.data.userId,
         );
+
         if (
           nextRefreshAt &&
           nextRefreshAt.getTime() > (yield* Clock.currentTimeMillis)
         ) {
           const waitMs =
             nextRefreshAt.getTime() - (yield* Clock.currentTimeMillis);
+
           yield* scheduler.extendUserRefreshLock(
             job.data.userId,
             lockOwner,
@@ -69,7 +76,9 @@ export const makeMemberRefreshProcessor = ({
           );
           yield* Effect.sleep(`${waitMs} millis`);
         }
+
         const result = yield* sync.syncMemberFromDiscord(job.data);
+
         if (isRetryableMemberRefreshStatus(result.status)) {
           if (result.status === "RATE_LIMITED") {
             yield* diagnostic(() =>
@@ -79,16 +88,19 @@ export const makeMemberRefreshProcessor = ({
               }),
             );
           }
+
           yield* diagnostic(() =>
             diagnostics.recordMemberRefreshMetric({
               outcome: "failed",
               reason: result.status,
             }),
           );
+
           return yield* Effect.fail(
             new Error(`MEMBER_REFRESH_${result.status}`),
           );
         }
+
         yield* diagnostic(() =>
           diagnostics.recordMemberRefreshMetric({
             outcome: "processed",
@@ -96,6 +108,7 @@ export const makeMemberRefreshProcessor = ({
           }),
         );
       });
+
       return yield* process.pipe(
         Effect.tapError((error) =>
           diagnostic(() =>

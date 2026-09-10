@@ -8,8 +8,11 @@ const matchesFilter = (
   filter: ReservationFilter,
 ): boolean => {
   if (filter === "available") return spot.isAvailableNow;
+
   if (filter === "pinned") return spot.isPinned;
+
   if (filter === "partners") return spot.hasPartnerReservations;
+
   return true;
 };
 
@@ -28,6 +31,7 @@ export function getVisibleReservationSpots(
     )
     .sort((left, right) => {
       if (left.isPinned !== right.isPinned) return left.isPinned ? -1 : 1;
+
       return (
         right.level - left.level || left.name.localeCompare(right.name, "pl")
       );

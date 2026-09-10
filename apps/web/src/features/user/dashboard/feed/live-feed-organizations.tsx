@@ -23,6 +23,7 @@ export const LiveFeedOrganizations = ({ organizations }: Props) => {
   const { data: guilds } = useUsersControllerGetCurrentUserGuilds({
     query: { enabled: false },
   });
+
   return (
     <TooltipProvider>
       <div className="flex flex-wrap items-center justify-end gap-1.5">

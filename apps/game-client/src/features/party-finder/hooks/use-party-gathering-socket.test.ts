@@ -39,11 +39,13 @@ const notification = (index: number) => ({
     },
   },
 });
+
 const prepare = () => {
   const test = createRealtimeTest();
   useGameStore.setState({ game: null });
   const settings = createNotificationsSettings(["guild-1"]);
   settings["party-gathering"].sound = false;
+
   const preferences: UserGameAccountPreferencesResponseDtoOutput = {
     accountId: "202",
     notifications: settings,
@@ -56,6 +58,7 @@ const prepare = () => {
     hasStoredAirTags: true,
     hasStoredPreferences: true,
   };
+
   const ready = async (mutedDiscordIds: string[] = []) => {
     await act(() => {
       setTestRuntimeGame({ hero: { accountId: "202" } });
@@ -84,6 +87,7 @@ const prepare = () => {
       );
     });
   };
+
   return { ...test, ready };
 };
 

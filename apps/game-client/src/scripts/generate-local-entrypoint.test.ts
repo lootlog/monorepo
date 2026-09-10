@@ -5,6 +5,7 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 const temporaryDirectories: string[] = [];
+
 const generatorPath = path.resolve(
   process.cwd(),
   "src/scripts/generate-local-entrypoint.mjs",
@@ -23,7 +24,9 @@ describe("generate-local-entrypoint", () => {
     const temporaryDirectory = await mkdtemp(
       path.join(tmpdir(), "game-client-local-entrypoint-"),
     );
+
     temporaryDirectories.push(temporaryDirectory);
+
     const outputPath = path.join(
       temporaryDirectory,
       "game-client-local.user.js",

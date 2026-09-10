@@ -40,8 +40,10 @@ export const makeNotificationDeliveryResult = (
     event: DiscordNotificationDeliveryResultEvent,
   ) {
     const job = yield* store.find(event.notificationJobId);
+
     if (!job || finalStatuses.includes(job.status)) return;
     const deliveredAt = new Date(event.deliveredAt);
+
     if (event.success) {
       yield* store.record({
         jobId: job.id,
@@ -56,13 +58,17 @@ export const makeNotificationDeliveryResult = (
         targetFirst: false,
       });
       yield* store.prune({ ownerType: job.ownerType, ownerId: job.ownerId });
+
       if (job.sourceEntityType === "scheduled-message") {
         yield* scheduleNext(job.ruleId);
       }
+
       return;
     }
+
     const failure =
       event.errorMessage ?? event.errorCode ?? "Notification delivery failed";
+
     const shouldRetry = event.retryable && job.attemptCount <= 3;
     yield* store.record({
       jobId: job.id,
@@ -76,14 +82,18 @@ export const makeNotificationDeliveryResult = (
             lastError: failure,
           },
     });
+
     if (shouldRetry) {
       yield* scheduler.enqueue(
         job.id,
         Math.max(30_000, job.attemptCount * 30_000),
       );
+
       return;
     }
+
     yield* store.prune({ ownerType: job.ownerType, ownerId: job.ownerId });
+
     if (job.sourceEntityType === "scheduled-message") {
       yield* scheduleNext(job.ruleId);
     }

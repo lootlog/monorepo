@@ -35,6 +35,7 @@ export const timersData = Layer.unwrap(
     const redis = yield* ApiRedis;
     const rabbit = yield* RabbitMessaging;
     const config = yield* ApiRuntimeConfig;
+
     const eventHeroKillQueue = yield* Effect.acquireRelease(
       Effect.sync(
         () =>
@@ -45,11 +46,14 @@ export const timersData = Layer.unwrap(
       ),
       (queue) => Effect.tryPromise(() => queue.close()),
     );
+
     const redlock = new RedlockService(redis).createInstance({
       automaticExtensionThreshold: 5000,
     });
+
     const attempt = <A>(operation: () => PromiseLike<A>) =>
       Effect.tryPromise({ try: operation, catch: (error) => error });
+
     const withLock = <A, E>(key: string, effect: Effect.Effect<A, E>) =>
       Effect.acquireUseRelease(
         Effect.tryPromise({
@@ -64,11 +68,13 @@ export const timersData = Layer.unwrap(
         (lock: Awaited<ReturnType<typeof redlock.acquire>>) =>
           Effect.tryPromise(() => lock.release()).pipe(Effect.ignore),
       );
+
     const service = TimersData.makeService({
       ...makeTimerHistory(database),
       createAuto: makeAutoTimer(database, {
         enqueueEventHeroCheck: (check) => {
           const windowKey = getEventHeroKillWindowKey(check.timerData);
+
           const jobId = buildEventHeroKillJobId({
             guildId: check.guildId,
             world: check.world,
@@ -156,6 +162,7 @@ export const timersData = Layer.unwrap(
       }),
       searchNpcs: makeTimerSearch(database),
     });
+
     return Layer.succeed(TimersData, service);
   }),
 );

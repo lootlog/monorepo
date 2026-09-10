@@ -4,6 +4,7 @@ import type {
 } from "#src/database/drizzle/schema";
 
 type Guild = typeof guildTable.$inferSelect;
+
 type Reservation = typeof reservationTable.$inferSelect;
 
 type DiscordGuildIcon =
@@ -15,13 +16,16 @@ const parseDiscordGuildIcon = (
   storedIcon: string | null,
 ): DiscordGuildIcon | null => {
   if (!storedIcon) return null;
+
   if (!storedIcon.startsWith("https://")) {
     return { kind: "hash", value: storedIcon };
   }
+
   try {
     const url = new URL(storedIcon);
     const isDiscordCdn = url.hostname === "cdn.discordapp.com";
     const belongsToGuild = url.pathname.startsWith(`/icons/${guildId}/`);
+
     return isDiscordCdn && belongsToGuild
       ? { kind: "cdn-url", value: url.toString() }
       : null;
@@ -48,10 +52,13 @@ export function getGuildIconUrl(
   guild: Pick<Guild, "id" | "icon">,
 ): string | null {
   const icon = parseDiscordGuildIcon(guild.id, guild.icon);
+
   if (!icon) return null;
+
   if (icon.kind === "cdn-url") return icon.value;
 
   const extension = icon.value.startsWith("a_") ? "gif" : "webp";
+
   return `https://cdn.discordapp.com/icons/${guild.id}/${icon.value}.${extension}?size=128`;
 }
 
@@ -64,6 +71,7 @@ export function getDiscordAvatarUrl(
   }
 
   const extension = avatar.startsWith("a_") ? "gif" : "webp";
+
   return `https://cdn.discordapp.com/avatars/${discordId}/${avatar}.${extension}?size=128`;
 }
 
@@ -79,6 +87,7 @@ export function presentReservation(
   const isMine =
     reservation.createdByUserId === viewer.userId ||
     reservation.legacyCreatedByDiscordId === viewer.discordId;
+
   const sourceIsCurrent = reservation.guildId === viewer.guildId;
   const canEdit = isMine && (sourceIsCurrent || viewer.guildId === null);
 

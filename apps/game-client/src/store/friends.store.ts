@@ -42,6 +42,7 @@ export const useFriendsStore = create<FriendsState>()((set, get) => ({
       ) {
         return state;
       }
+
       return {
         friends: Object.freeze([]),
         friendsMax: 0,
@@ -58,6 +59,7 @@ export const useFriendsStore = create<FriendsState>()((set, get) => ({
         friends,
         FRIEND_FIELDS,
       );
+
       if (
         state.status === "ready" &&
         state.friendsMax === friendsMax &&
@@ -65,6 +67,7 @@ export const useFriendsStore = create<FriendsState>()((set, get) => ({
       ) {
         return state;
       }
+
       return {
         friends: reconciled,
         friendsMax,

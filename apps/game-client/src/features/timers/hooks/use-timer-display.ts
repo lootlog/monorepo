@@ -12,6 +12,7 @@ const getTimerShortname = (timer: Timer, showType: boolean) => {
   }
 
   const typeShortname = getNpcTypeNames(timer.npc.type)?.shortname;
+
   const manualTimer =
     Number(timer.npc.margonemType) === MANUAL_TIMER_MARGONEM_TYPE;
 

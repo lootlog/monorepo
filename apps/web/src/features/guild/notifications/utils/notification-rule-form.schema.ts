@@ -41,6 +41,7 @@ const createRuleFormSchema = (t: (key: string, options?: TOptions) => string) =>
   });
 
 type RuleFormData = z.infer<ReturnType<typeof createRuleFormSchema>>;
+
 type Translator = (key: string, options?: TOptions) => string;
 
 const addIssue = (
@@ -120,6 +121,7 @@ const validateTimerSchedule = (
   }
 
   const offset = data.scheduleOffsetMinutes?.trim();
+
   if (!offset || offset.length === 0) {
     addIssue(
       ctx,
@@ -169,6 +171,7 @@ const validateScheduledAt = (
       t("settings.notifications.validation.scheduledAtRequired"),
       "scheduledAt",
     );
+
     return;
   }
 
@@ -176,6 +179,7 @@ const validateScheduledAt = (
     data.scheduledAt,
     GUILD_NOTIFICATION_TIMEZONE,
   );
+
   if (!scheduledAt || new Date(scheduledAt).getTime() <= Date.now()) {
     addIssue(
       ctx,
@@ -191,6 +195,7 @@ const validateHourlyInterval = (
   t: Translator,
 ) => {
   const intervalValue = Number(data.scheduleIntervalValue);
+
   if (
     !data.scheduleIntervalValue ||
     !Number.isInteger(intervalValue) ||
@@ -219,9 +224,11 @@ const validateScheduledRule = (
   ) {
     validateScheduledAt(data, ctx, t);
   }
+
   if (interval === NotificationScheduleIntervalType.HOURLY) {
     validateHourlyInterval(data, ctx, t);
   }
+
   if (
     (interval === NotificationScheduleIntervalType.DAILY ||
       interval === NotificationScheduleIntervalType.WEEKLY) &&
@@ -233,6 +240,7 @@ const validateScheduledRule = (
       "scheduleTimeOfDay",
     );
   }
+
   if (
     interval === NotificationScheduleIntervalType.WEEKLY &&
     (data.scheduleWeekday === undefined || data.scheduleWeekday === "")
@@ -250,6 +258,7 @@ export const ruleFormSchema = (t: Translator, maxNpcCount: number) =>
     if (data.triggerType === NotificationTriggerType.TIMER_BEFORE_SPAWN) {
       validateTimerRule(data, ctx, t, maxNpcCount);
     }
+
     if (data.triggerType === NotificationTriggerType.SCHEDULED_MESSAGE) {
       validateScheduledRule(data, ctx, t);
     }

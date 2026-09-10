@@ -47,6 +47,7 @@ export const makePinnedEventsPersistence = (
         >(),
       );
     }
+
     return run(
       "events.pins.findHeroes",
       database
@@ -66,11 +67,13 @@ export const makePinnedEventsPersistence = (
           string,
           Array<Omit<(typeof rows)[number], "eventId">>
         >();
+
         for (const { eventId, ...hero } of rows) {
           const heroes = byEventId.get(eventId) ?? [];
           heroes.push(hero);
           byEventId.set(eventId, heroes);
         }
+
         return byEventId;
       }),
     );
@@ -125,7 +128,9 @@ export const makePinnedEventsPersistence = (
             )
             .orderBy(desc(userPinnedEventTable.pinnedAt)),
         );
+
         const heroNpcs = yield* findHeroes(rows.map(({ event }) => event.id));
+
         return rows.map(({ event, pinnedAt }) => ({
           pinnedAt,
           event: { ...event, heroNpcs: heroNpcs.get(event.id) ?? [] },
@@ -144,9 +149,12 @@ export const makePinnedEventsPersistence = (
             )
             .limit(1),
         );
+
         const event = rows[0];
+
         if (!event) return null;
         const heroNpcs = yield* findHeroes([event.id]);
+
         return { ...event, heroNpcs: heroNpcs.get(event.id) ?? [] };
       }),
 
@@ -177,6 +185,7 @@ export const makePinnedEventsPersistence = (
                   userPinnedEventTable.eventId,
                 ],
               });
+
             const rows = yield* transaction
               .select({ pinnedAt: userPinnedEventTable.pinnedAt })
               .from(userPinnedEventTable)
@@ -187,6 +196,7 @@ export const makePinnedEventsPersistence = (
                 ),
               )
               .limit(1);
+
             return rows[0] ?? null;
           }),
         ),

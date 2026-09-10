@@ -8,6 +8,7 @@ import {
 } from "@lootlog/domain/reservations";
 
 const MAX_WINDOW_MS = 31 * 24 * 60 * 60 * 1000;
+
 export function parseReservationWindow(fromValue: string, toValue: string) {
   const from = new Date(fromValue);
   const to = new Date(toValue);
@@ -20,6 +21,7 @@ export function parseReservationWindow(fromValue: string, toValue: string) {
   ) {
     throw new InvalidRequestError({ code: "INVALID_TIME_RANGE" });
   }
+
   if (durationMs > MAX_WINDOW_MS) {
     throw new InvalidRequestError({ code: "RESERVATION_WINDOW_TOO_LARGE" });
   }
@@ -35,6 +37,7 @@ export function validateReservationTime(options: {
   allowPastStart?: boolean;
 }): void {
   const issue = getReservationTimeValidationIssue(options);
+
   if (issue) {
     throw new InvalidEntityError(issue);
   }

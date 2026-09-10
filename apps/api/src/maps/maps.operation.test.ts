@@ -25,8 +25,10 @@ const operationWith = (
       ),
     ),
   );
+
   return Effect.gen(function* () {
     const httpClient = yield* HttpClient.HttpClient;
+
     return yield* makeMapsOperation({
       httpClient,
       redis,
@@ -48,6 +50,7 @@ const redisWith = (cached?: string) => ({
 describe("maps operation", () => {
   it("returns the established cached projection without HTTP", async () => {
     const redis = redisWith('[{"id":1,"name":"Ithan"}]');
+
     const fetchImplementation = mock(() =>
       Promise.reject(new Error("must not fetch")),
     );
@@ -61,10 +64,12 @@ describe("maps operation", () => {
 
   it("retries transport failures for the idempotent read and fills cache", async () => {
     const redis = redisWith();
+
     const fetchImplementation = mock(() => {
       if (fetchImplementation.mock.calls.length < 3) {
         return Promise.reject(new Error("connection reset"));
       }
+
       return Promise.resolve(Response.json([{ id: 2, name: "Torneg" }]));
     });
 
@@ -81,6 +86,7 @@ describe("maps operation", () => {
 
   it("fails soft without retrying an oversized response", async () => {
     const redis = redisWith();
+
     const fetchImplementation = mock(() =>
       Promise.resolve(new Response(new Uint8Array(1024 * 1024 + 1))),
     );
@@ -93,6 +99,7 @@ describe("maps operation", () => {
   it("propagates Effect interruption to the HTTP abort signal", async () => {
     const redis = redisWith();
     let aborted = false;
+
     const fetchImplementation = mock(
       (_input: RequestInfo | URL, init?: RequestInit) =>
         new Promise<Response>((_resolve, reject) => {
@@ -102,7 +109,9 @@ describe("maps operation", () => {
           });
         }),
     );
+
     const fiber = Effect.runFork(operationWith(fetchImplementation, redis));
+
     while (fetchImplementation.mock.calls.length === 0) {
       await Promise.resolve();
     }

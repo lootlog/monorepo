@@ -11,6 +11,7 @@ import { usePartyReadyRoomSocket } from "./use-party-ready-room-socket";
 
 function ReadyRoomListener() {
   usePartyReadyRoomSocket();
+
   return null;
 }
 
@@ -43,7 +44,9 @@ describe("usePartyReadyRoomSocket", () => {
     const view = render(
       createElement(SocketProvider, null, createElement(ReadyRoomListener)),
     );
+
     act(() => wire.open());
+
     const update = (revision: number) => {
       wire.receive({
         v: 1,
@@ -59,6 +62,7 @@ describe("usePartyReadyRoomSocket", () => {
         },
       });
     };
+
     act(() => update(4));
     await vi.waitFor(() => {
       expect(

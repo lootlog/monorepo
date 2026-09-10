@@ -30,6 +30,7 @@ export const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(
     // React forwarded refs are either callbacks or mutable ref objects.
     const setViewportRef = (element: HTMLDivElement | null) => {
       viewportRef.current = element;
+
       if (typeof ref === "function") {
         ref(element);
       } else if (ref) {
@@ -39,6 +40,7 @@ export const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(
 
     useEffect(() => {
       const viewport = viewportRef.current;
+
       if (!viewport || orientation !== "horizontal") return;
 
       const handleWheel = (event: WheelEvent) => {
@@ -53,10 +55,12 @@ export const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(
           0,
           viewport.scrollWidth - viewport.clientWidth,
         );
+
         const nextScrollLeft = Math.min(
           maximumScrollLeft,
           Math.max(0, viewport.scrollLeft + event.deltaY),
         );
+
         if (nextScrollLeft === viewport.scrollLeft) return;
 
         event.preventDefault();
@@ -64,6 +68,7 @@ export const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(
       };
 
       viewport.addEventListener("wheel", handleWheel, { passive: false });
+
       return () => viewport.removeEventListener("wheel", handleWheel);
     }, [orientation]);
 
@@ -71,6 +76,7 @@ export const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(
       overflowX: orientation === "vertical" ? "hidden" : "scroll",
       overflowY: orientation === "horizontal" ? "hidden" : "scroll",
     };
+
     const contentStyle: CSSProperties | undefined =
       orientation === "vertical" ? { minWidth: 0, width: "100%" } : undefined;
 

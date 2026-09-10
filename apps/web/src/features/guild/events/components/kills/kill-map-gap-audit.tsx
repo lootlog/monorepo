@@ -15,24 +15,31 @@ interface KillMapGapAuditProps {
 
 export const KillMapGapAudit = ({ gaps, t }: KillMapGapAuditProps) => {
   const [showAll, setShowAll] = useState(false);
+
   const longestGaps = [...gaps]
     .sort((first, second) => {
       const durationDifference = second.durationSeconds - first.durationSeconds;
+
       if (durationDifference !== 0) return durationDifference;
 
       const startDifference = first.startedAt.localeCompare(second.startedAt);
+
       return startDifference !== 0
         ? startDifference
         : first.id.localeCompare(second.id);
     })
     .slice(0, 3);
+
   const auditGaps = [...gaps].sort((first, second) => {
     const startDifference = first.startedAt.localeCompare(second.startedAt);
+
     return startDifference !== 0
       ? startDifference
       : first.id.localeCompare(second.id);
   });
+
   const displayedGaps = showAll ? auditGaps : longestGaps;
+
   const list = (
     <div className="divide-y divide-border/50">
       {displayedGaps.map((gap) => {

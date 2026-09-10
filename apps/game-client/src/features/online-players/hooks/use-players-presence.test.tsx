@@ -23,11 +23,13 @@ const policy = (permissions: Permission[], organizationIds = ["guild-1"]) =>
     })),
     "user",
   );
+
 const fullPolicy = () =>
   policy([
     Permission.LOOTLOG_ONLINE_PLAYERS_READ,
     Permission.LOOTLOG_PRESENCE_LOCATION_READ,
   ]);
+
 const permissionEvent = (
   accessPolicy: ReturnType<typeof policy>,
 ): ServerEvent => ({
@@ -41,6 +43,7 @@ const permissionEvent = (
     accessPolicy,
   },
 });
+
 const delta = (...presences: PresenceWithLocation[]): ServerEvent => ({
   v: 1,
   type: "presence.delta",
@@ -60,12 +63,15 @@ describe("usePlayersPresence", () => {
     vi.useRealTimers();
     vi.restoreAllMocks();
   });
+
   const mount = async (withPolicy = true) => {
     const result = renderHook(() => usePlayersPresence("guild-1", "alpha"), {
       wrapper: harness.wrapper,
     });
+
     harness.open();
     await harness.join(["guild-1"], withPolicy ? fullPolicy() : undefined);
+
     return result;
   };
 
@@ -106,6 +112,7 @@ describe("usePlayersPresence", () => {
         },
       ],
     });
+
     expect(normalized["discord-1"]?.[0]?.player?.lvl).toBe(123);
   });
 
@@ -165,16 +172,20 @@ describe("usePlayersPresence", () => {
     let frame: FrameRequestCallback | undefined;
     vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) => {
       frame = callback;
+
       return 1;
     });
     let renders = 0;
+
     const { result } = renderHook(
       () => {
         renders++;
+
         return usePlayersPresence("guild-1", "alpha");
       },
       { wrapper: harness.wrapper },
     );
+
     harness.open();
     await harness.join(["guild-1"], fullPolicy());
     await waitFor(() => expect(result.current.hasLoaded).toBe(true));
@@ -216,11 +227,13 @@ describe("usePlayersPresence", () => {
         prof: "w",
       },
     });
+
     harness.fetchPresence.mockResolvedValue(
       createPresenceSnapshot([createOnlinePresence(), other]),
     );
     const { result } = await mount();
     await waitFor(() => expect(result.current.hasLoaded).toBe(true));
+
     const remove = (organizationId: string): ServerEvent => ({
       v: 1,
       type: "presence.delta",
@@ -237,6 +250,7 @@ describe("usePlayersPresence", () => {
         ],
       },
     });
+
     await harness.receive(remove("guild-2"));
     expect(result.current.onlinePlayers["discord-1"]).toHaveLength(2);
     await harness.receive(remove("guild-1"));
@@ -287,12 +301,14 @@ describe("usePlayersPresence", () => {
       vi.spyOn(window, "requestAnimationFrame").mockImplementation(
         (callback) => {
           frame = callback;
+
           return 1;
         },
       );
       harness.fetchPresence.mockResolvedValue(createPresenceSnapshot([]));
       const { result } = await mount();
       await waitFor(() => expect(result.current.hasLoaded).toBe(true));
+
       const removal: ServerEvent = {
         v: 1,
         type: "presence.delta",
@@ -309,7 +325,9 @@ describe("usePlayersPresence", () => {
           ],
         },
       };
+
       await harness.receive(delta(createOnlinePresence()), removal);
+
       if (recreated) await harness.receive(delta(createOnlinePresence()));
       act(() => frame?.(16));
       expect(result.current.onlinePlayers["discord-1"]?.length ?? 0).toBe(
@@ -351,10 +369,12 @@ describe("usePlayersPresence", () => {
 
   it("hides the previous scope while the next scope is loading", async () => {
     let guildId = "guild-1";
+
     const { result, rerender } = renderHook(
       () => usePlayersPresence(guildId, "alpha"),
       { wrapper: harness.wrapper },
     );
+
     harness.open();
     await harness.join(
       ["guild-1", "guild-2"],
@@ -385,11 +405,13 @@ describe("usePlayersPresence", () => {
     await waitFor(() => expect(result.current.hasLoaded).toBe(true));
     vi.useFakeTimers();
     harness.fetchPresence.mockRejectedValue(new Error("denied"));
+
     const event: ServerEvent = {
       v: 1,
       type: "permissions.updated",
       data: { organizationIds: ["guild-1"], subscriptionScopes: [] },
     };
+
     await harness.receive(event, event);
     expect(result.current.onlinePlayers).toEqual({});
     expect(harness.fetchPresence).toHaveBeenCalledTimes(1);
@@ -461,6 +483,7 @@ describe("usePlayersPresence", () => {
     let frame: FrameRequestCallback | undefined;
     vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) => {
       frame = callback;
+
       return 1;
     });
     harness.fetchPresence.mockResolvedValue(createPresenceSnapshot([]));

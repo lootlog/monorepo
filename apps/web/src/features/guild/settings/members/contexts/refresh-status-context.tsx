@@ -15,10 +15,12 @@ export const RefreshStatusContext = createContext<
 
 export const useRefreshStatus = () => {
   const context = useContext(RefreshStatusContext);
+
   if (!context) {
     throw new Error(
       "useRefreshStatus must be used within RefreshStatusProvider",
     );
   }
+
   return context;
 };

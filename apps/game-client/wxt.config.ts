@@ -20,22 +20,28 @@ export default defineConfig({
   manifest: ({ browser, mode }) => {
     const env = loadEnv(mode, import.meta.dirname, "");
     const hostPermissions = new Set<string>();
+
     const endpointNames: (keyof ReturnType<typeof buildProfile>)[] = [
       "VITE_API_URL",
       "VITE_BATTLELOG_API_URL",
       "VITE_AUTH_SERVICE_URL",
       "VITE_GATEWAY_URL",
     ];
+
     for (const name of endpointNames) {
       const value = buildProfile(mode)[name];
+
       if (!value)
         throw new Error(`Missing extension environment variable: ${name}`);
       const url = new URL(value);
+
       if (!["http:", "https:"].includes(url.protocol)) {
         throw new Error(`${name} must use HTTP or HTTPS`);
       }
+
       hostPermissions.add(`${url.origin}/*`);
     }
+
     const manifest: UserManifest = {
       name: "__MSG_extensionName__",
       default_locale: "pl",
@@ -45,6 +51,7 @@ export default defineConfig({
       host_permissions: [...hostPermissions],
       icons: { 128: "icon.png" },
     };
+
     if (browser === "firefox") {
       if (mode !== "production") {
         // Firefox's default MV3 CSP upgrades local ws:// to unavailable wss://.
@@ -52,6 +59,7 @@ export default defineConfig({
           extension_pages: "script-src 'self'; object-src 'self'",
         };
       }
+
       manifest.browser_specific_settings = {
         gecko: {
           id: "game-client@lootlog.pl",
@@ -68,12 +76,15 @@ export default defineConfig({
       };
     } else {
       manifest.minimum_chrome_version = "116";
+
       if (env.EXTENSION_CHROME_KEY) manifest.key = env.EXTENSION_CHROME_KEY;
     }
+
     return manifest;
   },
   vite: ({ mode }) => {
     const config = gameClientViteConfig(mode);
+
     return {
       ...config,
       define: {

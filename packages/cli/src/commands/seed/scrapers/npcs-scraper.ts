@@ -18,6 +18,7 @@ interface ScrapedNpc {
 
 const BASE_URL =
   SCRAPER_CONFIG.margoworld.baseUrl + SCRAPER_CONFIG.margoworld.npcsPath;
+
 const URL_MATCH = SCRAPER_CONFIG.margoworld.imageUrlMatch;
 
 const NPC_TYPE_WT_MAP = new Map<string, number>(
@@ -33,6 +34,7 @@ const NPC_TYPE_WT_MAP = new Map<string, number>(
 
 function getRandomProfession(): string {
   const { professions } = SCRAPER_CONFIG;
+
   return professions[Math.floor(Math.random() * professions.length)] ?? "w";
 }
 
@@ -56,10 +58,12 @@ function parseMeta(meta: string) {
 
   const name = parsed.querySelector("b")?.textContent ?? "Unknown";
   const type = parsed.querySelector("i")?.textContent ?? "unknown";
+
   const locationText = parsed
     .querySelector("div div")
     ?.textContent.replace(/\((.*?)\)/, "")
     .trim();
+
   const lvl = getNpcLevelFromMeta(meta);
 
   return {
@@ -116,9 +120,11 @@ async function scrapeNpcsByType(npcType: string): Promise<ScrapedNpc[]> {
     }
 
     console.log(`Scraped ${npcs.length} NPCs of type ${npcType}`);
+
     return npcs;
   } catch (error) {
     console.error(`Error scraping NPCs of type ${npcType}:`, error);
+
     return [];
   }
 }
@@ -136,6 +142,7 @@ export async function scrapeNpcs(
       console.log("💡 Use --force flag to re-scrape");
 
       const existingData = await readFile(fullPath, "utf-8");
+
       return JSON.parse(existingData);
     }
   }

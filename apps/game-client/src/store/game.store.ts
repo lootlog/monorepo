@@ -18,7 +18,9 @@ function areClansEqual(
   incoming: RuntimeGameSnapshot["hero"]["clan"],
 ): boolean {
   if (current === incoming) return true;
+
   if (!current || !incoming) return false;
+
   return (
     current.id === incoming.id &&
     current.name === incoming.name &&
@@ -52,6 +54,7 @@ function areGameSnapshotsEqual(
 
 function freezeGameSnapshot(game: RuntimeGameSnapshot): RuntimeGameSnapshot {
   let clan: RuntimeGameSnapshot["hero"]["clan"];
+
   if (game.hero.clan) {
     clan = Object.freeze({ ...game.hero.clan });
   }
@@ -81,11 +84,13 @@ export const useGameStore = create<GameState>()((set) => ({
       const gameUnchanged = Boolean(
         state.game && areGameSnapshotsEqual(state.game, game),
       );
+
       if (!mapChanged && state.status === "ready" && gameUnchanged) {
         return state;
       }
 
       let storedGame = state.game;
+
       if (!gameUnchanged || !storedGame) {
         storedGame = freezeGameSnapshot(game);
       }

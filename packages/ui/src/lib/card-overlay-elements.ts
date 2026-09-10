@@ -18,11 +18,14 @@ export function createCardOverlayElements(
   },
 ) {
   const random = createSeededRandom(hashString(id));
+
   for (let i = 0; i < 20; i++) random();
   const count = options.minimumCount + Math.floor(random() * 4);
+
   return Array.from({ length: count }, (_, index) => {
     const variant =
       random() > options.variantThreshold ? options.first : options.second;
+
     return {
       id: `${options.prefix}-${index}`,
       left: `${random() * 100}%`,

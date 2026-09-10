@@ -17,10 +17,12 @@ const tagClassNames = new Map(
 );
 
 const translations = createTranslationLookup(itemStats);
+
 function resolveTranslation(path: string) {
   const normalizedPath = path.startsWith("itemStats.")
     ? path.slice("itemStats.".length)
     : path;
+
   return translations.get(normalizedPath);
 }
 

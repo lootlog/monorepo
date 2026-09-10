@@ -16,6 +16,7 @@ export const formatAbyssNumber = (value: number) =>
 
 export const formatAbyssSignedNumber = (value: number) => {
   const sign = value >= 0 ? "+" : "";
+
   return `${sign}${formatAbyssNumber(value)}`;
 };
 

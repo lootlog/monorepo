@@ -19,6 +19,7 @@ describe("OnlinePlayersActions", () => {
     );
 
     const filterIcon = container.querySelector("svg");
+
     if (!filterIcon) throw new Error("Expected filter icon");
     await user.click(filterIcon);
 

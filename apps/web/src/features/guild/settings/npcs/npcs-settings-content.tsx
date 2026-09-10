@@ -20,12 +20,15 @@ import { useTranslation } from "react-i18next";
 export const NpcsSettingsContent = () => {
   const { t } = useTranslation();
   const guildId = useGuildId();
+
   const { data: config } = useLootlogConfigControllerGetLootlogConfig({
     guildId: guildId ?? "",
   });
+
   const [searchValue, setSearchValue] = useState("");
   const isMobile = useIsMobile();
   const normalizedSearchValue = searchValue.trim().toLowerCase();
+
   const filteredNpcs = [...(config?.npcs ?? [])]
     .filter((npc) => {
       const npcName = t(`npcType.${npc.npcType}`).toLowerCase();
@@ -40,6 +43,7 @@ export const NpcsSettingsContent = () => {
         t(`npcType.${secondNpc.npcType}`),
       ),
     );
+
   const hasActiveFilters = normalizedSearchValue !== "";
 
   return (

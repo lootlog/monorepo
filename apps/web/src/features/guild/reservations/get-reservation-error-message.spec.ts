@@ -5,6 +5,7 @@ import reservations from "@/i18n/translations/reservations.json";
 import { getReservationErrorMessage } from "./get-reservation-error-message";
 
 const translations = i18next.createInstance();
+
 await translations.init({
   lng: "pl",
   resources: { pl: { translation: { reservations } } },
@@ -20,9 +21,11 @@ describe("reservation error messages", () => {
           { status: 422 },
         ),
     });
+
     const error = await client
       .post("/reservations", {})
       .catch((error) => error);
+
     expect(getReservationErrorMessage(error, translations.t)).toBe(
       "Osiągnięto limit aktywnych i przyszłych rezerwacji na tym expowisku (3). Anuluj istniejącą rezerwację lub poczekaj na jej zakończenie.",
     );

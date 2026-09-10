@@ -37,6 +37,7 @@ export function ReservationFormDialog({
 }: ReservationFormDialogProps) {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
+
   const form = (
     <ReservationForm
       key={`${initialStartsAt?.toISOString() ?? "empty"}:${initialEndsAt?.toISOString() ?? "empty"}:${open}`}

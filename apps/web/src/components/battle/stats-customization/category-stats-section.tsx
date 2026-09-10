@@ -24,6 +24,7 @@ export const CategoryStatsSection = ({
 
   const getStatLabel = (statKey: string) => {
     const stat = allAvailableStats.find((s) => s.key === statKey);
+
     return stat ? t(stat.labelKey) : statKey;
   };
 
@@ -33,6 +34,7 @@ export const CategoryStatsSection = ({
 
   const propOrderKey = statOrder.join(":");
   const localOrderKey = localOrder.join(":");
+
   const displayedOrder =
     isDragging || localOrderKey !== propOrderKey ? localOrder : statOrder;
 

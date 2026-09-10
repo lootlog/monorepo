@@ -57,6 +57,7 @@ export const BattleCompactTeam: FC<BattleCompactTeamProps> = ({
       >
         {team.map((member) => {
           const isCurrentCharacter = member.originalId === characterId;
+
           const attributableOpposingTeam =
             team.length === 1 && opposingTeam.length === 1 ? opposingTeam : [];
 

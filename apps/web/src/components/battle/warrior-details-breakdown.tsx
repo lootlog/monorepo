@@ -12,6 +12,7 @@ export const WarriorDetailsBreakdown: FC<WarriorDetailsBreakdownProps> = ({
   warrior,
 }) => {
   const { t } = useTranslation();
+
   const healingStats = [
     {
       type: t("battleUi.breakdowns.details.passiveHealing"),

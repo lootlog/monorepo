@@ -23,6 +23,7 @@ const other: OtherCreate = {
   is_blessed: 0,
   relation: 1,
 };
+
 describe("OtherEventProcessor", () => {
   let test: ReturnType<typeof createAirTagTest>;
   beforeEach(() => {

@@ -40,6 +40,7 @@ export const useRecentHeroKills = ({
           { guildId, eventId, heroId },
           baseParams,
         );
+
         return response.data;
       }
 
@@ -47,6 +48,7 @@ export const useRecentHeroKills = ({
         { guildId, eventId },
         baseParams,
       );
+
       return response.data;
     },
     enabled: !!guildId && !!eventId,

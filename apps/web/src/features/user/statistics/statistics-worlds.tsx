@@ -14,6 +14,7 @@ export function StatisticsWorlds({
   onClearWorld: () => void;
 }) {
   const { t } = useTranslation();
+
   return (
     <>
       <SectionCard>

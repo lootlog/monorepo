@@ -40,9 +40,11 @@ export const ScoringRulesEditor = ({
 }: ScoringRulesEditorProps) => {
   const { t } = useTranslation();
   const [simulatorOpen, setSimulatorOpen] = useState(false);
+
   const form = useForm<ScoringRulesFormValues>({
     defaultValues: { scoringRules: value },
   });
+
   const notifyChange = useEffectEvent(onChange);
 
   useEffect(() => {
@@ -55,6 +57,7 @@ export const ScoringRulesEditor = ({
     const subscription = form.watch((_values, { name }) => {
       if (name) notifyChange(form.getValues("scoringRules"));
     });
+
     return () => subscription.unsubscribe();
   }, [form]);
 

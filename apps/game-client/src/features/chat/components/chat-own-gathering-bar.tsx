@@ -27,12 +27,15 @@ export function ChatOwnGatheringBar({
   const [inviteFailed, setInviteFailed] = useState(false);
   const [withdrawFailed, setWithdrawFailed] = useState(false);
   const organizer = room.viewer === "ORGANIZER";
+
   const actionLabel = t(
     cancellation.isPending ? "gatherings.cancelling" : "gatherings.cancel",
   );
+
   const counts = {
     partyMemberCount: room.partyMemberCount ?? summary?.partyMemberCount,
   };
+
   const participationButton = organizer ? (
     <ChatGatheringInviteButton onErrorChange={setInviteFailed} />
   ) : (
@@ -50,6 +53,7 @@ export function ChatOwnGatheringBar({
       }}
     />
   );
+
   const participationAction = (
     <div className="ll:flex ll:shrink-0 ll:items-center ll:gap-1">
       {withdrawal.isWithdrawing ? (
@@ -59,6 +63,7 @@ export function ChatOwnGatheringBar({
       )}
     </div>
   );
+
   return (
     <>
       {organizer ? (

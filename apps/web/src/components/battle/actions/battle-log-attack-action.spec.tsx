@@ -38,6 +38,7 @@ const renderAttackActions = (
     icon: "/kuf/uni_xxxiv_ork_m2.gif",
     team: 1,
   });
+
   const defender = buildBattleWarrior({
     originalId: "617",
     name: "Demodras",
@@ -46,6 +47,7 @@ const renderAttackActions = (
     icon: "/paid/her_atka_k.gif",
     team: 2,
   });
+
   const event: RawBattleParsedEvent = {
     attackerId: "38798",
     defenderId: "617",

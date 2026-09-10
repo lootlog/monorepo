@@ -22,20 +22,26 @@ export type FeedScope = {
   guild: typeof guildTable.$inferSelect;
   roles: ReadonlyArray<typeof roleTable.$inferSelect>;
 };
+
 const predicates = (scopes: ReadonlyArray<FeedScope>, discordId: string) => {
   const kills: SQL[] = [],
     loots: SQL[] = [];
+
   for (const { guild, roles } of scopes) {
     const permissions =
       guild.ownerId === discordId
         ? [Permission.OWNER]
         : roles.flatMap((role) => role.permissions);
+
     const policy = createAccessPolicy({ capabilities: permissions });
+
     if (!policy.allows(Capability.LOOTLOG_LOOTS_READ)) continue;
+
     const visibility = buildKillStatsCondition(
       guildKillActivityTable,
       visibilityFilter(policy, readableRoles(roles)),
     );
+
     kills.push(
       sql`(${guildKillActivityTable.guildId}=${guild.id} and ${visibility ?? sql`true`})`,
     );
@@ -43,6 +49,7 @@ const predicates = (scopes: ReadonlyArray<FeedScope>, discordId: string) => {
       sql`(r."guildId"=${guild.id} ${sql.raw(buildLootNpcVisibilitySql(permissions, roles))})`,
     );
   }
+
   return {
     kills: kills.length ? sql.join(kills, sql` OR `) : sql`false`,
     loots: loots.length ? sql.join(loots, sql` OR `) : sql`false`,
@@ -59,6 +66,7 @@ export const userFeedSql = (
   },
 ) => {
   const visible = predicates(scopes, discordId);
+
   // Kill creation assigns occurredAt once before Organization fanout. Hash the
   // complete timestamp multiset so distinct kills in one minute stay separate.
   return sql`
@@ -115,11 +123,14 @@ const enrichFeedLoots = Effect.fn("feed.enrich-loots")(function* (
       items.flatMap((item) => (item.type === "loot" ? [item.lootId] : [])),
     ),
   ];
+
   const summaries =
     yield* makeLootQueryPersistence(database).readVisibleSummaries(ids);
+
   return items.map((item): UserFeedItem => {
     if (item.type !== "loot") return item;
     const summary = summaries.get(item.lootId);
+
     return summary ? { ...item, summary } : item;
   });
 });
@@ -127,11 +138,15 @@ const enrichFeedLoots = Effect.fn("feed.enrich-loots")(function* (
 export const makeUserFeed = (database: typeof ApiDatabase.Service) =>
   Effect.fn("users.feed")(function* (discordId: string) {
     const now = yield* Clock.currentTimeMillis;
+
     const generatedAt = new Date(now).toISOString(),
       windowStart = new Date(now - 86400000).toISOString();
+
     const guilds = yield* selectAccessibleGuilds(database, discordId);
+
     if (!guilds.length)
       return { generatedAt, windowStart, items: [] } satisfies UserFeedResponse;
+
     const members = yield* database
       .select()
       .from(memberTable)
@@ -145,20 +160,25 @@ export const makeUserFeed = (database: typeof ApiDatabase.Service) =>
           ),
         ),
       );
+
     const hydrated = yield* hydrateMemberRoles(database, members);
+
     const scopes = guilds.map(({ guild }) => ({
       guild,
       roles:
         hydrated.find((member) => member.guildId === guild.id)?.roles ?? [],
     }));
+
     const result = yield* database.execute(
       userFeedSql(scopes, discordId, windowStart),
     );
+
     const decoded = yield* Schema.decodeUnknownEffect(
       Schema.Struct({
         rows: Schema.Array(Schema.Struct({ item: UserFeedItem })),
       }),
     )(result);
+
     return {
       generatedAt,
       windowStart,
@@ -180,18 +200,23 @@ export const readPublishedFeedEntry = Effect.fn("feed.read-published-entry")(
       .select()
       .from(guildTable)
       .where(eq(guildTable.id, guildId));
+
     if (!guild) return undefined;
+
     const cutoff = new Date(
       (yield* Clock.currentTimeMillis) - 86400000,
     ).toISOString();
+
     const result = yield* database.execute(
       userFeedSql([{ guild, roles: [] }], guild.ownerId, cutoff, selection),
     );
+
     const decoded = yield* Schema.decodeUnknownEffect(
       Schema.Struct({
         rows: Schema.Array(Schema.Struct({ item: UserFeedItem })),
       }),
     )(result);
+
     return (yield* enrichFeedLoots(
       database,
       decoded.rows.map((row) => row.item),

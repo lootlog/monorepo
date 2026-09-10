@@ -34,6 +34,7 @@ const logBetterAuthEvent = (
     warn: "Warn",
     error: "Error",
   } as const;
+
   // Better Auth details may contain OAuth input or database query parameters.
   runLogEffect(
     Effect.logWithLevel(severity[level])(
@@ -44,6 +45,7 @@ const logBetterAuthEvent = (
     ),
   );
 };
+
 export const betterAuthLogger = {
   log: logBetterAuthEvent,
 } satisfies BetterAuthOptions["logger"];
@@ -58,6 +60,7 @@ export const createLootlogAuth = ({
   readonly secondaryStorage?: AuthRedisStorage["Service"]["secondaryStorage"];
 }) => {
   const betterAuthBaseURL = resolveBetterAuthBaseURL(config.appUrl);
+
   const discordAuthOptions = createDiscordAuthOptions({
     clientId: config.discordClientId,
     clientSecret: reveal(config.discordClientSecret),
@@ -66,6 +69,7 @@ export const createLootlogAuth = ({
   });
 
   const storageOptions: Pick<BetterAuthOptions, "secondaryStorage"> = {};
+
   if (secondaryStorage !== undefined)
     storageOptions.secondaryStorage = secondaryStorage;
 
@@ -173,6 +177,7 @@ export class BetterAuthRuntime extends Context.Service<
         database: drizzle({ client: pool }),
         secondaryStorage: redis.secondaryStorage,
       });
+
       return BetterAuthRuntime.of({ ...auth, apiKeys: auth.api });
     }),
   );

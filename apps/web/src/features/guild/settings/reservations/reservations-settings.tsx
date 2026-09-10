@@ -8,6 +8,7 @@ import { ReservationSharingSettings } from "./reservation-sharing-settings";
 export const ReservationsSettings = () => {
   const { t } = useTranslation();
   const guildId = useGuildId();
+
   const { data: guild } = useGuildsControllerGetGuildById({
     guildId: guildId ?? "",
   });

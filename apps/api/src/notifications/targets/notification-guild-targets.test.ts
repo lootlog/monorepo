@@ -9,9 +9,11 @@ import { makeNotificationGuildTargets } from "#src/notifications/targets/notific
 describe("notification guild targets Effect module", () => {
   it("rejects a DM target before channel, database, or job access", async () => {
     const boundary = await createDatabaseBoundary();
+
     try {
       const selectable = mock(() => Effect.die("unexpected channel read"));
       const cancel = mock(() => Effect.die("unexpected job cancellation"));
+
       const targets = makeNotificationGuildTargets(
         boundary.database,
         { selectable },

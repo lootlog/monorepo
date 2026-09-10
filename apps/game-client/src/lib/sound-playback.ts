@@ -40,6 +40,7 @@ export function playSound(
   profile: SoundPlaybackProfile = {},
 ): void {
   const settings = getSettings();
+
   if (!settings) return;
 
   const categoryVolume = settings[`${category}Volume`];
@@ -49,6 +50,7 @@ export function playSound(
 
   const soundConfig =
     category === "pings" ? undefined : settings[`${category}Config`]?.[key];
+
   const soundUrl =
     soundConfig?.soundUrl === "" || !soundConfig?.soundUrl
       ? getDefaultSoundUrl(key)

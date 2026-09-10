@@ -40,6 +40,7 @@ export const GuildDocTrashDialog = ({
 }: GuildDocTrashDialogProps) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+
   const trashQuery = useDocsControllerGetTrash(
     { guildId },
     {
@@ -49,6 +50,7 @@ export const GuildDocTrashDialog = ({
       },
     },
   );
+
   const restoreDocument = useDocsControllerRestoreDocument();
   const purgeDocument = useDocsControllerPurgeDocument();
   const trashItems = trashQuery.data?.items ?? [];
@@ -134,6 +136,7 @@ export const GuildDocTrashDialog = ({
               trashItems.map((document) => {
                 const deletedByName =
                   document.deletedBy.name ?? t("docs.list.unknownEditor");
+
                 const deletedAt = formatGuildDocDateTime(document.deletedAt);
 
                 return (

@@ -33,8 +33,10 @@ export const StatsCardSettingsCard = ({
   const [previewToken, setPreviewToken] = useState(() => Date.now());
   const [isCopying, setIsCopying] = useState(false);
   const [imageError, setImageError] = useState(false);
+
   const refreshStatsCard =
     useAuthenticatedGuildStatsCardControllerRefreshStatsCard();
+
   const enabledValue = form.watch("publicStatsCardEnabled");
   const savedEnabled = guild.publicStatsCardEnabled;
   const imageUrl = `${API_URL}/public/guilds/${guild.id}/stats-card.png`;
@@ -45,13 +47,16 @@ export const StatsCardSettingsCard = ({
     if (!savedEnabled || isCopying) return;
 
     setIsCopying(true);
+
     return Promise.resolve()
       .then(() => copyToClipboard(imageUrl))
       .then((copied) => {
         if (copied) {
           toast.success(t("settings.general.statsCard.copySuccess"));
+
           return;
         }
+
         toast.error(t("settings.general.statsCard.copyError"));
       })
       .catch(() => {
@@ -80,6 +85,7 @@ export const StatsCardSettingsCard = ({
         onError: (error) => {
           if (error.status === 429) {
             toast.error(t("settings.general.statsCard.refreshRateLimited"));
+
             return;
           }
 

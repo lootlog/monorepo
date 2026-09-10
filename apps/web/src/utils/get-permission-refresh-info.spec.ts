@@ -12,6 +12,7 @@ describe("getPermissionRefreshInfo", () => {
 
   it("allows refresh after the ttl window expires", () => {
     const currentTimestamp = new Date("2026-03-12T12:00:00.000Z").getTime();
+
     const updatedAt = new Date(
       currentTimestamp - REFRESH_PERMISSIONS_TTL - 1000,
     ).toISOString();

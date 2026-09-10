@@ -33,19 +33,24 @@ export const useActivityLogsFilterModel = ({
   className,
 }: ActivityLogsFiltersSidebarProps) => {
   const { t } = useTranslation();
+
   const { filters, setFilters, clearFilters, hasActiveFilters } =
     useActivityLogsFilters();
+
   const guildId = useGuildId();
   const debouncedNameSearch = useDebounce(filters.name ?? "", 300);
   const debouncedClanSearch = useDebounce(filters.clanName ?? "", 300);
   const trimmedNameSearch = debouncedNameSearch.trim();
   const trimmedClanSearch = debouncedClanSearch.trim();
+
   const { data: guild } = useGuildsControllerGetGuildById({
     guildId: guildId ?? "",
   });
+
   const activityGuildId = guild?.id ?? "";
   const nameSearch = optionalText(trimmedNameSearch);
   const clanSearch = optionalText(trimmedClanSearch);
+
   const { data: nameSuggestionsResponse } = useQuery(
     getActivitiesControllerSuggestActorNamesQueryOptions(
       { guildId: activityGuildId },
@@ -62,6 +67,7 @@ export const useActivityLogsFilterModel = ({
       },
     ),
   );
+
   const { data: clanNameSuggestionsResponse } = useQuery(
     getActivitiesControllerSuggestClanNamesQueryOptions(
       { guildId: activityGuildId },
@@ -78,6 +84,7 @@ export const useActivityLogsFilterModel = ({
       },
     ),
   );
+
   const nameSuggestions = nameSuggestionsResponse?.suggestions ?? [];
   const clanNameSuggestions = clanNameSuggestionsResponse?.suggestions ?? [];
 
@@ -89,6 +96,7 @@ export const useActivityLogsFilterModel = ({
   const normalizedStartDate = startDateValue
     ? startOfDay(startDateValue)
     : undefined;
+
   const isStartDateDisabled = (date: Date) => {
     const normalizedDate = startOfDay(date);
 
@@ -97,6 +105,7 @@ export const useActivityLogsFilterModel = ({
       isAfter(normalizedDate, today)
     );
   };
+
   const isEndDateDisabled = (date: Date) => {
     const normalizedDate = startOfDay(date);
 
@@ -125,10 +134,12 @@ export const useActivityLogsFilterModel = ({
       return {
         types: (() => {
           const nextTypes = getActivityLogTypes(mergedFilters.types);
+
           return nextTypes.length > 0 ? nextTypes : null;
         })(),
         sources: (() => {
           const nextSources = getActivityLogSources(mergedFilters.sources);
+
           return nextSources.length > 0 ? nextSources : null;
         })(),
         startDate: mergedFilters.startDate || null,
@@ -139,6 +150,7 @@ export const useActivityLogsFilterModel = ({
       };
     });
   };
+
   const activityTypes: {
     value: ActivitiesControllerFindByGuildTypeItem;
     label: string;
@@ -152,6 +164,7 @@ export const useActivityLogsFilterModel = ({
       label: t("activityLogs.filters.types.DISCONNECT_EVENT"),
     },
   ];
+
   const activitySources: {
     value: ActivitiesControllerFindByGuildSourceItem;
     label: string;

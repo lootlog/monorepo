@@ -20,11 +20,17 @@ import { useNpcsStore } from "@/store/npcs.store";
 import { useGameStore } from "@/store/game.store";
 
 const requests: Request[] = [];
+
 let notificationStatus = 200;
+
 let chatStatus = 200;
+
 let responseGuildIds: string[] = [];
+
 let restoreApi: () => void = () => {};
+
 const play = vi.fn<HTMLMediaElement["play"]>().mockResolvedValue();
+
 const readyPreferences = (overrides?: {
   detect?: boolean;
   autoSend?: boolean;
@@ -143,6 +149,7 @@ describe("NpcsDetectionProcessor", () => {
           requests.push(request);
           const notification = new URL(request.url).pathname === "/messaging";
           const status = notification ? notificationStatus : chatStatus;
+
           return Promise.resolve(
             Response.json(
               notification
@@ -162,6 +169,7 @@ describe("NpcsDetectionProcessor", () => {
     vi.spyOn(HTMLMediaElement.prototype, "pause").mockImplementation(() => {});
     useSettingsStore.setState({ soundsMuted: false, masterVolume: 1 });
     queryClient.clear();
+
     const sound: UserSoundSettings = {
       userId: "user-1",
       masterVolume: 1,
@@ -175,6 +183,7 @@ describe("NpcsDetectionProcessor", () => {
       notificationsConfig: {},
       timersConfig: {},
     };
+
     queryClient.setQueryData(
       getSoundSettingsControllerGetSettingsQueryKey(),
       sound,
@@ -281,6 +290,7 @@ describe("NpcsDetectionProcessor", () => {
 
   it("clears pending detections during teardown without scheduling polling", () => {
     vi.useFakeTimers();
+
     try {
       processor.handle(createNpcEvent());
       readyPreferences();
@@ -515,10 +525,12 @@ describe("NpcsDetectionProcessor", () => {
           },
         ],
       });
+
       if (mode === "queued") processor.flushPending("202");
       else processor.handle(createNpcEvent());
       await waitFor(() => expect(requests).toHaveLength(3));
       const first = requests[0];
+
       if (!first) throw new Error("Expected notification request");
       expect(await first.json()).toMatchObject({
         world: "pandora",

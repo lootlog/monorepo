@@ -41,6 +41,7 @@ export const NotificationsPendingJobsCard = ({
   const { t } = useTranslation();
   const guildId = useGuildId();
   const queryClient = useQueryClient();
+
   const cancelGuildJob = useNotificationsGuildControllerCancelGuildJob<
     unknown,
     GuildNotificationCacheSnapshot | undefined
@@ -77,6 +78,7 @@ export const NotificationsPendingJobsCard = ({
       );
       throw error;
     }
+
     try {
       await cancelGuildJob.mutateAsync({
         pathParams: { guildId, jobId },

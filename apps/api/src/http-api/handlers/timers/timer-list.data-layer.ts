@@ -48,10 +48,13 @@ const visibleExpiredKeys = (
 ): ReadonlyArray<string> => {
   if (!world || !isObjectRecord(overrides)) return [];
   const alwaysVisible = overrides.alwaysVisibleExpiredTimers;
+
   if (!isRecord(alwaysVisible)) {
     return [];
   }
+
   const configured = alwaysVisible[world];
+
   return Array.isArray(configured)
     ? configured.filter((key): key is string => typeof key === "string")
     : [];
@@ -87,10 +90,12 @@ const readVisibleTimers = (
   selectedKeys: ReadonlyArray<string>,
 ) => {
   const now = new Date();
+
   const active = and(
     isNull(timerTable.deletedAt),
     gt(timerTable.maxSpawnTime, now),
   );
+
   const visibility =
     selectedKeys.length === 0
       ? active
@@ -105,12 +110,14 @@ const readVisibleTimers = (
             ),
           ),
         );
+
   const scope = world
     ? and(
         inArray(timerTable.guildId, [...guildIds]),
         eq(timerTable.world, world),
       )
     : inArray(timerTable.guildId, [...guildIds]);
+
   return database
     .select({
       timer: timerTable,
@@ -145,6 +152,7 @@ export const makeGuildTimerList = (
     world?: string,
   ) {
     const cacheKey = `timer:list:${access.guild.id}:${access.userId}:${world || "all"}`;
+
     const timers = yield* cache.getOrSet(
       cacheKey,
       Effect.gen(function* () {
@@ -153,6 +161,7 @@ export const makeGuildTimerList = (
           access.userId,
           world,
         );
+
         return yield* readVisibleTimers(
           database,
           [access.guild.id],
@@ -161,10 +170,12 @@ export const makeGuildTimerList = (
         );
       }),
     );
+
     return timers
       .filter((timer) => canViewTimer(access, timer))
       .map(mapTimerResponse);
   });
+
   return (access: TimersGuildAccess, world?: string) =>
     operation(access, world).pipe(Effect.mapError(toTimersDataFailure));
 };
@@ -179,10 +190,13 @@ export const makeAllTimerList = (database: typeof ApiDatabase.Service) => {
       identity.discordId,
       [Permission.LOOTLOG_TIMERS_READ, Permission.ADMIN],
     );
+
     if (guildRows.length === 0) {
       return yield* Effect.fail(new PermissionDeniedError());
     }
+
     const guildIds = guildRows.map(({ guild }) => guild.id);
+
     const members = yield* database
       .select({ member: memberTable, role: roleTable })
       .from(memberTable)
@@ -195,27 +209,32 @@ export const makeAllTimerList = (database: typeof ApiDatabase.Service) => {
           inArray(memberTable.guildId, guildIds),
         ),
       );
+
     const rolesByGuild = new Map<
       string,
       Array<typeof roleTable.$inferSelect>
     >();
+
     for (const { member, role } of members) {
       if (!role) continue;
       const roles = rolesByGuild.get(member.guildId) ?? [];
       roles.push(role);
       rolesByGuild.set(member.guildId, roles);
     }
+
     const selectedKeys = yield* readSelectedTimerKeys(
       database,
       identity.userId,
       world,
     );
+
     const timers = yield* readVisibleTimers(
       database,
       guildIds,
       world,
       selectedKeys,
     );
+
     const administrativeGuilds = new Set(
       guildRows
         .filter(
@@ -227,6 +246,7 @@ export const makeAllTimerList = (database: typeof ApiDatabase.Service) => {
         )
         .map(({ guild }) => guild.id),
     );
+
     return timers
       .filter(
         (timer) =>
@@ -238,6 +258,7 @@ export const makeAllTimerList = (database: typeof ApiDatabase.Service) => {
       )
       .map(mapTimerResponse);
   });
+
   return (
     identity: { readonly userId: string; readonly discordId: string },
     world?: string,

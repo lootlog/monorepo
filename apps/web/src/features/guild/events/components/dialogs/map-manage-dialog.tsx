@@ -67,6 +67,7 @@ export const MapManageDialog = ({
     filteredGameMaps,
     handleAddMapFromGame,
   } = useMapManageDialog({ open, onOpenChange, guildId, eventId, hero });
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl p-0 gap-0 overflow-hidden max-h-[90vh] flex flex-col">

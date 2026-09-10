@@ -35,6 +35,7 @@ describe("reservation catalog Effect adapter", () => {
         maps: ["map-a"],
       },
     ];
+
     const adapter = makeReservationCatalogAdapter({
       cache: cacheWith(cachedSpots),
       httpClient: makeHttpClient(500, null),
@@ -56,6 +57,7 @@ describe("reservation catalog Effect adapter", () => {
 
   it("fetches, normalizes and caches the established payload", async () => {
     const cache = emptyCache();
+
     const adapter = makeReservationCatalogAdapter({
       cache,
       httpClient: makeHttpClient(200, {

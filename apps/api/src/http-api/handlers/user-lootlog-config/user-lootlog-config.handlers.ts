@@ -77,6 +77,7 @@ export class UserLootlogConfigData extends Context.Service<
               (cause) => new UserLootlogConfigOperationError({ cause }),
             ),
           );
+
         const cacheRead = <S extends Schema.ConstraintDecoder<unknown>>(
           key: string,
           schema: S,
@@ -84,8 +85,10 @@ export class UserLootlogConfigData extends Context.Service<
           cache
             .getJson(key, schema)
             .pipe(Effect.catch(() => Effect.succeed(null)));
+
         const cacheWrite = <Value>(key: string, value: Value) =>
           cache.setJson(key, value, CACHE_TTL_SECONDS).pipe(Effect.ignore);
+
         const findGuilds = (discordId: string, permission: Permission) =>
           selectAccessibleGuilds(database, discordId, [permission]).pipe(
             Effect.map((rows) =>
@@ -99,9 +102,11 @@ export class UserLootlogConfigData extends Context.Service<
               Effect.gen(function* () {
                 const cacheKey = `user-lootlog-config:${discordId}:account:${accountId}`;
                 const keyAccess = yield* requestApiKeyAccess;
+
                 const cached = keyAccess
                   ? null
                   : yield* cacheRead(cacheKey, AccountLootlogConfigResponse);
+
                 if (cached !== null) return cached;
 
                 const [configs, guilds] = yield* Effect.all(
@@ -128,7 +133,9 @@ export class UserLootlogConfigData extends Context.Service<
                   ],
                   { concurrency: "unbounded" },
                 );
+
                 const writableGuildIds = new Set(guilds.map(({ id }) => id));
+
                 const result = Object.fromEntries(
                   configs.map((config) => [
                     config.characterId,
@@ -140,7 +147,9 @@ export class UserLootlogConfigData extends Context.Service<
                     },
                   ]),
                 );
+
                 if (!keyAccess) yield* cacheWrite(cacheKey, result);
+
                 return result;
               }),
             ),
@@ -151,25 +160,33 @@ export class UserLootlogConfigData extends Context.Service<
                   discordId,
                   Permission.LOOTLOG_LOOTS_WRITE,
                 );
+
                 const writableGuildIds = new Set(guilds.map(({ id }) => id));
+
                 const catchingGuildIds = [
                   ...new Set(payload.catchingGuildIds),
                 ].filter((id) => writableGuildIds.has(id));
+
                 const keyAccess = yield* requestApiKeyAccess;
+
                 const allowedIds = sql`ARRAY[${sql.join(
                   [...writableGuildIds].map((id) => sql`${id}`),
                   sql`, `,
                 )}]::text[]`;
+
                 const selectedIds = sql`ARRAY[${sql.join(
                   catchingGuildIds.map((id) => sql`${id}`),
                   sql`, `,
                 )}]::text[]`;
+
                 const updatedCatchingGuildIds = keyAccess
                   ? sql<
                       string[]
                     >`ARRAY(SELECT id FROM unnest(${userCharactersLootlogSettingsTable.catchingGuildIds}) AS id WHERE NOT (id = ANY(${allowedIds}))) || ${selectedIds}`
                   : catchingGuildIds;
+
                 const now = new Date(yield* Clock.currentTimeMillis);
+
                 const rows = yield* database
                   .insert(userCharactersLootlogSettingsTable)
                   .values({
@@ -192,7 +209,9 @@ export class UserLootlogConfigData extends Context.Service<
                     },
                   })
                   .returning();
+
                 const config = rows[0];
+
                 if (!config) {
                   return yield* Effect.fail(
                     new Error(
@@ -200,9 +219,11 @@ export class UserLootlogConfigData extends Context.Service<
                     ),
                   );
                 }
+
                 yield* cache
                   .deleteByPattern(getUserLootlogConfigCachePattern(discordId))
                   .pipe(Effect.ignore);
+
                 return keyAccess
                   ? {
                       ...config,
@@ -228,13 +249,16 @@ export class UserLootlogConfigData extends Context.Service<
                     ]),
                   ).values(),
                 ];
+
                 const guilds = yield* findGuilds(
                   discordId,
                   Permission.LOOTLOG_ACCESS,
                 );
+
                 const guildById = new Map(
                   guilds.map((guild) => [guild.id, guild]),
                 );
+
                 if (players.length === 0 || guilds.length === 0) {
                   return {
                     players: players.map((player) => ({
@@ -243,6 +267,7 @@ export class UserLootlogConfigData extends Context.Service<
                     })),
                   };
                 }
+
                 const predicates = players.map((player) =>
                   and(
                     eq(
@@ -259,6 +284,7 @@ export class UserLootlogConfigData extends Context.Service<
                     ),
                   ),
                 );
+
                 const configs = yield* database
                   .select()
                   .from(userCharactersLootlogSettingsTable)
@@ -272,15 +298,20 @@ export class UserLootlogConfigData extends Context.Service<
                     ),
                   )
                   .orderBy(desc(userCharactersLootlogSettingsTable.createdAt));
+
                 const visibleByPlayer = new Map<string, Set<string>>();
+
                 for (const config of configs) {
                   const key = `${config.userId}:${config.accountId}:${config.characterId}`;
                   const visible = visibleByPlayer.get(key) ?? new Set<string>();
+
                   for (const guildId of config.catchingGuildIds) {
                     if (guildById.has(guildId)) visible.add(guildId);
                   }
+
                   visibleByPlayer.set(key, visible);
                 }
+
                 return {
                   players: players.map((player) => ({
                     ...player,
@@ -317,6 +348,7 @@ const withIdentity = <A>(
     const identity = yield* UserLootlogConfigIdentity;
     const discordId = yield* identity.discordId;
     const data = yield* UserLootlogConfigData;
+
     return yield* operation(discordId, data);
   });
 

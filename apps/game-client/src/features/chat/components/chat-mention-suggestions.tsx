@@ -65,6 +65,7 @@ export const ChatMentionSuggestions: FC<ChatMentionSuggestionsProps> = ({
       ? "input.commandSuggestions.title"
       : "input.mentionSuggestions.title",
   );
+
   return (
     <div className="ll:absolute ll:bottom-full ll:inset-x-0 ll:z-50 ll:w-full ll:overflow-hidden ll:border-solid ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40 ll:bg-[#171719]">
       <div className="ll:flex ll:items-center ll:justify-between ll:border-solid ll:border-x-0 ll:border-t-0 ll:border-b ll:border-gray-400/20 ll:px-2 ll:py-1 ll:text-[10px] ll:text-neutral-400">
@@ -95,9 +96,11 @@ export const ChatMentionSuggestions: FC<ChatMentionSuggestionsProps> = ({
           <div role="listbox" aria-label={title}>
             {suggestions.map((suggestion, index) => {
               const command = suggestion.type === "command";
+
               const label = command
                 ? suggestion.label
                 : getChatMentionSuggestionDisplayLabel(suggestion);
+
               return (
                 <button
                   key={

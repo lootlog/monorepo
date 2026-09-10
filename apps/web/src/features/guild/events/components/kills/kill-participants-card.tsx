@@ -28,6 +28,7 @@ export const KillParticipantsCard = ({
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+
   const updateKillPoint = useEventsRankingControllerUpdateKillPoint({
     mutation: {
       onSuccess: () => {
@@ -37,6 +38,7 @@ export const KillParticipantsCard = ({
       },
     },
   });
+
   const sortedParticipants = [...participants].sort(
     (leftParticipant, rightParticipant) =>
       rightParticipant.points - leftParticipant.points,
@@ -45,11 +47,13 @@ export const KillParticipantsCard = ({
   const toggleExpanded = (participantId: string) => {
     setExpandedIds((currentIds) => {
       const nextIds = new Set(currentIds);
+
       if (nextIds.has(participantId)) {
         nextIds.delete(participantId);
       } else {
         nextIds.add(participantId);
       }
+
       return nextIds;
     });
   };
@@ -65,6 +69,7 @@ export const KillParticipantsCard = ({
       const data: Parameters<typeof updateKillPoint.mutateAsync>[0]["data"] = {
         pointsDelta,
       };
+
       if (comment) data.comment = comment;
       await updateKillPoint.mutateAsync({
         pathParams: {

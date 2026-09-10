@@ -9,9 +9,13 @@ import {
 import type { Other, OtherCreate } from "@lootlog/margonem/game-events";
 
 export const AIR_TAG_BATCH_INTERVAL_MS = 250;
+
 export const AIR_TAG_HEARTBEAT_INTERVAL_MS = 5_000;
+
 export const AIR_TAG_HEARTBEAT_SCAN_INTERVAL_MS = 5_000;
+
 export const AIR_TAG_MOVEMENT_THRESHOLD_TILES = 3;
+
 const MAX_LOCAL_TARGETS_PER_SCOPE = 100;
 
 type ObservationPublisher = (batch: AirTagObservationBatch) => void;
@@ -76,6 +80,7 @@ export class AirTagObservationController {
       enabled &&
       canPublish &&
       (!this.enabled || !this.canPublish || this.mapId !== mapId);
+
     const shouldClear =
       !enabled ||
       !canPublish ||
@@ -89,6 +94,7 @@ export class AirTagObservationController {
     if (shouldClear) {
       this.clearState();
     }
+
     this.mapId = mapId;
 
     if (shouldDetectCurrentOthers) {
@@ -147,6 +153,7 @@ export class AirTagObservationController {
     if (targetId === useGameStore.getState().game?.hero.characterId) return;
 
     const observation = this.toObservation(targetId, create);
+
     if (
       !observation ||
       create.dir === undefined ||
@@ -156,6 +163,7 @@ export class AirTagObservationController {
     }
 
     const now = this.now();
+
     const target: LocalAirTagTarget = {
       ...observation,
       dir: create.dir,
@@ -163,6 +171,7 @@ export class AirTagObservationController {
       lastPublishedX: observation.x,
       lastPublishedY: observation.y,
     };
+
     this.retainTargetCapacity(targetId);
     this.targets.set(targetId, target);
     this.queue(target, now);
@@ -176,6 +185,7 @@ export class AirTagObservationController {
     dir: number,
   ): void {
     const target = this.targets.get(targetId);
+
     if (!target) return;
 
     target.x = x;
@@ -187,6 +197,7 @@ export class AirTagObservationController {
         Math.abs(target.x - target.lastPublishedX),
         Math.abs(target.y - target.lastPublishedY),
       ) >= AIR_TAG_MOVEMENT_THRESHOLD_TILES;
+
     const heartbeatDue =
       this.now() - target.lastPublishedAt >= AIR_TAG_HEARTBEAT_INTERVAL_MS;
 
@@ -198,6 +209,7 @@ export class AirTagObservationController {
   private handleDelete(targetId: string): void {
     this.targets.delete(targetId);
     this.pending.delete(targetId);
+
     if (this.targets.size === 0) {
       this.stopHeartbeatTimer();
     }
@@ -216,6 +228,7 @@ export class AirTagObservationController {
     };
 
     if (create.clan) Object.assign(observation, { clan: create.clan });
+
     return isAirTagObservation(observation) ? observation : null;
   }
 
@@ -223,6 +236,7 @@ export class AirTagObservationController {
     target.lastPublishedAt = publishedAt;
     target.lastPublishedX = target.x;
     target.lastPublishedY = target.y;
+
     const observation: AirTagObservation = {
       targetId: target.targetId,
       nickname: target.nickname,
@@ -230,6 +244,7 @@ export class AirTagObservationController {
       x: target.x,
       y: target.y,
     };
+
     if (target.clan) observation.clan = target.clan;
     this.pending.set(target.targetId, observation);
     this.scheduleBatch();
@@ -247,6 +262,7 @@ export class AirTagObservationController {
   private flushBatch(): void {
     if (!this.isActive() || this.mapId === null || !this.publisher) {
       this.pending.clear();
+
       return;
     }
 
@@ -254,12 +270,15 @@ export class AirTagObservationController {
       0,
       AIR_TAG_MAX_BATCH_SIZE,
     );
+
     for (const observation of observations) {
       this.pending.delete(observation.targetId);
     }
+
     if (observations.length > 0) {
       this.publisher({ expectedMapId: this.mapId, observations });
     }
+
     if (this.pending.size > 0) {
       this.scheduleBatch();
     }
@@ -272,6 +291,7 @@ export class AirTagObservationController {
       if (!this.isActive()) return;
 
       const now = this.now();
+
       for (const target of this.targets.values()) {
         if (now - target.lastPublishedAt >= AIR_TAG_HEARTBEAT_INTERVAL_MS) {
           this.queue(target, now);
@@ -290,10 +310,12 @@ export class AirTagObservationController {
   private clearState(): void {
     this.targets.clear();
     this.pending.clear();
+
     if (this.batchTimer !== null) {
       this.cancelTimeout(this.batchTimer);
       this.batchTimer = null;
     }
+
     this.stopHeartbeatTimer();
   }
 
@@ -306,6 +328,7 @@ export class AirTagObservationController {
     }
 
     const oldestTargetId = this.targets.keys().next().value;
+
     if (oldestTargetId !== undefined) {
       this.targets.delete(oldestTargetId);
       this.pending.delete(oldestTargetId);

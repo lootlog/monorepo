@@ -56,6 +56,7 @@ const makeSocket = (): GatewaySocket => ({
 describe("MapPingService legacy parity", () => {
   test("returns the exact ACK and publishes one deduplicated event excluding the sender", async () => {
     const publications: unknown[] = [];
+
     const service = new MapPingService(
       {
         command: { eval: async () => [1, 1234, 0] },
@@ -66,12 +67,14 @@ describe("MapPingService legacy parity", () => {
         },
       },
     );
+
     const response = await service.send(makeSocket(), {
       expectedMapId: 7,
       type: "enemy",
       x: 10,
       y: 11,
     });
+
     expect(response).toMatchObject({
       status: "accepted",
       pingId: expect.any(String),
@@ -107,11 +110,13 @@ describe("MapPingService legacy parity", () => {
 
   test("fails closed when map context changed before consuming the rate limit", async () => {
     let evaluations = 0;
+
     const service = new MapPingService(
       {
         command: {
           eval: async () => {
             evaluations += 1;
+
             return [1, 1, 0];
           },
         },
@@ -120,6 +125,7 @@ describe("MapPingService legacy parity", () => {
         publishToScopes: () => Promise.reject(new Error("Unexpected publish")),
       },
     );
+
     expect(
       await service.send(makeSocket(), {
         expectedMapId: 8,

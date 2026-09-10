@@ -30,16 +30,27 @@ type GuildStatsCardData = {
 };
 
 const CARD_WIDTH = 1200;
+
 const CARD_HEIGHT = 630;
+
 const CARD_RADIUS = 8;
+
 const CACHE_TTL_SECONDS = 86_400;
+
 const CACHE_VERSION = "v2";
+
 const FONT_FAMILY = "DejaVu Sans, Arial, sans-serif";
+
 const ICON_SIZE = 112;
+
 const ICON_LEFT = 80;
+
 const ICON_TOP = 78;
+
 const ICON_FETCH_TIMEOUT_MS = 2_000;
+
 const MAX_ICON_BYTES = 2_000_000;
+
 const REFRESH_COOLDOWN_SECONDS = 300;
 
 export class PublicGuildStatsCardAdapterError extends TaggedErrorClass<PublicGuildStatsCardAdapterError>()(
@@ -83,6 +94,7 @@ type PublicGuildStatsCardFailure =
 
 const buildCacheKey = (guildId: string) =>
   `guild-stats-card:${guildId}:${CACHE_VERSION}`;
+
 const buildRefreshCooldownKey = (guildId: string) =>
   `guild-stats-card-refresh:${guildId}`;
 
@@ -93,6 +105,7 @@ export const makePublicGuildStatsCard = (options: {
   readonly image: PublicGuildStatsCardImageAdapter;
 }): PublicGuildStatsCard => {
   const useCache = options.environment !== RuntimeEnvironment.LOCAL;
+
   const getCardGuild = (guildId: string) =>
     options.repository
       .findActiveGuild(guildId)
@@ -103,12 +116,14 @@ export const makePublicGuildStatsCard = (options: {
             : Effect.fail(new ResourceNotFoundError("Guild not found")),
         ),
       );
+
   const render = (guild: GuildStatsCardGuild, guildId: string) =>
     Effect.gen(function* () {
       const stats = yield* options.repository.getLootStats(
         guildId,
         new Date((yield* Clock.currentTimeMillis) - 30 * 24 * 60 * 60 * 1000),
       );
+
       return yield* options.image
         .renderCard({ guild, stats })
         .pipe(
@@ -124,8 +139,10 @@ export const makePublicGuildStatsCard = (options: {
         const guild = yield* getCardGuild(guildId);
         const cacheKey = buildCacheKey(guildId);
         const cached = useCache ? yield* options.cache.get(cacheKey) : null;
+
         if (cached) return Buffer.from(cached, "base64");
         const image = yield* render(guild, guildId);
+
         if (useCache) {
           yield* options.cache.set(
             cacheKey,
@@ -133,23 +150,29 @@ export const makePublicGuildStatsCard = (options: {
             CACHE_TTL_SECONDS,
           );
         }
+
         return image;
       }),
     refreshStatsCard: (guildId) =>
       Effect.gen(function* () {
         const guild = yield* getCardGuild(guildId);
         const now = yield* Clock.currentTimeMillis;
+
         const nextRefreshAt = new Date(
           now + REFRESH_COOLDOWN_SECONDS * 1000,
         ).toISOString();
+
         const cooldownKey = buildRefreshCooldownKey(guildId);
+
         const acquired = yield* options.cache.setNX(
           cooldownKey,
           nextRefreshAt,
           REFRESH_COOLDOWN_SECONDS,
         );
+
         if (!acquired) {
           const activeNextRefreshAt = yield* options.cache.get(cooldownKey);
+
           return yield* Effect.fail(
             new ApplicationError(
               ApplicationErrorKind.RATE_LIMITED,
@@ -161,6 +184,7 @@ export const makePublicGuildStatsCard = (options: {
             ),
           );
         }
+
         yield* render(guild, guildId).pipe(
           Effect.tap((image) =>
             useCache
@@ -177,6 +201,7 @@ export const makePublicGuildStatsCard = (options: {
               .pipe(Effect.andThen(Effect.fail(error))),
           ),
         );
+
         return { nextRefreshAt };
       }),
   };
@@ -187,14 +212,18 @@ export class PublicGuildStatsCardImageAdapter {
 
   renderCard(data: GuildStatsCardData): Effect.Effect<Buffer, unknown> {
     const self = this;
+
     return Effect.gen(function* () {
       const icon = yield* self.fetchGuildIcon(data.guild.id, data.guild.icon);
+
       const base = yield* Effect.tryPromise(() =>
         sharp(Buffer.from(self.buildSvg(data, !icon)))
           .png()
           .toBuffer(),
       );
+
       if (!icon) return base;
+
       return yield* Effect.tryPromise(() =>
         sharp(base)
           .composite([{ input: icon, left: ICON_LEFT, top: ICON_TOP }])
@@ -285,6 +314,7 @@ export class PublicGuildStatsCardImageAdapter {
     if (!iconUrl) {
       return Effect.succeed(null);
     }
+
     return outboundHttpRequest(this.httpClient, {
       adapter: "discord-guild-icon",
       method: "GET",
@@ -307,6 +337,7 @@ export class PublicGuildStatsCardImageAdapter {
         ) {
           return Effect.succeed(null);
         }
+
         return Effect.tryPromise(() =>
           this.prepareIcon(Buffer.from(response.body)),
         );
@@ -342,6 +373,7 @@ export class PublicGuildStatsCardImageAdapter {
     }
 
     const extension = icon.startsWith("a_") ? "gif" : "png";
+
     return `https://cdn.discordapp.com/icons/${guildId}/${icon}.${extension}?size=256`;
   }
 

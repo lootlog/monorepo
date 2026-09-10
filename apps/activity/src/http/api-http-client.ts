@@ -48,6 +48,7 @@ export class ApiHttpClient extends Context.Service<
     ApiHttpClient,
     Effect.gen(function* () {
       const httpClient = yield* HttpClient.HttpClient;
+
       const get = Effect.fn("ApiHttpClient.get")(function* (
         operationId: string,
         url: URL | string,
@@ -69,6 +70,7 @@ export class ApiHttpClient extends Context.Service<
           decode: (body, status) => ({ status, body: new Uint8Array(body) }),
         });
       });
+
       return ApiHttpClient.of({ get });
     }),
   );

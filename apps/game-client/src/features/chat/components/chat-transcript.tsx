@@ -37,6 +37,7 @@ export type ChatScrollPosition = {
 };
 
 type ChatGuildData = ReturnType<typeof useChatGuildData>;
+
 export type ChatTranscriptProps = {
   appearance?: ChatAppearanceSettings;
   npcTypeColors?: NpcTypeColors;
@@ -57,9 +58,11 @@ export type ChatTranscriptProps = {
 
 const getViewportPosition = (viewport: HTMLElement): ChatScrollPosition => {
   const box = viewport.getBoundingClientRect();
+
   const row = Array.from(
     viewport.querySelectorAll<HTMLElement>("[data-message-id]"),
   ).find((element) => element.getBoundingClientRect().bottom > box.top);
+
   return {
     atEnd:
       viewport.scrollHeight - viewport.clientHeight - viewport.scrollTop <= 1,
@@ -91,12 +94,15 @@ export const ChatTranscript = ({
   const { visibleMessageIds } = useMessageScrollerVisibility();
   const viewport = useRef<HTMLDivElement>(null);
   const pointerHeld = useRef(false);
+
   const [highlightedMessageId, setHighlightedMessageId] = useState<
     string | null
   >(null);
+
   const highlightTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined,
   );
+
   useEffect(() => () => clearTimeout(highlightTimer.current), []);
   const initialPosition = useRef(position);
   const restored = useRef(false);
@@ -109,6 +115,7 @@ export const ChatTranscript = ({
         (item.message.id === messageId ||
           (item.kind === "npc-group" && item.messageIds.includes(messageId))),
     );
+
     if (
       !row ||
       row.kind === "date-divider" ||
@@ -116,12 +123,14 @@ export const ChatTranscript = ({
     ) {
       return false;
     }
+
     clearTimeout(highlightTimer.current);
     setHighlightedMessageId(row.message.id);
     highlightTimer.current = setTimeout(
       () => setHighlightedMessageId(null),
       1500,
     );
+
     return true;
   });
 
@@ -134,36 +143,46 @@ export const ChatTranscript = ({
     )
       return;
     const box = viewport.current.getBoundingClientRect();
+
     if (box.height === 0 || box.width === 0) return;
+
     const visible = new Set(
       Array.from(
         viewport.current.querySelectorAll<HTMLElement>("[data-message-id]"),
       ).flatMap((element) => {
         const row = element.getBoundingClientRect();
+
         return row.bottom > box.top && row.top < box.bottom
           ? [element.dataset.messageId]
           : [];
       }),
     );
+
     const ids = renderables.flatMap((row) => {
       if (row.kind === "date-divider" || !visible.has(row.message.id))
         return [];
+
       return row.kind === "npc-group" ? row.messageIds : [row.message.id];
     });
+
     if (ids.length > 0) onMessagesSeen?.(ids);
   });
+
   useEffect(() => {
     observeVisible();
     document.addEventListener("visibilitychange", observeVisible);
+
     return () =>
       document.removeEventListener("visibilitychange", observeVisible);
   }, [isActive, visibleMessageIds, unreadIds]);
 
   useLayoutEffect(() => {
     if (isEmpty || restored.current) return;
+
     const frame = requestAnimationFrame(() => {
       restored.current = true;
       const saved = initialPosition.current;
+
       if (saved?.atEnd === false && saved.messageId) {
         scrollToMessage(saved.messageId, {
           align: "start",
@@ -171,8 +190,10 @@ export const ChatTranscript = ({
           behavior: "instant",
         });
       }
+
       observeVisible();
     });
+
     return () => cancelAnimationFrame(frame);
   }, [isEmpty, scrollToMessage]);
 
@@ -180,6 +201,7 @@ export const ChatTranscript = ({
     if (!restored.current || !isActive || !viewport.current) return;
     onPositionChange?.(getViewportPosition(viewport.current));
   };
+
   const savePositionFromEffect = useEffectEvent(savePosition);
   // Persist actual DOM scroll geometry after virtualized rows change; the parent does not own this viewport.
   // oxlint-disable-next-line react-doctor/no-pass-data-to-parent
@@ -202,9 +224,11 @@ export const ChatTranscript = ({
     )
       return;
     const element = viewport.current;
+
     if (!element) return;
     const position = getViewportPosition(element);
     pointerHeld.current = true;
+
     if (position.messageId)
       scrollToMessage(position.messageId, {
         align: "start",
@@ -215,6 +239,7 @@ export const ChatTranscript = ({
 
   const resumeAtEnd = () => {
     const element = viewport.current;
+
     if (
       element &&
       !pointerHeld.current &&
@@ -224,14 +249,17 @@ export const ChatTranscript = ({
       scrollToEnd({ behavior: "instant" });
     }
   };
+
   const releasePosition = useEffectEvent(() => {
     if (!pointerHeld.current) return;
     pointerHeld.current = false;
     resumeAtEnd();
   });
+
   useEffect(() => {
     window.addEventListener("pointerup", releasePosition);
     window.addEventListener("pointercancel", releasePosition);
+
     return () => {
       window.removeEventListener("pointerup", releasePosition);
       window.removeEventListener("pointercancel", releasePosition);

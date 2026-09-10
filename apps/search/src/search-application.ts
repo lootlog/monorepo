@@ -22,6 +22,7 @@ export const SearchConsumers = Layer.effectDiscard(
   Effect.gen(function* () {
     const rabbit = yield* RabbitMessaging;
     const search = yield* SearchOperations;
+
     const consume = <A>(
       queueName: string,
       schema: Schema.Codec<ReadonlyArray<A>>,
@@ -35,6 +36,7 @@ export const SearchConsumers = Layer.effectDiscard(
         },
         (delivery) => {
           let items: ReadonlyArray<A>;
+
           try {
             items = Schema.decodeUnknownSync(Schema.fromJsonString(schema))(
               new TextDecoder().decode(delivery.content),
@@ -43,8 +45,10 @@ export const SearchConsumers = Layer.effectDiscard(
             effectLogger.error(`Validation error in ${queueName} handler`, {
               error,
             });
+
             return Effect.void;
           }
+
           return index(items).pipe(
             Effect.withSpan(queueName, {
               attributes: { adapter: "rabbitmq", retryCount: 0 },
@@ -52,6 +56,7 @@ export const SearchConsumers = Layer.effectDiscard(
           );
         },
       );
+
     yield* consume("search.items.index", IndexItemsPayload, (items) =>
       search.indexItems({ items: [...items] }),
     );
@@ -67,6 +72,7 @@ export const SearchConsumers = Layer.effectDiscard(
 const RabbitLive = Layer.unwrap(
   Effect.gen(function* () {
     const config = yield* SearchConfig;
+
     return RabbitMessaging.layer({
       uri: Redacted.value(config.rabbitmqUri),
       connectionName: config.serviceName,

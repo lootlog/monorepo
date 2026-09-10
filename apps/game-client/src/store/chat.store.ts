@@ -9,6 +9,7 @@ import type { MessageType } from "@/api/chat.api";
 const STORAGE_KEY = storageKey("ll:chat:state");
 
 export type ChatFilter = "all" | "normal" | "npc" | "party" | "reports";
+
 type ReplyableMessageType = Extract<MessageType, "NORMAL" | "NOTIFICATION">;
 
 export type ChatReplyDraft = {
@@ -145,6 +146,7 @@ export const useChatStore = create<ChatState>()(
       version: 2,
       migrate: (persisted) => {
         if (!isObjectRecord(persisted)) return { chatFilter: "all" as const };
+
         return { ...persisted, chatFilter: "all" as const };
       },
     },
@@ -153,6 +155,7 @@ export const useChatStore = create<ChatState>()(
 
 const getChatCharacterKey = () => {
   const hero = useGameStore.getState().game?.hero;
+
   return `${hero?.accountId ?? ""}:${hero?.characterId ?? ""}`;
 };
 
@@ -161,7 +164,9 @@ export const getSelectedChatGuildId = (
 ): string => {
   const key = getChatCharacterKey();
   const selected = state.selectedGuildByCharacter[key];
+
   if (selected !== undefined) return selected;
+
   // Preserve the existing per-character selector preference on first use.
   try {
     return z

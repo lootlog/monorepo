@@ -34,13 +34,16 @@ export function BattleHpTimelineLegendPopover({
   legendaryItems,
 }: BattleHpTimelineLegendPopoverProps) {
   const { t } = useTranslation();
+
   const legend = buildBattleHpTimelineLegendItems({
     config,
     layerCounts,
     legendaryItems,
   });
+
   const hasLegendItems =
     legend.eventItems.length > 0 || legend.legendaryItems.length > 0;
+
   const openLabel = t("battlePanel.single.chart.legend.open");
 
   return (

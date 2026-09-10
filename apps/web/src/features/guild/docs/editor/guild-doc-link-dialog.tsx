@@ -29,15 +29,18 @@ export const GuildDocLinkDialog = ({
   const [url, setUrl] = useState("");
   const [text, setText] = useState(selectedText);
   const needsText = selectedText.trim().length === 0;
+
   const canSubmit =
     url.trim().length > 0 && (!needsText || text.trim().length > 0);
 
   const [previousInput, setPreviousInput] = useState({ open, selectedText });
+
   if (
     previousInput.open !== open ||
     previousInput.selectedText !== selectedText
   ) {
     setPreviousInput({ open, selectedText });
+
     if (open) {
       setUrl("");
       setText(selectedText);

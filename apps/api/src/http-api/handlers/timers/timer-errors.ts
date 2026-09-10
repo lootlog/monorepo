@@ -55,6 +55,8 @@ export const toTimersDataFailure = (cause: unknown): TimersDataFailure => {
   ) {
     return cause;
   }
+
   if (cause instanceof ApplicationError) return cause;
+
   return new TimersInfrastructureError({ cause });
 };

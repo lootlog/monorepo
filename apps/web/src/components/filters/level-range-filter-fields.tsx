@@ -19,12 +19,15 @@ export function LevelRangeFilterFields({
   const [localMinLevel, setLocalMinLevel] = useState<number | undefined>(
     minLevel,
   );
+
   const [localMaxLevel, setLocalMaxLevel] = useState<number | undefined>(
     maxLevel,
   );
+
   const commitMinLevel = useDebounceCallback((value: number | undefined) => {
     if (value !== minLevel) onMinLevelChange(value);
   }, debounceMs);
+
   const commitMaxLevel = useDebounceCallback((value: number | undefined) => {
     if (value !== maxLevel) onMaxLevelChange(value);
   }, debounceMs);
@@ -43,6 +46,7 @@ export function LevelRangeFilterFields({
       commitMinLevel(undefined);
     } else {
       const parsed = Number.parseInt(value, 10);
+
       if (!Number.isNaN(parsed) && parsed > 0 && parsed <= 500) {
         setLocalMinLevel(parsed);
         commitMinLevel(parsed);
@@ -56,6 +60,7 @@ export function LevelRangeFilterFields({
       commitMaxLevel(undefined);
     } else {
       const parsed = Number.parseInt(value, 10);
+
       if (!Number.isNaN(parsed) && parsed > 0 && parsed <= 500) {
         setLocalMaxLevel(parsed);
         commitMaxLevel(parsed);

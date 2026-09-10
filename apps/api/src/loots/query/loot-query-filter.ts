@@ -35,21 +35,25 @@ const existsPlayer = (condition: SQL) => sql`EXISTS (
   INNER JOIN "PlayerSnapshot" query_ps ON query_ps.id = query_lp."playerSnapshotId"
   WHERE query_lp."lootId" = ${lootTable.id} AND ${condition}
 )`;
+
 const existsNpc = (condition: SQL) => sql`EXISTS (
   SELECT 1 FROM "LootNpc" query_ln
   INNER JOIN "NpcSnapshot" query_ns ON query_ns.id = query_ln."npcSnapshotId"
   WHERE query_ln."lootId" = ${lootTable.id} AND ${condition}
 )`;
+
 const existsItem = (condition: SQL) => sql`EXISTS (
   SELECT 1 FROM "LootItem" query_li
   INNER JOIN "ItemSnapshot" query_is ON query_is.id = query_li."itemSnapshotId"
   WHERE query_li."lootId" = ${lootTable.id} AND ${condition}
 )`;
+
 const sqlList = (values: ReadonlyArray<unknown>) =>
   sql.join(
     values.map((value) => sql`${value}`),
     sql`, `,
   );
+
 const levelRange = (
   column: SQL,
   minimum: number | undefined,
@@ -68,16 +72,19 @@ const rangeConditions = (filters: LootQueryFilters): Array<SQL | undefined> => {
     filters.npcLevelMin,
     filters.npcLevelMax,
   );
+
   const item = levelRange(
     sql`query_is.lvl`,
     filters.itemLevelMin,
     filters.itemLevelMax,
   );
+
   const player = levelRange(
     sql`query_lp.lvl`,
     filters.playerLevelMin,
     filters.playerLevelMax,
   );
+
   return [
     npc ? existsNpc(npc) : undefined,
     item ? existsItem(item) : undefined,
@@ -112,11 +119,15 @@ const professionCondition = (
   professions: ReadonlyArray<string> | undefined,
 ) => {
   if (!professions?.length) return undefined;
+
   const shortnames = professions.flatMap((profession) => {
     const shortname = getShortnameByProf(profession);
+
     return shortname ? [shortname] : [];
   });
+
   if (shortnames.length === 0) return undefined;
+
   const condition = or(
     sql`query_is."statRaw" NOT LIKE '%reqp=%'`,
     ...shortnames.map(
@@ -124,12 +135,16 @@ const professionCondition = (
         sql`query_is."statsSnapshot"->>'reqp' LIKE ${`%${shortname}%`}`,
     ),
   );
+
   return condition ? existsItem(condition) : undefined;
 };
+
 const searchCondition = (search: string | undefined) => {
   const value = search?.trim();
+
   if (!value) return undefined;
   const pattern = `%${value}%`;
+
   return or(
     ilike(lootTable.location, pattern),
     existsItem(sql`query_is.name ILIKE ${pattern}`),
@@ -143,28 +158,36 @@ const visibilityCondition = (
   roles: ReadonlyArray<LootQueryVisibilityRole>,
 ) => {
   if (permissions.includes("OWNER")) return undefined;
+
   const readableRoles = roles.filter((role) =>
     role.permissions.includes("LOOTLOG_LOOTS_READ"),
   );
+
   if (readableRoles.length === 0) return sql`false`;
+
   const roleConditions = readableRoles.map((role) => {
     const excluded: string[] = [];
+
     if (!role.permissions.includes("LOOTLOG_LOOTS_TITANS_READ")) {
       excluded.push("TITAN");
     }
+
     if (!role.permissions.includes("LOOTLOG_LOOTS_HEROES_READ")) {
       excluded.push("HERO", "EVENT_HERO");
     }
+
     const typeCondition =
       excluded.length === 0
         ? sql`visibility_npc.type IS NOT NULL`
         : sql`visibility_npc.type IS NOT NULL AND visibility_npc.type NOT IN (${sqlList(excluded)})`;
+
     return sql`(
       visibility_npc.lvl IS NOT NULL
       AND visibility_npc.lvl BETWEEN ${role.lvlRangeFrom ?? 0} AND ${role.lvlRangeTo ?? 500}
       AND ${typeCondition}
     )`;
   });
+
   return sql`
     EXISTS (SELECT 1 FROM "LootNpc" visibility_ln WHERE visibility_ln."lootId" = ${lootTable.id})
     AND NOT EXISTS (

@@ -1,6 +1,8 @@
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import type { roleTable } from "#src/database/drizzle/schema";
+
 type Role = typeof roleTable.$inferSelect;
+
 import {
   AssignEventMapLocationRequest,
   AssignEventMemberRequest,
@@ -54,6 +56,7 @@ export const makeEventsAssignment = (
         roles,
         accessPolicy,
       );
+
       return yield* mapAssignments.assignMember(
         guildData,
         eventId,
@@ -79,6 +82,7 @@ export const makeEventsAssignment = (
         roles,
         accessPolicy,
       );
+
       return yield* mapAssignments.unassignMember(
         guildData,
         eventId,
@@ -176,6 +180,7 @@ export const makeEventsAssignment = (
         roles,
         accessPolicy,
       );
+
       return yield* catalogMutations.getLocations(guildData, eventId, heroId);
     }).pipe(Effect.withSpan("EventsAssignment.getLocations"));
   },

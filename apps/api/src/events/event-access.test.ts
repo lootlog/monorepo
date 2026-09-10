@@ -27,6 +27,7 @@ describe("event access Effect module", () => {
         throw new Error("Unexpected database access");
       },
     });
+
     const policy = createAccessPolicy({
       capabilities: [Permission.LOOTLOG_EVENTS_READ],
     });

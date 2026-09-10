@@ -50,11 +50,13 @@ export function ReservationBlock({
   const { t } = useTranslation();
   const { reservation } = segment;
   const isContextMenuOpenRef = useRef(false);
+
   const notifyContextMenuClosedOnUnmount = useEffectEvent(() => {
     if (!isContextMenuOpenRef.current) return;
     isContextMenuOpenRef.current = false;
     onContextMenuOpenChange?.(false);
   });
+
   // The menu stays open while a cancel is pending; the block unmounts once the
   // reservation disappears, and the menu never reports that it closed.
   useEffect(() => () => notifyContextMenuClosedOnUnmount(), []);
@@ -62,11 +64,14 @@ export function ReservationBlock({
   const showStackedTime = durationMinutes >= 45;
   const showInlineTime = durationMinutes < 45 && segment.laneCount === 1;
   const showDetails = durationMinutes >= 90;
+
   const avatarClassName = showDetails
     ? "size-6"
     : "hidden size-4 @min-[7rem]:flex";
+
   const isPartner = !reservation.sourceOrganization.isCurrent;
   const time = `${format(segment.segmentStart, "HH:mm")}–${format(segment.segmentEnd, "HH:mm")}`;
+
   const fallback =
     reservation.author.displayName.charAt(0).toUpperCase() || "?";
 
@@ -147,6 +152,7 @@ export function ReservationBlock({
       onOpenChange={(open, eventDetails) => {
         isContextMenuOpenRef.current = open;
         onContextMenuOpenChange?.(open);
+
         if (!open && eventDetails.reason === "outside-press") {
           onContextMenuOutsidePress?.(eventDetails.event);
         }

@@ -19,6 +19,7 @@ const headers = Effect.map(
       ),
     ),
 );
+
 const respond = <A, R>(effect: Effect.Effect<A, HttpResponseError, R>) =>
   effect.pipe(
     Effect.map((body) =>
@@ -35,6 +36,7 @@ const respond = <A, R>(effect: Effect.Effect<A, HttpResponseError, R>) =>
       ),
     ),
   );
+
 const invalid = () =>
   new HttpResponseError({
     status: 400,
@@ -50,6 +52,7 @@ export const ApiKeyHandlers = HttpApiBuilder.group(
         respond(
           Effect.gen(function* () {
             const service = yield* ApiKeyService;
+
             return yield* service.list(
               yield* service.session(yield* headers, false),
             );
@@ -61,10 +64,12 @@ export const ApiKeyHandlers = HttpApiBuilder.group(
           Effect.gen(function* () {
             const service = yield* ApiKeyService;
             const userId = yield* service.session(yield* headers);
+
             const payload = yield* HttpServerRequest.schemaBodyJson(
               CreateApiKey,
               { onExcessProperty: "error" },
             ).pipe(Effect.mapError(invalid));
+
             return yield* service.create(userId, payload);
           }),
         ),
@@ -74,10 +79,12 @@ export const ApiKeyHandlers = HttpApiBuilder.group(
           Effect.gen(function* () {
             const service = yield* ApiKeyService;
             const userId = yield* service.session(yield* headers);
+
             const payload = yield* HttpServerRequest.schemaBodyJson(
               RenameApiKey,
               { onExcessProperty: "error" },
             ).pipe(Effect.mapError(invalid));
+
             return yield* service.rename(userId, params.id, payload.name);
           }),
         ),
@@ -86,6 +93,7 @@ export const ApiKeyHandlers = HttpApiBuilder.group(
         respond(
           Effect.gen(function* () {
             const service = yield* ApiKeyService;
+
             return yield* service.remove(
               yield* service.session(yield* headers),
               params.id,
@@ -97,10 +105,12 @@ export const ApiKeyHandlers = HttpApiBuilder.group(
         respond(
           Effect.gen(function* () {
             const service = yield* ApiKeyService;
+
             const payload = yield* HttpServerRequest.schemaBodyJson(
               ApiKeyStatusRequest,
               { onExcessProperty: "error" },
             ).pipe(Effect.mapError(invalid));
+
             return yield* service.statuses(yield* headers, payload.keyIds);
           }),
         ),

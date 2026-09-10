@@ -7,10 +7,13 @@ import { stringify } from "yaml";
 import { BattlelogApi } from "../http-api/battlelog-api.js";
 
 const document = OpenApi.fromApi(BattlelogApi);
+
 const integer = (maximum = Number.MAX_SAFE_INTEGER) => ({
   schema: { type: "integer", minimum: 1, maximum },
 });
+
 const boolean = { schema: { type: "boolean" } };
+
 type ParameterPatch = {
   schema: {
     type: string;
@@ -19,6 +22,7 @@ type ParameterPatch = {
     default?: number;
   };
 };
+
 const parameterSchemas = new Map<string, ParameterPatch>(
   Object.entries({
     "BattlesController_getDashboardBattles:size": {
@@ -40,6 +44,7 @@ const parameterSchemas = new Map<string, ParameterPatch>(
     "BattlesController_getBattleAnalytics:matchmaking": boolean,
   }),
 );
+
 const statisticOperations = [
   "BattlesController_getCombatProfile",
   "BattlesController_getProfessionWinRate",
@@ -51,17 +56,21 @@ const statisticOperations = [
   "BattlesController_getRatingDeltaByOpponent",
   "BattlesController_getPlayerVsPlayerBattles",
 ] as const;
+
 for (const operationId of statisticOperations) {
   for (const name of ["minLevel", "maxLevel", "size", "minBattles"] as const) {
     parameterSchemas.set(`${operationId}:${name}`, integer());
   }
+
   for (const name of ["includeTotal", "ph", "matchmaking"] as const) {
     parameterSchemas.set(`${operationId}:${name}`, boolean);
   }
 }
+
 const responseDescriptions = new Map<string, string>([
   ["HealthzController_healthCheck:200", "API is healthy"],
 ]);
+
 for (const operationId of [
   "BattlesController_getBattleTimeline",
   "BattlesController_getBattle",
@@ -71,6 +80,7 @@ for (const operationId of [
 ] as const) {
   responseDescriptions.set(`${operationId}:404`, "Battle not found");
 }
+
 for (const operationId of [
   "PublicBattlesController_getPublicBattle",
   "PublicBattlesController_getPublicBattleRaw",
@@ -78,11 +88,13 @@ for (const operationId of [
 ] as const) {
   responseDescriptions.set(`${operationId}:404`, "Public battle not found");
 }
+
 preserveOpenApi30Contract(
   document,
   Object.fromEntries(parameterSchemas),
   Object.fromEntries(responseDescriptions),
 );
+
 setOpenApiCompatibilityValue(
   document,
   [
@@ -97,6 +109,7 @@ setOpenApiCompatibilityValue(
   ],
   {},
 );
+
 const HTTP_METHODS = [
   "get",
   "post",
@@ -125,6 +138,7 @@ for (const [path, pathItem] of Object.entries(document.paths)) {
     }),
   );
 }
+
 await Bun.write(
   new URL("../../openapi.yaml", import.meta.url),
   stringify(document, { lineWidth: 0 }),

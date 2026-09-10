@@ -19,7 +19,9 @@ export const receiveChatMessage = (
 ) => {
   if (message.type === "PARTY_GATHERING") return state;
   const entries = state[message.guildId] ?? [];
+
   if (entries.some((entry) => entry.id === message.id)) return state;
+
   return {
     ...state,
     [message.guildId]: [
@@ -34,18 +36,18 @@ export const markChatMessagesRead = (
   messageIds: readonly string[],
 ) => {
   const visible = new Set(messageIds);
-  let result = state;
+  let result: ChatReadState | undefined;
+
   for (const [guildId, entries] of Object.entries(state)) {
     if (!entries.some((entry) => !entry.read && visible.has(entry.id)))
       continue;
-    result = {
-      ...result,
-      [guildId]: entries.map((entry) =>
-        visible.has(entry.id) ? { ...entry, read: true } : entry,
-      ),
-    };
+    result ??= { ...state };
+    result[guildId] = entries.map((entry) =>
+      visible.has(entry.id) ? { ...entry, read: true } : entry,
+    );
   }
-  return result;
+
+  return result ?? state;
 };
 
 export const prioritizeChatMessage = (
@@ -54,9 +56,11 @@ export const prioritizeChatMessage = (
   messageId: string,
 ) => {
   const entries = state[guildId];
+
   if (!entries?.some((entry) => entry.id === messageId && !entry.attention)) {
     return state;
   }
+
   return {
     ...state,
     [guildId]: entries.map((entry) =>
@@ -71,7 +75,9 @@ export const retainChatReadEntries = (
   retainedIds: ReadonlySet<string>,
 ) => {
   const entries = state[guildId];
+
   if (!entries?.some((entry) => !retainedIds.has(entry.id))) return state;
+
   return {
     ...state,
     [guildId]: entries.filter((entry) => retainedIds.has(entry.id)),
@@ -82,6 +88,7 @@ export const getChatUnreadSummary = (state: ChatReadState, guildId: string) => {
   const entries = (
     guildId === "all" ? Object.values(state).flat() : (state[guildId] ?? [])
   ).filter((entry) => !entry.read);
+
   return {
     ids: new Set(entries.map((entry) => entry.id)),
     attention: entries.filter((entry) => entry.attention).length,
@@ -119,25 +126,31 @@ export const reconcileChatReadState = (
   }: ReconcileChatReadStateInput,
 ) => {
   let next = state;
+
   if (Object.keys(state).some((guildId) => !allowedGuildIds.has(guildId))) {
     next = Object.fromEntries(
       Object.entries(state).filter(([guildId]) => allowedGuildIds.has(guildId)),
     );
   }
+
   for (const [guildId, allMessages] of Object.entries(messagesByGuildId)) {
     if (failedGuildIds.has(guildId)) continue;
+
     const messages = allMessages.filter(
       (message) => !isHiddenNpcChatMessage(message, hiddenNpcTypes),
     );
+
     next = retainChatReadEntries(
       next,
       guildId,
       new Set(messages.map((message) => message.id)),
     );
+
     for (const message of messages) {
       if (hasAttention(guildId, message))
         next = prioritizeChatMessage(next, guildId, message.id);
     }
   }
+
   return next;
 };

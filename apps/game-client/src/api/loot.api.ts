@@ -61,6 +61,7 @@ export async function createLoot(
   const client = createApiClient("main");
   const { mapPlayersSnapshot: _mapPlayersSnapshot, ...loggedOptions } = options;
   let attempt = 0;
+
   const response = await runSingleLoggedAction({
     actionType: "create_loot",
     actionPayload: loggedOptions,
@@ -84,11 +85,13 @@ export async function createLoot(
           "/loots",
           options,
         );
+
         logLootCreateDebug("http-success", {
           ...debugContext,
           attempt,
           response: requestResponse,
         });
+
         return requestResponse;
       } catch (error) {
         logLootCreateDebug("http-error", {

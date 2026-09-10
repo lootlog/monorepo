@@ -23,9 +23,11 @@ describe("API RabbitMQ topology", () => {
     const main = apiRabbitQueues.find(
       ({ name }) => name === Queue.GUILDS_CREATE,
     );
+
     const retry = apiRabbitQueues.find(
       ({ name }) => name === Queue.GUILDS_CREATE_RETRY,
     );
+
     const deadLetter = apiRabbitQueues.find(
       ({ name }) => name === Queue.GUILDS_CREATE_DLQ,
     );

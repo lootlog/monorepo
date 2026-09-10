@@ -4,6 +4,7 @@ import {
 } from "@/lib/audio-playback-pool";
 
 const audioPlaybackPool = createAudioPlaybackPool();
+
 let audioPlaybackConsumers = 0;
 
 export const preloadSoundUrl = (url: string, channel?: string) => {
@@ -25,6 +26,7 @@ export const acquireSoundPlayback = () => {
 
     released = true;
     audioPlaybackConsumers = Math.max(0, audioPlaybackConsumers - 1);
+
     if (audioPlaybackConsumers === 0) {
       audioPlaybackPool.dispose();
     }

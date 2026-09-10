@@ -20,13 +20,16 @@ import { useSettingsStore } from "@/store/settings.store";
 import { testRuntimeWindow } from "@/test/test-runtime-window";
 
 import { createCatchingGuildsHttp } from "@/test/catching-guilds-http";
+
 let endpoint: ReturnType<typeof createCatchingGuildsHttp>;
 
 import { useCharacterTooltipCatchingGuilds } from "./use-character-tooltip-catching-guilds";
 import { useWhoIsHereLootlogHighlight } from "./use-who-is-here-lootlog-highlight";
 
 const originalWindowEngine = testRuntimeWindow.Engine;
+
 const jqueryWindow: Window & { $?: unknown } = window;
+
 const originalWindowDollar = jqueryWindow.$;
 
 type WhoIsHereEntry = {
@@ -109,6 +112,7 @@ function setSuccess(
   guilds = [{ id: "guild-blue", name: "Blue Guild" }],
 ): void {
   const target = getOtherCatchingGuildsTarget(createOther(characterId));
+
   if (!target) throw new Error("Expected an online player target");
   useCharacterTooltipCatchingGuildsStore
     .getState()
@@ -120,6 +124,7 @@ function setRuntime(
   createTipWrapper = vi.fn<(container: Element | null, other: Other) => void>(),
 ): void {
   const tipContainer = document.querySelector(".tip-container");
+
   const whoIsHereEntry: WhoIsHereEntry = {
     $: {
       find: vi.fn<(selector: string) => Element | null>(() => tipContainer),
@@ -248,10 +253,12 @@ describe("useWhoIsHereLootlogHighlight", () => {
 
   it("does not rerender for other or presence updates while inactive", () => {
     let renderCount = 0;
+
     const { unmount } = renderHook(() => {
       renderCount += 1;
       useWhoIsHereLootlogHighlight();
     });
+
     const renderCountBeforeOtherUpdate = renderCount;
 
     act(() => {
@@ -347,6 +354,7 @@ describe("useWhoIsHereLootlogHighlight", () => {
     const { emit } = installMutationObserverMock();
     vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
       callback(0);
+
       return 1;
     });
     vi.stubGlobal("cancelAnimationFrame", vi.fn<typeof cancelAnimationFrame>());
@@ -356,6 +364,7 @@ describe("useWhoIsHereLootlogHighlight", () => {
       renderCount += 1;
       useWhoIsHereLootlogHighlight();
     });
+
     const renderCountBeforeMutation = renderCount;
     row.classList.remove("ll-who-is-here-lootlog-highlight");
     row.style.removeProperty("--ll-who-is-here-lootlog-color");
@@ -473,6 +482,7 @@ describe("useWhoIsHereLootlogHighlight", () => {
     act(() => {
       setOnlineOwner();
       const target = getOtherCatchingGuildsTarget(other);
+
       if (!target) throw new Error("Expected an online player target");
       useCharacterTooltipCatchingGuildsStore.getState().setLoading(target);
     });
@@ -485,6 +495,7 @@ describe("useWhoIsHereLootlogHighlight", () => {
 
     act(() => {
       const target = getOtherCatchingGuildsTarget(other);
+
       if (!target) throw new Error("Expected an online player target");
       useCharacterTooltipCatchingGuildsStore.getState().setError(target);
     });
@@ -500,11 +511,13 @@ describe("useWhoIsHereLootlogHighlight", () => {
     const row = appendWhoIsHereRow();
     const other = createOther();
     let tooltipHtml = "";
+
     const createTipWrapper = vi.fn<
       (container: Element | null, other: Other) => void
     >((_tipContainer, tooltipOther) => {
       tooltipHtml = String(tooltipOther.createStrTip?.() ?? "");
     });
+
     characterTooltipTransforms.register(appendCatchingGuildsTooltipSection);
     seedRuntimeOthers({ "617": other });
     setRuntime(other, createTipWrapper);
@@ -550,11 +563,13 @@ describe("useWhoIsHereLootlogHighlight", () => {
     const row = appendWhoIsHereRow();
     const other = createOther();
     let tooltipHtml = "";
+
     const createTipWrapper = vi.fn<
       (container: Element | null, other: Other) => void
     >((_tipContainer, tooltipOther) => {
       tooltipHtml = String(tooltipOther.createStrTip?.() ?? "");
     });
+
     characterTooltipTransforms.register(appendCatchingGuildsTooltipSection);
     seedRuntimeOthers({ "617": other });
     setRuntime(other, createTipWrapper);

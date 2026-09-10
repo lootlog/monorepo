@@ -74,21 +74,26 @@ const getGuildSwitcherStatus = ({
   visibleGuildCount,
 }: GuildSwitcherStatusInput) => {
   const hasResolvedGuilds = hasGuilds && isFetched && arePreferencesFetched;
+
   if (hasResolvedGuilds && visibleGuildCount === 1) {
     return "single" as const;
   }
+
   if (hasResolvedGuilds && visibleGuildCount === 0) {
     return "hidden" as const;
   }
+
   if ((!hasGuilds && isLoading) || (!hasPreferences && arePreferencesLoading)) {
     return "loading" as const;
   }
+
   if (
     (!hasGuilds && hasGuildsError) ||
     (!hasPreferences && hasPreferencesError)
   ) {
     return "error" as const;
   }
+
   return "ready" as const;
 };
 
@@ -108,11 +113,15 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
     unreadGuildIds,
     value,
   } = resolveGuildSwitcherProps(props);
+
   const { t } = useTranslation("common");
   const characterId = useCurrentCharacterId();
+
   const { guildsQuery, preferencesQuery, visibleGuilds } =
     useVisibleLootlogGuilds();
+
   const { data: guilds, error, isFetched, isLoading, refetch } = guildsQuery;
+
   const {
     data: userPreferences,
     error: preferencesError,
@@ -120,14 +129,17 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
     isLoading: arePreferencesLoading,
     refetch: refetchPreferences,
   } = preferencesQuery;
+
   const updatePreferences = useUpdateUserPreferences();
   const setOpen = useWindowsStore((state) => state.setOpen);
+
   const { setGuildId, guildId } = useSettingsStore(
     useShallow((state) => ({
       setGuildId: state.setGuildId,
       guildId: characterId ? state.guildIdByCharId[characterId] : undefined,
     })),
   );
+
   const hiddenGuildIds = userPreferences?.hiddenGuildIds;
   const latestHiddenGuildIds = useRef(hiddenGuildIds ?? []);
   useEffect(() => {
@@ -136,11 +148,15 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
   useEffect(() => {
     if (!isFetched || !arePreferencesFetched || visibleGuilds.length === 0)
       return;
+
     if (multiple) return;
+
     if (!onChange) return;
     const currentValue = value;
+
     if (allowAll && currentValue === "all") return;
     const exists = visibleGuilds.some((guild) => guild.id === currentValue);
+
     if (exists) return;
     onChange(visibleGuilds[0].id);
   }, [
@@ -156,6 +172,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
   const selectedValue = value !== undefined ? value : guildId;
   const selectedGuildIds = selectedValues ?? [];
   const resolvedButtonClassName = buttonClassName;
+
   const status = getGuildSwitcherStatus({
     arePreferencesFetched,
     arePreferencesLoading,
@@ -173,11 +190,13 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
 
     if (multiple) {
       onToggle?.(newGuildId);
+
       return;
     }
 
     if (onChange) {
       onChange(newGuildId);
+
       return;
     }
 
@@ -188,6 +207,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
 
   const hideGuild = (guildIdToHide: string, guildName: string) => {
     const confirmedHiddenGuildIds = hiddenGuildIds ?? [];
+
     if (confirmedHiddenGuildIds.includes(guildIdToHide)) {
       return;
     }

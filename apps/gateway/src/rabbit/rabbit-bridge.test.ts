@@ -17,12 +17,15 @@ describe("Gateway RabbitMQ topology", () => {
     const lootRetry = gatewayQueueDefinitions.find(
       (queue) => queue.name === "gateway-guilds-loots-create.retry",
     );
+
     const lootDlq = gatewayQueueDefinitions.find(
       (queue) => queue.name === "gateway-guilds-loots-create.dlq",
     );
+
     expect(lootRetry?.exchange).toBe(RabbitExchange.RETRY);
     expect(lootRetry?.messageTtl).toBe(30_000);
     expect(lootDlq?.exchange).toBe(RabbitExchange.DEAD_LETTER);
+
     for (const spec of gatewayConsumerSpecs) {
       if (
         spec.retryRoutingKey === undefined ||
@@ -30,6 +33,7 @@ describe("Gateway RabbitMQ topology", () => {
       ) {
         continue;
       }
+
       expect(
         gatewayQueueDefinitions.some(
           (queue) => queue.name === `${spec.queue}.dlq`,
@@ -41,6 +45,7 @@ describe("Gateway RabbitMQ topology", () => {
         ),
       ).toBe(spec.installRetryQueue !== false);
     }
+
     expect(
       gatewayQueueDefinitions.some(
         (queue) =>

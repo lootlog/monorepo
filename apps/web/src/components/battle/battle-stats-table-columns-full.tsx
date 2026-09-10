@@ -26,6 +26,7 @@ export const getBattleStatsTableColumns = (
     cell: ({ row }) => {
       const warrior = row.original;
       const isExpanded = expandedRows.get(warrior.id) === "details";
+
       return (
         <div className="flex items-center gap-1">
           <Button
@@ -60,6 +61,7 @@ export const getBattleStatsTableColumns = (
     cell: ({ row }) => {
       const warrior = row.original;
       const isExpanded = expandedRows.get(warrior.id) === "turns";
+
       return (
         <div className="flex justify-end">
           <Button
@@ -91,6 +93,7 @@ export const getBattleStatsTableColumns = (
     cell: ({ row }) => {
       const warrior = row.original;
       const isExpanded = expandedRows.get(warrior.id) === "damageDealt";
+
       return (
         <div className="flex justify-end">
           <Button
@@ -142,6 +145,7 @@ export const getBattleStatsTableColumns = (
     cell: ({ row }) => {
       const warrior = row.original;
       const isExpanded = expandedRows.get(warrior.id) === "damage";
+
       return (
         <div className="flex justify-end">
           <Button
@@ -181,6 +185,7 @@ export const getBattleStatsTableColumns = (
     cell: ({ row }) => {
       const warrior = row.original;
       const isExpanded = expandedRows.get(warrior.id) === "blocks";
+
       return (
         <div className="flex justify-end">
           <Button

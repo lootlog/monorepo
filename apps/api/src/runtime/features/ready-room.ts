@@ -14,8 +14,10 @@ export const readyRoomData = Layer.unwrap(
   Effect.gen(function* () {
     const redis = yield* ApiRedis;
     const rabbit = yield* RabbitMessaging;
+
     const attempt = <A>(operation: () => PromiseLike<A>) =>
       Effect.tryPromise({ try: operation, catch: (error) => error });
+
     const redisAdapter: ChatRedis = {
       rpush: (key, value) => attempt(() => redis.rpush(key, value)),
       ltrim: (key, start, stop) => attempt(() => redis.ltrim(key, start, stop)),
@@ -25,6 +27,7 @@ export const readyRoomData = Layer.unwrap(
       lrem: (key, count, value) => attempt(() => redis.lrem(key, count, value)),
       del: (key) => attempt(() => redis.del(key)),
     };
+
     const chatEvents: ChatEvents = {
       publish: (routingKey, payload) =>
         rabbit
@@ -35,7 +38,9 @@ export const readyRoomData = Layer.unwrap(
           })
           .pipe(Effect.asVoid),
     };
+
     const chat = yield* makeChatOperations(redisAdapter, chatEvents);
+
     return makeReadyRoomDataLayer(
       {
         getJson: (key, schema) =>

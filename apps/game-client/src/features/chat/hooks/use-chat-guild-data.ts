@@ -43,7 +43,9 @@ const getGuildIdsToLoad = (
   selectedGuildId: string | undefined,
 ) => {
   if (selectedGuildId === "all") return guildIds;
+
   if (!selectedGuildId) return [];
+
   return [selectedGuildId];
 };
 
@@ -59,14 +61,17 @@ const reconcileChatMessageRefetch = ({
   const messagesBeforeRequestById = new Map(
     cachedMessagesBeforeRequest?.map((message) => [message.id, message]),
   );
+
   const messageIdsAfterRequest = new Set(
     cachedMessagesAfterRequest?.map((message) => message.id),
   );
+
   const removedMessageIds = new Set(
     cachedMessagesBeforeRequest?.flatMap((message) =>
       messageIdsAfterRequest.has(message.id) ? [] : [message.id],
     ),
   );
+
   const messagesChangedDuringRequest =
     cachedMessagesAfterRequest?.filter(
       (message) => messagesBeforeRequestById.get(message.id) !== message,
@@ -96,12 +101,14 @@ export const useChatGuildData = ({
         queryFn: async ({ signal }) => {
           const cachedMessagesBeforeRequest =
             queryClient.getQueryData<ChatMessageType[]>(queryKey);
+
           const serverMessages = await chatControllerGetChatMessages(
             {
               guildId,
             },
             { signal },
           );
+
           const cachedMessagesAfterRequest =
             queryClient.getQueryData<ChatMessageType[]>(queryKey);
 
@@ -117,11 +124,13 @@ export const useChatGuildData = ({
       };
     }),
   });
+
   const memberQueries = useQueries({
     queries: guildIdsToLoad.map((guildId) =>
       getGuildMembersSummaryQueryOptions({ guildId }),
     ),
   });
+
   const hasMentionCandidatesByGuildId = guildIdsToLoad.reduce<
     Record<string, boolean>
   >((result, guildId, index) => {
@@ -133,6 +142,7 @@ export const useChatGuildData = ({
 
     return result;
   }, {});
+
   const currentMemberQueries = useQueries({
     queries: guildIdsToLoad.map((guildId) => ({
       queryKey: getMembersControllerGetMeQueryKey({ guildId }),
@@ -142,6 +152,7 @@ export const useChatGuildData = ({
       staleTime: 5 * 60 * 1000,
     })),
   });
+
   const roleQueries = useQueries({
     queries: guildIdsToLoad.map((guildId) => ({
       queryKey: getRolesControllerGetGuildRolesQueryKey({ guildId }),
@@ -151,19 +162,24 @@ export const useChatGuildData = ({
       staleTime: 5 * 60 * 1000,
     })),
   });
+
   const hasMessagesResponse = messageQueries.some(
     (query) => query.data !== undefined,
   );
+
   const failedGuildIds = guildIdsToLoad.filter(
     (_guildId, index) => messageQueries[index]?.isError,
   );
+
   const firstMessageError = messageQueries.find(
     (query) => query.isError,
   )?.error;
+
   const initialLoading =
     guildIdsToLoad.length > 0 &&
     !hasMessagesResponse &&
     messageQueries.some((query) => query.isPending || query.isFetching);
+
   const refreshing =
     hasMessagesResponse && messageQueries.some((query) => query.isFetching);
 
@@ -174,6 +190,7 @@ export const useChatGuildData = ({
       }
     });
   };
+
   const resourceState: AsyncResourceState = {
     error: hasMessagesResponse ? null : (firstMessageError ?? null),
     initialLoading,
@@ -210,12 +227,14 @@ export const useChatGuildData = ({
       guildData.messages,
     ]),
   );
+
   const membersByGuildId = Object.fromEntries(
     Object.entries(guildDataById).map(([guildId, guildData]) => [
       guildId,
       guildData.memberLookup,
     ]),
   );
+
   const mentionContextsByGuildId = Object.fromEntries(
     Object.entries(guildDataById).map(([guildId, guildData]) => [
       guildId,

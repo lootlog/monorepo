@@ -19,14 +19,19 @@ export const readGuildConfigurationCache = Effect.fnUntraced(function* (
 ) {
   const key = getGuildCacheKey(idOrVanityUrl);
   const cached = yield* cache.get(key);
+
   if (!cached) return null;
+
   try {
     const guild = decodeJsonUnknown(cached);
+
     if (!Predicate.isObject(guild) || Array.isArray(guild))
       throw new Error("Invalid guild cache");
+
     return { ...guild, ...resolveReservationSettings(guild) };
   } catch {
     yield* cache.del(key);
+
     return null;
   }
 });
@@ -37,6 +42,7 @@ export const writeGuildConfigurationCache = (
   concurrency?: "unbounded",
 ) => {
   const encoded = JSON.stringify(guild);
+
   return Effect.all(
     [
       cache.set(getGuildCacheKey(guild.id), encoded, GUILD_CACHE_TTL_SECONDS),

@@ -17,6 +17,7 @@ const presence: BasicPresence = {
   isAfk: false,
   lastSeen: 1,
 };
+
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
@@ -29,9 +30,11 @@ it("fetches initial web presence from the gateway", async () => {
     revision: 1,
     presences: [presence],
   });
+
   const { result } = renderHook(() => useMemberWebPresence("guild-1"), {
     wrapper: gateway.wrapper,
   });
+
   await waitFor(() =>
     expect(isMemberOnlineOnWeb(result.current, "discord-1")).toBe(true),
   );
@@ -48,9 +51,11 @@ it("applies online and offline web presence updates", async () => {
     revision: 1,
     presences: [],
   });
+
   const { result } = renderHook(() => useMemberWebPresence("guild-1"), {
     wrapper: gateway.wrapper,
   });
+
   await waitFor(() => expect(result.current?.size).toBe(0));
   act(() =>
     gateway.deliver({
@@ -94,12 +99,16 @@ it("hides the previous Organization presence immediately when switching or leavi
       presences: [presence],
     })
     .mockImplementation(() => new Promise(() => {}));
+
   type PresenceProps = { guildId: string | undefined };
+
   const initialProps: PresenceProps = { guildId: "guild-1" };
+
   const { result, rerender } = renderHook(
     ({ guildId }: PresenceProps) => useMemberWebPresence(guildId),
     { initialProps, wrapper: gateway.wrapper },
   );
+
   await waitFor(() =>
     expect(isMemberOnlineOnWeb(result.current, "discord-1")).toBe(true),
   );

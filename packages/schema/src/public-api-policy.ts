@@ -1,5 +1,6 @@
 /** Explicit supported HTTP inventory. Unknown operations are session-only. */
 export type PublicApiService = "main" | "activity" | "battlelog" | "search";
+
 export type PublicApiOperation = {
   readonly service: PublicApiService;
   readonly method: string;

@@ -13,6 +13,7 @@ import { fileURLToPath } from "node:url";
 import { parse } from "yaml";
 
 const BASELINE_SHA = "633f8f0157cca04ef2b609ba0e2f1903b1c28949";
+
 const HTTP_METHODS = new Set([
   "delete",
   "get",
@@ -23,10 +24,12 @@ const HTTP_METHODS = new Set([
   "put",
   "trace",
 ]);
+
 const GUILD_METADATA_ERROR_OPERATIONS = new Set([
   "GET /guilds/{guildId}",
   "GET /guilds/{guildId}/permissions",
 ]);
+
 const ORGANIZATION_NOT_FOUND_OPERATIONS = new Set([
   "GET /guilds/{guildId}/members",
   "GET /guilds/{guildId}/members/references",
@@ -37,6 +40,7 @@ const ORGANIZATION_NOT_FOUND_OPERATIONS = new Set([
   "DELETE /guilds/{guildId}/chat-messages",
   "DELETE /guilds/{guildId}/chat-messages/{messageId}",
 ]);
+
 // Domain and access failures now retain their 4xx status and structured reason.
 const RESERVATION_ERROR_STATUSES = new Map<string, readonly string[]>([
   ["GET /guilds/{guildId}/reservation-spots", ["401", "403", "404"]],
@@ -82,6 +86,7 @@ const RESERVATION_ERROR_STATUSES = new Map<string, readonly string[]>([
   ["GET /reservation-share-invitations/{token}", ["401", "404", "409", "410"]],
   ["POST /reservation-share-invitations/{token}", ["401", "404", "409", "410"]],
 ]);
+
 // Explicit response migrations, verified against the handlers and fixed baseline.
 // The first statuses replace empty responses; the second statuses are additions.
 const API_ERROR_RESPONSE_MIGRATIONS = [
@@ -342,6 +347,7 @@ const API_ERROR_RESPONSE_MIGRATIONS = [
     operations: ["PUT /guilds/{guildId}/events/{eventId}/pin"],
   },
 ] as const;
+
 const apiErrorResponseMigrations = new Map<
   string,
   { readonly restore: readonly string[]; readonly add: readonly string[] }
@@ -350,6 +356,7 @@ const apiErrorResponseMigrations = new Map<
     migration.operations.map((operation) => [operation, migration] as const),
   ),
 );
+
 const ACTIVITY_UNAVAILABLE_OPERATIONS = new Set([
   "GET /guilds/{guildId}/activity-logs",
   "GET /guilds/{guildId}/activity-logs/actor-name-suggestions",
@@ -360,11 +367,13 @@ const ACTIVITY_UNAVAILABLE_OPERATIONS = new Set([
   "GET /guilds/{guildId}/activity-logs/{id}",
   "DELETE /guilds/{guildId}/activity-logs/{id}",
 ]);
+
 const BATTLELOG_INVALID_REQUEST_OPERATIONS = new Set([
   "POST /battles",
   "PATCH /battles/{battleId}",
   "POST /internal/delete-user-data",
 ]);
+
 // Inline schemas correspond to AuthorizationUnavailable and BadRequestResponse.
 const ACTIVITY_UNAVAILABLE_SCHEMA: JsonValue = {
   type: "object",
@@ -374,6 +383,7 @@ const ACTIVITY_UNAVAILABLE_SCHEMA: JsonValue = {
   },
   required: ["message", "statusCode"],
 };
+
 const BATTLELOG_INVALID_REQUEST_SCHEMA: JsonValue = {
   type: "object",
   properties: {
@@ -419,6 +429,7 @@ const repositoryRoot = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../../..",
 );
+
 const services = [
   { baseline: "activity", current: "activity" },
   { baseline: "api", current: "api" },
@@ -436,12 +447,15 @@ const readBaseline = (
     ["show", `${revision}:apps/${service}/openapi.yaml`],
     { cwd: repositoryRoot, encoding: "utf8" },
   );
+
   if (result.error) throw result.error;
+
   if (result.status !== 0) {
     throw new Error(
       `Unable to read baseline OpenAPI for ${service}: ${result.stderr.trim()}`,
     );
   }
+
   return decodeOpenApiDocument(parse(result.stdout));
 };
 
@@ -457,6 +471,7 @@ const readCurrent = (service: string): OpenApiDocument =>
 
 const operations = (document: OpenApiDocument): Map<string, JsonValue> => {
   const result = new Map<string, JsonValue>();
+
   for (const [path, pathItem] of Object.entries(document.paths ?? {})) {
     for (const [method, operation] of Object.entries(pathItem)) {
       if (HTTP_METHODS.has(method)) {
@@ -464,6 +479,7 @@ const operations = (document: OpenApiDocument): Map<string, JsonValue> => {
       }
     }
   }
+
   return result;
 };
 
@@ -473,6 +489,7 @@ const removePresencePermission = (value: JsonValue): JsonValue => {
       .filter((item) => item !== "LOOTLOG_PRESENCE_LOCATION_READ")
       .map(removePresencePermission);
   }
+
   if (isJsonObject(value)) {
     return Object.fromEntries(
       Object.entries(value).map(([key, item]) => [
@@ -481,6 +498,7 @@ const removePresencePermission = (value: JsonValue): JsonValue => {
       ]),
     );
   }
+
   return value;
 };
 
@@ -488,8 +506,10 @@ const removeResponseStatus = (value: JsonValue, status: string): JsonValue => {
   if (!isJsonObject(value)) {
     return value;
   }
+
   const operation = structuredClone(value);
   const responses = operation["responses"];
+
   if (isJsonObject(responses)) {
     return {
       ...operation,
@@ -498,12 +518,14 @@ const removeResponseStatus = (value: JsonValue, status: string): JsonValue => {
       ),
     };
   }
+
   return operation;
 };
 
 export const normalizeOpenApiRepresentation = (value: JsonValue): JsonValue => {
   if (isJsonArray(value)) {
     const normalized = value.map(normalizeOpenApiRepresentation);
+
     if (
       normalized.every(
         (item): item is { in: string; name: string } =>
@@ -517,11 +539,14 @@ export const normalizeOpenApiRepresentation = (value: JsonValue): JsonValue => {
       return normalized.sort((left, right) => {
         const leftKey = `${left.in}:${left.name}`;
         const rightKey = `${right.in}:${right.name}`;
+
         return leftKey.localeCompare(rightKey);
       });
     }
+
     return normalized;
   }
+
   if (!isJsonObject(value)) return value;
 
   return Object.fromEntries(
@@ -551,6 +576,7 @@ const assertOrganizationNotFoundResponse = (
   const responses = isJsonObject(operation)
     ? operation["responses"]
     : undefined;
+
   if (!isJsonObject(responses) || responses["404"] === undefined) {
     throw new Error(`${operationKey} must declare a 404 response`);
   }
@@ -566,7 +592,9 @@ const assertErrorResponse = (
   const responses = isJsonObject(operation)
     ? operation["responses"]
     : undefined;
+
   const response = isJsonObject(responses) ? responses[status] : undefined;
+
   const expected = {
     content: {
       "application/json": {
@@ -574,6 +602,7 @@ const assertErrorResponse = (
       },
     },
   };
+
   if (
     response === undefined ||
     JSON.stringify(normalizeOpenApiRepresentation(response)) !==
@@ -589,8 +618,10 @@ const normalizeErrorResponseMigrations = (
   operation: JsonValue,
 ): JsonValue => {
   let normalized = operation;
+
   if (service === "api") {
     const migration = apiErrorResponseMigrations.get(operationKey);
+
     if (migration) {
       for (const status of [...migration.restore, ...migration.add]) {
         assertErrorResponse(
@@ -601,10 +632,13 @@ const normalizeErrorResponseMigrations = (
         );
         normalized = removeResponseStatus(normalized, status);
       }
+
       if (isJsonObject(normalized)) {
         const responses = normalized["responses"];
+
         if (isJsonObject(responses)) {
           const restoredResponses = { ...responses };
+
           for (const status of migration.restore)
             restoredResponses[status] = {};
           normalized = { ...normalized, responses: restoredResponses };
@@ -626,6 +660,7 @@ const normalizeErrorResponseMigrations = (
     );
     normalized = removeResponseStatus(normalized, "503");
   }
+
   if (
     service === "battlelog" &&
     BATTLELOG_INVALID_REQUEST_OPERATIONS.has(operationKey)
@@ -639,6 +674,7 @@ const normalizeErrorResponseMigrations = (
     );
     normalized = removeResponseStatus(normalized, "400");
   }
+
   return normalized;
 };
 
@@ -670,6 +706,7 @@ const normalizeManageableOrganizationResponse = (
   ) {
     throw new Error("ManageableOrganizationResponse contract changed");
   }
+
   assertErrorResponse(
     operation,
     "GET /guilds/@me/manageable",
@@ -680,8 +717,10 @@ const normalizeManageableOrganizationResponse = (
       items: { $ref: "#/components/schemas/ManageableOrganizationResponse" },
     },
   );
+
   if (isJsonObject(operation)) {
     const responses = operation["responses"];
+
     if (isJsonObject(responses)) {
       operation = {
         ...operation,
@@ -701,6 +740,7 @@ const normalizeManageableOrganizationResponse = (
       };
     }
   }
+
   return operation;
 };
 
@@ -710,6 +750,7 @@ const normalizeServiceAuthentication = (
   operation: JsonValue,
 ): JsonValue => {
   let normalized = operation;
+
   // Verified by Auth application and Battlelog HTTP service-credential tests.
   if (
     (service === "auth" && operationKey === "POST /auth/idp-token") ||
@@ -724,6 +765,7 @@ const normalizeServiceAuthentication = (
         schema: { nullable: true, type: "string" },
       },
     ];
+
     if (
       !isJsonObject(normalized) ||
       JSON.stringify(
@@ -734,10 +776,12 @@ const normalizeServiceAuthentication = (
       throw new Error(
         `${operationKey} must declare the service authorization header`,
       );
+
     const properties = {
       message: { type: "string" },
       statusCode: { type: "number", enum: [401] },
     };
+
     const unauthorizedSchema = {
       type: "object",
       properties:
@@ -749,6 +793,7 @@ const normalizeServiceAuthentication = (
           ? ["error", "message", "statusCode"]
           : ["message", "statusCode"],
     };
+
     assertErrorResponse(
       normalized,
       operationKey,
@@ -768,6 +813,7 @@ const normalizeServiceAuthentication = (
         : unauthorizedSchema,
     );
     normalized = removeResponseStatus({ ...normalized, parameters: [] }, "401");
+
     if (service === "auth") {
       assertErrorResponse(
         normalized,
@@ -796,6 +842,7 @@ const normalizeServiceAuthentication = (
       normalized = removeResponseStatus(normalized, "400");
     }
   }
+
   return normalized;
 };
 
@@ -810,6 +857,7 @@ export const normalizeAllowedChanges = (
     operationKey,
     operation,
   );
+
   if (service === "auth" && operationKey === "GET /auth/verify") {
     for (const status of ["401", "429", "503"]) {
       assertErrorResponse(
@@ -826,15 +874,18 @@ export const normalizeAllowedChanges = (
       normalized = removeResponseStatus(normalized, status);
     }
   }
+
   if (service === "api" && operationKey === "GET /guilds/@me/manageable") {
     normalized = normalizeManageableOrganizationResponse(normalized, schemas);
   }
+
   if (service === "api") normalized = removePresencePermission(normalized);
   normalized = normalizeErrorResponseMigrations(
     service,
     operationKey,
     normalized,
   );
+
   // Search outages now return an explicit 503 instead of a successful empty result.
   if (
     service === "search" &&
@@ -850,6 +901,7 @@ export const normalizeAllowedChanges = (
     // Missing Organizations now return 404 instead of an internal server error.
     normalized = removeResponseStatus(normalized, "404");
   }
+
   // Verified by the real authorization HTTP tests: missing Organizations return 404.
   if (
     service === "api" &&
@@ -858,6 +910,7 @@ export const normalizeAllowedChanges = (
     assertOrganizationNotFoundResponse(normalized, operationKey);
     normalized = removeResponseStatus(normalized, "404");
   }
+
   if (service === "api") {
     for (const status of RESERVATION_ERROR_STATUSES.get(operationKey) ?? []) {
       assertErrorResponse(normalized, operationKey, status);
@@ -883,6 +936,7 @@ const differencePaths = (
   path = "$",
 ): string[] => {
   if (JSON.stringify(left) === JSON.stringify(right)) return [];
+
   if (
     left === undefined ||
     right === undefined ||
@@ -896,20 +950,26 @@ const differencePaths = (
   }
 
   const leftEntries = isJsonArray(left) ? left.entries() : Object.entries(left);
+
   const rightKeys = new Set(
     isJsonArray(right) ? [...right.keys()].map(String) : Object.keys(right),
   );
+
   const differences: string[] = [];
+
   for (const [key, leftValue] of leftEntries) {
     const stringKey = String(key);
     rightKeys.delete(stringKey);
+
     const rightValue = isJsonArray(right)
       ? right[Number(key)]
       : right[stringKey];
+
     differences.push(
       ...differencePaths(leftValue, rightValue, `${path}.${stringKey}`),
     );
   }
+
   differences.push(
     ...[...rightKeys].map(
       (key) =>
@@ -918,6 +978,7 @@ const differencePaths = (
         )}`,
     ),
   );
+
   return differences;
 };
 
@@ -1078,15 +1139,19 @@ export const assertVerifiedPersonalAddition = (
   operation: JsonValue | undefined,
 ): void => {
   const expected = PERSONAL_ANALYTICS_ADDITIONS.get(service)?.[operationKey];
+
   if (!expected || !isJsonObject(operation)) {
     throw new Error(
       `Unverified personal API addition: ${service} ${operationKey}`,
     );
   }
+
   const keyNormalized =
     service === "auth" ? operation : normalizeApiKeyErrors(operation, expected);
+
   if (!isJsonObject(keyNormalized)) throw new Error("Invalid operation");
   const { tags: _tags, summary: _summary, ...contract } = keyNormalized;
+
   if (
     JSON.stringify(normalizeOpenApiRepresentation(contract)) !==
     JSON.stringify(normalizeOpenApiRepresentation(expected))
@@ -1106,20 +1171,26 @@ export const normalizeApiKeyErrors = (
   if (!isJsonObject(operation) || !isJsonObject(operation.responses))
     return operation;
   const responses = { ...operation.responses };
+
   const previousResponses =
     isJsonObject(previous) && isJsonObject(previous.responses)
       ? previous.responses
       : {};
+
   for (const status of ["401", "403", "429"]) {
     const response = responses[status];
+
     if (!isJsonObject(response) || !isJsonObject(response.content)) continue;
     const media = response.content["application/json"];
+
     if (!isJsonObject(media) || !isJsonObject(media.schema)) continue;
     const schema = media.schema;
     const alternatives = isJsonArray(schema.anyOf) ? schema.anyOf : [schema];
+
     const remaining = alternatives.filter((alternative) => {
       if (!isJsonObject(alternative)) return true;
       const { additionalProperties, ...errorContract } = alternative;
+
       return (
         (additionalProperties !== undefined &&
           additionalProperties !== false) ||
@@ -1133,11 +1204,14 @@ export const normalizeApiKeyErrors = (
           )
       );
     });
+
     if (remaining.length === alternatives.length) continue;
+
     if (remaining.length === 0) {
       if (previousResponses[status] === undefined) delete responses[status];
       else {
         const previousResponse = previousResponses[status];
+
         if (
           isJsonObject(previousResponse) &&
           previousResponse.content !== undefined &&
@@ -1148,6 +1222,7 @@ export const normalizeApiKeyErrors = (
             `API key errors replaced an existing ${status} response`,
           );
         }
+
         responses[status] = previousResponse;
       }
     } else {
@@ -1166,15 +1241,18 @@ export const normalizeApiKeyErrors = (
       };
     }
   }
+
   return { ...operation, responses };
 };
 
 if (import.meta.main) {
   const changedOperations: string[] = [];
+
   for (const service of services) {
     const baseline = operations(readBaseline(service.baseline));
     const currentDocument = readCurrent(service.current);
     const current = operations(currentDocument);
+
     if (service.current !== "auth") {
       const beforeKeys = operations(
         readBaseline(
@@ -1182,6 +1260,7 @@ if (import.meta.main) {
           "f44143e3396fd68ff6c947b728984d90f0602a0b",
         ),
       );
+
       for (const [key, operation] of current) {
         current.set(key, normalizeApiKeyErrors(operation, beforeKeys.get(key)));
       }
@@ -1189,9 +1268,11 @@ if (import.meta.main) {
 
     const additions = [...current.keys()].filter((key) => !baseline.has(key));
     const removals = [...baseline.keys()].filter((key) => !current.has(key));
+
     const expectedAdditions = Object.keys(
       PERSONAL_ANALYTICS_ADDITIONS.get(service.current) ?? {},
     );
+
     if (
       additions.length !== expectedAdditions.length ||
       additions.some((key) => !expectedAdditions.includes(key))
@@ -1200,14 +1281,17 @@ if (import.meta.main) {
         `${service.current} has unexpected OpenAPI additions: ${additions.join(", ") || "none"}`,
       );
     }
+
     for (const key of additions) {
       assertVerifiedPersonalAddition(service.current, key, current.get(key));
     }
+
     // User editing was removed; system party-ending updates remain realtime-only.
     const expectedRemovals =
       service.current === "api"
         ? ["PATCH /guilds/{guildId}/chat-messages/{messageId}"]
         : [];
+
     if (
       removals.length !== expectedRemovals.length ||
       removals.some((key) => !expectedRemovals.includes(key))
@@ -1219,20 +1303,25 @@ if (import.meta.main) {
 
     for (const [key, baselineOperation] of baseline) {
       const currentOperation = current.get(key);
+
       if (currentOperation === undefined) continue;
+
       const normalized = normalizeAllowedChanges(
         service.current,
         key,
         currentOperation,
         currentDocument.components?.schemas,
       );
+
       const normalizedBaseline =
         normalizeOpenApiRepresentation(baselineOperation);
+
       if (JSON.stringify(normalized) !== JSON.stringify(normalizedBaseline)) {
         const paths = differencePaths(normalizedBaseline, normalized).slice(
           0,
           4,
         );
+
         changedOperations.push(
           `${service.current}: ${key} (${paths.join(", ")})`,
         );

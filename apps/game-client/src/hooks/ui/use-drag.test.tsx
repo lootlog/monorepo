@@ -10,6 +10,7 @@ const startDrag = (
   const { getByTestId } = render(
     <div data-testid="drag-target" onPointerDown={handler} />,
   );
+
   fireEvent.pointerDown(getByTestId("drag-target"), {
     button: 0,
     clientX: 10,
@@ -41,9 +42,11 @@ describe("useDrag", () => {
     const documentEventNames = documentAddEventListener.mock.calls.map(
       ([eventName]) => eventName,
     );
+
     const windowEventNames = windowAddEventListener.mock.calls.map(
       ([eventName]) => eventName,
     );
+
     expect(documentEventNames).not.toContain("pointermove");
     expect(documentEventNames).not.toContain("pointerup");
     expect(documentEventNames).not.toContain("pointercancel");
@@ -53,10 +56,12 @@ describe("useDrag", () => {
 
   it("installs and removes session listeners around an active drag", () => {
     const documentAddEventListener = vi.spyOn(document, "addEventListener");
+
     const documentRemoveEventListener = vi.spyOn(
       document,
       "removeEventListener",
     );
+
     const element = document.createElement("div");
     vi.spyOn(element, "getBoundingClientRect").mockReturnValue({
       bottom: 100,
@@ -70,12 +75,14 @@ describe("useDrag", () => {
       toJSON: () => ({}),
     });
     const ref: RefObject<HTMLDivElement | null> = { current: element };
+
     const { result, unmount } = renderHook(() =>
       useDrag({
         ref,
         onDragStop: vi.fn<(position: { x: number; y: number }) => void>(),
       }),
     );
+
     documentAddEventListener.mockClear();
 
     startDrag(result.current.handlePointerDown, 1);
@@ -92,12 +99,15 @@ describe("useDrag", () => {
 
   it("moves with a coalesced transform and commits the position on drag end", () => {
     let scheduledFrame: FrameRequestCallback | null = null;
+
     const requestAnimationFrame = vi
       .spyOn(window, "requestAnimationFrame")
       .mockImplementation((callback) => {
         scheduledFrame = callback;
+
         return 1;
       });
+
     vi.spyOn(window, "cancelAnimationFrame").mockImplementation(
       () => undefined,
     );

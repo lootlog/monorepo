@@ -53,6 +53,7 @@ export const SidebarNav = ({
           if (!enabled) return null;
 
           const url = `${basePath}${path}`;
+
           return (
             <div key={path}>
               {divided && <Separator className="mb-1.5" />}

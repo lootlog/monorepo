@@ -28,6 +28,7 @@ export const battleSummaryCalculator = (() => {
 
       for (const battle of battles) {
         const userWarrior = domain.findUserWarrior(battle, characterIds);
+
         if (!userWarrior) {
           continue;
         }
@@ -80,6 +81,7 @@ export const battleSummaryCalculator = (() => {
 
       for (const battle of battles) {
         const userWarrior = domain.findUserWarrior(battle, characterIds);
+
         if (!userWarrior) {
           continue;
         }
@@ -162,6 +164,7 @@ export const battleSummaryCalculator = (() => {
 
       for (const battle of battles) {
         const userWarrior = domain.findUserWarrior(battle, characterIds);
+
         const opponentWarrior = domain.findOpponentWarrior(
           battle,
           characterIds,
@@ -184,6 +187,7 @@ export const battleSummaryCalculator = (() => {
         };
 
         stats.totalRatingDelta += battle.ratingDelta;
+
         if (battle.ratingDelta !== 0) {
           stats.battlesWithRating++;
         }
@@ -243,5 +247,6 @@ export const battleSummaryCalculator = (() => {
       };
     },
   };
+
   return summary;
 })();

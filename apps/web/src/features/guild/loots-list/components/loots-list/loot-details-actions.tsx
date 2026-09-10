@@ -17,6 +17,7 @@ export const LootDetailsActions: FC<LootDetailsActionsProps> = ({ loot }) => {
   const { t } = useTranslation();
   const guildId = useGuildId();
   const queryClient = useQueryClient();
+
   const { mutate: deleteLoot, isPending } = useLootsControllerDeleteLoot({
     mutation: {
       onSuccess: async () => {

@@ -21,7 +21,9 @@ const APPEARANCE_FIELDS = [
 ] as const;
 
 type JsonValue = typeof Schema.Json.Type;
+
 type JsonObject = { [key: string]: JsonValue };
+
 type TimerEffect = Effect.Effect<unknown, SettingsDocumentsFailure>;
 
 export interface TimerSettings {
@@ -43,8 +45,10 @@ export interface TimerSettings {
 }
 
 const asRecord = (value: unknown) => (isRecord(value) ? value : {});
+
 const asJsonValue = (value: unknown): JsonValue => {
   if (value === null) return null;
+
   if (
     typeof value === "string" ||
     typeof value === "number" ||
@@ -52,18 +56,24 @@ const asJsonValue = (value: unknown): JsonValue => {
   ) {
     return value;
   }
+
   if (Array.isArray(value)) return value.map(asJsonValue);
+
   if (!isRecord(value)) return null;
+
   return Object.fromEntries(
     Object.entries(value).map(([key, entry]) => [key, asJsonValue(entry)]),
   );
 };
+
 const asJsonObject = (value: unknown): JsonObject => {
   if (!isRecord(value)) return {};
+
   return Object.fromEntries(
     Object.entries(value).map(([key, entry]) => [key, asJsonValue(entry)]),
   );
 };
+
 const asStringArray = (value: unknown) =>
   Array.isArray(value)
     ? value.filter((item): item is string => typeof item === "string")
@@ -77,11 +87,14 @@ const mapGlobalSettingsResponse = (
   const timers = response.domains.timers;
   const timerAppearance = asRecord(appearance?.effective.timers);
   const effectiveTimers = timers?.effective ?? {};
+
   const updatedAtValues = [appearance?.updatedAt, timers?.updatedAt]
     .filter((value): value is Date => value !== undefined)
     .sort((left, right) => left.getTime() - right.getTime());
+
   const updatedAtValue = updatedAtValues[updatedAtValues.length - 1];
   const updatedAt = updatedAtValue ?? new Date();
+
   const timersSortOrder: "asc" | "desc" =
     effectiveTimers.timersSortOrder === "desc" ? "desc" : "asc";
 
@@ -115,6 +128,7 @@ const mapGuildSettingsResponse = (
 ) => {
   const timers = response.domains.timers;
   const updatedAt = timers?.updatedAt ?? new Date();
+
   return {
     userId,
     guildId,
@@ -150,10 +164,12 @@ const extractGuildSettingsFromLocal = (
 ) => {
   const hiddenTimers = asRecord(localData.hiddenTimers);
   const pinnedTimers = asRecord(localData.pinnedTimers);
+
   const guildIds = new Set([
     ...Object.keys(hiddenTimers),
     ...Object.keys(pinnedTimers),
   ]);
+
   const guildSettings: Record<
     string,
     { hiddenTimers: string[]; pinnedTimers: string[] }
@@ -165,6 +181,7 @@ const extractGuildSettingsFromLocal = (
       pinnedTimers: asStringArray(pinnedTimers[guildId]),
     };
   }
+
   return guildSettings;
 };
 
@@ -181,6 +198,7 @@ export const makeTimerSettings = (
   const updateGlobalSettings = (userId: string, dto: JsonObject) => {
     const appearanceSet: JsonObject = {};
     const timersSet: JsonObject = {};
+
     for (const [key, value] of Object.entries(dto)) {
       if (APPEARANCE_FIELDS.some((field) => field === key)) {
         appearanceSet[key] = value;
@@ -188,6 +206,7 @@ export const makeTimerSettings = (
         timersSet[key] = value;
       }
     }
+
     const operations = [
       ...(Object.keys(appearanceSet).length > 0
         ? [
@@ -210,6 +229,7 @@ export const makeTimerSettings = (
           ]
         : []),
     ];
+
     return operations.length === 0
       ? getGlobalSettings(userId)
       : settingsDocuments
@@ -258,9 +278,11 @@ export const makeTimerSettings = (
   ): TimerEffect =>
     Effect.gen(function* () {
       const { localData, conflictResolution = "local" } = dto;
+
       const existingResponse = yield* settingsDocuments.getPreferences(userId, {
         domains: ["appearance", "timers"],
       });
+
       const hasRemoteSettings = [
         ...(existingResponse.domains.appearance?.layers ?? []),
         ...(existingResponse.domains.timers?.layers ?? []),
@@ -277,11 +299,13 @@ export const makeTimerSettings = (
         userId,
         extractGlobalSettingsFromLocal(localData),
       );
+
       const guilds = yield* Effect.forEach(
         Object.entries(extractGuildSettingsFromLocal(localData)),
         ([guildId, settings]) => updateGuildSettings(userId, guildId, settings),
         { concurrency: "unbounded" },
       );
+
       return { global, guilds, message: "Migration completed successfully" };
     });
 

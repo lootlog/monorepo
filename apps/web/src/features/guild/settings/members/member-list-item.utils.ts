@@ -3,12 +3,14 @@ import type { MemberResponseDto as GuildMember } from "@lootlog/client/main";
 import { getMemberDiscordSyncPresentation } from "@/features/guild/settings/members/member-discord-sync.utils";
 
 export type MemberOnlineSource = "web" | "game";
+
 export type MemberStatusFilter =
   | "all"
   | "active"
   | "inactive"
   | "online"
   | "problems";
+
 export type MemberAccessState = "active" | "inactive" | "online" | "problem";
 
 export type MemberListSortValue = {

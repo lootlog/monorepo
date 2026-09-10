@@ -12,6 +12,7 @@ export const ChatNpcCountBadge: FC<ChatNpcCountBadgeProps> = ({ count }) => {
     if (count > previousCountRef.current) {
       badgeRef.current?.classList.add("ll-chat-npc-count-bump");
     }
+
     previousCountRef.current = count;
   }, [count]);
 

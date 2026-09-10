@@ -38,10 +38,12 @@ const makeMessage = (): ConsumeMessage => ({
 const makeChannel = () => {
   let consumer: ((message: ConsumeMessage | null) => void) | undefined;
   const ack = mock((_message: ConsumeMessage) => undefined);
+
   const nack = mock(
     (_message: ConsumeMessage, _allUpTo?: boolean, _requeue?: boolean) =>
       undefined,
   );
+
   const publish = mock(
     (
       _exchange: string,
@@ -50,6 +52,7 @@ const makeChannel = () => {
       _options?: Options.Publish,
     ) => true,
   );
+
   const cancel = mock((consumerTag: string) =>
     Promise.resolve({ consumerTag }),
   );
@@ -64,6 +67,7 @@ const makeChannel = () => {
     close: () => Promise.resolve(),
     consume: (_queue, callback) => {
       consumer = callback;
+
       return Promise.resolve({ consumerTag: "consumer-1" });
     },
     nack,
@@ -272,6 +276,7 @@ describe("RabbitMessaging", () => {
       channel,
       Effect.gen(function* () {
         const messaging = yield* RabbitMessaging;
+
         const consumer = yield* messaging.consume(
           {
             queue: "test-queue",
@@ -308,6 +313,7 @@ describe("RabbitMessaging", () => {
     const result = await Effect.runPromiseExit(
       Effect.gen(function* () {
         const messaging = yield* RabbitMessaging;
+
         const consumer = yield* messaging.consume(
           {
             queue: "test-queue",
@@ -343,10 +349,12 @@ test("closing the consumer scope cancels the broker subscription exactly once", 
     channel,
     Effect.gen(function* () {
       const messaging = yield* RabbitMessaging;
+
       const consumer = yield* messaging.consume(
         { queue: "test", failurePolicy: { strategy: "requeue" } },
         () => Effect.void,
       );
+
       yield* consumer.cancel;
     }),
   );
@@ -367,10 +375,12 @@ test("closing the consumer scope cancels the broker subscription exactly once", 
 
 test("a broker confirmation failure is not reported as published", async () => {
   const { channel } = makeChannel();
+
   const rejectingChannel = {
     ...channel,
     waitForConfirms: () => Promise.reject(new Error("broker rejected message")),
   };
+
   await expect(
     runWithChannel(
       rejectingChannel,
@@ -389,13 +399,16 @@ test("interruption while the broker registers a consumer still cancels it", asyn
   const { channel, cancel } = makeChannel();
   const started = Deferred.makeUnsafe<void>();
   const registration = Promise.withResolvers<{ consumerTag: string }>();
+
   const delayedChannel = {
     ...channel,
     consume: () => {
       Deferred.doneUnsafe(started, Effect.void);
+
       return registration.promise;
     },
   };
+
   const fiber = Effect.runFork(
     Effect.gen(function* () {
       const messaging = yield* RabbitMessaging;
@@ -409,6 +422,7 @@ test("interruption while the broker registers a consumer still cancels it", asyn
       Effect.scoped,
     ),
   );
+
   await Effect.runPromise(Deferred.await(started));
   const interruption = Effect.runFork(Fiber.interrupt(fiber));
   registration.resolve({ consumerTag: "delayed" });
@@ -423,10 +437,12 @@ test("scope closure retries a cancellation that previously failed", async () => 
     channel,
     Effect.gen(function* () {
       const messaging = yield* RabbitMessaging;
+
       const consumer = yield* messaging.consume(
         { queue: "test", failurePolicy: { strategy: "requeue" } },
         () => Effect.void,
       );
+
       yield* consumer.cancel.pipe(Effect.ignore);
     }),
   );

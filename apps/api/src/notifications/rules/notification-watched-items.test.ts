@@ -8,9 +8,11 @@ import { makeNotificationWatchedItems } from "#src/notifications/rules/notificat
 describe("notification watched items Effect module", () => {
   it("rejects an empty guild selection before adapters are used", async () => {
     const boundary = await createDatabaseBoundary();
+
     try {
       const listGuilds = mock(() => Effect.die("unexpected guild lookup"));
       const cancel = mock(() => Effect.die("unexpected job cancellation"));
+
       const watchedItems = makeNotificationWatchedItems(
         boundary.database,
         { list: listGuilds },

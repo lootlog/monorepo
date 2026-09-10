@@ -29,6 +29,7 @@ describe("useTimerRemovalBoundary", () => {
 
   it("uses deletedAt or maxSpawnTime plus the removal delay", () => {
     const timer = createTimer();
+
     const deletedTimer = createTimer({
       deletedAt: new Date(NOW + 2_000).toISOString(),
     });
@@ -47,6 +48,7 @@ describe("useTimerRemovalBoundary", () => {
 
     const { result } = renderHook(() => {
       renderCount += 1;
+
       return useTimerRemovalBoundary([createTimer()], 30_000, true);
     });
 
@@ -71,6 +73,7 @@ describe("useTimerRemovalBoundary", () => {
     const removalBoundary = NOW + 35_000;
     let initialRenderCompleted = false;
     let renderCount = 0;
+
     const dateNowSpy = vi
       .spyOn(Date, "now")
       .mockImplementation(() =>
@@ -95,6 +98,7 @@ describe("useTimerRemovalBoundary", () => {
 
   it("does not schedule work for an empty or closed presentation", () => {
     const empty = renderHook(() => useTimerRemovalBoundary([], 30_000, true));
+
     const closed = renderHook(() =>
       useTimerRemovalBoundary([createTimer()], 30_000, false),
     );

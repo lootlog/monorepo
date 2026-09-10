@@ -21,23 +21,29 @@ it("resolves the vanity route for refresh events and invalidates its member list
   const gateway = createTestGateway();
   const GatewayWrapper = gateway.wrapper;
   const RouterWrapper = await createOrganizationTestWrapper("/our-vanity");
+
   const client = new QueryClient({
     defaultOptions: { queries: { staleTime: Infinity, retry: false } },
   });
+
   client.setQueryData(
     getGuildsControllerGetGuildByIdQueryKey({ guildId: "our-vanity" }),
     { id: "canonical-id" },
   );
+
   const membersKey = getMembersControllerGetGuildMembersQueryKey(
     { guildId: "our-vanity" },
     { includeInactive: true },
   );
+
   const otherKey = getMembersControllerGetGuildMembersQueryKey(
     { guildId: "other-id" },
     { includeInactive: true },
   );
+
   client.setQueryData(membersKey, []);
   client.setQueryData(otherKey, []);
+
   const { result, unmount } = renderHook(useRefreshStatus, {
     wrapper: ({ children }: { children: ReactNode }) => (
       <RouterWrapper>
@@ -49,6 +55,7 @@ it("resolves the vanity route for refresh events and invalidates its member list
       </RouterWrapper>
     ),
   });
+
   const emit = (guildId: string) =>
     act(() => {
       gateway.deliver({
@@ -69,6 +76,7 @@ it("resolves the vanity route for refresh events and invalidates its member list
         },
       });
     });
+
   emit("other-id");
   expect(result.current.refreshedIds.size).toBe(0);
   expect(result.current.failedIds.size).toBe(0);

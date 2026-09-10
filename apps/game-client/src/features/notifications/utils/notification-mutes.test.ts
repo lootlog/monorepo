@@ -59,6 +59,7 @@ describe("notification mutes", () => {
         location: "Kwieciste Przejście",
       },
     });
+
     const secondKey = getNotificationNpcMuteKey({
       notificationId: "notification-2",
       discordId: "discord-2",
@@ -115,6 +116,7 @@ describe("notification mutes", () => {
       discordId: "discord-1",
       displayName: "Kamil",
     });
+
     const mutesAfterNpc = appendMutedNpc(
       {
         players: mutesAfterPlayer,
@@ -122,6 +124,7 @@ describe("notification mutes", () => {
       },
       mutedNpc,
     );
+
     const nextPlayers = appendMutedPlayer(
       {
         players: mutesAfterPlayer,

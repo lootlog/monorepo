@@ -21,12 +21,14 @@ export const makeBattleDeletion = (
 ) => {
   const drain = Effect.gen(function* () {
     const now = new Date(yield* Clock.currentTimeMillis);
+
     const pending = yield* database
       .select()
       .from(battleObjectDeletions)
       .where(lte(battleObjectDeletions.retryAt, now))
       .orderBy(asc(battleObjectDeletions.retryAt))
       .limit(100);
+
     yield* Effect.forEach(
       pending,
       (item) =>
@@ -67,15 +69,19 @@ export const makeBattleDeletion = (
           .delete(battles)
           .where(eq(battles.id, battleId))
           .returning({ battleId: battles.id, userId: battles.userId });
+
         if (removed.length === 0) {
           return yield* Effect.fail(
             new ResourceNotFoundError(`Battle with ID ${battleId} not found`),
           );
         }
+
         yield* transaction.insert(battleObjectDeletions).values(removed);
+
         return removed[0].userId;
       }),
     );
+
     yield* analytics
       .invalidateAnalyticsCache(userId)
       .pipe(
@@ -83,6 +89,7 @@ export const makeBattleDeletion = (
           Effect.logWarning("Battle analytics cleanup remains pending", error),
         ),
       );
+
     return { message: "Battle deleted successfully" };
   });
 
@@ -94,17 +101,21 @@ export const makeBattleDeletion = (
             .delete(battles)
             .where(eq(battles.userId, userId))
             .returning({ battleId: battles.id, userId: battles.userId });
+
           for (let offset = 0; offset < removed.length; offset += 1_000) {
             yield* transaction
               .insert(battleObjectDeletions)
               .values(removed.slice(offset, offset + 1_000));
           }
+
           yield* transaction
             .delete(userCharacters)
             .where(eq(userCharacters.userId, userId));
+
           return removed;
         }),
       );
+
       yield* analytics
         .invalidateAnalyticsCache(userId)
         .pipe(
@@ -115,6 +126,7 @@ export const makeBattleDeletion = (
             ),
           ),
         );
+
       return { deletedCount: removed.length };
     },
   );

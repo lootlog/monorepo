@@ -83,7 +83,9 @@ describe("AirTagService legacy parity", () => {
         ],
       }),
     ];
+
     const publications: unknown[] = [];
+
     const hub = {
       subscribe: (
         socket: GatewaySocket,
@@ -97,25 +99,31 @@ describe("AirTagService legacy parity", () => {
         publications.push(arguments_);
       },
     };
+
     const service = new AirTagService(
       {
         command: {
           get: async () => null,
           eval: async () => {
             const reply = evaluations.shift();
+
             if (reply === undefined) throw new Error("Unexpected Redis script");
+
             return reply;
           },
         },
       },
       hub,
     );
+
     const socket = makeSocket();
+
     const subscription = await service.updateSubscription(socket, {
       requestId: "request-1",
       enabled: true,
       expectedMapId: 7,
     });
+
     expect(subscription).toEqual({
       status: "accepted",
       requestId: "request-1",
@@ -131,12 +139,14 @@ describe("AirTagService legacy parity", () => {
         },
       ],
     });
+
     const response = await service.publishObservations(socket, {
       expectedMapId: 7,
       observations: [
         { targetId: "target", nickname: "Enemy", relation: 3, x: 1, y: 2 },
       ],
     });
+
     expect(response).toEqual({
       status: "accepted",
       acceptedScopes: 1,
@@ -163,11 +173,13 @@ describe("AirTagService legacy parity", () => {
 
   test("rejects an empty observation batch before touching Redis", async () => {
     let evaluations = 0;
+
     const service = new AirTagService(
       {
         command: {
           eval: async () => {
             evaluations += 1;
+
             return null;
           },
           get: () => Promise.reject(new Error("Unexpected Redis read")),
@@ -183,6 +195,7 @@ describe("AirTagService legacy parity", () => {
         publishToScopes: () => Promise.reject(new Error("Unexpected publish")),
       },
     );
+
     expect(
       await service.publishObservations(makeSocket(), {
         expectedMapId: 7,

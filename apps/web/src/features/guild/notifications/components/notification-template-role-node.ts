@@ -33,10 +33,12 @@ export class NotificationTemplateRoleNode extends TextNode {
       node.__roleColor,
       node.__key,
     );
+
     clone.__format = node.__format;
     clone.__style = node.__style;
     clone.__mode = node.__mode;
     clone.__detail = node.__detail;
+
     return clone;
   }
 
@@ -62,6 +64,7 @@ export class NotificationTemplateRoleNode extends TextNode {
   createDOM(config: EditorConfig) {
     const element = super.createDOM(config);
     this.applyRoleStyles(element);
+
     return element;
   }
 
@@ -131,8 +134,10 @@ export const $createNotificationTemplateRoleNode = (params: {
     `@${params.roleName}`,
     params.roleColor,
   );
+
   node.setMode("token");
   node.toggleUnmergeable();
+
   return node;
 };
 

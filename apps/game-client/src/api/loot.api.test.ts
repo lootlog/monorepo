@@ -4,6 +4,7 @@ import { useLogsStore } from "@/store/logs.store";
 import { createLoot, type CreateLootOptions } from "./loot.api";
 
 const http = vi.fn<typeof fetch>();
+
 describe("createLoot", () => {
   beforeEach(() => {
     http.mockReset();
@@ -27,6 +28,7 @@ describe("createLoot", () => {
       prc: "1",
       stat: "rarity=unique",
     };
+
     const options: CreateLootOptions = {
       accountId: "account-1",
       characterId: "character-1",
@@ -59,11 +61,13 @@ describe("createLoot", () => {
       source: "FIGHT",
       world: "pandora",
     };
+
     const response = {
       id: 1,
       rejectedGuilds: [],
       submittedGuilds: [{ guildId: "guild-1", guildName: "Guild" }],
     };
+
     http.mockResolvedValue(Response.json(response));
 
     await expect(
@@ -72,6 +76,7 @@ describe("createLoot", () => {
 
     expect(http).toHaveBeenCalledTimes(1);
     const call = http.mock.calls[0];
+
     if (!call) throw new Error("Missing HTTP request");
     const request = new Request(...call);
     expect(new URL(request.url).pathname).toBe("/loots");
@@ -100,12 +105,14 @@ describe("createLoot", () => {
         },
       ],
     };
+
     http.mockResolvedValue(
       Response.json({ id: 1, rejectedGuilds: [], submittedGuilds: [] }),
     );
     await createLoot(options, { attemptId: "snapshot", source: "fight" });
     expect(http).toHaveBeenCalledTimes(1);
     const call = http.mock.calls[0];
+
     if (!call) throw new Error("Missing HTTP request");
     const request = new Request(...call);
     expect(new URL(request.url).pathname).toBe("/loots");

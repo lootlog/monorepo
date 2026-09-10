@@ -23,6 +23,7 @@ describe("DiscordBotClientService", () => {
         updatedAt: "2026-09-03T00:00:00.000Z",
       },
     };
+
     const post = vi.fn(() => Effect.succeed(Response.json(payload)));
 
     await expect(

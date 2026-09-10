@@ -53,10 +53,12 @@ const buildParticipantScoringView = (
   const aggregatedMaps = participant.mapData
     ? aggregateMapData(participant.mapData)
     : [];
+
   const totalAfkSeconds = aggregatedMaps.reduce(
     (sum, map) => sum + map.afkTimeSeconds,
     0,
   );
+
   const scoring = getScoringBreakdown(participant);
   const hasManualAdjustment = scoring.manualAdjustmentPoints !== 0;
   const scoringItems = getScoringItems({ ...scoring, t, formatPoints });
@@ -92,6 +94,7 @@ export const KillParticipantRow = ({
 }: KillParticipantRowProps) => {
   const { t } = useTranslation();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
   const {
     aggregatedMaps,
     hasManualAdjustment,
@@ -100,14 +103,17 @@ export const KillParticipantRow = ({
     trackingDuration,
     trackingPercentage,
   } = buildParticipantScoringView(participant, t);
+
   const avatarUrl = getDiscordAvatarUrl(
     participant.member.userId,
     participant.member.avatar,
     32,
   );
+
   const roleCssColor = getCustomRoleCssColor(
     participant.member.roles?.[0]?.color,
   );
+
   const memberLinkParams =
     guildId && eventId
       ? {
@@ -116,6 +122,7 @@ export const KillParticipantRow = ({
           memberId: String(participant.member.id),
         }
       : null;
+
   const handleDialogSubmit = async ({
     pointsDelta,
     comment,

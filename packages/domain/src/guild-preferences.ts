@@ -12,9 +12,14 @@ export const orderGuilds = <Guild extends GuildIdentity>(
   }
 
   const guildsById = new Map(guilds.map((guild) => [guild.id, guild] as const));
-  const orderedGuilds = guildsOrder
-    .map((guildId) => guildsById.get(guildId))
-    .filter((guild): guild is Guild => guild !== undefined);
+  const orderedGuilds: Guild[] = [];
+
+  for (const guildId of guildsOrder) {
+    const guild = guildsById.get(guildId);
+
+    if (guild !== undefined) orderedGuilds.push(guild);
+  }
+
   const orderedGuildIds = new Set(orderedGuilds.map((guild) => guild.id));
 
   return [

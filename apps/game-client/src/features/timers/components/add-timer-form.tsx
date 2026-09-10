@@ -72,6 +72,7 @@ export function AddTimerForm(props: AddTimerFormProps) {
     hasSearchResults,
     showNoResults,
   } = useAddTimerForm(props);
+
   return (
     <form
       noValidate
@@ -140,6 +141,7 @@ export function AddTimerForm(props: AddTimerFormProps) {
                   const longname =
                     getNpcTypeNames(npc.type)?.longname ??
                     t("addForm.mobFallback");
+
                   const npcDetails =
                     npc.lvl > 0 && npc.prof
                       ? ` ${npc.lvl}${npc.prof.charAt(0).toLowerCase()}`

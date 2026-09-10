@@ -21,6 +21,7 @@ export type ChatDensityStyle = CSSProperties & {
 
 const formatScaledPixels = (pixels: number, scale: number) => {
   const scaledPixels = Math.round(pixels * scale * 100) / 100;
+
   return `${scaledPixels}px`;
 };
 

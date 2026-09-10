@@ -4,6 +4,7 @@ import { stringify } from "yaml";
 import { AuthApi } from "#src/http-api/auth-api";
 
 const document = OpenApi.fromApi(AuthApi);
+
 preserveOpenApi30Contract(
   document,
   {},
@@ -11,6 +12,7 @@ preserveOpenApi30Contract(
     "HealthzController_healthCheck:200": "Auth service is healthy",
   },
 );
+
 await Bun.write(
   new URL("../../openapi.yaml", import.meta.url),
   stringify(document, { lineWidth: 0 }),

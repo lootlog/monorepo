@@ -4,7 +4,9 @@ import { Effect, Fiber } from "effect";
 import { makeGuildStore } from "./guild-store.js";
 
 const config = { apiUrl: "http://api.local" };
+
 const options = { discordId: "discord-1", userId: "user-1" };
+
 const guilds = [
   {
     guild: { id: "organization-1", ownerId: "owner-1" },
@@ -16,6 +18,7 @@ const makeRedis = (cached: string | null = null) => {
   const get = mock(async () => cached);
   const set = mock(async () => "OK");
   const del = mock(async () => 1);
+
   return {
     store: { command: { get, set, del } },
     get,
@@ -33,6 +36,7 @@ describe("Gateway guild store", () => {
   test("serves a fresh Redis projection without outbound HTTP", async () => {
     const redis = makeRedis(JSON.stringify({ guilds, cachedAt: Date.now() }));
     const get = mock(() => Effect.die("HTTP must not run"));
+
     const store = makeGuildStore(
       config,
       redis.store,
@@ -48,12 +52,15 @@ describe("Gateway guild store", () => {
   test("retries retryable GET failures and fills the established cache", async () => {
     const redis = makeRedis();
     let attempt = 0;
+
     const get = mock(() => {
       attempt += 1;
+
       return attempt === 1
         ? Effect.fail(new Error("transport"))
         : Effect.succeed(httpResponse(200, guilds));
     });
+
     const store = makeGuildStore(
       config,
       redis.store,
@@ -70,6 +77,7 @@ describe("Gateway guild store", () => {
   test("does not retry a completed non-retryable response", async () => {
     const redis = makeRedis();
     const get = mock(() => Effect.succeed(httpResponse(404, {})));
+
     const store = makeGuildStore(
       config,
       redis.store,
@@ -85,6 +93,7 @@ describe("Gateway guild store", () => {
   test("propagates interruption to the permissions request", async () => {
     const redis = makeRedis();
     let interrupted = false;
+
     const get = mock(() =>
       Effect.never.pipe(
         Effect.onInterrupt(() =>
@@ -94,12 +103,15 @@ describe("Gateway guild store", () => {
         ),
       ),
     );
+
     const store = makeGuildStore(
       config,
       redis.store,
       httpClientFromResponses(get),
     );
+
     const fiber = Effect.runFork(store.getUserGuilds(options));
+
     while (get.mock.calls.length === 0) await Promise.resolve();
 
     await Effect.runPromise(Fiber.interrupt(fiber));

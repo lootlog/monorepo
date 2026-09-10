@@ -28,6 +28,7 @@ it("preserves anchor composition and keyboard activation", async () => {
   const activate = vi.fn((event: React.MouseEvent<HTMLAnchorElement>) =>
     event.preventDefault(),
   );
+
   render(
     <TextLink
       render={

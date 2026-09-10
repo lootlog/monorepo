@@ -9,6 +9,7 @@ interface HeroTimerCountdownProps {
 
 export const HeroTimerCountdown = ({ timer }: HeroTimerCountdownProps) => {
   const { t } = useTranslation();
+
   if (!timer) {
     return (
       <span className="text-xs text-muted-foreground flex items-center gap-1">

@@ -12,6 +12,7 @@ export function StatisticsNpcTable({
   npcs: UserKillAnalyticsResponseDtoOutput["npcs"];
 }) {
   const { t } = useTranslation();
+
   const columns: ColumnDef<
     typeof coreTableFeatures,
     UserKillAnalyticsResponseDtoOutput["npcs"][number]
@@ -91,18 +92,21 @@ export function StatisticsNpcTable({
       ),
     },
   ];
+
   const table = useTable({
     features: coreTableFeatures,
     data: npcs,
     columns,
     getRowId: (npc) => `${npc.world}:${npc.npcId}`,
   });
+
   if (!npcs.length)
     return (
       <p className="py-6 text-center text-sm text-muted-foreground">
         {t("statistics.noData")}
       </p>
     );
+
   return (
     <div className="overflow-x-auto">
       <Table className="min-w-[680px]">

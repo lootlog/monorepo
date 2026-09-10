@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 
 export const NPC_DETECTOR_CLOCK_INTERVAL_MS = 250;
+
 const subscribers = new Set<(currentTimeMs: number) => void>();
+
 let clockIntervalId: number | null = null;
 
 const stopClockIfIdle = () => {

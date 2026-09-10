@@ -41,10 +41,13 @@ const getTimerListState = <Timer extends { npc?: { name: string } | null }>(
   search: string,
 ) => {
   const normalizedSearch = search.trim().toLowerCase();
+
   const filtered = timers?.filter((timer) =>
     timer.npc?.name.toLowerCase().includes(normalizedSearch),
   );
+
   const hasFilteredTimers = (filtered?.length ?? 0) > 0;
+
   return {
     filtered,
     hasFilteredTimers,
@@ -72,6 +75,7 @@ export const Timers = () => {
   const guildId = useGuildId();
   const { world } = useGuildContext();
   const queryGuildId = guildId ?? "";
+
   const { data: timers, isPending } = useTimersControllerGetTimers(
     { guildId: queryGuildId },
     { world },
@@ -86,13 +90,16 @@ export const Timers = () => {
       },
     },
   );
+
   useTimerExpiry(timers, guildId, world);
   const [search, setSearch] = useState("");
   const isMobile = useIsMobile();
   const { viewMode, setViewMode } = useViewMode("timers-view-mode", "list");
   const { t } = useTranslation();
+
   const { filtered, hasFilteredTimers, showsNoSearchResults } =
     getTimerListState(timers, search);
+
   const emptyTranslationKeys =
     getEmptyTimerTranslationKeys(showsNoSearchResults);
 
@@ -101,6 +108,7 @@ export const Timers = () => {
       new Date(a.maxSpawnTime).getTime() - new Date(b.maxSpawnTime).getTime()
     );
   });
+
   const sorted = sortedByTime?.sort((a, b) => {
     return (
       NPC_TYPE_SORT_ORDER.findIndex((type) => type === a.npc?.type) -
@@ -211,6 +219,7 @@ export const Timers = () => {
                 <div className="flex flex-col gap-4">
                   {Object.keys(groups).map((key) => {
                     const npcType = findNpcType(key);
+
                     return (
                       <div key={key}>
                         <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground px-1 mb-2">

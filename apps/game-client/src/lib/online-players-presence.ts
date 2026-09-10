@@ -82,6 +82,7 @@ export const applyPresenceUpdates = (
           ? presence.sessionId !== update.sessionId
           : getPresenceKey(presence) !== presenceKey,
       );
+
       if (filteredPresences.length === currentAccountPresences.length) {
         continue;
       }
@@ -93,6 +94,7 @@ export const applyPresenceUpdates = (
       const existingPresenceIndex = currentAccountPresences.findIndex(
         (presence) => getPresenceKey(presence) === presenceKey,
       );
+
       if (existingPresenceIndex === -1) {
         updatedAccountPresences = [...currentAccountPresences, update];
       } else {
@@ -172,6 +174,7 @@ export const normalizePresence = (
         ...presence.playerPresence,
       }
     : presence.player;
+
   const normalizedPlayer = normalizePresencePlayer(rawPlayerPresence);
 
   return {
@@ -294,13 +297,16 @@ export const filterPresenceByPolicy = (
   policy: OrganizationAccessPolicy | undefined,
 ): PlayerPresenceResponse => {
   if (!canReadPresence(policy)) return {};
+
   if (canReadPresenceLocation(policy)) return players;
+
   return Object.fromEntries(
     Object.entries(players).map(([id, presences]) => [
       id,
       presences.map(({ mapName: _mapName, ...presence }) => {
         if (!presence.player) return presence;
         const { location: _location, ...player } = presence.player;
+
         return { ...presence, player };
       }),
     ]),

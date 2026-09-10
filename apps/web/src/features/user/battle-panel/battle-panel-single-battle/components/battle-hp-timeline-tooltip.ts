@@ -84,12 +84,14 @@ const tooltipDelta = z.object({
   labelKey: z.string(),
   value: z.number(),
 });
+
 const tooltipLegendaryBonus = z.object({
   labelKey: z.string(),
   recipientName: z.string().nullable(),
   team: z.number(),
   color: z.string(),
 });
+
 const tooltipPayload = z
   .object({
     turn: z.coerce.number(),

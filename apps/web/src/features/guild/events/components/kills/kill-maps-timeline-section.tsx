@@ -27,6 +27,7 @@ export const KillMapsTimelineSection = ({
   t,
 }: KillMapsTimelineSectionProps) => {
   const { guildId } = useParams({ strict: false });
+
   const { data: mapsTimeline, isLoading } =
     useEventsMonitoringControllerGetKillTimelineData({
       guildId: guildId ?? "",
@@ -51,9 +52,12 @@ export const KillMapsTimelineSection = ({
 
   const startTime = new Date(minSpawnTimeAtKill);
   const endTime = new Date(killedAt);
+
   const sortedMaps = [...mapsTimeline].sort((leftMap, rightMap) => {
     const gapCountDifference = rightMap.gaps.length - leftMap.gaps.length;
+
     if (gapCountDifference !== 0) return gapCountDifference;
+
     return leftMap.mapName.localeCompare(rightMap.mapName);
   });
 

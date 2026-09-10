@@ -14,6 +14,7 @@ import { useTranslation } from "react-i18next";
 export const MemberStatusBadge = ({ member }: { member: GuildMember }) => {
   const { t } = useTranslation();
   const syncPresentation = getMemberDiscordSyncPresentation(member);
+
   let copy = {
     label: t("settings.members.statusAccessOk"),
     className: "border-emerald-500/25 bg-emerald-500/10 text-emerald-500",

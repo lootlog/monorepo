@@ -1,4 +1,5 @@
 const url = "$GAME_CLIENT_URL$";
+
 const version = "$GAME_CLIENT_VERSION$";
 
 // ==UserScript==

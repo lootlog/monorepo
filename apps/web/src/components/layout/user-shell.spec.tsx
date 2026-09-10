@@ -39,6 +39,7 @@ const renderAccountPage = async () => {
       </ThemeContext.Provider>
     ),
   });
+
   const authenticated = createRoute({
     getParentRoute: () => root,
     id: "_authenticated",
@@ -48,14 +49,17 @@ const renderAccountPage = async () => {
       </UserShell>
     ),
   });
+
   const user = createRoute({
     getParentRoute: () => authenticated,
     path: "@me",
   });
+
   const settings = createRoute({
     getParentRoute: () => user,
     path: "settings",
   });
+
   const settingsIndex = createRoute({
     getParentRoute: () => settings,
     path: "/",
@@ -65,6 +69,7 @@ const renderAccountPage = async () => {
       </div>
     ),
   });
+
   const account = createRoute({
     getParentRoute: () => settings,
     path: "account",
@@ -77,6 +82,7 @@ const renderAccountPage = async () => {
       </div>
     ),
   });
+
   const router = createRouter({
     routeTree: root.addChildren([
       authenticated.addChildren([
@@ -85,9 +91,11 @@ const renderAccountPage = async () => {
     ]),
     history: createMemoryHistory({ initialEntries: ["/@me/settings/account"] }),
   });
+
   await router.load();
   render(<RouterProvider router={router} />);
   await screen.findByRole("heading", { name: "Account content" });
+
   return router;
 };
 
@@ -113,6 +121,7 @@ describe("user shell navigation", () => {
           : within(screen.getByRole("navigation")).getByRole("link", {
               name: "Ustawienia",
             });
+
       fireEvent.click(parentControl);
 
       await screen.findByRole("heading", { name: "Settings overview" });

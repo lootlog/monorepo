@@ -9,7 +9,9 @@ import {
 } from "@lootlog/client/main";
 
 type GuildNotificationTarget = NotificationTargetResponseDto;
+
 type GuildNotificationRule = GuildNotificationRulesResponseDto["items"][number];
+
 export type GuildNotificationJob =
   NotificationJobsResponseDto["pending"][number];
 
@@ -165,10 +167,14 @@ export const getGuildNotificationRuleScheduleTranslationKey = (
 
 export const TIMER_PRESET_SIMPLE =
   "**{{npcName}}** respi od {{minSpawnTime}} do {{maxSpawnTime}}";
+
 export const TIMER_PRESET_DETAILED =
   "**{{ruleName}}**\n🐉 **{{npcName}}** (ID: {{npcId}})\n🌍 {{world}}\n⏰ {{minSpawnTime}} – {{maxSpawnTime}}";
+
 export const TIMER_PRESET_MINIMAL = "{{npcName}} - {{minSpawnTime}}";
+
 export const SCHEDULED_PRESET_SIMPLE = "## {{ruleName}}\n\n{{scheduledFor}}";
+
 export const SCHEDULED_PRESET_MINIMAL = "{{ruleName}}";
 
 export const getDefaultGuildNotificationRuleContentTemplate = () =>

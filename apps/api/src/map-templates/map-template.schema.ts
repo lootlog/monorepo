@@ -15,7 +15,9 @@ export const CreateMapTemplateSchema = Schema.Struct({
   name: Schema.String,
   maps: Schema.Array(MapTemplateMapSchema).check(Schema.isMinLength(1)),
 }).annotate({ identifier: "CreateMapTemplateDto" });
+
 export type CreateMapTemplate = typeof CreateMapTemplateSchema.Type;
+
 export type EncodedCreateMapTemplate = typeof CreateMapTemplateSchema.Encoded;
 
 export const MapTemplateResponseSchema = Schema.Struct({
@@ -27,5 +29,6 @@ export const MapTemplateResponseSchema = Schema.Struct({
 }).annotate({ identifier: "MapTemplateResponseDto" });
 
 export type MapTemplateResponse = typeof MapTemplateResponseSchema.Type;
+
 export type EncodedMapTemplateResponse =
   typeof MapTemplateResponseSchema.Encoded;

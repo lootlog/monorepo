@@ -21,6 +21,7 @@ export const makeDiscordOperations = (
         attributes: { adapter: "discord", retryCount: 0 },
       }),
     );
+
   return {
     getUserGuilds: (userId: string, discordId: string) =>
       adapter("discord.userGuilds", () =>

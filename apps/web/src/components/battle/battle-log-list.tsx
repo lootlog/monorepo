@@ -59,23 +59,28 @@ export const BattleLogList: FC<BattleLogListProps> = ({
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
   const [resizedTurn, setResizedTurn] = useState<number | null>(null);
   const previousDesktop = useRef(isDesktop);
+
   const rememberSelectedTurn = useEffectEvent(() =>
     // eslint-disable-next-line react-doctor/no-derived-state -- This is a snapshot of the selected turn when the viewport changes, retained until its imperative scroll request completes.
     setResizedTurn(selectedTurn ?? null),
   );
+
   // eslint-disable-next-line react-doctor/no-derived-state-effect -- A media-query change switches physical scroll containers and requests re-alignment of the previously selected turn.
   useEffect(() => {
     if (previousDesktop.current !== isDesktop) rememberSelectedTurn();
     previousDesktop.current = isDesktop;
   }, [isDesktop]);
+
   const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(
     null,
   );
+
   useEffect(() => {
     setScrollElement(
       isDesktop ? scrollViewportRef.current : outerScrollViewportRef.current,
     );
   }, [isDesktop, scrollViewportRef, outerScrollViewportRef]);
+
   const virtualizer = useVirtualizer({
     count: events?.length ?? 0,
     getScrollElement: () => scrollElement,
@@ -85,6 +90,7 @@ export const BattleLogList: FC<BattleLogListProps> = ({
     useAnimationFrameWithResizeObserver: true,
     rangeExtractor: (range) => {
       const indexes = defaultRangeExtractor(range);
+
       if (
         focusedIndex !== null &&
         focusedIndex < range.count &&
@@ -93,6 +99,7 @@ export const BattleLogList: FC<BattleLogListProps> = ({
         indexes.push(focusedIndex);
         indexes.sort((a, b) => a - b);
       }
+
       return indexes;
     },
   });
@@ -100,7 +107,9 @@ export const BattleLogList: FC<BattleLogListProps> = ({
   useLayoutEffect(() => {
     const viewport = scrollElement;
     const list = listRef.current;
+
     if (!viewport || !list) return;
+
     const updateMargin = () => {
       setScrollMargin(
         list.getBoundingClientRect().top -
@@ -108,14 +117,18 @@ export const BattleLogList: FC<BattleLogListProps> = ({
           viewport.scrollTop,
       );
     };
+
     updateMargin();
     const observer = new ResizeObserver(updateMargin);
     observer.observe(viewport);
+
     // The wrapping detail content also changes when a timeline or overview loads.
     if (list.parentElement) observer.observe(list.parentElement);
+
     if (outerScrollViewportRef.current?.firstElementChild)
       observer.observe(outerScrollViewportRef.current.firstElementChild);
     window.addEventListener("resize", updateMargin);
+
     return () => {
       observer.disconnect();
       window.removeEventListener("resize", updateMargin);
@@ -125,12 +138,15 @@ export const BattleLogList: FC<BattleLogListProps> = ({
   const warriorsMap = new Map(
     warriors.map((warrior) => [warrior.originalId, warrior]),
   );
+
   const searchMatchedTurnsSet = new Set(searchMatchedTurns);
 
   const virtualItems = virtualizer.getVirtualItems();
+
   const visibleRangeKey = virtualItems
     .map((item) => `${item.index}:${item.size}`)
     .join(",");
+
   const notifyVisibleTurns = useEffectEvent(() => onVisibleTurnsChange?.());
   useEffect(() => {
     // eslint-disable-next-line react-doctor/no-prop-callback-in-effect -- Reports completed virtualizer layout so the owner can synchronize its DOM scroll overlay.
@@ -138,25 +154,33 @@ export const BattleLogList: FC<BattleLogListProps> = ({
   }, [visibleRangeKey, isDesktop]);
 
   let requestedTurn: number | null | undefined = resizedTurn;
+
   if (activeSearchTurn !== null && activeSearchTurn !== undefined)
     requestedTurn = activeSearchTurn;
   else if (scrollToSelectedTurnRequestId > 0) requestedTurn = selectedTurn;
+
   const notifyScrollComplete = useEffectEvent((turn: number) => {
     setResizedTurn(null);
     onSelectedTurnScrollComplete?.(turn);
   });
+
   const notifyScrollCancel = useEffectEvent((turn: number) => {
     setResizedTurn(null);
     onSelectedTurnScrollCancel?.(turn);
   });
+
   useEffect(() => {
     if (requestedTurn === null || requestedTurn === undefined) return;
+
     if (requestedTurn < 1 || requestedTurn > (events?.length ?? 0)) {
       // eslint-disable-next-line react-doctor/no-pass-live-state-to-parent, react-doctor/no-prop-callback-in-effect -- Owns an imperative scroll request: completion/cancellation notifications follow DOM measurements and user interruption, not mirrored parent state.
       notifyScrollCancel(requestedTurn);
+
       return;
     }
+
     const viewport = scrollElement;
+
     if (!viewport) return;
     let frame = 0;
     let stableFrames = 0;
@@ -167,13 +191,16 @@ export const BattleLogList: FC<BattleLogListProps> = ({
       align: "start",
       behavior: "auto",
     });
+
     const alignMeasuredRow = () => {
       const row = listRef.current?.querySelector<HTMLElement>(
         `[data-battle-turn="${requestedTurn}"]`,
       );
+
       if (row) {
         const viewportRect = viewport.getBoundingClientRect();
         const stickyRect = stickyContentRef?.current?.getBoundingClientRect();
+
         const stickyBottom =
           isDesktop &&
           stickyRect &&
@@ -181,6 +208,7 @@ export const BattleLogList: FC<BattleLogListProps> = ({
           stickyRect.top < viewportRect.bottom
             ? stickyRect.bottom
             : viewportRect.top;
+
         const target = Math.max(
           0,
           Math.min(
@@ -191,33 +219,43 @@ export const BattleLogList: FC<BattleLogListProps> = ({
               BATTLE_LOG_SCROLL_OFFSET_PX,
           ),
         );
+
         const settled = Math.abs(viewport.scrollTop - target) <= 1;
         stableFrames = settled ? stableFrames + 1 : 0;
+
         if (!settled) viewport.scrollTo({ top: target, behavior: "instant" });
+
         if (stableFrames >= 3) {
           finished = true;
           notifyScrollComplete(requestedTurn);
+
           return;
         }
       }
+
       attempts += 1;
+
       if (attempts < 75) frame = requestAnimationFrame(alignMeasuredRow);
       else {
         finished = true;
         notifyScrollCancel(requestedTurn);
       }
     };
+
     frame = requestAnimationFrame(alignMeasuredRow);
+
     const cancelFromUserInput = () => {
       if (finished) return;
       finished = true;
       cancelAnimationFrame(frame);
       notifyScrollCancel(requestedTurn);
     };
+
     viewport.addEventListener("wheel", cancelFromUserInput, { passive: true });
     viewport.addEventListener("touchstart", cancelFromUserInput, {
       passive: true,
     });
+
     return () => {
       cancelAnimationFrame(frame);
       viewport.removeEventListener("wheel", cancelFromUserInput);
@@ -246,8 +284,10 @@ export const BattleLogList: FC<BattleLogListProps> = ({
       >
         {virtualItems.map((item) => {
           const event = events?.[item.index];
+
           if (!event) return null;
           const turn = item.index + 1;
+
           return (
             <BattleEventEntry
               key={item.key}

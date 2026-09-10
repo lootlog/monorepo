@@ -23,6 +23,7 @@ import { LiveFeedRow } from "./live-feed-row";
 import { feedKill } from "./live-feed-test-data";
 
 type FeedItem = UserFeedResponseDtoOutput["items"][number];
+
 const feedLoot = {
   id: "loot:42",
   type: "loot",
@@ -62,10 +63,12 @@ async function renderRow(item: FeedItem, organizations?: FeedItem["guild"][]) {
       </ol>
     ),
   });
+
   const router = createRouter({
     routeTree: root,
     history: createMemoryHistory({ initialEntries: ["/"] }),
   });
+
   await router.load();
   const queryClient = new QueryClient();
   queryClient.setQueryData(getUsersControllerGetCurrentUserGuildsQueryKey(), [
@@ -83,9 +86,11 @@ async function renderRow(item: FeedItem, organizations?: FeedItem["guild"][]) {
 
 it("links a loot to its organization and preserves the loot search parameter", async () => {
   await renderRow(feedLoot);
+
   const link = await screen.findByRole("link", {
     name: "Nowy łup · Breheret Żelazny Łeb",
   });
+
   expect(link.getAttribute("href")).toBe("/wspolnota?lootId=42");
   expect(
     screen.getByRole("link", { name: "Wspólnota" }).getAttribute("href"),
@@ -114,6 +119,7 @@ it("keeps item names in accessible tile labels and stat tooltips only", async ()
   const list = await screen.findByRole("list", { name: "Przedmioty" });
   const items = within(list).getAllByRole("listitem");
   expect(items).toHaveLength(2);
+
   for (const [index, item] of items.entries()) {
     expect(item.textContent).toBe("");
     expect(within(item).queryAllByRole("img")).toHaveLength(0);
@@ -121,6 +127,7 @@ it("keeps item names in accessible tile labels and stat tooltips only", async ()
       within(item).getByRole("button", { name: feedLoot.items[index]?.name }),
     ).toBeTruthy();
   }
+
   fireEvent.focus(
     within(list).getByRole("button", { name: "Lśniące srebro północy" }),
   );
@@ -156,6 +163,7 @@ it("renders kill NPC sprites", async () => {
 it("preserves the kill statistics link and displays grouped count in its footer", async () => {
   const name =
     "Bardzo długie imię potwora wymagające zawinięcia na małym ekranie";
+
   await renderRow({ ...feedKill, count: 12, npc: { ...feedKill.npc, name } });
   const link = await screen.findByRole("link", { name: `Bicie: ${name}` });
   expect(link.getAttribute("href")).toBe("/organization/stats/npcs/1");
@@ -273,9 +281,11 @@ it("places all kill organizations in the header before world and time metadata",
     feedKill.guild,
     { id: "second", name: "Druga organizacja", vanityUrl: null },
   ]);
+
   const organization = await screen.findByRole("link", {
     name: "Druga organizacja",
   });
+
   expect(organization.getAttribute("href")).toBe("/second");
   expect(
     organization.compareDocumentPosition(screen.getByText("Pandora")) &
@@ -304,8 +314,10 @@ it("displays the kill NPC profession alongside its level", async () => {
     ...feedKill,
     npc: { ...feedKill.npc, lvl: 258, prof: "HUNTER" },
   });
+
   const link = await screen.findByRole("link", {
     name: `Bicie: ${feedKill.npc.name}`,
   });
+
   expect(link.textContent).toContain("(258h)");
 });

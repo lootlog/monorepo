@@ -10,6 +10,7 @@ export const feedKill = {
   count: 1,
   version: 1,
 } satisfies UserFeedResponseDtoOutput["items"][number];
+
 export function feedResponse(count = 1): UserFeedResponseDtoOutput {
   return {
     generatedAt: "2026-09-06T12:00:00Z",

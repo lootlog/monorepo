@@ -3,6 +3,7 @@ import * as m from "framer-motion/m";
 import type { FC } from "react";
 
 const SKELETON_COUNT = 3;
+
 const skeletonItems = Array.from({ length: SKELETON_COUNT }, (_, i) => i);
 
 export const GuildsSelectorSkeleton: FC = () => {

@@ -70,6 +70,7 @@ describe("battle HP timeline legend items", () => {
       layerCounts: {},
       legendaryItems,
     });
+
     const visibleLegend = buildBattleHpTimelineLegendItems({
       config: createLayerConfig(["legendary"]),
       layerCounts: {},

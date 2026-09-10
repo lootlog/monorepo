@@ -10,6 +10,7 @@ import { useSettingsStore } from "@/store/settings.store";
 import { WorldSelector } from "./world-selector";
 
 let harness: ReturnType<typeof createGuildPreferencesTest>;
+
 const render = () => renderUi(<WorldSelector />, { wrapper: harness.wrapper });
 
 describe("WorldSelector", () => {

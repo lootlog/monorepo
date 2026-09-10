@@ -30,6 +30,7 @@ export function ChatTranscriptRow({
 }: Props) {
   const messageGap = (appearance ?? CHAT_APPEARANCE_READABLE_PRESET)
     .messageGapPx;
+
   return (
     <MessageScroller.Item
       messageId={row.kind === "date-divider" ? undefined : row.message.id}

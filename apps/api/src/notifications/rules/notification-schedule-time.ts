@@ -18,6 +18,7 @@ type TimeOfDayParts = {
 export function isValidTimeZone(timeZone: string): boolean {
   try {
     getDateFormatter(timeZone).format(new Date());
+
     return true;
   } catch {
     return false;
@@ -35,6 +36,7 @@ export function isRecurringScheduleInterval(
 
 function parseTimeOfDay(timeOfDay: string): TimeOfDayParts {
   const [hours, minutes] = timeOfDay.split(":").map(Number);
+
   return {
     hours: hours ?? 0,
     minutes: minutes ?? 0,
@@ -47,6 +49,7 @@ function toUtcDateFromLocalTimeOfDay(
   timeZone: string,
 ): Date {
   const { hours, minutes } = parseTimeOfDay(timeOfDay);
+
   return toUtcDateFromLocal(localDate, hours, minutes, timeZone);
 }
 
@@ -60,6 +63,7 @@ export function calculateFirstOccurrenceInTimeZone(params: {
   const now = params.now ?? new Date();
   const currentLocalDate = getLocalDate(now, params.timeZone);
   let candidateLocalDate = currentLocalDate;
+
   let candidate = toUtcDateFromLocalTimeOfDay(
     candidateLocalDate,
     params.timeOfDay,
@@ -80,6 +84,7 @@ export function calculateFirstOccurrenceInTimeZone(params: {
     ).getUTCDay();
 
     let daysUntil = params.weekday - currentWeekday;
+
     if (daysUntil < 0) {
       daysUntil += 7;
     }
@@ -140,8 +145,10 @@ export function calculateNextOccurrenceInTimeZone(params: {
 
       const next = new Date(currentScheduledAt);
       next.setUTCHours(next.getUTCHours() + intervalValue);
+
       return next;
     }
+
     case NotificationScheduleIntervalType.DAILY: {
       if (!timeOfDay) {
         return null;
@@ -154,6 +161,7 @@ export function calculateNextOccurrenceInTimeZone(params: {
 
       return toUtcDateFromLocalTimeOfDay(nextLocalDate, timeOfDay, timeZone);
     }
+
     case NotificationScheduleIntervalType.WEEKLY: {
       if (!timeOfDay || weekday === null) {
         return null;
@@ -166,6 +174,7 @@ export function calculateNextOccurrenceInTimeZone(params: {
 
       return toUtcDateFromLocalTimeOfDay(nextLocalDate, timeOfDay, timeZone);
     }
+
     default:
       return null;
   }

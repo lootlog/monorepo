@@ -15,6 +15,7 @@ import { getHeroTimerCountdownState } from "./hero-timer-countdown-state";
 
 export const HeroTimerCountdownContent = ({ timer }: { timer: EventTimer }) => {
   const { t } = useTranslation();
+
   const [countdownState, setCountdownState] = useState(() =>
     getHeroTimerCountdownState(timer, Date.now()),
   );

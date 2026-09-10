@@ -6,6 +6,7 @@ const originalOffsetWidthDescriptor = Object.getOwnPropertyDescriptor(
   HTMLDivElement.prototype,
   "offsetWidth",
 );
+
 const originalOffsetHeightDescriptor = Object.getOwnPropertyDescriptor(
   HTMLDivElement.prototype,
   "offsetHeight",
@@ -47,6 +48,7 @@ const renderResizeHandle = ({
   );
 
   const windowRoot = container.querySelector('[data-testid="window-root"]');
+
   const resizeHandle = container.querySelector(
     "[data-ll-window-resize-handle]",
   );
@@ -70,6 +72,7 @@ describe("WindowResizeHandle", () => {
     const { resizeHandle, handleResize } = renderResizeHandle({
       allowVerticalResize: false,
     });
+
     fireEvent.keyDown(resizeHandle, { key: "ArrowRight", shiftKey: true });
     expect(handleResize).toHaveBeenLastCalledWith({ width: 210, height: 130 });
     fireEvent.keyUp(resizeHandle, { key: "ArrowRight" });

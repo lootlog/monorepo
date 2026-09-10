@@ -19,12 +19,14 @@ type ReadyRoomVersion = {
 };
 
 export const READY_ROOM_TOMBSTONE_TTL_MS = 120_000;
+
 export const READY_ROOM_TOMBSTONE_CAP = 512;
 
 let readyRoomObservationSequence = 0;
 
 function getNextReadyRoomObservationSequence(): number {
   readyRoomObservationSequence += 1;
+
   return readyRoomObservationSequence;
 }
 
@@ -67,6 +69,7 @@ export function selectReadyRoomParticipantForCharacter(
     projection.viewer === "ORGANIZER"
       ? new Set(projection.ownedParticipantIds)
       : null;
+
   return (
     Object.values(projection.participants).find(
       (participant) =>
@@ -84,10 +87,12 @@ export function selectReadyRoomForCharacter(
 ): PartyReadyRoomProjection | null {
   if (!identity) return null;
   const ownedReadyRoom = selectOwnedReadyRoom(state);
+
   const isOrganizerCharacter =
     ownedReadyRoom !== null &&
     identity.accountId === ownedReadyRoom.organizerCharacter.accountId &&
     identity.characterId === ownedReadyRoom.organizerCharacter.characterId;
+
   if (isOrganizerCharacter) return ownedReadyRoom;
 
   return (
@@ -116,9 +121,11 @@ function pruneExpiredRoomTombstones(
   now: number,
 ): Record<string, ReadyRoomVersion> {
   const roomVersionEntries = Object.entries(roomVersions);
+
   const presentVersions = roomVersionEntries.filter(
     ([, version]) => version.presence === "PRESENT",
   );
+
   const retainedTombstones = roomVersionEntries
     .filter(
       ([, version]) =>
@@ -128,11 +135,13 @@ function pruneExpiredRoomTombstones(
     .sort(([, firstVersion], [, secondVersion]) => {
       const timeDifference =
         secondVersion.observedAtMs - firstVersion.observedAtMs;
+
       if (timeDifference !== 0) return timeDifference;
 
       return secondVersion.observedSequence - firstVersion.observedSequence;
     })
     .slice(0, READY_ROOM_TOMBSTONE_CAP);
+
   const retainedVersions = [...presentVersions, ...retainedTombstones];
 
   if (retainedVersions.length === roomVersionEntries.length) {
@@ -148,18 +157,23 @@ function mergeProjectionIntoState(
   projection: PartyReadyRoomProjection,
 ): Pick<PartyFinderState, "projections" | "roomVersions"> {
   const observedAtMs = Date.now();
+
   const retainedRoomVersions = pruneExpiredRoomTombstones(
     roomVersions,
     observedAtMs,
   );
+
   if (!isSchemaVersionThree(projection)) {
     return { projections, roomVersions: retainedRoomVersions };
   }
+
   const notificationId = projection.notificationId;
   const currentVersion = retainedRoomVersions[notificationId];
+
   if (currentVersion && currentVersion.revision > projection.revision) {
     return { projections, roomVersions: retainedRoomVersions };
   }
+
   if (
     currentVersion?.revision === projection.revision &&
     currentVersion.presence === "REMOVED"
@@ -168,12 +182,14 @@ function mergeProjectionIntoState(
   }
 
   const current = projections[notificationId];
+
   if (
     current?.revision === projection.revision &&
     (current.viewer === "ORGANIZER" || projection.viewer !== "ORGANIZER")
   ) {
     return { projections, roomVersions: retainedRoomVersions };
   }
+
   return {
     projections: { ...projections, [notificationId]: projection },
     roomVersions: {
@@ -195,15 +211,20 @@ function removeProjectionFromState(
   revision: number,
 ): Pick<PartyFinderState, "projections" | "roomVersions"> {
   const observedAtMs = Date.now();
+
   const retainedRoomVersions = pruneExpiredRoomTombstones(
     roomVersions,
     observedAtMs,
   );
+
   const currentVersion = retainedRoomVersions[notificationId];
+
   if (currentVersion && currentVersion.revision > revision) {
     return { projections, roomVersions: retainedRoomVersions };
   }
+
   const { [notificationId]: _removed, ...remainingProjections } = projections;
+
   return {
     projections: remainingProjections,
     roomVersions: pruneExpiredRoomTombstones(
@@ -263,6 +284,7 @@ export const usePartyFinderStore = create<PartyFinderState>((set) => ({
   applyUpdate: (update) =>
     set((state) => {
       if (update.schemaVersion !== 3) return state;
+
       if (update.type === "UPSERT") {
         return mergeProjectionIntoState(
           state.projections,
@@ -270,6 +292,7 @@ export const usePartyFinderStore = create<PartyFinderState>((set) => ({
           update.projection,
         );
       }
+
       return removeProjectionFromState(
         state.projections,
         state.roomVersions,
@@ -281,9 +304,11 @@ export const usePartyFinderStore = create<PartyFinderState>((set) => ({
     set((state) => {
       const validIncomingProjections =
         incomingProjections.filter(isSchemaVersionThree);
+
       const incomingIds = new Set(
         validIncomingProjections.map(({ notificationId }) => notificationId),
       );
+
       let nextState = validIncomingProjections.reduce(
         (currentState, projection) =>
           mergeProjectionIntoState(
@@ -310,7 +335,9 @@ export const usePartyFinderStore = create<PartyFinderState>((set) => ({
         ) {
           continue;
         }
+
         const currentVersion = nextState.roomVersions[notificationId];
+
         if (
           currentVersion?.revision === baselineVersion.revision &&
           currentVersion.presence === "PRESENT"
@@ -323,6 +350,7 @@ export const usePartyFinderStore = create<PartyFinderState>((set) => ({
           );
         }
       }
+
       return { ...nextState, readyRoomsSynchronized: true };
     }),
   setReadyRoomsSynchronized: (readyRoomsSynchronized) =>
@@ -332,7 +360,9 @@ export const usePartyFinderStore = create<PartyFinderState>((set) => ({
       const revision =
         state.roomVersions[notificationId]?.revision ??
         state.projections[notificationId]?.revision;
+
       if (revision === undefined) return state;
+
       return removeProjectionFromState(
         state.projections,
         state.roomVersions,

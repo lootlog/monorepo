@@ -30,9 +30,13 @@ import {
 const runtime = ManagedRuntime.make(
   DocsRepository.layerDatabase.pipe(Layer.provideMerge(ApiDatabaseLive)),
 );
+
 const content = { root: { children: [], type: "root", version: 1 } };
+
 const guildId = "docs-integration-guild";
+
 const otherGuildId = "docs-other-guild";
+
 const create = () =>
   runtime.runPromise(
     Effect.flatMap(DocsRepository, (repository) =>
@@ -45,6 +49,7 @@ const create = () =>
       }),
     ),
   );
+
 const documents = () =>
   runtime.runPromise(
     Effect.flatMap(ApiDatabase, (db) =>
@@ -54,6 +59,7 @@ const documents = () =>
         .where(eq(guildDocumentTable.guildId, guildId)),
     ),
   );
+
 const history = () =>
   runtime.runPromise(
     Effect.flatMap(ApiDatabase, (db) =>
@@ -64,9 +70,12 @@ const history = () =>
         .orderBy(asc(guildDocumentHistoryTable.editedAt)),
     ),
   );
+
 const documentId = async () => {
   const row = (await documents())[0];
+
   if (!row) throw new Error("Expected persisted document");
+
   return row.id;
 };
 
@@ -136,6 +145,7 @@ describe("DocsRepository against migrated PostgreSQL", () => {
         sql`CREATE TRIGGER reject_test_document_history BEFORE INSERT ON "GuildDocumentHistory" FOR EACH ROW EXECUTE FUNCTION reject_test_document_history()`,
       ),
     );
+
     try {
       await expect(create()).rejects.toBeInstanceOf(DocsPersistenceError);
       expect(await documents()).toEqual([]);
@@ -167,9 +177,11 @@ describe("DocsRepository against migrated PostgreSQL", () => {
       { version: 1, updatedByMemberId: "editor-1" },
     ]);
     expect(await history()).toHaveLength(1);
+
     const nextContent = {
       root: { children: [{ type: "text", text: "New plan" }] },
     };
+
     await runtime.runPromise(
       service.updateDocument(guildId, id, "editor-2", {
         title: "Plan v2",
@@ -200,6 +212,7 @@ describe("DocsRepository against migrated PostgreSQL", () => {
     await create();
     const id = await documentId();
     const snapshot = (await history())[0];
+
     if (!snapshot) throw new Error("Expected history");
     const repository = await runtime.runPromise(DocsRepository);
     expect(

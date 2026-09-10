@@ -43,6 +43,7 @@ import { getActivePermissionCategories } from "../roles/active-permission-catego
 
 import type { getMemberDisplayData } from "./member-display-data";
 import type { MembersTableProps } from "./members-table";
+
 type MemberTableRowProps = Pick<
   MembersTableProps,
   "guildId" | "guildOwnerId" | "canManageMembers"
@@ -52,6 +53,7 @@ type MemberTableRowProps = Pick<
   isLastMember: boolean;
   openMemberDetails: (member: GuildMember) => void;
 };
+
 export function MemberTableRow({
   member,
   displayData,
@@ -62,6 +64,7 @@ export function MemberTableRow({
   canManageMembers,
 }: MemberTableRowProps) {
   const { t } = useTranslation();
+
   const {
     webActivityStats,
     gameActivityStats,
@@ -69,14 +72,18 @@ export function MemberTableRow({
     isGamePresenceVerified,
     onlineSources,
   } = displayData;
+
   const isOnline = onlineSources.length > 0;
+
   const activePermissionCategories = getActivePermissionCategories(
     member.roles.flatMap((role) => role.permissions),
   );
+
   const memberRouteParams = {
     guildId,
     memberId: String(member.id),
   };
+
   let activityLabel = t("settings.members.webActivity.noVisitsCompact");
 
   if (isOnlineOnWeb) {
@@ -100,6 +107,7 @@ export function MemberTableRow({
       )}
       onClickCapture={(event) => {
         const target = event.target;
+
         if (
           target instanceof Element &&
           target.closest("button,a,[data-member-row-action]")
@@ -141,6 +149,7 @@ export function MemberTableRow({
                 <span className="flex shrink-0 items-center gap-1">
                   {onlineSources.map((source) => {
                     const Icon = source === "web" ? Globe2 : Gamepad2;
+
                     const labelKey =
                       source === "web"
                         ? "settings.members.webActivity.onlineSources.web"

@@ -41,6 +41,7 @@ describe("business failures survive HTTP mapping", () => {
           toRecordsHttpResponse(Effect.fail(new RecordsDataError({ cause }))),
         ),
       );
+
       expect(response.status).toBe(status);
       expect(await response.json()).toEqual({ message });
     },
@@ -52,6 +53,7 @@ describe("business failures survive HTTP mapping", () => {
       submittedGuilds: [],
       rejectedGuilds: [{ id: "guild-a", reason: "NOT_ON_CHARACTER_WHITELIST" }],
     };
+
     const response = HttpServerResponse.toWeb(
       await Effect.runPromise(
         toRecordsHttpResponse(
@@ -61,6 +63,7 @@ describe("business failures survive HTTP mapping", () => {
         ),
       ),
     );
+
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual(body);
   });
@@ -82,6 +85,7 @@ describe("business failures survive HTTP mapping", () => {
           ),
         ),
       );
+
       expect(response.status).toBe(status);
       expect(await response.json()).toEqual({ message });
     },
@@ -101,6 +105,7 @@ describe("business failures survive HTTP mapping", () => {
         ),
       ),
     );
+
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({
       message: "errors.guilds.reservations.durationRangeInvalid",
@@ -120,6 +125,7 @@ describe("business failures survive HTTP mapping", () => {
         }),
       ),
     });
+
     const response = HttpServerResponse.toWeb(
       await Effect.runPromise(
         toAccountOrganizationHttpResponse(
@@ -127,6 +133,7 @@ describe("business failures survive HTTP mapping", () => {
         ),
       ),
     );
+
     expect(response.status).toBe(409);
     expect(await response.json()).toEqual({
       message: "errors.guilds.vanityUrlTaken",
@@ -146,12 +153,15 @@ describe("business failures survive HTTP mapping", () => {
         }),
       ),
     });
+
     const exit = await Effect.runPromiseExit(
       toAccountOrganizationHttpResponse(
         Effect.fail(new AccountOrganizationOperationError({ cause })),
       ),
     );
+
     expect(Exit.isFailure(exit)).toBe(true);
+
     if (Exit.isFailure(exit)) expect(Cause.hasDies(exit.cause)).toBe(true);
   });
 });

@@ -18,6 +18,7 @@ import { useWindowsStore } from "@/store/windows.store";
 
 export const createNotificationTest = () => {
   const test = createRealtimeTest();
+
   const preferences: UserGameAccountPreferencesResponseDtoOutput = {
     accountId: "1",
     notifications: createNotificationsSettings(["guild-1"]),
@@ -30,11 +31,13 @@ export const createNotificationTest = () => {
     hasStoredAirTags: true,
     hasStoredPreferences: true,
   };
+
   preferences.notifications.message = {
     ...preferences.notifications.message,
     sound: false,
     autoHideTimeout: 30,
   };
+
   const userPreferences: UserPreferencesResponseDtoOutput = {
     userId: "user",
     guildsOrder: [],
@@ -43,6 +46,7 @@ export const createNotificationTest = () => {
     chatAppearance: CHAT_APPEARANCE_READABLE_PRESET,
     mutes: { players: [], npcs: [] },
   };
+
   const soundSettings: SoundSettingsResponseDto = {
     userId: "user",
     masterVolume: 1,
@@ -56,6 +60,7 @@ export const createNotificationTest = () => {
     createdAt: "2026-01-01T00:00:00.000Z",
     updatedAt: "2026-01-01T00:00:00.000Z",
   };
+
   const setPreferences = () =>
     test.queryClient.setQueryData(
       getUsersControllerGetUserGameAccountPreferencesQueryKey({
@@ -63,16 +68,19 @@ export const createNotificationTest = () => {
       }),
       { ...preferences, notifications: { ...preferences.notifications } },
     );
+
   const setUserPreferences = () =>
     test.queryClient.setQueryData(
       getUsersControllerGetUserPreferencesQueryKey(),
       { ...userPreferences, mutes: { ...userPreferences.mutes } },
     );
+
   const setSounds = () =>
     test.queryClient.setQueryData(
       getSoundSettingsControllerGetSettingsQueryKey(),
       { ...soundSettings },
     );
+
   setPreferences();
   setUserPreferences();
   setSounds();
@@ -80,19 +88,23 @@ export const createNotificationTest = () => {
   useWindowsStore.getState().setOpen("notifications", false);
   const play = vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
   const audio: HTMLAudioElement[] = [];
+
   const load = vi
     .spyOn(HTMLMediaElement.prototype, "load")
     .mockImplementation(function (this: HTMLAudioElement) {
       if (!audio.includes(this)) audio.push(this);
     });
+
   const pause = vi
     .spyOn(HTMLMediaElement.prototype, "pause")
     .mockImplementation(() => {});
+
   onTestFinished(() => {
     play.mockRestore();
     load.mockRestore();
     pause.mockRestore();
   });
+
   return {
     ...test,
     preferences,

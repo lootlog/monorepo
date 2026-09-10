@@ -52,6 +52,7 @@ describe("map ping coordinates", () => {
 
   it("retains at most the newest 256 active pings", () => {
     const controller = new MapPingController(() => 1_000);
+
     const createEvent = (index: number) => ({
       pingId: `ping-${index}`,
       world: "aether",
@@ -183,6 +184,7 @@ describe("map ping coordinates", () => {
       y: 0,
       toJSON: () => ({}),
     });
+
     const geometry = {
       margin: { left: 30, top: 0 },
       normalSize: 3,
@@ -199,10 +201,12 @@ describe("map ping coordinates", () => {
   it("deduplicates received pings and stops rendering them after expiry", () => {
     let now = 1_000;
     let drawFrame: (() => void) | undefined;
+
     const renderer = {
       add: vi.fn<(drawable: RuntimeDrawable) => void>(),
       getHighestOrderWithoutSort: () => 10,
     };
+
     const originalEngine = testRuntimeWindow.Engine;
     const originalApi = testRuntimeWindow.API;
     testRuntimeWindow.Engine = {
@@ -223,6 +227,7 @@ describe("map ping coordinates", () => {
       removeCallbackFromEvent: vi.fn<() => void>(),
     };
     const controller = new MapPingController(() => now);
+
     const event = {
       pingId: "ping-1",
       world: "aether",
@@ -237,6 +242,7 @@ describe("map ping coordinates", () => {
     expect(controller.register()).toBe(true);
     expect(controller.addRemote(event, "Uwaga")).toBe(true);
     expect(controller.addRemote(event, "Uwaga")).toBe(false);
+
     if (!drawFrame) throw new Error("Expected draw callback");
     drawFrame();
     expect(renderer.add).toHaveBeenCalledTimes(1);
@@ -250,4 +256,5 @@ describe("map ping coordinates", () => {
     testRuntimeWindow.API = originalApi;
   });
 });
+
 import { testRuntimeWindow } from "@/test/test-runtime-window";

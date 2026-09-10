@@ -6,6 +6,7 @@ export const getOffsetPagination = (
 ) => {
   const hasNext = cursor + pageSize < total;
   const hasPrev = cursor > 0;
+
   return {
     hasNext,
     hasPrev,

@@ -32,6 +32,7 @@ export async function createKill(
   params: CreateKillParams,
 ): Promise<CreateKillResponse> {
   const client = createApiClient("main");
+
   const response = await runSingleLoggedAction({
     actionType: "create_kill",
     actionPayload: params,
@@ -81,6 +82,7 @@ export async function createBattle(
 ): Promise<CreateBattleResponse> {
   const client = createApiClient("battlelog");
   const { events, ...battleContext } = options;
+
   const response = await runSingleLoggedAction({
     actionType: "create_battle",
     actionPayload: {

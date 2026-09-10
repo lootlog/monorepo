@@ -33,15 +33,18 @@ const guild = {
 describe("internal guild HttpApi handlers", () => {
   it("preserves the unauthenticated gateway permission lookup contract", async () => {
     const calls: Array<[string, string]> = [];
+
     const permissions = [
       {
         guild: { id: "guild-a", ownerId: "discord-owner" },
         roles: [],
       },
     ];
+
     const data = InternalGuildsData.of({
       getUserPermissions: (discordId, userId) => {
         calls.push([discordId, userId]);
+
         return Effect.succeed(permissions);
       },
       getGuild: () => Effect.succeed(guild),
@@ -52,15 +55,18 @@ describe("internal guild HttpApi handlers", () => {
         Effect.provide(Layer.succeed(InternalGuildsData, data)),
       ),
     );
+
     expect(calls).toEqual([["discord-a", "user-a"]]);
     expect(Schema.is(InternalUserPermissionsResponse)(response)).toBe(true);
   });
 
   it("keeps empty internal identities as an empty result without data access", async () => {
     let dataCalled = false;
+
     const data = InternalGuildsData.of({
       getUserPermissions: () => {
         dataCalled = true;
+
         return Effect.succeed([]);
       },
       getGuild: () => Effect.succeed(guild),
@@ -71,6 +77,7 @@ describe("internal guild HttpApi handlers", () => {
         Effect.provide(Layer.succeed(InternalGuildsData, data)),
       ),
     );
+
     expect(response).toEqual([]);
     expect(dataCalled).toBe(false);
   });
@@ -80,16 +87,19 @@ describe("internal guild HttpApi handlers", () => {
       getUserPermissions: () => Effect.succeed([]),
       getGuild: () => Effect.succeed(guild),
     });
+
     const response = await Effect.runPromise(
       getInternalGuild("guild-a").pipe(
         Effect.provide(Layer.succeed(InternalGuildsData, data)),
       ),
     );
+
     expect(Schema.is(OrganizationSummary)(response)).toBe(true);
   });
 
   it("builds the established owner and member permission projection from repositories", async () => {
     const cached: unknown[] = [];
+
     const persistence: InternalGuildsPersistence = {
       findActiveGuild: () => Effect.succeed(null),
       findGuildsForPermissions: () =>
@@ -119,6 +129,7 @@ describe("internal guild HttpApi handlers", () => {
           },
         ]),
     };
+
     const cache = {
       get: () => Effect.succeed(null),
       getJson: () => Effect.succeed(null),
@@ -129,11 +140,13 @@ describe("internal guild HttpApi handlers", () => {
         }),
       del: () => Effect.void,
     } satisfies InternalGuildsCache;
+
     const data = makeInternalGuildsData(persistence, cache);
 
     const response = await Effect.runPromise(
       data.getUserPermissions("discord-a", "user-a"),
     );
+
     expect(Schema.is(InternalUserPermissionsResponse)(response)).toBe(true);
     expect(response).toHaveLength(2);
     expect(cached).toEqual([response]);
@@ -141,15 +154,18 @@ describe("internal guild HttpApi handlers", () => {
 
   it("preserves cached guild defaults without touching the database", async () => {
     let databaseRead = false;
+
     const persistence: InternalGuildsPersistence = {
       findActiveGuild: () =>
         Effect.sync(() => {
           databaseRead = true;
+
           return null;
         }),
       findGuildsForPermissions: () => Effect.succeed([]),
       findMembersWithRoles: () => Effect.succeed([]),
     };
+
     const cache = {
       get: () =>
         Effect.succeed(
@@ -165,6 +181,7 @@ describe("internal guild HttpApi handlers", () => {
       setJson: () => Effect.void,
       del: () => Effect.void,
     } satisfies InternalGuildsCache;
+
     const data = makeInternalGuildsData(persistence, cache);
 
     const response = await Effect.runPromise(data.getGuild("guild-a"));

@@ -28,6 +28,7 @@ const cancelableStatuses = [
   NotificationJobStatus.PROCESSING,
   NotificationJobStatus.BLOCKED,
 ] as const;
+
 const finalStatuses = [
   NotificationJobStatus.SENT,
   NotificationJobStatus.FAILED,
@@ -60,6 +61,7 @@ export const makeNotificationJobOperations = (
   ) =>
     Effect.gen(function* () {
       const scopeFilter = yield* notificationApiKeyJobFilter(database);
+
       const query = selectNotificationJobsWithRelations(database)
         .where(
           and(
@@ -74,6 +76,7 @@ export const makeNotificationJobOperations = (
             ? desc(notificationJobTable.updatedAt)
             : asc(notificationJobTable.scheduledFor),
         );
+
       return yield* (
         history ? query.limit(NOTIFICATIONS_HISTORY_RESPONSE_LIMIT) : query
       ).pipe(
@@ -113,6 +116,7 @@ export const makeNotificationJobOperations = (
       ],
       { concurrency: 2 },
     );
+
     return { pending, history };
   });
 
@@ -132,12 +136,15 @@ export const makeNotificationJobOperations = (
       )
       .limit(1)
       .pipe(Effect.mapError(databaseFailure("notifications.jobs.findGuild")));
+
     const job = rows[0];
+
     if (!job) {
       return yield* Effect.fail(
         new ResourceNotFoundError(NotificationError.NOTIFICATION_JOB_NOT_FOUND),
       );
     }
+
     if (!cancelableStatuses.some((status) => status === job.status)) {
       return yield* Effect.fail(
         new InvalidRequestError(
@@ -145,7 +152,9 @@ export const makeNotificationJobOperations = (
         ),
       );
     }
+
     yield* cancellation.cancel({ jobId });
+
     return { success: true as const };
   });
 

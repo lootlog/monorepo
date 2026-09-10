@@ -25,4 +25,5 @@ export const usePartyCommand = () => {
 
   return { handlePartyCommand };
 };
+
 import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";

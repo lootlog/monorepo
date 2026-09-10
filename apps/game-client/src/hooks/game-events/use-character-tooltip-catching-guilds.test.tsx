@@ -12,7 +12,9 @@ import { characterTooltipTransforms } from "@/lib/margonem-tooltips/registry";
 
 import { createCatchingGuildsHttp } from "@/test/catching-guilds-http";
 import * as tooltipPatcher from "@/lib/margonem-tooltips/patcher";
+
 let endpoint: ReturnType<typeof createCatchingGuildsHttp>;
+
 const refreshActiveOtherCanvasTooltip = vi.spyOn(
   tooltipPatcher,
   "refreshActiveOtherCanvasTooltip",
@@ -304,6 +306,7 @@ describe("useCharacterTooltipCatchingGuilds", () => {
       setOnlineOwner();
       useCharacterTooltipCatchingGuildsStore.getState().setActiveOther(other);
       const target = getOtherCatchingGuildsTarget(other);
+
       if (!target) throw new Error("Expected an online player target");
       useCharacterTooltipCatchingGuildsStore.getState().setLoading(target);
       window.dispatchEvent(new KeyboardEvent("keydown", { key: "Shift" }));
@@ -316,6 +319,7 @@ describe("useCharacterTooltipCatchingGuilds", () => {
 
     act(() => {
       const target = getOtherCatchingGuildsTarget(other);
+
       if (!target) throw new Error("Expected an online player target");
       useCharacterTooltipCatchingGuildsStore
         .getState()

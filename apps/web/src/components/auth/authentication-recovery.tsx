@@ -16,6 +16,7 @@ export const AuthenticationRecovery = ({
   onAction,
 }: Props) => {
   const { t } = useTranslation();
+
   const translationKey =
     mode === "reauth" ? "auth.reloginRequired" : "auth.unavailable";
 

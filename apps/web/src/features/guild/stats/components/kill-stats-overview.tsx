@@ -73,7 +73,9 @@ export const NpcTypeStatsCards: React.FC<NpcTypeStatsCardsProps> = ({
     <div className="grid grid-cols-2 gap-3 min-[1280px]:grid-cols-4">
       {NPC_TYPES_TO_DISPLAY.map((type) => {
         const config = NPC_TYPE_CONFIG.get(type);
+
         if (!config) return null;
+
         return (
           <StatsOverviewCard
             key={type}

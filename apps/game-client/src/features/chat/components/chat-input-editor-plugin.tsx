@@ -25,6 +25,7 @@ const deletePreviousWord = () => {
 
   if (!selection.isCollapsed()) {
     selection.removeText();
+
     return;
   }
 
@@ -83,6 +84,7 @@ export const ChatInputEditorPlugin: FC<ChatInputEditorPluginProps> = ({
       editorState.read(() => {
         const nextMessage = $getRoot().getTextContent();
         const selection = $getSelection();
+
         const nextCaretIndex = $isRangeSelection(selection)
           ? $getChatInputSelectionOffsets(selection)[1]
           : nextMessage.length;
@@ -93,6 +95,7 @@ export const ChatInputEditorPlugin: FC<ChatInputEditorPluginProps> = ({
         ) {
           previousTextRef.current = nextMessage;
           onChange(nextMessage, nextCaretIndex);
+
           return;
         }
 
@@ -116,6 +119,7 @@ export const ChatInputEditorPlugin: FC<ChatInputEditorPluginProps> = ({
       event.preventDefault();
       editor.update(deletePreviousWord);
     };
+
     const unregisterRootListener = editor.registerRootListener(
       (rootElement, previousRootElement) => {
         previousRootElement?.removeEventListener("keydown", handleKeyDown);

@@ -38,8 +38,11 @@ type NotificationsListProps = {
 };
 
 const EMPTY_NOTIFICATIONS: StoredNotification[] = [];
+
 const EMPTY_NOTIFICATION_SETTINGS: Partial<NotificationsSettings> = {};
+
 const INITIAL_BULK_RENDER_COUNT = 2;
+
 const MANUAL_EXIT_ANIMATION_DURATION_MS = 150;
 
 export const NotificationsList: FC<NotificationsListProps> = ({
@@ -48,6 +51,7 @@ export const NotificationsList: FC<NotificationsListProps> = ({
   settings = EMPTY_NOTIFICATION_SETTINGS,
 }) => {
   const visibleNotifications = notifications ?? EMPTY_NOTIFICATIONS;
+
   const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds({
     query: {
       queryKey: getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
@@ -55,22 +59,29 @@ export const NotificationsList: FC<NotificationsListProps> = ({
       staleTime: 1000 * 60 * 5,
     },
   });
+
   const guildNamesById = getGuildNamesById(guilds);
   const notificationsCount = visibleNotifications.length;
+
   const [fullyRenderedAnimationCycle, setFullyRenderedAnimationCycle] =
     useState(-1);
+
   const [manuallyLeavingNotificationIds, setManuallyLeavingNotificationIds] =
     useState<ReadonlySet<string>>(() => new Set());
+
   const manualRemovalTimeoutsRef = useRef(new Map<string, number>());
   const membersByGuildId = useNotificationGuildMembers(visibleNotifications);
   const { isReady: isMutesReady, mutes } = useCurrentUserNotificationMutes();
   const updateUserPreferences = useUpdateUserPreferences();
   const applyToReadyRoom = usePartyReadyRoomControllerApply();
+
   const mergeReadyRoomProjection = usePartyFinderStore(
     (state) => state.mergeProjection,
   );
+
   const setOpen = useWindowsStore((state) => state.setOpen);
   const scrollViewportRef = useRef<HTMLDivElement | null>(null);
+
   const {
     clearNotifications,
     latestNotificationAnimationCycle,
@@ -90,13 +101,16 @@ export const NotificationsList: FC<NotificationsListProps> = ({
       resumeNotificationAutoHide: state.resumeNotificationAutoHide,
     })),
   );
+
   const animationEffectsEnabled = useSettingsStore(
     (state) => state.animationEffectsEnabled,
   );
+
   const shouldStageBulkRender =
     notificationsCount > INITIAL_BULK_RENDER_COUNT &&
     latestPresentationStartedEmpty &&
     fullyRenderedAnimationCycle !== latestNotificationAnimationCycle;
+
   const renderedNotifications = shouldStageBulkRender
     ? visibleNotifications.slice(0, INITIAL_BULK_RENDER_COUNT)
     : visibleNotifications;
@@ -115,6 +129,7 @@ export const NotificationsList: FC<NotificationsListProps> = ({
     }
 
     let timeoutId: number | null = null;
+
     const animationFrameId = requestAnimationFrame(() => {
       timeoutId = window.setTimeout(() => {
         setFullyRenderedAnimationCycle(latestNotificationAnimationCycle);
@@ -123,6 +138,7 @@ export const NotificationsList: FC<NotificationsListProps> = ({
 
     return () => {
       cancelAnimationFrame(animationFrameId);
+
       if (timeoutId !== null) {
         window.clearTimeout(timeoutId);
       }
@@ -138,6 +154,7 @@ export const NotificationsList: FC<NotificationsListProps> = ({
         window.clearTimeout(timeoutId);
         removeNotification(notificationId);
       }
+
       manualRemovalTimeoutsRef.current.clear();
     },
     [removeNotification],
@@ -149,6 +166,7 @@ export const NotificationsList: FC<NotificationsListProps> = ({
 
   const handleJoinReadyRoom = (notification: StoredNotification) => {
     const character = buildCurrentCharacterPayload();
+
     if (!character) return;
 
     applyToReadyRoom.mutate(
@@ -176,15 +194,19 @@ export const NotificationsList: FC<NotificationsListProps> = ({
   const handleRemoveNotification = (notificationId: string) => {
     if (!animationEffectsEnabled) {
       removeNotification(notificationId);
+
       return;
     }
+
     if (manualRemovalTimeoutsRef.current.has(notificationId)) return;
 
     setManuallyLeavingNotificationIds((currentIds) => {
       const nextIds = new Set(currentIds);
       nextIds.add(notificationId);
+
       return nextIds;
     });
+
     const timeoutId = window.setTimeout(() => {
       manualRemovalTimeoutsRef.current.delete(notificationId);
       removeNotification(notificationId);
@@ -192,14 +214,17 @@ export const NotificationsList: FC<NotificationsListProps> = ({
         if (!currentIds.has(notificationId)) return currentIds;
         const nextIds = new Set(currentIds);
         nextIds.delete(notificationId);
+
         return nextIds;
       });
     }, MANUAL_EXIT_ANIMATION_DURATION_MS);
+
     manualRemovalTimeoutsRef.current.set(notificationId, timeoutId);
   };
 
   const getNotificationRow = (notification: StoredNotification) => {
     const settingsKey = getNotificationSettingsKey(notification);
+
     const categorySettings = isNotificationSettingsKey(settingsKey)
       ? settings[settingsKey]
       : undefined;
@@ -237,6 +262,7 @@ export const NotificationsList: FC<NotificationsListProps> = ({
       <div className="ll:flex ll:w-full ll:flex-col ll:gap-1 ll:pt-1">
         {renderedNotifications.map((notification) => {
           let animationClassName = "ll:w-full";
+
           if (animationEffectsEnabled) {
             animationClassName = manuallyLeavingNotificationIds.has(
               notification.notificationId,

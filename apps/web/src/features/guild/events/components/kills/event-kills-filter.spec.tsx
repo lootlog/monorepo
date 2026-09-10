@@ -58,6 +58,7 @@ describe("HeroKillsFilter", () => {
     const allHeroesTab = screen.getByRole("tab", {
       name: "events.kills.allHeroes",
     });
+
     fireEvent.mouseDown(allHeroesTab);
     fireEvent.click(allHeroesTab);
 

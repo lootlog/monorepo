@@ -25,10 +25,15 @@ export const getNpcTypeByWt = <TNpcType extends string>(
   }
 
   if (wt > 99) return npcTypes.TITAN;
+
   if (wt > 89) return npcTypes.COLOSSUS;
+
   if (wt > 79) return npcTypes.HERO;
+
   if (wt > 29) return npcTypes.ELITE3;
+
   if (wt > 19) return npcTypes.ELITE2;
+
   if (wt > 9) return npcTypes.ELITE;
 
   return npcTypes.COMMON;

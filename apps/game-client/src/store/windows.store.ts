@@ -135,8 +135,11 @@ interface WindowsState {
 }
 
 const DEFAULT_OPACITY: WindowOpacity = 4;
+
 const DEFAULT_POSITION: WindowPositionState = { x: 0, y: 0 };
+
 const DEFAULT_QUICK_ACCESS_WIDTH = 250;
+
 const DEFAULT_SIZE: WindowSizeState = { width: 242, height: 240 };
 
 export const sanitizeMaxContentHeight = (height: number | undefined) => {
@@ -171,6 +174,7 @@ const inferLegacyDefinedPosition = (
 ) => {
   if (!isObjectRecord(windowState)) return false;
   const position = windowState.position;
+
   return windowId === "settings"
     ? hasNonZeroPosition(position)
     : isObjectRecord(position);
@@ -178,10 +182,13 @@ const inferLegacyDefinedPosition = (
 
 const migrateLegacyWindowEntries = (state: RawPersistedWindows): void => {
   const addTimer = state["add-timer"];
+
   if (isObjectRecord(addTimer) && !("state" in addTimer)) {
     state["add-timer"] = { ...addTimer, state: {} };
   }
+
   const onlinePlayers = state["online-players"];
+
   if (isObjectRecord(onlinePlayers)) {
     const { state: _, ...windowState } = onlinePlayers;
     state["online-players"] = windowState;
@@ -213,17 +220,20 @@ const migrateLegacyCommand = (state: RawPersistedWindows): void => {
     state.command = state["chat-input"];
     delete state["chat-input"];
   }
+
   if (Array.isArray(state.windowFocusHistory)) {
     state.windowFocusHistory = state.windowFocusHistory.map((id) =>
       id === "chat-input" ? "command" : id,
     );
   }
+
   if (state.currentWindowFocus === "chat-input")
     state.currentWindowFocus = "command";
 };
 
 const migrateQuickAccessWidth = (state: RawPersistedWindows): void => {
   const quickAccess = state["quick-access"];
+
   if (isObjectRecord(quickAccess) && isObjectRecord(quickAccess.size)) {
     state["quick-access"] = {
       ...quickAccess,
@@ -236,12 +246,14 @@ const migrateSettingsTabToPath = (state: RawPersistedWindows): void => {
   const settings = isObjectRecord(state.settings) ? state.settings : {};
   const settingsState = isObjectRecord(settings.state) ? settings.state : {};
   const previousTab = settingsTabSchema.safeParse(settingsState.activeTab);
+
   // Version 12 mapped "appearance" to its chat subsection, which version 14
   // later moved into the chat domain; keep that historical destination.
   const nextPath: SettingsPath =
     previousTab.success && previousTab.data === "appearance"
       ? { domain: "chat", subsection: "chat-appearance" }
       : resolveSettingsPath(previousTab.success ? previousTab.data : undefined);
+
   state.settings = {
     ...settings,
     state: {
@@ -255,12 +267,14 @@ const migrateSettingsTabToPath = (state: RawPersistedWindows): void => {
 const migrateChatSettingsPath = (state: RawPersistedWindows): void => {
   const settings = isObjectRecord(state.settings) ? state.settings : {};
   const settingsState = isObjectRecord(settings.state) ? settings.state : {};
+
   if (
     settingsState.activeTab !== "appearance" ||
     settingsState.activeSubsection !== "chat"
   ) {
     return;
   }
+
   state.settings = {
     ...settings,
     state: {
@@ -276,38 +290,52 @@ export const migrateWindowsState = (
   version: number,
 ): RawPersistedWindows => {
   const state = isObjectRecord(persisted) ? persisted : {};
+
   if (version < 2) migrateLegacyCommand(state);
+
   if (version < 3) {
     const settings = isObjectRecord(state.settings) ? state.settings : {};
     state.settings = { ...settings, state: settings.state ?? {} };
   }
+
   if (version < 4) {
     for (const windowId of WINDOW_IDS) {
       if (windowId === "extension-login") continue;
       const windowState = state[windowId];
+
       if (!isObjectRecord(windowState)) continue;
       state[windowId] = {
         ...windowState,
         hasDefinedPosition: inferLegacyDefinedPosition(windowId, windowState),
       };
     }
+
     const settings = isObjectRecord(state.settings) ? state.settings : {};
     state.settings = { ...settings, state: settings.state ?? {} };
   }
+
   migrateLegacyWindowEntries(state);
+
   if (version < 10) {
     state.currentWindowFocus = undefined;
     state.windowFocusHistory = [];
   }
+
   if (version < 11) migrateQuickAccessWidth(state);
+
   if (version < 12) migrateSettingsTabToPath(state);
+
   if (version < 13) delete state["event-mode"];
+
   if (version < 14) migrateChatSettingsPath(state);
+
   return state;
 };
 
 const optionalNumber = z.number().optional().catch(undefined);
+
 const optionalBoolean = z.boolean().optional().catch(undefined);
+
 const windowSchema = z.looseObject({
   open: optionalBoolean,
   hasDefinedPosition: optionalBoolean,
@@ -339,8 +367,10 @@ const parsePersistedWindow = (
   defaults: WindowData,
 ): WindowData => {
   const parsed = windowSchema.safeParse(value);
+
   if (!parsed.success) return defaults;
   const data = parsed.data;
+
   return {
     ...defaults,
     ...data,
@@ -372,9 +402,11 @@ const settingsPayloadSchema = z.looseObject({
     .optional()
     .catch(undefined),
 });
+
 const addTimerPayloadSchema = z.looseObject({
   guildId: z.string().optional().catch(undefined),
 });
+
 const notificationPayloadSchema = z.looseObject({
   npc: z
     .looseObject({
@@ -406,11 +438,13 @@ const mergePersistedWindows = (
   const raw = isObjectRecord(persisted) ? persisted : {};
   // Keep extension fields, but persisted names must never overwrite live actions.
   const merged = { ...raw, ...current };
+
   for (const id of WINDOW_IDS) {
     if (id === "settings" || id === "add-timer" || id === "create-notification")
       continue;
     merged[id] = parsePersistedWindow(raw[id], current[id]);
   }
+
   merged.settings = {
     ...parsePersistedWindow(raw.settings, current.settings),
     state: {
@@ -439,6 +473,7 @@ const mergePersistedWindows = (
       ),
     },
   };
+
   return merged;
 };
 
@@ -607,6 +642,7 @@ export const useWindowsStore = create<WindowsState>()(
             key,
             ...state.windowFocusHistory.filter((id) => id !== key),
           ];
+
           return {
             currentWindowFocus: key,
             windowFocusHistory: newHistory,
@@ -681,6 +717,7 @@ export const useWindowsStore = create<WindowsState>()(
       setPosition: (key: WindowId, pos) =>
         set((state) => {
           const currentWindow = state[key];
+
           if (
             currentWindow.hasDefinedPosition &&
             currentWindow.position.x === pos.x &&
@@ -750,6 +787,7 @@ export const useWindowsStore = create<WindowsState>()(
       setSettingsActiveTab: (activeTab) =>
         set((state) => {
           const nextPath = resolveSettingsPath(activeTab);
+
           if (
             state.settings.state.activeTab === nextPath.domain &&
             state.settings.state.activeSubsection === nextPath.subsection
@@ -785,6 +823,7 @@ export const useWindowsStore = create<WindowsState>()(
           const newHistory = !curr
             ? [key, ...state.windowFocusHistory.filter((id) => id !== key)]
             : state.windowFocusHistory.filter((id) => id !== key);
+
           return {
             [key]: {
               ...state[key],
@@ -818,6 +857,7 @@ export const useWindowsStore = create<WindowsState>()(
           setSettingsPath: _setSettingsPath,
           ...persisted
         } = state;
+
         const {
           open: _open,
           hasDefinedPosition: _hasDefinedPosition,
@@ -827,6 +867,7 @@ export const useWindowsStore = create<WindowsState>()(
           state: _notificationState,
           ...notificationGeometry
         } = state["create-notification"];
+
         return { ...persisted, "create-notification": notificationGeometry };
       },
       storage: createJSONStorage(() =>
@@ -845,10 +886,12 @@ export const resetExtensionLoginWindow = () => {
     360,
     window.visualViewport?.width ?? window.innerWidth,
   );
+
   const height = Math.min(
     180,
     window.visualViewport?.height ?? window.innerHeight,
   );
+
   useWindowsStore.setState({
     "extension-login": {
       ...useWindowsStore.getInitialState()["extension-login"],

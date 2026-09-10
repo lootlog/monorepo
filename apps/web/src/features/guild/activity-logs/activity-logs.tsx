@@ -27,14 +27,18 @@ const FILTERS_OPEN_KEY = "activity-logs-filters-open";
 
 export const ActivityLogs: FC = () => {
   const { t } = useTranslation();
+
   const { guildId } = useParams({
     from: "/_authenticated/$guildId/activity-logs",
   });
+
   const { filters, setFilters, hasActiveFilters } = useActivityLogsFilters();
+
   const [isFiltersOpen, setIsFiltersOpen] = useLocalStorage(
     FILTERS_OPEN_KEY,
     true,
   );
+
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const isMobile = useIsMobile();
   const hasGuildId = Boolean(guildId);
@@ -55,11 +59,13 @@ export const ActivityLogs: FC = () => {
       },
     ),
   );
+
   const worldSuggestions = worldSuggestionsResponse?.worlds ?? [];
 
   const handleOpenSidebar = () => {
     if (isMobile) {
       setIsMobileFiltersOpen((prev) => !prev);
+
       return;
     }
 

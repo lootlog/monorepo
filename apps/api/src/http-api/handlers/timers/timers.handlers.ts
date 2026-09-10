@@ -182,15 +182,18 @@ export const getAllTimers = Effect.fn("getAllTimers")(function* (
 ) {
   const current = yield* identity;
   const value = yield* data((service) => service.getAll(current, world));
+
   return yield* decode(TimersResponse, value);
 });
 
 export const getRecentTimerHistory = Effect.fn("getRecentTimerHistory")(
   function* (guildId: string, world: string, limit?: number) {
     const access = yield* requireGuild(guildId, Permission.LOOTLOG_TIMERS_READ);
+
     const value = yield* data((service) =>
       service.getRecentHistory(access, world, limit),
     );
+
     return yield* decode(TimerHistoryListResponse, value);
   },
 );
@@ -201,6 +204,7 @@ export const getGuildTimers = Effect.fn("getGuildTimers")(function* (
 ) {
   const access = yield* requireGuild(guildId, Permission.LOOTLOG_TIMERS_READ);
   const value = yield* data((service) => service.getGuildTimers(access, world));
+
   return yield* decode(TimersResponse, value);
 });
 
@@ -211,9 +215,11 @@ export const searchTimerNpcs = Effect.fn("searchTimerNpcs")(function* (
   limit?: number,
 ) {
   const access = yield* requireGuild(guildId, Permission.LOOTLOG_TIMERS_READ);
+
   const value = yield* data((service) =>
     service.searchNpcs(access.guild.id, world, search, limit),
   );
+
   return yield* decode(TimerNpcSearchResponse, value);
 });
 
@@ -222,6 +228,7 @@ export const createAutoTimer = Effect.fn("createAutoTimer")(function* (
 ) {
   const current = yield* identity;
   const value = yield* data((service) => service.createAuto(current, payload));
+
   return yield* decode(CreateAutoTimerResponse, value);
 });
 
@@ -231,9 +238,11 @@ export const resetGuildTimer = Effect.fn("resetGuildTimer")(function* (
   payload: ResetTimerRequest,
 ) {
   const access = yield* requireGuild(guildId, Permission.LOOTLOG_TIMERS_RESET);
+
   const value = yield* data((service) =>
     service.reset(access, timerIdentifier, payload),
   );
+
   return yield* decode(TimerResponse, value);
 });
 
@@ -254,9 +263,11 @@ export const getGuildTimerHistory = Effect.fn("getGuildTimerHistory")(
     limit?: number,
   ) {
     const access = yield* requireGuild(guildId, Permission.LOOTLOG_TIMERS_READ);
+
     const value = yield* data((service) =>
       service.getHistory(access, world, timerIdentifier, limit),
     );
+
     return yield* decode(TimerHistoryListResponse, value);
   },
 );
@@ -266,9 +277,11 @@ export const restoreGuildTimer = Effect.fn("restoreGuildTimer")(function* (
   historyEntryId: number,
 ) {
   const access = yield* requireGuild(guildId, Permission.LOOTLOG_TIMERS_WRITE);
+
   const value = yield* data((service) =>
     service.restore(access, historyEntryId),
   );
+
   return yield* decode(TimerResponse, value);
 });
 
@@ -278,9 +291,11 @@ export const createManualGuildTimer = Effect.fn("createManualGuildTimer")(
       guildId,
       Permission.LOOTLOG_TIMERS_WRITE,
     );
+
     const value = yield* data((service) =>
       service.createManual(access, payload),
     );
+
     return yield* decode(TimerResponse, value);
   },
 );

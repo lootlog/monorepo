@@ -96,6 +96,7 @@ const LootDetailsContent: FC<LootDetailsContentProps> = ({
           <div className="flex flex-wrap items-end gap-2 p-3">
             {loot.players.map((player, idx) => {
               const color = playerColorMap[player.id];
+
               return (
                 <PlayerTile
                   key={player.id}

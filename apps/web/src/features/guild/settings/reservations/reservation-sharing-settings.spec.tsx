@@ -36,18 +36,23 @@ type InvitationResponse = {
   createdAt: string;
   expiresAt: string;
 } & ({ invitePath: string } | { inviteUrl: string });
+
 const defaultInvitation = {
   id: "invitation-1",
   invitePath: "/reservation-sharing/invitations/invitation-1",
   createdAt: "2026-08-26T00:00:00.000Z",
   expiresAt: "2026-09-02T00:00:00.000Z",
 };
+
 let createdInvitationResponse: InvitationResponse = defaultInvitation;
+
 let restoreClient = () => {};
+
 const renderSettings = async () => {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } },
   });
+
   restoreClient = configureApiClients({
     main: { baseUrl: "https://api.test" },
   });
@@ -56,12 +61,16 @@ const renderSettings = async () => {
     "fetch",
     async (input: string | URL | Request, init?: RequestInit) => {
       const request = new Request(input, init);
+
       if (request.method === "POST")
         return Response.json(createdInvitationResponse);
+
       if (request.method === "DELETE") {
         revoked = true;
+
         return new Response(null, { status: 204 });
       }
+
       return Response.json({
         shares: [],
         pendingInvitations: revoked ? [] : [defaultInvitation],
@@ -78,6 +87,7 @@ const renderSettings = async () => {
   );
   await screen.findByText("Oczekujące zaproszenia");
 };
+
 describe("ReservationSharingSettings", () => {
   afterEach(() => {
     cleanup();
@@ -144,21 +154,25 @@ describe("ReservationSharingSettings", () => {
   });
   it("keeps copy busy until the clipboard request settles and allows retry after failure", async () => {
     let rejectCopy: (cause?: unknown) => void = () => {};
+
     const writeText = vi.fn(
       () =>
         new Promise<void>((_resolve, reject) => {
           rejectCopy = reject;
         }),
     );
+
     Object.defineProperty(navigator, "clipboard", {
       configurable: true,
       value: { writeText },
     });
     await renderSettings();
     fireEvent.click(screen.getByRole("button", { name: "Utwórz zaproszenie" }));
+
     const copy = await screen.findByRole<HTMLButtonElement>("button", {
       name: "Kopiuj",
     });
+
     fireEvent.click(copy);
     await waitFor(() => expect(copy.disabled).toBe(true));
     expect(copy.getAttribute("aria-busy")).toBe("true");
@@ -172,15 +186,18 @@ describe("ReservationSharingSettings", () => {
     const writeText = vi.fn(() => {
       throw new Error("Clipboard unavailable");
     });
+
     Object.defineProperty(navigator, "clipboard", {
       configurable: true,
       value: { writeText },
     });
     await renderSettings();
     fireEvent.click(screen.getByRole("button", { name: "Utwórz zaproszenie" }));
+
     const copy = await screen.findByRole<HTMLButtonElement>("button", {
       name: "Kopiuj",
     });
+
     fireEvent.click(copy);
     await waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(copy.disabled).toBe(false));

@@ -1,6 +1,7 @@
 import type { GameEvent } from "@lootlog/margonem/game-events";
 
 export type RuntimeStatus = "uninitialized" | "ready";
+
 export type RuntimeInterface = "ni" | "si";
 
 export type RuntimeNpc = Readonly<{
@@ -126,6 +127,7 @@ export type RuntimeEventEnvelope = Readonly<{
 }>;
 
 export type RuntimeEventHandler = (envelope: RuntimeEventEnvelope) => void;
+
 export type RuntimeIntentHandler = (intent: RuntimeIntent) => void;
 
 export type RuntimeObserverFailure = Readonly<{

@@ -42,12 +42,16 @@ function hydrateOnlineCharacterOwners({
   void requestServerPresence(socket, guildId, world)
     .then((response) => {
       if (requestIdRef.current !== currentRequestId) return;
+
       if (!response) {
         useOnlineCharacterOwnersStore.getState().setError();
+
         return;
       }
+
       if (response.status === "forbidden") {
         useOnlineCharacterOwnersStore.getState().setForbidden();
+
         return;
       }
 
@@ -69,15 +73,20 @@ export function useOnlineCharacterOwners(): void {
   const isShiftPressed = useCharacterTooltipCatchingGuildsStore(
     (state) => state.isShiftPressed,
   );
+
   const selectedGuildId = useSelectedLootlogGuildId();
   const active = isShiftPressed && isConcreteLootlogGuildId(selectedGuildId);
+
   const selectedWorldSetting = useSettingsStore((state) =>
     active ? state.worldByGuildId[selectedGuildId] : undefined,
   );
+
   const selectedWorld = active
     ? (selectedWorldSetting ?? getCurrentWorld())
     : undefined;
+
   const { connected, joined, socket } = useSocket();
+
   const { data: guildMembersByUserId } = useGuildMembersSummary(
     { guildId: selectedGuildId ?? "" },
     {
@@ -87,6 +96,7 @@ export function useOnlineCharacterOwners(): void {
       },
     },
   );
+
   const guildMembersByUserIdRef = useRef(guildMembersByUserId);
   const selectedGuildIdRef = useRef(selectedGuildId);
   const selectedWorldRef = useRef(selectedWorld);
@@ -96,6 +106,7 @@ export function useOnlineCharacterOwners(): void {
 
   useEffect(() => {
     guildMembersByUserIdRef.current = guildMembersByUserId;
+
     if (!active) return;
     useOnlineCharacterOwnersStore
       .getState()
@@ -121,10 +132,12 @@ export function useOnlineCharacterOwners(): void {
       activeHydrationKeyRef.current = null;
       activeHydrationSocketRef.current = socket;
       useOnlineCharacterOwnersStore.getState().clearOwners();
+
       return;
     }
 
     const hydrationKey = `${selectedGuildId}\u0000${selectedWorld}`;
+
     if (
       activeHydrationKeyRef.current === hydrationKey &&
       activeHydrationSocketRef.current === socket
@@ -168,8 +181,10 @@ export function useOnlineCharacterOwners(): void {
       }
 
       const store = useOnlineCharacterOwnersStore.getState();
+
       if (normalizedPresence.status === "offline") {
         store.removePresence(normalizedPresence);
+
         return;
       }
 

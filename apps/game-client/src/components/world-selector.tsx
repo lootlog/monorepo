@@ -16,6 +16,7 @@ import { useDelayedVisibility } from "@/hooks/ui/use-delayed-visibility";
 import { useVisibleLootlogGuilds } from "@/hooks/use-visible-lootlog-guilds";
 
 const recentWorldsSchema = z.array(z.string());
+
 const DEFAULT_RECENT_WORLDS: string[] = [];
 
 const recentWorldsKey = (accountId: string, characterId: string) =>
@@ -33,17 +34,21 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
   className = "",
 }) => {
   const { t } = useTranslation("common");
+
   const { guildsQuery, preferencesQuery, visibleGuilds } =
     useVisibleLootlogGuilds();
+
   const characterId = useGameStore(
     (state) => state.game?.hero.characterId ?? "",
   );
+
   const accountId = useGameStore((state) => state.game?.hero.accountId ?? "");
   const defaultWorld = useGameStore((state) => state.game?.world ?? "unknown");
 
   const { guildId, world, setWorld } = useSettingsStore(
     useShallow((state) => {
       const currentGuildId = state.guildIdByCharId[characterId];
+
       return {
         guildId: currentGuildId,
         world: currentGuildId
@@ -53,6 +58,7 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
       };
     }),
   );
+
   const {
     data: worlds,
     isFetched,
@@ -75,16 +81,19 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
       DEFAULT_RECENT_WORLDS,
       recentWorldsSchema,
     );
+
   const showLoading = useDelayedVisibility(isLoading);
 
   useEffect(() => {
     if (!isFetched || !guildId || !worlds) return;
+
     if (!world) {
       if (defaultWorld && worlds.includes(defaultWorld)) {
         setWorld(guildId, defaultWorld);
       } else if (worlds.length > 0) {
         setWorld(guildId, worlds[0]);
       }
+
       return;
     }
 
@@ -101,6 +110,7 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
     if (!worlds || worlds.length === 0) return [];
 
     const availableWorlds = new Set(worlds);
+
     const recent =
       recentWorlds?.flatMap((w) =>
         availableWorlds.has(w)
@@ -114,6 +124,7 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
       ) ?? [];
 
     const recentValues = new Set(recent.map((w) => w.value));
+
     const rest = worlds.flatMap((w) =>
       recentValues.has(w)
         ? []
@@ -154,6 +165,7 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
         newWorld,
         ...(recentWorlds?.filter((w) => w !== newWorld) ?? []),
       ].slice(0, MAX_RECENT_WORLDS);
+
       setRecentWorlds(updatedRecent);
     }
 

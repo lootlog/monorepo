@@ -17,6 +17,7 @@ import {
 } from "../../utils/env-generator.js";
 
 const __filename = fileURLToPath(import.meta.url);
+
 const __dirname = dirname(__filename);
 
 const ROOT_PATH = join(__dirname, "../../../../..");
@@ -55,6 +56,7 @@ const processEnvFile = async (
 
   if (exists && options.skipExisting) {
     console.log(chalk.yellow(`⏭️  Skipping ${envFile.name} (already exists)`));
+
     return {
       created: false,
       variables: parseEnvFile(readEnvFile(envFile.path)),
@@ -67,8 +69,10 @@ const processEnvFile = async (
         `⚠️  ${envFile.name}/.env already exists. Overwrite? (y/n): `,
       ),
     );
+
     if (overwrite.toLowerCase() !== "y") {
       console.log(chalk.gray(`   Skipped ${envFile.name}`));
+
       return {
         created: false,
         variables: parseEnvFile(readEnvFile(envFile.path)),
@@ -82,9 +86,11 @@ const processEnvFile = async (
   if (options.auto) {
     variables = generateEnvValues(variables, sharedValues);
     let derivedSharedValues = sharedValues;
+
     if (processOptions.useGeneratedSharedValues) {
       derivedSharedValues = extractSharedValues(variables);
     }
+
     variables = enhanceVariablesWithDerivedValues(
       variables,
       derivedSharedValues,
@@ -98,6 +104,7 @@ const processEnvFile = async (
   writeEnvFile(envFile.path, envContent);
 
   console.log(chalk.green(`✅ Created ${envFile.name}/.env`));
+
   return {
     created: true,
     variables,
@@ -162,6 +169,7 @@ ${chalk.bold("Note:")}
   Shared values (database credentials, RabbitMQ, Redis, activity signing) are generated once
   and reused across all services.
     `);
+
     return;
   }
 
@@ -180,6 +188,7 @@ ${chalk.bold("Note:")}
   console.log(chalk.gray(`Found ${envFiles.length} environment files:\n`));
 
   let sharedValues = new Map<string, string>();
+
   if (options.auto && (!options.force || options.skipExisting)) {
     for (const secretKey of [
       "ACTIVITY_EVENT_SIGNATURE_SECRET",
@@ -188,20 +197,25 @@ ${chalk.bold("Note:")}
     ]) {
       for (const envFile of envFiles) {
         if (!existsSync(envFile.path)) continue;
+
         const value = extractSharedValues(
           parseEnvFile(readEnvFile(envFile.path)),
         ).get(secretKey);
+
         if (value === undefined) continue;
         const previous = sharedValues.get(secretKey);
+
         if (!value || (previous !== undefined && previous !== value)) {
           throw new Error(
             `Invalid or inconsistent ${secretKey} in existing .env files. Align the root and relevant application values or regenerate all files with --force.`,
           );
         }
+
         sharedValues.set(secretKey, value);
       }
     }
   }
+
   let createdCount = 0;
   let skippedCount = 0;
   const rootEnvFile = envFiles.find((envFile) => envFile.name === "root");
@@ -218,6 +232,7 @@ ${chalk.bold("Note:")}
         useGeneratedSharedValues: true,
       },
     );
+
     if (rootResult.created) {
       createdCount++;
     } else {
@@ -238,6 +253,7 @@ ${chalk.bold("Note:")}
 
   for (const envFile of appEnvFiles) {
     const result = await processEnvFile(envFile, sharedValues, options);
+
     if (result.created) {
       createdCount++;
     } else {

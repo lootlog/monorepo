@@ -42,8 +42,11 @@ import {
 } from "#src/realtime/subscription-policy";
 
 type Command = typeof ClientCommand.Type;
+
 type Scope = typeof SubscriptionScope.Type;
+
 type Event = typeof ServerEvent.Type;
+
 type RealtimeResponse = typeof Response.Type;
 
 const scopedGuilds = (
@@ -51,6 +54,7 @@ const scopedGuilds = (
   guilds: SessionData["guilds"],
 ): SessionData["guilds"] => {
   const access = session.apiKeyAccess;
+
   return access
     ? guilds.filter(({ guild }) => access.organizationIds.includes(guild.id))
     : guilds;
@@ -63,6 +67,7 @@ const sessionAccessPolicy = (
     session.guilds,
     session.discordId,
   );
+
   return {
     ...snapshot,
     version: createHash("sha256").update(snapshot.version).digest("hex"),
@@ -137,12 +142,14 @@ export class CommandHandler {
         socket.close(1008, "API key authorization expired"),
       );
     let decoded: unknown;
+
     if (socket.data.frameEncoding === "json") {
       if (Buffer.isBuffer(input)) {
         return Effect.sync(() =>
           socket.close(1003, "text JSON frames required"),
         );
       }
+
       try {
         decoded = JSON.parse(input);
       } catch {
@@ -156,6 +163,7 @@ export class CommandHandler {
           socket.close(1003, "binary MessagePack frames required"),
         );
       }
+
       try {
         decoded = decode(new Uint8Array(input));
       } catch {
@@ -164,18 +172,23 @@ export class CommandHandler {
         );
       }
     }
+
     let command: Command;
+
     try {
       command = decodeClientCommand(decoded);
     } catch {
       const rejection = invalidLegacyPayloadResponse(decoded);
+
       if (rejection) {
         return Effect.sync(() => {
           this.hub.sendResponse(socket, rejection);
         });
       }
+
       return Effect.sync(() => socket.close(1007, "malformed realtime frame"));
     }
+
     return this.dispatch(socket, command).pipe(
       Effect.tap((data) =>
         Effect.sync(() => {
@@ -193,6 +206,7 @@ export class CommandHandler {
           const failure = isCommandFailure(error)
             ? commandFailureDetails(error)
             : { message: "command temporarily unavailable", retryable: true };
+
           if (command.requestId)
             this.hub.sendResponse(
               socket,
@@ -214,6 +228,7 @@ export class CommandHandler {
     userId: string,
   ): Effect.Effect<void, unknown> {
     const { activity, guilds, hub, presence } = this;
+
     return Effect.gen(function* () {
       if (
         !hub
@@ -221,34 +236,43 @@ export class CommandHandler {
           .some((socket) => socket.data.discordId === discordId)
       )
         return;
+
       const updatedGuilds = yield* guilds.getUserGuilds({
         discordId,
         userId,
       });
+
       for (const socket of hub.getLocalSocketsForUser(userId)) {
         if (socket.data.discordId !== discordId) continue;
         const allowedGuilds = scopedGuilds(socket.data, updatedGuilds);
         const previousPolicy = sessionAccessPolicy(socket.data);
+
         const accessPolicy = sessionAccessPolicy({
           guilds: allowedGuilds,
           discordId,
         });
+
         const changes = diffAccessPolicies(previousPolicy, accessPolicy);
         socket.data.guilds = allowedGuilds;
+
         if (changes.length === 0) continue;
         const updatedIds = new Set(allowedGuilds.map(({ guild }) => guild.id));
+
         const removedIds = previousPolicy.organizations
           .map(({ organizationId }) => organizationId)
           .filter((id) => !updatedIds.has(id));
+
         if (removedIds.length > 0 && !socket.data.apiKeyAccess) {
           yield* activity.publish("DISCONNECT_EVENT", socket.data, removedIds);
         }
+
         if (!socket.data.apiKeyAccess) yield* presence.reconcileAccess(socket);
         socket.data.airTagScopes = socket.data.airTagScopes.filter((scope) =>
           canSubscribe(socket.data, scope.subscription),
         );
         const scopes = defaultScopes(socket.data);
         const scopeKeys = new Set(scopes.map(getScopeKey));
+
         for (const scope of socket.data.subscriptions.values()) {
           if (
             canSubscribe(socket.data, scope) &&
@@ -258,19 +282,23 @@ export class CommandHandler {
             scopeKeys.add(getScopeKey(scope));
           }
         }
+
         const replaced = yield* Effect.try(() =>
           hub.replaceSubscriptions(socket, scopes),
         ).pipe(
           Effect.as(true),
           Effect.catch((cause) => {
             socket.close(1008, "subscription reconciliation failed");
+
             return Effect.logWarning(
               "Subscription reconciliation failed",
               cause,
             ).pipe(Effect.as(false));
           }),
         );
+
         if (!replaced) continue;
+
         const event = {
           v: 1,
           type: "permissions.updated",
@@ -281,7 +309,9 @@ export class CommandHandler {
             subscriptionScopes: scopes,
           },
         } satisfies Event;
+
         hub.sendEvent(socket, event);
+
         if (allowedGuilds.length === 0) {
           if (socket.data.apiKeyAccess) socket.data.apiKeyLeaseExpiresAt = 0;
           socket.close(1008, "organization access removed");
@@ -308,6 +338,7 @@ export class CommandHandler {
   ): Effect.Effect<unknown, CommandFailure> {
     if (!hasValidApiKeyLease(socket.data))
       return Effect.fail(new OrganizationAccessDenied());
+
     if (
       socket.data.apiKeyAccess &&
       ![
@@ -318,13 +349,16 @@ export class CommandHandler {
       ].includes(command.type)
     )
       return Effect.fail(new OrganizationAccessDenied());
+
     const fromPromise = <A>(evaluate: () => Promise<A>) =>
       Effect.tryPromise({
         try: evaluate,
         catch: (cause) =>
           new RealtimeDependencyError({ operation: command.type, cause }),
       });
+
     const requireJoined = this.requireJoined(socket);
+
     switch (command.type) {
       case "session.join":
         return this.join(socket, command.data);
@@ -344,8 +378,10 @@ export class CommandHandler {
           topic: "organization.presence",
           organizationId: command.data.organizationId,
         } satisfies Scope;
+
         if (!canSubscribe(socket.data, scope))
           return Effect.fail(new OrganizationAccessDenied());
+
         return requireJoined.pipe(
           Effect.andThen(
             this.presence.snapshot(
@@ -366,14 +402,17 @@ export class CommandHandler {
           ),
         );
       }
+
       case "subscription.subscribe":
         if (!canSubscribe(socket.data, command.data))
           return Effect.fail(new OrganizationAccessDenied());
+
         return requireJoined.pipe(
           Effect.andThen(
             Effect.try({
               try: () => {
                 this.hub.subscribe(socket, command.data);
+
                 return { scope: command.data };
               },
               catch: (cause) =>
@@ -391,6 +430,7 @@ export class CommandHandler {
           Effect.andThen(
             Effect.sync(() => {
               this.hub.unsubscribe(socket, command.data);
+
               return { scope: command.data };
             }),
           ),
@@ -425,10 +465,13 @@ export class CommandHandler {
     data: Extract<Command, { type: "session.join" }>["data"],
   ): Effect.Effect<unknown, CommandFailure> {
     const { activity, guilds, hub, presence, proofVerifier } = this;
+
     return Effect.gen(function* () {
       const wasJoined = socket.data.joined;
+
       if (socket.data.platform === "game" && !data.character)
         return yield* Effect.fail(new GameCharacterRequired());
+
       if (
         socket.data.apiKeyAccess &&
         (data.character || data.margonemAccountProof)
@@ -436,6 +479,7 @@ export class CommandHandler {
         return yield* Effect.fail(new OrganizationAccessDenied());
       socket.data.character = data.character;
       socket.data.confidence = "reported";
+
       if (data.character) {
         const verification = yield* proofVerifier.verify({
           proof: data.margonemAccountProof,
@@ -444,10 +488,13 @@ export class CommandHandler {
           characterId: data.character.characterId,
           clanId: data.character.clan?.id,
         });
+
         if (verification.valid) socket.data.confidence = "verified";
       }
+
       const userGuilds = yield* guilds.getUserGuilds(socket.data);
       const authorizedGuilds = scopedGuilds(socket.data, userGuilds);
+
       if (authorizedGuilds.length === 0) {
         const previousPolicy = sessionAccessPolicy(socket.data);
         socket.data.guilds = [];
@@ -466,6 +513,7 @@ export class CommandHandler {
             changes: diffAccessPolicies(previousPolicy, accessPolicy),
           },
         });
+
         if (wasJoined && !socket.data.apiKeyAccess) {
           yield* activity.publish(
             "DISCONNECT_EVENT",
@@ -475,6 +523,7 @@ export class CommandHandler {
             ),
           );
         }
+
         yield* presence
           .reconcileAccess(socket)
           .pipe(
@@ -485,8 +534,10 @@ export class CommandHandler {
             ),
           );
         socket.data.presence = undefined;
+
         return yield* Effect.fail(new NoAuthorizedOrganizations());
       }
+
       socket.data.guilds = authorizedGuilds;
       socket.data.joined = true;
       const scopes = defaultScopes(socket.data);
@@ -500,6 +551,7 @@ export class CommandHandler {
                 cause,
               }),
       });
+
       const event = {
         v: 1,
         type: "session.joined",
@@ -510,9 +562,12 @@ export class CommandHandler {
           subscriptionScopes: scopes,
         },
       } satisfies Event;
+
       hub.sendEvent(socket, event);
+
       if (!wasJoined && !socket.data.apiKeyAccess)
         yield* activity.publish("CONNECT_EVENT", socket.data);
+
       return event.data;
     }).pipe(
       Effect.mapError((cause) =>

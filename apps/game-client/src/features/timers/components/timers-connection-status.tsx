@@ -15,6 +15,7 @@ import { useTranslation } from "react-i18next";
 export const TimersConnectionStatus: FC = () => {
   const { t } = useTranslation("timers");
   const { connected, joined, joinedGuilds } = useSocket();
+
   const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds({
     query: {
       queryKey: getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),

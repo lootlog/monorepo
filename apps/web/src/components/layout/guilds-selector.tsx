@@ -38,9 +38,11 @@ export const GuildsSelector: FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [pendingOrder, setPendingOrder] = useState<string[] | null>(null);
   const updateUserPreferences = useUpdateUserPreferences();
+
   const latestHiddenGuildIds = useRef(
     preferencesQuery.data?.hiddenGuildIds ?? [],
   );
+
   useLayoutEffect(() => {
     latestHiddenGuildIds.current = preferencesQuery.data?.hiddenGuildIds ?? [];
   }, [preferencesQuery.data?.hiddenGuildIds]);
@@ -53,6 +55,7 @@ export const GuildsSelector: FC = () => {
 
     return orderGuilds(guilds, preferencesQuery.data?.guildsOrder);
   };
+
   const orderedGuilds = getOrderedGuilds();
   const orderedGuildsKey = orderedGuilds.map((guild) => guild.id).join(":");
   const pendingOrderKey = pendingOrder?.join(":");
@@ -103,6 +106,7 @@ export const GuildsSelector: FC = () => {
     isHidden: boolean,
   ) => {
     const confirmedHiddenGuildIds = preferencesQuery.data?.hiddenGuildIds ?? [];
+
     const nextHiddenGuildIds = isHidden
       ? confirmedHiddenGuildIds.filter(
           (hiddenGuildId) => hiddenGuildId !== guildId,
@@ -126,6 +130,7 @@ export const GuildsSelector: FC = () => {
                 onClick: () => {
                   const currentHiddenGuildIds = latestHiddenGuildIds.current;
                   let undoHiddenGuildIds = currentHiddenGuildIds;
+
                   if (isHidden && !currentHiddenGuildIds.includes(guildId)) {
                     undoHiddenGuildIds = [...currentHiddenGuildIds, guildId];
                   } else if (!isHidden) {

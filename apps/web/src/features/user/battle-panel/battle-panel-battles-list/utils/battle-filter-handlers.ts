@@ -14,6 +14,7 @@ const toggleValue = <T>(values: T[] | undefined, value: T): T[] | undefined => {
   const next = values?.includes(value)
     ? values.filter((item) => item !== value)
     : [...(values ?? []), value];
+
   return next.length > 0 ? next : undefined;
 };
 

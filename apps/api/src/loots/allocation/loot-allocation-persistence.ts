@@ -31,6 +31,7 @@ type AuthorizedLootOptions = {
 
 const databaseSubmissionCutoff = (cutoff: Date) =>
   sql`CURRENT_TIMESTAMP - ${Date.now() - cutoff.getTime()} * INTERVAL '1 millisecond'`;
+
 const authorizedSubmissionExists = (options: AuthorizedLootOptions) =>
   sql`EXISTS (
     SELECT 1
@@ -55,11 +56,15 @@ export const makeLootAllocationPersistence = (
   const keyAllocationScope = Effect.gen(function* () {
     if (!(yield* requestApiKeyAccess)) return undefined;
     const identity = yield* requestScopedIdentity;
+
     const guilds = yield* selectAccessibleGuilds(database, identity.discordId, [
       Permission.LOOTLOG_LOOTS_WRITE,
     ]);
+
     const ids = guilds.map(({ guild }) => guild.id);
+
     if (ids.length === 0) return sql`false`;
+
     // Allocation is shared by every organization record; never partially authorize a global update.
     return sql`NOT EXISTS (
       SELECT 1 FROM ${organizationLootRecordTable}
@@ -67,6 +72,7 @@ export const makeLootAllocationPersistence = (
         AND NOT (${inArray(organizationLootRecordTable.guildId, ids)})
     )`;
   });
+
   const protect = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
     effect.pipe(
       Effect.mapError(
@@ -82,6 +88,7 @@ export const makeLootAllocationPersistence = (
       "loot-allocation.find-authorized",
       Effect.gen(function* () {
         const keyScope = yield* keyAllocationScope;
+
         const [loot] = yield* database
           .select()
           .from(lootTable)
@@ -93,7 +100,9 @@ export const makeLootAllocationPersistence = (
             ),
           )
           .limit(1);
+
         if (!loot) return null;
+
         const [items, players, npcs, records] = yield* Effect.all(
           [
             database
@@ -139,6 +148,7 @@ export const makeLootAllocationPersistence = (
           ] as const,
           { concurrency: "unbounded" },
         );
+
         return {
           ...loot,
           lootItems: items.map(({ lootItem, itemSnapshot }) => ({
@@ -165,6 +175,7 @@ export const makeLootAllocationPersistence = (
       "loot-allocation.compare-and-set",
       Effect.gen(function* () {
         const keyScope = yield* keyAllocationScope;
+
         return yield* database
           .update(lootTable)
           .set({
@@ -190,6 +201,7 @@ export const makeLootAllocationPersistence = (
       "loot-allocation.find-state",
       Effect.gen(function* () {
         const keyScope = yield* keyAllocationScope;
+
         return yield* database
           .select({
             lootShare: lootTable.lootShare,

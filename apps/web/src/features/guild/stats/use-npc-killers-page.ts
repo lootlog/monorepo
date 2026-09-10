@@ -18,6 +18,7 @@ const ITEMS_PER_PAGE = 20;
 
 export function useNpcKillersPage() {
   const { t } = useTranslation();
+
   const { npcId, guildId } = useParams({
     from: "/_authenticated/$guildId/stats/npcs/$npcId",
   });
@@ -25,10 +26,12 @@ export function useNpcKillersPage() {
   const [cursor, setCursor] = useState(0);
   const [search, setSearch] = useState("");
   const { settings, setWorld, setPeriod } = useStatsSettings("npc-killers");
+
   const npcKillersParams = buildNpcKillersParams({
     world: settings.world ?? undefined,
     period: settings.period,
   });
+
   const { data, isLoading } = useKillsControllerGetNpcKillers(
     {
       guildId,
@@ -48,6 +51,7 @@ export function useNpcKillersPage() {
       },
     },
   );
+
   const { data: guildMembers } = useMembersControllerGetGuildMemberReferences(
     { guildId },
     {
@@ -77,18 +81,23 @@ export function useNpcKillersPage() {
   const membersMap = new Map(guildMembers?.map((m) => [m.userId, m]) ?? []);
 
   const killers = data?.killers ?? [];
+
   const filteredKillers = search
     ? killers.filter((k) =>
         k.memberName.toLowerCase().includes(search.toLowerCase()),
       )
     : killers;
+
   const hasActiveFilters =
     Boolean(settings.world) || settings.period !== "all" || Boolean(search);
+
   const total = filteredKillers.length;
+
   const paginatedKillers = filteredKillers.slice(
     cursor,
     cursor + ITEMS_PER_PAGE,
   );
+
   const { hasNext, hasPrev, handleNextPage, handlePreviousPage } =
     getOffsetPagination(cursor, total, ITEMS_PER_PAGE, setCursor);
 

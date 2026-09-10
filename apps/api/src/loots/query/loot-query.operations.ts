@@ -16,7 +16,9 @@ import { DEFAULT_PAGE_LIMIT } from "#src/loots/config/pagination";
 import type { LootQueryPersistence } from "#src/loots/query/loot-query.persistence";
 
 type Guild = typeof guildTable.$inferSelect;
+
 type Role = typeof roleTable.$inferSelect;
+
 type LootQueryRecord = Effect.Success<
   ReturnType<LootQueryPersistence["findMany"]>
 >[number];
@@ -98,6 +100,7 @@ export const makeLootQueryOperations = (
     const names = Array.from(
       new Set((itemNames ?? []).map((name) => name.trim()).filter(Boolean)),
     );
+
     return names.length === 0
       ? Effect.succeed(undefined)
       : attempt(
@@ -110,7 +113,9 @@ export const makeLootQueryOperations = (
     fetchLootsByGuildId: (guild, permissions, roles, params) =>
       Effect.gen(function* () {
         const itemSnapshotIds = yield* resolveItemSnapshotIds(params.itemNames);
+
         if (itemSnapshotIds?.length === 0) return [];
+
         const records = yield* attempt(
           "loots.query.list",
           persistence.findMany({
@@ -140,13 +145,16 @@ export const makeLootQueryOperations = (
             limit: params.limit ?? DEFAULT_PAGE_LIMIT,
           }),
         );
+
         return records.map((loot) => mapLoot(guild.id, loot));
       }),
 
     countLootsByGuildId: (guild, permissions, roles, params) =>
       Effect.gen(function* () {
         const itemSnapshotIds = yield* resolveItemSnapshotIds(params.itemNames);
+
         if (itemSnapshotIds?.length === 0) return 0;
+
         return yield* attempt(
           "loots.query.count",
           persistence.count({
@@ -190,7 +198,9 @@ export const makeLootQueryOperations = (
 
     resolveLootItemByHid: (guild, permissions, roles, options) => {
       const hid = options.hid.trim();
+
       if (!hid) return Effect.succeed(null);
+
       return attempt(
         "loots.query.resolveItem",
         persistence.resolveItemByHid({

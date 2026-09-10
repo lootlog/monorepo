@@ -9,10 +9,15 @@ export type UpstreamFetch = (request: Request) => Promise<Response>;
 type Upstream = "docs" | "landing" | "web";
 
 const landingDocuments = new Set(["/", "/privacy-policy", "/terms-of-service"]);
+
 const landingFiles = new Set(["/apple-icon.png", "/favicon.ico", "/icon.svg"]);
+
 const credentialHeaders = ["authorization", "cookie", "proxy-authorization"];
+
 const legacyDocsAssetRoot = "/__legacy-assets/docs";
+
 const legacyLandingAssetRoot = "/__legacy-assets/landing";
+
 const legacyAssetProbeOrder: Upstream[] = ["web", "landing", "docs"];
 
 function normalizeDocumentPath(pathname: string): string {
@@ -60,6 +65,7 @@ function selectLegacyAssetUpstream(
   referer: string | null,
 ): Upstream {
   const refererUrl = getSameOriginReferer(requestUrl, referer);
+
   if (!refererUrl) {
     return "web";
   }
@@ -77,6 +83,7 @@ function getSameOriginReferer(
 
   try {
     const refererUrl = new URL(referer);
+
     return refererUrl.origin === requestUrl.origin ? refererUrl : null;
   } catch {
     return null;
@@ -146,6 +153,7 @@ function createLegacyAssetRedirect(
   }
 
   const legacyAssetRoot = getLegacyAssetRoot(upstream);
+
   if (!legacyAssetRoot) {
     return null;
   }
@@ -187,6 +195,7 @@ function createLegacyAssetProbeRequest(
   for (const header of credentialHeaders) {
     headers.delete(header);
   }
+
   headers.delete("content-length");
 
   return new Request(upstreamUrl, {
@@ -201,6 +210,7 @@ function isStaticAssetResponse(response: Response): boolean {
   }
 
   const contentType = response.headers.get("content-type")?.toLowerCase();
+
   return !contentType?.startsWith("text/html");
 }
 
@@ -256,12 +266,15 @@ export async function routeRequest(
   upstreamFetch: UpstreamFetch = fetch,
 ): Promise<Response> {
   const requestUrl = new URL(request.url);
+
   const ambiguousLegacyAssetReferer = getAmbiguousLegacyAssetReferer(
     request,
     requestUrl,
   );
+
   const canProbeLegacyAsset =
     request.method === "GET" || request.method === "HEAD";
+
   const upstream =
     ambiguousLegacyAssetReferer && canProbeLegacyAsset
       ? await resolveAmbiguousLegacyAssetUpstream(
@@ -271,7 +284,9 @@ export async function routeRequest(
           upstreamFetch,
         )
       : selectUpstream(request, requestUrl);
+
   const legacyAssetRedirect = createLegacyAssetRedirect(requestUrl, upstream);
+
   if (legacyAssetRedirect) {
     return legacyAssetRedirect;
   }

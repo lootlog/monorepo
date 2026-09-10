@@ -7,10 +7,13 @@ import type { MapTimelineData } from "../../types/api";
 import { KillMapsTimelineTable } from "./kill-maps-timeline-table";
 
 const { t } = await initializeTestTranslations();
+
 const startTime = new Date("2026-08-12T08:00:00.000Z");
+
 const endTime = new Date("2026-08-12T10:00:00.000Z");
 
 beforeEach(() => installMatchMedia(false));
+
 afterEach(cleanup);
 
 describe("KillMapsTimelineTable", () => {
@@ -30,9 +33,11 @@ describe("KillMapsTimelineTable", () => {
     expect(screen.getByText("Pradawne Wzgórze").closest("td")?.cellIndex).toBe(
       1,
     );
+
     const columnWidths = Array.from(document.querySelectorAll("col")).map(
       (column) => column.className,
     );
+
     expect(columnWidths[0]).toBe("w-16");
     const coverage = screen.getByText("100%");
     expect(coverage.className).toContain("text-sm");
@@ -81,6 +86,7 @@ describe("KillMapsTimelineTable", () => {
     const mapToggle = screen.getByRole("button", {
       name: "events.killDetail.mapCoverage.expandMap",
     });
+
     expect(mapToggle.className).toContain("size-11");
     expect(mapToggle.className).toContain("lg:size-9");
     expect(mapToggle.className).toContain("mr-1");
@@ -102,9 +108,11 @@ describe("KillMapsTimelineTable", () => {
     expect(detail?.closest("tr")?.className).not.toContain(
       "hover:bg-transparent",
     );
+
     const diagnostics = screen
       .getByText("events.killDetail.mapCoverage.covered")
       .closest("dl");
+
     expect(diagnostics?.className).toContain("border-b");
     expect(diagnostics?.className).not.toContain("border-y");
 
@@ -112,9 +120,11 @@ describe("KillMapsTimelineTable", () => {
     expect(
       screen.queryByText("events.killDetail.mapCoverage.assignmentPeriods"),
     ).toBeNull();
+
     const assignmentToggle = screen.getByRole("button", {
       name: "events.killDetail.mapCoverage.assignmentPeriodsAccessible",
     });
+
     fireEvent.click(assignmentToggle);
     expect(assignmentToggle.getAttribute("aria-expanded")).toBe("true");
     expect(screen.getAllByText(/\d{2}:\d{2} – \d{2}:\d{2}/)).toHaveLength(2);
@@ -135,6 +145,7 @@ describe("KillMapsTimelineTable", () => {
     const toggles = screen.getAllByRole("button", {
       name: "events.killDetail.mapCoverage.expandMap",
     });
+
     fireEvent.click(toggles[0]!);
     fireEvent.click(toggles[1]!);
 
@@ -177,6 +188,7 @@ describe("KillMapsTimelineTable", () => {
     const auditToggle = screen.getByRole("button", {
       name: /events\.killDetail\.mapCoverage\.showAllGaps/,
     });
+
     expect(auditToggle.className).toContain("h-11");
     expect(auditToggle.className).toContain("md:h-8");
     fireEvent.click(auditToggle);
@@ -231,16 +243,20 @@ describe("KillMapsTimelineTable", () => {
     const coverageCell = screen.getByText("100%").closest("td");
     expect(coverageCell?.className).toContain("w-16");
     expect(coverageCell?.className).toContain("px-0!");
+
     const actionCell = screen
       .getByRole("button", {
         name: "events.killDetail.mapCoverage.expandMap",
       })
       .closest("td");
+
     expect(actionCell?.className).toContain("w-12");
     expect(actionCell?.className).toContain("p-0!");
+
     const columnWidths = Array.from(document.querySelectorAll("col")).map(
       (column) => column.className,
     );
+
     expect(columnWidths).toEqual(["", "w-16 md:w-20", "w-12"]);
     fireEvent.click(
       screen.getByRole("button", {

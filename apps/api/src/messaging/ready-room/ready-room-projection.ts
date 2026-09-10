@@ -11,7 +11,9 @@ function cloneCharacter(
   character: PartyReadyRoomCharacter,
 ): PartyReadyRoomCharacter {
   const cloned = { ...character };
+
   if (character.clan) cloned.clan = { ...character.clan };
+
   return cloned;
 }
 
@@ -40,13 +42,19 @@ function createProjectionBase(
     updatedAt: aggregate.updatedAt,
     expiresAt: aggregate.expiresAt,
   };
+
   if (aggregate.partyMemberCount !== undefined)
     projection.partyMemberCount = aggregate.partyMemberCount;
+
   if (aggregate.npc) projection.npc = { ...aggregate.npc };
+
   if (aggregate.description !== undefined)
     projection.description = aggregate.description;
+
   if (aggregate.minLvl !== undefined) projection.minLvl = aggregate.minLvl;
+
   if (aggregate.maxLvl !== undefined) projection.maxLvl = aggregate.maxLvl;
+
   return projection;
 }
 
@@ -68,6 +76,7 @@ export function createReadyRoomProjection(
   if (aggregate.status !== "ACTIVE") return null;
   const base = createProjectionBase(aggregate);
   base.guildIds = base.guildIds.filter((id) => visibleGuildIds.includes(id));
+
   if (base.guildIds.length === 0) return null;
 
   if (viewerDiscordId === aggregate.organizerDiscordId) {
@@ -96,6 +105,7 @@ export function createReadyRoomProjection(
         cloneParticipant(participant),
       ]),
   );
+
   if (Object.keys(participants).length === 0) {
     return null;
   }

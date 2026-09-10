@@ -17,14 +17,18 @@ import { GuildSwitcher } from "./guild-switcher";
 
 const isToastAction = (action: ExternalToast["action"]): action is Action =>
   typeof action === "object" && action !== null && "onClick" in action;
+
 const mockToastSuccess = vi.hoisted(() => vi.fn<typeof SonnerToast.success>());
+
 vi.mock("sonner", () => ({
   toast: {
     error: vi.fn<typeof SonnerToast.error>(),
     success: mockToastSuccess,
   },
 }));
+
 let harness: ReturnType<typeof createGuildPreferencesTest>;
+
 const render = (ui: ReactElement) => renderUi(ui, { wrapper: harness.wrapper });
 
 describe("GuildSwitcher", () => {
@@ -83,6 +87,7 @@ describe("GuildSwitcher", () => {
     );
     await waitFor(() => expect(mockToastSuccess).toHaveBeenCalledOnce());
     const action = mockToastSuccess.mock.calls[0]?.[1]?.action;
+
     if (!isToastAction(action)) throw new Error("Expected undo action");
     act(() =>
       harness.setPreferences({ hiddenGuildIds: ["guild-1", "guild-2"] }),

@@ -44,9 +44,11 @@ export const ChatNpcMessageView: FC<ChatNpcMessageViewProps> = (props) => {
     senderName,
     wrapSender,
   } = props;
+
   const appearance = props.appearance ?? CHAT_APPEARANCE_READABLE_PRESET;
   const count = props.count ?? 1;
   const npc = message.npc;
+
   if (!npc) return null;
 
   const isMsgYesterday = isChatMessageYesterdayOrOlder(message.timestamp);
@@ -54,6 +56,7 @@ export const ChatNpcMessageView: FC<ChatNpcMessageViewProps> = (props) => {
   const npcCoordinatesLabel = getChatNpcCoordinatesLabel(npc);
   const npcTextColor = getChatNpcTextColor(npc, npcTypeColors);
   const tileNpc = toChatGameNpc(npc);
+
   const sender = (
     <span
       className={cn("ll:select-text ll:font-bold", {

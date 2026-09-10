@@ -12,6 +12,7 @@ export const LegendaryBonusesBreakdown: FC<LegendaryBonusesBreakdownProps> = ({
   warrior,
 }) => {
   const { t } = useTranslation();
+
   const offensiveBonuses = [
     {
       type: t("battleUi.breakdowns.legendary.curse"),

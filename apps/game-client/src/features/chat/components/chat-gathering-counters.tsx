@@ -11,6 +11,7 @@ export function ChatGatheringCounters({
   partyMemberCount?: number;
 }) {
   const { t } = useTranslation("chat");
+
   const label =
     partyMemberCount === undefined
       ? t("gatherings.partyMemberCountUnknown")

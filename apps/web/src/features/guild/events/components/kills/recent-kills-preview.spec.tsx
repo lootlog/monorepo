@@ -19,8 +19,11 @@ import { afterEach, describe, expect, it, onTestFinished } from "vitest";
 import { RecentKillsPreview } from "./recent-kills-preview";
 
 await initializeTestTranslations();
+
 const RouterWrapper = await createOrganizationTestWrapper();
+
 afterEach(cleanup);
+
 const renderPreview = (
   content: ReactNode,
   fetch: NonNullable<ApiServiceConfig["fetch"]>,
@@ -28,15 +31,18 @@ const renderPreview = (
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
+
   onTestFinished(() => queryClient.clear());
   onTestFinished(
     configureApiClients({ main: { baseUrl: "https://api.test", fetch } }),
   );
+
   return render(
     <QueryClientProvider client={queryClient}>{content}</QueryClientProvider>,
     { wrapper: RouterWrapper },
   );
 };
+
 const recentKillsResponse = () =>
   Promise.resolve(
     Response.json({ data: [createHeroKill()], nextCursor: null }),
@@ -48,9 +54,11 @@ describe("RecentKillsPreview", () => {
       <RecentKillsPreview guildId="guild-1" eventId="event-1" />,
       recentKillsResponse,
     );
+
     const viewAllLink = await screen.findByRole("link", {
       name: "events.kills.viewAll",
     });
+
     expect(viewAllLink.closest("header")).toBeTruthy();
     expect(viewAllLink.getAttribute("href")).toBe(
       "/guild-1/events/event-1/kills",
@@ -87,6 +95,7 @@ describe("RecentKillsPreview", () => {
       />,
       (input) => {
         requests.push(input instanceof Request ? input.url : String(input));
+
         return recentKillsResponse();
       },
     );
@@ -116,16 +125,19 @@ describe("RecentKillsPreview", () => {
         () => {
           if (state === "loading")
             return new Promise<Response>(() => undefined);
+
           if (state === "error")
             return Promise.resolve(
               Response.json({ message: "Unavailable" }, { status: 503 }),
             );
+
           return Promise.resolve(Response.json({ data: [], nextCursor: null }));
         },
       );
       expect(
         screen.getByRole("heading", { name: "events.kills.recentTitle" }),
       ).toBeTruthy();
+
       if (state === "loading")
         expect(screen.getByLabelText("events.kills.loading")).toBeTruthy();
       else

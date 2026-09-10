@@ -21,18 +21,21 @@ export const useGameAccountPreferencesSync = () => {
   const gameInitialized = useGlobalStore(
     (state) => state.gameState.gameInitialized,
   );
+
   const {
     data: guilds,
     isFetched: areGuildsFetched,
     isFetching: areGuildsFetching,
     isLoading: areGuildsLoading,
   } = useUsersControllerGetCurrentUserAccessibleGuilds();
+
   const queryClient = useQueryClient();
   const accountId = useGameStore((state) => state.game?.hero.accountId ?? null);
   const seededAccountsRef = useRef<Set<string>>(new Set());
 
   const { data, isLoading, isFetching, isFetched } =
     useUserGameAccountPreferences(accountId, gameInitialized);
+
   const updateUserGameAccountPreferences =
     useUpdateUserGameAccountPreferences(accountId);
 
@@ -58,13 +61,17 @@ export const useGameAccountPreferencesSync = () => {
       const queryKey = getUsersControllerGetUserGameAccountPreferencesQueryKey({
         accountId,
       });
+
       const guildIds = guilds?.map((guild) => guild.id) ?? [];
+
       const seededNotifications = data.hasStoredNotifications
         ? data.notifications
         : createNotificationsSettings(guildIds);
+
       const seededDetector = data.hasStoredDetector
         ? data.detector
         : createDetectorSettings();
+
       seededAccountsRef.current.add(accountId);
       queryClient.setQueryData<UserGameAccountPreferencesResponseDtoOutput>(
         queryKey,

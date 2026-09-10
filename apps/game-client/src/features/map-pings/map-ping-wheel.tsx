@@ -11,13 +11,18 @@ import {
 } from "./map-ping-presentation";
 
 const WHEEL_SIZE_PX = MAP_PING_WHEEL_RADIUS_PX * 2;
+
 const WHEEL_CENTER_PX = MAP_PING_WHEEL_RADIUS_PX;
+
 const WHEEL_INNER_RADIUS_PX = 24;
+
 const SYMBOL_DISTANCE_PX = 56;
+
 const SYMBOL_SIZE_PX = 9;
 
 const getPointOnWheel = (radius: number, angle: number) => {
   const radians = (angle * Math.PI) / 180;
+
   return {
     x: WHEEL_CENTER_PX + Math.cos(radians) * radius,
     y: WHEEL_CENTER_PX + Math.sin(radians) * radius,
@@ -29,6 +34,7 @@ const getSegmentPath = (centerAngle: number) => {
     MAP_PING_WHEEL_RADIUS_PX,
     centerAngle - 45,
   );
+
   const outerEnd = getPointOnWheel(MAP_PING_WHEEL_RADIUS_PX, centerAngle + 45);
   const innerEnd = getPointOnWheel(WHEEL_INNER_RADIUS_PX, centerAngle + 45);
   const innerStart = getPointOnWheel(WHEEL_INNER_RADIUS_PX, centerAngle - 45);
@@ -50,6 +56,7 @@ export const MapPingWheel = () => {
     mapPingInteractionController.subscribe,
     mapPingInteractionController.getSnapshot,
   );
+
   const { t } = useTranslation("settings");
 
   if (!snapshot) {

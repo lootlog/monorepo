@@ -39,6 +39,7 @@ export type MouseHotkeyBinding = HotkeyModifiers & {
 };
 
 export type HotkeyBinding = KeyboardHotkeyBinding | MouseHotkeyBinding;
+
 export type HotkeyScope = "global" | "map-surface";
 
 export type HotkeyCategory = "communication" | "windows" | "party";
@@ -197,9 +198,11 @@ export const HOTKEY_ACTIONS: HotkeyActionConfig[] = [
 
 const getDefaultBindings = (): Record<HotkeyAction, HotkeyBinding> => {
   const bindings: Partial<Record<HotkeyAction, HotkeyBinding>> = {};
+
   for (const config of HOTKEY_ACTIONS) {
     bindings[config.action] = { ...config.defaultBinding };
   }
+
   // SAFETY: HOTKEY_ACTIONS enumerates all eight HotkeyAction values, copied by the loop above.
   return bindings as Record<HotkeyAction, HotkeyBinding>;
 };
@@ -208,13 +211,16 @@ export const migrateHotkeysState = (persisted: unknown, version = 0) => {
   if (!isObjectRecord(persisted))
     throw new TypeError("Invalid persisted hotkey state");
   const state = persisted;
+
   const persistedBindings = isObjectRecord(state.bindings)
     ? state.bindings
     : {};
+
   const bindings: Record<string, HotkeyBinding> = {};
 
   for (const [action, binding] of Object.entries(persistedBindings)) {
     const migratedBinding = migrateBinding(binding);
+
     if (migratedBinding) {
       bindings[action] = migratedBinding;
     }
@@ -225,19 +231,23 @@ export const migrateHotkeysState = (persisted: unknown, version = 0) => {
   for (const [action, binding] of Object.entries(defaults)) {
     const previous = bindings[action];
     const isQuickAction = action === "chat-help" || action === "chat-position";
+
     const needsDefault =
       !previous ||
       (version < 7 &&
         isQuickAction &&
         previous.type === "keyboard" &&
         !previous.key);
+
     if (!needsDefault) continue;
+
     const occupied =
       isQuickAction &&
       Object.entries(bindings).some(
         ([otherAction, otherBinding]) =>
           otherAction !== action && bindingsEqual(otherBinding, binding),
       );
+
     bindings[action] = occupied
       ? { type: "keyboard", key: "", shift: false, ctrl: false, alt: false }
       : binding;
@@ -245,6 +255,7 @@ export const migrateHotkeysState = (persisted: unknown, version = 0) => {
 
   // SAFETY: The defaults loop adds every missing HotkeyAction after validating stored bindings.
   const completeBindings = bindings as Record<HotkeyAction, HotkeyBinding>;
+
   return { ...state, bindings: completeBindings };
 };
 
@@ -254,6 +265,7 @@ const migrateBinding = (binding: unknown): HotkeyBinding | null => {
   }
 
   const candidate = binding;
+
   const modifiers = {
     shift: candidate.shift === true,
     ctrl: candidate.ctrl === true,
@@ -293,6 +305,7 @@ export const useHotkeysStore = create<HotkeysState>()(
           ([otherAction, otherBinding]) =>
             otherAction !== action && bindingsEqual(otherBinding, binding),
         );
+
         if (hasConflict) {
           return false;
         }
@@ -300,10 +313,12 @@ export const useHotkeysStore = create<HotkeysState>()(
         set((state) => ({
           bindings: { ...state.bindings, [action]: binding },
         }));
+
         return true;
       },
       resetBinding: (action) => {
         const config = HOTKEY_ACTIONS.find((c) => c.action === action);
+
         if (!config) return;
         set((state) => ({
           bindings: {
@@ -333,6 +348,7 @@ export const bindingsEqual = (
     (second.type === "keyboard" && !second.key)
   )
     return false;
+
   if (
     first.type !== second.type ||
     first.shift !== second.shift ||
@@ -357,13 +373,18 @@ export const formatBinding = (binding: HotkeyBinding): string => {
   if (binding.type === "keyboard" && !binding.key)
     return i18n.t("chat:quickActions.unassigned");
   const parts: string[] = [];
+
   if (binding.ctrl) parts.push(i18n.t("settings.hotkeys.modifiers.ctrl"));
+
   if (binding.alt) parts.push(i18n.t("settings.hotkeys.modifiers.alt"));
+
   if (binding.shift) parts.push(i18n.t("settings.hotkeys.modifiers.shift"));
+
   if (binding.type === "keyboard") {
     parts.push(binding.key);
   } else {
     parts.push(i18n.t(`settings.hotkeys.mouseButtons.${binding.button}`));
   }
+
   return parts.join(" + ");
 };

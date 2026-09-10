@@ -37,6 +37,7 @@ export const makeEventGapReads = (
         attributes: { adapter: "events.gaps.drizzle", retryCount: 0 },
       }),
     );
+
   const cached = <
     S extends Schema.ConstraintDecoder<unknown>,
     Params extends object,
@@ -55,7 +56,9 @@ export const makeEventGapReads = (
       scope,
       Buffer.from(stableJsonStringify(params)).toString("base64url"),
     ].join(":");
+
     const codec = makeJsonCodec(Schema.toType(schema), superjson);
+
     return redis
       .getOrSetJsonEffect({
         key,
@@ -70,6 +73,7 @@ export const makeEventGapReads = (
         }),
       );
   };
+
   const requireMap = (guildId: string, eventId: string, mapId: string) =>
     query(
       "events.gaps.scopedMap",
@@ -105,6 +109,7 @@ export const makeEventGapReads = (
         Schema.Array(CoverageGapResponse),
         Effect.gen(function* () {
           yield* requireMap(guild.id, eventId, mapId);
+
           return yield* query(
             "events.gaps.mapHistory",
             database
@@ -129,6 +134,7 @@ export const makeEventGapReads = (
         NullableCoverageGapResponse,
         Effect.gen(function* () {
           yield* requireMap(guild.id, eventId, mapId);
+
           const rows = yield* query(
             "events.gaps.mapActive",
             database
@@ -142,6 +148,7 @@ export const makeEventGapReads = (
               )
               .limit(1),
           );
+
           return rows[0] ?? null;
         }),
       ).pipe(Effect.withSpan("EventsMonitoringController_getActiveGapForMap")),

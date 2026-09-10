@@ -40,6 +40,7 @@ export const MemberDeactivationButton = ({
   const guildId = useGuildId();
   const [isOpen, setIsOpen] = useState(false);
   const queryClient = useQueryClient();
+
   const deactivateMemberMutation = useMembersControllerDeactivateMember({
     mutation: {
       onSuccess: (data, variables) => {
@@ -109,6 +110,7 @@ export const MemberDeactivationButton = ({
             render=<Button loading={deactivateMemberMutation.isPending} />
             onClick={(event) => {
               event.preventBaseUIHandler();
+
               if (!guildId || deactivateMemberMutation.isPending) {
                 return;
               }

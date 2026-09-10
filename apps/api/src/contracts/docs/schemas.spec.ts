@@ -11,6 +11,7 @@ describe("document content contract", () => {
         ],
       },
     };
+
     expect(
       Schema.decodeUnknownSync(UpdateDocumentRequest)({
         title: "Guide",

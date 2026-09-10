@@ -13,28 +13,35 @@ afterEach(() => {
   disposeTimerSettingsSync();
   vi.useRealTimers();
 });
+
 it("registers real HTTP synchronization in StrictMode and cancels pending work on unmount", async () => {
   const requests: Request[] = [];
+
   const restore = configureApiClients({
     main: {
       baseUrl: "https://api.example.test",
       fetch: (input, init) => {
         requests.push(new Request(input, init));
+
         return Promise.resolve(Response.json({}));
       },
     },
   });
+
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: Infinity } },
   });
+
   const Wrapper = ({ children }: PropsWithChildren) => (
     <StrictMode>
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     </StrictMode>
   );
+
   const view = renderHook(useTimerSettingsMutationsRegistry, {
     wrapper: Wrapper,
   });
+
   onTestFinished(() => {
     view.unmount();
     queryClient.clear();

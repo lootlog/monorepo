@@ -12,6 +12,7 @@ import { useTranslation } from "react-i18next";
 
 import type { MapTemplateResponseDto } from "@lootlog/client/main";
 import type { LocationData } from "./map-manage-dialog.types";
+
 interface EventMapTemplatesProps {
   guildId: string;
   templates: MapTemplateResponseDto[] | undefined;
@@ -23,6 +24,7 @@ interface EventMapTemplatesProps {
     locationId: string | null,
   ) => void;
 }
+
 export function EventMapTemplates({
   guildId,
   templates,
@@ -32,6 +34,7 @@ export function EventMapTemplates({
   handleLoadTemplate,
 }: EventMapTemplatesProps) {
   const { t } = useTranslation();
+
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">

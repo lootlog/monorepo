@@ -35,6 +35,7 @@ export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({
 }) => {
   const { t } = useTranslation();
   const guildId = useGuildId();
+
   const { data: fetchedWorlds } = useGuildsControllerGetWorldsByGuildId(
     {
       guildId: guildId ?? "",
@@ -48,6 +49,7 @@ export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({
       },
     },
   );
+
   const worlds = externalWorlds ?? fetchedWorlds;
   const guildContext = useContext(GuildContext);
   const contextWorld = guildContext?.world ?? "";
@@ -60,16 +62,19 @@ export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({
 
   const availableWorlds = new Set(worlds);
   const orderedWorldNames = new Set(worldOrder);
+
   const orderedWorlds = worlds
     ? [
         ...worldOrder.filter((world) => availableWorlds.has(world)),
         ...worlds.filter((world) => !orderedWorldNames.has(world)),
       ]
     : [];
+
   const worldOptions = orderedWorlds.map((world) => ({
     value: world,
     label: world.charAt(0).toUpperCase() + world.slice(1),
   }));
+
   const options = showAllOption
     ? [
         {

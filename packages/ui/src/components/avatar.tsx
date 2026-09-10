@@ -15,6 +15,7 @@ const Avatar = React.forwardRef<HTMLSpanElement, AvatarPrimitive.Root.Props>(
     />
   ),
 );
+
 Avatar.displayName = "Avatar";
 
 const AvatarImage = React.forwardRef<
@@ -27,6 +28,7 @@ const AvatarImage = React.forwardRef<
     {...props}
   />
 ));
+
 AvatarImage.displayName = "AvatarImage";
 
 const AvatarFallback = React.forwardRef<
@@ -42,6 +44,7 @@ const AvatarFallback = React.forwardRef<
     {...props}
   />
 ));
+
 AvatarFallback.displayName = "AvatarFallback";
 
 export { Avatar, AvatarImage, AvatarFallback };

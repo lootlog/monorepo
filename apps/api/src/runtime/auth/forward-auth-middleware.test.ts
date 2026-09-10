@@ -18,10 +18,13 @@ import {
 const endpoint = HttpApiEndpoint.get("protected", "/protected", {
   success: Schema.String,
 });
+
 const group = HttpApiGroup.make("protected")
   .add(endpoint)
   .middleware(BearerSecurityMiddleware);
+
 const api = HttpApi.make("test").add(group);
+
 const runProtected = async (
   headers: HeadersInit = {},
   handler: Effect.Effect<
@@ -44,6 +47,7 @@ const runProtected = async (
     ),
     { disableLogger: true },
   );
+
   try {
     return await boundary.handler(
       new Request("http://localhost/protected", { headers }),
@@ -93,10 +97,12 @@ test("does not accept a bearer credential without trusted forward-auth headers",
 
 test("does not execute the protected handler after a failed forward-auth check", async () => {
   let handlerExecuted = false;
+
   const response = await runProtected(
     {},
     Effect.sync(() => {
       handlerExecuted = true;
+
       return HttpServerResponse.empty({ status: 204 });
     }),
   );

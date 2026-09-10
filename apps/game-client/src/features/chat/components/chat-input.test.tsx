@@ -40,14 +40,21 @@ beforeEach(() => {
 });
 
 const sendRequest = vi.fn<typeof fetch>();
+
 const notificationRequest = vi.fn<typeof fetch>();
+
 const clearRequest = vi.fn<typeof fetch>();
+
 const mockScrollIntoView = vi.fn<HTMLElement["scrollIntoView"]>();
+
 let queryClient: QueryClient;
+
 let restoreApi: () => void;
+
 const chatQueryKey = getChatControllerGetChatMessagesQueryKey({
   guildId: "guild-1",
 });
+
 const render = (ui: ReactElement) => {
   const guild = { guildId: "guild-1" };
   queryClient.setQueryData(
@@ -66,6 +73,7 @@ const render = (ui: ReactElement) => {
     getRolesControllerGetGuildRolesQueryKey(guild),
     mockGuildRoles,
   );
+
   return renderUi(
     <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>,
   );
@@ -75,6 +83,7 @@ let mockGuildMembers: MemberSummaryResponseDtoOutput[] = [
   { id: 1, userId: "user-1", name: "Raider", color: 0x12ab34 },
   { id: 2, userId: "user-2", name: "Hero", color: null },
 ];
+
 let mockGuildRoles: RoleResponseDtoOutput[] = [
   {
     id: "role-1",
@@ -85,6 +94,7 @@ let mockGuildRoles: RoleResponseDtoOutput[] = [
     permissions: [],
   },
 ];
+
 let mockCurrentMember: NullableMemberResponseDto = {
   id: 2,
   userId: "user-2",
@@ -112,6 +122,7 @@ let mockCurrentMember: NullableMemberResponseDto = {
   nextRefreshAt: null,
   updatedAt: "2026-01-01T10:00:00.000Z",
 };
+
 let mockGuildPermissions: Permission[] = [];
 
 const setPlainEditorSelection = ({
@@ -193,10 +204,13 @@ describe("ChatInput", () => {
           const url = new URL(
             input instanceof Request ? input.url : String(input),
           );
+
           if (url.pathname.endsWith("/chat-messages")) {
             if (init?.method === "DELETE") return clearRequest(input, init);
+
             return sendRequest(input, init);
           }
+
           if (url.pathname.startsWith("/messaging"))
             return notificationRequest(input, init);
           throw new Error(`Unexpected HTTP request: ${url.pathname}`);
@@ -339,6 +353,7 @@ describe("ChatInput", () => {
 
     const scrollCallsBeforeArrowNavigation =
       mockScrollIntoView.mock.calls.length;
+
     await user.keyboard("{ArrowDown}");
     expect(mockScrollIntoView.mock.calls.length).toBeGreaterThan(
       scrollCallsBeforeArrowNavigation,
@@ -443,9 +458,11 @@ describe("ChatInput", () => {
 
   it("cuts selected text through controlled state instead of native contentEditable mutation", async () => {
     const user = userEvent.setup();
+
     const clipboardData = {
       setData: vi.fn<DataTransfer["setData"]>(),
     };
+
     render(<ChatInput selectedGuildId="guild-1" />);
 
     const editor = getEditor();
@@ -507,9 +524,11 @@ describe("ChatInput", () => {
 
   it("deletes reverse selections without collapsing them first", async () => {
     const user = userEvent.setup();
+
     const clipboardData = {
       setData: vi.fn<DataTransfer["setData"]>(),
     };
+
     render(<ChatInput selectedGuildId="guild-1" />);
 
     const editor = getEditor();
@@ -520,6 +539,7 @@ describe("ChatInput", () => {
     const selection = document.getSelection();
 
     expect(textNode).toBeInstanceOf(Text);
+
     if (!(textNode instanceof Text) || !selection)
       throw new Error("Expected text selection");
     selection.setBaseAndExtent(textNode, 11, textNode, 6);

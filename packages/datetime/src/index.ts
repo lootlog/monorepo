@@ -12,6 +12,7 @@ export function createCachedFormatter(
 
   return (timeZone: string) => {
     const cachedFormatter = cache.get(timeZone);
+
     if (cachedFormatter) {
       return cachedFormatter;
     }
@@ -20,7 +21,9 @@ export function createCachedFormatter(
       timeZone,
       ...options,
     });
+
     cache.set(timeZone, formatter);
+
     return formatter;
   };
 }
@@ -83,6 +86,7 @@ function getTimeZoneOffsetMinutes(date: Date, timeZone: string): number {
   }
 
   const match = offsetToken.match(/^GMT([+-])(\d{1,2})(?::?(\d{2}))?$/);
+
   if (!match) {
     return 0;
   }
@@ -109,6 +113,7 @@ export function toUtcDateFromLocal(
     0,
     0,
   );
+
   const firstOffset = getTimeZoneOffsetMinutes(new Date(utcGuessMs), timeZone);
   let resultMs = utcGuessMs - firstOffset * 60_000;
   const secondOffset = getTimeZoneOffsetMinutes(new Date(resultMs), timeZone);
@@ -124,6 +129,7 @@ export function addDays(localDate: LocalDate, days: number): LocalDate {
   const date = new Date(
     Date.UTC(localDate.year, localDate.month - 1, localDate.day),
   );
+
   date.setUTCDate(date.getUTCDate() + days);
 
   return {
@@ -192,22 +198,27 @@ export function calculateLocalWindowOverlapMs(params: {
       fromClock.minute,
       params.timeZone,
     );
+
     const crossesMidnight =
       toClock.hour * 60 + toClock.minute <=
       fromClock.hour * 60 + fromClock.minute;
+
     const windowEndDate = crossesMidnight
       ? addDays(currentLocalDate, 1)
       : currentLocalDate;
+
     const windowEndUtc = toUtcDateFromLocal(
       windowEndDate,
       toClock.hour,
       toClock.minute,
       params.timeZone,
     );
+
     const overlapStartMs = Math.max(
       params.startUtc.getTime(),
       windowStartUtc.getTime(),
     );
+
     const overlapEndMs = Math.min(
       params.endUtc.getTime(),
       windowEndUtc.getTime(),

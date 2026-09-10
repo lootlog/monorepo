@@ -12,6 +12,7 @@ export function CookieConsent() {
 
   useEffect(() => {
     const consent = readCookieConsent(localStorage);
+
     if (!consent) {
       // The persisted decision is only available after browser hydration.
       // oxlint-disable-next-line react/set-state-in-effect

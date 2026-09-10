@@ -28,6 +28,7 @@ export const createTestGuild = (
   reservationMaxAdvanceDays: 7,
   reservationActiveLimitPerSpot: 1,
 });
+
 export const createGuildPreferencesTest = () => {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -35,8 +36,10 @@ export const createGuildPreferencesTest = () => {
       mutations: { retry: false },
     },
   });
+
   const preferencesKey = getUsersControllerGetUserPreferencesQueryKey();
   const guildsKey = getUsersControllerGetCurrentUserAccessibleGuildsQueryKey();
+
   const setPreferences = (
     overrides: Partial<UserPreferencesResponseDtoOutput> = {},
   ) =>
@@ -49,6 +52,7 @@ export const createGuildPreferencesTest = () => {
       mutes: { players: [], npcs: [] },
       ...overrides,
     });
+
   setPreferences();
   queryClient.setQueryData(
     getSettingsDocumentsControllerGetPreferencesQueryKey({
@@ -61,24 +65,31 @@ export const createGuildPreferencesTest = () => {
     createTestGuild("guild-2", "Beta"),
     createTestGuild("guild-3", "Gamma"),
   ]);
+
   const request = vi.fn<typeof fetch>().mockImplementation((input) => {
     const url = new URL(input instanceof Request ? input.url : String(input));
+
     if (url.pathname !== getUsersControllerGetUserPreferencesUrl())
       throw new Error(`Unexpected HTTP request: ${url.pathname}`);
+
     return Promise.resolve(
       Response.json(queryClient.getQueryData(preferencesKey)),
     );
   });
+
   const restore = configureApiClients({
     main: { baseUrl: "https://api.example.test", fetch: request },
   });
+
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
+
   onTestFinished(() => {
     restore();
     queryClient.clear();
   });
+
   return {
     queryClient,
     preferencesKey,

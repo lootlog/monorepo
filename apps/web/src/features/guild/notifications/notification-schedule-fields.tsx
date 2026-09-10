@@ -35,6 +35,7 @@ export const NotificationScheduleFields = ({ form, t }: Props) => {
     form.watch("triggerType"),
     form.watch("scheduleIntervalType"),
   );
+
   return (
     <>
       {isScheduledMessage ? (

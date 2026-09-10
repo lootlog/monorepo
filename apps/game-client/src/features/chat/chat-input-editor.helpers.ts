@@ -58,10 +58,12 @@ export const $getChatInputSelectionOffsets = (
 
 const $getChatInputTextPoint = (requestedOffset: number) => {
   const root = $getRoot();
+
   const targetOffset = Math.max(
     0,
     Math.min(requestedOffset, root.getTextContentSize()),
   );
+
   let traversedLength = 0;
 
   for (const textNode of root.getAllTextNodes()) {
@@ -86,6 +88,7 @@ export const $selectChatInputRange = (start: number, end = start) => {
 
   if (!startPoint || !endPoint) {
     $getRoot().selectEnd();
+
     return;
   }
 

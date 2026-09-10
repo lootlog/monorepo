@@ -31,10 +31,14 @@ test.each([
         ),
       ),
     );
+
     const raw = document.paths?.[path]?.post;
+
     if (!raw) throw new Error("Missing service operation");
+
     const operation =
       service === "battlelog" ? normalizeApiKeyErrors(raw, undefined) : raw;
+
     if (!isJsonObject(operation) || !isJsonObject(operation.responses))
       throw new Error("Missing service responses");
     const responses = operation.responses;
@@ -53,6 +57,7 @@ test.each([
         responses: { ...responses, "401": {} },
       }),
     ).toThrow("service authentication error");
+
     if (service === "auth") {
       expect(() =>
         normalizeAllowedChanges(service, `POST ${path}`, {
@@ -116,6 +121,7 @@ test("HTTP error exceptions reject missing statuses, altered references and medi
       "503": { ...httpErrorResponse, headers: { "Retry-After": {} } },
     },
   ];
+
   for (const responses of invalidResponses) {
     expect(() =>
       normalizeAllowedChanges("api", "DELETE /users/@me", { responses }),
@@ -151,8 +157,10 @@ test.each([
         ),
       ),
     );
+
     const operation = document.paths?.[path]?.[method];
     expect(operation).toBeDefined();
+
     if (!isJsonObject(operation) || !isJsonObject(operation.responses))
       throw new Error("Missing test operation responses");
     const operationResponses = operation.responses;
@@ -170,6 +178,7 @@ test.each([
     expect(() =>
       normalizeAllowedChanges(service, key, { ...operation, responses }),
     ).toThrow(`must declare a ${status} ${schemaName}`);
+
     // Removing the migrated status must not conceal loss of the existing 404.
     if (service === "battlelog")
       expect(normalizeAllowedChanges(service, key, operation)).toHaveProperty(
@@ -181,6 +190,7 @@ test.each([
 test("enum order is immaterial but allowed values must remain identical", () => {
   const normalize = (values: string[]) =>
     normalizeOpenApiRepresentation({ schema: { enum: values } });
+
   expect(normalize(["TITAN", "COLOSSUS"])).toEqual(
     normalize(["COLOSSUS", "TITAN"]),
   );
@@ -204,6 +214,7 @@ test("Organization 404 exceptions require the declared response", () => {
 
 test("reservation exceptions retain only the verified statuses and error schema", () => {
   const operation = "GET /users/@me/reservations";
+
   const errorResponse = {
     content: {
       "application/json": {
@@ -213,11 +224,13 @@ test("reservation exceptions retain only the verified statuses and error schema"
       },
     },
   };
+
   expect(
     normalizeAllowedChanges("api", operation, {
       responses: { "200": {}, "401": errorResponse },
     }),
   ).toEqual({ responses: { "200": {} } });
+
   const invalidResponses: Parameters<typeof normalizeAllowedChanges>[2][] = [
     {},
     {
@@ -229,6 +242,7 @@ test("reservation exceptions retain only the verified statuses and error schema"
     },
     { ...errorResponse, headers: { "Retry-After": {} } },
   ];
+
   for (const response of invalidResponses) {
     expect(() =>
       normalizeAllowedChanges("api", operation, {
@@ -236,6 +250,7 @@ test("reservation exceptions retain only the verified statuses and error schema"
       }),
     ).toThrow("must declare a 401 OrganizationWorkspaceErrorResponse");
   }
+
   expect(() =>
     normalizeAllowedChanges("api", operation, { responses: { "200": {} } }),
   ).toThrow("must declare a 401 OrganizationWorkspaceErrorResponse");
@@ -270,6 +285,7 @@ test.each([
         "utf8",
       ),
     );
+
     const operation = document.paths[path].get;
     const key = `GET ${path}`;
     expect(() =>
@@ -322,6 +338,7 @@ test("manageable guild migration pins the Discord summary response and preserves
       "utf8",
     ),
   );
+
   const key = "GET /guilds/@me/manageable";
   const operation = document.paths["/guilds/@me/manageable"].get;
   const schemas = document.components.schemas;
@@ -334,6 +351,7 @@ test("manageable guild migration pins the Discord summary response and preserves
   expect(() => normalizeAllowedChanges("api", key, operation)).toThrow(
     "contract changed",
   );
+
   for (const schema of [
     {
       ...schemas.ManageableOrganizationResponse,
@@ -351,6 +369,7 @@ test("manageable guild migration pins the Discord summary response and preserves
       }),
     ).toThrow("contract changed");
   }
+
   for (const responses of [
     {},
     { "200": { content: { "text/plain": { schema: { type: "string" } } } } },
@@ -371,6 +390,7 @@ test("manageable guild migration pins the Discord summary response and preserves
       normalizeAllowedChanges("api", key, { ...operation, responses }, schemas),
     ).toThrow("must declare a 200 ManageableOrganizationResponse");
   }
+
   expect(
     normalizeAllowedChanges(
       "api",
@@ -393,13 +413,16 @@ test("API key errors retain domain alternatives and reject removed domain contra
     properties: { message: { type: "string" } },
     required: ["message"],
   };
+
   const domain = { $ref: "#/components/schemas/HttpErrorResponse" };
+
   const response = (
     schema:
       | typeof keyError
       | typeof domain
       | { anyOf: (typeof keyError | typeof domain)[] },
   ) => ({ content: { "application/json": { schema } } });
+
   const previous = { responses: { "403": response(domain) } };
   expect(
     normalizeApiKeyErrors(

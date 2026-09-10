@@ -15,7 +15,9 @@ import { createTimerHttpFixture } from "../timer-http-fixtures";
 import { TimerContextMenuContent } from "./timer-context-menu-content";
 
 type MenuProps = ComponentProps<typeof TimerContextMenuContent>;
+
 const action = () => vi.fn<() => void>();
+
 const createProps = (overrides: Partial<MenuProps> = {}): MenuProps => ({
   timer: { ...createTimerFixture(), minTimeLeft: 0, maxTimeLeft: 0 },
   isPending: false,
@@ -43,19 +45,23 @@ const createProps = (overrides: Partial<MenuProps> = {}): MenuProps => ({
   onDelete: vi.fn<MenuProps["onDelete"]>(),
   ...overrides,
 });
+
 const openMenu = () =>
   userEvent.pointer({
     keys: "[MouseRight]",
     target: screen.getByText("Timer"),
   });
+
 const renderMenu = async (props: MenuProps) => {
   const fixture = createTimerHttpFixture();
+
   for (const guildId of ["guild-1", "guild-2"]) {
     fixture.queryClient.setQueryData(
       getGuildsControllerGetGuildPermissionsQueryKey({ guildId }),
       [Permission.LOOTLOG_TIMERS_DELETE],
     );
   }
+
   const view = render(
     <QueryClientProvider client={fixture.queryClient}>
       <ContextMenu>
@@ -66,6 +72,7 @@ const renderMenu = async (props: MenuProps) => {
       </ContextMenu>
     </QueryClientProvider>,
   );
+
   onTestFinished(() => {
     view.unmount();
     fixture.cleanup();
@@ -107,6 +114,7 @@ describe("TimerContextMenuContent", () => {
 
   it("offers grouped deletion per organization and can reverse persistent visibility", async () => {
     const user = userEvent.setup();
+
     const timer = {
       ...createTimerFixture(),
       minTimeLeft: 0,
@@ -116,6 +124,7 @@ describe("TimerContextMenuContent", () => {
         { guildId: "guild-2", npcId: 10, timerKey: "timer-2" },
       ],
     };
+
     const props = createProps({
       timer,
       timersGrouping: true,
@@ -123,6 +132,7 @@ describe("TimerContextMenuContent", () => {
       isHidden: true,
       isAlwaysVisibleExpiredTimer: true,
     });
+
     await renderMenu(props);
     expect(
       screen.queryByRole("menuitem", { name: "Historia" }),

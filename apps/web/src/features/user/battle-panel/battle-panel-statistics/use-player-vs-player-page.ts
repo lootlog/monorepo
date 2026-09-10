@@ -53,9 +53,11 @@ export function usePlayerVsPlayerPage() {
   const params = useParams({ strict: false });
 
   const opponentId = params.opponentId ?? params.myId;
+
   const [queryState, setQueryState] = useQueryStates(
     battlePanelPlayerVsPlayerSearchParsers,
   );
+
   const resolvePageState = () => ({
     pageIndex: getBattlePanelPageIndex(queryState.page),
     currentCharacterId:
@@ -69,6 +71,7 @@ export function usePlayerVsPlayerPage() {
     matchmaking: queryState.matchmaking ?? undefined,
     cursor: queryState.cursor ?? undefined,
   });
+
   const {
     pageIndex,
     currentCharacterId,
@@ -81,7 +84,9 @@ export function usePlayerVsPlayerPage() {
     matchmaking,
     cursor,
   } = resolvePageState();
+
   const pageSize = 20;
+
   const requestIds = getPlayerVsPlayerRequestIds(
     currentCharacterId,
     params.myId,
@@ -185,15 +190,18 @@ export function usePlayerVsPlayerPage() {
   };
 
   const opponentNameCandidate = data?.battles[0]?.opponentWarrior.name;
+
   const opponentNameFallback = t(
     "battlePanel.statistics.playerVsPlayer.opponentFallback",
   );
+
   const { opponentName, battles, totalCount, visibleCount } =
     getPlayerVsPlayerTableView(
       data,
       opponentNameCandidate,
       opponentNameFallback,
     );
+
   const myCharacter = data?.battles[0]?.userWarrior;
 
   const table = useTable({
@@ -209,6 +217,7 @@ export function usePlayerVsPlayerPage() {
     ph,
     matchmaking,
   };
+
   const activeFilterChips = buildPlayerVsPlayerFilterLabels({
     ...filterState,
     translate: t,

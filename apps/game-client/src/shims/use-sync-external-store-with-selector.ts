@@ -35,6 +35,7 @@ export function useSyncExternalStoreWithSelector<Snapshot, Selection>(
 
     prevSnapshotRef.current = nextSnapshot;
     prevSelectionRef.current = nextSelection;
+
     return nextSelection;
   }, [getSnapshot, selector, isEqual]);
 

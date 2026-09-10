@@ -16,11 +16,14 @@ import {
 import { applySettingsPatch, type JsonRecord } from "./settings-resolver.js";
 
 type SettingsOperation = PatchSettingsDocuments["operations"][number];
+
 type StoredSettingsDocument = typeof userSettingDocumentTable.$inferSelect;
 
 const getPostgresErrorCode = (error: unknown): string | undefined => {
   if (!isRecord(error)) return undefined;
+
   if (typeof error.code === "string") return error.code;
+
   return getPostgresErrorCode(error.cause);
 };
 
@@ -105,8 +108,10 @@ export class SettingsDocumentsRepository extends Context.Service<
                     ),
                   )
                   .limit(1);
+
                 const current = currentRows[0];
                 let nextOverrides: JsonRecord;
+
                 try {
                   nextOverrides = applySettingsPatch({
                     domain: operation.domain,
@@ -132,6 +137,7 @@ export class SettingsDocumentsRepository extends Context.Service<
                       .delete(userSettingDocumentTable)
                       .where(eq(userSettingDocumentTable.id, current.id));
                   }
+
                   continue;
                 }
 
@@ -141,6 +147,7 @@ export class SettingsDocumentsRepository extends Context.Service<
                     SETTINGS_CATALOG[operation.domain].schemaVersion,
                   updatedAt: new Date(yield* Clock.currentTimeMillis),
                 };
+
                 if (current) {
                   yield* transaction
                     .update(userSettingDocumentTable)
@@ -178,10 +185,13 @@ export class SettingsDocumentsRepository extends Context.Service<
               if (error instanceof InvalidSettingsPatchError) {
                 return Effect.fail(error);
               }
+
               const code = getPostgresErrorCode(error);
+
               if (attempt < 2 && (code === "40001" || code === "23505")) {
                 return applyOperationsAttempt(userId, operations, attempt + 1);
               }
+
               return Effect.fail(persistenceError(error));
             }),
           );
@@ -194,6 +204,7 @@ export class SettingsDocumentsRepository extends Context.Service<
               eq(userSettingDocumentTable.scopeId, scope.id),
             ),
           );
+
           return database
             .select()
             .from(userSettingDocumentTable)

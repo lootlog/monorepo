@@ -32,17 +32,23 @@ import type {
 import type { LootStatsService } from "#src/loots/query/loot-stats.service";
 
 type Guild = typeof guildTable.$inferSelect;
+
 type Role = typeof roleTable.$inferSelect;
+
 type LootCount = Effect.Success<
   ReturnType<LootQueryOperations["countLootsByGuildId"]>
 >;
+
 type ResolvedLootItem = Effect.Success<
   ReturnType<LootQueryOperations["resolveLootItemByHid"]>
 >;
+
 type FetchedLoot = Effect.Success<
   ReturnType<LootQueryOperations["fetchLootById"]>
 >;
+
 type LootComments = Effect.Success<ReturnType<LootPersistence["listComments"]>>;
+
 type LootComment = Effect.Success<ReturnType<LootPersistence["createComment"]>>;
 
 export class LootsOperationError extends TaggedErrorClass<LootsOperationError>()(
@@ -56,6 +62,7 @@ type LootsFailure =
   | LootQueryError
   | LootsOperationError
   | ResourceNotFoundError;
+
 type LootsEffect<A> = Effect.Effect<A, LootsFailure>;
 
 export interface LootsOperations {
@@ -133,6 +140,7 @@ const cacheKey = (
       }))
       .sort((left, right) => left.id.localeCompare(right.id)),
   };
+
   return [
     "loots",
     "list",
@@ -237,7 +245,9 @@ export const makeLootsOperations = ({
           options.roles,
           options.lootId,
         );
+
         if (!loot) return yield* Effect.fail(new ResourceNotFoundError());
+
         return yield* persistence.listComments(
           options.guild.id,
           options.lootId,
@@ -253,22 +263,26 @@ export const makeLootsOperations = ({
           options.roles,
           options.lootId,
         );
+
         if (!loot) {
           return yield* Effect.fail(
             new ResourceNotFoundError(ErrorKey.CANT_DELETE_LOOT),
           );
         }
+
         const archived = yield* persistence.archive({
           discordId: options.discordId,
           guildId: options.guild.id,
           lootId: options.lootId,
           archivedAt: new Date(yield* Clock.currentTimeMillis),
         });
+
         if (!archived) {
           return yield* Effect.fail(
             new ResourceNotFoundError(ErrorKey.CANT_DELETE_LOOT),
           );
         }
+
         yield* Effect.all(
           [
             invalidateList([options.guild.id]),
@@ -287,28 +301,36 @@ export const makeLootsOperations = ({
           options.roles,
           options.lootId,
         );
+
         if (!loot) return yield* Effect.fail(new ResourceNotFoundError());
+
         const comment = yield* persistence.createComment({
           discordId: options.discordId,
           guildId: options.guild.id,
           lootId: options.lootId,
           body: options.body,
         });
+
         yield* invalidateList([options.guild.id]);
+
         return comment;
       }),
 
     fetchLootsByGuildId: (guild, accessPolicy, roles, params) => {
       const permissions = getEffectiveCapabilities(accessPolicy);
+
       const firstPage =
         params.cursor === undefined ||
         params.cursor === null ||
         params.cursor <= 0;
+
       if (!firstPage) {
         return query.fetchLootsByGuildId(guild, permissions, roles, params);
       }
+
       const key = cacheKey(guild, permissions, roles, params);
       const wireCodec = makeJsonCodec(LootListResponse);
+
       return redis.getOrSetJsonEffect({
         key,
         codec: {

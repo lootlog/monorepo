@@ -18,6 +18,7 @@ import {
 } from "./settings.operations.js";
 
 const timestamp = "2026-09-02T12:00:00.000Z";
+
 const timerSettings = {
   userId: "user-a",
   generalConfig: {},
@@ -35,6 +36,7 @@ const timerSettings = {
   createdAt: timestamp,
   updatedAt: timestamp,
 };
+
 const soundSettings = {
   userId: "user-a",
   masterVolume: 0.5,
@@ -81,8 +83,10 @@ describe("settings HttpApi handlers", () => {
       patchPreferences: () => Effect.succeed({ domains: {} }),
       parseDomains: () => Effect.succeed([]),
     };
+
     const timerService = makeTimerSettings(settingsDocuments);
     const soundService = makeSoundSettings(settingsDocuments);
+
     const layer = provideServices(
       makeData({
         getGlobalTimerSettings: (userId) =>
@@ -91,6 +95,7 @@ describe("settings HttpApi handlers", () => {
           soundService.getSettings(userId).pipe(Effect.orDie),
       }),
     );
+
     const [timers, sounds] = await Effect.runPromise(
       Effect.all([getGlobalTimerSettings(), getSoundSettings()]).pipe(
         Effect.provide(layer),
@@ -106,11 +111,14 @@ describe("settings HttpApi handlers", () => {
       status: 401,
       code: "AUTH_REQUIRED",
     });
+
     let dataCalled = false;
+
     const layer = provideServices(
       makeData({
         getSoundSettings: () => {
           dataCalled = true;
+
           return Effect.succeed(soundSettings);
         },
       }),
@@ -127,10 +135,12 @@ describe("settings HttpApi handlers", () => {
 
   it("passes the authenticated user and guild scope to timer mutations", async () => {
     const calls: Array<[string, string]> = [];
+
     const layer = provideServices(
       makeData({
         updateGuildTimerSettings: (userId, guildId) => {
           calls.push([userId, guildId]);
+
           return Effect.succeed({
             userId,
             guildId,
@@ -152,6 +162,7 @@ describe("settings HttpApi handlers", () => {
 
   it("delegates a multi-domain preference patch as one atomic operation", async () => {
     let calls = 0;
+
     const payload = {
       operations: [
         {
@@ -162,10 +173,12 @@ describe("settings HttpApi handlers", () => {
         },
       ],
     };
+
     const layer = provideServices(
       makeData({
         patchPreferences: () => {
           calls += 1;
+
           return Effect.succeed({ domains: {} });
         },
       }),
@@ -180,6 +193,7 @@ describe("settings HttpApi handlers", () => {
 
   it("keeps Date values in the handler and encodes the existing HTTP JSON", async () => {
     const updatedAt = new Date(timestamp);
+
     const layer = provideServices(
       makeData({
         getPreferences: () =>
@@ -207,6 +221,7 @@ describe("settings HttpApi handlers", () => {
     const response = await Effect.runPromise(
       getPreferences({ domains: "appearance" }).pipe(Effect.provide(layer)),
     );
+
     const encoded = await Effect.runPromise(
       Schema.encodeEffect(SettingsDocumentsResponseSchema)(response),
     );

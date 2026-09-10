@@ -24,6 +24,7 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
   const routeGuildId = useGuildId();
   const [connected, setConnected] = useState(socket.connected);
   const [joined, setJoined] = useState(false);
+
   const [unreadLootIdsByGuild, setUnreadLootIdsByGuild] = useState<
     Record<string, number[]>
   >({});
@@ -31,15 +32,18 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
   const currentGuild = guilds?.find(
     (guild) => guild.id === routeGuildId || guild.vanityUrl === routeGuildId,
   );
+
   const currentGuildId = currentGuild?.id;
 
   const handleConnect = useEffectEvent(() => {
     setConnected(true);
   });
+
   const handleDisconnect = useEffectEvent(() => {
     setConnected(false);
     setJoined(false);
   });
+
   const handleJoin = useEffectEvent((data: GatewayJoinPayload) => {
     if (data.status === "error") {
       return;
@@ -47,11 +51,13 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
 
     setJoined(true);
   });
+
   const emitJoin = useEffectEvent(() => {
     if (connected && user && guilds) {
       socket.emit(GatewayEvent.JOIN, {});
     }
   });
+
   const handleLootCreate = useEffectEvent(
     (payload: GuildLootCreatedEventV2) => {
       if (payload.guildId === currentGuildId) {
@@ -60,6 +66,7 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
 
       setUnreadLootIdsByGuild((prev) => {
         const unreadLootIds = prev[payload.guildId] ?? [];
+
         if (unreadLootIds.includes(payload.lootId)) {
           return prev;
         }
@@ -108,6 +115,7 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
 
       const next = { ...prev };
       delete next[currentGuildId];
+
       return next;
     });
   }, [currentGuildId]);

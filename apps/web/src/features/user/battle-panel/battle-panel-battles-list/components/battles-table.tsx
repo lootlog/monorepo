@@ -101,6 +101,7 @@ const BATTLE_TABLE_PRIMARY_LINK_COLUMN_ID = "leftTeam";
 
 const getBattleCellLink = (battle: Battle, columnId: string) => {
   const { leftTeam, rightTeam } = getBattleTeams(battle);
+
   if (
     !BATTLE_TABLE_LINK_COLUMN_IDS.has(columnId) ||
     (columnId === "leftTeam" && leftTeam.length > 1) ||
@@ -108,8 +109,10 @@ const getBattleCellLink = (battle: Battle, columnId: string) => {
   ) {
     return undefined;
   }
+
   const primaryColumnId =
     leftTeam.length > 1 ? "status" : BATTLE_TABLE_PRIMARY_LINK_COLUMN_ID;
+
   return columnId === primaryColumnId ? "primary" : "secondary";
 };
 
@@ -129,6 +132,7 @@ export const BattlesTable = ({
 }: BattlesTableProps) => {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
+
   const {
     clearSelection,
     handleHeaderSelectionChange,
@@ -149,6 +153,7 @@ export const BattlesTable = ({
       );
     },
   });
+
   const {
     handleBulkDelete,
     handleBulkShare,
@@ -176,6 +181,7 @@ export const BattlesTable = ({
     content: ReactNode,
   ) => {
     const link = getBattleCellLink(cell.row.original, cell.column.id);
+
     if (!link) {
       return content;
     }
@@ -237,6 +243,7 @@ export const BattlesTable = ({
       selectedCount={selectedBattles.length}
     />
   ) : undefined;
+
   const paginationFooter = pagination ? (
     <BattlePanelPaginationFooter
       label={({ from, to, total }) =>

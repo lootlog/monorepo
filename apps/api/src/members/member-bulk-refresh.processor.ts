@@ -1,4 +1,4 @@
-import { Clock, Effect } from "effect";
+import { Clock, Effect, Result } from "effect";
 import { eq, sql } from "drizzle-orm";
 import type { RabbitMessaging } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
@@ -26,6 +26,7 @@ export const makeMemberBulkRefreshProcessor = (
       .pipe(
         Effect.flatMap((rows) => {
           const job = rows[0];
+
           return job
             ? rabbit.publish({
                 exchange: "default",
@@ -46,6 +47,7 @@ export const makeMemberBulkRefreshProcessor = (
             : Effect.void;
         }),
       );
+
   return (job: {
     readonly data: {
       readonly jobId: number;
@@ -67,6 +69,7 @@ export const makeMemberBulkRefreshProcessor = (
       const skippedIds: string[] = [];
       const failedIds: string[] = [];
       let processedMembers = 0;
+
       for (const memberId of memberIds) {
         const result = yield* Effect.result(
           refreshMember({
@@ -75,7 +78,8 @@ export const makeMemberBulkRefreshProcessor = (
             skipTtlCheck: true,
           }),
         );
-        if (result._tag === "Failure") {
+
+        if (Result.isFailure(result)) {
           failedIds.push(memberId);
           yield* database
             .update(memberRefreshJobTable)
@@ -86,13 +90,16 @@ export const makeMemberBulkRefreshProcessor = (
             .where(eq(memberRefreshJobTable.id, jobId));
           continue;
         }
+
         processedMembers += 1;
         const refreshedMember = result.success;
+
         if (!refreshedMember || refreshedMember.refreshQueued) {
           skippedIds.push(memberId);
         } else {
           refreshedIds.push(memberId);
         }
+
         if (processedMembers % 5 === 0) {
           yield* database
             .update(memberRefreshJobTable)
@@ -104,6 +111,7 @@ export const makeMemberBulkRefreshProcessor = (
           yield* emitRefreshJobUpdate(jobId);
         }
       }
+
       const completedAt = new Date(yield* Clock.currentTimeMillis);
       yield* database
         .update(memberRefreshJobTable)
@@ -132,6 +140,7 @@ export const makeMemberBulkRefreshProcessor = (
             })
             .where(eq(memberRefreshJobTable.id, job.data.jobId));
           yield* emitRefreshJobUpdate(job.data.jobId);
+
           return yield* Effect.fail(error);
         }),
       ),

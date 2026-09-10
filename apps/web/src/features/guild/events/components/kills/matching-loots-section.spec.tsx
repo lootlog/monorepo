@@ -36,13 +36,16 @@ describe("MatchingLootsSection", () => {
         .getAllByTestId("loot-list-item")
         .map((row) => row.dataset.presentation),
     ).toEqual(["embedded", "embedded"]);
+
     const showAllLink = screen.getByRole("link", {
       name: "events.loots.showAll",
     });
+
     const target = new URL(
       showAllLink.getAttribute("href") ?? "",
       "https://web.test",
     );
+
     expect(target.pathname).toBe("/guild-one");
     expect(target.searchParams.get("npcs")).toBe("Potulny Berserker");
     expect(showAllLink.getAttribute("class")).toContain("hover:text-primary");

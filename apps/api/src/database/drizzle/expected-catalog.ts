@@ -25,11 +25,16 @@ const compressedCatalog =
 export const EXPECTED_API_CATALOG: ExpectedApiCatalog = JSON.parse(
   gunzipSync(Buffer.from(compressedCatalog, "base64")).toString("utf8"),
 );
+
 export const EXPECTED_API_CATALOG_SHA256 =
   "9c4ced23618a51a36dd02e9587d58974a4b147a637fa555dd6e9813bf47cf51d";
+
 export const LEGACY_MIGRATION_EVIDENCE_SHA256 =
   "57e884169fb61b6de7f5a317cf96d586260bb6be889de34f9635b9858b01cae3";
+
 export const BASELINE_MIGRATION_SHA256 =
   "da090de580ce11a694782741bd2a9fd1924fe5ad4d9947e24320c5fe64d5772a";
+
 export const BASELINE_MIGRATION_NAME = "20260901121000_legacy_prisma_baseline";
+
 export const BASELINE_MIGRATION_CREATED_AT = 1788264600000;

@@ -34,12 +34,15 @@ export const intFromString = (options?: {
       Schema.isLessThanOrEqualTo(options.max),
     );
   }
+
   if (options?.min !== undefined) {
     return integer.check(Schema.isGreaterThanOrEqualTo(options.min));
   }
+
   if (options?.max !== undefined) {
     return integer.check(Schema.isLessThanOrEqualTo(options.max));
   }
+
   return integer;
 };
 
@@ -49,6 +52,7 @@ export const commaSeparatedArray = <
   itemSchema: S,
 ) => {
   const items = Schema.mutable(Schema.Array(itemSchema));
+
   const fromString = Schema.String.pipe(
     Schema.decodeTo(items, {
       decode: SchemaGetter.transform((value) =>

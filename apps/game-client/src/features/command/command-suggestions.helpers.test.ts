@@ -9,7 +9,9 @@ import {
 } from "./command-suggestions.helpers";
 
 const translations = createInstance();
+
 await translations.init({ lng: "pl", resources: {}, initAsync: false });
+
 const translateCommand = translations.getFixedT("pl", "command");
 
 describe("command-suggestions.helpers", () => {

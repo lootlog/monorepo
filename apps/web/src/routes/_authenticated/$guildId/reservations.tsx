@@ -11,6 +11,7 @@ export const Route = createFileRoute("/_authenticated/$guildId/reservations")({
         context.queryClient,
         reservationSpotsQueryOptions(params.guildId),
       ).catch(() => undefined);
+
       return null;
     }),
   component: ReservationsLayout,

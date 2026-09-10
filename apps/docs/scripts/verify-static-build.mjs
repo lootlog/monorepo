@@ -4,6 +4,7 @@ import { access, readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 
 const clientDirectory = path.resolve("dist/client");
+
 const contentDirectory = path.resolve("content/docs");
 
 const rootDocument = await readFile(
@@ -12,8 +13,11 @@ const rootDocument = await readFile(
 );
 
 assert.match(rootDocument, /http-equiv="refresh" content="0;url=\/docs"/u);
+
 assert.match(rootDocument, /window\.location\.replace\("\/docs"\)/u);
+
 assert.match(rootDocument, /href="\/docs"/u);
+
 assert.doesNotMatch(
   rootDocument,
   /(?:href|src)="\/assets\//u,
@@ -28,10 +32,12 @@ await Promise.all(
   contentFiles.map(async (fileName) => {
     const slug = fileName.slice(0, -".mdx".length);
     const routePath = slug === "index" ? "docs" : `docs/${slug}`;
+
     const [source, document] = await Promise.all([
       readFile(path.join(contentDirectory, fileName), "utf8"),
       readFile(path.join(clientDirectory, routePath, "index.html"), "utf8"),
     ]);
+
     const title = source.match(/^title: (.+)$/mu)?.[1];
     const description = source.match(/^description: (.+)$/mu)?.[1];
 
@@ -60,9 +66,11 @@ const searchResponse = await readFile(
   path.join(clientDirectory, "api/search"),
   "utf8",
 );
+
 const parsedSearchResponse = JSON.parse(searchResponse);
 
 assert.equal(parsedSearchResponse.type, "advanced");
+
 for (const fileName of contentFiles) {
   const slug = fileName.slice(0, -".mdx".length);
   const publicPath = slug === "index" ? "/docs" : `/docs/${slug}`;
@@ -76,11 +84,13 @@ for (const fileName of contentFiles) {
 const staticFunctionFiles = await readdir(
   path.join(clientDirectory, "__tsr/staticServerFnCache"),
 );
+
 assert.equal(
   staticFunctionFiles.length,
   contentFiles.length,
   "static server function responses are incomplete",
 );
+
 await Promise.all(
   staticFunctionFiles.map(async (fileName) => {
     const response = await readFile(

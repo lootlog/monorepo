@@ -26,6 +26,7 @@ export const getBattleLogScrollActiveTurn = ({
   const visibleTop =
     Math.max(viewportTop, occlusionBottom ?? viewportTop) +
     ACTIVE_TURN_ANCHOR_OFFSET;
+
   const visibleRows = turnPositions.filter(
     (position) =>
       position.bottom >= visibleTop && position.top <= viewportBottom,

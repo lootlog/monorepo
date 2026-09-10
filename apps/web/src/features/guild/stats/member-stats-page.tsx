@@ -96,10 +96,12 @@ export const MemberStatsPage: React.FC = () => {
     handlePreviousPage,
     handleNextPage,
   } = useMemberStatsPage();
+
   if (!member) {
     if (isLoading) {
       return <StatsDetailLoading entity="member" />;
     }
+
     return (
       <div className="h-full flex flex-col items-center justify-center">
         <p className="text-muted-foreground">
@@ -111,8 +113,10 @@ export const MemberStatsPage: React.FC = () => {
 
   const overview = data?.overview;
   const hasActiveFilters = hasMemberStatsFilters(settings, debouncedSearch);
+
   const { npcs, total, hasNext, totalParticipations } =
     getMemberStatsResponseView(data);
+
   const hasPrev = cursor > 0;
 
   const activeTypes = NPC_TYPE_ORDER.filter(
@@ -260,6 +264,7 @@ export const MemberStatsPage: React.FC = () => {
                   <TableBody>
                     {npcs.map((npc, index) => {
                       const globalIndex = cursor + index;
+
                       return (
                         <TableRow
                           key={npc.npcId}

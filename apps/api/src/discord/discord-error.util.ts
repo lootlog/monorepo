@@ -73,6 +73,7 @@ export async function throwIfDiscordRateLimited(
     userId,
     endpoint,
   );
+
   const retryAfterMs = nextAvailableAt
     ? Math.max(nextAvailableAt.getTime() - Date.now(), 0)
     : undefined;
@@ -108,6 +109,7 @@ export function toDiscordRequestError(error: unknown): Error {
   }
 
   const status = extractHttpStatus(error);
+
   if (status === HttpStatus.UNAUTHORIZED) {
     return new AuthenticationRequiredError({
       message: "DISCORD_UNAUTHORIZED",
@@ -150,6 +152,7 @@ export function getInvalidDiscordRequestStatus(
   }
 
   const status = extractHttpStatus(error);
+
   if (status === HttpStatus.UNAUTHORIZED) {
     return 401;
   }

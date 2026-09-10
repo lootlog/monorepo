@@ -54,9 +54,11 @@ describe("ActivityRepository", () => {
         makePostgresLayer({ url: Redacted.make(postgres.getConnectionUri()) }),
       ),
     );
+
     const repositoryLayer = ActivityRepository.layer.pipe(
       Layer.provide(databaseLayer),
     );
+
     const activity = {
       userId: "user-1",
       guildId: "guild-1",
@@ -70,6 +72,7 @@ describe("ActivityRepository", () => {
     const [first, second] = await Effect.runPromise(
       Effect.gen(function* () {
         const repository = yield* ActivityRepository;
+
         return yield* Effect.all(
           [repository.create(activity), repository.create(activity)],
           { concurrency: "unbounded" },
@@ -94,6 +97,7 @@ describe("ActivityRepository", () => {
         ('10000000-0000-4000-8000-000000000000', 'user-pagination', 'guild-pagination', 'discord-pagination', 'CONNECT_EVENT', '2026-09-04T12:02:00Z', 'WEB_APP', 'pagination-middle'),
         ('xxxxxxxxxxxxxxxxxxxxxxxxx', 'user-pagination', 'guild-pagination', 'discord-pagination', 'CONNECT_EVENT', '2026-09-04T12:01:00Z', 'WEB_APP', 'pagination-oldest')`,
     );
+
     const repositoryLayer = ActivityRepository.layer.pipe(
       Layer.provide(
         ActivityDatabase.layer.pipe(
@@ -109,15 +113,18 @@ describe("ActivityRepository", () => {
     const [firstPage, secondPage] = await Effect.runPromise(
       Effect.gen(function* () {
         const repository = yield* ActivityRepository;
+
         const first = yield* repository.findMany({
           guildId: "guild-pagination",
           limit: 2,
         });
+
         const second = yield* repository.findMany({
           guildId: "guild-pagination",
           cursor: first.nextCursor,
           limit: 2,
         });
+
         return [first, second] as const;
       }).pipe(Effect.provide(repositoryLayer)),
     );

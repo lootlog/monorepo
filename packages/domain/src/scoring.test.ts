@@ -82,9 +82,11 @@ describe("domain scoring", () => {
     const first = normalizeEventScoringRules(null);
     const firstRule = first.rules[0];
     expect(firstRule).toBeDefined();
+
     if (!firstRule) {
       throw new Error("Expected the default scoring rules to be non-empty");
     }
+
     firstRule.enabled = false;
 
     expect(normalizeEventScoringRules(null).rules[0]?.enabled).toBe(true);

@@ -28,6 +28,7 @@ const notification = {
     targetType: NotificationTargetType.CHANNEL,
   },
 };
+
 const decode = (payload: typeof Schema.Json.Type) =>
   decodeNotificationCommand(new TextEncoder().encode(JSON.stringify(payload)));
 
@@ -39,6 +40,7 @@ it("preserves notification content, mentions and extension fields", () => {
     metadata: { source: "timer" },
     extension: true,
   };
+
   expect(decode(input)).toEqual(input);
 });
 

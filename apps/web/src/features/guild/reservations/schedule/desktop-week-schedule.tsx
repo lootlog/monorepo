@@ -56,6 +56,7 @@ export function DesktopWeekSchedule({
     onReservationCancel,
     cancellingReservationId,
   });
+
   return (
     <ScrollArea className="min-h-0 flex-1 select-none">
       <div
@@ -74,35 +75,46 @@ export function DesktopWeekSchedule({
           if (contextMenuOpenRef.current || suppressSelectionRef.current) {
             suppressSelectionRef.current = true;
             setSelection(null);
+
             return;
           }
+
           if (event.button !== 0) return;
           const point = pointFromPointer(event);
+
           if (!point) return;
+
           if (!isReservationStartSelectable(dateFromPoint(point))) {
             setIsPointerOverUnavailableSlot(true);
+
             return;
           }
+
           event.currentTarget.setPointerCapture(event.pointerId);
           setSelection({ anchor: point, current: point });
         }}
         onPointerMove={(event) => {
           const point = pointFromPointer(event);
+
           const isOverReservation =
             event.target instanceof Element &&
             event.target.closest(".reservation-card") !== null;
+
           setIsPointerOverUnavailableSlot(
             !isOverReservation &&
               point !== null &&
               !isReservationStartSelectable(dateFromPoint(point)),
           );
+
           if (!selection || !point) return;
           const anchorDate = dateFromPoint(selection.anchor);
+
           const targetDate = clampReservationEndDate({
             anchorDate,
             targetDate: dateFromPoint(point),
             settings,
           });
+
           setSelection({
             anchor: selection.anchor,
             current: pointFromDate(targetDate),
@@ -111,8 +123,10 @@ export function DesktopWeekSchedule({
         onPointerUp={() => {
           if (suppressSelectionRef.current) {
             suppressSelectionRef.current = false;
+
             return;
           }
+
           finishSelection();
         }}
         onPointerLeave={() => setIsPointerOverUnavailableSlot(false)}
@@ -127,6 +141,7 @@ export function DesktopWeekSchedule({
           const date = new Date(weekStart);
           date.setDate(date.getDate() + index);
           const isToday = date.toDateString() === now.toDateString();
+
           return (
             <div
               key={date.toISOString()}
@@ -190,11 +205,15 @@ export function DesktopWeekSchedule({
 
         {segments.map((segment) => {
           if (segment.dayIdx < 0 || segment.dayIdx >= DAYS.length) return null;
+
           const startFraction =
             (segment.dayIdx + segment.lane / segment.laneCount) / DAYS.length;
+
           const lanePercentage = 100 / (DAYS.length * segment.laneCount);
+
           const laneLabelOffset =
             LABEL_COLUMN_WIDTH / (DAYS.length * segment.laneCount);
+
           return (
             <ReservationBlock
               key={segment.id}
@@ -217,6 +236,7 @@ export function DesktopWeekSchedule({
               }}
               onContextMenuOutsidePress={(event) => {
                 const grid = gridRef.current;
+
                 if (!grid || !isEventInsideElement(event, grid)) return;
                 suppressSelectionRef.current = true;
                 setSelection(null);

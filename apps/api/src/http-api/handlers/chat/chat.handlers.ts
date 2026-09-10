@@ -103,6 +103,7 @@ const declaredHttpFailure = <A, R>(effect: Effect.Effect<A, ChatFailure, R>) =>
     ChatNotFound: emptyStatusResponse,
     ChatOperationError: (error) => {
       const status = applicationErrorStatusOrUndefined(error.cause);
+
       return status === 403 || status === 404
         ? Effect.succeed(HttpServerResponse.empty({ status }))
         : Effect.die(error.cause);
@@ -110,6 +111,7 @@ const declaredHttpFailure = <A, R>(effect: Effect.Effect<A, ChatFailure, R>) =>
   });
 
 const readCapabilities = [Permission.LOOTLOG_CHAT_READ] as const;
+
 const writeCapabilities = [
   Permission.LOOTLOG_CHAT_READ,
   Permission.LOOTLOG_CHAT_WRITE,
@@ -119,9 +121,11 @@ export const getChatMessages = Effect.fn("getChatMessages")(function* (
   guildId: string,
 ) {
   const access = yield* requireGuild(guildId, readCapabilities);
+
   const value = yield* data((service) =>
     service.getMessages(access.discordId, access.guildId),
   );
+
   return yield* decode(ChatMessagesResponse, value);
 });
 
@@ -130,9 +134,11 @@ export const sendChatMessage = Effect.fn("sendChatMessage")(function* (
   payload: SendChatMessageRequest,
 ) {
   const access = yield* requireGuild(guildId, writeCapabilities);
+
   const value = yield* data((service) =>
     service.sendMessage(access.discordId, access.guildId, payload),
   );
+
   return yield* decode(ChatMessageResponse, value);
 });
 
@@ -140,9 +146,11 @@ export const clearChatMessages = Effect.fn("clearChatMessages")(function* (
   guildId: string,
 ) {
   const access = yield* requireGuild(guildId, writeCapabilities);
+
   const value = yield* data((service) =>
     service.clearMessages(access.discordId, access.guildId),
   );
+
   return yield* decode(ChatMessageActionResponse, value);
 });
 
@@ -151,9 +159,11 @@ export const deleteChatMessage = Effect.fn("deleteChatMessage")(function* (
   messageId: string,
 ) {
   const access = yield* requireGuild(guildId, writeCapabilities);
+
   const value = yield* data((service) =>
     service.deleteMessage(access.discordId, access.guildId, messageId),
   );
+
   return yield* decode(ChatMessageActionResponse, value);
 });
 

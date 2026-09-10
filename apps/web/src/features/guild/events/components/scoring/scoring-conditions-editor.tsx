@@ -164,6 +164,7 @@ const ConditionRow = ({
                   const selectedType = EVENT_SCORING_CONDITION_TYPES.find(
                     (type) => type === nextConditionType,
                   );
+
                   if (!selectedType) return;
                   setValue(
                     conditionPath,

@@ -12,6 +12,7 @@ export const DamageDealtBreakdown: FC<DamageDealtBreakdownProps> = ({
   warrior,
 }) => {
   const { t } = useTranslation();
+
   const damageStats = [
     {
       type: t("battleUi.breakdowns.damageDealt.all"),

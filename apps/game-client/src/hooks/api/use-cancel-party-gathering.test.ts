@@ -23,11 +23,13 @@ describe("useCancelPartyGathering", () => {
   beforeEach(() => {
     requests.length = 0;
     useWindowsStore.getState().setOpen("party-finder", true);
+
     const restore = configureApiClients({
       main: {
         baseUrl: "https://api.example.test",
         fetch: (input, init) => {
           requests.push(new Request(input, init));
+
           return Promise.resolve(
             Response.json({
               schemaVersion: 3,
@@ -39,6 +41,7 @@ describe("useCancelPartyGathering", () => {
         },
       },
     });
+
     onTestFinished(restore);
     usePartyFinderStore.getState().clearReadyRooms();
     usePartyFinderStore.getState().mergeProjection({
@@ -91,10 +94,13 @@ describe("useCancelPartyGathering", () => {
     const queryClient = new QueryClient({
       defaultOptions: { mutations: { retry: false } },
     });
+
     const chatQueryKey = getChatControllerGetChatMessagesQueryKey({
       guildId: "guild-1",
     });
+
     queryClient.setQueryData(chatQueryKey, [{ id: "message-1" }]);
+
     const { result } = renderHook(() => useCancelPartyGathering(), {
       wrapper: createWrapper(queryClient),
     });
