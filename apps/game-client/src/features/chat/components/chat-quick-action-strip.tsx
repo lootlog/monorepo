@@ -1,5 +1,4 @@
 import { usePartyCommand } from "@/features/command/hooks/use-party-command";
-import { useChatStore } from "@/store/chat.store";
 import { MapPin, Plus, Siren, Swords } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -17,9 +16,6 @@ export const ChatQuickActionStrip = ({ guildId }: { guildId?: string }) => {
   const { sendHelp, sendPosition, isPending } = useChatQuickActions();
   const bindings = useHotkeysStore((state) => state.bindings);
   const { handlePartyCommand } = usePartyCommand();
-  const selectedInputGuildIds = useChatStore(
-    (state) => state.selectedInputGuildIds,
-  );
   const [creatingParty, setCreatingParty] = useState(false);
   const [open, setOpen] = useState(false);
   const disabled = !guildId || isPending;
@@ -45,14 +41,15 @@ export const ChatQuickActionStrip = ({ guildId }: { guildId?: string }) => {
       label: t("gatherings.title"),
       icon: Swords,
       run: async () => {
+        if (!guildId) return;
         setCreatingParty(true);
         try {
-          await handlePartyCommand(undefined, selectedInputGuildIds);
+          await handlePartyCommand(undefined, [guildId]);
         } finally {
           setCreatingParty(false);
         }
       },
-      disabled: creatingParty || selectedInputGuildIds.length === 0,
+      disabled: creatingParty || !guildId,
       shortcut: "",
     },
   ] as const;

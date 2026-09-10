@@ -163,13 +163,13 @@ it("opens quick actions with current shortcuts and sends position without changi
   await waitFor(() => expect(trigger).toHaveFocus());
 });
 
-it("creates an empty gathering like /grp without opening the form or changing the draft", async () => {
+it("creates a gathering in the current chat organization instead of the command window selection", async () => {
   const user = userEvent.setup();
-  useChatStore.getState().setSelectedInputGuildIds(["a"]);
+  useChatStore.getState().setSelectedInputGuildIds(["b"]);
   useChatStore.getState().setDraft("a", "Keep draft");
   useWindowsStore.getState().setOpen("create-party-gathering", false);
   request.mockRejectedValueOnce(new Error("offline"));
-  render(<ChatQuickActionStrip />, { wrapper });
+  render(<ChatQuickActionStrip guildId="a" />, { wrapper });
   await user.click(screen.getByRole("button", { name: "Szybkie akcje" }));
   expect(
     screen.queryByRole("button", { name: "Ustawienia" }),
@@ -184,4 +184,15 @@ it("creates an empty gathering like /grp without opening the form or changing th
   expect(body).not.toHaveProperty("maxLvl");
   expect(useWindowsStore.getState()["create-party-gathering"].open).toBe(false);
   expect(useChatStore.getState().draftsByGuild.a).toBe("Keep draft");
+});
+
+it("disables gathering creation without a chat organization even when commands have a selection", async () => {
+  const user = userEvent.setup();
+  useChatStore.getState().setSelectedInputGuildIds(["b"]);
+  render(<ChatQuickActionStrip />, { wrapper });
+  await user.click(screen.getByRole("button", { name: "Szybkie akcje" }));
+  const create = screen.getByRole("button", { name: "Party finder" });
+  expect(create).toBeDisabled();
+  await user.click(create);
+  expect(request).not.toHaveBeenCalled();
 });
