@@ -78,15 +78,15 @@ export const ChatFiltersSettings = () => {
       } catch {
         generation.current += 1;
         await settingsDocuments.refetch();
-        toast.error(t("settings.chatFilters.saveError"));
+        toast.error(t("chatFilters.saveError"));
       }
     });
   };
 
   return (
     <SettingsTabLayout
-      title={t("settings.chatFilters.hiddenNpcTypes.title")}
-      description={t("settings.chatFilters.hiddenNpcTypes.description")}
+      title={t("chatFilters.hiddenNpcTypes.title")}
+      description={t("chatFilters.hiddenNpcTypes.description")}
     >
       <SettingsSection className="ll:gap-1.5">
         <div
@@ -102,7 +102,7 @@ export const ChatFiltersSettings = () => {
                 key={npcType}
                 label={
                   <label htmlFor={controlId}>
-                    {t("settings.chatFilters.hiddenNpcTypes.hide", {
+                    {t("chatFilters.hiddenNpcTypes.hide", {
                       npcType: label,
                     })}
                   </label>
