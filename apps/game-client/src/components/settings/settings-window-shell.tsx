@@ -59,7 +59,7 @@ export const SettingsWindowShell: FC<SettingsWindowShellProps> = ({
           subsections ? "ll:pt-1" : "ll:pt-0",
         )}
       >
-        <div className="ll:flex ll:flex-col ll:gap-[var(--ll-settings-space-lg)] ll:px-1 ll:pb-2">
+        <div className="ll:flex ll:flex-col ll:gap-[var(--ll-settings-space-lg)] ll:px-3 ll:pb-2">
           {children}
         </div>
       </ScrollArea>
