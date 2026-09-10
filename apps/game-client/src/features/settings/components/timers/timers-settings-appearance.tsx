@@ -13,8 +13,8 @@ export const TimersSettingsAppearance: FC = () => {
   const { t } = useTranslation();
 
   return (
-    <div className="ll:grid ll:grid-cols-1 ll:gap-[var(--ll-settings-space-lg)] min-[680px]:ll:grid-cols-[minmax(0,1fr)_220px]">
-      <div className="ll:order-2 ll:flex ll:flex-col ll:gap-[var(--ll-settings-space-lg)] min-[680px]:ll:order-1">
+    <div className="ll:grid ll:grid-cols-1 ll:gap-[var(--ll-settings-space-xl)] min-[680px]:ll:grid-cols-[minmax(0,1fr)_220px]">
+      <div className="ll:order-2 ll:flex ll:flex-col ll:gap-[var(--ll-settings-space-xl)] min-[680px]:ll:order-1">
         <SettingsSection
           controlId="timer-visibility"
           title={t("settings.timers.appearance.visibilityTitle")}

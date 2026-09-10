@@ -14,6 +14,7 @@ export type SettingsIconName =
   | "bell"
   | "volume2"
   | "keyboard"
+  | "flaskConical"
   | "activity"
   | "info";
 
@@ -69,18 +70,6 @@ const MANIFEST = [
             help: {
               recommendationKey: "settings.help.animationsRecommendation",
             },
-          },
-          {
-            id: "map-pings",
-            labelKey: "settings.general.mapPingsLabel",
-            descriptionKey: "settings.general.mapPingsDescription",
-            settingKeys: ["gameData.pings"],
-          },
-          {
-            id: "air-tags",
-            labelKey: "settings.general.airTagsLabel",
-            descriptionKey: "settings.general.airTagsDescription",
-            settingKeys: ["gameData.airTags"],
           },
         ],
       },
@@ -401,6 +390,33 @@ const MANIFEST = [
             id: "hotkeys",
             labelKey: "settings.hotkeys.title",
             settingKeys: ["controls.hotkeys"],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "experimental",
+    labelKey: "settings.domains.experimental",
+    icon: "flaskConical",
+    subsections: [
+      {
+        id: "experimental",
+        labelKey: "settings.domains.experimental",
+        controls: [
+          {
+            id: "map-pings",
+            labelKey: "settings.experimental.mapPingsLabel",
+            descriptionKey: "settings.experimental.mapPingsDescription",
+            aliases: ["pingi", "mapa"],
+            settingKeys: ["gameData.pings"],
+          },
+          {
+            id: "air-tags",
+            labelKey: "settings.experimental.airTagsLabel",
+            descriptionKey: "settings.experimental.airTagsDescription",
+            aliases: ["airtag", "widoczność"],
+            settingKeys: ["gameData.airTags"],
           },
         ],
       },

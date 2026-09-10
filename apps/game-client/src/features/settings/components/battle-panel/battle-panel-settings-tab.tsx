@@ -14,10 +14,7 @@ export const BattlePanelSettingsTab: FC = () => {
   const { t } = useTranslation();
 
   return (
-    <SettingsTabLayout
-      title={t("settings.battlePanel.title")}
-      description={t("settings.battlePanel.description")}
-    >
+    <SettingsTabLayout>
       <SettingsSection title={t("settings.battlePanel.dataCollectionTitle")}>
         <SettingsRow
           controlId="battle-data-collection"

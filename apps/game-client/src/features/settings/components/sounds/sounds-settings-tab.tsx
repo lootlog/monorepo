@@ -48,18 +48,15 @@ export function SoundsSettingsTab() {
 
   if (isLoading) {
     return (
-      <SettingsTabLayout title={t("sounds.title")}>
+      <SettingsTabLayout>
         <p className="ll:text-[12px] ll:text-gray-400">{t("sounds.loading")}</p>
       </SettingsTabLayout>
     );
   }
 
   return (
-    <SettingsTabLayout
-      title={t("sounds.title")}
-      description={t("sounds.description")}
-    >
-      <div className="ll:flex ll:flex-col ll:gap-[var(--ll-settings-space-lg)]">
+    <SettingsTabLayout>
+      <div className="ll:flex ll:flex-col ll:gap-[var(--ll-settings-space-xl)]">
         <MasterVolumeControl
           isMuted={soundsMuted}
           volume={masterVolume}

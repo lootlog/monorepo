@@ -8,6 +8,7 @@ export const SETTINGS_DOMAIN_VALUES = [
   "notifications",
   "sounds",
   "controls",
+  "experimental",
   "diagnostics",
   "information",
 ] as const;
@@ -47,6 +48,7 @@ export const SETTINGS_SUBSECTION_VALUES = [
   "notification-mutes",
   "sounds",
   "hotkeys",
+  "experimental",
   "logs",
   "debug",
   "build",
@@ -78,6 +80,7 @@ const SETTINGS_PATHS: Record<SettingsTabValue, SettingsPath> = {
   },
   sounds: { domain: "sounds", subsection: "sounds" },
   controls: { domain: "controls", subsection: "hotkeys" },
+  experimental: { domain: "experimental", subsection: "experimental" },
   diagnostics: { domain: "diagnostics", subsection: "logs" },
   information: { domain: "information", subsection: "build" },
   catching: { domain: "game-data", subsection: "catching" },

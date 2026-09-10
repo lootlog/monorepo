@@ -216,10 +216,7 @@ export const CatchingSettings = () => {
   };
 
   return (
-    <SettingsTabLayout
-      title={t("settings.catching.title")}
-      description={t("settings.catching.description")}
-    >
+    <SettingsTabLayout>
       <SettingsSection
         controlId="catching-range"
         title={t("settings.catching.characterTitle")}

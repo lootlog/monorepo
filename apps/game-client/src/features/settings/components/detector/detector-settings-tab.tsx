@@ -39,11 +39,7 @@ export const DetectorSettingsTab = () => {
   ];
 
   return (
-    <SettingsTabLayout
-      title={t("detector.title")}
-      description={t("detector.description")}
-      contentClassName="ll:gap-3"
-    >
+    <SettingsTabLayout contentClassName="ll:gap-3">
       <div className="ll:relative">
         <Tabs defaultValue={NpcType.ELITE2} className="ll:w-full ll:gap-3">
           <TabsList className="ll:w-full">

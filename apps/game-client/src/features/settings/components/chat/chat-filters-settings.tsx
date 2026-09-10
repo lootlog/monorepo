@@ -16,10 +16,7 @@ export const ChatFiltersSettings = () => {
   const { npcTypeColors } = useNpcTypeColors();
 
   return (
-    <SettingsTabLayout
-      title={t("chatFilters.npcMessages.title")}
-      description={t("chatFilters.npcMessages.description")}
-    >
+    <SettingsTabLayout>
       <SettingsSection controlId="chat-npc-message-types">
         <div id="chat-npc-message-types" className="ll:flex ll:flex-col">
           {CHAT_NPC_TYPES.map((npcType) => {

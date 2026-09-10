@@ -133,8 +133,6 @@ export const LogsSettingsTab: FC = () => {
 
   return (
     <SettingsTabLayout
-      title={t("settings.logs.title")}
-      description={t("settings.logs.description")}
       actions={
         <div className="ll:flex ll:items-center ll:gap-2">
           <Button

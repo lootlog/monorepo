@@ -55,15 +55,6 @@ const render = () => {
 describe("DetectorSettingsTab", () => {
   it("renders translated tab copy instead of raw settings keys", () => {
     render();
-
-    expect(
-      screen.getByRole("heading", { name: "Ustawienia wykrywacza" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "Skonfiguruj wspólny routing komunikatów oraz lokalne wykrywanie NPC dla każdego typu.",
-      ),
-    ).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Elita 2" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Heros" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Kolos" })).toBeInTheDocument();

@@ -2,18 +2,18 @@ import { cn } from "cn";
 import type { FC, ReactNode } from "react";
 
 type SettingsTabLayoutProps = {
-  title: ReactNode;
-  description?: ReactNode;
   children: ReactNode;
+  /** Tab-level actions, rendered as a trailing toolbar above the sections. */
   actions?: ReactNode;
   className?: string;
   contentClassName?: string;
 };
 
-/** Subsection body: a compact heading line followed by its sections. */
+/**
+ * Subsection body: its sections, optionally preceded by a toolbar. The
+ * navigation already names the subsection, so the body carries no heading.
+ */
 export const SettingsTabLayout: FC<SettingsTabLayoutProps> = ({
-  title,
-  description,
   children,
   actions,
   className,
@@ -25,22 +25,14 @@ export const SettingsTabLayout: FC<SettingsTabLayoutProps> = ({
       className,
     )}
   >
-    <div className="ll:flex ll:items-start ll:justify-between ll:gap-2 ll:px-2">
-      <div className="ll:min-w-0 ll:flex-1">
-        <h2 className="ll:m-0 ll:text-[length:var(--ll-settings-font-size)] ll:font-semibold ll:leading-[var(--ll-settings-line-height)] ll:text-gray-100">
-          {title}
-        </h2>
-        {description ? (
-          <p className="ll:m-0 ll:text-[length:var(--ll-settings-meta-font-size)] ll:leading-[var(--ll-settings-meta-line-height)] ll:text-muted-foreground">
-            {description}
-          </p>
-        ) : null}
+    {actions ? (
+      <div className="ll:flex ll:items-center ll:justify-end ll:gap-2 ll:px-2">
+        {actions}
       </div>
-      {actions ? <div className="ll:shrink-0">{actions}</div> : null}
-    </div>
+    ) : null}
     <div
       className={cn(
-        "ll:flex ll:flex-col ll:gap-[var(--ll-settings-space-lg)]",
+        "ll:flex ll:flex-col ll:gap-[var(--ll-settings-space-xl)]",
         contentClassName,
       )}
     >

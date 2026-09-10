@@ -27,6 +27,7 @@
     "notifications": "Powiadomienia",
     "sounds": "Dźwięki",
     "controls": "Sterowanie",
+    "experimental": "Eksperymentalne",
     "diagnostics": "Diagnostyka",
     "information": "Informacje"
   },
@@ -181,7 +182,12 @@
     "allowWorldSelectionLabel": "Pozwalaj na wybór świata",
     "allowWorldSelectionDescription": "Nie działa na zgrupowanych timerach.",
     "animationEffectsLabel": "Efekty animacji",
-    "animationEffectsDescription": "Włącz płynne animacje interfejsu. Wyłącz na słabszym komputerze, aby ograniczyć lagi.",
+    "animationEffectsDescription": "Włącz płynne animacje interfejsu. Wyłącz na słabszym komputerze, aby ograniczyć lagi."
+  },
+  "experimental": {
+    "sectionTitle": "Funkcje eksperymentalne",
+    "sectionDescription": "Funkcje w trakcie testów. Mogą działać niestabilnie lub zmienić się bez zapowiedzi.",
+    "newInterfaceOnly": "Funkcje eksperymentalne są dostępne tylko w nowym interfejsie gry.",
     "mapPingsLabel": "Pingi na mapie",
     "mapPingsDescription": "Pokazuj i wysyłaj pingi na mapie oraz Podręcznej mapie.",
     "airTagsLabel": "AirTagi - współdzielona widoczność",

@@ -1,4 +1,5 @@
 import { SettingsSection } from "@/components/settings/settings-section";
+import { Button } from "@/components/ui/button";
 import { useRecentlyChangedStore } from "@/features/settings/recently-changed.store";
 import {
   getControlLocation,
@@ -50,13 +51,13 @@ export const SettingsRecentlyChanged: FC = () => {
       }
       description={t("settings.recent.description")}
       actions={
-        <button
-          type="button"
+        <Button
+          variant="ghost"
           onClick={clear}
-          className="ll-custom-cursor-pointer ll:rounded-sm ll:border-0 ll:bg-transparent ll:px-1.5 ll:py-0.5 ll:text-[11px] ll:text-muted-foreground ll:hover:text-gray-100 ll:focus-visible:outline-2 ll:focus-visible:outline-ring"
+          className="ll:h-auto ll:px-1.5 ll:py-0.5 ll:text-[11px] ll:leading-none ll:text-muted-foreground ll:transition-[color,background-color,scale] ll:duration-150 ll:ease-out ll:hover:text-foreground ll:active:scale-[0.96]"
         >
           {t("settings.recent.clear")}
-        </button>
+        </Button>
       }
     >
       <ul className="ll:m-0 ll:flex ll:list-none ll:flex-col ll:p-0">
@@ -65,7 +66,7 @@ export const SettingsRecentlyChanged: FC = () => {
             <button
               type="button"
               onClick={() => openControl(item.controlId)}
-              className="ll-custom-cursor-pointer ll:flex ll:w-full ll:min-h-[var(--ll-settings-control-height)] ll:items-center ll:gap-2 ll:rounded-sm ll:border-0 ll:bg-transparent ll:px-2 ll:py-[var(--ll-settings-space-sm)] ll:text-left ll:hover:bg-white/5 ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:focus-visible:-outline-offset-2"
+              className="ll-custom-cursor-pointer ll:flex ll:w-full ll:min-h-[var(--ll-settings-control-height)] ll:items-center ll:gap-2 ll:rounded-sm ll:border-0 ll:bg-transparent ll:ps-2 ll:pe-1.5 ll:py-[var(--ll-settings-space-sm)] ll:text-start ll:hover:bg-white/5 ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:focus-visible:-outline-offset-2"
             >
               <span className="ll:min-w-0 ll:flex-1">
                 <span className="ll:block ll:truncate ll:text-[length:var(--ll-settings-font-size)] ll:leading-[var(--ll-settings-line-height)] ll:text-gray-100">
@@ -77,6 +78,7 @@ export const SettingsRecentlyChanged: FC = () => {
               </span>
               <ChevronRight
                 className="ll:size-3.5 ll:shrink-0 ll:text-muted-foreground"
+                strokeWidth={1.5}
                 aria-hidden="true"
               />
             </button>

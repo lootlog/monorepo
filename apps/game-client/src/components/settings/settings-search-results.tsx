@@ -1,4 +1,3 @@
-import { cn } from "cn";
 import type { FC } from "react";
 import type { SettingsSearchItem } from "@/features/settings/settings-search";
 
@@ -63,11 +62,7 @@ export const SettingsSearchResults: FC<SettingsSearchResultsProps> = ({
             aria-selected={index === selectedResultIndex}
             onMouseEnter={() => onSelectIndex(index)}
             onClick={() => onOpen(result)}
-            className={cn(
-              "ll-custom-cursor-pointer ll:mt-px ll:flex ll:w-full ll:items-center ll:rounded-sm ll:border-0 ll:bg-transparent ll:px-2 ll:py-1 ll:text-left ll:text-[11px] ll:leading-4 ll:text-gray-200 ll:hover:bg-white/5",
-              index === selectedResultIndex &&
-                "ll:bg-white/10 ll:text-gray-100",
-            )}
+            className="ll-custom-cursor-pointer ll:mt-px ll:flex ll:w-full ll:items-center ll:rounded-sm ll:border-0 ll:bg-transparent ll:px-2 ll:py-1 ll:text-start ll:text-[11px] ll:leading-4 ll:text-gray-200 ll:hover:bg-accent/60 ll:aria-selected:bg-accent ll:aria-selected:text-foreground"
           >
             <span className="ll:truncate">{result.label}</span>
           </button>

@@ -6,15 +6,8 @@ import { recordRecentlyChanged } from "@/features/settings/recently-changed.stor
 import { useSettingsStore } from "@/store/settings.store";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  useCurrentGameAccountPreferences,
-  useUpdateGameAccountPreferences,
-} from "@/features/settings/persistence/use-game-account-preferences";
-import { useGameStore } from "@/store/game.store";
 
 export const GeneralSettingsTab: FC = () => {
-  const gameInterface = useGameStore((state) => state.game?.interface);
-
   const {
     allowWorldSelection,
     animationEffectsEnabled,
@@ -24,15 +17,8 @@ export const GeneralSettingsTab: FC = () => {
 
   const { t } = useTranslation();
 
-  const { data: accountPreferences } = useCurrentGameAccountPreferences();
-
-  const updateAccountPreferences = useUpdateGameAccountPreferences();
-
   return (
-    <SettingsTabLayout
-      title={t("settings.general.title")}
-      description={t("settings.general.description")}
-    >
+    <SettingsTabLayout>
       <SettingsSection title={t("settings.general.behaviorTitle")}>
         <SettingsRow
           controlId="allow-world-selection"
@@ -48,44 +34,6 @@ export const GeneralSettingsTab: FC = () => {
             id="allow-world-selection"
           />
         </SettingsRow>
-        {gameInterface === "ni" ? (
-          <>
-            <SettingsRow
-              controlId="map-pings"
-              label={t("settings.general.mapPingsLabel")}
-              description={t("settings.general.mapPingsDescription")}
-            >
-              <Switch
-                checked={accountPreferences?.pings.enabled ?? false}
-                disabled={
-                  !accountPreferences || updateAccountPreferences.isPending
-                }
-                onCheckedChange={(enabled) => {
-                  recordRecentlyChanged("map-pings");
-                  updateAccountPreferences.mutate({ pings: { enabled } });
-                }}
-                id="map-pings"
-              />
-            </SettingsRow>
-            <SettingsRow
-              controlId="air-tags"
-              label={t("settings.general.airTagsLabel")}
-              description={t("settings.general.airTagsDescription")}
-            >
-              <Switch
-                checked={accountPreferences?.airTags?.enabled ?? false}
-                disabled={
-                  !accountPreferences || updateAccountPreferences.isPending
-                }
-                onCheckedChange={(enabled) => {
-                  recordRecentlyChanged("air-tags");
-                  updateAccountPreferences.mutate({ airTags: { enabled } });
-                }}
-                id="air-tags"
-              />
-            </SettingsRow>
-          </>
-        ) : null}
         <SettingsRow
           controlId="animation-effects"
           label={t("settings.general.animationEffectsLabel")}

@@ -44,10 +44,6 @@ describe("ChatFiltersSettings", () => {
         <ChatFiltersSettings />
       </QueryClientProvider>,
     );
-
-    expect(
-      screen.getByRole("heading", { name: "Wiadomości NPC w chacie" }),
-    ).toBeInTheDocument();
     expect(screen.queryByText(/chatFilters\./)).not.toBeInTheDocument();
     expect(screen.getByRole("switch", { name: "Tytan" })).not.toBeChecked();
     expect(screen.getByRole("switch", { name: "Heros" })).toBeChecked();

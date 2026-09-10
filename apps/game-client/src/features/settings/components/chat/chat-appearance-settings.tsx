@@ -51,7 +51,7 @@ export const ChatAppearanceSettingsForm = () => {
     : METADATA_KEYS.filter((key) => key !== "showGuildLabel");
 
   return (
-    <div className="ll:flex ll:min-w-0 ll:flex-col ll:gap-[var(--ll-settings-space-lg)]">
+    <div className="ll:flex ll:min-w-0 ll:flex-col ll:gap-[var(--ll-settings-space-xl)]">
       <SettingsSection
         controlId="chat-preset"
         title={t("settings.chat.preset.section")}
