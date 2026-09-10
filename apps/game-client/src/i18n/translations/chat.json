@@ -133,7 +133,8 @@
     "showEquipment": "Pokaż ekwipunek",
     "inviteFriends": "Zaproś do przyjaciół",
     "inviteParty": "Zaproś do drużyny",
-    "showProfile": "Pokaż profil"
+    "showProfile": "Pokaż profil",
+    "hideNpcType": "Ukryj wiadomości: {{npcType}}"
   },
   "errors": {
     "rateLimited": "Wysyłasz zbyt szybko. Spróbuj ponownie za chwilę.",

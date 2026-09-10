@@ -1,12 +1,20 @@
 import type { ReactElement } from "react";
 import { createChatTestWrapper } from "../chat-test-wrapper";
+import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
 import userEvent from "@testing-library/user-event";
-import { fireEvent, render as renderUi, screen } from "@testing-library/react";
+import {
+  fireEvent,
+  render as renderUi,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { MessageType } from "@/api/chat.api";
-import type {
-  ChatMessageResponseDtoOutput as ChatMessageType,
-  MemberSummaryResponseDtoOutput as GuildMember,
+import {
+  getSettingsDocumentsControllerGetPreferencesQueryKey,
+  type ChatMessageResponseDtoOutput as ChatMessageType,
+  type MemberSummaryResponseDtoOutput as GuildMember,
+  type SettingsDocumentsResponseDtoOutput,
 } from "@lootlog/client/main";
 
 import { ChatNpcMessage } from "./chat-npc-message";
@@ -73,6 +81,63 @@ describe("ChatNpcMessage", () => {
       await screen.findByRole("menuitem", { name: "Kopiuj lokalizację" }),
     );
     expect(writeText).toHaveBeenCalledWith("Swamp (7, 9)");
+  });
+
+  it("hides the NPC rank of the clicked message through the context menu", async () => {
+    const user = userEvent.setup();
+    const harness = createGuildPreferencesTest();
+    const settingsDocuments: SettingsDocumentsResponseDtoOutput = {
+      domains: {
+        chat: {
+          effective: { hiddenNpcTypes: [] },
+          layers: [],
+          sources: {},
+          schemaVersion: 1,
+        },
+      },
+    };
+    harness.queryClient.setQueryData(
+      getSettingsDocumentsControllerGetPreferencesQueryKey({
+        domains: "chat",
+      }),
+      settingsDocuments,
+    );
+    const patchRequest = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(Response.json(settingsDocuments));
+    harness.request.mockImplementation(patchRequest);
+    renderUi(
+      <ChatNpcMessage
+        all={false}
+        guildName="Guild"
+        message={makeChatMessage({
+          npc: { ...makeChatMessage().npc!, wt: 100, prof: "w", type: 3 },
+        })}
+      />,
+      { wrapper: harness.wrapper },
+    );
+
+    fireEvent.contextMenu(screen.getByText("Hydra"));
+    await user.click(
+      await screen.findByRole("menuitem", {
+        name: "Ukryj wiadomości: Tytan",
+      }),
+    );
+
+    await waitFor(() =>
+      expect(patchRequest.mock.calls[0]?.[1]?.body).toBe(
+        JSON.stringify({
+          operations: [
+            {
+              domain: "chat",
+              scope: { type: "USER", id: "user" },
+              set: { hiddenNpcTypes: ["TITAN"] },
+              unset: [],
+            },
+          ],
+        }),
+      ),
+    );
   });
 
   it("hides the counter when there is only one grouped message", () => {
