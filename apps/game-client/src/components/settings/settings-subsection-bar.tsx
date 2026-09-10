@@ -23,7 +23,7 @@ export const SettingsSubsectionBar: FC<SettingsSubsectionBarProps> = ({
   <Tabs
     value={activeId}
     onValueChange={(id) => onSelect(String(id))}
-    className="ll:shrink-0 ll:px-1"
+    className="ll:shrink-0 ll:px-3"
   >
     <TabsList aria-label={label} className="ll:w-full">
       {options.map((option) => (
