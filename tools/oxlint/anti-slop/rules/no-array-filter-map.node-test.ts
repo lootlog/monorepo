@@ -22,6 +22,9 @@ tester.run("anti-slop/no-array-filter-map", noArrayFilterMapRule, {
     "let users = []; users = iterator; users.filter(active).map(email);",
     "const users = []; users[method](active).map(email);",
     "const first = second; const second = first; first.filter(active).map(email);",
+    "import type { Array } from './collection'; function collect(xs: Array<User>) { return xs.filter(active).map(email); }",
+    "type ReadonlyArray<T> = Lazy<T>; function collect(xs: ReadonlyArray<User>) { return xs.filter(active).map(email); }",
+    "function collect<Array>(xs: Array) { return xs.filter(active).map(email); }",
   ],
   invalid: [
     { code: "[].filter(active).map(email);", errors: [error] },
