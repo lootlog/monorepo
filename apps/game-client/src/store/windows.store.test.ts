@@ -17,7 +17,7 @@ describe("windows store", () => {
     localStorage.setItem(
       storageKey("ll-windows-state"),
       JSON.stringify({
-        version: 13,
+        version: 14,
         state: {
           "create-notification": {
             size: { width: 420 },
@@ -260,6 +260,36 @@ describe("migrateWindowsState", () => {
     expect(migrated).toHaveProperty("settings.state", {
       activeTab: "game-data",
       activeSubsection: "detector",
+    });
+  });
+
+  it("moves the persisted chat appearance path into the chat domain", () => {
+    const migrateSettingsPath = (state: {
+      activeTab: string;
+      activeSubsection: string;
+    }) =>
+      migrateWindowsState(
+        { settings: { open: true, state }, windowFocusHistory: [] },
+        13,
+      );
+
+    expect(
+      migrateSettingsPath({
+        activeTab: "appearance",
+        activeSubsection: "chat",
+      }),
+    ).toHaveProperty("settings.state", {
+      activeTab: "chat",
+      activeSubsection: "chat-appearance",
+    });
+    expect(
+      migrateSettingsPath({
+        activeTab: "appearance",
+        activeSubsection: "npc-colors",
+      }),
+    ).toHaveProperty("settings.state", {
+      activeTab: "appearance",
+      activeSubsection: "npc-colors",
     });
   });
 

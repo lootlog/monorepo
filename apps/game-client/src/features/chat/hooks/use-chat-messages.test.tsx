@@ -291,6 +291,37 @@ describe("useChatMessagesListener", () => {
     },
   );
 
+  it("does not present a mention from an NPC rank hidden in chat", async () => {
+    mount({ hiddenNpcTypes: new Set(["TITAN"]) });
+    await harness.receive(
+      created(
+        message("hidden-mention", "guild-1", {
+          type: "NPC",
+          message: "Hej @Current Hero",
+          npc: {
+            id: 1,
+            name: "Titan",
+            icon: "npc.gif",
+            location: "Map",
+            type: 3,
+            wt: 100,
+            prof: "w",
+            lvl: 300,
+          },
+        }),
+      ),
+    );
+    await harness.receive(
+      created(
+        message("visible-mention", "guild-1", { message: "Hej @Current Hero" }),
+      ),
+    );
+    await waitFor(() => expect(notifications()).toHaveLength(1));
+    expect(notifications()[0]).toMatchObject({
+      notificationId: "chat-mention:guild-1:visible-mention",
+    });
+  });
+
   it("presents a matching chat mention through the notification pipeline", async () => {
     mount();
     await harness.receive(

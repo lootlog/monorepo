@@ -231,6 +231,25 @@ const migrateQuickAccessWidth = (state: RawPersistedWindows): void => {
   }
 };
 
+const migrateChatSettingsPath = (state: RawPersistedWindows): void => {
+  const settings = isObjectRecord(state.settings) ? state.settings : {};
+  const settingsState = isObjectRecord(settings.state) ? settings.state : {};
+  if (
+    settingsState.activeTab !== "appearance" ||
+    settingsState.activeSubsection !== "chat"
+  ) {
+    return;
+  }
+  state.settings = {
+    ...settings,
+    state: {
+      ...settingsState,
+      activeTab: "chat",
+      activeSubsection: "chat-appearance",
+    },
+  };
+};
+
 export const migrateWindowsState = (
   persisted: unknown,
   version: number,
@@ -277,6 +296,7 @@ export const migrateWindowsState = (
     };
   }
   if (version < 13) delete state["event-mode"];
+  if (version < 14) migrateChatSettingsPath(state);
   return state;
 };
 
@@ -806,7 +826,7 @@ export const useWindowsStore = create<WindowsState>()(
       storage: createJSONStorage(() =>
         createDeduplicatingStateStorage(localStorage),
       ),
-      version: 13,
+      version: 14,
       migrate: migrateWindowsState,
       merge: mergePersistedWindows,
     },

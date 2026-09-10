@@ -3,25 +3,27 @@ import {
   NotificationCategoryTabs,
   type NotificationCategoryTab,
 } from "@/features/settings/components/notifications/notification-category-tabs";
-import { NpcType } from "@/api/npcs.api";
 import { useTranslation } from "react-i18next";
 
-export const NotificationsSettingsTab = () => {
+export const ChatNotificationsSettingsTab = () => {
   const { t } = useTranslation(["settings", "common"]);
   const categories: NotificationCategoryTab[] = [
-    { label: t("common:npcTypes.elite2"), key: NpcType.ELITE2 },
-    { label: t("common:npcTypes.hero"), key: NpcType.HERO },
-    { label: t("common:npcTypes.colossus"), key: NpcType.COLOSSUS },
-    { label: t("common:npcTypes.titan"), key: NpcType.TITAN },
+    { label: t("common:npcTypes.message"), key: "message" },
+    { label: t("common:npcTypes.partyGathering"), key: "party-gathering" },
   ];
 
   return (
     <SettingsTabLayout
-      title={t("notifications.title")}
-      description={t("notifications.description")}
+      title={t("chatNotifications.title")}
+      description={t("chatNotifications.description")}
       contentClassName="ll:gap-3"
     >
-      <NotificationCategoryTabs categories={categories} />
+      <div
+        id="chat-notification-rules"
+        data-settings-control="chat-notification-rules"
+      >
+        <NotificationCategoryTabs categories={categories} />
+      </div>
     </SettingsTabLayout>
   );
 };

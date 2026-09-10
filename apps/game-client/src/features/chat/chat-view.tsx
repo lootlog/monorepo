@@ -25,7 +25,10 @@ import {
   canReplyToChatMessage,
   resolveChatReplyNames,
 } from "./chat-reply.helpers";
-import { useNpcTypeColors } from "@/hooks/api/use-settings-documents";
+import {
+  useChatSettingsDocuments,
+  useNpcTypeColors,
+} from "@/hooks/api/use-settings-documents";
 import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
 import { AsyncContent } from "@/components/async-content";
 import { ChatConnectionStatus } from "./components/chat-connection-status";
@@ -245,6 +248,8 @@ export const ChatView = ({
       return [guild.id, summary.attention];
     }),
   );
+  const { hiddenNpcTypes } = useChatSettingsDocuments();
+  const hiddenNpcTypeSet = new Set(hiddenNpcTypes);
   const effectiveFilter = !filtersVisible
     ? "all"
     : chatFilter === "npc" || chatFilter === "party"
@@ -255,6 +260,7 @@ export const ChatView = ({
       messagesByGuildId,
       effectiveSelectedGuildId,
       effectiveFilter,
+      hiddenNpcTypeSet,
     ),
     messagesByGuildId,
     membersByGuildId,

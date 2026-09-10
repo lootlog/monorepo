@@ -20,13 +20,12 @@ const catalogHasKey = (key: SettingsCatalogKey) => {
 };
 
 describe("settings manifest persistence references", () => {
-  it("places NPC colors between chat and timer appearance", () => {
+  it("keeps NPC colors first in appearance after moving chat to its own domain", () => {
     const appearance = SETTINGS_MANIFEST.find(
       (domain) => domain.id === "appearance",
     );
 
     expect(appearance?.subsections.map((subsection) => subsection.id)).toEqual([
-      "chat",
       "npc-colors",
       "timer-appearance",
       "timer-colors",
@@ -49,6 +48,7 @@ describe("settings manifest persistence references", () => {
       "general",
       "servers",
       "appearance",
+      "chat",
       "timers",
       "game-data",
       "notifications",
@@ -65,6 +65,21 @@ describe("settings manifest persistence references", () => {
     expect(sounds?.subsections.map((subsection) => subsection.id)).toEqual([
       "sounds",
     ]);
+  });
+
+  it("groups chat appearance, notifications and filters under the chat domain", () => {
+    const chat = SETTINGS_MANIFEST.find((domain) => domain.id === "chat");
+
+    expect(chat?.subsections.map((subsection) => subsection.id)).toEqual([
+      "chat-appearance",
+      "chat-notifications",
+      "chat-filters",
+    ]);
+    expect(
+      chat?.subsections
+        .flatMap((subsection) => subsection.controls)
+        .map((control) => control.id),
+    ).toContain("chat-hidden-npc-types");
   });
 
   it("exposes server visibility as a searchable settings domain", () => {
