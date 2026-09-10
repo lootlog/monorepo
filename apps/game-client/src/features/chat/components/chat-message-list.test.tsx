@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { createChatTestWrapper } from "../chat-test-wrapper";
 import { createChatMessage } from "../chat-test-fixtures";
@@ -58,5 +58,37 @@ describe("chat transcript rendering", () => {
       { wrapper: createChatTestWrapper().wrapper },
     );
     expect(onMessagesSeen).not.toHaveBeenCalled();
+  });
+  it("keeps a manually scrolled-up viewport in place when a message is appended", () => {
+    const view = render(
+      <ChatMessageList
+        {...props}
+        renderables={rows(["one", "two"])}
+        position={{ atEnd: true, offset: 0 }}
+      />,
+      { wrapper: createChatTestWrapper().wrapper },
+    );
+    const viewport = view.container.querySelector<HTMLElement>(
+      "[data-chat-viewport]",
+    )!;
+    const scrollTo = vi.fn();
+    Object.defineProperty(viewport, "scrollTop", {
+      value: 120,
+      writable: true,
+    });
+    Object.defineProperty(viewport, "scrollTo", { value: scrollTo });
+    fireEvent.wheel(viewport, { deltaY: -100 });
+
+    view.rerender(
+      <ChatMessageList
+        {...props}
+        renderables={rows(["one", "two", "three"])}
+        position={{ atEnd: false, messageId: "one", offset: 0 }}
+      />,
+    );
+
+    expect(scrollTo).not.toHaveBeenCalledWith(
+      expect.objectContaining({ top: 0 }),
+    );
   });
 });
