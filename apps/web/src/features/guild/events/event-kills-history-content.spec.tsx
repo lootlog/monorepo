@@ -63,9 +63,9 @@ describe("EventKillsHistoryContent", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Maddok" }));
     expect(await screen.findByText("7")).toBeTruthy();
     expect(
-      requests
-        .filter((url) => url.pathname.endsWith("/hero-stats"))
-        .map((url) => url.pathname),
+      requests.flatMap((url) =>
+        url.pathname.endsWith("/hero-stats") ? [url.pathname] : [],
+      ),
     ).toEqual(["/guilds/guild-1/events/event-1/hero-stats"]);
   });
 });

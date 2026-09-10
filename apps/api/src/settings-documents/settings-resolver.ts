@@ -188,8 +188,9 @@ export const resolveSettingsDomain = (
   }
 
   const updatedValues = migratedLayers
-    .map((layer) => layer.updatedAt)
-    .filter((value): value is Date => value !== undefined)
+    .flatMap((layer) =>
+      layer.updatedAt === undefined ? [] : [layer.updatedAt],
+    )
     .sort((left, right) => left.getTime() - right.getTime());
   const updatedAt = updatedValues[updatedValues.length - 1];
 

@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { Effect, Layer } from "effect";
+import { Effect, Layer, Result } from "effect";
 import { FetchHttpClient, HttpClient } from "effect/unstable/http";
 import { boundedHttpGet } from "../src/bounded-http-get.js";
 
@@ -52,8 +52,8 @@ test("successful-response policy retries server status with caller's exact budge
     3,
   );
   expect(calls).toBe(4);
+  expect(Result.isFailure(result)).toBe(true);
   expect(result).toMatchObject({
-    _tag: "Failure",
     failure: { reason: "status", retryable: true, status: 503 },
   });
 });
@@ -65,8 +65,8 @@ test("raw policy returns non-success responses without retrying", async () => {
     return Promise.resolve(new Response("unavailable", { status: 503 }));
   });
   expect(calls).toBe(1);
+  expect(Result.isSuccess(result)).toBe(true);
   expect(result).toMatchObject({
-    _tag: "Success",
     success: { body: "unavailable", status: 503 },
   });
 });
@@ -80,8 +80,8 @@ test.each(["successful", "raw"] as const)(
       return Promise.resolve(new Response(new Uint8Array(1024 * 1024 + 1)));
     });
     expect(calls).toBe(1);
+    expect(Result.isFailure(result)).toBe(true);
     expect(result).toMatchObject({
-      _tag: "Failure",
       failure: {
         reason: "response-too-large",
         retryable: false,

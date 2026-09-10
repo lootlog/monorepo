@@ -100,7 +100,7 @@ const decodeCursor = (cursor: string) => {
   const value = Schema.decodeUnknownOption(
     Schema.fromJsonString(Schema.Tuple([Schema.String, Schema.String])),
   )(Buffer.from(cursor, "base64url").toString("utf8"));
-  if (value._tag === "None" || !Number.isFinite(Date.parse(value.value[0]))) {
+  if (Option.isNone(value) || !Number.isFinite(Date.parse(value.value[0]))) {
     throw new Error("Invalid activity cursor");
   }
   const [createdAt, id] = value.value;
@@ -467,14 +467,14 @@ export class ActivityRepository extends Context.Service<
             asc(memberActivityStats.source),
           );
       const normalize = (limit = 10) => Math.min(Math.max(limit, 1), 50);
-      const dedupe = (rows: Array<string | null>, limit: number) =>
-        [
-          ...new Map(
-            rows
-              .filter((v): v is string => !!v?.trim())
-              .map((v) => [v.toLowerCase(), v.trim()]),
-          ).values(),
-        ].slice(0, limit);
+      const dedupe = (rows: Array<string | null>, limit: number) => {
+        const byKey = new Map<string, string>();
+        for (const v of rows) {
+          if (!v?.trim()) continue;
+          byKey.set(v.toLowerCase(), v.trim());
+        }
+        return [...byKey.values()].slice(0, limit);
+      };
       const suggestActorNames = Effect.fn("ActivityRepository.suggestActors")(
         function* (guildId: string, search?: string, limit = 10) {
           const n = normalize(limit);

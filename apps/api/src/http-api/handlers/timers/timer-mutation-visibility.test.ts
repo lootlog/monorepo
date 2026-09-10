@@ -1,5 +1,5 @@
 import { expect, it } from "bun:test";
-import { Effect } from "effect";
+import { Effect, Result } from "effect";
 import { eq } from "drizzle-orm";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
@@ -181,10 +181,8 @@ it.each([
           const denied = await boundary.run(
             restore(access, deletion.id).pipe(Effect.result),
           );
-          expect(denied).toMatchObject({
-            _tag: "Failure",
-            failure: { kind: "not-found" },
-          });
+          expect(Result.isFailure(denied)).toBe(true);
+          expect(denied).toMatchObject({ failure: { kind: "not-found" } });
           expect(
             (await boundary.run(database.select().from(timerTable)))[0],
           ).toEqual(hiddenCurrent);

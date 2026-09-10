@@ -230,7 +230,7 @@ it("renews the real Lua lock beyond its TTL while concurrent callers create one 
 
 it("does not renew or release another owner's real Redis lock after ownership changes", async () => {
   const blocker = await pool.connect();
-  let creation: Promise<unknown> | undefined;
+  let creation: Promise<Exit.Exit<unknown, unknown>> | undefined;
   try {
     // Allow the submission lookup while holding INSERTs past the Redis lock TTL.
     await blocker.query("BEGIN; LOCK TABLE battles IN SHARE MODE");
@@ -246,7 +246,7 @@ it("does not renew or release another owner's real Redis lock after ownership ch
       ),
     ).toBeGreaterThan(3_000);
     await blocker.query("COMMIT");
-    expect(await creation).toMatchObject({ _tag: "Failure" });
+    expect(Exit.isFailure(await creation)).toBe(true);
     expect(await services.redis.get(lockKey)).toBe("replacement-owner");
   } finally {
     await blocker.query("ROLLBACK");

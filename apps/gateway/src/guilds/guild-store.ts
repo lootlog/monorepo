@@ -1,7 +1,7 @@
 import { boundedHttpGet } from "@lootlog/instrumentation/bounded-http-get";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { UserGuildPermissionsDtoSchema } from "@lootlog/schema/permissions";
-import { Clock, Effect, Schema } from "effect";
+import { Clock, Effect, Option, Schema } from "effect";
 import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 import type { GetUserGuildsOptions, UserGuildData } from "#src/guilds/guild";
@@ -106,7 +106,7 @@ export const makeGuildStore = (
     }
 
     const guilds = yield* fetchGuilds(options).pipe(Effect.option);
-    if (guilds._tag === "Some") {
+    if (Option.isSome(guilds)) {
       const value = JSON.stringify({
         guilds: guilds.value,
         cachedAt: now,

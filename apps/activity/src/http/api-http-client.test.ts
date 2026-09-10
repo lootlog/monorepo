@@ -54,8 +54,12 @@ describe("Activity API HttpClient", () => {
       Promise.resolve(new Response(new Uint8Array(1024 * 1024 + 1))),
     );
 
-    await expect(runWith(fetchImplementation)).rejects.toMatchObject({
-      _tag: "ApiHttpClientFailure",
+    const error: unknown = await runWith(fetchImplementation).then(
+      () => undefined,
+      (cause: unknown) => cause,
+    );
+    expect(error).toBeInstanceOf(ApiHttpClientFailure);
+    expect(error).toMatchObject({
       reason: "response-too-large",
       retryable: false,
     } satisfies Partial<ApiHttpClientFailure>);

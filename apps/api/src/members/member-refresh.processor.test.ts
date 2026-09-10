@@ -1,5 +1,5 @@
 import { describe, expect, it, mock } from "bun:test";
-import { Effect, Fiber } from "effect";
+import { Effect, Fiber, Result } from "effect";
 import { TestClock } from "effect/testing";
 import { makeMemberRefreshProcessor } from "./member-refresh.processor.js";
 import type { MemberSyncResult } from "./member.types.js";
@@ -57,8 +57,8 @@ describe("member refresh processor", () => {
     const result = await Effect.runPromise(
       Effect.result(makeMemberRefreshProcessor(dependencies)(job)),
     );
+    expect(Result.isFailure(result)).toBe(true);
     expect(result).toMatchObject({
-      _tag: "Failure",
       failure: new Error("MEMBER_REFRESH_LOCKED"),
     });
     expect(dependencies.sync.syncMemberFromDiscord).not.toHaveBeenCalled();
@@ -79,8 +79,8 @@ describe("member refresh processor", () => {
     const result = await Effect.runPromise(
       Effect.result(makeMemberRefreshProcessor(dependencies)(job)),
     );
+    expect(Result.isFailure(result)).toBe(true);
     expect(result).toMatchObject({
-      _tag: "Failure",
       failure: new Error("MEMBER_REFRESH_RATE_LIMITED"),
     });
     expect(dependencies.scheduler.releaseUserRefreshLock).toHaveBeenCalledWith(

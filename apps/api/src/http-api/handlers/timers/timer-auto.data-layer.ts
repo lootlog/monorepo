@@ -2,7 +2,7 @@ import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { upsertActorCharacter } from "./timer-actor-snapshot.js";
 import { randomUUID } from "node:crypto";
 import { and, desc, eq, gt, gte, inArray, isNull, lte, or } from "drizzle-orm";
-import { Clock, Effect, Schema } from "effect";
+import { Clock, Effect, Result, Schema } from "effect";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
@@ -585,13 +585,10 @@ export const makeAutoTimer = (
     }
     const submittedGuilds: Array<{ guildId: string; guildName: string }> = [];
     for (const { guild } of targets) {
-      const result = yield* writeGuildTimer(identity, guild.id, payload).pipe(
-        Effect.map(() => ({ _tag: "Right" as const })),
-        Effect.catch((error) =>
-          Effect.succeed({ _tag: "Left" as const, error }),
-        ),
+      const result = yield* Effect.result(
+        writeGuildTimer(identity, guild.id, payload),
       );
-      if (result._tag === "Right") {
+      if (Result.isSuccess(result)) {
         submittedGuilds.push({ guildId: guild.id, guildName: guild.name });
       } else {
         rejectedGuilds.push({

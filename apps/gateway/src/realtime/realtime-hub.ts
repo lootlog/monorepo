@@ -15,7 +15,7 @@ import {
   isServerEventFrame,
   type SubscriptionScope,
 } from "@lootlog/protocol/realtime";
-import { Effect, Schema } from "effect";
+import { Effect, Result, Schema } from "effect";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 import {
   type BackgroundTaskRunner,
@@ -473,7 +473,7 @@ export class RealtimeHub {
     const decoded = tryDecodeRealtimeFrame(
       localBytes ?? fromBase64(message.frame),
     );
-    if (decoded._tag === "Failure") {
+    if (Result.isFailure(decoded)) {
       this.logger.warn(
         "Rejected malformed Redis federation frame",
         decoded.failure,

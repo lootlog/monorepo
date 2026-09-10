@@ -2,7 +2,7 @@ import {
   RuntimeEnvironment,
   RuntimeEnvironmentSchema,
 } from "@lootlog/schema/runtime-environment";
-import { Config, Context, Effect, Layer, Redacted } from "effect";
+import { Config, Context, Effect, Layer, Option, Redacted } from "effect";
 
 export interface ActivityConfigValue {
   readonly environment: RuntimeEnvironment;
@@ -30,19 +30,16 @@ export class ActivityConfig extends Context.Service<
       const configuredSecret = yield* Config.option(
         Config.redacted("ACTIVITY_EVENT_SIGNATURE_SECRET"),
       );
-      const signatureSecret =
-        configuredSecret._tag === "Some"
-          ? configuredSecret.value
-          : environment === RuntimeEnvironment.PROD ||
-              environment === RuntimeEnvironment.STAGING
-            ? yield* Effect.fail(
-                new Error(
-                  `ACTIVITY_EVENT_SIGNATURE_SECRET is required when ENV=${environment}`,
-                ),
-              )
-            : Redacted.make(
-                "local-development-activity-event-signature-secret",
-              );
+      const signatureSecret = Option.isSome(configuredSecret)
+        ? configuredSecret.value
+        : environment === RuntimeEnvironment.PROD ||
+            environment === RuntimeEnvironment.STAGING
+          ? yield* Effect.fail(
+              new Error(
+                `ACTIVITY_EVENT_SIGNATURE_SECRET is required when ENV=${environment}`,
+              ),
+            )
+          : Redacted.make("local-development-activity-event-signature-secret");
       if (Redacted.value(signatureSecret).length < 32)
         return yield* Effect.fail(
           new Error(
@@ -70,16 +67,15 @@ export class ActivityConfig extends Context.Service<
         ),
         databaseUrl: yield* Config.redacted("POSTGRESQL_CONNECTION_URI"),
         rabbitmqUri: yield* Config.redacted("RABBITMQ_URI"),
-        redisUrl:
-          redisHost._tag === "Some"
-            ? Redacted.make(
-                `redis://${encodeURIComponent(redisUsername)}:${encodeURIComponent(redisPassword)}@${redisHost.value}:${redisPort}`,
-              )
-            : environment === RuntimeEnvironment.LOCAL
-              ? undefined
-              : yield* Effect.fail(
-                  new Error(`REDIS_HOST is required when ENV=${environment}`),
-                ),
+        redisUrl: Option.isSome(redisHost)
+          ? Redacted.make(
+              `redis://${encodeURIComponent(redisUsername)}:${encodeURIComponent(redisPassword)}@${redisHost.value}:${redisPort}`,
+            )
+          : environment === RuntimeEnvironment.LOCAL
+            ? undefined
+            : yield* Effect.fail(
+                new Error(`REDIS_HOST is required when ENV=${environment}`),
+              ),
         apiServiceUrl: yield* Config.string("API_SERVICE_URL"),
         signatureSecret,
       });

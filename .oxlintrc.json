@@ -1,5 +1,5 @@
 {
-  "plugins": ["react", "typescript", "unicorn", "vitest"],
+  "plugins": ["oxc", "react", "typescript", "unicorn", "vitest"],
   "categories": {
     "correctness": "error"
   },
@@ -48,6 +48,33 @@
     }
   },
   "overrides": [
+    {
+      // Effect tagged-value policy applies only to workspaces that depend on `effect`.
+      "files": [
+        "apps/activity/**",
+        "apps/api/**",
+        "apps/auth/**",
+        "apps/battlelog/**",
+        "apps/discord-bot/**",
+        "apps/gateway/**",
+        "apps/search/**",
+        "packages/cli/**",
+        "packages/client/**",
+        "packages/database/**",
+        "packages/domain/**",
+        "packages/instrumentation/**",
+        "packages/messaging/**",
+        "packages/protocol/**",
+        "packages/schema/**",
+        "packages/sdk/**"
+      ],
+      "rules": {
+        "anti-slop-effect/no-manual-effect-error-tag": "error",
+        "anti-slop-effect/no-manual-tag-comparison": "error",
+        "anti-slop-effect/no-manual-tagged-construction": "error",
+        "anti-slop-effect/prefer-effect-match": "error"
+      }
+    },
     {
       "files": ["packages/protocol/src/rabbit/events.ts"],
       "rules": {
@@ -1485,6 +1512,9 @@
     "anti-slop/no-widen-then-assert": "error",
     "anti-slop/require-safety-comment-for-type-assertion": "error",
     "anti-slop-effect/no-service-constructor-imports": "error",
+    "anti-slop/no-array-filter-map": "error",
+    "anti-slop/no-reduce-accumulator-copy": "error",
+    "oxc/no-accumulating-spread": "error",
     "complexity": "error",
     "eqeqeq": "error",
     "no-console": [

@@ -1,4 +1,4 @@
-import { Function, Schema } from "effect";
+import { Function, Option, Schema } from "effect";
 import {
   ActivitySource,
   ActivityType,
@@ -105,7 +105,7 @@ export const parseActivityQuery = (url: URL): QueryActivities => {
       Schema.Array(Schema.Literals(Object.values(ActivitySource))),
     ),
   )(sources);
-  if (type._tag === "None" || source._tag === "None") {
+  if (Option.isNone(type) || Option.isNone(source)) {
     throw new Error("Invalid activity filter");
   }
   const startDate = url.searchParams.get("startDate") ?? undefined;

@@ -1,4 +1,4 @@
-import { DateTime, Effect, Schema } from "effect";
+import { DateTime, Effect, Match, Schema } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
   UserKillActivityResponse,
@@ -164,12 +164,11 @@ const periodRecords = (
     if (point.kills === null) continue;
     const date = localDate(point.date);
     const start = DateTime.startOf(date, unit, { weekStartsOn: 1 });
-    const next =
-      unit === "day"
-        ? DateTime.add(start, { days: 1 })
-        : unit === "week"
-          ? DateTime.add(start, { days: 7 })
-          : DateTime.add(start, { months: 1 });
+    const next = Match.value(unit).pipe(
+      Match.when("day", () => DateTime.add(start, { days: 1 })),
+      Match.when("week", () => DateTime.add(start, { days: 7 })),
+      Match.orElse(() => DateTime.add(start, { months: 1 })),
+    );
     const startDate = DateTime.formatIsoDate(start);
     const endDate = DateTime.formatIsoDate(
       DateTime.subtract(next, { days: 1 }),

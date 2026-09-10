@@ -1,6 +1,6 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { verify as verifySignatureValue } from "node:crypto";
-import { Clock, Effect, Option, Schema } from "effect";
+import { Cause, Clock, Effect, Option, Schema } from "effect";
 import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 
@@ -111,7 +111,7 @@ export const makeMargonemProofVerifier = (
       Effect.mapError(
         (error) =>
           new MargonemSigningKeyFailure({
-            reason: error._tag === "TimeoutError" ? "timeout" : "transport",
+            reason: Cause.isTimeoutError(error) ? "timeout" : "transport",
           }),
       ),
     );

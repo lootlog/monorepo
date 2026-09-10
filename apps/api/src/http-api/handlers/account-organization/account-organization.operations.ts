@@ -6,7 +6,7 @@ import {
   writeGuildConfigurationCache,
 } from "#src/guilds/guild-configuration-cache";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { Cause, Context, Effect, Layer, Schema } from "effect";
+import { Cause, Context, Effect, Layer, Predicate, Schema } from "effect";
 import { applicationErrorResponse } from "../../application-error-response.js";
 import { EffectDrizzleQueryError } from "drizzle-orm/effect-core/errors";
 import { SqlError } from "effect/unstable/sql/SqlError";
@@ -383,7 +383,7 @@ export const toAccountOrganizationHttpResponse = <A, R>(
       }
       if (
         databaseCause instanceof SqlError &&
-        databaseCause.reason._tag === "UniqueViolation" &&
+        Predicate.isTagged(databaseCause.reason, "UniqueViolation") &&
         databaseCause.reason.constraint === "Guild_vanityUrl_key"
       ) {
         return applicationErrorResponse(

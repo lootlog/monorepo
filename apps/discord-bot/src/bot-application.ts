@@ -61,7 +61,7 @@ export const decodeNotificationCommand = (
   content: Uint8Array,
 ): DiscordNotificationSendCommand | undefined => {
   const decoded = decodeNotificationJson(new TextDecoder().decode(content));
-  if (decoded._tag === "None") return undefined;
+  if (Option.isNone(decoded)) return undefined;
   const input = { ...decoded.value };
   // Non-string content historically falls back to title/message in the delivery adapter.
   if (!Schema.is(Schema.String)(input.content)) delete input.content;

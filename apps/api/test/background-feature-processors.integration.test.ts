@@ -1,6 +1,6 @@
 import { afterAll, beforeEach, describe, expect, it } from "bun:test";
 import { asc, eq, sql } from "drizzle-orm";
-import { Effect, ManagedRuntime } from "effect";
+import { Effect, ManagedRuntime, Result } from "effect";
 import { TestClock } from "effect/testing";
 import { MessagingError, type RabbitMessaging } from "@lootlog/messaging";
 import {
@@ -248,7 +248,8 @@ describe("background feature processors against migrated PostgreSQL", () => {
         return { rows, result };
       }),
     );
-    expect(result).toMatchObject({ _tag: "Failure", failure });
+    expect(Result.isFailure(result)).toBe(true);
+    expect(result).toMatchObject({ failure });
     expect(rows).toMatchObject([
       { status: "FAILED", processedMembers: 0, completedAt: expect.any(Date) },
     ]);
