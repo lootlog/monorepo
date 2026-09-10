@@ -1,5 +1,5 @@
-import { cn } from "cn";
 import type { FC } from "react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export type SettingsSubsectionOption = { id: string; label: string };
 
@@ -10,33 +10,27 @@ type SettingsSubsectionBarProps = {
   onSelect: (id: string) => void;
 };
 
-/** Segmented subsection switcher, styled like the chat filter bar. */
+/**
+ * Subsection switcher above the domain content. Its own tabs root drives
+ * navigation only; the selected subsection renders through the settings path.
+ */
 export const SettingsSubsectionBar: FC<SettingsSubsectionBarProps> = ({
   label,
   options,
   activeId,
   onSelect,
 }) => (
-  <div
-    role="group"
-    aria-label={label}
-    className="ll:flex ll:h-7 ll:shrink-0 ll:items-stretch ll:border-y ll:border-x-0 ll:border-gray-400/40 ll:bg-black/20"
+  <Tabs
+    value={activeId}
+    onValueChange={(id) => onSelect(String(id))}
+    className="ll:shrink-0 ll:border-b ll:border-border ll:px-1 ll:pb-1"
   >
-    {options.map((option) => (
-      <button
-        key={option.id}
-        type="button"
-        aria-current={option.id === activeId}
-        onClick={() => onSelect(option.id)}
-        className={cn(
-          "ll-custom-cursor-pointer ll:flex ll:min-w-0 ll:flex-1 ll:items-center ll:justify-center ll:border-0 ll:bg-transparent ll:px-2 ll:py-0 ll:text-[11px] ll:font-semibold ll:leading-none ll:transition-none ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:focus-visible:-outline-offset-2",
-          option.id === activeId
-            ? "ll:bg-white/10 ll:text-gray-100"
-            : "ll:text-muted-foreground ll:hover:bg-white/5 ll:hover:text-gray-100",
-        )}
-      >
-        <span className="ll:truncate">{option.label}</span>
-      </button>
-    ))}
-  </div>
+    <TabsList variant="line" aria-label={label} className="ll:w-full">
+      {options.map((option) => (
+        <TabsTrigger key={option.id} value={option.id} className="ll:text-xs">
+          <span className="ll:truncate">{option.label}</span>
+        </TabsTrigger>
+      ))}
+    </TabsList>
+  </Tabs>
 );

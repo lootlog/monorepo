@@ -1,4 +1,9 @@
-import { render as renderUi, screen, waitFor } from "@testing-library/react";
+import {
+  render as renderUi,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useWindowsStore } from "@/store/windows.store";
@@ -124,13 +129,21 @@ describe("SettingsTabs", () => {
     render();
 
     expect(
-      screen.queryByRole("button", { name: "Zachowanie" }),
+      screen.queryByRole("tablist", { name: "Sekcje ustawień" }),
     ).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("tab", { name: "Chat" }));
 
-    expect(screen.getByRole("button", { name: "Wygląd" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Filtry" })).toBeInTheDocument();
+    const subsections = within(
+      screen.getByRole("tablist", { name: "Sekcje ustawień" }),
+    );
+
+    expect(
+      subsections.getByRole("tab", { name: "Wygląd" }),
+    ).toBeInTheDocument();
+    expect(
+      subsections.getByRole("tab", { name: "Filtry" }),
+    ).toBeInTheDocument();
   });
 
   it("uses an icon rail and opens the overlaid search panel when compact", async () => {

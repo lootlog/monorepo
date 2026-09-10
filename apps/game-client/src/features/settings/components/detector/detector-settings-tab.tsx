@@ -1,10 +1,5 @@
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
-import {
-  SETTINGS_SUBTABS_LIST_CLASS_NAME,
-  SETTINGS_SUBTAB_CONTENT_CLASS_NAME,
-  SETTINGS_SUBTAB_TRIGGER_CLASS_NAME,
-} from "@/components/settings/settings-styles";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DetectorRoutingSettingsTabForm } from "@/features/settings/components/detector/detector-routing-settings-tab-form";
 import { DetectorSettingsTabForm } from "@/features/settings/components/detector/detector-settings-tab-form";
@@ -51,23 +46,15 @@ export const DetectorSettingsTab = () => {
     >
       <div className="ll:relative">
         <Tabs defaultValue={NpcType.ELITE2} className="ll:w-full ll:gap-3">
-          <TabsList className={SETTINGS_SUBTABS_LIST_CLASS_NAME}>
+          <TabsList className="ll:w-full">
             {categoryTabs.map((tab) => (
-              <TabsTrigger
-                key={tab.key}
-                value={tab.key}
-                className={SETTINGS_SUBTAB_TRIGGER_CLASS_NAME}
-              >
+              <TabsTrigger key={tab.key} value={tab.key}>
                 {tab.label}
               </TabsTrigger>
             ))}
           </TabsList>
           {categoryTabs.map((tab) => (
-            <TabsContent
-              key={tab.key}
-              value={tab.key}
-              className={SETTINGS_SUBTAB_CONTENT_CLASS_NAME}
-            >
+            <TabsContent key={tab.key} value={tab.key}>
               {tab.content}
             </TabsContent>
           ))}
