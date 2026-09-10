@@ -14060,7 +14060,7 @@ export const getUsersControllerGetUserGameAccountPreferencesUrl = ({ accountId }
 }
 
 /**
- * Retrieve account-scoped game preferences for a specific Margonem account
+ * Retrieve account-scoped game preferences for a specific Margonem account. Deprecated: use GET/PATCH /preferences (settings documents).
  * @summary Get user game account preferences
  */
 export const usersControllerGetUserGameAccountPreferences = async ({ accountId }: UsersControllerGetUserGameAccountPreferencesPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<UserGameAccountPreferencesResponseDtoOutput> => {
@@ -14204,7 +14204,7 @@ export const getUsersControllerUpdateUserGameAccountPreferencesUrl = ({ accountI
 }
 
 /**
- * Update account-scoped game preferences for a specific Margonem account
+ * Update account-scoped game preferences for a specific Margonem account. Deprecated: use GET/PATCH /preferences (settings documents).
  * @summary Update user game account preferences
  */
 export const usersControllerUpdateUserGameAccountPreferences = async ({ accountId }: UsersControllerUpdateUserGameAccountPreferencesPathParameters,
@@ -18927,7 +18927,7 @@ export const getTimerSettingsControllerGetGlobalSettingsUrl = () => {
 }
 
 /**
- * Retrieve user global timer settings
+ * Retrieve user global timer settings. Deprecated: use GET/PATCH /preferences (settings documents).
  * @summary Get global timer settings
  */
 export const timerSettingsControllerGetGlobalSettings = async ( options?: Parameters<typeof mainFetch>[1]): Promise<TimerSettingsResponseDto> => {
@@ -19071,7 +19071,7 @@ export const getTimerSettingsControllerUpdateGlobalSettingsUrl = () => {
 }
 
 /**
- * Update user global timer settings
+ * Update user global timer settings. Deprecated: use GET/PATCH /preferences (settings documents).
  * @summary Update global timer settings
  */
 export const timerSettingsControllerUpdateGlobalSettings = async (updateTimerSettingsDto: UpdateTimerSettingsDto, options?: Parameters<typeof mainFetch>[1]): Promise<TimerSettingsResponseDto> => {
@@ -19150,7 +19150,7 @@ export const getTimerSettingsControllerGetGuildSettingsUrl = ({ guildId }: Timer
 }
 
 /**
- * Retrieve user timer settings for a specific guild
+ * Retrieve user timer settings for a specific guild. Deprecated: use GET/PATCH /preferences (settings documents).
  * @summary Get guild-specific timer settings
  */
 export const timerSettingsControllerGetGuildSettings = async ({ guildId }: TimerSettingsControllerGetGuildSettingsPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<GuildTimerSettingsResponseDto> => {
@@ -19294,7 +19294,7 @@ export const getTimerSettingsControllerUpdateGuildSettingsUrl = ({ guildId }: Ti
 }
 
 /**
- * Update user timer settings for a specific guild
+ * Update user timer settings for a specific guild. Deprecated: use GET/PATCH /preferences (settings documents).
  * @summary Update guild-specific timer settings
  */
 export const timerSettingsControllerUpdateGuildSettings = async ({ guildId }: TimerSettingsControllerUpdateGuildSettingsPathParameters,
@@ -19374,7 +19374,7 @@ export const getTimerSettingsControllerMigrateSettingsUrl = () => {
 }
 
 /**
- * Migrate timer settings from localStorage to backend with conflict resolution
+ * Migrate timer settings from localStorage to backend with conflict resolution. Deprecated: use GET/PATCH /preferences (settings documents).
  * @summary Migrate localStorage settings to backend
  */
 export const timerSettingsControllerMigrateSettings = async (migrateTimerSettingsDto: MigrateTimerSettingsDto, options?: Parameters<typeof mainFetch>[1]): Promise<void> => {
@@ -26831,7 +26831,7 @@ export const getSoundSettingsControllerGetSettingsUrl = () => {
 }
 
 /**
- * Retrieve user sound settings
+ * Retrieve user sound settings. Deprecated: use GET/PATCH /preferences (settings documents).
  * @summary Get sound settings
  */
 export const soundSettingsControllerGetSettings = async ( options?: Parameters<typeof mainFetch>[1]): Promise<SoundSettingsResponseDto> => {
@@ -26975,7 +26975,7 @@ export const getSoundSettingsControllerUpdateSettingsUrl = () => {
 }
 
 /**
- * Update user sound settings
+ * Update user sound settings. Deprecated: use GET/PATCH /preferences (settings documents).
  * @summary Update sound settings
  */
 export const soundSettingsControllerUpdateSettings = async (updateSoundSettingsDto: UpdateSoundSettingsDto, options?: Parameters<typeof mainFetch>[1]): Promise<SoundSettingsResponseDto> => {

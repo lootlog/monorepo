@@ -502,7 +502,7 @@
             }
           }
         },
-        "description": "Retrieve account-scoped game preferences for a specific Margonem account",
+        "description": "Retrieve account-scoped game preferences for a specific Margonem account. Deprecated: use GET/PATCH /preferences (settings documents).",
         "summary": "Get user game account preferences",
         "x-lootlog-access": "read",
         "x-lootlog-data": "personal"
@@ -589,7 +589,7 @@
             }
           }
         },
-        "description": "Update account-scoped game preferences for a specific Margonem account",
+        "description": "Update account-scoped game preferences for a specific Margonem account. Deprecated: use GET/PATCH /preferences (settings documents).",
         "summary": "Update user game account preferences",
         "requestBody": {
           "content": {
@@ -11950,7 +11950,7 @@
             }
           }
         },
-        "description": "Retrieve user sound settings",
+        "description": "Retrieve user sound settings. Deprecated: use GET/PATCH /preferences (settings documents).",
         "summary": "Get sound settings",
         "x-lootlog-access": "read",
         "x-lootlog-data": "personal"
@@ -12037,7 +12037,7 @@
             }
           }
         },
-        "description": "Update user sound settings",
+        "description": "Update user sound settings. Deprecated: use GET/PATCH /preferences (settings documents).",
         "summary": "Update sound settings",
         "requestBody": {
           "content": {

@@ -71,6 +71,32 @@ describe("settings resolver", () => {
     expect(isValid("TITAN")).toBe(false);
   });
 
+  it("keeps backfilled legacy preference shapes and rejects malformed ones", () => {
+    const { gameData, notifications, controls } = SETTINGS_CATALOG;
+
+    expect(gameData.fields.detector.isValid({ HERO: { detect: false } })).toBe(
+      true,
+    );
+    expect(gameData.fields.detector.isValid({ routingRules: [{}] })).toBe(true);
+    expect(gameData.fields.detector.isValid({ routingRules: "none" })).toBe(
+      false,
+    );
+    expect(gameData.fields.pings.isValid({ enabled: true })).toBe(true);
+    expect(gameData.fields.pings.isValid({ enabled: "yes" })).toBe(false);
+    expect(
+      notifications.fields.presentation.isValid({ HERO: { show: true } }),
+    ).toBe(true);
+    expect(notifications.fields.presentation.isValid({ HERO: true })).toBe(
+      false,
+    );
+    expect(
+      notifications.fields.mutes.isValid({ players: [{ discordId: "1" }] }),
+    ).toBe(true);
+    expect(notifications.fields.mutes.isValid({ players: "1" })).toBe(false);
+    expect(controls.fields.hotkeys.isValid({ "toggle-chat": {} })).toBe(true);
+    expect(controls.fields.hotkeys.isValid({ "toggle-chat": "k" })).toBe(false);
+  });
+
   it("keeps chat values on the user layer while ignoring lower scopes", () => {
     const resolution = resolveSettingsDomain("appearance", [
       {

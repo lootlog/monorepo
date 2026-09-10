@@ -1,7 +1,7 @@
 /* oxlint-disable eslint/complexity -- preference migrations intentionally normalize every optional legacy field at one boundary. */
 import { isRecord, isObjectRecord } from "@lootlog/schema/records";
-import { and, eq } from "drizzle-orm";
-import { Clock, Effect } from "effect";
+import { eq } from "drizzle-orm";
+import { Clock, Effect, type Schema } from "effect";
 import {
   mergeChatAppearanceSettings,
   normalizeChatAppearanceSettings,
@@ -36,19 +36,29 @@ import {
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { PermissionDeniedError } from "#src/shared/http/http-errors";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import {
-  userGameAccountSettingsTable,
-  userSettingDocumentTable,
-  userSettingsTable,
-} from "#src/database/drizzle/schema";
-import { applySettingsPatch } from "#src/settings-documents/settings-resolver";
+import { userSettingsTable } from "#src/database/drizzle/schema";
+import type {
+  SettingsDocuments,
+  SettingsDocumentsResponse,
+} from "#src/settings-documents/settings-documents.service";
+import type {
+  PatchSettingsDocuments,
+  SettingsDomainResolution,
+} from "@lootlog/schema/settings-documents";
 import type {
   UpdateUserGameAccountPreferencesRequest,
   UpdateUserPreferencesRequest,
 } from "#src/contracts/users/schemas";
 import { AccountOrganizationOperationError } from "./account-organization.operations.js";
 
-const GLOBAL_NOTIFICATION_MUTES_ACCOUNT_ID = "__global-notification-mutes__";
+type JsonValue = typeof Schema.Json.Type;
+
+type SettingsOperation = PatchSettingsDocuments["operations"][number];
+
+const toJson = <TValue extends object>(value: TValue): JsonValue =>
+  // SAFETY: every caller passes a normalized preference record built from plain
+  // JSON-compatible values, so the structured clone is a JSON object.
+  structuredClone(value) as JsonValue;
 
 const DETECTOR_LEVEL_MIN = 0;
 
@@ -120,12 +130,12 @@ const normalizeMutedNpcs = (npcs: unknown): MutedNpcPreference[] => {
   return [...values.values()];
 };
 
-const storedMutes = (settings: unknown): NotificationMutes => {
-  if (!isRecord(settings)) {
-    return cloneMutes();
-  }
-
-  const mutes = isObjectRecord(settings.mutes) ? settings.mutes : undefined;
+const storedMutes = (
+  notifications: SettingsDomainResolution | undefined,
+): NotificationMutes => {
+  const mutes = isObjectRecord(notifications?.effective.mutes)
+    ? notifications.effective.mutes
+    : undefined;
 
   return {
     players: normalizeMutedPlayers(mutes?.players),
@@ -165,12 +175,44 @@ const response = (
   mutes: cloneMutes(mutes),
 });
 
-// Storage documents preserve fields from other preference versions during patching.
-type StoredGamePreferences = Record<string, unknown>;
+type StoredGamePreferences = {
+  notifications?: unknown;
+  detector?: unknown;
+  pings?: unknown;
+  airTags?: unknown;
+};
 
+const hasStoredSource = (
+  resolution: SettingsDomainResolution | undefined,
+  path: string,
+) => {
+  const source = resolution?.sources[path];
+
+  return source !== undefined && source !== "DEFAULT";
+};
+
+// Only values with a stored layer count as present; catalog defaults stay "unset".
 const storedGamePreferences = (
-  settings: unknown,
-): StoredGamePreferences | null => (isRecord(settings) ? settings : null);
+  documents: SettingsDocumentsResponse,
+): StoredGamePreferences => {
+  const gameData = documents.domains.gameData;
+  const notifications = documents.domains.notifications;
+  const stored: StoredGamePreferences = {};
+
+  if (hasStoredSource(notifications, "presentation"))
+    stored.notifications = notifications?.effective.presentation;
+
+  if (hasStoredSource(gameData, "detector"))
+    stored.detector = gameData?.effective.detector;
+
+  if (hasStoredSource(gameData, "pings"))
+    stored.pings = gameData?.effective.pings;
+
+  if (hasStoredSource(gameData, "airTags"))
+    stored.airTags = gameData?.effective.airTags;
+
+  return stored;
+};
 
 const cloneNotifications = (
   settings: NotificationsSettings,
@@ -378,19 +420,19 @@ const normalizeAirTags = (raw: unknown): AirTagPreferences => {
 
 const gamePreferencesResponse = (
   accountId: string,
-  stored: StoredGamePreferences | null,
+  stored: StoredGamePreferences,
 ): UserGameAccountPreferences => {
-  const hasStoredNotifications = stored?.notifications !== undefined;
-  const hasStoredDetector = stored?.detector !== undefined;
-  const hasStoredPings = stored?.pings !== undefined;
-  const hasStoredAirTags = stored?.airTags !== undefined;
+  const hasStoredNotifications = stored.notifications !== undefined;
+  const hasStoredDetector = stored.detector !== undefined;
+  const hasStoredPings = stored.pings !== undefined;
+  const hasStoredAirTags = stored.airTags !== undefined;
 
   return {
     accountId,
-    notifications: normalizeNotifications(stored?.notifications),
-    detector: normalizeDetector(stored?.detector),
-    pings: normalizePings(stored?.pings),
-    airTags: normalizeAirTags(stored?.airTags),
+    notifications: normalizeNotifications(stored.notifications),
+    detector: normalizeDetector(stored.detector),
+    pings: normalizePings(stored.pings),
+    airTags: normalizeAirTags(stored.airTags),
     hasStoredNotifications,
     hasStoredDetector,
     hasStoredPings,
@@ -405,6 +447,7 @@ const gamePreferencesResponse = (
 
 const readPreferences = (
   database: typeof ApiDatabase.Service,
+  settingsDocuments: SettingsDocuments,
   userId: string,
 ) =>
   Effect.all(
@@ -415,39 +458,22 @@ const readPreferences = (
         .where(eq(userSettingsTable.userId, userId))
         .limit(1)
         .pipe(Effect.map((rows) => rows[0] ?? null)),
-      mutes: database
-        .select({ settings: userGameAccountSettingsTable.settings })
-        .from(userGameAccountSettingsTable)
-        .where(
-          and(
-            eq(userGameAccountSettingsTable.userId, userId),
-            eq(
-              userGameAccountSettingsTable.accountId,
-              GLOBAL_NOTIFICATION_MUTES_ACCOUNT_ID,
-            ),
-          ),
-        )
-        .limit(1)
-        .pipe(Effect.map((rows) => storedMutes(rows[0]?.settings))),
-      appearance: database
-        .select({ overrides: userSettingDocumentTable.overrides })
-        .from(userSettingDocumentTable)
-        .where(
-          and(
-            eq(userSettingDocumentTable.userId, userId),
-            eq(userSettingDocumentTable.domain, "appearance"),
-            eq(userSettingDocumentTable.scopeType, "USER"),
-            eq(userSettingDocumentTable.scopeId, userId),
-          ),
-        )
-        .limit(1)
-        .pipe(Effect.map((rows) => rows[0]?.overrides)),
+      documents: settingsDocuments.getPreferences(userId, {
+        domains: ["appearance", "notifications"],
+      }),
     },
     { concurrency: "unbounded" },
+  ).pipe(
+    Effect.map(({ settings, documents }) => ({
+      settings,
+      mutes: storedMutes(documents.domains.notifications),
+      appearance: documents.domains.appearance?.effective,
+    })),
   );
 
 export const makeUserPreferencesData = (
   database: typeof ApiDatabase.Service,
+  settingsDocuments: SettingsDocuments,
 ) => {
   const visibleOrganizationIds = Effect.gen(function* () {
     if (!(yield* requestApiKeyAccess)) return undefined;
@@ -501,22 +527,17 @@ export const makeUserPreferencesData = (
     });
 
   const readGamePreferences = (userId: string, accountId: string) =>
-    database
-      .select({ settings: userGameAccountSettingsTable.settings })
-      .from(userGameAccountSettingsTable)
-      .where(
-        and(
-          eq(userGameAccountSettingsTable.userId, userId),
-          eq(userGameAccountSettingsTable.accountId, accountId),
-        ),
-      )
-      .limit(1)
-      .pipe(Effect.map((rows) => storedGamePreferences(rows[0]?.settings)));
+    settingsDocuments
+      .getPreferences(userId, {
+        domains: ["gameData", "notifications"],
+        gameAccountId: accountId,
+      })
+      .pipe(Effect.map(storedGamePreferences));
 
   const getUserPreferences = Effect.fn("getUserPreferences")(function* (
     userId: string,
   ) {
-    const current = yield* readPreferences(database, userId);
+    const current = yield* readPreferences(database, settingsDocuments, userId);
 
     return response(
       userId,
@@ -540,16 +561,11 @@ export const makeUserPreferencesData = (
       );
     }
 
-    const current = yield* readPreferences(database, userId);
-
-    const legacyAppearance =
-      current.settings && "chatAppearance" in current.settings
-        ? current.settings.chatAppearance
-        : undefined;
+    const current = yield* readPreferences(database, settingsDocuments, userId);
 
     const nextAppearance = payload.chatAppearance
       ? mergeChatAppearanceSettings(
-          chatAppearance(current.appearance, legacyAppearance),
+          chatAppearance(current.appearance),
           payload.chatAppearance,
         )
       : undefined;
@@ -603,61 +619,29 @@ export const makeUserPreferencesData = (
       );
     }
 
+    const userScope = { type: "USER", id: userId } as const;
+    const operations: SettingsOperation[] = [];
+
     if (payload.mutes) {
-      writes.push(
-        database
-          .insert(userGameAccountSettingsTable)
-          .values({
-            userId,
-            accountId: GLOBAL_NOTIFICATION_MUTES_ACCOUNT_ID,
-            settings: { mutes: nextMutes },
-            createdAt: now,
-            updatedAt: now,
-          })
-          .onConflictDoUpdate({
-            target: [
-              userGameAccountSettingsTable.userId,
-              userGameAccountSettingsTable.accountId,
-            ],
-            set: { settings: { mutes: nextMutes }, updatedAt: now },
-          }),
-      );
+      operations.push({
+        domain: "notifications",
+        scope: userScope,
+        set: { mutes: toJson(nextMutes) },
+        unset: [],
+      });
     }
 
     if (nextAppearance) {
-      const overrides = applySettingsPatch({
+      operations.push({
         domain: "appearance",
-        scope: { type: "USER", id: userId },
-        currentOverrides: isRecord(current.appearance)
-          ? current.appearance
-          : {},
-        set: { chat: nextAppearance },
+        scope: userScope,
+        set: { chat: toJson(nextAppearance) },
         unset: [],
       });
+    }
 
-      writes.push(
-        database
-          .insert(userSettingDocumentTable)
-          .values({
-            userId,
-            domain: "appearance",
-            scopeType: "USER",
-            scopeId: userId,
-            overrides,
-            schemaVersion: 1,
-            createdAt: now,
-            updatedAt: now,
-          })
-          .onConflictDoUpdate({
-            target: [
-              userSettingDocumentTable.userId,
-              userSettingDocumentTable.domain,
-              userSettingDocumentTable.scopeType,
-              userSettingDocumentTable.scopeId,
-            ],
-            set: { overrides, schemaVersion: 1, updatedAt: now },
-          }),
-      );
+    if (operations.length > 0) {
+      writes.push(settingsDocuments.patchPreferences(userId, { operations }));
     }
 
     yield* Effect.all(writes, { concurrency: "unbounded", discard: true });
@@ -678,7 +662,7 @@ export const makeUserPreferencesData = (
           }
         : current.settings,
       nextMutes,
-      nextAppearance ?? chatAppearance(current.appearance, legacyAppearance),
+      nextAppearance ?? chatAppearance(current.appearance),
     );
   });
 
@@ -758,38 +742,48 @@ export const makeUserPreferencesData = (
     );
 
     const hasStoredNotifications =
-      stored?.notifications !== undefined ||
-      payload.notifications !== undefined;
+      stored.notifications !== undefined || payload.notifications !== undefined;
 
     const hasStoredDetector =
-      stored?.detector !== undefined || payload.detector !== undefined;
+      stored.detector !== undefined || payload.detector !== undefined;
 
     const hasStoredPings =
-      stored?.pings !== undefined || payload.pings !== undefined;
+      stored.pings !== undefined || payload.pings !== undefined;
 
     const hasStoredAirTags =
-      stored?.airTags !== undefined || payload.airTags !== undefined;
+      stored.airTags !== undefined || payload.airTags !== undefined;
 
-    const settings = { ...stored };
+    const accountScope = { type: "GAME_ACCOUNT", id: accountId } as const;
+    const gameDataSet: Record<string, JsonValue> = {};
 
-    if (hasStoredNotifications) settings.notifications = notifications;
+    if (payload.detector !== undefined) gameDataSet.detector = toJson(detector);
 
-    if (hasStoredDetector) settings.detector = detector;
+    if (payload.pings !== undefined) gameDataSet.pings = toJson(pings);
 
-    if (hasStoredPings) settings.pings = pings;
+    if (payload.airTags !== undefined) gameDataSet.airTags = toJson(airTags);
+    const operations: SettingsOperation[] = [];
 
-    if (hasStoredAirTags) settings.airTags = airTags;
-    const now = new Date(yield* Clock.currentTimeMillis);
-    yield* database
-      .insert(userGameAccountSettingsTable)
-      .values({ userId, accountId, settings, createdAt: now, updatedAt: now })
-      .onConflictDoUpdate({
-        target: [
-          userGameAccountSettingsTable.userId,
-          userGameAccountSettingsTable.accountId,
-        ],
-        set: { settings, updatedAt: now },
+    if (Object.keys(gameDataSet).length > 0) {
+      operations.push({
+        domain: "gameData",
+        scope: accountScope,
+        set: gameDataSet,
+        unset: [],
       });
+    }
+
+    if (payload.notifications !== undefined) {
+      operations.push({
+        domain: "notifications",
+        scope: accountScope,
+        set: { presentation: toJson(notifications) },
+        unset: [],
+      });
+    }
+
+    if (operations.length > 0) {
+      yield* settingsDocuments.patchPreferences(userId, { operations });
+    }
 
     return {
       accountId,
