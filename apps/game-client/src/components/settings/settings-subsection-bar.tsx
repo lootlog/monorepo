@@ -23,9 +23,9 @@ export const SettingsSubsectionBar: FC<SettingsSubsectionBarProps> = ({
   <Tabs
     value={activeId}
     onValueChange={(id) => onSelect(String(id))}
-    className="ll:shrink-0 ll:border-b ll:border-border ll:px-1 ll:pb-1"
+    className="ll:shrink-0 ll:px-1"
   >
-    <TabsList variant="line" aria-label={label} className="ll:w-full">
+    <TabsList aria-label={label} className="ll:w-full">
       {options.map((option) => (
         <TabsTrigger key={option.id} value={option.id} className="ll:text-xs">
           <span className="ll:truncate">{option.label}</span>
