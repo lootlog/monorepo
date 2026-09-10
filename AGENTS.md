@@ -274,6 +274,11 @@ Before calling a change complete, account for every applicable item:
   restate the type system, validate their own fixtures instead of actual output,
   or merely exercise framework mechanics. Broad snapshots are not a substitute
   for behavioral assertions.
+- Treat UI primitives copied from shadcn or wrapping Base UI (`components/ui`
+  in any app, `packages/ui`) as vendored: the library owns their tests. Test
+  them only where Lootlog adds logic of its own, such as value mapping or
+  event forwarding; a `data-*` attribute, class, size variant, or a prop that
+  passes straight through to the primitive is not Lootlog logic.
 - Keep UI tests for meaningful behavior: authorization, user input, state
   transitions, persistence, failure recovery, and keyboard/accessibility
   interactions. Assert outcomes, not presentation details; remove incidental
