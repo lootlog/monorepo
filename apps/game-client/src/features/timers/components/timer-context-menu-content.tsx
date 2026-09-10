@@ -90,7 +90,7 @@ export const TimerContextMenuContent: FC<TimerContextMenuContentProps> = ({
 
   if (isPending) {
     return (
-      <div className="ll:p-4 ll:text-center ll:text-sm ll:text-gray-400">
+      <div className="ll:p-4 ll:text-center ll:text-sm ll:text-muted-foreground">
         <Loader2 className="ll:h-4 ll:w-4 ll:animate-spin ll:mx-auto ll:mb-2 ll:text-orange-500" />
         <p>{t("contextMenu.creating")}</p>
       </div>
@@ -107,7 +107,11 @@ export const TimerContextMenuContent: FC<TimerContextMenuContentProps> = ({
         hiddenDefaultColors={hiddenDefaultColors}
         onColorChange={onColorChange}
       />
-      <ContextMenuItem onClick={onPin} className="ll:mt-1">
+      <ContextMenuItem
+        onClick={onPin}
+        data-active={isPinned}
+        className="ll:text-white ll:data-[active=true]:bg-white/10 ll:data-[active=true]:data-[highlighted]:bg-white/20 ll:data-[active=true]:hover:bg-white/20 ll:data-[active=true]:focus-visible:bg-white/20"
+      >
         {isPinned ? (
           <PinOff className="ll:h-4 ll:w-4 ll:mr-2" />
         ) : (
@@ -115,11 +119,18 @@ export const TimerContextMenuContent: FC<TimerContextMenuContentProps> = ({
         )}
         {isPinned ? t("contextMenu.unpin") : t("contextMenu.pin")}
       </ContextMenuItem>
-      <ContextMenuItem onClick={isPinned ? onUnpinAll : onPinAll}>
+      <ContextMenuItem
+        onClick={isPinned ? onUnpinAll : onPinAll}
+        className="ll:text-white"
+      >
         <Globe className="ll:h-4 ll:w-4 ll:mr-2" />
         {isPinned ? t("contextMenu.unpinAll") : t("contextMenu.pinAll")}
       </ContextMenuItem>
-      <ContextMenuItem onClick={isHidden ? onShow : onHide}>
+      <ContextMenuItem
+        onClick={isHidden ? onShow : onHide}
+        data-active={isHidden}
+        className="ll:text-white ll:data-[active=true]:bg-white/10 ll:data-[active=true]:data-[highlighted]:bg-white/20 ll:data-[active=true]:hover:bg-white/20 ll:data-[active=true]:focus-visible:bg-white/20"
+      >
         {isHidden ? (
           <Eye className="ll:h-4 ll:w-4 ll:mr-2" />
         ) : (
@@ -127,12 +138,19 @@ export const TimerContextMenuContent: FC<TimerContextMenuContentProps> = ({
         )}
         {isHidden ? t("contextMenu.show") : t("contextMenu.hide")}
       </ContextMenuItem>
-      <ContextMenuItem onClick={isHidden ? onShowAll : onHideAll}>
+      <ContextMenuItem
+        onClick={isHidden ? onShowAll : onHideAll}
+        className="ll:text-white"
+      >
         <Globe className="ll:h-4 ll:w-4 ll:mr-2" />
         {isHidden ? t("contextMenu.showAll") : t("contextMenu.hideAll")}
       </ContextMenuItem>
       {showAlwaysVisibleOption && (
-        <ContextMenuItem onClick={onToggleAlwaysVisibleExpiredTimer}>
+        <ContextMenuItem
+          onClick={onToggleAlwaysVisibleExpiredTimer}
+          data-active={isAlwaysVisibleExpiredTimer}
+          className="ll:text-white ll:data-[active=true]:bg-white/10 ll:data-[active=true]:data-[highlighted]:bg-white/20 ll:data-[active=true]:hover:bg-white/20 ll:data-[active=true]:focus-visible:bg-white/20"
+        >
           {isAlwaysVisibleExpiredTimer ? (
             <EyeOff className="ll:h-4 ll:w-4 ll:mr-2" />
           ) : (
@@ -144,7 +162,7 @@ export const TimerContextMenuContent: FC<TimerContextMenuContentProps> = ({
         </ContextMenuItem>
       )}
       {canReset && (
-        <ContextMenuItem onClick={onReset}>
+        <ContextMenuItem onClick={onReset} className="ll:text-emerald-300">
           <RotateCcw className="ll:h-4 ll:w-4 ll:mr-2" />
           {t("contextMenu.restart")}
         </ContextMenuItem>
@@ -155,6 +173,7 @@ export const TimerContextMenuContent: FC<TimerContextMenuContentProps> = ({
       ) : (
         canDelete && (
           <ContextMenuItem
+            className="ll:text-red-300 ll:hover:bg-red-500/20 ll:data-[highlighted]:bg-red-500/20 ll:focus-visible:bg-red-500/20"
             onClick={() => onDelete(timer.guildId, timer.timerKey)}
           >
             <Trash2 className="ll:h-4 ll:w-4 ll:mr-2" />

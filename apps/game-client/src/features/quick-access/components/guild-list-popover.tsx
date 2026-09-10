@@ -57,34 +57,39 @@ export const GuildListPopover = () => {
         </TooltipContent>
       </Tooltip>
 
-      <PopoverContent className="ll:w-48 ll:p-1 ll:bg-black" align="start">
+      <PopoverContent
+        className="ll-action-menu ll:w-48 ll:p-0 ll:overflow-hidden"
+        align="start"
+      >
         {isLoading ? (
           <div className="ll:flex ll:items-center ll:justify-center ll:py-3">
-            <Loader2 className="ll:h-4 ll:w-4 ll:animate-spin ll:text-gray-300" />
+            <Loader2 className="ll:h-4 ll:w-4 ll:animate-spin ll:text-muted-foreground" />
           </div>
         ) : (
-          <div className="ll:space-y-0.5">
+          <div className="ll:space-y-0">
             <Button
-              className="ll:w-full ll:justify-between ll:h-auto ll:py-1 ll:px-1.5 ll-custom-cursor-pointer ll:text-white ll:rounded-sm ll:font-medium ll:bg-gray-500/30 ll:border ll:border-gray-400 ll:hover:bg-gray-400/30 ll:transition-all"
+              variant="menu"
+              className="ll:w-full ll:justify-between ll:h-auto"
               onClick={handleDashboardClick}
             >
-              <span className="ll:text-xs">{t("guildPopover.dashboard")}</span>
-              <ExternalLink className="ll:w-3 ll:h-3 ll:text-gray-400" />
+              <span>{t("guildPopover.dashboard")}</span>
+              <ExternalLink className="ll:w-3 ll:h-3 ll:text-muted-foreground" />
             </Button>
 
             {guilds && guilds.length > 0 && (
-              <div className="ll:border-t ll:border-gray-600/50 ll:my-0.5" />
+              <div className="ll:border-0 ll:border-t ll:border-solid ll:border-gray-400/40" />
             )}
 
             {guilds && guilds.length > 0 ? (
               <ScrollArea
                 className={`ll:max-h-[240px] ${guilds.length <= 6 ? "ll:h-auto" : ""}`}
               >
-                <div className="ll:space-y-0.5">
+                <div className="ll:space-y-0">
                   {guilds.map((guild) => (
                     <Button
+                      variant="menu"
                       key={guild.id}
-                      className="ll:w-full ll:justify-between ll:h-auto ll:py-1 ll:px-1.5 ll-custom-cursor-pointer ll:text-white ll:rounded-sm ll:bg-gray-500/30 ll:border ll:border-gray-400 ll:hover:bg-gray-400/30 ll:transition-all"
+                      className="ll:w-full ll:justify-between ll:h-auto"
                       onClick={() => handleGuildClick(guild.id)}
                     >
                       <div className="ll:flex ll:items-center ll:gap-2 ll:overflow-hidden ll:flex-1 ll:min-w-0">
@@ -94,21 +99,19 @@ export const GuildListPopover = () => {
                             alt={guild.name}
                             className="ll:object-cover ll:size-full ll:rounded-full"
                           />
-                          <AvatarFallback className="ll:text-xs ll:font-semibold ll:bg-gray-700 ll:text-gray-200 ll:size-full ll:flex ll:items-center ll:justify-center ll:rounded-full">
+                          <AvatarFallback className="ll:text-xs ll:font-semibold ll:bg-muted ll:text-popover-foreground ll:size-full ll:flex ll:items-center ll:justify-center ll:rounded-full">
                             {guild.name.charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
-                        <span className="ll:text-xs ll:truncate">
-                          {guild.name}
-                        </span>
+                        <span className="ll:truncate">{guild.name}</span>
                       </div>
-                      <ExternalLink className="ll:w-3 ll:h-3 ll:text-gray-400 ll:shrink-0" />
+                      <ExternalLink className="ll:w-3 ll:h-3 ll:text-muted-foreground ll:shrink-0" />
                     </Button>
                   ))}
                 </div>
               </ScrollArea>
             ) : (
-              <div className="ll:px-2 ll:py-2 ll:text-center ll:text-xs ll:text-gray-400">
+              <div className="ll:px-2 ll:py-2 ll:text-center ll:text-xs ll:text-muted-foreground">
                 {t("guildPopover.emptyGuilds")}
               </div>
             )}

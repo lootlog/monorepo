@@ -57,7 +57,7 @@ export function ChatHiddenGatherings({
               className="ll:flex ll:items-start ll:gap-2 ll:py-1"
             >
               <div className="ll:min-w-0 ll:flex-1">
-                <div className="ll:text-[11px] ll:text-gray-100">
+                <div className="ll:text-[11px] ll:text-popover-foreground">
                   {gathering.organizerName}
                 </div>
                 <ChatGatheringDetails {...gathering} />
@@ -66,7 +66,7 @@ export function ChatHiddenGatherings({
                 <TooltipTrigger asChild>
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="menu"
                     className="ll:size-6 ll:shrink-0 ll:p-0"
                     aria-label={t("gatherings.restoreNamed", {
                       name:

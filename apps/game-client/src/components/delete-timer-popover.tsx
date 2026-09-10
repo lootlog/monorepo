@@ -17,7 +17,7 @@ import {
 
 import type { TimerWithTimeLeft } from "@/features/timers/utils/timers-utils";
 import { REQUIRED_DELETE_PERMISSIONS } from "@/features/timers/constants/required-delete-permissions";
-import { cn } from "cn";
+import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import { Loader2, Trash2 } from "lucide-react";
 
@@ -89,6 +89,7 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
     const guild = guildsWithPermissions[0];
     return (
       <ContextMenuItem
+        className="ll:text-red-300 ll:hover:bg-red-500/20 ll:data-[highlighted]:bg-red-500/20 ll:focus-visible:bg-red-500/20"
         onClick={() => onDeleteTimer(guild.guildId, guild.timerKey)}
       >
         <Trash2 className="ll:h-4 ll:w-4 ll:mr-2" />
@@ -101,6 +102,7 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
     <Popover open={open} onOpenChange={preservePopoverOnMenuPress(setOpen)}>
       <PopoverTrigger asChild>
         <ContextMenuItem
+          className="ll:text-red-300 ll:hover:bg-red-500/20 ll:data-[highlighted]:bg-red-500/20 ll:focus-visible:bg-red-500/20"
           onSelect={(e) => {
             e.preventDefault();
             setOpen(true);
@@ -111,34 +113,30 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
         </ContextMenuItem>
       </PopoverTrigger>
       <PopoverContent
-        className="ll:w-64 ll:p-2"
+        className="ll-action-menu ll:w-64 ll:p-0 ll:overflow-hidden"
         side="right"
         align="start"
         finalFocus={false}
       >
-        <div className="ll:flex ll:flex-col ll:gap-1">
-          <p className="ll:text-xs ll:font-semibold ll:mb-1 ll:text-gray-400">
+        <div className="ll:flex ll:flex-col ll:gap-0">
+          <p className="ll:text-xs ll:font-semibold ll:m-0 ll:px-2 ll:py-2 ll:text-muted-foreground">
             {t("contextMenu.deleteChooseGuild")}
           </p>
           {guildsWithPermissions.map((guild) => {
             const guildData = guilds?.find((g) => g.id === guild.guildId);
             return (
-              <button
+              <Button
                 type="button"
                 key={guild.guildId}
-                className={cn(
-                  "ll:text-left ll:px-2 ll:py-1.5 ll:rounded ll:text-sm",
-                  "ll:bg-gray-700/50 ll:hover:bg-gray-600/50",
-                  "ll:transition-colors ll-custom-cursor-pointer",
-                  "ll:text-white",
-                )}
+                variant="menu"
+                className="ll:justify-start ll:text-left ll:text-red-300 ll:hover:bg-red-500/20"
                 onClick={() => {
                   onDeleteTimer(guild.guildId, guild.timerKey);
                   setOpen(false);
                 }}
               >
                 {guildData?.name ?? guild.guildId}
-              </button>
+              </Button>
             );
           })}
         </div>

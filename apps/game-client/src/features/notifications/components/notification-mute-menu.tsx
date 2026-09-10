@@ -119,9 +119,10 @@ export const NotificationMuteMenu: FC<NotificationMuteMenuProps> = ({
       <PopoverContent
         anchor={muteButtonRef}
         align="end"
-        className="ll:w-52 ll:p-1 ll:flex ll:flex-col ll:gap-1"
+        className="ll-action-menu ll:w-52 ll:p-0 ll:flex ll:flex-col ll:gap-0 ll:overflow-hidden"
       >
         <Button
+          variant="menu"
           className="ll:h-auto ll:min-h-8 ll:justify-start ll:px-2 ll:py-1.5 ll:text-left ll:leading-4"
           disabled={isDisabled}
           onClick={handleMutePlayer}
@@ -130,6 +131,7 @@ export const NotificationMuteMenu: FC<NotificationMuteMenuProps> = ({
         </Button>
         {mutedNpc ? (
           <Button
+            variant="menu"
             className="ll:h-auto ll:min-h-8 ll:justify-start ll:px-2 ll:py-1.5 ll:text-left ll:leading-4"
             disabled={isDisabled}
             onClick={handleMuteNpc}

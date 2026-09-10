@@ -4,6 +4,7 @@ import {
   ContextMenuContent,
   ContextMenuItem,
 } from "@/components/ui/context-menu";
+import { Copy, MapPin } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { copyChatText } from "../chat-copy-text";
 import { getChatNpcLocation } from "./chat-message.helpers";
@@ -65,9 +66,19 @@ export const ChatNpcMessage: FC<ChatNpcMessageProps> = ({
       </ContextMenuTrigger>
       <ContextMenuContent>
         <ContextMenuItem onClick={() => void copyChatText(message.message)}>
+          <Copy
+            aria-hidden="true"
+            strokeWidth={1.5}
+            className="ll:mr-2 ll:size-3.5 ll:shrink-0"
+          />
           {t("messageActions.copy")}
         </ContextMenuItem>
         <ContextMenuItem onClick={() => void copyChatText(location)}>
+          <MapPin
+            aria-hidden="true"
+            strokeWidth={1.5}
+            className="ll:mr-2 ll:size-3.5 ll:shrink-0"
+          />
           {t("messageActions.copyLocation")}
         </ContextMenuItem>
       </ContextMenuContent>
