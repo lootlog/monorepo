@@ -51,7 +51,7 @@ export const CategoryAccordionItem: FC<CategoryAccordionItemProps> = ({
 
   return (
     <AccordionItem value={id} disabled={disabled}>
-      <div className="ll:flex ll:items-center ll:gap-3 ll:border ll:border-gray-400 ll:rounded-sm ll:px-3">
+      <div className="ll:flex ll:items-center ll:gap-2 ll:rounded-sm ll:bg-black/20 ll:px-2">
         <div className="ll:flex ll:items-center ll:gap-2 ll:flex-1">
           <CategoryVolumeControl
             icon={icon}
@@ -75,8 +75,10 @@ export const CategoryAccordionItem: FC<CategoryAccordionItemProps> = ({
         />
       </div>
       <AccordionContent>
-        <div className="ll:flex ll:flex-col ll:gap-3 ll:pt-2">
-          <p className="ll:text-xs ll:text-muted-foreground">{description}</p>
+        <div className="ll:flex ll:flex-col ll:gap-2 ll:pt-1">
+          <p className="ll:m-0 ll:text-[11px] ll:text-muted-foreground">
+            {description}
+          </p>
           {fields.map((field) => {
             const config = categoryConfig[field.key] ?? DEFAULT_NPC_CONFIG;
             const soundUrl = config.soundUrl ?? "";
@@ -94,7 +96,7 @@ export const CategoryAccordionItem: FC<CategoryAccordionItemProps> = ({
               />
             );
           })}
-          <p className="ll:text-xs ll:text-muted-foreground ll:mt-1">
+          <p className="ll:m-0 ll:text-[11px] ll:text-muted-foreground">
             {t("settings.sounds.supportedFormats")}
           </p>
         </div>

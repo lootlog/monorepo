@@ -10,6 +10,7 @@ type SettingsTabLayoutProps = {
   contentClassName?: string;
 };
 
+/** Subsection body: a compact heading line followed by its sections. */
 export const SettingsTabLayout: FC<SettingsTabLayoutProps> = ({
   title,
   description,
@@ -17,28 +18,33 @@ export const SettingsTabLayout: FC<SettingsTabLayoutProps> = ({
   actions,
   className,
   contentClassName,
-}) => {
-  return (
+}) => (
+  <div
+    className={cn(
+      "ll:flex ll:w-full ll:flex-col ll:gap-[var(--ll-settings-space-lg)]",
+      className,
+    )}
+  >
+    <div className="ll:flex ll:items-start ll:justify-between ll:gap-2 ll:px-2">
+      <div className="ll:min-w-0 ll:flex-1">
+        <h2 className="ll:m-0 ll:text-[length:var(--ll-settings-font-size)] ll:font-semibold ll:leading-[var(--ll-settings-line-height)] ll:text-gray-100">
+          {title}
+        </h2>
+        {description ? (
+          <p className="ll:m-0 ll:text-[length:var(--ll-settings-meta-font-size)] ll:leading-[var(--ll-settings-meta-line-height)] ll:text-muted-foreground">
+            {description}
+          </p>
+        ) : null}
+      </div>
+      {actions ? <div className="ll:shrink-0">{actions}</div> : null}
+    </div>
     <div
       className={cn(
-        "ll:flex ll:w-full ll:flex-col ll:gap-4 ll:pt-1",
-        className,
+        "ll:flex ll:flex-col ll:gap-[var(--ll-settings-space-lg)]",
+        contentClassName,
       )}
     >
-      <div className="ll:flex ll:items-start ll:justify-between ll:gap-3">
-        <div className="ll:min-w-0 ll:flex-1 ll:space-y-1">
-          <h2 className="ll:text-sm ll:font-semibold ll:text-white">{title}</h2>
-          {description ? (
-            <p className="ll:m-0 ll:text-[12px] ll:leading-5 ll:text-gray-400">
-              {description}
-            </p>
-          ) : null}
-        </div>
-        {actions ? <div className="ll:shrink-0">{actions}</div> : null}
-      </div>
-      <div className={cn("ll:flex ll:flex-col ll:gap-4", contentClassName)}>
-        {children}
-      </div>
+      {children}
     </div>
-  );
-};
+  </div>
+);

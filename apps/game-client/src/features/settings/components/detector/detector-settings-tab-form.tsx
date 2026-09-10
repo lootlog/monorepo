@@ -1,4 +1,4 @@
-import { SettingsControlRow } from "@/components/settings/settings-control-row";
+import { SettingsRow } from "@/components/settings/settings-row";
 import { Switch } from "@/components/ui/switch";
 import { useUpdateGameAccountPreferences } from "@/features/settings/persistence/use-game-account-preferences";
 import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
@@ -163,7 +163,7 @@ export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
           const isHighlightField = field.key === "highlight";
 
           return (
-            <SettingsControlRow
+            <SettingsRow
               key={field.key}
               disabled={isDisabled}
               label={field.label}
@@ -181,7 +181,7 @@ export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
                   />
                 )}
               />
-            </SettingsControlRow>
+            </SettingsRow>
           );
         })}
       </div>

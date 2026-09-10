@@ -6,18 +6,17 @@ type SettingsPanelProps = {
   className?: string;
 };
 
+/** Translucent surface for list items and read-only blocks inside settings. */
 export const SettingsPanel: FC<SettingsPanelProps> = ({
   children,
   className,
-}) => {
-  return (
-    <div
-      className={cn(
-        "ll:rounded-md ll:border ll:border-gray-600 ll:bg-gray-900/70 ll:px-3 ll:py-2",
-        className,
-      )}
-    >
-      {children}
-    </div>
-  );
-};
+}) => (
+  <div
+    className={cn(
+      "ll:rounded-sm ll:bg-black/20 ll:px-2 ll:py-[var(--ll-settings-space-sm)]",
+      className,
+    )}
+  >
+    {children}
+  </div>
+);

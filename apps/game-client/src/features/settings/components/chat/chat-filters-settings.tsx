@@ -1,4 +1,4 @@
-import { SettingsControlRow } from "@/components/settings/settings-control-row";
+import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Switch } from "@/components/ui/switch";
@@ -20,18 +20,14 @@ export const ChatFiltersSettings = () => {
       title={t("chatFilters.npcMessages.title")}
       description={t("chatFilters.npcMessages.description")}
     >
-      <SettingsSection className="ll:gap-1.5">
-        <div
-          id="chat-npc-message-types"
-          data-settings-control="chat-npc-message-types"
-          className="ll:flex ll:flex-col ll:gap-1.5"
-        >
+      <SettingsSection controlId="chat-npc-message-types">
+        <div id="chat-npc-message-types" className="ll:flex ll:flex-col">
           {CHAT_NPC_TYPES.map((npcType) => {
             const label = t(`common:npcTypes.${npcType.toLowerCase()}`);
             const controlId = `chat-npc-message-type-${npcType.toLowerCase()}`;
 
             return (
-              <SettingsControlRow
+              <SettingsRow
                 key={npcType}
                 label={<label htmlFor={controlId}>{label}</label>}
                 labelStyle={{
@@ -46,7 +42,7 @@ export const ChatFiltersSettings = () => {
                     setNpcTypeVisible(npcType, checked)
                   }
                 />
-              </SettingsControlRow>
+              </SettingsRow>
             );
           })}
         </div>

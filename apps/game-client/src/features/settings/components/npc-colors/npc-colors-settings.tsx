@@ -1,3 +1,4 @@
+import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Button } from "@/components/ui/button";
 import { enqueueSettingsPatch } from "@/features/settings/persistence/settings-patch-client";
@@ -81,66 +82,70 @@ export const NpcColorsSettings = () => {
         </Button>
       }
     >
-      <div
-        id="npc-type-colors"
-        className="ll:grid ll:grid-cols-1 ll:gap-1.5 min-[680px]:ll:grid-cols-2"
-      >
-        {COMBAT_NPC_TYPES.map((npcType) => {
-          const surfaceColors = deriveNpcSurfaceColors(draft[npcType]);
+      <SettingsSection controlId="npc-type-colors">
+        <div
+          id="npc-type-colors"
+          className="ll:grid ll:grid-cols-1 ll:gap-1.5 ll:px-2 min-[680px]:ll:grid-cols-2"
+        >
+          {COMBAT_NPC_TYPES.map((npcType) => {
+            const surfaceColors = deriveNpcSurfaceColors(draft[npcType]);
 
-          const isModified =
-            draft[npcType] !== DEFAULT_NPC_TYPE_COLORS[npcType];
+            const isModified =
+              draft[npcType] !== DEFAULT_NPC_TYPE_COLORS[npcType];
 
-          const npcTypeLabel = t(`common:npcTypes.${npcType.toLowerCase()}`);
+            const npcTypeLabel = t(`common:npcTypes.${npcType.toLowerCase()}`);
 
-          return (
-            <NpcColorEditorPopover
-              key={npcType}
-              color={draft[npcType]}
-              defaultColor={DEFAULT_NPC_TYPE_COLORS[npcType]}
-              npcType={npcType}
-              open={openType === npcType}
-              saving={saving && openType === npcType}
-              onOpenChange={(open) => setOpenType(open ? npcType : null)}
-              onDraftChange={(color) => updateDraft(npcType, color)}
-              onCommit={(color) => {
-                const normalizedColor = updateDraft(npcType, color);
-                commit({ [npcType]: normalizedColor });
-              }}
-              onReset={() => resetType(npcType)}
-            >
-              <button
-                type="button"
-                className="ll:flex ll:h-9 ll:min-w-0 ll:items-center ll:gap-2 ll:rounded-sm ll:border ll:border-solid ll:border-gray-500/40 ll:bg-gray-900/50 ll:px-2 ll:text-left ll:text-xs ll:text-white ll:outline-none focus-visible:ll:ring-1 focus-visible:ll:ring-purple-400 ll-custom-cursor-pointer"
-                style={{
-                  borderColor:
-                    openType === npcType ? surfaceColors.border : undefined,
-                  backgroundColor:
-                    openType === npcType ? surfaceColors.background : undefined,
+            return (
+              <NpcColorEditorPopover
+                key={npcType}
+                color={draft[npcType]}
+                defaultColor={DEFAULT_NPC_TYPE_COLORS[npcType]}
+                npcType={npcType}
+                open={openType === npcType}
+                saving={saving && openType === npcType}
+                onOpenChange={(open) => setOpenType(open ? npcType : null)}
+                onDraftChange={(color) => updateDraft(npcType, color)}
+                onCommit={(color) => {
+                  const normalizedColor = updateDraft(npcType, color);
+                  commit({ [npcType]: normalizedColor });
                 }}
-                aria-label={`${t("settings.npcColors.editColor")}: ${npcTypeLabel}`}
+                onReset={() => resetType(npcType)}
               >
-                <span
-                  className="ll:size-4 ll:shrink-0 ll:rounded-sm ll:border ll:border-solid"
+                <button
+                  type="button"
+                  className="ll:flex ll:h-9 ll:min-w-0 ll:items-center ll:gap-2 ll:rounded-sm ll:border ll:border-solid ll:border-gray-500/40 ll:bg-gray-900/50 ll:px-2 ll:text-left ll:text-xs ll:text-white ll:outline-none focus-visible:ll:ring-1 focus-visible:ll:ring-purple-400 ll-custom-cursor-pointer"
                   style={{
-                    backgroundColor: draft[npcType],
-                    borderColor: draft[npcType],
+                    borderColor:
+                      openType === npcType ? surfaceColors.border : undefined,
+                    backgroundColor:
+                      openType === npcType
+                        ? surfaceColors.background
+                        : undefined,
                   }}
-                />
-                <span className="ll:min-w-0 ll:flex-1 ll:truncate">
-                  {npcTypeLabel}
-                </span>
-                {isModified ? (
+                  aria-label={`${t("settings.npcColors.editColor")}: ${npcTypeLabel}`}
+                >
                   <span
-                    className="ll:size-1.5 ll:shrink-0 ll:rounded-full ll:bg-purple-400"
-                    title={t("settings.npcColors.modified")}
+                    className="ll:size-4 ll:shrink-0 ll:rounded-sm ll:border ll:border-solid"
+                    style={{
+                      backgroundColor: draft[npcType],
+                      borderColor: draft[npcType],
+                    }}
                   />
-                ) : null}
-              </button>
-            </NpcColorEditorPopover>
-          );
-        })}
-      </div>
+                  <span className="ll:min-w-0 ll:flex-1 ll:truncate">
+                    {npcTypeLabel}
+                  </span>
+                  {isModified ? (
+                    <span
+                      className="ll:size-1.5 ll:shrink-0 ll:rounded-full ll:bg-purple-400"
+                      title={t("settings.npcColors.modified")}
+                    />
+                  ) : null}
+                </button>
+              </NpcColorEditorPopover>
+            );
+          })}
+        </div>
+      </SettingsSection>
     </SettingsTabLayout>
   );
 };

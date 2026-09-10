@@ -1,4 +1,5 @@
 import type { CustomTimerColor } from "@lootlog/schema/timer-settings";
+import { SettingsSection } from "@/components/settings/settings-section";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -148,14 +149,14 @@ export const TimersSettingsColors: FC = () => {
   };
 
   return (
-    <div className="ll:flex ll:flex-col ll:gap-3">
-      <section className="ll:flex ll:flex-col ll:gap-1.5">
-        <div className="ll:text-[10px] ll:font-semibold ll:uppercase ll:tracking-wide ll:text-gray-400">
-          {t("settings.timers.colors.standardColorsTitle")}
-        </div>
+    <div className="ll:flex ll:flex-col ll:gap-[var(--ll-settings-space-lg)]">
+      <SettingsSection
+        controlId="timer-colors-list"
+        title={t("settings.timers.colors.standardColorsTitle")}
+      >
         <div
           id="timer-colors-list"
-          className="ll:grid ll:grid-cols-2 ll:gap-1.5"
+          className="ll:grid ll:grid-cols-2 ll:gap-1.5 ll:px-2 ll:pt-1"
         >
           {visibleDefaultColors.map((colorId) => {
             const selection: TimerColorSelection = {
@@ -192,13 +193,11 @@ export const TimersSettingsColors: FC = () => {
             );
           })}
         </div>
-      </section>
+      </SettingsSection>
 
-      <section className="ll:flex ll:flex-col ll:gap-1.5">
-        <div className="ll:flex ll:items-center ll:justify-between">
-          <div className="ll:text-[10px] ll:font-semibold ll:uppercase ll:tracking-wide ll:text-gray-400">
-            {t("settings.timers.colors.customColorsTitle")}
-          </div>
+      <SettingsSection
+        title={t("settings.timers.colors.customColorsTitle")}
+        actions={
           <Popover
             open={openPopover === "add"}
             onOpenChange={(open) => setOpenPopover(open ? "add" : null)}
@@ -221,10 +220,10 @@ export const TimersSettingsColors: FC = () => {
               <AddColorForm onAdd={handleAddColor} />
             </PopoverContent>
           </Popover>
-        </div>
-
+        }
+      >
         {Object.keys(customColors).length > 0 ? (
-          <div className="ll:grid ll:grid-cols-2 ll:gap-1.5">
+          <div className="ll:grid ll:grid-cols-2 ll:gap-1.5 ll:px-2 ll:pt-1">
             {Object.values(customColors).map((color) => {
               const selection: TimerColorSelection = {
                 id: color.id,
@@ -251,7 +250,7 @@ export const TimersSettingsColors: FC = () => {
             })}
           </div>
         ) : null}
-      </section>
+      </SettingsSection>
 
       <HiddenColorsList
         hiddenColors={hiddenDefaultColors}

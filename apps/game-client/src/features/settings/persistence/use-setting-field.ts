@@ -14,10 +14,14 @@ import {
 } from "./settings-documents";
 import { enqueueSettingsPatch } from "./settings-patch-client";
 import { useSettingsDocuments } from "./use-settings-documents";
+import { recordRecentlyChanged } from "@/features/settings/recently-changed.store";
+import type { SettingsControlId } from "@/features/settings/settings-manifest";
 
 type UseSettingFieldOptions = {
   scopeType?: SettingsScopeType;
   afterSave?: () => void;
+  /** Manifest control that owns this field; recorded as recently changed. */
+  controlId?: SettingsControlId;
 };
 
 /**
@@ -37,6 +41,8 @@ export const useSettingField = <TKey extends ServerSettingsCatalogKey>(
   const setValue = (next: SettingsCatalogValue<TKey>) => {
     const set: Record<string, unknown> = {};
     setPath(set, field, next);
+
+    if (options.controlId) recordRecentlyChanged(options.controlId);
 
     return enqueueSettingsPatch({
       domain,

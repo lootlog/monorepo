@@ -226,6 +226,7 @@ export const CatchingSettings = () => {
       description={t("settings.catching.description")}
     >
       <SettingsSection
+        controlId="catching-range"
         title={t("settings.catching.characterTitle")}
         description={t("settings.catching.characterDescription")}
       >

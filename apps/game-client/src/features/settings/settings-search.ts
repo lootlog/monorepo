@@ -2,6 +2,7 @@ import type {
   SettingsDomainValue,
   SettingsSubsectionValue,
 } from "./constants/settings-tabs";
+import type { SettingsDomainManifestItem } from "./settings-manifest";
 
 export interface SettingsSearchItem {
   categoryId: SettingsDomainValue;
@@ -158,3 +159,28 @@ export const searchSettings = (
 
   return matches.map(({ item }) => item);
 };
+
+type Translate = (key: string) => string;
+
+/** Flattens the visible manifest into searchable, ordered items. */
+export const buildSettingsSearchItems = (
+  domains: readonly SettingsDomainManifestItem[],
+  t: Translate,
+): SettingsSearchItem[] =>
+  domains.flatMap((domain, domainIndex) =>
+    domain.subsections.flatMap((subsection, subsectionIndex) =>
+      subsection.controls.map((control, controlIndex) => ({
+        categoryId: domain.id,
+        categoryLabel: t(domain.labelKey),
+        subsectionId: subsection.id,
+        subsectionLabel: t(subsection.labelKey),
+        controlId: control.id,
+        label: t(control.labelKey),
+        description: control.descriptionKey
+          ? t(control.descriptionKey)
+          : undefined,
+        keywords: control.aliases ? [...control.aliases] : undefined,
+        order: domainIndex * 10_000 + subsectionIndex * 100 + controlIndex,
+      })),
+    ),
+  );

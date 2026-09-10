@@ -1,6 +1,6 @@
 import { orderGuilds as orderLootlogGuilds } from "@lootlog/domain/guild-preferences";
 import { AsyncContent } from "@/components/async-content";
-import { SettingsControlRow } from "@/components/settings/settings-control-row";
+import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
@@ -123,6 +123,7 @@ export const ServerVisibilitySettingsTab = () => {
           </SettingsEmptyState>
         ) : (
           <SettingsSection
+            controlId="server-visibility"
             title={t("settings.servers.listTitle")}
             actions={
               <Button
@@ -184,9 +185,8 @@ export const ServerVisibilitySettingsTab = () => {
                 const isVisible = !hiddenGuildIdSet.has(guild.id);
 
                 return (
-                  <SettingsControlRow
+                  <SettingsRow
                     key={guild.id}
-                    id={`server-visibility-${guild.id}`}
                     label={
                       <div className="ll:flex ll:min-w-0 ll:items-center ll:gap-2.5">
                         <Avatar className="ll:size-8 ll:shrink-0 ll:rounded-md ll:border ll:border-white/10 ll:bg-black/20">
@@ -217,7 +217,7 @@ export const ServerVisibilitySettingsTab = () => {
                         updateGuildVisibility(guild.id, checked)
                       }
                     />
-                  </SettingsControlRow>
+                  </SettingsRow>
                 );
               })
             )}

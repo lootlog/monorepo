@@ -33,7 +33,7 @@ export interface SettingsControlManifestItem {
 export interface SettingsSubsectionManifestItem {
   id: SettingsSubsectionValue;
   labelKey: string;
-  controls: SettingsControlManifestItem[];
+  controls: readonly SettingsControlManifestItem[];
   visible?: () => boolean;
 }
 
@@ -41,10 +41,10 @@ export interface SettingsDomainManifestItem {
   id: SettingsDomainValue;
   labelKey: string;
   icon: SettingsIconName;
-  subsections: SettingsSubsectionManifestItem[];
+  subsections: readonly SettingsSubsectionManifestItem[];
 }
 
-export const SETTINGS_MANIFEST: SettingsDomainManifestItem[] = [
+const MANIFEST = [
   {
     id: "general",
     labelKey: "settings.domains.general",
@@ -75,6 +75,12 @@ export const SETTINGS_MANIFEST: SettingsDomainManifestItem[] = [
             labelKey: "settings.general.mapPingsLabel",
             descriptionKey: "settings.general.mapPingsDescription",
             settingKeys: ["gameData.pings"],
+          },
+          {
+            id: "air-tags",
+            labelKey: "settings.general.airTagsLabel",
+            descriptionKey: "settings.general.airTagsDescription",
+            settingKeys: ["gameData.airTags"],
           },
         ],
       },
@@ -440,4 +446,46 @@ export const SETTINGS_MANIFEST: SettingsDomainManifestItem[] = [
       },
     ],
   },
-];
+] as const satisfies readonly SettingsDomainManifestItem[];
+
+export const SETTINGS_MANIFEST: readonly SettingsDomainManifestItem[] =
+  MANIFEST;
+
+/** Every control id declared in the manifest; rows and search share it. */
+export type SettingsControlId =
+  (typeof MANIFEST)[number]["subsections"][number]["controls"][number]["id"];
+
+export interface SettingsControlLocation {
+  domain: SettingsDomainValue;
+  subsection: SettingsSubsectionValue;
+  control: SettingsControlManifestItem;
+}
+
+const controlLocations = new Map<string, SettingsControlLocation>();
+
+for (const domain of SETTINGS_MANIFEST) {
+  for (const subsection of domain.subsections) {
+    for (const control of subsection.controls) {
+      controlLocations.set(control.id, {
+        domain: domain.id,
+        subsection: subsection.id,
+        control,
+      });
+    }
+  }
+}
+
+export const getControlLocation = (controlId: string) =>
+  controlLocations.get(controlId);
+
+export const isSettingsControlId = (
+  value: string,
+): value is SettingsControlId => controlLocations.has(value);
+
+export const getVisibleSettingsManifest = () =>
+  SETTINGS_MANIFEST.map((domain) => ({
+    ...domain,
+    subsections: domain.subsections.filter(
+      (subsection) => subsection.visible?.() ?? true,
+    ),
+  }));

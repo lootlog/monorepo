@@ -14,7 +14,7 @@ import { useTranslation } from "react-i18next";
 export function useSoundSettingsForm() {
   const gameInterface = useGameStore((state) => state.game?.interface);
   const { data: soundSettings, isLoading } = useSoundSettings();
-  const { mutate: updateSettings, isPending } = useUpdateSoundSettings();
+  const { mutate: updateSettings } = useUpdateSoundSettings();
   const masterVolume = useSettingsStore((state) => state.masterVolume);
   const setMasterVolume = useSettingsStore((state) => state.setMasterVolume);
   const soundsMuted = useSettingsStore((state) => state.soundsMuted);
@@ -124,7 +124,6 @@ export function useSoundSettingsForm() {
     isLoading,
     gameInterface,
     updateSettings,
-    isPending,
     masterVolume,
     setMasterVolume,
     soundsMuted,

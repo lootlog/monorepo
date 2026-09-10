@@ -23,24 +23,24 @@ export const ChatAppearancePresetCard: FC<ChatAppearancePresetCardProps> = ({
 }) => (
   <button
     aria-pressed={selected}
-    className="ll:group ll:relative ll:flex ll:min-w-0 ll:flex-col ll:gap-1.5 ll:rounded-lg ll:border ll:bg-gray-900/70 ll:p-2 ll:text-left ll:transition-colors hover:ll:border-purple-400/70 hover:ll:bg-gray-900 focus-visible:ll:outline-none focus-visible:ll:ring-2 focus-visible:ll:ring-purple-400/70 data-[selected=true]:ll:border-purple-400 data-[selected=true]:ll:bg-purple-950/35"
+    className="ll-custom-cursor-pointer ll:group ll:relative ll:flex ll:min-w-0 ll:flex-col ll:gap-1 ll:rounded-sm ll:border-0 ll:bg-black/20 ll:p-2 ll:text-left ll:transition-colors ll:hover:bg-white/5 ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:data-[selected=true]:bg-primary/15 ll:data-[selected=true]:shadow-[inset_0_0_0_1px_var(--color-primary)]"
     data-selected={selected}
     onClick={onSelect}
     type="button"
   >
     <span className="ll:flex ll:w-full ll:items-start ll:justify-between ll:gap-2">
-      <span className="ll:text-sm ll:font-semibold ll:text-gray-100">
+      <span className="ll:text-[12px] ll:font-semibold ll:leading-4 ll:text-gray-100">
         {name}
       </span>
       <span
-        className="ll:flex ll:size-5 ll:shrink-0 ll:items-center ll:justify-center ll:rounded-full ll:bg-purple-500 ll:text-white ll:transition-opacity"
+        className="ll:flex ll:size-4 ll:shrink-0 ll:items-center ll:justify-center ll:rounded-full ll:bg-primary ll:text-white ll:transition-opacity"
         data-visible={selected}
         style={{ opacity: selected ? 1 : 0 }}
       >
-        <Check aria-hidden className="ll:size-3.5" />
+        <Check aria-hidden className="ll:size-3" />
       </span>
     </span>
-    <span className="ll:line-clamp-2 ll:text-[10px] ll:leading-3.5 ll:text-gray-400">
+    <span className="ll:line-clamp-2 ll:text-[10px] ll:leading-3.5 ll:text-muted-foreground">
       {description}
     </span>
     <ChatAppearancePresetMiniPreview
