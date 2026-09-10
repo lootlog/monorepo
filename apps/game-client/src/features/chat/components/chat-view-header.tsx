@@ -1,5 +1,4 @@
 import { GuildSwitcher } from "@/components/guild-switcher";
-import { ChatSettingsButton } from "./chat-settings-button";
 import type { ReactNode } from "react";
 
 type Props = {
@@ -19,7 +18,6 @@ export function ChatViewHeader({
 }: Props) {
   return (
     <div className="ll:flex ll:shrink-0 ll:items-center ll:gap-1 ll:p-1">
-      <ChatSettingsButton />
       <GuildSwitcher
         allowAll
         className="ll:min-w-0 ll:flex-1"

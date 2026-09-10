@@ -3,6 +3,7 @@ import { CHAT_INTEGRATION_ENABLED } from "../chat.constants";
 import { ListFilter, Dock, SquareArrowOutUpRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { ChatActionButton } from "./chat-action-button";
+import { ChatSettingsButton } from "./chat-settings-button";
 
 type ChatWindowActionsProps = {
   integrated: boolean;
@@ -28,6 +29,7 @@ export const ChatWindowActions = ({
     : t("integration.attach");
   return (
     <div className="ll:flex ll:shrink-0 ll:items-center ll:gap-1">
+      <ChatSettingsButton />
       <ChatActionButton
         label={filterLabel}
         pressed={filtersVisible}
