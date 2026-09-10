@@ -1,4 +1,4 @@
-import { Effect } from "effect";
+import { Effect, Result } from "effect";
 import type {
   DiscordGuildChannelDeletedEvent,
   DiscordNotificationDeliveryResultEvent,
@@ -59,7 +59,7 @@ export const makeNotificationsEvents = (options: {
           return options.rebuild.rebuildTimer(rule.id, event).pipe(
             Effect.result,
             Effect.tap((result) =>
-              result._tag === "Failure"
+              Result.isFailure(result)
                 ? Effect.sync(() =>
                     options.logger.error(
                       `Failed to rebuild timer jobs for rule ${rule.id}: ${causeMessage(result.failure)}`,
@@ -85,7 +85,7 @@ export const makeNotificationsEvents = (options: {
         .pipe(
           Effect.result,
           Effect.tap((result) =>
-            result._tag === "Failure"
+            Result.isFailure(result)
               ? Effect.sync(() =>
                   options.logger.error(
                     `Failed to cancel pending jobs for deleted timer ${event.timerKey}: ${causeMessage(result.failure)}`,

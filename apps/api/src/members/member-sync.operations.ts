@@ -1,6 +1,6 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { APIGuildMember } from "discord-api-types/v10";
-import { Clock, Effect, Schema } from "effect";
+import { Clock, Effect, Result, Schema } from "effect";
 import {
   ApplicationError,
   ApplicationErrorKind,
@@ -126,7 +126,7 @@ export const makeMemberSync = (
           discordId: options.discordId,
         }),
       );
-      if (result._tag === "Success") {
+      if (Result.isSuccess(result)) {
         const member = yield* createOrUpdateMember({
           ...result.success,
           guildId: options.guildId,

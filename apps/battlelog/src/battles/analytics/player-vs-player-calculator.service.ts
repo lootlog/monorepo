@@ -9,35 +9,37 @@ export const playerVsPlayerCalculator = {
     characterIds: Set<string>,
     query: PlayerVsPlayerQuery,
   ): PlayerVsPlayerBattle[] {
-    return battles
-      .filter((battle) => shouldIncludeBattle(battle, query))
-      .filter((battle) =>
-        domain.isOpponentLevelInRange(
+    const result: PlayerVsPlayerBattle[] = [];
+    for (const battle of battles) {
+      if (!shouldIncludeBattle(battle, query)) continue;
+      if (
+        !domain.isOpponentLevelInRange(
           battle,
           characterIds,
           query.minLevel,
           query.maxLevel,
-        ),
+        )
       )
-      .map((battle) => {
-        const userWarrior = domain.findUserWarrior(battle, characterIds);
-        const opponentWarrior = domain.findWarrior(battle, query.opponentId);
+        continue;
+      const userWarrior = domain.findUserWarrior(battle, characterIds);
+      const opponentWarrior = domain.findWarrior(battle, query.opponentId);
 
-        return {
-          battleId: battle.id,
-          createdAt: battle.createdAt.toISOString(),
-          duration: battle.duration,
-          winner: battle.winner,
-          loser: battle.loser,
-          hasFlee: battle.hasFlee,
-          matchmaking: battle.matchmaking,
-          ratingDelta: battle.ratingDelta,
-          userRating: battle.rating,
-          opponentRating: battle.opponentRating,
-          userWarrior: domain.mapPlayerVsPlayerWarrior(userWarrior),
-          opponentWarrior: domain.mapPlayerVsPlayerWarrior(opponentWarrior),
-        };
+      result.push({
+        battleId: battle.id,
+        createdAt: battle.createdAt.toISOString(),
+        duration: battle.duration,
+        winner: battle.winner,
+        loser: battle.loser,
+        hasFlee: battle.hasFlee,
+        matchmaking: battle.matchmaking,
+        ratingDelta: battle.ratingDelta,
+        userRating: battle.rating,
+        opponentRating: battle.opponentRating,
+        userWarrior: domain.mapPlayerVsPlayerWarrior(userWarrior),
+        opponentWarrior: domain.mapPlayerVsPlayerWarrior(opponentWarrior),
       });
+    }
+    return result;
   },
 };
 

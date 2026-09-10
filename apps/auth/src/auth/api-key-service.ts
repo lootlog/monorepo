@@ -1,7 +1,7 @@
 import { HttpClient, HttpClientResponse } from "effect/unstable/http";
 import { hasServiceAuthorization } from "@lootlog/protocol/http/service-auth";
 import { and, eq, inArray } from "drizzle-orm";
-import { Context, Effect, Layer, Schema } from "effect";
+import { Context, Effect, Layer, Option, Schema } from "effect";
 import {
   type ApiKeyAccess,
   ApiKeyGrant,
@@ -40,7 +40,7 @@ const decodeGrant = Schema.decodeUnknownOption(
 type StoredKey = typeof authApiKeys.$inferSelect;
 const grantFor = (key: StoredKey) => {
   const grant = decodeGrant(key.metadata ?? "");
-  return grant._tag === "Some" ? grant.value : null;
+  return Option.getOrNull(grant);
 };
 const active = (key: StoredKey, now: number) =>
   key.enabled === true &&

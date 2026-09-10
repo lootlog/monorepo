@@ -131,17 +131,17 @@ export const makeReadyRoomRepository = (
     keys: ReadonlyArray<string>,
     arguments_: ReadonlyArray<string | number>,
   ) {
-    let declaredKeys = [...keys];
+    const declaredKeys = new Set(keys);
     // Bound work if concurrent requests keep replacing the indexed room.
     for (let attempt = 0; attempt < 8; attempt += 1) {
-      const result = yield* redis.eval(script, declaredKeys, arguments_);
+      const result = yield* redis.eval(script, [...declaredKeys], arguments_);
       if (
         !Schema.is(Schema.Array(Schema.String))(result) ||
         result[0] !== "DECLARE_KEYS"
       ) {
         return result;
       }
-      declaredKeys = [...new Set([...declaredKeys, ...result.slice(1)])];
+      for (const key of result.slice(1)) declaredKeys.add(key);
     }
     return yield* Effect.fail(
       new Error("Ready Room indexes changed too often"),

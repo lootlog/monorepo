@@ -16,6 +16,7 @@ import {
   Layer,
   Option,
   Redacted,
+  Result,
   Schema,
   Schedule,
 } from "effect";
@@ -78,7 +79,7 @@ export const OnlineConsumer = Layer.effectDiscard(
               throw new Error("Future checkpoint observation");
             return event;
           }).pipe(Effect.result);
-          if (parsed._tag === "Failure") {
+          if (Result.isFailure(parsed)) {
             // Ack only after confirmed DLQ publication; do not consume and discard its evidence.
             yield* rabbit.publish({
               exchange: RabbitExchange.DEAD_LETTER,

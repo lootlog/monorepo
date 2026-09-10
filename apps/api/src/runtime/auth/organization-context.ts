@@ -2,7 +2,7 @@ import { createSelectSchema } from "drizzle-orm/effect-schema";
 import { isoDatetimeCodec } from "#src/shared/schema/response-codecs";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, eq, or } from "drizzle-orm";
-import { Context, Effect, Layer, Schema } from "effect";
+import { Context, Effect, Layer, Option, Schema } from "effect";
 import { resolveCapabilities } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import type { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
@@ -125,7 +125,7 @@ export class OrganizationContextLookup extends Context.Service<
               const parsed = yield* Effect.try(() => {
                 return decodeCachedGuild(cached);
               }).pipe(Effect.option);
-              if (parsed._tag === "Some") return parsed.value;
+              if (Option.isSome(parsed)) return parsed.value;
               yield* cache.del(key).pipe(Effect.ignore);
             }
             const rows = yield* database

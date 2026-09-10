@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 import { createServer, type AddressInfo, type Socket } from "node:net";
 import { ManagedRuntime } from "effect";
+import { SqlError } from "effect/unstable/sql/SqlError";
 import { makePostgresLayer, PostgresPool } from "../src/postgres.js";
 
 test("fails startup with the original driver error when PostgreSQL is unavailable", async () => {
@@ -12,8 +13,9 @@ test("fails startup with the original driver error when PostgreSQL is unavailabl
     }),
   );
   try {
-    await expect(runtime.runPromise(PostgresPool)).rejects.toMatchObject({
-      _tag: "SqlError",
+    const startup = runtime.runPromise(PostgresPool);
+    await expect(startup).rejects.toBeInstanceOf(SqlError);
+    await expect(startup).rejects.toMatchObject({
       reason: { cause: { code: "ECONNREFUSED" } },
     });
   } finally {
@@ -40,9 +42,9 @@ test("closes a stalled connection after startup times out", async () => {
     }),
   );
   try {
-    await expect(runtime.runPromise(PostgresPool)).rejects.toMatchObject({
-      _tag: "SqlError",
-    });
+    await expect(runtime.runPromise(PostgresPool)).rejects.toBeInstanceOf(
+      SqlError,
+    );
     await runtime.dispose();
     await new Promise<void>((resolve) => setImmediate(resolve));
     expect(sockets.size).toBe(0);

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { SearchOperationFailure } from "../src/meilisearch/search-operation-failure.js";
-import { Context, Effect, Layer } from "effect";
+import { Context, Effect, Layer, Predicate } from "effect";
 import { HttpRouter, HttpServer } from "effect/unstable/http";
 import {
   SearchOperations,
@@ -92,7 +92,9 @@ test("a search outage is an explicit unavailable response, not an empty success"
       new Request("http://localhost/players?limit=10"),
     );
     expect(response.status).toBe(503);
-    expect(await response.json()).toMatchObject({ _tag: "SearchUnavailable" });
+    expect(Predicate.isTagged("SearchUnavailable")(await response.json())).toBe(
+      true,
+    );
   } finally {
     await boundary.dispose();
   }

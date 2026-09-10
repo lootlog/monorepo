@@ -139,7 +139,7 @@ export const ActivityConsumers = Layer.effectDiscard(
       (delivery) =>
         Effect.gen(function* () {
           const decoded = decodeJson(delivery);
-          if (decoded._tag === "Failure") {
+          if (Result.isFailure(decoded)) {
             yield* publishDlq(
               delivery,
               RabbitRoutingKey.ACTIVITY_LOG_CREATE_DLQ,
@@ -202,7 +202,7 @@ export const ActivityConsumers = Layer.effectDiscard(
       (delivery) =>
         Effect.gen(function* () {
           const decoded = decodeJson(delivery);
-          if (decoded._tag === "Failure") {
+          if (Result.isFailure(decoded)) {
             yield* publishDlq(
               delivery,
               RabbitRoutingKey.GUILDS_MEMBERS_REMOVE_DLQ,

@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { encode } from "@msgpack/msgpack";
+import { Result } from "effect";
 import {
   decodePresenceSnapshot,
   isMapPingAcknowledgement,
@@ -169,7 +170,7 @@ describe("realtime MessagePack codec", () => {
   test("returns typed failures for untrusted frames", () => {
     const result = tryDecodeRealtimeFrame(new Uint8Array([0xc1]));
     expect(result._tag).toBe("Failure");
-    if (result._tag === "Failure") {
+    if (Result.isFailure(result)) {
       expect(result.failure).toBeInstanceOf(RealtimeCodecError);
       expect(result.failure.operation).toBe("decode");
     }

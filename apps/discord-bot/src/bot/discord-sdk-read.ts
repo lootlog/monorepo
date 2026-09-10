@@ -1,5 +1,5 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { Effect, Schema } from "effect";
+import { Cause, Effect, Schema } from "effect";
 import { DiscordAPIError } from "discord.js";
 
 const nonRetryableErrorCodes = new Set([
@@ -38,7 +38,7 @@ export const discordSdkRead = <A>(
     }).pipe(
       Effect.timeout("10 seconds"),
       Effect.mapError((error) =>
-        error._tag === "TimeoutError"
+        Cause.isTimeoutError(error)
           ? new DiscordSdkReadFailure({
               operation,
               cause: new Error(`${operation} timed out`),

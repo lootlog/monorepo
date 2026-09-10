@@ -11,6 +11,7 @@ import {
   encodeRealtimeFrame,
   tryDecodeRealtimeFrame,
 } from "@lootlog/protocol/realtime/codec";
+import { Result } from "effect";
 
 type CommandType = ClientCommand["type"];
 type CommandData<Type extends CommandType> = Extract<
@@ -355,7 +356,7 @@ export class RealtimeClient {
       return decodeRealtimeFrame(JSON.parse(data));
     }
     const decoded = tryDecodeRealtimeFrame(await toBytes(data));
-    if (decoded._tag === "Failure") throw decoded.failure;
+    if (Result.isFailure(decoded)) throw decoded.failure;
     return decoded.success;
   }
 

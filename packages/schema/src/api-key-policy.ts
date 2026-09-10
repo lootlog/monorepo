@@ -1,4 +1,4 @@
-import { Schema } from "effect";
+import { Option, Schema } from "effect";
 import { API_KEY_ACCESS_HEADER, ApiKeyAccess } from "./api-key-access.js";
 import { getPublicApiOperation } from "./public-api-policy.js";
 
@@ -13,7 +13,7 @@ export function readApiKeyAccess(
   const value = headers[API_KEY_ACCESS_HEADER];
   if (value === undefined || value === "") return undefined;
   const decoded = decodeAccess(value);
-  return decoded._tag === "Some" ? decoded.value : null;
+  return Option.isSome(decoded) ? decoded.value : null;
 }
 
 export function apiKeyAllowsOperation(

@@ -45,12 +45,49 @@ These are raw format boundaries, not permission to pass unparsed values through
 application services. Neither narrowing these contracts without evidence nor
 moving checks behind new aliases/predicates is an acceptable lint fix.
 
-Run the plugin's behavioral regressions with:
+Run the plugin's behavioral regressions from the repository root with:
 
 ```sh
 bun test tools/oxlint/anti-slop
+node --test "tools/oxlint/anti-slop/**/*.node-test.ts"
 ```
 
-The tests run Oxlint against isolated fixtures and check both allowed boundary
-cases and nearby violations that must remain errors. Keep these local corrections
-when updating the copied plugin.
+The `*.test.ts` files run Oxlint against isolated fixtures and check both
+allowed boundary cases and nearby violations that must remain errors; they guard
+the local corrections above. The `*.node-test.ts` files are the upstream
+`RuleTester` suites for adopted rules. They need Node's raw-transfer parser,
+which Bun does not provide, so they run under `node --test` (Node 22+). Keep the
+local corrections when updating the copied plugin.
+
+## Provenance
+
+Updates follow `.agents/skills/install-anti-slop/references/update.md` as a
+reviewed three-way merge, never a directory replacement.
+
+- Base: the skill bundle installed on 2026-09-08 (`skills-lock.json` hash
+  `91e87212…`, upstream v0.1.2 era).
+- Incoming: `dmmulroy/anti-slop@c44ef22` (merged 2026-09-10; the skill bundle
+  in `.agents/skills/install-anti-slop` matches this revision byte for byte).
+- Adopted: `shared/scope.ts` (`resolveVariable` extraction), `shared/array-method.ts`,
+  `rules/no-array-filter-map.ts`, `rules/no-reduce-accumulator-copy.ts`,
+  `rules/require-readable-spacing.ts` with `vendor/eslint-stylistic/` (MIT,
+  see its `UPSTREAM.md`), `effect/shared/tagged-values.ts`, and the Effect rules
+  `no-manual-effect-error-tag`, `no-manual-tag-comparison`,
+  `no-manual-tagged-construction`, `prefer-effect-match`. All are enabled at
+  `error`; the Effect rules only in workspaces that declare `effect`.
+- Retained local deviations from upstream: the option schemas and boundary
+  exemptions described above in `effect/rules/no-service-constructor-imports.ts`,
+  `rules/no-known-value-widening.ts`, `rules/no-module-mocking.ts`,
+  `rules/no-reflect-apply.ts`, `rules/no-runtime-typeof.ts`,
+  `rules/no-shape-in-symbol-names.ts`, `rules/no-unknown-parameters.ts`,
+  `rules/no-unknown-returns.ts`, `rules/no-unsafe-dictionary-type.ts`, and
+  `shared/function-parameters.ts`; the local `*.test.ts` suites and
+  `shared/lint-fixture.ts`; `rules/require-readable-spacing-cli.node-test.ts`
+  spawns the repository's `node_modules/.bin/oxlint` instead of `pnpm exec`.
+- Deferred: none. The next update should diff against `c44ef22`.
+
+Oxlint override `files` globs resolve relative to the config that declares
+them, so workspaces with their own `.oxlintrc.json` (`apps/activity`,
+`apps/auth`, `apps/battlelog`, `apps/discord-bot`, `apps/gateway`) enable the
+Effect rules directly; the root override covers the remaining Effect
+workspaces.

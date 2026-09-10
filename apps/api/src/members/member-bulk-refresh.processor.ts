@@ -1,4 +1,4 @@
-import { Clock, Effect } from "effect";
+import { Clock, Effect, Result } from "effect";
 import { eq, sql } from "drizzle-orm";
 import type { RabbitMessaging } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
@@ -75,7 +75,7 @@ export const makeMemberBulkRefreshProcessor = (
             skipTtlCheck: true,
           }),
         );
-        if (result._tag === "Failure") {
+        if (Result.isFailure(result)) {
           failedIds.push(memberId);
           yield* database
             .update(memberRefreshJobTable)

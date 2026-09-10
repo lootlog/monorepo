@@ -2,7 +2,7 @@ import { isObjectRecord } from "@lootlog/schema/records";
 import type { DiscordNotificationSendCommand } from "@lootlog/schema/notifications";
 import type { NotificationContentModule } from "#src/notifications/content/notification-content.service";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { Effect, Schema } from "effect";
+import { Effect, Result, Schema } from "effect";
 import type {
   NotificationJobStore,
   NotificationJobWithRelations,
@@ -133,7 +133,7 @@ export const makeNotificationJobDispatch = (
         },
       })
       .pipe(Effect.result);
-    if (published._tag === "Success") return;
+    if (Result.isSuccess(published)) return;
     const message = errorMessage(published.failure);
     yield* store.update(job.id, {
       status: NotificationJobStatus.PENDING,

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { Effect } from "effect";
+import { Effect, Predicate } from "effect";
 import { Meilisearch, type SearchParams } from "meilisearch";
 import { makeItemsModule } from "#src/items/items.service";
 import { configureMeilisearchIndexes } from "#src/meilisearch/meilisearch-indexes.service";
@@ -127,14 +127,11 @@ describe("Search Effect modules", () => {
 
     const players = makePlayersModule(client, silentLogger);
 
-    expect(
-      await Effect.runPromise(
-        players.getPlayers({ limit: 10 }).pipe(Effect.flip),
-      ),
-    ).toMatchObject({
-      _tag: "SearchOperationFailure",
-      operation: "search.players",
-    });
+    const failure = await Effect.runPromise(
+      players.getPlayers({ limit: 10 }).pipe(Effect.flip),
+    );
+    expect(Predicate.isTagged("SearchOperationFailure")(failure)).toBe(true);
+    expect(failure).toMatchObject({ operation: "search.players" });
   });
 
   test("returns a typed failure so Rabbit can requeue failed indexing", async () => {

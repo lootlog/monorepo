@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { Effect, Layer, Schema } from "effect";
+import { Effect, Layer, Predicate, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
 import { RefreshStatsCardResponse } from "#src/contracts/guild-stats-card/schemas";
 import { GameMapsResponse } from "#src/contracts/maps/schemas";
@@ -133,7 +133,7 @@ describe("public system HttpApi handlers", () => {
       "public, max-age=300, must-revalidate",
     );
     expect(response.body._tag).toBe("Uint8Array");
-    if (response.body._tag === "Uint8Array") {
+    if (Predicate.isTagged(response.body, "Uint8Array")) {
       expect(response.body.body).toEqual(png);
     }
   });

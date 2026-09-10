@@ -1,4 +1,4 @@
-import { Effect } from "effect";
+import { Cause, Effect } from "effect";
 import type { HttpClient } from "effect/unstable/http/HttpClient";
 
 type FailureReason =
@@ -30,7 +30,7 @@ export const boundedHttpGet = Effect.fnUntraced(function* <
       Effect.timeout(options.timeoutMilliseconds),
       Effect.mapError((error) =>
         options.failure(
-          error._tag === "TimeoutError" ? "timeout" : "transport",
+          Cause.isTimeoutError(error) ? "timeout" : "transport",
           true,
         ),
       ),

@@ -1,5 +1,5 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { Clock, Effect, Result, Schema } from "effect";
+import { Cause, Clock, Effect, Result, Schema } from "effect";
 import { RabbitRoutingKey as RoutingKey } from "@lootlog/protocol/rabbit/topology";
 import {
   NotificationTargetType,
@@ -122,7 +122,7 @@ export const makeDiscordDelivery = (
         Effect.mapError((error) => deliveryFailure("publish", error)),
         Effect.timeout("10 seconds"),
         Effect.mapError((error) =>
-          error._tag === "TimeoutError"
+          Cause.isTimeoutError(error)
             ? deliveryFailure(
                 "publish",
                 new Error("Discord result publish timed out"),
@@ -146,7 +146,7 @@ export const makeDiscordDelivery = (
       Effect.map((message) => ({ id: message.id })),
       Effect.timeout("10 seconds"),
       Effect.mapError((error) =>
-        error._tag === "TimeoutError"
+        Cause.isTimeoutError(error)
           ? deliveryFailure("send", new Error("Discord DM send timed out"))
           : error,
       ),
@@ -175,7 +175,7 @@ export const makeDiscordDelivery = (
       Effect.map((message) => ({ id: message.id })),
       Effect.timeout("10 seconds"),
       Effect.mapError((error) =>
-        error._tag === "TimeoutError"
+        Cause.isTimeoutError(error)
           ? deliveryFailure("send", new Error("Discord channel send timed out"))
           : error,
       ),

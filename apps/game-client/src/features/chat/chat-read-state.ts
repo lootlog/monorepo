@@ -34,18 +34,16 @@ export const markChatMessagesRead = (
   messageIds: readonly string[],
 ) => {
   const visible = new Set(messageIds);
-  let result = state;
+  let result: ChatReadState | undefined;
   for (const [guildId, entries] of Object.entries(state)) {
     if (!entries.some((entry) => !entry.read && visible.has(entry.id)))
       continue;
-    result = {
-      ...result,
-      [guildId]: entries.map((entry) =>
-        visible.has(entry.id) ? { ...entry, read: true } : entry,
-      ),
-    };
+    result ??= { ...state };
+    result[guildId] = entries.map((entry) =>
+      visible.has(entry.id) ? { ...entry, read: true } : entry,
+    );
   }
-  return result;
+  return result ?? state;
 };
 
 export const prioritizeChatMessage = (

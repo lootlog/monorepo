@@ -7,8 +7,10 @@ import {
   Fiber,
   ManagedRuntime,
   Metric,
+  Predicate,
   Queue,
   Redacted,
+  Result,
   Schedule,
 } from "effect";
 import { Redis } from "effect/unstable/persistence";
@@ -118,10 +120,14 @@ const makeSocket = (connectionId: string) => {
   return { socket, frames };
 };
 
-const eventsOfType = (frames: ReadonlyArray<Uint8Array>, type: string) =>
-  frames
-    .map((frame) => decodeRealtimeFrame(frame))
-    .filter((frame) => "type" in frame && frame.type === type);
+const eventsOfType = (frames: ReadonlyArray<Uint8Array>, type: string) => {
+  const events: ReturnType<typeof decodeRealtimeFrame>[] = [];
+  for (const frame of frames) {
+    const decoded = decodeRealtimeFrame(frame);
+    if ("type" in decoded && decoded.type === type) events.push(decoded);
+  }
+  return events;
+};
 
 const waitFor = async (predicate: () => boolean): Promise<void> => {
   const deadline = Date.now() + 2_000;
@@ -750,10 +756,12 @@ describe("realtime Dragonfly integration", () => {
         if (!subscriberAddress)
           throw new Error("Subscriber connection not found");
         yield* redis.send("CLIENT", "KILL", subscriberAddress);
-        expect(yield* Effect.result(Queue.take(messages))).toMatchObject({
-          _tag: "Failure",
-          failure: { _tag: "RedisError" },
-        });
+        const taken = yield* Effect.result(Queue.take(messages));
+        expect(Result.isFailure(taken)).toBe(true);
+        expect(
+          Result.isFailure(taken) &&
+            Predicate.isTagged("RedisError")(taken.failure),
+        ).toBe(true);
       }).pipe(
         Effect.scoped,
         Effect.provide(

@@ -1,5 +1,5 @@
 import type { ServerEvent } from "@lootlog/protocol/realtime";
-import { Schema } from "effect";
+import { Option, Schema } from "effect";
 import type { SessionData } from "./session.js";
 
 const SharedRoom = Schema.Struct({
@@ -34,7 +34,7 @@ export function canReadApiKeyEvent(
       const room = readSharedRoom(event.data.payload);
       return (
         allowed(event.data.organizationId) &&
-        room._tag === "Some" &&
+        Option.isSome(room) &&
         room.value.room.guildIds.every(allowed)
       );
     }

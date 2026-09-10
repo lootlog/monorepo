@@ -13,6 +13,7 @@ import {
   Layer,
   Option,
   Predicate,
+  Result,
   Schema,
   type Redacted,
 } from "effect";
@@ -112,7 +113,7 @@ export const normalizeScopes = Function.compose(
     Schema.Union([Schema.String, Schema.Array(Schema.Unknown)]),
   ),
   (result): ReadonlyArray<string> => {
-    if (result._tag === "None") return [];
+    if (Option.isNone(result)) return [];
     const scopes = result.value;
     if (Predicate.isString(scopes)) return scopes.split(/\s+/).filter(Boolean);
     return scopes.filter(Predicate.isString);
@@ -316,7 +317,7 @@ export const createAuthService = ({
         ),
       );
 
-      if (result._tag === "Failure") {
+      if (Result.isFailure(result)) {
         const error = result.failure;
 
         if (error instanceof HttpResponseError) {
@@ -351,7 +352,7 @@ export const createAuthService = ({
         }),
       );
 
-      if (result._tag === "Failure") {
+      if (Result.isFailure(result)) {
         const error = result.failure;
 
         if (error instanceof HttpResponseError) {

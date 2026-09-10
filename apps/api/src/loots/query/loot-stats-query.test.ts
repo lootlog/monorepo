@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { Effect } from "effect";
+import { Effect, Predicate } from "effect";
 import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
 import {
   LootStatsQueryError,
@@ -30,11 +30,8 @@ describe("makeLootStatsQuery", () => {
         Effect.flip(query("loot-stats.read", "SELECT missing_column", [])),
       );
       expect(error).toBeInstanceOf(LootStatsQueryError);
-      expect(error).toMatchObject({
-        _tag: "LootStatsQueryError",
-        operation: "loot-stats.read",
-        cause: { _tag: "SqlError" },
-      });
+      expect(error).toMatchObject({ operation: "loot-stats.read" });
+      expect(Predicate.isTagged("SqlError")(error.cause)).toBe(true);
     } finally {
       await boundary.dispose();
     }

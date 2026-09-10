@@ -15,7 +15,7 @@ import {
   pgTable,
   timestamp,
 } from "drizzle-orm/pg-core";
-import { Effect, ManagedRuntime, Redacted } from "effect";
+import { Effect, ManagedRuntime, Predicate, Redacted } from "effect";
 import { SqlClient } from "effect/unstable/sql";
 import { makePostgresLayer, PostgresPool } from "../src/postgres.js";
 
@@ -43,8 +43,12 @@ test("preserves required TLS without falling back to an unencrypted connection",
     }),
   );
   try {
-    await expect(runtime.runPromise(PostgresPool)).rejects.toMatchObject({
-      _tag: "SqlError",
+    const error: unknown = await runtime.runPromise(PostgresPool).then(
+      () => undefined,
+      (cause: unknown) => cause,
+    );
+    expect(Predicate.isTagged("SqlError")(error)).toBe(true);
+    expect(error).toMatchObject({
       reason: {
         cause: { message: "The server does not support SSL connections" },
       },

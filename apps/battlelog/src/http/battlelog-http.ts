@@ -82,7 +82,7 @@ const currentUserId = Effect.fn("Battlelog.currentUserId")(function* () {
 const errorResponse = (cause: unknown) => {
   if (
     HttpServerError.isHttpServerError(cause) &&
-    cause.reason._tag === "RequestParseError"
+    cause.reason instanceof HttpServerError.RequestParseError
   ) {
     return HttpServerResponse.jsonUnsafe(
       { error: "Bad Request", message: "Invalid JSON body", statusCode: 400 },

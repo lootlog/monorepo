@@ -1,6 +1,15 @@
 import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
 import { describe, expect, it } from "bun:test";
-import { Cause, Effect, Exit, FileSystem, Layer, Path, Schema } from "effect";
+import {
+  Cause,
+  Effect,
+  Exit,
+  FileSystem,
+  Layer,
+  Path,
+  Predicate,
+  Schema,
+} from "effect";
 import { Permission } from "@lootlog/schema/permissions";
 import {
   InvalidEntityError,
@@ -565,7 +574,7 @@ it.each([
   );
   expect(response.status).toBe(error.status);
   expect(response.body._tag).toBe("Uint8Array");
-  if (response.body._tag === "Uint8Array") {
+  if (Predicate.isTagged(response.body, "Uint8Array")) {
     expect(JSON.parse(new TextDecoder().decode(response.body.body))).toEqual({
       code: error.code,
     });
