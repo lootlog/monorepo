@@ -31,6 +31,8 @@ export function DesktopWeekSchedule({
 }: DesktopWeekScheduleProps) {
   const {
     gridRef,
+    nowRef,
+    isNowVisible,
     isPointerOverUnavailableSlot,
     contextMenuOpenRef,
     suppressSelectionRef,
@@ -166,8 +168,9 @@ export function DesktopWeekSchedule({
           )),
         ])}
 
-        {nowDay >= 0 && nowDay < DAYS.length && (
+        {isNowVisible && (
           <div
+            ref={nowRef}
             className="pointer-events-none absolute z-20 h-px bg-destructive"
             style={{
               top: nowTop,

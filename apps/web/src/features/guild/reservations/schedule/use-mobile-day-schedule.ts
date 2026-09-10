@@ -21,6 +21,7 @@ import {
   resetSwipePosition,
 } from "./mobile-day-interactions";
 import { isReservationStartSelectable } from "./reservation-settings";
+import { scrollViewportToNowIndicator } from "./scroll-viewport-to-now-indicator";
 import type { ReservationRange, ReservationSegment } from "./types";
 import { useMobileDaySwipe } from "./use-mobile-day-swipe";
 
@@ -146,16 +147,7 @@ export function useMobileDaySchedule({
   useEffect(() => {
     const nowIndicator = nowRef.current;
     if (!isToday || !nowIndicator) return;
-    const scrollViewport = nowIndicator.closest(
-      '[data-slot="scroll-area-viewport"]',
-    );
-    if (!(scrollViewport instanceof HTMLElement)) return;
-
-    scrollViewport.scrollTop = Math.max(
-      0,
-      nowIndicator.offsetTop - scrollViewport.clientHeight / 2,
-    );
-    scrollViewport.scrollLeft = 0;
+    scrollViewportToNowIndicator(nowIndicator);
   }, [isToday]);
 
   useEffect(
