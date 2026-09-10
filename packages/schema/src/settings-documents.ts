@@ -4,6 +4,7 @@ import { IsoDateTime, NonEmptyString } from "./primitives.js";
 export const SETTINGS_DOMAINS = [
   "general",
   "appearance",
+  "chat",
   "timers",
   "gameData",
   "notifications",

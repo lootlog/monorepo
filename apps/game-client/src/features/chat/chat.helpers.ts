@@ -2,6 +2,8 @@ import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/c
 import { CHAT_MESSAGE_LIMIT } from "@lootlog/schema/chat";
 import type { ChatFilter } from "@/store/chat.store";
 import { MessageType } from "@/api/chat.api";
+import { resolveNpcType } from "@lootlog/domain/npc-routing";
+import type { NpcTypeEnum } from "@lootlog/schema/npc-type";
 
 const CHAT_MESSAGE_DEDUPE_WINDOW_MS = 200;
 const CHAT_NPC_GROUP_WINDOW_MS = 60_000;
@@ -151,12 +153,27 @@ export const getVisibleChatMessageAliases = (
   );
 };
 
+export const EMPTY_HIDDEN_NPC_TYPES: ReadonlySet<NpcTypeEnum> = new Set();
+
+export const isHiddenNpcChatMessage = (
+  message: ChatMessageType,
+  hiddenNpcTypes: ReadonlySet<NpcTypeEnum>,
+) => {
+  if (hiddenNpcTypes.size === 0) return false;
+  if (message.type !== MessageType.NPC || !message.npc) return false;
+  const npcType = resolveNpcType(message.npc);
+  return npcType !== null && hiddenNpcTypes.has(npcType);
+};
+
 export const filterChatMessages = (
   messages: ChatMessageType[],
   chatFilter: ChatFilter,
+  hiddenNpcTypes: ReadonlySet<NpcTypeEnum> = EMPTY_HIDDEN_NPC_TYPES,
 ) => {
   const supportedMessages = messages.filter(
-    (message) => message.type !== MessageType.PARTY_GATHERING,
+    (message) =>
+      message.type !== MessageType.PARTY_GATHERING &&
+      !isHiddenNpcChatMessage(message, hiddenNpcTypes),
   );
   if (chatFilter === "all") return supportedMessages;
 
@@ -318,12 +335,14 @@ export const getCurrentChatMessages = (
   messageCache: Record<string, ChatMessageType[]>,
   selectedGuildId: string | undefined,
   chatFilter: ChatFilter,
+  hiddenNpcTypes: ReadonlySet<NpcTypeEnum> = EMPTY_HIDDEN_NPC_TYPES,
 ) => {
   const filteredMessages = filterChatMessages(
     deduplicateChatMessages(
       getMessagesForSelectedGuild(messageCache, selectedGuildId),
     ),
     chatFilter,
+    hiddenNpcTypes,
   );
 
   return filteredMessages.slice(-CHAT_VISIBLE_MESSAGE_LIMIT);

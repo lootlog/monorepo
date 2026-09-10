@@ -19,6 +19,7 @@ import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
 import type { FC } from "react";
 import { ChatCharacterTooltip } from "./chat-character-tooltip";
 import { ChatNpcMessageView } from "./chat-npc-message-view";
+import { ChatNpcHideTypeMenuItem } from "./chat-npc-hide-type-menu-item";
 
 type ChatNpcMessageProps = {
   all: boolean;
@@ -81,6 +82,7 @@ export const ChatNpcMessage: FC<ChatNpcMessageProps> = ({
           />
           {t("messageActions.copyLocation")}
         </ContextMenuItem>
+        <ChatNpcHideTypeMenuItem npc={message.npc} />
       </ContextMenuContent>
     </ContextMenu>
   );

@@ -21,6 +21,7 @@
     "general": "Ogólne",
     "servers": "Serwery",
     "appearance": "Wygląd",
+    "chat": "Chat",
     "timers": "Timery",
     "gameData": "Dane z gry",
     "notifications": "Powiadomienia",
@@ -32,7 +33,8 @@
   "subsections": {
     "behavior": "Zachowanie",
     "serverVisibility": "Widoczność",
-    "chat": "Chat",
+    "chatAppearance": "Wygląd",
+    "chatFilters": "Filtry",
     "npcColors": "Kolory NPC",
     "timerAppearance": "Wygląd timerów",
     "timerColors": "Kolory timerów",
@@ -591,5 +593,12 @@
       "partyLeave": "Opuszczenie grupy",
       "customJson": "Własny JSON"
     }
+  },
+  "chatFilters": {
+    "npcMessages": {
+      "title": "Wiadomości NPC w chacie",
+      "description": "Wyłącz typy NPC, których wiadomości nie chcesz widzieć w chacie. Wyłączone typy nie pojawiają się w chacie i nie wywołują powiadomień o wzmiankach."
+    },
+    "saveError": "Nie udało się zapisać filtrów chatu."
   }
 }

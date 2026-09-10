@@ -5,6 +5,7 @@ import {
   SETTINGS_DOMAIN_VALUES,
   SETTINGS_SUBSECTION_VALUES,
   LEGACY_SETTINGS_TAB_VALUES,
+  type SettingsPath,
   type SettingsSubsectionValue,
   type SettingsTabValue,
 } from "@/features/settings/constants/settings-tabs";
@@ -231,6 +232,45 @@ const migrateQuickAccessWidth = (state: RawPersistedWindows): void => {
   }
 };
 
+const migrateSettingsTabToPath = (state: RawPersistedWindows): void => {
+  const settings = isObjectRecord(state.settings) ? state.settings : {};
+  const settingsState = isObjectRecord(settings.state) ? settings.state : {};
+  const previousTab = settingsTabSchema.safeParse(settingsState.activeTab);
+  // Version 12 mapped "appearance" to its chat subsection, which version 14
+  // later moved into the chat domain; keep that historical destination.
+  const nextPath: SettingsPath =
+    previousTab.success && previousTab.data === "appearance"
+      ? { domain: "chat", subsection: "chat-appearance" }
+      : resolveSettingsPath(previousTab.success ? previousTab.data : undefined);
+  state.settings = {
+    ...settings,
+    state: {
+      ...settingsState,
+      activeTab: nextPath.domain,
+      activeSubsection: nextPath.subsection,
+    },
+  };
+};
+
+const migrateChatSettingsPath = (state: RawPersistedWindows): void => {
+  const settings = isObjectRecord(state.settings) ? state.settings : {};
+  const settingsState = isObjectRecord(settings.state) ? settings.state : {};
+  if (
+    settingsState.activeTab !== "appearance" ||
+    settingsState.activeSubsection !== "chat"
+  ) {
+    return;
+  }
+  state.settings = {
+    ...settings,
+    state: {
+      ...settingsState,
+      activeTab: "chat",
+      activeSubsection: "chat-appearance",
+    },
+  };
+};
+
 export const migrateWindowsState = (
   persisted: unknown,
   version: number,
@@ -260,23 +300,9 @@ export const migrateWindowsState = (
     state.windowFocusHistory = [];
   }
   if (version < 11) migrateQuickAccessWidth(state);
-  if (version < 12) {
-    const settings = isObjectRecord(state.settings) ? state.settings : {};
-    const settingsState = isObjectRecord(settings.state) ? settings.state : {};
-    const previousTab = settingsTabSchema.safeParse(settingsState.activeTab);
-    const nextPath = resolveSettingsPath(
-      previousTab.success ? previousTab.data : undefined,
-    );
-    state.settings = {
-      ...settings,
-      state: {
-        ...settingsState,
-        activeTab: nextPath.domain,
-        activeSubsection: nextPath.subsection,
-      },
-    };
-  }
+  if (version < 12) migrateSettingsTabToPath(state);
   if (version < 13) delete state["event-mode"];
+  if (version < 14) migrateChatSettingsPath(state);
   return state;
 };
 
@@ -806,7 +832,7 @@ export const useWindowsStore = create<WindowsState>()(
       storage: createJSONStorage(() =>
         createDeduplicatingStateStorage(localStorage),
       ),
-      version: 13,
+      version: 14,
       migrate: migrateWindowsState,
       merge: mergePersistedWindows,
     },

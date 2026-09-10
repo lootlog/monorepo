@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BattlePanelSettingsTab } from "@/features/settings/components/battle-panel/battle-panel-settings-tab";
 import { CatchingSettings } from "@/features/settings/components/catching/catching-settings";
 import { ChatAppearanceSettingsForm } from "@/features/settings/components/chat/chat-appearance-settings";
+import { ChatFiltersSettings } from "@/features/settings/components/chat/chat-filters-settings";
 import { DebugTab } from "@/features/settings/components/debug/debug-tab";
 import { DetectorSettingsTab } from "@/features/settings/components/detector/detector-settings-tab";
 import { GeneralSettingsTab } from "@/features/settings/components/general/general-settings-tab";
@@ -39,6 +40,7 @@ import {
   Database,
   Info,
   Keyboard,
+  MessageSquare,
   Palette,
   Search,
   Server,
@@ -54,6 +56,7 @@ const ICONS = {
   settings: Settings,
   server: Server,
   palette: Palette,
+  messageSquare: MessageSquare,
   clock: Clock,
   database: Database,
   bell: Bell,
@@ -65,48 +68,30 @@ const ICONS = {
 
 const COMPACT_WIDTH = 600;
 
-const getSettingsContent = (subsection: SettingsSubsectionValue): ReactNode => {
-  switch (subsection) {
-    case "visibility":
-      return <ServerVisibilitySettingsTab />;
-    case "behavior":
-      return <GeneralSettingsTab />;
-    case "chat":
-      return <ChatAppearanceSettingsForm />;
-    case "npc-colors":
-      return <NpcColorsSettings />;
-    case "timer-appearance":
-      return <TimersSettingsAppearance />;
-    case "timer-colors":
-      return <TimersSettingsColors />;
-    case "timer-behavior":
-      return <TimersSettingsGeneral />;
-    case "hidden-timers":
-      return <HiddenTimersTab />;
-    case "catching":
-      return <CatchingSettings />;
-    case "detector":
-      return <DetectorSettingsTab />;
-    case "battle-panel":
-      return <BattlePanelSettingsTab />;
-    case "notification-rules":
-      return <NotificationsSettingsTab />;
-    case "notification-mutes":
-      return <NotificationMutesSettingsTab />;
-    case "sounds":
-      return <SoundsSettingsTab />;
-    case "hotkeys":
-      return <HotkeysSettingsTab />;
-    case "logs":
-      return <LogsSettingsTab />;
-    case "debug":
-      return <DebugTab />;
-    case "build":
-      return <InformationSettingsTab />;
-    default:
-      return <GeneralSettingsTab />;
-  }
-};
+const SETTINGS_CONTENT = {
+  visibility: () => <ServerVisibilitySettingsTab />,
+  behavior: () => <GeneralSettingsTab />,
+  "chat-appearance": () => <ChatAppearanceSettingsForm />,
+  "chat-filters": () => <ChatFiltersSettings />,
+  "npc-colors": () => <NpcColorsSettings />,
+  "timer-appearance": () => <TimersSettingsAppearance />,
+  "timer-colors": () => <TimersSettingsColors />,
+  "timer-behavior": () => <TimersSettingsGeneral />,
+  "hidden-timers": () => <HiddenTimersTab />,
+  catching: () => <CatchingSettings />,
+  detector: () => <DetectorSettingsTab />,
+  "battle-panel": () => <BattlePanelSettingsTab />,
+  "notification-rules": () => <NotificationsSettingsTab />,
+  "notification-mutes": () => <NotificationMutesSettingsTab />,
+  sounds: () => <SoundsSettingsTab />,
+  hotkeys: () => <HotkeysSettingsTab />,
+  logs: () => <LogsSettingsTab />,
+  debug: () => <DebugTab />,
+  build: () => <InformationSettingsTab />,
+} satisfies Record<SettingsSubsectionValue, () => ReactNode>;
+
+const getSettingsContent = (subsection: SettingsSubsectionValue): ReactNode =>
+  SETTINGS_CONTENT[subsection]();
 
 export const SettingsTabs = () => {
   const { t } = useTranslation();

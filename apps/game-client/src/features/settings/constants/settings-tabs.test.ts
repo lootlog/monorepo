@@ -16,6 +16,17 @@ describe("resolveSettingsPath", () => {
     });
   });
 
+  it("opens appearance on NPC colors and chat on chat appearance", () => {
+    expect(resolveSettingsPath("appearance")).toEqual({
+      domain: "appearance",
+      subsection: "npc-colors",
+    });
+    expect(resolveSettingsPath("chat")).toEqual({
+      domain: "chat",
+      subsection: "chat-appearance",
+    });
+  });
+
   it("migrates the previous notifications and sounds path", () => {
     expect(resolveSettingsPath("notifications", "sounds")).toEqual({
       domain: "sounds",

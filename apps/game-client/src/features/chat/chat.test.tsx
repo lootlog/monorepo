@@ -32,7 +32,10 @@ describe("Chat", () => {
     );
     expect(
       harness.requests.filter(
-        (path) => !path.endsWith("/get-session") && path !== "/sound-settings",
+        (path) =>
+          !path.endsWith("/get-session") &&
+          path !== "/sound-settings" &&
+          path !== "/preferences",
       ),
     ).toEqual([]);
     expect(container).toBeEmptyDOMElement();

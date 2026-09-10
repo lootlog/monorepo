@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { NpcTypeEnum } from "@lootlog/schema/npc-type";
 import { MessageType } from "@/api/chat.api";
 import { CHAT_MESSAGE_LIMIT } from "@lootlog/schema/chat";
 import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/client/main";
@@ -238,6 +239,54 @@ describe("chat helpers", () => {
         "npc",
       ).map((message) => message.id),
     ).toEqual(["message-3"]);
+  });
+
+  it("hides NPC messages whose resolved rank is filtered out", () => {
+    const titanMessage = makeChatMessage({
+      id: "titan",
+      type: MessageType.NPC,
+      npc: {
+        id: 10,
+        name: "Titan",
+        icon: "npc.png",
+        location: "Cave",
+        lvl: 300,
+        prof: "w",
+        type: 3,
+        wt: 100,
+      },
+    });
+    const elite2Message = makeChatMessage({
+      id: "elite2",
+      type: MessageType.NPC,
+      timestamp: "2026-01-01T10:00:30.000Z",
+      npc: {
+        id: 11,
+        name: "Elite",
+        icon: "npc.png",
+        location: "Cave",
+        lvl: 50,
+        prof: "m",
+        type: 2,
+        wt: 25,
+      },
+    });
+    const messages = [makeChatMessage(), titanMessage, elite2Message];
+    const hidden = new Set<NpcTypeEnum>(["TITAN"]);
+
+    expect(
+      filterChatMessages(messages, "all", hidden).map((message) => message.id),
+    ).toEqual(["message-1", "elite2"]);
+    expect(
+      filterChatMessages(messages, "reports", hidden).map(
+        (message) => message.id,
+      ),
+    ).toEqual(["elite2"]);
+    expect(
+      filterChatMessages(messages, "all", new Set()).map(
+        (message) => message.id,
+      ),
+    ).toEqual(["message-1", "titan", "elite2"]);
   });
 
   it("groups identical NPC bursts within a one-minute window", () => {

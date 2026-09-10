@@ -75,6 +75,7 @@
     "@vitejs/plugin-react": "catalog:",
     "@vitest/ui": "^4.1.11",
     "happy-dom": "^20.11.12",
+    "nanostores": "catalog:",
     "oxc-transform-react": "^0.149.0",
     "postcss-load-config": "catalog:",
     "rollup-plugin-visualizer": "^7.1.1",

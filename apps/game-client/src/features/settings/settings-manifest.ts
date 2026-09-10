@@ -8,6 +8,7 @@ export type SettingsIconName =
   | "settings"
   | "server"
   | "palette"
+  | "messageSquare"
   | "clock"
   | "database"
   | "bell"
@@ -104,61 +105,6 @@ export const SETTINGS_MANIFEST: SettingsDomainManifestItem[] = [
     icon: "palette",
     subsections: [
       {
-        id: "chat",
-        labelKey: "settings.subsections.chat",
-        controls: [
-          {
-            id: "chat-preset",
-            labelKey: "settings.chat.preset.label",
-            aliases: ["czytelny", "kompaktowy"],
-            settingKeys: [
-              "appearance.chat.npcLayout",
-              "appearance.chat.fontScalePercent",
-              "appearance.chat.messageGapPx",
-              "appearance.chat.showTimestamp",
-              "appearance.chat.showGuildLabel",
-              "appearance.chat.showNpcAvatar",
-              "appearance.chat.showNpcLevel",
-              "appearance.chat.showNpcLocationAndCoordinates",
-            ],
-          },
-          {
-            id: "chat-npc-layout",
-            labelKey: "settings.chat.npcLayout.label",
-            descriptionKey: "settings.chat.npcLayout.description",
-            settingKeys: ["appearance.chat.npcLayout"],
-            help: {
-              recommendationKey: "settings.chat.npcLayout.recommendation",
-              exampleKey: "settings.chat.npcLayout.example",
-            },
-          },
-          {
-            id: "chat-font-scale",
-            labelKey: "settings.chat.fontScale.label",
-            aliases: ["rozmiar tekstu", "czcionka"],
-            settingKeys: ["appearance.chat.fontScalePercent"],
-          },
-          {
-            id: "chat-message-gap",
-            labelKey: "settings.chat.messageGap.label",
-            aliases: ["odstęp", "gap", "margines"],
-            settingKeys: ["appearance.chat.messageGapPx"],
-          },
-          {
-            id: "chat-metadata",
-            labelKey: "settings.chat.metadata.title",
-            aliases: ["avatar", "gildia", "poziom", "lokacja", "koordynaty"],
-            settingKeys: [
-              "appearance.chat.showTimestamp",
-              "appearance.chat.showGuildLabel",
-              "appearance.chat.showNpcAvatar",
-              "appearance.chat.showNpcLevel",
-              "appearance.chat.showNpcLocationAndCoordinates",
-            ],
-          },
-        ],
-      },
-      {
         id: "npc-colors",
         labelKey: "settings.subsections.npcColors",
         controls: [
@@ -222,6 +168,89 @@ export const SETTINGS_MANIFEST: SettingsDomainManifestItem[] = [
               "appearance.timers.overriddenDefaultColors",
               "appearance.timers.hiddenDefaultColors",
             ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "chat",
+    labelKey: "settings.domains.chat",
+    icon: "messageSquare",
+    subsections: [
+      {
+        id: "chat-appearance",
+        labelKey: "settings.subsections.chatAppearance",
+        controls: [
+          {
+            id: "chat-preset",
+            labelKey: "settings.chat.preset.label",
+            aliases: ["czytelny", "kompaktowy"],
+            settingKeys: [
+              "appearance.chat.npcLayout",
+              "appearance.chat.fontScalePercent",
+              "appearance.chat.messageGapPx",
+              "appearance.chat.showTimestamp",
+              "appearance.chat.showGuildLabel",
+              "appearance.chat.showNpcAvatar",
+              "appearance.chat.showNpcLevel",
+              "appearance.chat.showNpcLocationAndCoordinates",
+            ],
+          },
+          {
+            id: "chat-npc-layout",
+            labelKey: "settings.chat.npcLayout.label",
+            descriptionKey: "settings.chat.npcLayout.description",
+            settingKeys: ["appearance.chat.npcLayout"],
+            help: {
+              recommendationKey: "settings.chat.npcLayout.recommendation",
+              exampleKey: "settings.chat.npcLayout.example",
+            },
+          },
+          {
+            id: "chat-font-scale",
+            labelKey: "settings.chat.fontScale.label",
+            aliases: ["rozmiar tekstu", "czcionka"],
+            settingKeys: ["appearance.chat.fontScalePercent"],
+          },
+          {
+            id: "chat-message-gap",
+            labelKey: "settings.chat.messageGap.label",
+            aliases: ["odstęp", "gap", "margines"],
+            settingKeys: ["appearance.chat.messageGapPx"],
+          },
+          {
+            id: "chat-metadata",
+            labelKey: "settings.chat.metadata.title",
+            aliases: ["avatar", "gildia", "poziom", "lokacja", "koordynaty"],
+            settingKeys: [
+              "appearance.chat.showTimestamp",
+              "appearance.chat.showGuildLabel",
+              "appearance.chat.showNpcAvatar",
+              "appearance.chat.showNpcLevel",
+              "appearance.chat.showNpcLocationAndCoordinates",
+            ],
+          },
+        ],
+      },
+      {
+        id: "chat-filters",
+        labelKey: "settings.subsections.chatFilters",
+        controls: [
+          {
+            id: "chat-npc-message-types",
+            labelKey: "settings.chatFilters.npcMessages.title",
+            descriptionKey: "settings.chatFilters.npcMessages.description",
+            aliases: [
+              "ukryj",
+              "wyłącz",
+              "elita",
+              "heros",
+              "kolos",
+              "tytan",
+              "filtr",
+            ],
+            settingKeys: ["chat.hiddenNpcTypes"],
           },
         ],
       },

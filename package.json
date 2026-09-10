@@ -58,6 +58,7 @@
       "drizzle-orm": "1.0.0-rc.4",
       "effect": "4.0.0-rc.112",
       "lexical": "0.48.0",
+      "nanostores": "1.5.2",
       "postcss-load-config": "^6.0.1",
       "react": "^19.2.8",
       "react-doctor": "0.9.12",

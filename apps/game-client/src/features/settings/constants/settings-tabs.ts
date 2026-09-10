@@ -2,6 +2,7 @@ export const SETTINGS_DOMAIN_VALUES = [
   "general",
   "servers",
   "appearance",
+  "chat",
   "timers",
   "game-data",
   "notifications",
@@ -32,7 +33,8 @@ export type SettingsTabValue = SettingsDomainValue | LegacySettingsTabValue;
 export const SETTINGS_SUBSECTION_VALUES = [
   "behavior",
   "visibility",
-  "chat",
+  "chat-appearance",
+  "chat-filters",
   "npc-colors",
   "timer-appearance",
   "timer-colors",
@@ -66,7 +68,8 @@ const DEFAULT_SETTINGS_PATH: SettingsPath = {
 const SETTINGS_PATHS: Record<SettingsTabValue, SettingsPath> = {
   general: DEFAULT_SETTINGS_PATH,
   servers: { domain: "servers", subsection: "visibility" },
-  appearance: { domain: "appearance", subsection: "chat" },
+  appearance: { domain: "appearance", subsection: "npc-colors" },
+  chat: { domain: "chat", subsection: "chat-appearance" },
   timers: { domain: "timers", subsection: "timer-behavior" },
   "game-data": { domain: "game-data", subsection: "catching" },
   notifications: {
