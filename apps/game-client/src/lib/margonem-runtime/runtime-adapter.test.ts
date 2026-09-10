@@ -39,7 +39,7 @@ const hero = {
   y: 8,
 };
 
-const map = { id: 7, name: "Test map", visibility: 21 };
+const map = { id: 7, name: "Test map", visibility: 21, pvp: 2 };
 
 afterEach(() => {
   vi.unstubAllGlobals();

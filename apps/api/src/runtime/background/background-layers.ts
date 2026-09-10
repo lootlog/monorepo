@@ -1,3 +1,4 @@
+import { makeGroupFightCleanup } from "#src/group-fights/group-fight-retention";
 import { makeGuildKillActivityCleanup } from "#src/kills/guild-kill-activity";
 import { Effect, FiberSet, Layer, Schedule } from "effect";
 import {
@@ -352,6 +353,14 @@ export const ScheduledJobs = Layer.effectDiscard(
         ),
       ),
       "15 * * * *",
+    );
+    yield* forkCronTask(
+      makeGroupFightCleanup(database)().pipe(
+        Effect.catch((error) =>
+          Effect.logError("Group fight cleanup failed", error),
+        ),
+      ),
+      "30 * * * *",
     );
     yield* forkCronTask(cleanupTimers, "0 3 * * *");
     yield* forkCronTask(cleanupReservations, "0 4 * * *");

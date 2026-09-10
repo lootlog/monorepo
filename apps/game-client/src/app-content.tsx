@@ -1,4 +1,5 @@
 import { AddTimer } from "@/features/timers/add-timer";
+import { useGroupFightSettings } from "@/hooks/use-group-fight-settings";
 import { AnimationEffectsRootClass } from "@/components/animation-effects-root-class";
 import { BackendPreferencesWarning } from "@/features/backend-preferences-warning/backend-preferences-warning";
 import { CatchingWhitelistWarning } from "@/features/catching-whitelist-warning/catching-whitelist-warning";
@@ -31,6 +32,7 @@ import { useTimerSettingsSync } from "@/hooks/use-timer-settings-sync";
 import { useSelectedLootlogGuildInitialization } from "@/hooks/use-selected-lootlog-guild";
 
 export const AppContent = () => {
+  useGroupFightSettings();
   useGameEventHandlers();
   useInit();
   useSelectedLootlogGuildInitialization();

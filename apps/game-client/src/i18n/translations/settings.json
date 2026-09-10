@@ -1,4 +1,12 @@
 {
+  "groupFights": {
+    "title": "Ustawki",
+    "description": "Ranking walk grupowych PvP na czerwonych mapach elit II i tytanów.",
+    "enabled": "Zbieraj ustawki na tej postaci",
+    "collectionDescription": "Wysyłaj walki grupowe do organizacji wybranych w ustawieniach zbierania. Działa niezależnie od panelu walk. Administrator lub właściciel organizacji wybiera przyjmowane składy: domyślnie co najmniej 8 na 8, opcjonalnie także nierówne walki, np. 10 na 1.",
+    "saveError": "Nie udało się zapisać ustawienia ustawek.",
+    "loadError": "Nie udało się pobrać ustawień. Zbieranie ustawek jest wstrzymane."
+  },
   "window": {
     "title": "Ustawienia"
   },
@@ -517,6 +525,7 @@
     "actionTypes": {
       "create_kill": "Dodanie zabicia",
       "create_battle": "Dodanie walki",
+      "create_group_fight": "Dodanie ustawki",
       "create_loot": "Dodanie łupu",
       "update_loot": "Aktualizacja łupu",
       "create_timer": "Dodanie timera",

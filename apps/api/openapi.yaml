@@ -1656,6 +1656,8 @@ paths:
                     - LOOTLOG_EVENTS_WRITE
                     - LOOTLOG_DOCS_READ
                     - LOOTLOG_DOCS_WRITE
+                    - LOOTLOG_GROUP_FIGHTS_READ
+                    - LOOTLOG_GROUP_FIGHTS_WRITE
         "401":
           description: Error
           content:
@@ -13675,6 +13677,342 @@ paths:
                 additionalProperties: false
       description: Retrieves kill statistics for a specific member including overview and list of killed NPCs.
       summary: Get kill statistics for a specific guild member
+  /group-fights:
+    post:
+      tags:
+        - group-fights
+      operationId: GroupFightsController_createGroupFight
+      parameters: []
+      security:
+        - bearer: []
+      responses:
+        "201":
+          description: CreateGroupFightResponseDto_Output
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateGroupFightResponseDto_Output"
+        "400":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "401":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "403":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Records a players-versus-players group fight observed by the game client. Guilds are auto-detected from the character catching configuration and each guild applies its own collection mode.
+      summary: Record a group PvP fight
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGroupFightDto"
+        required: true
+  /guilds/{guildId}/group-fights/ranking:
+    get:
+      tags:
+        - group-fights
+      operationId: GroupFightsController_getGuildGroupFightRanking
+      parameters:
+        - name: guildId
+          in: path
+          schema:
+            type: string
+            minLength: 1
+          required: true
+        - name: world
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: period
+          in: query
+          schema:
+            $ref: "#/components/schemas/GroupFightPeriod"
+          required: false
+        - name: npcType
+          in: query
+          schema:
+            type: string
+            enum:
+              - ELITE2
+              - TITAN
+          required: false
+        - name: npcName
+          in: query
+          schema:
+            type: string
+            maxLength: 255
+          required: false
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: GuildGroupFightRankingResponseDto_Output
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuildGroupFightRankingResponseDto_Output"
+        "401":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Aggregates wins, losses, draws and time spent in group fights per organization member.
+      summary: Get the guild group fight ranking
+  /guilds/{guildId}/group-fights:
+    get:
+      tags:
+        - group-fights
+      operationId: GroupFightsController_getGuildGroupFights
+      parameters:
+        - name: guildId
+          in: path
+          schema:
+            type: string
+            minLength: 1
+          required: true
+        - name: world
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: period
+          in: query
+          schema:
+            $ref: "#/components/schemas/GroupFightPeriod"
+          required: false
+        - name: npcType
+          in: query
+          schema:
+            type: string
+            enum:
+              - ELITE2
+              - TITAN
+          required: false
+        - name: npcName
+          in: query
+          schema:
+            type: string
+            maxLength: 255
+          required: false
+        - name: day
+          in: query
+          schema:
+            type: string
+            pattern: ^\d{4}-\d{2}-\d{2}$
+          required: false
+        - name: cursor
+          in: query
+          schema:
+            type: string
+            pattern: ^[+-]?\d*\.?\d+(?:[Ee][+-]?\d+)?$
+          required: false
+        - name: limit
+          in: query
+          schema:
+            type: string
+            pattern: ^[+-]?\d*\.?\d+(?:[Ee][+-]?\d+)?$
+          required: false
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: GuildGroupFightsResponseDto_Output
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuildGroupFightsResponseDto_Output"
+        "401":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      summary: List guild group fights
+  /guilds/{guildId}/group-fights/{fightId}:
+    get:
+      tags:
+        - group-fights
+      operationId: GroupFightsController_getGuildGroupFight
+      parameters:
+        - name: guildId
+          in: path
+          schema:
+            type: string
+            minLength: 1
+          required: true
+        - name: fightId
+          in: path
+          schema:
+            type: string
+            minLength: 1
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: GroupFightDetailResponseDto_Output
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupFightDetailResponseDto_Output"
+        "401":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      summary: Get a single guild group fight
   /guilds/{guildId}/stats-card/refresh:
     post:
       tags:
@@ -15704,6 +16042,8 @@ components:
                     - LOOTLOG_EVENTS_WRITE
                     - LOOTLOG_DOCS_READ
                     - LOOTLOG_DOCS_WRITE
+                    - LOOTLOG_GROUP_FIGHTS_READ
+                    - LOOTLOG_GROUP_FIGHTS_WRITE
               lvlRangeFrom:
                 nullable: true
                 type: number
@@ -15841,6 +16181,8 @@ components:
                     - LOOTLOG_EVENTS_WRITE
                     - LOOTLOG_DOCS_READ
                     - LOOTLOG_DOCS_WRITE
+                    - LOOTLOG_GROUP_FIGHTS_READ
+                    - LOOTLOG_GROUP_FIGHTS_WRITE
               lvlRangeFrom:
                 nullable: true
                 type: number
@@ -16111,6 +16453,10 @@ components:
           type: number
         reservationActiveLimitPerSpot:
           type: number
+        groupFightsEnabled:
+          type: boolean
+        groupFightsIncludeIncomplete:
+          type: boolean
       required:
         - id
         - name
@@ -16180,6 +16526,8 @@ components:
                     - LOOTLOG_EVENTS_WRITE
                     - LOOTLOG_DOCS_READ
                     - LOOTLOG_DOCS_WRITE
+                    - LOOTLOG_GROUP_FIGHTS_READ
+                    - LOOTLOG_GROUP_FIGHTS_WRITE
             required:
               - id
               - lvlRangeFrom
@@ -16231,6 +16579,10 @@ components:
           type: number
         reservationActiveLimitPerSpot:
           type: number
+        groupFightsEnabled:
+          type: boolean
+        groupFightsIncludeIncomplete:
+          type: boolean
       required:
         - id
         - name
@@ -16241,6 +16593,8 @@ components:
         - reservationTimeGranularityMinutes
         - reservationMaxAdvanceDays
         - reservationActiveLimitPerSpot
+        - groupFightsEnabled
+        - groupFightsIncludeIncomplete
       additionalProperties: false
     UpdateGuildConfigDto:
       type: object
@@ -16250,6 +16604,10 @@ components:
           type: string
           minLength: 1
         publicStatsCardEnabled:
+          type: boolean
+        groupFightsEnabled:
+          type: boolean
+        groupFightsIncludeIncomplete:
           type: boolean
         reservationMaxDurationMinutes:
           type: integer
@@ -16406,6 +16764,8 @@ components:
                     - LOOTLOG_EVENTS_WRITE
                     - LOOTLOG_DOCS_READ
                     - LOOTLOG_DOCS_WRITE
+                    - LOOTLOG_GROUP_FIGHTS_READ
+                    - LOOTLOG_GROUP_FIGHTS_WRITE
             required:
               - id
               - lvlRangeFrom
@@ -16469,6 +16829,8 @@ components:
               - LOOTLOG_EVENTS_WRITE
               - LOOTLOG_DOCS_READ
               - LOOTLOG_DOCS_WRITE
+              - LOOTLOG_GROUP_FIGHTS_READ
+              - LOOTLOG_GROUP_FIGHTS_WRITE
         lvlRangeFrom:
           nullable: true
           type: number
@@ -16523,6 +16885,8 @@ components:
               - LOOTLOG_EVENTS_WRITE
               - LOOTLOG_DOCS_READ
               - LOOTLOG_DOCS_WRITE
+              - LOOTLOG_GROUP_FIGHTS_READ
+              - LOOTLOG_GROUP_FIGHTS_WRITE
         lvlRangeFrom:
           type: number
         lvlRangeTo:
@@ -16677,6 +17041,8 @@ components:
                         - LOOTLOG_EVENTS_WRITE
                         - LOOTLOG_DOCS_READ
                         - LOOTLOG_DOCS_WRITE
+                        - LOOTLOG_GROUP_FIGHTS_READ
+                        - LOOTLOG_GROUP_FIGHTS_WRITE
                   lvlRangeFrom:
                     nullable: true
                     type: number
@@ -16930,6 +17296,8 @@ components:
                         - LOOTLOG_EVENTS_WRITE
                         - LOOTLOG_DOCS_READ
                         - LOOTLOG_DOCS_WRITE
+                        - LOOTLOG_GROUP_FIGHTS_READ
+                        - LOOTLOG_GROUP_FIGHTS_WRITE
                   lvlRangeFrom:
                     nullable: true
                     type: number
@@ -28111,6 +28479,654 @@ components:
         - npcs
         - pagination
       additionalProperties: false
+    GroupFightTeam:
+      type: number
+      enum:
+        - 1
+        - 2
+    GroupFightParticipantDto:
+      type: object
+      properties:
+        characterId:
+          type: string
+          minLength: 1
+          maxLength: 64
+        accountId:
+          nullable: true
+          type: string
+          minLength: 1
+          maxLength: 64
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        lvl:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        prof:
+          type: string
+          maxLength: 16
+        icon:
+          type: string
+          maxLength: 2048
+        team:
+          $ref: "#/components/schemas/GroupFightTeam"
+        joinedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        fled:
+          type: boolean
+      required:
+        - characterId
+        - name
+        - lvl
+        - prof
+        - icon
+        - team
+        - joinedAt
+        - fled
+      additionalProperties: false
+    CreateGroupFightDto:
+      type: object
+      properties:
+        world:
+          type: string
+          minLength: 1
+          maxLength: 64
+        accountId:
+          type: string
+          minLength: 1
+          maxLength: 64
+        characterId:
+          type: string
+          minLength: 1
+          maxLength: 64
+        submissionKey:
+          type: string
+          minLength: 1
+          maxLength: 128
+        map:
+          type: object
+          properties:
+            id:
+              type: integer
+              minimum: 0
+              maximum: 9007199254740991
+            pvp:
+              type: number
+              enum:
+                - 2
+            name:
+              type: string
+              minLength: 1
+              maxLength: 255
+          required:
+            - id
+            - pvp
+            - name
+          additionalProperties: false
+        qualification:
+          type: object
+          properties:
+            source:
+              type: string
+              enum:
+                - CATALOG
+                - NPC_OBSERVED
+            npc:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  minimum: -9007199254740991
+                  maximum: 9007199254740991
+                name:
+                  type: string
+                  maxLength: 255
+                wt:
+                  type: integer
+                  minimum: -9007199254740991
+                  maximum: 9007199254740991
+                lvl:
+                  type: integer
+                  minimum: -9007199254740991
+                  maximum: 9007199254740991
+                icon:
+                  type: string
+                  maxLength: 255
+              required:
+                - id
+                - name
+                - wt
+              additionalProperties: false
+          required:
+            - source
+          additionalProperties: false
+        startedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        endedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        myTeam:
+          $ref: "#/components/schemas/GroupFightTeam"
+        winningTeam:
+          nullable: true
+          $ref: "#/components/schemas/GroupFightTeam"
+        participants:
+          type: array
+          items:
+            $ref: "#/components/schemas/GroupFightParticipantDto"
+          minItems: 3
+          maxItems: 20
+        battleId:
+          nullable: true
+          type: string
+          minLength: 1
+          maxLength: 128
+      required:
+        - world
+        - accountId
+        - characterId
+        - submissionKey
+        - map
+        - qualification
+        - startedAt
+        - endedAt
+        - myTeam
+        - winningTeam
+        - participants
+      additionalProperties: false
+    CreateGroupFightResponseDto_Output:
+      type: object
+      properties:
+        submittedGuilds:
+          type: array
+          items:
+            type: object
+            properties:
+              guildId:
+                type: string
+              groupFightId:
+                type: number
+              deduplicated:
+                type: boolean
+            required:
+              - guildId
+              - groupFightId
+              - deduplicated
+            additionalProperties: false
+        rejectedGuilds:
+          type: array
+          items:
+            type: object
+            properties:
+              guildId:
+                type: string
+              reason:
+                type: string
+                enum:
+                  - GROUP_FIGHTS_DISABLED
+                  - INCOMPLETE_TEAMS
+                  - MISSING_MEMBER
+            required:
+              - guildId
+              - reason
+            additionalProperties: false
+      required:
+        - submittedGuilds
+        - rejectedGuilds
+      additionalProperties: false
+    GroupFightPeriod:
+      type: string
+      enum:
+        - today
+        - week
+        - month
+        - all
+        - 24h
+        - 3d
+        - 7d
+        - 14d
+        - 30d
+        - 90d
+    GuildGroupFightRankingResponseDto_Output:
+      type: object
+      properties:
+        npcs:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              npcType:
+                type: string
+                enum:
+                  - ELITE2
+                  - TITAN
+              lvl:
+                nullable: true
+                type: number
+              icon:
+                nullable: true
+                type: string
+              mapId:
+                nullable: true
+                type: number
+              mapName:
+                type: string
+              totalFights:
+                type: number
+              wins:
+                type: number
+              losses:
+                type: number
+              draws:
+                type: number
+              flees:
+                type: number
+              totalDurationSeconds:
+                type: number
+            required:
+              - name
+              - npcType
+              - lvl
+              - icon
+              - mapId
+              - mapName
+              - totalFights
+              - wins
+              - losses
+              - draws
+              - flees
+              - totalDurationSeconds
+            additionalProperties: false
+        summary:
+          type: object
+          properties:
+            totalFights:
+              type: number
+            wins:
+              type: number
+            losses:
+              type: number
+            draws:
+              type: number
+            flees:
+              type: number
+            fullTeamFights:
+              type: number
+            totalDurationSeconds:
+              type: number
+          required:
+            - totalFights
+            - wins
+            - losses
+            - draws
+            - flees
+            - fullTeamFights
+            - totalDurationSeconds
+          additionalProperties: false
+        ranking:
+          type: array
+          items:
+            type: object
+            properties:
+              memberId:
+                type: number
+              memberUserId:
+                type: string
+              memberDiscordId:
+                type: string
+              memberName:
+                type: string
+              memberAvatar:
+                nullable: true
+                type: string
+              fights:
+                type: number
+              wins:
+                type: number
+              losses:
+                type: number
+              draws:
+                type: number
+              flees:
+                type: number
+              winRate:
+                type: number
+              totalSeconds:
+                type: number
+              lastFightAt:
+                nullable: true
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              characters:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    characterId:
+                      type: string
+                    name:
+                      type: string
+                    prof:
+                      type: string
+                    lvl:
+                      type: number
+                    icon:
+                      type: string
+                    world:
+                      type: string
+                    fights:
+                      type: number
+                    wins:
+                      type: number
+                    losses:
+                      type: number
+                    draws:
+                      type: number
+                    flees:
+                      type: number
+                    totalSeconds:
+                      type: number
+                  required:
+                    - characterId
+                    - name
+                    - prof
+                    - lvl
+                    - icon
+                    - world
+                    - fights
+                    - wins
+                    - losses
+                    - draws
+                    - flees
+                    - totalSeconds
+                  additionalProperties: false
+            required:
+              - memberId
+              - memberUserId
+              - memberDiscordId
+              - memberName
+              - memberAvatar
+              - fights
+              - wins
+              - losses
+              - draws
+              - flees
+              - winRate
+              - totalSeconds
+              - lastFightAt
+              - characters
+            additionalProperties: false
+      required:
+        - npcs
+        - summary
+        - ranking
+      additionalProperties: false
+    GroupFightSummaryResponseDto_Output:
+      type: object
+      properties:
+        id:
+          type: number
+        world:
+          type: string
+        mapId:
+          nullable: true
+          type: number
+        mapName:
+          type: string
+        startedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        endedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        durationSeconds:
+          type: number
+        teamOneSize:
+          type: number
+        teamTwoSize:
+          type: number
+        outcome:
+          type: string
+          enum:
+            - TEAM_WON
+            - NO_WINNER
+        winningTeam:
+          nullable: true
+          $ref: "#/components/schemas/GroupFightTeam"
+        ourTeam:
+          $ref: "#/components/schemas/GroupFightTeam"
+        result:
+          type: string
+          enum:
+            - WIN
+            - LOSS
+            - DRAW
+        hasFlee:
+          type: boolean
+        memberCount:
+          type: number
+        battleIds:
+          type: array
+          items:
+            type: string
+        roster:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              lvl:
+                type: number
+              prof:
+                type: string
+              team:
+                $ref: "#/components/schemas/GroupFightTeam"
+              fled:
+                type: boolean
+            required:
+              - name
+              - lvl
+              - prof
+              - team
+              - fled
+            additionalProperties: false
+      required:
+        - id
+        - world
+        - mapId
+        - mapName
+        - startedAt
+        - endedAt
+        - durationSeconds
+        - teamOneSize
+        - teamTwoSize
+        - outcome
+        - winningTeam
+        - ourTeam
+        - result
+        - hasFlee
+        - memberCount
+        - battleIds
+        - roster
+      additionalProperties: false
+    GuildGroupFightsResponseDto_Output:
+      type: object
+      properties:
+        fights:
+          type: array
+          items:
+            $ref: "#/components/schemas/GroupFightSummaryResponseDto_Output"
+        pagination:
+          type: object
+          properties:
+            total:
+              type: number
+            cursor:
+              type: number
+            limit:
+              type: number
+            hasNext:
+              type: boolean
+          required:
+            - total
+            - cursor
+            - limit
+            - hasNext
+          additionalProperties: false
+      required:
+        - fights
+        - pagination
+      additionalProperties: false
+    GroupFightParticipantResponseDto_Output:
+      type: object
+      properties:
+        characterId:
+          type: string
+        accountId:
+          nullable: true
+          type: string
+        name:
+          type: string
+        prof:
+          type: string
+        lvl:
+          type: number
+        icon:
+          type: string
+        team:
+          $ref: "#/components/schemas/GroupFightTeam"
+        result:
+          type: string
+          enum:
+            - WIN
+            - LOSS
+            - DRAW
+            - FLEE
+        participationSeconds:
+          type: number
+        fled:
+          type: boolean
+        member:
+          nullable: true
+          type: object
+          properties:
+            memberId:
+              type: number
+            memberUserId:
+              type: string
+            memberDiscordId:
+              type: string
+            memberName:
+              type: string
+            memberAvatar:
+              nullable: true
+              type: string
+          required:
+            - memberId
+            - memberUserId
+            - memberDiscordId
+            - memberName
+            - memberAvatar
+          additionalProperties: false
+      required:
+        - characterId
+        - accountId
+        - name
+        - prof
+        - lvl
+        - icon
+        - team
+        - result
+        - participationSeconds
+        - fled
+        - member
+      additionalProperties: false
+    GroupFightDetailResponseDto_Output:
+      type: object
+      properties:
+        id:
+          type: number
+        world:
+          type: string
+        mapId:
+          nullable: true
+          type: number
+        mapName:
+          type: string
+        startedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        endedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        durationSeconds:
+          type: number
+        teamOneSize:
+          type: number
+        teamTwoSize:
+          type: number
+        outcome:
+          type: string
+          enum:
+            - TEAM_WON
+            - NO_WINNER
+        winningTeam:
+          nullable: true
+          $ref: "#/components/schemas/GroupFightTeam"
+        ourTeam:
+          $ref: "#/components/schemas/GroupFightTeam"
+        result:
+          type: string
+          enum:
+            - WIN
+            - LOSS
+            - DRAW
+        hasFlee:
+          type: boolean
+        memberCount:
+          type: number
+        battleIds:
+          type: array
+          items:
+            type: string
+        participants:
+          type: array
+          items:
+            $ref: "#/components/schemas/GroupFightParticipantResponseDto_Output"
+      required:
+        - id
+        - world
+        - mapId
+        - mapName
+        - startedAt
+        - endedAt
+        - durationSeconds
+        - teamOneSize
+        - teamTwoSize
+        - outcome
+        - winningTeam
+        - ourTeam
+        - result
+        - hasFlee
+        - memberCount
+        - battleIds
+        - participants
+      additionalProperties: false
     RefreshStatsCardResponseDto_Output:
       type: object
       properties:
@@ -28586,6 +29602,7 @@ tags:
   - name: maps
   - name: map-templates
   - name: kills
+  - name: group-fights
   - name: guild-stats-card
   - name: public-guild-stats-card
   - name: docs

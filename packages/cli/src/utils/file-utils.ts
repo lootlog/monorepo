@@ -17,7 +17,9 @@ export const discoverEnvFiles = async (
     });
   }
 
-  const appsSampleFiles = await glob(`${rootPath}/apps/**/.env.example`);
+  const appsSampleFiles = await glob(
+    `${rootPath.replaceAll("\\", "/")}/apps/**/.env.example`,
+  );
 
   for (const samplePath of appsSampleFiles) {
     const appDir = path.dirname(samplePath);

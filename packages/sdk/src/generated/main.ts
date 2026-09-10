@@ -672,6 +672,8 @@ export const NullableMemberResponseDtoRolesItemPermissionsItem = {
   LOOTLOG_EVENTS_WRITE: 'LOOTLOG_EVENTS_WRITE',
   LOOTLOG_DOCS_READ: 'LOOTLOG_DOCS_READ',
   LOOTLOG_DOCS_WRITE: 'LOOTLOG_DOCS_WRITE',
+  LOOTLOG_GROUP_FIGHTS_READ: 'LOOTLOG_GROUP_FIGHTS_READ',
+  LOOTLOG_GROUP_FIGHTS_WRITE: 'LOOTLOG_GROUP_FIGHTS_WRITE',
 } as const;
 
 export type NullableMemberResponseDtoRolesItem = {
@@ -808,6 +810,8 @@ export const MemberResponseDtoRolesItemPermissionsItem = {
   LOOTLOG_EVENTS_WRITE: 'LOOTLOG_EVENTS_WRITE',
   LOOTLOG_DOCS_READ: 'LOOTLOG_DOCS_READ',
   LOOTLOG_DOCS_WRITE: 'LOOTLOG_DOCS_WRITE',
+  LOOTLOG_GROUP_FIGHTS_READ: 'LOOTLOG_GROUP_FIGHTS_READ',
+  LOOTLOG_GROUP_FIGHTS_WRITE: 'LOOTLOG_GROUP_FIGHTS_WRITE',
 } as const;
 
 export type MemberResponseDtoRolesItem = {
@@ -957,6 +961,8 @@ export interface UserGuildListResponseDtoOutput {
   reservationTimeGranularityMinutes?: number;
   reservationMaxAdvanceDays?: number;
   reservationActiveLimitPerSpot?: number;
+  groupFightsEnabled?: boolean;
+  groupFightsIncludeIncomplete?: boolean;
 }
 
 export type UserGuildPermissionsDtoOutputGuild = {
@@ -1001,6 +1007,8 @@ export const UserGuildPermissionsDtoOutputRolesItemPermissionsItem = {
   LOOTLOG_EVENTS_WRITE: 'LOOTLOG_EVENTS_WRITE',
   LOOTLOG_DOCS_READ: 'LOOTLOG_DOCS_READ',
   LOOTLOG_DOCS_WRITE: 'LOOTLOG_DOCS_WRITE',
+  LOOTLOG_GROUP_FIGHTS_READ: 'LOOTLOG_GROUP_FIGHTS_READ',
+  LOOTLOG_GROUP_FIGHTS_WRITE: 'LOOTLOG_GROUP_FIGHTS_WRITE',
 } as const;
 
 export type UserGuildPermissionsDtoOutputRolesItem = {
@@ -1036,6 +1044,8 @@ export interface GuildResponseDtoOutput {
   reservationTimeGranularityMinutes: number;
   reservationMaxAdvanceDays: number;
   reservationActiveLimitPerSpot: number;
+  groupFightsEnabled: boolean;
+  groupFightsIncludeIncomplete: boolean;
 }
 
 export type HttpErrorResponse = {[key: string]: unknown} & {
@@ -1050,6 +1060,8 @@ export interface UpdateGuildConfigDto {
      */
   vanityUrl?: string | null;
   publicStatsCardEnabled?: boolean;
+  groupFightsEnabled?: boolean;
+  groupFightsIncludeIncomplete?: boolean;
   /**
      * @minimum 30
      * @maximum 720
@@ -1114,6 +1126,8 @@ export const RoleResponseDtoOutputPermissionsItem = {
   LOOTLOG_EVENTS_WRITE: 'LOOTLOG_EVENTS_WRITE',
   LOOTLOG_DOCS_READ: 'LOOTLOG_DOCS_READ',
   LOOTLOG_DOCS_WRITE: 'LOOTLOG_DOCS_WRITE',
+  LOOTLOG_GROUP_FIGHTS_READ: 'LOOTLOG_GROUP_FIGHTS_READ',
+  LOOTLOG_GROUP_FIGHTS_WRITE: 'LOOTLOG_GROUP_FIGHTS_WRITE',
 } as const;
 
 export interface RoleResponseDtoOutput {
@@ -1168,6 +1182,8 @@ export const UpdateRolePermissionsDtoPermissionsItem = {
   LOOTLOG_EVENTS_WRITE: 'LOOTLOG_EVENTS_WRITE',
   LOOTLOG_DOCS_READ: 'LOOTLOG_DOCS_READ',
   LOOTLOG_DOCS_WRITE: 'LOOTLOG_DOCS_WRITE',
+  LOOTLOG_GROUP_FIGHTS_READ: 'LOOTLOG_GROUP_FIGHTS_READ',
+  LOOTLOG_GROUP_FIGHTS_WRITE: 'LOOTLOG_GROUP_FIGHTS_WRITE',
 } as const;
 
 export interface UpdateRolePermissionsDto {
@@ -1251,6 +1267,8 @@ export const TimerResponseDtoMemberRolesItemPermissionsItem = {
   LOOTLOG_EVENTS_WRITE: 'LOOTLOG_EVENTS_WRITE',
   LOOTLOG_DOCS_READ: 'LOOTLOG_DOCS_READ',
   LOOTLOG_DOCS_WRITE: 'LOOTLOG_DOCS_WRITE',
+  LOOTLOG_GROUP_FIGHTS_READ: 'LOOTLOG_GROUP_FIGHTS_READ',
+  LOOTLOG_GROUP_FIGHTS_WRITE: 'LOOTLOG_GROUP_FIGHTS_WRITE',
 } as const;
 
 export type TimerResponseDtoMemberRolesItem = {
@@ -1440,6 +1458,8 @@ export const TimerHistoryResponseDtoMemberRolesItemPermissionsItem = {
   LOOTLOG_EVENTS_WRITE: 'LOOTLOG_EVENTS_WRITE',
   LOOTLOG_DOCS_READ: 'LOOTLOG_DOCS_READ',
   LOOTLOG_DOCS_WRITE: 'LOOTLOG_DOCS_WRITE',
+  LOOTLOG_GROUP_FIGHTS_READ: 'LOOTLOG_GROUP_FIGHTS_READ',
+  LOOTLOG_GROUP_FIGHTS_WRITE: 'LOOTLOG_GROUP_FIGHTS_WRITE',
 } as const;
 
 export type TimerHistoryResponseDtoMemberRolesItem = {
@@ -9204,6 +9224,8 @@ export const GuildsControllerGetGuildPermissions200Item = {
   LOOTLOG_EVENTS_WRITE: 'LOOTLOG_EVENTS_WRITE',
   LOOTLOG_DOCS_READ: 'LOOTLOG_DOCS_READ',
   LOOTLOG_DOCS_WRITE: 'LOOTLOG_DOCS_WRITE',
+  LOOTLOG_GROUP_FIGHTS_READ: 'LOOTLOG_GROUP_FIGHTS_READ',
+  LOOTLOG_GROUP_FIGHTS_WRITE: 'LOOTLOG_GROUP_FIGHTS_WRITE',
 } as const;
 
 export type GuildsControllerGetGuildPermissions401 = {

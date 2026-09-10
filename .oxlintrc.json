@@ -1394,6 +1394,20 @@
       }
     },
     {
+      "files": ["apps/api/src/group-fights/group-fight-queries.ts"],
+      "rules": {
+        "anti-slop-effect/no-service-constructor-imports": [
+          "error",
+          {
+            "nonServiceImports": [
+              "makeGroupFightMemberLinks",
+              "makeGroupFightRanking"
+            ]
+          }
+        ]
+      }
+    },
+    {
       "files": ["apps/api/src/events/wrapped/event-wrapped.service.ts"],
       "rules": {
         "anti-slop/no-unknown-parameters": [

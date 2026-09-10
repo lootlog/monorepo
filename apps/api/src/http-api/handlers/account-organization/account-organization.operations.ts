@@ -187,6 +187,10 @@ const buildGuildConfigurationUpdate = (
   }
   if (payload.publicStatsCardEnabled !== undefined)
     update.publicStatsCardEnabled = payload.publicStatsCardEnabled;
+  if (payload.groupFightsEnabled !== undefined)
+    update.groupFightsEnabled = payload.groupFightsEnabled;
+  if (payload.groupFightsIncludeIncomplete !== undefined)
+    update.groupFightsIncludeIncomplete = payload.groupFightsIncludeIncomplete;
   if (payload.reservationMaxDurationMinutes !== undefined)
     update.reservationMaxDurationMinutes =
       payload.reservationMaxDurationMinutes;

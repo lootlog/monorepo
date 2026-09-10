@@ -7,6 +7,7 @@ import { GuildsHandlers } from "./guilds/guilds.handlers.js";
 import { HealthHandlers } from "./health/health.handlers.js";
 import { InternalGuildsHandlers } from "./internal/internal.handlers.js";
 import { KillsHandlers } from "./kills/kills.handlers.js";
+import { GroupFightsHandlers } from "./group-fights/group-fights.handlers.js";
 import { LootsHandlers } from "./loots/loots.handlers.js";
 import { LootlogConfigHandlers } from "./lootlog-config/lootlog-config.handlers.js";
 import { MapsHandlers } from "./maps/maps.handlers.js";
@@ -50,6 +51,7 @@ export const LootlogApiHandlers = Layer.mergeAll(
   MapsHandlers,
   MapTemplatesHandlers,
   KillsHandlers,
+  GroupFightsHandlers,
   GuildStatsCardHandlers,
   PublicGuildStatsCardHandlers,
   DocsHandlers,

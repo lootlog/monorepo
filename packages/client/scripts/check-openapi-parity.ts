@@ -471,7 +471,12 @@ const operations = (document: OpenApiDocument): Map<string, JsonValue> => {
 const removePresencePermission = (value: JsonValue): JsonValue => {
   if (isJsonArray(value)) {
     return value
-      .filter((item) => item !== "LOOTLOG_PRESENCE_LOCATION_READ")
+      .filter(
+        (item) =>
+          item !== "LOOTLOG_PRESENCE_LOCATION_READ" &&
+          item !== "LOOTLOG_GROUP_FIGHTS_READ" &&
+          item !== "LOOTLOG_GROUP_FIGHTS_WRITE",
+      )
       .map(removePresencePermission);
   }
   if (isJsonObject(value)) {
@@ -925,6 +930,7 @@ const differencePaths = (
 // Intentional private additions verified against real persistence and authorization tests:
 // activity/src/online/online-repository.integration.test.ts;
 // api/test/kill-analytics.integration.test.ts, user-feed.integration.test.ts and records.operations.test.ts.
+// Group fights: api/test/group-fights.integration.test.ts and http-boundary.e2e-spec.ts.
 const PERSONAL_ANALYTICS_ADDITIONS = new Map<
   string,
   Partial<Record<string, JsonValue>>
@@ -967,6 +973,151 @@ const PERSONAL_ANALYTICS_ADDITIONS = new Map<
       },
     },
     api: {
+      "POST /group-fights": {
+        operationId: "GroupFightsController_createGroupFight",
+        parameters: [],
+        security: [{ bearer: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/CreateGroupFightDto" },
+            },
+          },
+        },
+        responses: {
+          "201": {
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/CreateGroupFightResponseDto_Output",
+                },
+              },
+            },
+          },
+          "400": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/HttpErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+      ...Object.fromEntries(
+        [
+          [
+            "/ranking",
+            "getGuildGroupFightRanking",
+            "GuildGroupFightRankingResponseDto_Output",
+          ],
+          ["", "getGuildGroupFights", "GuildGroupFightsResponseDto_Output"],
+          [
+            "/{fightId}",
+            "getGuildGroupFight",
+            "GroupFightDetailResponseDto_Output",
+          ],
+        ].map(([suffix, method, response]): [string, JsonValue] => [
+          `GET /guilds/{guildId}/group-fights${suffix}`,
+          {
+            operationId: `GroupFightsController_${method}`,
+            security: [{ bearer: [] }],
+            parameters: [
+              {
+                name: "guildId",
+                in: "path",
+                required: true,
+                schema: { type: "string", minLength: 1 },
+              },
+              ...(suffix === "/{fightId}"
+                ? [
+                    {
+                      name: "fightId",
+                      in: "path",
+                      required: true,
+                      schema: { type: "string", minLength: 1 },
+                    },
+                  ]
+                : [
+                    {
+                      name: "world",
+                      in: "query",
+                      required: false,
+                      schema: { type: "string" },
+                    },
+                    {
+                      name: "period",
+                      in: "query",
+                      required: false,
+                      schema: { $ref: "#/components/schemas/GroupFightPeriod" },
+                    },
+                    {
+                      name: "npcType",
+                      in: "query",
+                      required: false,
+                      schema: {
+                        type: "string",
+                        enum: ["ELITE2", "TITAN"],
+                      },
+                    },
+                    {
+                      name: "npcName",
+                      in: "query",
+                      required: false,
+                      schema: { type: "string", maxLength: 255 },
+                    },
+                  ]),
+              ...(suffix === ""
+                ? [
+                    {
+                      name: "day",
+                      in: "query",
+                      required: false,
+                      schema: {
+                        type: "string",
+                        pattern: "^\\d{4}-\\d{2}-\\d{2}$",
+                      },
+                    },
+                  ]
+                : []),
+              ...(suffix === ""
+                ? ["cursor", "limit"].map((name) => ({
+                    name,
+                    in: "query",
+                    required: false,
+                    schema: {
+                      type: "string",
+                      pattern: "^[+-]?\\d*\\.?\\d+(?:[Ee][+-]?\\d+)?$",
+                    },
+                  }))
+                : []),
+            ],
+            responses: {
+              "200": {
+                content: {
+                  "application/json": {
+                    schema: { $ref: `#/components/schemas/${response}` },
+                  },
+                },
+              },
+              ...Object.fromEntries(
+                ["403", "404"].map((status) => [
+                  status,
+                  {
+                    content: {
+                      "application/json": {
+                        schema: {
+                          $ref: "#/components/schemas/HttpErrorResponse",
+                        },
+                      },
+                    },
+                  },
+                ]),
+              ),
+            },
+          },
+        ]),
+      ),
       "GET /users/@me/feed": {
         operationId: "UsersController_getUserFeed",
         parameters: [],
@@ -1058,6 +1209,14 @@ export const assertVerifiedPersonalAddition = (
     JSON.stringify(normalizeOpenApiRepresentation(contract)) !==
     JSON.stringify(normalizeOpenApiRepresentation(expected))
   ) {
+    console.error(
+      "ACTUAL:",
+      JSON.stringify(normalizeOpenApiRepresentation(contract)),
+    );
+    console.error(
+      "EXPECTED:",
+      JSON.stringify(normalizeOpenApiRepresentation(expected)),
+    );
     throw new Error(
       `Verified personal API contract changed: ${service} ${operationKey}`,
     );

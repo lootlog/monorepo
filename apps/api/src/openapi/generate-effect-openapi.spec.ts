@@ -1,12 +1,13 @@
 import { expect, it } from "bun:test";
 import { cpSync } from "node:fs";
-import { cp, mkdir, mkdtemp, rm, symlink } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { cp, mkdir, mkdtemp, rm } from "node:fs/promises";
 import path from "node:path";
 
 it("exports current source contracts without depending on compiled output", async () => {
   const appDirectory = path.resolve(import.meta.dir, "../..");
-  const fixture = await mkdtemp(path.join(tmpdir(), "api-openapi-source-"));
+  const tempRoot = path.join(appDirectory, ".tmp");
+  await mkdir(tempRoot, { recursive: true });
+  const fixture = await mkdtemp(path.join(tempRoot, "api-openapi-source-"));
   try {
     cpSync(path.join(appDirectory, "src"), path.join(fixture, "src"), {
       recursive: true,
@@ -18,11 +19,6 @@ it("exports current source contracts without depending on compiled output", asyn
     await cp(
       path.join(appDirectory, "tsconfig.json"),
       path.join(fixture, "tsconfig.json"),
-    );
-    await symlink(
-      path.join(appDirectory, "node_modules"),
-      path.join(fixture, "node_modules"),
-      "dir",
     );
     const generate = async () => {
       const child = Bun.spawn([process.execPath, "run", "openapi:generate"], {

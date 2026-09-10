@@ -52,6 +52,8 @@ export const permissionEnum = pgEnum("Permission", [
   "LOOTLOG_DOCS_WRITE",
   "LOOTLOG_LOOTS_ARCHIVE",
   "LOOTLOG_PRESENCE_LOCATION_READ",
+  "LOOTLOG_GROUP_FIGHTS_READ",
+  "LOOTLOG_GROUP_FIGHTS_WRITE",
 ]);
 export const memberTypeEnum = pgEnum("MemberType", [
   "OWNER",
@@ -244,6 +246,10 @@ export const guildTable = pgTable(
       .default(3)
       .notNull(),
     documentLimit: integer("documentLimit").default(50).notNull(),
+    groupFightsEnabled: boolean("groupFightsEnabled").default(true).notNull(),
+    groupFightsIncludeIncomplete: boolean("groupFightsIncludeIncomplete")
+      .default(false)
+      .notNull(),
     createdAt: timestamp("createdAt", { mode: "date", precision: 3 })
       .defaultNow()
       .notNull(),
@@ -2670,5 +2676,127 @@ export const guildKillActivityTable = pgTable(
       table.occurredAt,
     ),
     index("GuildKillActivity_occurredAt_idx").on(table.occurredAt),
+  ],
+);
+
+export const groupFightOutcomeEnum = pgEnum("GroupFightOutcome", [
+  "TEAM_WON",
+  "NO_WINNER",
+]);
+export const groupFightParticipantResultEnum = pgEnum(
+  "GroupFightParticipantResult",
+  ["WIN", "LOSS", "DRAW", "FLEE"],
+);
+export const groupFightQualificationSourceEnum = pgEnum(
+  "GroupFightQualificationSource",
+  ["CATALOG", "NPC_OBSERVED"],
+);
+
+export const groupFightTable = pgTable(
+  "GroupFight",
+  {
+    id: serial("id").notNull().primaryKey(),
+    guildId: text("guildId")
+      .notNull()
+      .references(() => guildTable.id, { onDelete: "cascade" }),
+    world: text("world").notNull(),
+    fightKey: text("fightKey").notNull(),
+    mapId: integer("mapId"),
+    mapName: text("mapName").notNull(),
+    qualificationSource: groupFightQualificationSourceEnum(
+      "qualificationSource",
+    ).notNull(),
+    qualifyingNpcName: text("qualifyingNpcName"),
+    mapNpcs: jsonb("mapNpcs")
+      .$type<Array<{ name: string; npcType: "ELITE2" | "TITAN" }>>()
+      .default([])
+      .notNull(),
+    startedAt: timestamp("startedAt", { mode: "date", precision: 3 }).notNull(),
+    endedAt: timestamp("endedAt", { mode: "date", precision: 3 }).notNull(),
+    durationSeconds: integer("durationSeconds").notNull(),
+    teamOneSize: integer("teamOneSize").notNull(),
+    teamTwoSize: integer("teamTwoSize").notNull(),
+    outcome: groupFightOutcomeEnum("outcome").notNull(),
+    winningTeam: integer("winningTeam"),
+    effectiveWinningTeam: integer("effectiveWinningTeam"),
+    ourTeam: integer("ourTeam").notNull(),
+    hasFlee: boolean("hasFlee").default(false).notNull(),
+    createdAt: timestamp("createdAt", { mode: "date", precision: 3 })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updatedAt", { mode: "date", precision: 3 }).notNull(),
+  },
+  (table) => [
+    uniqueIndex("GroupFight_guildId_fightKey_key").on(
+      table.guildId,
+      table.fightKey,
+    ),
+    index("GroupFight_guildId_endedAt_idx").on(table.guildId, table.endedAt),
+    index("GroupFight_endedAt_idx").on(table.endedAt),
+    index("GroupFight_guildId_world_endedAt_idx").on(
+      table.guildId,
+      table.world,
+      table.endedAt,
+    ),
+  ],
+);
+
+export const groupFightParticipantTable = pgTable(
+  "GroupFightParticipant",
+  {
+    id: serial("id").notNull().primaryKey(),
+    groupFightId: integer("groupFightId")
+      .notNull()
+      .references(() => groupFightTable.id, { onDelete: "cascade" }),
+    characterId: text("characterId").notNull(),
+    accountId: text("accountId"),
+    name: text("name").notNull(),
+    prof: text("prof").notNull(),
+    lvl: integer("lvl").notNull(),
+    icon: text("icon").notNull(),
+    team: integer("team").notNull(),
+    result: groupFightParticipantResultEnum("result").notNull(),
+    fled: boolean("fled").default(false).notNull(),
+    joinedAt: timestamp("joinedAt", { mode: "date", precision: 3 }).notNull(),
+    participationSeconds: integer("participationSeconds").notNull(),
+  },
+  (table) => [
+    uniqueIndex("GroupFightParticipant_groupFightId_characterId_key").on(
+      table.groupFightId,
+      table.characterId,
+    ),
+    index("GroupFightParticipant_accountId_characterId_idx").on(
+      table.accountId,
+      table.characterId,
+    ),
+    index("GroupFightParticipant_characterId_idx").on(table.characterId),
+  ],
+);
+
+export const groupFightSubmissionTable = pgTable(
+  "GroupFightSubmission",
+  {
+    id: serial("id").notNull().primaryKey(),
+    groupFightId: integer("groupFightId")
+      .notNull()
+      .references(() => groupFightTable.id, { onDelete: "cascade" }),
+    guildId: text("guildId").notNull(),
+    userId: text("userId").notNull(),
+    accountId: text("accountId").notNull(),
+    characterId: text("characterId").notNull(),
+    team: integer("team").notNull(),
+    battleId: text("battleId"),
+    submissionKey: text("submissionKey").notNull(),
+    createdAt: timestamp("createdAt", { mode: "date", precision: 3 })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("GroupFightSubmission_guildId_submissionKey_key").on(
+      table.guildId,
+      table.submissionKey,
+    ),
+    index("GroupFightSubmission_groupFightId_idx").on(table.groupFightId),
+    index("GroupFightSubmission_userId_idx").on(table.userId),
   ],
 );

@@ -187,7 +187,7 @@ export class OrganizationContextLookup extends Context.Service<
                   cached,
                   config.environment,
                 );
-                if (context) return context;
+                if (context) return { ...context, guild };
                 yield* cache.del(permissionsKey).pipe(Effect.ignore);
               }
 

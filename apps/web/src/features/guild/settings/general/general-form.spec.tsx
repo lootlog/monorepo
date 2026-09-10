@@ -49,6 +49,8 @@ it("keeps save busy for the network request and restores it after failure", asyn
             reservationTimeGranularityMinutes: 5,
             reservationMaxAdvanceDays: 7,
             reservationActiveLimitPerSpot: 1,
+            groupFightsEnabled: true,
+            groupFightsIncludeIncomplete: false,
           } satisfies GuildResponseDtoOutput),
         );
       },

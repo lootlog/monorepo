@@ -20,7 +20,9 @@
     "./scoring": "./src/scoring.ts",
     "./settings-documents": "./src/settings-documents.ts",
     "./guild-preferences": "./src/guild-preferences.ts",
-    "./guild-documents": "./src/guild-documents.ts"
+    "./guild-documents": "./src/guild-documents.ts",
+    "./group-fights": "./src/group-fights.ts",
+    "./group-fight-maps": "./src/group-fight-maps.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",

@@ -261,6 +261,9 @@ test.each([
   ["api", "/users/@me/stats/kills/analytics"],
   ["api", "/users/@me/stats/kills/activity"],
   ["api", "/users/@me/feed"],
+  ["api", "/guilds/{guildId}/group-fights"],
+  ["api", "/guilds/{guildId}/group-fights/ranking"],
+  ["api", "/guilds/{guildId}/group-fights/{fightId}"],
 ] as const)(
   "verified private addition %s %s pins authentication, filters and response",
   (service, path) => {
@@ -385,6 +388,31 @@ test("manageable guild migration pins the Discord summary response and preserves
   expect(
     normalizeAllowedChanges("api", "GET /unrelated", operation, schemas),
   ).toEqual(normalizeOpenApiRepresentation(operation));
+});
+
+test("group fight ingestion pins its authenticated request and acceptance status", () => {
+  const document = parse(
+    readFileSync(
+      new URL("../../../apps/api/openapi.yaml", import.meta.url),
+      "utf8",
+    ),
+  );
+  const operation = document.paths["/group-fights"].post;
+  expect(() =>
+    assertVerifiedPersonalAddition("api", "POST /group-fights", operation),
+  ).not.toThrow();
+  for (const mutation of [
+    { security: [] },
+    { requestBody: {} },
+    { responses: { "200": operation.responses["201"] } },
+  ]) {
+    expect(() =>
+      assertVerifiedPersonalAddition("api", "POST /group-fights", {
+        ...operation,
+        ...mutation,
+      }),
+    ).toThrow("contract changed");
+  }
 });
 
 test("API key errors retain domain alternatives and reject removed domain contracts", () => {

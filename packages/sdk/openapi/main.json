@@ -2038,7 +2038,9 @@
                       "LOOTLOG_EVENTS_READ",
                       "LOOTLOG_EVENTS_WRITE",
                       "LOOTLOG_DOCS_READ",
-                      "LOOTLOG_DOCS_WRITE"
+                      "LOOTLOG_DOCS_WRITE",
+                      "LOOTLOG_GROUP_FIGHTS_READ",
+                      "LOOTLOG_GROUP_FIGHTS_WRITE"
                     ]
                   }
                 }
@@ -22164,7 +22166,9 @@
                       "LOOTLOG_EVENTS_READ",
                       "LOOTLOG_EVENTS_WRITE",
                       "LOOTLOG_DOCS_READ",
-                      "LOOTLOG_DOCS_WRITE"
+                      "LOOTLOG_DOCS_WRITE",
+                      "LOOTLOG_GROUP_FIGHTS_READ",
+                      "LOOTLOG_GROUP_FIGHTS_WRITE"
                     ]
                   }
                 },
@@ -22404,7 +22408,9 @@
                       "LOOTLOG_EVENTS_READ",
                       "LOOTLOG_EVENTS_WRITE",
                       "LOOTLOG_DOCS_READ",
-                      "LOOTLOG_DOCS_WRITE"
+                      "LOOTLOG_DOCS_WRITE",
+                      "LOOTLOG_GROUP_FIGHTS_READ",
+                      "LOOTLOG_GROUP_FIGHTS_WRITE"
                     ]
                   }
                 },
@@ -22670,6 +22676,12 @@
           },
           "reservationActiveLimitPerSpot": {
             "type": "number"
+          },
+          "groupFightsEnabled": {
+            "type": "boolean"
+          },
+          "groupFightsIncludeIncomplete": {
+            "type": "boolean"
           }
         },
         "required": ["id", "name", "ownerId", "publicStatsCardEnabled"],
@@ -22742,7 +22754,9 @@
                       "LOOTLOG_EVENTS_READ",
                       "LOOTLOG_EVENTS_WRITE",
                       "LOOTLOG_DOCS_READ",
-                      "LOOTLOG_DOCS_WRITE"
+                      "LOOTLOG_DOCS_WRITE",
+                      "LOOTLOG_GROUP_FIGHTS_READ",
+                      "LOOTLOG_GROUP_FIGHTS_WRITE"
                     ]
                   }
                 }
@@ -22809,6 +22823,12 @@
           },
           "reservationActiveLimitPerSpot": {
             "type": "number"
+          },
+          "groupFightsEnabled": {
+            "type": "boolean"
+          },
+          "groupFightsIncludeIncomplete": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -22820,7 +22840,9 @@
           "reservationMinDurationMinutes",
           "reservationTimeGranularityMinutes",
           "reservationMaxAdvanceDays",
-          "reservationActiveLimitPerSpot"
+          "reservationActiveLimitPerSpot",
+          "groupFightsEnabled",
+          "groupFightsIncludeIncomplete"
         ],
         "additionalProperties": false
       },
@@ -22848,6 +22870,12 @@
             "minLength": 1
           },
           "publicStatsCardEnabled": {
+            "type": "boolean"
+          },
+          "groupFightsEnabled": {
+            "type": "boolean"
+          },
+          "groupFightsIncludeIncomplete": {
             "type": "boolean"
           },
           "reservationMaxDurationMinutes": {
@@ -22935,7 +22963,9 @@
                 "LOOTLOG_EVENTS_READ",
                 "LOOTLOG_EVENTS_WRITE",
                 "LOOTLOG_DOCS_READ",
-                "LOOTLOG_DOCS_WRITE"
+                "LOOTLOG_DOCS_WRITE",
+                "LOOTLOG_GROUP_FIGHTS_READ",
+                "LOOTLOG_GROUP_FIGHTS_WRITE"
               ]
             }
           },
@@ -22991,7 +23021,9 @@
                 "LOOTLOG_EVENTS_READ",
                 "LOOTLOG_EVENTS_WRITE",
                 "LOOTLOG_DOCS_READ",
-                "LOOTLOG_DOCS_WRITE"
+                "LOOTLOG_DOCS_WRITE",
+                "LOOTLOG_GROUP_FIGHTS_READ",
+                "LOOTLOG_GROUP_FIGHTS_WRITE"
               ]
             }
           },
@@ -23178,7 +23210,9 @@
                           "LOOTLOG_EVENTS_READ",
                           "LOOTLOG_EVENTS_WRITE",
                           "LOOTLOG_DOCS_READ",
-                          "LOOTLOG_DOCS_WRITE"
+                          "LOOTLOG_DOCS_WRITE",
+                          "LOOTLOG_GROUP_FIGHTS_READ",
+                          "LOOTLOG_GROUP_FIGHTS_WRITE"
                         ]
                       }
                     },
@@ -23486,7 +23520,9 @@
                           "LOOTLOG_EVENTS_READ",
                           "LOOTLOG_EVENTS_WRITE",
                           "LOOTLOG_DOCS_READ",
-                          "LOOTLOG_DOCS_WRITE"
+                          "LOOTLOG_DOCS_WRITE",
+                          "LOOTLOG_GROUP_FIGHTS_READ",
+                          "LOOTLOG_GROUP_FIGHTS_WRITE"
                         ]
                       }
                     },

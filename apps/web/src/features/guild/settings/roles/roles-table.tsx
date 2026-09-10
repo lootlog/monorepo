@@ -200,7 +200,7 @@ export const RolesTable = ({ guildId, isMobile, roles }: RolesTableProps) => {
 
                         return (
                           <PermissionCategoryTooltip
-                            key={category.name}
+                            key={category.groupKey}
                             category={category}
                             activePermissions={activePermissions}
                             side="top"

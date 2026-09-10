@@ -32,6 +32,7 @@ const ROUTES = {
   },
 
   guild: {
+    groupFights: (guildId: string) => `/${guildId}/group-fights`,
     base: (guildId: string) => `/${guildId}`,
     lootlog: (guildId: string) => `/${guildId}`,
     timers: (guildId: string) => `/${guildId}/timers`,

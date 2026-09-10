@@ -41,6 +41,7 @@ export const SETTINGS_SUBSECTION_VALUES = [
   "catching",
   "detector",
   "battle-panel",
+  "group-fights",
   "notification-rules",
   "notification-mutes",
   "sounds",

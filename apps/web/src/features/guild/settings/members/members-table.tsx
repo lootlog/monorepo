@@ -484,7 +484,7 @@ export const MembersTable = ({
 
                           return (
                             <PermissionCategoryTooltip
-                              key={category.name}
+                              key={category.groupKey}
                               category={category}
                               activePermissions={activePermissions}
                               side="top"

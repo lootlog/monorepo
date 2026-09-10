@@ -710,6 +710,8 @@ export const NullableMemberResponseDtoRolesItemPermissionsItem = {
   LOOTLOG_EVENTS_WRITE: 'LOOTLOG_EVENTS_WRITE',
   LOOTLOG_DOCS_READ: 'LOOTLOG_DOCS_READ',
   LOOTLOG_DOCS_WRITE: 'LOOTLOG_DOCS_WRITE',
+  LOOTLOG_GROUP_FIGHTS_READ: 'LOOTLOG_GROUP_FIGHTS_READ',
+  LOOTLOG_GROUP_FIGHTS_WRITE: 'LOOTLOG_GROUP_FIGHTS_WRITE',
 } as const;
 
 export type NullableMemberResponseDtoRolesItem = {
@@ -815,6 +817,8 @@ export const MemberResponseDtoRolesItemPermissionsItem = {
   LOOTLOG_EVENTS_WRITE: 'LOOTLOG_EVENTS_WRITE',
   LOOTLOG_DOCS_READ: 'LOOTLOG_DOCS_READ',
   LOOTLOG_DOCS_WRITE: 'LOOTLOG_DOCS_WRITE',
+  LOOTLOG_GROUP_FIGHTS_READ: 'LOOTLOG_GROUP_FIGHTS_READ',
+  LOOTLOG_GROUP_FIGHTS_WRITE: 'LOOTLOG_GROUP_FIGHTS_WRITE',
 } as const;
 
 export type MemberResponseDtoRolesItem = {
@@ -995,6 +999,8 @@ export interface UserGuildListResponseDtoOutput {
   reservationTimeGranularityMinutes?: number;
   reservationMaxAdvanceDays?: number;
   reservationActiveLimitPerSpot?: number;
+  groupFightsEnabled?: boolean;
+  groupFightsIncludeIncomplete?: boolean;
 }
 
 export type UserGuildPermissionsDtoOutputGuild = {
@@ -1039,6 +1045,8 @@ export const UserGuildPermissionsDtoOutputRolesItemPermissionsItem = {
   LOOTLOG_EVENTS_WRITE: 'LOOTLOG_EVENTS_WRITE',
   LOOTLOG_DOCS_READ: 'LOOTLOG_DOCS_READ',
   LOOTLOG_DOCS_WRITE: 'LOOTLOG_DOCS_WRITE',
+  LOOTLOG_GROUP_FIGHTS_READ: 'LOOTLOG_GROUP_FIGHTS_READ',
+  LOOTLOG_GROUP_FIGHTS_WRITE: 'LOOTLOG_GROUP_FIGHTS_WRITE',
 } as const;
 
 export type UserGuildPermissionsDtoOutputRolesItem = {
@@ -1074,6 +1082,8 @@ export interface GuildResponseDtoOutput {
   reservationTimeGranularityMinutes: number;
   reservationMaxAdvanceDays: number;
   reservationActiveLimitPerSpot: number;
+  groupFightsEnabled: boolean;
+  groupFightsIncludeIncomplete: boolean;
 }
 
 export interface UpdateGuildConfigDto {
@@ -1083,6 +1093,8 @@ export interface UpdateGuildConfigDto {
      */
   vanityUrl?: string | null;
   publicStatsCardEnabled?: boolean;
+  groupFightsEnabled?: boolean;
+  groupFightsIncludeIncomplete?: boolean;
   /**
      * @minimum 30
      * @maximum 720
@@ -1198,6 +1210,8 @@ export const UserGuildPermissionsDtoRolesItemPermissionsItem = {
   LOOTLOG_EVENTS_WRITE: 'LOOTLOG_EVENTS_WRITE',
   LOOTLOG_DOCS_READ: 'LOOTLOG_DOCS_READ',
   LOOTLOG_DOCS_WRITE: 'LOOTLOG_DOCS_WRITE',
+  LOOTLOG_GROUP_FIGHTS_READ: 'LOOTLOG_GROUP_FIGHTS_READ',
+  LOOTLOG_GROUP_FIGHTS_WRITE: 'LOOTLOG_GROUP_FIGHTS_WRITE',
 } as const;
 
 export type UserGuildPermissionsDtoRolesItem = {
@@ -1249,6 +1263,8 @@ export const RoleResponseDtoOutputPermissionsItem = {
   LOOTLOG_EVENTS_WRITE: 'LOOTLOG_EVENTS_WRITE',
   LOOTLOG_DOCS_READ: 'LOOTLOG_DOCS_READ',
   LOOTLOG_DOCS_WRITE: 'LOOTLOG_DOCS_WRITE',
+  LOOTLOG_GROUP_FIGHTS_READ: 'LOOTLOG_GROUP_FIGHTS_READ',
+  LOOTLOG_GROUP_FIGHTS_WRITE: 'LOOTLOG_GROUP_FIGHTS_WRITE',
 } as const;
 
 export interface RoleResponseDtoOutput {
@@ -1303,6 +1319,8 @@ export const UpdateRolePermissionsDtoPermissionsItem = {
   LOOTLOG_EVENTS_WRITE: 'LOOTLOG_EVENTS_WRITE',
   LOOTLOG_DOCS_READ: 'LOOTLOG_DOCS_READ',
   LOOTLOG_DOCS_WRITE: 'LOOTLOG_DOCS_WRITE',
+  LOOTLOG_GROUP_FIGHTS_READ: 'LOOTLOG_GROUP_FIGHTS_READ',
+  LOOTLOG_GROUP_FIGHTS_WRITE: 'LOOTLOG_GROUP_FIGHTS_WRITE',
 } as const;
 
 export interface UpdateRolePermissionsDto {
@@ -1386,6 +1404,8 @@ export const TimerResponseDtoMemberRolesItemPermissionsItem = {
   LOOTLOG_EVENTS_WRITE: 'LOOTLOG_EVENTS_WRITE',
   LOOTLOG_DOCS_READ: 'LOOTLOG_DOCS_READ',
   LOOTLOG_DOCS_WRITE: 'LOOTLOG_DOCS_WRITE',
+  LOOTLOG_GROUP_FIGHTS_READ: 'LOOTLOG_GROUP_FIGHTS_READ',
+  LOOTLOG_GROUP_FIGHTS_WRITE: 'LOOTLOG_GROUP_FIGHTS_WRITE',
 } as const;
 
 export type TimerResponseDtoMemberRolesItem = {
@@ -1575,6 +1595,8 @@ export const TimerHistoryResponseDtoMemberRolesItemPermissionsItem = {
   LOOTLOG_EVENTS_WRITE: 'LOOTLOG_EVENTS_WRITE',
   LOOTLOG_DOCS_READ: 'LOOTLOG_DOCS_READ',
   LOOTLOG_DOCS_WRITE: 'LOOTLOG_DOCS_WRITE',
+  LOOTLOG_GROUP_FIGHTS_READ: 'LOOTLOG_GROUP_FIGHTS_READ',
+  LOOTLOG_GROUP_FIGHTS_WRITE: 'LOOTLOG_GROUP_FIGHTS_WRITE',
 } as const;
 
 export type TimerHistoryResponseDtoMemberRolesItem = {
@@ -9028,6 +9050,402 @@ export interface MemberKillsResponseDtoOutput {
   pagination: MemberKillsResponseDtoOutputPagination;
 }
 
+export type GroupFightTeam = typeof GroupFightTeam[keyof typeof GroupFightTeam];
+
+
+export const GroupFightTeam = {
+  NUMBER_1: 1,
+  NUMBER_2: 2,
+} as const;
+
+export interface GroupFightParticipantDto {
+  /**
+     * @minLength 1
+     * @maxLength 64
+     */
+  characterId: string;
+  /**
+     * @minLength 1
+     * @maxLength 64
+     * @nullable
+     */
+  accountId?: string | null;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  name: string;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  lvl: number;
+  /** @maxLength 16 */
+  prof: string;
+  /** @maxLength 2048 */
+  icon: string;
+  team: GroupFightTeam;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  joinedAt: string;
+  fled: boolean;
+}
+
+export type CreateGroupFightDtoMapPvp = typeof CreateGroupFightDtoMapPvp[keyof typeof CreateGroupFightDtoMapPvp];
+
+
+export const CreateGroupFightDtoMapPvp = {
+  NUMBER_2: 2,
+} as const;
+
+export type CreateGroupFightDtoMap = {
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  id: number;
+  pvp: CreateGroupFightDtoMapPvp;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  name: string;
+};
+
+export type CreateGroupFightDtoQualificationSource = typeof CreateGroupFightDtoQualificationSource[keyof typeof CreateGroupFightDtoQualificationSource];
+
+
+export const CreateGroupFightDtoQualificationSource = {
+  CATALOG: 'CATALOG',
+  NPC_OBSERVED: 'NPC_OBSERVED',
+} as const;
+
+export type CreateGroupFightDtoQualificationNpc = {
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  id: number;
+  /** @maxLength 255 */
+  name: string;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  wt: number;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  lvl?: number;
+  /** @maxLength 255 */
+  icon?: string;
+};
+
+export type CreateGroupFightDtoQualification = {
+  source: CreateGroupFightDtoQualificationSource;
+  npc?: CreateGroupFightDtoQualificationNpc;
+};
+
+export interface CreateGroupFightDto {
+  /**
+     * @minLength 1
+     * @maxLength 64
+     */
+  world: string;
+  /**
+     * @minLength 1
+     * @maxLength 64
+     */
+  accountId: string;
+  /**
+     * @minLength 1
+     * @maxLength 64
+     */
+  characterId: string;
+  /**
+     * @minLength 1
+     * @maxLength 128
+     */
+  submissionKey: string;
+  map: CreateGroupFightDtoMap;
+  qualification: CreateGroupFightDtoQualification;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  startedAt: string;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  endedAt: string;
+  myTeam: GroupFightTeam;
+  winningTeam: GroupFightTeam | null;
+  /**
+     * @minItems 3
+     * @maxItems 20
+     */
+  participants: GroupFightParticipantDto[];
+  /**
+     * @minLength 1
+     * @maxLength 128
+     * @nullable
+     */
+  battleId?: string | null;
+}
+
+export type CreateGroupFightResponseDtoOutputSubmittedGuildsItem = {
+  guildId: string;
+  groupFightId: number;
+  deduplicated: boolean;
+};
+
+export type CreateGroupFightResponseDtoOutputRejectedGuildsItemReason = typeof CreateGroupFightResponseDtoOutputRejectedGuildsItemReason[keyof typeof CreateGroupFightResponseDtoOutputRejectedGuildsItemReason];
+
+
+export const CreateGroupFightResponseDtoOutputRejectedGuildsItemReason = {
+  GROUP_FIGHTS_DISABLED: 'GROUP_FIGHTS_DISABLED',
+  INCOMPLETE_TEAMS: 'INCOMPLETE_TEAMS',
+  MISSING_MEMBER: 'MISSING_MEMBER',
+} as const;
+
+export type CreateGroupFightResponseDtoOutputRejectedGuildsItem = {
+  guildId: string;
+  reason: CreateGroupFightResponseDtoOutputRejectedGuildsItemReason;
+};
+
+export interface CreateGroupFightResponseDtoOutput {
+  submittedGuilds: CreateGroupFightResponseDtoOutputSubmittedGuildsItem[];
+  rejectedGuilds: CreateGroupFightResponseDtoOutputRejectedGuildsItem[];
+}
+
+export type GroupFightPeriod = typeof GroupFightPeriod[keyof typeof GroupFightPeriod];
+
+
+export const GroupFightPeriod = {
+  today: 'today',
+  week: 'week',
+  month: 'month',
+  all: 'all',
+  '24h': '24h',
+  '3d': '3d',
+  '7d': '7d',
+  '14d': '14d',
+  '30d': '30d',
+  '90d': '90d',
+} as const;
+
+export type GuildGroupFightRankingResponseDtoOutputNpcsItemNpcType = typeof GuildGroupFightRankingResponseDtoOutputNpcsItemNpcType[keyof typeof GuildGroupFightRankingResponseDtoOutputNpcsItemNpcType];
+
+
+export const GuildGroupFightRankingResponseDtoOutputNpcsItemNpcType = {
+  ELITE2: 'ELITE2',
+  TITAN: 'TITAN',
+} as const;
+
+export type GuildGroupFightRankingResponseDtoOutputNpcsItem = {
+  name: string;
+  npcType: GuildGroupFightRankingResponseDtoOutputNpcsItemNpcType;
+  /** @nullable */
+  lvl: number | null;
+  /** @nullable */
+  icon: string | null;
+  /** @nullable */
+  mapId: number | null;
+  mapName: string;
+  totalFights: number;
+  wins: number;
+  losses: number;
+  draws: number;
+  flees: number;
+  totalDurationSeconds: number;
+};
+
+export type GuildGroupFightRankingResponseDtoOutputSummary = {
+  totalFights: number;
+  wins: number;
+  losses: number;
+  draws: number;
+  flees: number;
+  fullTeamFights: number;
+  totalDurationSeconds: number;
+};
+
+export type GuildGroupFightRankingResponseDtoOutputRankingItemCharactersItem = {
+  characterId: string;
+  name: string;
+  prof: string;
+  lvl: number;
+  icon: string;
+  world: string;
+  fights: number;
+  wins: number;
+  losses: number;
+  draws: number;
+  flees: number;
+  totalSeconds: number;
+};
+
+export type GuildGroupFightRankingResponseDtoOutputRankingItem = {
+  memberId: number;
+  memberUserId: string;
+  memberDiscordId: string;
+  memberName: string;
+  /** @nullable */
+  memberAvatar: string | null;
+  fights: number;
+  wins: number;
+  losses: number;
+  draws: number;
+  flees: number;
+  winRate: number;
+  totalSeconds: number;
+  /**
+     * @nullable
+     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+     */
+  lastFightAt: string | null;
+  characters: GuildGroupFightRankingResponseDtoOutputRankingItemCharactersItem[];
+};
+
+export interface GuildGroupFightRankingResponseDtoOutput {
+  npcs: GuildGroupFightRankingResponseDtoOutputNpcsItem[];
+  summary: GuildGroupFightRankingResponseDtoOutputSummary;
+  ranking: GuildGroupFightRankingResponseDtoOutputRankingItem[];
+}
+
+export type GroupFightSummaryResponseDtoOutputOutcome = typeof GroupFightSummaryResponseDtoOutputOutcome[keyof typeof GroupFightSummaryResponseDtoOutputOutcome];
+
+
+export const GroupFightSummaryResponseDtoOutputOutcome = {
+  TEAM_WON: 'TEAM_WON',
+  NO_WINNER: 'NO_WINNER',
+} as const;
+
+export type GroupFightSummaryResponseDtoOutputResult = typeof GroupFightSummaryResponseDtoOutputResult[keyof typeof GroupFightSummaryResponseDtoOutputResult];
+
+
+export const GroupFightSummaryResponseDtoOutputResult = {
+  WIN: 'WIN',
+  LOSS: 'LOSS',
+  DRAW: 'DRAW',
+} as const;
+
+export type GroupFightSummaryResponseDtoOutputRosterItem = {
+  name: string;
+  lvl: number;
+  prof: string;
+  team: GroupFightTeam;
+  fled: boolean;
+};
+
+export interface GroupFightSummaryResponseDtoOutput {
+  id: number;
+  world: string;
+  /** @nullable */
+  mapId: number | null;
+  mapName: string;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  startedAt: string;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  endedAt: string;
+  durationSeconds: number;
+  teamOneSize: number;
+  teamTwoSize: number;
+  outcome: GroupFightSummaryResponseDtoOutputOutcome;
+  winningTeam: GroupFightTeam | null;
+  ourTeam: GroupFightTeam;
+  result: GroupFightSummaryResponseDtoOutputResult;
+  hasFlee: boolean;
+  memberCount: number;
+  battleIds: string[];
+  roster: GroupFightSummaryResponseDtoOutputRosterItem[];
+}
+
+export type GuildGroupFightsResponseDtoOutputPagination = {
+  total: number;
+  cursor: number;
+  limit: number;
+  hasNext: boolean;
+};
+
+export interface GuildGroupFightsResponseDtoOutput {
+  fights: GroupFightSummaryResponseDtoOutput[];
+  pagination: GuildGroupFightsResponseDtoOutputPagination;
+}
+
+export type GroupFightParticipantResponseDtoOutputResult = typeof GroupFightParticipantResponseDtoOutputResult[keyof typeof GroupFightParticipantResponseDtoOutputResult];
+
+
+export const GroupFightParticipantResponseDtoOutputResult = {
+  WIN: 'WIN',
+  LOSS: 'LOSS',
+  DRAW: 'DRAW',
+  FLEE: 'FLEE',
+} as const;
+
+/**
+ * @nullable
+ */
+export type GroupFightParticipantResponseDtoOutputMember = {
+  memberId: number;
+  memberUserId: string;
+  memberDiscordId: string;
+  memberName: string;
+  /** @nullable */
+  memberAvatar: string | null;
+} | null;
+
+export interface GroupFightParticipantResponseDtoOutput {
+  characterId: string;
+  /** @nullable */
+  accountId: string | null;
+  name: string;
+  prof: string;
+  lvl: number;
+  icon: string;
+  team: GroupFightTeam;
+  result: GroupFightParticipantResponseDtoOutputResult;
+  participationSeconds: number;
+  fled: boolean;
+  /** @nullable */
+  member: GroupFightParticipantResponseDtoOutputMember;
+}
+
+export type GroupFightDetailResponseDtoOutputOutcome = typeof GroupFightDetailResponseDtoOutputOutcome[keyof typeof GroupFightDetailResponseDtoOutputOutcome];
+
+
+export const GroupFightDetailResponseDtoOutputOutcome = {
+  TEAM_WON: 'TEAM_WON',
+  NO_WINNER: 'NO_WINNER',
+} as const;
+
+export type GroupFightDetailResponseDtoOutputResult = typeof GroupFightDetailResponseDtoOutputResult[keyof typeof GroupFightDetailResponseDtoOutputResult];
+
+
+export const GroupFightDetailResponseDtoOutputResult = {
+  WIN: 'WIN',
+  LOSS: 'LOSS',
+  DRAW: 'DRAW',
+} as const;
+
+export interface GroupFightDetailResponseDtoOutput {
+  id: number;
+  world: string;
+  /** @nullable */
+  mapId: number | null;
+  mapName: string;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  startedAt: string;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  endedAt: string;
+  durationSeconds: number;
+  teamOneSize: number;
+  teamTwoSize: number;
+  outcome: GroupFightDetailResponseDtoOutputOutcome;
+  winningTeam: GroupFightTeam | null;
+  ourTeam: GroupFightTeam;
+  result: GroupFightDetailResponseDtoOutputResult;
+  hasFlee: boolean;
+  memberCount: number;
+  battleIds: string[];
+  participants: GroupFightParticipantResponseDtoOutput[];
+}
+
 export interface RefreshStatsCardResponseDtoOutput {
   nextRefreshAt: string;
 }
@@ -10006,6 +10424,8 @@ export const GuildsControllerGetGuildPermissions200Item = {
   LOOTLOG_EVENTS_WRITE: 'LOOTLOG_EVENTS_WRITE',
   LOOTLOG_DOCS_READ: 'LOOTLOG_DOCS_READ',
   LOOTLOG_DOCS_WRITE: 'LOOTLOG_DOCS_WRITE',
+  LOOTLOG_GROUP_FIGHTS_READ: 'LOOTLOG_GROUP_FIGHTS_READ',
+  LOOTLOG_GROUP_FIGHTS_WRITE: 'LOOTLOG_GROUP_FIGHTS_WRITE',
 } as const;
 
 export type GuildsControllerGetGuildPermissions401 = {
@@ -13030,6 +13450,112 @@ export type KillsControllerGetMemberKills403 = HttpErrorResponse | {
 };
 
 export type KillsControllerGetMemberKills429 = {
+  message: string;
+};
+
+export type GroupFightsControllerCreateGroupFight401 = {
+  message: string;
+};
+
+export type GroupFightsControllerCreateGroupFight403 = {
+  message: string;
+};
+
+export type GroupFightsControllerCreateGroupFight429 = {
+  message: string;
+};
+
+export type GroupFightsControllerGetGuildGroupFightRankingPathParameters = {
+ guildId: string,
+ }
+export type GroupFightsControllerGetGuildGroupFightRankingParams = {
+world?: string;
+period?: GroupFightPeriod;
+npcType?: GroupFightsControllerGetGuildGroupFightRankingNpcType;
+/**
+ * @maxLength 255
+ */
+npcName?: string;
+};
+
+export type GroupFightsControllerGetGuildGroupFightRankingNpcType = typeof GroupFightsControllerGetGuildGroupFightRankingNpcType[keyof typeof GroupFightsControllerGetGuildGroupFightRankingNpcType];
+
+
+export const GroupFightsControllerGetGuildGroupFightRankingNpcType = {
+  ELITE2: 'ELITE2',
+  TITAN: 'TITAN',
+} as const;
+
+export type GroupFightsControllerGetGuildGroupFightRanking401 = {
+  message: string;
+};
+
+export type GroupFightsControllerGetGuildGroupFightRanking403 = HttpErrorResponse | {
+  message: string;
+};
+
+export type GroupFightsControllerGetGuildGroupFightRanking429 = {
+  message: string;
+};
+
+export type GroupFightsControllerGetGuildGroupFightsPathParameters = {
+ guildId: string,
+ }
+export type GroupFightsControllerGetGuildGroupFightsParams = {
+world?: string;
+period?: GroupFightPeriod;
+npcType?: GroupFightsControllerGetGuildGroupFightsNpcType;
+/**
+ * @maxLength 255
+ */
+npcName?: string;
+/**
+ * @pattern ^\d{4}-\d{2}-\d{2}$
+ */
+day?: string;
+/**
+ * @pattern ^[+-]?\d*\.?\d+(?:[Ee][+-]?\d+)?$
+ */
+cursor?: string;
+/**
+ * @pattern ^[+-]?\d*\.?\d+(?:[Ee][+-]?\d+)?$
+ */
+limit?: string;
+};
+
+export type GroupFightsControllerGetGuildGroupFightsNpcType = typeof GroupFightsControllerGetGuildGroupFightsNpcType[keyof typeof GroupFightsControllerGetGuildGroupFightsNpcType];
+
+
+export const GroupFightsControllerGetGuildGroupFightsNpcType = {
+  ELITE2: 'ELITE2',
+  TITAN: 'TITAN',
+} as const;
+
+export type GroupFightsControllerGetGuildGroupFights401 = {
+  message: string;
+};
+
+export type GroupFightsControllerGetGuildGroupFights403 = HttpErrorResponse | {
+  message: string;
+};
+
+export type GroupFightsControllerGetGuildGroupFights429 = {
+  message: string;
+};
+
+export type GroupFightsControllerGetGuildGroupFightPathParameters = {
+ guildId: string,
+    fightId: string,
+ }
+export type GroupFightsControllerGetGuildGroupFight401 = {
+  message: string;
+};
+
+export type GroupFightsControllerGetGuildGroupFight403 = HttpErrorResponse | {
+  message: string;
+};
+
+export type GroupFightsControllerGetGuildGroupFight429 = {
   message: string;
 };
 
@@ -34370,6 +34896,553 @@ export const useGetKillsControllerGetMemberKillsQueryData = () => {
   return ({ guildId, memberId }: KillsControllerGetMemberKillsPathParameters,
     params?: KillsControllerGetMemberKillsParams,) =>
     queryClient.getQueryData<Awaited<ReturnType<typeof killsControllerGetMemberKills>>>(getKillsControllerGetMemberKillsQueryKey({ guildId, memberId },params));
+}
+
+
+
+export const getGroupFightsControllerCreateGroupFightUrl = () => {
+
+
+
+
+  return `/group-fights`
+}
+
+/**
+ * Records a players-versus-players group fight observed by the game client. Guilds are auto-detected from the character catching configuration and each guild applies its own collection mode.
+ * @summary Record a group PvP fight
+ */
+export const groupFightsControllerCreateGroupFight = async (createGroupFightDto: CreateGroupFightDto, options?: Parameters<typeof mainFetch>[1]): Promise<CreateGroupFightResponseDtoOutput> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+return mainFetch<CreateGroupFightResponseDtoOutput>(getGroupFightsControllerCreateGroupFightUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createGroupFightDto)
+  }
+);}
+
+
+
+
+
+export const getGroupFightsControllerCreateGroupFightMutationOptions = <TError = ErrorType<HttpErrorResponse | GroupFightsControllerCreateGroupFight401 | GroupFightsControllerCreateGroupFight403 | GroupFightsControllerCreateGroupFight429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof groupFightsControllerCreateGroupFight>>, TError,GroupFightsControllerCreateGroupFightMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof groupFightsControllerCreateGroupFight>>, TError,GroupFightsControllerCreateGroupFightMutationVariables, TContext> => {
+
+const mutationKey = ['groupFightsControllerCreateGroupFight'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof groupFightsControllerCreateGroupFight>>, GroupFightsControllerCreateGroupFightMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  groupFightsControllerCreateGroupFight(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GroupFightsControllerCreateGroupFightMutationResult = NonNullable<Awaited<ReturnType<typeof groupFightsControllerCreateGroupFight>>>
+    export type GroupFightsControllerCreateGroupFightMutationBody = BodyType<CreateGroupFightDto>
+    export type GroupFightsControllerCreateGroupFightMutationError = ErrorType<HttpErrorResponse | GroupFightsControllerCreateGroupFight401 | GroupFightsControllerCreateGroupFight403 | GroupFightsControllerCreateGroupFight429>
+    export type GroupFightsControllerCreateGroupFightMutationVariables = {data: BodyType<CreateGroupFightDto>}
+
+    /**
+ * @summary Record a group PvP fight
+ */
+export const useGroupFightsControllerCreateGroupFight = <TError = ErrorType<HttpErrorResponse | GroupFightsControllerCreateGroupFight401 | GroupFightsControllerCreateGroupFight403 | GroupFightsControllerCreateGroupFight429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof groupFightsControllerCreateGroupFight>>, TError,GroupFightsControllerCreateGroupFightMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof groupFightsControllerCreateGroupFight>>,
+        TError,
+        GroupFightsControllerCreateGroupFightMutationVariables,
+        TContext
+      > => {
+      return useMutation(getGroupFightsControllerCreateGroupFightMutationOptions(options), queryClient);
+    }
+
+export const getGroupFightsControllerGetGuildGroupFightRankingUrl = ({ guildId }: GroupFightsControllerGetGuildGroupFightRankingPathParameters,
+    params?: GroupFightsControllerGetGuildGroupFightRankingParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/guilds/${guildId}/group-fights/ranking?${stringifiedParams}` : `/guilds/${guildId}/group-fights/ranking`
+}
+
+/**
+ * Aggregates wins, losses, draws and time spent in group fights per organization member.
+ * @summary Get the guild group fight ranking
+ */
+export const groupFightsControllerGetGuildGroupFightRanking = async ({ guildId }: GroupFightsControllerGetGuildGroupFightRankingPathParameters,
+    params?: GroupFightsControllerGetGuildGroupFightRankingParams, options?: Parameters<typeof mainFetch>[1]): Promise<GuildGroupFightRankingResponseDtoOutput> => {
+
+  return mainFetch<GuildGroupFightRankingResponseDtoOutput>(getGroupFightsControllerGetGuildGroupFightRankingUrl({ guildId },params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGroupFightsControllerGetGuildGroupFightRankingQueryKey = ({ guildId }: GroupFightsControllerGetGuildGroupFightRankingPathParameters,
+    params?: GroupFightsControllerGetGuildGroupFightRankingParams,) => {
+    return [
+    `/guilds/${guildId}/group-fights/ranking`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGroupFightsControllerGetGuildGroupFightRankingQueryOptions = <TData = Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFightRanking>>, TError = ErrorType<GroupFightsControllerGetGuildGroupFightRanking401 | GroupFightsControllerGetGuildGroupFightRanking403 | HttpErrorResponse | GroupFightsControllerGetGuildGroupFightRanking429>>({ guildId }: GroupFightsControllerGetGuildGroupFightRankingPathParameters,
+    params?: GroupFightsControllerGetGuildGroupFightRankingParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFightRanking>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGroupFightsControllerGetGuildGroupFightRankingQueryKey({ guildId },params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFightRanking>>> = ({ signal }) => groupFightsControllerGetGuildGroupFightRanking({ guildId },params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: guildId !== null && guildId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFightRanking>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GroupFightsControllerGetGuildGroupFightRankingQueryResult = NonNullable<Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFightRanking>>>
+export type GroupFightsControllerGetGuildGroupFightRankingQueryError = ErrorType<GroupFightsControllerGetGuildGroupFightRanking401 | GroupFightsControllerGetGuildGroupFightRanking403 | HttpErrorResponse | GroupFightsControllerGetGuildGroupFightRanking429>
+
+
+export function useGroupFightsControllerGetGuildGroupFightRanking<TData = Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFightRanking>>, TError = ErrorType<GroupFightsControllerGetGuildGroupFightRanking401 | GroupFightsControllerGetGuildGroupFightRanking403 | HttpErrorResponse | GroupFightsControllerGetGuildGroupFightRanking429>>(
+ pathParams: GroupFightsControllerGetGuildGroupFightRankingPathParameters,
+    params: undefined |  GroupFightsControllerGetGuildGroupFightRankingParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFightRanking>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFightRanking>>,
+          TError,
+          Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFightRanking>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGroupFightsControllerGetGuildGroupFightRanking<TData = Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFightRanking>>, TError = ErrorType<GroupFightsControllerGetGuildGroupFightRanking401 | GroupFightsControllerGetGuildGroupFightRanking403 | HttpErrorResponse | GroupFightsControllerGetGuildGroupFightRanking429>>(
+ pathParams: GroupFightsControllerGetGuildGroupFightRankingPathParameters,
+    params?: GroupFightsControllerGetGuildGroupFightRankingParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFightRanking>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFightRanking>>,
+          TError,
+          Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFightRanking>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGroupFightsControllerGetGuildGroupFightRanking<TData = Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFightRanking>>, TError = ErrorType<GroupFightsControllerGetGuildGroupFightRanking401 | GroupFightsControllerGetGuildGroupFightRanking403 | HttpErrorResponse | GroupFightsControllerGetGuildGroupFightRanking429>>(
+ pathParams: GroupFightsControllerGetGuildGroupFightRankingPathParameters,
+    params?: GroupFightsControllerGetGuildGroupFightRankingParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFightRanking>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get the guild group fight ranking
+ */
+
+export function useGroupFightsControllerGetGuildGroupFightRanking<TData = Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFightRanking>>, TError = ErrorType<GroupFightsControllerGetGuildGroupFightRanking401 | GroupFightsControllerGetGuildGroupFightRanking403 | HttpErrorResponse | GroupFightsControllerGetGuildGroupFightRanking429>>(
+ { guildId }: GroupFightsControllerGetGuildGroupFightRankingPathParameters,
+    params?: GroupFightsControllerGetGuildGroupFightRankingParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFightRanking>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGroupFightsControllerGetGuildGroupFightRankingQueryOptions({ guildId },params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get the guild group fight ranking
+ */
+export const prefetchGroupFightsControllerGetGuildGroupFightRankingQuery = async <TData = Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFightRanking>>, TError = ErrorType<GroupFightsControllerGetGuildGroupFightRanking401 | GroupFightsControllerGetGuildGroupFightRanking403 | HttpErrorResponse | GroupFightsControllerGetGuildGroupFightRanking429>>(
+ queryClient: QueryClient, { guildId }: GroupFightsControllerGetGuildGroupFightRankingPathParameters,
+    params?: GroupFightsControllerGetGuildGroupFightRankingParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFightRanking>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getGroupFightsControllerGetGuildGroupFightRankingQueryOptions({ guildId },params,options)
+
+  await queryClient.prefetchQuery(queryOptions);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get the guild group fight ranking
+ */
+export const invalidateGroupFightsControllerGetGuildGroupFightRanking = async (
+ queryClient: QueryClient, { guildId }: GroupFightsControllerGetGuildGroupFightRankingPathParameters,
+    params?: GroupFightsControllerGetGuildGroupFightRankingParams, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getGroupFightsControllerGetGuildGroupFightRankingQueryKey({ guildId },params) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get the guild group fight ranking
+ */
+export const useSetGroupFightsControllerGetGuildGroupFightRankingQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId }: GroupFightsControllerGetGuildGroupFightRankingPathParameters,
+    params: GroupFightsControllerGetGuildGroupFightRankingParams | undefined,updater: Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFightRanking>> | undefined | ((old: Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFightRanking>> | undefined) => Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFightRanking>> | undefined)) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFightRanking>>>({ queryKey: getGroupFightsControllerGetGuildGroupFightRankingQueryKey({ guildId },params) }, updater);
+  };
+}
+
+/**
+ * @summary Get the guild group fight ranking
+ */
+export const useGetGroupFightsControllerGetGuildGroupFightRankingQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId }: GroupFightsControllerGetGuildGroupFightRankingPathParameters,
+    params?: GroupFightsControllerGetGuildGroupFightRankingParams,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFightRanking>>>(getGroupFightsControllerGetGuildGroupFightRankingQueryKey({ guildId },params));
+}
+
+
+
+export const getGroupFightsControllerGetGuildGroupFightsUrl = ({ guildId }: GroupFightsControllerGetGuildGroupFightsPathParameters,
+    params?: GroupFightsControllerGetGuildGroupFightsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/guilds/${guildId}/group-fights?${stringifiedParams}` : `/guilds/${guildId}/group-fights`
+}
+
+/**
+ * @summary List guild group fights
+ */
+export const groupFightsControllerGetGuildGroupFights = async ({ guildId }: GroupFightsControllerGetGuildGroupFightsPathParameters,
+    params?: GroupFightsControllerGetGuildGroupFightsParams, options?: Parameters<typeof mainFetch>[1]): Promise<GuildGroupFightsResponseDtoOutput> => {
+
+  return mainFetch<GuildGroupFightsResponseDtoOutput>(getGroupFightsControllerGetGuildGroupFightsUrl({ guildId },params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGroupFightsControllerGetGuildGroupFightsQueryKey = ({ guildId }: GroupFightsControllerGetGuildGroupFightsPathParameters,
+    params?: GroupFightsControllerGetGuildGroupFightsParams,) => {
+    return [
+    `/guilds/${guildId}/group-fights`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGroupFightsControllerGetGuildGroupFightsQueryOptions = <TData = Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFights>>, TError = ErrorType<GroupFightsControllerGetGuildGroupFights401 | GroupFightsControllerGetGuildGroupFights403 | HttpErrorResponse | GroupFightsControllerGetGuildGroupFights429>>({ guildId }: GroupFightsControllerGetGuildGroupFightsPathParameters,
+    params?: GroupFightsControllerGetGuildGroupFightsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFights>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGroupFightsControllerGetGuildGroupFightsQueryKey({ guildId },params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFights>>> = ({ signal }) => groupFightsControllerGetGuildGroupFights({ guildId },params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: guildId !== null && guildId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFights>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GroupFightsControllerGetGuildGroupFightsQueryResult = NonNullable<Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFights>>>
+export type GroupFightsControllerGetGuildGroupFightsQueryError = ErrorType<GroupFightsControllerGetGuildGroupFights401 | GroupFightsControllerGetGuildGroupFights403 | HttpErrorResponse | GroupFightsControllerGetGuildGroupFights429>
+
+
+export function useGroupFightsControllerGetGuildGroupFights<TData = Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFights>>, TError = ErrorType<GroupFightsControllerGetGuildGroupFights401 | GroupFightsControllerGetGuildGroupFights403 | HttpErrorResponse | GroupFightsControllerGetGuildGroupFights429>>(
+ pathParams: GroupFightsControllerGetGuildGroupFightsPathParameters,
+    params: undefined |  GroupFightsControllerGetGuildGroupFightsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFights>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFights>>,
+          TError,
+          Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFights>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGroupFightsControllerGetGuildGroupFights<TData = Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFights>>, TError = ErrorType<GroupFightsControllerGetGuildGroupFights401 | GroupFightsControllerGetGuildGroupFights403 | HttpErrorResponse | GroupFightsControllerGetGuildGroupFights429>>(
+ pathParams: GroupFightsControllerGetGuildGroupFightsPathParameters,
+    params?: GroupFightsControllerGetGuildGroupFightsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFights>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFights>>,
+          TError,
+          Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFights>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGroupFightsControllerGetGuildGroupFights<TData = Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFights>>, TError = ErrorType<GroupFightsControllerGetGuildGroupFights401 | GroupFightsControllerGetGuildGroupFights403 | HttpErrorResponse | GroupFightsControllerGetGuildGroupFights429>>(
+ pathParams: GroupFightsControllerGetGuildGroupFightsPathParameters,
+    params?: GroupFightsControllerGetGuildGroupFightsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFights>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List guild group fights
+ */
+
+export function useGroupFightsControllerGetGuildGroupFights<TData = Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFights>>, TError = ErrorType<GroupFightsControllerGetGuildGroupFights401 | GroupFightsControllerGetGuildGroupFights403 | HttpErrorResponse | GroupFightsControllerGetGuildGroupFights429>>(
+ { guildId }: GroupFightsControllerGetGuildGroupFightsPathParameters,
+    params?: GroupFightsControllerGetGuildGroupFightsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFights>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGroupFightsControllerGetGuildGroupFightsQueryOptions({ guildId },params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary List guild group fights
+ */
+export const prefetchGroupFightsControllerGetGuildGroupFightsQuery = async <TData = Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFights>>, TError = ErrorType<GroupFightsControllerGetGuildGroupFights401 | GroupFightsControllerGetGuildGroupFights403 | HttpErrorResponse | GroupFightsControllerGetGuildGroupFights429>>(
+ queryClient: QueryClient, { guildId }: GroupFightsControllerGetGuildGroupFightsPathParameters,
+    params?: GroupFightsControllerGetGuildGroupFightsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFights>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getGroupFightsControllerGetGuildGroupFightsQueryOptions({ guildId },params,options)
+
+  await queryClient.prefetchQuery(queryOptions);
+
+  return queryClient;
+}
+
+/**
+ * @summary List guild group fights
+ */
+export const invalidateGroupFightsControllerGetGuildGroupFights = async (
+ queryClient: QueryClient, { guildId }: GroupFightsControllerGetGuildGroupFightsPathParameters,
+    params?: GroupFightsControllerGetGuildGroupFightsParams, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getGroupFightsControllerGetGuildGroupFightsQueryKey({ guildId },params) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary List guild group fights
+ */
+export const useSetGroupFightsControllerGetGuildGroupFightsQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId }: GroupFightsControllerGetGuildGroupFightsPathParameters,
+    params: GroupFightsControllerGetGuildGroupFightsParams | undefined,updater: Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFights>> | undefined | ((old: Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFights>> | undefined) => Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFights>> | undefined)) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFights>>>({ queryKey: getGroupFightsControllerGetGuildGroupFightsQueryKey({ guildId },params) }, updater);
+  };
+}
+
+/**
+ * @summary List guild group fights
+ */
+export const useGetGroupFightsControllerGetGuildGroupFightsQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId }: GroupFightsControllerGetGuildGroupFightsPathParameters,
+    params?: GroupFightsControllerGetGuildGroupFightsParams,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFights>>>(getGroupFightsControllerGetGuildGroupFightsQueryKey({ guildId },params));
+}
+
+
+
+export const getGroupFightsControllerGetGuildGroupFightUrl = ({ guildId, fightId }: GroupFightsControllerGetGuildGroupFightPathParameters,) => {
+
+
+
+
+  return `/guilds/${guildId}/group-fights/${fightId}`
+}
+
+/**
+ * @summary Get a single guild group fight
+ */
+export const groupFightsControllerGetGuildGroupFight = async ({ guildId, fightId }: GroupFightsControllerGetGuildGroupFightPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<GroupFightDetailResponseDtoOutput> => {
+
+  return mainFetch<GroupFightDetailResponseDtoOutput>(getGroupFightsControllerGetGuildGroupFightUrl({ guildId, fightId }),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGroupFightsControllerGetGuildGroupFightQueryKey = ({ guildId, fightId }: GroupFightsControllerGetGuildGroupFightPathParameters,) => {
+    return [
+    `/guilds/${guildId}/group-fights/${fightId}`
+    ] as const;
+    }
+
+
+export const getGroupFightsControllerGetGuildGroupFightQueryOptions = <TData = Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFight>>, TError = ErrorType<GroupFightsControllerGetGuildGroupFight401 | GroupFightsControllerGetGuildGroupFight403 | HttpErrorResponse | GroupFightsControllerGetGuildGroupFight429>>({ guildId, fightId }: GroupFightsControllerGetGuildGroupFightPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFight>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGroupFightsControllerGetGuildGroupFightQueryKey({ guildId, fightId });
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFight>>> = ({ signal }) => groupFightsControllerGetGuildGroupFight({ guildId, fightId }, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: guildId !== null && guildId !== undefined && fightId !== null && fightId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFight>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GroupFightsControllerGetGuildGroupFightQueryResult = NonNullable<Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFight>>>
+export type GroupFightsControllerGetGuildGroupFightQueryError = ErrorType<GroupFightsControllerGetGuildGroupFight401 | GroupFightsControllerGetGuildGroupFight403 | HttpErrorResponse | GroupFightsControllerGetGuildGroupFight429>
+
+
+export function useGroupFightsControllerGetGuildGroupFight<TData = Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFight>>, TError = ErrorType<GroupFightsControllerGetGuildGroupFight401 | GroupFightsControllerGetGuildGroupFight403 | HttpErrorResponse | GroupFightsControllerGetGuildGroupFight429>>(
+ pathParams: GroupFightsControllerGetGuildGroupFightPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFight>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFight>>,
+          TError,
+          Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFight>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGroupFightsControllerGetGuildGroupFight<TData = Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFight>>, TError = ErrorType<GroupFightsControllerGetGuildGroupFight401 | GroupFightsControllerGetGuildGroupFight403 | HttpErrorResponse | GroupFightsControllerGetGuildGroupFight429>>(
+ pathParams: GroupFightsControllerGetGuildGroupFightPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFight>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFight>>,
+          TError,
+          Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFight>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGroupFightsControllerGetGuildGroupFight<TData = Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFight>>, TError = ErrorType<GroupFightsControllerGetGuildGroupFight401 | GroupFightsControllerGetGuildGroupFight403 | HttpErrorResponse | GroupFightsControllerGetGuildGroupFight429>>(
+ pathParams: GroupFightsControllerGetGuildGroupFightPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFight>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get a single guild group fight
+ */
+
+export function useGroupFightsControllerGetGuildGroupFight<TData = Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFight>>, TError = ErrorType<GroupFightsControllerGetGuildGroupFight401 | GroupFightsControllerGetGuildGroupFight403 | HttpErrorResponse | GroupFightsControllerGetGuildGroupFight429>>(
+ { guildId, fightId }: GroupFightsControllerGetGuildGroupFightPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFight>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGroupFightsControllerGetGuildGroupFightQueryOptions({ guildId, fightId },options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get a single guild group fight
+ */
+export const prefetchGroupFightsControllerGetGuildGroupFightQuery = async <TData = Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFight>>, TError = ErrorType<GroupFightsControllerGetGuildGroupFight401 | GroupFightsControllerGetGuildGroupFight403 | HttpErrorResponse | GroupFightsControllerGetGuildGroupFight429>>(
+ queryClient: QueryClient, { guildId, fightId }: GroupFightsControllerGetGuildGroupFightPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFight>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getGroupFightsControllerGetGuildGroupFightQueryOptions({ guildId, fightId },options)
+
+  await queryClient.prefetchQuery(queryOptions);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get a single guild group fight
+ */
+export const invalidateGroupFightsControllerGetGuildGroupFight = async (
+ queryClient: QueryClient, { guildId, fightId }: GroupFightsControllerGetGuildGroupFightPathParameters, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getGroupFightsControllerGetGuildGroupFightQueryKey({ guildId, fightId }) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get a single guild group fight
+ */
+export const useSetGroupFightsControllerGetGuildGroupFightQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId, fightId }: GroupFightsControllerGetGuildGroupFightPathParameters,updater: Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFight>> | undefined | ((old: Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFight>> | undefined) => Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFight>> | undefined)) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFight>>>({ queryKey: getGroupFightsControllerGetGuildGroupFightQueryKey({ guildId, fightId }) }, updater);
+  };
+}
+
+/**
+ * @summary Get a single guild group fight
+ */
+export const useGetGroupFightsControllerGetGuildGroupFightQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId, fightId }: GroupFightsControllerGetGuildGroupFightPathParameters,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof groupFightsControllerGetGuildGroupFight>>>(getGroupFightsControllerGetGuildGroupFightQueryKey({ guildId, fightId }));
 }
 
 

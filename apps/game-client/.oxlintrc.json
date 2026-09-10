@@ -375,6 +375,17 @@
       }
     },
     {
+      "files": ["src/processors/group-fight-event-processor.test.ts"],
+      "rules": {
+        "anti-slop/no-module-mocking": [
+          "error",
+          {
+            "externalModules": ["@lootlog/client/transport"]
+          }
+        ]
+      }
+    },
+    {
       "files": ["src/hooks/use-local-storage.ts"],
       "rules": {
         "anti-slop/no-runtime-typeof": [

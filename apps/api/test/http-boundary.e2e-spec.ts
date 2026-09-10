@@ -38,6 +38,8 @@ import {
   roleTable,
   timerTable,
   userGameAccountSettingsTable,
+  userCharactersLootlogSettingsTable,
+  groupFightTable,
 } from "../src/database/drizzle/schema.js";
 
 const caller = {
@@ -124,8 +126,10 @@ describe("API HTTP boundary", () => {
     await redis.flushall();
     await databaseRuntime.runPromise(
       Effect.gen(function* () {
+        // User-scoped settings carry no Guild foreign key, so the cascade
+        // never reaches them and they would leak across tests.
         yield* database.execute(
-          sql`TRUNCATE TABLE "Guild" RESTART IDENTITY CASCADE`,
+          sql`TRUNCATE TABLE "Guild", "UserCharactersLootlogSettings", "UserGameAccountSettings" RESTART IDENTITY CASCADE`,
         );
         const updatedAt = new Date();
         yield* database.insert(guildTable).values([
@@ -193,6 +197,200 @@ describe("API HTTP boundary", () => {
     await databaseRuntime.dispose();
     await boundary.dispose();
   });
+
+  it("records group fights once and protects history and rankings with Organization capabilities", async () => {
+    await databaseRuntime.runPromise(
+      database
+        .insert(userCharactersLootlogSettingsTable)
+        .values({
+          userId: caller.discordId,
+          accountId: "group-fight-account",
+          characterId: "1",
+          catchingGuildIds: [authorizedGuildId, forbiddenGuildId],
+          updatedAt: new Date(),
+        })
+        .onConflictDoNothing(),
+    );
+    // Relative to now so the 90-day retention guard never expires the payload.
+    const fightEndedAt = new Date();
+    const fightStartedAt = new Date(fightEndedAt.getTime() - 30_000);
+    const payload = {
+      world,
+      accountId: "group-fight-account",
+      characterId: "1",
+      submissionKey: crypto.randomUUID(),
+      map: { id: 1, pvp: 2, name: "Sala Tronowa" },
+      qualification: { source: "CATALOG" },
+      startedAt: fightStartedAt.toISOString(),
+      endedAt: fightEndedAt.toISOString(),
+      myTeam: 1,
+      winningTeam: 1,
+      participants: Array.from({ length: 16 }, (_, index) => index + 1).map(
+        (id) => ({
+          characterId: String(id),
+          accountId: id === 1 ? "group-fight-account" : null,
+          name: `Player${id}`,
+          lvl: 100,
+          prof: "w",
+          icon: "",
+          team: id <= 8 ? 1 : 2,
+          joinedAt: fightStartedAt.toISOString(),
+          fled: false,
+        }),
+      ),
+    };
+    for (let retry = 0; retry < 2; retry++) {
+      const response = await request("/group-fights", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      expect(response.status).toBe(201);
+      expect(await response.json()).toMatchObject({
+        submittedGuilds: [
+          { guildId: authorizedGuildId, deduplicated: retry > 0 },
+        ],
+        rejectedGuilds: [
+          { guildId: forbiddenGuildId, reason: "MISSING_MEMBER" },
+        ],
+      });
+    }
+    const records = await databaseRuntime.runPromise(
+      database.select().from(groupFightTable),
+    );
+    expect(records).toHaveLength(1);
+    const fight = records[0];
+    if (!fight) throw new Error("Missing accepted group fight");
+    const ranking = await request(
+      `/guilds/${authorizedGuildId}/group-fights/ranking`,
+    );
+    expect(ranking.status).toBe(200);
+    expect(await ranking.json()).toMatchObject({
+      summary: { totalFights: 1 },
+      ranking: [{ fights: 1, wins: 1, totalSeconds: 30 }],
+    });
+    const history = await request(`/guilds/${authorizedGuildId}/group-fights`);
+    expect(history.status).toBe(200);
+    expect(await history.json()).toMatchObject({ fights: [{ id: fight.id }] });
+    const detail = await request(
+      `/guilds/${authorizedGuildId}/group-fights/${fight.id}`,
+    );
+    expect(detail.status).toBe(200);
+    expect(await detail.json()).toMatchObject({
+      participants: expect.arrayContaining([
+        expect.objectContaining({ characterId: "1" }),
+        expect.objectContaining({ characterId: "2" }),
+        expect.objectContaining({ characterId: "3" }),
+        expect.objectContaining({ characterId: "4" }),
+      ]),
+    });
+    for (const suffix of ["", "/ranking", `/${fight.id}`]) {
+      expect(
+        (await request(`/guilds/${forbiddenGuildId}/group-fights${suffix}`))
+          .status,
+      ).toBe(403);
+    }
+    const invalid = await request("/group-fights", {
+      method: "POST",
+      body: JSON.stringify({ ...payload, map: { ...payload.map, pvp: 1 } }),
+    });
+    expect(invalid.status).toBe(400);
+    expect(
+      await databaseRuntime.runPromise(
+        database.select({ count: count() }).from(groupFightTable),
+      ),
+    ).toEqual([{ count: 1 }]);
+  });
+
+  it.each([
+    [false, 8, 8, true],
+    [false, 10, 9, true],
+    [false, 10, 7, false],
+    [false, 10, 1, false],
+    [true, 10, 1, true],
+    [true, 2, 1, true],
+  ])(
+    "persists according to collection policy %s for %sv%s",
+    async (includeIncomplete, teamOne, teamTwo, accepted) => {
+      const configuration = await request(
+        `/guilds/${authorizedGuildId}/config`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({
+            groupFightsIncludeIncomplete: includeIncomplete,
+          }),
+        },
+      );
+      expect(configuration.status).toBe(200);
+      const forbidden = await request(`/guilds/${forbiddenGuildId}/config`, {
+        method: "PATCH",
+        body: JSON.stringify({ groupFightsIncludeIncomplete: true }),
+      });
+      expect(forbidden.status).toBe(403);
+      await databaseRuntime.runPromise(
+        database.insert(userCharactersLootlogSettingsTable).values({
+          userId: caller.discordId,
+          accountId: "policy-account",
+          characterId: "1",
+          catchingGuildIds: [authorizedGuildId],
+          updatedAt: new Date(),
+        }),
+      );
+      const endedAt = new Date().toISOString();
+      const startedAt = new Date(Date.now() - 30_000).toISOString();
+      const response = await request("/group-fights", {
+        method: "POST",
+        body: JSON.stringify({
+          world,
+          accountId: "policy-account",
+          characterId: "1",
+          submissionKey: crypto.randomUUID(),
+          map: { id: 1, pvp: 2, name: "Sala Tronowa" },
+          qualification: { source: "CATALOG" },
+          startedAt,
+          endedAt,
+          myTeam: 1,
+          winningTeam: 1,
+          participants: Array.from(
+            { length: teamOne + teamTwo },
+            (_, index) => ({
+              characterId: String(index + 1),
+              accountId: index === 0 ? "policy-account" : null,
+              name: `Player${index + 1}`,
+              lvl: 100,
+              prof: "w",
+              icon: "",
+              team: index < teamOne ? 1 : 2,
+              joinedAt: startedAt,
+              fled: false,
+            }),
+          ),
+        }),
+      });
+      expect(response.status).toBe(201);
+      expect(await response.json()).toMatchObject(
+        accepted
+          ? {
+              submittedGuilds: [{ guildId: authorizedGuildId }],
+              rejectedGuilds: [],
+            }
+          : {
+              submittedGuilds: [],
+              rejectedGuilds: [
+                { guildId: authorizedGuildId, reason: "INCOMPLETE_TEAMS" },
+              ],
+            },
+      );
+      const records = await databaseRuntime.runPromise(
+        database.select().from(groupFightTable),
+      );
+      expect(records).toHaveLength(accepted ? 1 : 0);
+      if (accepted)
+        expect(records[0]).toMatchObject({
+          teamOneSize: teamOne,
+          teamTwoSize: teamTwo,
+        });
+    },
+  );
 
   it("resolves notification senders from member summaries using Discord IDs", async () => {
     const notification = await request("/messaging", {

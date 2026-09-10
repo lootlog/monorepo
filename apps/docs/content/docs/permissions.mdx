@@ -3,6 +3,21 @@ title: Role i uprawnienia
 description: Kontroluj dostęp członków organizacji za pomocą ról i uprawnień Lootlog.
 ---
 
+## Ustawki
+
+Oprócz `LOOTLOG_ACCESS` ustaw rolę zgodnie z potrzebami:
+
+| Uprawnienie                  | Działanie                                                        |
+| ---------------------------- | ---------------------------------------------------------------- |
+| `LOOTLOG_GROUP_FIGHTS_READ`  | Przeglądanie rankingu, historii i szczegółów ustawek organizacji |
+| `LOOTLOG_GROUP_FIGHTS_WRITE` | Zapisywanie kwalifikujących się walk z dodatku do gry            |
+
+Administrator i właściciel mają te uprawnienia w ramach swojej roli.
+Pozostałym rolom należy nadać je w ustawieniach organizacji.
+Do rankingu wchodzą aktywni członkowie posiadający dostęp do aplikacji.
+Utrata członkostwa lub dostępu wyklucza członka z bieżącego rankingu,
+zachowując historię walk organizacji.
+
 Organizacja Lootloga odpowiada serwerowi Discord. Uprawnienia Lootloga są
 przypisywane do ról członków. Członek mający kilka ról otrzymuje sumę ich
 uprawnień.

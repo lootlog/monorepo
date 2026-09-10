@@ -22,6 +22,8 @@ const makeGuild = (
     vanityUrl: "test-guild",
     ownerId: "owner-1",
     publicStatsCardEnabled: false,
+    groupFightsEnabled: true,
+    groupFightsIncludeIncomplete: true,
     reservationMaxDurationMinutes: 240,
     reservationMinDurationMinutes: 15,
     reservationTimeGranularityMinutes: 15,

@@ -1,6 +1,6 @@
 import { fileURLToPath } from "node:url";
 import { existsSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { question, chalk } from "zx";
 import type { CliOptions, EnvFile, EnvVariable } from "../../types.js";
 import {
@@ -270,7 +270,7 @@ ${chalk.bold("Note:")}
 };
 
 // Only run main when this file is executed directly, not when imported
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (__filename === resolve(process.argv[1] ?? "")) {
   generate(process.argv.slice(2)).catch((error) => {
     console.error(chalk.red(`\n❌ Error: ${error.message}\n`));
     process.exit(1);

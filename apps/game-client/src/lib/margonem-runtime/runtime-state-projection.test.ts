@@ -171,7 +171,7 @@ describe("RuntimeStateProjection", () => {
           x: 8,
           y: 9,
         }),
-        map: { id: 11, name: "New map", visibility: 25 },
+        map: { id: 11, name: "New map", visibility: 25, pvp: 0 },
       }),
     );
     expect(adapter.getStateSnapshot).toHaveBeenCalledOnce();
