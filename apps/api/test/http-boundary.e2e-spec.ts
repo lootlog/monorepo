@@ -126,8 +126,10 @@ describe("API HTTP boundary", () => {
     await redis.flushall();
     await databaseRuntime.runPromise(
       Effect.gen(function* () {
+        // User-scoped settings carry no Guild foreign key, so the cascade
+        // never reaches them and they would leak across tests.
         yield* database.execute(
-          sql`TRUNCATE TABLE "Guild" RESTART IDENTITY CASCADE`,
+          sql`TRUNCATE TABLE "Guild", "UserCharactersLootlogSettings", "UserGameAccountSettings" RESTART IDENTITY CASCADE`,
         );
         const updatedAt = new Date();
         yield* database.insert(guildTable).values([
@@ -209,6 +211,9 @@ describe("API HTTP boundary", () => {
         })
         .onConflictDoNothing(),
     );
+    // Relative to now so the 90-day retention guard never expires the payload.
+    const fightEndedAt = new Date();
+    const fightStartedAt = new Date(fightEndedAt.getTime() - 30_000);
     const payload = {
       world,
       accountId: "group-fight-account",
@@ -216,8 +221,8 @@ describe("API HTTP boundary", () => {
       submissionKey: crypto.randomUUID(),
       map: { id: 1, pvp: 2, name: "Sala Tronowa" },
       qualification: { source: "CATALOG" },
-      startedAt: "2026-09-06T10:00:00.000Z",
-      endedAt: "2026-09-06T10:00:30.000Z",
+      startedAt: fightStartedAt.toISOString(),
+      endedAt: fightEndedAt.toISOString(),
       myTeam: 1,
       winningTeam: 1,
       participants: Array.from({ length: 16 }, (_, index) => index + 1).map(
@@ -229,7 +234,7 @@ describe("API HTTP boundary", () => {
           prof: "w",
           icon: "",
           team: id <= 8 ? 1 : 2,
-          joinedAt: "2026-09-06T10:00:00.000Z",
+          joinedAt: fightStartedAt.toISOString(),
           fled: false,
         }),
       ),
