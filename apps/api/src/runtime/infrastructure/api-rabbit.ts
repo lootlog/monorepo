@@ -20,6 +20,10 @@ const retried = (
   });
 
 export const apiRabbitQueues = [
+  queue(
+    "backend-game-character-offline",
+    RabbitRoutingKey.GAME_CHARACTER_OFFLINE,
+  ),
   retried(
     Queue.GUILDS_CREATE,
     RabbitRoutingKey.GUILDS_CREATE,

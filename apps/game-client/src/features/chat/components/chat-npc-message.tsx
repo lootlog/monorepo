@@ -1,3 +1,13 @@
+import {
+  ContextMenu,
+  ContextMenuTrigger,
+  ContextMenuContent,
+  ContextMenuItem,
+} from "@/components/ui/context-menu";
+import { Copy, MapPin } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { copyChatText } from "../chat-copy-text";
+import { getChatNpcLocation } from "./chat-message.helpers";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import type {
   ChatMessageResponseDtoOutput as ChatMessageType,
@@ -29,24 +39,49 @@ export const ChatNpcMessage: FC<ChatNpcMessageProps> = ({
   message,
   npcTypeColors,
 }) => {
+  const { t } = useTranslation("chat");
   const memberColor = useMemberColor(member);
   if (!message.npc || !guildName) return null;
 
+  const location = getChatNpcLocation(message.npc);
+
   return (
-    <ChatNpcMessageView
-      all={all}
-      appearance={appearance}
-      count={count}
-      guildName={guildName}
-      memberColor={memberColor ?? "FFF"}
-      message={message}
-      npcTypeColors={npcTypeColors}
-      senderName={member?.name ?? message.characterData.nick}
-      wrapSender={(sender) => (
-        <ChatCharacterTooltip character={message.characterData}>
-          {sender}
-        </ChatCharacterTooltip>
-      )}
-    />
+    <ContextMenu>
+      <ContextMenuTrigger>
+        <ChatNpcMessageView
+          all={all}
+          appearance={appearance}
+          count={count}
+          guildName={guildName}
+          memberColor={memberColor ?? "FFF"}
+          message={message}
+          npcTypeColors={npcTypeColors}
+          senderName={member?.name ?? message.characterData.nick}
+          wrapSender={(sender) => (
+            <ChatCharacterTooltip character={message.characterData}>
+              {sender}
+            </ChatCharacterTooltip>
+          )}
+        />
+      </ContextMenuTrigger>
+      <ContextMenuContent>
+        <ContextMenuItem onClick={() => void copyChatText(message.message)}>
+          <Copy
+            aria-hidden="true"
+            strokeWidth={1.5}
+            className="ll:mr-2 ll:size-3.5 ll:shrink-0"
+          />
+          {t("messageActions.copy")}
+        </ContextMenuItem>
+        <ContextMenuItem onClick={() => void copyChatText(location)}>
+          <MapPin
+            aria-hidden="true"
+            strokeWidth={1.5}
+            className="ll:mr-2 ll:size-3.5 ll:shrink-0"
+          />
+          {t("messageActions.copyLocation")}
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
   );
 };

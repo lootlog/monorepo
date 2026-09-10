@@ -1,6 +1,7 @@
 import { Effect, Schema } from "effect";
 import { PartyReadyRoomAggregateSchema } from "@lootlog/schema/party-ready-room";
 import {
+  FIND_ACTIVE_READY_ROOM_IDS_SCRIPT,
   COMMIT_READY_ROOM_SCRIPT,
   CREATE_READY_ROOM_SCRIPT,
   EXIT_READY_ROOM_PARTICIPANT_SCRIPT,
@@ -45,6 +46,10 @@ export interface ReadyRoomRedis {
 }
 
 export interface ReadyRoomEffectRepository {
+  readonly findActive: (
+    guildIds: ReadonlyArray<string>,
+    world: string,
+  ) => Effect.Effect<ReadonlyArray<ReadyRoomAggregate>, unknown>;
   readonly create: (
     aggregate: ReadyRoomAggregate,
   ) => Effect.Effect<CreateReadyRoomResult, unknown>;
@@ -121,10 +126,58 @@ export const makeReadyRoomRepository = (
   redis: ReadyRoomRedis,
   clock: () => number = Date.now,
 ): ReadyRoomEffectRepository => {
+  const evalWithIndexedRoomKeys = Effect.fnUntraced(function* (
+    script: string,
+    keys: ReadonlyArray<string>,
+    arguments_: ReadonlyArray<string | number>,
+  ) {
+    let declaredKeys = [...keys];
+    // Bound work if concurrent requests keep replacing the indexed room.
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      const result = yield* redis.eval(script, declaredKeys, arguments_);
+      if (
+        !Schema.is(Schema.Array(Schema.String))(result) ||
+        result[0] !== "DECLARE_KEYS"
+      ) {
+        return result;
+      }
+      declaredKeys = [...new Set([...declaredKeys, ...result.slice(1)])];
+    }
+    return yield* Effect.fail(
+      new Error("Ready Room indexes changed too often"),
+    );
+  });
   const get = (notificationId: string) =>
     redis.getJson(roomKey(notificationId), PartyReadyRoomAggregateSchema);
   return {
     get,
+    findActive: (guildIds, world) =>
+      redis
+        .eval(
+          FIND_ACTIVE_READY_ROOM_IDS_SCRIPT,
+          guildIds.map(
+            (id) =>
+              `party-ready-room:v3:discovery:${encodeURIComponent(id)}:${encodeURIComponent(world)}`,
+          ),
+          [clock()],
+        )
+        .pipe(
+          Effect.flatMap((value) =>
+            Effect.try(() =>
+              Schema.decodeUnknownSync(Schema.Array(Schema.String))(value),
+            ),
+          ),
+          Effect.flatMap((ids) => Effect.all(ids.map(get))),
+          Effect.map((rooms) =>
+            rooms.filter(
+              (room): room is ReadyRoomAggregate =>
+                room !== null &&
+                room.status === "ACTIVE" &&
+                room.world === world &&
+                Date.parse(room.expiresAt) > clock(),
+            ),
+          ),
+        ),
     findForUser: (discordId) =>
       redis
         .eval(
@@ -169,32 +222,36 @@ export const makeReadyRoomRepository = (
       if (ttl <= 0) {
         return Effect.fail(new Error("Ready Room must expire in the future"));
       }
-      return redis
-        .eval(
-          CREATE_READY_ROOM_SCRIPT,
-          [
-            roomKey(aggregate.notificationId),
-            organizerKey(aggregate.organizerDiscordId),
-            characterKey(
-              aggregate.world,
-              aggregate.organizerCharacter.characterId,
-            ),
-          ],
-          [
-            ROOM_PREFIX,
-            JSON.stringify(aggregate),
-            aggregate.notificationId,
-            ttl,
-          ],
-        )
-        .pipe(
-          Effect.flatMap((result) =>
-            Effect.try({
-              try: () => parseCreate(result, aggregate),
-              catch: (error) => error,
-            }),
+      return evalWithIndexedRoomKeys(
+        CREATE_READY_ROOM_SCRIPT,
+        [
+          roomKey(aggregate.notificationId),
+          organizerKey(aggregate.organizerDiscordId),
+          characterKey(
+            aggregate.world,
+            aggregate.organizerCharacter.characterId,
           ),
-        );
+          ...aggregate.guildIds.map(
+            (id) =>
+              `party-ready-room:v3:discovery:${encodeURIComponent(id)}:${encodeURIComponent(aggregate.world)}`,
+          ),
+        ],
+        [
+          ROOM_PREFIX,
+          JSON.stringify(aggregate),
+          aggregate.notificationId,
+          ttl,
+          Date.parse(aggregate.expiresAt),
+          3 + aggregate.guildIds.length,
+        ],
+      ).pipe(
+        Effect.flatMap((result) =>
+          Effect.try({
+            try: () => parseCreate(result, aggregate),
+            catch: (error) => error,
+          }),
+        ),
+      );
     },
     commit: (expected, next) => {
       const ttl = remainingTtl(next, clock);
@@ -219,43 +276,41 @@ export const makeReadyRoomRepository = (
       if (ttl <= 0) return Effect.succeed({ status: "missing" as const });
       const participant = next.participants[participantId];
       if (!participant) return Effect.succeed({ status: "conflict" as const });
-      return redis
-        .eval(
-          JOIN_READY_ROOM_SCRIPT,
-          [
-            roomKey(next.notificationId),
-            userKey(participant.discordId),
-            characterKey(next.world, participant.character.characterId),
-          ],
-          [
-            JSON.stringify(expected),
-            JSON.stringify(next),
-            next.notificationId,
-            Date.parse(next.expiresAt),
-            ttl,
-            ROOM_PREFIX,
-          ],
-        )
-        .pipe(
-          Effect.flatMap(
-            (result): Effect.Effect<JoinReadyRoomResult, unknown> => {
-              if (
-                Array.isArray(result) &&
-                result[0] === "JOINED_ELSEWHERE" &&
-                Schema.is(Schema.String)(result[1])
-              ) {
-                return Effect.succeed<JoinReadyRoomResult>({
-                  status: "joined-elsewhere" as const,
-                  notificationId: result[1],
-                });
-              }
-              return Effect.try({
-                try: () => parseCommit(result, next),
-                catch: (error) => error,
+      return evalWithIndexedRoomKeys(
+        JOIN_READY_ROOM_SCRIPT,
+        [
+          roomKey(next.notificationId),
+          userKey(participant.discordId),
+          characterKey(next.world, participant.character.characterId),
+        ],
+        [
+          JSON.stringify(expected),
+          JSON.stringify(next),
+          next.notificationId,
+          Date.parse(next.expiresAt),
+          ttl,
+          ROOM_PREFIX,
+        ],
+      ).pipe(
+        Effect.flatMap(
+          (result): Effect.Effect<JoinReadyRoomResult, unknown> => {
+            if (
+              Array.isArray(result) &&
+              result[0] === "JOINED_ELSEWHERE" &&
+              Schema.is(Schema.String)(result[1])
+            ) {
+              return Effect.succeed<JoinReadyRoomResult>({
+                status: "joined-elsewhere" as const,
+                notificationId: result[1],
               });
-            },
-          ),
-        );
+            }
+            return Effect.try({
+              try: () => parseCommit(result, next),
+              catch: (error) => error,
+            });
+          },
+        ),
+      );
     },
     exitParticipant: (expected, next, participantId) => {
       const ttl = remainingTtl(next, clock);

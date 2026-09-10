@@ -18,6 +18,8 @@ import {
 
 type HotkeyEvent = KeyboardEvent | MouseEvent;
 type UseHotkeysOptions = {
+  onChatHelp?: () => void;
+  onChatPosition?: () => void;
   onMapPingCancel?: () => void;
   onMapPingEnd?: (event: HotkeyEvent) => void;
   onMapPingStart?: (event: HotkeyEvent) => boolean;
@@ -67,6 +69,8 @@ const hotkeyScopes = new Map<string, HotkeyActionConfig["scope"]>(
 );
 
 export const useHotkeys = ({
+  onChatHelp,
+  onChatPosition,
   onMapPingCancel,
   onMapPingEnd,
   onMapPingStart,
@@ -109,12 +113,31 @@ export const useHotkeys = ({
       return true;
     };
 
+    const quickActions = new Map<string, () => void>([
+      [
+        "create-party-gathering",
+        () =>
+          useWindowsStore.getState().setOpen("create-party-gathering", true),
+      ],
+      ["chat-position", () => onChatPosition?.()],
+      ["chat-help", () => onChatHelp?.()],
+      [
+        "join-party-gathering",
+        () => window.dispatchEvent(new Event("lootlog:join-visible-gathering")),
+      ],
+    ]);
     const executeAction = (event: HotkeyEvent) => {
       for (const [action, binding] of Object.entries(bindings)) {
         if (!matchesBinding(event, binding)) {
           continue;
         }
 
+        const quickAction = quickActions.get(action);
+        if (quickAction) {
+          if (event instanceof KeyboardEvent && event.repeat) return true;
+          quickAction();
+          return true;
+        }
         const windowId = ACTION_TO_WINDOW.get(action);
         if (windowId) {
           toggleOpen(windowId, true);
@@ -249,7 +272,15 @@ export const useHotkeys = ({
         handledMouseTimeoutRef.current = null;
       }
     };
-  }, [bindings, onMapPingCancel, onMapPingEnd, onMapPingStart, toggleOpen]);
+  }, [
+    bindings,
+    onChatHelp,
+    onChatPosition,
+    onMapPingCancel,
+    onMapPingEnd,
+    onMapPingStart,
+    toggleOpen,
+  ]);
 
   return null;
 };

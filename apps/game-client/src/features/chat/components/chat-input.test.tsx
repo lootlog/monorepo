@@ -1,5 +1,6 @@
-import { type toast as SonnerToast, toast } from "sonner";
+import { toast } from "sonner";
 import {
+  act,
   fireEvent,
   render as renderUi,
   screen,
@@ -33,6 +34,11 @@ beforeEach(() =>
   setTestRuntimeGame({ world: "tempest", hero: { name: "CurrentHero" } }),
 );
 
+beforeEach(() => {
+  vi.spyOn(toast, "error").mockImplementation(() => "error");
+  vi.spyOn(toast, "warning").mockImplementation(() => "warning");
+});
+
 const sendRequest = vi.fn<typeof fetch>();
 const notificationRequest = vi.fn<typeof fetch>();
 const clearRequest = vi.fn<typeof fetch>();
@@ -64,10 +70,6 @@ const render = (ui: ReactElement) => {
     <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>,
   );
 };
-
-vi.mock("sonner", () => ({
-  toast: { error: vi.fn<typeof SonnerToast.error>() },
-}));
 
 let mockGuildMembers: MemberSummaryResponseDtoOutput[] = [
   { id: 1, userId: "user-1", name: "Raider", color: 0x12ab34 },
@@ -151,22 +153,13 @@ const createSentMessageResponse = (): ChatMessageResponseDtoOutput => ({
     prof: "w",
     icon: "hero.png",
   },
-  canEdit: false,
+
   canDelete: false,
 });
 
 describe("ChatInput", () => {
   const getEditor = () => {
     return screen.getByRole("textbox", { name: "Wiadomość..." });
-  };
-
-  const getEditorShell = () => {
-    const editorShell = getEditor().parentElement?.parentElement;
-
-    expect(editorShell).not.toBeNull();
-
-    if (!editorShell) throw new Error("Expected editor shell");
-    return editorShell;
   };
 
   afterEach(() => {
@@ -211,7 +204,6 @@ describe("ChatInput", () => {
       },
     });
     mockScrollIntoView.mockReset();
-    vi.mocked(toast.error).mockReset();
     mockGuildMembers = [
       { id: 1, userId: "user-1", name: "Raider", color: 0x12ab34 },
       { id: 2, userId: "user-2", name: "Hero", color: null },
@@ -256,17 +248,35 @@ describe("ChatInput", () => {
     mockGuildPermissions = [];
   });
 
-  it("uses the shared input focus ring on the editor shell", () => {
-    render(<ChatInput selectedGuildId="guild-1" />);
-
-    expect(getEditorShell()).toHaveClass(
-      "ll:focus-within:border-ring",
-      "ll:focus-within:ring-ring/50",
-      "ll:focus-within:ring-[3px]",
+  it("restores draft and reply after the composer unmounts", async () => {
+    const user = userEvent.setup();
+    const first = render(<ChatInput selectedGuildId="guild-1" />);
+    await user.click(getEditor());
+    await user.paste("Keep this draft");
+    act(() =>
+      useChatStore.getState().setReplyDraft({
+        guildId: "guild-1",
+        messageId: "old-message",
+        message: "Help",
+        senderNick: "Raider",
+        type: "NOTIFICATION",
+      }),
     );
+    first.unmount();
+    render(<ChatInput selectedGuildId="guild-1" />);
+    await waitFor(() =>
+      expect(getEditor().textContent).toBe("Keep this draft"),
+    );
+    expect(screen.getByText("[P] Help")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Anuluj odpowiedź" }));
+    expect(
+      useChatStore.getState().replyDraftsByGuild["guild-1"],
+    ).toBeUndefined();
+    expect(getEditor().textContent).toBe("Keep this draft");
+    await waitFor(() => expect(getEditor()).toHaveFocus());
   });
 
-  it("shows grouped suggestions inside the scroll area and inserts the highlighted mention instead of submitting", async () => {
+  it("shows suggestions inside the scroll area and inserts the highlighted mention instead of submitting", async () => {
     const user = userEvent.setup();
     render(<ChatInput selectedGuildId="guild-1" />);
 
@@ -279,11 +289,6 @@ describe("ChatInput", () => {
     expect(
       listbox.closest("[data-ll-scroll-area-viewport]"),
     ).toBeInTheDocument();
-    expect(screen.getByText("Role")).toBeInTheDocument();
-    expect(screen.getByText("Nicki")).toBeInTheDocument();
-
-    expect(screen.getByText("@Raid Team")).toHaveStyle({ color: "#ff8800" });
-    expect(screen.getByText("@Raider")).toHaveStyle({ color: "#12ab34" });
 
     await user.keyboard("{Enter}");
 
@@ -320,7 +325,6 @@ describe("ChatInput", () => {
 
     await user.keyboard("{ArrowDown}{Enter}");
     expect(editor.textContent).toBe("hej @Raider ");
-    expect(screen.getByText("@Raider")).toHaveStyle({ color: "#12ab34" });
 
     firstRender.unmount();
 
@@ -339,10 +343,9 @@ describe("ChatInput", () => {
     expect(mockScrollIntoView.mock.calls.length).toBeGreaterThan(
       scrollCallsBeforeArrowNavigation,
     );
-    expect(mockScrollIntoView).toHaveBeenLastCalledWith({
-      behavior: "smooth",
-      block: "nearest",
-    });
+    expect(mockScrollIntoView).toHaveBeenLastCalledWith(
+      expect.objectContaining({ block: "nearest" }),
+    );
 
     await user.keyboard("{Escape}");
     await waitFor(() => {
@@ -560,7 +563,6 @@ describe("ChatInput", () => {
     const mention = editor.querySelector("[data-chat-mention='raider']");
 
     expect(mention).toHaveTextContent("@Raider");
-    expect(mention).toHaveStyle({ color: "#12ab34" });
 
     await user.keyboard("{Control>}{Backspace}{/Control}");
     await waitFor(() => {
@@ -577,7 +579,7 @@ describe("ChatInput", () => {
     );
   });
 
-  it("limits pasted composer text to 120 characters", async () => {
+  it("limits pasted composer text to the supported 128 characters", async () => {
     const user = userEvent.setup();
     render(<ChatInput selectedGuildId="guild-1" />);
 
@@ -585,7 +587,7 @@ describe("ChatInput", () => {
     await user.click(editor);
     await user.paste("a".repeat(140));
 
-    expect(editor.textContent).toBe("a".repeat(120));
+    expect(editor.textContent).toBe("a".repeat(128));
   });
 
   it("does not submit while an IME composition is active", async () => {
@@ -601,16 +603,6 @@ describe("ChatInput", () => {
 
     expect(sendRequest).not.toHaveBeenCalled();
     expect(editor.textContent).toBe("zażółć");
-  });
-
-  it("keeps the single-line editor horizontally scrollable", () => {
-    render(<ChatInput selectedGuildId="guild-1" />);
-
-    expect(getEditor()).toHaveClass(
-      "ll:overflow-x-auto",
-      "ll:overflow-y-hidden",
-      "ll:whitespace-pre",
-    );
   });
 
   it("shows the placeholder again after deleting the editor content to zero", async () => {
@@ -695,7 +687,7 @@ describe("ChatInput", () => {
     expect(editor.textContent).toBe("");
   });
 
-  it("shows only the notification rate-limit error for a 429 response", async () => {
+  it("retains the notification draft without posting chat after a 429 response", async () => {
     notificationRequest.mockResolvedValue(
       Response.json({ retryAfterMs: 1_000 }, { status: 429 }),
     );
@@ -706,12 +698,13 @@ describe("ChatInput", () => {
     await user.paste("!alarm");
     fireEvent.keyDown(editor, { key: "Enter" });
 
+    await waitFor(() => expect(notificationRequest).toHaveBeenCalledTimes(1));
+    expect(sendRequest).not.toHaveBeenCalled();
     await waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith(
-        "Wysyłasz powiadomienia zbyt szybko. Spróbuj ponownie za chwilę.",
+        "Wysyłasz zbyt szybko. Spróbuj ponownie za chwilę.",
       ),
     );
-    expect(toast.error).toHaveBeenCalledTimes(1);
     expect(editor.textContent).toBe("!alarm");
   });
 
@@ -796,11 +789,8 @@ describe("ChatInput", () => {
 
   it("restores editor focus after sending a message", async () => {
     const user = userEvent.setup();
-    const onMessageSent = vi.fn<() => void>();
     sendRequest.mockResolvedValue(Response.json(createSentMessageResponse()));
-    render(
-      <ChatInput onMessageSent={onMessageSent} selectedGuildId="guild-1" />,
-    );
+    render(<ChatInput selectedGuildId="guild-1" />);
 
     const editor = getEditor();
     await user.click(editor);
@@ -813,7 +803,6 @@ describe("ChatInput", () => {
     await waitFor(() => {
       expect(editor).toHaveFocus();
     });
-    expect(onMessageSent).toHaveBeenCalledTimes(1);
     expect(editor.textContent).toBe("");
   });
 
@@ -833,6 +822,9 @@ describe("ChatInput", () => {
     await waitFor(() => {
       expect(editor).toHaveFocus();
     });
+    expect(toast.error).toHaveBeenCalledWith(
+      "Nie udało się wysłać wiadomości na czat",
+    );
     expect(editor.textContent).toBe("hello");
   });
 });

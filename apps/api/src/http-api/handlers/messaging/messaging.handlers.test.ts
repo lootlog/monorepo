@@ -6,25 +6,12 @@ import {
   MessagingData,
   MessagingIdentity,
   sendNotification,
-  volunteerForNotification,
 } from "./messaging.handlers.js";
 
 const notification = {
   guildIds: ["guild-a"],
   world: "Tempest",
   message: "Hello",
-};
-const volunteer = {
-  world: "Tempest",
-  targetDiscordId: "discord-owner",
-  character: {
-    lvl: 300,
-    nick: "Hero",
-    accountId: "account-a",
-    characterId: "character-a",
-    prof: "w",
-    icon: "hero.gif",
-  },
 };
 const makeData = (overrides: Partial<MessagingData["Service"]> = {}) =>
   MessagingData.of({
@@ -90,24 +77,5 @@ describe("messaging HttpApi handlers", () => {
     );
     expect(error).toBe(denied);
     expect(dataCalled).toBe(false);
-  });
-
-  it("delegates volunteer validation and RabbitMQ delivery exactly once", async () => {
-    const calls: Array<[string, string]> = [];
-    const layer = provideServices(
-      makeData({
-        volunteer: (discordId, notificationId) => {
-          calls.push([discordId, notificationId]);
-          return Effect.void;
-        },
-      }),
-    );
-
-    await Effect.runPromise(
-      volunteerForNotification("notification-a", volunteer).pipe(
-        Effect.provide(layer),
-      ),
-    );
-    expect(calls).toEqual([["discord-a", "notification-a"]]);
   });
 });

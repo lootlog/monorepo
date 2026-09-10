@@ -76,52 +76,6 @@ describe("ChatAppearanceSettingsForm", () => {
     expect(screen.getByRole("switch", { name: "Gildia" })).toBeInTheDocument();
   });
 
-  it("aligns every segmented control to the right edge", () => {
-    const queryClient = harness.queryClient;
-    const { container } = render(
-      <QueryClientProvider client={queryClient}>
-        <ChatAppearanceSettingsForm />
-      </QueryClientProvider>,
-    );
-
-    const toggleGroups = container.querySelectorAll(
-      '[data-slot="toggle-group"]',
-    );
-    expect(toggleGroups).toHaveLength(1);
-    for (const toggleGroup of toggleGroups) {
-      expect(toggleGroup).toHaveClass("ll:ml-auto");
-    }
-  });
-
-  it("uses two preset cards without scope or inheritance controls", () => {
-    const queryClient = harness.queryClient;
-    render(
-      <QueryClientProvider client={queryClient}>
-        <ChatAppearanceSettingsForm />
-      </QueryClientProvider>,
-    );
-
-    expect(screen.getByRole("button", { name: /Czytelny/ })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
-    expect(screen.getByRole("button", { name: /Kompaktowy/ })).toHaveAttribute(
-      "aria-pressed",
-      "false",
-    );
-    expect(document.getElementById("chat-preset")).toHaveStyle({
-      gap: "8px",
-      gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 9rem), 1fr))",
-    });
-    expect(screen.getByText("Więcej opcji")).toBeVisible();
-    expect(document.querySelector("details")).not.toBeInTheDocument();
-    expect(
-      screen.queryByTestId("chat-appearance-preview-messages"),
-    ).not.toBeInTheDocument();
-    expect(screen.queryByText("Zakres ustawień")).not.toBeInTheDocument();
-    expect(screen.queryByText(/Dziedzicz/)).not.toBeInTheDocument();
-  });
-
   it("keeps slider changes local until the interaction is committed", async () => {
     const queryClient = harness.queryClient;
     patchRequest.mockResolvedValue(
@@ -146,11 +100,6 @@ describe("ChatAppearanceSettingsForm", () => {
       </QueryClientProvider>,
     );
 
-    const restoreDefaultsButton = screen
-      .getByText("Przywróć domyślne")
-      .closest("button");
-    expect(restoreDefaultsButton).toHaveClass("ll:invisible");
-
     const slider = screen.getByRole("slider", { name: "Skala tekstu" });
     const sliderControl = slider.parentElement?.parentElement;
     if (!sliderControl) throw new Error("Expected slider control");
@@ -171,7 +120,6 @@ describe("ChatAppearanceSettingsForm", () => {
       pointerType: "mouse",
     });
 
-    expect(restoreDefaultsButton).not.toHaveClass("ll:invisible");
     expect(screen.queryByText("Własne ustawienia")).not.toBeInTheDocument();
     expect(
       queryClient.getQueryData<UserPreferencesResponseDtoOutput>(

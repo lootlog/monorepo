@@ -89,10 +89,7 @@ const renderLeadingVisual = (
     return (
       <div className="ll:flex ll:h-10 ll:w-8 ll:shrink-0 ll:items-center ll:justify-center ll:overflow-hidden">
         <CharacterTile
-          character={{
-            ...notification.character,
-            id: Number(notification.character.characterId),
-          }}
+          character={notification.character}
           className="ll:scale-75 ll:origin-center"
         />
       </div>

@@ -1,39 +1,58 @@
-import { useEffect, useState } from "react";
+import { ChatFilterSwitcher } from "./components/chat-filter-switcher";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { useShallow } from "zustand/react/shallow";
 import { DraggableWindow } from "@/components/draggable-window";
 import { GuildSwitcher } from "@/components/guild-switcher";
-import { ChatInput } from "@/features/chat/components/chat-input";
-import { ChatMessageList } from "@/features/chat/components/chat-message-list";
-import { ChatWindowActions } from "@/features/chat/components/chat-window-actions";
-import { useChatGuildData } from "@/features/chat/hooks/use-chat-guild-data";
+import { ChatInput } from "./components/chat-input";
+import { ChatMessageList } from "./components/chat-message-list";
+import { ChatWindowActions } from "./components/chat-window-actions";
+import { ChatGatheringBar } from "./components/chat-gathering-bar";
+import { useChatGuildData } from "./hooks/use-chat-guild-data";
 import { getGuildNamesById } from "@/lib/api/generated-helpers";
 import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/client/main";
-import { cn } from "cn";
-import { type ChatFilter, useChatStore } from "@/store/chat.store";
+import { useChatStore } from "@/store/chat.store";
 import { useGameStore } from "@/store/game.store";
 import { useWindowsStore } from "@/store/windows.store";
 import {
+  groupDuplicateChatMessages,
+  getVisibleChatMessageAliases,
+  getMessagesForSelectedGuild,
   getChatRenderableMessages,
-  getChatRenderableMessagesSignature,
   getCurrentChatMessages,
   getNextSelectedGuildId,
-  hasVisibleChatMessages,
 } from "./chat.helpers";
-import { canReplyToChatMessage } from "./chat-reply.helpers";
-import type { ChatUnreadCountByGuildId } from "./chat-unread.helpers";
+import {
+  canReplyToChatMessage,
+  resolveChatReplyNames,
+} from "./chat-reply.helpers";
 import { useNpcTypeColors } from "@/hooks/api/use-settings-documents";
 import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
 import { AsyncContent } from "@/components/async-content";
 import { AsyncStatusIndicator } from "@/components/async-status-indicator";
 import { useSocket } from "@/contexts/socket-context";
 import { useVisibleLootlogGuilds } from "@/hooks/use-visible-lootlog-guilds";
+import {
+  getChatUnreadSummary,
+  markChatMessagesRead,
+  prioritizeChatMessage,
+  retainChatReadEntries,
+  type ChatReadState,
+} from "./chat-read-state";
+import {
+  hasCurrentUserMention,
+  normalizeChatMentionName,
+} from "./chat-mentions.helpers";
+import type { ChatScrollPosition } from "./components/chat-transcript";
 
 interface ChatViewProps {
   isOpen: boolean;
+  embedded: boolean;
   selectedGuildId: string;
   setSelectedGuildId: (guildId: string) => void;
-  unreadCountByGuildId: ChatUnreadCountByGuildId;
+  readState: ChatReadState;
+  setReadState: (update: (state: ChatReadState) => ChatReadState) => void;
+  getPosition: (key: string) => ChatScrollPosition | undefined;
+  savePosition: (key: string, position: ChatScrollPosition) => void;
 }
 
 type ChatAsyncStateInput = {
@@ -95,14 +114,29 @@ const resolveChatAsyncState = ({
   };
 };
 
-const shouldShowChatInput = (guildId: string, isEnabled: boolean) =>
-  guildId !== "" && guildId !== "all" && isEnabled;
+const resolveChatGuildTargets = (
+  selectedGuildId: string,
+  visibleGuilds:
+    | ReturnType<typeof useVisibleLootlogGuilds>["visibleGuilds"]
+    | undefined,
+) => ({
+  effectiveSelectedGuildId: visibleGuilds?.length === 0 ? "" : selectedGuildId,
+  resolvedComposeGuildId: visibleGuilds?.some(
+    (guild) => guild.id === selectedGuildId,
+  )
+    ? selectedGuildId
+    : "",
+});
 
 export const ChatView = ({
   isOpen,
+  embedded,
   selectedGuildId,
   setSelectedGuildId,
-  unreadCountByGuildId,
+  readState,
+  setReadState,
+  getPosition,
+  savePosition,
 }: ChatViewProps) => {
   const { t } = useTranslation("chat");
   const { connected, joined } = useSocket();
@@ -115,29 +149,16 @@ export const ChatView = ({
   const { npcTypeColors } = useNpcTypeColors();
   const chatAppearance =
     preferences.data?.chatAppearance ?? CHAT_APPEARANCE_READABLE_PRESET;
-  const [scrollToBottomRequest, setScrollToBottomRequest] = useState(0);
-  const {
-    isChatInputEnabled,
-    setChatInputEnabled,
-    toggleChatInputEnabled,
-    chatFilter,
-    setChatFilter,
-    filtersVisible,
-    toggleFiltersVisible,
-    setReplyDraft,
-  } = useChatStore(
-    useShallow((state) => ({
-      isChatInputEnabled: state.isChatInputEnabled,
-      setChatInputEnabled: state.setChatInputEnabled,
-      toggleChatInputEnabled: state.toggleChatInputEnabled,
-      chatFilter: state.chatFilter,
-      setChatFilter: state.setChatFilter,
-      filtersVisible: state.filtersVisible,
-      toggleFiltersVisible: state.toggleFiltersVisible,
-      setReplyDraft: state.setReplyDraft,
-    })),
+  const filtersVisible = useChatStore((state) => state.filtersVisible);
+  const chatFilter = useChatStore((state) => state.chatFilter);
+  const gameInterface = useGameStore((state) => state.game?.interface);
+  const currentCharacterNick = useGameStore(
+    (state) => state.game?.hero.name ?? "",
   );
-  const setOpen = useWindowsStore((state) => state.setOpen);
+  const characterId = useGameStore(
+    (state) => state.game?.hero.characterId ?? "",
+  );
+  const world = useGameStore((state) => state.game?.world ?? "");
   const {
     error: guildsError,
     isFetching: guildsFetching,
@@ -147,11 +168,8 @@ export const ChatView = ({
   const visibleGuilds = areVisibleGuildsResolved
     ? resolvedVisibleGuilds
     : undefined;
-  const effectiveSelectedGuildId =
-    visibleGuilds?.length === 0 ? "" : selectedGuildId;
-  const currentCharacterNick = useGameStore(
-    (state) => state.game?.hero.name ?? "",
-  );
+  const { effectiveSelectedGuildId, resolvedComposeGuildId } =
+    resolveChatGuildTargets(selectedGuildId, visibleGuilds);
   const {
     failedGuildIds,
     hasMessagesResponse,
@@ -167,37 +185,80 @@ export const ChatView = ({
     guilds: visibleGuilds,
     selectedGuildId: effectiveSelectedGuildId,
   });
-  useEffect(() => {
-    const nextSelectedGuildId = getNextSelectedGuildId(
-      selectedGuildId,
-      visibleGuilds,
-    );
 
-    if (nextSelectedGuildId !== undefined) {
-      setSelectedGuildId(nextSelectedGuildId);
-    }
+  useEffect(() => {
+    const next = getNextSelectedGuildId(selectedGuildId, visibleGuilds);
+    if (next !== undefined) setSelectedGuildId(next);
   }, [selectedGuildId, setSelectedGuildId, visibleGuilds]);
+  useEffect(() => {
+    if (!visibleGuilds) return;
+    setReadState((current) => {
+      let next = current;
+      const allowed = new Set(visibleGuilds.map((guild) => guild.id));
+      if (Object.keys(current).some((guildId) => !allowed.has(guildId))) {
+        next = Object.fromEntries(
+          Object.entries(current).filter(([guildId]) => allowed.has(guildId)),
+        );
+      }
+      if (!hasMessagesResponse) return next;
+      for (const [guildId, messages] of Object.entries(messagesByGuildId)) {
+        if (failedGuildIds.includes(guildId)) continue;
+        next = retainChatReadEntries(
+          next,
+          guildId,
+          new Set(messages.map((message) => message.id)),
+        );
+        const context = mentionContextsByGuildId[guildId];
+        for (const message of messages) {
+          const repliesToMe =
+            message.replyTo &&
+            context?.currentUserNames?.some(
+              (name) =>
+                normalizeChatMentionName(name) ===
+                normalizeChatMentionName(message.replyTo?.senderNick ?? ""),
+            );
+          if (repliesToMe || hasCurrentUserMention(message.message, context))
+            next = prioritizeChatMessage(next, guildId, message.id);
+        }
+      }
+      return next;
+    });
+  }, [
+    visibleGuilds,
+    hasMessagesResponse,
+    messagesByGuildId,
+    mentionContextsByGuildId,
+    failedGuildIds,
+    setReadState,
+  ]);
 
   const guildNamesById = getGuildNamesById(visibleGuilds);
-  const chatFilters: { key: ChatFilter; label: string }[] = [
-    { key: "all", label: t("filters.all") },
-    { key: "normal", label: t("filters.normal") },
-    { key: "npc", label: t("filters.npc") },
-    { key: "party", label: t("filters.party") },
-  ];
-  const currentMessages = getCurrentChatMessages(
+  const unread = getChatUnreadSummary(readState, effectiveSelectedGuildId);
+  const unreadCountByGuildId = Object.fromEntries(
+    (visibleGuilds ?? []).map((guild) => {
+      const summary = getChatUnreadSummary(readState, guild.id);
+      return [guild.id, summary.attention];
+    }),
+  );
+  const effectiveFilter = !filtersVisible
+    ? "all"
+    : chatFilter === "npc" || chatFilter === "party"
+      ? "reports"
+      : chatFilter;
+  const currentMessages = resolveChatReplyNames(
+    getCurrentChatMessages(
+      messagesByGuildId,
+      effectiveSelectedGuildId,
+      effectiveFilter,
+    ),
     messagesByGuildId,
-    effectiveSelectedGuildId,
-    chatFilter,
+    membersByGuildId,
   );
   const currentRenderableMessages = getChatRenderableMessages(currentMessages);
-  const currentRenderSignature = getChatRenderableMessagesSignature(
-    currentRenderableMessages,
+  const selectedMessageGroups = groupDuplicateChatMessages(
+    getMessagesForSelectedGuild(messagesByGuildId, effectiveSelectedGuildId),
   );
-  const hasRenderableMessages = hasVisibleChatMessages(
-    currentMessages,
-    guildNamesById,
-  );
+  const positionKey = `${world}:${characterId}:${effectiveSelectedGuildId}:${effectiveFilter}`;
   const {
     initialError,
     initialLoading,
@@ -221,143 +282,168 @@ export const ChatView = ({
     visibleGuildCount: visibleGuilds?.length,
   });
   const retryChatData = () => {
-    if (guildsError) {
-      void refetchGuilds();
-    }
-    if (preferences.error) {
-      void preferences.refetch();
-    }
+    if (guildsError) void refetchGuilds();
+    if (preferences.error) void preferences.refetch();
     retryFailed();
   };
-
   const handleReplyToMessage = (message: ChatMessageType) => {
-    if (!canReplyToChatMessage(message)) {
-      return;
-    }
-
-    setReplyDraft({
+    if (!canReplyToChatMessage(message)) return;
+    useChatStore.getState().setReplyDraft({
       guildId: message.guildId,
       messageId: message.id,
-      senderNick: message.characterData.nick,
+      senderNick:
+        membersByGuildId[message.guildId]?.[message.senderId]?.name ??
+        message.characterData.nick,
       message: message.message,
       type: message.type,
     });
-    setChatInputEnabled(true);
-
-    if (selectedGuildId === "all") {
-      setSelectedGuildId(message.guildId);
-    }
   };
-
+  const actions = (
+    <ChatWindowActions
+      integrated={embedded}
+      canIntegrate={gameInterface === "ni"}
+      toggleIntegrated={() => {
+        useWindowsStore.getState().setOpen("chat", true);
+        useChatStore.getState().toggleIntegratedMode();
+      }}
+    />
+  );
+  const content = (
+    <ChatGatheringBar isVisible={isOpen}>
+      {(gatheringBar, hiddenGatherings, ownGathering) => (
+        <div className="ll:flex ll:size-full ll:min-h-0 ll:flex-col">
+          <div className="ll:flex ll:shrink-0 ll:items-center ll:gap-1 ll:p-1">
+            <GuildSwitcher
+              allowAll
+              className="ll:min-w-0 ll:flex-1"
+              value={selectedGuildId}
+              onChange={(guildId) => {
+                setSelectedGuildId(guildId);
+              }}
+              unreadCountByGuildId={unreadCountByGuildId}
+              unreadGuildIds={
+                new Set(
+                  (visibleGuilds ?? [])
+                    .filter(
+                      (guild) =>
+                        getChatUnreadSummary(readState, guild.id).ids.size > 0,
+                    )
+                    .map((guild) => guild.id),
+                )
+              }
+            />
+            {embedded && actions}
+          </div>
+          {filtersVisible && (
+            <ChatFilterSwitcher
+              value={effectiveFilter}
+              onValueChange={useChatStore.getState().setChatFilter}
+              unread={unread}
+            />
+          )}
+          <div className="ll:relative ll:shrink-0 ll:z-10">{gatheringBar}</div>
+          <div
+            className={`ll:relative ll:min-h-0 ll:flex-1 ll:overflow-hidden ${!filtersVisible ? "ll:border-solid ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40" : ""}`}
+          >
+            <div className="ll:pointer-events-auto ll:absolute ll:right-1 ll:top-1 ll:z-20 ll:flex ll:max-w-[calc(100%-8px)] ll:items-start ll:gap-1">
+              <AsyncStatusIndicator
+                active={partialError}
+                kind="error"
+                label={
+                  failedGuildIds.length > 0
+                    ? t("states.partialError", { count: failedGuildIds.length })
+                    : t("states.refreshError")
+                }
+                onRetry={retryChatData}
+                retryLabel={t("actions.retry", { ns: "common" })}
+              />
+              <AsyncStatusIndicator
+                active={showOfflineStatus}
+                kind="warning"
+                label={t("states.offline")}
+              />
+              <AsyncStatusIndicator
+                active={showRefreshingStatus}
+                delay
+                kind="loading"
+                label={t("states.refreshing")}
+              />
+            </div>
+            <div className="ll:absolute ll:right-2 ll:bottom-2 ll:z-20">
+              {hiddenGatherings}
+            </div>
+            <AsyncContent
+              error={initialError}
+              errorLabel={t("states.loadError")}
+              isLoading={initialLoading}
+              loadingLabel={t("states.loading")}
+              onRetry={retryChatData}
+              retryLabel={t("actions.retry", { ns: "common" })}
+            >
+              <ChatMessageList
+                key={positionKey}
+                appearance={chatAppearance}
+                npcTypeColors={npcTypeColors}
+                ariaLabel={t("window.title")}
+                emptyStateTitle={t(
+                  effectiveSelectedGuildId === "all"
+                    ? "emptyState.allTitle"
+                    : "emptyState.guildTitle",
+                )}
+                guildNamesById={guildNamesById}
+                membersByGuildId={membersByGuildId}
+                mentionContextsByGuildId={mentionContextsByGuildId}
+                onReplyToMessage={handleReplyToMessage}
+                renderables={currentRenderableMessages}
+                selectedGuildId={effectiveSelectedGuildId}
+                isActive={isOpen}
+                unreadIds={unread.ids}
+                onMessagesSeen={(ids) =>
+                  setReadState((current) =>
+                    markChatMessagesRead(
+                      current,
+                      getVisibleChatMessageAliases(selectedMessageGroups, ids),
+                    ),
+                  )
+                }
+                position={getPosition(positionKey)}
+                onPositionChange={(position) => {
+                  savePosition(positionKey, position);
+                }}
+              />
+            </AsyncContent>
+          </div>
+          <div className="ll:shrink-0">
+            {ownGathering}
+            <div>
+              {!resolvedComposeGuildId && (
+                <p className="ll:text-[10px] ll:text-muted-foreground">
+                  {t("quickActions.selectOrganization")}
+                </p>
+              )}
+              <ChatInput
+                variant="borderless"
+                selectedGuildId={resolvedComposeGuildId || undefined}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </ChatGatheringBar>
+  );
+  if (embedded) return content;
   return (
     <DraggableWindow
       isOpen={isOpen}
       id="chat"
+      contentClassName="ll:-mx-1 ll:-mb-1"
       title={t("window.title")}
-      onClose={() => setOpen("chat", false)}
-      minHeight={116}
-      minWidth={242}
-      actions=<ChatWindowActions
-        chatInputEnabled={isChatInputEnabled}
-        toggleChatInputEnabled={toggleChatInputEnabled}
-        filtersVisible={filtersVisible}
-        toggleFiltersVisible={toggleFiltersVisible}
-      />
+      onClose={() => useWindowsStore.getState().setOpen("chat", false)}
+      minHeight={260}
+      // minWidth={260}
+      actions={actions}
     >
-      <div className="ll:flex ll:flex-col ll:h-full ll:w-full">
-        <div className="ll:shrink-0 ll:pt-1 ll:pb-1">
-          <GuildSwitcher
-            allowAll
-            value={selectedGuildId}
-            onChange={setSelectedGuildId}
-            unreadCountByGuildId={unreadCountByGuildId}
-          />
-        </div>
-        {filtersVisible && (
-          <div className="ll:shrink-0 ll:flex ll:gap-0.5 ll:px-1 ll:pb-1">
-            {chatFilters.map((filter) => (
-              <button
-                key={filter.key}
-                type="button"
-                onClick={() => setChatFilter(filter.key)}
-                className={cn(
-                  "ll:flex-1 ll:text-[10px] ll:py-0.5 ll:rounded-sm ll:border ll:transition-colors",
-                  chatFilter === filter.key
-                    ? "ll:bg-gray-600 ll:border-gray-500 ll:text-white"
-                    : "ll:bg-transparent ll:border-gray-700 ll:text-gray-400 ll:hover:text-gray-300 ll:hover:border-gray-600",
-                )}
-              >
-                {filter.label}
-              </button>
-            ))}
-          </div>
-        )}
-        <div className="ll:relative ll:flex-1 ll:overflow-hidden">
-          <div className="ll:pointer-events-auto ll:absolute ll:right-1 ll:top-1 ll:z-20">
-            <AsyncStatusIndicator
-              active={partialError}
-              kind="error"
-              label={
-                failedGuildIds.length > 0
-                  ? t("states.partialError", {
-                      count: failedGuildIds.length,
-                    })
-                  : t("states.refreshError")
-              }
-              onRetry={retryChatData}
-              retryLabel={t("actions.retry", { ns: "common" })}
-            />
-            <AsyncStatusIndicator
-              active={showOfflineStatus}
-              kind="warning"
-              label={t("states.offline")}
-            />
-            <AsyncStatusIndicator
-              active={showRefreshingStatus}
-              delay
-              kind="loading"
-              label={t("states.refreshing")}
-            />
-          </div>
-          <AsyncContent
-            error={initialError}
-            errorLabel={t("states.loadError")}
-            isLoading={initialLoading}
-            loadingLabel={t("states.loading")}
-            onRetry={retryChatData}
-            retryLabel={t("actions.retry", { ns: "common" })}
-          >
-            <ChatMessageList
-              appearance={chatAppearance}
-              npcTypeColors={npcTypeColors}
-              key={`${effectiveSelectedGuildId}:${chatFilter}`}
-              ariaLabel={t("window.title")}
-              emptyStateTitle={t(
-                effectiveSelectedGuildId === "all"
-                  ? "emptyState.allTitle"
-                  : "emptyState.guildTitle",
-              )}
-              guildNamesById={guildNamesById}
-              hasRenderableMessages={hasRenderableMessages}
-              membersByGuildId={membersByGuildId}
-              mentionContextsByGuildId={mentionContextsByGuildId}
-              onReplyToMessage={handleReplyToMessage}
-              renderSignature={currentRenderSignature}
-              renderables={currentRenderableMessages}
-              scrollToBottomRequest={scrollToBottomRequest}
-              selectedGuildId={effectiveSelectedGuildId}
-            />
-          </AsyncContent>
-        </div>
-        {shouldShowChatInput(effectiveSelectedGuildId, isChatInputEnabled) && (
-          <ChatInput
-            onMessageSent={() =>
-              setScrollToBottomRequest((currentRequest) => currentRequest + 1)
-            }
-            selectedGuildId={effectiveSelectedGuildId}
-          />
-        )}
-      </div>
+      {content}
     </DraggableWindow>
   );
 };

@@ -4952,76 +4952,6 @@ paths:
                 additionalProperties: false
       description: Delete a chat message from a guild
       summary: Delete chat message
-    patch:
-      tags:
-        - chat
-      operationId: ChatController_updateChatMessage
-      parameters:
-        - name: messageId
-          in: path
-          schema:
-            type: string
-            example: msg_123
-          required: true
-        - name: guildId
-          in: path
-          schema: {}
-          required: true
-      security:
-        - bearer: []
-      responses:
-        "200":
-          description: ChatMessageActionResponseDto_Output
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ChatMessageActionResponseDto_Output"
-        "401":
-          description: Error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
-        "403":
-          description: <No Content>
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
-        "404":
-          description: <No Content>
-        "429":
-          description: Error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
-                additionalProperties: false
-      description: Update the content of a chat message
-      summary: Update chat message
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateMessageDto"
-        required: true
   /guilds/{guildId}/reservation-spots:
     get:
       tags:
@@ -8055,6 +7985,68 @@ paths:
             schema:
               $ref: "#/components/schemas/CreateVolunteerDto"
         required: true
+  /messaging/party-gathering/active:
+    get:
+      tags:
+        - party-ready-room
+      operationId: PartyReadyRoomController_active
+      parameters:
+        - name: world
+          in: query
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 50
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivePartyGatheringSummary"
+        "401":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "403":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
   /messaging/party-gathering:
     get:
       tags:
@@ -19017,6 +19009,10 @@ components:
         npc:
           type: object
           properties:
+            world:
+              type: string
+              minLength: 1
+              maxLength: 50
             id:
               type: number
             name:
@@ -19105,8 +19101,6 @@ components:
             - message
             - type
           additionalProperties: false
-        canEdit:
-          type: boolean
         canDelete:
           type: boolean
       required:
@@ -19117,7 +19111,6 @@ components:
         - timestamp
         - type
         - characterData
-        - canEdit
         - canDelete
       additionalProperties: false
     SendMessageDto:
@@ -19162,6 +19155,10 @@ components:
         npc:
           type: object
           properties:
+            world:
+              type: string
+              minLength: 1
+              maxLength: 50
             id:
               type: number
             name:
@@ -19262,16 +19259,6 @@ components:
           type: boolean
       required:
         - success
-      additionalProperties: false
-    UpdateMessageDto:
-      type: object
-      properties:
-        message:
-          type: string
-          minLength: 1
-          maxLength: 128
-      required:
-        - message
       additionalProperties: false
     ReservationSpotsResponseDto:
       type: array
@@ -22874,9 +22861,131 @@ components:
         - targetDiscordId
         - character
       additionalProperties: false
+    ActivePartyGatheringSummary:
+      type: object
+      properties:
+        notificationId:
+          type: string
+        organizerName:
+          type: string
+        organizerDiscordId:
+          type: string
+        organizerLvl:
+          type: number
+        organizerProf:
+          type: string
+        applicantCount:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        inPartyCount:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        partyMemberCount:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        guildIds:
+          type: array
+          items:
+            type: string
+        world:
+          type: string
+        description:
+          type: string
+        minLvl:
+          type: number
+        maxLvl:
+          type: number
+        npc:
+          type: object
+          properties:
+            prof:
+              type: string
+            icon:
+              type: string
+            type:
+              type: string
+            name:
+              type: string
+            location:
+              type: string
+            lvl:
+              type: number
+            x:
+              type: number
+            y:
+              type: number
+          required:
+            - name
+            - location
+            - lvl
+          additionalProperties: false
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        expiresAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+      required:
+        - notificationId
+        - organizerName
+        - applicantCount
+        - inPartyCount
+        - guildIds
+        - world
+        - createdAt
+        - expiresAt
+      additionalProperties: false
     PartyReadyRoomProjectionDto_Output:
       type: object
       properties:
+        npc:
+          type: object
+          properties:
+            prof:
+              type: string
+            icon:
+              type: string
+            name:
+              type: string
+            location:
+              type: string
+            lvl:
+              anyOf:
+                - type: number
+                - type: string
+                  enum:
+                    - Infinity
+                    - -Infinity
+                    - NaN
+            type:
+              type: string
+            x:
+              anyOf:
+                - type: number
+                - type: string
+                  enum:
+                    - Infinity
+                    - -Infinity
+                    - NaN
+            y:
+              anyOf:
+                - type: number
+                - type: string
+                  enum:
+                    - Infinity
+                    - -Infinity
+                    - NaN
+          required:
+            - name
+            - location
+            - lvl
+            - type
+          additionalProperties: false
         schemaVersion:
           type: number
           enum:
@@ -22939,6 +23048,10 @@ components:
           type: number
         maxLvl:
           type: number
+        partyMemberCount:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
         status:
           type: string
           enum:
@@ -23205,6 +23318,49 @@ components:
         projection:
           type: object
           properties:
+            npc:
+              type: object
+              properties:
+                prof:
+                  type: string
+                icon:
+                  type: string
+                name:
+                  type: string
+                location:
+                  type: string
+                lvl:
+                  anyOf:
+                    - type: number
+                    - type: string
+                      enum:
+                        - Infinity
+                        - -Infinity
+                        - NaN
+                type:
+                  type: string
+                x:
+                  anyOf:
+                    - type: number
+                    - type: string
+                      enum:
+                        - Infinity
+                        - -Infinity
+                        - NaN
+                y:
+                  anyOf:
+                    - type: number
+                    - type: string
+                      enum:
+                        - Infinity
+                        - -Infinity
+                        - NaN
+              required:
+                - name
+                - location
+                - lvl
+                - type
+              additionalProperties: false
             schemaVersion:
               type: number
               enum:
@@ -23267,6 +23423,10 @@ components:
               type: number
             maxLvl:
               type: number
+            partyMemberCount:
+              type: integer
+              minimum: 0
+              maximum: 9007199254740991
             status:
               type: string
               enum:

@@ -35,6 +35,7 @@ type GuildSwitcherProps = {
   onToggle?: (guildId: string) => void;
   selectedValues?: string[];
   unreadCountByGuildId?: Record<string, number>;
+  unreadGuildIds?: ReadonlySet<string>;
   value?: string;
 };
 
@@ -104,6 +105,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
     onToggle,
     selectedValues,
     unreadCountByGuildId,
+    unreadGuildIds,
     value,
   } = resolveGuildSwitcherProps(props);
   const { t } = useTranslation("common");
@@ -291,7 +293,10 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
           hideLabel={t("guildSwitcher.hideInGameClient")}
           guild={guild}
           buttonClassName={resolvedButtonClassName}
-          unreadBadge={formatChatUnreadBadge(unreadCountByGuildId?.[guild.id])}
+          unreadBadge={
+            formatChatUnreadBadge(unreadCountByGuildId?.[guild.id]) ??
+            (unreadGuildIds?.has(guild.id) ? "•" : null)
+          }
         />
       ))}
     </>

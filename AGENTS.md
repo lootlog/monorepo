@@ -263,9 +263,21 @@ Before calling a change complete, account for every applicable item:
 - Tests must protect observable behavior, business invariants, real
   regressions, authorization boundaries, or meaningful integration contracts.
   Each test must answer: “What real regression would this catch?”
-- Skip tests that count symbols or modules, mirror private wiring, restate the
-  type system, verify framework mechanics, or exist only to increase coverage.
-  Broad snapshots are not a substitute for behavioral assertions.
+- Add tests only for a concrete logic regression: name the incorrect outcome
+  they prevent. Prefer extending an existing behavioral test over creating a
+  new suite or fixture.
+- For styling, layout, or copy-only changes, use existing visual inspection and
+  lint/typecheck. Do not add tests for literal text rendering, CSS classes or
+  values, DOM nesting, decorative animations, or the absence of deleted UI.
+  Do not commit temporary design/verification pages unless explicitly requested.
+- Skip tests that count symbols or modules, mirror private forwarding or wiring,
+  restate the type system, validate their own fixtures instead of actual output,
+  or merely exercise framework mechanics. Broad snapshots are not a substitute
+  for behavioral assertions.
+- Keep UI tests for meaningful behavior: authorization, user input, state
+  transitions, persistence, failure recovery, and keyboard/accessibility
+  interactions. Assert outcomes, not presentation details; remove incidental
+  style and copy assertions from otherwise useful tests.
 - Keep E2E fakes at genuine external boundaries. Verify resulting state, not
   only status codes, and never mock the unit under test or internal application
   layers.

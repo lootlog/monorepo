@@ -26,7 +26,7 @@ export const createChatMessage = (
   timestamp: "2026-04-22T10:00:00.000Z",
   type: "NORMAL",
   characterData: createChatCharacter(),
-  canEdit: false,
+
   canDelete: false,
   ...overrides,
 });

@@ -25,15 +25,17 @@ export const TimerHistoryList: FC<TimerHistoryListProps> = ({
 
   return (
     <div className="ll:flex ll:flex-col ll:gap-2 ll:text-xs">
-      <div className="ll:font-semibold ll:text-white ll:pt-1">{title}</div>
+      <div className="ll:font-semibold ll:text-popover-foreground ll:pt-1">
+        {title}
+      </div>
       {isLoading && (
-        <div className="ll:flex ll:items-center ll:gap-2 ll:text-gray-300">
+        <div className="ll:flex ll:items-center ll:gap-2 ll:text-muted-foreground">
           <Loader2 className="ll:h-4 ll:w-4 ll:animate-spin" />
           {t("history.loading")}
         </div>
       )}
       {!isLoading && history.length === 0 && (
-        <div className="ll:text-gray-400">{t("history.empty")}</div>
+        <div className="ll:text-muted-foreground">{t("history.empty")}</div>
       )}
       {!isLoading && history.length > 0 && (
         <div className="ll:flex ll:flex-col ll:gap-1">

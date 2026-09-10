@@ -1,6 +1,8 @@
+import type { ReactElement } from "react";
+import { createChatTestWrapper } from "../chat-test-wrapper";
 import userEvent from "@testing-library/user-event";
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render as renderUi, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { MessageType } from "@/api/chat.api";
 import type {
   ChatMessageResponseDtoOutput as ChatMessageType,
@@ -8,6 +10,9 @@ import type {
 } from "@lootlog/client/main";
 
 import { ChatNpcMessage } from "./chat-npc-message";
+
+const render = (ui: ReactElement) =>
+  renderUi(ui, { wrapper: createChatTestWrapper().wrapper });
 
 const makeChatMessage = (
   overrides?: Partial<ChatMessageType>,
@@ -39,7 +44,6 @@ const makeChatMessage = (
     type: 1,
     wt: 100,
   },
-  canEdit: false,
   canDelete: false,
   ...overrides,
 });
@@ -51,28 +55,24 @@ const member: GuildMember = {
 };
 
 describe("ChatNpcMessage", () => {
-  it("renders a compact npc card with sender, guild label and group badge", () => {
+  it("copies the NPC location through the context menu", async () => {
+    const user = userEvent.setup();
+    const writeText = vi.spyOn(navigator.clipboard, "writeText");
     render(
       <ChatNpcMessage
-        all
+        all={false}
         guildName="Guild"
         message={makeChatMessage()}
-        member={member}
-        count={3}
       />,
     );
-
-    expect(screen.getByText("Member:")).toBeInTheDocument();
-    expect(screen.getByText("[Guild]")).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: "Hydra" })).toBeInTheDocument();
-    expect(screen.getByText("Hydra")).toBeInTheDocument();
-    expect(screen.getByText("Hydra").parentElement).toHaveTextContent(
-      "Hydra(250m)",
+    expect(
+      screen.queryByRole("button", { name: "Kopiuj lokalizację" }),
+    ).not.toBeInTheDocument();
+    fireEvent.contextMenu(screen.getByText("Hydra"));
+    await user.click(
+      await screen.findByRole("menuitem", { name: "Kopiuj lokalizację" }),
     );
-    expect(screen.getByText("(250m)")).toBeInTheDocument();
-    expect(screen.getByText("Swamp")).toBeInTheDocument();
-    expect(screen.getByText("(7, 9)")).toHaveClass("ll:whitespace-nowrap");
-    expect(screen.getByText("x3")).toBeInTheDocument();
+    expect(writeText).toHaveBeenCalledWith("Swamp (7, 9)");
   });
 
   it("hides the counter when there is only one grouped message", () => {

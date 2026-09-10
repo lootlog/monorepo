@@ -4,7 +4,14 @@ import {
   createMemberFixture,
 } from "../../../../test/organization-fixtures.js";
 import { afterEach, describe, expect, it } from "bun:test";
-import { Effect } from "effect";
+import { Effect, Layer } from "effect";
+import { BunHttpServer } from "@effect/platform-bun";
+import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
+import { HttpRouter } from "effect/unstable/http";
+import { HttpApi, HttpApiBuilder } from "effect/unstable/httpapi";
+import { ChatGroup } from "../../contracts/chat/api.js";
+import { BearerSecurityMiddleware } from "../../contracts/shared.js";
+import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { Permission } from "@lootlog/schema/permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -14,7 +21,12 @@ import {
   roleTable,
 } from "#src/database/drizzle/schema";
 import { PermissionDeniedError } from "#src/shared/http/http-errors";
-import { ChatOperationError } from "./chat.handlers.js";
+import {
+  ChatOperationError,
+  ChatHandlers,
+  ChatData,
+  ChatAuthorization,
+} from "./chat.handlers.js";
 import { makeChatOperations, type ChatRedis } from "./chat.data-layer.js";
 
 const message = {
@@ -127,57 +139,126 @@ const setup = async (permissions: Permission[], levelFrom = 200) => {
         }),
     }).pipe(Effect.provideService(ApiDatabase, database)),
   );
-  return { operations: operations.service, records, published };
+  return {
+    operations: operations.service,
+    endPartyGatheringMessages: operations.endPartyGatheringMessages,
+    records,
+    published,
+  };
 };
 
 describe("chat mutation source visibility", () => {
-  it.each(["edit", "delete"] as const)(
-    "rejects %s after the author loses the source level",
-    async (action) => {
-      const fixture = await setup([
-        Permission.LOOTLOG_CHAT_READ,
-        Permission.LOOTLOG_CHAT_WRITE,
-      ]);
-      const operation =
-        action === "edit"
-          ? fixture.operations.updateMessage(
-              "author",
-              "organization",
-              "message",
-              "Changed",
-            )
-          : fixture.operations.deleteMessage(
-              "author",
-              "organization",
-              "message",
-            );
-      const failure = await Effect.runPromise(operation.pipe(Effect.flip));
-      expect(failure).toBeInstanceOf(ChatOperationError);
-      expect(failure.cause).toBeInstanceOf(PermissionDeniedError);
+  it("rejects the removed PATCH endpoint without changing stored messages", async () => {
+    const fixture = await setup(
+      [Permission.LOOTLOG_CHAT_READ, Permission.LOOTLOG_CHAT_WRITE],
+      0,
+    );
+    const caller = { userId: "author-user", discordId: "author" };
+    const services = Layer.mergeAll(
+      Layer.succeed(ChatData, fixture.operations),
+      Layer.succeed(ChatAuthorization, {
+        requireGuild: () =>
+          Effect.succeed({
+            ...caller,
+            guildId: "organization",
+            permissions: [
+              Permission.LOOTLOG_CHAT_READ,
+              Permission.LOOTLOG_CHAT_WRITE,
+            ],
+          }),
+      }),
+    );
+    const boundary = HttpRouter.toWebHandler(
+      HttpApiBuilder.layer(HttpApi.make("LootlogApi").add(ChatGroup)).pipe(
+        Layer.provide(ChatHandlers),
+        Layer.provide(
+          Layer.succeed(BearerSecurityMiddleware, {
+            bearer: (effect) =>
+              Effect.provideService(effect, ForwardAuthIdentity, caller),
+          }),
+        ),
+        HttpRouter.provideRequest(services),
+        Layer.provide(BunHttpServer.layerHttpServices),
+        Layer.provide(apiKeyEndpointPolicyLayer("main")),
+      ),
+      { disableLogger: true },
+    );
+    try {
+      const response = await boundary.handler(
+        new Request(
+          "http://api.test/guilds/organization/chat-messages/message",
+          {
+            method: "PATCH",
+            headers: {
+              authorization: "Bearer test",
+              "content-type": "application/json",
+            },
+            body: JSON.stringify({ message: "Changed" }),
+          },
+        ),
+      );
+      expect(response.status).toBe(404);
       expect(fixture.records).toEqual([JSON.stringify(message)]);
       expect(fixture.published).toEqual([]);
-    },
-  );
+    } finally {
+      await boundary.dispose();
+    }
+  });
 
-  it("retains author mutations for a visible source and broadcasts their result", async () => {
+  it("rejects deletion after the author loses the source level", async () => {
+    const fixture = await setup([
+      Permission.LOOTLOG_CHAT_READ,
+      Permission.LOOTLOG_CHAT_WRITE,
+    ]);
+    const operation = fixture.operations.deleteMessage(
+      "author",
+      "organization",
+      "message",
+    );
+    const failure = await Effect.runPromise(operation.pipe(Effect.flip));
+    expect(failure).toBeInstanceOf(ChatOperationError);
+    expect(failure.cause).toBeInstanceOf(PermissionDeniedError);
+    expect(fixture.records).toEqual([JSON.stringify(message)]);
+    expect(fixture.published).toEqual([]);
+  });
+
+  it("retains author deletion for a visible source and broadcasts their result", async () => {
     const fixture = await setup(
       [Permission.LOOTLOG_CHAT_READ, Permission.LOOTLOG_CHAT_WRITE],
       0,
     );
     await Effect.runPromise(
-      fixture.operations.updateMessage(
-        "author",
-        "organization",
-        "message",
-        "Changed",
-      ),
-    );
-    expect(JSON.parse(fixture.records[0] ?? "null").message).toBe("Changed");
-    await Effect.runPromise(
       fixture.operations.deleteMessage("author", "organization", "message"),
     );
     expect(fixture.records).toEqual([]);
-    expect(fixture.published).toHaveLength(2);
+    expect(fixture.published).toHaveLength(1);
+  });
+
+  it("preserves system updates when a party gathering ends", async () => {
+    const fixture = await setup([Permission.LOOTLOG_CHAT_READ]);
+    fixture.records[0] = JSON.stringify({
+      ...message,
+      type: "PARTY_GATHERING",
+      partyGathering: {
+        notificationId: "party",
+        discordId: "author",
+        world: "world",
+      },
+    });
+    await Effect.runPromise(
+      fixture.endPartyGatheringMessages("party", ["organization"]),
+    );
+    const stored = JSON.parse(fixture.records[0] ?? "null");
+    expect(stored.message).toBe("Character zakończył zbieranie grupy");
+    expect(stored.partyGathering).toBeUndefined();
+    expect(fixture.published).toEqual([
+      {
+        guildId: "organization",
+        messageId: "message",
+        message: stored.message,
+        routing: { tier: "base", npcLevel: message.npc.lvl },
+      },
+    ]);
   });
 
   it("allows administrators to delete messages outside their role range", async () => {

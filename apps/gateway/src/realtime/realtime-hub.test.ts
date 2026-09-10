@@ -1090,7 +1090,7 @@ const npcDeliveryCases = (npcType: string, npcLevel: number, tier: string) =>
       { type: "PARTY_GATHERING", npc: { lvl: npcLevel, type: npcType } },
     ],
     [
-      "chat edit",
+      "system party chat update",
       "gateway-guilds-update-message",
       "organization.chat",
       {
@@ -1276,28 +1276,24 @@ test("chat capabilities are recipient-specific and cannot be supplied by the sen
         Permission.LOOTLOG_CHAT_READ,
         Permission.LOOTLOG_CHAT_WRITE,
       ],
-      canEdit: true,
       canDelete: true,
     },
     {
       id: "reader",
       permissions: [Permission.LOOTLOG_CHAT_READ],
-      canEdit: false,
       canDelete: false,
     },
     {
       id: "reader-2",
       permissions: [Permission.LOOTLOG_CHAT_READ],
-      canEdit: false,
       canDelete: false,
     },
     {
       id: "admin",
       permissions: [Permission.ADMIN],
-      canEdit: false,
       canDelete: true,
     },
-    { id: "owner", permissions: [], canEdit: false, canDelete: true },
+    { id: "owner", permissions: [], canDelete: true },
   ];
   const targets = viewers.map((viewer) => {
     const session = { ...makeSession(viewer.id), discordId: viewer.id };
@@ -1330,7 +1326,6 @@ test("chat capabilities are recipient-specific and cannot be supplied by the sen
         senderId: "author",
         type: "NORMAL",
         message: "Hello",
-        canEdit: true,
         canDelete: true,
       },
     },
@@ -1342,7 +1337,6 @@ test("chat capabilities are recipient-specific and cannot be supplied by the sen
       data: {
         payload: {
           id: "message",
-          canEdit: viewer.canEdit,
           canDelete: viewer.canDelete,
         },
       },

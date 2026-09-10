@@ -1,3 +1,5 @@
+import { getTextColor } from "@/utils/notifications-and-detector/background";
+import { getChatSubmitAction } from "@/features/chat/chat-submit.helpers";
 import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
@@ -110,8 +112,17 @@ export const ChatInputEditor = forwardRef<
             spellCheck={false}
             tabIndex={disabled ? -1 : 0}
             data-slot="chat-input"
+            style={{
+              color:
+                getChatSubmitAction({
+                  canClearChat: false,
+                  messageValue: message,
+                }).kind === "notification"
+                  ? getTextColor("message", true)
+                  : undefined,
+            }}
             className={cn(
-              "ll:box-border ll:block ll:h-full ll:w-full ll:min-w-0 ll:overflow-x-auto ll:overflow-y-hidden ll:px-1 ll:py-1 ll:text-xs ll:leading-[14px] ll:text-white ll:outline-none ll:whitespace-pre",
+              "ll:box-border ll:block ll:content-center ll:h-full ll:w-full ll:min-w-0 ll:overflow-x-auto ll:overflow-y-hidden ll:px-1 ll:py-0 ll:text-xs ll:leading-[14px] ll:text-white ll:caret-white ll:cursor-text ll:outline-none ll:whitespace-pre ll:[&>p]:m-0",
               disabled && "ll:cursor-not-allowed ll:opacity-50",
             )}
             onMouseDown={(event) => {
@@ -136,7 +147,7 @@ export const ChatInputEditor = forwardRef<
           />
           placeholder=<span
             aria-hidden
-            className="ll:pointer-events-none ll:absolute ll:left-1 ll:top-1 ll:text-xs ll:leading-[14px] ll:text-gray-500"
+            className="ll:pointer-events-none ll:absolute ll:left-1 ll:top-1/2 ll:-translate-y-1/2 ll:text-xs ll:leading-[14px] ll:text-gray-500"
           >
             {placeholder}
           </span>

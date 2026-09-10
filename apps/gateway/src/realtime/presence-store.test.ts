@@ -1,4 +1,5 @@
 import { describe, expect, spyOn, test } from "bun:test";
+import { PRESENCE_EXPIRY_MS } from "@lootlog/protocol/realtime";
 import { Permission } from "@lootlog/schema/permissions";
 import { Effect } from "effect";
 import { TestClock } from "effect/testing";
@@ -18,6 +19,39 @@ class MemoryRedis {
     if (options.includes("NX") && this.values.has(key)) return null;
     this.values.set(key, value);
     return "OK";
+  }
+
+  async eval<A>(
+    _script: string,
+    _numberOfKeys: number,
+    ...parameters: Array<string | number>
+  ): Promise<A> {
+    const [
+      pending,
+      outbox,
+      pendingIndex,
+      characterIndex,
+      outboxIndex,
+      value,
+      pendingMember,
+      outboxMember,
+      publish,
+    ] = parameters.map(String);
+    if (this.values.get(pending!) !== value) {
+      // SAFETY: PresenceStore only invokes its numeric offline-claim script through this fake.
+      return 0 as A;
+    }
+    this.values.delete(pending!);
+    this.sets.get(pendingIndex!)?.delete(pendingMember!);
+    this.sets.get(characterIndex!)?.delete(pendingMember!);
+    if (publish === "1") {
+      this.values.set(outbox!, value!);
+      const set = this.sets.get(outboxIndex!) ?? new Set<string>();
+      set.add(outboxMember!);
+      this.sets.set(outboxIndex!, set);
+    }
+    // SAFETY: The successful offline-claim script returns the numeric literal 1.
+    return 1 as A;
   }
 
   async get(key: string): Promise<string | null> {
@@ -551,4 +585,285 @@ test("expiry cleanup resumes after a transient Redis failure", async () => {
       expect(attempts).toBe(2);
     }).pipe(Effect.scoped, Effect.provide(TestClock.layer())),
   );
+});
+
+describe("game character offline grace", () => {
+  const character = {
+    name: "Player",
+    characterId: "character-1",
+    accountId: "account-1",
+    world: "world-1",
+    lvl: 100,
+    prof: "w",
+    icon: "player.gif",
+  };
+
+  test("publishes only after ten seconds, survives a new store instance and ignores web presence", async () => {
+    const redis = new MemoryRedis();
+    const hub = new RecordingHub();
+    let now = 0;
+    const events: unknown[] = [];
+    const makeStore = () =>
+      new PresenceStore(
+        { command: redis },
+        hub,
+        () => now,
+        undefined,
+        undefined,
+        (event) =>
+          Effect.sync(() => {
+            events.push(event);
+          }),
+      );
+    const first = makeStore();
+    const game = socket({ ...session([]), character });
+    await Effect.runPromise(first.publish(game, { organizationIds: [] }));
+    await Effect.runPromise(first.disconnect(game.data));
+    const web = socket({
+      ...session([]),
+      connectionId: "web",
+      platform: "web-app",
+      character,
+    });
+    await Effect.runPromise(first.publish(web, { organizationIds: [] }));
+    now = 9_999;
+    await Effect.runPromise(makeStore().sweepOffline());
+    expect(events).toEqual([]);
+    now = 10_000;
+    await Effect.runPromise(makeStore().sweepOffline());
+    expect(events).toEqual([
+      {
+        userId: "user-1",
+        discordId: "discord-1",
+        world: "world-1",
+        characterId: "character-1",
+        organizationIds: ["organization-1"],
+        disconnectedAt: 0,
+      },
+    ]);
+    await Effect.runPromise(makeStore().sweepOffline());
+    expect(events).toHaveLength(1);
+  });
+
+  test("refresh cancels the previous deadline and a later exit gets a full grace period", async () => {
+    const redis = new MemoryRedis();
+    let now = 0;
+    const events: unknown[] = [];
+    const store = new PresenceStore(
+      { command: redis },
+      new RecordingHub(),
+      () => now,
+      undefined,
+      undefined,
+      (event) =>
+        Effect.sync(() => {
+          events.push(event);
+        }),
+    );
+    const first = socket({ ...session([]), character });
+    await Effect.runPromise(store.publish(first, { organizationIds: [] }));
+    await Effect.runPromise(store.disconnect(first.data));
+    now = 5_000;
+    const second = socket({
+      ...session([]),
+      connectionId: "second",
+      character,
+    });
+    await Effect.runPromise(store.publish(second, { organizationIds: [] }));
+    now = 6_000;
+    await Effect.runPromise(store.disconnect(second.data));
+    now = 10_000;
+    await Effect.runPromise(store.sweepOffline());
+    expect(events).toEqual([]);
+    now = 16_000;
+    await Effect.runPromise(store.sweepOffline());
+    expect(events).toHaveLength(1);
+  });
+
+  test("expired Redis presence still schedules departure from durable character metadata", async () => {
+    const redis = new MemoryRedis();
+    let now = 0;
+    const events: Array<{ disconnectedAt: number }> = [];
+    const makeStore = () =>
+      new PresenceStore(
+        { command: redis },
+        new RecordingHub(),
+        () => now,
+        undefined,
+        undefined,
+        (event) =>
+          Effect.sync(() => {
+            events.push(event);
+          }),
+      );
+    const game = socket({ ...session([]), character });
+    await Effect.runPromise(makeStore().publish(game, { organizationIds: [] }));
+    redis.values.delete("presence:organization-1:session-1");
+    now = PRESENCE_EXPIRY_MS + 10_000;
+    await Effect.runPromise(makeStore().sweepExpired());
+    await Effect.runPromise(makeStore().sweepOffline());
+    expect(events).toEqual([
+      expect.objectContaining({ disconnectedAt: PRESENCE_EXPIRY_MS }),
+    ]);
+  });
+
+  test("late expiry of an old session does not shorten the latest exit grace", async () => {
+    const redis = new MemoryRedis();
+    let now = 0;
+    const events: unknown[] = [];
+    const store = new PresenceStore(
+      { command: redis },
+      new RecordingHub(),
+      () => now,
+      undefined,
+      undefined,
+      (event) =>
+        Effect.sync(() => {
+          events.push(event);
+        }),
+    );
+    const abandoned = socket({ ...session([]), character });
+    await Effect.runPromise(store.publish(abandoned, { organizationIds: [] }));
+    now = PRESENCE_EXPIRY_MS + 5_000;
+    const fresh = socket({ ...session([]), connectionId: "fresh", character });
+    await Effect.runPromise(store.publish(fresh, { organizationIds: [] }));
+    now += 5_000;
+    await Effect.runPromise(store.disconnect(fresh.data));
+    now += 5_000;
+    await Effect.runPromise(store.sweepExpired());
+    await Effect.runPromise(store.sweepOffline());
+    expect(events).toEqual([]);
+    now += 5_000;
+    await Effect.runPromise(store.sweepOffline());
+    expect(events).toHaveLength(1);
+  });
+
+  test("reconnect between the presence check and atomic departure decision cancels departure", async () => {
+    let reconnect: (() => Promise<void>) | undefined;
+    class ReconnectingRedis extends MemoryRedis {
+      override async eval<A>(
+        script: string,
+        numberOfKeys: number,
+        ...parameters: Array<string | number>
+      ): Promise<A> {
+        const operation = reconnect;
+        reconnect = undefined;
+        await operation?.();
+        return super.eval<A>(script, numberOfKeys, ...parameters);
+      }
+    }
+    const redis = new ReconnectingRedis();
+    let now = 0;
+    const events: unknown[] = [];
+    const store = new PresenceStore(
+      { command: redis },
+      new RecordingHub(),
+      () => now,
+      undefined,
+      undefined,
+      (event) =>
+        Effect.sync(() => {
+          events.push(event);
+        }),
+    );
+    const game = socket({ ...session([]), character });
+    await Effect.runPromise(store.publish(game, { organizationIds: [] }));
+    await Effect.runPromise(store.disconnect(game.data));
+    now = 10_000;
+    reconnect = async () => {
+      await Effect.runPromise(
+        store.publish(
+          socket({ ...session([]), connectionId: "new", character }),
+          { organizationIds: [] },
+        ),
+      );
+    };
+    await Effect.runPromise(store.sweepOffline());
+    expect(events).toEqual([]);
+  });
+
+  test("failed publication remains durable after the departure decision", async () => {
+    const redis = new MemoryRedis();
+    let now = 0;
+    const store = new PresenceStore(
+      { command: redis },
+      new RecordingHub(),
+      () => now,
+      undefined,
+      undefined,
+      () => Effect.fail(new Error("Rabbit unavailable")),
+    );
+    const game = socket({ ...session([]), character });
+    await Effect.runPromise(store.publish(game, { organizationIds: [] }));
+    await Effect.runPromise(store.disconnect(game.data));
+    now = 10_000;
+    await Effect.runPromise(store.sweepOffline().pipe(Effect.flip));
+    const events: unknown[] = [];
+    const recovered = new PresenceStore(
+      { command: redis },
+      new RecordingHub(),
+      () => now,
+      undefined,
+      undefined,
+      (event) =>
+        Effect.sync(() => {
+          events.push(event);
+        }),
+    );
+    await Effect.runPromise(recovered.sweepOffline());
+    expect(events).toHaveLength(1);
+  });
+
+  test("changing game character expires the old character while the new one stays online", async () => {
+    const redis = new MemoryRedis();
+    let now = 0;
+    const events: Array<{ characterId: string }> = [];
+    const store = new PresenceStore(
+      { command: redis },
+      new RecordingHub(),
+      () => now,
+      undefined,
+      undefined,
+      (event) =>
+        Effect.sync(() => {
+          events.push(event);
+        }),
+    );
+    const game = socket({ ...session([]), character });
+    await Effect.runPromise(store.publish(game, { organizationIds: [] }));
+    game.data.character = { ...character, characterId: "other-character" };
+    await Effect.runPromise(store.publish(game, { organizationIds: [] }));
+    now = 10_000;
+    await Effect.runPromise(store.sweepOffline());
+    expect(events.map((event) => event.characterId)).toEqual(["character-1"]);
+  });
+
+  test("another live game connection keeps the character online", async () => {
+    const redis = new MemoryRedis();
+    let now = 0;
+    const events: unknown[] = [];
+    const store = new PresenceStore(
+      { command: redis },
+      new RecordingHub(),
+      () => now,
+      undefined,
+      undefined,
+      (event) =>
+        Effect.sync(() => {
+          events.push(event);
+        }),
+    );
+    const first = socket({ ...session([]), character });
+    const second = socket({
+      ...session([]),
+      connectionId: "second",
+      character,
+    });
+    await Effect.runPromise(store.publish(first, { organizationIds: [] }));
+    await Effect.runPromise(store.publish(second, { organizationIds: [] }));
+    await Effect.runPromise(store.disconnect(first.data));
+    now = 10_000;
+    await Effect.runPromise(store.sweepOffline());
+    expect(events).toEqual([]);
+  });
 });

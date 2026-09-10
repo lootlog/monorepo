@@ -1,11 +1,15 @@
 import { GameCharacter } from "../game-character.schema.js";
 /** Shared input and output schemas for the party-ready-room feature. */
 import * as Schema from "effect/Schema";
-import { PARTY_READY_ROOM_PARTY_PRESENCE_STATES } from "@lootlog/schema/party-ready-room";
+import {
+  PartyGatheringNpcSchema,
+  PARTY_READY_ROOM_PARTY_PRESENCE_STATES,
+} from "@lootlog/schema/party-ready-room";
 import {
   DateTimeString,
   FiniteNumber,
   NonEmptyString,
+  NonNegativeSafeInteger,
   PositiveSafeInteger,
 } from "@lootlog/schema/http-scalars";
 
@@ -18,6 +22,7 @@ const ReadyRoomParticipant = Schema.Struct({
   updatedAt: DateTimeString,
 });
 const readyRoomFields = {
+  npc: Schema.optionalKey(PartyGatheringNpcSchema),
   schemaVersion: Schema.Literal(3),
   notificationId: Schema.String,
   organizerDiscordId: Schema.String,
@@ -27,6 +32,7 @@ const readyRoomFields = {
   description: Schema.optionalKey(Schema.String),
   minLvl: Schema.optionalKey(FiniteNumber),
   maxLvl: Schema.optionalKey(FiniteNumber),
+  partyMemberCount: Schema.optionalKey(NonNegativeSafeInteger),
   status: Schema.Literal("ACTIVE"),
   revision: PositiveSafeInteger,
   createdAt: DateTimeString,
@@ -207,3 +213,39 @@ export const PartyReadyRoomParams = Schema.Struct({
   notificationId: Schema.String,
 });
 export type PartyReadyRoomParams = typeof PartyReadyRoomParams.Type;
+
+export const ActivePartyGatheringsQuery = Schema.Struct({
+  world: NonEmptyString.check(Schema.isMaxLength(50)),
+});
+export const ActivePartyGatheringSummary = Schema.Struct({
+  notificationId: Schema.String,
+  organizerName: Schema.String,
+  organizerDiscordId: Schema.optionalKey(Schema.String),
+  organizerLvl: Schema.optionalKey(FiniteNumber),
+  organizerProf: Schema.optionalKey(Schema.String),
+  applicantCount: NonNegativeSafeInteger,
+  inPartyCount: NonNegativeSafeInteger,
+  partyMemberCount: Schema.optionalKey(NonNegativeSafeInteger),
+  guildIds: Schema.Array(Schema.String),
+  world: Schema.String,
+  description: Schema.optionalKey(Schema.String),
+  minLvl: Schema.optionalKey(FiniteNumber),
+  maxLvl: Schema.optionalKey(FiniteNumber),
+  npc: Schema.optionalKey(
+    Schema.Struct({
+      prof: Schema.optionalKey(Schema.String),
+      icon: Schema.optionalKey(Schema.String),
+      type: Schema.optionalKey(Schema.String),
+      name: Schema.String,
+      location: Schema.String,
+      lvl: FiniteNumber,
+      x: Schema.optionalKey(FiniteNumber),
+      y: Schema.optionalKey(FiniteNumber),
+    }),
+  ),
+  createdAt: DateTimeString,
+  expiresAt: DateTimeString,
+}).annotate({ identifier: "ActivePartyGatheringSummary" });
+export const ActivePartyGatheringsResponse = Schema.Array(
+  ActivePartyGatheringSummary,
+);

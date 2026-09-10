@@ -6,7 +6,7 @@ import {
   OtlpTracer,
 } from "effect/unstable/observability";
 import { isHealthcheck } from "./instrumentation.js";
-import { logSpanContext, makeJsonLogger } from "./logging.js";
+import { logSpanContext, makeJsonLogger, makeLocalLogger } from "./logging.js";
 import { startRuntimeMetrics } from "./runtime-metrics.js";
 
 const sampledTracer = Layer.effect(
@@ -94,7 +94,11 @@ export const makeObservabilityLayer = <E, R>(
         ),
       ).pipe(
         Layer.provideMerge(
-          Logger.layer([makeJsonLogger({ ...config, commitSha })]),
+          Logger.layer([
+            config.environment === "local"
+              ? makeLocalLogger()
+              : makeJsonLogger({ ...config, commitSha }),
+          ]),
         ),
       );
     }),

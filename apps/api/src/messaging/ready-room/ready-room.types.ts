@@ -1,4 +1,5 @@
 import type {
+  PartyGatheringNpc,
   PartyReadyRoomCharacter,
   PartyReadyRoomParticipant,
   PartyReadyRoomStatus,
@@ -6,6 +7,7 @@ import type {
 
 export interface ReadyRoomAggregate {
   schemaVersion: 3;
+  npc?: PartyGatheringNpc;
   notificationId: string;
   organizerDiscordId: string;
   organizerCharacter: PartyReadyRoomCharacter;
@@ -14,6 +16,7 @@ export interface ReadyRoomAggregate {
   description?: string;
   minLvl?: number;
   maxLvl?: number;
+  partyMemberCount?: number;
   status: PartyReadyRoomStatus;
   revision: number;
   createdAt: string;

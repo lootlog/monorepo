@@ -44,7 +44,7 @@ export const AddColorForm: FC<AddColorFormProps> = ({ onAdd }) => {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={t("settings.timers.colors.namePlaceholder")}
-            className="ll:min-w-0 ll:flex-1 ll:text-xs"
+            className="ll:text-popover-foreground ll:border-foreground/20 ll:min-w-0 ll:flex-1 ll:text-xs"
           />
           <div className="ll:flex ll:items-center ll:gap-1">
             <Label className="ll:text-[11px]">
@@ -54,7 +54,7 @@ export const AddColorForm: FC<AddColorFormProps> = ({ onAdd }) => {
               type="color"
               value={stripAlphaChannel(borderColor)}
               onChange={(e) => setBorderColor(e.target.value)}
-              className="ll:h-8 ll:w-8 ll:p-1"
+              className="ll:text-popover-foreground ll:border-foreground/20 ll:h-8 ll:w-8 ll:p-1"
               aria-label={t("settings.timers.colors.borderAria")}
             />
           </div>
@@ -67,7 +67,7 @@ export const AddColorForm: FC<AddColorFormProps> = ({ onAdd }) => {
               type="color"
               value={stripAlphaChannel(backgroundColor)}
               onChange={(e) => setBackgroundColor(e.target.value)}
-              className="ll:h-8 ll:w-8 ll:p-1"
+              className="ll:text-popover-foreground ll:border-foreground/20 ll:h-8 ll:w-8 ll:p-1"
               aria-label={t("settings.timers.colors.backgroundAria")}
             />
           </div>
@@ -100,7 +100,7 @@ export const AddColorForm: FC<AddColorFormProps> = ({ onAdd }) => {
                     Math.max(0, Math.min(100, Number(e.target.value) || 0)),
                   )
                 }
-                className="ll:w-12"
+                className="ll:text-popover-foreground ll:border-foreground/20 ll:w-12"
               />
               <span className="ll:text-muted-foreground ll:text-sm">%</span>
             </div>
@@ -124,6 +124,7 @@ export const AddColorForm: FC<AddColorFormProps> = ({ onAdd }) => {
           </div>
 
           <Button
+            variant="menu"
             onClick={handleAdd}
             disabled={!name.trim()}
             className="ll:h-7 ll:w-full"

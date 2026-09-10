@@ -35,7 +35,6 @@ const ORGANIZATION_NOT_FOUND_OPERATIONS = new Set([
   "GET /guilds/{guildId}/chat-messages",
   "POST /guilds/{guildId}/chat-messages",
   "DELETE /guilds/{guildId}/chat-messages",
-  "PATCH /guilds/{guildId}/chat-messages/{messageId}",
   "DELETE /guilds/{guildId}/chat-messages/{messageId}",
 ]);
 // Domain and access failures now retain their 4xx status and structured reason.
@@ -967,6 +966,40 @@ const PERSONAL_ANALYTICS_ADDITIONS = new Map<
       },
     },
     api: {
+      // Verified by ready-room-visibility.test.ts and ready-room-cas.integration.test.ts.
+      "GET /messaging/party-gathering/active": {
+        operationId: "PartyReadyRoomController_active",
+        parameters: [
+          {
+            name: "world",
+            in: "query",
+            required: true,
+            schema: { type: "string", minLength: 1, maxLength: 50 },
+          },
+        ],
+        security: [{ bearer: [] }],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: {
+                    $ref: "#/components/schemas/ActivePartyGatheringSummary",
+                  },
+                },
+              },
+            },
+          },
+          "401": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/HttpErrorResponse" },
+              },
+            },
+          },
+        },
+      },
       "GET /users/@me/feed": {
         operationId: "UsersController_getUserFeed",
         parameters: [],
@@ -1170,9 +1203,17 @@ if (import.meta.main) {
     for (const key of additions) {
       assertVerifiedPersonalAddition(service.current, key, current.get(key));
     }
-    if (removals.length > 0) {
+    // User editing was removed; system party-ending updates remain realtime-only.
+    const expectedRemovals =
+      service.current === "api"
+        ? ["PATCH /guilds/{guildId}/chat-messages/{messageId}"]
+        : [];
+    if (
+      removals.length !== expectedRemovals.length ||
+      removals.some((key) => !expectedRemovals.includes(key))
+    ) {
       throw new Error(
-        `${service.current} removed OpenAPI operations: ${removals.join(", ")}`,
+        `${service.current} has unexpected OpenAPI removals: ${removals.join(", ") || "none"}`,
       );
     }
 

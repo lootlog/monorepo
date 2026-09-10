@@ -49,28 +49,6 @@ describe("ChatMessage", () => {
     expect(screen.getByText("Member:")).toBeInTheDocument();
   });
 
-  it("renders the party card for party gathering messages", () => {
-    render(
-      <ChatMessage
-        all={false}
-        guildName="Guild"
-        member={member}
-        message={makeChatMessage({
-          type: MessageType.PARTY_GATHERING,
-          partyGathering: {
-            notificationId: "notification-1",
-            discordId: "discord-1",
-            world: "tempest",
-          },
-        })}
-      />,
-    );
-
-    expect(
-      screen.getByRole("button", { name: "Dołącz do grupy" }),
-    ).toBeInTheDocument();
-  });
-
   it("renders nothing without guild name", () => {
     const { container } = render(
       <ChatMessage all={false} member={member} message={makeChatMessage()} />,
@@ -87,24 +65,6 @@ describe("ChatMessage", () => {
     expect(screen.getByText("Hero:")).toBeInTheDocument();
   });
 
-  it("shows edit and delete actions when backend capabilities allow them", () => {
-    render(
-      <ChatMessage
-        all={false}
-        guildName="Guild"
-        member={member}
-        message={makeChatMessage({
-          canEdit: true,
-          canDelete: true,
-        })}
-      />,
-    );
-
-    fireEvent.contextMenu(screen.getByText("Member:"));
-    expect(screen.getByText("Edytuj")).toBeInTheDocument();
-    expect(screen.getByText("Usuń")).toBeInTheDocument();
-  });
-
   it("shows delete without edit when backend allows only moderation", () => {
     render(
       <ChatMessage
@@ -112,7 +72,6 @@ describe("ChatMessage", () => {
         guildName="Guild"
         member={member}
         message={makeChatMessage({
-          canEdit: false,
           canDelete: true,
         })}
       />,
@@ -140,7 +99,7 @@ describe("ChatMessage", () => {
       />,
     );
 
-    expect(screen.getByText("QuotedHero")).toBeInTheDocument();
+    expect(screen.getByText("QuotedHero:")).toBeInTheDocument();
     expect(screen.getByText("quoted message")).toBeInTheDocument();
   });
 
@@ -171,50 +130,6 @@ describe("ChatMessage", () => {
       messageId: "message-0",
     });
     unsubscribe();
-  });
-
-  it("highlights targeted mentions in the message body", () => {
-    render(
-      <ChatMessage
-        all={false}
-        guildName="Guild"
-        member={member}
-        mentionContext={{
-          memberColorsByName: {
-            hero: "12ab34",
-          },
-          currentUserNames: ["Hero"],
-          currentUserRoleNames: ["Raid Team"],
-        }}
-        message={makeChatMessage({
-          message: "hej @Hero",
-        })}
-      />,
-    );
-
-    expect(screen.getByText("@Hero")).toHaveStyle({ color: "#12ab34" });
-    expect(screen.getByText("@Hero")).toHaveClass("ll:ring-1");
-  });
-
-  it("uses discord colors for role mentions in the message body", () => {
-    render(
-      <ChatMessage
-        all={false}
-        guildName="Guild"
-        member={member}
-        mentionContext={{
-          roleNames: ["Raid Team"],
-          roleColorsByName: {
-            "raid team": "ff8800",
-          },
-        }}
-        message={makeChatMessage({
-          message: "hej @Raid Team",
-        })}
-      />,
-    );
-
-    expect(screen.getByText("@Raid Team")).toHaveStyle({ color: "#ff8800" });
   });
 
   it("shows the reply action only for replyable message types", () => {

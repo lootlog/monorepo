@@ -101,6 +101,7 @@ describe("npc notification helpers", () => {
   it("builds chat payloads with current character data", () => {
     expect(
       buildNpcChatMessagePayload({
+        world: "tempest",
         npc,
         guildIds: ["guild-1"],
         messageType: MessageType.NPC,
@@ -118,6 +119,7 @@ describe("npc notification helpers", () => {
         icon: "hero.gif",
       },
       npc: {
+        world: "tempest",
         x: 12,
         y: 18,
         icon: "event-icon.gif",

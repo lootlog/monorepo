@@ -40,6 +40,9 @@ function createProjectionBase(
     updatedAt: aggregate.updatedAt,
     expiresAt: aggregate.expiresAt,
   };
+  if (aggregate.partyMemberCount !== undefined)
+    projection.partyMemberCount = aggregate.partyMemberCount;
+  if (aggregate.npc) projection.npc = { ...aggregate.npc };
   if (aggregate.description !== undefined)
     projection.description = aggregate.description;
   if (aggregate.minLvl !== undefined) projection.minLvl = aggregate.minLvl;
@@ -60,9 +63,12 @@ export function getReadyRoomActiveRecipientDiscordIds(
 export function createReadyRoomProjection(
   aggregate: ReadyRoomAggregate,
   viewerDiscordId: string,
+  visibleGuildIds: ReadonlyArray<string> = aggregate.guildIds,
 ): PartyReadyRoomProjection | null {
   if (aggregate.status !== "ACTIVE") return null;
   const base = createProjectionBase(aggregate);
+  base.guildIds = base.guildIds.filter((id) => visibleGuildIds.includes(id));
+  if (base.guildIds.length === 0) return null;
 
   if (viewerDiscordId === aggregate.organizerDiscordId) {
     return {
@@ -104,8 +110,13 @@ export function createReadyRoomProjection(
 export function createReadyRoomClientUpdate(
   aggregate: ReadyRoomAggregate,
   viewerDiscordId: string,
+  visibleGuildIds: ReadonlyArray<string> = aggregate.guildIds,
 ): PartyReadyRoomClientUpdate {
-  const projection = createReadyRoomProjection(aggregate, viewerDiscordId);
+  const projection = createReadyRoomProjection(
+    aggregate,
+    viewerDiscordId,
+    visibleGuildIds,
+  );
 
   if (!projection) {
     return {

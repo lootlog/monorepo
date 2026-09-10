@@ -8,8 +8,7 @@
     "onlinePlayers": "Gracze online",
     "chat": "Chat",
     "command": "Konsola",
-    "settings": "Ustawienia",
-    "activePartyGathering": "Aktywne zbieranie grupy"
+    "settings": "Ustawienia"
   },
   "guildPopover": {
     "lootlogPage": "Strona Lootloga",

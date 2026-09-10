@@ -1,6 +1,5 @@
 import type {
   MessageType as ChatMessageType,
-  PartyGatheringChatData,
   SendChatMessageOptions,
 } from "@/api/chat.api";
 import type { CreateNotificationOptions } from "@/api/messaging.api";
@@ -26,11 +25,11 @@ type BuildNpcNotificationPayloadOptions = {
 };
 
 type BuildNpcChatMessagePayloadOptions = {
+  world: string;
   npc: GameNpcWithLocation;
   guildIds: string[];
   messageType: ChatMessageType;
   message?: string;
-  partyGathering?: PartyGatheringChatData;
 };
 
 const buildNotificationNpcPayload = (npc: GameNpcWithLocation) => ({
@@ -90,11 +89,11 @@ export function buildNpcNotificationPayload({
 }
 
 export const buildNpcChatMessagePayload = ({
+  world,
   npc,
   guildIds,
   messageType,
   message = "",
-  partyGathering,
 }: BuildNpcChatMessagePayloadOptions): SendChatMessageOptions | null => {
   const characterData = buildChatCharacterData();
   if (!characterData) return null;
@@ -104,8 +103,7 @@ export const buildNpcChatMessagePayload = ({
     guildIds,
     type: messageType,
     characterData,
-    npc: buildNotificationNpcPayload(npc),
+    npc: { ...buildNotificationNpcPayload(npc), world },
   };
-  if (partyGathering) payload.partyGathering = partyGathering;
   return payload;
 };

@@ -179,10 +179,10 @@ export const createGameAccessCache = (queryClient: QueryClient) => {
   let currentPolicy: AccessPolicySnapshot | undefined;
   let refreshTimer: ReturnType<typeof setTimeout> | undefined;
   const pendingQueries = new Set<Query>();
-  const scheduleRefresh = () => {
+  const scheduleRefresh = (immediate = false) => {
     if (pendingQueries.size === 0) return;
     clearTimeout(refreshTimer);
-    refreshTimer = setTimeout(() => {
+    const refresh = () => {
       refreshTimer = undefined;
       const pending = new Set(pendingQueries);
       pendingQueries.clear();
@@ -190,7 +190,9 @@ export const createGameAccessCache = (queryClient: QueryClient) => {
         { predicate: (query) => pending.has(query), refetchType: "active" },
         { cancelRefetch: false },
       );
-    }, 5000);
+    };
+    if (immediate) refresh();
+    else refreshTimer = setTimeout(refresh, 5000);
   };
   return {
     apply(data: PermissionsUpdatedPayload) {
@@ -224,7 +226,7 @@ export const createGameAccessCache = (queryClient: QueryClient) => {
         initial,
         pendingQueries,
       );
-      scheduleRefresh();
+      scheduleRefresh(initial);
     },
     dispose() {
       clearTimeout(refreshTimer);

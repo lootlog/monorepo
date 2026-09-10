@@ -93,10 +93,10 @@ export const NpcColorEditorPopover: FC<NpcColorEditorPopoverProps> = ({
         <div className="ll:flex ll:flex-col ll:gap-3">
           <div className="ll:flex ll:items-start ll:justify-between ll:gap-2">
             <div>
-              <div className="ll:text-sm ll:font-semibold ll:text-white">
+              <div className="ll:text-sm ll:font-semibold ll:text-popover-foreground">
                 {t(`common:npcTypes.${npcType.toLowerCase()}`)}
               </div>
-              <div className="ll:text-[10px] ll:text-gray-400">
+              <div className="ll:text-[10px] ll:text-muted-foreground">
                 {saving
                   ? t("settings.npcColors.saving")
                   : colorDraft === defaultColor
@@ -117,7 +117,7 @@ export const NpcColorEditorPopover: FC<NpcColorEditorPopoverProps> = ({
                 onDraftChange(nextColor);
               }}
               onBlur={() => commitColor(colorDraft)}
-              className="ll:h-9 ll:w-12 ll:p-1"
+              className="ll:text-popover-foreground ll:border-foreground/20 ll:h-9 ll:w-12 ll:p-1"
               aria-label={t("settings.npcColors.picker")}
             />
             <Input
@@ -133,17 +133,17 @@ export const NpcColorEditorPopover: FC<NpcColorEditorPopoverProps> = ({
                 }
                 if (event.key === "Escape") rollbackAndClose();
               }}
-              className="ll:w-28 ll:font-mono ll:uppercase"
+              className="ll:text-popover-foreground ll:border-foreground/20 ll:w-28 ll:font-mono ll:uppercase"
               aria-label={t("settings.npcColors.hex")}
             />
           </div>
 
           <div className="ll:grid ll:gap-2">
-            <div className="ll:text-[10px] ll:uppercase ll:tracking-wide ll:text-gray-400">
+            <div className="ll:text-[10px] ll:uppercase ll:tracking-wide ll:text-muted-foreground">
               {t("settings.npcColors.preview")}
             </div>
-            <div className="ll:rounded-sm ll:bg-gray-500/25 ll:px-2 ll:py-1 ll:text-xs">
-              <span className="ll:text-gray-400">[21:37] </span>
+            <div className="ll:rounded-sm ll:bg-muted ll:px-2 ll:py-1 ll:text-xs">
+              <span className="ll:text-muted-foreground">[21:37] </span>
               <strong style={{ color: surfaceColors.text }}>
                 {t(`common:npcTypes.${npcType.toLowerCase()}`)}
               </strong>
@@ -168,10 +168,10 @@ export const NpcColorEditorPopover: FC<NpcColorEditorPopoverProps> = ({
             </div>
           </div>
 
-          <div className="ll:flex ll:justify-end ll:border-t ll:border-gray-500/30 ll:pt-2">
+          <div className="ll:flex ll:justify-end ll:pt-2">
             <Button
               type="button"
-              variant="ghost"
+              variant="menu"
               disabled={colorDraft === defaultColor}
               className="ll:h-7 ll:gap-2 ll:px-2"
               onClick={() => {

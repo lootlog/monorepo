@@ -2984,6 +2984,11 @@ export type ChatMessageResponseDtoOutputCharacterData = {
 };
 
 export type ChatMessageResponseDtoOutputNpc = {
+  /**
+     * @minLength 1
+     * @maxLength 50
+     */
+  world?: string;
   id: number;
   /** @minLength 1 */
   name: string;
@@ -3059,7 +3064,6 @@ export interface ChatMessageResponseDtoOutput {
   npc?: ChatMessageResponseDtoOutputNpc;
   partyGathering?: ChatMessageResponseDtoOutputPartyGathering;
   replyTo?: ChatMessageResponseDtoOutputReplyTo;
-  canEdit: boolean;
   canDelete: boolean;
 }
 
@@ -3086,6 +3090,11 @@ export type SendMessageDtoCharacterData = {
 };
 
 export type SendMessageDtoNpc = {
+  /**
+     * @minLength 1
+     * @maxLength 50
+     */
+  world?: string;
   id: number;
   /** @minLength 1 */
   name: string;
@@ -3157,14 +3166,6 @@ export interface SendMessageDto {
 
 export interface ChatMessageActionResponseDtoOutput {
   success: boolean;
-}
-
-export interface UpdateMessageDto {
-  /**
-     * @minLength 1
-     * @maxLength 128
-     */
-  message: string;
 }
 
 export type ReservationSpotsResponseDtoItemCurrentReservationAuthor = {
@@ -6057,6 +6058,61 @@ export interface CreateVolunteerDto {
   character: CreateVolunteerDtoCharacter;
 }
 
+export type ActivePartyGatheringSummaryNpc = {
+  prof?: string;
+  icon?: string;
+  type?: string;
+  name: string;
+  location: string;
+  lvl: number;
+  x?: number;
+  y?: number;
+};
+
+export interface ActivePartyGatheringSummary {
+  notificationId: string;
+  organizerName: string;
+  organizerDiscordId?: string;
+  organizerLvl?: number;
+  organizerProf?: string;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  applicantCount: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  inPartyCount: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  partyMemberCount?: number;
+  guildIds: string[];
+  world: string;
+  description?: string;
+  minLvl?: number;
+  maxLvl?: number;
+  npc?: ActivePartyGatheringSummaryNpc;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  createdAt: string;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  expiresAt: string;
+}
+
+export type PartyReadyRoomProjectionDtoOutputNpc = {
+  prof?: string;
+  icon?: string;
+  name: string;
+  location: string;
+  lvl: number | 'Infinity' | '-Infinity' | 'NaN';
+  type: string;
+  x?: number | 'Infinity' | '-Infinity' | 'NaN';
+  y?: number | 'Infinity' | '-Infinity' | 'NaN';
+};
+
 export type PartyReadyRoomProjectionDtoOutputSchemaVersion = typeof PartyReadyRoomProjectionDtoOutputSchemaVersion[keyof typeof PartyReadyRoomProjectionDtoOutputSchemaVersion];
 
 
@@ -6171,6 +6227,7 @@ export type PartyReadyRoomProjectionDtoOutputParticipants = {[key: string]: {
 }};
 
 export interface PartyReadyRoomProjectionDtoOutput {
+  npc?: PartyReadyRoomProjectionDtoOutputNpc;
   schemaVersion: PartyReadyRoomProjectionDtoOutputSchemaVersion;
   notificationId: string;
   organizerDiscordId: string;
@@ -6180,6 +6237,11 @@ export interface PartyReadyRoomProjectionDtoOutput {
   description?: string;
   minLvl?: number;
   maxLvl?: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  partyMemberCount?: number;
   status: PartyReadyRoomProjectionDtoOutputStatus;
   /**
      * @minimum 1
@@ -6328,6 +6390,17 @@ export const PartyReadyRoomClientUpdateDtoOutputType = {
   REMOVE: 'REMOVE',
 } as const;
 
+export type PartyReadyRoomClientUpdateDtoOutputProjectionNpc = {
+  prof?: string;
+  icon?: string;
+  name: string;
+  location: string;
+  lvl: number | 'Infinity' | '-Infinity' | 'NaN';
+  type: string;
+  x?: number | 'Infinity' | '-Infinity' | 'NaN';
+  y?: number | 'Infinity' | '-Infinity' | 'NaN';
+};
+
 export type PartyReadyRoomClientUpdateDtoOutputProjectionSchemaVersion = typeof PartyReadyRoomClientUpdateDtoOutputProjectionSchemaVersion[keyof typeof PartyReadyRoomClientUpdateDtoOutputProjectionSchemaVersion];
 
 
@@ -6442,6 +6515,7 @@ export type PartyReadyRoomClientUpdateDtoOutputProjectionParticipants = {[key: s
 }};
 
 export type PartyReadyRoomClientUpdateDtoOutputProjection = {
+  npc?: PartyReadyRoomClientUpdateDtoOutputProjectionNpc;
   schemaVersion: PartyReadyRoomClientUpdateDtoOutputProjectionSchemaVersion;
   notificationId: string;
   organizerDiscordId: string;
@@ -6451,6 +6525,11 @@ export type PartyReadyRoomClientUpdateDtoOutputProjection = {
   description?: string;
   minLvl?: number;
   maxLvl?: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  partyMemberCount?: number;
   status: PartyReadyRoomClientUpdateDtoOutputProjectionStatus;
   /**
      * @minimum 1
@@ -10852,22 +10931,6 @@ export type ChatControllerDeleteChatMessage429 = {
   message: string;
 };
 
-export type ChatControllerUpdateChatMessagePathParameters = {
- guildId: string,
-    messageId: string,
- }
-export type ChatControllerUpdateChatMessage401 = {
-  message: string;
-};
-
-export type ChatControllerUpdateChatMessage403 = {
-  message: string;
-};
-
-export type ChatControllerUpdateChatMessage429 = {
-  message: string;
-};
-
 export type ListReservationSpotsPathParameters = {
  guildId: string,
  }
@@ -11532,6 +11595,26 @@ export type MessagingControllerVolunteer403 = HttpErrorResponse | {
 };
 
 export type MessagingControllerVolunteer429 = {
+  message: string;
+};
+
+export type PartyReadyRoomControllerActiveParams = {
+/**
+ * @minLength 1
+ * @maxLength 50
+ */
+world: string;
+};
+
+export type PartyReadyRoomControllerActive401 = HttpErrorResponse | {
+  message: string;
+};
+
+export type PartyReadyRoomControllerActive403 = {
+  message: string;
+};
+
+export type PartyReadyRoomControllerActive429 = {
   message: string;
 };
 
@@ -21594,86 +21677,6 @@ export const useChatControllerDeleteChatMessage = <TError = ErrorType<ChatContro
       return useMutation(getChatControllerDeleteChatMessageMutationOptions(options), queryClient);
     }
 
-export const getChatControllerUpdateChatMessageUrl = ({ guildId, messageId }: ChatControllerUpdateChatMessagePathParameters,) => {
-
-
-
-
-  return `/guilds/${guildId}/chat-messages/${messageId}`
-}
-
-/**
- * Update the content of a chat message
- * @summary Update chat message
- */
-export const chatControllerUpdateChatMessage = async ({ guildId, messageId }: ChatControllerUpdateChatMessagePathParameters,
-    updateMessageDto: UpdateMessageDto, options?: Parameters<typeof mainFetch>[1]): Promise<ChatMessageActionResponseDtoOutput> => {
-
-    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
-    if (!h) return {};
-    if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
-  };
-return mainFetch<ChatMessageActionResponseDtoOutput>(getChatControllerUpdateChatMessageUrl({ guildId, messageId }),
-  {
-    ...options,
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(updateMessageDto)
-  }
-);}
-
-
-
-
-
-export const getChatControllerUpdateChatMessageMutationOptions = <TError = ErrorType<ChatControllerUpdateChatMessage401 | ChatControllerUpdateChatMessage403 | void | ChatControllerUpdateChatMessage429>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof chatControllerUpdateChatMessage>>, TError,ChatControllerUpdateChatMessageMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof chatControllerUpdateChatMessage>>, TError,ChatControllerUpdateChatMessageMutationVariables, TContext> => {
-
-const mutationKey = ['chatControllerUpdateChatMessage'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof chatControllerUpdateChatMessage>>, ChatControllerUpdateChatMessageMutationVariables> = (props) => {
-          const {pathParams,data} = props ?? {};
-
-          return  chatControllerUpdateChatMessage(pathParams,data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type ChatControllerUpdateChatMessageMutationResult = NonNullable<Awaited<ReturnType<typeof chatControllerUpdateChatMessage>>>
-    export type ChatControllerUpdateChatMessageMutationBody = BodyType<UpdateMessageDto>
-    export type ChatControllerUpdateChatMessageMutationError = ErrorType<ChatControllerUpdateChatMessage401 | ChatControllerUpdateChatMessage403 | void | ChatControllerUpdateChatMessage429>
-    export type ChatControllerUpdateChatMessageMutationVariables = {pathParams: ChatControllerUpdateChatMessagePathParameters;data: BodyType<UpdateMessageDto>}
-
-    /**
- * @summary Update chat message
- */
-export const useChatControllerUpdateChatMessage = <TError = ErrorType<ChatControllerUpdateChatMessage401 | ChatControllerUpdateChatMessage403 | void | ChatControllerUpdateChatMessage429>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof chatControllerUpdateChatMessage>>, TError,ChatControllerUpdateChatMessageMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof chatControllerUpdateChatMessage>>,
-        TError,
-        ChatControllerUpdateChatMessageMutationVariables,
-        TContext
-      > => {
-      return useMutation(getChatControllerUpdateChatMessageMutationOptions(options), queryClient);
-    }
-
 export const getListReservationSpotsUrl = ({ guildId }: ListReservationSpotsPathParameters,) => {
 
 
@@ -25919,6 +25922,138 @@ export const useMessagingControllerVolunteer = <TError = ErrorType<HttpErrorResp
       > => {
       return useMutation(getMessagingControllerVolunteerMutationOptions(options), queryClient);
     }
+
+export const getPartyReadyRoomControllerActiveUrl = (params: PartyReadyRoomControllerActiveParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/messaging/party-gathering/active?${stringifiedParams}` : `/messaging/party-gathering/active`
+}
+
+export const partyReadyRoomControllerActive = async (params: PartyReadyRoomControllerActiveParams, options?: Parameters<typeof mainFetch>[1]): Promise<ActivePartyGatheringSummary[]> => {
+
+  return mainFetch<ActivePartyGatheringSummary[]>(getPartyReadyRoomControllerActiveUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getPartyReadyRoomControllerActiveQueryKey = (params?: PartyReadyRoomControllerActiveParams,) => {
+    return [
+    `/messaging/party-gathering/active`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getPartyReadyRoomControllerActiveQueryOptions = <TData = Awaited<ReturnType<typeof partyReadyRoomControllerActive>>, TError = ErrorType<PartyReadyRoomControllerActive401 | PartyReadyRoomControllerActive403 | PartyReadyRoomControllerActive429>>(params: PartyReadyRoomControllerActiveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof partyReadyRoomControllerActive>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getPartyReadyRoomControllerActiveQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof partyReadyRoomControllerActive>>> = ({ signal }) => partyReadyRoomControllerActive(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof partyReadyRoomControllerActive>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type PartyReadyRoomControllerActiveQueryResult = NonNullable<Awaited<ReturnType<typeof partyReadyRoomControllerActive>>>
+export type PartyReadyRoomControllerActiveQueryError = ErrorType<PartyReadyRoomControllerActive401 | PartyReadyRoomControllerActive403 | PartyReadyRoomControllerActive429>
+
+
+export function usePartyReadyRoomControllerActive<TData = Awaited<ReturnType<typeof partyReadyRoomControllerActive>>, TError = ErrorType<PartyReadyRoomControllerActive401 | PartyReadyRoomControllerActive403 | PartyReadyRoomControllerActive429>>(
+ params: PartyReadyRoomControllerActiveParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof partyReadyRoomControllerActive>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof partyReadyRoomControllerActive>>,
+          TError,
+          Awaited<ReturnType<typeof partyReadyRoomControllerActive>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePartyReadyRoomControllerActive<TData = Awaited<ReturnType<typeof partyReadyRoomControllerActive>>, TError = ErrorType<PartyReadyRoomControllerActive401 | PartyReadyRoomControllerActive403 | PartyReadyRoomControllerActive429>>(
+ params: PartyReadyRoomControllerActiveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof partyReadyRoomControllerActive>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof partyReadyRoomControllerActive>>,
+          TError,
+          Awaited<ReturnType<typeof partyReadyRoomControllerActive>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePartyReadyRoomControllerActive<TData = Awaited<ReturnType<typeof partyReadyRoomControllerActive>>, TError = ErrorType<PartyReadyRoomControllerActive401 | PartyReadyRoomControllerActive403 | PartyReadyRoomControllerActive429>>(
+ params: PartyReadyRoomControllerActiveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof partyReadyRoomControllerActive>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function usePartyReadyRoomControllerActive<TData = Awaited<ReturnType<typeof partyReadyRoomControllerActive>>, TError = ErrorType<PartyReadyRoomControllerActive401 | PartyReadyRoomControllerActive403 | PartyReadyRoomControllerActive429>>(
+ params: PartyReadyRoomControllerActiveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof partyReadyRoomControllerActive>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getPartyReadyRoomControllerActiveQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const prefetchPartyReadyRoomControllerActiveQuery = async <TData = Awaited<ReturnType<typeof partyReadyRoomControllerActive>>, TError = ErrorType<PartyReadyRoomControllerActive401 | PartyReadyRoomControllerActive403 | PartyReadyRoomControllerActive429>>(
+ queryClient: QueryClient, params: PartyReadyRoomControllerActiveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof partyReadyRoomControllerActive>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getPartyReadyRoomControllerActiveQueryOptions(params,options)
+
+  await queryClient.prefetchQuery(queryOptions);
+
+  return queryClient;
+}
+
+export const invalidatePartyReadyRoomControllerActive = async (
+ queryClient: QueryClient, params: PartyReadyRoomControllerActiveParams, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getPartyReadyRoomControllerActiveQueryKey(params) }, options);
+
+  return queryClient;
+}
+
+export const useSetPartyReadyRoomControllerActiveQueryData = () => {
+  const queryClient = useQueryClient();
+  return (params: PartyReadyRoomControllerActiveParams | undefined,updater: Awaited<ReturnType<typeof partyReadyRoomControllerActive>> | undefined | ((old: Awaited<ReturnType<typeof partyReadyRoomControllerActive>> | undefined) => Awaited<ReturnType<typeof partyReadyRoomControllerActive>> | undefined)) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof partyReadyRoomControllerActive>>>({ queryKey: getPartyReadyRoomControllerActiveQueryKey(params) }, updater);
+  };
+}
+
+export const useGetPartyReadyRoomControllerActiveQueryData = () => {
+  const queryClient = useQueryClient();
+  return (params: PartyReadyRoomControllerActiveParams,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof partyReadyRoomControllerActive>>>(getPartyReadyRoomControllerActiveQueryKey(params));
+}
+
+
 
 export const getPartyReadyRoomControllerListUrl = () => {
 
