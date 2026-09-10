@@ -1,16 +1,11 @@
 import { ChatGatheringInviteButton } from "./chat-gathering-invite-button";
+import { ChatGatheringJoinButton } from "./chat-gathering-join-button";
+import { ChatGatheringCounters } from "./chat-gathering-counters";
 import {
   ChatGatheringDetails,
   hasChatGatheringDetails,
 } from "./chat-gathering-details";
-import {
-  Settings2,
-  X,
-  LogOut,
-  LoaderCircle,
-  Users,
-  UserCheck,
-} from "lucide-react";
+import { Settings2, X, LoaderCircle } from "lucide-react";
 import {
   Tooltip,
   TooltipTrigger,
@@ -20,6 +15,7 @@ import { useWindowsStore } from "@/store/windows.store";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { PartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
+import type { ActivePartyGatheringSummary } from "@lootlog/client/main";
 import { useReadyRoomWithdrawal } from "@/features/party-finder/hooks/use-ready-room-withdrawal";
 import { useCancelPartyGathering } from "@/hooks/api/use-cancel-party-gathering";
 import { Button } from "@/components/ui/button";
@@ -27,8 +23,10 @@ import { CHAT_GATHERING_ACTION_CLASS } from "../chat.constants";
 
 export function ChatOwnGatheringBar({
   room,
+  summary,
 }: {
   room: PartyReadyRoomProjection;
+  summary?: ActivePartyGatheringSummary;
 }) {
   const { t } = useTranslation("chat");
   const setOpen = useWindowsStore((state) => state.setOpen);
@@ -38,123 +36,97 @@ export function ChatOwnGatheringBar({
   const [withdrawFailed, setWithdrawFailed] = useState(false);
   const hasDetails = hasChatGatheringDetails(room);
   const organizer = room.viewer === "ORGANIZER";
-  const pending = cancellation.isPending || withdrawal.isWithdrawing;
-  const actionLabel = organizer
-    ? t(pending ? "gatherings.cancelling" : "gatherings.cancel")
-    : t(pending ? "gatherings.withdrawing" : "gatherings.withdraw");
-  const participants = Object.values(room.participants);
+  const actionLabel = t(
+    cancellation.isPending ? "gatherings.cancelling" : "gatherings.cancel",
+  );
+  const participants = Object.values(room.participants).filter(
+    ({ character }) =>
+      character.accountId !== room.organizerCharacter.accountId ||
+      character.characterId !== room.organizerCharacter.characterId,
+  );
   const inParty = participants.filter(
     (participant) => participant.partyPresence === "IN_PARTY",
   ).length;
-  const counters = [
-    {
-      id: "applicants",
-      Icon: Users,
-      value: participants.length,
-      label: t("gatherings.applicantCount", { count: participants.length }),
-    },
-    {
-      id: "inParty",
-      Icon: UserCheck,
-      value: inParty,
-      label: t("gatherings.inPartyCount", {
-        count: inParty,
-      }),
-    },
-  ];
-  const inviteButton = organizer ? (
+  const counts = organizer
+    ? { applicantCount: participants.length, inPartyCount: inParty }
+    : summary;
+  const participationButton = organizer ? (
     <ChatGatheringInviteButton onErrorChange={setInviteFailed} />
-  ) : null;
+  ) : (
+    <ChatGatheringJoinButton
+      pending={withdrawal.isWithdrawing}
+      disabled={!withdrawal.participant}
+      status={
+        withdrawal.participant?.partyPresence === "IN_PARTY"
+          ? "inParty"
+          : "applied"
+      }
+      onClick={() => {
+        setWithdrawFailed(false);
+        void withdrawal.withdraw()?.catch(() => setWithdrawFailed(true));
+      }}
+    />
+  );
   return (
     <>
       <div className="ll:flex ll:flex-col ll:gap-0.5">
         <div
-          className={`ll:flex ll:h-4 ll:items-start ll:gap-1 ${hasDetails ? "ll:mb-1" : ""}`}
+          className={`ll:flex ll:flex-wrap ll:gap-1 ${hasDetails ? "ll:min-h-5 ll:items-start ll:mb-1" : "ll:min-h-6 ll:items-center"}`}
         >
-          <span className="ll:shrink-0 ll:whitespace-nowrap ll:relative ll:-top-px ll:text-[11px] ll:font-semibold">
+          <span
+            className={`ll:shrink-0 ll:whitespace-nowrap ll:text-[11px] ll:font-semibold ${hasDetails ? "ll:relative ll:-top-px" : ""}`}
+          >
             {t("gatherings.title")}
           </span>
-          {organizer && (
-            <div className="ll:ml-1 ll:flex ll:items-center ll:gap-1.5">
-              {counters.map(({ id, Icon, value, label }) => (
-                <Tooltip key={id}>
+          <ChatGatheringCounters {...counts} />
+          <div
+            className={`ll:ml-auto ll:flex ll:shrink-0 ll:items-center ll:gap-0 ${hasDetails ? "ll:-mt-1" : ""}`}
+          >
+            {!hasDetails && participationButton}
+            {organizer && (
+              <>
+                <Tooltip>
                   <TooltipTrigger asChild>
-                    <span
-                      tabIndex={0}
-                      role="img"
-                      aria-label={label}
-                      className="ll:flex ll:items-center ll:gap-0.5 ll:text-[10px] ll:tabular-nums ll:focus-visible:outline-2 ll:focus-visible:outline-ring"
+                    <Button
+                      variant="ghost"
+                      className={`${CHAT_GATHERING_ACTION_CLASS} ll:w-6`}
+                      aria-label={t("gatherings.manage")}
+                      onClick={() => setOpen("party-finder", true)}
                     >
-                      <Icon size={12} aria-hidden="true" />
-                      <span aria-hidden="true">{value}</span>
-                    </span>
+                      <Settings2 size={14} aria-hidden="true" />
+                    </Button>
                   </TooltipTrigger>
-                  <TooltipContent side="top">{label}</TooltipContent>
+                  <TooltipContent side="top">
+                    {t("gatherings.manage")}
+                  </TooltipContent>
                 </Tooltip>
-              ))}
-            </div>
-          )}
-          <div className="ll:ml-auto ll:-mt-1 ll:flex ll:shrink-0 ll:items-center ll:gap-0">
-            {!hasDetails && inviteButton}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className={`${CHAT_GATHERING_ACTION_CLASS} ll:w-6`}
-                  aria-label={t("gatherings.manage")}
-                  onClick={() => setOpen("party-finder", true)}
-                >
-                  <Settings2 size={14} aria-hidden="true" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">
-                {t("gatherings.manage")}
-              </TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className={`${CHAT_GATHERING_ACTION_CLASS} ll:w-6`}
-                  aria-label={actionLabel}
-                  aria-busy={pending}
-                  disabled={pending || (!organizer && !withdrawal.participant)}
-                  onClick={() => {
-                    if (organizer) cancellation.mutate();
-                    else {
-                      setWithdrawFailed(false);
-                      void withdrawal
-                        .withdraw()
-                        ?.catch(() => setWithdrawFailed(true));
-                    }
-                  }}
-                >
-                  {pending ? (
-                    <LoaderCircle size={14} aria-hidden="true" />
-                  ) : organizer ? (
-                    <X size={14} aria-hidden="true" />
-                  ) : (
-                    <LogOut size={14} aria-hidden="true" />
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">{actionLabel}</TooltipContent>
-            </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="destructive"
+                      className={`${CHAT_GATHERING_ACTION_CLASS} ll:w-6`}
+                      aria-label={actionLabel}
+                      aria-busy={cancellation.isPending}
+                      disabled={cancellation.isPending}
+                      onClick={() => cancellation.mutate()}
+                    >
+                      {cancellation.isPending ? (
+                        <LoaderCircle size={14} aria-hidden="true" />
+                      ) : (
+                        <X size={14} aria-hidden="true" />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">{actionLabel}</TooltipContent>
+                </Tooltip>
+              </>
+            )}
           </div>
         </div>
         <ChatGatheringDetails
           {...room}
-          action={hasDetails ? inviteButton : undefined}
+          action={hasDetails ? participationButton : undefined}
         />
-        {!organizer && (
-          <div className="ll:text-[10px] ll:text-gray-300 ll:[overflow-wrap:anywhere]">
-            {t(
-              withdrawal.participant?.partyPresence === "IN_PARTY"
-                ? "gatherings.inParty"
-                : "gatherings.applied",
-            )}
-          </div>
-        )}
       </div>
       {inviteFailed && (
         <p role="alert" className="ll:m-0 ll:text-amber-200">

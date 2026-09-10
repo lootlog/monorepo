@@ -66,7 +66,7 @@ export const ChatQuickActionStrip = ({ guildId }: { guildId?: string }) => {
           aria-label={t("quickActions.menu")}
           title={t("quickActions.menu")}
         >
-          <Plus aria-hidden className="ll:size-3" />
+          <Plus aria-hidden className="ll:size-4" />
         </Button>
       </PopoverTrigger>
       <PopoverContent

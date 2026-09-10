@@ -4,6 +4,8 @@ import { selectFeaturedGathering } from "./chat-gathering-bar";
 const first: ActivePartyGatheringSummary = {
   notificationId: "first",
   organizerName: "Hero",
+  applicantCount: 0,
+  inPartyCount: 0,
   guildIds: ["org"],
   world: "Test",
   createdAt: "2026-09-09T00:00:00Z",

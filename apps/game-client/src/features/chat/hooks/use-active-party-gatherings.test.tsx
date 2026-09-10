@@ -20,6 +20,8 @@ it("retains visible unexpired gatherings after failed refresh and recovers on su
   const room: ActivePartyGatheringSummary = {
     notificationId: "active",
     organizerName: "Hero",
+    applicantCount: 0,
+    inPartyCount: 0,
     guildIds: ["guild-1"],
     world: "pandora",
     createdAt: new Date().toISOString(),

@@ -250,6 +250,7 @@ export const ChatTranscript = ({
         aria-label={ariaLabel}
         hidden={isEmpty}
         data-chat-viewport
+        data-scroll-fade-viewport
         data-ll-draggable="false"
         className="ll:scroll-fade-y ll:scroll-fade-4 ll:size-full ll:min-h-0 ll:overflow-y-auto ll:overscroll-contain ll:rounded ll:outline-none ll:focus-visible:ring-1 ll:focus-visible:ring-inset ll:focus-visible:ring-ring"
         style={{ overflowAnchor: "auto", overflowX: "hidden" }}

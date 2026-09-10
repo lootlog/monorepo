@@ -563,10 +563,21 @@ export const makeReadyRoomDataLayer = (
                 .flatMap((room) => {
                   const visible = visibleGuilds(room);
                   if (visible.length === 0) return [];
+                  const applicants = Object.values(room.participants).filter(
+                    ({ character }) =>
+                      character.accountId !==
+                        room.organizerCharacter.accountId ||
+                      character.characterId !==
+                        room.organizerCharacter.characterId,
+                  );
                   return [
                     {
                       notificationId: room.notificationId,
                       organizerName: room.organizerCharacter.nick,
+                      applicantCount: applicants.length,
+                      inPartyCount: applicants.filter(
+                        ({ partyPresence }) => partyPresence === "IN_PARTY",
+                      ).length,
                       guildIds: visible,
                       world: room.world,
                       ...(room.description !== undefined && {

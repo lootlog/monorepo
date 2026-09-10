@@ -1,12 +1,8 @@
-import { getSubtleBackgroundColor } from "@/utils/notifications-and-detector/background";
-import {
-  isCombatNpcType,
-  type NpcTypeColors,
-} from "@lootlog/schema/npc-appearance";
+import { getPartyGatheringBackgroundColor } from "@/utils/notifications-and-detector/background";
+import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
 import { ChatAvailableGatherings } from "./chat-available-gatherings";
 import { CHAT_GATHERING_ACTION_CLASS } from "../chat.constants";
-import { ChatOwnGatheringBar } from "./chat-own-gathering-bar";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -27,6 +23,11 @@ import { useGameStore } from "@/store/game.store";
 import { buildCurrentCharacterPayload } from "@/lib/api/generated-helpers";
 import { getCurrentReadyRoomCharacterIdentity } from "@/features/party-finder/ready-room-character-identity";
 import { Button } from "@/components/ui/button";
+import {
+  getHiddenPartyGatheringsScopeKey,
+  useHiddenPartyGatheringsStore,
+} from "@/store/hidden-party-gatherings.store";
+import { ChatHiddenGatherings } from "./chat-hidden-gatherings";
 
 export function selectFeaturedGathering(
   candidates: ActivePartyGatheringSummary[],
@@ -41,27 +42,33 @@ export function selectFeaturedGathering(
   return candidates[0] ?? null;
 }
 
-function getGatheringBackground(
-  gathering: { npc?: { type?: string } } | null | undefined,
-  colors?: NpcTypeColors,
-) {
-  const type = gathering?.npc?.type;
-  return getSubtleBackgroundColor(
-    isCombatNpcType(type) ? type : "party-gathering",
-    colors,
-  );
-}
-
 export function ChatGatheringBar({
   isVisible = true,
   npcTypeColors,
+  children,
 }: {
   isVisible?: boolean;
   npcTypeColors?: NpcTypeColors;
+  children: (
+    backgroundColor: string | undefined,
+    gatheringBar: ReactNode,
+    hiddenGatherings: ReactNode,
+  ) => ReactNode;
 }) {
   const { t } = useTranslation("chat");
   const discovery = useActivePartyGatherings();
   const level = useGameStore((state) => state.game?.hero.level ?? 0);
+  const scopeKey = useGameStore((state) =>
+    getHiddenPartyGatheringsScopeKey({
+      userId: discovery.userId,
+      world: discovery.world,
+      accountId: state.game?.hero.accountId,
+      characterId: state.game?.hero.characterId,
+    }),
+  );
+  const hiddenByScope = useHiddenPartyGatheringsStore(
+    (state) => state.hiddenByScope,
+  );
   const identity = getCurrentReadyRoomCharacterIdentity();
   const room = usePartyFinderStore(
     (state) =>
@@ -76,6 +83,7 @@ export function ChatGatheringBar({
     null,
   );
   const barRef = useRef<HTMLDivElement>(null);
+  const hiddenTriggerRef = useRef<HTMLButtonElement>(null);
   const pendingRef = useRef(false);
   const application = useMutation({
     mutationFn: (target: ActivePartyGatheringSummary) => {
@@ -98,19 +106,51 @@ export function ChatGatheringBar({
       });
     },
   });
-  const candidates = discovery.data.filter(
+  const eligibleGatherings = discovery.data.filter(
     (candidate) =>
       level >= (candidate.minLvl ?? 0) &&
       level <= (candidate.maxLvl ?? Infinity),
   );
+  const hiddenIds = scopeKey ? hiddenByScope[scopeKey] : undefined;
+  const hidden = (candidate: ActivePartyGatheringSummary) =>
+    (hiddenIds?.[candidate.notificationId] ?? 0) > discovery.observedAt;
+  const candidates = eligibleGatherings.filter(
+    (candidate) => !hidden(candidate),
+  );
+  const hiddenGatherings = eligibleGatherings.filter(hidden);
   const newest = candidates[0] ?? null;
   const locked = hovered || focused || application.isPending;
   const target = selectFeaturedGathering(candidates, locked ? frozen : null);
   const apply = (candidate: ActivePartyGatheringSummary) => {
-    if (pendingRef.current || room || discovery.isStale) return;
+    if (
+      pendingRef.current ||
+      room ||
+      discovery.isStale ||
+      useHiddenPartyGatheringsStore
+        .getState()
+        .isHidden(scopeKey, candidate.notificationId)
+    )
+      return;
     pendingRef.current = true;
     setFrozen(candidate);
     application.mutate(candidate);
+  };
+  const hideGathering = (candidate: ActivePartyGatheringSummary) => {
+    if (
+      !scopeKey ||
+      pendingRef.current ||
+      room?.notificationId === candidate.notificationId
+    )
+      return;
+    useHiddenPartyGatheringsStore
+      .getState()
+      .hide(
+        scopeKey,
+        candidate.notificationId,
+        Date.parse(candidate.expiresAt),
+      );
+    if (target?.notificationId === candidate.notificationId) setFrozen(null);
+    requestAnimationFrame(() => hiddenTriggerRef.current?.focus());
   };
   useEffect(() => {
     const join = () => {
@@ -138,70 +178,99 @@ export function ChatGatheringBar({
     if (applyError && appliedTarget.notificationId !== target?.notificationId)
       resetApplication();
   }, [applyError, appliedTarget, resetApplication, target?.notificationId]);
-  if (!room && candidates.length === 0 && !hasError && !applyFailed)
-    return null;
-  return (
-    <div
-      ref={barRef}
-      style={{
-        backgroundColor: getGatheringBackground(room ?? target, npcTypeColors),
-      }}
-      className="ll:shrink-0 ll:border-solid ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40 ll:px-1.5 ll:py-1.5 ll:text-[11px] ll:leading-[14px] ll:[--ll-chat-detail-font-size:11px] ll:[--ll-chat-detail-line-height:14px] ll:text-gray-100"
-      onMouseEnter={() => {
-        setFrozen(target);
-        setHovered(true);
-      }}
-      onMouseLeave={() => setHovered(false)}
-      onFocus={() => {
-        if (!focused) setFrozen(target);
-        setFocused(true);
-      }}
-      onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget))
-          setFocused(false);
-      }}
-    >
-      {room ? (
-        <ChatOwnGatheringBar key={room.notificationId} room={room} />
-      ) : (
+  const showBar = [room, candidates.length, hasError, applyFailed].some(
+    Boolean,
+  );
+  const backgroundColor = showBar
+    ? getPartyGatheringBackgroundColor(
+        (room ?? target)?.npc?.type,
+        npcTypeColors,
+      )
+    : undefined;
+  return children(
+    backgroundColor,
+    showBar && (
+      <div
+        ref={barRef}
+        style={{
+          backgroundColor,
+        }}
+        className="ll:shrink-0 ll:border-solid ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40 ll:px-1.5 ll:py-1.5 ll:text-[11px] ll:leading-[14px] ll:[--ll-chat-detail-font-size:11px] ll:[--ll-chat-detail-line-height:14px] ll:text-gray-100"
+        onMouseEnter={() => {
+          setFrozen(target);
+          setHovered(true);
+        }}
+        onMouseLeave={() => setHovered(false)}
+        onFocus={() => {
+          if (!focused) setFrozen(target);
+          setFocused(true);
+        }}
+        onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget))
+            setFocused(false);
+        }}
+      >
         <ChatAvailableGatherings
           candidates={candidates}
           target={target}
+          room={room}
+          roomSummary={discovery.data.find(
+            (candidate) => candidate.notificationId === room?.notificationId,
+          )}
           locked={locked}
           pending={application.isPending}
           stale={discovery.isStale}
           onApply={apply}
+          onHide={hideGathering}
           onShowLatest={() => setFrozen(newest)}
         />
-      )}
-      {applyFailed && (
-        <p role="alert" className="ll:m-0 ll:text-amber-200">
-          {t("gatherings.applyFailed")}
-        </p>
-      )}
-      {discovery.isStale ? (
-        <div className="ll:flex ll:items-center ll:gap-1">
-          <p
-            role="status"
-            className="ll:m-0 ll:min-w-0 ll:flex-1 ll:text-amber-200"
-          >
-            {t(hasError ? "gatherings.failed" : "gatherings.stale")}
+        {applyFailed && (
+          <p role="alert" className="ll:m-0 ll:text-amber-200">
+            {t("gatherings.applyFailed")}
           </p>
-          <Button
-            type="button"
-            variant="ghost"
-            className={CHAT_GATHERING_ACTION_CLASS}
-            disabled={discovery.isFetching}
-            onClick={() => void discovery.refetch()}
-          >
-            {t(
-              discovery.isFetching
-                ? "gatherings.refreshing"
-                : "gatherings.retry",
-            )}
-          </Button>
-        </div>
-      ) : null}
-    </div>
+        )}
+        {discovery.isStale ? (
+          <div className="ll:flex ll:items-center ll:gap-1">
+            <p
+              role="status"
+              className="ll:m-0 ll:min-w-0 ll:flex-1 ll:text-amber-200"
+            >
+              {t(hasError ? "gatherings.failed" : "gatherings.stale")}
+            </p>
+            <Button
+              type="button"
+              variant="ghost"
+              className={CHAT_GATHERING_ACTION_CLASS}
+              disabled={discovery.isFetching}
+              onClick={() => void discovery.refetch()}
+            >
+              {t(
+                discovery.isFetching
+                  ? "gatherings.refreshing"
+                  : "gatherings.retry",
+              )}
+            </Button>
+          </div>
+        ) : null}
+      </div>
+    ),
+    hiddenGatherings.length > 0 && (
+      <ChatHiddenGatherings
+        triggerRef={hiddenTriggerRef}
+        gatherings={hiddenGatherings}
+        onRestore={(notificationId) => {
+          if (scopeKey)
+            useHiddenPartyGatheringsStore
+              .getState()
+              .restore(scopeKey, notificationId);
+          requestAnimationFrame(() =>
+            (
+              hiddenTriggerRef.current ??
+              barRef.current?.querySelector<HTMLButtonElement>("button")
+            )?.focus(),
+          );
+        }}
+      />
+    ),
   );
 }

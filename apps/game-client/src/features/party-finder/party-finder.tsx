@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { useWindowsStore } from "@/store/windows.store";
 import {
   selectOwnedReadyRoom,
-  selectReadyRoomForCharacter,
   usePartyFinderStore,
 } from "@/store/party-finder.store";
 import { usePartyStore } from "@/store/party.store";
@@ -11,7 +10,6 @@ import { useCancelPartyGathering } from "@/hooks/api/use-cancel-party-gathering"
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useTranslation } from "react-i18next";
 import { ReadyRoomParticipantsList } from "@/features/party-finder/components/ready-room-participants-list";
-import { ReadyRoomParticipantStatus } from "@/features/party-finder/components/ready-room-participant-status";
 import { useReadyRoomInvitations } from "@/features/party-finder/hooks/use-ready-room-invitations";
 import { getCurrentReadyRoomCharacterIdentity } from "@/features/party-finder/ready-room-character-identity";
 
@@ -21,28 +19,23 @@ export const PartyFinder = () => {
   const setOpen = useWindowsStore((state) => state.setOpen);
 
   const currentCharacterIdentity = getCurrentReadyRoomCharacterIdentity();
-  const readyRoom = usePartyFinderStore(
-    (state) =>
-      selectOwnedReadyRoom(state) ??
-      selectReadyRoomForCharacter(state, currentCharacterIdentity),
-  );
+  const readyRoom = usePartyFinderStore(selectOwnedReadyRoom);
   const partyMembers = usePartyStore((s) => s.members);
   const { mutate: cancelPartyGathering, isPending: isCancelling } =
     useCancelPartyGathering();
   const { inviteParticipants, canInviteParticipants } =
     useReadyRoomInvitations();
-  const isOrganizerView =
-    readyRoom?.viewer === "ORGANIZER" &&
+  const isOrganizerCharacter =
+    readyRoom !== null &&
     currentCharacterIdentity?.accountId ===
       readyRoom.organizerCharacter.accountId &&
     currentCharacterIdentity.characterId ===
       readyRoom.organizerCharacter.characterId;
-  const invitableParticipantIds =
-    isOrganizerView && readyRoom.viewer === "ORGANIZER"
-      ? Object.values(readyRoom.participants)
-          .filter((participant) => participant.partyPresence === "OUTSIDE")
-          .map(({ participantId }) => participantId)
-      : [];
+  const hasInvitableParticipants =
+    isOrganizerCharacter &&
+    Object.values(readyRoom.participants).some(
+      (participant) => participant.partyPresence === "OUTSIDE",
+    );
 
   if (!readyRoom) return null;
 
@@ -57,7 +50,7 @@ export const PartyFinder = () => {
       minWidth={242}
     >
       <div className="ll:flex ll:flex-col ll:h-full">
-        {isOrganizerView ? (
+        {isOrganizerCharacter ? (
           <div className="ll:shrink-0 ll:flex ll:items-center ll:justify-center ll:gap-1 ll:py-1.5 ll:border-b ll:border-gray-700">
             <span className="ll:text-[11px] ll:text-gray-300">
               {t("header.party")}
@@ -74,41 +67,32 @@ export const PartyFinder = () => {
           </div>
         )}
         <ScrollArea className="ll:flex-1">
-          {readyRoom.viewer === "ORGANIZER" ? (
-            <ReadyRoomParticipantsList room={readyRoom} />
-          ) : (
-            <ReadyRoomParticipantStatus room={readyRoom} />
-          )}
+          <ReadyRoomParticipantsList room={readyRoom} />
         </ScrollArea>
-        {readyRoom.viewer === "ORGANIZER" ? (
-          <div className="ll:shrink-0 ll:p-2 ll:border-t ll:border-gray-700 ll:flex ll:flex-col ll:gap-1.5">
-            {isOrganizerView ? (
-              <Button
-                onClick={() => {
-                  void inviteParticipants().catch((cause: unknown) => {
-                    console.warn("Failed to resolve party invitations", cause);
-                  });
-                }}
-                disabled={
-                  invitableParticipantIds.length === 0 ||
-                  !canInviteParticipants()
-                }
-                className="ll:w-full ll:border-green-500 ll:text-green-400 ll:hover:bg-green-600/20"
-              >
-                {t("actions.inviteAll")}
-              </Button>
-            ) : null}
+        <div className="ll:shrink-0 ll:p-2 ll:border-t ll:border-gray-700 ll:flex ll:flex-col ll:gap-1.5">
+          {isOrganizerCharacter ? (
             <Button
-              onClick={() => cancelPartyGathering()}
-              disabled={isCancelling}
-              className="ll:w-full ll:border-red-500 ll:bg-red-600/20 ll:text-red-300 ll:hover:bg-red-600/40"
+              onClick={() => {
+                void inviteParticipants().catch((cause: unknown) => {
+                  console.warn("Failed to resolve party invitations", cause);
+                });
+              }}
+              disabled={!hasInvitableParticipants || !canInviteParticipants()}
+              className="ll:w-full ll:border-green-500 ll:text-green-400 ll:hover:bg-green-600/20"
             >
-              {isCancelling
-                ? t("actions.ending")
-                : t("actions.cancelPartyGathering")}
+              {t("actions.inviteAll")}
             </Button>
-          </div>
-        ) : null}
+          ) : null}
+          <Button
+            onClick={() => cancelPartyGathering()}
+            disabled={isCancelling}
+            className="ll:w-full ll:border-red-500 ll:bg-red-600/20 ll:text-red-300 ll:hover:bg-red-600/40"
+          >
+            {isCancelling
+              ? t("actions.ending")
+              : t("actions.cancelPartyGathering")}
+          </Button>
+        </div>
       </div>
     </DraggableWindow>
   );

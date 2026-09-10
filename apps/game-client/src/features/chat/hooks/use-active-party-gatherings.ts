@@ -83,8 +83,11 @@ export function useActivePartyGatherings() {
     isApiError(query.error) &&
     (query.error.status === 401 || query.error.status === 403);
   const enabledIds = new Set(visibleGuilds.map((guild) => guild.id));
+  const observedAt = Math.max(now, query.dataUpdatedAt, query.errorUpdatedAt);
   return {
     ...query,
+    userId: session?.user.id,
+    observedAt,
     world,
     visibleGuilds,
     isStale: query.isError || !connected,
@@ -93,8 +96,7 @@ export function useActivePartyGatherings() {
         ? (query.data ?? []).filter(
             (room) =>
               room.world === world &&
-              Date.parse(room.expiresAt) >
-                Math.max(now, query.dataUpdatedAt, query.errorUpdatedAt) &&
+              Date.parse(room.expiresAt) > observedAt &&
               room.guildIds.some((id) => enabledIds.has(id)),
           )
         : [],

@@ -15,6 +15,14 @@ retain their existing behavior. New chat NPC reports also carry an optional
 `npc.world`; historical reports without it remain readable but must not initiate
 source-dependent actions.
 
+Discovery summaries include nonnegative integer `applicantCount` and
+`inPartyCount` values derived from registered characters. Both exclude the
+organizer character, even if explicitly registered; `inPartyCount` includes only
+registered characters observed in the party, not unrelated party members.
+Only visible gatherings expose these totals, and participant projections remain
+private. Deploy this additive API response before the updated game client; the
+counters require no persistence migration or WebSocket contract change.
+
 ## Deployment
 
 1. Deploy the gateway source-visibility filter before any API instance emits the
