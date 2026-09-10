@@ -9,7 +9,6 @@ import {
   getChatRenderableMessages,
   getMessagesForSelectedGuild,
   getNextSelectedGuildId,
-  hasVisibleChatMessages,
   mergeChatMessageHistories,
   removeChatMessage,
   updateChatMessage,
@@ -33,7 +32,7 @@ const makeChatMessage = (
     prof: "w",
     icon: "hero.png",
   },
-  canEdit: false,
+
   canDelete: false,
   ...overrides,
 });
@@ -288,12 +287,14 @@ describe("chat helpers", () => {
         kind: "npc-group",
         key: "npc-group:npc-1",
         count: 2,
+        messageIds: ["npc-1", "npc-2"],
         message: firstNpcMessage,
       },
       {
         kind: "npc-group",
         key: "npc-group:npc-3",
         count: 1,
+        messageIds: ["npc-3"],
         message: nextBurstNpcMessage,
       },
     ]);
@@ -368,12 +369,14 @@ describe("chat helpers", () => {
         kind: "npc-group",
         key: "npc-group:npc-a-1",
         count: 2,
+        messageIds: ["npc-a-1", "npc-a-2"],
         message: expect.objectContaining({ id: "npc-a-1" }),
       },
       {
         kind: "npc-group",
         key: "npc-group:npc-b-1",
         count: 2,
+        messageIds: ["npc-b-1", "npc-b-2"],
         message: expect.objectContaining({ id: "npc-b-1" }),
       },
     ]);
@@ -431,12 +434,14 @@ describe("chat helpers", () => {
         kind: "npc-group",
         key: "npc-group:npc-1",
         count: 1,
+        messageIds: ["npc-1"],
         message: expect.objectContaining({ id: "npc-1" }),
       },
       {
         kind: "npc-group",
         key: "npc-group:npc-2",
         count: 1,
+        messageIds: ["npc-2"],
         message: expect.objectContaining({ id: "npc-2" }),
       },
     ]);
@@ -494,6 +499,7 @@ describe("chat helpers", () => {
         kind: "npc-group",
         key: "npc-group:npc-a-1",
         count: 3,
+        messageIds: ["npc-a-1", "npc-a-2", "npc-a-3"],
         message: expect.objectContaining({ id: "npc-a-1", senderId: "user-1" }),
       },
     ]);
@@ -541,6 +547,7 @@ describe("chat helpers", () => {
         kind: "npc-group",
         key: "npc-group:npc-0",
         count: 15,
+        messageIds: messages.map((message) => message.id),
         message: firstMessage,
       },
     ]);
@@ -582,14 +589,6 @@ describe("chat helpers", () => {
     ]);
   });
 
-  it("detects whether chat has renderable messages", () => {
-    const messages = [makeChatMessage()];
-
-    expect(hasVisibleChatMessages(messages, { "guild-1": "Guild" })).toBe(true);
-
-    expect(hasVisibleChatMessages(messages, {})).toBe(false);
-  });
-
   it("reconciles create, update and delete operations against a single message list", () => {
     const messages = [makeChatMessage()];
     const nextMessage = makeChatMessage({ id: "message-2", message: "next" });
@@ -603,4 +602,11 @@ describe("chat helpers", () => {
     ).toBe("updated message");
     expect(removeChatMessage(messages, "message-1")).toEqual([]);
   });
+});
+
+it("excludes legacy party cards from every chat filter", () => {
+  const legacy = makeChatMessage({ type: MessageType.PARTY_GATHERING });
+  for (const filter of ["all", "normal", "npc", "party", "reports"] as const) {
+    expect(filterChatMessages([legacy], filter)).toEqual([]);
+  }
 });

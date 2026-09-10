@@ -1,19 +1,17 @@
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { cn } from "cn";
-import { useState, type FC } from "react";
+import type { FC } from "react";
 import { MessageType } from "@/api/chat.api";
 import {
   type ChatMessageResponseDtoOutput as ChatMessageType,
   type MemberSummaryResponseDtoOutput as GuildMember,
   useChatControllerDeleteChatMessage,
-  useChatControllerUpdateChatMessage,
 } from "@lootlog/client/main";
 
 import type { ChatAppearanceSettings } from "@lootlog/schema/chat-appearance";
 import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
 import { ContextMenu, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { useGameStore } from "@/store/game.store";
-import { PartyGatheringCard } from "./party-gathering-card";
 import {
   getChatMessageBody,
   isChatMessageYesterdayOrOlder,
@@ -24,15 +22,12 @@ import type { ChatMentionContext } from "@/features/chat/chat-mentions.helpers";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 
-import {
-  removeChatMessage,
-  updateChatMessage,
-} from "@/features/chat/chat.helpers";
+import { removeChatMessage } from "@/features/chat/chat.helpers";
 import { dispatchChatScrollToMessage } from "@/features/chat/chat-scroll-to-message";
 import { updateChatMessagesCache } from "@/features/chat/chat-query-cache.helpers";
 import { ChatCharacterTooltip } from "@/features/chat/components/chat-character-tooltip";
 import { ChatPlayerMessageView } from "@/features/chat/components/chat-player-message-view";
-import { toast } from "sonner";
+import { ChatReplyPreview } from "./chat-reply-preview";
 import { ChatMessageBody } from "./chat-message-body";
 import { ChatMessageContextMenu } from "./chat-message-context-menu";
 
@@ -64,27 +59,6 @@ export const ChatMessage: FC<ChatMessageProps> = ({
   const memberColor = useMemberColor(member);
   const isMsgYesterday = isChatMessageYesterdayOrOlder(message.timestamp);
   const messageBody = getChatMessageBody(message);
-  const [isEditing, setIsEditing] = useState(false);
-  const [draftMessage, setDraftMessage] = useState(message.message);
-  const { mutate: updateChatMessageMutation, isPending: isUpdating } =
-    useChatControllerUpdateChatMessage({
-      mutation: {
-        onSuccess: () => {
-          updateChatMessagesCache({
-            guildId: message.guildId,
-            queryClient,
-            updater: (old: ChatMessageType[] | undefined) =>
-              old
-                ? updateChatMessage(old, message.id, draftMessage.trim())
-                : old,
-          });
-          setIsEditing(false);
-        },
-        onError: () => {
-          toast.error(t("errors.editFailed"));
-        },
-      },
-    });
   const { mutate: deleteChatMessageMutation, isPending: isDeleting } =
     useChatControllerDeleteChatMessage({
       mutation: {
@@ -96,12 +70,8 @@ export const ChatMessage: FC<ChatMessageProps> = ({
               old ? removeChatMessage(old, message.id) : old,
           });
         },
-        onError: () => {
-          toast.error(t("errors.deleteFailed"));
-        },
       },
     });
-  const canEditMessage = message.canEdit;
   const canDeleteMessage = message.canDelete;
   const canReplyMessage = canReplyToChatMessage(message);
   const senderName =
@@ -110,21 +80,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({
 
   if (!guildName) return null;
 
-  if (!messageBody && message.type !== MessageType.PARTY_GATHERING) return null;
-
-  if (message.type === MessageType.PARTY_GATHERING) {
-    return (
-      <PartyGatheringCard
-        message={message}
-        member={member}
-        guildName={guildName}
-        all={all}
-        isMsgYesterday={isMsgYesterday}
-        showGuildLabel={appearance?.showGuildLabel}
-        showTimestamp={appearance?.showTimestamp}
-      />
-    );
-  }
+  if (!messageBody) return null;
 
   if (message.type === MessageType.NPC) {
     return (
@@ -144,37 +100,63 @@ export const ChatMessage: FC<ChatMessageProps> = ({
     dispatchChatScrollToMessage(message.replyTo.messageId);
   };
 
+  const actionProps = {
+    canDelete: canDeleteMessage,
+    canReply: canReplyMessage,
+    gameInterface,
+    heroName,
+    isDeleting,
+    message,
+    onReply,
+    onDelete: () =>
+      deleteChatMessageMutation({
+        pathParams: { guildId: message.guildId, messageId: message.id },
+      }),
+  };
+
   return (
     <ContextMenu>
-      <ContextMenuTrigger asChild>
+      <ContextMenuTrigger
+        asChild
+        tabIndex={0}
+        onKeyDown={(event) => {
+          if (event.target !== event.currentTarget) return;
+          if (
+            event.key !== "ContextMenu" &&
+            !(event.shiftKey && event.key === "F10")
+          )
+            return;
+          event.preventDefault();
+          const rect = event.currentTarget.getBoundingClientRect();
+          event.currentTarget.dispatchEvent(
+            new MouseEvent("contextmenu", {
+              bubbles: true,
+              cancelable: true,
+              clientX: rect.left,
+              clientY: rect.top,
+            }),
+          );
+        }}
+      >
         <ChatPlayerMessageView
           all={all}
           appearance={appearance}
           body=<ChatMessageBody
-            draftMessage={draftMessage}
             isDeleting={isDeleting}
-            isEditing={isEditing}
             isMsgYesterday={isMsgYesterday}
-            isUpdating={isUpdating}
             mentionContext={mentionContext}
             message={message}
-            onCancel={() => {
-              setDraftMessage(message.message);
-              setIsEditing(false);
-            }}
-            onDraftChange={(event) => setDraftMessage(event.target.value)}
-            onScrollToOriginal={scrollToOriginalMessage}
-            onSubmit={(event) => {
-              event.preventDefault();
-              updateChatMessageMutation({
-                pathParams: {
-                  guildId: message.guildId,
-                  messageId: message.id,
-                },
-                data: { message: draftMessage.trim() },
-              });
-            }}
           />
+          replyPreview={
+            message.replyTo ? (
+              <ChatReplyPreview
+                variant="compact"
+                reply={message.replyTo}
+                onClick={scrollToOriginalMessage}
+                className="ll:mb-0.5 ll:-ml-1.5 ll:-mr-0.5 ll:w-[calc(100%+8px)] ll:max-w-none ll:pl-1.5 ll:pr-0.5"
+              />
+            ) : null
+          }
           guildName={guildName}
           isMsgYesterday={isMsgYesterday}
           messageId={message.id}
@@ -194,29 +176,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({
         />
       </ContextMenuTrigger>
 
-      <ChatMessageContextMenu
-        canDelete={canDeleteMessage}
-        canEdit={canEditMessage}
-        canReply={canReplyMessage}
-        gameInterface={gameInterface}
-        heroName={heroName}
-        isDeleting={isDeleting}
-        isUpdating={isUpdating}
-        message={message}
-        onDelete={() => {
-          deleteChatMessageMutation({
-            pathParams: {
-              guildId: message.guildId,
-              messageId: message.id,
-            },
-          });
-        }}
-        onEdit={() => {
-          setDraftMessage(message.message);
-          setIsEditing(true);
-        }}
-        onReply={onReply}
-      />
+      <ChatMessageContextMenu {...actionProps} />
     </ContextMenu>
   );
 };

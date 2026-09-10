@@ -166,7 +166,7 @@ export const NotificationsList: FC<NotificationsListProps> = ({
           if (projection.schemaVersion !== 3) return;
           mergeReadyRoomProjection(decodePartyReadyRoomProjection(projection));
           setOpen("notifications", false);
-          setOpen("party-finder", true);
+          setOpen("chat", true);
           clearNotifications();
         },
       },

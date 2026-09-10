@@ -21,8 +21,12 @@ import type { GatewayConfiguration } from "#src/config/gateway-config";
 import { RedisGatewayStore } from "#src/platform/redis-store";
 import { GatewayMetrics } from "#src/realtime/gateway-metrics";
 import { PRESENCE_EXPIRY_MS } from "@lootlog/protocol/realtime";
+import { PresenceStore } from "#src/realtime/presence-store";
 import { OnlineHistory } from "#src/realtime/online-history";
-import type { UserOnlineEventV1 } from "@lootlog/protocol/rabbit/events";
+import type {
+  GameCharacterOffline,
+  UserOnlineEventV1,
+} from "@lootlog/protocol/rabbit/events";
 import { AirTagService } from "#src/realtime/air-tag-service";
 import { MapPingService } from "#src/realtime/map-ping-service";
 import { RealtimeHub } from "#src/realtime/realtime-hub";
@@ -249,6 +253,98 @@ describe("realtime Dragonfly integration", () => {
           ),
         ).value,
       ).toBe(3);
+    } finally {
+      await runtime.dispose();
+    }
+  });
+
+  test("offline claims serialize with reconnect and retain expired-session delivery through a restart", async () => {
+    const runtime = ManagedRuntime.make(
+      BunRedis.layer({ url: `redis://${dragonfly.getHost()}:${redisPort}` }),
+    );
+    try {
+      const redis = await runtime.runPromise(Redis.Redis);
+      const store = new RedisGatewayStore(
+        redis,
+        {
+          host: dragonfly.getHost(),
+          port: redisPort,
+          username: "",
+          password: "",
+          keyPrefix: `offline-test:${crypto.randomUUID()}`,
+        },
+        (effect) => runtime.runPromise(effect),
+        () => {},
+      );
+      let now = Date.now();
+      const hub = {
+        instanceId: crypto.randomUUID(),
+        publishPresence: async () => {},
+        publishToScope: async () => {},
+        refreshRegistry: async () => {},
+      };
+      const events: GameCharacterOffline[] = [];
+      let fails = false;
+      const publish = (event: GameCharacterOffline) =>
+        Effect.suspend(() => {
+          if (fails) return Effect.fail(new Error("Rabbit unavailable"));
+          events.push(event);
+          return Effect.void;
+        });
+      let beforeClaim: (() => Promise<void>) | undefined;
+      const command = {
+        ...store.command,
+        eval: async <A>(
+          script: string,
+          keyCount: number,
+          ...args: ReadonlyArray<string | number>
+        ): Promise<A> => {
+          const callback = beforeClaim;
+          beforeClaim = undefined;
+          await callback?.();
+          return store.command.eval<A>(script, keyCount, ...args);
+        },
+      };
+      const makePresence = () =>
+        new PresenceStore(
+          { command },
+          hub,
+          () => now,
+          undefined,
+          undefined,
+          publish,
+        );
+      let presence = makePresence();
+      const game = makeSocket("offline").socket;
+      game.data.character = game.data.presence?.character;
+      await Effect.runPromise(presence.publish(game, { organizationIds: [] }));
+      await Effect.runPromise(presence.disconnect(game.data));
+      now += 10_000;
+      beforeClaim = async () => {
+        await Effect.runPromise(
+          presence.publish(game, { organizationIds: [] }),
+        );
+      };
+      await Effect.runPromise(presence.sweepOffline());
+      expect(events).toEqual([]);
+
+      // Redis TTL can elapse while the gateway is down; metadata must retain identity.
+      for (const { guild } of game.data.guilds)
+        await store.command.del(
+          `presence:${guild.id}:${game.data.connectionId}`,
+        );
+      now += PRESENCE_EXPIRY_MS + 10_000;
+      presence = makePresence();
+      await Effect.runPromise(presence.sweepExpired());
+      fails = true;
+      await Effect.runPromise(presence.sweepOffline().pipe(Effect.flip));
+      presence = makePresence();
+      fails = false;
+      await Effect.runPromise(presence.sweepOffline());
+      expect(events).toHaveLength(1);
+      expect(events[0]?.characterId).toBe(game.data.character?.characterId);
+      await Effect.runPromise(presence.sweepOffline());
+      expect(events).toHaveLength(1);
     } finally {
       await runtime.dispose();
     }

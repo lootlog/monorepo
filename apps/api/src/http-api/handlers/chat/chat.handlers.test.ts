@@ -12,7 +12,6 @@ import {
   deleteChatMessage,
   getChatMessages,
   sendChatMessage,
-  updateChatMessage,
 } from "./chat.handlers.js";
 
 const identity = { userId: "user-a", discordId: "discord-a" };
@@ -36,7 +35,6 @@ const message = {
     prof: "w",
     icon: "hero.gif",
   },
-  canEdit: true,
   canDelete: true,
 };
 const payload = {
@@ -59,7 +57,6 @@ const makeData = (overrides: Partial<ChatData["Service"]> = {}) =>
     sendMessage: () => Effect.succeed(message),
     clearMessages: () => Effect.succeed({ success: true }),
     deleteMessage: () => Effect.succeed({ success: true }),
-    updateMessage: () => Effect.succeed({ success: true }),
     ...overrides,
   });
 
@@ -157,16 +154,6 @@ describe("Chat HttpApi handlers", () => {
         },
       }),
       makeData({
-        updateMessage: (discordId, guildId, messageId, nextMessage) => {
-          mutationCalls.push({
-            kind: "update",
-            discordId,
-            guildId,
-            messageId,
-            nextMessage,
-          });
-          return Effect.succeed({ success: true });
-        },
         deleteMessage: (discordId, guildId, messageId) => {
           mutationCalls.push({
             kind: "delete",
@@ -183,11 +170,6 @@ describe("Chat HttpApi handlers", () => {
       }),
     );
 
-    const updated = await Effect.runPromise(
-      updateChatMessage("guild-alias", "message-a", "updated").pipe(
-        Effect.provide(layer),
-      ),
-    );
     const ownershipError = await Effect.runPromise(
       Effect.flip(
         deleteChatMessage("guild-alias", "message-b").pipe(
@@ -196,25 +178,13 @@ describe("Chat HttpApi handlers", () => {
       ),
     );
 
-    expect(updated).toEqual({ success: true });
     expect(authorizationCalls).toEqual([
-      {
-        guildId: "guild-alias",
-        allOf: [Permission.LOOTLOG_CHAT_READ, Permission.LOOTLOG_CHAT_WRITE],
-      },
       {
         guildId: "guild-alias",
         allOf: [Permission.LOOTLOG_CHAT_READ, Permission.LOOTLOG_CHAT_WRITE],
       },
     ]);
     expect(mutationCalls).toEqual([
-      {
-        kind: "update",
-        discordId: "discord-a",
-        guildId: "guild-canonical",
-        messageId: "message-a",
-        nextMessage: "updated",
-      },
       {
         kind: "delete",
         discordId: "discord-a",

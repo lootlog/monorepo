@@ -1,3 +1,4 @@
+import { ReadyRoomData } from "#src/http-api/handlers/party-ready-room/party-ready-room.handlers";
 import { makeGuildKillActivityCleanup } from "#src/kills/guild-kill-activity";
 import { Effect, FiberSet, Layer, Schedule } from "effect";
 import {
@@ -68,6 +69,7 @@ export const RabbitConsumers = Layer.effectDiscard(
       Effect.repeat(Schedule.spaced("1 second")),
       Effect.forkScoped,
     );
+    const readyRooms = yield* ReadyRoomData;
     const guildSync = yield* GuildDiscordSync;
     const { removal } = yield* MemberServices;
     const { tracking } = yield* EventsServices;
@@ -210,6 +212,13 @@ export const RabbitConsumers = Layer.effectDiscard(
       "backend-discord-guild-sync-state-updated",
       RabbitRoutingKey.DISCORD_GUILD_SYNC_STATE_UPDATED,
       (data) => guildSync.handleGuildSyncStateUpdated(data),
+    );
+
+    yield* consume(
+      "backend-game-character-offline",
+      RabbitRoutingKey.GAME_CHARACTER_OFFLINE,
+      (event) => readyRooms.characterOffline(event),
+      { strategy: "requeue" },
     );
 
     yield* consume(

@@ -1,89 +1,84 @@
-import { z } from "zod";
+import { CHAT_INTEGRATION_ENABLED } from "./chat.constants";
 import { useState } from "react";
+import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import { useChatMessagesListener } from "@/features/chat/hooks/use-chat-messages";
-import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useWindowPresence } from "@/hooks/ui/use-window-presence";
-import { storageKey } from "@/lib/storage-key";
-import { useChatStore } from "@/store/chat.store";
+import { getSelectedChatGuildId, useChatStore } from "@/store/chat.store";
 import { useGameStore } from "@/store/game.store";
 import { useWindowsStore } from "@/store/windows.store";
+import { getLootlogHostPortalThemeClassName } from "@/components/ui/theme-boundary";
 import { ChatView } from "./chat-view";
-import {
-  clearAllChatUnreadCounts,
-  clearChatUnreadCount,
-  incrementChatUnreadCount,
-  type ChatUnreadCountByGuildId,
-} from "./chat-unread.helpers";
-
-const selectedGuildSchema = z.string();
-
-const chatSelectedGuildKey = (accountId: string, characterId: string) =>
-  storageKey(`ll:chat:selected-guild:${accountId}:${characterId}`);
+import { useIntegratedChatHost } from "./hooks/use-integrated-chat-host";
+import { hasCurrentUserMention } from "./chat-mentions.helpers";
+import { receiveChatMessage, type ChatReadState } from "./chat-read-state";
+import type { ChatScrollPosition } from "./components/chat-transcript";
 
 export const Chat = () => {
+  const { t } = useTranslation("chat");
   const isIntegratedMode = useChatStore((state) => state.isIntegratedMode);
   const open = useWindowsStore((state) => state.chat.open);
-  const characterId = useGameStore(
-    (state) => state.game?.hero.characterId ?? "",
-  );
+  useGameStore((state) => state.game?.hero.characterId ?? "");
   const accountId = useGameStore((state) => state.game?.hero.accountId ?? "");
   const gameInterface = useGameStore((state) => state.game?.interface);
-  const [selectedGuildId = "", setSelectedGuildId] = useLocalStorage(
-    chatSelectedGuildKey(accountId, characterId),
-    "",
-    selectedGuildSchema,
+  const selectedGuildId = useChatStore(getSelectedChatGuildId);
+  const setSelectedGuildId = useChatStore(
+    (state) => state.setSelectedChatGuildId,
   );
-  const [unreadCountByGuildId, setUnreadCountByGuildId] =
-    useState<ChatUnreadCountByGuildId>({});
-  const isChatViewVisible =
-    open && !(isIntegratedMode && gameInterface === "ni");
-  const { shouldRender: shouldRenderChatView } =
-    useWindowPresence(isChatViewVisible);
+  const [readStates, setReadStates] = useState<Record<string, ChatReadState>>(
+    {},
+  );
+  const [positions] = useState(() => new Map<string, ChatScrollPosition>());
+  const readState = readStates[accountId] ?? {};
+  const setReadState = (update: (state: ChatReadState) => ChatReadState) =>
+    setReadStates((current) => {
+      const before = current[accountId] ?? {};
+      const after = update(before);
+      return before === after ? current : { ...current, [accountId]: after };
+    });
+  const integrated = useIntegratedChatHost(
+    CHAT_INTEGRATION_ENABLED && isIntegratedMode && gameInterface === "ni",
+    t("integration.tab"),
+  );
+  const isVisible = integrated.target ? integrated.visible : open;
+  const { shouldRender } = useWindowPresence(open);
 
   useChatMessagesListener({
-    prefetchMembers: isChatViewVisible,
+    prefetchMembers: isVisible,
     onRemoteMessage: (message) => {
-      if (!selectedGuildId || selectedGuildId === "all") {
-        return;
-      }
-
-      if (message.guildId === selectedGuildId) {
-        return;
-      }
-
-      setUnreadCountByGuildId((currentUnreadCountByGuildId) =>
-        incrementChatUnreadCount({
-          unreadCountByGuildId: currentUnreadCountByGuildId,
-          guildId: message.guildId,
-        }),
+      const heroName = useGameStore.getState().game?.hero.name ?? "";
+      const attention =
+        hasCurrentUserMention(message.message, {
+          currentUserNames: [heroName],
+        }) || Boolean(heroName && message.replyTo?.senderNick === heroName);
+      setReadState((current) =>
+        receiveChatMessage(current, message, attention),
       );
     },
   });
 
-  const handleSelectedGuildChange = (nextGuildId: string) => {
-    setSelectedGuildId(nextGuildId);
-    if (!nextGuildId) return;
-
-    setUnreadCountByGuildId((currentUnreadCountByGuildId) =>
-      nextGuildId === "all"
-        ? clearAllChatUnreadCounts()
-        : clearChatUnreadCount({
-            unreadCountByGuildId: currentUnreadCountByGuildId,
-            guildId: nextGuildId,
-          }),
-    );
-  };
-
-  if (!shouldRenderChatView) {
-    return null;
-  }
-
-  return (
+  if (!integrated.target && !shouldRender) return null;
+  const view = (
     <ChatView
-      isOpen={isChatViewVisible}
+      isOpen={isVisible}
+      embedded={Boolean(integrated.target)}
       selectedGuildId={selectedGuildId}
-      setSelectedGuildId={handleSelectedGuildChange}
-      unreadCountByGuildId={unreadCountByGuildId}
+      setSelectedGuildId={(guildId) => setSelectedGuildId(guildId)}
+      readState={readState}
+      setReadState={setReadState}
+      getPosition={(key) => positions.get(`${accountId}:${key}`)}
+      savePosition={(key, position) => {
+        positions.set(`${accountId}:${key}`, position);
+      }}
     />
+  );
+  if (!integrated.target) return view;
+  return createPortal(
+    <div
+      className={`${getLootlogHostPortalThemeClassName()} ll:flex ll:size-full ll:min-h-0 ll:flex-col ll:bg-background ll:text-foreground`}
+    >
+      {view}
+    </div>,
+    integrated.target,
   );
 };

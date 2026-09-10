@@ -433,6 +433,8 @@ export class NpcsDetectionProcessor {
   private async autoSendNpcNotifications(
     intents: readonly NpcNotificationIntent[],
   ): Promise<void> {
+    const world = useGameStore.getState().game?.world;
+    if (!world) return;
     const successfulNotifications = (
       await Promise.all(
         intents.map(async ({ composedNpc, guildIds }) => {
@@ -440,6 +442,7 @@ export class NpcsDetectionProcessor {
             const notificationResponse = await createNotification(
               buildNpcNotificationPayload({
                 npc: composedNpc,
+                world,
                 guildIds,
               }),
             );
@@ -476,6 +479,7 @@ export class NpcsDetectionProcessor {
       successfulNotifications.map(async ({ npc, guildIds }) => {
         try {
           const chatMessage = buildNpcChatMessagePayload({
+            world,
             npc,
             guildIds,
             messageType: MessageType.NPC,

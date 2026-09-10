@@ -5966,112 +5966,6 @@
         "summary": "Delete chat message",
         "x-lootlog-access": "write",
         "x-lootlog-data": "organization"
-      },
-      "patch": {
-        "tags": ["chat"],
-        "operationId": "ChatController_updateChatMessage",
-        "parameters": [
-          {
-            "name": "messageId",
-            "in": "path",
-            "schema": {
-              "type": "string",
-              "example": "msg_123"
-            },
-            "required": true
-          },
-          {
-            "name": "guildId",
-            "in": "path",
-            "schema": {},
-            "required": true
-          }
-        ],
-        "security": [
-          {
-            "apiKey": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "ChatMessageActionResponseDto_Output",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ChatMessageActionResponseDto_Output"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "<No Content>",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "<No Content>"
-          },
-          "429": {
-            "description": "Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["message"],
-                  "additionalProperties": false
-                }
-              }
-            }
-          }
-        },
-        "description": "Update the content of a chat message",
-        "summary": "Update chat message",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateMessageDto"
-              }
-            }
-          },
-          "required": true
-        },
-        "x-lootlog-access": "write",
-        "x-lootlog-data": "organization"
       }
     },
     "/guilds/{guildId}/reservation-spots": {
@@ -25592,6 +25486,11 @@
           "npc": {
             "type": "object",
             "properties": {
+              "world": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 50
+              },
               "id": {
                 "type": "number"
               },
@@ -25699,9 +25598,6 @@
             "required": ["messageId", "senderNick", "message", "type"],
             "additionalProperties": false
           },
-          "canEdit": {
-            "type": "boolean"
-          },
           "canDelete": {
             "type": "boolean"
           }
@@ -25714,7 +25610,6 @@
           "timestamp",
           "type",
           "characterData",
-          "canEdit",
           "canDelete"
         ],
         "additionalProperties": false
@@ -25761,6 +25656,11 @@
           "npc": {
             "type": "object",
             "properties": {
+              "world": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 50
+              },
               "id": {
                 "type": "number"
               },
@@ -25880,18 +25780,6 @@
           }
         },
         "required": ["success"],
-        "additionalProperties": false
-      },
-      "UpdateMessageDto": {
-        "type": "object",
-        "properties": {
-          "message": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 128
-          }
-        },
-        "required": ["message"],
         "additionalProperties": false
       },
       "ReservationSpotsResponseDto": {
@@ -30278,6 +30166,61 @@
       "PartyReadyRoomProjectionDto_Output": {
         "type": "object",
         "properties": {
+          "npc": {
+            "type": "object",
+            "properties": {
+              "prof": {
+                "type": "string"
+              },
+              "icon": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "location": {
+                "type": "string"
+              },
+              "lvl": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string",
+                    "enum": ["Infinity", "-Infinity", "NaN"]
+                  }
+                ]
+              },
+              "type": {
+                "type": "string"
+              },
+              "x": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string",
+                    "enum": ["Infinity", "-Infinity", "NaN"]
+                  }
+                ]
+              },
+              "y": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string",
+                    "enum": ["Infinity", "-Infinity", "NaN"]
+                  }
+                ]
+              }
+            },
+            "required": ["name", "location", "lvl", "type"],
+            "additionalProperties": false
+          },
           "schemaVersion": {
             "type": "number",
             "enum": [3]
@@ -30360,6 +30303,11 @@
           },
           "maxLvl": {
             "type": "number"
+          },
+          "partyMemberCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
           },
           "status": {
             "type": "string",
@@ -30676,6 +30624,61 @@
           "projection": {
             "type": "object",
             "properties": {
+              "npc": {
+                "type": "object",
+                "properties": {
+                  "prof": {
+                    "type": "string"
+                  },
+                  "icon": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "location": {
+                    "type": "string"
+                  },
+                  "lvl": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string",
+                        "enum": ["Infinity", "-Infinity", "NaN"]
+                      }
+                    ]
+                  },
+                  "type": {
+                    "type": "string"
+                  },
+                  "x": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string",
+                        "enum": ["Infinity", "-Infinity", "NaN"]
+                      }
+                    ]
+                  },
+                  "y": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string",
+                        "enum": ["Infinity", "-Infinity", "NaN"]
+                      }
+                    ]
+                  }
+                },
+                "required": ["name", "location", "lvl", "type"],
+                "additionalProperties": false
+              },
               "schemaVersion": {
                 "type": "number",
                 "enum": [3]
@@ -30758,6 +30761,11 @@
               },
               "maxLvl": {
                 "type": "number"
+              },
+              "partyMemberCount": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
               },
               "status": {
                 "type": "string",

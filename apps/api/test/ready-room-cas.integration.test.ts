@@ -12,6 +12,7 @@ import type { ReadyRoomAggregate } from "#src/messaging/ready-room/ready-room.ty
 describe("Ready Room revision CAS integration", () => {
   let runtime: ManagedRuntime.ManagedRuntime<Redis.Redis, never>;
   let repository: ReadyRoomEffectRepository;
+  let redis: RedisService;
 
   beforeAll(async () => {
     runtime = ManagedRuntime.make(
@@ -19,7 +20,7 @@ describe("Ready Room revision CAS integration", () => {
         url: `redis://${encodeURIComponent(process.env.REDIS_USERNAME ?? "")}:${encodeURIComponent(process.env.REDIS_PASSWORD ?? "")}@${process.env.REDIS_HOST ?? "127.0.0.1"}:${process.env.REDIS_PORT ?? "6379"}`,
       }),
     );
-    const redis = new RedisService(
+    redis = new RedisService(
       await runtime.runPromise(Redis.Redis),
       {},
       (effect) => runtime.runPromise(effect),
@@ -81,6 +82,32 @@ describe("Ready Room revision CAS integration", () => {
       expect(
         (await Effect.runPromise(repository.create(original))).status,
       ).toBe("created");
+      expect(
+        await Effect.runPromise(repository.findActive([id], "Other")),
+      ).toEqual([]);
+      expect(
+        await Effect.runPromise(repository.findActive([`${id}-other`], "Test")),
+      ).toEqual([]);
+      expect(
+        await Effect.runPromise(repository.findActive([id, id], "Test")),
+      ).toEqual([original]);
+      expect(
+        await Effect.runPromise(
+          repository.create({
+            ...original,
+            notificationId: crypto.randomUUID(),
+          }),
+        ),
+      ).toEqual({ status: "active-room-exists", notificationId: id });
+      expect(
+        await Effect.runPromise(
+          repository.create({
+            ...original,
+            notificationId: crypto.randomUUID(),
+            organizerDiscordId: crypto.randomUUID(),
+          }),
+        ),
+      ).toEqual({ status: "joined-elsewhere", notificationId: id });
       const current = await Effect.runPromise(repository.get(id));
       if (!current) throw new Error("Created room missing");
       expect(current).toEqual(original);
@@ -99,8 +126,36 @@ describe("Ready Room revision CAS integration", () => {
           : repository[operation](current, next);
       expect((await Effect.runPromise(mutate())).status).toBe("committed");
       expect(await Effect.runPromise(repository.get(id))).toEqual(next);
+      expect(
+        await Effect.runPromise(repository.findActive([id], "Test")),
+      ).toEqual(operation === "terminate" ? [] : [next]);
       expect((await Effect.runPromise(mutate())).status).toBe("conflict");
       expect(await Effect.runPromise(repository.get(id))).toEqual(next);
+      if (operation === "join") {
+        const otherId = crypto.randomUUID();
+        const other = {
+          ...original,
+          notificationId: otherId,
+          organizerDiscordId: otherId,
+          organizerCharacter: { ...character, characterId: otherId },
+        };
+        expect((await Effect.runPromise(repository.create(other))).status).toBe(
+          "created",
+        );
+        const joinOther = () =>
+          repository.join(other, { ...other, revision: 2 }, "participant");
+        expect(await Effect.runPromise(joinOther())).toEqual({
+          status: "joined-elsewhere",
+          notificationId: id,
+        });
+        // A stale index must be recovered without accessing undeclared keys.
+        await redis.del(`party-ready-room:v3:room:${id}`);
+        expect((await Effect.runPromise(joinOther())).status).toBe("committed");
+      }
+      await redis.del(`party-ready-room:v3:room:${id}`);
+      expect(
+        (await Effect.runPromise(repository.create(original))).status,
+      ).toBe("created");
     });
   }
 });

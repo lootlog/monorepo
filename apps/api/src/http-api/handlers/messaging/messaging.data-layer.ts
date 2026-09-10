@@ -1,3 +1,4 @@
+import type { PartyGatheringNpc } from "@lootlog/schema/party-ready-room";
 import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { randomUUID } from "node:crypto";
@@ -7,7 +8,7 @@ import { Clock, Effect, Layer, Schema } from "effect";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
-import { Permission } from "@lootlog/schema/permissions";
+import { NOTIFICATION_SEND_PERMISSIONS } from "@lootlog/domain/npc-permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
 
 import {
@@ -90,6 +91,7 @@ export interface MessagingEvents {
 
 export interface MessagingReadyRoom {
   readonly create: (input: {
+    readonly npc?: PartyGatheringNpc;
     readonly notificationId: string;
     readonly organizerDiscordId: string;
     readonly organizerCharacter: NonNullable<
@@ -143,13 +145,6 @@ export const consumeNotificationRateLimit = (
       }),
     );
 
-const permissionSet = [
-  Permission.LOOTLOG_NOTIFICATIONS_SEND,
-  Permission.OWNER,
-  Permission.ADMIN,
-  Permission.LOOTLOG_MANAGE,
-] as const;
-
 export const makeMessagingDataLayer = (
   redis: MessagingRedis,
   events: MessagingEvents,
@@ -163,9 +158,11 @@ export const makeMessagingDataLayer = (
           Effect.mapError((cause) => new MessagingOperationError({ cause })),
         );
       const guildIdsFor = (discordId: string) =>
-        selectAccessibleGuilds(database, discordId, permissionSet).pipe(
-          Effect.map((rows) => rows.map(({ guild }) => guild.id)),
-        );
+        selectAccessibleGuilds(
+          database,
+          discordId,
+          NOTIFICATION_SEND_PERMISSIONS,
+        ).pipe(Effect.map((rows) => rows.map(({ guild }) => guild.id)));
       const metadata = (notificationId: string) =>
         redis.get(`notification:${notificationId}`).pipe(
           Effect.map((value): NotificationMetadata | null => {
@@ -232,6 +229,17 @@ export const makeMessagingDataLayer = (
                   organizerCharacter: data.character,
                   guildIds,
                   world: data.world,
+                  npc: data.npc
+                    ? {
+                        ...data.npc,
+                        type: getNpcTypeByWt(
+                          NpcType,
+                          data.npc.wt,
+                          data.npc.prof,
+                          data.npc.type,
+                        ),
+                      }
+                    : undefined,
                 });
               }
               yield* redis.set(

@@ -13,7 +13,27 @@ if current.notificationId ~= expected.notificationId or current.revision ~= expe
 end
 `;
 
+// Resolve index targets before any mutation; the caller retries with these keys
+// declared so Redis-compatible servers can lock every key the script accesses.
+const DECLARE_INDEXED_ROOM_KEYS_SCRIPT = `
+local function declareIndexedRoomKeys(prefix, firstIndex, lastIndex)
+  local declared = {}
+  for _, key in ipairs(KEYS) do declared[key] = true end
+  local missing = { "DECLARE_KEYS" }
+  for index = firstIndex, lastIndex do
+    local id = redis.call("get", KEYS[index])
+    if id and not declared[prefix .. id] then
+      table.insert(missing, prefix .. id)
+    end
+  end
+  if #missing > 1 then return missing end
+end
+`;
+
 export const CREATE_READY_ROOM_SCRIPT = `
+${DECLARE_INDEXED_ROOM_KEYS_SCRIPT}
+local missing = declareIndexedRoomKeys(ARGV[1], 2, 3)
+if missing then return missing end
 local organizerRoomId = redis.call("get", KEYS[2])
 if organizerRoomId then
   if redis.call("get", ARGV[1] .. organizerRoomId) then
@@ -38,11 +58,19 @@ redis.call("set", KEYS[1], ARGV[2], "EX", ARGV[4])
 redis.call("set", KEYS[2], ARGV[3], "EX", ARGV[4])
 redis.call("set", KEYS[3], ARGV[3], "EX", ARGV[4])
 
+for index = 4, tonumber(ARGV[6]) do
+  redis.call("zadd", KEYS[index], ARGV[5], ARGV[3])
+  local ttl = redis.call("ttl", KEYS[index])
+  if ttl < tonumber(ARGV[4]) then redis.call("expire", KEYS[index], ARGV[4]) end
+end
 return { "CREATED" }
 `;
 
 export const JOIN_READY_ROOM_SCRIPT = `
 ${ASSERT_READY_ROOM_REVISION_SCRIPT}
+${DECLARE_INDEXED_ROOM_KEYS_SCRIPT}
+local missing = declareIndexedRoomKeys(ARGV[6], 3, 3)
+if missing then return missing end
 
 local characterRoomId = redis.call("get", KEYS[3])
 if characterRoomId and characterRoomId ~= ARGV[3] then
@@ -135,4 +163,16 @@ for _, notificationId in ipairs(ARGV) do
 end
 
 return { "PRUNED" }
+`;
+
+export const FIND_ACTIVE_READY_ROOM_IDS_SCRIPT = `
+local result = {}
+local seen = {}
+for _, key in ipairs(KEYS) do
+  redis.call("zremrangebyscore", key, "-inf", ARGV[1])
+  for _, id in ipairs(redis.call("zrange", key, 0, -1)) do
+    if not seen[id] then table.insert(result, id); seen[id] = true end
+  end
+end
+return result
 `;

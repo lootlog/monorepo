@@ -28,6 +28,7 @@ export type ChatRenderableMessage =
       kind: "npc-group";
       key: string;
       count: number;
+      messageIds: string[];
       message: ChatMessageType;
     };
 
@@ -80,61 +81,73 @@ export const getMessagesForSelectedGuild = (
   return messages;
 };
 
-export const deduplicateChatMessages = (messages: ChatMessageType[]) => {
-  const unique: ChatMessageType[] = [];
-  const timestampsByDedupeKeyAndBucket = new Map<
+export type ChatMessageGroup = {
+  message: ChatMessageType;
+  messageIds: string[];
+};
+
+export const groupDuplicateChatMessages = (messages: ChatMessageType[]) => {
+  const unique: ChatMessageGroup[] = [];
+  const groupsByDedupeKeyAndBucket = new Map<
     string,
-    Map<number, number[]>
+    Map<number, { timestamp: number; group: ChatMessageGroup }[]>
   >();
 
   for (const message of messages) {
     const timestamp = getChatMessageTimestamp(message.timestamp);
     const dedupeKey = getChatMessageDedupeKey(message);
     const bucket = Math.floor(timestamp / CHAT_MESSAGE_DEDUPE_WINDOW_MS);
-    let isDuplicate = false;
-
-    let timestampsByBucket = timestampsByDedupeKeyAndBucket.get(dedupeKey);
-
-    if (!timestampsByBucket) {
-      timestampsByBucket = new Map<number, number[]>();
-      timestampsByDedupeKeyAndBucket.set(dedupeKey, timestampsByBucket);
+    let duplicate: ChatMessageGroup | undefined;
+    let groupsByBucket = groupsByDedupeKeyAndBucket.get(dedupeKey);
+    if (!groupsByBucket) {
+      groupsByBucket = new Map();
+      groupsByDedupeKeyAndBucket.set(dedupeKey, groupsByBucket);
     }
-
     for (
       let comparedBucket = bucket - 1;
       comparedBucket <= bucket + 1;
       comparedBucket += 1
     ) {
-      const comparedTimestamps = timestampsByBucket.get(comparedBucket);
-      if (!comparedTimestamps) continue;
-
-      for (const comparedTimestamp of comparedTimestamps) {
+      const comparedGroups = groupsByBucket.get(comparedBucket);
+      if (!comparedGroups) continue;
+      for (const candidate of comparedGroups) {
         if (
-          Math.abs(comparedTimestamp - timestamp) <=
+          Math.abs(candidate.timestamp - timestamp) <=
           CHAT_MESSAGE_DEDUPE_WINDOW_MS
         ) {
-          isDuplicate = true;
+          duplicate = candidate.group;
           break;
         }
       }
-
-      if (isDuplicate) break;
+      if (duplicate) break;
     }
-
-    if (isDuplicate) {
+    if (duplicate) {
+      duplicate.messageIds.push(message.id);
       continue;
     }
-
-    const bucketTimestamps = timestampsByBucket.get(bucket) ?? [];
-    bucketTimestamps.push(timestamp);
-    timestampsByBucket.set(bucket, bucketTimestamps);
-    unique.push(message);
+    const group = { message, messageIds: [message.id] };
+    const bucketGroups = groupsByBucket.get(bucket) ?? [];
+    bucketGroups.push({ timestamp, group });
+    groupsByBucket.set(bucket, bucketGroups);
+    unique.push(group);
   }
-
   return unique.sort(
-    (firstMessage, secondMessage) =>
-      getChatMessageTimestamp(firstMessage.timestamp) -
-      getChatMessageTimestamp(secondMessage.timestamp),
+    (first, second) =>
+      getChatMessageTimestamp(first.message.timestamp) -
+      getChatMessageTimestamp(second.message.timestamp),
+  );
+};
+
+export const deduplicateChatMessages = (messages: ChatMessageType[]) =>
+  groupDuplicateChatMessages(messages).map((group) => group.message);
+
+export const getVisibleChatMessageAliases = (
+  groups: ChatMessageGroup[],
+  visibleIds: readonly string[],
+) => {
+  const visible = new Set(visibleIds);
+  return groups.flatMap((group) =>
+    visible.has(group.message.id) ? group.messageIds : [],
   );
 };
 
@@ -142,9 +155,12 @@ export const filterChatMessages = (
   messages: ChatMessageType[],
   chatFilter: ChatFilter,
 ) => {
-  if (chatFilter === "all") return messages;
+  const supportedMessages = messages.filter(
+    (message) => message.type !== MessageType.PARTY_GATHERING,
+  );
+  if (chatFilter === "all") return supportedMessages;
 
-  return messages.filter((message) => {
+  return supportedMessages.filter((message) => {
     switch (chatFilter) {
       case "normal":
         return (
@@ -154,7 +170,9 @@ export const filterChatMessages = (
       case "npc":
         return message.type === MessageType.NPC;
       case "party":
-        return message.type === MessageType.PARTY_GATHERING;
+        return message.type === MessageType.NPC;
+      case "reports":
+        return message.type === MessageType.NPC;
       default:
         return true;
     }
@@ -233,6 +251,7 @@ export const getChatRenderableMessages = (
         kind: "npc-group",
         key: `npc-group:${message.id}`,
         count: 1,
+        messageIds: [message.id],
         message,
         firstTimestamp: timestamp,
         order: renderables.length,
@@ -245,6 +264,7 @@ export const getChatRenderableMessages = (
     }
 
     existingGroup.count += 1;
+    existingGroup.messageIds.push(message.id);
   }
 
   renderables.sort((firstRenderable, secondRenderable) => {
@@ -273,6 +293,7 @@ export const getChatRenderableMessages = (
             kind: "npc-group",
             key: renderable.key,
             count: renderable.count,
+            messageIds: renderable.messageIds,
             message: renderable.message,
           };
     const currentTimestamp = publicRenderable.message.timestamp;
@@ -293,24 +314,6 @@ export const getChatRenderableMessages = (
   return normalizedRenderables;
 };
 
-export const getChatRenderableMessagesSignature = (
-  renderables: ChatRenderableMessage[],
-) => {
-  return renderables
-    .map((renderable) => {
-      if (renderable.kind === "date-divider") {
-        return `${renderable.key}:${renderable.timestamp}`;
-      }
-
-      if (renderable.kind === "npc-group") {
-        return `${renderable.key}:${renderable.message.id}:${renderable.count}`;
-      }
-
-      return `${renderable.key}:${renderable.message.id}`;
-    })
-    .join("|");
-};
-
 export const getCurrentChatMessages = (
   messageCache: Record<string, ChatMessageType[]>,
   selectedGuildId: string | undefined,
@@ -324,15 +327,6 @@ export const getCurrentChatMessages = (
   );
 
   return filteredMessages.slice(-CHAT_VISIBLE_MESSAGE_LIMIT);
-};
-
-export const hasVisibleChatMessages = (
-  messages: ChatMessageType[],
-  guildNamesById: Record<string, string>,
-) => {
-  return messages.some((message) => {
-    return !!message.characterData && !!guildNamesById[message.guildId];
-  });
 };
 
 export const mergeChatMessageHistories = (
@@ -416,7 +410,6 @@ export const updateChatMessage = (
       ? {
           ...message,
           message: messageBody,
-          partyGathering: undefined,
         }
       : message,
   );

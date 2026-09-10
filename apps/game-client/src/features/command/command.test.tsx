@@ -146,7 +146,7 @@ describe("CommandWindow", () => {
     const { textarea } = submit("!alarm");
     await waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith(
-        "Wysyłasz powiadomienia zbyt szybko. Spróbuj ponownie za chwilę.",
+        "Wysyłasz zbyt szybko. Spróbuj ponownie za chwilę.",
       ),
     );
     expect(toast.error).toHaveBeenCalledTimes(1);

@@ -1,3 +1,4 @@
+import { GameCharacterOffline } from "@lootlog/protocol/rabbit/events";
 import type { OnlineHistory } from "./online-history.js";
 import {
   BasicPresence,
@@ -40,13 +41,36 @@ type Published = typeof PublishedPresence.Type;
 type Snapshot = typeof PresenceSnapshot.Type;
 type Event = typeof ServerEvent.Type;
 
+const OFFLINE_PENDING_INDEX = "presence:offline:pending";
+const OFFLINE_OUTBOX_INDEX = "presence:offline:outbox";
+// The atomic move is the departure decision. A reconnect before it cancels the
+// pending record; a reconnect after it starts a new online period.
+const CLAIM_OFFLINE = `
+if redis.call('GET', KEYS[1]) ~= ARGV[1] then return 0 end
+redis.call('DEL', KEYS[1])
+redis.call('SREM', KEYS[3], ARGV[2])
+redis.call('SREM', KEYS[4], ARGV[2])
+if ARGV[4] == '1' then
+  redis.call('SET', KEYS[2], ARGV[1])
+  redis.call('SADD', KEYS[5], ARGV[3])
+end
+return 1
+`;
+
+const decodeOffline = Schema.decodeUnknownSync(
+  Schema.fromJsonString(GameCharacterOffline),
+);
 const REDIS_TTL_SECONDS = Math.ceil(PRESENCE_EXPIRY_MS / 1_000);
 const SWEEP_INTERVAL_MS = 5_000;
 const PresenceJson = Schema.fromJsonString(
   Schema.Union([PresenceWithLocation, BasicPresence]),
 );
 const PresenceMetadataJson = Schema.fromJsonString(
-  Schema.Struct({ userId: Schema.String, discordId: Schema.String }),
+  Schema.Struct({
+    userId: Schema.String,
+    discordId: Schema.String,
+    presence: Schema.optional(BasicPresence),
+  }),
 );
 const decodePresence = Schema.decodeUnknownSync(PresenceJson);
 const decodePresenceMetadata = Schema.decodeUnknownSync(PresenceMetadataJson);
@@ -70,7 +94,15 @@ export class PresenceStore {
     private readonly redis: {
       readonly command: Pick<
         RedisGatewayStore["command"],
-        "get" | "set" | "del" | "sadd" | "srem" | "smembers" | "mget" | "incr"
+        | "get"
+        | "set"
+        | "del"
+        | "sadd"
+        | "srem"
+        | "smembers"
+        | "mget"
+        | "incr"
+        | "eval"
       >;
     },
     private readonly hub: Pick<
@@ -80,6 +112,9 @@ export class PresenceStore {
     private readonly now: () => number = Date.now,
     private readonly coverage?: Pick<CoveragePublisher, "publish">,
     private readonly onlineHistory?: Pick<OnlineHistory, "observe">,
+    private readonly publishOffline?: (
+      event: GameCharacterOffline,
+    ) => Effect.Effect<void, unknown>,
   ) {}
 
   readonly sweepSchedule = SWEEP_INTERVAL_MS;
@@ -123,6 +158,14 @@ export class PresenceStore {
         ? { ...basic, location: data.location }
         : basic;
       socket.data.presence = presence;
+      if (
+        previousPresence?.character &&
+        (previousPresence.character.characterId !==
+          presence.character?.characterId ||
+          previousPresence.character.world !== presence.character?.world)
+      ) {
+        yield* self.scheduleOffline(previousPresence);
+      }
 
       for (const organizationId of selectedOrganizationIds) {
         yield* self.write(organizationId, presence, socket.data.discordId);
@@ -136,6 +179,7 @@ export class PresenceStore {
           presence,
         );
       }
+      yield* self.cancelOffline(presence);
       yield* (
         self.onlineHistory?.observe(socket.data, presence.lastSeen) ??
           Effect.void
@@ -203,6 +247,169 @@ export class PresenceStore {
           presence.userId,
           presence.sessionId,
           session.discordId,
+        );
+      }
+      yield* self.scheduleOffline(presence);
+    });
+  }
+
+  private offlineCharacterKey(presence: {
+    userId: string;
+    character?: { characterId: string; world: string };
+  }): string {
+    return `presence:offline:character:${JSON.stringify([presence.userId, presence.character?.world, presence.character?.characterId])}`;
+  }
+
+  private cancelOffline(
+    presence: Basic | Precise,
+  ): Effect.Effect<void, unknown> {
+    const self = this;
+    return Effect.gen(function* () {
+      if (presence.platform !== "game" || !presence.character) return;
+      const index = self.offlineCharacterKey(presence);
+      const keys = yield* fromPromise("presence.offline-list", () =>
+        self.redis.command.smembers(index),
+      );
+      for (const key of keys) {
+        yield* fromPromise("presence.offline-cancel", () =>
+          self.redis.command.del(key),
+        );
+        yield* fromPromise("presence.offline-unindex", () =>
+          self.redis.command.srem(OFFLINE_PENDING_INDEX, key),
+        );
+        yield* fromPromise("presence.offline-character-unindex", () =>
+          self.redis.command.srem(index, key),
+        );
+      }
+    });
+  }
+
+  private scheduleOffline(
+    presence: Basic | Precise,
+    disconnectedAt = this.now(),
+  ): Effect.Effect<void, unknown> {
+    const self = this;
+    return Effect.gen(function* () {
+      if (
+        !self.publishOffline ||
+        presence.platform !== "game" ||
+        !presence.character ||
+        !presence.discordId
+      )
+        return;
+      const pendingKeys = yield* fromPromise("presence.offline-existing", () =>
+        self.redis.command.smembers(self.offlineCharacterKey(presence)),
+      );
+      if (pendingKeys.length > 0) {
+        const pendingValues = yield* fromPromise(
+          "presence.offline-existing-read",
+          () => self.redis.command.mget(pendingKeys),
+        );
+        if (
+          pendingValues.some(
+            (value) =>
+              value !== null &&
+              decodeOffline(value).disconnectedAt > disconnectedAt,
+          )
+        )
+          return;
+      }
+      yield* self.cancelOffline(presence);
+      const event: GameCharacterOffline = {
+        userId: presence.userId,
+        discordId: presence.discordId,
+        world: presence.character.world,
+        characterId: presence.character.characterId,
+        organizationIds: presence.organizationIds,
+        disconnectedAt,
+      };
+      const key = `${self.offlineCharacterKey(presence)}:session:${presence.sessionId}:${crypto.randomUUID()}`;
+      yield* fromPromise("presence.offline-schedule", () =>
+        self.redis.command.set(key, JSON.stringify(event)),
+      );
+      yield* fromPromise("presence.offline-index", () =>
+        self.redis.command.sadd(OFFLINE_PENDING_INDEX, key),
+      );
+      yield* fromPromise("presence.offline-character-index", () =>
+        self.redis.command.sadd(self.offlineCharacterKey(presence), key),
+      );
+    });
+  }
+
+  runOfflineSweep() {
+    return this.sweepOffline().pipe(
+      Effect.catch((error) =>
+        Effect.logError("Character offline sweep failed; retrying", error),
+      ),
+      Effect.repeat(Schedule.spaced(1_000)),
+    );
+  }
+
+  sweepOffline(): Effect.Effect<void, unknown> {
+    const self = this;
+    return Effect.gen(function* () {
+      if (!self.publishOffline) return;
+      const keys = yield* fromPromise("presence.offline-pending", () =>
+        self.redis.command.smembers(OFFLINE_PENDING_INDEX),
+      );
+      for (const key of keys) {
+        const value = yield* fromPromise("presence.offline-read", () =>
+          self.redis.command.get(key),
+        );
+        if (!value) {
+          yield* fromPromise("presence.offline-unindex", () =>
+            self.redis.command.srem(OFFLINE_PENDING_INDEX, key),
+          );
+          continue;
+        }
+        const event = decodeOffline(value);
+        if (self.now() - event.disconnectedAt < 10_000) continue;
+        let online = false;
+        for (const organizationId of event.organizationIds) {
+          const presences = yield* self.readOrganization(organizationId);
+          online ||= presences.some(
+            (presence) =>
+              presence.platform === "game" &&
+              presence.userId === event.userId &&
+              presence.character?.world === event.world &&
+              presence.character.characterId === event.characterId,
+          );
+        }
+        const outboxKey = `${key}:decided`;
+        yield* fromPromise("presence.offline-claim", () =>
+          self.redis.command.eval(
+            CLAIM_OFFLINE,
+            5,
+            key,
+            outboxKey,
+            OFFLINE_PENDING_INDEX,
+            self.offlineCharacterKey({
+              userId: event.userId,
+              character: { world: event.world, characterId: event.characterId },
+            }),
+            OFFLINE_OUTBOX_INDEX,
+            value,
+            key,
+            outboxKey,
+            online ? "0" : "1",
+          ),
+        );
+      }
+      const outboxKeys = yield* fromPromise("presence.offline-outbox", () =>
+        self.redis.command.smembers(OFFLINE_OUTBOX_INDEX),
+      );
+      for (const key of outboxKeys) {
+        const value = yield* fromPromise("presence.offline-outbox-read", () =>
+          self.redis.command.get(key),
+        );
+        if (value) {
+          yield* self.publishOffline(decodeOffline(value));
+          yield* fromPromise("presence.offline-outbox-complete", () =>
+            self.redis.command.del(key),
+          );
+        }
+        yield* fromPromise("presence.offline-outbox-unindex", () =>
+          self.redis.command.srem(OFFLINE_OUTBOX_INDEX, key),
         );
       }
     });
@@ -310,6 +517,12 @@ export class PresenceStore {
           const sessionId = key.slice(key.lastIndexOf(":") + 1);
           const metadata = yield* self.readMetadata(organizationId, sessionId);
           const userId = metadata?.userId;
+          if (metadata?.presence) {
+            yield* self.scheduleOffline(
+              metadata.presence,
+              metadata.presence.lastSeen + PRESENCE_EXPIRY_MS,
+            );
+          }
           if (userId)
             yield* self.remove(
               organizationId,
@@ -437,9 +650,8 @@ export class PresenceStore {
             JSON.stringify({
               userId: presence.userId,
               discordId,
+              presence: withoutLocation(presence),
             }),
-            "EX",
-            REDIS_TTL_SECONDS * 2,
           ),
         ),
       ],
@@ -585,7 +797,11 @@ export class PresenceStore {
     organizationId: string,
     sessionId: string,
   ): Effect.Effect<
-    { readonly userId: string; readonly discordId: string } | null,
+    {
+      readonly userId: string;
+      readonly discordId: string;
+      readonly presence?: Basic;
+    } | null,
     unknown
   > {
     return fromPromise("presence.read-metadata", () =>

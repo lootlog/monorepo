@@ -47,7 +47,7 @@ const createNpcPreviewMessage = (
     type: 1,
     wt: 80,
   },
-  canEdit: false,
+
   canDelete: false,
 });
 

@@ -1,10 +1,76 @@
 {
+  "messageActions": {
+    "label": "Akcje wiadomości",
+    "more": "Więcej akcji",
+    "copy": "Kopiuj wiadomość",
+    "copied": "Skopiowano",
+    "copyFailed": "Nie udało się skopiować",
+    "showOriginal": "Przejdź do wiadomości: {{name}}",
+    "clearReply": "Anuluj odpowiedź",
+    "copyLocation": "Kopiuj lokalizację",
+    "gathered": "Utworzono zbiórkę",
+    "gatherFailed": "Nie udało się utworzyć zbiórki",
+    "activeGathering": "Masz już aktywną zbiórkę. Znajdziesz ją na pasku zbiórek.",
+    "finishDraft": "Dokończ obecną wiadomość przed przygotowaniem wezwania",
+    "helpTooLong": "Wezwanie przekracza limit 128 znaków",
+    "missingLocation": "Zgłoszenie nie zawiera pełnej lokalizacji"
+  },
+  "gatherings": {
+    "listTitle": "Zbiórki",
+    "closeList": "Zamknij listę zbiórek",
+    "activeTab": "Aktywne ({{count}})",
+    "hiddenTab": "Ukryte ({{count}})",
+    "emptyList": "Brak zbiórek w tej zakładce",
+    "showInChat": "Pokaż w czacie",
+    "visibleInChat": "Widoczna w czacie",
+    "options": "Opcje zbiórki",
+    "more": "+{{count}} pozostałe zbiórki",
+    "collapse": "Zwiń pozostałe",
+    "noDescription": "Brak opisu",
+    "title": "Party finder",
+    "ownTitle": "Party finder",
+    "counts": "({{inParty}}/10)",
+    "partyMemberCount": "W grupie: {{count}}/10",
+    "partyMemberCountUnknown": "Liczba osób w grupie niedostępna",
+    "shortcutUnset": "Skrót nieustawiony",
+    "hide": "Ukryj zbiórkę",
+    "hidden": "Ukryte zbiórki ({{count}})",
+    "restore": "Przywróć zbiórkę",
+    "restoreNamed": "Przywróć zbiórkę: {{name}}",
+    "invite": "Zaproś zgłoszonych",
+    "inviting": "Wysyłanie zaproszeń…",
+    "inviteFailed": "Nie udało się wysłać zaproszeń",
+    "inParty": "W grupie",
+    "level": "Poziom: {{min}}–{{max}}",
+    "manage": "Lista chętnych",
+    "applied": "Zgłoszono",
+    "cancel": "Anuluj zbiórkę",
+    "withdraw": "Wycofaj zgłoszenie",
+    "apply": "Zgłoś się",
+    "applying": "Zgłaszanie…",
+    "failed": "Nie udało się odświeżyć zbiórek.",
+    "stale": "Dane zbiórek mogą być nieaktualne.",
+    "applyFailed": "Nie udało się zgłosić do zbiórki. Spróbuj ponownie.",
+    "cancelFailed": "Nie udało się anulować zbiórki. Spróbuj ponownie.",
+    "withdrawFailed": "Nie udało się wycofać zgłoszenia. Spróbuj ponownie.",
+    "refreshing": "Odświeżanie…",
+    "cancelling": "Anulowanie…",
+    "withdrawing": "Wycofywanie…",
+    "retry": "Odśwież"
+  },
+  "integration": {
+    "tab": "Lootlog",
+    "attach": "Przenieś do czatu gry",
+    "detach": "Otwórz w osobnym oknie"
+  },
   "window": {
-    "title": "Chat"
+    "title": "Czat"
   },
   "filters": {
     "all": "Wszystko",
-    "normal": "Czat",
+    "normal": "Rozmowy",
+    "reports": "Zdarzenia",
+    "label": "Widok czatu",
     "npc": "NPC",
     "party": "Grupa"
   },
@@ -28,7 +94,7 @@
     "yesterday": "Wczoraj"
   },
   "input": {
-    "hint": "(! = powiadomienie, /grp = szukaj grupy)",
+    "suggestionKeyboardHint": "↑ ↓ wybór · Enter zatwierdź · Esc zamknij",
     "placeholder": "Wiadomość...",
     "pending": "Wysyłanie wiadomości",
     "clearChatConfirm": {
@@ -38,24 +104,18 @@
       "cancel": "Anuluj"
     },
     "commandSuggestions": {
+      "title": "Wybierz komendę",
       "noResults": "Brak pasujących komend"
     },
     "mentionSuggestions": {
-      "roles": "Role",
-      "members": "Nicki",
+      "title": "Wspomnij osobę lub rolę",
       "loading": "Ładowanie mentionów...",
       "noResults": "Brak pasujących mentionów"
     }
   },
   "actions": {
     "hideFilters": "Ukryj filtry",
-    "showFilters": "Pokaż filtry",
-    "hideInput": "Ukryj pole czatu",
-    "showInput": "Pokaż pole czatu"
-  },
-  "edit": {
-    "save": "Zapisz",
-    "cancel": "Anuluj"
+    "showFilters": "Pokaż filtry"
   },
   "reply": {
     "replyingTo": "Odpowiedź"
@@ -67,7 +127,6 @@
     "unknownUser": "Nieznany",
     "sendMessage": "Wyślij wiadomość",
     "reply": "Odpowiedz",
-    "edit": "Edytuj",
     "delete": "Usuń",
     "deleting": "Usuwanie wiadomości",
     "showEquipment": "Pokaż ekwipunek",
@@ -75,21 +134,53 @@
     "inviteParty": "Zaproś do drużyny",
     "showProfile": "Pokaż profil"
   },
-  "partyGathering": {
-    "levelRange": "Poziom: {{min}} - {{max}}",
-    "volunteering": "Zgłaszanie...",
-    "requiredLevel": "Wymagany poziom {{min}}-{{max}}",
-    "joinParty": "Dołącz do grupy",
-    "joined": "Zapisano do grupy",
-    "joinedElsewhere": "Zapisano do innej grupy",
-    "registration": {
-      "organizer": "Zapisano do grupy: {{organizer}}"
-    }
-  },
   "errors": {
+    "rateLimited": "Wysyłasz zbyt szybko. Spróbuj ponownie za chwilę.",
     "sendFailed": "Nie udało się wysłać wiadomości na czat",
     "clearFailed": "Nie udało się wyczyścić czatu",
-    "editFailed": "Nie udało się edytować wiadomości",
     "deleteFailed": "Nie udało się usunąć wiadomości"
+  },
+  "quickActions": {
+    "menu": "Szybkie akcje",
+    "selectOrganization": "Wybierz organizację u góry czatu",
+    "help": "Pomoc",
+    "position": "Pozycja",
+    "helpMessage": "Potrzebuję pomocy! {{map}} ({{x}}, {{y}}).",
+    "enemyCount": " Wrogowie: {{count}}.",
+    "helpSent": "Wysłano wezwanie pomocy",
+    "partialDelivery": "Powiadomienie wysłano, ale nie udało się zapisać go w czacie. Nie wysyłaj ponownie.",
+    "runtimeUnavailable": "Dane gry nie są jeszcze dostępne",
+    "organizationsUnavailable": "Poczekaj na załadowanie organizacji",
+    "unassigned": "Nieprzypisany",
+    "hotkeys": {
+      "chat-position": {
+        "label": "Wyślij pozycję",
+        "description": "Wysyła pozycję do organizacji wybranej u góry czatu."
+      },
+      "chat-help": {
+        "label": "Wezwij pomoc",
+        "description": "Wysyła wezwanie pomocy do organizacji wybranej u góry czatu."
+      },
+      "create-party-gathering": {
+        "label": "Utwórz grupę — Party finder",
+        "description": "Otwiera formularz tworzenia grupy."
+      },
+      "join-party-gathering": {
+        "label": "Zgłoś się do zbiórki",
+        "description": "Zgłasza do zbiórki widocznej na pasku czatu. Ponowne użycie wycofuje zgłoszenie."
+      }
+    },
+    "positionSent": "Wysłano pozycję"
+  },
+  "navigation": {
+    "unread": "Nieprzeczytane wiadomości",
+    "attention": "Wzmianki i odpowiedzi do Ciebie",
+    "sent": "Wiadomość wysłana",
+    "latest": "Najnowsze wiadomości",
+    "newMessages_one": "{{count}} nowa wiadomość",
+    "newMessages_few": "{{count}} nowe wiadomości",
+    "newMessages_many": "{{count}} nowych wiadomości",
+    "newMessages_other": "{{count}} nowych wiadomości",
+    "messageUnavailable": "Wiadomość została usunięta lub nie jest już dostępna w historii"
   }
 }

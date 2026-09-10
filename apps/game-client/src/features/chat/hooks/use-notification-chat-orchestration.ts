@@ -9,6 +9,13 @@ type StartNotificationMessageOptions<TResult> = {
   sendChatMessage: (guildIds: string[]) => Promise<TResult>;
 };
 
+export class NotificationChatPublishError extends Error {
+  constructor(cause: unknown) {
+    super("Notification delivered, chat publishing failed", { cause });
+    this.name = "NotificationChatPublishError";
+  }
+}
+
 export const useNotificationChatOrchestration = () => {
   const { mutateAsync: createNotificationAsync } =
     useMessagingControllerSendNotification();
@@ -32,7 +39,11 @@ export const useNotificationChatOrchestration = () => {
         },
       });
       const resolvedGuildIds = response.guildIds ?? guildIds;
-      const result = await sendChatMessage(resolvedGuildIds);
+      const result = await sendChatMessage(resolvedGuildIds).catch(
+        (cause: unknown) => {
+          throw new NotificationChatPublishError(cause);
+        },
+      );
 
       return {
         guildIds: resolvedGuildIds,

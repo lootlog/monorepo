@@ -42,7 +42,7 @@ const message = (
     prof: "w",
     icon: "icon",
   },
-  canEdit: false,
+
   canDelete: false,
 });
 const policy = (titanAccess = true, maxLevel = 500) =>
@@ -118,7 +118,7 @@ describe("chat policy reconciliation", () => {
     client.clear();
   });
 
-  it("cancels history started before the first snapshot and retries permitted history after five seconds", async () => {
+  it("immediately retries permitted history interrupted by the first snapshot", async () => {
     vi.useFakeTimers();
     const client = new QueryClient();
     const release = retainChatAccessPolicy(client);
@@ -142,13 +142,39 @@ describe("chat policy reconciliation", () => {
     applyChatAccessPolicy(client, policy(false));
     expect(client.getQueryData(key("one"))).toEqual([]);
     expect(client.getQueryData(key("two"))).toEqual([]);
+    expect(fetch).toHaveBeenCalledTimes(2);
     resolve?.([message("two", "stale")]);
-    await vi.advanceTimersByTimeAsync(4999);
-    expect(client.getQueryData(key("two"))).toEqual([]);
-    expect(fetch).toHaveBeenCalledTimes(1);
-    await vi.advanceTimersByTimeAsync(1);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(client.getQueryData(key("two"))).toEqual(rows);
+    await vi.advanceTimersByTimeAsync(5000);
     expect(fetch).toHaveBeenCalledTimes(2);
     expect(client.getQueryData(key("two"))).toEqual(rows);
+    off();
+    release();
+    client.clear();
+  });
+
+  it("does not restart history denied by the first snapshot", async () => {
+    vi.useFakeTimers();
+    const client = new QueryClient();
+    const release = retainChatAccessPolicy(client);
+    let resolve: ((rows: ChatMessage[]) => void) | undefined;
+    const fetch = vi.fn(
+      () =>
+        new Promise<ChatMessage[]>((done) => {
+          resolve = done;
+        }),
+    );
+    const observer = new QueryObserver(client, {
+      queryKey: key("removed"),
+      queryFn: fetch,
+    });
+    const off = observer.subscribe(() => {});
+    applyChatAccessPolicy(client, policy());
+    resolve?.([message("removed", "stale")]);
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(client.getQueryData(key("removed"))).toEqual([]);
     off();
     release();
     client.clear();

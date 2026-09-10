@@ -9,6 +9,16 @@ import { NonEmptyString, NonNegativeInt } from "@lootlog/schema/primitives";
 import { Schema } from "effect";
 import { RabbitRoutingKey } from "./topology.js";
 
+export const GameCharacterOffline = Schema.Struct({
+  userId: NonEmptyString,
+  discordId: NonEmptyString,
+  world: NonEmptyString,
+  characterId: NonEmptyString,
+  organizationIds: Schema.Array(NonEmptyString),
+  disconnectedAt: NonNegativeInt,
+});
+export type GameCharacterOffline = typeof GameCharacterOffline.Type;
+
 const NullableString = Schema.NullOr(Schema.String);
 const NullableNumber = Schema.NullOr(Schema.Number);
 
@@ -309,6 +319,7 @@ export const UserOnlineEventV1 = Schema.Union([
 export type UserOnlineEventV1 = typeof UserOnlineEventV1.Type;
 
 export const canonicalRabbitEventSchemas = {
+  [RabbitRoutingKey.GAME_CHARACTER_OFFLINE]: GameCharacterOffline,
   [RabbitRoutingKey.GUILDS_KILLS_ACCEPTED_V1]: GuildKillsAcceptedV1,
   [RabbitRoutingKey.USERS_ONLINE_CHECKPOINT_V1]: UserOnlineEventV1,
   [RabbitRoutingKey.ACTIVITY_LOG_CREATE]: ActivityLogCreated,

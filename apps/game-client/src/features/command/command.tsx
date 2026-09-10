@@ -1,3 +1,5 @@
+import { useChatSendError } from "@/features/chat/hooks/use-chat-send-error";
+import { CHAT_INPUT_MAX_LENGTH } from "@/features/chat/chat.constants";
 import { DraggableWindow } from "@/components/draggable-window";
 import { useWindowsStore } from "@/store/windows.store";
 import { MessageType } from "@/api/chat.api";
@@ -16,19 +18,19 @@ import { GuildMultiSelector } from "@/components/guild-multi-selector";
 import { usePartyCommand } from "./hooks/use-party-command";
 import { useTranslation } from "react-i18next";
 import {
-  isNotificationRateLimitError,
+  NotificationChatPublishError,
   useNotificationChatOrchestration,
 } from "@/features/chat/hooks/use-notification-chat-orchestration";
 import { useShallow } from "zustand/react/shallow";
 import { useRef, useState } from "react";
-import { toast } from "sonner";
 
 const FormSchema = z.object({
-  message: z.string().min(1).max(120),
+  message: z.string().min(1).max(CHAT_INPUT_MAX_LENGTH),
 });
 type FormData = z.infer<typeof FormSchema>;
 
 export const CommandWindow = () => {
+  const reportSendError = useChatSendError();
   const { t } = useTranslation("command");
   const { selectedInputGuildIds, setSelectedInputGuildIds } = useChatStore(
     useShallow((state) => ({
@@ -131,8 +133,10 @@ export const CommandWindow = () => {
       setValue("message", "");
       setOpen("command", false);
     } catch (error) {
-      if (isNotificationRateLimitError(error)) {
-        toast.error(t("errors.notificationRateLimited"));
+      reportSendError(error);
+      if (error instanceof NotificationChatPublishError) {
+        setValue("message", "");
+        setOpen("command", false);
       }
     } finally {
       submissionInProgressRef.current = false;

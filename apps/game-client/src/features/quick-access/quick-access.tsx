@@ -5,7 +5,6 @@ import {
   type QuickAccessButtonProps,
 } from "@/features/quick-access/components/quick-access-button";
 import { GuildListPopover } from "@/features/quick-access/components/guild-list-popover";
-import { usePartyFinderStore } from "@/store/party-finder.store";
 import { useWindowsStore } from "@/store/windows.store";
 import {
   MessagesSquare,
@@ -19,11 +18,6 @@ import { useTranslation } from "react-i18next";
 
 export const QuickAccess = () => {
   const { t } = useTranslation("quickAccess");
-  const hasActiveReadyRoom = usePartyFinderStore((state) =>
-    Object.values(state.projections).some(
-      (projection) => projection.status === "ACTIVE",
-    ),
-  );
   const open = useWindowsStore((state) => state["quick-access"].open);
   const setOpen = useWindowsStore((state) => state.setOpen);
   const buttons: QuickAccessButtonProps[] = [
@@ -75,13 +69,6 @@ export const QuickAccess = () => {
         orientation="horizontal"
       >
         <div className="ll:flex ll:w-max ll:gap-1 ll:px-1 ll:py-1">
-          {hasActiveReadyRoom ? (
-            <QuickAccessButton
-              id="party-finder"
-              title={t("buttons.activePartyGathering")}
-              icon=<Swords size="16" className="ll:text-green-500" />
-            />
-          ) : null}
           {buttons.map((button) => (
             <QuickAccessButton
               key={button.id}

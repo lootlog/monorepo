@@ -71,6 +71,17 @@ describe("Ready Room projections", () => {
     for (const optionalFields of [
       {},
       { description: "", minLvl: 1, maxLvl: 500 },
+      {
+        npc: {
+          name: "NPC",
+          location: "Map",
+          lvl: 100,
+          type: "HERO",
+          icon: "npc.gif",
+          prof: "w",
+        },
+      },
+      { npc: { name: "NPC", location: "Map", lvl: 100, type: "HERO" } },
     ]) {
       it(`serializes HTTP snapshots and updates for ${viewer} with ${JSON.stringify(optionalFields)}`, async () => {
         const current = { ...aggregate, ...optionalFields };
@@ -147,4 +158,17 @@ describe("Ready Room projections", () => {
       revision: 4,
     });
   });
+});
+
+it("does not expose hidden target Organization IDs in private projections or updates", () => {
+  const room = { ...aggregate, guildIds: ["guild-1", "hidden-guild"] };
+  expect(
+    createReadyRoomProjection(room, "shared", ["guild-1"])?.guildIds,
+  ).toEqual(["guild-1"]);
+  const update = createReadyRoomClientUpdate(room, "shared", ["guild-1"]);
+  expect(update.type).toBe("UPSERT");
+  if (update.type === "UPSERT")
+    expect(update.projection.guildIds).toEqual(["guild-1"]);
+  expect(createReadyRoomClientUpdate(room, "shared", []).type).toBe("REMOVE");
+  expect(room.guildIds).toEqual(["guild-1", "hidden-guild"]);
 });

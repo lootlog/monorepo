@@ -62,7 +62,7 @@ const selectNpc = async (user: ReturnType<typeof userEvent.setup>) => {
 it("uses saved guild selection, preserves it after a local selection, submits durations and closes on success", async () => {
   const user = userEvent.setup();
   const fixture = mountForm();
-  expect(screen.getByRole("button", { name: "B" })).toHaveAttribute(
+  expect(screen.getByRole("button", { name: "Beta" })).toHaveAttribute(
     "aria-pressed",
     "true",
   );
@@ -73,7 +73,7 @@ it("uses saved guild selection, preserves it after a local selection, submits du
     overflowX: "hidden",
     overflowY: "scroll",
   });
-  await user.click(screen.getByRole("button", { name: "A" }));
+  await user.click(screen.getByRole("button", { name: "Alpha" }));
   await fillDurations(user);
   expect(await submit(user, fixture)).toMatchObject({
     name: "Tanroth",
@@ -91,7 +91,7 @@ it("uses saved guild selection, preserves it after a local selection, submits du
 });
 it("prefers the initial guild without overwriting the saved selection", () => {
   mountForm("guild-1");
-  expect(screen.getByRole("button", { name: "A" })).toHaveAttribute(
+  expect(screen.getByRole("button", { name: "Alpha" })).toHaveAttribute(
     "aria-pressed",
     "true",
   );

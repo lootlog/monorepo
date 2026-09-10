@@ -10,7 +10,7 @@ import { AlertTriangle } from "lucide-react";
 import type { FC } from "react";
 
 type CharacterTileProps = {
-  character: MargonemCharacter;
+  character: Pick<MargonemCharacter, "icon" | "nick" | "lvl" | "prof">;
   className?: string;
   isAfk?: boolean;
 };

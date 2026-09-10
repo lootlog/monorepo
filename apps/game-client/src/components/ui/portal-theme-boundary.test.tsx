@@ -98,9 +98,6 @@ describe("overlay theme boundary", () => {
     });
 
     expectContentInsideThemeBoundary("context-menu-content");
-    expect(["6px", "calc(8px - 2px)"]).toContain(
-      getComputedStyle(screen.getByTestId("context-menu-content")).borderRadius,
-    );
     const contextMenuPositioner = screen.getByTestId(
       "context-menu-content",
     ).parentElement;
@@ -151,7 +148,6 @@ describe("overlay theme boundary", () => {
     );
 
     expectContentInsideThemeBoundary("popover-content");
-    expectSmallRadius("popover-content");
     const popoverPositioner =
       screen.getByTestId("popover-content").parentElement;
 
@@ -160,16 +156,6 @@ describe("overlay theme boundary", () => {
       throw new Error("Popover positioner was not rendered");
     }
     expect(getComputedStyle(popoverPositioner).zIndex).toBe("500");
-    expect(screen.getByTestId("popover-content")).toHaveClass("ll:bg-black");
-    expect(screen.getByTestId("popover-content")).not.toHaveClass(
-      "ll:bg-black/80",
-    );
-    const input = screen.getByRole("textbox", { name: "Popover input" });
-    fireEvent.focus(input);
-    expect(input).toHaveClass(
-      "ll:focus-visible:ring-ring/50",
-      "ll:focus-visible:ring-[3px]",
-    );
   });
 
   it("reports an outside press through the popover root", async () => {

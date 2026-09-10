@@ -66,7 +66,7 @@ describe("GuildSwitcher", () => {
   it("hides a guild from its context menu and can undo the change", async () => {
     const { rerender } = render(<GuildSwitcher />);
 
-    fireEvent.contextMenu(screen.getByRole("button", { name: "A" }));
+    fireEvent.contextMenu(screen.getByRole("button", { name: "Alpha" }));
     fireEvent.click(
       await screen.findByText("Ukryj w grze", {}, { timeout: 1000 }),
     );
@@ -114,7 +114,7 @@ describe("GuildSwitcher", () => {
       });
     });
 
-    expect(screen.getByRole("button", { name: "A" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Alpha" })).toBeInTheDocument();
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 

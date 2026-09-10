@@ -515,11 +515,6 @@ describe("API HTTP boundary", () => {
     { suffix: "/chat-messages", method: "DELETE" },
     { suffix: "/chat-messages/message-a", method: "DELETE" },
     {
-      suffix: "/chat-messages/message-a",
-      method: "PATCH",
-      payload: { message: "Updated" },
-    },
-    {
       suffix: "/chat-messages",
       method: "POST",
       payload: {

@@ -1,3 +1,4 @@
+import { Message } from "@/components/ui/message";
 import { cn } from "cn";
 import { format } from "@/utils/local-date";
 import {
@@ -10,6 +11,7 @@ type ChatPlayerMessageViewProps = ComponentPropsWithRef<"div"> & {
   all: boolean;
   appearance?: ChatAppearanceSettings;
   body: ReactNode;
+  replyPreview?: ReactNode;
   guildName: string;
   isMsgYesterday: boolean;
   messageId: string;
@@ -21,6 +23,7 @@ export const ChatPlayerMessageView: FC<ChatPlayerMessageViewProps> = ({
   all,
   appearance = CHAT_APPEARANCE_READABLE_PRESET,
   body,
+  replyPreview,
   className,
   guildName,
   isMsgYesterday,
@@ -29,39 +32,42 @@ export const ChatPlayerMessageView: FC<ChatPlayerMessageViewProps> = ({
   timestamp,
   ...rootProps
 }) => (
-  <div
+  <Message
     {...rootProps}
     className={cn(
-      "ll:w-full ll:min-w-0 ll:max-w-full ll:box-border ll:cursor-text ll:select-text ll:rounded-sm ll:text-[length:var(--ll-chat-font-size)] ll:leading-[var(--ll-chat-line-height)] ll:text-white ll:transition-colors ll:hover:bg-gray-500/20",
+      "ll:flow-root ll:cursor-text ll:select-text ll:outline-none",
       className,
     )}
     data-chat-message-id={messageId}
   >
-    <span
-      className="ll:inline-block ll:max-w-full ll:select-text"
-      style={{ overflowWrap: "anywhere" }}
-    >
-      {appearance.showTimestamp ? (
-        <span
-          className={cn(
-            "ll:select-text ll:text-[length:var(--ll-chat-meta-font-size)] ll:leading-[var(--ll-chat-meta-line-height)]",
-            { "ll:opacity-50": isMsgYesterday },
-          )}
-        >
-          [{format(new Date(timestamp), "HH:mm")}]
-        </span>
-      ) : null}{" "}
-      {all && appearance.showGuildLabel ? (
-        <span
-          className={cn("ll:mr-0.5 ll:select-text ll:font-bold", {
-            "ll:opacity-50": isMsgYesterday,
-          })}
-        >
-          [{guildName}]{" "}
-        </span>
-      ) : null}
-      {sender}
-    </span>{" "}
+    <span className="ll:min-w-0">
+      <span
+        className="ll:min-w-0 ll:flex-1 ll:select-text"
+        style={{ overflowWrap: "anywhere" }}
+      >
+        {appearance.showTimestamp ? (
+          <span
+            className={cn(
+              "ll:select-text ll:text-[length:var(--ll-chat-meta-font-size)] ll:leading-[var(--ll-chat-meta-line-height)]",
+              { "ll:opacity-50": isMsgYesterday },
+            )}
+          >
+            [{format(new Date(timestamp), "HH:mm")}]
+          </span>
+        ) : null}{" "}
+        {all && appearance.showGuildLabel ? (
+          <span
+            className={cn("ll:mr-0.5 ll:select-text ll:font-bold", {
+              "ll:opacity-50": isMsgYesterday,
+            })}
+          >
+            [{guildName}]{" "}
+          </span>
+        ) : null}
+        {sender}{" "}
+      </span>
+    </span>
+    {replyPreview}
     {body}
-  </div>
+  </Message>
 );

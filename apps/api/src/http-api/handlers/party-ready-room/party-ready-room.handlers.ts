@@ -1,3 +1,4 @@
+import type { GameCharacterOffline } from "@lootlog/protocol/rabbit/events";
 import { statusCodeResponse } from "#src/shared/http/handler-response";
 import { applicationErrorResponse } from "../../application-error-response.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
@@ -7,6 +8,7 @@ import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { decodeDomainJson } from "../../domain-json.schema.js";
 import { LootlogApi } from "../../lootlog-api.js";
 import {
+  ActivePartyGatheringsResponse,
   PartyReadyRoomResponse,
   PartyReadyRoomUpdateResponse,
   PartyReadyRoomsResponse,
@@ -45,11 +47,22 @@ type DataEffect = Effect.Effect<unknown, ReadyRoomOperationError>;
 export class ReadyRoomData extends Context.Service<
   ReadyRoomData,
   {
-    readonly accessibleGuildIds: (discordId: string) => DataEffect;
+    readonly characterOffline: (
+      event: typeof GameCharacterOffline.Type,
+    ) => DataEffect;
+    readonly accessibleGuildIds: (
+      discordId: string,
+      includeReadable?: boolean,
+    ) => DataEffect;
     readonly create: (
       identity: ReadyRoomIdentity,
       guildIds: ReadonlyArray<string>,
       payload: CreatePartyGatheringRequest,
+    ) => DataEffect;
+    readonly active: (
+      identity: ReadyRoomIdentity,
+      accessibleGuildIds: ReadonlyArray<string>,
+      world: string,
     ) => DataEffect;
     readonly list: (
       identity: ReadyRoomIdentity,
@@ -105,8 +118,10 @@ const data = <A>(
   ) => Effect.Effect<A, ReadyRoomOperationError>,
 ) => Effect.flatMap(ReadyRoomData, operation);
 
-const accessibleGuildIds = (discordId: string) =>
-  data((service) => service.accessibleGuildIds(discordId)).pipe(
+const accessibleGuildIds = (discordId: string, includeReadable = false) =>
+  data((service) =>
+    service.accessibleGuildIds(discordId, includeReadable),
+  ).pipe(
     Effect.flatMap((value) =>
       Array.isArray(value)
         ? Effect.succeed(
@@ -127,6 +142,17 @@ const assertVisible = Effect.fn("assertReadyRoomVisible")(function* (
 ) {
   const guildIds = yield* accessibleGuildIds(current.discordId);
   yield* data((service) => service.get(current, notificationId, guildIds));
+});
+
+export const activeReadyRooms = Effect.fn("activeReadyRooms")(function* (
+  world: string,
+) {
+  const current = yield* identity;
+  const guildIds = yield* accessibleGuildIds(current.discordId, true);
+  const value = yield* data((service) =>
+    service.active(current, guildIds, world),
+  );
+  return yield* decode(ActivePartyGatheringsResponse, value);
 });
 
 export const listReadyRooms = Effect.fn("listReadyRooms")(function* () {
@@ -251,6 +277,9 @@ export const PartyReadyRoomHandlers = HttpApiBuilder.group(
   "party-ready-room",
   (handlers) =>
     handlers
+      .handle("PartyReadyRoomControllerActive", ({ query }) =>
+        orDieHttpFailure(activeReadyRooms(query.world)),
+      )
       .handle("PartyReadyRoomControllerList", () =>
         orDieHttpFailure(listReadyRooms()),
       )

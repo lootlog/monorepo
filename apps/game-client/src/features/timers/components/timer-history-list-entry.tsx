@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { Tile } from "@/components/ui/tile";
 import {
   Tooltip,
   TooltipContent,
@@ -36,35 +35,25 @@ const getNpcLabel = (entry: TimerHistoryResponseDto) => {
 const ACTION_CONFIG = {
   CREATE: {
     Icon: Plus,
-    iconClassName: "ll:text-emerald-300",
-    borderColor: "#34d399",
-    backgroundColor: "#064e3b66",
+    iconClassName: "ll:text-emerald-700 ll:in-[.dark-theme]:text-emerald-300",
   },
   RESET: {
     Icon: RotateCcw,
-    iconClassName: "ll:text-sky-300",
-    borderColor: "#38bdf8",
-    backgroundColor: "#0c4a6e66",
+    iconClassName: "ll:text-sky-700 ll:in-[.dark-theme]:text-sky-300",
   },
   DELETE: {
     Icon: Trash2,
-    iconClassName: "ll:text-red-300",
-    borderColor: "#f87171",
-    backgroundColor: "#7f1d1d66",
+    iconClassName: "ll:text-red-700 ll:in-[.dark-theme]:text-red-300",
   },
   RESTORE: {
     Icon: Undo2,
-    iconClassName: "ll:text-teal-300",
-    borderColor: "#2dd4bf",
-    backgroundColor: "#134e4a66",
+    iconClassName: "ll:text-teal-700 ll:in-[.dark-theme]:text-teal-300",
   },
 } satisfies Record<
   TimerHistoryResponseDto["action"],
   {
     Icon: typeof Plus;
     iconClassName: string;
-    borderColor: string;
-    backgroundColor: string;
   }
 >;
 
@@ -96,12 +85,11 @@ export const TimerHistoryListEntry: FC<TimerHistoryListEntryProps> = ({
           onMouseLeave={() => setTooltipOpen(false)}
           onPointerDown={() => setTooltipOpen(false)}
         >
-          <Tile
-            customBackgroundColor={actionConfig.backgroundColor}
-            customBorderColor={actionConfig.borderColor}
-            className={cn("ll:h-7 ll:px-1 ll:justify-start ll:gap-1.5", {
-              "ll:py-4": rowLayout === "npcWithMember",
-            })}
+          <span
+            className={cn(
+              "ll:box-border ll:flex ll:w-full ll:items-center ll:rounded-sm ll:bg-muted/50 ll:min-h-7 ll:py-1 ll:px-2 ll:justify-start ll:gap-1.5",
+              { "ll:py-1.5": rowLayout === "npcWithMember" },
+            )}
           >
             <ActionIcon
               className={cn(
@@ -116,15 +104,15 @@ export const TimerHistoryListEntry: FC<TimerHistoryListEntryProps> = ({
             >
               {rowLayout === "npcWithMember" ? (
                 <>
-                  <span className="ll:min-w-0 ll:truncate ll:text-[11px] ll:font-semibold ll:text-white">
+                  <span className="ll:min-w-0 ll:truncate ll:text-[11px] ll:font-semibold ll:text-popover-foreground">
                     {getNpcLabel(entry)}
                   </span>
-                  <span className="ll:min-w-0 ll:truncate ll:text-[10px] ll:text-gray-300">
+                  <span className="ll:min-w-0 ll:truncate ll:text-[10px] ll:text-muted-foreground">
                     {getEntryMainLabel(entry)}
                   </span>
                 </>
               ) : (
-                <span className="ll:min-w-0 ll:truncate ll:text-[11px] ll:font-semibold ll:text-white">
+                <span className="ll:min-w-0 ll:truncate ll:text-[11px] ll:font-semibold ll:text-popover-foreground">
                   {getEntryMainLabel(entry)}
                 </span>
               )}
@@ -132,7 +120,7 @@ export const TimerHistoryListEntry: FC<TimerHistoryListEntryProps> = ({
             {entry.canRestore && (
               <Button
                 aria-label={t("history.restore")}
-                className="ll:h-5 ll:w-5 ll:p-0 ll:shrink-0 ll:text-gray-200 hover:ll:text-white"
+                className="ll:size-6 ll:p-0 ll:shrink-0"
                 disabled={restorePending}
                 onClick={(event) => {
                   event.preventDefault();
@@ -147,92 +135,92 @@ export const TimerHistoryListEntry: FC<TimerHistoryListEntryProps> = ({
                 tabIndex={-1}
                 title={t("history.restore")}
                 type="button"
-                variant="ghost"
+                variant="menu"
               >
                 <RotateCcw className="ll:h-3 ll:w-3" />
               </Button>
             )}
-            <span className="ll:ml-auto ll:shrink-0 ll:text-[10px] ll:text-gray-300">
+            <span className="ll:ml-auto ll:shrink-0 ll:text-[10px] ll:text-muted-foreground">
               {format(new Date(entry.createdAt), "HH:mm:ss")}
             </span>
-          </Tile>
+          </span>
         </span>
       </TooltipTrigger>
       {tooltipOpen && (
         <TooltipContent
           side="right"
-          className="ll:w-72 ll:max-w-72 ll:overflow-hidden ll:p-0 ll:text-left ll:shadow-lg"
+          className="ll:w-72 ll:max-w-72 ll:overflow-hidden ll:rounded-lg ll:border ll:border-solid ll:border-white/50 ll:bg-popover ll:p-0 ll:text-popover-foreground ll:text-left ll:shadow-md"
         >
-          <div className="ll:bg-black/35 ll:p-2">
+          <div className="ll:p-2">
             <div className="ll:flex ll:items-center ll:gap-2">
-              <span className="ll:flex ll:h-6 ll:w-6 ll:shrink-0 ll:items-center ll:justify-center ll:rounded-sm ll:bg-black/35">
+              <span className="ll:flex ll:h-6 ll:w-6 ll:shrink-0 ll:items-center ll:justify-center ll:rounded-sm ll:bg-muted">
                 <ActionIcon
                   className={cn("ll:h-4 ll:w-4", actionConfig.iconClassName)}
                 />
               </span>
               <div className="ll:min-w-0 ll:flex-1">
-                <div className="ll:text-[11px] ll:font-semibold ll:uppercase ll:tracking-wide ll:text-white">
+                <div className="ll:text-[11px] ll:font-semibold ll:uppercase ll:tracking-wide ll:text-popover-foreground">
                   {t(`history.actions.${entry.action.toLowerCase()}`)}
                 </div>
-                <div className="ll:truncate ll:text-[10px] ll:text-gray-300">
+                <div className="ll:truncate ll:text-[10px] ll:text-muted-foreground">
                   {format(new Date(entry.createdAt), "dd.MM.yyyy HH:mm:ss")}
                 </div>
               </div>
             </div>
 
-            <div className="ll:mt-2 ll:border-t ll:border-white/10 ll:pt-2">
-              <div className="ll:text-[10px] ll:uppercase ll:tracking-wide ll:text-gray-400">
+            <div className="ll:mt-2 ll:pt-2">
+              <div className="ll:text-[10px] ll:uppercase ll:tracking-wide ll:text-muted-foreground">
                 {t("history.details.npc")}
               </div>
-              <div className="ll:truncate ll:text-sm ll:font-semibold ll:text-white">
+              <div className="ll:truncate ll:text-sm ll:font-semibold ll:text-popover-foreground">
                 {getNpcLabel(entry)}
               </div>
             </div>
 
-            <div className="ll:mt-2 ll:grid ll:gap-1 ll:border-t ll:border-white/10 ll:pt-2">
+            <div className="ll:mt-2 ll:grid ll:gap-1 ll:pt-2">
               <div className="ll:min-w-0">
-                <div className="ll:text-[10px] ll:uppercase ll:tracking-wide ll:text-gray-400">
+                <div className="ll:text-[10px] ll:uppercase ll:tracking-wide ll:text-muted-foreground">
                   {t("history.details.member")}
                 </div>
-                <div className="ll:truncate ll:text-[11px] ll:font-semibold ll:text-white">
+                <div className="ll:truncate ll:text-[11px] ll:font-semibold ll:text-popover-foreground">
                   {getEntryMainLabel(entry)}
                 </div>
               </div>
               {entry.actorCharacter && (
                 <div className="ll:min-w-0">
-                  <div className="ll:text-[10px] ll:uppercase ll:tracking-wide ll:text-gray-400">
+                  <div className="ll:text-[10px] ll:uppercase ll:tracking-wide ll:text-muted-foreground">
                     {t("history.details.character")}
                   </div>
-                  <div className="ll:truncate ll:text-[11px] ll:text-gray-100">
+                  <div className="ll:truncate ll:text-[11px] ll:text-popover-foreground">
                     {getCharacterLabel(entry.actorCharacter)}
                   </div>
                 </div>
               )}
             </div>
 
-            <div className="ll:mt-2 ll:grid ll:grid-cols-2 ll:gap-x-2 ll:gap-y-1 ll:border-t ll:border-white/10 ll:pt-2 ll:text-[10px]">
-              <span className="ll:text-gray-400">
+            <div className="ll:mt-2 ll:grid ll:grid-cols-2 ll:gap-x-2 ll:gap-y-1 ll:pt-2 ll:text-[10px]">
+              <span className="ll:text-muted-foreground">
                 {t("history.details.world")}
               </span>
-              <span className="ll:truncate ll:text-right ll:text-gray-100">
+              <span className="ll:truncate ll:text-right ll:text-popover-foreground">
                 {entry.world}
               </span>
               {entry.minSpawnTime && (
                 <>
-                  <span className="ll:text-gray-400">
+                  <span className="ll:text-muted-foreground">
                     {t("history.details.min")}
                   </span>
-                  <span className="ll:text-right ll:text-gray-100">
+                  <span className="ll:text-right ll:text-popover-foreground">
                     {format(new Date(entry.minSpawnTime), "dd.MM HH:mm:ss")}
                   </span>
                 </>
               )}
               {entry.maxSpawnTime && (
                 <>
-                  <span className="ll:text-gray-400">
+                  <span className="ll:text-muted-foreground">
                     {t("history.details.max")}
                   </span>
-                  <span className="ll:text-right ll:text-gray-100">
+                  <span className="ll:text-right ll:text-popover-foreground">
                     {format(new Date(entry.maxSpawnTime), "dd.MM HH:mm:ss")}
                   </span>
                 </>

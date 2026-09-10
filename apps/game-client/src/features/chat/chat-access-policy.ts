@@ -30,11 +30,15 @@ const getState = (queryClient: QueryClient) => {
   return state;
 };
 
-const scheduleRefresh = (queryClient: QueryClient, state: ChatPolicyState) => {
+const scheduleRefresh = (
+  queryClient: QueryClient,
+  state: ChatPolicyState,
+  immediate = false,
+) => {
   clearTimeout(state.timer);
   state.timer = undefined;
   if (state.pendingGuilds.size === 0) return;
-  state.timer = setTimeout(() => {
+  const refresh = () => {
     const guildIds = new Set(state.pendingGuilds);
     state.pendingGuilds.clear();
     state.timer = undefined;
@@ -48,7 +52,9 @@ const scheduleRefresh = (queryClient: QueryClient, state: ChatPolicyState) => {
       },
       { cancelRefetch: false },
     );
-  }, REFRESH_DELAY_MS);
+  };
+  if (immediate) refresh();
+  else state.timer = setTimeout(refresh, REFRESH_DELAY_MS);
 };
 
 export const retainChatAccessPolicy = (queryClient: QueryClient) => {
@@ -164,7 +170,7 @@ export const applyChatAccessPolicy = (
   for (const guildId of interruptedUnloadedGuilds)
     state.pendingGuilds.add(guildId);
   if (changes.length === 0) return;
-  scheduleRefresh(queryClient, state);
+  scheduleRefresh(queryClient, state, initial);
 };
 
 /** Old gateways cannot identify which cached rows were revoked. Purge once per burst and refetch through current server authorization. */

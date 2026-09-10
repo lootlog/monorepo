@@ -6,7 +6,7 @@ import {
   type MouseEvent,
 } from "react";
 
-type ButtonVariant = "default" | "ghost" | "destructive";
+type ButtonVariant = "default" | "ghost" | "destructive" | "menu";
 type ButtonProps = ComponentProps<"button"> & {
   variant?: ButtonVariant;
 };
@@ -16,6 +16,7 @@ const BUTTON_VARIANT_CLASS_NAMES: Record<ButtonVariant, string> = {
     "ll:border-gray-400 ll:bg-gray-400/30 ll:text-white ll:hover:bg-gray-400/50",
   ghost:
     "ll:border-gray-400/50 ll:bg-transparent ll:text-white ll:hover:bg-white/8",
+  menu: "ll:text-[11px] ll:font-semibold ll:box-border ll:border-0 ll:h-auto ll:min-h-6 ll:px-2 ll:py-1.5 ll:bg-transparent ll:text-popover-foreground ll:hover:bg-muted ll:focus-visible:bg-muted ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:disabled:bg-transparent ll:disabled:text-muted-foreground ll:disabled:opacity-50",
   destructive:
     "ll:border-red-500/60 ll:bg-transparent ll:text-red-400 ll:hover:bg-red-500/10 ll:hover:text-red-300",
 };
@@ -33,6 +34,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <button
         ref={ref}
+        data-variant={variant}
         className={cn(
           "ll:text-[12px] ll:border ll:rounded-sm ll:h-5 ll:disabled:bg-gray-700/30 ll:disabled:text-gray-500 ll:disabled:cursor-not-allowed ll:transition-colors ll:flex ll:items-center ll:justify-center",
           BUTTON_VARIANT_CLASS_NAMES[variant],

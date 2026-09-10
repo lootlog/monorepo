@@ -1,4 +1,5 @@
 import { Schema } from "effect";
+import { NonNegativeSafeInteger } from "./http-scalars.js";
 
 export const PARTY_READY_ROOM_STATUSES = ["ACTIVE", "CANCELLED"] as const;
 
@@ -36,6 +37,7 @@ export interface PartyReadyRoomParticipant {
 }
 
 export interface PartyReadyRoomProjectionBase {
+  npc?: PartyGatheringNpc;
   schemaVersion: 3;
   notificationId: string;
   organizerDiscordId: string;
@@ -45,6 +47,7 @@ export interface PartyReadyRoomProjectionBase {
   description?: string;
   minLvl?: number;
   maxLvl?: number;
+  partyMemberCount?: number;
   status: "ACTIVE";
   revision: number;
   createdAt: string;
@@ -111,8 +114,21 @@ export const PartyReadyRoomParticipantSchema = Schema.Struct({
   updatedAt: Schema.String,
 });
 
+export const PartyGatheringNpcSchema = Schema.Struct({
+  prof: Schema.optionalKey(Schema.String),
+  icon: Schema.optionalKey(Schema.String),
+  name: Schema.String,
+  location: Schema.String,
+  lvl: Schema.Number,
+  type: Schema.String,
+  x: Schema.optionalKey(Schema.Number),
+  y: Schema.optionalKey(Schema.Number),
+});
+export type PartyGatheringNpc = typeof PartyGatheringNpcSchema.Type;
+
 export const PartyReadyRoomAggregateSchema = Schema.Struct({
   schemaVersion: Schema.Literal(3),
+  npc: Schema.optionalKey(PartyGatheringNpcSchema),
   notificationId: Schema.String,
   organizerDiscordId: Schema.String,
   organizerCharacter: PartyReadyRoomCharacterSchema,
@@ -121,6 +137,7 @@ export const PartyReadyRoomAggregateSchema = Schema.Struct({
   description: Schema.optionalKey(Schema.String),
   minLvl: Schema.optionalKey(Schema.Number),
   maxLvl: Schema.optionalKey(Schema.Number),
+  partyMemberCount: Schema.optionalKey(NonNegativeSafeInteger),
   status: Schema.Literals(PARTY_READY_ROOM_STATUSES),
   revision: Schema.Number,
   createdAt: Schema.String,

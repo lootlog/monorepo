@@ -66,8 +66,10 @@ describe("Effect Ready Room repository", () => {
       "party-ready-room:v3:room:notification-1",
       "party-ready-room:v3:organizer:discord-1",
       "party-ready-room:v3:character:Tempest:character-1",
+      "party-ready-room:v3:discovery:guild-1:Tempest",
     ]);
-    expect(calls[0]?.arguments_.at(-1)).toBe(1800);
+    expect(calls[0]?.arguments_[3]).toBe(1800);
+    expect(calls[0]?.arguments_[4]).toBe(Date.parse(aggregate().expiresAt));
   });
 
   test("maps a Redis CAS mismatch to a typed conflict result", async () => {

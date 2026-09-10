@@ -55,6 +55,22 @@ export const readyRoomData = Layer.unwrap(
               content: new TextEncoder().encode(JSON.stringify(envelope)),
             })
             .pipe(Effect.asVoid),
+        publishGathering: (payload) =>
+          rabbit
+            .publish({
+              exchange: "default",
+              routingKey: RabbitRoutingKey.GUILDS_PARTY_GATHERING,
+              content: new TextEncoder().encode(JSON.stringify(payload)),
+            })
+            .pipe(Effect.asVoid),
+        publishCancellation: (payload) =>
+          rabbit
+            .publish({
+              exchange: "default",
+              routingKey: RabbitRoutingKey.GUILDS_PARTY_GATHERING_CANCEL,
+              content: new TextEncoder().encode(JSON.stringify(payload)),
+            })
+            .pipe(Effect.asVoid),
         endPartyGatheringMessages: chat.endPartyGatheringMessages,
       },
     );

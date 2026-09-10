@@ -1,3 +1,4 @@
+import { CHAT_INPUT_MAX_LENGTH } from "@/features/chat/chat.constants";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { mergeRegister } from "@lexical/utils";
 import {
@@ -16,8 +17,6 @@ import {
   PASTE_COMMAND,
 } from "lexical";
 import { useEffect, type FC } from "react";
-
-export const CHAT_INPUT_MAX_LENGTH = 120;
 
 export const normalizeChatInputText = (
   text: string,

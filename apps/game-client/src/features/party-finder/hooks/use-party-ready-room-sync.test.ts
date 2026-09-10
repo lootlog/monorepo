@@ -37,6 +37,7 @@ let restoreClient = () => {};
 afterEach(() => {
   restoreClient();
   vi.unstubAllGlobals();
+  vi.useRealTimers();
 });
 describe("usePartyReadyRoomSync", () => {
   beforeEach(() => {
@@ -79,5 +80,28 @@ describe("usePartyReadyRoomSync", () => {
         projections: { "room-1": { revision: 3 } },
       });
     });
+  });
+  it("recovers a missed room and removes revoked access without reconnecting", async () => {
+    vi.useFakeTimers();
+    listReadyRooms
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([createProjection(1)])
+      .mockResolvedValueOnce([]);
+    const { unmount } = renderHook(() => usePartyReadyRoomSync());
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(usePartyFinderStore.getState().projections).toEqual({});
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30_000);
+    });
+    expect(usePartyFinderStore.getState().projections["room-1"]).toBeDefined();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30_000);
+    });
+    expect(usePartyFinderStore.getState().projections).toEqual({});
+    unmount();
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(listReadyRooms).toHaveBeenCalledTimes(3);
   });
 });
