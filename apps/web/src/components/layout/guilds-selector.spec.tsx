@@ -7,7 +7,7 @@ import {
   render,
   screen,
   waitFor,
-} from "@testing-library/react";
+} from "@testing-library/react/pure";
 import {
   afterEach,
   beforeEach,
@@ -98,6 +98,8 @@ beforeEach(() => {
     }),
   );
 });
+// Keep the Toaster mounted until its exit callbacks finish; automatic RTL cleanup
+// would unmount it before this asynchronous teardown can drain those callbacks.
 afterEach(async () => {
   await waitFor(() => {
     if (client.isMutating() || client.isFetching())
