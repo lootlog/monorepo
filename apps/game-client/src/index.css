@@ -5,7 +5,7 @@
 @import "@lootlog/ui/scroll-fade.css";
 @source "src/**/*.{ts,tsx}";
 
-@variant dark (:is(#lootlog-root.dark-theme, .ll-theme-boundary.dark-theme) *);
+@variant dark (&:where(#lootlog-root.dark-theme, .ll-theme-boundary.dark-theme, #lootlog-root.dark-theme *, .ll-theme-boundary.dark-theme *));
 
 /*
  * Scoped stand-in for the Tailwind preflight, which cannot be loaded because
@@ -23,6 +23,10 @@
   :is(button, input, select, textarea, optgroup) {
   font: inherit;
   color: inherit;
+}
+
+:where(#lootlog-root, .ll-theme-boundary) button {
+  background-color: transparent;
 }
 
 @theme inline {
