@@ -7,10 +7,6 @@ import {
   type NotificationsSettings,
   type UserGameAccountPreferences,
 } from "@lootlog/schema/account-preferences";
-import { getUsersControllerGetUserGameAccountPreferencesQueryKey } from "@lootlog/client/main";
-
-const UPDATE_USER_GAME_ACCOUNT_PREFERENCES_MUTATION_KEY_PREFIX =
-  "update-user-game-account-preferences";
 
 // SAFETY: The schema-owned default literal contains exactly the six NotificationType keys.
 const notificationSettingTypes = Object.keys(
@@ -26,17 +22,6 @@ type GameAccountDetectorPreferences = Pick<
   UserGameAccountPreferences,
   "detector" | "hasStoredDetector"
 >;
-
-export const getUserGameAccountPreferencesQueryKey = (accountId: string) =>
-  getUsersControllerGetUserGameAccountPreferencesQueryKey({ accountId });
-
-export const getUpdateUserGameAccountPreferencesMutationKey = (
-  accountId: string,
-) =>
-  [
-    UPDATE_USER_GAME_ACCOUNT_PREFERENCES_MUTATION_KEY_PREFIX,
-    accountId,
-  ] as const;
 
 const cloneNotificationsSettings = (
   settings: NotificationsSettings,

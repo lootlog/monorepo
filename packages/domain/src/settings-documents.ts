@@ -11,7 +11,7 @@ import {
   DEFAULT_NPC_TYPE_COLORS,
   isHexAppearanceColor,
 } from "@lootlog/schema/npc-appearance";
-import { NpcTypeSchema } from "@lootlog/schema/npc-type";
+import { NpcTypeSchema, type NpcTypeEnum } from "@lootlog/schema/npc-type";
 import type {
   AirTagPreferences,
   DetectorSettings,
@@ -174,7 +174,7 @@ export const SETTINGS_CATALOG = {
     schemaVersion: 1,
     migrations: [],
     fields: {
-      guildsOrder: field([], userScopes, isStringArray),
+      guildsOrder: field<string[]>([], userScopes, isStringArray),
       allowWorldSelection: field(false, userScopes, isBoolean),
     },
   },
@@ -285,14 +285,18 @@ export const SETTINGS_CATALOG = {
       "timers.timersColors": field({}, guildScopes, isRecord),
       "timers.defaultColorNames": field({}, guildScopes, isRecord),
       "timers.overriddenDefaultColors": field({}, guildScopes, isRecord),
-      "timers.hiddenDefaultColors": field([], guildScopes, isStringArray),
+      "timers.hiddenDefaultColors": field<string[]>(
+        [],
+        guildScopes,
+        isStringArray,
+      ),
     },
   },
   chat: {
     schemaVersion: 1,
     migrations: [],
     fields: {
-      hiddenNpcTypes: field([], userScopes, isNpcTypeArray),
+      hiddenNpcTypes: field<NpcTypeEnum[]>([], userScopes, isNpcTypeArray),
     },
   },
   timers: {
@@ -314,8 +318,8 @@ export const SETTINGS_CATALOG = {
       colorFiltersEnabled: field(false, guildScopes, isBoolean),
       timersSortOrder: field("asc", guildScopes, isOneOf(["asc", "desc"])),
       syncEnabled: field(true, guildScopes, isBoolean),
-      hiddenTimers: field([], guildScopes, isStringArray),
-      pinnedTimers: field([], guildScopes, isStringArray),
+      hiddenTimers: field<string[]>([], guildScopes, isStringArray),
+      pinnedTimers: field<string[]>([], guildScopes, isStringArray),
     },
   },
   gameData: {

@@ -1,6 +1,9 @@
 import { render as renderUi, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
-import { getSoundSettingsControllerGetSettingsQueryKey } from "@lootlog/client/main";
+import {
+  seedSettingsDocumentValues,
+  soundSettingValues,
+} from "@/test/settings-documents-fixtures";
 import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
 import { createSoundSettings } from "@/test/sound-settings-fixtures";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
@@ -15,14 +18,16 @@ import { SoundsSettingsTab } from "./sounds-settings-tab";
 describe("SoundsSettingsTab", () => {
   beforeEach(() => {
     harness = createGuildPreferencesTest();
-    harness.queryClient.setQueryData(
-      getSoundSettingsControllerGetSettingsQueryKey(),
-      createSoundSettings({
-        masterVolume: 0.8,
-        notificationsVolume: 0.6,
-        detectorVolume: 0.5,
-        timersVolume: 0.4,
-      }),
+    seedSettingsDocumentValues(
+      harness.queryClient,
+      soundSettingValues(
+        createSoundSettings({
+          masterVolume: 0.8,
+          notificationsVolume: 0.6,
+          detectorVolume: 0.5,
+          timersVolume: 0.4,
+        }),
+      ),
     );
     setTestRuntimeGame({ interface: "ni" });
   });

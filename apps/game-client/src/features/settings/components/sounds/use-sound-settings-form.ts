@@ -2,16 +2,14 @@ import { NpcType } from "@/api/npcs.api";
 import {
   useSoundSettings,
   useUpdateSoundSettings,
-} from "@/hooks/api/use-sound-settings";
+} from "@/features/settings/persistence/use-sound-settings";
 import { useSoundPlayback } from "@/hooks/use-sound-playback";
-import { normalizeSoundSettings } from "@/lib/api/generated-helpers";
 import { useGameStore } from "@/store/game.store";
 import { useSettingsStore } from "@/store/settings.store";
 import type { SoundCategory } from "@/features/settings/components/sounds/types";
 import { Bell, Clock, Crosshair, type LucideIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useSoundSettingsPatchQueue } from "./use-sound-settings-patch-queue";
 
 export function useSoundSettingsForm() {
   const gameInterface = useGameStore((state) => state.game?.interface);
@@ -28,9 +26,7 @@ export function useSoundSettingsForm() {
   const { playSoundTest } = useSoundPlayback();
   const { t } = useTranslation(["settings", "common"]);
 
-  const settings = soundSettings
-    ? normalizeSoundSettings(soundSettings)
-    : undefined;
+  const settings = soundSettings;
 
   const [mutedCategories, setMutedCategories] = useState<
     Record<SoundCategory, boolean>
@@ -120,7 +116,9 @@ export function useSoundSettingsForm() {
     },
   ];
 
-  const queueSoundConfigPatch = useSoundSettingsPatchQueue(updateSettings);
+  // The shared settings patch queue already debounces and merges nested
+  // sound configuration patches.
+  const queueSoundConfigPatch = updateSettings;
 
   return {
     isLoading,

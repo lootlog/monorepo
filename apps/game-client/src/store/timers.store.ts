@@ -10,10 +10,7 @@ import { NpcType } from "@/api/npcs.api";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { storageKey } from "@/lib/storage-key";
-import {
-  debouncedSyncGlobalSettings,
-  debouncedSyncGuildSettings,
-} from "./timer-settings-sync";
+import { syncGuildTimerList, syncTimerSettings } from "./timer-settings-sync";
 
 export const TIMERS_STORAGE_KEY = storageKey("ll-timers-state");
 
@@ -51,7 +48,6 @@ interface TimersState {
   colorFiltersEnabled?: boolean;
   timerFiltersSearchText?: string;
   timersSortOrder?: "asc" | "desc";
-  syncEnabled?: boolean;
   generalConfig: TimersGeneralConfig;
   setGeneralConfig: (config: TimersGeneralConfig) => void;
   displayConfig: TimersDisplayConfig;
@@ -61,7 +57,6 @@ interface TimersState {
   toggleTimerFiltersEnabled: () => void;
   toggleColorFiltersEnabled: () => void;
   setTimerFiltersSearchText: (text: string) => void;
-  setSyncEnabled: (enabled: boolean) => void;
   hideTimer: (guildId: string, timerId: string) => void;
   revealTimer: (guildId: string, timerId: string) => void;
   showExpiredTimerAlways: (world: string, timerKey: string) => void;
@@ -112,7 +107,7 @@ export const useTimersStore = create<TimersState>()(
         payload: UpdateTimerSettingsPayload & Partial<TimersState>,
       ) => {
         setWithTimestamp(() => payload);
-        debouncedSyncGlobalSettings(payload);
+        syncTimerSettings(payload);
       };
 
       const updateGuildTimerList = (
@@ -130,7 +125,7 @@ export const useTimersStore = create<TimersState>()(
         setWithTimestamp(() => ({
           [field]: { ...get()[field], [guildId]: next },
         }));
-        debouncedSyncGuildSettings(guildId, { [field]: next });
+        syncGuildTimerList(guildId, field, next);
       };
 
       return {
@@ -160,7 +155,6 @@ export const useTimersStore = create<TimersState>()(
         colorFiltersEnabled: false,
         timerFiltersSearchText: "",
         timersSortOrder: "asc",
-        syncEnabled: true,
         timersFilters: {},
         setTimersFilters: (guildId: string, filters: TimersFilters) => {
           setWithTimestamp((state) => ({
@@ -177,25 +171,20 @@ export const useTimersStore = create<TimersState>()(
           setWithTimestamp((state) => ({
             timerFiltersEnabled: !state.timerFiltersEnabled,
           }));
-          const state = get();
-          debouncedSyncGlobalSettings({
-            timerFiltersEnabled: state.timerFiltersEnabled,
+          syncTimerSettings({
+            timerFiltersEnabled: get().timerFiltersEnabled,
           });
         },
         toggleColorFiltersEnabled: () => {
           setWithTimestamp((state) => ({
             colorFiltersEnabled: !state.colorFiltersEnabled,
           }));
-          const state = get();
-          debouncedSyncGlobalSettings({
-            colorFiltersEnabled: state.colorFiltersEnabled,
+          syncTimerSettings({
+            colorFiltersEnabled: get().colorFiltersEnabled,
           });
         },
         setTimerFiltersSearchText: (text: string) => {
           set({ timerFiltersSearchText: text });
-        },
-        setSyncEnabled: (enabled: boolean) => {
-          setGlobalSettings({ syncEnabled: enabled });
         },
         hideTimer: (guildId: string, timerId: string) =>
           updateGuildTimerList("hiddenTimers", guildId, timerId, true),
@@ -368,7 +357,6 @@ export const useTimersStore = create<TimersState>()(
         timerFiltersEnabled: state.timerFiltersEnabled,
         colorFiltersEnabled: state.colorFiltersEnabled,
         timersSortOrder: state.timersSortOrder,
-        syncEnabled: state.syncEnabled,
         timersFilters: state.timersFilters,
         generalConfig: state.generalConfig,
         displayConfig: state.displayConfig,
@@ -408,7 +396,6 @@ export const useTimersStore = create<TimersState>()(
             persisted.colorFiltersEnabled ?? currentState.colorFiltersEnabled,
           timersSortOrder:
             persisted.timersSortOrder ?? currentState.timersSortOrder,
-          syncEnabled: persisted.syncEnabled ?? currentState.syncEnabled,
         };
       },
       version: 6,

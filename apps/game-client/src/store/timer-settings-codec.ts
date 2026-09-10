@@ -63,7 +63,6 @@ const persistedTimerSettings = z.object({
   timerFiltersEnabled: z.boolean().optional().catch(undefined),
   colorFiltersEnabled: z.boolean().optional().catch(undefined),
   timersSortOrder: z.enum(["asc", "desc"]).optional().catch(undefined),
-  syncEnabled: z.boolean().optional().catch(undefined),
 });
 
 export const decodeTimerSettings = (value: unknown) => {

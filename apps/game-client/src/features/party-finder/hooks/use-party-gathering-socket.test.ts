@@ -2,11 +2,16 @@ import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import {
-  getUsersControllerGetUserGameAccountPreferencesQueryKey,
   getUsersControllerGetUserPreferencesQueryKey,
   type UserGameAccountPreferencesResponseDtoOutput,
   type UserPreferencesResponseDtoOutput,
 } from "@lootlog/client/main";
+import {
+  accountPreferenceValues,
+  createSettingsDocuments,
+  seedSettingsDocuments,
+  userPreferenceValues,
+} from "@/test/settings-documents-fixtures";
 import { createRealtimeTest } from "@/test/realtime-test";
 import {
   createNotificationsSettings,
@@ -62,11 +67,20 @@ const prepare = () => {
   const ready = async (mutedDiscordIds: string[] = []) => {
     await act(() => {
       setTestRuntimeGame({ hero: { accountId: "202" } });
-      test.queryClient.setQueryData(
-        getUsersControllerGetUserGameAccountPreferencesQueryKey({
-          accountId: "202",
+      seedSettingsDocuments(
+        test.queryClient,
+        createSettingsDocuments({
+          ...accountPreferenceValues(preferences),
+          ...userPreferenceValues({
+            mutes: {
+              players: mutedDiscordIds.map((discordId) => ({
+                discordId,
+                displayName: discordId,
+              })),
+              npcs: [],
+            },
+          }),
         }),
-        preferences,
       );
       test.queryClient.setQueryData<UserPreferencesResponseDtoOutput>(
         getUsersControllerGetUserPreferencesQueryKey(),

@@ -1,4 +1,6 @@
 import { QueryClientProvider } from "@tanstack/react-query";
+import { getChatAppearanceFromDocuments } from "@/features/settings/persistence/use-appearance-settings";
+import { getCurrentSettingsDocumentsQueryKey } from "@/features/settings/persistence/settings-patch-client";
 import {
   act,
   fireEvent,
@@ -11,11 +13,7 @@ import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance
 import { DEFAULT_NPC_TYPE_COLORS } from "@lootlog/schema/npc-appearance";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import {
-  getSettingsDocumentsControllerGetPreferencesQueryKey,
-  type SettingsDocumentsResponseDtoOutput,
-  type UserPreferencesResponseDtoOutput,
-} from "@lootlog/client/main";
+import type { SettingsDocumentsResponseDtoOutput } from "@lootlog/client/main";
 import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
 import { useSettingsStore } from "@/store/settings.store";
 
@@ -45,9 +43,7 @@ describe("ChatAppearanceSettingsForm", () => {
     useSettingsStore.setState({ allowWorldSelection: false });
     harness.setPreferences({ userId: "user-1" });
     harness.queryClient.setQueryData(
-      getSettingsDocumentsControllerGetPreferencesQueryKey({
-        domains: "appearance",
-      }),
+      getCurrentSettingsDocumentsQueryKey(),
       settingsDocuments,
     );
     patchRequest
@@ -126,9 +122,9 @@ describe("ChatAppearanceSettingsForm", () => {
 
     expect(screen.queryByText("Własne ustawienia")).not.toBeInTheDocument();
     expect(
-      queryClient.getQueryData<UserPreferencesResponseDtoOutput>(
-        harness.preferencesKey,
-      )?.chatAppearance.fontScalePercent,
+      getChatAppearanceFromDocuments(
+        queryClient.getQueryData(getCurrentSettingsDocumentsQueryKey()),
+      ).fontScalePercent,
     ).toBe(100);
     expect(patchRequest).not.toHaveBeenCalled();
 
@@ -141,9 +137,9 @@ describe("ChatAppearanceSettingsForm", () => {
     });
 
     expect(
-      queryClient.getQueryData<UserPreferencesResponseDtoOutput>(
-        harness.preferencesKey,
-      )?.chatAppearance.fontScalePercent,
+      getChatAppearanceFromDocuments(
+        queryClient.getQueryData(getCurrentSettingsDocumentsQueryKey()),
+      ).fontScalePercent,
     ).toBe(70);
     await waitFor(() => expect(patchRequest).toHaveBeenCalledOnce());
   });

@@ -6,7 +6,7 @@ import {
   CHAT_NPC_TYPES,
   useHiddenNpcTypes,
 } from "@/features/chat/hooks/use-hidden-npc-types";
-import { useNpcTypeColors } from "@/hooks/api/use-settings-documents";
+import { useNpcTypeColors } from "@/features/settings/persistence/use-appearance-settings";
 import { getTextColor } from "@/utils/notifications-and-detector/background";
 import { useTranslation } from "react-i18next";
 

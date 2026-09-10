@@ -5,7 +5,10 @@ import { useWindowsStore } from "@/store/windows.store";
 
 import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
 import { createSoundSettings } from "@/test/sound-settings-fixtures";
-import { getSoundSettingsControllerGetSettingsQueryKey } from "@lootlog/client/main";
+import {
+  seedSettingsDocumentValues,
+  soundSettingValues,
+} from "@/test/settings-documents-fixtures";
 
 let harness: ReturnType<typeof createGuildPreferencesTest>;
 
@@ -16,9 +19,9 @@ import { SettingsTabs } from "./settings-tabs";
 describe("SettingsTabs", () => {
   beforeEach(() => {
     harness = createGuildPreferencesTest();
-    harness.queryClient.setQueryData(
-      getSoundSettingsControllerGetSettingsQueryKey(),
-      createSoundSettings(),
+    seedSettingsDocumentValues(
+      harness.queryClient,
+      soundSettingValues(createSoundSettings()),
     );
     Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
       configurable: true,

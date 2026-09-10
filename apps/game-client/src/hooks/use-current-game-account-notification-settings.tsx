@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useCurrentGameAccountPreferences } from "@/hooks/use-current-game-account-preferences";
+import { useCurrentGameAccountPreferences } from "@/features/settings/persistence/use-game-account-preferences";
 import {
   getEffectiveNotificationSettings,
   isNotificationPreferencesReady,

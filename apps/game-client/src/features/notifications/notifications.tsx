@@ -7,7 +7,7 @@ import { useNotificationsStore } from "@/store/notifications.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNpcTypeColors } from "@/hooks/api/use-settings-documents";
+import { useNpcTypeColors } from "@/features/settings/persistence/use-appearance-settings";
 
 export const Notifications = () => {
   const { t } = useTranslation("notifications");

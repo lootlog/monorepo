@@ -1,6 +1,5 @@
-import { queryClient } from "@/lib/query-client";
 import { getDefaultSoundUrl } from "@/features/settings/config/default-sounds";
-import { getSoundSettingsControllerGetSettingsQueryKey } from "@lootlog/client/main";
+import { readSoundSettings } from "@/features/settings/persistence/use-sound-settings";
 import {
   disposeSoundPlayback,
   playSoundRequest,
@@ -15,24 +14,7 @@ export type SoundPlaybackProfile = {
   preservesPitch?: boolean;
 };
 
-const SOUND_SETTINGS_QUERY_KEY =
-  getSoundSettingsControllerGetSettingsQueryKey();
-
-function getSettings(): UserSoundSettings | undefined {
-  const cached = queryClient.getQueryData<
-    UserSoundSettings | { data: UserSoundSettings }
-  >(SOUND_SETTINGS_QUERY_KEY);
-
-  if (cached && "masterVolume" in cached) {
-    return cached;
-  }
-
-  if (cached && "data" in cached) {
-    return cached.data;
-  }
-
-  return undefined;
-}
+const getSettings = (): UserSoundSettings | undefined => readSoundSettings();
 
 export function playSound(
   category: SoundCategory,
