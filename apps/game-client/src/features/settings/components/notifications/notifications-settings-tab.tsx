@@ -13,6 +13,11 @@ export const NotificationsSettingsTab = () => {
     { label: t("common:npcTypes.hero"), key: NpcType.HERO },
     { label: t("common:npcTypes.colossus"), key: NpcType.COLOSSUS },
     { label: t("common:npcTypes.titan"), key: NpcType.TITAN },
+    { label: t("common:npcTypes.message"), key: "message" },
+    {
+      label: t("common:npcTypes.partyGathering"),
+      key: "party-gathering",
+    },
   ];
 
   return (

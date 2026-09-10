@@ -72,7 +72,6 @@ describe("settings manifest persistence references", () => {
 
     expect(chat?.subsections.map((subsection) => subsection.id)).toEqual([
       "chat-appearance",
-      "chat-notifications",
       "chat-filters",
     ]);
     expect(

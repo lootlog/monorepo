@@ -45,16 +45,12 @@ describe("NotificationsSettingsTab", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Skonfiguruj ustawienia powiadomień. Możesz dostosować, które typy NPC będą wywoływać powiadomienia oraz jak będą one prezentowane. Powiadomienia z chatu znajdziesz w zakładce Chat.",
+        "Skonfiguruj ustawienia powiadomień. Możesz dostosować, które typy NPC będą wywoływać powiadomienia oraz jak będą one prezentowane.",
       ),
     ).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Elita 2" })).toBeInTheDocument();
-    expect(
-      screen.queryByRole("tab", { name: "Komunikaty" }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("tab", { name: "Grupa" }),
-    ).not.toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Komunikaty" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Grupa" })).toBeInTheDocument();
     expect(
       screen.queryByText("settings.notifications.title"),
     ).not.toBeInTheDocument();

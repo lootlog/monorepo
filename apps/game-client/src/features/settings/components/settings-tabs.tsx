@@ -5,7 +5,6 @@ import { BattlePanelSettingsTab } from "@/features/settings/components/battle-pa
 import { CatchingSettings } from "@/features/settings/components/catching/catching-settings";
 import { ChatAppearanceSettingsForm } from "@/features/settings/components/chat/chat-appearance-settings";
 import { ChatFiltersSettings } from "@/features/settings/components/chat/chat-filters-settings";
-import { ChatNotificationsSettingsTab } from "@/features/settings/components/chat/chat-notifications-settings-tab";
 import { DebugTab } from "@/features/settings/components/debug/debug-tab";
 import { DetectorSettingsTab } from "@/features/settings/components/detector/detector-settings-tab";
 import { GeneralSettingsTab } from "@/features/settings/components/general/general-settings-tab";
@@ -73,7 +72,6 @@ const SETTINGS_CONTENT = {
   visibility: () => <ServerVisibilitySettingsTab />,
   behavior: () => <GeneralSettingsTab />,
   "chat-appearance": () => <ChatAppearanceSettingsForm />,
-  "chat-notifications": () => <ChatNotificationsSettingsTab />,
   "chat-filters": () => <ChatFiltersSettings />,
   "npc-colors": () => <NpcColorsSettings />,
   "timer-appearance": () => <TimersSettingsAppearance />,

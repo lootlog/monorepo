@@ -121,9 +121,6 @@ describe("SettingsTabs", () => {
     await user.click(screen.getByRole("tab", { name: "Chat" }));
 
     expect(screen.getByRole("button", { name: "Wygląd" })).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Powiadomienia" }),
-    ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Filtry" })).toBeInTheDocument();
   });
 

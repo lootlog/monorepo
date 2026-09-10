@@ -234,18 +234,6 @@ export const SETTINGS_MANIFEST: SettingsDomainManifestItem[] = [
         ],
       },
       {
-        id: "chat-notifications",
-        labelKey: "settings.subsections.chatNotifications",
-        controls: [
-          {
-            id: "chat-notification-rules",
-            labelKey: "settings.chatNotifications.title",
-            descriptionKey: "settings.chatNotifications.description",
-            aliases: ["komunikaty", "grupa", "zbiórka", "wzmianki"],
-          },
-        ],
-      },
-      {
         id: "chat-filters",
         labelKey: "settings.subsections.chatFilters",
         controls: [
