@@ -38,7 +38,8 @@
         "*.config.{ts,mts,js,mjs}",
         "**/*.{spec,test,e2e-spec}.{ts,tsx,js}"
       ],
-      "vite": false
+      "vite": false,
+      "ignoreDependencies": ["shadcn"]
     },
     "packages/*": {
       "entry": [
