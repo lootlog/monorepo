@@ -52,7 +52,7 @@ export const TimersSettingsGeneral: FC = () => {
   };
 
   return (
-    <div className="ll:flex ll:flex-col ll:gap-[var(--ll-settings-space-lg)]">
+    <div className="ll:flex ll:flex-col ll:gap-[var(--ll-settings-space-xl)]">
       <SettingsSection
         controlId="timer-behavior"
         title={t("settings.timers.general.behaviorTitle")}

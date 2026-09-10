@@ -11,6 +11,7 @@ export type SettingsDensityStyle = CSSProperties & {
   "--ll-settings-line-height": string;
   "--ll-settings-meta-font-size": string;
   "--ll-settings-meta-line-height": string;
+  "--ll-settings-space-xl": string;
   "--ll-settings-space-lg": string;
   "--ll-settings-space-md": string;
   "--ll-settings-space-sm": string;
@@ -24,6 +25,7 @@ export const SETTINGS_DENSITY_STYLE: SettingsDensityStyle = {
   "--ll-settings-line-height": "16px",
   "--ll-settings-meta-font-size": "11px",
   "--ll-settings-meta-line-height": "14px",
+  "--ll-settings-space-xl": "24px",
   "--ll-settings-space-lg": "8px",
   "--ll-settings-space-md": "6px",
   "--ll-settings-space-sm": "4px",

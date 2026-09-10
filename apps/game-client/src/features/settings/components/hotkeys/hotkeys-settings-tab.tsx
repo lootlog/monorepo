@@ -105,11 +105,8 @@ export const HotkeysSettingsTab = () => {
   }, [capturingAction, setBinding, t]);
 
   return (
-    <SettingsTabLayout
-      title={t("settings.hotkeys.title")}
-      description={t("settings.hotkeys.description")}
-    >
-      <div className="ll:flex ll:flex-col ll:gap-[var(--ll-settings-space-lg)]">
+    <SettingsTabLayout>
+      <div className="ll:flex ll:flex-col ll:gap-[var(--ll-settings-space-xl)]">
         {categories.map(([category, actions], index) => (
           <SettingsSection
             key={category}

@@ -16,6 +16,7 @@ import { ChatAppearanceSettingsForm } from "@/features/settings/components/chat/
 import { ChatFiltersSettings } from "@/features/settings/components/chat/chat-filters-settings";
 import { DebugTab } from "@/features/settings/components/debug/debug-tab";
 import { DetectorSettingsTab } from "@/features/settings/components/detector/detector-settings-tab";
+import { ExperimentalSettingsTab } from "@/features/settings/components/experimental/experimental-settings-tab";
 import { GeneralSettingsTab } from "@/features/settings/components/general/general-settings-tab";
 import { HiddenTimersTab } from "@/features/settings/components/hidden-timers/hidden-timers-tab";
 import { HotkeysSettingsTab } from "@/features/settings/components/hotkeys/hotkeys-settings-tab";
@@ -51,6 +52,7 @@ import {
   Bell,
   Clock,
   Database,
+  FlaskConical,
   Info,
   Keyboard,
   MessageSquare,
@@ -73,6 +75,7 @@ const ICONS = {
   bell: Bell,
   volume2: Volume2,
   keyboard: Keyboard,
+  flaskConical: FlaskConical,
   activity: Activity,
   info: Info,
 } satisfies Record<SettingsIconName, LucideIcon>;
@@ -96,6 +99,7 @@ const SETTINGS_CONTENT = {
   "notification-mutes": () => <NotificationMutesSettingsTab />,
   sounds: () => <SoundsSettingsTab />,
   hotkeys: () => <HotkeysSettingsTab />,
+  experimental: () => <ExperimentalSettingsTab />,
   logs: () => <LogsSettingsTab />,
   debug: () => <DebugTab />,
   build: () => <InformationSettingsTab />,
@@ -336,7 +340,7 @@ export const SettingsTabs = () => {
         ) : (
           <TabsContent
             value={activeDomain.id}
-            className="ll:mt-0 ll:flex ll:flex-col ll:gap-[var(--ll-settings-space-lg)]"
+            className="ll:mt-0 ll:flex ll:flex-col ll:gap-[var(--ll-settings-space-xl)]"
           >
             {SETTINGS_CONTENT[selectedSubsection]()}
           </TabsContent>

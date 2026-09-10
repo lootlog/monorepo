@@ -23,11 +23,7 @@ export const NotificationsSettingsTab = () => {
   ];
 
   return (
-    <SettingsTabLayout
-      title={t("notifications.title")}
-      description={t("notifications.description")}
-      contentClassName="ll:gap-3"
-    >
+    <SettingsTabLayout contentClassName="ll:gap-3">
       <SettingsSection controlId="notification-rules">
         <NotificationCategoryTabs categories={categories} />
       </SettingsSection>

@@ -46,7 +46,7 @@ describe("SettingsTabs", () => {
     }));
   });
 
-  it("renders eleven domain tabs in order and opens the selected domain", async () => {
+  it("renders twelve domain tabs in order and opens the selected domain", async () => {
     const user = userEvent.setup();
     render();
 
@@ -64,6 +64,7 @@ describe("SettingsTabs", () => {
       "Powiadomienia",
       "Dźwięki",
       "Sterowanie",
+      "Eksperymentalne",
       "Diagnostyka",
       "Informacje",
     ]);

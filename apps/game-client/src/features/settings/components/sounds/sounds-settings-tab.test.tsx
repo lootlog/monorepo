@@ -34,13 +34,6 @@ describe("SoundsSettingsTab", () => {
 
   it("renders translated settings copy instead of raw settings keys", () => {
     render();
-
-    expect(
-      screen.getByRole("heading", { name: "Ustawienia dźwięków" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Skonfiguruj dźwięki dla różnych funkcji."),
-    ).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: "Kategorie dźwięków" }),
     ).toBeInTheDocument();

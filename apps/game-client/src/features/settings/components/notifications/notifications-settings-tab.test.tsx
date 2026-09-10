@@ -55,15 +55,6 @@ const render = () => {
 describe("NotificationsSettingsTab", () => {
   it("renders translated tab copy instead of raw settings keys", () => {
     render();
-
-    expect(
-      screen.getByRole("heading", { name: "Ustawienia powiadomień" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "Skonfiguruj ustawienia powiadomień. Możesz dostosować, które typy NPC będą wywoływać powiadomienia oraz jak będą one prezentowane.",
-      ),
-    ).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Elita 2" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Komunikaty" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Grupa" })).toBeInTheDocument();

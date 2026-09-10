@@ -29,10 +29,7 @@ export const HiddenTimersTab = () => {
   }
 
   return (
-    <SettingsTabLayout
-      title={t("settings.hiddenTimers.title")}
-      description={t("settings.hiddenTimers.description")}
-    >
+    <SettingsTabLayout>
       <SettingsSection
         title={t("settings.hiddenTimers.scopeTitle")}
         description={

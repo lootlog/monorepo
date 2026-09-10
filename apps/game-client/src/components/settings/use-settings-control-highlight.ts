@@ -27,7 +27,7 @@ export const useSettingsControlHighlight = <TElement extends HTMLElement>(
 
   useEffect(() => {
     if (!pendingScroll) return;
-    ref.current?.scrollIntoView({ block: "center" });
+    ref.current?.scrollIntoView({ block: "center", behavior: "smooth" });
     clearPendingScroll();
   }, [clearPendingScroll, pendingScroll]);
 

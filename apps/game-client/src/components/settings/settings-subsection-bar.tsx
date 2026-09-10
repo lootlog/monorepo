@@ -27,7 +27,11 @@ export const SettingsSubsectionBar: FC<SettingsSubsectionBarProps> = ({
   >
     <TabsList aria-label={label} className="ll:w-full">
       {options.map((option) => (
-        <TabsTrigger key={option.id} value={option.id} className="ll:text-xs">
+        <TabsTrigger
+          key={option.id}
+          value={option.id}
+          className="ll:text-xs ll:transition-[color,background-color,border-color,box-shadow] ll:duration-150"
+        >
           <span className="ll:truncate">{option.label}</span>
         </TabsTrigger>
       ))}

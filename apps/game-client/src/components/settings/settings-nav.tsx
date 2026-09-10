@@ -20,7 +20,7 @@ type SettingsNavProps = {
 };
 
 const railButtonClassName =
-  "ll-custom-cursor-pointer ll:flex ll:size-7 ll:shrink-0 ll:items-center ll:justify-center ll:rounded-sm ll:border-0 ll:bg-transparent ll:p-0 ll:text-gray-300 ll:transition-colors ll:hover:bg-white/5 ll:hover:text-gray-100 ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:aria-current:bg-white/10 ll:aria-current:text-gray-100";
+  "ll-custom-cursor-pointer ll:flex ll:size-7 ll:shrink-0 ll:items-center ll:justify-center ll:rounded-sm ll:border-0 ll:bg-transparent ll:p-0 ll:text-muted-foreground ll:transition-[color,background-color,scale] ll:duration-150 ll:ease-out ll:hover:bg-accent/60 ll:hover:text-foreground ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:active:scale-[0.96] ll:aria-current:bg-accent ll:aria-current:text-foreground";
 
 const moveRailFocus = (event: KeyboardEvent<HTMLDivElement>) => {
   if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
@@ -55,7 +55,7 @@ export const SettingsNav: FC<SettingsNavProps> = ({
   if (compact) {
     return (
       <div
-        className="ll:flex ll:h-full ll:w-9 ll:shrink-0 ll:flex-col ll:items-center ll:gap-0.5 ll:border-0 ll:border-r ll:border-gray-400/30 ll:bg-black/15 ll:px-1 ll:py-1"
+        className="ll:flex ll:h-full ll:w-9 ll:shrink-0 ll:flex-col ll:items-center ll:gap-0.5 ll:border-0 ll:border-e ll:border-gray-400/30 ll:bg-black/15 ll:px-1 ll:py-1"
         onKeyDown={moveRailFocus}
       >
         <button
@@ -95,7 +95,7 @@ export const SettingsNav: FC<SettingsNavProps> = ({
         <TabsTrigger
           key={domain.id}
           value={domain.id}
-          className="ll:h-auto ll:min-h-7 ll:w-full ll:justify-start ll:gap-2 ll:rounded-sm ll:px-2 ll:py-1 ll:text-left ll:text-xs ll:font-semibold ll:text-muted-foreground ll:transition-none ll:hover:bg-accent ll:hover:text-foreground ll:data-active:bg-accent ll:data-active:text-foreground ll:after:hidden"
+          className="ll:h-auto ll:min-h-7 ll:w-full ll:justify-start ll:gap-2 ll:rounded-sm ll:ps-1.5 ll:pe-2 ll:py-1 ll:text-start ll:text-xs ll:font-semibold ll:text-muted-foreground ll:transition-none ll:hover:bg-accent/60 ll:hover:text-foreground ll:data-active:bg-accent! ll:data-active:text-foreground! ll:after:hidden"
         >
           <domain.icon className="ll:size-3.5 ll:shrink-0" aria-hidden="true" />
           <span className="ll:truncate">{domain.label}</span>

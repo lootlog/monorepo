@@ -35,9 +35,6 @@ describe("InformationSettingsTab", () => {
       timeZone: "UTC",
     }).format(new Date(buildTimestamp));
 
-    expect(
-      screen.getByRole("heading", { name: "Informacje o kliencie" }),
-    ).toBeInTheDocument();
     expect(screen.getByText("Wersja klienta")).toBeInTheDocument();
     expect(screen.getByText("1.0.1")).toBeInTheDocument();
     expect(screen.getByText("Commit SHA")).toBeInTheDocument();

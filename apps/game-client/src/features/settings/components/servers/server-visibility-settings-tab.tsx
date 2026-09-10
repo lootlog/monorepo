@@ -80,8 +80,6 @@ export const ServerVisibilitySettingsTab = () => {
 
   return (
     <SettingsTabLayout
-      title={t("settings.servers.title")}
-      description={t("settings.servers.description")}
       actions={
         saveStatus ? (
           <div className="ll:flex ll:items-center ll:gap-2">

@@ -349,11 +349,7 @@ export const DebugTab: FC = () => {
   };
 
   return (
-    <SettingsTabLayout
-      title={t("settings.debug.title")}
-      description={t("settings.debug.description")}
-      className="ll:px-2 ll:pb-2"
-    >
+    <SettingsTabLayout className="ll:px-2 ll:pb-2">
       <SettingsSection title={t("settings.debug.eventTemplatesTitle")}>
         <div className="ll:flex ll:flex-wrap ll:gap-1">
           {eventTemplateKeys.map((key) => (

@@ -51,11 +51,7 @@ export const NotificationMutesSettingsTab = () => {
     .sort((left, right) => left.name.localeCompare(right.name, "pl"));
 
   return (
-    <SettingsTabLayout
-      title={t("settings.notificationMutes.title")}
-      description={t("settings.notificationMutes.description")}
-      contentClassName="ll:gap-3"
-    >
+    <SettingsTabLayout contentClassName="ll:gap-3">
       <SettingsSection controlId="notification-mutes">
         <Tabs defaultValue="players" className="ll:w-full ll:gap-3">
           <TabsList className="ll:w-full">

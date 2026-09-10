@@ -41,10 +41,7 @@ export const InformationSettingsTab = () => {
   ];
 
   return (
-    <SettingsTabLayout
-      title={t("settings.information.title")}
-      description={t("settings.information.description")}
-    >
+    <SettingsTabLayout>
       <SettingsSection
         controlId="build-information"
         title={t("settings.information.buildDetailsTitle")}

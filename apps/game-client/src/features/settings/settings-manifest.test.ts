@@ -56,6 +56,7 @@ describe("settings manifest persistence references", () => {
       "notifications",
       "sounds",
       "controls",
+      "experimental",
       "diagnostics",
       "information",
     ]);

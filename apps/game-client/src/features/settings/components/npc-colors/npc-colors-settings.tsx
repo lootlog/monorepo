@@ -62,8 +62,6 @@ export const NpcColorsSettings = () => {
 
   return (
     <SettingsTabLayout
-      title={t("settings.npcColors.title")}
-      description={t("settings.npcColors.description")}
       actions={
         <Button
           type="button"

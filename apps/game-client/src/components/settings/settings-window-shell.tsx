@@ -40,18 +40,18 @@ export const SettingsWindowShell: FC<SettingsWindowShellProps> = ({
       <>
         {nav}
         {searchOverlayOpen ? (
-          <div className="ll:absolute ll:inset-y-0 ll:left-9 ll:z-30 ll:flex ll:w-52 ll:flex-col ll:gap-1 ll:border-0 ll:border-r ll:border-gray-400/40 ll:bg-gray-900/95 ll:p-1 ll:shadow-2xl">
+          <div className="ll:absolute ll:inset-y-0 ll:start-9 ll:z-30 ll:flex ll:w-54 ll:flex-col ll:gap-3 ll:border-0 ll:border-e ll:border-gray-400/30 ll:bg-gray-900/95 ll:p-1 ll:pe-3 ll:shadow-2xl ll:animate-in ll:fade-in-0 ll:slide-in-from-start-2 ll:duration-150">
             {search}
           </div>
         ) : null}
       </>
     ) : (
-      <div className="ll:flex ll:h-full ll:min-h-0 ll:w-42 ll:shrink-0 ll:flex-col ll:gap-1 ll:border-0 ll:border-r ll:border-gray-400/30 ll:bg-black/15 ll:p-1">
+      <div className="ll:flex ll:h-full ll:min-h-0 ll:w-44 ll:shrink-0 ll:flex-col ll:gap-3 ll:border-0 ll:border-e ll:border-gray-400/30 ll:bg-black/15 ll:p-1 ll:pe-3">
         {search}
         <ScrollArea className="ll:min-h-0 ll:flex-1">{nav}</ScrollArea>
       </div>
     )}
-    <div className="ll:flex ll:min-h-0 ll:min-w-0 ll:flex-1 ll:flex-col">
+    <div className="ll:flex ll:min-h-0 ll:min-w-0 ll:flex-1 ll:flex-col ll:pt-1">
       {subsections}
       <ScrollArea
         className={cn(
@@ -59,7 +59,7 @@ export const SettingsWindowShell: FC<SettingsWindowShellProps> = ({
           subsections ? "ll:pt-1" : "ll:pt-0",
         )}
       >
-        <div className="ll:flex ll:flex-col ll:gap-[var(--ll-settings-space-lg)] ll:px-3 ll:pb-2">
+        <div className="ll:flex ll:flex-col ll:gap-[var(--ll-settings-space-xl)] ll:px-3 ll:pb-2">
           {children}
         </div>
       </ScrollArea>
